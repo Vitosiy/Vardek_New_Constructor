@@ -1,0 +1,11 @@
+.toggle-container:focus {
+  box-shadow: none;
+}
+.toggle-handle-on {
+  background-color: #5d6069 !important;
+}
+.toggle-handle {
+  &-on {
+    background: #5d6069 !important;
+  }
+}

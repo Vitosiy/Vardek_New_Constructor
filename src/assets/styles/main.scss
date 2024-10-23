@@ -1,0 +1,169 @@
+@import 'fonts-main.scss';
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: "Gilroy";
+}
+
+body {
+  background: #f6f5fa;
+}
+
+div {
+  &::-webkit-scrollbar {
+    width: 3px;
+    border-radius: 15px;
+  }
+
+  &::-webkit-scrollbar-track {
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $dark-grey;
+    transform: translateX(-5px);
+    box-shadow: inset 0 0 1px $dark-grey;
+    border-radius: 15px;
+  }
+}
+
+p,
+h1,
+button {
+  margin: 0;
+  padding: 0;
+  font-family: "Gilroy";
+}
+
+button {
+  outline: none;
+  cursor: pointer;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+input {
+  margin: 0;
+  bottom: 0;
+  font-family: "Gilroy";
+  border: none;
+  background-color: $bg;
+  border-radius: 15px;
+  &:focus {
+    outline: none;
+  }
+}
+
+select {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 15px;
+  outline: none;
+  border: 1px solid $light-stroke;
+  background-color: $stroke;
+}
+
+a {
+  color: $black;
+  text-decoration: none;
+}
+
+p {
+  &.text-grey {
+    color: $dark-grey;
+  }
+}
+
+.menu__close {
+  position: absolute;
+  right: 15px;
+  top: 19px;
+  cursor: pointer;
+}
+
+.popup__close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
+
+.light-radial__button {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid $dark-grey;
+  border-radius: 360px;
+  background: none;
+  transition: 0.2s;
+  cursor: pointer;
+  svg {
+    path {
+      transition: 0.2s;
+    }
+  }
+  &.router-link-active {
+    border: 1px solid $black;
+    svg {
+      path {
+        fill: $black;
+      }
+    }
+  }
+}
+.black-radial__button {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 360px;
+  background: $black;
+  cursor: pointer;
+}
+.grey-radial__button {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 360px;
+  background: $stroke;
+  cursor: pointer;
+}
+
+.right-menu__svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background-color: $stroke;
+  border-radius: 360px;
+  cursor: pointer;
+  &.active {
+    background-color: $red;
+    svg {
+      path {
+        fill: $white;
+      }
+      g {
+        path {
+          fill: $white;
+        }
+      }
+    }
+  }
+}
