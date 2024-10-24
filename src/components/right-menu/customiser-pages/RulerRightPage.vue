@@ -5,16 +5,16 @@
       <p class="customiser-section__title">Размер товара</p>
       <div class="settings-size">
         <div class="size-item">
-          <p class="item__label text-grey ">Ширина</p>
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="3000 мм" />
+          <p class="item__label text-grey" @click="resizeModel">Ширина</p>
+          <MainInput class="input__search right-menu" v-model="productSize.width.value" type="text" placeholder="3000 мм" />
         </div>
         <div class="size-item">
           <p class="item__label text-grey ">Высота</p>
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="3000 мм" />
+          <MainInput class="input__search right-menu" v-model="productSize.height.value" type="text" placeholder="3000 мм" />
         </div>
         <div class="size-item">
           <p class="item__label text-grey ">Глубина</p>
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="3000 мм" />
+          <MainInput class="input__search right-menu" v-model="productSize.depth.value" type="text" placeholder="3000 мм" />
         </div>
       </div>
     </div>
@@ -40,8 +40,25 @@
     </div>
   </div>
 </template>
-<script setup>
+<script lang="ts" setup>
 import MainInput from "@/components/ui/inputs/MainInput.vue";
+const eventBus = useEventBus();
+import { useEventBus } from "@/store/appliction/useEventBus";
+
+import { inject } from 'vue';
+// Получаем данные из `provide`
+const productSize = inject('parentDataSize');
+
+const resizeModel = () => {
+    let data: { width: number; height: number; depth: number } = {
+      width: productSize.width.value,
+      height: productSize.height.value,
+      depth: productSize.depth.value,
+    };
+    eventBus.emit("A:Model-resize", data);
+  }
+
+
 </script>
 <style lang="scss" scoped>
 .ruler {

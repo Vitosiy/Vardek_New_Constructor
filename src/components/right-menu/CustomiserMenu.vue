@@ -18,6 +18,10 @@ const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
 
+// const customise = defineProps({
+//   productData: Object,
+//   productSize: Object
+// })
 
 </script>
 
@@ -84,6 +88,7 @@ const togglePopup = () => {
         align-items: center;
         gap: 8px;
       }
+
       .close__button {
         cursor: pointer;
       }

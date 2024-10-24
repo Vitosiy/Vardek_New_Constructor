@@ -1,17 +1,26 @@
 <script setup lang="ts">
+// @ts-nocheck
 import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
 
-import { Ref, ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
-import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { Ref, ref, watch, computed, onMounted, onBeforeUnmount, provide } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useSceneState } from "@/store/appliction/useSceneState";
+import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
+
 
 import { Application } from "@/Application/Core/Application";
 
-import customInput from "@/components/ui/inputs/customInput.vue";
+// import customInput from "@/components/customInput.vue";
+
+import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
+import ContentControllerButton from "@/components/ui/buttons/right-menu/controller/ContentControllerButton.vue";
+import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
+import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
+import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
+import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
 
 import Toggle from "@vueform/toggle";
 import Slider from "@vueform/slider";
@@ -50,14 +59,14 @@ interface IProductSizeEdit {
   size: TSize | null;
 }
 
+const appData = useAppData().getAppData;
 const startData = useSceneState();
 const roomStore = useRoomState();
 const eventBus = useEventBus();
-const customiser = useCustomiserStore();
 const models = useAppData().getAppData.CATALOG.PRODUCTS;
 const wallMaterials = useAppData().getAppData.WALL;
 const floorMaterials = useAppData().getAppData.FLOOR;
-const catalogSections = useAppData().getAppData.CATALOG;
+const customiserStore = useCustomiserStore();
 
 const sceneContainer: Ref<HTMLElement | null> = ref(null);
 let VerdekConstructor: Application | null = null;
@@ -107,11 +116,21 @@ const productColor = ref<{ [key: string]: any }>({});
 
 const fasadeColor = ref<{ [key: string]: any }>({});
 
+const currentFasadeId = ref<{ [key: string]: any }>({});
+
 const productData = ref<{ [key: string]: any }>({});
 
 const product = ref<{ [key: string]: any } | null>(null);
 
 const controllerPositionData = ref<THREEInterfases.IMouseData>({ x: 0, y: 0 });
+
+const totalContent = ref<any>();
+
+const paletteColorsData = ref<{ [key: string]: any }>({});
+
+const showPalette = ref<boolean>(false);
+
+const selectPalette = ref<any>(null);
 
 onMounted(() => {
   if (sceneContainer.value) {
@@ -127,6 +146,7 @@ onMounted(() => {
     eventBus.on("A:Selected", (item: any) => {
       let object = item.object;
       let roomContant = item.roomContant;
+      totalContent.value = roomContant;
 
       if (!object) {
         controller.value = false;
@@ -145,8 +165,11 @@ onMounted(() => {
       productColor.value = object?.PROPS.CONFIG.MODULE_COLOR_LIST;
 
       /**  Список FASADE для фасалдов модели */
-
       fasadeColor.value = object?.PROPS.CONFIG.FASADE_COLOR_LIST;
+
+      /** Текущий фасад */
+
+      currentFasadeId.color = object?.PROPS.CONFIG.FASADE_COLOR;
 
       /**  Координаты мыши */
       controllerPositionData.value = object?.MOUSE_POSITION;
@@ -174,6 +197,11 @@ watch(refraction, () => {
 watch(pointLightValue, () => {
   changePointLightPower(pointLightValue.value);
   console.log(pointLightValue.value);
+});
+
+watch(paletteColorsData, () => {
+  showPalette.value =
+    Object.keys(paletteColorsData.value).length > 0 ? true : false;
 });
 
 const resizeRoom = () => {
@@ -231,6 +259,10 @@ const save = () => {
 
 const load = () => {
   if (VerdekConstructor) {
+    shadows.value = false;
+    refraction.value = false;
+    eventBus.emit("A:ToggleShadow", shadows.value);
+    eventBus.emit("A:ToggleRefraction", refraction.value);
     eventBus.emit("A:Load", selectedRoom.value?.id);
   }
 };
@@ -262,8 +294,39 @@ const changeModuleTexture = (value: { [key: string]: any }) => {
 
 const changeFasadeTexture = (value: { [key: string]: any }) => {
   if (VerdekConstructor) {
+    currentFasadeId.value = value.ID;
+
+    if (
+      appData.FASADE[currentFasadeId.value].PALETTE.length &&
+      appData.FASADE[currentFasadeId.value].PALETTE[0] != null
+    ) {
+      paletteColorsData.value = Object.keys(appData.PALETTE)
+        .filter(
+          (key) =>
+            appData.PALETTE[key].TYPE ===
+            appData.FASADE[currentFasadeId.value].PALETTE[0]
+        )
+        .reduce((obj, key) => {
+          obj[key] = appData.PALETTE[key];
+          return obj;
+        }, {});
+
+      return;
+    }
+
+    paletteColorsData.value = {};
     eventBus.emit("A:ChangeFasadeTexture", value);
   }
+};
+
+const changePaletteColor = () => {
+
+
+  // const selectedPalette = paletteColorsData.find(
+  //   (palette) => palette.UNAME === selectPalette.value
+  // );
+
+  eventBus.emit("A:ChangePaletteColor", selectPalette.value);
 };
 
 const onDrag = (event: any, model: { [key: string]: any } | string) => {
@@ -273,6 +336,7 @@ const onDrag = (event: any, model: { [key: string]: any } | string) => {
 const removeModel = () => {
   if (VerdekConstructor) {
     eventBus.emit("A:RemoveModel");
+    console.log(totalContent.value, "roomContant");
     controller.value = false;
   }
 };
@@ -324,6 +388,16 @@ const getProductSizeProps = (
   }
 };
 
+const parentDataSize = productSize.value;
+const parentDataProduct = productData.value;
+
+provide('parentDataSize', parentDataSize);
+provide('parentDataProduct', parentDataProduct);
+
+const togglePopup = () => {
+  customiserStore.toggleCustomiserPopup();
+};
+
 const activeController = computed(() => {
   return {
     "model-controller--active": controller.value,
@@ -351,7 +425,7 @@ const controllerPosition = computed(() => {
     <customInput v-model="inputValue.depth" :min="1" :max="10" :step="1" />
 
     <button class="btn" @click="resizeRoom">Resize</button>
-  </div>
+  </div> -->
 
   <div class="quality">
     <div>
@@ -364,113 +438,52 @@ const controllerPosition = computed(() => {
       <Toggle v-model="refraction" />
     </div>
 
-    <div>
+    <!-- <div>
       <p>Направленный свет</p>
       <Slider v-model="pointLightValue" />
-    </div>
+    </div> -->
 
-    <button
-      class="btn"
-      v-for="(item, key) in quality"
-      :key="key + item"
-      @click="setQuality(item)"
-    >
+    <!-- <button class="btn" v-for="(item, key) in quality" :key="key + item" @click="setQuality(item)">
       {{ item }}
-    </button>
+    </button> -->
   </div>
 
-  <select
-    class="example"
-    id="rooms"
-    v-model="selectValue"
-    name="rooms"
-    @change="load"
-  >
-    <option
-      v-for="(room, key) in roomStore.getRooms"
-      :key="key"
-      :value="room.id"
-    >
+  <!-- <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load">
+    <option v-for="(room, key) in roomStore.getRooms" :key="key" :value="room.id">
       {{ room.label }}
     </option>
   </select> -->
 
-  <div class="ui-panel--right">
+  <!-- <div class="ui-panel--right">
     <button class="btn" @click="save">Сохранить</button>
     <button class="btn" @click="create">Создать новую</button>
-    <button class="btn" @click="toggleiew">Поменять вид</button>
-  </div>
-
-  <!-- <div class="drag_example">
-    <h3>Перетаскивание моделей </h3>
-    <div class="drag_example--items">
-      <div
-        class="drag_example--item"
-        v-for="item in dropItems"
-        :key="item.NAME as string"
-        @dragstart="onDrag($event, item)"
-      >
-        <img class="drag_example--image" src="/images/example.png" alt="#" />
-        <p>{{ item.NAME }}</p>
-      </div>
-    </div>
+    <button class="btn" @click="toggleiew">Поменять вид</button> 
   </div> -->
 
   <!-- <div class="room-textures">
-    <select
-      class="room-textures--item"
-      id="wall"
-      v-model="wallTexture"
-      name="wall"
-      @change="changeWallTexture"
-    >
-      <option
-        v-for="(texture, key) in wallMaterials"
-        :key="key"
-        :value="texture.ID"
-      >
+    <select class="room-textures--item" id="wall" v-model="wallTexture" name="wall" @change="changeWallTexture">
+      <option v-for="(texture, key) in wallMaterials" :key="key" :value="texture.ID">
         {{ texture.NAME }}
       </option>
     </select>
 
-    <select
-      class="room-textures--item"
-      id="floor"
-      v-model="floorTexture"
-      name="floor"
-      @change="changeFloorTexture"
-    >
-      <option
-        v-for="(texture, key) in floorMaterials"
-        :key="key"
-        :value="texture.ID"
-      >
+    <select class="room-textures--item" id="floor" v-model="floorTexture" name="floor" @change="changeFloorTexture">
+      <option v-for="(texture, key) in floorMaterials" :key="key" :value="texture.ID">
         {{ texture.NAME }}
       </option>
     </select>
   </div> -->
 
-  <div
-    :class="['model-controller', activeController]"
-    :style="controllerPosition"
-  >
+  <!-- <div :class="['model-controller', activeController]" :style="controllerPosition">
     <div>
       <h2>{{ productData.PRODUCT?.NAME }}</h2>
       <div class="model-controller_controls">
         <div class="model-controller_items">
           <h3>Корпус</h3>
           <div class="model-controller_elements">
-            <div
-              v-for="(fasade_data, key) in productColor"
-              :key="fasade_data!.NAME + key"
-              class="model-controller_item"
-              @click="changeModuleTexture(fasade_data)"
-            >
-              <img
-                class="model-controller_image"
-                :src="fasade_data.DETAIL_PICTURE"
-                alt=""
-              />
+            <div v-for="(fasade_data, key) in productColor" :key="fasade_data!.NAME + key" class="model-controller_item"
+              @click="changeModuleTexture(fasade_data)">
+              <img class="model-controller_image" :src="fasade_data.DETAIL_PICTURE" alt="" />
               <p class="model-controller_text">{{ fasade_data.NAME }}</p>
             </div>
           </div>
@@ -480,37 +493,49 @@ const controllerPosition = computed(() => {
           <div v-for="size in productSize">
             <p>{{ size.title }}</p>
             <b></b>
-            <customInput
-              v-model="size.value"
-              :min="size.min !== null ? size.min : null"
-              :max="size.max !== null ? size.max : null"
-              :step="1"
-            />
+            <customInput v-model="size.value" :min="size.min !== null ? size.min : null"
+              :max="size.max !== null ? size.max : null" :step="1" />
           </div>
           <button class="btn" @click="resizeModel">Resize</button>
         </div>
         <div class="model-controller_items">
           <h3>Фасад</h3>
           <div class="model-controller_elements">
-            <div
-              v-for="(fasade_data, key) in fasadeColor"
-              :key="fasade_data!.NAME + key"
-              class="model-controller_item"
-              @click="changeFasadeTexture(fasade_data)"
-            >
-              <img
-                class="model-controller_image"
-                :src="fasade_data.DETAIL_PICTURE"
-                alt=""
-              />
+            <div v-for="(fasade_data, key) in fasadeColor" :key="fasade_data!.NAME + key" class="model-controller_item"
+              @click="changeFasadeTexture(fasade_data)">
+              <img class="model-controller_image" :src="fasade_data.DETAIL_PICTURE" alt="" />
               <p class="model-controller_text">{{ fasade_data.NAME }}</p>
             </div>
           </div>
+          <select v-if="showPalette" class="palette-textures--items" id="palette" v-model="selectPalette" name="palette"
+            @change="changePaletteColor">
+            <option v-for="(palette, key) in paletteColorsData" :key="key" :value="palette.ID">
+              <div class="palette-textures--item">
+                <p>{{ palette.NAME }} {{ palette.UNAME }}</p>
+              </div>
+            </option>
+          </select>
+
           <button class="btn" @click="toggleFasad">Скрыть/Показать</button>
         </div>
       </div>
     </div>
     <button class="btn" @click="removeModel">Удалить</button>
+  </div> -->
+  <CustomiserMenu/>
+
+  <div :class="['model-controller', activeController]" :style="controllerPosition">
+    <div class="controller-left">
+      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg">
+      <ControllerButton />
+      <ContentControllerButton />
+      <DeleteControllerButton />
+    </div>
+    <div class="controller-right">
+      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg">
+      <UpControllerButton />
+      <OpenFacadeButton />
+    </div>
   </div>
 </template>
 
@@ -526,7 +551,7 @@ const controllerPosition = computed(() => {
 
 .inputs {
   position: absolute;
-  right: 2rem;
+  left: 2rem;
   top: 50%;
   display: flex;
   flex-direction: column;
@@ -585,12 +610,14 @@ const controllerPosition = computed(() => {
     display: flex;
     gap: 0.5rem;
   }
+
   &--item {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     color: black;
     max-width: 50px;
+
     p {
       font-size: 0.75rem;
       display: -webkit-box;
@@ -617,36 +644,56 @@ const controllerPosition = computed(() => {
 }
 
 .model-controller {
-  position: absolute;
-  left: 50%;
-  top: 50%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: absolute;
+  left: 50%;
+  top: 50%;
   padding: 1rem;
   filter: blur(10px);
   opacity: 0;
   transform: translate(-50%, -50%);
   transition: all 0.25s ease-in-out;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
   max-height: 0;
-  overflow: hidden;
+
   &--active {
     filter: blur(0);
     opacity: 1;
-    pointer-events: all;
     height: fit-content;
     max-height: 50vh;
     // transform: translateX(0);
   }
+
+  .controller-left {
+    position: absolute;
+    left: 30px;
+    top: -30px;
+
+    .left-line {}
+  }
+
+  .controller-right {
+    position: absolute;
+    left: 80px;
+    top: 30px;
+
+    .right-line {}
+  }
+
   &_controls {
     display: flex;
     gap: 1rem;
   }
+
   &_image {
     width: 25px;
     aspect-ratio: 1;
   }
+
   &_items {
     display: flex;
     // align-items: center;
@@ -656,9 +703,11 @@ const controllerPosition = computed(() => {
     background-color: rgba(255, 255, 255, 0.5);
     border-radius: 10px;
   }
+
   &_elements {
     display: flex;
   }
+
   &_item {
     display: flex;
     flex-direction: column;
@@ -668,12 +717,14 @@ const controllerPosition = computed(() => {
     cursor: pointer;
     border-radius: 5px;
     transition: all 0.2s ease-in-out;
+
     &:hover {
       -webkit-box-shadow: 0px 6px 8px 0px rgba(34, 60, 80, 0.2);
       -moz-box-shadow: 0px 6px 8px 0px rgba(34, 60, 80, 0.2);
       box-shadow: 0px 6px 8px 0px rgba(0, 0, 0, 0.2);
     }
   }
+
   &_text {
     font-size: 12px;
   }
@@ -709,6 +760,7 @@ const controllerPosition = computed(() => {
   border: none;
   outline: none;
 }
+
 .distance-label {
   font-size: 12px;
   font-weight: 400;
@@ -724,5 +776,21 @@ const controllerPosition = computed(() => {
   font-size: 12px;
   font-weight: 400;
   color: black;
+}
+
+.palette-textures {
+  &--items {
+    max-width: fit-content;
+  }
+
+  &--item {
+    padding: 2rem;
+    display: flex;
+  }
+
+  &--image {
+    width: 25px;
+    aspect-ratio: 1;
+  }
 }
 </style>
