@@ -86,6 +86,8 @@ export class MeshEvents {
     /** Цвкет Фасада */
     changeFasadeTexture(data: { [key: string]: any }) {
 
+        console.log(data)
+
         const props = this._currentMesh?.userData.PROPS
         const fasade = props.FASADE
 
@@ -94,27 +96,81 @@ export class MeshEvents {
             y: data.TEXTURE_HEIGHT,
         }
 
+        if (!data.COLOR) {
+            Object.values(fasade).forEach((item: any) => {
+
+                item.visible = true;
+
+                item.traverse((children: THREE.Object3D) => {
+
+                    if (children instanceof THREE.Mesh) {
+
+                        this.changeColor(
+                            {
+                                object: children,
+                                url: data.TEXTURE,
+                                textureSize
+                            })
+                    }
+
+                    if (this.root._trafficManager) {
+                        this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+                    }
+                })
+            })
+
+
+            if (this.root._trafficManager) {
+                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_COLOR = data.ID
+            }
+
+            return;
+        }
+
+        console.log(data.COLOR)
+
+
         Object.values(fasade).forEach((item: any) => {
 
             item.traverse((children: THREE.Object3D) => {
 
+                item.visible = true
+
                 if (children instanceof THREE.Mesh) {
-                    console.log(children.userData)
-                    this.changeColor(
-                        {
-                            object: children,
-                            url: data.TEXTURE,
-                            textureSize
-                        })
+
+                    !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
+
+                    children.material = new THREE.MeshStandardMaterial();
+                    children.material.color.set(`${data.COLOR}`)
+                    children.material.metalness = 0.7
+                    children.material.roughness = 0.05
+
+                    children.material.clearcoat = 1
+                    children.material.clearcoatRoughness = 0
+
+                    children.material.receiveShadow = true;
+                    children.material.castShadow = true;
+                    children.material.encoding = THREE.SRGBColorSpace;
+
+                    children.material.needsUpdate = true;
+
+                }
+                if (this.root._trafficManager) {
+                    this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
                 }
             })
+
+            if (this.root._trafficManager) {
+                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_COLOR = data.ID
+            }
+
+
         })
+
 
         // Доделать под разный выбранный фасад
 
-        if (this.root._trafficManager) {
-            this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_COLOR = data.ID
-        }
+
     }
 
     changePaletteColor(data: number | string) {
@@ -133,6 +189,8 @@ export class MeshEvents {
 
                 item.traverse((children: THREE.Object3D) => {
 
+                    item.visible = true;
+
                     if (children instanceof THREE.Mesh) {
 
                         !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
@@ -145,6 +203,10 @@ export class MeshEvents {
                                 textureSize: fasadeSize
                             })
                     }
+
+                    if (this.root._trafficManager) {
+                        this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+                    }
                 })
             })
 
@@ -154,6 +216,8 @@ export class MeshEvents {
         Object.values(fasade).forEach((item: any) => {
 
             item.traverse((children: THREE.Object3D) => {
+
+                item.visible = true;
 
                 if (children instanceof THREE.Mesh) {
 
@@ -170,7 +234,11 @@ export class MeshEvents {
 
                     children.material.encoding = THREE.SRGBColorSpace;
 
-                    console.log(children.material)
+               
+                }
+
+                if (this.root._trafficManager) {
+                    this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
                 }
             })
         })
