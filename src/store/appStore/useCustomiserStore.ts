@@ -26,6 +26,7 @@ export const useCustomiserStore = defineStore('customiser', () => {
       customisers.value.push(type);
     }
   }
+  
   return {
     isCustomiserOpen,
     customisers,

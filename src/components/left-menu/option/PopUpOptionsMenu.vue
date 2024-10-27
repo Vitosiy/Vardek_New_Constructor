@@ -1,4 +1,7 @@
+
+
 <script setup lang="ts">
+
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
@@ -6,11 +9,14 @@ import { useMenuStore } from '@/store/appStore/useMenuStore';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { computed } from "vue";
 
+import { _URL } from "@/types/constants";
+
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
 
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
+    
     return Object.values(catalogProducts).filter(item => menuStore.catalogFilterProductsId.includes(item.ID));
   } else {
     console.log('empty');
@@ -26,7 +32,7 @@ const filteredData = computed(() => {
 
 // Вариант Александра
 const getImageUrl = (imageName: string) => {
-  return `${imageName}`;
+  return ` ${_URL}${imageName}`;
 };
 
 const dropItems: { [key: string]: {} } = catalogProducts;

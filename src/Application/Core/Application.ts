@@ -14,6 +14,8 @@ import { MeshEvents } from '../Meshes/Utils/Events';
 
 import { Resources } from "../Utils/Resources";
 
+import { ENVIROMENT_MAP } from "../F-mockapi";
+
 export class Application {
 
     /** Хранилища */
@@ -28,7 +30,7 @@ export class Application {
     camera: Camera;
     renderer: Renderer;
     resources: Resources = new Resources();
-    enviromentData: { [key: string]: any } = this.appData.getAppData.ENVIROMENT_MAP[0]
+    enviromentData: { [key: string]: any } = ENVIROMENT_MAP[0]
     world: World;
 
     draft: boolean = false

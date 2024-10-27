@@ -2,14 +2,22 @@
 // @ts-nocheck
 import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
+import { _URL } from "@/types/constants";
 
-import { Ref, ref, watch, computed, onMounted, onBeforeUnmount, provide } from "vue";
+import {
+  Ref,
+  ref,
+  watch,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  provide,
+} from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useSceneState } from "@/store/appliction/useSceneState";
-import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
-
+import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 
 import { Application } from "@/Application/Core/Application";
 
@@ -20,7 +28,7 @@ import ContentControllerButton from "@/components/ui/buttons/right-menu/controll
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
 import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
-import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
+import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
 
 import Toggle from "@vueform/toggle";
 import Slider from "@vueform/slider";
@@ -320,8 +328,6 @@ const changeFasadeTexture = (value: { [key: string]: any }) => {
 };
 
 const changePaletteColor = () => {
-
-
   // const selectedPalette = paletteColorsData.find(
   //   (palette) => palette.UNAME === selectPalette.value
   // );
@@ -391,8 +397,8 @@ const getProductSizeProps = (
 const parentDataSize = productSize.value;
 const parentDataProduct = productData.value;
 
-provide('parentDataSize', parentDataSize);
-provide('parentDataProduct', parentDataProduct);
+provide("parentDataSize", parentDataSize);
+provide("parentDataProduct", parentDataProduct);
 
 const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
@@ -474,16 +480,28 @@ const controllerPosition = computed(() => {
     </select>
   </div> -->
 
-  <!-- <div :class="['model-controller', activeController]" :style="controllerPosition">
+  <div
+    :class="['model-controller', activeController]"
+    :style="controllerPosition"
+    v-if="product"
+  >
     <div>
       <h2>{{ productData.PRODUCT?.NAME }}</h2>
       <div class="model-controller_controls">
         <div class="model-controller_items">
           <h3>Корпус</h3>
           <div class="model-controller_elements">
-            <div v-for="(fasade_data, key) in productColor" :key="fasade_data!.NAME + key" class="model-controller_item"
-              @click="changeModuleTexture(fasade_data)">
-              <img class="model-controller_image" :src="fasade_data.DETAIL_PICTURE" alt="" />
+            <div
+              v-for="(fasade_data, key) in productColor"
+              :key="fasade_data!.NAME + key"
+              class="model-controller_item"
+              @click="changeModuleTexture(fasade_data)"
+            >
+              <img
+                class="model-controller_image"
+                :src="_URL + fasade_data.DETAIL_PICTURE"
+                alt=""
+              />
               <p class="model-controller_text">{{ fasade_data.NAME }}</p>
             </div>
           </div>
@@ -493,26 +511,46 @@ const controllerPosition = computed(() => {
           <div v-for="size in productSize">
             <p>{{ size.title }}</p>
             <b></b>
-            <customInput v-model="size.value" :min="size.min !== null ? size.min : null"
-              :max="size.max !== null ? size.max : null" :step="1" />
+            <customInput
+              v-model="size.value"
+              :min="size.min !== null ? size.min : null"
+              :max="size.max !== null ? size.max : null"
+              :step="1"
+            />
           </div>
           <button class="btn" @click="resizeModel">Resize</button>
         </div>
         <div class="model-controller_items">
           <h3>Фасад</h3>
           <div class="model-controller_elements">
-            <div v-for="(fasade_data, key) in fasadeColor" :key="fasade_data!.NAME + key" class="model-controller_item"
-              @click="changeFasadeTexture(fasade_data)">
-              <img class="model-controller_image" :src="fasade_data.DETAIL_PICTURE" alt="" />
+            <div
+              v-for="(fasade_data, key) in fasadeColor"
+              :key="fasade_data!.NAME + key"
+              class="model-controller_item"
+              @click="changeFasadeTexture(fasade_data)"
+            >
+              <img
+                class="model-controller_image"
+                :src="_URL + fasade_data.DETAIL_PICTURE"
+                alt=""
+              />
               <p class="model-controller_text">{{ fasade_data.NAME }}</p>
             </div>
           </div>
-          <select v-if="showPalette" class="palette-textures--items" id="palette" v-model="selectPalette" name="palette"
-            @change="changePaletteColor">
-            <option v-for="(palette, key) in paletteColorsData" :key="key" :value="palette.ID">
-              <div class="palette-textures--item">
-                <p>{{ palette.NAME }} {{ palette.UNAME }}</p>
-              </div>
+          <select
+            v-if="showPalette"
+            class="palette-textures--items"
+            id="palette"
+            v-model="selectPalette"
+            name="palette"
+            @change="changePaletteColor"
+          >
+            <option
+              v-for="(palette, key) in paletteColorsData"
+              :key="key"
+              :value="palette.ID"
+            >
+              {{ palette.NAME }} {{ palette.UNAME }}
             </option>
           </select>
 
@@ -521,10 +559,10 @@ const controllerPosition = computed(() => {
       </div>
     </div>
     <button class="btn" @click="removeModel">Удалить</button>
-  </div> -->
-  <CustomiserMenu/>
+  </div>
+  <CustomiserMenu />
 
-  <div :class="['model-controller', activeController]" :style="controllerPosition">
+  <!-- <div :class="['model-controller', activeController]" :style="controllerPosition">
     <div class="controller-left">
       <img class="left-line" src="@/assets/svg/right-menu/left-line.svg">
       <ControllerButton />
@@ -536,7 +574,7 @@ const controllerPosition = computed(() => {
       <UpControllerButton />
       <OpenFacadeButton />
     </div>
-  </div>
+  </div> -->
 </template>
 
 <style lang="scss" scoped>
@@ -655,16 +693,18 @@ const controllerPosition = computed(() => {
   opacity: 0;
   transform: translate(-50%, -50%);
   transition: all 0.25s ease-in-out;
-  pointer-events: none;
+  // pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
   max-height: 0;
+  z-index: -1;
 
   &--active {
     filter: blur(0);
     opacity: 1;
     height: fit-content;
     max-height: 50vh;
+    z-index: 1;
     // transform: translateX(0);
   }
 
@@ -673,7 +713,8 @@ const controllerPosition = computed(() => {
     left: 30px;
     top: -30px;
 
-    .left-line {}
+    .left-line {
+    }
   }
 
   .controller-right {
@@ -681,7 +722,8 @@ const controllerPosition = computed(() => {
     left: 80px;
     top: 30px;
 
-    .right-line {}
+    .right-line {
+    }
   }
 
   &_controls {
@@ -706,6 +748,9 @@ const controllerPosition = computed(() => {
 
   &_elements {
     display: flex;
+    flex-direction: column;
+    max-height: 200px;
+    overflow: scroll;
   }
 
   &_item {

@@ -185,7 +185,7 @@ export const START_PROJECT_PARAMS = {
             }
         ],
         floor: 44013,
-        wall: 44014,
+        wall: 44128,
     },
     camera: {
         position: [8 * 1000, 1.5 * 1000, 0],

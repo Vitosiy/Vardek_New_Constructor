@@ -1,0 +1,1 @@
+export const _URL = 'https://dev.vardek.online'

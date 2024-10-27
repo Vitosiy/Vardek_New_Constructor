@@ -6,12 +6,18 @@ export const useAppData = defineStore('AppData', () => {
 
     const appData = ref<{ [key: string]: any }>(APP)
 
+    const setAppData = (value: any) => {
+        appData.value = value
+        console.log(appData.value);
+    }
+
     const getAppData = computed(() => {
         return appData.value
     })
 
     return {
-        getAppData
+        getAppData,
+        setAppData
     };
 
 })
