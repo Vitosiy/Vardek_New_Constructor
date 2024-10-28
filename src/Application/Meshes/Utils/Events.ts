@@ -88,9 +88,10 @@ export class MeshEvents {
     /** Цвкет Фасада */
     changeFasadeTexture(data: { [key: string]: any }) {
 
-        console.log(data)
+        if(!this._currentMesh) return;
 
         const props = this._currentMesh?.userData.PROPS
+
         const fasade = props.FASADE
 
         const textureSize = {
@@ -205,6 +206,8 @@ export class MeshEvents {
 
     changePaletteColor(data: number | string) {
 
+        if(!this._currentMesh) return;
+
         const props = this._currentMesh?.userData.PROPS
         const fasade = props.FASADE
         const palette = this._APP.PALETTE[data]
@@ -278,7 +281,7 @@ export class MeshEvents {
 
     changeGlassColor(data: number | string) {
 
-        console.log('GLASS', data)
+        if(!this._currentMesh) return;
 
         const props = this._currentMesh?.userData.PROPS
         const fasade = props.FASADE
@@ -355,6 +358,8 @@ export class MeshEvents {
     // Доделать под разный выбранный фасад
     toggleFasade() {
 
+        if(!this._currentMesh) return;
+
         const props = this._currentMesh?.userData.PROPS
         const fasade = props.FASADE
 
@@ -369,11 +374,9 @@ export class MeshEvents {
 
     }
 
-    hideTable() {
-
-    }
-
     changeModelSize(data: { width: number, height: number, depth: number }) {
+
+        if(!this._currentMesh) return;
 
         const position = this._currentMesh!.userData.PROPS.CONFIG.POSITION as THREE.Vector3
         // const rotation = this._currentMesh!.userData.PROPS.CONFIG.ROTATION as THREE.Euler

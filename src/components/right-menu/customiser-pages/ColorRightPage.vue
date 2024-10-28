@@ -84,9 +84,11 @@ import MainInput from "@/components/ui/inputs/MainInput.vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useObjectData } from "@/store/appliction/useObjectData";
+import { useAppData } from "@/store/appliction/useAppData";
 
 const eventBus = useEventBus();
 const objectData = useObjectData().getObjectData;
+const _APP = useAppData().getAppData
 
 const productColor = ref<{ [key: string]: any }>({});
 const сolorPage = ref<string>('korp');
@@ -117,20 +119,24 @@ const changeColorPage = (value: string) => {
 
 
 const changeFasadeTexture = (value: { [key: string]: any }) => {
+
+ 
   currentFasadeId.value = value.ID;
 
+  console.log(objectData)
+
   if (
-    objectData.FASADE[currentFasadeId.value].PALETTE.length &&
-    objectData.FASADE[currentFasadeId.value].PALETTE[0] != null
+    _APP.FASADE[currentFasadeId.value].PALETTE.length &&
+    _APP.FASADE[currentFasadeId.value].PALETTE[0] != null
   ) {
     paletteColorsData.value = Object.keys(objectData.PALETTE)
       .filter(
         (key) =>
-          objectData.PALETTE[key].TYPE ===
-          objectData.FASADE[currentFasadeId.value].PALETTE[0]
+        _APP.PALETTE[key].TYPE ===
+        _APP.FASADE[currentFasadeId.value].PALETTE[0]
       )
       .reduce((obj, key) => {
-        obj[key] = objectData.PALETTE[key];
+        obj[key] = _APP.PALETTE[key];
         return obj;
       }, {});
 

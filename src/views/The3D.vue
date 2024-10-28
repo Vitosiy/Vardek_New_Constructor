@@ -153,7 +153,7 @@ onMounted(() => {
     // Пописать интерфейс *item*
     eventBus.on("A:Selected", (item: any) => {
       let object = item.object;
-      objectData.setObjectData(object)
+
       let roomContant = item.roomContant;
       totalContent.value = roomContant;
 
@@ -161,7 +161,7 @@ onMounted(() => {
         controller.value = false;
         return;
       }
-
+      objectData.setObjectData(object)
       getProductSizeProps(
         object?.PROPS.CONFIG.SIZE,
         object?.PROPS.CONFIG.SIZE_EDIT
@@ -207,10 +207,10 @@ watch(pointLightValue, () => {
   console.log(pointLightValue.value);
 });
 
-watch(paletteColorsData, () => {
-  showPalette.value =
-    Object.keys(paletteColorsData.value).length > 0 ? true : false;
-});
+// watch(paletteColorsData, () => {
+//   showPalette.value =
+//     Object.keys(paletteColorsData.value).length > 0 ? true : false;
+// });
 
 const resizeRoom = () => {
   if (VerdekConstructor) {
@@ -300,32 +300,32 @@ const changeModuleTexture = (value: { [key: string]: any }) => {
   }
 };
 
-const changeFasadeTexture = (value: { [key: string]: any }) => {
-  if (VerdekConstructor) {
-    currentFasadeId.value = value.ID;
+// const changeFasadeTexture = (value: { [key: string]: any }) => {
+//   if (VerdekConstructor) {
+//     currentFasadeId.value = value.ID;
 
-    if (
-      appData.FASADE[currentFasadeId.value].PALETTE.length &&
-      appData.FASADE[currentFasadeId.value].PALETTE[0] != null
-    ) {
-      paletteColorsData.value = Object.keys(appData.PALETTE)
-        .filter(
-          (key) =>
-            appData.PALETTE[key].TYPE ===
-            appData.FASADE[currentFasadeId.value].PALETTE[0]
-        )
-        .reduce((obj, key) => {
-          obj[key] = appData.PALETTE[key];
-          return obj;
-        }, {});
+//     if (
+//       appData.FASADE[currentFasadeId.value].PALETTE.length &&
+//       appData.FASADE[currentFasadeId.value].PALETTE[0] != null
+//     ) {
+//       paletteColorsData.value = Object.keys(appData.PALETTE)
+//         .filter(
+//           (key) =>
+//             appData.PALETTE[key].TYPE ===
+//             appData.FASADE[currentFasadeId.value].PALETTE[0]
+//         )
+//         .reduce((obj, key) => {
+//           obj[key] = appData.PALETTE[key];
+//           return obj;
+//         }, {});
 
-      return;
-    }
+//       return;
+//     }
 
-    paletteColorsData.value = {};
-    eventBus.emit("A:ChangeFasadeTexture", value);
-  }
-};
+//     paletteColorsData.value = {};
+//     eventBus.emit("A:ChangeFasadeTexture", value);
+//   }
+// };
 
 const changePaletteColor = () => {
   // const selectedPalette = paletteColorsData.find(
