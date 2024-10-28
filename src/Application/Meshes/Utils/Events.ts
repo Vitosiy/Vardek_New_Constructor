@@ -5,6 +5,8 @@ import { DeepDispose } from '@/Application/Utils/DeepDispose';
 import { BuildProduct } from '../BuildProduct';
 import { useAppData } from '@/store/appliction/useAppData';
 
+const alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
+
 
 export class MeshEvents {
 
@@ -22,6 +24,7 @@ export class MeshEvents {
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
     private onChangeFasadeTexture: (data: { [key: string]: any }) => void;
     private onChangePaletteColor: (data: number | string) => void;
+    private onChangeGlassColor: (data: number | string) => void;
 
     private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
     private onToggleFasade: () => void;
@@ -39,6 +42,7 @@ export class MeshEvents {
         this.onChangeModuleTexture = this.changeModuleTexture.bind(this)
         this.onChangeFasadeTexture = this.changeFasadeTexture.bind(this)
         this.onChangePaletteColor = this.changePaletteColor.bind(this)
+        this.onChangeGlassColor = this.changeGlassColor.bind(this)
         this.onChangeModelSize = this.changeModelSize.bind(this)
         this.onToggleFasade = this.toggleFasade.bind(this)
     }
@@ -54,8 +58,6 @@ export class MeshEvents {
 
         let body = this._currentMesh?.userData.PROPS.BODY
         let shelf = this._currentMesh?.userData.PROPS.SHELF
-
-        console.log(shelf, 'shelf!!')
 
         body?.traverse((children: THREE.Object3D) => {
             if (children instanceof THREE.Mesh) {
@@ -127,9 +129,6 @@ export class MeshEvents {
             return;
         }
 
-        console.log(data.COLOR)
-
-
         Object.values(fasade).forEach((item: any) => {
 
             item.traverse((children: THREE.Object3D) => {
@@ -141,16 +140,47 @@ export class MeshEvents {
                     !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
 
                     children.material = new THREE.MeshStandardMaterial();
-                    children.material.color.set(`${data.COLOR}`)
-                    children.material.metalness = 0.7
-                    children.material.roughness = 0.05
 
-                    children.material.clearcoat = 1
-                    children.material.clearcoatRoughness = 0
+                    this.resources.startLoading(`${alumTextures}metal_roughness.jpg`, 'texture', (file) => {
+                        children.material.roughnessMap = file
+                        children.material.roughnessMap.wrapS = children.material.roughnessMap.wrapT = THREE.RepeatWrapping;
+                        children.material.roughnessMap.repeat.set(
+                            1 / 512,
+                            1 / 512
+                        );
+                        children.material.roughnessMap.offset.set(0.5, 0.5);
+                    }, true)
+                    // this.resources.startLoading(`${alumTextures}metal_normal.png`, 'texture', (file) => {
+                    //     children.material.normalMap = file
+                    //     children.material.normalMap.wrapS = children.material.normalMap.wrapT = THREE.RepeatWrapping;
+                    //     children.material.normalMap.repeat.set(
+                    //         1 / 512,
+                    //         1 / 512
+                    //     );
+                    //     children.material.normalMap.offset.set(0.5, 0.5);
+                    // })
+                    this.resources.startLoading(`${alumTextures}metal_metallic.jpg`, 'texture', (file) => {
+                        children.material.metallicMap = file
+                        children.material.metallicMap.wrapS = children.material.metallicMap.wrapT = THREE.RepeatWrapping;
+                        children.material.metallicMap.repeat.set(
+                            1 / 512,
+                            1 / 512
+                        );
+                        children.material.metallicMap.offset.set(0.5, 0.5);
+                    }, true)
+
+                    children.material.color.set(`${data.COLOR}`)
+                    children.material.metalness = 0.5
+                    children.material.roughness = 0.5
+
+                    // children.material.clearcoat = 1
+                    // children.material.clearcoatRoughness = 0
 
                     children.material.receiveShadow = true;
                     children.material.castShadow = true;
                     children.material.encoding = THREE.SRGBColorSpace;
+
+
 
                     children.material.needsUpdate = true;
 
@@ -188,8 +218,7 @@ export class MeshEvents {
                 const fasadeSize = box.getSize(vec)
 
                 item.traverse((children: THREE.Object3D) => {
-
-                    item.visible = true;
+                    item.visible = true
 
                     if (children instanceof THREE.Mesh) {
 
@@ -203,11 +232,87 @@ export class MeshEvents {
                                 textureSize: fasadeSize
                             })
                     }
+                })
 
-                    if (this.root._trafficManager) {
-                        this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+                if (this.root._trafficManager) {
+                    this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+                }
+            })
+
+            return
+        }
+
+        Object.values(fasade).forEach((item: any) => {
+
+            item.traverse((children: THREE.Object3D) => {
+
+                item.visible = true
+
+                if (children instanceof THREE.Mesh) {
+
+                    !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
+
+                    children.material = new THREE.MeshStandardMaterial();
+                    children.material.color.set(`#${palette.HTML}`)
+                    children.material.metalness = 0.7
+                    children.material.roughness = 0.05
+
+                    children.material.clearcoat = 1
+                    children.material.clearcoatRoughness = 0
+
+                    children.material.receiveShadow = true;
+                    children.material.castShadow = true;
+                    children.material.encoding = THREE.SRGBColorSpace;
+
+                    children.material.needsUpdate = true;
+
+                }
+            })
+
+            if (this.root._trafficManager) {
+                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+            }
+        })
+
+    }
+
+    changeGlassColor(data: number | string) {
+
+        console.log('GLASS', data)
+
+        const props = this._currentMesh?.userData.PROPS
+        const fasade = props.FASADE
+        const GLASS = this._APP.GLASS[data]
+
+        if (GLASS.DETAIL_PICTURE != null && GLASS.COLOR === null) {
+
+            Object.values(fasade).forEach((item: any) => {
+
+                item.visible = true;
+
+                const box = new THREE.Box3().setFromObject(item);
+                const vec = new THREE.Vector3()
+                const fasadeSize = box.getSize(vec)
+
+                item.traverse((children: THREE.Object3D) => {
+
+                    if (children instanceof THREE.Mesh) {
+
+                        !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
+
+                        this.changeColor(
+                            {
+                                object: children,
+                                url: GLASS.DETAIL_PICTURE,
+                                type: "Glass",
+                                textureSize: fasadeSize
+                            })
                     }
                 })
+
+                if (this.root._trafficManager) {
+                    this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+                }
             })
 
             return
@@ -224,17 +329,19 @@ export class MeshEvents {
                     !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
 
                     children.material = new THREE.MeshStandardMaterial();
-                    children.material.color.set(`#${palette.HTML}`)
+                    children.material.color.set(`#${GLASS.COLOR}`)
                     children.material.metalness = 0.7
                     children.material.roughness = 0.05
 
                     children.material.clearcoat = 1
                     children.material.clearcoatRoughness = 0
-                    children.material.needsUpdate = true;
 
+                    children.material.receiveShadow = true;
+                    children.material.castShadow = true;
                     children.material.encoding = THREE.SRGBColorSpace;
 
-               
+                    children.material.needsUpdate = true;
+
                 }
 
                 if (this.root._trafficManager) {
@@ -253,14 +360,12 @@ export class MeshEvents {
 
         Object.values(fasade).forEach((item: any) => {
 
-            item.visible ? item.visible = false : item.visible = true
+            item.visible = false
 
             if (this.root._trafficManager) {
                 this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
             }
         })
-
-
 
     }
 
@@ -286,18 +391,19 @@ export class MeshEvents {
 
     changeColor({ object, url, textureSize, type }: { object: THREE.Object3D, url: string, textureSize?: THREETypes.TObject, type?: string }) {
 
+        console.log(url)
+
         object.traverse(children => {
             if (children instanceof THREE.Mesh) {
 
                 children.userData.ORIGINAL_COLOR != null ? children.material = children.userData.ORIGINAL_COLOR : ''
 
-
                 this.resources.startLoading(url, 'texture', (file) => {
 
-                    if (type === "Palette") {
+                    if (type === "Palette" || type === "Glass") {
                         children.material = new THREE.MeshStandardMaterial()
                     }
-                    // children.material = new THREE.MeshStandardMaterial()
+
                     if (file instanceof THREE.Texture) {
 
                         file.colorSpace = THREE.SRGBColorSpace
@@ -337,6 +443,10 @@ export class MeshEvents {
             this.changePaletteColor(data)
         }
 
+        this.onChangeGlassColor = (data) => {
+            this.changeGlassColor(data)
+        }
+
         this.onChangeModelSize = (data) => {
             this.changeModelSize(data as { width: number, height: number, depth: number })
         }
@@ -346,9 +456,10 @@ export class MeshEvents {
         }
 
 
-        this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture)
-        this.events.on('A:ChangeFasadeTexture', this.onChangeFasadeTexture)
-        this.events.on('A:ChangePaletteColor', this.onChangePaletteColor)
+        this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
+        this.events.on('A:ChangeFasadeTexture', this.onChangeFasadeTexture);
+        this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
+        this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
 
         this.events.on('A:Model-resize', this.onChangeModelSize)
         this.events.on('A:Toggle-Fasad', this.onToggleFasade)

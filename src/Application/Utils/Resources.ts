@@ -51,13 +51,12 @@ export class Resources extends EventEmitter {
         return _URL + obj
     }
 
-    startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void): void {
+    startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void, dev?: boolean): void {
 
         let truePath
         switch (type) {
 
             case 'GLTF':
-                truePath = this.replaceUrls(path)
 
                 this.loaders?.gltfLoader.load(truePath as string, (file: any) => {
                     if (callback) {
@@ -96,7 +95,10 @@ export class Resources extends EventEmitter {
                 break
 
             case 'texture':
-                truePath = this.replaceUrls(path)
+                truePath = !dev ? this.replaceUrls(path) : path
+
+                console.log(truePath,'path')
+
                 this.loaders?.textureLoader.load(truePath as string, (file: any) => {
 
                     if (callback) {
