@@ -40,6 +40,9 @@ button {
   font-size: 16px;
   padding: 15px 25px;
   font-weight: 600;
+  outline: none;
+  background: $bg;
+  color: $strong-grey;
   &.right-menu {
     padding: 10px 15px;
   }
@@ -47,11 +50,6 @@ button {
 .red__button {
   background: $red;
   color: $white;
-}
-
-.grey__button {
-  background: $bg;
-  color: $strong-grey;
 }
 
 .blue__button {

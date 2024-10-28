@@ -60,7 +60,7 @@ const togglePopup = () => {
   padding: 15px;
   background: $white;
   box-shadow: 0px 0px 10px 0px #3030301a;
-  z-index: 1;
+  z-index: 10;
   border-radius: 15px;
   transition: 0.5s ease-in-out;
   transform: translateZ(-10px);

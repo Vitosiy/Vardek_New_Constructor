@@ -11,13 +11,13 @@ import {
   computed,
   onMounted,
   onBeforeUnmount,
-  provide,
 } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { useObjectData } from "@/store/appliction/useObjectData";
 
 import { Application } from "@/Application/Core/Application";
 
@@ -28,7 +28,6 @@ import ContentControllerButton from "@/components/ui/buttons/right-menu/controll
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
 import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
-import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
 
 import Toggle from "@vueform/toggle";
 import Slider from "@vueform/slider";
@@ -75,6 +74,7 @@ const models = useAppData().getAppData.CATALOG.PRODUCTS;
 const wallMaterials = useAppData().getAppData.WALL;
 const floorMaterials = useAppData().getAppData.FLOOR;
 const customiserStore = useCustomiserStore();
+const objectData = useObjectData()
 
 const sceneContainer: Ref<HTMLElement | null> = ref(null);
 let VerdekConstructor: Application | null = null;
@@ -153,6 +153,7 @@ onMounted(() => {
     // Пописать интерфейс *item*
     eventBus.on("A:Selected", (item: any) => {
       let object = item.object;
+      objectData.setObjectData(object)
       let roomContant = item.roomContant;
       totalContent.value = roomContant;
 
@@ -176,7 +177,6 @@ onMounted(() => {
       fasadeColor.value = object?.PROPS.CONFIG.FASADE_COLOR_LIST;
 
       /** Текущий фасад */
-
       currentFasadeId.color = object?.PROPS.CONFIG.FASADE_COLOR;
 
       /**  Координаты мыши */
@@ -394,12 +394,6 @@ const getProductSizeProps = (
   }
 };
 
-const parentDataSize = productSize.value;
-const parentDataProduct = productData.value;
-
-provide("parentDataSize", parentDataSize);
-provide("parentDataProduct", parentDataProduct);
-
 const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
@@ -480,7 +474,7 @@ const controllerPosition = computed(() => {
     </select>
   </div> -->
 
-  <div
+  <!-- <div
     :class="['model-controller', activeController]"
     :style="controllerPosition"
     v-if="product"
@@ -559,10 +553,9 @@ const controllerPosition = computed(() => {
       </div>
     </div>
     <button class="btn" @click="removeModel">Удалить</button>
-  </div>
-  <CustomiserMenu />
+  </div> -->
 
-  <!-- <div :class="['model-controller', activeController]" :style="controllerPosition">
+  <div :class="['model-controller', activeController]" :style="controllerPosition">
     <div class="controller-left">
       <img class="left-line" src="@/assets/svg/right-menu/left-line.svg">
       <ControllerButton />
@@ -574,7 +567,7 @@ const controllerPosition = computed(() => {
       <UpControllerButton />
       <OpenFacadeButton />
     </div>
-  </div> -->
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -692,8 +685,7 @@ const controllerPosition = computed(() => {
   filter: blur(10px);
   opacity: 0;
   transform: translate(-50%, -50%);
-  transition: all 0.25s ease-in-out;
-  // pointer-events: none;
+  pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
   max-height: 0;
@@ -705,7 +697,6 @@ const controllerPosition = computed(() => {
     height: fit-content;
     max-height: 50vh;
     z-index: 1;
-    // transform: translateX(0);
   }
 
   .controller-left {
