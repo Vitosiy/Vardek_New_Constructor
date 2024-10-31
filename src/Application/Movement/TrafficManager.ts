@@ -109,11 +109,20 @@ export class TrafficManager {
     }
 
     removeFromBasket(basketProduct: any) {
+        const object = this.scene.getObjectById(basketProduct.id)
+
+        if (!object) return
+
+
+        this.boxHelper.removeBoxHelper()
+        this.ruler.clearRuler();
+        this.room.remove(object.id)
+        this.despose.clearObject(object, this.scene)
+        // this._currentObject = this.scene.getObjectById(basketProduct.id)
+        // this.removeFromRoom()
         // if (basketProduct) return
-        console.log(basketProduct.id);
-        
-        this.room.remove(basketProduct.id)
-        this.despose.clearObject(basketProduct, this.scene)
+        this._currentObject = null
+        // this.despose.clearObject(basketProduct, this.scene)
     }
 
     vueEvents() {
@@ -121,7 +130,7 @@ export class TrafficManager {
         this.eventsStore.on('A:RemoveModel', () => {
             this.removeFromRoom()
         })
-        
+
         this.eventsStore.on('A:RemoveModelFromBasket', (basketProduct: any) => {
             this.removeFromBasket(basketProduct)
         })
