@@ -42,6 +42,9 @@ button {
 button {
   outline: none;
   cursor: pointer;
+  &:focus {
+    outline: none;
+  }
 }
 
 h1 {
@@ -149,6 +152,11 @@ p {
   border-radius: 360px;
   background: $stroke;
   cursor: pointer;
+
+  &.bask {
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .right-menu__svg {
@@ -190,6 +198,7 @@ p {
   border-radius: 360px;
   cursor: pointer;
   transition: 0.05s;
+
   &:focus {
     outline: none;
 

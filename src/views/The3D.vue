@@ -18,6 +18,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useObjectData } from "@/store/appliction/useObjectData";
+import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 
 import { Application } from "@/Application/Core/Application";
 
@@ -75,6 +76,7 @@ const wallMaterials = useAppData().getAppData.WALL;
 const floorMaterials = useAppData().getAppData.FLOOR;
 const customiserStore = useCustomiserStore();
 const objectData = useObjectData()
+const roomContantData = useRoomContantData()
 
 const sceneContainer: Ref<HTMLElement | null> = ref(null);
 let VerdekConstructor: Application | null = null;
@@ -156,28 +158,25 @@ onMounted(() => {
 
       let roomContant = item.roomContant;
       totalContent.value = roomContant;
-
+      
       if (!object) {
         controller.value = false;
         return;
       }
+
       objectData.setObjectData(object)
+      roomContantData.setRoomContantData(totalContent.value)
+
       getProductSizeProps(
         object?.PROPS.CONFIG.SIZE,
         object?.PROPS.CONFIG.SIZE_EDIT
       );
-
+      
+      controller.value = true;
+      
       getCurrentProduct(object);
 
       controller.value = true;
-      /**  Список FASADE для корпуса модели */
-      productColor.value = object?.PROPS.CONFIG.MODULE_COLOR_LIST;
-
-      /**  Список FASADE для фасалдов модели */
-      fasadeColor.value = object?.PROPS.CONFIG.FASADE_COLOR_LIST;
-
-      /** Текущий фасад */
-      currentFasadeId.color = object?.PROPS.CONFIG.FASADE_COLOR;
 
       /**  Координаты мыши */
       controllerPositionData.value = object?.MOUSE_POSITION;
@@ -218,16 +217,6 @@ const resizeRoom = () => {
   }
 };
 
-const resizeModel = () => {
-  if (VerdekConstructor) {
-    let data: { width: number; height: number; depth: number } = {
-      width: productSize.value.width.value,
-      height: productSize.value.height.value,
-      depth: productSize.value.depth.value,
-    };
-    eventBus.emit("A:Model-resize", data);
-  }
-};
 
 const toggleShadow = (value: boolean) => {
   if (VerdekConstructor) {
@@ -560,12 +549,12 @@ const controllerPosition = computed(() => {
       <img class="left-line" src="@/assets/svg/right-menu/left-line.svg">
       <ControllerButton />
       <ContentControllerButton />
-      <DeleteControllerButton />
+      <DeleteControllerButton @click="removeModel"/>
     </div>
     <div class="controller-right">
       <img class="right-line" src="@/assets/svg/right-menu/right-line.svg">
       <UpControllerButton />
-      <OpenFacadeButton />
+      <OpenFacadeButton/>
     </div>
   </div>
 </template>
@@ -696,7 +685,7 @@ const controllerPosition = computed(() => {
     opacity: 1;
     height: fit-content;
     max-height: 50vh;
-    z-index: 1;
+    z-index: 0;
   }
 
   .controller-left {

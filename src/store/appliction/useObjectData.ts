@@ -8,7 +8,6 @@ export const useObjectData = defineStore('ObjectData', () => {
 
     const setObjectData = (value: any) => {
         objectData.value = value
-        console.log(objectData.value);
     }
 
     const getObjectData = computed(() => {

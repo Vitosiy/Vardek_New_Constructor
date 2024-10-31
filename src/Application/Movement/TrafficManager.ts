@@ -108,10 +108,22 @@ export class TrafficManager {
         this.ruler.clearRuler();
     }
 
+    removeFromBasket(basketProduct: any) {
+        // if (basketProduct) return
+        console.log(basketProduct.id);
+        
+        this.room.remove(basketProduct.id)
+        this.despose.clearObject(basketProduct, this.scene)
+    }
+
     vueEvents() {
 
         this.eventsStore.on('A:RemoveModel', () => {
             this.removeFromRoom()
+        })
+        
+        this.eventsStore.on('A:RemoveModelFromBasket', (basketProduct: any) => {
+            this.removeFromBasket(basketProduct)
         })
 
         this.eventsStore.on('A:CameraToggle', (value: boolean) => {

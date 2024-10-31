@@ -2,7 +2,6 @@
   <div v-if="popupStore.isAnyPopupOpen" class="popUp">
     <div class="popUp__container">
       <BasketPopUpView v-if="popupStore.popups.basket" />
-      <InfoPopUpView v-if="popupStore.popups.info" />
       <StudyPopUpView v-if="popupStore.popups.study"/>
       <ErrorPopUpView v-if="popupStore.popups.error"/>
       <ProjectPopUpView v-if="popupStore.popups.project"/>
@@ -11,7 +10,6 @@
 </template>
 <script setup lang="ts">
 import BasketPopUpView from "@/components/popUp/popup-views/BasketPopUpView.vue";
-import InfoPopUpView from "@/components/popUp/popup-views/InfoPopUpView.vue";
 import StudyPopUpView from "@/components/popUp/popup-views/StudyPopUpView.vue";
 import ErrorPopUpView from "@/components/popUp/popup-views/ErrorPopUpView.vue";
 import ProjectPopUpView from "@/components/popUp/popup-views/ProjectPopUpView.vue";

@@ -1,3 +1,72 @@
+<script lang="ts" setup>
+
+import { ref, watch } from "vue";
+import { _URL } from "@/types/constants";
+
+import MainButton from "@/components/ui/buttons/MainButton.vue";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
+
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useObjectData } from "@/store/appliction/useObjectData";
+import { useAppData } from "@/store/appliction/useAppData";
+
+const eventBus = useEventBus();
+const objectData = useObjectData().getObjectData;
+const _APP = useAppData().getAppData
+
+const productColor = ref<{ [key: string]: any }>({});
+const сolorPage = ref<string>('korp');
+const showPalette = ref<boolean>(false);
+const paletteColorsData = ref<{ [key: string]: any }>({});
+const currentFasadeId = ref<{ [key: string]: any }>({});
+const fasadeColor = ref<{ [key: string]: any }>({});
+
+
+
+productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST;
+fasadeColor.value = objectData.PROPS.CONFIG.FASADE_COLOR_LIST;
+currentFasadeId.color = objectData.PROPS.CONFIG.FASADE_COLOR;
+
+
+watch(paletteColorsData, () => {
+  showPalette.value =
+    Object.keys(paletteColorsData.value).length > 0 ? true : false;
+});
+
+const changeColorPage = (value: string) => {
+  сolorPage.value = value
+}
+
+const changeFasadeTexture = (value: { [key: string]: any }) => {
+  currentFasadeId.value = value.ID;
+  if (
+    _APP.FASADE[currentFasadeId.value].PALETTE.length &&
+    _APP.FASADE[currentFasadeId.value].PALETTE[0] != null
+  ) {
+    paletteColorsData.value = Object.keys(objectData.PALETTE)
+      .filter(
+        (key) =>
+          _APP.PALETTE[key].TYPE ===
+          _APP.FASADE[currentFasadeId.value].PALETTE[0]
+      )
+      .reduce((obj, key) => {
+        obj[key] = _APP.PALETTE[key];
+        return obj;
+      }, {});
+
+    return;
+  }
+
+  paletteColorsData.value = {};
+  eventBus.emit("A:ChangeFasadeTexture", value);
+};
+
+const changeModuleTexture = (value: { [key: string]: any }) => {
+  console.log(value);
+  eventBus.emit("A:ChangeModuleTexture", value);
+};
+</script>
+
 <template>
   <div class="color">
     <div class="color__links">
@@ -26,7 +95,7 @@
             <img src="../../../assets/svg/right-menu/arrow.svg" class="item__arrow" />
           </div>
 
-          <MainInput class="input__search" v-model="textValue" type="text" placeholder="Поиск..." />
+          <MainInput class="input__search" type="text" placeholder="Поиск..." />
           <div class="item-group">
             <p class="item-group__title text-grey">High gloss</p>
             <div v-for="(fasade_data, key) in productColor" :key="fasade_data!.NAME + key" class="item-group-color"
@@ -58,10 +127,11 @@
             <img src="../../../assets/svg/right-menu/arrow.svg" class="item__arrow" />
           </div>
 
-          <MainInput class="input__search" v-model="textValue" type="text" placeholder="Поиск..." />
+          <MainInput class="input__search" type="text" placeholder="Поиск..." />
           <div class="item-group">
             <p class="item-group__title text-grey">High gloss</p>
-            <div v-for="(fasade_data, key) in fasadeColor" :key="fasade_data!.NAME + key" class="item-group-color" @click="changeFasadeTexture(fasade_data)">
+            <div v-for="(fasade_data, key) in fasadeColor" :key="fasade_data!.NAME + key" class="item-group-color"
+              @click="changeFasadeTexture(fasade_data)">
               <div class="item-group-name">
                 <img :src="_URL + fasade_data.DETAIL_PICTURE" class="name__bg" />
                 <p class="name__text">{{ fasade_data.NAME }}</p>
@@ -74,85 +144,7 @@
     </div>
   </div>
 </template>
-<script lang="ts" setup>
 
-import { ref, watch } from "vue";
-import { _URL } from "@/types/constants";
-
-import MainButton from "@/components/ui/buttons/MainButton.vue";
-import MainInput from "@/components/ui/inputs/MainInput.vue";
-
-import { useEventBus } from "@/store/appliction/useEventBus";
-import { useObjectData } from "@/store/appliction/useObjectData";
-import { useAppData } from "@/store/appliction/useAppData";
-
-const eventBus = useEventBus();
-const objectData = useObjectData().getObjectData;
-const _APP = useAppData().getAppData
-
-const productColor = ref<{ [key: string]: any }>({});
-const сolorPage = ref<string>('korp');
-
-const showPalette = ref<boolean>(false);
-const paletteColorsData = ref<{ [key: string]: any }>({});
-const currentFasadeId = ref<{ [key: string]: any }>({});
-
-const fasadeColor = ref<{ [key: string]: any }>({});
-
-
-
-productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST;
-
-fasadeColor.value = objectData.PROPS.CONFIG.FASADE_COLOR_LIST;
-currentFasadeId.color = objectData.PROPS.CONFIG.FASADE_COLOR;
-
-
-watch(paletteColorsData, () => {
-  showPalette.value =
-    Object.keys(paletteColorsData.value).length > 0 ? true : false;
-});
-
- 
-const changeColorPage = (value: string) => {
-  сolorPage.value = value
-}
-
-
-const changeFasadeTexture = (value: { [key: string]: any }) => {
-
- 
-  currentFasadeId.value = value.ID;
-
-  console.log(objectData)
-
-  if (
-    _APP.FASADE[currentFasadeId.value].PALETTE.length &&
-    _APP.FASADE[currentFasadeId.value].PALETTE[0] != null
-  ) {
-    paletteColorsData.value = Object.keys(objectData.PALETTE)
-      .filter(
-        (key) =>
-        _APP.PALETTE[key].TYPE ===
-        _APP.FASADE[currentFasadeId.value].PALETTE[0]
-      )
-      .reduce((obj, key) => {
-        obj[key] = _APP.PALETTE[key];
-        return obj;
-      }, {});
-
-    return;
-  }
-
-  paletteColorsData.value = {};
-  eventBus.emit("A:ChangeFasadeTexture", value);
-};
-
-const changeModuleTexture = (value: { [key: string]: any }) => {
-  console.log(value);
-  eventBus.emit("A:ChangeModuleTexture", value);
-};
-
-</script>
 <style lang="scss" scoped>
 .color {
   height: calc(100vh - 220px);

@@ -5,6 +5,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import MainHeader from "@/components/header/MainHeader.vue";
 import OptionsMenu from "@/components/left-menu/OptionsMenu.vue";
 import MainPopUp from "@/components/popUp/MainPopUp.vue";
+import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
 
 
@@ -58,6 +59,7 @@ onMounted(() => {
 <template>
   <MainHeader />
   <MainPopUp />
+  <InfoPopUp />
 
   <div class="main__container" v-if="ready">
     <CustomiserMenu />

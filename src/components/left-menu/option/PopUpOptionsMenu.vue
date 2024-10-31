@@ -53,6 +53,9 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
+const toggleInfoPopup = () => {
+  popupStore.toggleInfoPopup();
+};
 </script>
 
 <template>
@@ -63,7 +66,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       <div v-for="item in filteredData" class="popup-items" draggable="true" :key="item.name"
         @dragstart="onDrag($event, item)">
         <div class="popup-items-picture">
-          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="openPopup('info')">
+          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
           <img :src="getImageUrl(item.PREVIEW_PICTURE)" class="popup-items__image" />
         </div>
         <p class="popup-items__title">{{ item.NAME }}</p>

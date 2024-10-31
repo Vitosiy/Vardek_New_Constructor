@@ -85,7 +85,7 @@ export class MeshEvents {
         }
     }
 
-    /** Цвкет Фасада */
+    /** Цвет Фасада */
     changeFasadeTexture(data: { [key: string]: any }) {
 
         if(!this._currentMesh) return;
