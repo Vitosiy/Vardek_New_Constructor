@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 
 import { usePopupStore } from '@/store/appStore/popUpsStore';
@@ -13,6 +13,7 @@ import DeleteBasketButton from "@/components/ui/buttons/basket/DeleteBasketButto
 const eventBus = useEventBus();
 const popupStore = usePopupStore();
 const roomContantData = useRoomContantData().getRoomContantData
+const _roomContantData = useRoomContantData()
 
 const contentLenght = ref<number>(0)
 const produtcCount = ref<number>(1)
@@ -67,7 +68,10 @@ async function setBasketOrder() {
 // ==========================================================================
 
 const deleteProductInBusket = (basketProduct: any) => {
-  eventBus.emit("A:RemoveModelFromBasket", basketProduct);  
+  eventBus.emit("A:RemoveModelFromBasket", basketProduct);
+  nextTick(() => {
+    _roomContantData.setRoomContantData({ ...roomContantData })
+  })
 }
 
 const toggleInfoPopup = () => {
@@ -96,7 +100,7 @@ const closePopup = () => {
             <div class="names__title"></div>
           </div>
           <div v-if="contentLenght != 0" class="basket-inlist-table">
-            <div v-for="(product, key) in roomContantData" :key="product.userData.PROPS.PRODUCT.NAME + key"
+            <div v-for="(product, key) in _roomContantData.getRoomContantData" :key="product.userData.PROPS.PRODUCT.NAME + key"
               class="basket-item">
               <div class="basket-item-image">
                 <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
