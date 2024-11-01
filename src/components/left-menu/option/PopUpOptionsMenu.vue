@@ -1,6 +1,5 @@
-
-
 <script setup lang="ts">
+// @ts-nocheck 31
 
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 

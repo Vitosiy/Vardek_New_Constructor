@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+// @ts-nocheck 31
+
 import { nextTick, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 

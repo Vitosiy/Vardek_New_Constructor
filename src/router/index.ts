@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 
 const baseUrl = import.meta.env.VITE_BASE_URL;

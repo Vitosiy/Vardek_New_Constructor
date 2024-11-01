@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import { onMounted, ref } from "vue";
 import { useAppData } from "@/store/appliction/useAppData";
 

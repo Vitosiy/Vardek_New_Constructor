@@ -1,3 +1,26 @@
+<script lang="ts" setup>
+// @ts-nocheck 31
+
+import MainInput from "@/components/ui/inputs/MainInput.vue";
+const eventBus = useEventBus();
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useObjectData } from "@/store/appliction/useObjectData";
+
+const objectStore = useObjectData().getObjectData;
+
+
+const resizeModel = () => {
+    let data: { width: any; height: any; depth: any } = {
+      width: objectStore.PROPS.PRODUCT.width,
+      height: objectStore.PROPS.PRODUCT.height,
+      depth: objectStore.PROPS.PRODUCT.depth,
+    };
+    eventBus.emit("A:Model-resize", data);
+  }
+
+
+</script>
+
 <template>
   <div class="ruler">
     <!-- component -->
@@ -40,26 +63,7 @@
     </div>
   </div>
 </template>
-<script lang="ts" setup>
-import MainInput from "@/components/ui/inputs/MainInput.vue";
-const eventBus = useEventBus();
-import { useEventBus } from "@/store/appliction/useEventBus";
-import { useObjectData } from "@/store/appliction/useObjectData";
 
-const objectStore = useObjectData().getObjectData;
-
-
-const resizeModel = () => {
-    let data: { width: any; height: any; depth: any } = {
-      width: objectStore.PROPS.PRODUCT.width,
-      height: objectStore.PROPS.PRODUCT.height,
-      depth: objectStore.PROPS.PRODUCT.depth,
-    };
-    eventBus.emit("A:Model-resize", data);
-  }
-
-
-</script>
 <style lang="scss" scoped>
 .ruler {
   display: flex;

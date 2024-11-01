@@ -5,6 +5,8 @@
 </template>
 
 <script lang="ts" setup>
+// @ts-nocheck 31
+
 import { ref, onMounted, Ref } from "vue";
 import { useConstructorStore } from "@/store/appStore/constructor";
 

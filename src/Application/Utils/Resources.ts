@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 

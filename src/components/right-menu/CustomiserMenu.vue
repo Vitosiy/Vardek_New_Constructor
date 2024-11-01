@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";

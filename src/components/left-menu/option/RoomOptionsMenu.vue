@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck 31
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";

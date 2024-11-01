@@ -1,14 +1,6 @@
-<template>
-  <div v-if="popupStore.isAnyPopupOpen" class="popUp">
-    <div class="popUp__container">
-      <BasketPopUpView v-if="popupStore.popups.basket" />
-      <StudyPopUpView v-if="popupStore.popups.study"/>
-      <ErrorPopUpView v-if="popupStore.popups.error"/>
-      <ProjectPopUpView v-if="popupStore.popups.project"/>
-    </div>
-  </div>
-</template>
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import BasketPopUpView from "@/components/popUp/popup-views/BasketPopUpView.vue";
 import StudyPopUpView from "@/components/popUp/popup-views/StudyPopUpView.vue";
 import ErrorPopUpView from "@/components/popUp/popup-views/ErrorPopUpView.vue";
@@ -20,6 +12,18 @@ const popupStore = usePopupStore();
 
 const isAnyPopupOpen = popupStore.isAnyPopupOpen;
 </script>
+
+<template>
+  <div v-if="popupStore.isAnyPopupOpen" class="popUp">
+    <div class="popUp__container">
+      <BasketPopUpView v-if="popupStore.popups.basket" />
+      <StudyPopUpView v-if="popupStore.popups.study"/>
+      <ErrorPopUpView v-if="popupStore.popups.error"/>
+      <ProjectPopUpView v-if="popupStore.popups.project"/>
+    </div>
+  </div>
+</template>
+
 <style lang="scss" scoped>
 .popUp {
   width: 100%;

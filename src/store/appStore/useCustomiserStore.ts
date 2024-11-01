@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 

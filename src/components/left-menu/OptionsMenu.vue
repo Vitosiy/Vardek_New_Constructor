@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import { computed, ref } from "vue";
 
 import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue";

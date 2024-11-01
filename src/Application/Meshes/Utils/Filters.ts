@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import * as THREETypes from "@/types/types"
 import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"

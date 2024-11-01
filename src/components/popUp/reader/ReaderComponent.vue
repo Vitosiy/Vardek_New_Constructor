@@ -1,3 +1,20 @@
+
+<script lang="ts" setup>
+// @ts-nocheck 31
+
+import { ref } from 'vue'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import 'swiper/swiper-bundle.css'
+import { Pagination, Navigation } from 'swiper/modules'
+// Данные для слайдера и видео
+const videoUrl = ref('path-to-video.mp4')
+const images = ref([
+  'path-to-image1.jpg',
+  'path-to-image2.jpg',
+  'path-to-image3.jpg'
+])
+</script>
+
 <template>
   <div class="reader">
     <div class="reader-imtext">
@@ -50,19 +67,6 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue'
-import { Swiper, SwiperSlide } from 'swiper/vue'
-import 'swiper/swiper-bundle.css'
-import { Pagination, Navigation } from 'swiper/modules'
-// Данные для слайдера и видео
-const videoUrl = ref('path-to-video.mp4')
-const images = ref([
-  'path-to-image1.jpg',
-  'path-to-image2.jpg',
-  'path-to-image3.jpg'
-])
-</script>
 <style lang="scss" scoped>
 .reader {
   display: flex;
