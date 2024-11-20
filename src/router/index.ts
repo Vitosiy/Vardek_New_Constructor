@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 const baseUrl = import.meta.env.VITE_BASE_URL;
 
 import MainView from "@/views/MainView.vue";
-import Constructor2DView from "@/views/Constructor2DView.vue";
+import Constructor2D from "@/views/Constructor2D.vue";
 import Constructor3DView from "@/views/The3D.vue";
 import AuthView from "@/views/auth/AuthView.vue";
 
@@ -24,7 +24,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "/2d",
         name: "Constructor2d",
-        component: Constructor2DView,
+        component: Constructor2D,
       },
       {
         path: "/3d",
