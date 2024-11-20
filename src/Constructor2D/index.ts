@@ -6,7 +6,7 @@ export default class Constructor2D {
   private canvas: HTMLCanvasElement;
   private app2d: PIXI.Application | null = null;
 
-  constructor(container: HTMLElement, canvas: HTMLElement) {
+  constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
 
     this.container = container;
     this.canvas = canvas;
