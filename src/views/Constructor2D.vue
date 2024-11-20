@@ -33,10 +33,10 @@ onMounted(async () => {
   display: flex;
   width: 100%;
 }
-// #constructor2D{
-//   width: 100%;
-//   height: 100%;
-// }
+#constructor2D{
+  width: 100%;
+  height: 100%;
+}
 </style>
 
 <template>
