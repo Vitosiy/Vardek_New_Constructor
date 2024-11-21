@@ -9,6 +9,7 @@ import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
 import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
 import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
 import MainPopUp from '@/components/popUp/MainPopUp.vue'
+import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 
 import { useRoute } from "vue-router";
 
@@ -64,6 +65,7 @@ onMounted(() => {
 <template>
     <MainHeader/>
     <MainPopUp/>
+    <InfoPopUp />
     <div class="main__container">
         <OptionsMenu v-if="route.name === 'Constructor3d'"/>
         <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
