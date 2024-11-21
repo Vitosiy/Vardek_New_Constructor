@@ -4,12 +4,15 @@
 import { onMounted, ref } from "vue";
 import { useAppData } from "@/store/appliction/useAppData";
 
-import MainHeader from "@/components/header/MainHeader.vue";
-import OptionsMenu from "@/components/left-menu/OptionsMenu.vue";
-import MainPopUp from "@/components/popUp/MainPopUp.vue";
-import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
-import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
+import MainHeader from '@/components/header/MainHeader.vue'
+import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
+import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
+import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
+import MainPopUp from '@/components/popUp/MainPopUp.vue'
 
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const ready = ref<boolean>(false);
 
@@ -59,17 +62,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <MainHeader />
-  <MainPopUp />
-  <InfoPopUp />
-
-  <div class="main__container" v-if="ready">
-    <CustomiserMenu />
-    <OptionsMenu />
-    <RouterView />
-  </div>
-
+    <MainHeader/>
+    <MainPopUp/>
+    <div class="main__container">
+        <OptionsMenu v-if="route.name === 'Constructor3d'"/>
+        <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
+        <CustomiserMenu/>
+        <RouterView/>
+    </div>
 </template>
+
+
+// import MainHeader from '@/components/header/MainHeader.vue'
+// import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
+// import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
+// import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
+// import MainPopUp from '@/components/popUp/MainPopUp.vue'
+
+// import { useRoute } from "vue-router";
+
+// const route = useRoute();
+
+
+
+
 
 <style lang="scss" scoped>
 .main__container {
