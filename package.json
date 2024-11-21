@@ -15,11 +15,11 @@
     "axios": "^1.7.7",
     "lil-gui": "^0.19.2",
     "pinia": "^2.2.1",
+    "pixi.js": "^8.5.0",
     "swiper": "^11.1.14",
     "three": "^0.167.1",
     "three-csg-ts": "^3.2.0",
     "vue": "^3.3.4",
-    "pixi.js": "^8.5.0",
     "vue-router": "^4.4.3"
   },
   "devDependencies": {

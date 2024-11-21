@@ -66,7 +66,7 @@ onMounted(() => {
     <MainHeader/>
     <MainPopUp/>
     <InfoPopUp />
-    <div class="main__container">
+    <div class="main__container" v-if="ready">
         <OptionsMenu v-if="route.name === 'Constructor3d'"/>
         <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
         <CustomiserMenu/>
