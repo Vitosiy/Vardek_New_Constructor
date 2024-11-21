@@ -2,7 +2,8 @@
 
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 
-const baseUrl = import.meta.env.VITE_BASE_URL;
+const baseUrl = '/';
+
 
 import MainView from "@/views/MainView.vue";
 import Constructor2DView from "@/views/Constructor2DView.vue";
