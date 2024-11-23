@@ -22,3 +22,8 @@ export interface CatalogSectionInt {
   icon: IconInt;
   goods: GoodInt[];
 }
+
+export interface Vector2 {
+  x: number;
+  y: number;
+}
