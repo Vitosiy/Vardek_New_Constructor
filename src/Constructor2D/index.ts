@@ -142,8 +142,8 @@ export default class Constructor2D {
         );
 
         // Смещаем в противоположную сторону (вычитаем изменения)
-        const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x + distanceX;
-        const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y + distanceY;
+        const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
+        const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
 
         // Обновляем координаты центра в store
         this.constructorStore.updateOriginOfCoordinates(newX, newY);

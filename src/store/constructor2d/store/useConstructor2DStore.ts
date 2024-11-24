@@ -11,11 +11,24 @@ interface Mouse {
   positionPoint: Vector2;
 }
 
+interface Segment {
+  indent: number,
+  width: number
+}
+
+interface State {
+  mouse: Mouse;
+  originOfCoordinates: Vector2;
+  segment: Segment;
+  colorAxisLine: number | string;
+}
+
+
 export const useConstructor2DStore = defineStore('constructor2DStore', {
   
-  state: () => ({
+  state: (): State => ({
 
-    mouse: <Mouse>{
+    mouse: {
       
       rightBtn: false,
 
@@ -36,10 +49,17 @@ export const useConstructor2DStore = defineStore('constructor2DStore', {
 
     },
 
-    originOfCoordinates: <Vector2>{
+    originOfCoordinates: {
       x: 30,
       y: 30
-    }
+    },
+
+    segment: {
+      indent: 5,
+      width: 5
+    },
+
+    colorAxisLine: 0xDA444C
 
   }),
   

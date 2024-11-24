@@ -8,6 +8,8 @@ export default class Grid {
   private app: PIXI.Application;
   private container: PIXI.Container;
   private gridLines: PIXI.Graphics;
+  private gridAxisLinesHorizontal: PIXI.Graphics;
+  private gridAxisLinesVertical: PIXI.Graphics;
 
   private gridSize: number;
   private rulerSpace: number;
@@ -29,6 +31,10 @@ export default class Grid {
     this.gridLines = new PIXI.Graphics();
     this.container.addChild(this.gridLines);
 
+    this.gridAxisLinesHorizontal = new PIXI.Graphics();
+    this.gridAxisLinesVertical = new PIXI.Graphics();
+    this.container.addChild(this.gridAxisLinesHorizontal, this.gridAxisLinesVertical);
+
     // Получаем начальные значения из Pinia-хранилища
     this.gridSize = this.gridStore.gridSize;
     this.rulerSpace = this.rulerStore.rulerSpace;
@@ -48,7 +54,58 @@ export default class Grid {
 
   private init(): void {
     this.drawGrid();
+    this.drawGridAxisLines();
   }
+
+  private drawGridAxisLines(): void {
+    this.drawAxisLine(this.gridAxisLinesHorizontal, "horizontal");
+    this.drawAxisLine(this.gridAxisLinesVertical, "vertical");
+  }
+
+  private drawAxisLine(graphics: PIXI.Graphics, direction: "horizontal" | "vertical"): void {
+    graphics.clear();
+  
+    const isHorizontal = direction === "horizontal";
+    const length = isHorizontal
+      ? this.app.renderer.width
+      : this.app.renderer.height;
+  
+    // Убедитесь, что округление согласовано с первым скриптом
+    const countSegments = Number((length / (this.constructorStore.segment.indent + this.constructorStore.segment.width)).toFixed());
+
+    console.log(this.constructorStore.originOfCoordinates.x, this.constructorStore.originOfCoordinates.y)
+  
+    for (let i = 0; i < countSegments; i++) {
+      const start = isHorizontal
+        ? { 
+            x: i * (this.constructorStore.segment.indent + this.constructorStore.segment.width), 
+            y: this.constructorStore.originOfCoordinates.y
+          }
+        : { 
+            x: this.constructorStore.originOfCoordinates.x,
+            y: i * (this.constructorStore.segment.indent + this.constructorStore.segment.width) 
+          };
+  
+      const end = isHorizontal
+        ? { 
+            x: start.x + this.constructorStore.segment.width, 
+            y: start.y 
+          }
+        : { 
+            x: start.x, 
+            y: start.y + this.constructorStore.segment.width 
+          };
+  
+      graphics.moveTo(start.x, start.y);
+      graphics.lineTo(end.x, end.y);
+    }
+  
+    graphics.stroke({
+      width: 1, 
+      color: this.constructorStore.colorAxisLine // Убедитесь, что цвет корректно определен
+    });
+  }
+  
 
   private drawGrid(): void {
     this.gridLines.clear(); // Очистка перед перерисовкой
@@ -67,7 +124,7 @@ export default class Grid {
     this.drawLines(
       vLines,
       (i) => {
-        const positionX: number = (i * this.gridSize) - (centerScene.x % this.gridSize); // Смещение для создания эффекта бесконечной сетки
+        const positionX: number = (i * this.gridSize) + (centerScene.x % this.gridSize); // Смещение для создания эффекта бесконечной сетки
         return {
           startX: positionX,
           startY: -this.gridSize, // Рисуем чуть за пределами видимой области для бесшовности
@@ -82,7 +139,7 @@ export default class Grid {
     this.drawLines(
       hLines,
       (i) => {
-        const positionY: number = (i * this.gridSize) - (centerScene.y % this.gridSize); // Смещение для создания эффекта бесконечной сетки
+        const positionY: number = (i * this.gridSize) + (centerScene.y % this.gridSize); // Смещение для создания эффекта бесконечной сетки
         return {
           startX: -this.gridSize,               // Рисуем чуть за пределами видимой области для бесшовности
           startY: positionY,
@@ -139,6 +196,7 @@ export default class Grid {
   }
 
   private handleConstructorStoreChange(): void {
-    this.drawGrid(); // Например, перерисовка сетки
+    this.drawGrid(); // перерисовка сетки
+    this.drawGridAxisLines(); // перерисовка axis-линий
   }
 }
