@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 
 import Grid from "./CanvasComponents/Grid";
+import Rulers from "./CanvasComponents/Rulers";
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import {
@@ -9,6 +10,7 @@ import {
 
 interface Components {
   grid: Grid | null;
+  rulers: Rulers | null;
 }
 
 export default class Constructor2D {
@@ -16,7 +18,10 @@ export default class Constructor2D {
   private container: HTMLElement;
   private canvas: HTMLCanvasElement;
   private app2d: PIXI.Application | null = null;
-  private components: Components = { grid: null };
+  private components: Components = {
+    grid: null,
+    rulers: null,
+  };
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
 
@@ -53,7 +58,15 @@ export default class Constructor2D {
 
   // инициализация draw-компонентов
   private initComponents(): void {
+
+    // добавляем компонент сетки
     this.components.grid ??= new Grid(this.app2d!);
+    
+    // добавляем компонент для рисования планировок
+    
+    // добавляем компонент для отображения линеек
+    this.components.rulers ??= new Rulers(this.app2d!);
+
   }
 
   private handleResize(): void {

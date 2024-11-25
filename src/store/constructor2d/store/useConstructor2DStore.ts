@@ -23,7 +23,6 @@ interface State {
   colorAxisLine: number | string;
 }
 
-
 export const useConstructor2DStore = defineStore('constructor2DStore', {
   
   state: (): State => ({
