@@ -22,18 +22,30 @@ function handleClick(id: string): void {
   
 }
 
-function goodItemClick(e: DragEvent, id: string): void {
+function goodItemDrag(e: DragEvent, id: string): void {
+  // Функция обрабатывает клик по элементу товара в каталоге.
+  // Принимает два параметра:
+  // - e: объект события DragEvent (например, для перетаскивания элемента);
+  // - id: строка, идентификатор товара.
   
+  // Находим текущую активную секцию каталога по её id, хранимом в menuItemActive.
   const section = catalogSections.find((el) => el.id === menuItemActive.value);
+  
+  // В найденной секции ищем товар с заданным идентификатором id.
   const item = section?.goods?.find((el) => el.id === id);
 
-  if(item){
+  if (item) {
+    // Если товар найден, выполняются следующие действия:
+    // Устанавливаем идентификатор текущего активного товара.
     goodItemActive.value = id;
+    
+    // Вызываем метод `setGoodActive`, чтобы отметить товар активным в меню конструктора.
     constructor2dMenu.setGoodActive(item.nameMode);
-    e.dataTransfer?.setData('good', item.nameMode);
-    e.dataTransfer.effectAllowed = 'move';
+    
+    // Настраиваем данные для перетаскивания (drag-and-drop).
+    e.dataTransfer?.setData('good', item.nameMode); // Передаём имя модели товара.
+    e.dataTransfer.effectAllowed = 'move';         // Указываем, что элемент можно перемещать.
   }
-
 }
 
 </script>
@@ -82,7 +94,7 @@ function goodItemClick(e: DragEvent, id: string): void {
               <div class="goods-list-item" v-if="item.goods" v-for="(gItem, i) in item.goods" :key="i">
                 <div class="goods-list-item__icon" 
                   :class="gItem.id === goodItemActive ? 'active' : ''"
-                  draggable="true" @dragstart="goodItemClick($event, gItem.id)">
+                  draggable="true" @dragstart="goodItemDrag($event, gItem.id)">
                   <img v-if="gItem.icon !== ''" :src="'./src/assets/img/'+gItem.icon">
                 </div>
                 <p>{{ gItem.name }}</p>

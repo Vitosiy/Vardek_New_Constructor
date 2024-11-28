@@ -2,6 +2,11 @@ import * as PIXI from 'pixi.js';
 
 import Grid from "./CanvasComponents/Grid";
 import Rulers from "./CanvasComponents/Rulers";
+import Planner from "./CanvasComponents/Planner";
+
+import {
+  DropData
+} from "@/types/constructor2d/interfaсes";
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import {
@@ -11,6 +16,7 @@ import {
 interface Components {
   grid: Grid | null;
   rulers: Rulers | null;
+  planner: Planner | null;
 }
 
 export default class Constructor2D {
@@ -21,6 +27,7 @@ export default class Constructor2D {
   private components: Components = {
     grid: null,
     rulers: null,
+    planner: null,
   };
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
@@ -63,6 +70,7 @@ export default class Constructor2D {
     this.components.grid ??= new Grid(this.app2d!);
     
     // добавляем компонент для рисования планировок
+    this.components.planner ??= new Planner(this.app2d!);
     
     // добавляем компонент для отображения линеек
     this.components.rulers ??= new Rulers(this.app2d!);
@@ -73,6 +81,14 @@ export default class Constructor2D {
     if (this.app2d) {
       this.app2d.renderer.resize(this.container.clientWidth, this.container.clientHeight);
     }
+  }
+
+  public addDoor(data: DropData): void {
+
+    if(!this.components.planner) return;
+
+    // добавить в Store товар
+    
   }
 
   /*
@@ -145,22 +161,22 @@ export default class Constructor2D {
 
       this.constructorStore.mouse.positionPoint
 
-        // Вычисляем изменения по осям X и Y
-        const { distanceX, distanceY } = calculateMouseDistanceByAxes(
-          { // Новая позиция мыши
-            x: this.constructorStore.mouse.positionPoint.x, 
-            y: this.constructorStore.mouse.positionPoint.y 
-          },
-          this.constructorStore.mouse.rightClickPosition, // положение клика на по правой кнопке
-        );
+      // Вычисляем изменения по осям X и Y
+      const { distanceX, distanceY } = calculateMouseDistanceByAxes(
+        { // Новая позиция мыши
+          x: this.constructorStore.mouse.positionPoint.x, 
+          y: this.constructorStore.mouse.positionPoint.y 
+        },
+        this.constructorStore.mouse.rightClickPosition, // положение клика на по правой кнопке
+      );
 
-        // Смещаем в противоположную сторону (вычитаем изменения)
-        const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
-        const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
+      // Смещаем в противоположную сторону (вычитаем изменения)
+      const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
+      const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
 
-        // Обновляем координаты центра в store
-        this.constructorStore.updateOriginOfCoordinates(newX, newY);
+      // Обновляем координаты центра в store
+      this.constructorStore.updateOriginOfCoordinates(newX, newY);
     }
-}
+  }
 
 }
