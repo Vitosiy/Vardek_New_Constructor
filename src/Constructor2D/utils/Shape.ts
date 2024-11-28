@@ -295,7 +295,7 @@ function drawArrowHead(
     }
   }
 
-  function rotatePoint(x, y, centerX, centerY, angle) {
+  function rotatePoint(x:number, y:number, centerX:number, centerY:number, angle:number) {
     // Перевод угла в радианы
     let rad = angle * Math.PI / 180;
     // Применяем матрицу поворота
