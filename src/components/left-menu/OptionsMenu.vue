@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import { computed, ref } from "vue";
 
 import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue";
@@ -24,6 +26,8 @@ const selectedSectionType = ref<string>('standart');
 
 
 const filteredCatalogSections = computed(() => {
+
+
   return Object.values(catalogSections).filter(item => item.TYPE === selectedSectionType.value);
 });
 
@@ -36,6 +40,8 @@ const closeAllMenus = () => {
 };
 
 const showTechMenu = (id: string, products: []) => {
+
+
   menuStore.openMenu('tech', id, products);
 };
 
@@ -77,6 +83,7 @@ const showRoomParMenu = () => {
           <div v-for="(item, index) in filteredCatalogSections" :key="index" class="goods-item"
             :class="{ active: menuStore.openMenus == 'tech' && item.ID === menuStore.menuContentsByID }"
             @click="showTechMenu(item.ID, item.PRODUCTS)">
+
             <S2DAppartSVG class="goods-item__image" />
             <p class="goods-item__title">{{ item.NAME }}</p>
             <div class="radial-sphere"></div>

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
 import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
 import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
@@ -15,6 +15,8 @@ import GetAppHelperButton from "@/components/ui/buttons/header/helpers/GetAppHel
 import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/InsertFileHelperButton.vue";
 import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
 import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
+
+
 </script>
 
 <template>

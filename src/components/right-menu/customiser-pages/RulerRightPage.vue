@@ -1,20 +1,43 @@
+<script lang="ts" setup>
+// @ts-nocheck 31
+
+import MainInput from "@/components/ui/inputs/MainInput.vue";
+const eventBus = useEventBus();
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useObjectData } from "@/store/appliction/useObjectData";
+
+const objectStore = useObjectData().getObjectData;
+
+
+const resizeModel = () => {
+    let data: { width: any; height: any; depth: any } = {
+      width: objectStore.PROPS.PRODUCT.width,
+      height: objectStore.PROPS.PRODUCT.height,
+      depth: objectStore.PROPS.PRODUCT.depth,
+    };
+    eventBus.emit("A:Model-resize", data);
+  }
+
+
+</script>
+
 <template>
   <div class="ruler">
     <!-- component -->
     <div class="customiser-section">
-      <p class="customiser-section__title">Размер товара</p>
+      <p class="customiser-section__title">Размер товара {{ objectStore.PROPS.PRODUCT.width }}</p>
       <div class="settings-size">
         <div class="size-item">
-          <p class="item__label text-grey ">Ширина</p>
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="3000 мм" />
+          <p class="item__label text-grey" @click="resizeModel">Ширина</p>
+          <MainInput class="input__search right-menu" v-model="objectStore.PROPS.PRODUCT.width" type="text" placeholder="3000 мм" />
         </div>
         <div class="size-item">
           <p class="item__label text-grey ">Высота</p>
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="3000 мм" />
+          <MainInput class="input__search right-menu" v-model="objectStore.PROPS.PRODUCT.height" type="text" placeholder="3000 мм" />
         </div>
         <div class="size-item">
           <p class="item__label text-grey ">Глубина</p>
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="3000 мм" />
+          <MainInput class="input__search right-menu" v-model="objectStore.PROPS.PRODUCT.depth" type="text" placeholder="3000 мм" />
         </div>
       </div>
     </div>
@@ -40,9 +63,7 @@
     </div>
   </div>
 </template>
-<script setup>
-import MainInput from "@/components/ui/inputs/MainInput.vue";
-</script>
+
 <style lang="scss" scoped>
 .ruler {
   display: flex;

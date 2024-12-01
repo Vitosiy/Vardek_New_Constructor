@@ -1,4 +1,5 @@
-@import 'fonts-main.scss';
+@use 'fonts-main.scss';
+@use 'colors.scss' as *;
 
 html,
 body,
@@ -20,8 +21,7 @@ div {
     border-radius: 15px;
   }
 
-  &::-webkit-scrollbar-track {
-  }
+  &::-webkit-scrollbar-track {}
 
   &::-webkit-scrollbar-thumb {
     background-color: $dark-grey;
@@ -42,6 +42,9 @@ button {
 button {
   outline: none;
   cursor: pointer;
+  &:focus {
+    outline: none;
+  }
 }
 
 h1 {
@@ -56,6 +59,7 @@ input {
   border: none;
   background-color: $bg;
   border-radius: 15px;
+
   &:focus {
     outline: none;
   }
@@ -108,13 +112,16 @@ p {
   background: none;
   transition: 0.2s;
   cursor: pointer;
+
   svg {
     path {
       transition: 0.2s;
     }
   }
+
   &.router-link-active {
     border: 1px solid $black;
+
     svg {
       path {
         fill: $black;
@@ -122,6 +129,7 @@ p {
     }
   }
 }
+
 .black-radial__button {
   width: 50px;
   height: 50px;
@@ -133,6 +141,7 @@ p {
   background: $black;
   cursor: pointer;
 }
+
 .grey-radial__button {
   width: 50px;
   height: 50px;
@@ -143,6 +152,11 @@ p {
   border-radius: 360px;
   background: $stroke;
   cursor: pointer;
+
+  &.bask {
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .right-menu__svg {
@@ -153,17 +167,72 @@ p {
   background-color: $stroke;
   border-radius: 360px;
   cursor: pointer;
+
   &.active {
     background-color: $red;
+
     svg {
       path {
         fill: $white;
       }
+
       g {
         path {
           fill: $white;
         }
       }
+    }
+  }
+}
+
+.right-menu__button {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background-color: $stroke;
+  border: 2px solid $white;
+  border-radius: 360px;
+  cursor: pointer;
+  transition: 0.05s;
+
+  &:focus {
+    outline: none;
+
+  }
+
+  svg {
+    path {
+      fill: $strong-grey;
+    }
+
+    g {
+      path {
+        fill: $strong-grey;
+      }
+    }
+  }
+
+  &.active {
+    background-color: $red;
+
+    svg {
+      path {
+        fill: $white;
+      }
+
+      g {
+        path {
+          fill: $white;
+        }
+      }
+    }
+
+    &:active {
+      background-color: $clicked-red;
     }
   }
 }

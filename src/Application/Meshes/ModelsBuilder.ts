@@ -26,9 +26,9 @@ export class ModelsBuilder {
 
         this.resources.startLoading(url, type, (file: any) => {
 
-            const box = new THREE.Box3().setFromObject(file);
-            const point = new THREE.Vector3()
-            const size = box.getSize(point)
+            // const box = new THREE.Box3().setFromObject(file);
+            // const point = new THREE.Vector3()
+            // const size = box.getSize(point)
 
 
             file.userData.PROPS = props

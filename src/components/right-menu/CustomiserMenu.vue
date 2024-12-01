@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
@@ -18,6 +20,10 @@ const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
 
+// const customise = defineProps({
+//   productData: Object,
+//   productSize: Object
+// })
 
 </script>
 
@@ -56,7 +62,7 @@ const togglePopup = () => {
   padding: 15px;
   background: $white;
   box-shadow: 0px 0px 10px 0px #3030301a;
-  z-index: 1;
+  z-index: 10;
   border-radius: 15px;
   transition: 0.5s ease-in-out;
   transform: translateZ(-10px);
@@ -84,6 +90,7 @@ const togglePopup = () => {
         align-items: center;
         gap: 8px;
       }
+
       .close__button {
         cursor: pointer;
       }

@@ -1,4 +1,23 @@
 
+const environmentMap = new URL('/environmentMap', import.meta.url).href + "/"
+
+export const  ENVIROMENT_MAP = {
+    '0': {
+        'ID': 0,
+        'NAME': 'environment',
+        'type': 'cubeTexture',
+        'texture':
+            [
+                `${environmentMap}px.jpg`,
+                `${environmentMap}nx.jpg`,
+                `${environmentMap}py.jpg`,
+                `${environmentMap}ny.jpg`,
+                `${environmentMap}pz.jpg`,
+                `${environmentMap}nz.jpg`
+            ]
+    },
+};
+
 export const rooms_mok = [
     {
         id: 0,
@@ -143,8 +162,8 @@ export const rooms_mok = [
                     "side": 0
                 }
             ],
-            floor: 44013,
-            wall: 44014
+            wall: '',
+            floor: ''
         },
         content: [
         ],

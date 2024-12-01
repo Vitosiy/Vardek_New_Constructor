@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
@@ -26,6 +28,7 @@ export const useCustomiserStore = defineStore('customiser', () => {
       customisers.value.push(type);
     }
   }
+  
   return {
     isCustomiserOpen,
     customisers,

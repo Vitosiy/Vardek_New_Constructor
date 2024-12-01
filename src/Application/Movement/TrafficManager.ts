@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 
 import { useEventBus } from '@/store/appliction/useEventBus';
+import { useModelState } from '@/store/appliction/useModelState';
 
 import { DragAndDropManager } from "./DragAndDropManager";
 import { MoveManager } from "./MoveManager";
@@ -21,6 +22,7 @@ export class TrafficManager {
     scene: THREE.Scene;
 
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    modelState: ReturnType<typeof useModelState> = useModelState()
 
     raycaster: THREE.Raycaster = new THREE.Raycaster()
     mouse: THREE.Vector2 = new THREE.Vector2()
@@ -50,7 +52,7 @@ export class TrafficManager {
         this.room = room
 
         this.despose = new DeepDispose()
-        this.boxHelper = new CustomBoxHelper(null, this.scene)
+        this.boxHelper = new CustomBoxHelper(null, this.scene, root)
         // this.geometryBuilder = new GeometryBuilder(root);
         this.geometryBuilder = room.geometryBuilder
 
@@ -63,20 +65,31 @@ export class TrafficManager {
     }
 
     get _currentObject() {
+
+
         return this.currentObject
     }
 
     set _currentObject(object) {
+
         /** Получаем выбранный объект */
+        // if(!object) return
+
         this.currentObject = object
+        
+        if(object){
+            this.modelState.createCurrentModelFasadesData(object.userData.PROPS.PRODUCT.FACADE)
+        }
+        else{
+            this.modelState.clearCurrentModelFasadesData()
+        }
+      
         this.eventsStore.emit("A:Selected", {
             object: object?.userData,
             roomContant: this.room._roomContant
         })
+
     }
-
-
-
     get _sizes() {
         return this.root._sizes
     }
@@ -108,10 +121,31 @@ export class TrafficManager {
         this.ruler.clearRuler();
     }
 
+    removeFromBasket(basketProduct: any) {
+        const object = this.scene.getObjectById(basketProduct.id)
+
+        if (!object) return
+
+
+        this.boxHelper.removeBoxHelper()
+        this.ruler.clearRuler();
+        this.room.remove(object.id)
+        this.despose.clearObject(object, this.scene)
+        // this._currentObject = this.scene.getObjectById(basketProduct.id)
+        // this.removeFromRoom()
+        // if (basketProduct) return
+        this._currentObject = null
+        // this.despose.clearObject(basketProduct, this.scene)
+    }
+
     vueEvents() {
 
         this.eventsStore.on('A:RemoveModel', () => {
             this.removeFromRoom()
+        })
+
+        this.eventsStore.on('A:RemoveModelFromBasket', (basketProduct: any) => {
+            this.removeFromBasket(basketProduct)
         })
 
         this.eventsStore.on('A:CameraToggle', (value: boolean) => {

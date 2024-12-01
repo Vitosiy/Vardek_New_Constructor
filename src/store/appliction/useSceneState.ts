@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import * as THREEInterfases from "../../types/interfases"

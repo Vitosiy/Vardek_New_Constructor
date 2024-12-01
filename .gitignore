@@ -24,4 +24,5 @@ Ideas
 *.njsproj
 *.sln
 *.sw?
-*.dump.js
+*.dump.ts
+*.dump.vue

@@ -1,5 +1,9 @@
+// @ts-nocheck 31
+
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
+
+import { _URL } from "@/types/constants";
 import { EventEmitter } from "./EventEmitter";
 import { FBXLoader, GLTFLoader, ColladaLoader } from "three/examples/jsm/Addons.js";
 
@@ -7,7 +11,7 @@ export class Resources extends EventEmitter {
 
     sources: { [key: string]: unknown } = {}
     items: { [key: string]: unknown } = {}
-    loaders: THREEInterfases.ILoaders|null = null
+    loaders: THREEInterfases.ILoaders | null = null
     loadingManager: THREE.LoadingManager = new THREE.LoadingManager();
     data: any
 
@@ -25,9 +29,9 @@ export class Resources extends EventEmitter {
 
     setLoaders() {
         this.loaders = {} as THREEInterfases.ILoaders
-        this.loaders.gltfLoader = new GLTFLoader(this.loadingManager);
-        this.loaders.fbxLoader = new FBXLoader(this.loadingManager);
-        this.loaders.daeLoader = new ColladaLoader(this.loadingManager);
+        this.loaders.gltfLoader = new GLTFLoader(this.loadingManager)
+        this.loaders.fbxLoader = new FBXLoader(this.loadingManager)
+        this.loaders.daeLoader = new ColladaLoader(this.loadingManager)
         this.loaders.textureLoader = new THREE.TextureLoader(this.loadingManager).setCrossOrigin('anonymous');
         this.loaders.cubeTextureLoader = new THREE.CubeTextureLoader(this.loadingManager);
 
@@ -44,12 +48,19 @@ export class Resources extends EventEmitter {
         }
     }
 
-    startLoading(path: string | readonly string[] , type: string, callback?: (file: unknown | null | boolean) => void): void {
 
+    replaceUrls(obj: any) {
+        return _URL + obj
+    }
+
+    startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void, dev?: boolean): void {
+
+        let truePath
         switch (type) {
 
             case 'GLTF':
-                this.loaders?.gltfLoader.load(path as string, (file: any) => {
+
+                this.loaders?.gltfLoader.load(truePath as string, (file: any) => {
                     if (callback) {
                         this.data = file.scene
 
@@ -65,7 +76,8 @@ export class Resources extends EventEmitter {
                 break
 
             case 'FBX':
-                this.loaders?.fbxLoader.load(path as string , (file: any) => {
+                truePath = this.replaceUrls(path)
+                this.loaders?.fbxLoader.load(truePath as string, (file: any) => {
                     if (callback) {
                         this.data = file.scene
 
@@ -75,7 +87,8 @@ export class Resources extends EventEmitter {
                 break
 
             case 'DAE':
-                this.loaders?.daeLoader.load(path as string, (file: any) => {
+                truePath = this.replaceUrls(path)
+                this.loaders?.daeLoader.load(truePath as string, (file: any) => {
                     if (callback) {
                         this.data = file.scene
                         callback(file.scene)
@@ -84,7 +97,11 @@ export class Resources extends EventEmitter {
                 break
 
             case 'texture':
-                this.loaders?.textureLoader.load(path as string, (file: any) => {
+                truePath = !dev ? this.replaceUrls(path) : path
+
+                console.log(truePath,'path')
+
+                this.loaders?.textureLoader.load(truePath as string, (file: any) => {
 
                     if (callback) {
                         this.data = file
@@ -104,7 +121,7 @@ export class Resources extends EventEmitter {
                 break
 
             case 'cubeTexture':
-                this.loaders?.cubeTextureLoader.load(path as readonly string[] ,
+                this.loaders?.cubeTextureLoader.load(path as readonly string[],
                     (file: unknown) => {
                         this.items['environmentMapTexture'] = file
                         this.trigger('cubeTextureLoaded')

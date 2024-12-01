@@ -1,3 +1,5 @@
+/**// @ts-nocheck */
+
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 
@@ -6,12 +8,12 @@ import { BuildProduct } from './BuildProduct'
 
 export class JsonBuilder {
 
-    root: BuildProduct
+    parent: BuildProduct
     resources: THREETypes.TResources
 
-    constructor(root: BuildProduct) {
-        this.root = root
-        this.resources = root.root._resources
+    constructor(parent: BuildProduct) {
+        this.parent = parent
+        // this.resources = parent._resources
     }
 
     createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
@@ -28,7 +30,7 @@ export class JsonBuilder {
                 material = json.material;
             }
 
-            if(data.material instanceof THREE.Material){
+            if (data.material instanceof THREE.Material) {
                 material = data.material;
             }
 
@@ -47,31 +49,31 @@ export class JsonBuilder {
                     case 'MeshBasicMaterial':
                         material = new THREE.MeshBasicMaterial(material);
                         if (fasade) {
-                            this.getTexture(material, textureUrl)
+                            this.parent.getTexture({ material, url: textureUrl })
                         }
                         break;
                     case 'MeshStandardMaterial':
                         material = new THREE.MeshStandardMaterial(material);
                         if (fasade) {
-                            this.getTexture(material, textureUrl)
+                            this.parent.getTexture({ material, url: textureUrl })
                         }
                         break
                     case 'MeshPhongMaterial':
                         material = new THREE.MeshPhongMaterial(material);
                         if (fasade) {
-                            this.getTexture(material, textureUrl)
+                            this.parent.getTexture({ material, url: textureUrl })
                         }
                         break
                     case 'MeshPhysicalMaterial':
                         material = new THREE.MeshPhysicalMaterial(material);
                         if (fasade) {
-                            this.getTexture(material, textureUrl)
+                            this.parent.getTexture({ material, url: textureUrl })
                         }
                         break
                     case 'MeshLambertMaterial':
                         material = new THREE.MeshLambertMaterial(material);
                         if (fasade) {
-                            this.getTexture(material, textureUrl)
+                            this.parent.getTexture({ material, url: textureUrl })
                         }
                         break
                 }
@@ -175,18 +177,18 @@ export class JsonBuilder {
         return geometry
     }
 
-    getTexture(material: any, url: string) {
-        this.resources.startLoading(url, 'texture', (file) => {
-            if (file instanceof THREE.Texture) {
-                file.colorSpace = THREE.SRGBColorSpace
-                material.map = file
-                material.needsUpdate = true;
-            }
-        });
-    }
+    // getTexture(material: any, url: string) {
+    //     this.resources.startLoading(url, 'texture', (file) => {
+    //         if (file instanceof THREE.Texture) {
+    //             file.colorSpace = THREE.SRGBColorSpace
+    //             material.map = file
+    //             material.needsUpdate = true;
+    //         }
+    //     });
+    // }
 
-    update(root: BuildProduct) {
-        this.root = root
+    update(parent: BuildProduct) {
+        this.parent = parent
     }
 
 }

@@ -5,10 +5,11 @@ export const usePopupStore = defineStore('popup', () => {
   const popups = ref({
     basket: false,
     error: false,
-    info: false,
     project: false,
     study: false,
   });
+
+  const isInfoPopupOpen = ref<boolean> (false)
 
   const openPopup = (popupName: keyof typeof popups.value) => {
     popups.value[popupName] = true;
@@ -19,13 +20,21 @@ export const usePopupStore = defineStore('popup', () => {
     popups.value[popupName] = false;
   };
 
+  const toggleInfoPopup = () => {
+    isInfoPopupOpen.value = !isInfoPopupOpen.value
+  }
+
   const isAnyPopupOpen = computed(() => {
     return Object.values(popups.value).some(isOpen => isOpen);
   });
+
   return {
     popups,
+    isInfoPopupOpen,
+    
     openPopup,
     closePopup,
+    toggleInfoPopup,
     isAnyPopupOpen
   };
 });

@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import * as THREE from "three"
 import { FBXLoader, GLTFLoader, ColladaLoader } from "three/examples/jsm/Addons.js";
 

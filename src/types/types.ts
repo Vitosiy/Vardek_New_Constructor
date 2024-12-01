@@ -5,14 +5,23 @@ import { RoomManager } from "@/Application/Room/RoomManager";
 import { Resources } from "@/Application/Utils/Resources";
 import { Ruler } from "@/Application/Utils/Ruler";
 import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
+import { BuildProduct } from "@/Application/Meshes/BuildProduct"; 
+import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
+import { PaletteBulider } from "@/Application/Meshes/PaletteBuilder";
+import { MeshEvents } from "@/Application/Meshes/Utils/Events";
+
 
 export type TApplication = Application
+export type TMeshEvents = MeshEvents
 export type TTrafficManager = TrafficManager
+export type TRoomManager = RoomManager
 export type TResources = Resources
 export type TRuler = Ruler
 export type TScene = THREE.Scene
-export type TRoomManager = RoomManager
 export type TCustomBoxHelper = CustomBoxHelper
+export type TBuildProduct = BuildProduct
+export type TMillingBuilder = MillingBuilder
+export type TPaletteBulider = PaletteBulider
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 

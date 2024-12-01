@@ -1,28 +1,53 @@
+// @ts-nocheck
+
 import * as THREETypes from "@/types/types"
+import { GlobalsData } from "./Globals"
 import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"
+import { useModelState } from "@/store/appliction/useModelState"
 
-export class Filters {
+export class Filters extends GlobalsData {
 
     root: THREETypes.TApplication
     trafficManager: THREETypes.TTrafficManager | null = null
-    project = useSceneState().getCurrentProjectParams;
 
-
-    _APP: THREETypes.TObject = useAppData().getAppData;
-    _COLOR: THREETypes.TObject = this._APP.COLOR;
-    _FASADE: THREETypes.TObject = this._APP.FASADE;
-    _FASADESIZE: THREETypes.TObject = this._APP.FASADESIZE;
-    _FASADENUMBERSIZE: THREETypes.TObject = this._APP.FASADENUMBERSIZE;
-    _FASADE_SECTION: THREETypes.TObject = this._APP.FASADE_SECTION
-    _FASADE_POSITION: THREETypes.TObject = this._APP.FASADE_POSITION
+    private project = useSceneState().getCurrentProjectParams;
+    private modelState = useModelState()
 
     constructor(root: THREETypes.TApplication) {
+        super();
         this.root = root
     }
 
-    filterProductFasade() {
+    filterProductFasade(items) {
 
+        const groupedFasades = {};
+
+        items.forEach(facadeId => {
+            const facade = this._FASADE[facadeId];
+            if (!facade) return;
+
+            const section = this._FASADE_SECTION[facade.IBLOCK_SECTION_ID];
+            if (!section || !section.UF_GROUP) return;
+
+            const groupId = section.UF_GROUP;
+
+            if (!groupedFasades[groupId]) {
+                groupedFasades[groupId] = [];
+            }
+
+
+            groupedFasades[groupId].push(facadeId);
+
+        });
+
+        // Формирование итогового массива
+        const result = Object.entries(this._FASADE_GROUPS).map(([groupId, group]) => ({
+            NAME: group.NAME,
+            FASADES: groupedFasades[groupId] || [],
+        })).filter(group => group.FASADES.length > 0);
+
+        // console.log(result)
     }
 
     filteFasadeColor(items: THREETypes.TObject) {
@@ -31,42 +56,68 @@ export class Filters {
 
     filterFasadePosition(items: THREETypes.TObject, product: THREETypes.TObject) {
 
-        let fasadeList = product.FASADE_POSITION
+        let fasadePositionList = product.FASADE_POSITION
 
-        fasadeList.forEach((fasade: number) => {
+        let sortFasadePositionList = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER)
+
+        // console.log(fasadePositionList, '---fasadePositionList', sortFasadePositionList, '--sortFasadePositionList')
+
+        sortFasadePositionList.forEach((fasade: number, key) => {
+
+            console.log('auf')
+
+            let fasadeProps: { TYPE: number, SHOW: boolean, LIST: number, COLOR: number } = {}
+
             let fasadePosition = this._FASADE_POSITION[fasade]
-            let fasadeNumber = fasadePosition.FASADE_NUMBER
 
-            console.log(fasadePosition, 'fasadePosition')
+            let fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
-            // console.log(fasadeList)
+            // console.log(`fasadeNumber-${fasadeNumber}, key-${key}`)
 
-            let fasad = !items.FASADE_TYPE['FASADE' + fasadeNumber] ? { 0: this.project.default_fasade_up } : items.FASADE_TYPE['FASADE' + fasadeNumber]
+            let fasad, fasadeId
 
-            Object.entries(fasad).forEach(([key, value]) => {
+            if (typeof items.FASADE_PROPS[fasadeNumber] === 'object' && items.FASADE_PROPS[fasadeNumber].TYPE) {
+                fasad = items.FASADE_PROPS[fasadeNumber].TYPE;
+                fasadeId = items.FASADE_PROPS[fasadeNumber].TYPE
+            }
+            else {
+                fasad = this.project.default_fasade_up
+                fasadeId = this.project.default_fasade_up;
+            }
 
-                let fasadeId = items.FASADE_TYPE[`FASADE${fasadePosition.FASADE_NUMBER}`]?.[key] ?? this.project.default_fasade_up
+            console.log(fasadeId, 'fasadeId')
 
-                items.FASADE_TYPE[`FASADE${fasadePosition.FASADE_NUMBER}`] = {}
+            // items.FASADE_TYPE[fasadeNumber] = ''
 
-                /** ---FASADELIST--- */
-                items.FASADE_TYPE['FASADE' + fasadePosition.FASADE_NUMBER][key] = value;
-                items.FASADE_LIST[fasadeNumber] = fasadePosition.ID
-                /** ---FASADECOLOR--- */
+            /** ---FASADELIST--- */
 
-                if (items.FASADE_COLOR == null) {
-                    items.FASADE_COLOR = this.project.default_fasade_up
-                }
+            // items.FASADE_TYPE[fasadeNumber] = fasad;
+            // items.FASADE_LIST.push(fasadePosition.ID)
 
-            })
+            /** ---FASADECOLOR--- */
+            if (items.FASADE_PROPS.length < fasadePositionList.length) {
+                // items.FASADE_COLOR.push(this.project.default_fasade_up)
+                fasadeProps.COLOR = this.project.default_fasade_up
+            }
 
+            /** --- FASADE_SHOW ---*/
+
+            // items.FASADE_SHOW.push(false)
+
+            fasadeProps.SHOW = false
+            fasadeProps.LIST = fasadePosition.ID
+            fasadeProps.TYPE = fasad
+            fasadeProps.MILLING = null
+            fasadeProps.PALETTE = null
+
+            items.FASADE_PROPS.push(fasadeProps)
         })
 
     }
 
     filterFasadeSizer(items: THREETypes.TObject, number: boolean | number) {
 
-        console.log(items, 'HH')
+        // console.log(items, 'HH')
 
         const fasadeSize = this._FASADESIZE;
         const fasadeNumberSize = this._FASADENUMBERSIZE;
@@ -172,4 +223,5 @@ export class Filters {
 
         // return tmpl;
     }
+
 } 

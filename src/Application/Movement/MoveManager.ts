@@ -1,3 +1,5 @@
+// @ts-nocheck 31
+
 import * as THREE from "three";
 import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
@@ -34,6 +36,7 @@ export class MoveManager {
     private onMouseDownBound: (event: MouseEvent) => void;
     private onMouseMoveBound: (event: MouseEvent) => void;
     private onMouseUpBound: (event: MouseEvent) => void;
+    private onWheelBound: (event: WheelEvent) => void;
 
     private onTouchStartBound: (event: TouchEvent) => void;
     private onTouchMoveBound: (event: TouchEvent) => void;
@@ -55,6 +58,7 @@ export class MoveManager {
         this.onMouseDownBound = this.onMouseDown.bind(this)
         this.onMouseMoveBound = this.onMouseMove.bind(this)
         this.onMouseUpBound = this.onMouseUp.bind(this)
+        this.onWheelBound = this.onWheel.bind(this)
 
         this.onTouchStartBound = this.onTouchStart.bind(this)
         this.onTouchMoveBound = this.onTouchMove.bind(this)
@@ -69,6 +73,7 @@ export class MoveManager {
         this.canvas.addEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.addEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.addEventListener('mouseup', this.onMouseUpBound, false);
+        this.canvas.addEventListener('wheel', this.onWheelBound, false);
 
         // Для сенсорных событий (мобильные устройства)
         this.canvas.addEventListener('touchstart', this.onTouchStartBound, false);
@@ -77,8 +82,19 @@ export class MoveManager {
     }
 
     private onMouseDown(event: MouseEvent) {
-        if (event.button !== 0) return;  // Проверка на левую кнопку мыши
-        this.handleInteractionStart(event.clientX, event.clientY);
+        switch (event.button) {
+            case 0:
+                this.handleInteractionStart(event.clientX, event.clientY);
+                break;
+            case 1:
+            case 2:
+                this.boxHelper.removeBoxHelper()
+                /** Убираем линейку */
+                this.trafficManager.ruler.clearRuler()
+                // Убираем выбранный объект 
+                this.trafficManager._currentObject = null
+                break;
+        }
     }
 
     private onMouseMove(event: MouseEvent) {
@@ -87,6 +103,14 @@ export class MoveManager {
 
     private onMouseUp(event: MouseEvent) {
         this.handleInteractionEnd();
+    }
+
+    private onWheel(event: WheelEvent) {
+        this.boxHelper.removeBoxHelper()
+        /** Убираем линейку */
+        this.trafficManager.ruler.clearRuler()
+        // Убираем выбранный объект 
+        this.trafficManager._currentObject = null
     }
 
     private onTouchStart(event: TouchEvent) {
@@ -209,6 +233,7 @@ export class MoveManager {
     }
 
     private moveSelectedObject() {
+
         if (!this.roomManager._roomFloor || !this.selectedObject) return;
 
         // this.eventBuss.emit('A:Move')
@@ -221,32 +246,25 @@ export class MoveManager {
 
         if (intersects.length > 0) {
             const point = intersects[0].point; // Точка пересечения с полом или стеной
+            const surface = intersects[0].object // стена
 
-            // const face = intersects[0].face // нормали
-            // const surface = intersects[0].object // стена
+            const adjustedPosition = this.roomManager.adjustPositionWithRaycasting({
+                object: this.selectedObject, targetPosition: point, wall: surface
+            });
 
-            // Создаем OBB для объекта
-            // const newOBB = createOBBFromObject(this.selectedObject);
-            // const BBHELPER = this.obbHelper.add(newOBB)
-            // this.scene.add(BBHELPER)
+            if (adjustedPosition.position && adjustedPosition.rotation) {
 
-            // Перемещаем OBB в точку пересечения
-            const newOBB = this.selectedObject.userData.obb.clone();
-            newOBB.center.copy(point);
+                this.selectedObject.position.copy(adjustedPosition.position);
+                this.selectedObject.rotation.copy(adjustedPosition.rotation)
 
-            // Проверяем, выходит ли объект за пределы комнаты
-            // const adjustedPosition = this.roomManager.adjustPositionWithinRoomOBB(newOBB, this.selectedObject, face, surface);
-            const adjustedPosition = this.roomManager.adjustPositionWithRaycasting(this.selectedObject, point, 500, 2000);
+                this.selectedObject.updateMatrix()
+                this.selectedObject.userData.obb.applyMatrix4(this.selectedObject.matrixWorld)
 
-            if (adjustedPosition) {
-                this.selectedObject.position.copy(adjustedPosition);
-            } else {
-                this.selectedObject.position.set(point.x, point.y, point.z);
+                this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
+                // this.selectedObject.userData.PROPS.CONFIG.POSITION = this.selectedObject.position;
+                // Обновляем BoxHelper для визуализации
+                this.boxHelper.updateBoxHelper();
             }
-
-            // Обновляем BoxHelper для визуализации
-            this.boxHelper.updateBoxHelper();
-
         }
 
         // Обновляем линейку
@@ -257,6 +275,8 @@ export class MoveManager {
         this.canvas.removeEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.removeEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.removeEventListener('mouseup', this.onMouseUpBound, false);
+        this.canvas.removeEventListener('wheel', this.onWheelBound, false);
+
     }
 
     updateRoomData(roomManager: THREETypes.TRoomManager) {

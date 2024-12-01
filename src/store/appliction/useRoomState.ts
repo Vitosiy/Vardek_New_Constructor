@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"

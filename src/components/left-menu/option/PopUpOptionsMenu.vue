@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck 31
+
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
@@ -6,11 +8,14 @@ import { useMenuStore } from '@/store/appStore/useMenuStore';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { computed } from "vue";
 
+import { _URL } from "@/types/constants";
+
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
 
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
+    
     return Object.values(catalogProducts).filter(item => menuStore.catalogFilterProductsId.includes(item.ID));
   } else {
     console.log('empty');
@@ -26,7 +31,7 @@ const filteredData = computed(() => {
 
 // Вариант Александра
 const getImageUrl = (imageName: string) => {
-  return `${imageName}`;
+  return ` ${_URL}${imageName}`;
 };
 
 const dropItems: { [key: string]: {} } = catalogProducts;
@@ -47,6 +52,9 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
+const toggleInfoPopup = () => {
+  popupStore.toggleInfoPopup();
+};
 </script>
 
 <template>
@@ -57,7 +65,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       <div v-for="item in filteredData" class="popup-items" draggable="true" :key="item.name"
         @dragstart="onDrag($event, item)">
         <div class="popup-items-picture">
-          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="openPopup('info')">
+          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
           <img :src="getImageUrl(item.PREVIEW_PICTURE)" class="popup-items__image" />
         </div>
         <p class="popup-items__title">{{ item.NAME }}</p>
