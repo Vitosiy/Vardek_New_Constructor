@@ -4,9 +4,11 @@ import Grid from "./CanvasComponents/Grid";
 import Rulers from "./CanvasComponents/Rulers";
 import Planner from "./CanvasComponents/Planner";
 
+/*
 import {
   DropData
 } from "@/types/constructor2d/interfaсes";
+*/
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import {
@@ -83,7 +85,7 @@ export default class Constructor2D {
     }
   }
 
-  public addDoor(data: DropData): void {
+  public addDoor(/*data: DropData*/): void {
 
     if(!this.components.planner) return;
 
@@ -114,9 +116,10 @@ export default class Constructor2D {
   
     if (!stage) return;
   
-    stage.on('rightdown', this.onRightDown.bind(this));
-    stage.on('rightup', this.onRightUp.bind(this));
-    stage.on('pointermove', this.onPointerMove.bind(this));
+    stage
+      .on('rightdown', this.onRightDown.bind(this))
+      .on('rightup', this.onRightUp.bind(this))
+      .on('pointermove', this.onPointerMove.bind(this));
   }
 
   private removeInteractions(): void {
@@ -125,9 +128,10 @@ export default class Constructor2D {
     if (!stage) return;
 
     // Удаляем все обработчики обработчики
-    stage.off('rightdown');
-    stage.off('rightup');
-    stage.off('pointermove');
+    stage
+      .off('rightdown')
+      .off('rightup')
+      .off('pointermove');
   }
 
   private onRightDown(e: PIXI.FederatedPointerEvent): void {
