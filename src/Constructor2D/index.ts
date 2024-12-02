@@ -4,6 +4,7 @@ import Grid from "./CanvasComponents/Grid";
 import Rulers from "./CanvasComponents/Rulers";
 import Planner from "./CanvasComponents/Planner";
 import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
+import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
 
 /*
 import {
@@ -81,7 +82,7 @@ export default class Constructor2D {
     // добавляем компонент для рисования планировок
     this.components.planner ??= new Planner(this.app2d!);
 
-    // this.components.startPointActiveObject ??= new PIXI.Container();
+    this.components.startPointActiveObject ??= new StartPointActiveObject(this.app2d!);
     
     // добавляем компонент для отображения линеек
     this.components.rulers ??= new Rulers(this.app2d!);

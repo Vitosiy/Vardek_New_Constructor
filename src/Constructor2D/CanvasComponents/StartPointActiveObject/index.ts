@@ -21,21 +21,17 @@ import {
   // rect,
   // drawVerticalLines,
   // drawDashedOutline,
-  drawArrow,
+  // drawArrow,
   // drawArrowHead,
-  // drawCircle,
-} from "./../../utils/Shape";
+  drawCircle,
+} from "../../utils/Shape";
 
-export default class ArrowRulerActiveObject {
+export default class StartPointActiveObject {
 
   private app: PIXI.Application;
   private container: PIXI.Container;
   
-  private xArrow: PIXI.Graphics;
-  private xText: PIXI.Text;
-
-  private yArrow: PIXI.Graphics;
-  private yText: PIXI.Text;
+  private circle: PIXI.Graphics;
   
   // private gridStore = useGridStore();
   // private rulerStore = useRulers2DStore();
@@ -50,27 +46,8 @@ export default class ArrowRulerActiveObject {
     this.container = new PIXI.Container();
     this.app.stage.addChild(this.container);
 
-    this.xArrow = new PIXI.Graphics();
-    this.container.addChild(this.xArrow);
-    this.xText = new PIXI.Text({ // Создаём текстовую метку
-      text: "", // Текст метки, вычисляется как положительная координата
-      style: {
-        fontSize: 16, // Размер текста метки
-        fill: 0xff0000, // Цвет текста метки
-      }
-    });
-    this.container.addChild(this.xText);
-
-    this.yArrow = new PIXI.Graphics();
-    this.container.addChild(this.yArrow);
-    this.yText = new PIXI.Text({ // Создаём текстовую метку
-      text: "", // Текст метки, вычисляется как положительная координата
-      style: {
-        fontSize: 16, // Размер текста метки
-        fill: 0xff0000, // Цвет текста метки
-      }
-    });
-    this.container.addChild(this.yText);
+    this.circle = new PIXI.Graphics();
+    this.container.addChild(this.circle);
 
     watch(
       () => this.plannerStore.objects,
@@ -109,32 +86,17 @@ export default class ArrowRulerActiveObject {
     
     const position = obj.position;
 
-    this.xArrow.clear();
-    this.xText.text = "";
-    this.yArrow.clear();
-    this.xText.text = "";
+    this.circle.clear();
 
     position.x += 30;
     position.y += 30;
 
-    drawArrow(
-      this.xArrow,
+    // синяя точка
+    drawCircle(
+      this.circle,
       position,
-      position.y - 30,
-      -90, // Угол направления стрелки в градусах
-      configWall.color.tapeLineColor, // Цвет стрелки
-      1, // Толщина линии
-      12 // Размер треугольника (основание и высота)
-    );
-
-    drawArrow(
-      this.yArrow,
-      position,
-      position.x - 30,
-      180, // Угол направления стрелки в градусах
-      configWall.color.tapeLineColor, // Цвет стрелки
-      1, // Толщина линии
-      12 // Размер треугольника (основание и высота)
+      12, 
+      configWall.color.mediumBlue
     );
     
   }
