@@ -83,7 +83,7 @@ export default class Rulers {
   }
 
   private drawTopRuler(): void { // Метод для рисования верхней линейки
-    const startRulerCoordinatesX = this.constructorStore.originOfCoordinates.x; // Определяем начальную координату нуля по оси X
+    const startRulerCoordinatesX = this.constructorStore.originOfCoordinates.x + 30; // Определяем начальную координату нуля по оси X
 
     this.topRulerSegmentsGraphics.clear(); // Очищаем графику сегментов верхней линейки
     this.topRulerSegmentNumbers.removeChildren(); // Удаляем все числовые метки верхней линейки
@@ -115,7 +115,7 @@ export default class Rulers {
 
       if (i > 0) { // Проверяем, что сегмент не первый, чтобы добавить метку
         const label = new PIXI.Text({ // Создаём текстовую метку
-          text: `${-i * segmentWidth}`, // Текст метки, вычисляется как отрицательная координата
+          text: `${-i * segmentWidth * 10}`, // Текст метки, вычисляется как отрицательная координата
           style: {
             fontSize: 16, // Размер текста метки
             fill: color, // Цвет текста метки
@@ -145,7 +145,7 @@ export default class Rulers {
       }
 
       const label = new PIXI.Text({ // Создаём текстовую метку
-        text: `${i * segmentWidth}`, // Текст метки, вычисляется как положительная координата
+        text: `${i * segmentWidth * 10}`, // Текст метки, вычисляется как положительная координата
         style: {
           fontSize: 16, // Размер текста метки
           fill: color, // Цвет текста метки
@@ -158,7 +158,7 @@ export default class Rulers {
   }
 
   private drawLeftRuler(): void { // Метод для рисования левой линейки
-    const startRulerCoordinatesX = this.constructorStore.originOfCoordinates.y; // Устанавливаем точку отсчета 0 по оси Y
+    const startRulerCoordinatesX = this.constructorStore.originOfCoordinates.y + 30; // Устанавливаем точку отсчета 0 по оси Y
 
     this.leftRulerSegmentsGraphics.clear(); // Очищаем графику для сегментов левой линейки
     this.leftRulerSegmentNumbers.removeChildren(); // Удаляем все метки из контейнера числовых меток
@@ -192,7 +192,7 @@ export default class Rulers {
 
       if (i > 0) { // Условие: текстовую метку добавляем только если это не первый сегмент
         const label = new PIXI.Text({ // Создаём текстовую метку для сегмента
-          text: `${-i * segmentHeight}`, // Значение метки (отрицательное для сегментов выше нуля)
+          text: `${-i * segmentHeight * 10}`, // Значение метки (отрицательное для сегментов выше нуля)
           style: {
             fontSize: 16, // Устанавливаем размер шрифта
             fill: color, // Устанавливаем цвет текста
@@ -220,7 +220,7 @@ export default class Rulers {
       this.leftRulerSegmentsGraphics.stroke({ color: color }); // Применяем цвет линии
 
       const label = new PIXI.Text({ // Создаём текстовую метку для сегмента
-        text: `${i * segmentHeight}`, // Значение метки (положительное для сегментов ниже нуля)
+        text: `${i * segmentHeight * 10}`, // Значение метки (положительное для сегментов ниже нуля)
         style: {
           fontSize: 16, // Устанавливаем размер шрифта
           fill: color, // Устанавливаем цвет текста

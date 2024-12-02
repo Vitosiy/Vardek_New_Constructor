@@ -37,6 +37,7 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     item.height = config.height;
     
     objects.value.push(item);
+    
   };
 
   const removeObj = (index: number) => {

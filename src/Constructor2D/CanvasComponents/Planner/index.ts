@@ -1,3 +1,6 @@
+import {
+  watch
+} from 'vue';
 import * as PIXI from 'pixi.js';
 import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
@@ -36,36 +39,59 @@ export default class Planner {
   private activeObjectGraphic:  PIXI.Graphics;
   
   private drawObjects: DrawObjects[] = [];
+  private activeObject: string | number = '';
   
   private gridStore = useGridStore();
   private rulerStore = useRulers2DStore();
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
-  
-  private unsubscribePlannerStore: () => void;
 
   constructor(pixiApp: PIXI.Application) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
     this.app = pixiApp;
     this.container = new PIXI.Container();
+    this.container.position.set(30, 30);
     this.app.stage.addChild(this.container);
 
     this.activeObjectGraphic = new PIXI.Graphics();
-    this.app.stage.addChild(this.activeObjectGraphic );
+    this.app.stage.addChild(this.activeObjectGraphic);
 
-    this.constructorStore.$subscribe(() => this.init());
+    watch(
+      () => this.plannerStore.objects,
+      (newVal) => {
+        
+        const lastAddedObject = newVal[newVal.length - 1];
+        
+        if (lastAddedObject) {
 
-    this.unsubscribePlannerStore = this.plannerStore.$subscribe((mutation, state) => {
-      const currentObjects = state.objects;
-      const newObject = currentObjects[currentObjects.length - 1];
+          const newObject = JSON.parse(JSON.stringify(lastAddedObject));
 
-      if (!this.drawObjects.some((el) => el.id === newObject.id)) {
-        const newDrawObject = this.createDrawObject(newObject);
-        this.drawObjects.push(newDrawObject);
-        this.drawObject(newObject);
-      }
-    });
+          if (!this.drawObjects.some((el) => el.id === newObject.id)) {
+            const newDrawObject = this.createDrawObject(newObject);
+            this.drawObjects.push(newDrawObject);
+            this.drawObject(newObject);
+          }
+          
+        }
+
+      },
+      { deep: true } // Следим за глубокими изменениями в массиве
+    );
+
+    watch(
+      () => this.constructorStore.originOfCoordinates,
+      (newValue) => {
+
+        const cX = 30 + newValue.x;
+        const cY = 30 + newValue.y;
+        
+        this.container.position.set(cX, cY);
+        
+      },
+      { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+    );
+    
   }
 
   private init(): void {
@@ -235,7 +261,7 @@ export default class Planner {
         
       }
 
-      this.activateObject(data.position);
+      this.activeObject = data.id;
 
     }
     
@@ -252,43 +278,6 @@ export default class Planner {
       textWallWidth?: PIXI.Text | null; // гирина стены
       textWallLength?: PIXI.Text | null; // длина стены
     */
-    
-  }
-
-  private activateObject(position: Vector2): void {
-
-    this.activeObjectGraphic.clear();
-
-    this.app.stage.removeChild(this.activeObjectGraphic); // Убираем объект
-    this.app.stage.addChild(this.activeObjectGraphic);
-
-    drawArrow(
-      this.activeObjectGraphic,
-      position,
-      position.y - this.constructorStore.originOfCoordinates.y,
-      -90, // Угол направления стрелки в градусах
-      configWall.color.tapeLineColor, // Цвет стрелки
-      1, // Толщина линии
-      12 // Размер треугольника (основание и высота)
-    );
-
-    drawArrow(
-      this.activeObjectGraphic,
-      position,
-      position.x - this.constructorStore.originOfCoordinates.x,
-      180, // Угол направления стрелки в градусах
-      configWall.color.tapeLineColor, // Цвет стрелки
-      1, // Толщина линии
-      12 // Размер треугольника (основание и высота)
-    );
-
-    // синяя точка
-    drawCircle(
-      this.activeObjectGraphic,
-      position,
-      12, 
-      configWall.color.mediumBlue
-    );
     
   }
 

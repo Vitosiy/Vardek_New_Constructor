@@ -34,6 +34,7 @@ export default class Grid {
     this.app = pixiApp;
     // Создание нового контейнера для хранения графических элементов
     this.container = new PIXI.Container();
+    this.container.position.set(30, 30);
     // Добавление контейнера на сцену приложения PIXI
     this.app.stage.addChild(this.container);
 

@@ -51,11 +51,18 @@ function dropHandler(ev: DragEvent): void {
     // Получаем координаты мыши при броске
     const { offsetX: x, offsetY: y } = ev;
     
+    const cX = x - 30;
+    const cY = y - 30;
+    
     // добавляем "товар" объект в Store
     plannerStore.addObj({
       id: MathUtils.generateUUID(),
       name: draggedData,
-      position: { x, y }
+      width: 150,
+      height: 30,
+      position: { x: cX, y: cY },
+      heightDirection: -1,
+      angleDegrees: 0
     });
 
   } catch (error) {
