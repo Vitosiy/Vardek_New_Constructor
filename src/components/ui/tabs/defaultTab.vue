@@ -63,26 +63,35 @@ const selectTab = (name: string) => {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .tabs-navigation {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
 }
 button {
-  padding: 8px 16px;
+
   border: none;
-  cursor: pointer;
-  background-color: #f0f0f0;
+  border-radius: 15px;
+  font-size: 16px;
+  padding: 15px 25px;
+  font-weight: 600;
+  outline: none;
+  background: $bg;
+  color: $strong-grey;
   transition: background-color 0.2s, transform 0.1s;
 }
 button:hover {
   background-color: #e0e0e0;
 }
+
 button.active {
-  background-color: #007bff;
-  color: white;
-  transform: scale(1.05);
+  // background-color: #007bff;
+  // color: white;
+  
+  background: $red;
+  color: $white;
+
 }
 .tabs-content {
   margin-top: 16px;

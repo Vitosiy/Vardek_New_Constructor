@@ -113,7 +113,8 @@ export class MeshEvents {
         if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
             this.modelState.createCurrentPaletteData(data.ID)
             let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
-            console.log(palette)
+
+            console.log(palette, 'palette')
 
             this.changePaletteColor({ data: palette, fasadeNdx })
             return

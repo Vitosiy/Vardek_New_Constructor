@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**/ / @ts-nocheck 31 */;
 
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import { _URL } from "@/types/constants";
 
 import MainButton from "@/components/ui/buttons/MainButton.vue";
@@ -37,11 +37,18 @@ const paletteColorsData = ref<{ [key: string]: any }>({});
 const productFasades = ref<{ [key: string]: any }>({});
 /**  Список типов FASADE для фасалдов модели */
 const fasades = ref<{ [key: string]: any }>({});
-/** Текущий фасад */
-const currentFasadeId = ref<{ [key: string]: any }>({});
 
 /**------------------------------ */
+/** Текущий фасад */
+const currentFasadeId = ref<{ [key: string]: any }>({});
+const selectedFasade = ref<number | null>(null);
 const tabsList = ref<any[]>([]);
+
+const selectPalette = ref<any>(null);
+const selectGlass = ref<any>(null);
+const selectMilling = ref<any>(null);
+
+/**------------------------------ */
 
 onMounted(() => {
   productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST;
@@ -50,16 +57,7 @@ onMounted(() => {
 
   fasades.value = modelState.getCurrentModelFasadesData;
 
-  console.log(
-    fasades.value,
-    "--fasades.value",
-    productFasades.value,
-    "productFasades.value"
-  );
-
   createTabList(productFasades.value);
-
-  // console.log(fasades.value);
 });
 
 // Обработка события изменения таба
@@ -67,10 +65,6 @@ const handleTabChange = (newTab: string) => {
   console.log("Selected Tab:", newTab);
 };
 /* ------------------------------- */
-
-// productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST;
-// fasadeColor.value = objectData.PROPS.CONFIG.FASADE_COLOR_LIST;
-// currentFasadeId.color = objectData.PROPS.CONFIG.FASADE_COLOR;
 
 const createTabList = (fasadsCount) => {
   let data = [
@@ -111,7 +105,8 @@ const changeModuleTexture = (data: { [key: string]: any }) => {
 };
 
 const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
-  console.log(data, fasadeNdx);
+  currentFasadeId.value = fasadeNdx;
+  selectedFasade.value = data.ID;
 
   modelState.createCurrentPaletteData(data.ID);
   modelState.createCurrentMillingData(data.ID);
@@ -119,27 +114,69 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
   eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
 };
 
+/** Палитра */
+const changePaletteColor = () => {
+  eventBus.emit("A:ChangePaletteColor", {
+    data: selectPalette.value,
+    fasadeNdx: currentFasadeId.value,
+  });
+};
 
+/** Фрезеровка */
+const changeMilling = () => {
+  eventBus.emit("A:ChangeMilling", {
+    data: selectMilling.value,
+    fasadeNdx: currentFasadeId.value,
+  });
+};
 </script>
 
 <template>
   <div class="color">
-    <div class="color__links">
-      <MainButton
-        className="right-menu"
-        :class="{ red__button: сolorPage === 'korp' }"
-        @click="changeColorPage('korp')"
+    <div
+      v-if="
+        Object.keys(modelState.getCurrentPaletteData).length > 0 &&
+        selectedFasade
+      "
+    >
+      <select
+        style
+        id="palette"
+        v-model="selectPalette"
+        name="palette"
+        @change="changePaletteColor(tabIndex - 1)"
       >
-        Корпус</MainButton
-      >
-      <div v-for="(fasade, key) in productFasades" :key="key + Math.random()">
-        <MainButton
-          className="right-menu"
-          :class="{ red__button: сolorPage === 'facade' }"
-          @click="changeColorPage({ type: 'facade', key })"
-          >Фасад {{ key + 1 }}</MainButton
+        <option
+          v-for="(palette, key) in modelState.getCurrentPaletteData"
+          :key="key"
+          :value="palette.ID"
         >
-      </div>
+          {{ palette.NAME }} {{ palette.UNAME }}
+        </option>
+      </select>
+    </div>
+
+    <div
+      v-if="
+        Object.keys(modelState.getCurrentMillingData).length > 0 &&
+        selectedFasade
+      "
+    >
+      <select
+        class="palette-textures--items"
+        id="palette"
+        v-model="selectMilling"
+        name="millig"
+        @change="changeMilling(fasad_ndx)"
+      >
+        <option
+          v-for="(millig, key) in modelState.getCurrentMillingData"
+          :key="millig + key"
+          :value="millig.ID"
+        >
+          {{ millig.NAME }} {{ millig.ID }}
+        </option>
+      </select>
     </div>
 
     <defaultTab
@@ -159,7 +196,6 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
 
           <div class="settings-color">
             <div class="color-item">
-
               <MainInput
                 class="input__search"
                 type="text"
@@ -201,12 +237,18 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
                       </summary>
 
                       <div
-                        class="item-group-color"
+                        :class="[
+                          'item-group-color',
+                          { active: selectedFasade === _FASADE[fasade].ID },
+                        ]"
                         style
-                        v-for="(fasade, key) in fasade_type.FASADES"
+                        v-for="(fasade, ndx) in fasade_type.FASADES"
                         :key="key + fasade"
                         @click="
-                          changeFasadeTexture(_FASADE[fasade], tabIndex - 1) /** -1 т.к. отсчёт идёт после корпуса */
+                          changeFasadeTexture(
+                            _FASADE[fasade],
+                            tabIndex - 1
+                          ) /** -1 т.к. отсчёт идёт после корпуса */
                         "
                       >
                         <div class="item-group-name">
@@ -218,6 +260,7 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
                           <p class="name__text">
                             {{ _FASADE[fasade].NAME }}
                           </p>
+
                         </div>
                       </div>
                     </details>
@@ -229,92 +272,6 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
         </div>
       </template>
     </defaultTab>
-
-    <!-- component -->
-    <!-- <div v-if="сolorPage === 'korp'" class="customiser-section">
-      <p class="customiser-section__title">Цвет корпуса</p>
-
-      <div class="settings-color">
-        <div class="color-item">
-          <div class="item-header">
-            <p class="item__title">Эмаль RAL Classic</p>
-            <img
-              src="../../../assets/svg/right-menu/arrow.svg"
-              class="item__arrow"
-            />
-          </div>
-
-          <MainInput class="input__search" type="text" placeholder="Поиск..." />
-
-          <div class="item-group">
-            <p class="item-group__title text-grey">High gloss</p>
-            <div
-              v-for="(fasade_data, key) in productColor"
-              :key="fasade_data!.NAME + key"
-              class="item-group-color"
-              @click="changeModuleTexture(fasade_data)"
-            >
-              <div class="item-group-name">
-                <img
-                  :src="_URL + fasade_data.DETAIL_PICTURE"
-                  class="name__bg"
-                />
-                <p class="name__text">{{ fasade_data.NAME }}</p>
-              </div>
-              <img
-                src="../../../assets/svg/right-menu/help.svg"
-                class="item-group__question"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div
-      v-if="сolorPage === 'facade'"
-      :key="currentFasade"
-      class="customiser-section"
-    >
-      <p class="customiser-section__title">Цвет фасада</p>
-
-      <div class="settings-color">
-        <div class="color-item">
-          <div class="item-header">
-            <p class="item__title">Эмаль RAL Classic</p>
-            <img
-              src="../../../assets/svg/right-menu/arrow.svg"
-              class="item__arrow"
-            />
-          </div>
-
-          <MainInput class="input__search" type="text" placeholder="Поиск..." />
-          <div class="item-group">
-            <p class="item-group__title text-grey">High gloss</p>
-            <div
-              v-for="(fasade_data, key) in productFasades"
-              :key="fasade_data!.NAME + key"
-              class="item-group-color"
-              @click="changeFasadeTexture(fasade_data)"
-            >
-              {{ fasade_data }}
-              <div class="item-group-name">
-                <img
-                  :src="_URL + fasade_data.DETAIL_PICTURE"
-                  class="name__bg"
-                />
-                <p class="name__text">{{ fasade_data.NAME }}</p>
-              </div> 
-              <img
-                src="../../../assets/svg/right-menu/help.svg"
-                class="item-group__question"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div> -->
   </div>
 </template>
 
@@ -432,12 +389,12 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
     right: 1rem;
     top: 1rem;
     display: inline-block;
-    transform: rotate(-90deg);
+    transform: rotate(90deg);
     transition: transform 0.2s ease-in-out;
   }
 
   details[open] summary::before {
-    transform: rotate(90deg);
+    transform: rotate(-90deg);
   }
 }
 </style>
