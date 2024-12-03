@@ -2,6 +2,9 @@ import {
   watch
 } from 'vue';
 import * as PIXI from 'pixi.js';
+import { 
+  MathUtils
+} from "three";
 // import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
@@ -56,7 +59,7 @@ export default class ArrowRulerActiveObject {
       text: "", // Текст метки, вычисляется как положительная координата
       style: {
         fontSize: 16, // Размер текста метки
-        fill: 0xff0000, // Цвет текста метки
+        fill: 0x5D6069, // Цвет текста метки
       }
     });
     this.container.addChild(this.xText);
@@ -67,7 +70,7 @@ export default class ArrowRulerActiveObject {
       text: "", // Текст метки, вычисляется как положительная координата
       style: {
         fontSize: 16, // Размер текста метки
-        fill: 0xff0000, // Цвет текста метки
+        fill: 0x5D6069, // Цвет текста метки
       }
     });
     this.container.addChild(this.yText);
@@ -112,39 +115,44 @@ export default class ArrowRulerActiveObject {
     this.xArrow.clear();
     this.xText.text = "";
     this.yArrow.clear();
-    this.xText.text = "";
+    this.yText.text = "";
 
     position.x += 30;
     position.y += 30;
 
+    // вертикальная стрелка
+    const distanceY = position.y - 30;
+    const rotateDegY = -90;
     drawArrow(
       this.xArrow,
       position,
-      position.y - 30,
-      -90, // Угол направления стрелки в градусах
+      distanceY,
+      rotateDegY, // Угол направления стрелки в градусах
       configWall.color.tapeLineColor, // Цвет стрелки
       1, // Толщина линии
       12 // Размер треугольника (основание и высота)
     );
+    this.xText.text = `${distanceY * 10} см`;
+    this.xText.x = position.x - 24;
+    this.xText.y = ((distanceY + 30) / 2) + (this.xText.width / 2);
+    this.xText.rotation = MathUtils.degToRad(rotateDegY);
 
+    // горизонтальная стрелка
+    const distanceX = position.x - 30;
+    const rotateDegX = 180;
     drawArrow(
       this.yArrow,
       position,
-      position.x - 30,
-      180, // Угол направления стрелки в градусах
+      distanceX,
+      rotateDegX, // Угол направления стрелки в градусах
       configWall.color.tapeLineColor, // Цвет стрелки
       1, // Толщина линии
       12 // Размер треугольника (основание и высота)
     );
+    this.yText.text = `${distanceX * 10} см`;
+    this.yText.y = position.y - 24;
+    this.yText.x = ((distanceX - 30) / 2) + (this.yText.width / 2);
     
   }
 
 }
-
-   // синяя точка
-  //  drawCircle(
-  //   this.activeObjectGraphic,
-  //   position,
-  //   12, 
-  //   configWall.color.mediumBlue
-  // );

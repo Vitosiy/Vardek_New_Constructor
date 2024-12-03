@@ -265,24 +265,9 @@ export default class Planner {
 
     }
     
-    // делаем активным объект
-    
-    /*
-      root?: PIXI.Container | null; // родительский контейнер для всех елементов стены
-      maskWall?: GraphicsOrNull;
-      bodyWall?: GraphicsOrNull;
-      lineWall?: GraphicsOrNull;
-      startPoint?: GraphicsOrNull;
-      endPoint?: GraphicsOrNull;
-      normalIndicator?: GraphicsOrNull;
-      textWallWidth?: PIXI.Text | null; // гирина стены
-      textWallLength?: PIXI.Text | null; // длина стены
-    */
-    
   }
 
   destroy(): void {
-    this.unsubscribePlannerStore?.();
     this.app.stage.removeChild(this.container);
   }
 }
