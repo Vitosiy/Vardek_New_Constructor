@@ -337,6 +337,53 @@ function drawCircle(
   graphics.fill(color);
 }
 
+function line(
+  graphic: PIXI.Graphics,
+  startPoint: Vector2,
+  width: number, // длина линии
+  height: number, // отступ по оси Y от координат startPoint
+  color: number | string, // цвет линии
+  angleDegrees: number, // угол вопорота, относительно startPoint
+  heightDirection: 1 | -1 = -1, // позиция токеч линии по оси Y относительно startPoint
+): void {
+
+  /*
+  // 1. Вычисляем стартовую точку с учетом отступа по оси Y
+  const p1 = {
+    x: startPoint.x,
+    y: startPoint.y + height * 2 * heightDirection,
+  };
+
+  // 2. Вычисляем вторую точку с учетом ширины и отступа по оси Y
+  const p2 = {
+    x: startPoint.x + width,
+    y: startPoint.y + height * 2 * heightDirection,
+  };
+
+  // 3. Поворачиваем точки на заданный угол относительно startPoint
+  const angleRadians = (angleDegrees * Math.PI) / 180;
+
+  const rotatePoint = (point: { x: number; y: number }) => {
+    const dx = point.x - startPoint.x;
+    const dy = point.y - startPoint.y;
+
+    return {
+      x: startPoint.x + dx * Math.cos(angleRadians) - dy * Math.sin(angleRadians),
+      y: startPoint.y + dx * Math.sin(angleRadians) + dy * Math.cos(angleRadians),
+    };
+  };
+
+  const rotatedP1 = rotatePoint(p1);
+  const rotatedP2 = rotatePoint(p2);
+
+  // 4. Рисуем линию
+  graphic.lineStyle(1, typeof color === "string" ? PIXI.utils.string2hex(color) : color);
+  graphic.moveTo(rotatedP1.x, rotatedP1.y);
+  graphic.lineTo(rotatedP2.x, rotatedP2.y);
+  */
+  
+}
+
 export {
   rect,
   drawVerticalLines,

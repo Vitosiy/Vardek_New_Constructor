@@ -5,6 +5,7 @@ import Rulers from "./CanvasComponents/Rulers";
 import Planner from "./CanvasComponents/Planner";
 import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
 import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
+import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
 
 /*
 import {
@@ -21,7 +22,8 @@ interface Components {
   grid: Grid | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
-  // startPointActiveObject: StartPointActiveObject | null;
+  sizeTextActiveObject: SizeTextActiveObject | null;
+  startPointActiveObject: StartPointActiveObject | null;
   rulers: Rulers | null;
 }
 
@@ -34,7 +36,8 @@ export default class Constructor2D {
     grid: null,
     arrowRulerActiveObject: null,
     planner: null,
-    // startPointActiveObject: null,
+    sizeTextActiveObject: null,
+    startPointActiveObject: null,
     rulers: null,
   };
 
@@ -81,6 +84,8 @@ export default class Constructor2D {
     
     // добавляем компонент для рисования планировок
     this.components.planner ??= new Planner(this.app2d!);
+
+    this.components.sizeTextActiveObject ??= new SizeTextActiveObject(this.app2d!);
 
     this.components.startPointActiveObject ??= new StartPointActiveObject(this.app2d!);
     

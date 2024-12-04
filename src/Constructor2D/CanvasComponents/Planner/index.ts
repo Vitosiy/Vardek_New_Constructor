@@ -172,8 +172,8 @@ export default class Planner {
           20, // spacing
           data.heightDirection, // heightDirection
           configWall.color.line76deg, // Цвет линий
-          1,
-          configWall.angleDegrees // Толщина линий
+          1, // Толщина линий
+          configWall.angleDegrees 
         );
 
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
