@@ -21,21 +21,21 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "/2d",
-        // name: "Constructor2d",
-        // component: () => import('@/views/Constructor2D.vue'),
-        name: "Main",
-        component: () => import('@/views/MainView.vue'),
+        name: "Constructor2d",
+        component: () => import('@/views/Constructor2D.vue'),
+        // name: "Main",
+        // component: () => import('@/views/MainView.vue'),
       },
       {
         path: "/3d",
         name: "Constructor3d",
         component: () => import('@/views/The3D.vue'),
       },
-      // {
-      //   path: "/Main",
-      //   name: "Main",
-      //   component: () => import('@/views/MainView.vue'),
-      // },
+      {
+        path: "/Main",
+        name: "Main",
+        component: () => import('@/views/MainView.vue'),
+      },
 
     ],
   },

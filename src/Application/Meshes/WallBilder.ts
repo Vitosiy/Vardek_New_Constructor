@@ -146,6 +146,7 @@ export class WallBuilder {
             depthWrite: false
         });
 
+
         if (textureId) {
             this.loadTexture(type, textureId, material, dimensions)
         }

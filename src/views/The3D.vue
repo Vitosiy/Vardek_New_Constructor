@@ -172,8 +172,8 @@ onMounted(() => {
       let roomContant = item.roomContant;
       totalContent.value = roomContant;
 
-      let roomContant = item.roomContant;
-      totalContent.value = roomContant;
+      // let roomContant = item.roomContant;
+      // totalContent.value = roomContant;
       
       if (!object) {
         controller.value = false;
@@ -475,8 +475,8 @@ const controllerPosition = computed(() => {
   <!-- <div class="ui-panel--right">
     <button class="btn" @click="save">Сохранить</button>
     <button class="btn" @click="create">Создать новую</button>
-    <!-- <button class="btn" @click="toggleiew">Поменять вид</button>  -->
-  </div>
+    <button class="btn" @click="toggleiew">Поменять вид</button>  -->
+  <!-- </div> -->
 
   <!-- <div class="room-textures">
     <select class="room-textures--item" id="wall" v-model="wallTexture" name="wall" @change="changeWallTexture">
