@@ -6,9 +6,11 @@ import { ref, onMounted, Ref, watch } from "vue";
 
 import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 
 const leftMenuStore = useC2DLeftMenuStore();
 const plannerStore = usePlanner2DStore();
+const constructor2DStore = useConstructor2DStore();
 
 import Constructor2D from '@/Constructor2D';
 
@@ -50,9 +52,11 @@ function dropHandler(ev: DragEvent): void {
     
     // Получаем координаты мыши при броске
     const { offsetX: x, offsetY: y } = ev;
+
+    const oc = constructor2DStore.getOriginOfCoordinates;
     
-    const cX = x - 30;
-    const cY = y - 30;
+    const cX = x - 30 - oc.x;
+    const cY = y - 30 - oc.y;
     
     // добавляем "товар" объект в Store
     plannerStore.addObj({

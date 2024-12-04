@@ -89,5 +89,12 @@ export const useConstructor2DStore = defineStore('constructor2DStore', {
     }
     
   },
+
+  getters: {
+    // Добавляем геттер для originOfCoordinates
+    getOriginOfCoordinates: (state) => {
+      return state.originOfCoordinates;
+    }
+  }
   
 });

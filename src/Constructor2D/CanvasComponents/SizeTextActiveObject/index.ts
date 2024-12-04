@@ -111,7 +111,7 @@ export default class SizeTextActiveObject {
     this.widthText.text = "";
     this.heightText.text = "";
 
-    this.widthText.text = `${obj.height} см`;
+    this.widthText.text = `${Math.round(obj.height)} см`;
     this.widthText.x = obj.position.x + obj.width + 40;
     this.widthText.y = obj.position.y + 6;
     this.widthText.rotation = MathUtils.degToRad(obj.angleDegrees);

@@ -132,7 +132,7 @@ export default class ArrowRulerActiveObject {
       1, // Толщина линии
       12 // Размер треугольника (основание и высота)
     );
-    this.xText.text = `${distanceY * 10} см`;
+    this.xText.text = `${Math.round(distanceY * 10)} см`;
     this.xText.x = position.x - 24;
     this.xText.y = ((distanceY + 30) / 2) + (this.xText.width / 2);
     this.xText.rotation = MathUtils.degToRad(rotateDegY);
@@ -149,7 +149,7 @@ export default class ArrowRulerActiveObject {
       1, // Толщина линии
       12 // Размер треугольника (основание и высота)
     );
-    this.yText.text = `${distanceX * 10} см`;
+    this.yText.text = `${Math.round(distanceX * 10)} см`;
     this.yText.y = position.y - 24;
     this.yText.x = ((distanceX - 30) / 2) + (this.yText.width / 2);
     
