@@ -165,8 +165,14 @@ export const rooms_mok = [
             wall: '',
             floor: ''
         },
-        content: [
-        ],
+        content: {
+            '2d':[
+                
+            ],
+            '3d':[
+
+            ]
+        },
     },
     {
         id: 1,

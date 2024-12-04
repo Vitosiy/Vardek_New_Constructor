@@ -137,6 +137,7 @@ export class MillingBuilder {
 
           else {
             shapeMesh.updateMatrixWorld(true)
+            
             // object.add(shapeMesh)
 
             const shape_bsp = CSG.fromMesh(shapeMesh);

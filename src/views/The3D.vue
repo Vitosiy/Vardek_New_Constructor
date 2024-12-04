@@ -209,7 +209,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   console.log("onBeforeUnmount");
+
   VerdekConstructor?.destroy();
+  VerdekConstructor = null;
+
+
 });
 
 watch(shadows, () => {
@@ -457,17 +461,17 @@ const controllerPosition = computed(() => {
     </button> -->
   </div>
 
-  <!-- <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load">
+  <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load" style="top: 15rem; left:25rem" >
     <option v-for="(room, key) in roomStore.getRooms" :key="key" :value="room.id">
       {{ room.label }}
     </option>
-  </select> -->
+  </select>
 
-  <!-- <div class="ui-panel--right">
+  <div class="ui-panel--right">
     <button class="btn" @click="save">Сохранить</button>
     <button class="btn" @click="create">Создать новую</button>
-    <button class="btn" @click="toggleiew">Поменять вид</button> 
-  </div> -->
+    <!-- <button class="btn" @click="toggleiew">Поменять вид</button>  -->
+  </div>
 
   <!-- <div class="room-textures">
     <select class="room-textures--item" id="wall" v-model="wallTexture" name="wall" @change="changeWallTexture">

@@ -518,6 +518,8 @@ export class RoomManager extends Room {
             model.data = this.convertProps(item.userData.PROPS)
 
             mokSave.push(JSON.stringify(model))
+
+            console.log(JSON.parse(mokSave), 'mokSave--')
         })
 
         return mokSave

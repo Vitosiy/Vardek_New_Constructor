@@ -116,6 +116,10 @@ export class Application {
         this.removeVueEvents()
         this.clearScene(this.scene, this.renderer.instance)
 
+        console.log('Destroy')
+
+        console.log(this)
+
     }
 
     clearScene(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {

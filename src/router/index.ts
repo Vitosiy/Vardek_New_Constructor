@@ -16,30 +16,33 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Public",
-    component: DefaultLayout,
-    redirect: "/",
+    component: () => import('@/layouts/DefaultLayout.vue'),
+    redirect: { path: "/2d" },
     children: [
       {
-        path: "/",
-        name: "Main",
-        component: MainView,
-      },
-      {
         path: "/2d",
-        name: "Constructor2d",
-        component: Constructor2D,
+        // name: "Constructor2d",
+        // component: () => import('@/views/Constructor2D.vue'),
+        name: "Main",
+        component: () => import('@/views/MainView.vue'),
       },
       {
         path: "/3d",
         name: "Constructor3d",
-        component: Constructor3DView,
+        component: () => import('@/views/The3D.vue'),
       },
+      // {
+      //   path: "/Main",
+      //   name: "Main",
+      //   component: () => import('@/views/MainView.vue'),
+      // },
+
     ],
   },
   {
     path: "/auth",
     name: "Auth",
-    component: AuthView,
+    component: () => import('@/views/auth/AuthView.vue'),
   },
 ];
 
