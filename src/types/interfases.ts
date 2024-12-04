@@ -223,10 +223,17 @@ export interface ISetProduct {
     config: THREETypes.TObject,
     object: THREE.Object3D,
     point: THREE.Vector3,
+
     roomManager: THREETypes.TRoomManager,
     trafficManager?: THREETypes.TTrafficManager,
     boxHelper?: THREETypes.TCustomBoxHelper,
-    obb?: THREETypes.TObject
+    wall?:THREE.Object3D | THREE.Mesh,
+}
+
+export interface IClampPosition {
+    position: THREE.Vector3,
+    rotation: THREE.Vector3 | THREE.Euler | null,
+    quaternion: THREE.Quaternion
 }
 
 

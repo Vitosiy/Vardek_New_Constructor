@@ -194,6 +194,7 @@ export const START_PROJECT_PARAMS = {
         near: 1,
         far: 25000
     },
+    
     orto_camera: {
         position: [0, 10, 0],
         target: { x: 0, y: 0, z: 0 },

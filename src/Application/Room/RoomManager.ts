@@ -1,11 +1,11 @@
-// @ts-nocheck 31
 
 import * as THREE from 'three';
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
-// import { OBB } from 'three/examples/jsm/math/OBB.js';
-// import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
+import { OBB } from 'three/examples/jsm/math/OBB.js';
+import { Capsule } from 'three/addons/math/Capsule.js';
+import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useRoomState } from '@/store/appliction/useRoomState';
@@ -20,9 +20,9 @@ import CreateShape from '../2DScene/CreateShape';
 
 export class RoomManager extends Room {
 
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
-    roomState: ReturnType<typeof useRoomState> = useRoomState()
-    modelState: ReturnType<typeof useModelState> = useModelState()
+    private eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    private roomState: ReturnType<typeof useRoomState> = useRoomState()
+    private modelState: ReturnType<typeof useModelState> = useModelState()
 
     createShape: CreateShape
     setObject: SetObject
@@ -85,7 +85,6 @@ export class RoomManager extends Room {
         return boundsArray
     }
 
-
     /**-------------------------------------------------------- */
 
     get _roomContant() {
@@ -96,61 +95,238 @@ export class RoomManager extends Room {
         this.contant[`${value.id}`] = value
     }
 
-
-    adjustPositionWithRaycasting(object: THREE.Object3D, targetPosition: THREE.Vector3, maxDistance: number, snapHeight?: number): THREE.Vector3 | null {
+    adjustPositionWithRaycasting({ object, targetPosition, wall, maxDistance, snapHeight }: { object: THREE.Object3D, targetPosition: THREE.Vector3, wall: THREE.Object3D, maxDistance: number, snapHeight?: number }): THREEInterfases.IClampPosition {
         // object.updateMatrixWorld()
-        const objectBox = new THREE.Box3().setFromObject(object);
 
-        // const boxH = new THREE.Box3Helper(objectBox,'0xffffff')
-        // boxH.position.set(targetPosition.x,targetPosition.y,targetPosition.z)
-        // this.scene.add(boxH)
-
-        const roomBounds = this.getRoomBounds();
-        const smallBoxSize = objectBox.getSize(new THREE.Vector3());
-        const tempBox = new THREE.Box3().setFromCenterAndSize(targetPosition, smallBoxSize);
         let heightClamp = this.heightClamp
+        const objectBox = new THREE.Box3().setFromObject(object);
+        const heightMagnetThreshold = object.userData.trueHeight;
 
-        const heightMagnetThreshold = smallBoxSize.y / 2;
-        // const heightMagnetThreshold = 300;
+        const position = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
 
-        const adjustedPosition = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
+        // const roomBounds = this.getRoomBounds();
+        // const smallBoxSize = objectBox.getSize(new THREE.Vector3());
 
-        const closestWall = this.getClosestWallDistance(adjustedPosition);
 
-        // Если объект достаточно близко к стене, примагничиваем его
-        if (closestWall.distance <= maxDistance) {
-            console.log('5')
-            const snappedPosition = this.snapToWall(adjustedPosition, closestWall.wall as THREE.Box3, smallBoxSize);
-            const clampedPosition = this.clampPositionToWall(snappedPosition, roomBounds, objectBox, object);
-            return clampedPosition;
+        // let objectOBB = object.userData.obb
+
+        const objectPos = this.roomInterseck({ object, wall, position })
+
+        return {
+            position: objectPos.position,
+            rotation: objectPos.rotation,
+            quaternion: object.quaternion
         }
 
-        // Обычная проверка, если не нужно примагничивание
-        else if (roomBounds.containsBox(tempBox)) {
-            console.log('6')
-            return adjustedPosition;
-        } else {
-            console.log('7')
+        // const heightMagnetThreshold = smallBoxSize.y / 2;
 
-            const clampedPosition = this.clampPositionToWall(adjustedPosition, roomBounds, objectBox, object);
-            return clampedPosition;
+        // const adjustedPosition = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
+
+        // const closestWall = this.getClosestWallDistance(adjustedPosition);
+
+        // // Если объект достаточно близко к стене, примагничиваем его
+        // if (closestWall.distance <= maxDistance) {
+        //     const snappedPosition = this.snapToWall(adjustedPosition, closestWall.wall as THREE.Box3, smallBoxSize);
+        //     const clampedPosition = this.clampPositionToWall(snappedPosition, roomBounds, objectBox, object, closestWall.rotation);
+
+        //     return clampedPosition;
+        // }
+        // else {
+
+        //     const clampedPosition = this.clampPositionToWall(adjustedPosition, roomBounds, objectBox, object, closestWall.rotation);
+
+        //     let rotation = Object.keys(object.userData.PROPS.CONFIG.ROTATION).length > 0 ? object.userData.PROPS.CONFIG.ROTATION : new THREE.Euler(0, 0, 0, 'XYZ');
+        //     let quaternion = closestWall.quaternion ?? new THREE.Quaternion()
+
+        //     const data = {
+        //         position: clampedPosition.position,
+        //         rotation,
+        //         quaternion
+        //     };
+
+        //     return data
+        // }
+    }
+
+    private roomInterseck({
+        object,
+        wall,
+        position,
+    }: {
+        object: THREE.Object3D;
+        wall: THREE.Object3D;
+        position: THREE.Vector3;
+    }): { position: THREE.Vector3; rotation: THREE.Euler } {
+        let adjustPosition = position.clone();
+        const rotationProps = object.userData.PROPS.CONFIG.ROTATION;
+        const rotation = new THREE.Euler(rotationProps.x, rotationProps.y, rotationProps.z, 'XYZ');
+
+        const roomBound = this._roomBounds;
+        const aabb = new THREE.Box3().setFromObject(object);
+        const objectSize = aabb.getSize(new THREE.Vector3());
+        const obb = new OBB().fromBox3(aabb);
+
+        let closestWall: THREE.Mesh | null = null;
+        let minDistance = Infinity;
+
+        this._roomTotal.forEach(wall => {
+
+            const wallOBB = wall.userData?.obb;
+
+            if (!wallOBB || wall.userData.name === "floor") return;
+
+            const wallNormal = wall.userData.plane.normal.clone().normalize();
+            const distanceToPlane = Math.abs(wallNormal.dot(adjustPosition) + wall.userData.plane.constant);
+
+            if (obb.intersectsOBB(wallOBB) && distanceToPlane < minDistance) {
+
+                minDistance = distanceToPlane;
+                closestWall = wall;
+
+                let correctData = this.getClampedPosition({ position: adjustPosition, rotation, wall, object })
+                adjustPosition = correctData.correctPosition
+                rotation.copy(correctData.correctRotation)
+
+            }
+
+        });
+
+        // Шаг 3: Корректируем положение относительно пересечений
+        // if (closestWall) {
+
+        //     let correctData = this.getClampedPosition({ position: adjustPosition, rotation, wall: closestWall, object })
+        //     adjustPosition = correctData.correctPosition
+        //     rotation.copy(correctData.correctRotation)
+
+
+        //     // const wallNormal = closestWall.userData.plane.normal.clone().normalize();
+        //     // const distanceToPlane = closestWall.userData.plane.distanceToPoint(adjustPosition);
+        //     // const side = this.getFacingSideFromOBB(object, closestWall);
+        //     // const correctSize = side === "left" || side === "right" ? object.userData.trueLength : object.userData.trueDepth;
+
+        //     // if (distanceToPlane < correctSize) {
+        //     //     const correction = wallNormal.multiplyScalar(correctSize - distanceToPlane);
+        //     //     adjustPosition.add(correction);
+        //     // }
+
+        //     // if (closestWall.userData.name !== "floor") {
+        //     //     rotation.copy(closestWall.rotation);
+        //     // }
+        // }
+
+        // Шаг 4: Ограничение высоты (ось Y)
+        adjustPosition.y = Math.max(
+            (objectSize.y - 0.001) / 2,
+            Math.min(position.y, roomBound.max.y - (objectSize.y - 0.001) / 2)
+        );
+
+        // Обновляем конфигурацию объекта
+        object.userData.PROPS.CONFIG = { ...object.userData.PROPS.CONFIG, ROTATION: rotation, POSITION: adjustPosition };
+
+        return { position: adjustPosition, rotation };
+    }
+
+    private getClampedPosition({ position, rotation, wall, object }: { position: THREE.Vector3, rotation: THREE.Euler, wall: THREE.Mesh, object: THREE.Object3D }) {
+
+        const correctPosition = position.clone()
+        const correctRotation = rotation.clone()
+
+        const wallNormal = wall.userData.plane.normal.clone().normalize();
+        const distanceToPlane = wall.userData.plane.distanceToPoint(correctPosition);
+        const side = this.getFacingSideFromOBB(object, wall);
+        const correctSize = side === "left" || side === "right" ? object.userData.trueLength : object.userData.trueDepth;
+
+        if (distanceToPlane < correctSize) {
+            const correction = wallNormal.multiplyScalar(correctSize - distanceToPlane);
+            correctPosition.add(correction);
+        }
+
+        if (wall.userData.name !== "floor") {
+            correctRotation.copy(wall.rotation);
+        }
+
+        return {
+            correctPosition,
+            correctRotation
         }
     }
 
-    private getRoomBounds(): THREE.Box3 {
-        const roomBox = new THREE.Box3();
+    private getFacingSideFromOBB(object: THREE.Object3D, wall: THREE.Mesh): string {
+        // Обновляем OBB объекта
+        const obb = new OBB();
+        const boundingBox = new THREE.Box3().setFromObject(object);
+        const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(object.quaternion);
+        obb.fromBox3(boundingBox);
+        obb.applyMatrix4(rotationMatrix);
 
-        // Объединяем границы всех стен и пола
-        for (const wall of this._roomWalls) {
-            roomBox.union(new THREE.Box3().setFromObject(wall));
+        // Нормаль стены
+        const wallNormal = wall.userData.plane.normal.clone().normalize();
+
+        // Направления сторон OBB
+        const sides: { [key: string]: number } = {
+            forward: new THREE.Vector3(0, 0, 1).applyMatrix3(obb.rotation).dot(wallNormal),
+            backward: new THREE.Vector3(0, 0, -1).applyMatrix3(obb.rotation).dot(wallNormal),
+            left: new THREE.Vector3(-1, 0, 0).applyMatrix3(obb.rotation).dot(wallNormal),
+            right: new THREE.Vector3(1, 0, 0).applyMatrix3(obb.rotation).dot(wallNormal),
+            up: new THREE.Vector3(0, 1, 0).applyMatrix3(obb.rotation).dot(wallNormal),
+            down: new THREE.Vector3(0, -1, 0).applyMatrix3(obb.rotation).dot(wallNormal),
         }
 
-        roomBox.union(new THREE.Box3().setFromObject(this._roomFloor as THREE.Object3D));
+        // Определяем сторону с максимальным скалярным произведением (по модулю)
+        const closestSide = Object.keys(sides).reduce((a, b) => (Math.abs(sides[a]) > Math.abs(sides[b]) ? a : b));
 
-        return roomBox;
+        return closestSide;
     }
 
-    private clampPositionToWall(position: THREE.Vector3, roomBox: THREE.Box3, objectBox: THREE.Box3, object: THREE.Object3D): THREE.Vector3 {
+    private findClosestSide(target: number, numbers: number[]) {
+        return numbers.reduce((closest, current) =>
+            Math.abs(current - target) < Math.abs(closest - target) ? current : closest
+        );
+    }
+
+    private createProgectionPoint(vector: THREE.Vector3, wall: THREE.Mesh, object: THREE.Object3D) {
+        const plane = wall.userData.plane
+        const objectHeight = object.userData.trueHeight
+
+        const planePoint = new THREE.Vector3();
+        plane.coplanarPoint(planePoint);
+
+
+        const planeNormal = plane.normal;
+
+        // Вычисляем проекцию вектора на плоскость
+        const vectorToPlane = vector.clone().sub(planePoint);
+        const distanceToPlane = vectorToPlane.dot(planeNormal);
+        const projection = vector.clone().sub(planeNormal.clone().multiplyScalar(distanceToPlane));
+
+        // console.log(projection)
+
+
+        const pointGeometry = new THREE.SphereGeometry(20)
+
+        const projectionPoint = new THREE.Mesh(pointGeometry, new THREE.MeshBasicMaterial({ color: 0x0000ff }));
+        projectionPoint.position.copy(projection);
+
+        this.scene.add(projectionPoint);
+
+        return projection
+    }
+
+
+    // private getRoomBounds(): THREE.Box3 {
+    //     const roomBox = new THREE.Box3();
+
+    //     // Объединяем границы всех стен и пола
+    //     for (const wall of this._roomWalls) {
+    //         roomBox.union(new THREE.Box3().setFromObject(wall));
+    //     }
+
+    //     roomBox.union(new THREE.Box3().setFromObject(this._roomFloor as THREE.Object3D));
+
+    //     return roomBox;
+    // }
+
+    private clampPositionToWall(position: THREE.Vector3, roomBox: THREE.Box3, objectBox: THREE.Box3, object: THREE.Object3D, rotate?: THREE.Vector3 | THREE.Euler | null, quaternion?: THREE.Quaternion): THREEInterfases.IClampPosition {
         const bigBox = roomBox;
 
         // Получаем размеры маленького бокса
@@ -167,19 +343,23 @@ export class RoomManager extends Room {
 
         let clampedZ = Math.max(bigBox.min.z + smallBoxSize.z / 2, Math.min(position.z, bigBox.max.z - smallBoxSize.z / 2));
 
-        // console.log(object.userData.PROPS.CONFIG.HEIGHTCORRECT,'HEIGHTCORRECT')
-        // console.log(clampedY,'clampedY')
-
         if (object.userData.PROPS.CONFIG.ORIGIN) {
             clampedY -= smallBoxSize.y / 2
         }
 
-        return new THREE.Vector3(clampedX, clampedY, clampedZ);
+        return {
+            position: new THREE.Vector3(clampedX, clampedY, clampedZ),
+            rotation: rotate as THREE.Vector3 | THREE.Euler | null,
+            quaternion: quaternion as THREE.Quaternion
+        };
     }
 
     private getClosestWallDistance(position: THREE.Vector3) {
         let closestDistance = Infinity;
         let closestWall = null;
+        let rotation = null;
+        let quaternion = null
+
 
         // Проверяем каждую стену и вычисляем расстояние до неё
         for (const wall of this._roomWalls) {
@@ -188,21 +368,25 @@ export class RoomManager extends Room {
             // Вычисляем расстояние от позиции до ближайшей точки стены
             const distance = wallBox.distanceToPoint(position);
 
+
             // Обновляем ближайшую стену
             if (distance < closestDistance) {
                 closestDistance = distance;
                 closestWall = wallBox;
+                rotation = wall.rotation.clone();
+                quaternion = new THREE.Quaternion();
+                quaternion.setFromEuler(wall.rotation).normalize()
             }
         }
 
-        return { distance: closestDistance, wall: closestWall };
+        return { distance: closestDistance, wall: closestWall, rotation, quaternion };
     }
 
     private snapToHeight(
         position: THREE.Vector3,
         objectBox: THREE.Box3,
         snapHeight: number,
-        threshold: number
+        threshold: number,
     ): THREE.Vector3 {
 
         const adjustedPosition = new THREE.Vector3(position.x, position.y, position.z)
@@ -235,7 +419,7 @@ export class RoomManager extends Room {
 
     /** Функция примагничивания объекта к стене */
 
-    private snapToWall(position: THREE.Vector3, wallBox: THREE.Box3, objectSize: THREE.Vector3): THREE.Vector3 {
+    private snapToWall(position: THREE.Vector3, wallBox: THREE.Box3, objectSize: THREE.Vector3,): THREE.Vector3 {
         const snappedPosition = position.clone();
 
         // Примагничиваем по X
@@ -334,6 +518,8 @@ export class RoomManager extends Room {
             model.data = this.convertProps(item.userData.PROPS)
 
             mokSave.push(JSON.stringify(model))
+
+            console.log(JSON.parse(mokSave), 'mokSave--')
         })
 
         return mokSave
@@ -347,6 +533,8 @@ export class RoomManager extends Room {
         saveData.BODY = null;
         saveData.LEG = []
         saveData.SHELF = []
+        saveData.FASADE = []
+        saveData.FASADE_DEFAULT = []
         saveData.TABLETOP = {}
         saveData.CONFIG.HEIGHTCORRECT = 0
 
@@ -368,11 +556,10 @@ export class RoomManager extends Room {
 
                 const model = JSON.parse(item as string)
                 const point = model.position
-                const obb = model.obb
                 const loadData = model.data
 
                 this.geometryBuilder.craeteModel(this.modelState.getModels[model.id] as THREEInterfases.IModelsData, (object) => {
-                    this.setObject.create({ scene: this.scene, config: this.modelState.getModels[model.id], object, point, roomManager: this, obb })
+                    this.setObject.create({ scene: this.scene, config: this.modelState.getModels[model.id], object, point, roomManager: this })
                 }, loadData
                 )
 
@@ -433,4 +620,5 @@ export class RoomManager extends Room {
             this.heightClamp = useSceneState().getStartHeightClamp;
         }
     }
+
 }

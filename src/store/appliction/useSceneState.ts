@@ -1,4 +1,4 @@
-// @ts-nocheck 31
+// @ts-nocheck
 
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';

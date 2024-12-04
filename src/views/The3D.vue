@@ -4,14 +4,7 @@ import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
 import { _URL } from "@/types/constants";
 
-import {
-  Ref,
-  ref,
-  watch,
-  computed,
-  onMounted,
-  onBeforeUnmount,
-} from "vue";
+import { Ref, ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";
@@ -19,6 +12,8 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useObjectData } from "@/store/appliction/useObjectData";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+
+import { useModelState } from "@/store/appliction/useModelState";
 
 import { Application } from "@/Application/Core/Application";
 
@@ -71,12 +66,19 @@ const appData = useAppData().getAppData;
 const startData = useSceneState();
 const roomStore = useRoomState();
 const eventBus = useEventBus();
+
+const modelState = useModelState();
 const models = useAppData().getAppData.CATALOG.PRODUCTS;
 const wallMaterials = useAppData().getAppData.WALL;
 const floorMaterials = useAppData().getAppData.FLOOR;
 const customiserStore = useCustomiserStore();
-const objectData = useObjectData()
-const roomContantData = useRoomContantData()
+const objectData = useObjectData(); /** Текущий объект */
+const roomContantData = useRoomContantData();
+
+
+
+const _FASADE = appData.FASADE;
+const _MILLING = appData.MILLING;
 
 const sceneContainer: Ref<HTMLElement | null> = ref(null);
 let VerdekConstructor: Application | null = null;
@@ -142,6 +144,17 @@ const showPalette = ref<boolean>(false);
 
 const selectPalette = ref<any>(null);
 
+/**----------------- 01.12.24-------------------- */
+
+const fasades = ref<{ [key: string]: any }>({});
+const productFasades = ref<any[]>([]);
+const glassColorsData = ref<{ [key: string]: any }>({});
+const showGlass = ref<boolean>(false);
+
+const selectGlass = ref<any>(null);
+const selectMilling = ref<any>(null);
+/** ---------------------------------------------- */
+
 onMounted(() => {
   if (sceneContainer.value) {
     VerdekConstructor = new Application(sceneContainer.value);
@@ -158,14 +171,17 @@ onMounted(() => {
 
       let roomContant = item.roomContant;
       totalContent.value = roomContant;
+
+      let roomContant = item.roomContant;
+      totalContent.value = roomContant;
       
       if (!object) {
         controller.value = false;
         return;
       }
 
-      objectData.setObjectData(object)
-      roomContantData.setRoomContantData(totalContent.value)
+      objectData.setObjectData(object);
+      roomContantData.setRoomContantData(totalContent.value);
 
       getProductSizeProps(
         object?.PROPS.CONFIG.SIZE,
@@ -178,6 +194,16 @@ onMounted(() => {
 
       controller.value = true;
 
+      // /**  Список FASADE для корпуса модели */
+      // productColor.value = object?.PROPS.CONFIG.MODULE_COLOR_LIST;
+
+      // /** Доступные модели фасадов для продукта */
+      // productFasades.value = object?.PROPS.CONFIG.FASADE_PROPS;
+
+      /** Получаем список типов FASADE для фасалдов модели */
+      // fasades.value = modelState.getCurrentModelFasadesData;
+      // console.log(fasades.value, 'FVALUE')
+
       /**  Координаты мыши */
       controllerPositionData.value = object?.MOUSE_POSITION;
 
@@ -188,7 +214,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   console.log("onBeforeUnmount");
+
   VerdekConstructor?.destroy();
+  VerdekConstructor = null;
+
+
 });
 
 watch(shadows, () => {
@@ -216,7 +246,6 @@ const resizeRoom = () => {
     eventBus.emit("A:Room-resize", inputValue.value);
   }
 };
-
 
 const toggleShadow = (value: boolean) => {
   if (VerdekConstructor) {
@@ -437,17 +466,17 @@ const controllerPosition = computed(() => {
     </button> -->
   </div>
 
-  <!-- <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load">
+  <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load" style="top: 15rem; left:25rem" >
     <option v-for="(room, key) in roomStore.getRooms" :key="key" :value="room.id">
       {{ room.label }}
     </option>
-  </select> -->
+  </select>
 
   <!-- <div class="ui-panel--right">
     <button class="btn" @click="save">Сохранить</button>
     <button class="btn" @click="create">Создать новую</button>
-    <button class="btn" @click="toggleiew">Поменять вид</button> 
-  </div> -->
+    <!-- <button class="btn" @click="toggleiew">Поменять вид</button>  -->
+  </div>
 
   <!-- <div class="room-textures">
     <select class="room-textures--item" id="wall" v-model="wallTexture" name="wall" @change="changeWallTexture">
@@ -544,17 +573,20 @@ const controllerPosition = computed(() => {
     <button class="btn" @click="removeModel">Удалить</button>
   </div> -->
 
-  <div :class="['model-controller', activeController]" :style="controllerPosition">
+  <div
+    :class="['model-controller', activeController]"
+    :style="controllerPosition"
+  >
     <div class="controller-left">
-      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg">
+      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
       <ControllerButton />
       <ContentControllerButton />
-      <DeleteControllerButton @click="removeModel"/>
+      <DeleteControllerButton @click="removeModel" />
     </div>
     <div class="controller-right">
-      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg">
+      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
       <UpControllerButton />
-      <OpenFacadeButton/>
+      <OpenFacadeButton />
     </div>
   </div>
 </template>

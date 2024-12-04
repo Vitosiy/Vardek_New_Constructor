@@ -233,6 +233,7 @@ export class MoveManager {
     }
 
     private moveSelectedObject() {
+
         if (!this.roomManager._roomFloor || !this.selectedObject) return;
 
         // this.eventBuss.emit('A:Move')
@@ -245,32 +246,25 @@ export class MoveManager {
 
         if (intersects.length > 0) {
             const point = intersects[0].point; // Точка пересечения с полом или стеной
+            const surface = intersects[0].object // стена
 
-            // const face = intersects[0].face // нормали
-            // const surface = intersects[0].object // стена
+            const adjustedPosition = this.roomManager.adjustPositionWithRaycasting({
+                object: this.selectedObject, targetPosition: point, wall: surface
+            });
 
-            // Создаем OBB для объекта
-            // const newOBB = createOBBFromObject(this.selectedObject);
-            // const BBHELPER = this.obbHelper.add(newOBB)
-            // this.scene.add(BBHELPER)
+            if (adjustedPosition.position && adjustedPosition.rotation) {
 
-            // Перемещаем OBB в точку пересечения
-            const newOBB = this.selectedObject.userData.obb.clone();
-            newOBB.center.copy(point);
+                this.selectedObject.position.copy(adjustedPosition.position);
+                this.selectedObject.rotation.copy(adjustedPosition.rotation)
 
-            // Проверяем, выходит ли объект за пределы комнаты
-            // const adjustedPosition = this.roomManager.adjustPositionWithinRoomOBB(newOBB, this.selectedObject, face, surface);
-            const adjustedPosition = this.roomManager.adjustPositionWithRaycasting(this.selectedObject, point, 500, 2000);
+                this.selectedObject.updateMatrix()
+                this.selectedObject.userData.obb.applyMatrix4(this.selectedObject.matrixWorld)
 
-            if (adjustedPosition) {
-                this.selectedObject.position.copy(adjustedPosition);
-            } else {
-                this.selectedObject.position.set(point.x, point.y, point.z);
+                this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
+                // this.selectedObject.userData.PROPS.CONFIG.POSITION = this.selectedObject.position;
+                // Обновляем BoxHelper для визуализации
+                this.boxHelper.updateBoxHelper();
             }
-
-            // Обновляем BoxHelper для визуализации
-            this.boxHelper.updateBoxHelper();
-
         }
 
         // Обновляем линейку

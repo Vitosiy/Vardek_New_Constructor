@@ -43,6 +43,8 @@ export class WallBuilder {
 
         mesh.userData.name = 'wall'
 
+        mesh.userData.plane = this.convertPlaneGeometryToPlane(mesh)
+
         return mesh;
     }
 
@@ -117,7 +119,7 @@ export class WallBuilder {
 
         const size = new THREE.Vector3();
         boundingBox.getSize(size);
-        
+
         // Создаем OBB на основе вычисленных значений
         const obb = new OBB(center, size.multiplyScalar(0.5));
 
@@ -125,6 +127,9 @@ export class WallBuilder {
 
         floorMesh.userData.obb = obb;
         floorMesh.userData.name = 'floor'
+
+        floorMesh.userData.plane = this.convertPlaneGeometryToPlane(floorMesh)
+        console.log(floorMesh.userData.plane)
 
         return floorMesh;
     }
@@ -163,7 +168,7 @@ export class WallBuilder {
 
     // Устанавливаем текстуру
     private loadTexture(type: string, textureId: number | string, material: THREE.MeshPhysicalMaterial, dimensions?: number[]) {
-    
+
         switch (type) {
             case 'wall':
                 this.resources.startLoading(this.wallTextureData[textureId].texture, 'texture', (file) => {
@@ -214,6 +219,26 @@ export class WallBuilder {
         }
 
         this.loadTexture(type, textureId, material, dimensions);
+    }
+
+    // Создаёь PLANE для обработки коллизии
+
+    convertPlaneGeometryToPlane(object: THREE.Object3D): THREE.Plane {
+        // Получаем нормаль в локальном пространстве PlaneGeometry (по умолчанию (0, 0, 1))
+        const localNormal = new THREE.Vector3(0, 0, 1);
+
+        // Преобразуем нормаль в мировое пространство
+        const worldNormal = localNormal.applyQuaternion(object.quaternion).normalize();
+
+        // Позиция объекта в мировом пространстве
+        const worldPosition = new THREE.Vector3();
+        object.getWorldPosition(worldPosition);
+
+        // Вычисляем `constant` для плоскости (расстояние от начала координат)
+        const constant = -worldNormal.dot(worldPosition);
+
+        // Создаем плоскость
+        return new THREE.Plane(worldNormal, constant);
     }
 
 }

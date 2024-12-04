@@ -2,17 +2,17 @@ import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
-// import { Room } from "../Meshes/Room"
-import {RoomManager} from "../Room/RoomManager"
-// import { DragAndDropManager } from "../Utils/DragAndDropManager"
-import {TrafficManager} from "../Movement/TrafficManager"
+
+import { RoomManager } from "../Room/RoomManager"
+import { MeshEvents } from "../Meshes/Utils/Events"
+
+import { TrafficManager } from "../Movement/TrafficManager"
 import { AppLights } from "../World/Lights"
 import { Environment } from "../World/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
 
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
-// import { useAppContext } from "@/store/useAppContext"
 import { useEventBus } from '@/store/appliction/useEventBus';
 
 export class World {
@@ -30,6 +30,11 @@ export class World {
     room: any
     lights: AppLights | any
     enviroment: any
+    meshEvents: MeshEvents | null = null
+
+    private onCreateRoom: () => void;
+    private onSaveRoom: () => void;
+    private onLoadRoom: (data: number) => void;
 
     constructor(root: THREETypes.TApplication) {
 
@@ -62,6 +67,10 @@ export class World {
 
             this.vueEvents()
         })
+
+        this.onCreateRoom = this.createRoom.bind(this)
+        this.onSaveRoom = this.saveRoom.bind(this)
+        this.onLoadRoom = this.loadRoom.bind(this)
     }
 
     setRoom() {
@@ -103,7 +112,7 @@ export class World {
                 size: this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes,
                 content: this.room.save()
             })
-            this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms})
+            this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
             console.log(this.sceneState.getCurrentProjectParams)
             return
         }
@@ -133,21 +142,46 @@ export class World {
             this.trafficManager.update(this.room)
 
         }
-        // console.log(this.roomsStore.getRooms)
+        console.log(this.roomsStore.getRooms)
     }
 
     vueEvents() {
 
-        this.eventsStore.on('A:Create', () => {
+        this.onCreateRoom = () => {
             this.createRoom()
-        })
+        }
 
-        this.eventsStore.on('A:Save', () => {
+        this.onSaveRoom = () => {
             this.saveRoom()
-        })
+        }
 
-        this.eventsStore.on('A:Load', (roomId: number) => {
-            this.loadRoom(roomId)
-        })
+        this.onLoadRoom = (value) => {
+            this.loadRoom(value)
+        }
+
+        this.eventsStore.on('A:Create', this.onCreateRoom);
+        this.eventsStore.on('A:Save', this.onSaveRoom)
+        this.eventsStore.on('A:Load', this.onLoadRoom)
+
+
+        this.meshEvents = new MeshEvents(this.root)
+
+        // this.eventsStore.on('A:Create', () => {
+        //     this.createRoom()
+        // })
+
+        // this.eventsStore.on('A:Save', () => {
+        //     this.saveRoom()
+        // })
+
+        // this.eventsStore.on('A:Load', (roomId: number) => {
+        //     this.loadRoom(roomId)
+        // })
+    }
+
+    removeVueEvents() {
+        this.eventsStore.off('A:Create', this.onCreateRoom);
+        this.eventsStore.off('A:Save', this.onSaveRoom)
+        this.eventsStore.off('A:Load', this.onLoadRoom)
     }
 }

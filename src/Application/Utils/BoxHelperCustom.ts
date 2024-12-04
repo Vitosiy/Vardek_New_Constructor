@@ -1,22 +1,32 @@
 import * as THREE from "three";
+import * as THREETypes from "@/types/types"
+import { OBB } from 'three/examples/jsm/math/OBB.js';
+import { OBBHelper } from "./CalculateBoundingBox";
 import { separateArrows } from "./CalculateBoundingBox";
 
 export class CustomBoxHelper {
 
-    scene: THREE.Scene
-    selectedObject: THREE.Object3D | null = null;
-    boxHelper: THREE.Mesh | null = null;
-    bb: any
+    private scene: THREE.Scene
+    private selectedObject: THREE.Object3D | null = null;
+    private boxHelper: THREE.Mesh | null = null;
+    private root: THREETypes.TApplication
+    private obbh: OBBHelper
 
-    constructor(selectedObject: THREE.Mesh | null, scene: THREE.Scene) {
+    constructor(selectedObject: THREE.Mesh | null, scene: THREE.Scene, root: THREETypes.TApplication) {
 
         this.scene = scene
         this.selectedObject = selectedObject
+        this.root = root
+        this.obbh = new OBBHelper()
 
     }
 
     get _boxHelperCheck() {
         return this.boxHelper
+    }
+
+    get _currentObject() {
+        return this.root._trafficManager?._currentObject
     }
 
     set _boxHelperCheck(value) {
@@ -29,43 +39,42 @@ export class CustomBoxHelper {
 
         if (this.selectedObject) {
 
-            // const boundingBox = new THREE.Box3()
-            // separateArrows(this.selectedObject, boundingBox)
- 
+            const obb = this.selectedObject.userData.obb
+            const trashhold = 15
+  
 
-            const boundingBox = new THREE.Box3().setFromObject(this.selectedObject!);
-            const vec = new THREE.Vector3()
-            const size = boundingBox.getSize(vec)
-          
-            const objectWidth = Math.round(size.x) + 15;
-            const objectHeight = Math.round(size.y) + 10;
-            const objectDepth = Math.round(size.z) + 15;
-
-
-            const boxGeometry = new THREE.BoxGeometry(objectWidth, objectHeight, objectDepth);
-
-            const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.25 });
-
-            this.boxHelper = new THREE.Mesh(boxGeometry, boxMaterial);
-            this.boxHelper.renderOrder = 1
+            const geometry = new THREE.BoxGeometry(obb.halfSize.x * 2 + trashhold, obb.halfSize.y * 2 + trashhold, obb.halfSize.z * 2 + trashhold);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.25 });
+            this.boxHelper = new THREE.Mesh(geometry, material);
+            this.boxHelper.userData.obb = obb
             this.boxHelper.userData.name = 'boxHelper'
+            this.boxHelper.renderOrder = 1
 
-            this.boxHelper.position.copy(this.selectedObject.position);
-            this.updateBoxHelper()
+
+            const matrix4 = new THREE.Matrix4();
+            matrix4.setFromMatrix3(obb.rotation);
+
+            const quaternion = new THREE.Quaternion();
+            quaternion.setFromRotationMatrix(matrix4);
+
+            this.boxHelper.position.copy(obb.center);
+
+            this.boxHelper.quaternion.copy(quaternion);
+
             this.scene.add(this.boxHelper);
+
+            this.updateBoxHelper()
+
         }
     }
 
     updateBoxHelper() {
 
         if (this.boxHelper && this.selectedObject) {
-            // const boundingBox = new THREE.Box3().setFromObject(this.selectedObject!);
-            
-            const boundingBox = new THREE.Box3()
-            separateArrows(this.selectedObject, boundingBox)
 
-            const center = boundingBox.getCenter(new THREE.Vector3());
-            this.boxHelper.position.copy(center);
+            this.boxHelper.position.copy(this.selectedObject.position)
+            this.boxHelper.rotation.copy(this.selectedObject.rotation)
+
         }
     }
 

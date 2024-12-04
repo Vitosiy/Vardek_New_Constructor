@@ -18,7 +18,6 @@ export const  ENVIROMENT_MAP = {
     },
 };
 
-
 export const rooms_mok = [
     {
         id: 0,
@@ -163,11 +162,17 @@ export const rooms_mok = [
                     "side": 0
                 }
             ],
-            floor: 44013,
-            wall: 44014
+            wall: '',
+            floor: ''
         },
-        content: [
-        ],
+        content: {
+            '2d':[
+                
+            ],
+            '3d':[
+
+            ]
+        },
     },
     {
         id: 1,

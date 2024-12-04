@@ -15,6 +15,8 @@ export class GeometryBuilder {
 
     craeteModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any): void {
 
+        console.log(data, 'data')
+
         this.buildProduct.getModel(data, onLoad, loadedProps)
 
     }

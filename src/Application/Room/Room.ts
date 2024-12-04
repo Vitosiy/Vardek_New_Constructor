@@ -4,13 +4,14 @@ import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
-import { OBB } from 'three/examples/jsm/math/OBB.js';
-import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
+// import { OBB } from 'three/examples/jsm/math/OBB.js';
+// import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 
-import { useEventBus } from '@/store/appliction/useEventBus';
+import { Octree } from 'three/addons/math/Octree.js';
+import { OctreeHelper } from 'three/addons/helpers/OctreeHelper.js';
+
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState"
-import { useAppData } from "@/store/appliction/useAppData";
 
 import { DeepDispose } from "../Utils/DeepDispose";
 import { WallBuilder } from "../Meshes/WallBilder";
@@ -27,18 +28,16 @@ export class Room {
     boundHeightClampValue: ((item: number) => void) | null = null
 
 
-    parent: THREETypes.TApplication
-    params: { [key: string]: any }
-    wallBuilder: WallBuilder = new WallBuilder()
-    resources: Resources = new Resources()
-    dispose: DeepDispose = new DeepDispose()
+    private parent: THREETypes.TApplication
+    private params: { [key: string]: any }
+    private wallBuilder: WallBuilder = new WallBuilder()
+    private resources: Resources = new Resources()
+    private dispose: DeepDispose = new DeepDispose()
 
     resizeParams: { [key: string]: number | 0 } | THREEInterfases.IWallSizes
     scene: THREE.Scene
-    roomsStore: ReturnType<typeof useRoomState> = useRoomState()
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
-    startData: ReturnType<typeof useSceneState> = useSceneState()
-    appData: ReturnType<typeof useAppData> = useAppData()
+    private roomsStore: ReturnType<typeof useRoomState> = useRoomState()
+    private startData: ReturnType<typeof useSceneState> = useSceneState()
     roomLight: any
 
     walls: THREE.Object3D[] = [];
@@ -53,7 +52,9 @@ export class Room {
     wallTexture: number | string = 0
     floorTexture: number | string = 0
 
-    obbHelper = new OBBHelper()
+    obbHelper = new OBBHelper();
+    worldOctree = new Octree();
+    roomBounds: THREE.Box3 = new THREE.Box3()
 
     constructor(parent: THREETypes.TApplication, light: any) {
 
@@ -66,7 +67,8 @@ export class Room {
         this.getStartSize()
         this.createRoom(this.params)
 
-        this.setRoom()
+        this.setRoom();
+        this.roomBounds = this.getRoomBounds();
 
     }
 
@@ -92,6 +94,14 @@ export class Room {
 
     get _roomFloor() {
         return this.floor
+    }
+
+    get _roomTotal() {
+        return [...this.walls, this._roomFloor] as THREE.Mesh[]
+    }
+
+    get _roomBounds() {
+        return this.roomBounds
     }
 
     // get _roomCeiling() {
@@ -166,8 +176,14 @@ export class Room {
 
         this.floor = this.wallBuilder.createFloorFromWalls(params.walls, params.floor,)
 
-        this.roomObject.add(this.wallsGroup)
+        // this.wallsGroup.renderOrder = 0
+        // this.floor.renderOrder = 0
+
         this.roomObject.add(this.floor)
+        this.roomObject.add(this.wallsGroup)
+
+        this.wallsGroup.add(this.floor)
+
         this.roomObject.renderOrder = 2
         // this.roomObject.position.set(0,0,0)
 
@@ -189,10 +205,11 @@ export class Room {
             // const BBHELPER = this.obbHelper.add(wall.userData.obb)
             // this.scene.add(BBHELPER)
 
-
         })
 
         /** Helpers для OBB  пола */
+
+        // this.createRoomOctree()
 
         // const BBHELPER = this.obbHelper.add(this.floor?.userData.obb)
         // this.scene.add(BBHELPER)
@@ -218,6 +235,31 @@ export class Room {
         this.floorTexture = materialId
         // Щтправляем материал в хранилище
         this.roomsStore.setFloorTexture(materialId)
+    }
+
+    private createRoomOctree() {
+        this.worldOctree.fromGraphNode(this.wallsGroup)
+        this.worldOctree.split(16)
+
+        const helper = new OctreeHelper(this.worldOctree, 0x00ff00);
+        helper.visible = true;
+        this.scene.add(helper);
+
+        console.log(this.worldOctree)
+    }
+
+    private getRoomBounds(): THREE.Box3 {
+        console.log('getRoomBounds')
+        const roomBox = new THREE.Box3();
+
+        // Объединяем границы всех стен и пола
+        for (const wall of this.walls) {
+            roomBox.union(new THREE.Box3().setFromObject(wall));
+        }
+
+        roomBox.union(new THREE.Box3().setFromObject(this._roomFloor as THREE.Object3D));
+
+        return roomBox
     }
 
     // setSize(width: number, height: number, depth: number, thickness: number) {

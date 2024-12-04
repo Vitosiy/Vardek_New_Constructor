@@ -10,9 +10,10 @@ import { World } from "./World";
 
 import { useEventBus } from '../../store/appliction/useEventBus';
 import { useAppData } from "@/store/appliction/useAppData";
-import { MeshEvents } from '../Meshes/Utils/Events';
+// import { MeshEvents } from '../Meshes/Utils/Events';
 
 import { Resources } from "../Utils/Resources";
+import { ENVIROMENT_MAP } from "../F-mockapi";
 
 import { ENVIROMENT_MAP } from "../F-mockapi";
 
@@ -21,7 +22,7 @@ export class Application {
     /** Хранилища */
     eventsStore: ReturnType<typeof useEventBus> = useEventBus();
     appData: ReturnType<typeof useAppData> = useAppData();
-    meshEvents: MeshEvents | null = null
+    // meshEvents: MeshEvents | null = null
 
     canvas: HTMLElement;
     sizes: Sizes;
@@ -116,7 +117,11 @@ export class Application {
         this.time.off('tick')
         this.removeVueEvents()
         this.clearScene(this.scene, this.renderer.instance)
-  
+
+        console.log('Destroy')
+
+        console.log(this)
+
     }
 
     clearScene(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
@@ -171,10 +176,15 @@ export class Application {
             this.world.room.createShape.hideDraft()
         })
 
-        this.meshEvents = new MeshEvents(this)
+        // this.meshEvents = new MeshEvents(this)
     }
 
-    removeVueEvents(){
-        this.meshEvents?.removeVueEvents()
+    removeVueEvents() {
+        // if (this.meshEvents) {
+        //     this.meshEvents.removeVueEvents();
+        //     this.meshEvents = null
+        //     console.log('remove!')
+        // }
+        this.world.removeVueEvents()
     }
 }

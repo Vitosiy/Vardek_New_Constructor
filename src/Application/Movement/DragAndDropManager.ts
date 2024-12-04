@@ -10,7 +10,6 @@ import { GeometryBuilder } from "../Meshes/GeometryBuilder";
 import {RoomManager} from "../Room/RoomManager";
 import SetObject from "../Utils/SetObject";
 
-import { createOBBFromObject } from "../Utils/CalculateBoundingBox";
 
 export class DragAndDropManager {
 
@@ -92,22 +91,27 @@ export class DragAndDropManager {
     
                 if (intersects.length > 0) {
                     const point = intersects[0].point;
+                    const surface = intersects[0].object;
     
                     this.geometryBuilder.craeteModel(productData, (object) => {
+
                         object.userData.MOUSE_POSITION = {
                             x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
                             y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
                         };
     
                         let config = object.userData.PROPS.CONFIG;
+
                         this.setObject.create({
                             scene:this.scene, 
                             config, 
                             object, 
                             point, 
-                            roomManager:this.roomManager, trafficManager:this.trafficManager, boxHelper:this.boxHelper}
-                        );
-                        this.trafficManager.moveManager.setupModelMove();
+                            roomManager:this.roomManager, 
+                            trafficManager:this.trafficManager, 
+                            boxHelper:this.boxHelper,
+                            wall:surface
+                        });
                     });
                 }
             } catch (error) {

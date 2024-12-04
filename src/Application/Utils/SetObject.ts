@@ -1,4 +1,4 @@
-// @ts-nocheck 31
+// @ts-nocheck
 
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
@@ -18,94 +18,58 @@ export default class SetObject {
     roomManager: THREETypes.TRoomManager | null = null
     trafficManager: THREETypes.TTrafficManager | null = null
     boxHelper: THREETypes.TCustomBoxHelper | null = null
-    obbHelper: OBBHelper = new OBBHelper()
 
-    constructor() {
-
-    }
-
-    create({ scene, config, object, point, roomManager, trafficManager, boxHelper, obb }: THREEInterfases.ISetProduct) {
-
-        // const boundingBox = new THREE.Box3().setFromObject(object);
-        // const objectWidth = boundingBox.max.x - boundingBox.min.x;
-        // const objectHeight = boundingBox.max.y - boundingBox.min.y;
-        // const objectDepth = boundingBox.max.z - boundingBox.min.z;
+    create({ scene, config, object, point, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
 
 
         const positionEmpty = this.isEmpty(object.userData.PROPS.CONFIG.POSITION);
         const rotationEmpty = this.isEmpty(object.userData.PROPS.CONFIG.ROTATION);
 
         let position = positionEmpty ? new THREE.Vector3(point.x, point.y, point.z) : object.userData.PROPS.CONFIG.POSITION
-        let rotation = rotationEmpty ? new THREE.Euler(0, 0, 0, 'XYZ') : object.userData.PROPS.CONFIG.ROTATION
+        let rotation = rotationEmpty ? new THREE.Euler(0, 0, 0, 'XYZ') : object.userData.PROPS.CONFIG.ROTATION;
 
-
-
-        position = new THREE.Vector3(point.x, point.y, point.z);
-
-        object.userData.globalData = config.ID
-        object.userData.modelVector = object.userData.PROPS.PRODUCT.element_type
-
-        // console.log(config, 'config')
-        // console.log(object.userData.globalData, 'config.ID')
-        // console.log(object.userData.originAtBottom, 'origin at set')
-
-        const OBB = createOBBFromObject(object)
-        object.userData.obb = OBB
-
+        object.userData.globalData = config.ID;
+        object.userData.modelVector = object.userData.PROPS.PRODUCT.element_type;
 
         // /** Проверяем положение объекта внутри комнаты */
 
-        // if (!roomManager.isWithinRoom(position.x, position.y, position.z, objectWidth, objectHeight, objectDepth)) {
-        //     position = roomManager.adjustPositionWithinRoom(
-        //         position.x,
-        //         position.y,
-        //         position.z,
-        //         objectWidth,
-        //         objectHeight,
-        //         objectDepth,
-        //         object.userData.originAtBottom,
-        //         object.userData.correctPosition
-        //     );
-        // }
         object.userData.current = true
-        const newOBB = object.userData.obb.clone();
-        newOBB.center.copy(point);
 
-        // const adjustedPosition = roomManager.adjustPositionWithinRoomOBB(newOBB, object);
-        // const adjustedPosition = roomManager.adjustPositionWithRaycasting(object, position, 500, 2000);
-
-        // if (adjustedPosition) {
-
-        //     position = adjustedPosition;
-        // }
-        // else {
-        //     position = point
-        // }
-
-        /**Добавляем объект на сцену  */
-
-        // object.position.copy(position);
-        // object.updateMatrixWorld(true)
-        scene.add(object);
-        // object.applyMatrix4(object.matrixWorld)
-        console.log(object)
-
-        const adjustedPosition = roomManager.adjustPositionWithRaycasting(object, position, 500, 2000);
-
-        position = adjustedPosition ?? position
-
-        object.position.copy(position);
+        object.position.copy(point);
         // object.rotation.copy(rotation)
-        // object.applyMatrix4(object.matrixWorld)
+        object.matrixAutoUpdate = false;
+
+        object.updateMatrix()
+        object.userData.obb.applyMatrix4(object.matrixWorld)
+
+        scene.add(object);
+
+        // let adjustedPosition = roomManager.adjustPositionWithRaycasting(
+        //     {
+        //         object,
+        //         targetPosition: point,
+        //         wall
+        //     })
+
+        let adjustedPosition = positionEmpty && rotationEmpty ? roomManager.adjustPositionWithRaycasting(
+            {
+                object,
+                targetPosition: point,
+                wall
+            }) : { position, rotation }
+
+        object.position.copy(adjustedPosition.position);
+        object.rotation.copy(adjustedPosition.rotation)
+
+        object.updateMatrix()
+        object.userData.obb.applyMatrix4(object.matrixWorld)
 
 
         object.userData.PROPS.CONFIG.POSITION = object.position.clone();
         object.userData.PROPS.CONFIG.ROTATION = object.rotation.clone();
 
-        // object.userData.PROPS.ARROWS.traverse((child: any) => {
-        //     if (child.name !== 'ARROW_SIZE') return
-        //     child.position.set(...child.userData.translate)
-        // })
+        console.log(object)
+
 
 
         /** Добавляем объект в RoomContant для последующего использования */
@@ -126,9 +90,6 @@ export default class SetObject {
             boxHelper.addBoxHelper(object);
             return
         }
-
-        boxHelper.removeBoxHelper();
-        boxHelper.addBoxHelper(object);
     }
 
     isEmpty(obj: {}) {
