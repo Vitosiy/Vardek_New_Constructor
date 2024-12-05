@@ -3,11 +3,15 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 import {
-  PlannerObject
+  PlannerObject,
+  Vector2
 } from "@/types/constructor2d/interfaсes";
 
 import { 
-  getRectPoints
+  getRectPoints,
+  getRectPointsV2,
+  getDistanceBetweenVectors,
+  getAngleBetweenVectors
 } from "@/Constructor2D/utils/Math";
 
 import { configWall } from "@/store/constructor2d/data/usePlannerData";
@@ -37,6 +41,7 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     item.height = config.height;
     
     objects.value.push(item);
+    
   };
 
   const removeObj = (index: number) => {
@@ -47,9 +52,55 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     }
   };
 
+  const setNewPointPosition = (id: number | string, indexPoint: number, position: Vector2) => {
+
+    // Находим объект по id
+    const targetObject = objects.value.find(obj => obj.id === id);
+
+    if (!targetObject) {
+      console.warn(`Object с id ${id} не найден.`);
+      return;
+    }
+
+    // Проверяем, что индекс точки корректен
+    if (!targetObject.points || indexPoint < 0 || indexPoint >= targetObject.points.length) {
+      console.warn(`Индекс точки ${indexPoint} выходит за границы массива.`);
+      return;
+    }
+
+    const distance = getDistanceBetweenVectors(position, targetObject.points[1]);
+    targetObject.angleDegrees = getAngleBetweenVectors(
+      position, 
+      {
+        x: position.x + distance,
+        y: position.y
+      },
+      targetObject.points[1]
+    );
+    
+    targetObject.position = position;
+    targetObject.width = distance;
+
+    const points = getRectPointsV2(
+      targetObject.width,
+      targetObject.height,
+      position,
+      targetObject.heightDirection,
+      targetObject.angleDegrees
+    );
+
+    // Обновляем точку
+    targetObject.points[0] = position;
+    targetObject.points[1] = points[1];
+    targetObject.points[2] = points[2];
+    targetObject.points[3] = points[3];
+    
+  }
+
   return {
     objects,
     addObj,
     removeObj,
+    setNewPointPosition,
   };
 });

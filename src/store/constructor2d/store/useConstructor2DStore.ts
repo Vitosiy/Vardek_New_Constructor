@@ -49,8 +49,8 @@ export const useConstructor2DStore = defineStore('constructor2DStore', {
     },
 
     originOfCoordinates: {
-      x: 30,
-      y: 30
+      x: 0,
+      y: 0
     },
 
     segment: {
@@ -89,5 +89,12 @@ export const useConstructor2DStore = defineStore('constructor2DStore', {
     }
     
   },
+
+  getters: {
+    // Добавляем геттер для originOfCoordinates
+    getOriginOfCoordinates: (state) => {
+      return state.originOfCoordinates;
+    }
+  }
   
 });

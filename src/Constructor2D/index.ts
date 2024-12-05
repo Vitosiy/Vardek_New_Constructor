@@ -3,10 +3,15 @@ import * as PIXI from 'pixi.js';
 import Grid from "./CanvasComponents/Grid";
 import Rulers from "./CanvasComponents/Rulers";
 import Planner from "./CanvasComponents/Planner";
+import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
+import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
+import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
 
+/*
 import {
   DropData
 } from "@/types/constructor2d/interfaсes";
+*/
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import {
@@ -15,8 +20,11 @@ import {
 
 interface Components {
   grid: Grid | null;
-  rulers: Rulers | null;
+  arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
+  sizeTextActiveObject: SizeTextActiveObject | null;
+  startPointActiveObject: StartPointActiveObject | null;
+  rulers: Rulers | null;
 }
 
 export default class Constructor2D {
@@ -26,8 +34,11 @@ export default class Constructor2D {
   private app2d: PIXI.Application | null = null;
   private components: Components = {
     grid: null,
-    rulers: null,
+    arrowRulerActiveObject: null,
     planner: null,
+    sizeTextActiveObject: null,
+    startPointActiveObject: null,
+    rulers: null,
   };
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
@@ -68,9 +79,15 @@ export default class Constructor2D {
 
     // добавляем компонент сетки
     this.components.grid ??= new Grid(this.app2d!);
+
+    this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
     
     // добавляем компонент для рисования планировок
     this.components.planner ??= new Planner(this.app2d!);
+
+    this.components.sizeTextActiveObject ??= new SizeTextActiveObject(this.app2d!);
+
+    this.components.startPointActiveObject ??= new StartPointActiveObject(this.app2d!);
     
     // добавляем компонент для отображения линеек
     this.components.rulers ??= new Rulers(this.app2d!);
@@ -83,7 +100,7 @@ export default class Constructor2D {
     }
   }
 
-  public addDoor(data: DropData): void {
+  public addDoor(/*data: DropData*/): void {
 
     if(!this.components.planner) return;
 
@@ -114,9 +131,10 @@ export default class Constructor2D {
   
     if (!stage) return;
   
-    stage.on('rightdown', this.onRightDown.bind(this));
-    stage.on('rightup', this.onRightUp.bind(this));
-    stage.on('pointermove', this.onPointerMove.bind(this));
+    stage
+      .on('rightdown', this.onRightDown.bind(this))
+      .on('rightup', this.onRightUp.bind(this))
+      .on('pointermove', this.onPointerMove.bind(this));
   }
 
   private removeInteractions(): void {
@@ -125,9 +143,10 @@ export default class Constructor2D {
     if (!stage) return;
 
     // Удаляем все обработчики обработчики
-    stage.off('rightdown');
-    stage.off('rightup');
-    stage.off('pointermove');
+    stage
+      .off('rightdown')
+      .off('rightup')
+      .off('pointermove');
   }
 
   private onRightDown(e: PIXI.FederatedPointerEvent): void {
