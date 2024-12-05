@@ -109,8 +109,10 @@ export default class ArrowRulerActiveObject {
   }
 
   public draw(obj: PlannerObject): void {
+
+    if(!obj.points) return;
     
-    const position = obj.position;
+    const position = obj.points[0];
 
     this.xArrow.clear();
     this.xText.text = "";

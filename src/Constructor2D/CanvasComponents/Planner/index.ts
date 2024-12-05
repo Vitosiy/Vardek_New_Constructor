@@ -114,6 +114,15 @@ export default class Planner {
 
     this.container.addChild(containers.root);
 
+    // containers.maskWall.eventMode = 'static';
+    // containers.bodyWall.eventMode = 'static';
+    // containers.lineWall.eventMode = 'static';
+    // containers.startPoint.eventMode = 'static';
+    // containers.endPoint.eventMode = 'static';
+    // containers.normalIndicator.eventMode = 'static';
+    // containers.textWallWidth.eventMode = 'static';
+    // containers.textWallLength.eventMode = 'static';
+
     containers.root.addChild(
       containers.maskWall,
       containers.bodyWall,

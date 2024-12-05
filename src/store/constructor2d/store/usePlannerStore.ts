@@ -3,7 +3,8 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 import {
-  PlannerObject
+  PlannerObject,
+  Vector2
 } from "@/types/constructor2d/interfaсes";
 
 import { 
@@ -48,9 +49,33 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     }
   };
 
+  const setNewPointPosition = (id: number | string, indexPoint: number, position: Vector2) => {
+
+    // Находим объект по id
+    const targetObject = objects.value.find(obj => obj.id === id);
+
+    if (!targetObject) {
+      console.warn(`Object с id ${id} не найден.`);
+      return;
+    }
+
+    // Проверяем, что индекс точки корректен
+    if (!targetObject.points || indexPoint < 0 || indexPoint >= targetObject.points.length) {
+      console.warn(`Индекс точки ${indexPoint} выходит за границы массива.`);
+      return;
+    }
+
+    // Обновляем точку
+    targetObject.points[indexPoint] = position;
+
+    console.log(targetObject.points[indexPoint]);
+    
+  }
+
   return {
     objects,
     addObj,
     removeObj,
+    setNewPointPosition,
   };
 });

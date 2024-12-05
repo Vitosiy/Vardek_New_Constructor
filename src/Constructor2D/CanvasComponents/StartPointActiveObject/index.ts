@@ -1,5 +1,6 @@
 import {
-  watch
+  watch,
+  ref
 } from 'vue';
 import * as PIXI from 'pixi.js';
 // import { useGridStore } from '@/store/constructor2d/store/useGridStore';
@@ -38,6 +39,9 @@ export default class StartPointActiveObject {
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
 
+  private downMouse: boolean = false;
+  private activeObject = ref<number | string>(0);
+
   constructor(pixiApp: PIXI.Application) {
 
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -47,7 +51,11 @@ export default class StartPointActiveObject {
     this.app.stage.addChild(this.container);
 
     this.circle = new PIXI.Graphics();
+
+    this.circle.eventMode = 'static';
     this.container.addChild(this.circle);
+
+    this.setupInteractions();
 
     watch(
       () => this.plannerStore.objects,
@@ -83,8 +91,12 @@ export default class StartPointActiveObject {
   }
 
   public draw(obj: PlannerObject): void {
+
+    if(!obj.points) return;
     
-    const position = obj.position;
+    const position = obj.points[0];
+
+    this.activeObject.value = obj.id;
 
     this.circle.clear();
 
@@ -101,12 +113,54 @@ export default class StartPointActiveObject {
     
   }
 
-}
+  private setupInteractions(): void {
 
-   // синяя точка
-  //  drawCircle(
-  //   this.activeObjectGraphic,
-  //   position,
-  //   12, 
-  //   configWall.color.mediumBlue
-  // );
+    // если нажали на точку стены
+    this.circle.on('pointerdown', this.handleMouseDown.bind(this));
+    
+    // если отпустили кнопку на точке стены
+    this.circle.on('pointerup', this.handleMouseUp.bind(this));
+
+    // если перемещаем курсор с нажатой кнопкой 
+    this.app.stage.on('pointermove', this.handleMouseMove.bind(this));
+
+  }
+
+  private handleMouseDown(e: PIXI.FederatedPointerEvent): void {
+
+    e.preventDefault();
+
+    this.downMouse = true;
+    
+  }
+
+  private handleMouseUp (e: PIXI.FederatedPointerEvent): void {
+
+    e.preventDefault();
+
+    this.downMouse = false;
+    
+  }
+
+  private handleMouseMove (e: PIXI.FederatedPointerEvent): void {
+
+    e.preventDefault();
+    
+    if(this.downMouse){
+
+      const co = this.constructorStore.getOriginOfCoordinates;
+
+      this.plannerStore.setNewPointPosition(
+        this.activeObject.value,
+        0,
+        {
+          x: e.data.global.x - co.x - 30,
+          y: e.data.global.y - co.y - 30
+        }
+      );
+      
+    }
+    
+  }
+
+}
