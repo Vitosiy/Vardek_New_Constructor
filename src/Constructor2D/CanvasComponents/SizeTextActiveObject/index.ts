@@ -37,6 +37,7 @@ export default class SizeTextActiveObject {
   private widthLine: PIXI.Graphics;
   private widthText: PIXI.Text;
   private heightText: PIXI.Text;
+  private heightTextContainer: PIXI.Container;
   
   // private gridStore = useGridStore();
   // private rulerStore = useRulers2DStore();
@@ -70,7 +71,9 @@ export default class SizeTextActiveObject {
         fill: configWall.color.arrowHeadWall, // Цвет текста метки
       }
     });
-    this.container.addChild(this.heightText);
+    this.heightTextContainer = new PIXI.Container();
+    this.heightTextContainer.addChild(this.heightText);
+    this.container.addChild(this.heightTextContainer);
 
     watch(
       () => this.plannerStore.objects,
@@ -111,10 +114,18 @@ export default class SizeTextActiveObject {
     this.widthText.text = "";
     this.heightText.text = "";
 
-    this.widthText.text = `${Math.round(obj.height)} см`;
-    this.widthText.x = obj.position.x + obj.width + 40;
-    this.widthText.y = obj.position.y + 6;
-    this.widthText.rotation = MathUtils.degToRad(obj.angleDegrees);
+    this.heightText.text = `${Math.round(obj.height)} см`;
+
+    if(obj.points){
+      this.heightText.x = 10;
+      this.heightText.y = -24;
+    }
+
+    if(obj.points){
+      this.heightTextContainer.x = obj.points[1].x + 30;
+      this.heightTextContainer.y = obj.points[1].y + 30;
+      this.heightTextContainer.rotation = MathUtils.degToRad(obj.angleDegrees);
+    }
 
     { // рисуем линию длины стены
 
