@@ -205,7 +205,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
           configWall.color.arrowHeadWall, // Цвет стрелки
           1, // Толщина линии
-          12 // Размер треугольника (основание и высота)
+          12, // Размер треугольника (основание и высота)
+          true
         );
 
         // рисуем указатель внутренне стороны стены (стрелка без линии)
@@ -218,7 +219,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          true // не очищаем графику
+          false // не очищаем графику
         );
 
         // рисуем указатель начала стены (стрелка без линии)
@@ -270,6 +271,8 @@ export default class Planner {
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
+        /*
+        */
         
       }
 
