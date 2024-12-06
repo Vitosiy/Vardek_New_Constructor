@@ -95,7 +95,7 @@ export default class StartPointActiveObject {
 
     if(!obj.points) return;
     
-    const position = obj.points[0];
+    const position = obj.points[1];
 
     this.activeObject.value = obj.id;
 
@@ -155,7 +155,7 @@ export default class StartPointActiveObject {
 
       this.plannerStore.setNewPointPosition(
         this.activeObject.value,
-        0,
+        1,
         {
           x: e.data.global.x - co.x - 30,
           y: e.data.global.y - co.y - 30
