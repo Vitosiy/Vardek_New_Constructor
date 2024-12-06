@@ -7,6 +7,7 @@ import * as PIXI from 'pixi.js';
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 
 import {
   PlannerObject,
@@ -38,8 +39,8 @@ export default class StartPointActiveObject {
   // private rulerStore = useRulers2DStore();
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
+  private interactiveWallStore = useC2DInteractiveWallStore();
 
-  private downMouse: boolean = false;
   private activeObject = ref<number | string>(0);
 
   constructor(pixiApp: PIXI.Application) {
@@ -130,7 +131,8 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
 
-    this.downMouse = true;
+    this.interactiveWallStore.setStatusRightDownMouse(true);
+    // this.downMouse = true;
     
   }
 
@@ -138,7 +140,8 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
 
-    this.downMouse = false;
+    this.interactiveWallStore.setStatusRightDownMouse(false);
+    // this.downMouse = false;
     
   }
 
@@ -146,7 +149,7 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
     
-    if(this.downMouse){
+    if(this.interactiveWallStore.statusRightDownMouse){
 
       const co = this.constructorStore.getOriginOfCoordinates;
 
