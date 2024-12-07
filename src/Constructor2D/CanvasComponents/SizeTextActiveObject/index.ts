@@ -110,6 +110,8 @@ export default class SizeTextActiveObject {
 
   public draw(obj: PlannerObject): void {
 
+    this.container.visible = true;
+
     this.widthLine.clear();
     this.widthText.text = "";
     this.heightText.text = "";
@@ -156,6 +158,12 @@ export default class SizeTextActiveObject {
     this.xText.y = ((distanceY + 30) / 2) + (this.xText.width / 2);
     this.xText.rotation = MathUtils.degToRad(rotateDegY);
     */
+    
+  }
+
+  public clearGraphic(): void{
+
+    this.container.visible = false;
     
   }
 

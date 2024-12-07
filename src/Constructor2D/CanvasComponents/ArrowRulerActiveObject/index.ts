@@ -114,6 +114,8 @@ export default class ArrowRulerActiveObject {
     
     const position = obj.points[0];
 
+    this.container.visible = true;
+
     this.xArrow.clear();
     this.xText.text = "";
     this.yArrow.clear();
@@ -154,6 +156,12 @@ export default class ArrowRulerActiveObject {
     this.yText.text = `${Math.round(distanceX * 10)} см`;
     this.yText.y = position.y - 24;
     this.yText.x = ((distanceX - 30) / 2) + (this.yText.width / 2);
+    
+  }
+
+  public clearGraphic(): void{
+
+    this.container.visible = false;
     
   }
 

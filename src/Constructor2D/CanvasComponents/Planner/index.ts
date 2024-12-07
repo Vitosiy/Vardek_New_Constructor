@@ -112,11 +112,11 @@ export default class Planner {
       normalIndicator: new PIXI.Graphics(),
       textWallWidth: new PIXI.Text(),
       textWallLength: new PIXI.Text(),
+      eventGraphic: new PIXI.Graphics(),
     };
 
     this.container.addChild(containers.root);
 
-    // containers.maskWall.eventMode = 'static';
     // containers.bodyWall.eventMode = 'static';
     // containers.lineWall.eventMode = 'static';
     // containers.startPoint.eventMode = 'static';
@@ -124,6 +124,8 @@ export default class Planner {
     // containers.normalIndicator.eventMode = 'static';
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
+    containers.eventGraphic.eventMode = 'static';
+    containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this));
 
     containers.root.addChild(
       containers.maskWall,
@@ -133,7 +135,8 @@ export default class Planner {
       containers.endPoint,
       containers.normalIndicator,
       containers.textWallWidth,
-      containers.textWallLength
+      containers.textWallLength,
+      containers.eventGraphic,
     );
 
     return { id: data.id, containers };
@@ -159,7 +162,7 @@ export default class Planner {
     const { containers } = obj;
 
     if(data.points){
-    
+      
       // рисуем маску для wallBody
       if(containers.maskWall){
         rect(
@@ -193,7 +196,6 @@ export default class Planner {
         drawDashedOutline(containers.bodyWall, data.points);
         
       }
-
 
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
@@ -271,15 +273,35 @@ export default class Planner {
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
-        /*
-        */
         
+      }
+    
+      if(containers.eventGraphic){
+        rect(
+          containers.eventGraphic,
+          {
+            points: data.points,
+            heightDirection: data.heightDirection,
+            color: "rgba(255,255,255,0)" //configWall.color.background // Цвет заливки
+          }
+        );
       }
 
       this.activeObject = data.id;
 
     }
     
+  }
+
+  private handlerEventGraphic(e:PIXI.FederatedPointerEvent):void {
+
+    e.preventDefault();
+
+    // 1. Делаем активным объект, рисуем элементы активного объекта
+    console.log("click wall object", true);
+
+    e.stopPropagation(); // Останавливаем всплытие события
+
   }
 
   destroy(): void {

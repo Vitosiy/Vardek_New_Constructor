@@ -41,8 +41,6 @@ export default class StartPointActiveObject {
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
 
-  // private activeObject = ref<number | string>(0);
-
   constructor(pixiApp: PIXI.Application) {
 
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -94,6 +92,8 @@ export default class StartPointActiveObject {
   public draw(obj: PlannerObject): void {
 
     if(!obj.points) return;
+
+    this.container.visible = true;
     
     const position = obj.points[0];
 
@@ -116,11 +116,11 @@ export default class StartPointActiveObject {
 
   private setupInteractions(): void {
 
-    // если нажали на точку стены
-    this.circle.on('pointerdown', this.handleMouseDown.bind(this));
-    
-    // если отпустили кнопку на точке стены
-    this.circle.on('pointerup', this.handleMouseUp.bind(this));
+    this.circle
+      // если нажали на точку стены
+      .on('pointerdown', this.handleMouseDown.bind(this))
+      // если отпустили кнопку на точке стены
+      .on('pointerup', this.handleMouseUp.bind(this));
 
     // если перемещаем курсор с нажатой кнопкой 
     this.app.stage.on('pointermove', this.handleMouseMove.bind(this));
@@ -131,8 +131,9 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
 
-    this.interactiveWallStore.setStatusRightDownMouse(true);
-    // this.downMouse = true;
+    this.interactiveWallStore.setStatusLeftDownMouse(true);
+
+    e.stopPropagation(); // Останавливаем всплытие события
     
   }
 
@@ -140,8 +141,9 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
 
-    this.interactiveWallStore.setStatusRightDownMouse(false);
-    // this.downMouse = false;
+    this.interactiveWallStore.setStatusLeftDownMouse(false);
+    
+    e.stopPropagation(); // Останавливаем всплытие события
     
   }
 
@@ -149,7 +151,7 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
     
-    if(this.interactiveWallStore.statusRightDownMouse){
+    if(this.interactiveWallStore.statusLeftDownMouse){
 
       const co = this.constructorStore.getOriginOfCoordinates;
 
@@ -163,6 +165,14 @@ export default class StartPointActiveObject {
       );
       
     }
+    
+    e.stopPropagation(); // Останавливаем всплытие события
+    
+  }
+
+  public clearGraphic(): void{
+
+    this.container.visible = false;
     
   }
 
