@@ -41,7 +41,7 @@ export default class StartPointActiveObject {
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
 
-  private activeObject = ref<number | string>(0);
+  // private activeObject = ref<number | string>(0);
 
   constructor(pixiApp: PIXI.Application) {
 
@@ -95,9 +95,9 @@ export default class StartPointActiveObject {
 
     if(!obj.points) return;
     
-    const position = obj.points[1];
+    const position = obj.points[0];
 
-    this.activeObject.value = obj.id;
+    this.interactiveWallStore.setActiveObjectID(obj.id);
 
     this.circle.clear();
 
@@ -154,8 +154,8 @@ export default class StartPointActiveObject {
       const co = this.constructorStore.getOriginOfCoordinates;
 
       this.plannerStore.setNewPointPosition(
-        this.activeObject.value,
-        1,
+        this.interactiveWallStore.activeObjectID,
+        0,
         {
           x: e.data.global.x - co.x - 30,
           y: e.data.global.y - co.y - 30
