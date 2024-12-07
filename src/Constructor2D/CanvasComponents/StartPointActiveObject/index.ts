@@ -26,6 +26,7 @@ import {
   // drawArrow,
   // drawArrowHead,
   drawCircle,
+  rectV2,
 } from "../../utils/Shape";
 
 export default class StartPointActiveObject {
@@ -33,7 +34,11 @@ export default class StartPointActiveObject {
   private app: PIXI.Application;
   private container: PIXI.Container;
   
-  private circle: PIXI.Graphics;
+  private circleStartPoint: PIXI.Graphics;
+  private circleEndPoint: PIXI.Graphics;
+
+  private startPointRect: PIXI.Graphics;
+  private endPointRect: PIXI.Graphics;
   
   // private gridStore = useGridStore();
   // private rulerStore = useRulers2DStore();
@@ -49,10 +54,18 @@ export default class StartPointActiveObject {
     this.container = new PIXI.Container();
     this.app.stage.addChild(this.container);
 
-    this.circle = new PIXI.Graphics();
-
-    this.circle.eventMode = 'static';
-    this.container.addChild(this.circle);
+    this.circleStartPoint = new PIXI.Graphics();
+    this.circleStartPoint.eventMode = 'static';
+    this.container.addChild(this.circleStartPoint);
+    
+    this.circleEndPoint = new PIXI.Graphics();
+    this.circleEndPoint.eventMode = 'static';
+    this.container.addChild(this.circleEndPoint);
+    
+    this.startPointRect = new PIXI.Graphics();
+    this.container.addChild(this.startPointRect);
+    this.endPointRect = new PIXI.Graphics();
+    this.container.addChild(this.endPointRect);
 
     this.setupInteractions();
 
@@ -95,28 +108,76 @@ export default class StartPointActiveObject {
 
     this.container.visible = true;
     
-    const position = obj.points[0];
-
     this.interactiveWallStore.setActiveObjectID(obj.id);
 
-    this.circle.clear();
+    { // start point
+      const position = obj.points[0];
 
-    position.x += 30;
-    position.y += 30;
+      this.circleStartPoint.clear();
 
-    // синяя точка
-    drawCircle(
-      this.circle,
-      position,
-      12, 
-      configWall.color.mediumBlue
-    );
+      position.x += 30;
+      position.y += 30;
+
+      // синяя точка
+      drawCircle(
+        this.circleStartPoint,
+        position,
+        10, 
+        configWall.color.mediumBlue
+      );
+
+      this.startPointRect.visible = false;
+      rectV2(
+        this.startPointRect,
+        {
+          center: position, 
+          width: 10,
+          height: 10,
+          fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
+          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1         // Толщина линии обводки
+        }
+      );
+
+    }
+
+    { // end point
+
+      const position = obj.points[1];
+
+      this.circleEndPoint.clear();
+
+      position.x += 30;
+      position.y += 30;
+
+      // синяя точка
+      drawCircle(
+        this.circleEndPoint,
+        position,
+        10, 
+        configWall.color.mediumBlue
+      );
+
+      this.endPointRect.visible = false;
+      rectV2(
+        this.endPointRect,
+        {
+          center: position, 
+          width: 10,
+          height: 10,
+          fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
+          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1         // Толщина линии обводки
+        }
+      );
+      
+    }
     
   }
 
   private setupInteractions(): void {
 
-    this.circle
+    this.circleStartPoint
       // если нажали на точку стены
       .on('pointerdown', this.handleMouseDown.bind(this))
       // если отпустили кнопку на точке стены

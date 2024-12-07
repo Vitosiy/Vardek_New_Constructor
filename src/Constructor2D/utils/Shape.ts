@@ -35,6 +35,43 @@ function rect(graphic: PIXI.Graphics, data: RectData): PIXI.Graphics {
   
 }
 
+function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
+
+  /* data:
+  center: Vector2, 
+  width: number, 
+  height: number,
+  fillColor: number = 0xff0000, // Цвет заливки (по умолчанию красный)
+  lineColor: number = 0x000000, // Цвет обводки (по умолчанию чёрный)
+  lineWidth: number = 2         // Толщина линии обводки
+  */
+
+  if(data.width && data.height){
+  
+    // Вычисляем верхний левый угол из центра
+    const x = data.center.x - data.width / 2;
+    const y = data.center.y - data.height / 2;
+
+    // Очищаем графику перед рисованием (опционально)
+    graphic.clear();
+
+    // Рисуем прямоугольник
+    // graphic.beginFill(0xff0000); // Устанавливаем цвет заливки (например, красный)
+    graphic.rect(x, y, data.width, data.height); // Рисуем прямоугольник
+    if(data.lineColor){
+      graphic.stroke({
+        width: data.lineWidth ?? 1,
+        color: data.lineColor ?? "rgba(0,0,0,0)"
+      });
+    }
+    graphic.fill(data.fillColor ?? "rgba(0,0,0,0)");
+
+    return graphic;
+
+  }
+
+}
+
 function drawVerticalLines(
   graphics: PIXI.Graphics,
   startPoint: Vector2,
@@ -386,6 +423,7 @@ function line(
 
 export {
   rect,
+  rectV2,
   drawVerticalLines,
   drawDashedOutline,
   drawArrow,
