@@ -109,7 +109,6 @@ function goodItemDrag(e: DragEvent, id: string): void {
 </template>
 
 <style lang="scss" scoped>
-
 .options {
   width: 315px;
   flex-shrink: 0;
@@ -118,6 +117,11 @@ function goodItemDrag(e: DragEvent, id: string): void {
   background: #f6f5fa;
   transform-style: preserve-3d;
   z-index: 1;
+  -webkit-user-select: none; /* Safari и старые версии Chrome */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* Internet Explorer 10+ */
+  user-select: none;  
+  
   &__container {
     display: flex;
     flex-direction: column;
