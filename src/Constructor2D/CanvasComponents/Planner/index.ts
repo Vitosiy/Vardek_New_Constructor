@@ -6,6 +6,7 @@ import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 
 import {
   PlannerObject,
@@ -45,6 +46,7 @@ export default class Planner {
   private rulerStore = useRulers2DStore();
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
+  private interactiveWallStore = useC2DInteractiveWallStore();
 
   constructor(pixiApp: PIXI.Application) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -125,7 +127,7 @@ export default class Planner {
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
     containers.eventGraphic.eventMode = 'static';
-    containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this));
+    containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
       containers.maskWall,
@@ -287,18 +289,19 @@ export default class Planner {
         );
       }
 
-      this.activeObject = data.id;
+      this.interactiveWallStore.activeObjectID = data.id;
+      // this.activeObject = data.id;
 
     }
     
   }
 
-  private handlerEventGraphic(e:PIXI.FederatedPointerEvent):void {
+  private handlerEventGraphic(id: number | string, e:PIXI.FederatedPointerEvent):void {
 
     e.preventDefault();
 
-    // 1. Делаем активным объект, рисуем элементы активного объекта
-    console.log("click wall object", true);
+    // Найти объект по ID
+    this.interactiveWallStore.setActiveObjectID(id);
 
     e.stopPropagation(); // Останавливаем всплытие события
 

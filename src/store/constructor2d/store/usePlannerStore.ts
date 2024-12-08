@@ -1,6 +1,6 @@
-import * as PIXI from 'pixi.js';
+// import * as PIXI from 'pixi.js';
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 import {
   PlannerObject,
@@ -102,10 +102,16 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     
   }
 
+  // Добавляем геттер для получения объекта по id
+  const getObjectById = computed(() => {
+    return (id: number | string) => objects.value.find(obj => obj.id === id);
+  });
+
   return {
     objects,
     addObj,
     removeObj,
     setNewPointPosition,
+    getObjectById
   };
 });

@@ -57,8 +57,6 @@ export default class Constructor2D {
     watch (
       () => this.interactiveWallStore.activeObjectID,
       (newVal, oldVal) => {
-        
-        console.log(newVal, oldVal);
 
         if(newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse){
           if(this.components.startPointActiveObject) this.components.startPointActiveObject.clearGraphic();

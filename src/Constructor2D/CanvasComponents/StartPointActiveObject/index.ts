@@ -100,6 +100,19 @@ export default class StartPointActiveObject {
       { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
     );
 
+    watch (
+      () => this.interactiveWallStore.activeObjectID,
+      (newVal, oldVal) => {
+
+        if(newVal){
+          const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
+          this.interactiveWallStore.setActivePoint(0);
+          this.draw(obj);
+        }
+
+      }
+    );
+
   }
 
   public draw(obj: PlannerObject): void {
