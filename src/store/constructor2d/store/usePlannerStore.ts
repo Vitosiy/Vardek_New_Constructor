@@ -1,6 +1,6 @@
-import * as PIXI from 'pixi.js';
+// import * as PIXI from 'pixi.js';
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 import {
   PlannerObject,
@@ -68,39 +68,50 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
       return;
     }
 
-    const distance = getDistanceBetweenVectors(position, targetObject.points[1]);
+    const startPoint: Vector2 = indexPoint === 0 ? position : targetObject.points[0];
+    const endPoint: Vector2 = indexPoint === 0 ? targetObject.points[1] : position;
+
+    const distance = getDistanceBetweenVectors(startPoint, endPoint);
+
     targetObject.angleDegrees = getAngleBetweenVectors(
-      position, 
+      startPoint, 
       {
-        x: position.x + distance,
-        y: position.y
+        x: startPoint.x + distance,
+        y: startPoint.y
       },
-      targetObject.points[1]
+      endPoint //targetObject.points[1]
     );
     
-    targetObject.position = position;
+    if(indexPoint === 0) targetObject.position = position;
     targetObject.width = distance;
 
     const points = getRectPointsV2(
-      targetObject.width,
+      distance,
       targetObject.height,
-      position,
+      startPoint,
+      endPoint,
       targetObject.heightDirection,
       targetObject.angleDegrees
     );
 
     // Обновляем точку
-    targetObject.points[0] = position;
+    targetObject.points[0] = startPoint;
     targetObject.points[1] = points[1];
     targetObject.points[2] = points[2];
     targetObject.points[3] = points[3];
     
   }
 
+  // Добавляем геттер для получения объекта по id
+  const getObjectById = computed(() => {
+    return (id: number | string) => objects.value.find(obj => obj.id === id);
+  });
+
   return {
     objects,
     addObj,
     removeObj,
     setNewPointPosition,
+    getObjectById
   };
 });

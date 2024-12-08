@@ -6,6 +6,7 @@ import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 
 import {
   PlannerObject,
@@ -45,6 +46,7 @@ export default class Planner {
   private rulerStore = useRulers2DStore();
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
+  private interactiveWallStore = useC2DInteractiveWallStore();
 
   constructor(pixiApp: PIXI.Application) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -112,11 +114,11 @@ export default class Planner {
       normalIndicator: new PIXI.Graphics(),
       textWallWidth: new PIXI.Text(),
       textWallLength: new PIXI.Text(),
+      eventGraphic: new PIXI.Graphics(),
     };
 
     this.container.addChild(containers.root);
 
-    // containers.maskWall.eventMode = 'static';
     // containers.bodyWall.eventMode = 'static';
     // containers.lineWall.eventMode = 'static';
     // containers.startPoint.eventMode = 'static';
@@ -124,6 +126,8 @@ export default class Planner {
     // containers.normalIndicator.eventMode = 'static';
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
+    containers.eventGraphic.eventMode = 'static';
+    containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
       containers.maskWall,
@@ -133,7 +137,8 @@ export default class Planner {
       containers.endPoint,
       containers.normalIndicator,
       containers.textWallWidth,
-      containers.textWallLength
+      containers.textWallLength,
+      containers.eventGraphic,
     );
 
     return { id: data.id, containers };
@@ -159,7 +164,7 @@ export default class Planner {
     const { containers } = obj;
 
     if(data.points){
-    
+      
       // рисуем маску для wallBody
       if(containers.maskWall){
         rect(
@@ -194,7 +199,6 @@ export default class Planner {
         
       }
 
-
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
 
@@ -205,7 +209,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
           configWall.color.arrowHeadWall, // Цвет стрелки
           1, // Толщина линии
-          12 // Размер треугольника (основание и высота)
+          12, // Размер треугольника (основание и высота)
+          true
         );
 
         // рисуем указатель внутренне стороны стены (стрелка без линии)
@@ -218,7 +223,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          true // не очищаем графику
+          false // не очищаем графику
         );
 
         // рисуем указатель начала стены (стрелка без линии)
@@ -272,11 +277,34 @@ export default class Planner {
         );
         
       }
+    
+      if(containers.eventGraphic){
+        rect(
+          containers.eventGraphic,
+          {
+            points: data.points,
+            heightDirection: data.heightDirection,
+            color: "rgba(255,255,255,0)" //configWall.color.background // Цвет заливки
+          }
+        );
+      }
 
-      this.activeObject = data.id;
+      this.interactiveWallStore.activeObjectID = data.id;
+      // this.activeObject = data.id;
 
     }
     
+  }
+
+  private handlerEventGraphic(id: number | string, e:PIXI.FederatedPointerEvent):void {
+
+    e.preventDefault();
+
+    // Найти объект по ID
+    this.interactiveWallStore.setActiveObjectID(id);
+
+    e.stopPropagation(); // Останавливаем всплытие события
+
   }
 
   destroy(): void {

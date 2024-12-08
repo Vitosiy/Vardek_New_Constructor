@@ -7,6 +7,7 @@ import * as PIXI from 'pixi.js';
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 
 import {
   PlannerObject,
@@ -25,6 +26,7 @@ import {
   // drawArrow,
   // drawArrowHead,
   drawCircle,
+  rectV2,
 } from "../../utils/Shape";
 
 export default class StartPointActiveObject {
@@ -32,15 +34,17 @@ export default class StartPointActiveObject {
   private app: PIXI.Application;
   private container: PIXI.Container;
   
-  private circle: PIXI.Graphics;
+  private circleStartPoint: PIXI.Graphics;
+  private circleEndPoint: PIXI.Graphics;
+
+  private startPointRect: PIXI.Graphics;
+  private endPointRect: PIXI.Graphics;
   
   // private gridStore = useGridStore();
   // private rulerStore = useRulers2DStore();
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
-
-  private downMouse: boolean = false;
-  private activeObject = ref<number | string>(0);
+  private interactiveWallStore = useC2DInteractiveWallStore();
 
   constructor(pixiApp: PIXI.Application) {
 
@@ -49,11 +53,19 @@ export default class StartPointActiveObject {
     this.app = pixiApp;
     this.container = new PIXI.Container();
     this.app.stage.addChild(this.container);
+    
+    this.startPointRect = new PIXI.Graphics();
+    this.container.addChild(this.startPointRect);
+    this.endPointRect = new PIXI.Graphics();
+    this.container.addChild(this.endPointRect);
 
-    this.circle = new PIXI.Graphics();
-
-    this.circle.eventMode = 'static';
-    this.container.addChild(this.circle);
+    this.circleStartPoint = new PIXI.Graphics();
+    this.circleStartPoint.eventMode = 'static';
+    this.container.addChild(this.circleStartPoint);
+    
+    this.circleEndPoint = new PIXI.Graphics();
+    this.circleEndPoint.eventMode = 'static';
+    this.container.addChild(this.circleEndPoint);
 
     this.setupInteractions();
 
@@ -88,49 +100,130 @@ export default class StartPointActiveObject {
       { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
     );
 
+    watch (
+      () => this.interactiveWallStore.activeObjectID,
+      (newVal, oldVal) => {
+
+        if(newVal){
+          const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
+          this.interactiveWallStore.setActivePoint(0);
+          this.draw(obj);
+        }
+
+      }
+    );
+
   }
 
   public draw(obj: PlannerObject): void {
 
     if(!obj.points) return;
+
+    this.container.visible = true;
     
-    const position = obj.points[0];
+    this.interactiveWallStore.setActiveObjectID(obj.id);
 
-    this.activeObject.value = obj.id;
+    { // start point
+      const position = obj.points[0];
 
-    this.circle.clear();
+      this.circleStartPoint.clear();
 
-    position.x += 30;
-    position.y += 30;
+      position.x += 30;
+      position.y += 30;
 
-    // синяя точка
-    drawCircle(
-      this.circle,
-      position,
-      12, 
-      configWall.color.mediumBlue
-    );
+      if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 0){
+        this.startPointRect.visible = true;
+      }else{
+        this.startPointRect.visible = false;
+      }
+      rectV2(
+        this.startPointRect,
+        {
+          center: position, 
+          width: 10,
+          height: 10,
+          // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
+          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1         // Толщина линии обводки
+        }
+      );
+
+      // синяя точка
+      drawCircle(
+        this.circleStartPoint,
+        position,
+        10, 
+        configWall.color.mediumBlue
+      );
+
+    }
+
+    { // end point
+
+      const position = obj.points[1];
+
+      this.circleEndPoint.clear();
+
+      position.x += 30;
+      position.y += 30;
+
+      if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 1){
+        this.endPointRect.visible = true;
+      }else{
+        this.endPointRect.visible = false;
+      }
+      rectV2(
+        this.endPointRect,
+        {
+          center: position, 
+          width: 10,
+          height: 10,
+          // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
+          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1         // Толщина линии обводки
+        }
+      );
+
+      // синяя точка
+      drawCircle(
+        this.circleEndPoint,
+        position,
+        10, 
+        "rgba(255,0,0,0.0)"
+      );
+      
+    }
     
   }
 
   private setupInteractions(): void {
 
-    // если нажали на точку стены
-    this.circle.on('pointerdown', this.handleMouseDown.bind(this));
-    
-    // если отпустили кнопку на точке стены
-    this.circle.on('pointerup', this.handleMouseUp.bind(this));
+    this.circleStartPoint
+      // если нажали на точку стены
+      .on('pointerdown', this.handleMouseDown.bind(this, 0))
+      // если отпустили кнопку на точке стены
+      .on('pointerup', this.handleMouseUp.bind(this));
+
+    this.circleEndPoint
+      // если нажали на точку стены
+      .on('pointerdown', this.handleMouseDown.bind(this, 1))
+      // если отпустили кнопку на точке стены
+      .on('pointerup', this.handleMouseUp.bind(this));
 
     // если перемещаем курсор с нажатой кнопкой 
     this.app.stage.on('pointermove', this.handleMouseMove.bind(this));
 
   }
 
-  private handleMouseDown(e: PIXI.FederatedPointerEvent): void {
+  private handleMouseDown(indexPoint: number, e: PIXI.FederatedPointerEvent): void {
 
     e.preventDefault();
 
-    this.downMouse = true;
+    this.interactiveWallStore.setActivePoint(indexPoint);
+    this.interactiveWallStore.setStatusLeftDownMouse(true);
+    this.handleMouseMove(e);
+
+    e.stopPropagation(); // Останавливаем всплытие события
     
   }
 
@@ -138,7 +231,9 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
 
-    this.downMouse = false;
+    this.interactiveWallStore.setStatusLeftDownMouse(false);
+    
+    e.stopPropagation(); // Останавливаем всплытие события
     
   }
 
@@ -146,20 +241,28 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
     
-    if(this.downMouse){
-
+    if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
+      
       const co = this.constructorStore.getOriginOfCoordinates;
 
       this.plannerStore.setNewPointPosition(
-        this.activeObject.value,
-        0,
+        this.interactiveWallStore.activeObjectID,
+        this.interactiveWallStore.activePoint,
         {
           x: e.data.global.x - co.x - 30,
           y: e.data.global.y - co.y - 30
         }
       );
-      
+
     }
+    
+    e.stopPropagation(); // Останавливаем всплытие события
+    
+  }
+
+  public clearGraphic(): void{
+
+    this.container.visible = false;
     
   }
 

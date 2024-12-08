@@ -1,3 +1,7 @@
+import {
+  watch,
+  ref
+} from 'vue';
 import * as PIXI from 'pixi.js';
 
 import Grid from "./CanvasComponents/Grid";
@@ -14,6 +18,7 @@ import {
 */
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
@@ -42,11 +47,25 @@ export default class Constructor2D {
   };
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
+  private interactiveWallStore = useC2DInteractiveWallStore();
 
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
 
     this.container = container;
     this.canvas = canvas;
+
+    watch (
+      () => this.interactiveWallStore.activeObjectID,
+      (newVal, oldVal) => {
+
+        if(newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse){
+          if(this.components.startPointActiveObject) this.components.startPointActiveObject.clearGraphic();
+          if(this.components.arrowRulerActiveObject) this.components.arrowRulerActiveObject.clearGraphic();
+          if(this.components.sizeTextActiveObject) this.components.sizeTextActiveObject.clearGraphic();
+        }
+
+      }
+    );
 
   }
 
@@ -132,6 +151,7 @@ export default class Constructor2D {
     if (!stage) return;
   
     stage
+      .on('pointerup', this.onClick.bind(this))
       .on('rightdown', this.onRightDown.bind(this))
       .on('rightup', this.onRightUp.bind(this))
       .on('pointermove', this.onPointerMove.bind(this));
@@ -144,9 +164,23 @@ export default class Constructor2D {
 
     // Удаляем все обработчики обработчики
     stage
+      .off('click')
       .off('rightdown')
       .off('rightup')
       .off('pointermove');
+  }
+
+  private onClick(e: PIXI.FederatedPointerEvent): void {
+
+    e.preventDefault();
+
+    if(!this.app2d) return;
+
+    if(!this.interactiveWallStore.statusLeftDownMouse){
+      // 1. тут нужно отменить выбор объекта
+      this.interactiveWallStore.setActiveObjectID(0);
+    }
+
   }
 
   private onRightDown(e: PIXI.FederatedPointerEvent): void {

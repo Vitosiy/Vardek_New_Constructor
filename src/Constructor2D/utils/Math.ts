@@ -8,6 +8,7 @@ function calculateMouseDistanceByAxes(previous: Vector2, current: Vector2): { di
 
   return { distanceX, distanceY };
 }
+
 function getRectPoints(
   width: number,
   height: number,
@@ -60,6 +61,7 @@ function getRectPointsV2(
   width: number,
   height: number,
   startPoint: Vector2,
+  endPoint: Vector2,
   heightDirection: 1 | -1 = 1,
   angleDegrees: number = 0
 ): [Vector2, Vector2, Vector2, Vector2] {
@@ -107,31 +109,31 @@ function getDistanceBetweenVectors(vecA: Vector2, vecB: Vector2): number {
 }
 
 function getAngleBetweenVectors(center: Vector2, start: Vector2, end: Vector2): number {
-    // Создаём векторы
-    const v1 = { x: start.x - center.x, y: start.y - center.y };
-    const v2 = { x: end.x - center.x, y: end.y - center.y };
-  
-    // Скалярное произведение
-    const dot = v1.x * v2.x + v1.y * v2.y;
-  
-    // Длины векторов
-    const magnitudeV1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
-    const magnitudeV2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
-  
-    // Проверка на нулевые длины векторов
-    if (magnitudeV1 === 0 || magnitudeV2 === 0) {
-      throw new Error("Один из векторов имеет нулевую длину.");
-    }
-  
-    // Определитель
-    const det = v1.x * v2.y - v1.y * v2.x;
-  
-    // Угол в радианах
-    const angleRadians = Math.atan2(det, dot);
-  
-    // Преобразование в градусы
-    return (angleRadians * 180) / Math.PI;
+  // Создаём векторы
+  const v1 = { x: start.x - center.x, y: start.y - center.y };
+  const v2 = { x: end.x - center.x, y: end.y - center.y };
+
+  // Скалярное произведение
+  const dot = v1.x * v2.x + v1.y * v2.y;
+
+  // Длины векторов
+  const magnitudeV1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+  const magnitudeV2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+
+  // Проверка на нулевые длины векторов
+  if (magnitudeV1 === 0 || magnitudeV2 === 0) {
+    throw new Error("Один из векторов имеет нулевую длину.");
   }
+
+  // Определитель
+  const det = v1.x * v2.y - v1.y * v2.x;
+
+  // Угол в радианах
+  const angleRadians = Math.atan2(det, dot);
+
+  // Преобразование в градусы
+  return (angleRadians * 180) / Math.PI;
+}
 
 export {
   

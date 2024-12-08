@@ -41,6 +41,7 @@ export interface DropData {
 // Интерфейс для объектов визуализации на 2д сцене
 export interface PlannerObjectContainers {
   root?: PIXI.Container | null; // родительский контейнер для всех елементов стены
+  eventGraphic?: GraphicsOrNull;
   maskWall?: GraphicsOrNull;
   bodyWall?: GraphicsOrNull;
   lineWall?: GraphicsOrNull;
