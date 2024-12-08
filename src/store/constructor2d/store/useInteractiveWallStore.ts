@@ -6,6 +6,7 @@ export const useC2DInteractiveWallStore = defineStore('useC2DInteractiveWallStor
   // Состояния
   const activeObjectID = ref<string | number>(0);
   const statusLeftDownMouse = ref<boolean>(false);
+  const activePoint = ref<number | null>(null);
 
   // Методы
   const setStatusLeftDownMouse = (value: boolean) => {
@@ -16,12 +17,18 @@ export const useC2DInteractiveWallStore = defineStore('useC2DInteractiveWallStor
     activeObjectID.value = value;
   }
 
+  const setActivePoint = (value: number | null) => {
+    activePoint.value = value;
+  }
+
   return {
     activeObjectID,
     statusLeftDownMouse,
+    activePoint,
 
     setActiveObjectID,
-    setStatusLeftDownMouse
+    setStatusLeftDownMouse,
+    setActivePoint
   };
 
 });

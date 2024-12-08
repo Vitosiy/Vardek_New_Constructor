@@ -53,6 +53,11 @@ export default class StartPointActiveObject {
     this.app = pixiApp;
     this.container = new PIXI.Container();
     this.app.stage.addChild(this.container);
+    
+    this.startPointRect = new PIXI.Graphics();
+    this.container.addChild(this.startPointRect);
+    this.endPointRect = new PIXI.Graphics();
+    this.container.addChild(this.endPointRect);
 
     this.circleStartPoint = new PIXI.Graphics();
     this.circleStartPoint.eventMode = 'static';
@@ -61,11 +66,6 @@ export default class StartPointActiveObject {
     this.circleEndPoint = new PIXI.Graphics();
     this.circleEndPoint.eventMode = 'static';
     this.container.addChild(this.circleEndPoint);
-    
-    this.startPointRect = new PIXI.Graphics();
-    this.container.addChild(this.startPointRect);
-    this.endPointRect = new PIXI.Graphics();
-    this.container.addChild(this.endPointRect);
 
     this.setupInteractions();
 
@@ -118,25 +118,29 @@ export default class StartPointActiveObject {
       position.x += 30;
       position.y += 30;
 
-      // синяя точка
-      drawCircle(
-        this.circleStartPoint,
-        position,
-        10, 
-        configWall.color.mediumBlue
-      );
-
-      this.startPointRect.visible = false;
+      if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 0){
+        this.startPointRect.visible = true;
+      }else{
+        this.startPointRect.visible = false;
+      }
       rectV2(
         this.startPointRect,
         {
           center: position, 
           width: 10,
           height: 10,
-          fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
+          // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
           lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
           lineWidth: 1         // Толщина линии обводки
         }
+      );
+
+      // синяя точка
+      drawCircle(
+        this.circleStartPoint,
+        position,
+        10, 
+        configWall.color.mediumBlue
       );
 
     }
@@ -150,25 +154,29 @@ export default class StartPointActiveObject {
       position.x += 30;
       position.y += 30;
 
-      // синяя точка
-      drawCircle(
-        this.circleEndPoint,
-        position,
-        10, 
-        configWall.color.mediumBlue
-      );
-
-      this.endPointRect.visible = false;
+      if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 1){
+        this.endPointRect.visible = true;
+      }else{
+        this.endPointRect.visible = false;
+      }
       rectV2(
         this.endPointRect,
         {
           center: position, 
           width: 10,
           height: 10,
-          fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
+          // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
           lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
           lineWidth: 1         // Толщина линии обводки
         }
+      );
+
+      // синяя точка
+      drawCircle(
+        this.circleEndPoint,
+        position,
+        10, 
+        configWall.color.mediumBlue
       );
       
     }
@@ -179,7 +187,13 @@ export default class StartPointActiveObject {
 
     this.circleStartPoint
       // если нажали на точку стены
-      .on('pointerdown', this.handleMouseDown.bind(this))
+      .on('pointerdown', this.handleMouseDown.bind(this, 0))
+      // если отпустили кнопку на точке стены
+      .on('pointerup', this.handleMouseUp.bind(this));
+
+    this.circleEndPoint
+      // если нажали на точку стены
+      .on('pointerdown', this.handleMouseDown.bind(this, 1))
       // если отпустили кнопку на точке стены
       .on('pointerup', this.handleMouseUp.bind(this));
 
@@ -188,10 +202,11 @@ export default class StartPointActiveObject {
 
   }
 
-  private handleMouseDown(e: PIXI.FederatedPointerEvent): void {
+  private handleMouseDown(indexPoint: number, e: PIXI.FederatedPointerEvent): void {
 
     e.preventDefault();
 
+    this.interactiveWallStore.setActivePoint(indexPoint);
     this.interactiveWallStore.setStatusLeftDownMouse(true);
 
     e.stopPropagation(); // Останавливаем всплытие события
@@ -212,19 +227,19 @@ export default class StartPointActiveObject {
 
     e.preventDefault();
     
-    if(this.interactiveWallStore.statusLeftDownMouse){
-
+    if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
+      
       const co = this.constructorStore.getOriginOfCoordinates;
 
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
-        0,
+        this.interactiveWallStore.activePoint,
         {
           x: e.data.global.x - co.x - 30,
           y: e.data.global.y - co.y - 30
         }
       );
-      
+
     }
     
     e.stopPropagation(); // Останавливаем всплытие события
