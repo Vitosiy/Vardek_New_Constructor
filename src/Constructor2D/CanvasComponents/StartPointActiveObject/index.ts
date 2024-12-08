@@ -224,9 +224,9 @@ export default class StartPointActiveObject {
     
   }
 
-  private handleMouseMove (e?: PIXI.FederatedPointerEvent): void {
+  private handleMouseMove (e: PIXI.FederatedPointerEvent): void {
 
-    if(e) e.preventDefault();
+    e.preventDefault();
     
     if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
       
