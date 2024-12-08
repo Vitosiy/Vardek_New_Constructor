@@ -176,7 +176,7 @@ export default class StartPointActiveObject {
         this.circleEndPoint,
         position,
         10, 
-        configWall.color.mediumBlue
+        "rgba(255,0,0,0.0)"
       );
       
     }
@@ -208,6 +208,7 @@ export default class StartPointActiveObject {
 
     this.interactiveWallStore.setActivePoint(indexPoint);
     this.interactiveWallStore.setStatusLeftDownMouse(true);
+    this.handleMouseMove(e);
 
     e.stopPropagation(); // Останавливаем всплытие события
     
@@ -223,9 +224,9 @@ export default class StartPointActiveObject {
     
   }
 
-  private handleMouseMove (e: PIXI.FederatedPointerEvent): void {
+  private handleMouseMove (e?: PIXI.FederatedPointerEvent): void {
 
-    e.preventDefault();
+    if(e) e.preventDefault();
     
     if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
       

@@ -9,6 +9,7 @@ import {
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 
 import {
   PlannerObject,
@@ -44,6 +45,7 @@ export default class ArrowRulerActiveObject {
   // private rulerStore = useRulers2DStore();
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
+  private interactiveWallStore = useC2DInteractiveWallStore();
 
   constructor(pixiApp: PIXI.Application) {
 
@@ -112,7 +114,7 @@ export default class ArrowRulerActiveObject {
 
     if(!obj.points) return;
     
-    const position = obj.points[0];
+    const position = obj.points[this.interactiveWallStore.activePoint ?? 0];
 
     this.container.visible = true;
 
