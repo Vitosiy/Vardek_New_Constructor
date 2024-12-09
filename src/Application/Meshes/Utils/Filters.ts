@@ -25,6 +25,7 @@ export class Filters extends GlobalsData {
 
         items.forEach(facadeId => {
             const facade = this._FASADE[facadeId];
+
             if (!facade) return;
 
             const section = this._FASADE_SECTION[facade.IBLOCK_SECTION_ID];
@@ -64,8 +65,6 @@ export class Filters extends GlobalsData {
 
         sortFasadePositionList.forEach((fasade: number, key) => {
 
-            console.log('auf')
-
             let fasadeProps: { TYPE: number, SHOW: boolean, LIST: number, COLOR: number } = {}
 
             let fasadePosition = this._FASADE_POSITION[fasade]
@@ -85,7 +84,7 @@ export class Filters extends GlobalsData {
                 fasadeId = this.project.default_fasade_up;
             }
 
-            console.log(fasadeId, 'fasadeId')
+            // console.log(fasadeId, 'fasadeId')
 
             // items.FASADE_TYPE[fasadeNumber] = ''
 

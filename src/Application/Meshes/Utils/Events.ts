@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import GUI from 'lil-gui';

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
@@ -5,15 +7,14 @@ import * as THREETypes from "@/types/types"
 // import { OBB } from 'three/examples/jsm/math/OBB.js';
 // import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import { Octree } from 'three/addons/math/Octree.js';
 import { OctreeHelper } from 'three/addons/helpers/OctreeHelper.js';
 
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState"
 
-import { DeepDispose } from "../Utils/DeepDispose";
 import { WallBuilder } from "../Meshes/WallBilder";
-import { Resources } from "../Utils/Resources";
 
 import { OBBHelper } from "../Utils/CalculateBoundingBox";
 
@@ -28,9 +29,9 @@ export class Room {
 
     private parent: THREETypes.TApplication
     private params: { [key: string]: any }
-    private wallBuilder: WallBuilder = new WallBuilder()
-    private resources: Resources = new Resources()
-    private dispose: DeepDispose = new DeepDispose()
+    private wallBuilder: WallBuilder
+    // private resources: Resources = new Resources()
+    // private dispose: DeepDispose = new DeepDispose()
 
     resizeParams: { [key: string]: number | 0 } | THREEInterfases.IWallSizes
     scene: THREE.Scene
@@ -55,6 +56,8 @@ export class Room {
     roomBounds: THREE.Box3 = new THREE.Box3()
 
     constructor(parent: THREETypes.TApplication, light: any) {
+
+        this.wallBuilder = new WallBuilder(parent)
 
         this.parent = parent
         this.scene = parent.scene
@@ -102,9 +105,22 @@ export class Room {
         return this.roomBounds
     }
 
+    // get _worldOctree() {
+    //     return this.worldOctree
+    // }
+
     // get _roomCeiling() {
     //     return this.сeiling
     // }
+
+    loadRoom(light) {
+        this.roomLight = light
+        this.getStartSize()
+        this.createRoom(this.params)
+
+        this.setRoom();
+        this.roomBounds = this.getRoomBounds();
+    }
 
     getStartSize() {
 
@@ -137,8 +153,9 @@ export class Room {
 
         /** OLD */
 
-        params.walls.forEach((wall: THREEInterfases.IWallData) => {
+        params.walls.forEach((wall: THREEInterfases.IWallData, key: number) => {
             const part = this.wallBuilder.createPlaneWall(wall.width, wall.height, wall.position, wall.rotation, wall.side, params.wall,)
+            part.userData.name = `wall_${key}`
             this.walls.push(part)
             this.wallsGroup.add(part)
 
@@ -166,6 +183,8 @@ export class Room {
         const height = totalSize.y
         const depth = box!.max.z - box!.min.z;
 
+        this.wallsGroup.userData.elementType = "element_room"
+
         this.wallsGroupSize = {
             width,
             height,
@@ -173,16 +192,16 @@ export class Room {
         }
 
         this.floor = this.wallBuilder.createFloorFromWalls(params.walls, params.floor,)
+        this.floor.userData.name = 'floor'
 
         // this.wallsGroup.renderOrder = 0
         // this.floor.renderOrder = 0
 
         this.roomObject.add(this.floor)
         this.roomObject.add(this.wallsGroup)
-
         this.wallsGroup.add(this.floor)
 
-        this.roomObject.renderOrder = 2
+        // this.roomObject.renderOrder = 2
         // this.roomObject.position.set(0,0,0)
 
     }
@@ -205,6 +224,17 @@ export class Room {
 
         })
 
+        // this.updateWallMaterial(this.wallTexture)
+
+        // this.scene.traverse(child=>{
+        //     if(child instanceof THREE.Mesh){
+        //         console.log(child)
+        //     }
+        // })
+
+        // this.trigger('A:RoomLoaded')
+        // console.log('done')
+
         /** Helpers для OBB  пола */
 
         // this.createRoomOctree()
@@ -216,8 +246,33 @@ export class Room {
     }
 
     updateWallMaterial(materialId: number | string) {
-        this.walls.forEach(wall => {
-            this.wallBuilder.updateTexture(wall as THREE.Mesh, 'wall', materialId, wall.userData.dimensions);
+
+        // console.log(materialId, 'materialId')
+        // this.walls.forEach(wall => {
+        //     this.wallBuilder.updateTexture(wall as THREE.Mesh, 'wall', materialId, wall.userData.dimensions);
+        // })
+
+        this.scene.traverse(child=>{
+            if(child instanceof THREE.Object3D && child.userData.elementType ){
+    
+                child.traverse(children=>{
+                    if(children instanceof THREE.Mesh && !children.userData.isArrowHelper && children.userData.name !='floor' ){
+                        let demention 
+                        if(children.userData.dimensions){
+                            demention = children.userData.dimensions
+                            this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention);
+                            //   console.log(demention, children,  '1')
+                        }
+                        else{
+
+                            let parent = this.getRootObject(children)
+                            demention = [parent.userData.trueDepth*2, parent.userData.trueHeight*2]
+                            this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention)
+                            // console.log(demention, children,  '2')
+                        }
+                    }
+                })
+            }
         })
 
         // Сохраняем материал локально
@@ -227,6 +282,7 @@ export class Room {
     }
 
     updateFloorMaterial(materialId: number | string) {
+
         this.wallBuilder.updateTexture(this.floor as THREE.Mesh, 'floor', materialId, this.floor?.userData.dimensions);
 
         // Сохраняем материал локально
@@ -247,7 +303,6 @@ export class Room {
     }
 
     private getRoomBounds(): THREE.Box3 {
-        console.log('getRoomBounds')
         const roomBox = new THREE.Box3();
 
         // Объединяем границы всех стен и пола
@@ -258,6 +313,14 @@ export class Room {
         roomBox.union(new THREE.Box3().setFromObject(this._roomFloor as THREE.Object3D));
 
         return roomBox
+    }
+
+    private getRootObject(object: THREE.Object3D): THREE.Object3D {
+        let root = object;
+        while (root.parent && root.parent.type !== 'Scene') {
+            root = root.parent;
+        }
+        return root;
     }
 
     // setSize(width: number, height: number, depth: number, thickness: number) {

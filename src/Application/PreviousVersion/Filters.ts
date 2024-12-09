@@ -1,4 +1,4 @@
-// @ts-nocheck 31
+// @ts-nocheck
 
 import { useAppData } from "@/store/appliction/useAppData"
 import { expressionsReplace } from "./Functions";

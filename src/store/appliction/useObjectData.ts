@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { APP } from '@/Application/F-sources';
 
 export const useObjectData = defineStore('ObjectData', () => {
 
-    const objectData = ref<{ [key: string]: any }>(APP)
+    const objectData = ref<{ [key: string]: any }>({})
 
     const setObjectData = (value: any) => {
         objectData.value = value

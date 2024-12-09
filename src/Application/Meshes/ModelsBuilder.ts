@@ -1,9 +1,11 @@
+//@ts-nocheck
 
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 
 import { Resources } from '../Utils/Resources'
 import { BuildProduct } from './BuildProduct'
+import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 export class ModelsBuilder {
 
@@ -18,24 +20,42 @@ export class ModelsBuilder {
 
     }
 
-    create(url: string, onLoad: (object: THREE.Object3D) => void, props: THREETypes.TObject) {
+    create(url: any, onLoad: (object: THREE.Object3D) => void, props: THREETypes.TObject) {
 
         const arrows = new THREE.Object3D()
-        const type = props.CONFIG.MODEL.model_type
+        const model = props.CONFIG.MODEL
+        // console.log(model, 'TT')
 
 
-        this.resources.startLoading(url, type, (file: any) => {
+        this.resources.startLoading(url, model.model_type, (file: any) => {
 
-            // const box = new THREE.Box3().setFromObject(file);
-            // const point = new THREE.Vector3()
-            // const size = box.getSize(point)
+            if (!file) {
+                console.error('Модель не может быть загружена', file)
+            }
 
+            const parentObject = new THREE.Object3D()
 
-            file.userData.PROPS = props
-            file.userData.PROPS.CONFIG.ORIGIN = true
+            // console.log(model.id, 'CCreate')
+
+            //3689569
+
+            const aabb = new THREE.Box3().setFromObject(file);
+            const center = new THREE.Vector3();
+            aabb.getCenter(center);
+            let size = aabb.getSize(center)
 
             file.traverse((child: any) => {
                 if (child instanceof THREE.Mesh) {
+                    
+                    // child.geometry.center();
+
+                    child.scale.set(model.scale, model.scale, model.scale)
+                    child.position.sub(center);
+                    child.position.y += size.y / 2
+                    child.position.x =0
+                    child.position.z =0
+                    // child.geometry.translate(0, -size.y * 0.5, 0);
+                  
 
                     if (child.material.map) {
                         child.material.map.encoding = THREE.SRGBColorSpace;
@@ -43,8 +63,19 @@ export class ModelsBuilder {
                         child.material.emissive = new THREE.Color(0xffffff);
                         child.material.emissiveIntensity = 0.1
                         child.material.needsUpdate = true;
+
+                        child.material.map.generateMipmaps = true;
+                        child.material.map.minFilter = THREE.LinearMipmapLinearFilter; // Включение mipmaps
+                        child.material.map.needsUpdate = true; // Обновление текстуры
+
+                    }
+                    if (child.material.normalMap) {
+                        child.material.normalMap.generateMipmaps = true;
+                        child.material.normalMap.minFilter = THREE.LinearMipmapLinearFilter;
+                        child.material.normalMap.needsUpdate = true;
                     }
                 }
+
             })
 
             /** Добавляем стрелки размеров */
@@ -56,8 +87,36 @@ export class ModelsBuilder {
                 }
             })
 
-            file.add(arrows)
+            // file.add(file)
+            file.userData.PROPS = props
 
+
+            parentObject.position.sub(center);
+            parentObject.traverse(child => {
+                if (child instanceof THREE.Mesh) {
+                    // Создаем матрицу смещения
+                    // const offsetMatrix = new THREE.Matrix4();
+                    // // offsetMatrix.makeTranslation(-size.x * 0.5, -size.y * 0.5, -size.z * 0.5);
+                    // // Применяем смещение
+                    // child.geometry.applyMatrix4(offsetMatrix);
+                }
+            })
+
+
+            // parentObject.updateMatrixWorld(true)
+
+            let obb = new OBB();
+            obb = obb.fromBox3(aabb);
+
+            file.userData.obb = obb
+            file.userData.trueDepth = size.z * 0.5
+            file.userData.trueHeight = size.y * 0.5
+            file.userData.trueLength = size.x * 0.5
+            file.userData.trueSizes = {
+                z: size.z * 0.5, y: size.y * 0.5, x: size.x * 0.5
+            }
+
+            file.add(arrows)
 
             onLoad(file)
         })

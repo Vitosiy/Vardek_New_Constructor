@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 // import * as THREEInterfases from "@/types/interfases"
@@ -12,7 +14,7 @@ export class FasadeBuilder {
 
     getFasade(group: THREE.Object3D, props: THREETypes.TObject, model_data: THREETypes.TObject) {
 
-        console.log(props, 'FasadeBuilder')
+        // console.log(props, 'FasadeBuilder')
 
         const sizes = props.CONFIG.SIZE
         let start_position = this.parent.getStartPosition(sizes);
@@ -38,7 +40,7 @@ export class FasadeBuilder {
             let vec = new THREE.Vector3();
             let size = box.getSize(vec)
 
-            console.log(props.CONFIG.FASADE_POSITIONS, '1')
+            // console.log(props.CONFIG.FASADE_POSITIONS, '1')
 
             props.CONFIG.FASADE_POSITIONS[key].FASADE_WIDTH = size.x
             props.CONFIG.FASADE_POSITIONS[key].FASADE_HEIGHT = size.y
@@ -78,7 +80,7 @@ export class FasadeBuilder {
 
             group.add(fasade as THREE.Object3D)
 
-            console.log(props.CONFIG.FASADE_POSITIONS, 'FASADE_POSITIONS--2')
+            // console.log(props.CONFIG.FASADE_POSITIONS, 'FASADE_POSITIONS--2')
 
         })
     }

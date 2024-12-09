@@ -191,7 +191,7 @@ export const START_PROJECT_PARAMS = {
         position: [8 * 1000, 1.5 * 1000, 0],
         target: { x: 0, y: 1500, z: 0 },
         fov: 45,
-        near: 1,
+        near: 10,
         far: 25000
     },
     
@@ -219,7 +219,7 @@ export const START_PROJECT_PARAMS = {
             decay: 0
         }
     },
-    height_clamp: 2000,
+    height_clamp: 3000,
     table: {
         "material": {
             "type": "MeshLambertMaterial",

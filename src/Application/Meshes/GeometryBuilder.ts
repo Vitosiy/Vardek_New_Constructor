@@ -13,11 +13,9 @@ export class GeometryBuilder {
         this.buildProduct = new BuildProduct(root)
     }
 
-    craeteModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any): void {
+    craeteModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any, loaded_size?:any): void {
 
-        console.log(data, 'data')
-
-        this.buildProduct.getModel(data, onLoad, loadedProps)
+        this.buildProduct.getModel(data, onLoad, loadedProps, loaded_size)
 
     }
 }

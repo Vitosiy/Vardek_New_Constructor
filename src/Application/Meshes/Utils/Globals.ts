@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { useAppData } from "@/store/appliction/useAppData"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"

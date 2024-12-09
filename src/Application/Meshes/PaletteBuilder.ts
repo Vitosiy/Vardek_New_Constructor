@@ -15,6 +15,8 @@ export class PaletteBulider{
 
         const palette = this.parent._APP.PALETTE[data]
 
+        // console.log(palette, '--PPPP')
+
         if (palette.DETAIL_PICTURE != null) {
 
             const box = new THREE.Box3().setFromObject(fasade);
@@ -56,6 +58,7 @@ export class PaletteBulider{
                 children.material = new THREE.MeshStandardMaterial();
                 children.material.color.set(`#${palette.HTML}`)
                 children.material.metalness = 0.7
+
                 children.material.roughness = 0.05
 
                 children.material.clearcoat = 1

@@ -6,6 +6,7 @@ import * as THREETypes from "@/types/types"
 
 import { useEventBus } from '@/store/appliction/useEventBus';
 
+import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 
 export default class SetObject {
@@ -19,14 +20,19 @@ export default class SetObject {
     trafficManager: THREETypes.TTrafficManager | null = null
     boxHelper: THREETypes.TCustomBoxHelper | null = null
 
-    create({ scene, config, object, point, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
+    create({ scene, config, object, point, rotate, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
 
 
-        const positionEmpty = this.isEmpty(object.userData.PROPS.CONFIG.POSITION);
-        const rotationEmpty = this.isEmpty(object.userData.PROPS.CONFIG.ROTATION);
+        const positionEmpty = object.userData.PROPS.CONFIG.POSITION == null;
+        const rotationEmpty = object.userData.PROPS.CONFIG.ROTATION == null;
 
-        let position = positionEmpty ? new THREE.Vector3(point.x, point.y, point.z) : object.userData.PROPS.CONFIG.POSITION
-        let rotation = rotationEmpty ? new THREE.Euler(0, 0, 0, 'XYZ') : object.userData.PROPS.CONFIG.ROTATION;
+        let position = object.userData.PROPS.CONFIG.POSITION ?? new THREE.Vector3(point.x, point.y, point.z)
+        let rotation = object.userData.PROPS.CONFIG.ROTATION ?? new THREE.Euler(0, 0, 0, 'XYZ')
+
+        if(rotate){
+            object.userData.PROPS.CONFIG.POSITION = new THREE.Vector3(point.x, point.y, point.z)
+            object.userData.PROPS.CONFIG.ROTATION = new THREE.Euler(rotate._x, rotate._y,rotate._z, 'XYZ')
+        }
 
         object.userData.globalData = config.ID;
         object.userData.modelVector = object.userData.PROPS.PRODUCT.element_type;
@@ -34,43 +40,58 @@ export default class SetObject {
         // /** Проверяем положение объекта внутри комнаты */
 
         object.userData.current = true
-
         object.position.copy(point);
-        // object.rotation.copy(rotation)
-        object.matrixAutoUpdate = false;
 
-        object.updateMatrix()
-        object.userData.obb.applyMatrix4(object.matrixWorld)
+        // object.matrixAutoUpdate = false;
+        // object.updateMatrix()
 
-        scene.add(object);
+        // object.userData.obb.applyMatrix4(object.matrixWorld)
 
-        // let adjustedPosition = roomManager.adjustPositionWithRaycasting(
+        const aabb = new THREE.Box3().setFromObject(object);
+        let obb = new OBB();
+        obb = obb.fromBox3(aabb);
+        obb.applyMatrix4(object.matrixWorld)
+        object.userData.obb = obb
+
+        let adjustedPosition
+
+        if (positionEmpty && rotationEmpty) {
+            // console.log('EMPTY')
+            adjustedPosition = roomManager.adjustPositionWithRaycasting(
+                {
+                    object,
+                    targetPosition: point,
+                    targetRotation: rotate,
+                    wall
+                })
+        }
+        else {
+            // console.log('NOT_EMPTY')
+            adjustedPosition = { position, rotation }
+        }
+
+        // let adjustedPosition = positionEmpty && rotationEmpty ? roomManager.adjustPositionWithRaycasting(
         //     {
         //         object,
         //         targetPosition: point,
+        //         targetRotation: rotate,
         //         wall
-        //     })
+        //     }) : { position, rotation }
 
-        let adjustedPosition = positionEmpty && rotationEmpty ? roomManager.adjustPositionWithRaycasting(
-            {
-                object,
-                targetPosition: point,
-                wall
-            }) : { position, rotation }
+        // let adjustedPosition = { position, rotation }
 
         object.position.copy(adjustedPosition.position);
         object.rotation.copy(adjustedPosition.rotation)
-
-        object.updateMatrix()
         object.userData.obb.applyMatrix4(object.matrixWorld)
-
 
         object.userData.PROPS.CONFIG.POSITION = object.position.clone();
         object.userData.PROPS.CONFIG.ROTATION = object.rotation.clone();
 
-        console.log(object)
+        scene.add(object);
 
-
+        if (object.userData.helper) {
+            scene.add(object.userData.helper)
+        }
 
         /** Добавляем объект в RoomContant для последующего использования */
 
@@ -82,7 +103,6 @@ export default class SetObject {
             trafficManager._currentObject = object
             trafficManager.ruler.drawRulerToObjects(object)
         }
-
 
         if (!boxHelper) return
 

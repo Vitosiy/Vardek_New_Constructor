@@ -1,6 +1,6 @@
 // @ts-nocheck 31
 
-import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
+import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } from "vue-router";
 
 const baseUrl = '/';
 
@@ -47,7 +47,7 @@ const routes: Array<RouteRecordRaw> = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(baseUrl),
+  history: createWebHashHistory(baseUrl),
   routes,
 });
 

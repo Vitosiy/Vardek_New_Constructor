@@ -26,6 +26,7 @@
 </template>
 
 <script lang="ts" setup>
+//@ts-nocheck
 import { ref, defineProps, defineEmits, computed } from "vue";
 
 // Интерфейс для табов

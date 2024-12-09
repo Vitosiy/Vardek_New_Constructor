@@ -1,4 +1,4 @@
-// @ts-nocheck 31
+//@ts-nocheck
 
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
@@ -51,14 +51,17 @@ export class Resources extends EventEmitter {
 
     replaceUrls(obj: any) {
         return _URL + obj
+        // return  obj
     }
 
-    startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void, dev?: boolean): void {
+    startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void): void {
 
         let truePath
+        
         switch (type) {
 
             case 'GLTF':
+                truePath = this.replaceUrls(path)
 
                 this.loaders?.gltfLoader.load(truePath as string, (file: any) => {
                     if (callback) {
@@ -70,6 +73,7 @@ export class Resources extends EventEmitter {
                                 children.receiveShadow = true;
                             }
                         })
+
                         callback(file.scene)
                     }
                 });
@@ -77,11 +81,18 @@ export class Resources extends EventEmitter {
 
             case 'FBX':
                 truePath = this.replaceUrls(path)
-                this.loaders?.fbxLoader.load(truePath as string, (file: any) => {
-                    if (callback) {
-                        this.data = file.scene
 
-                        callback(file.scene)
+                console.log(truePath)
+
+                let example = 'https://dev.vardek.online/upload/iblock/fa8/fa8d309c7d9927fd467936994c5ff446.FBX'
+
+                this.loaders?.fbxLoader.load(truePath as string, (file: any) => {
+                    console.log(file)
+
+                    if (callback) {
+                        this.data = file
+
+                        callback(file)
                     }
                 });
                 break
@@ -90,17 +101,14 @@ export class Resources extends EventEmitter {
                 truePath = this.replaceUrls(path)
                 this.loaders?.daeLoader.load(truePath as string, (file: any) => {
                     if (callback) {
-                        this.data = file.scene
-                        callback(file.scene)
+                        this.data = file
+                        callback(file)
                     }
                 });
                 break
 
             case 'texture':
-                truePath = !dev ? this.replaceUrls(path) : path
-
-                console.log(truePath,'path')
-
+                truePath = this.replaceUrls(path)
                 this.loaders?.textureLoader.load(truePath as string, (file: any) => {
 
                     if (callback) {

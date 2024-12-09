@@ -65,6 +65,7 @@ export class Renderer {
         this.instance.setSize(this.sizes.width, this.sizes.height);
         this.instance.setPixelRatio(this.sizes.pixelRatio);
         this.instance.setClearColor('#cccccc')
+        this.instance.logarithmicDepthBuffer = true 
         // this.instance.shadowMap.autoUpdate = true;
         this.canvas.appendChild(this.instance.domElement)
 
@@ -120,7 +121,8 @@ export class Renderer {
                 this.instance.shadowMap.enabled = true;
 
                 this.instance.shadowMap.type = THREE.BasicShadowMap;
-                this.instance.toneMapping = THREE.NoToneMapping;
+                this.instance.toneMapping = THREE.ReinhardToneMapping;
+                this.instance.toneMappingExposure = 1.8;
                 this.instance.receiveShadow = true;
 
                 this.instance.shadowMap.needsUpdate = true
@@ -132,8 +134,8 @@ export class Renderer {
                 this.instance.physicallyCorrectLights = false;
                 this.instance.shadowMap.enabled = true;
                 this.instance.shadowMap.type = THREE.BasicShadowMap;
-                this.instance.toneMapping = THREE.ACESFilmicToneMapping;
-                this.instance.toneMappingExposure = 1;
+                this.instance.toneMapping = THREE.ReinhardToneMapping;
+                this.instance.toneMappingExposure = 1.8;
                 this.instance.receiveShadow = true;
                 // this.instance.shadowMap.autoUpdate = true;
                 this.instance.shadowMap.needsUpdate = true

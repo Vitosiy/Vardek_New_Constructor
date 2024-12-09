@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 
@@ -6,10 +8,12 @@ import { GlobalsData } from './Utils/Globals'
 export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
+    scene: THREE.Scene
     constructor(root: THREETypes.TApplication) {
 
         super();
         this.resources = root._resources
+        this.scene = root._scene
     }
 
     createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
@@ -268,7 +272,7 @@ export class BuildersHelper extends GlobalsData {
             extrusionSettings
         );
 
-        console.log(geometry, 'KKgeometry')
+        // console.log(geometry, 'KKgeometry')
 
         return geometry;
     }
@@ -283,4 +287,5 @@ export class BuildersHelper extends GlobalsData {
         }
         return false
     }
+
 }

@@ -1,14 +1,16 @@
+//@ts-nocheck
+
 import * as THREE from "three";
 import * as THREETypes from "@/types/types"
-import { OBB } from 'three/examples/jsm/math/OBB.js';
+
 import { OBBHelper } from "./CalculateBoundingBox";
-import { separateArrows } from "./CalculateBoundingBox";
+
 
 export class CustomBoxHelper {
 
     private scene: THREE.Scene
     private selectedObject: THREE.Object3D | null = null;
-    private boxHelper: THREE.Mesh | null = null;
+    private boxHelper: THREE.Mesh |THREE.BoxHelper| null = null;
     private root: THREETypes.TApplication
     private obbh: OBBHelper
 
@@ -39,31 +41,48 @@ export class CustomBoxHelper {
 
         if (this.selectedObject) {
 
-            const obb = this.selectedObject.userData.obb
-            const trashhold = 15
-  
+            this.boxHelper= new THREE.BoxHelper(this.selectedObject,  0x00ff00)
 
-            const geometry = new THREE.BoxGeometry(obb.halfSize.x * 2 + trashhold, obb.halfSize.y * 2 + trashhold, obb.halfSize.z * 2 + trashhold);
-            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.25 });
-            this.boxHelper = new THREE.Mesh(geometry, material);
-            this.boxHelper.userData.obb = obb
-            this.boxHelper.userData.name = 'boxHelper'
+            // console.log(this.boxHelper, '!!this.boxHelper')
+            this.boxHelper.material.depthTest = false;
+            this.boxHelper.material.depthWrite = false;
+            this.boxHelper.material.opacity = 0.5
+
+            this.boxHelper.material.transparent = true
+
             this.boxHelper.renderOrder = 1
-
-
-            const matrix4 = new THREE.Matrix4();
-            matrix4.setFromMatrix3(obb.rotation);
-
-            const quaternion = new THREE.Quaternion();
-            quaternion.setFromRotationMatrix(matrix4);
-
-            this.boxHelper.position.copy(obb.center);
-
-            this.boxHelper.quaternion.copy(quaternion);
-
             this.scene.add(this.boxHelper);
+            this.boxHelper.update()
 
-            this.updateBoxHelper()
+            // const obb = this.selectedObject.userData.obb
+            // const size = this.selectedObject.userData.trueSizes
+
+            // const trashhold = 15
+
+
+            // const geometry = new THREE.BoxGeometry(size.x * 2 + trashhold, size.y * 2 + trashhold, size.z * 2 + trashhold);
+            // const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.25 });
+            // this.boxHelper = new THREE.Mesh(geometry, material);
+            // this.boxHelper.userData.obb = obb
+            // this.boxHelper.userData.name = 'boxHelper'
+            // this.boxHelper.renderOrder = 1
+
+
+            // const matrix4 = new THREE.Matrix4();
+            // matrix4.setFromMatrix3(obb.rotation);
+
+            // const quaternion = new THREE.Quaternion();
+            // quaternion.setFromRotationMatrix(matrix4);
+
+            // this.boxHelper.position.copy(this.selectedObject.position);
+
+            // this.boxHelper.rotation.copy(this.selectedObject.rotation);
+
+            // // this.boxHelper.updateMatrixWorld(true)
+
+            // this.scene.add(this.boxHelper);
+
+            // this.updateBoxHelper()
 
         }
     }
@@ -71,10 +90,9 @@ export class CustomBoxHelper {
     updateBoxHelper() {
 
         if (this.boxHelper && this.selectedObject) {
-
-            this.boxHelper.position.copy(this.selectedObject.position)
-            this.boxHelper.rotation.copy(this.selectedObject.rotation)
-
+            this.boxHelper.update()
+            // this.boxHelper.position.copy(this.selectedObject.position)
+            // this.boxHelper.rotation.copy(this.selectedObject.rotation)
         }
     }
 

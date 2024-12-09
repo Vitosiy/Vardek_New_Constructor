@@ -1,4 +1,4 @@
-/**// @ts-nocheck */
+// @ts-nocheck 
 
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
@@ -12,7 +12,7 @@ export class MillingBuilder {
   millingsStore = MILLINGS
 
   constructor() {
-    console.log(this.millingsStore, 'CREATE MILLINGS')
+    // console.log(this.millingsStore, 'CREATE MILLINGS')
   }
 
   createMillingFasade(object, fasadePosition, millingParams: number, defaultGeometry) {

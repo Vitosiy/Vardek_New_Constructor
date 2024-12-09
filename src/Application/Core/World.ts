@@ -59,7 +59,11 @@ export class World {
 
             // console.log(this.startData.getStartRoomData)
 
-            this.setRoom()
+            // this.setRoom()
+
+            this.scene.add(new THREE.AxesHelper(2000))
+            this.room = new RoomManager(this.root, this.lights);
+            this.room.update()
 
             this.lights.setLight(this.room._wallsGroupSize, 3)
 
@@ -76,8 +80,17 @@ export class World {
     setRoom() {
 
         this.scene.add(new THREE.AxesHelper(2000))
-        this.room = new RoomManager(this.root, this.lights);
+        // this.room = new RoomManager(this.root, this.lights);
+        this.room.loadRoom(this.lights)
+
+
+        // this.room.on('A:RoomLoaded',()=>{
+        //     console.log('EEEEEEEEEEEE')
+        //     this.room.update()
+        // })
+
         this.room.update()
+        this.room.updateWallMaterial(this.room.wallTexture)
     }
 
     createRoom() {
@@ -85,8 +98,8 @@ export class World {
         this.roomsStore.clearTempRoomSize();
         this.roomsStore.clearCurrentRoomId();
 
-        this.room.removeVueEvents();
-        this.room = null;
+        // this.room.removeVueEvents();
+        // this.room = null;
         this.deepDispose.clearScene(this.scene);
 
         this.setRoom();
@@ -113,7 +126,7 @@ export class World {
                 content: this.room.save()
             })
             this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
-            console.log(this.sceneState.getCurrentProjectParams)
+            // console.log(this.sceneState.getCurrentProjectParams)
             return
         }
 
@@ -122,17 +135,18 @@ export class World {
         this.roomsStore.updateRoom(this.roomsStore.getRoomId as number, this.room.save(), this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes)
         this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
 
-        console.log(this.sceneState.getCurrentProjectParams)
+        // console.log(this.sceneState.getCurrentProjectParams)
 
     }
 
     loadRoom(roomId: number) {
 
+
         /** Добавляем ID комнаты в хранилище */
         this.roomsStore.setCurrentRoomId(roomId);
 
-        this.room.removeVueEvents();
-        this.room = null;
+        // this.room.removeVueEvents();
+        // this.room = null;
         this.deepDispose.clearScene(this.scene);
 
         this.setRoom();
@@ -142,7 +156,14 @@ export class World {
             this.trafficManager.update(this.room)
 
         }
-        console.log(this.roomsStore.getRooms)
+
+
+        // this.room.off('A:RoomLoaded',()=>{
+        //     console.log('EEEEEEEEEEEE')
+        // })
+
+
+        // console.log(this.roomsStore.getRooms)
     }
 
     vueEvents() {
@@ -166,17 +187,6 @@ export class World {
 
         this.meshEvents = new MeshEvents(this.root)
 
-        // this.eventsStore.on('A:Create', () => {
-        //     this.createRoom()
-        // })
-
-        // this.eventsStore.on('A:Save', () => {
-        //     this.saveRoom()
-        // })
-
-        // this.eventsStore.on('A:Load', (roomId: number) => {
-        //     this.loadRoom(roomId)
-        // })
     }
 
     removeVueEvents() {

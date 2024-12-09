@@ -1,3 +1,5 @@
+
+//@ts-nocheck
 import * as PIXI from 'pixi.js';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';

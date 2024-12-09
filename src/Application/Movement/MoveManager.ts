@@ -1,4 +1,4 @@
-// @ts-nocheck 31
+// @ts-nocheck 
 
 import * as THREE from "three";
 import * as THREETypes from "@/types/types"
@@ -245,6 +245,8 @@ export class MoveManager {
         const intersects = this.raycaster.intersectObjects([...this.roomManager._roomWalls, this.roomManager._roomFloor]);
 
         if (intersects.length > 0) {
+
+
             const point = intersects[0].point; // Точка пересечения с полом или стеной
             const surface = intersects[0].object // стена
 
@@ -252,24 +254,36 @@ export class MoveManager {
                 object: this.selectedObject, targetPosition: point, wall: surface
             });
 
-            if (adjustedPosition.position && adjustedPosition.rotation) {
+            this.selectedObject.position.copy(adjustedPosition.position);
+            this.selectedObject.rotation.copy(adjustedPosition.rotation)
 
-                this.selectedObject.position.copy(adjustedPosition.position);
-                this.selectedObject.rotation.copy(adjustedPosition.rotation)
+            this.selectedObject.updateWorldMatrix(true, true)
+            this.selectedObject.updateMatrix();
 
-                this.selectedObject.updateMatrix()
-                this.selectedObject.userData.obb.applyMatrix4(this.selectedObject.matrixWorld)
+            let obb = new OBB();
+            const aabb = new THREE.Box3().setFromObject(this.selectedObject);
+            obb = obb.fromBox3(aabb);
+            obb.applyMatrix4(this.selectedObject.matrixWorld)
 
-                this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
-                // this.selectedObject.userData.PROPS.CONFIG.POSITION = this.selectedObject.position;
-                // Обновляем BoxHelper для визуализации
-                this.boxHelper.updateBoxHelper();
-            }
+            this.selectedObject.userData.obb = obb
+            // const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.selectedObject.quaternion);
+
+            // const rotationMatrix3 = new THREE.Matrix3().setFromMatrix4(rotationMatrix);
+            // obb.rotation.copy(rotationMatrix3);
+
+            // this.selectedObject.userData.obb.applyMatrix4(this.selectedObject.matrixWorld)
+
+            this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
+            // this.selectedObject.userData.PROPS.CONFIG.POSITION = this.selectedObject.position;
+            // Обновляем BoxHelper для визуализации
+            this.boxHelper.updateBoxHelper();
+
         }
 
         // Обновляем линейку
         this.trafficManager.ruler.drawRulerToObjects(this.selectedObject)
     }
+
 
     dispose() {
         this.canvas.removeEventListener('mousedown', this.onMouseDownBound, false);

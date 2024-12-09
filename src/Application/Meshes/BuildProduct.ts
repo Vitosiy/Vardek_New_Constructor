@@ -5,6 +5,7 @@ import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
 import { OBB } from 'three/examples/jsm/math/OBB.js';
+import { Capsule } from 'three/addons/math/Capsule.js';
 
 import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"
@@ -67,29 +68,29 @@ export class BuildProduct extends BuildersHelper {
         this.heightCorrect += value
     }
 
-    getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject): void {
+    getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject, loaded_size?: THREETypes.TObject): void {
 
         const type = this._MODELS[product_data.models[0]]
 
-        let model = this.createPerentGroup(product_data, onLoad, type, loaded_props);
+        // console.log(type, 'TYPE')
 
+        let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
 
         if (!!type.DAE) return;
-
 
         onLoad(model as THREE.Object3D)
     }
 
     /** Создание данных модели */
 
-    createPerentGroup(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, type: THREETypes.TObject, loadedProps?: THREETypes.TObject) {
+    createPerentGroup(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, type: THREETypes.TObject, loadedProps?: THREETypes.TObject, loaded_size?: THREETypes.TObject) {
 
-        let perent_group = new THREE.Object3D();
+        let parent_group = new THREE.Object3D();
 
         /** Проверяем на загружаемы контент */
         let props: THREETypes.TObject = !loadedProps ? this.createStartProps(product_data) : loadedProps;
-
-        perent_group.userData.PROPS = props
+        
+        parent_group.userData.PROPS = props
 
         /** Если модель */
 
@@ -98,31 +99,35 @@ export class BuildProduct extends BuildersHelper {
             return
         }
 
-        /** Если json */
+        /** Если json  */ /** Если есть загружаемые размеры */
 
-        let product = this.createProductBody(perent_group)
+        let product = loaded_size? this.createProductBody(parent_group, loaded_size) : this.createProductBody(parent_group)
 
-        perent_group.add(product as THREE.Object3D)
+        parent_group.add(product as THREE.Object3D)
 
         product!.name = product_data.NAME
 
-        const aabb = new THREE.Box3().setFromObject(perent_group);
-        const size = new THREE.Vector3()
-        aabb.getSize(size);
+        const aabb = new THREE.Box3().setFromObject(parent_group);
+        const productSize = new THREE.Vector3();
 
         let obb = new OBB();
         obb = obb.fromBox3(aabb);
 
-        /** Для определения коллизии */
-        perent_group.userData.obb = obb
-
         /** Для корректного примагничивания к стенам */
-        perent_group.userData.trueDepth = size.z * 0.5
-        perent_group.userData.trueHeight = size.y * 0.5
-        perent_group.userData.trueLength = size.x * 0.5
-        perent_group.userData.trueSizes = [size.z * 0.5, size.y * 0.5, size.x * 0.5]
+        aabb.getSize(productSize);
 
-        return perent_group
+        /** Присваиваем тип объекта */
+        parent_group.userData.elementType = product_data.element_type
+
+        parent_group.userData.trueDepth = productSize.z * 0.5
+        parent_group.userData.trueHeight = productSize.y * 0.5
+        parent_group.userData.trueLength = productSize.x * 0.5
+        parent_group.userData.trueSizes = {
+            z: productSize.z * 0.5, y: productSize.y * 0.5, x: productSize.x * 0.5
+        }
+
+
+        return parent_group
     }
 
     createStartProps(product_data: THREETypes.TObject) {
@@ -193,8 +198,8 @@ export class BuildProduct extends BuildersHelper {
                 SIZE_EDIT_DEPTH_MIN: null,
                 SIZE_EDIT_DEPTH_MAX: null
             },
-            POSITION: {},
-            ROTATION: {},
+            POSITION: null,
+            ROTATION: null,
         }
 
         PARAMS.HAVETABLETOP = (product_data.tabletop != null && this.project.table_top_type_auto) as boolean
@@ -257,6 +262,7 @@ export class BuildProduct extends BuildersHelper {
 
         let height_correct = 0
 
+        /** Корректировка положения по высоте */
         const getHeightCorrect = (value: number, type: string) => {
             switch (type) {
                 case 'top':
@@ -290,7 +296,11 @@ export class BuildProduct extends BuildersHelper {
 
         /** Корректировка положения общего Box3 по высоте  */
         total.position.y += height_correct / 2
-        total.position.z -= 10
+
+        /** Корректировка по глубине */
+        if (!size) {
+            total.position.z -= 10
+        }
 
         model_props.CONFIG.HEIGHTCORRECT = height_correct
 
@@ -303,7 +313,7 @@ export class BuildProduct extends BuildersHelper {
 
         let fasade = this._FASADE[props.CONFIG.MODULE_COLOR]
 
-        let body = this.json_builder.createMesh({ data: data, fasade: fasade })
+        let body = this.json_builder.createMesh({ data, fasade })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
         body.matrixWorldNeedsUpdate = true
@@ -366,7 +376,7 @@ export class BuildProduct extends BuildersHelper {
                 let depth = parseInt(eval(table.depth));
                 if (width || depth) {
 
-                    console.log(props.CONFIG.EXPRESSIONS, 'table_1')
+                    // console.log(props.CONFIG.EXPRESSIONS, 'table_1')
 
                     let expr = Object.assign(local_expression, {
                         "#MHEIGHT#": params!.height,
@@ -383,7 +393,7 @@ export class BuildProduct extends BuildersHelper {
                         "#Z#": depth || props.CONFIG.SIZE.depth,
                     });
 
-                    console.log(props.CONFIG.EXPRESSIONS, 'table_2')
+                    // console.log(props.CONFIG.EXPRESSIONS, 'table_2')
 
                     let opt = Object.assign(this.expressionsReplace(model, expr), {
                         material: material,
@@ -399,7 +409,7 @@ export class BuildProduct extends BuildersHelper {
                         tablet.rotation.set(0, eval(table.rotation.y), 0);
                     }
 
-                    tablet.renderOrder = 2
+                    // tablet.renderOrder = 2
 
                     tableTop.add(tablet);
 
@@ -419,7 +429,7 @@ export class BuildProduct extends BuildersHelper {
 
             props.TABLETOP = tableTop
 
-            console.log(props, 'table top')
+            // console.log(props, 'table top')
 
             return
         }
@@ -442,7 +452,7 @@ export class BuildProduct extends BuildersHelper {
         });
 
         let tableBody = this.json_builder.createMesh({ data: opt, parent_size: sizes });
-        console.log(tableBody, "TB")
+        // console.log(tableBody, "TB")
 
         let tableHeight = this.calculateHeight(tableBody)
 

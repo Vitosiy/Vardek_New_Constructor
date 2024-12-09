@@ -11,5 +11,7 @@ import router from './router'
 import { createPinia } from 'pinia'
 const pinia = createPinia()
 
+console.log('AUF')
 
-createApp(App).use(router).use(pinia).mount('#app')
+
+createApp(App).use(pinia).use(router).mount('#app')

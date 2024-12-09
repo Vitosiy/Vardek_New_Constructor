@@ -1,5 +1,8 @@
+//@ts-nocheck
+
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
+import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 import { Resources } from "../Utils/Resources";
@@ -8,9 +11,13 @@ import { useAppData } from "@/store/appliction/useAppData";
 export class WallBuilder {
 
     appData: ReturnType<typeof useAppData> = useAppData()
-    resources: Resources = new Resources()
+    resources: Resources 
     floorTextureData: { [key: string]: any } = this.appData.getAppData.FLOOR
     wallTextureData: { [key: string]: any } = this.appData.getAppData.WALL
+
+    constructor(root:THREETypes.TApplication){
+        this.resources = root._resources
+    }
 
     createMesh(
         GeometryClass: new (...args: any[]) => THREE.BufferGeometry,
@@ -31,9 +38,6 @@ export class WallBuilder {
         mesh.rotation.set(rotation._x, rotation._y, rotation._z, rotation._order);
 
         geometry.computeBoundingBox();
-        // geometry.userData.obb = new OBB().fromBox3(
-        //     mesh.geometry.boundingBox as THREE.Box3
-        // )
 
         mesh.userData.dimensions = dimensions
 
@@ -41,9 +45,50 @@ export class WallBuilder {
             mesh.geometry.boundingBox as THREE.Box3
         )
 
-        mesh.userData.name = 'wall'
-
         mesh.userData.plane = this.convertPlaneGeometryToPlane(mesh)
+
+        /** Получаем перпендикулярный вектор нормали */
+
+        let normal = mesh.userData.plane.normal.clone().normalize();
+        let perpendicular = this.findPerpendicularVector(normal);
+
+        // console.log(normal, 'NORM', this.findPerpendicularVector(normal), 'PERP')
+
+        /** Получаем координаты x, z стены */
+
+        let verBuffer = mesh.geometry.getAttribute('position').array
+        let vertices = []
+
+        for (let i = 0; i < verBuffer.length; i += 3) {
+            const x = verBuffer[i];
+            const y = verBuffer[i + 1];
+            const z = verBuffer[i + 2];
+            vertices.push(new THREE.Vector3(x, y, z));
+        }
+
+        let positionVertices: [] = []
+
+        vertices.forEach((item, key) => {
+
+            const vertex = new THREE.Vector3();
+
+            vertex.fromBufferAttribute(mesh.geometry.getAttribute('position'), key);
+
+            mesh.localToWorld(vertex);
+
+            if (vertex.y > 0) return
+
+            positionVertices.push(vertex)
+
+        })
+
+        const vector = new THREE.Vector3().subVectors(positionVertices[0], positionVertices[1]).normalize();
+        const center = new THREE.Vector3().addVectors(positionVertices[0], positionVertices[1]).multiplyScalar(0.5);
+
+        mesh.userData.coordinates = positionVertices
+        mesh.userData.perpendicular = perpendicular
+        mesh.userData.middleVector = vector
+        mesh.userData.center = center
 
         return mesh;
     }
@@ -129,7 +174,6 @@ export class WallBuilder {
         floorMesh.userData.name = 'floor'
 
         floorMesh.userData.plane = this.convertPlaneGeometryToPlane(floorMesh)
-        console.log(floorMesh.userData.plane)
 
         return floorMesh;
     }
@@ -142,8 +186,8 @@ export class WallBuilder {
             clearcoat: 0,
             clearcoatRoughness: 0.6,
             side: side as THREE.Side,
-            depthTest: true,
-            depthWrite: false
+            // depthTest: true,
+            // depthWrite: false
         });
 
         if (textureId) {
@@ -168,6 +212,8 @@ export class WallBuilder {
 
     // Устанавливаем текстуру
     private loadTexture(type: string, textureId: number | string, material: THREE.MeshPhysicalMaterial, dimensions?: number[]) {
+
+        // console.log(dimensions, 'dimensions')
 
         switch (type) {
             case 'wall':
@@ -239,6 +285,25 @@ export class WallBuilder {
 
         // Создаем плоскость
         return new THREE.Plane(worldNormal, constant);
+    }
+
+    findPerpendicularVector(normal) {
+        // Убедимся, что нормаль нормализована
+        // Убедимся, что нормаль нормализована
+        const normalizedNormal = normal.clone().normalize();
+
+        // Выбираем вспомогательный вектор
+        let helper;
+        if (Math.abs(normalizedNormal.y) < 0.9) {
+            helper = new THREE.Vector3(0, 1, 0); // Используем ось Y, если нормаль не направлена почти вертикально
+        } else {
+            helper = new THREE.Vector3(1, 0, 0); // В противном случае используем ось X
+        }
+
+        // Векторное произведение: результат гарантированно перпендикулярен нормали
+        const perpendicular = new THREE.Vector3().crossVectors(normalizedNormal, helper).normalize();
+
+        return perpendicular;
     }
 
 }

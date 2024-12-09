@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as THREE from 'three';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 

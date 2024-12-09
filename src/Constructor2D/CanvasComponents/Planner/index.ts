@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as PIXI from 'pixi.js';
 import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';

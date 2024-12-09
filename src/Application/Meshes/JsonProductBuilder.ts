@@ -1,4 +1,4 @@
-/**// @ts-nocheck */
+// @ts-nocheck 
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
@@ -9,7 +9,7 @@ import { BuildProduct } from './BuildProduct'
 export class JsonBuilder {
 
     parent: BuildProduct
-    resources: THREETypes.TResources
+    // resources: THREETypes.TResources
 
     constructor(parent: BuildProduct) {
         this.parent = parent
@@ -25,6 +25,8 @@ export class JsonBuilder {
 
         json.items.forEach((item: THREETypes.TObject, key: number) => {
             let material, geometry, textureUrl: string
+
+            // console.log(item)
 
             if (json.material instanceof THREE.Material) {
                 material = json.material;
@@ -88,6 +90,9 @@ export class JsonBuilder {
                     case 'ExtrudeGeometry':
                         geometry = this.createShapeGeometry(item.geometry, parent_size)
                         break;
+                    case "PlaneGeometry":
+                        geometry = this.createPlaneGeometry(item.geometry, parent_size)
+                            
                 }
                 obj[item.id] = new THREE.Mesh(geometry, material);
                 obj[item.id].receiveShadow = true;
@@ -126,6 +131,13 @@ export class JsonBuilder {
             parseInt(geometry_data.opt.z)
         )
         // geometry.computeBoundingBox();
+        return geometry
+    }
+
+    createPlaneGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject){
+        let geometry = new THREE.PlaneGeometry(
+            parseInt(geometry_data.opt.x), parseInt(geometry_data.opt.y)
+        )
         return geometry
     }
 

@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 export const MILLINGS = {
     2462671: [
         {

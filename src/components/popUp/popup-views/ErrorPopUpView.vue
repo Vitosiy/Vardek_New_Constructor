@@ -10,6 +10,7 @@
   </div>
 </template>
 <script lang="ts" setup>
+//@ts-nocheck
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { usePopupStore } from '@/store/appStore/popUpsStore';

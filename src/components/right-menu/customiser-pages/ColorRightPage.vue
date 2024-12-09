@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-/**/ / @ts-nocheck 31 */;
+// @ts-nocheck 31
 
 import { ref, watch, onMounted, computed } from "vue";
 import { _URL } from "@/types/constants";

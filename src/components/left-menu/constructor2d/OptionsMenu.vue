@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//@ts-nocheck
 import { ref } from 'vue'
 import { MathUtils } from "three";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";

@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 
+//@ts-nocheck
+
 import { MathUtils } from "three";
 
 import { ref, onMounted, Ref, watch } from "vue";

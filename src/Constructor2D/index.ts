@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import * as PIXI from 'pixi.js';
 
 import Grid from "./CanvasComponents/Grid";
