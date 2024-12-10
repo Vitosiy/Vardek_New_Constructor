@@ -82,8 +82,6 @@ export class Resources extends EventEmitter {
             case 'FBX':
                 truePath = this.replaceUrls(path)
 
-                console.log(truePath)
-
                 let example = 'https://dev.vardek.online/upload/iblock/fa8/fa8d309c7d9927fd467936994c5ff446.FBX'
 
                 this.loaders?.fbxLoader.load(truePath as string, (file: any) => {
