@@ -75,22 +75,21 @@ export default class SizeTextActiveObject {
     this.heightTextContainer.addChild(this.heightText);
     this.container.addChild(this.heightTextContainer);
 
+    // отслеживаем изменения в объекте
     watch(
-      () => this.plannerStore.objects,
-      (newVal) => {
-        
-        const lastAddedObject = newVal[newVal.length - 1];
-        
-        if (lastAddedObject) {
-
-          const newObject = JSON.parse(JSON.stringify(lastAddedObject));
-
-          this.draw(newObject);
-          
-        }
-
+      () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+      (newVal, oldVal) => {
+        newVal.forEach((newObject, index) => {
+          const oldObject = oldVal?.[index];
+    
+          if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+            // Если объект изменился
+            const updatedObject = JSON.parse(JSON.stringify(newObject));
+            this.draw(updatedObject); // Выполняем действие с изменённым объектом
+          }
+        });
       },
-      { deep: true } // Следим за глубокими изменениями в массиве
+      { deep: true } // Глубокое слежение за изменениями
     );
 
     watch(
