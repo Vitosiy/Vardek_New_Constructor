@@ -1,100 +1,99 @@
-import { defineStore } from 'pinia';
+import { ref, reactive, computed } from "vue";
+import { defineStore } from "pinia";
 
-import {
-  Vector2
-} from "@/types/constructor2d/interfaсes";
+import { Vector2 } from "@/types/constructor2d/interfaсes";
 
-interface Mouse {
-  rightBtn: boolean;
-  rightClickPosition: Vector2;
-  prevOriginOfCoordinates: Vector2;
-  positionPoint: Vector2;
-}
+export const useConstructor2DStore = defineStore("constructor2DStore", () => {
+  // Состояния
+  const mouse = reactive({
+    rightBtn: false,
+    rightClickPosition: reactive<Vector2>({ x: 0, y: 0 }),
+    prevOriginOfCoordinates: reactive<Vector2>({ x: 0, y: 0 }),
+    positionPoint: reactive<Vector2>({ x: 0, y: 0 }),
+  });
 
-interface Segment {
-  indent: number,
-  width: number
-}
+  const originOfCoordinates = reactive<Vector2>({ x: 0, y: 0 });
 
-interface State {
-  mouse: Mouse;
-  originOfCoordinates: Vector2;
-  segment: Segment;
-  colorAxisLine: number | string;
-}
+  const segment = reactive({
+    indent: 5,
+    width: 5,
+  });
 
-export const useConstructor2DStore = defineStore('constructor2DStore', {
-  
-  state: (): State => ({
+  const colorAxisLine = ref<number | string>(0xDA444C);
 
-    mouse: {
-      
-      rightBtn: false,
+  const scale = ref<number | 0.01>(1); // это для размера холста планировщика
+  const scale1 = ref<number>(1); // противоположное значение от переменной scale
 
-      rightClickPosition: {
-        x: 0,
-        y: 0
-      },
+  // Действия
+  const toggleRightBtn = () => {
+    mouse.rightBtn = !mouse.rightBtn;
+  };
 
-      prevOriginOfCoordinates: {
-        x: 0,
-        y: 0
-      },
-      
-      positionPoint: {
-        x: 0,
-        y: 0
-      }
+  const updatePositionPoint = (x: number, y: number) => {
+    mouse.positionPoint.x = x;
+    mouse.positionPoint.y = y;
+  };
 
-    },
+  const updateOriginOfCoordinates = (x: number, y: number) => {
+    originOfCoordinates.x = x;
+    originOfCoordinates.y = y;
+  };
 
-    originOfCoordinates: {
-      x: 0,
-      y: 0
-    },
+  const updataRightClickPosition = (x: number, y: number) => {
+    mouse.rightClickPosition.x = x;
+    mouse.rightClickPosition.y = y;
+  };
 
-    segment: {
-      indent: 5,
-      width: 5
-    },
+  const updatePrevOriginOfCoordinates = (x: number, y: number) => {
+    mouse.prevOriginOfCoordinates.x = x;
+    mouse.prevOriginOfCoordinates.y = y;
+  };
 
-    colorAxisLine: 0xDA444C
+  const setColorAxisLine = (color: number | string) => {
+    colorAxisLine.value = color;
+  };
 
-  }),
-  
-  actions: {
+  const setScale = (newScale: number) => {
+    const ns = Math.max(newScale, 0.01);
+    scale.value = ns;
+    scale1.value = 1 / ns; // Обновляем противоположное значение
+  };
 
-    toggleRightBtn() {
-      this.mouse.rightBtn = !this.mouse.rightBtn;
-    },
+  const setSegment = (indent: number, width: number) => {
+    segment.indent = indent;
+    segment.width = width;
+  };
 
-    updatePositionPoint(x: number, y: number) {
-      this.mouse.positionPoint.x = x;
-      this.mouse.positionPoint.y = y;
-    },
+  // Геттеры
+  const getOriginOfCoordinates = computed(() => originOfCoordinates);
+  const getColorAxisLine = computed(() => colorAxisLine.value);
+  const getScale = computed(() => scale.value);
+  const getScale1 = computed(() => scale1.value);
+  const getSegment = computed(() => segment);
 
-    updateOriginOfCoordinates(x: number, y: number) {
-      this.originOfCoordinates.x = x;
-      this.originOfCoordinates.y = y;
-    },
+  // Экспортируем состояние, действия, геттеры и сеттеры
+  return {
+    mouse,
+    originOfCoordinates,
+    segment,
+    colorAxisLine,
+    scale,
+    scale1,
 
-    updataRightClickPosition(x: number, y: number) {
-      this.mouse.rightClickPosition.x = x;
-      this.mouse.rightClickPosition.y = y;
-    },
+    toggleRightBtn,
+    updatePositionPoint,
+    updateOriginOfCoordinates,
+    updataRightClickPosition,
+    updatePrevOriginOfCoordinates,
 
-    updatePrevOriginOfCoordinates(x: number, y: number) {
-      this.mouse.prevOriginOfCoordinates.x = x;
-      this.mouse.prevOriginOfCoordinates.y = y;
-    }
-    
-  },
+    setColorAxisLine,
+    setScale,
+    setSegment,
 
-  getters: {
-    // Добавляем геттер для originOfCoordinates
-    getOriginOfCoordinates: (state) => {
-      return state.originOfCoordinates;
-    }
-  }
-  
+    getOriginOfCoordinates,
+    getColorAxisLine,
+    getScale,
+    getScale1,
+    getSegment,
+  };
 });
