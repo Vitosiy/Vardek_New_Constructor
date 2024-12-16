@@ -228,7 +228,10 @@ export default class Constructor2D {
       const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
 
       // Обновляем координаты центра в store
-      this.constructorStore.updateOriginOfCoordinates(newX, newY);
+      this.constructorStore.updateOriginOfCoordinates(
+        newX < 0 ? newX : 0, 
+        newY < 0 ? newY : 0
+      );
     }
   }
 
