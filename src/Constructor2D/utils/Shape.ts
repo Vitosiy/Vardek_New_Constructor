@@ -66,9 +66,9 @@ function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
     }
     graphic.fill(data.fillColor ?? "rgba(0,0,0,0)");
 
-    return graphic;
-
   }
+    
+  return graphic;
 
 }
 
