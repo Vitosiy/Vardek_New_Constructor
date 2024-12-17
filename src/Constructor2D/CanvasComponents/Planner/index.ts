@@ -309,17 +309,18 @@ export default class Planner {
         
       }
     
-      /*
       if(containers.eventGraphic){
         rect(
           containers.eventGraphic,
+          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
-            color: "rgba(255,255,255,0)" //configWall.color.background // Цвет заливки
+            color: "rgba(255,0,0,0)" //configWall.color.background // Цвет заливки
           }
         );
       }
+      /*
       */
 
       this.interactiveWallStore.activeObjectID = data.id;
