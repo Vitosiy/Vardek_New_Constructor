@@ -315,7 +315,7 @@ function drawArrowHead(
 
   // 1. Сначала вычисляем точку рисования стрелки (без поворота)
   const baseX = (startPoint.x * inverseScale) + distanceX * inverseScale;
-  const baseY = (startPoint.y * inverseScale) + distanceY;
+  const baseY = (startPoint.y * inverseScale) + distanceY * inverseScale;
 
   // 2. Поворачиваем точку (baseX, baseY) относительно startPoint на угол angleRadians
   const deltaX = baseX - (startPoint.x * inverseScale);
