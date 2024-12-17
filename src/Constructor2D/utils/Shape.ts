@@ -81,7 +81,9 @@ function drawVerticalLines(
   heightDirection: 1 | -1 = -1, // Направление линий по оси Y
   color: number = 0x000000, // Цвет линий
   lineWidth: number = 1, // Толщина линий
-  rotationDegrees: number = 0 // Угол поворота линий вокруг startPoint
+  rotationDegrees: number = 0, // Угол поворота линий вокруг startPoint
+  scale: number = 1,
+  inverseScale: number = 1
 ): void {
   graphics.clear(); // Очистка предыдущего содержимого
 
@@ -91,29 +93,29 @@ function drawVerticalLines(
 
   height += 100;
 
-  const numLines = Math.floor(width / spacing); // Количество линий, помещающихся в ширину
+  const numLines = Math.floor((width * inverseScale) / spacing); // Количество линий, помещающихся в ширину
 
   // Функция для поворота точки вокруг startPoint
   const rotatePoint = (x: number, y: number, origin: Vector2, angle: number): Vector2 => {
     const cosAngle = Math.cos(angle);
     const sinAngle = Math.sin(angle);
 
-    const dx = x - origin.x;
-    const dy = y - origin.y;
+    const dx = x - (origin.x * inverseScale);
+    const dy = y - (origin.y * inverseScale);
 
-    const rotatedX = dx * cosAngle - dy * sinAngle + origin.x;
-    const rotatedY = dx * sinAngle + dy * cosAngle + origin.y;
+    const rotatedX = dx * cosAngle - dy * sinAngle + (origin.x * inverseScale);
+    const rotatedY = dx * sinAngle + dy * cosAngle + (origin.y * inverseScale);
 
     return { x: rotatedX, y: rotatedY };
   };
 
   for (let i = 0; i <= numLines; i++) {
-    const xStart = startPoint.x + i * spacing; // X-координата начальной точки линии
-    const yStart = startPoint.y; // Y-координата начальной точки линии
+    const xStart = (startPoint.x * inverseScale) + i * spacing; // X-координата начальной точки линии
+    const yStart = (startPoint.y * inverseScale); // Y-координата начальной точки линии
 
     // Вычисляем смещение конечной точки с учетом heightDirection
-    const xOffset = height * Math.cos(baseAngleRadians); // Горизонтальное смещение
-    const yOffset = height * Math.sin(baseAngleRadians) * heightDirection; // Вертикальное смещение
+    const xOffset = (height * scale) * Math.cos(baseAngleRadians); // Горизонтальное смещение
+    const yOffset = (height * scale) * Math.sin(baseAngleRadians) * heightDirection; // Вертикальное смещение
 
     const xEnd = xStart + xOffset; // X-координата конечной точки
     const yEnd = yStart + yOffset; // Y-координата конечной точки

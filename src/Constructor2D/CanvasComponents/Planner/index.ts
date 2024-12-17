@@ -200,7 +200,6 @@ export default class Planner {
         );
       }
 
-      /*
       // рисуем тело стены
       if(containers.bodyWall){
         
@@ -213,16 +212,19 @@ export default class Planner {
           data.heightDirection, // heightDirection
           configWall.color.line76deg, // Цвет линий
           1, // Толщина линий
-          configWall.angleDegrees + data.angleDegrees
+          configWall.angleDegrees + data.angleDegrees,
+          this.constructorStore.getScale,
+          this.constructorStore.getInverseScale
         );
 
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
 
         // рисуем пунктирную рамку стены
-        drawDashedOutline(containers.bodyWall, data.points);
+        // drawDashedOutline(containers.bodyWall, data.points);
         
       }
-
+      
+      /*
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
 
