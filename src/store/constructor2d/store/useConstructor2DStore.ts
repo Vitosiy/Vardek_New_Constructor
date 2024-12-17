@@ -21,8 +21,11 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
 
   const colorAxisLine = ref<number | string>(0xDA444C);
 
-  const scale = ref<number | 0.01>(1); // это для размера холста планировщика
-  const scale1 = ref<number>(1); // противоположное значение от переменной scale
+  const scale = ref<number>(1); // это для размера холста планировщика
+  const inverseScale = ref<number>(1); // противоположное значение от переменной scale
+  const scaleMin = ref<number>(0.1);
+  const scaleMax = ref<number>(3);
+  const scaleSpeed = ref<number>(0.1);
 
   // Действия
   const toggleRightBtn = () => {
@@ -54,10 +57,41 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
   };
 
   const setScale = (newScale: number) => {
-    const ns = Math.max(newScale, 0.01);
+
+    // Ограничиваем значение scale в диапазоне [0.01, 3]
+    const ns = Math.min(
+      Math.max(newScale, scaleMin.value),
+      scaleMax.value
+    );
+
     scale.value = ns;
-    scale1.value = 1 / ns; // Обновляем противоположное значение
+
+    // Если scale меньше 1, inverseScale становится больше 1, и наоборот
+    if (ns < 1) {
+      inverseScale.value = 1 / ns;
+    } else {
+      inverseScale.value = ns === 1 ? 1 : 1 / ns;
+    }
+
+    // Лог для проверки
+    console.log(`Scale: ${scale.value}, inverseScale: ${inverseScale.value}`);
   };
+
+  const setScaleSpeed = (value: number) => {
+
+    scaleSpeed.value = value;
+    
+  };
+
+  const setScaleRange = (type: "min" | "max", value: number) => {
+
+    if (type === "min") {
+      scaleMin.value = value;
+    }else if (type === "max") {
+      scaleMax.value = value;
+    }
+    
+  }
 
   const setSegment = (indent: number, width: number) => {
     segment.indent = indent;
@@ -68,7 +102,10 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
   const getOriginOfCoordinates = computed(() => originOfCoordinates);
   const getColorAxisLine = computed(() => colorAxisLine.value);
   const getScale = computed(() => scale.value);
-  const getScale1 = computed(() => scale1.value);
+  const getInverseScale = computed(() => inverseScale.value);
+  const getScaleMin = computed(() => scaleMin.value);
+  const getScaleMax = computed(() => scaleMax.value);
+  const getScaleSpeed = computed(() => scaleSpeed.value);
   const getSegment = computed(() => segment);
 
   // Экспортируем состояние, действия, геттеры и сеттеры
@@ -78,7 +115,8 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     segment,
     colorAxisLine,
     scale,
-    scale1,
+    inverseScale,
+    scaleSpeed,
 
     toggleRightBtn,
     updatePositionPoint,
@@ -88,12 +126,17 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
 
     setColorAxisLine,
     setScale,
+    setScaleSpeed,
+    setScaleRange,
     setSegment,
 
     getOriginOfCoordinates,
     getColorAxisLine,
     getScale,
-    getScale1,
+    getInverseScale,
+    getScaleMin,
+    getScaleMax,
+    getScaleSpeed,
     getSegment,
   };
 });

@@ -154,7 +154,8 @@ export default class Constructor2D {
       .on('pointerup', this.onClick.bind(this))
       .on('rightdown', this.onRightDown.bind(this))
       .on('rightup', this.onRightUp.bind(this))
-      .on('pointermove', this.onPointerMove.bind(this));
+      .on('pointermove', this.onPointerMove.bind(this))
+      .on('wheel', this.onWheel.bind(this));
   }
 
   private removeInteractions(): void {
@@ -167,7 +168,30 @@ export default class Constructor2D {
       .off('click')
       .off('rightdown')
       .off('rightup')
-      .off('pointermove');
+      .off('pointermove')
+      .off('wheel');
+  }
+
+  private onWheel(e: WheelEvent): void {
+
+    e.preventDefault();
+    
+    // Получаем текущий масштаб
+    let currentScale: number = this.constructorStore.getScale;
+    const scaleSpeed: number = this.constructorStore.getScaleSpeed;
+  
+    // Изменяем масштаб в зависимости от направления скролла
+    if (e.deltaY < 0) {
+      // Скролл вверх — увеличиваем масштаб
+      currentScale += scaleSpeed;
+    } else if (e.deltaY > 0) {
+      // Скролл вниз — уменьшаем масштаб
+      currentScale -= scaleSpeed;
+    }
+  
+    // Ограничиваем минимальный масштаб, чтобы избежать нуля или отрицательных значений
+    this.constructorStore.setScale(currentScale);
+
   }
 
   private onClick(e: PIXI.FederatedPointerEvent): void {
