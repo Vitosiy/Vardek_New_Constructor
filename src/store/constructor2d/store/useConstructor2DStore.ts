@@ -23,9 +23,9 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
 
   const scale = ref<number>(1); // это для размера холста планировщика
   const inverseScale = ref<number>(1); // противоположное значение от переменной scale
-  const scaleMin = ref<number>(0.1);
-  const scaleMax = ref<number>(3);
-  const scaleSpeed = ref<number>(0.1);
+  const scaleMin = ref<number>(0.3);
+  const scaleMax = ref<number>(2);
+  const scaleSpeed = ref<number>(0.01);
 
   // Действия
   const toggleRightBtn = () => {

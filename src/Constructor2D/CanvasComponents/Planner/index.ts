@@ -108,6 +108,15 @@ export default class Planner {
       },
       { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
     );
+
+    watch(
+      () => this.constructorStore.scale,
+      (newValue) => {
+        
+        this.container.scale.set(newValue);
+        
+      }
+    );
     
   }
 

@@ -112,6 +112,15 @@ export default class StartPointActiveObject {
       }
     );
 
+    watch(
+      () => this.constructorStore.scale,
+      (newValue) => {
+        
+        this.container.scale.set(newValue);
+        
+      }
+    );
+
   }
 
   public draw(obj: PlannerObject): void {
@@ -119,6 +128,8 @@ export default class StartPointActiveObject {
     if(!obj.points) return;
 
     this.container.visible = true;
+    this.container.x = 30;
+    this.container.y = 30;
     
     this.interactiveWallStore.setActiveObjectID(obj.id);
 
@@ -126,9 +137,6 @@ export default class StartPointActiveObject {
       const position = obj.points[0];
 
       this.circleStartPoint.clear();
-
-      position.x += 30;
-      position.y += 30;
 
       if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 0){
         this.startPointRect.visible = true;
@@ -162,9 +170,6 @@ export default class StartPointActiveObject {
       const position = obj.points[1];
 
       this.circleEndPoint.clear();
-
-      position.x += 30;
-      position.y += 30;
 
       if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 1){
         this.endPointRect.visible = true;
@@ -248,8 +253,8 @@ export default class StartPointActiveObject {
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
         {
-          x: e.data.global.x - co.x - 30,
-          y: e.data.global.y - co.y - 30
+          x: e.data.global.x - co.x,
+          y: e.data.global.y - co.y
         }
       );
 

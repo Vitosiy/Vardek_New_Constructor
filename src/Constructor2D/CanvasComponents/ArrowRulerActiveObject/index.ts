@@ -120,6 +120,15 @@ export default class ArrowRulerActiveObject {
       }
     );
 
+    watch(
+      () => this.constructorStore.scale,
+      (newValue) => {
+        
+        this.container.scale.set(newValue);
+        
+      }
+    );
+
   }
 
   public draw(obj: PlannerObject): void {
@@ -129,17 +138,16 @@ export default class ArrowRulerActiveObject {
     const position = obj.points[this.interactiveWallStore.activePoint ?? 0];
 
     this.container.visible = true;
+    this.container.x = 30;
+    this.container.y = 30;
 
     this.xArrow.clear();
     this.xText.text = "";
     this.yArrow.clear();
     this.yText.text = "";
 
-    position.x += 30;
-    position.y += 30;
-
     // вертикальная стрелка
-    const distanceY = position.y - 30;
+    const distanceY = position.y;
     const rotateDegY = -90;
     drawArrow(
       this.xArrow,
@@ -152,11 +160,11 @@ export default class ArrowRulerActiveObject {
     );
     this.xText.text = `${Math.round(distanceY * 10)} см`;
     this.xText.x = position.x - 24;
-    this.xText.y = ((distanceY + 30) / 2) + (this.xText.width / 2);
+    this.xText.y = ((distanceY) / 2) + (this.xText.width / 2);
     this.xText.rotation = MathUtils.degToRad(rotateDegY);
 
     // горизонтальная стрелка
-    const distanceX = position.x - 30;
+    const distanceX = position.x;
     const rotateDegX = 180;
     drawArrow(
       this.yArrow,
@@ -169,7 +177,7 @@ export default class ArrowRulerActiveObject {
     );
     this.yText.text = `${Math.round(distanceX * 10)} см`;
     this.yText.y = position.y - 24;
-    this.yText.x = ((distanceX - 30) / 2) + (this.yText.width / 2);
+    this.yText.x = ((distanceX) / 2) + (this.yText.width / 2);
     
   }
 
