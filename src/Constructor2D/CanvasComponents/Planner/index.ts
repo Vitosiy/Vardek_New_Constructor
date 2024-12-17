@@ -220,7 +220,7 @@ export default class Planner {
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
 
         // рисуем пунктирную рамку стены
-        // drawDashedOutline(containers.bodyWall, data.points);
+        drawDashedOutline(containers.bodyWall, data.points, this.constructorStore.getInverseScale);
         
       }
       

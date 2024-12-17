@@ -137,10 +137,11 @@ function drawVerticalLines(
 function drawDashedOutline(
   graphics: PIXI.Graphics,
   points: Vector2[], // Массив точек для контура
+  scale: number = 1,
   dashLength: number = 4, // Длина каждого штриха
   gapLength: number = 2, // Длина промежутка между штрихами
   color: number = 0x000000, // Цвет линии
-  lineWidth: number = 1 // Толщина линии
+  lineWidth: number = 1, // Толщина линии
 ): void {
   if (points.length < 2) {
     console.warn("Недостаточно точек для построения контура.");
@@ -149,8 +150,16 @@ function drawDashedOutline(
 
   // Перебираем точки попарно
   for (let i = 0; i < points.length - 1; i++) {
-    const startPoint = points[i]; // Текущая точка
-    const endPoint = points[i + 1]; // Следующая точка
+    const p0 = {
+      x: points[i].x * scale,
+      y: points[i].y * scale
+    };
+    const p1 = {
+      x: points[i + 1].x * scale,
+      y: points[i + 1].y * scale
+    };
+    const startPoint = p0; // points[i]; // Текущая точка
+    const endPoint = p1; // points[i + 1]; // Следующая точка
 
     // Вычисляем разницу координат
     const dx = endPoint.x - startPoint.x;
@@ -190,8 +199,16 @@ function drawDashedOutline(
   }
 
   // Соединяем последнюю точку с первой для замкнутого контура
-  const startPoint = points[points.length - 1];
-  const endPoint = points[0];
+  const p0 = {
+    x: points[points.length - 1].x * scale,
+    y: points[points.length - 1].y * scale
+  };
+  const p1 = {
+    x: points[0].x * scale,
+    y: points[0].y * scale
+  };
+  const startPoint = p0; // points[points.length - 1];
+  const endPoint = p1; // points[0];
   const dx = endPoint.x - startPoint.x;
   const dy = endPoint.y - startPoint.y;
   const lineLength = Math.sqrt(dx * dx + dy * dy);
