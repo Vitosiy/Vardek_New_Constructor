@@ -224,7 +224,6 @@ export default class Planner {
         
       }
       
-      /*
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
 
@@ -236,7 +235,8 @@ export default class Planner {
           configWall.color.arrowHeadWall, // Цвет стрелки
           1, // Толщина линии
           12, // Размер треугольника (основание и высота)
-          true
+          true,
+          this.constructorStore.getInverseScale
         );
 
         // рисуем указатель внутренне стороны стены (стрелка без линии)
@@ -249,9 +249,11 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
+          false, // не очищаем графику
+          this.constructorStore.getInverseScale
         );
 
+        /*
         // рисуем указатель начала стены (стрелка без линии)
         drawArrowHead(
           containers.lineWall,
@@ -301,9 +303,11 @@ export default class Planner {
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
+        */
         
       }
     
+      /*
       if(containers.eventGraphic){
         rect(
           containers.eventGraphic,

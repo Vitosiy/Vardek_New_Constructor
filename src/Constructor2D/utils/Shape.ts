@@ -245,7 +245,8 @@ function drawArrow(
   color: number = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   triangleSize: number = 12, // Размер треугольника (основание и высота)
-  clearGraphics?: boolean // Флаг: очищать графику или нет
+  clearGraphics: boolean = false, // Флаг: очищать графику или нет,
+  inverseScale: number = 1
 ): void {
   if(clearGraphics || clearGraphics !== undefined){
     graphics.clear(); // Очистка графики
@@ -256,12 +257,12 @@ function drawArrow(
 
   // Вычисляем конечную точку линии на основе длины и угла
   const endPoint = {
-    x: startPoint.x + Math.cos(angleRadians) * width,
-    y: startPoint.y + Math.sin(angleRadians) * width,
+    x: (startPoint.x * inverseScale) + Math.cos(angleRadians) * (width * inverseScale),
+    y: (startPoint.y * inverseScale) + Math.sin(angleRadians) * (width * inverseScale),
   };
 
   // Рисуем основную линию
-  graphics.moveTo(startPoint.x, startPoint.y);
+  graphics.moveTo((startPoint.x * inverseScale), (startPoint.y * inverseScale));
   graphics.lineTo(endPoint.x, endPoint.y);
   graphics.stroke({
     color: color,
@@ -300,7 +301,8 @@ function drawArrowHead(
   angleDegrees: number, // Угол поворота стрелки относительно начала
   color: number = 0x000000, // Цвет стрелки
   size: number = 12, // Размер треугольника (основание и высота)
-  clearGraphics: boolean = true // Флаг: очищать графику или нет
+  clearGraphics: boolean = true, // Флаг: очищать графику или нет
+  inverseScale: number = 1,
 ): void {
   if (clearGraphics) {
     graphics.clear(); // Очистка графики, если требуется
@@ -312,15 +314,15 @@ function drawArrowHead(
   const halfBase = size / 2;
 
   // 1. Сначала вычисляем точку рисования стрелки (без поворота)
-  const baseX = startPoint.x + distanceX;
-  const baseY = startPoint.y + distanceY;
+  const baseX = (startPoint.x * inverseScale) + distanceX * inverseScale;
+  const baseY = (startPoint.y * inverseScale) + distanceY;
 
   // 2. Поворачиваем точку (baseX, baseY) относительно startPoint на угол angleRadians
-  const deltaX = baseX - startPoint.x;
-  const deltaY = baseY - startPoint.y;
+  const deltaX = baseX - (startPoint.x * inverseScale);
+  const deltaY = baseY - (startPoint.y * inverseScale);
 
-  const rotatedX = startPoint.x + deltaX * Math.cos(angleRadians) - deltaY * Math.sin(angleRadians);
-  const rotatedY = startPoint.y + deltaX * Math.sin(angleRadians) + deltaY * Math.cos(angleRadians);
+  const rotatedX = (startPoint.x * inverseScale) + deltaX * Math.cos(angleRadians) - deltaY * Math.sin(angleRadians);
+  const rotatedY = (startPoint.y * inverseScale) + deltaX * Math.sin(angleRadians) + deltaY * Math.cos(angleRadians);
 
   // Теперь rotatedX и rotatedY — это точка рисования стрелки с учетом смещения и поворота
 
