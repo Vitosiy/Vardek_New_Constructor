@@ -5,7 +5,7 @@ import {
   RectData
 } from "@/types/constructor2d/interfaсes";
 
-function rect(graphic: PIXI.Graphics, data: RectData): PIXI.Graphics {
+function rect(graphic: PIXI.Graphics, scale: number, data: RectData): PIXI.Graphics {
 
   /*
   data = {
@@ -23,11 +23,11 @@ function rect(graphic: PIXI.Graphics, data: RectData): PIXI.Graphics {
   }
 
   // Логика рисования прямоугольника через точки
-  graphic.moveTo(points[0].x, points[0].y); // Перемещаемся к первой точке
-  graphic.lineTo(points[1].x, points[1].y); // Линия ко второй точке
-  graphic.lineTo(points[2].x, points[2].y); // Линия к третьей точке
-  graphic.lineTo(points[3].x, points[3].y); // Линия к четвертой точке
-  graphic.lineTo(points[0].x, points[0].y); // Замыкаем контур
+  graphic.moveTo(points[0].x*scale, points[0].y*scale); // Перемещаемся к первой точке
+  graphic.lineTo(points[1].x*scale, points[1].y*scale); // Линия ко второй точке
+  graphic.lineTo(points[2].x*scale, points[2].y*scale); // Линия к третьей точке
+  graphic.lineTo(points[3].x*scale, points[3].y*scale); // Линия к четвертой точке
+  graphic.lineTo(points[0].x*scale, points[0].y*scale); // Замыкаем контур
   graphic.fill(color); // Устанавливаем цвет заливки
 
   // Возвращаем объект graphics

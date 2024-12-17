@@ -99,12 +99,12 @@ export default class Constructor2D {
     // добавляем компонент сетки
     this.components.grid ??= new Grid(this.app2d!);
 
-    this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
+    // this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
     
     // добавляем компонент для рисования планировок
     this.components.planner ??= new Planner(this.app2d!);
 
-    this.components.sizeTextActiveObject ??= new SizeTextActiveObject(this.app2d!);
+    // this.components.sizeTextActiveObject ??= new SizeTextActiveObject(this.app2d!);
 
     this.components.startPointActiveObject ??= new StartPointActiveObject(this.app2d!);
     
@@ -236,7 +236,7 @@ export default class Constructor2D {
     // Если правая кнопка мыши зажата, перемещаем сцену
     if (this.constructorStore.mouse.rightBtn) {
 
-      this.constructorStore.mouse.positionPoint
+      const scale = this.constructorStore.getInverseScale;
 
       // Вычисляем изменения по осям X и Y
       const { distanceX, distanceY } = calculateMouseDistanceByAxes(
@@ -248,8 +248,8 @@ export default class Constructor2D {
       );
 
       // Смещаем в противоположную сторону (вычитаем изменения)
-      const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
-      const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
+      const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x + 30 - distanceX;
+      const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y + 30 - distanceY;
 
       // Обновляем координаты центра в store
       this.constructorStore.updateOriginOfCoordinates(

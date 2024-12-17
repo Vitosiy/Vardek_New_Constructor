@@ -52,6 +52,8 @@ export default class StartPointActiveObject {
 
     this.app = pixiApp;
     this.container = new PIXI.Container();
+    this.container.x = 30;
+    this.container.y = 30;
     this.app.stage.addChild(this.container);
     
     this.startPointRect = new PIXI.Graphics();
@@ -90,8 +92,8 @@ export default class StartPointActiveObject {
       () => this.constructorStore.originOfCoordinates,
       (newValue) => {
 
-        const cX = newValue.x;
-        const cY = newValue.y;
+        const cX = 30 + newValue.x;
+        const cY = 30 + newValue.y;
         
         this.container.position.set(cX, cY);
         
@@ -128,13 +130,13 @@ export default class StartPointActiveObject {
     if(!obj.points) return;
 
     this.container.visible = true;
-    this.container.x = 30;
-    this.container.y = 30;
     
     this.interactiveWallStore.setActiveObjectID(obj.id);
 
     { // start point
       const position = obj.points[0];
+      position.x = position.x * this.constructorStore.getInverseScale;
+      position.y = position.y * this.constructorStore.getInverseScale;
 
       this.circleStartPoint.clear();
 
@@ -248,13 +250,14 @@ export default class StartPointActiveObject {
     if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
       
       const co = this.constructorStore.getOriginOfCoordinates;
+      const scale = this.constructorStore.getScale;
 
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
         {
-          x: e.data.global.x - co.x - 30,
-          y: e.data.global.y - co.y - 30
+          x: e.global.x - co.x - 30,
+          y: e.global.y - co.y - 30
         }
       );
 

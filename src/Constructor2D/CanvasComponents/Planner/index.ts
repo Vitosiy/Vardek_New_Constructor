@@ -191,6 +191,7 @@ export default class Planner {
       if(containers.maskWall){
         rect(
           containers.maskWall,
+          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
@@ -199,6 +200,7 @@ export default class Planner {
         );
       }
 
+      /*
       // рисуем тело стены
       if(containers.bodyWall){
         
@@ -310,6 +312,7 @@ export default class Planner {
           }
         );
       }
+      */
 
       this.interactiveWallStore.activeObjectID = data.id;
       // this.activeObject = data.id;

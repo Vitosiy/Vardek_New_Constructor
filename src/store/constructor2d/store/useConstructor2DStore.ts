@@ -73,8 +73,6 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
       inverseScale.value = ns === 1 ? 1 : 1 / ns;
     }
 
-    // Лог для проверки
-    console.log(`Scale: ${scale.value}, inverseScale: ${inverseScale.value}`);
   };
 
   const setScaleSpeed = (value: number) => {
