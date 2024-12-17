@@ -253,8 +253,8 @@ export default class StartPointActiveObject {
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
         {
-          x: e.data.global.x - co.x,
-          y: e.data.global.y - co.y
+          x: e.data.global.x - co.x - 30,
+          y: e.data.global.y - co.y - 30
         }
       );
 
