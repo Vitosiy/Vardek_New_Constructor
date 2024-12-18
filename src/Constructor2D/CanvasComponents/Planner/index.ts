@@ -149,7 +149,7 @@ export default class Planner {
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
     containers.eventGraphic.eventMode = 'static';
-    containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
+    // containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
       containers.maskWall,
