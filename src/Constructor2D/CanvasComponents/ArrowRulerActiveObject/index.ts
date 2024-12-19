@@ -13,6 +13,7 @@ import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInter
 
 import {
   PlannerObject,
+  Vector2,
   // PlannerObjectContainers,
   // Vector2,
 } from "@/types/constructor2d/interfaсes";
@@ -53,6 +54,8 @@ export default class ArrowRulerActiveObject {
 
     this.app = pixiApp;
     this.container = new PIXI.Container();
+    this.container.x = 30;
+    this.container.y = 30;
     this.app.stage.addChild(this.container);
 
     this.xArrow = new PIXI.Graphics();
@@ -98,8 +101,8 @@ export default class ArrowRulerActiveObject {
       () => this.constructorStore.originOfCoordinates,
       (newValue) => {
 
-        const cX = newValue.x;
-        const cY = newValue.y;
+        const cX = 30 + newValue.x;
+        const cY = 30 + newValue.y;
         
         this.container.position.set(cX, cY);
         
@@ -138,8 +141,6 @@ export default class ArrowRulerActiveObject {
     const position = obj.points[this.interactiveWallStore.activePoint ?? 0];
 
     this.container.visible = true;
-    this.container.x = 30;
-    this.container.y = 30;
 
     this.xArrow.clear();
     this.xText.text = "";
@@ -156,11 +157,13 @@ export default class ArrowRulerActiveObject {
       rotateDegY, // Угол направления стрелки в градусах
       configWall.color.tapeLineColor, // Цвет стрелки
       1, // Толщина линии
-      12 // Размер треугольника (основание и высота)
+      12, // Размер треугольника (основание и высота)
+      true,
+      this.constructorStore.getInverseScale
     );
     this.xText.text = `${Math.round(distanceY * 10)} см`;
-    this.xText.x = position.x - 24;
-    this.xText.y = ((distanceY) / 2) + (this.xText.width / 2);
+    this.xText.x = (position.x * this.constructorStore.getInverseScale) - 24;
+    this.xText.y = ((distanceY / 2) + (this.xText.width / 2)) * this.constructorStore.getInverseScale;
     this.xText.rotation = MathUtils.degToRad(rotateDegY);
 
     // горизонтальная стрелка
@@ -173,11 +176,13 @@ export default class ArrowRulerActiveObject {
       rotateDegX, // Угол направления стрелки в градусах
       configWall.color.tapeLineColor, // Цвет стрелки
       1, // Толщина линии
-      12 // Размер треугольника (основание и высота)
+      12, // Размер треугольника (основание и высота)
+      true,
+      this.constructorStore.getInverseScale
     );
     this.yText.text = `${Math.round(distanceX * 10)} см`;
-    this.yText.y = position.y - 24;
-    this.yText.x = ((distanceX) / 2) + (this.yText.width / 2);
+    this.yText.y = (position.y * this.constructorStore.getInverseScale) - 24;
+    this.yText.x = ((distanceX / 2) - (this.yText.width / 2)) * this.constructorStore.getInverseScale;
     
   }
 

@@ -99,7 +99,7 @@ export default class Constructor2D {
     // добавляем компонент сетки
     this.components.grid ??= new Grid(this.app2d!);
 
-    // this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
+    this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
     
     // добавляем компонент для рисования планировок
     this.components.planner ??= new Planner(this.app2d!);
