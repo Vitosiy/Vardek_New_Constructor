@@ -1,3 +1,6 @@
+import {
+  watch
+} from 'vue';
 import * as PIXI from 'pixi.js';
 import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
@@ -58,6 +61,16 @@ export default class Grid {
     this.constructorStore.$subscribe(() => {
       this.handleConstructorStoreChange();
     });
+
+    watch(
+      () => this.constructorStore.scale,
+      (scale) => {
+        
+        this.container.scale.set(scale);
+        this.drawGrid();
+        
+      }
+    );
 
     // Инициализация компонентов класса
     this.init();
@@ -137,9 +150,9 @@ export default class Grid {
     this.gridLines.clear();
     
     // Получает текущую ширину области рендера
-    const width = this.app.renderer.width;
+    const width = this.app.renderer.width * this.constructorStore.getInverseScale;
     // Получает текущую высоту области рендера
-    const height = this.app.renderer.height;
+    const height = this.app.renderer.height * this.constructorStore.getInverseScale;
     
     // Рассчитывает количество вертикальных линий с учетом размера сетки
     const vLines = Math.ceil(width / this.gridStore.gridSize) + 2; // Добавляет две линии для создания эффекта "бесконечной" сетки
@@ -147,7 +160,10 @@ export default class Grid {
     const hLines = Math.ceil(height / this.gridStore.gridSize) + 2; // Аналогично добавляет две линии
     
     // Определяет центр сцены (координаты начала системы координат)
-    const centerScene = this.constructorStore.originOfCoordinates;
+    const centerScene = {
+      x: this.constructorStore.originOfCoordinates.x * this.constructorStore.getInverseScale - 30,
+      y: this.constructorStore.originOfCoordinates.y * this.constructorStore.getInverseScale - 30
+    };
     
     // Отрисовка вертикальных линий
     this.drawLines(

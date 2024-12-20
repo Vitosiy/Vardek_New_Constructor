@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useGridStore = defineStore('grid2DStore', {
   state: () => ({
-    gridSize: 30,        // Размер ячейки сетки
+    gridSize: 100,        // Размер ячейки сетки
     colorGrid: 0xefefef, // Цвет сетки
   }),
   actions: {
