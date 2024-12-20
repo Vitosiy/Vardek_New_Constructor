@@ -134,8 +134,8 @@ export default class Grid {
     const hLines = Math.ceil(height / this.gridStore!.gridSize) + 2;
     
     const centerScene = {
-      x: this.constructorStore!.originOfCoordinates.x * this.constructorStore!.getInverseScale - 30,
-      y: this.constructorStore!.originOfCoordinates.y * this.constructorStore!.getInverseScale - 30
+      x: (this.constructorStore!.originOfCoordinates.x - 30) * this.constructorStore!.getInverseScale,
+      y: (this.constructorStore!.originOfCoordinates.y - 30) * this.constructorStore!.getInverseScale
     };
     
     this.drawLines(

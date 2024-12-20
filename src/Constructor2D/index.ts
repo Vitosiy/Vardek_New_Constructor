@@ -229,8 +229,8 @@ export default class Constructor2D {
         this.constructorStore.mouse.rightClickPosition
       );
 
-      const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x + 30 - distanceX;
-      const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y + 30 - distanceY;
+      const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
+      const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
 
       this.constructorStore.updateOriginOfCoordinates(
         newX < 0 ? newX : 0,
