@@ -120,7 +120,7 @@ export default class Constructor2D {
       // Отписываемся от всех наблюдателей
       this.unwatchList.forEach(unwatch => unwatch());
       this.unwatchList = []; // Очищаем массив наблюдателей для безопасности
-      
+
       // Удаляем обработчики событий с канвы
       this.removeInteractions();
 
@@ -148,9 +148,10 @@ export default class Constructor2D {
     if (!stage) return;
 
     stage
-      .on('pointerup', this.onClick.bind(this))
+      .on('click', this.onClick.bind(this))
       .on('rightdown', this.onRightDown.bind(this))
       .on('rightup', this.onRightUp.bind(this))
+      .on('pointerout', this.onRightUp.bind(this))
       .on('pointermove', this.onPointerMove.bind(this))
       .on('wheel', this.onWheel.bind(this));
   }
@@ -161,9 +162,10 @@ export default class Constructor2D {
     if (!stage) return;
 
     stage
-      .off('pointerup', this.onClick)
+      .off('click', this.onClick)
       .off('rightdown', this.onRightDown)
       .off('rightup', this.onRightUp)
+      .off('pointerout', this.onRightUp)
       .off('pointermove', this.onPointerMove)
       .off('wheel', this.onWheel);
   }
@@ -206,7 +208,9 @@ export default class Constructor2D {
 
   private onRightUp(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
-    this.constructorStore.toggleRightBtn();
+    if(this.constructorStore.mouse.rightBtn){
+      this.constructorStore.toggleRightBtn();
+    }
   }
 
   private onPointerMove(e: PIXI.FederatedPointerEvent): void {
