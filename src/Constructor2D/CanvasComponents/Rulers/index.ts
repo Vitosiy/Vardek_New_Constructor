@@ -25,6 +25,9 @@ export default class Rulers {
   private visibleTextRuler: boolean = true;
   private limitMaxSegmentsForText = 15;
 
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
 
     if (!pixiApp) { // Проверяем, был ли передан экземпляр PIXI.Application
@@ -51,51 +54,64 @@ export default class Rulers {
     this.pureSquareGraphics = new PIXI.Graphics(); // Инициализируем графику для квадрата начала координат
     this.container.addChild(this.pureSquareGraphics); // Добавляем графику квадрата в общий контейнер
     
-    this.constructorStore.$subscribe(() => { // Подписываемся на изменения в состоянии конструктора
-        this.handleConstructorStoreChange(); // Вызываем метод для обработки изменений в состоянии конструктора
-    });
+    // this.constructorStore.$subscribe(() => { // Подписываемся на изменения в состоянии конструктора
+    //   this.handleConstructorStoreChange(); // Вызываем метод для обработки изменений в состоянии конструктора
+    // });
     
     this.init(); // Вызываем метод инициализации (рисование линейки и квадрата)
-        
-    watch(
-      () => this.constructorStore.scale,
-      (scale) => {
 
-        // const width = (this.app.renderer.width - 30) * this.constructorStore.getInverseScale; // Вычисляем доступную ширину линейки по холсту
-
-        // const segmentSize = this.rulerStore.getSegmentSize * (1 / scale); // размер деления линейки (сегмент линейки)егмента линейки)
-        
-        // let countSegments = Math.ceil(width / segmentSize); // получаем количество сегментов
-
-        // console.log("countSegments:", this.app.renderer.width, scale, countSegments);
-
-        // const cs = Math.ceil(width*widthInverse) / (segmentSize * scale));
-
-        // this.rulerStore.setSegmentSize(segmentSize * scale);
-        // this.rulerStore.setTextSegment(i * cs);
-
-        /*
-        if(countSegments > 10){
-
-          for(let i=2;;i++){
-
-            const cs = Math.ceil(width / ((segmentSize * i) * scale));
-            
-            if(cs > 20){
-              
-              this.rulerStore.setSegmentSize(ss);
-              this.rulerStore.setTextSegment(i * cs);
-              
-              break;
-            }
-            
-          }
-
-        }
-        */
+    this.unwatchList.push(
+      // Используем watch для наблюдения за изменениями в store
+      watch(
+        () => this.constructorStore, // Источник данных, за которым наблюдаем
+        () => {
+          this.handleConstructorStoreChange(); // Вызываем обработчик изменений
+        },
+        { deep: true } // Глубокое отслеживание (необходимо, если наблюдаем за вложенными объектами)
+      )
+    );
     
-        this.drawRulers(); // Перерисовываем линейки
-      }
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.scale,
+        (scale) => {
+
+          // const width = (this.app.renderer.width - 30) * this.constructorStore.getInverseScale; // Вычисляем доступную ширину линейки по холсту
+
+          // const segmentSize = this.rulerStore.getSegmentSize * (1 / scale); // размер деления линейки (сегмент линейки)егмента линейки)
+          
+          // let countSegments = Math.ceil(width / segmentSize); // получаем количество сегментов
+
+          // console.log("countSegments:", this.app.renderer.width, scale, countSegments);
+
+          // const cs = Math.ceil(width*widthInverse) / (segmentSize * scale));
+
+          // this.rulerStore.setSegmentSize(segmentSize * scale);
+          // this.rulerStore.setTextSegment(i * cs);
+
+          /*
+          if(countSegments > 10){
+
+            for(let i=2;;i++){
+
+              const cs = Math.ceil(width / ((segmentSize * i) * scale));
+              
+              if(cs > 20){
+                
+                this.rulerStore.setSegmentSize(ss);
+                this.rulerStore.setTextSegment(i * cs);
+                
+                break;
+              }
+              
+            }
+
+          }
+          */
+      
+          this.drawRulers(); // Перерисовываем линейки
+        }
+      )
     );
   
   }
@@ -108,6 +124,8 @@ export default class Rulers {
 
   private drawRulers(): void { // Метод для рисования всех линеек
 
+    if(!this.app || !this.app.renderer) return;
+    
     this.visibleTextRuler = true;
 
     { // count top segments
@@ -313,6 +331,48 @@ export default class Rulers {
 
     this.drawRulers(); // Перерисовываем линейки при изменении данных в сторе конструктора
 
+  }
+
+  public destroy(): void {
+
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив для безопасности
+    
+    // Очистка верхней линейки
+    if (this.topRulerSegmentsGraphics) {
+      this.topRulerSegmentsGraphics.destroy(true);
+      this.container.removeChild(this.topRulerSegmentsGraphics);
+    }
+    if (this.topRulerSegmentNumbers) {
+      this.topRulerSegmentNumbers.destroy(true);
+      this.container.removeChild(this.topRulerSegmentNumbers);
+    }
+
+    // Очистка левой линейки
+    if (this.leftRulerSegmentsGraphics) {
+      this.leftRulerSegmentsGraphics.destroy(true);
+      this.container.removeChild(this.leftRulerSegmentsGraphics);
+    }
+    if (this.leftRulerSegmentNumbers) {
+      this.leftRulerSegmentNumbers.destroy(true);
+      this.container.removeChild(this.leftRulerSegmentNumbers);
+    }
+
+    // Очистка квадрата начала координат
+    if (this.pureSquareGraphics) {
+      this.pureSquareGraphics.destroy(true);
+      this.container.removeChild(this.pureSquareGraphics);
+    }
+
+    // Очистка контейнера
+    if (this.container) {
+      this.container.destroy({ children: true, texture: true });
+      this.container = null!;
+    }
+
+    // Обнуление ссылок
+    this.app = null!;
   }
 
 }

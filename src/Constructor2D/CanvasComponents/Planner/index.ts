@@ -48,6 +48,9 @@ export default class Planner {
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
 
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
@@ -59,63 +62,71 @@ export default class Planner {
     this.activeObjectGraphic = new PIXI.Graphics();
     this.app.stage.addChild(this.activeObjectGraphic);
 
-    watch(
-      () => this.plannerStore.objects.length, // Следим за длиной массива
-      (newLength, oldLength) => {
-        if (newLength > oldLength) {
-          // Определяем, что добавлен новый объект
-          const lastAddedObject = this.plannerStore.objects[newLength - 1];
-          
-          if (lastAddedObject) {
-            const newObject = JSON.parse(JSON.stringify(lastAddedObject));
-    
-            if (!this.drawObjects.some((el) => el.id === newObject.id)) {
-              const newDrawObject = this.createDrawObject(newObject);
-              this.drawObjects.push(newDrawObject);
-              this.drawObject(newObject);
+    this.unwatchList.push(
+      watch(
+        () => this.plannerStore.objects.length, // Следим за длиной массива
+        (newLength, oldLength) => {
+          if (newLength > oldLength) {
+            // Определяем, что добавлен новый объект
+            const lastAddedObject = this.plannerStore.objects[newLength - 1];
+            
+            if (lastAddedObject) {
+              const newObject = JSON.parse(JSON.stringify(lastAddedObject));
+      
+              if (!this.drawObjects.some((el) => el.id === newObject.id)) {
+                const newDrawObject = this.createDrawObject(newObject);
+                this.drawObjects.push(newDrawObject);
+                this.drawObject(newObject);
+              }
             }
           }
         }
-      }
+      )
     );
     
-    // отслеживаем изменения в объекте
-    watch(
-      () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
-      (newVal, oldVal) => {
-        newVal.forEach((newObject, index) => {
-          const oldObject = oldVal?.[index];
-    
-          if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-            // Если объект изменился
-            const updatedObject = JSON.parse(JSON.stringify(newObject));
-            this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
-          }
-        });
-      },
-      { deep: true } // Глубокое слежение за изменениями
+    this.unwatchList.push(
+      // отслеживаем изменения в объекте
+      watch(
+        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+      
+            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              // Если объект изменился
+              const updatedObject = JSON.parse(JSON.stringify(newObject));
+              this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
+            }
+          });
+        },
+        { deep: true } // Глубокое слежение за изменениями
+      )
     );
 
-    watch(
-      () => this.constructorStore.originOfCoordinates,
-      (newValue) => {
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.originOfCoordinates,
+        (newValue) => {
 
-        const cX = 30 + newValue.x;
-        const cY = 30 + newValue.y;
-        
-        this.container.position.set(cX, cY);
-        
-      },
-      { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+          const cX = 30 + newValue.x;
+          const cY = 30 + newValue.y;
+          
+          this.container.position.set(cX, cY);
+          
+        },
+        { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+      )
     );
 
-    watch(
-      () => this.constructorStore.scale,
-      (newValue) => {
-        
-        this.container.scale.set(newValue);
-        
-      }
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.scale,
+        (newValue) => {
+          
+          this.container.scale.set(newValue);
+          
+        }
+      )
     );
     
   }
@@ -341,7 +352,53 @@ export default class Planner {
 
   }
 
-  destroy(): void {
-    this.app.stage.removeChild(this.container);
+  public destroy(): void {
+
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив для безопасности
+  
+    // Удаляем графику из сцены
+    this.drawObjects.forEach(drawObject => {
+      const { containers } = drawObject;
+
+      // Уничтожаем каждый элемент контейнеров
+      for (const key in containers) {
+        const graphic = containers[key as keyof PlannerObjectContainers];
+        if (graphic && typeof graphic.destroy === "function") {
+          try {
+            // Уничтожаем с рекурсивным удалением дочерних объектов
+            graphic.destroy(true);
+            // Убираем из контейнера
+            if (this.container.children.includes(graphic)) {
+              this.container.removeChild(graphic);
+            }
+          } catch (error) {
+            console.warn(`Failed to destroy graphic: ${key}`, error);
+          }
+        }
+      }
+    });
+  
+    this.drawObjects = []; // Очищаем массив объектов
+  
+    // Уничтожаем основной контейнер
+    if (this.container) {
+      this.container.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
+      this.app.stage.removeChild(this.container); // Убираем контейнер со сцены
+      this.container = null!; // Обнуляем ссылку
+    }
+  
+    // Уничтожаем графику активного объекта
+    if (this.activeObjectGraphic) {
+      this.activeObjectGraphic.destroy(true);
+      this.app.stage.removeChild(this.activeObjectGraphic);
+      this.activeObjectGraphic = null!;
+    }
+  
+    // Обнуляем другие ссылки
+    this.app = null!;
+    this.activeObject = '';
   }
+  
 }

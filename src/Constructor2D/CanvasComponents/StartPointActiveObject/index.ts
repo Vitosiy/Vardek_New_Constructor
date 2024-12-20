@@ -46,6 +46,9 @@ export default class StartPointActiveObject {
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
 
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
 
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -71,56 +74,64 @@ export default class StartPointActiveObject {
 
     this.setupInteractions();
     
-    // отслеживаем изменения в объекте
-    watch(
-      () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
-      (newVal, oldVal) => {
-        newVal.forEach((newObject, index) => {
-          const oldObject = oldVal?.[index];
-    
-          if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-            // Если объект изменился
-            const updatedObject = JSON.parse(JSON.stringify(newObject));
-            this.draw(updatedObject); // Выполняем действие с изменённым объектом
+    this.unwatchList.push(
+      // отслеживаем изменения в объекте
+      watch(
+        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+      
+            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              // Если объект изменился
+              const updatedObject = JSON.parse(JSON.stringify(newObject));
+              this.draw(updatedObject); // Выполняем действие с изменённым объектом
+            }
+          });
+        },
+        { deep: true } // Глубокое слежение за изменениями
+      )
+    );
+
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.originOfCoordinates,
+        (newValue) => {
+
+          const cX = 30 + newValue.x;
+          const cY = 30 + newValue.y;
+          
+          this.container.position.set(cX, cY);
+          
+        },
+        { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+      )
+    );
+
+    this.unwatchList.push(
+      watch (
+        () => this.interactiveWallStore.activeObjectID,
+        (newVal, oldVal) => {
+
+          if(newVal){
+            const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
+            this.interactiveWallStore.setActivePoint(0);
+            this.draw(obj);
           }
-        });
-      },
-      { deep: true } // Глубокое слежение за изменениями
-    );
 
-    watch(
-      () => this.constructorStore.originOfCoordinates,
-      (newValue) => {
-
-        const cX = 30 + newValue.x;
-        const cY = 30 + newValue.y;
-        
-        this.container.position.set(cX, cY);
-        
-      },
-      { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
-    );
-
-    watch (
-      () => this.interactiveWallStore.activeObjectID,
-      (newVal, oldVal) => {
-
-        if(newVal){
-          const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
-          this.interactiveWallStore.setActivePoint(0);
-          this.draw(obj);
         }
-
-      }
+      )
     );
 
-    watch(
-      () => this.constructorStore.scale,
-      (newValue) => {
-        
-        this.container.scale.set(newValue);
-        
-      }
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.scale,
+        (newValue) => {
+          
+          this.container.scale.set(newValue);
+          
+        }
+      )
     );
 
   }
@@ -272,5 +283,43 @@ export default class StartPointActiveObject {
     this.container.visible = false;
     
   }
+
+  public destroy(): void {
+
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив для безопасности
+
+    this.circleStartPoint.off('pointerdown');
+    this.circleStartPoint.off('pointerup');
+
+    this.circleEndPoint.off('pointerdown');
+    this.circleEndPoint.off('pointerup');
+
+    this.app.stage.off('pointermove', this.handleMouseMove);
+
+    // Очистка и уничтожение графики
+    [this.circleStartPoint, this.circleEndPoint, this.startPointRect, this.endPointRect].forEach(graphic => {
+      if (graphic) {
+        graphic.destroy(true);
+        this.container.removeChild(graphic);
+      }
+    });
+
+    // Удаление контейнера
+    if (this.container) {
+      this.app.stage.removeChild(this.container);
+      this.container.destroy({ children: true, texture: true });
+    }
+
+    // Обнуление свойств
+    this.circleStartPoint = null!;
+    this.circleEndPoint = null!;
+    this.startPointRect = null!;
+    this.endPointRect = null!;
+    this.container = null!;
+    this.app = null!;
+  }
+
 
 }

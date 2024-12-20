@@ -49,68 +49,52 @@ export default class Constructor2D {
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
   private interactiveWallStore = useC2DInteractiveWallStore();
 
-  constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
 
+  constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
     this.container = container;
     this.canvas = canvas;
 
-    watch (
-      () => this.interactiveWallStore.activeObjectID,
-      (newVal, oldVal) => {
-
-        if(newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse){
-          if(this.components.startPointActiveObject) this.components.startPointActiveObject.clearGraphic();
-          if(this.components.arrowRulerActiveObject) this.components.arrowRulerActiveObject.clearGraphic();
-          if(this.components.sizeTextActiveObject) this.components.sizeTextActiveObject.clearGraphic();
+    this.unwatchList.push(
+      watch (
+        () => this.interactiveWallStore.activeObjectID,
+        (newVal, oldVal) => {
+          if (newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse) {
+            this.clearAllGraphics();
+          }
         }
-
-      }
+      )
     );
-
   }
 
   async init(): Promise<void> {
-
-    if (this.app2d) return; // Если уже инициализировано, ничего не делаем
+    if (this.app2d) return;
 
     this.app2d = new PIXI.Application();
     await this.app2d.init({
-      canvas: this.canvas, // Используем canvas напрямую, а не view
-      resizeTo: this.container, // Рендер автоматически будет менять размер в зависимости от размера контейнера
-      backgroundColor: 0xffffff, // Белый фон
-      antialias: true, // Сглаживание
+      canvas: this.canvas,
+      resizeTo: this.container,
+      backgroundColor: 0xffffff,
+      antialias: true,
       resolution: window.devicePixelRatio || 1
     });
     this.app2d.stage.hitArea = this.app2d.screen;
-    this.app2d.stage.eventMode = 'static'; // ???
+    this.app2d.stage.eventMode = 'static';
 
     this.initComponents();
     this.setupInteractions();
 
-    // Обработчик изменения размера окна
     this.handleResize();
     window.addEventListener('resize', this.handleResize.bind(this));
-    
   }
 
-  // инициализация draw-компонентов
   private initComponents(): void {
-
-    // добавляем компонент сетки
     this.components.grid ??= new Grid(this.app2d!);
-
     this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
-    
-    // добавляем компонент для рисования планировок
     this.components.planner ??= new Planner(this.app2d!);
-
-    // this.components.sizeTextActiveObject ??= new SizeTextActiveObject(this.app2d!);
-
     this.components.startPointActiveObject ??= new StartPointActiveObject(this.app2d!);
-    
-    // добавляем компонент для отображения линеек
     this.components.rulers ??= new Rulers(this.app2d!);
-
   }
 
   private handleResize(): void {
@@ -119,27 +103,40 @@ export default class Constructor2D {
     }
   }
 
-  public addDoor(/*data: DropData*/): void {
-
-    if(!this.components.planner) return;
-
-    // добавить в Store товар
-    
+  public addDoor(): void {
+    if (!this.components.planner) return;
+    // Логика добавления двери в Store
   }
 
-  /*
-  Очистка ресурсов (например, при удалении компонента):
-  Метод destroy удаляет экземпляр PIXI и все связанные ресурсы, а также удаляет обработчик события resize, 
-  чтобы предотвратить утечки памяти.
-  */
+  public clearAllGraphics(): void {
+    this.components.startPointActiveObject?.clearGraphic();
+    this.components.arrowRulerActiveObject?.clearGraphic();
+    this.components.sizeTextActiveObject?.clearGraphic();
+  }
+
   destroy(): void {
     if (this.app2d) {
-
-      // удаляем все обраотчики на объекте this.app2d.stage
-      this.removeInteractions();
+    
+      // Отписываемся от всех наблюдателей
+      this.unwatchList.forEach(unwatch => unwatch());
+      this.unwatchList = []; // Очищаем массив наблюдателей для безопасности
       
-      // Удаляем обработчик событий
+      // Удаляем обработчики событий с канвы
+      this.removeInteractions();
+
+      // Удаляем resize listener
       window.removeEventListener('resize', this.handleResize.bind(this));
+
+      // Удаляем все компоненты
+      for (const key in this.components) {
+        const component = this.components[key as keyof Components];
+        if (component && typeof component.destroy === 'function') {
+          component.destroy();
+        }
+        this.components[key as keyof Components] = null;
+      }
+
+      // Уничтожаем приложение PIXI
       this.app2d.destroy(true, { children: true });
       this.app2d = null;
     }
@@ -147,9 +144,9 @@ export default class Constructor2D {
 
   private setupInteractions(): void {
     const stage = this.app2d?.stage;
-  
+
     if (!stage) return;
-  
+
     stage
       .on('pointerup', this.onClick.bind(this))
       .on('rightdown', this.onRightDown.bind(this))
@@ -163,100 +160,78 @@ export default class Constructor2D {
 
     if (!stage) return;
 
-    // Удаляем все обработчики обработчики
     stage
-      .off('click')
-      .off('rightdown')
-      .off('rightup')
-      .off('pointermove')
-      .off('wheel');
+      .off('pointerup', this.onClick)
+      .off('rightdown', this.onRightDown)
+      .off('rightup', this.onRightUp)
+      .off('pointermove', this.onPointerMove)
+      .off('wheel', this.onWheel);
   }
 
   private onWheel(e: WheelEvent): void {
-
     e.preventDefault();
-    
-    // Получаем текущий масштаб
+
     let currentScale: number = this.constructorStore.getScale;
     const scaleSpeed: number = this.constructorStore.getScaleSpeed;
-  
-    // Изменяем масштаб в зависимости от направления скролла
+
     if (e.deltaY < 0) {
-      // Скролл вверх — увеличиваем масштаб
       currentScale += scaleSpeed;
     } else if (e.deltaY > 0) {
-      // Скролл вниз — уменьшаем масштаб
       currentScale -= scaleSpeed;
     }
-  
-    // Ограничиваем минимальный масштаб, чтобы избежать нуля или отрицательных значений
-    this.constructorStore.setScale(currentScale);
 
+    this.constructorStore.setScale(currentScale);
   }
 
   private onClick(e: PIXI.FederatedPointerEvent): void {
-
     e.preventDefault();
 
-    if(!this.app2d) return;
+    if (!this.app2d) return;
 
-    if(!this.interactiveWallStore.statusLeftDownMouse){
-      // 1. тут нужно отменить выбор объекта
+    if (!this.interactiveWallStore.statusLeftDownMouse) {
       this.interactiveWallStore.setActiveObjectID(0);
     }
-
   }
 
   private onRightDown(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
-    
+
     this.constructorStore.toggleRightBtn();
     this.constructorStore.updataRightClickPosition(e.global.x, e.global.y);
     this.constructorStore.updatePrevOriginOfCoordinates(
       this.constructorStore.originOfCoordinates.x,
       this.constructorStore.originOfCoordinates.y
     );
-    
   }
-  
+
   private onRightUp(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
-    // Логика отпускания правой кнопки мыши
-
     this.constructorStore.toggleRightBtn();
-    
   }
-  
+
   private onPointerMove(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
 
-    // Обновляем текущую позицию мыши в хранилище
     this.constructorStore.updatePositionPoint(e.global.x, e.global.y);
 
-    // Если правая кнопка мыши зажата, перемещаем сцену
     if (this.constructorStore.mouse.rightBtn) {
-
       const scale = this.constructorStore.getInverseScale;
 
-      // Вычисляем изменения по осям X и Y
       const { distanceX, distanceY } = calculateMouseDistanceByAxes(
-        { // Новая позиция мыши
-          x: this.constructorStore.mouse.positionPoint.x, 
-          y: this.constructorStore.mouse.positionPoint.y 
+        {
+          x: this.constructorStore.mouse.positionPoint.x,
+          y: this.constructorStore.mouse.positionPoint.y,
         },
-        this.constructorStore.mouse.rightClickPosition, // положение клика на по правой кнопке
+        this.constructorStore.mouse.rightClickPosition
       );
 
-      // Смещаем в противоположную сторону (вычитаем изменения)
       const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x + 30 - distanceX;
       const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y + 30 - distanceY;
 
-      // Обновляем координаты центра в store
       this.constructorStore.updateOriginOfCoordinates(
-        newX < 0 ? newX : 0, 
+        newX < 0 ? newX : 0,
         newY < 0 ? newY : 0
       );
     }
   }
-
 }

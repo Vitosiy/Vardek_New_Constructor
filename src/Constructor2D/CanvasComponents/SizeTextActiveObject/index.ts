@@ -44,6 +44,9 @@ export default class SizeTextActiveObject {
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
 
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
 
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -75,43 +78,49 @@ export default class SizeTextActiveObject {
     this.heightTextContainer.addChild(this.heightText);
     this.container.addChild(this.heightTextContainer);
 
-    // отслеживаем изменения в объекте
-    watch(
-      () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
-      (newVal, oldVal) => {
-        newVal.forEach((newObject, index) => {
-          const oldObject = oldVal?.[index];
-    
-          if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-            // Если объект изменился
-            const updatedObject = JSON.parse(JSON.stringify(newObject));
-            this.draw(updatedObject); // Выполняем действие с изменённым объектом
-          }
-        });
-      },
-      { deep: true } // Глубокое слежение за изменениями
+    this.unwatchList.push(
+      // отслеживаем изменения в объекте
+      watch(
+        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+      
+            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              // Если объект изменился
+              const updatedObject = JSON.parse(JSON.stringify(newObject));
+              this.draw(updatedObject); // Выполняем действие с изменённым объектом
+            }
+          });
+        },
+        { deep: true } // Глубокое слежение за изменениями
+      )
     );
 
-    watch(
-      () => this.constructorStore.originOfCoordinates,
-      (newValue) => {
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.originOfCoordinates,
+        (newValue) => {
 
-        const cX = newValue.x;
-        const cY = newValue.y;
-        
-        this.container.position.set(cX, cY);
-        
-      },
-      { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+          const cX = newValue.x;
+          const cY = newValue.y;
+          
+          this.container.position.set(cX, cY);
+          
+        },
+        { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+      )
     );
 
-    watch(
-      () => this.constructorStore.scale,
-      (newValue) => {
-        
-        this.container.scale.set(newValue);
-        
-      }
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.scale,
+        (newValue) => {
+          
+          this.container.scale.set(newValue);
+          
+        }
+      )
     );
 
   }
@@ -174,5 +183,47 @@ export default class SizeTextActiveObject {
     this.container.visible = false;
     
   }
+
+  public destroy(): void {
+    
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив наблюдателей для безопасности
+  
+    // Уничтожаем графику
+    if (this.widthLine) {
+      this.widthLine.destroy(true);
+      this.container.removeChild(this.widthLine);
+      this.widthLine = null!;
+    }
+  
+    if (this.widthText) {
+      this.widthText.destroy(true);
+      this.container.removeChild(this.widthText);
+      this.widthText = null!;
+    }
+  
+    if (this.heightText) {
+      this.heightText.destroy(true);
+      this.heightTextContainer.removeChild(this.heightText);
+      this.heightText = null!;
+    }
+  
+    if (this.heightTextContainer) {
+      this.heightTextContainer.destroy(true);
+      this.container.removeChild(this.heightTextContainer);
+      this.heightTextContainer = null!;
+    }
+  
+    // Уничтожаем контейнер
+    if (this.container) {
+      this.container.destroy({ children: true, texture: true });
+      this.app.stage.removeChild(this.container);
+      this.container = null!;
+    }
+  
+    // Обнуляем ссылку на PIXI.Application
+    this.app = null!;
+  }  
 
 }
