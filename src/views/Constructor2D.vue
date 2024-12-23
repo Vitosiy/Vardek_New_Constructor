@@ -2,7 +2,7 @@
 
 import { MathUtils } from "three";
 
-import { ref, onMounted, Ref, watch } from "vue";
+import { ref, onMounted, Ref, watch, onUnmounted } from "vue";
 
 import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
@@ -30,6 +30,13 @@ onMounted(async () => {
 
   console.log("!!! App2d:", App2d);
   
+});
+
+onUnmounted(() => {
+  if (App2d) {
+    App2d.destroy(); // Уничтожаем объект App2d
+    App2d = null;    // Сбрасываем переменную в null
+  }
 });
 
 function dropHandler(ev: DragEvent): void {

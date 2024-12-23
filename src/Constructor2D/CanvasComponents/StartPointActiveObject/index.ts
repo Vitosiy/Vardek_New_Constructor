@@ -46,12 +46,17 @@ export default class StartPointActiveObject {
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
 
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
 
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
     this.app = pixiApp;
     this.container = new PIXI.Container();
+    this.container.x = 30;
+    this.container.y = 30;
     this.app.stage.addChild(this.container);
     
     this.startPointRect = new PIXI.Graphics();
@@ -68,49 +73,65 @@ export default class StartPointActiveObject {
     this.container.addChild(this.circleEndPoint);
 
     this.setupInteractions();
+    
+    this.unwatchList.push(
+      // отслеживаем изменения в объекте
+      watch(
+        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+      
+            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              // Если объект изменился
+              const updatedObject = JSON.parse(JSON.stringify(newObject));
+              this.draw(updatedObject); // Выполняем действие с изменённым объектом
+            }
+          });
+        },
+        { deep: true } // Глубокое слежение за изменениями
+      )
+    );
 
-    watch(
-      () => this.plannerStore.objects,
-      (newVal) => {
-        
-        const lastAddedObject = newVal[newVal.length - 1];
-        
-        if (lastAddedObject) {
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.originOfCoordinates,
+        (newValue) => {
 
-          const newObject = JSON.parse(JSON.stringify(lastAddedObject));
+          const cX = 30 + newValue.x;
+          const cY = 30 + newValue.y;
+          
+          this.container.position.set(cX, cY);
+          
+        },
+        { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+      )
+    );
 
-          this.draw(newObject);
+    this.unwatchList.push(
+      watch (
+        () => this.interactiveWallStore.activeObjectID,
+        (newVal, oldVal) => {
+
+          if(newVal){
+            const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
+            this.interactiveWallStore.setActivePoint(0);
+            this.draw(obj);
+          }
+
+        }
+      )
+    );
+
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.scale,
+        (newValue) => {
+          
+          this.container.scale.set(newValue);
           
         }
-
-      },
-      { deep: true } // Следим за глубокими изменениями в массиве
-    );
-
-    watch(
-      () => this.constructorStore.originOfCoordinates,
-      (newValue) => {
-
-        const cX = newValue.x;
-        const cY = newValue.y;
-        
-        this.container.position.set(cX, cY);
-        
-      },
-      { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
-    );
-
-    watch (
-      () => this.interactiveWallStore.activeObjectID,
-      (newVal, oldVal) => {
-
-        if(newVal){
-          const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
-          this.interactiveWallStore.setActivePoint(0);
-          this.draw(obj);
-        }
-
-      }
+      )
     );
 
   }
@@ -125,11 +146,10 @@ export default class StartPointActiveObject {
 
     { // start point
       const position = obj.points[0];
+      position.x = position.x * this.constructorStore.getInverseScale;
+      position.y = position.y * this.constructorStore.getInverseScale;
 
       this.circleStartPoint.clear();
-
-      position.x += 30;
-      position.y += 30;
 
       if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 0){
         this.startPointRect.visible = true;
@@ -163,9 +183,6 @@ export default class StartPointActiveObject {
       const position = obj.points[1];
 
       this.circleEndPoint.clear();
-
-      position.x += 30;
-      position.y += 30;
 
       if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 1){
         this.endPointRect.visible = true;
@@ -244,13 +261,14 @@ export default class StartPointActiveObject {
     if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
       
       const co = this.constructorStore.getOriginOfCoordinates;
+      const scale = this.constructorStore.getScale;
 
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
         {
-          x: e.data.global.x - co.x - 30,
-          y: e.data.global.y - co.y - 30
+          x: e.global.x - co.x - 30,
+          y: e.global.y - co.y - 30
         }
       );
 
@@ -265,5 +283,43 @@ export default class StartPointActiveObject {
     this.container.visible = false;
     
   }
+
+  public destroy(): void {
+
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив для безопасности
+
+    this.circleStartPoint.off('pointerdown');
+    this.circleStartPoint.off('pointerup');
+
+    this.circleEndPoint.off('pointerdown');
+    this.circleEndPoint.off('pointerup');
+
+    this.app.stage.off('pointermove', this.handleMouseMove);
+
+    // Очистка и уничтожение графики
+    [this.circleStartPoint, this.circleEndPoint, this.startPointRect, this.endPointRect].forEach(graphic => {
+      if (graphic) {
+        graphic.destroy(true);
+        this.container.removeChild(graphic);
+      }
+    });
+
+    // Удаление контейнера
+    if (this.container) {
+      this.app.stage.removeChild(this.container);
+      this.container.destroy({ children: true, texture: true });
+    }
+
+    // Обнуление свойств
+    this.circleStartPoint = null!;
+    this.circleEndPoint = null!;
+    this.startPointRect = null!;
+    this.endPointRect = null!;
+    this.container = null!;
+    this.app = null!;
+  }
+
 
 }

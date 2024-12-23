@@ -48,6 +48,9 @@ export default class Planner {
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
 
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
@@ -59,41 +62,71 @@ export default class Planner {
     this.activeObjectGraphic = new PIXI.Graphics();
     this.app.stage.addChild(this.activeObjectGraphic);
 
-    watch(
-      () => this.plannerStore.objects,
-      (newVal) => {
-        
-        const lastAddedObject = newVal[newVal.length - 1];
-        
-        if (lastAddedObject) {
-
-          const newObject = JSON.parse(JSON.stringify(lastAddedObject));
-
-          if (!this.drawObjects.some((el) => el.id === newObject.id)) {
-            const newDrawObject = this.createDrawObject(newObject);
-            this.drawObjects.push(newDrawObject);
-            this.drawObject(newObject);
-          }else{
-            this.drawObject(newObject);
+    this.unwatchList.push(
+      watch(
+        () => this.plannerStore.objects.length, // Следим за длиной массива
+        (newLength, oldLength) => {
+          if (newLength > oldLength) {
+            // Определяем, что добавлен новый объект
+            const lastAddedObject = this.plannerStore.objects[newLength - 1];
+            
+            if (lastAddedObject) {
+              const newObject = JSON.parse(JSON.stringify(lastAddedObject));
+      
+              if (!this.drawObjects.some((el) => el.id === newObject.id)) {
+                const newDrawObject = this.createDrawObject(newObject);
+                this.drawObjects.push(newDrawObject);
+                this.drawObject(newObject);
+              }
+            }
           }
-          
         }
-
-      },
-      { deep: true } // Следим за глубокими изменениями в массиве
+      )
+    );
+    
+    this.unwatchList.push(
+      // отслеживаем изменения в объекте
+      watch(
+        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+      
+            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              // Если объект изменился
+              const updatedObject = JSON.parse(JSON.stringify(newObject));
+              this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
+            }
+          });
+        },
+        { deep: true } // Глубокое слежение за изменениями
+      )
     );
 
-    watch(
-      () => this.constructorStore.originOfCoordinates,
-      (newValue) => {
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.originOfCoordinates,
+        (newValue) => {
 
-        const cX = 30 + newValue.x;
-        const cY = 30 + newValue.y;
-        
-        this.container.position.set(cX, cY);
-        
-      },
-      { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+          const cX = 30 + newValue.x;
+          const cY = 30 + newValue.y;
+          
+          this.container.position.set(cX, cY);
+          
+        },
+        { deep: true } // Необходим, чтобы отслеживать изменения вложенных объектов
+      )
+    );
+
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore.scale,
+        (newValue) => {
+          
+          this.container.scale.set(newValue);
+          
+        }
+      )
     );
     
   }
@@ -127,7 +160,7 @@ export default class Planner {
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
     containers.eventGraphic.eventMode = 'static';
-    containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
+    // containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
       containers.maskWall,
@@ -169,6 +202,7 @@ export default class Planner {
       if(containers.maskWall){
         rect(
           containers.maskWall,
+          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
@@ -189,16 +223,18 @@ export default class Planner {
           data.heightDirection, // heightDirection
           configWall.color.line76deg, // Цвет линий
           1, // Толщина линий
-          configWall.angleDegrees + data.angleDegrees
+          configWall.angleDegrees + data.angleDegrees,
+          this.constructorStore.getScale,
+          this.constructorStore.getInverseScale
         );
 
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
 
         // рисуем пунктирную рамку стены
-        drawDashedOutline(containers.bodyWall, data.points);
+        drawDashedOutline(containers.bodyWall, data.points, this.constructorStore.getInverseScale);
         
       }
-
+      
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
 
@@ -210,7 +246,8 @@ export default class Planner {
           configWall.color.arrowHeadWall, // Цвет стрелки
           1, // Толщина линии
           12, // Размер треугольника (основание и высота)
-          true
+          true,
+          this.constructorStore.getInverseScale
         );
 
         // рисуем указатель внутренне стороны стены (стрелка без линии)
@@ -223,7 +260,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
+          false, // не очищаем графику
+          this.constructorStore.getInverseScale
         );
 
         // рисуем указатель начала стены (стрелка без линии)
@@ -236,7 +274,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
+          false, // не очищаем графику
+          this.constructorStore.getInverseScale
         );
 
         // рисуем указатель конца стены (стрелка без линии)
@@ -249,7 +288,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
+          false, // не очищаем графику
+          this.constructorStore.getInverseScale
         );
 
         drawArrowHead(
@@ -261,7 +301,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.green, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
+          false, // не очищаем графику
+          this.constructorStore.getInverseScale
         );
 
         drawArrowHead(
@@ -273,7 +314,8 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.green, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
+          false, // не очищаем графику
+          this.constructorStore.getInverseScale
         );
         
       }
@@ -281,13 +323,16 @@ export default class Planner {
       if(containers.eventGraphic){
         rect(
           containers.eventGraphic,
+          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
-            color: "rgba(255,255,255,0)" //configWall.color.background // Цвет заливки
+            color: "rgba(255,0,0,0)" //configWall.color.background // Цвет заливки
           }
         );
       }
+      /*
+      */
 
       this.interactiveWallStore.activeObjectID = data.id;
       // this.activeObject = data.id;
@@ -307,7 +352,53 @@ export default class Planner {
 
   }
 
-  destroy(): void {
-    this.app.stage.removeChild(this.container);
+  public destroy(): void {
+
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив для безопасности
+  
+    // Удаляем графику из сцены
+    this.drawObjects.forEach(drawObject => {
+      const { containers } = drawObject;
+
+      // Уничтожаем каждый элемент контейнеров
+      for (const key in containers) {
+        const graphic = containers[key as keyof PlannerObjectContainers];
+        if (graphic && typeof graphic.destroy === "function") {
+          try {
+            // Уничтожаем с рекурсивным удалением дочерних объектов
+            graphic.destroy(true);
+            // Убираем из контейнера
+            if (this.container.children.includes(graphic)) {
+              this.container.removeChild(graphic);
+            }
+          } catch (error) {
+            console.warn(`Failed to destroy graphic: ${key}`, error);
+          }
+        }
+      }
+    });
+  
+    this.drawObjects = []; // Очищаем массив объектов
+  
+    // Уничтожаем основной контейнер
+    if (this.container) {
+      this.container.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
+      this.app.stage.removeChild(this.container); // Убираем контейнер со сцены
+      this.container = null!; // Обнуляем ссылку
+    }
+  
+    // Уничтожаем графику активного объекта
+    if (this.activeObjectGraphic) {
+      this.activeObjectGraphic.destroy(true);
+      this.app.stage.removeChild(this.activeObjectGraphic);
+      this.activeObjectGraphic = null!;
+    }
+  
+    // Обнуляем другие ссылки
+    this.app = null!;
+    this.activeObject = '';
   }
+  
 }

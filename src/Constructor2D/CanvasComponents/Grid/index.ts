@@ -1,3 +1,6 @@
+import {
+  watch
+} from 'vue';
 import * as PIXI from 'pixi.js';
 import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
@@ -5,216 +8,225 @@ import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructo
 
 export default class Grid {
   
-  // Переменная для хранения экземпляра приложения PIXI
-  private app: PIXI.Application; 
-  // Контейнер для хранения графических элементов
-  private container: PIXI.Container; 
-  // Графический объект для отрисовки сетки
-  private gridLines: PIXI.Graphics; 
-  // Графический объект для отрисовки горизонтальных осей сетки
-  private gridAxisLinesHorizontal: PIXI.Graphics; 
-  // Графический объект для отрисовки вертикальных осей сетки
-  private gridAxisLinesVertical: PIXI.Graphics; 
+  private app: PIXI.Application | null; // PIXI-приложение, может быть обнулено
+  private container: PIXI.Container | null; // Контейнер, может быть обнулен
+  private gridLines: PIXI.Graphics | null; // Линии сетки, может быть обнулено
+  private gridAxisLinesHorizontal: PIXI.Graphics | null; // Горизонтальные линии, может быть обнулено
+  private gridAxisLinesVertical: PIXI.Graphics | null; // Вертикальные линии, может быть обнулено
 
-  // Хранилище сетки, используется для управления состоянием сетки
-  private gridStore = useGridStore(); 
-  // Хранилище линейки, используется для управления состоянием линеек
-  private rulerStore = useRulers2DStore(); 
-  // Хранилище конструктора, используется для управления состоянием приложения
-  private constructorStore = useConstructor2DStore(); 
+  // Хранилища, добавлен `| null` для возможности обнуления
+  private gridStore: ReturnType<typeof useGridStore> | null = useGridStore();
+  private rulerStore: ReturnType<typeof useRulers2DStore> | null = useRulers2DStore();
+  private constructorStore: ReturnType<typeof useConstructor2DStore> | null = useConstructor2DStore();
 
-  // Конструктор класса, принимает экземпляр PIXI.Application
+  // Массив для хранения функций отписки
+  private unwatchList: (() => void)[] = [];
+
   constructor(pixiApp: PIXI.Application) {
-    // Проверка, что передан экземпляр PIXI.Application, иначе выбрасывается ошибка
     if (!pixiApp) {
       throw new Error("PIXI.Application instance is required");
     }
 
-    // Инициализация приложения PIXI
     this.app = pixiApp;
-    // Создание нового контейнера для хранения графических элементов
     this.container = new PIXI.Container();
     this.container.position.set(30, 30);
-    // Добавление контейнера на сцену приложения PIXI
     this.app.stage.addChild(this.container);
 
-    // Создание объекта для рисования сетки
     this.gridLines = new PIXI.Graphics();
-    // Добавление объекта сетки в контейнер
     this.container.addChild(this.gridLines);
 
-    // Создание объектов для рисования осей сетки (горизонтальных и вертикальных)
     this.gridAxisLinesHorizontal = new PIXI.Graphics();
     this.gridAxisLinesVertical = new PIXI.Graphics();
-    // Добавление объектов осей сетки в контейнер
     this.container.addChild(this.gridAxisLinesHorizontal, this.gridAxisLinesVertical);
 
-    // Подписка на изменения в хранилище сетки, вызов обработчика при изменении данных
-    this.gridStore.$subscribe(() => {
-      this.handleConstructorStoreChange();
-    });
+    this.unwatchList.push(
+      // Используем watch для наблюдения за изменениями в store
+      watch(
+        () => this.gridStore, // Источник данных, за которым наблюдаем
+        () => {
+          this.handleConstructorStoreChange(); // Вызываем обработчик изменений
+        },
+        { deep: true } // Глубокое отслеживание (необходимо, если наблюдаем за вложенными объектами)
+      )
+    );
 
-    // Подписка на изменения в хранилище конструктора, вызов обработчика при изменении данных
-    this.constructorStore.$subscribe(() => {
-      this.handleConstructorStoreChange();
-    });
+    this.unwatchList.push(
+      // Используем watch для наблюдения за изменениями в store
+      watch(
+        () => this.constructorStore, // Источник данных, за которым наблюдаем
+        () => {
+          this.handleConstructorStoreChange(); // Вызываем обработчик изменений
+        },
+        { deep: true } // Глубокое отслеживание (необходимо, если наблюдаем за вложенными объектами)
+      )
+    );
 
-    // Инициализация компонентов класса
+    this.unwatchList.push(
+      watch(
+        () => this.constructorStore!.scale,
+        (scale) => {
+          this.container!.scale.set(scale);
+          this.drawGrid();
+        }
+      )
+    );
+
     this.init();
   }
 
-  // Метод для инициализации сетки и осевых линий
   private init(): void {
-    // Рисует основную сетку
     this.drawGrid();
-    // Рисует линии осей (горизонтальные и вертикальные)
     this.drawGridAxisLines();
   }
 
-  // Метод для рисования осевых линий (горизонтальных и вертикальных)
   private drawGridAxisLines(): void {
-    // Рисует горизонтальные линии осей
-    this.drawAxisLine(this.gridAxisLinesHorizontal, "horizontal");
-    // Рисует вертикальные линии осей
-    this.drawAxisLine(this.gridAxisLinesVertical, "vertical");
+    this.drawAxisLine(this.gridAxisLinesHorizontal!, "horizontal");
+    this.drawAxisLine(this.gridAxisLinesVertical!, "vertical");
   }
 
-  // Метод для рисования отдельной осевой линии (горизонтальной или вертикальной)
   private drawAxisLine(graphics: PIXI.Graphics, direction: "horizontal" | "vertical"): void {
-    // Очищает графический объект перед началом рисования
     graphics.clear();
-
-    // Проверяет, является ли направление горизонтальным
     const isHorizontal = direction === "horizontal";
-    // Определяет длину линии в зависимости от направления (ширина или высота рендера)
     const length = isHorizontal
-      ? this.app.renderer.width
-      : this.app.renderer.height;
+      ? this.app!.renderer.width
+      : this.app!.renderer.height;
 
-    // Рассчитывает количество сегментов для осевой линии
-    const countSegments = Number((length / (this.constructorStore.segment.indent + this.constructorStore.segment.width)).toFixed());
+    const countSegments = Number((length / (this.constructorStore!.segment.indent + this.constructorStore!.segment.width)).toFixed());
 
-    // Цикл для отрисовки каждого сегмента осевой линии
     for (let i = 0; i < countSegments; i++) {
-      // Начальная точка сегмента в зависимости от направления
       const start = isHorizontal
         ? { 
-            x: i * (this.constructorStore.segment.indent + this.constructorStore.segment.width), // Расстояние сегмента по оси X
-            y: this.constructorStore.originOfCoordinates.y // Координата Y берется из хранилища
+            x: i * (this.constructorStore!.segment.indent + this.constructorStore!.segment.width),
+            y: this.constructorStore!.originOfCoordinates.y
           }
         : { 
-            x: this.constructorStore.originOfCoordinates.x, // Координата X берется из хранилища
-            y: i * (this.constructorStore.segment.indent + this.constructorStore.segment.width) // Расстояние сегмента по оси Y
+            x: this.constructorStore!.originOfCoordinates.x,
+            y: i * (this.constructorStore!.segment.indent + this.constructorStore!.segment.width)
           };
 
-      // Конечная точка сегмента в зависимости от направления
       const end = isHorizontal
         ? { 
-            x: start.x + this.constructorStore.segment.width, // Длина сегмента по оси X
-            y: start.y // Координата Y остается неизменной
+            x: start.x + this.constructorStore!.segment.width,
+            y: start.y
           }
         : { 
-            x: start.x, // Координата X остается неизменной
-            y: start.y + this.constructorStore.segment.width // Длина сегмента по оси Y
+            x: start.x,
+            y: start.y + this.constructorStore!.segment.width
           };
 
-      // Начинает линию от начальной точки сегмента
       graphics.moveTo(start.x, start.y);
-      // Рисует линию до конечной точки сегмента
       graphics.lineTo(end.x, end.y);
     }
 
-    // Применяет стиль к осевой линии (толщина и цвет)
     graphics.stroke({
-      width: 1, // Толщина линии
-      color: this.constructorStore.colorAxisLine // Цвет линии берется из хранилища
+      width: 1,
+      color: this.constructorStore!.colorAxisLine
     });
   }
 
-  // Метод для отрисовки сетки
   private drawGrid(): void {
-    // Очищает графический объект перед началом рисования сетки
-    this.gridLines.clear();
+    this.gridLines!.clear();
     
-    // Получает текущую ширину области рендера
-    const width = this.app.renderer.width;
-    // Получает текущую высоту области рендера
-    const height = this.app.renderer.height;
+    const width = this.app!.renderer.width * this.constructorStore!.getInverseScale;
+    const height = this.app!.renderer.height * this.constructorStore!.getInverseScale;
     
-    // Рассчитывает количество вертикальных линий с учетом размера сетки
-    const vLines = Math.ceil(width / this.gridStore.gridSize) + 2; // Добавляет две линии для создания эффекта "бесконечной" сетки
-    // Рассчитывает количество горизонтальных линий с учетом размера сетки
-    const hLines = Math.ceil(height / this.gridStore.gridSize) + 2; // Аналогично добавляет две линии
+    const vLines = Math.ceil(width / this.gridStore!.gridSize) + 2;
+    const hLines = Math.ceil(height / this.gridStore!.gridSize) + 2;
     
-    // Определяет центр сцены (координаты начала системы координат)
-    const centerScene = this.constructorStore.originOfCoordinates;
+    const centerScene = {
+      x: (this.constructorStore!.originOfCoordinates.x - 30) * this.constructorStore!.getInverseScale,
+      y: (this.constructorStore!.originOfCoordinates.y - 30) * this.constructorStore!.getInverseScale
+    };
     
-    // Отрисовка вертикальных линий
     this.drawLines(
-      vLines, // Количество вертикальных линий
+      vLines,
       (i) => {
-        // Вычисляет позицию линии по X с учетом смещения и остатка от деления
-        const positionX: number = (i * this.gridStore.gridSize) + (centerScene.x % this.gridStore.gridSize);
+        const positionX: number = (i * this.gridStore!.gridSize) + (centerScene.x % this.gridStore!.gridSize);
         return {
-          startX: positionX, // Начальная координата X
-          startY: -this.gridStore.gridSize, // Начальная координата Y чуть выше видимой области
-          endX: positionX, // Конечная координата X совпадает с начальной
-          endY: height + this.gridStore.gridSize, // Конечная координата Y чуть ниже видимой области
+          startX: positionX,
+          startY: -this.gridStore!.gridSize,
+          endX: positionX,
+          endY: height + this.gridStore!.gridSize,
         };
       },
-      this.gridStore.colorGrid // Цвет линий сетки
+      this.gridStore!.colorGrid
     );
-    
-    // Отрисовка горизонтальных линий
+
     this.drawLines(
-      hLines, // Количество горизонтальных линий
+      hLines,
       (i) => {
-        // Вычисляет позицию линии по Y с учетом смещения и остатка от деления
-        const positionY: number = (i * this.gridStore.gridSize) + (centerScene.y % this.gridStore.gridSize);
+        const positionY: number = (i * this.gridStore!.gridSize) + (centerScene.y % this.gridStore!.gridSize);
         return {
-          startX: -this.gridStore.gridSize, // Начальная координата X чуть левее видимой области
-          startY: positionY, // Начальная координата Y
-          endX: width + this.gridStore.gridSize, // Конечная координата X чуть правее видимой области
-          endY: positionY, // Конечная координата Y совпадает с начальной
+          startX: -this.gridStore!.gridSize,
+          startY: positionY,
+          endX: width + this.gridStore!.gridSize,
+          endY: positionY,
         };
       },
-      this.gridStore.colorGrid // Цвет линий сетки
+      this.gridStore!.colorGrid
     );
-    
-    // Вычисляет отступ для линейки на основе расстояния между сеткой и линейкой
-    const offset = this.rulerStore.rulerSpace - this.gridStore.gridSize;
-    // Устанавливает позицию сетки с учетом отступа
-    this.gridLines.position.set(offset, offset);
+
+    const offset = this.rulerStore!.rulerSpace - this.gridStore!.gridSize;
+    this.gridLines!.position.set(offset, offset);
   }
 
-  // Метод для рисования линий (универсальный для горизонтальных и вертикальных)
   private drawLines(
-    count: number, // Количество линий
-    getPositions: (index: number) => { startX: number; startY: number; endX: number; endY: number }, // Функция для получения координат начала и конца линии
-    color: number | string // Цвет линий
+    count: number,
+    getPositions: (index: number) => { startX: number; startY: number; endX: number; endY: number },
+    color: number | string
   ): void {
-    // Цикл по количеству линий
     for (let i = 0; i < count; i++) {
-      // Получает координаты начала и конца линии для текущего индекса
       const { startX, startY, endX, endY } = getPositions(i);
-      // Устанавливает начальную точку линии
-      this.gridLines.moveTo(startX, startY);
-      // Рисует линию до конечной точки
-      this.gridLines.lineTo(endX, endY);
+      this.gridLines!.moveTo(startX, startY);
+      this.gridLines!.lineTo(endX, endY);
     }
-    // Применяет стиль линий (ширина и цвет)
-    this.gridLines.stroke({
-      width: 1, // Толщина линии
-      color: color // Цвет линии
+    this.gridLines!.stroke({
+      width: 1,
+      color: color
     });
   }
 
-  // Метод для обработки изменений в хранилище конструктора
   private handleConstructorStoreChange(): void {
-    // Перерисовывает сетку
     this.drawGrid();
-    // Перерисовывает осевые линии
     this.drawGridAxisLines();
   }
 
+  public destroy(): void {
+
+    // Отписываемся от всех наблюдателей
+    this.unwatchList.forEach(unwatch => unwatch());
+    this.unwatchList = []; // Очищаем массив для безопасности
+    
+    // Очистка сетки
+    if (this.gridLines) {
+      this.gridLines.destroy(true);
+      this.container!.removeChild(this.gridLines);
+      this.gridLines = null;
+    }
+
+    if (this.gridAxisLinesHorizontal) {
+      this.gridAxisLinesHorizontal.destroy(true);
+      this.container!.removeChild(this.gridAxisLinesHorizontal);
+      this.gridAxisLinesHorizontal = null;
+    }
+
+    if (this.gridAxisLinesVertical) {
+      this.gridAxisLinesVertical.destroy(true);
+      this.container!.removeChild(this.gridAxisLinesVertical);
+      this.gridAxisLinesVertical = null;
+    }
+
+    if (this.container) {
+      this.container.destroy({ children: true, texture: true });
+      this.container = null;
+    }
+
+    // Обнуление хранилищ
+    this.gridStore = null;
+    this.rulerStore = null;
+    this.constructorStore = null;
+
+    // Обнуление приложения
+    this.app = null;
+  }
 }
