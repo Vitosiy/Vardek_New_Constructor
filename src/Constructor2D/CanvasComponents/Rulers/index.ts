@@ -122,7 +122,7 @@ export default class Rulers {
     this.drawPureSquare(); // Рисуем квадрат в точке пересечения линеек
   }
 
-  private drawRulers(): void { // Метод для рисования всех линеек
+  public drawRulers(): void { // Метод для рисования всех линеек
 
     if(!this.app || !this.app.renderer) return;
     
@@ -146,7 +146,7 @@ export default class Rulers {
     this.drawLeftRuler(); // Вызываем метод для рисования левой линейки
   }
 
-  private drawPureSquare(): void { // Метод для рисования квадрата пересечения линеек
+  public drawPureSquare(): void { // Метод для рисования квадрата пересечения линеек
 
     const size = this.rulerStore.rulerSpace; // Получаем размер квадрата из стора линейки
     const color = this.rulerStore.edgeColor; // Получаем цвет линий из стора линейки

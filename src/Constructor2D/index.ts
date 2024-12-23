@@ -100,6 +100,9 @@ export default class Constructor2D {
   private handleResize(): void {
     if (this.app2d) {
       this.app2d.renderer.resize(this.container.clientWidth, this.container.clientHeight);
+      if(this.components.rulers) this.components.rulers.drawRulers();
+      if(this.components.grid) this.components.grid.drawGrid();
+      if(this.components.grid) this.components.grid.drawGridAxisLines();
     }
   }
 
