@@ -90,11 +90,11 @@ export default class Constructor2D {
   }
 
   private initComponents(): void {
-    this.components.grid ??= new Grid(this.app2d!);
-    this.components.arrowRulerActiveObject ??= new ArrowRulerActiveObject(this.app2d!);
-    this.components.planner ??= new Planner(this.app2d!);
-    this.components.startPointActiveObject ??= new StartPointActiveObject(this.app2d!);
-    this.components.rulers ??= new Rulers(this.app2d!);
+    this.components.grid = new Grid(this.app2d!);
+    this.components.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!);
+    this.components.planner = new Planner(this.app2d!);
+    this.components.startPointActiveObject = new StartPointActiveObject(this.app2d!);
+    this.components.rulers = new Rulers(this.app2d!);
   }
 
   private handleResize(): void {

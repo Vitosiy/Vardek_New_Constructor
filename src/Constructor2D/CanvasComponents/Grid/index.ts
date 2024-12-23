@@ -79,7 +79,7 @@ export default class Grid {
     this.drawGridAxisLines();
   }
 
-  private drawGridAxisLines(): void {
+  public drawGridAxisLines(): void {
     this.drawAxisLine(this.gridAxisLinesHorizontal!, "horizontal");
     this.drawAxisLine(this.gridAxisLinesVertical!, "vertical");
   }
@@ -124,7 +124,7 @@ export default class Grid {
     });
   }
 
-  private drawGrid(): void {
+  public drawGrid(): void {
     this.gridLines!.clear();
     
     const width = this.app!.renderer.width * this.constructorStore!.getInverseScale;
@@ -134,8 +134,8 @@ export default class Grid {
     const hLines = Math.ceil(height / this.gridStore!.gridSize) + 2;
     
     const centerScene = {
-      x: (this.constructorStore!.originOfCoordinates.x - 30) * this.constructorStore!.getInverseScale,
-      y: (this.constructorStore!.originOfCoordinates.y - 30) * this.constructorStore!.getInverseScale
+      x: (this.constructorStore!.originOfCoordinates.x * this.constructorStore!.getInverseScale - 30),
+      y: (this.constructorStore!.originOfCoordinates.y * this.constructorStore!.getInverseScale - 30)
     };
     
     this.drawLines(
