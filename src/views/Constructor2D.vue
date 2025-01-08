@@ -25,10 +25,14 @@ let App2d: Constructor2D | null = null;
 
 onMounted(async () => {
 
-  App2d = new Constructor2D(root2d.value, canvas2d.value);
-  await App2d.init();
+  if (root2d.value && canvas2d.value) {
+    
+    App2d = new Constructor2D(root2d.value, canvas2d.value);
+    await App2d.init();
 
-  console.log("!!! App2d:", App2d);
+    console.log("!!! App2d:", App2d);
+    
+  }
   
 });
 
