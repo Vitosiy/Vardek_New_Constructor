@@ -160,7 +160,7 @@ export default class Planner {
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
     containers.eventGraphic.eventMode = 'static';
-    // containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
+    containers.eventGraphic.on("pointerdown", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
       containers.maskWall,
@@ -347,18 +347,18 @@ export default class Planner {
 
     // Найти объект по ID
     this.interactiveWallStore.setActiveObjectID(id);
+    console.log("test", id);
 
     e.stopPropagation(); // Останавливаем всплытие события
 
   }
 
   public destroy(): void {
-
     // Отписываемся от всех наблюдателей
     this.unwatchList.forEach(unwatch => unwatch());
     this.unwatchList = []; // Очищаем массив для безопасности
   
-    // Удаляем графику из сцены
+     // Удаляем графику из сцены
     this.drawObjects.forEach(drawObject => {
       const { containers } = drawObject;
 
@@ -367,15 +367,23 @@ export default class Planner {
         const graphic = containers[key as keyof PlannerObjectContainers];
         if (graphic && typeof graphic.destroy === "function") {
           try {
-            // Уничтожаем с рекурсивным удалением дочерних объектов
-            graphic.destroy(true);
-            // Убираем из контейнера
-            if (this.container.children.includes(graphic)) {
+            // Уничтожаем графику, только если она существует
+            if (!graphic.destroyed) {
+              graphic.destroy(true); // Уничтожаем графику рекурсивно
+            }
+
+            // Убираем из контейнера, если графика существует
+            if (this.container && this.container.children.includes(graphic)) {
               this.container.removeChild(graphic);
             }
+
+            // Обнуляем ссылку
+            containers[key as keyof PlannerObjectContainers] = null!;
           } catch (error) {
             console.warn(`Failed to destroy graphic: ${key}`, error);
           }
+        } else {
+          console.warn(`Skipping destroy for graphic: ${key}, as it is null or undefined`);
         }
       }
     });
@@ -384,21 +392,29 @@ export default class Planner {
   
     // Уничтожаем основной контейнер
     if (this.container) {
-      this.container.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
-      this.app.stage.removeChild(this.container); // Убираем контейнер со сцены
-      this.container = null!; // Обнуляем ссылку
+      try {
+        this.container.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
+        this.app.stage.removeChild(this.container); // Убираем контейнер со сцены
+        this.container = null!; // Обнуляем ссылку
+      } catch (error) {
+        console.warn("Failed to destroy main container", error);
+      }
     }
   
     // Уничтожаем графику активного объекта
     if (this.activeObjectGraphic) {
-      this.activeObjectGraphic.destroy(true);
-      this.app.stage.removeChild(this.activeObjectGraphic);
-      this.activeObjectGraphic = null!;
+      try {
+        this.activeObjectGraphic.destroy(true);
+        this.app.stage.removeChild(this.activeObjectGraphic);
+        this.activeObjectGraphic = null!;
+      } catch (error) {
+        console.warn("Failed to destroy active object graphic", error);
+      }
     }
   
     // Обнуляем другие ссылки
     this.app = null!;
     this.activeObject = '';
-  }
+  }  
   
 }

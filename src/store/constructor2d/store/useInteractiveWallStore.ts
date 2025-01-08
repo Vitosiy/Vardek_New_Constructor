@@ -15,6 +15,7 @@ export const useC2DInteractiveWallStore = defineStore('useC2DInteractiveWallStor
 
   const setActiveObjectID = (value: string | number) => {
     activeObjectID.value = value;
+    console.log("setActiveObjectID:", value);
   }
 
   const setActivePoint = (value: number | null) => {

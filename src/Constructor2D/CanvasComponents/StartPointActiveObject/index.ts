@@ -141,8 +141,6 @@ export default class StartPointActiveObject {
     if(!obj.points) return;
 
     this.container.visible = true;
-    
-    this.interactiveWallStore.setActiveObjectID(obj.id);
 
     { // start point
       const position = obj.points[0];

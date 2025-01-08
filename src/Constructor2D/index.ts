@@ -151,7 +151,7 @@ export default class Constructor2D {
     if (!stage) return;
 
     stage
-      .on('click', this.onClick.bind(this))
+      .on('pointerdown', this.onClick.bind(this))
       .on('rightdown', this.onRightDown.bind(this))
       .on('rightup', this.onRightUp.bind(this))
       .on('pointerout', this.onRightUp.bind(this))
@@ -165,7 +165,7 @@ export default class Constructor2D {
     if (!stage) return;
 
     stage
-      .off('click', this.onClick)
+      .off('pointerdown', this.onClick)
       .off('rightdown', this.onRightDown)
       .off('rightup', this.onRightUp)
       .off('pointerout', this.onRightUp)
@@ -192,7 +192,7 @@ export default class Constructor2D {
     e.preventDefault();
 
     if (!this.app2d) return;
-
+    
     if (!this.interactiveWallStore.statusLeftDownMouse) {
       this.interactiveWallStore.setActiveObjectID(0);
     }
