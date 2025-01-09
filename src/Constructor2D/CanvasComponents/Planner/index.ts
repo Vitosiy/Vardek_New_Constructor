@@ -330,9 +330,13 @@ export default class Planner {
 
     e.preventDefault();
 
-    // Найти объект по ID
-    this.interactiveWallStore.setActiveObjectID(id);
-    console.log("test", id);
+    if (e.button == 0){
+
+      // Найти объект по ID
+      this.interactiveWallStore.setActiveObjectID(id);
+      console.log("test", id);
+
+    }
 
     e.stopPropagation(); // Останавливаем всплытие события
 

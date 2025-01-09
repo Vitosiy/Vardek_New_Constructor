@@ -193,9 +193,12 @@ export default class Constructor2D {
 
     if (!this.app2d) return;
     
+    if (e.button !== 0) return;
+
     if (!this.interactiveWallStore.statusLeftDownMouse) {
       this.interactiveWallStore.setActiveObjectID(0);
     }
+
   }
 
   private onRightDown(e: PIXI.FederatedPointerEvent): void {
