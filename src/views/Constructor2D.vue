@@ -2,13 +2,13 @@
 
 import { MathUtils } from "three";
 
-import { ref, onMounted, Ref, watch, onUnmounted } from "vue";
+import { ref, onMounted, Ref, onUnmounted } from "vue";
 
-import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
+// import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 
-const leftMenuStore = useC2DLeftMenuStore();
+// const leftMenuStore = useC2DLeftMenuStore();
 const plannerStore = usePlanner2DStore();
 const constructor2DStore = useConstructor2DStore();
 

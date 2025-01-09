@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { APP } from '@/Application/F-sources';
+// import { APP } from '@/Application/F-sources';
 
 export const useSchemeTransition = defineStore('SchemeTransition', () => {
 

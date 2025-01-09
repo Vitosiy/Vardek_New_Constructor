@@ -11,7 +11,7 @@ import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInter
 import {
   PlannerObject,
   PlannerObjectContainers,
-  Vector2,
+  // Vector2,
 } from "@/types/constructor2d/interfaсes";
 
 import { 
@@ -29,7 +29,7 @@ import {
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
-  drawCircle,
+  // drawCircle,
 } from "./../../utils/Shape";
 
 export default class Planner {
@@ -128,9 +128,9 @@ export default class Planner {
     
   }
 
-  private init(): void {
-    // Отрисовка сохраненной сцены
-  }
+  // private init(): void {
+  //   // Отрисовка сохраненной сцены
+  // }
 
   private createDrawObject(data: PlannerObject): DrawObjects {
     

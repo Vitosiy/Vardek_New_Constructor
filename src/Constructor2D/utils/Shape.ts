@@ -391,13 +391,13 @@ function drawCircle(
 }
 
 function line(
-  graphic: PIXI.Graphics,
-  startPoint: Vector2,
-  width: number, // длина линии
-  height: number, // отступ по оси Y от координат startPoint
-  color: number | string, // цвет линии
-  angleDegrees: number, // угол вопорота, относительно startPoint
-  heightDirection: 1 | -1 = -1, // позиция токеч линии по оси Y относительно startPoint
+  // graphic: PIXI.Graphics,
+  // startPoint: Vector2,
+  // width: number, // длина линии
+  // height: number, // отступ по оси Y от координат startPoint
+  // color: number | string, // цвет линии
+  // angleDegrees: number, // угол вопорота, относительно startPoint
+  // heightDirection: 1 | -1 = -1, // позиция токеч линии по оси Y относительно startPoint
 ): void {
 
   /*
@@ -444,5 +444,6 @@ export {
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
-  drawCircle
+  drawCircle,
+  line
 }

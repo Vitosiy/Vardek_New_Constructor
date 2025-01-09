@@ -16,9 +16,9 @@ import {
 
 import { configWall } from "@/store/constructor2d/data/usePlannerData";
 
-import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
+// import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 
-const interactiveWallStore = useConstructor2DStore();
+// const interactiveWallStore = useConstructor2DStore();
 
 export const usePlanner2DStore = defineStore('planner2DStore', () => {
   const objects = ref<PlannerObject[]>([]);
@@ -31,9 +31,6 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
 
     item.heightDirection = config.heightDirection;
     item.angleDegrees = config.angleDegrees;
-
-    const scale = interactiveWallStore.getScale;
-    const inverseScale = interactiveWallStore.getInverseScale;
     
     const points = getRectPoints(
       config.width,

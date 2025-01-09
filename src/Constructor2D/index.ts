@@ -1,6 +1,6 @@
 import {
   watch,
-  ref
+  // ref
 } from 'vue';
 import * as PIXI from 'pixi.js';
 
@@ -59,7 +59,7 @@ export default class Constructor2D {
     this.unwatchList.push(
       watch (
         () => this.interactiveWallStore.activeObjectID,
-        (newVal, oldVal) => {
+        (newVal) => {
           if (newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse) {
             this.clearAllGraphics();
           }

@@ -1,6 +1,6 @@
 import {
   watch,
-  ref
+  // ref
 } from 'vue';
 import * as PIXI from 'pixi.js';
 // import { useGridStore } from '@/store/constructor2d/store/useGridStore';
@@ -111,7 +111,7 @@ export default class StartPointActiveObject {
     this.unwatchList.push(
       watch (
         () => this.interactiveWallStore.activeObjectID,
-        (newVal, oldVal) => {
+        (newVal) => {
 
           if(newVal){
             const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));

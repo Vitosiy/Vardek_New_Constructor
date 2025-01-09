@@ -66,6 +66,8 @@ function getRectPointsV2(
   angleDegrees: number = 0
 ): [Vector2, Vector2, Vector2, Vector2] {
 
+  endPoint = { x: endPoint.x, y: endPoint.y };
+
   // Угол поворота в радианах
   const angleRadians = (angleDegrees * Math.PI) / 180;
 
