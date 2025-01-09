@@ -144,8 +144,6 @@ export default class StartPointActiveObject {
 
     { // start point
       const position = obj.points[0];
-      position.x = position.x * this.constructorStore.getInverseScale;
-      position.y = position.y * this.constructorStore.getInverseScale;
 
       this.circleStartPoint.clear();
 
@@ -259,14 +257,14 @@ export default class StartPointActiveObject {
     if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
       
       const co = this.constructorStore.getOriginOfCoordinates;
-      const scale = this.constructorStore.getScale;
+      const inverseScale = this.constructorStore.getInverseScale;
 
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
         {
-          x: e.global.x - co.x - 30,
-          y: e.global.y - co.y - 30
+          x: (e.global.x - co.x - 30) * inverseScale,
+          y: (e.global.y - co.y - 30) * inverseScale
         }
       );
 

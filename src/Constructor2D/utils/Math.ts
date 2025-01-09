@@ -135,12 +135,23 @@ function getAngleBetweenVectors(center: Vector2, start: Vector2, end: Vector2): 
   return (angleRadians * 180) / Math.PI;
 }
 
+/**
+ * Округляет число до ближайшего значения с учётом точности.
+ * @param value - Число для округления.
+ * @param precision - Количество знаков после запятой.
+ * @returns Округлённое число.
+ */
+function roundToPrecision(value: number, precision: number = 15): number {
+  return parseFloat(value.toFixed(precision));
+}
+
 export {
   
   calculateMouseDistanceByAxes,
   getRectPoints,
   getDistanceBetweenVectors,
   getAngleBetweenVectors,
-  getRectPointsV2
+  getRectPointsV2,
+  roundToPrecision
 
 };

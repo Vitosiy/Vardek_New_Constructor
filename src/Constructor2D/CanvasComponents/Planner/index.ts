@@ -2,8 +2,8 @@ import {
   watch
 } from 'vue';
 import * as PIXI from 'pixi.js';
-import { useGridStore } from '@/store/constructor2d/store/useGridStore';
-import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
+// import { useGridStore } from '@/store/constructor2d/store/useGridStore';
+// import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
@@ -35,15 +35,12 @@ import {
 export default class Planner {
 
   private app: PIXI.Application;
-  private container: PIXI.Container;
+  container: PIXI.Container;
 
   private activeObjectGraphic:  PIXI.Graphics;
   
   private drawObjects: DrawObjects[] = [];
-  private activeObject: string | number = '';
-  
-  private gridStore = useGridStore();
-  private rulerStore = useRulers2DStore();
+
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
@@ -202,7 +199,6 @@ export default class Planner {
       if(containers.maskWall){
         rect(
           containers.maskWall,
-          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
@@ -223,15 +219,13 @@ export default class Planner {
           data.heightDirection, // heightDirection
           configWall.color.line76deg, // Цвет линий
           1, // Толщина линий
-          configWall.angleDegrees + data.angleDegrees,
-          this.constructorStore.getScale,
-          this.constructorStore.getInverseScale
+          configWall.angleDegrees + data.angleDegrees
         );
 
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
 
         // рисуем пунктирную рамку стены
-        drawDashedOutline(containers.bodyWall, data.points, this.constructorStore.getInverseScale);
+        drawDashedOutline(containers.bodyWall, data.points);
         
       }
       
@@ -246,8 +240,7 @@ export default class Planner {
           configWall.color.arrowHeadWall, // Цвет стрелки
           1, // Толщина линии
           12, // Размер треугольника (основание и высота)
-          true,
-          this.constructorStore.getInverseScale
+          true
         );
 
         // рисуем указатель внутренне стороны стены (стрелка без линии)
@@ -260,8 +253,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
+          false // не очищаем графику
         );
 
         // рисуем указатель начала стены (стрелка без линии)
@@ -274,8 +266,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
+          false // не очищаем графику
         );
 
         // рисуем указатель конца стены (стрелка без линии)
@@ -288,8 +279,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.arrowHeadWall, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
+          false // не очищаем графику
         );
 
         drawArrowHead(
@@ -301,8 +291,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.green, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
+          false // не очищаем графику
         );
 
         drawArrowHead(
@@ -314,8 +303,7 @@ export default class Planner {
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
           configWall.color.green, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
+          false // не очищаем графику
         );
         
       }
@@ -323,7 +311,6 @@ export default class Planner {
       if(containers.eventGraphic){
         rect(
           containers.eventGraphic,
-          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
@@ -331,10 +318,8 @@ export default class Planner {
           }
         );
       }
-      /*
-      */
 
-      this.interactiveWallStore.activeObjectID = data.id;
+      this.interactiveWallStore.setActiveObjectID(data.id);
       // this.activeObject = data.id;
 
     }
@@ -414,7 +399,6 @@ export default class Planner {
   
     // Обнуляем другие ссылки
     this.app = null!;
-    this.activeObject = '';
   }  
   
 }

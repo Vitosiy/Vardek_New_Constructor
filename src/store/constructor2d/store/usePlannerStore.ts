@@ -33,18 +33,19 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     item.angleDegrees = config.angleDegrees;
 
     const scale = interactiveWallStore.getScale;
+    const inverseScale = interactiveWallStore.getInverseScale;
     
     const points = getRectPoints(
-      config.width * scale,
-      config.height * scale,
+      config.width,
+      config.height,
       item.position,
       item.heightDirection,
       item.angleDegrees
     );
 
     item.points = points;
-    item.width = config.width * scale;
-    item.height = config.height * scale;
+    item.width = config.width;
+    item.height = config.height;
     
     objects.value.push(item);
     

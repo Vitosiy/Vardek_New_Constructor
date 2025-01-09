@@ -26,7 +26,7 @@ let App2d: Constructor2D | null = null;
 onMounted(async () => {
 
   if (root2d.value && canvas2d.value) {
-    
+
     App2d = new Constructor2D(root2d.value, canvas2d.value);
     await App2d.init();
 
@@ -62,12 +62,21 @@ function dropHandler(ev: DragEvent): void {
     }
     
     // Получаем координаты мыши при броске
-    const { offsetX: x, offsetY: y } = ev;
+    const { offsetX: eX, offsetY: eY } = ev;
 
     const oc = constructor2DStore.getOriginOfCoordinates;
+
+    const scale = constructor2DStore.getScale;
+    const invScale = constructor2DStore.getInverseScale;
     
-    const cX = x - 30 - oc.x;
-    const cY = y - 30 - oc.y;
+    console.log("!!! scale: ", scale, " * invScale: ", invScale, " = ", scale * invScale);
+    
+    // позиция курсора мыши в координатах canvas
+    const canvasPositionMouseX = eX - 30 - oc.x;
+    const canvasPositionMouseY = eY - 30 - oc.y;
+
+    const positionObjectX = canvasPositionMouseX * invScale;
+    const positionObjectY = canvasPositionMouseY * invScale;
     
     // добавляем "товар" объект в Store
     plannerStore.addObj({
@@ -75,7 +84,7 @@ function dropHandler(ev: DragEvent): void {
       name: draggedData,
       width: 150,
       height: 30,
-      position: { x: cX, y: cY },
+      position: { x: positionObjectX, y: positionObjectY },
       heightDirection: -1,
       angleDegrees: 0
     });

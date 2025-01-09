@@ -222,7 +222,6 @@ export default class Constructor2D {
     this.constructorStore.updatePositionPoint(e.global.x, e.global.y);
 
     if (this.constructorStore.mouse.rightBtn) {
-      const scale = this.constructorStore.getInverseScale;
 
       const { distanceX, distanceY } = calculateMouseDistanceByAxes(
         {
