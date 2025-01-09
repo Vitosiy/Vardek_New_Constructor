@@ -111,11 +111,36 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     return (id: number | string) => objects.value.find(obj => obj.id === id);
   });
 
+  // геттер, который принимает аргументы положения курсора и нужно найти точку 0 или 1, которая под курсором. Искать нужно во всех объектах
+  const getPointByPosition = computed(() => {
+    return (position: Vector2) => {
+      let result = null;
+      objects.value.forEach(obj => {
+        if (obj.points) {
+          obj.points.forEach((point, index) => {
+            if(index === 0 || index === 1){
+              if (getDistanceBetweenVectors(point, position) < 10) {
+                result = {
+                  object: obj,
+                  indexPoint: index
+                };
+              }
+            }
+          });
+        }
+      });
+      return result
+    }
+  }); 
+
   return {
     objects,
+    
     addObj,
     removeObj,
     setNewPointPosition,
-    getObjectById
+    
+    getObjectById,
+    getPointByPosition
   };
 });
