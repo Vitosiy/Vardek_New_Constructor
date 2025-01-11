@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { MathUtils } from "three";
+// import { MathUtils } from "three";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 
@@ -11,6 +11,12 @@ const constructor2dMenu = useC2DLeftMenuStore();
 
 const menuItemActive = ref<string | null>(null);
 const goodItemActive = ref<string | null>(null);
+
+const invisibleElement = document.createElement('div');
+invisibleElement.style.width = '1px';
+invisibleElement.style.height = '1px';
+invisibleElement.style.opacity = '0'; // Убедимся, что он полностью невидим
+document.body.appendChild(invisibleElement);
 
 function handleClick(id: string): void {
   
@@ -44,7 +50,9 @@ function goodItemDrag(e: DragEvent, id: string): void {
     
     // Настраиваем данные для перетаскивания (drag-and-drop).
     e.dataTransfer?.setData('good', item.nameMode); // Передаём имя модели товара.
-    e.dataTransfer.effectAllowed = 'move';         // Указываем, что элемент можно перемещать.
+    // e.dataTransfer.effectAllowed = 'move';         // Указываем, что элемент можно перемещать.
+    // Скрываем отображение перетаскиваемого объекта
+    e.dataTransfer?.setDragImage(invisibleElement, -9999, -9999);
   }
 }
 

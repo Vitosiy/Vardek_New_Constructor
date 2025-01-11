@@ -77,6 +77,28 @@ function dropHandler(ev: DragEvent): void {
 
     const positionObjectX = canvasPositionMouseX * invScale;
     const positionObjectY = canvasPositionMouseY * invScale;
+
+    const hoverPointObject: { id: number; indexPoint: number } | null = plannerStore.getPointByPosition({
+      x: positionObjectX,
+      y: positionObjectY
+    });
+
+    // Если курсор попал на точку объекта, то обновляем хранилище
+    if(hoverPointObject){
+      
+      constructor2DStore.setHoverObject(
+        hoverPointObject.id,
+        hoverPointObject.indexPoint
+      );
+      
+    }else{
+
+      constructor2DStore.setHoverObject(
+        null,
+        null
+      );
+
+    }
     
     // добавляем "товар" объект в Store
     plannerStore.addObj({
@@ -86,7 +108,10 @@ function dropHandler(ev: DragEvent): void {
       height: 30,
       position: { x: positionObjectX, y: positionObjectY },
       heightDirection: -1,
-      angleDegrees: 0
+      angleDegrees: 0,
+      // добавить свойство для хранения объекта с которым нужно объединить,
+      // объект хранить в себе indexPoint и id объекта
+      // mergeObject: { id: null, indexPoint: null }
     });
 
   } catch (error) {

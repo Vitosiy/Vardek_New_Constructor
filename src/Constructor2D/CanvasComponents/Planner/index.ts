@@ -125,6 +125,19 @@ export default class Planner {
         }
       )
     );
+
+    // подписываемся на объект в constructionStore hoverObject
+    // this.unwatchList.push(
+    //   watch(
+    //     () => this.constructorStore.hoverObject,
+    //     (newValue) => {
+    //       if(newValue){
+    //         // console.log("!!! >>> hoverObject", newValue);
+    //       }
+    //     },
+    //     { deep: true } // Глубокое слежение за изменениями
+    //   )
+    // );
     
   }
 
@@ -194,6 +207,10 @@ export default class Planner {
     const { containers } = obj;
 
     if(data.points){
+
+      const hoverPointObject = this.constructorStore.getHoverObject;
+
+      console.log("hoverPointObject", hoverPointObject);
       
       // рисуем маску для wallBody
       if(containers.maskWall){

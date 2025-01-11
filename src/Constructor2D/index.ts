@@ -19,7 +19,7 @@ import {
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
-import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+// import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
@@ -49,7 +49,7 @@ export default class Constructor2D {
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
   private interactiveWallStore = useC2DInteractiveWallStore();
-  private plannerStore = usePlanner2DStore();
+  // private plannerStore = usePlanner2DStore();
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -226,13 +226,6 @@ export default class Constructor2D {
 
     this.constructorStore.updatePositionPoint(e.global.x, e.global.y);
 
-    const res = this.plannerStore.getPointByPosition({
-      x: e.global.x - 30,
-      y: e.global.y - 30
-    });
-
-    if(res) console.log("plannerStore.getPointByPosition:", res);
-
     if (this.constructorStore.mouse.rightBtn) {
 
       const { distanceX, distanceY } = calculateMouseDistanceByAxes(
@@ -246,10 +239,10 @@ export default class Constructor2D {
       const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
       const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
 
-      this.constructorStore.updateOriginOfCoordinates(
-        newX < 0 ? newX : 0,
-        newY < 0 ? newY : 0
-      );
+      this.constructorStore.updateOriginOfCoordinates( newX, newY );
+      
     }
+
   }
+
 }
