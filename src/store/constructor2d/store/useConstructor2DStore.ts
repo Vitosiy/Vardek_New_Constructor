@@ -14,7 +14,7 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
 
   // граница смещения объекта на холсте
   // данный параметр используется для ограничения смещения объекта по осям x и y
-  const objectOffsetLimit = ref<number>(20);
+  const objectOffsetLimit = ref<number>(0);
 
   const originOfCoordinates = reactive<Vector2>({ 
     x: objectOffsetLimit.value, 
