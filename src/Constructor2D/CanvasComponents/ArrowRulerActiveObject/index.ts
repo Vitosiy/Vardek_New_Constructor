@@ -150,9 +150,9 @@ export default class ArrowRulerActiveObject {
       12,
       true
     );
-    this.xText!.text = `${Math.round((distanceY) * 10)} см`;
-    this.xText!.x = (position.x) - 24;
-    this.xText!.y = ((distanceY / 2) + (this.xText!.width / 2));
+    this.xText!.text = `${Math.round((distanceY * this.constructorStore!.getInverseScale) * 10)} см`;
+    this.xText!.x = (position.x * this.constructorStore!.getInverseScale) - 24;
+    this.xText!.y = ((distanceY / 2) + (this.xText!.width / 2)) * this.constructorStore!.getInverseScale;
     this.xText!.rotation = MathUtils.degToRad(rotateDegY);
 
     // Отрисовка горизонтальной стрелки (ось X)
@@ -168,9 +168,9 @@ export default class ArrowRulerActiveObject {
       12,
       true
     );
-    this.yText!.text = `${Math.round((distanceX) * 10)} см`;
-    this.yText!.y = (position.y) - 24;
-    this.yText!.x = ((distanceX / 2) - (this.yText!.width / 2));
+    this.yText!.text = `${Math.round((distanceX * this.constructorStore!.getInverseScale) * 10)} см`;
+    this.yText!.y = (position.y * this.constructorStore!.getInverseScale) - 24;
+    this.yText!.x = ((distanceX / 2) - (this.yText!.width / 2)) * this.constructorStore!.getInverseScale;
   }
 
   // Метод для скрытия графики
