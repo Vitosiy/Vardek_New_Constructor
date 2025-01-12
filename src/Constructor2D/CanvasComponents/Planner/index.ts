@@ -15,6 +15,10 @@ import {
 } from "@/types/constructor2d/interfaсes";
 
 import { 
+  getIntersectionPoint
+} from "./../../utils/Math";
+
+import { 
   configWall
 } from "@/store/constructor2d/data/usePlannerData";
 
@@ -29,7 +33,7 @@ import {
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
-  // drawCircle,
+  drawCircle,
 } from "./../../utils/Shape";
 
 export default class Planner {
@@ -208,10 +212,6 @@ export default class Planner {
 
     if(data.points){
 
-      const hoverPointObject = this.constructorStore.getHoverObject;
-
-      console.log("hoverPointObject", hoverPointObject);
-      
       // рисуем маску для wallBody
       if(containers.maskWall){
         rect(
@@ -322,6 +322,40 @@ export default class Planner {
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
+
+        /* точка пересечения
+        const hoverPointObject = this.constructorStore.getHoverObject;
+
+        console.log("hoverPointObject", hoverPointObject);
+
+        if(hoverPointObject.id){
+          
+          if(hoverPointObject.indexPoint === 1){
+          
+            const hoverObj = this.plannerStore.getObjectById(hoverPointObject.id);
+            if(hoverObj && hoverObj.points){
+              
+              const interactionPoint = getIntersectionPoint(
+                [data.points[2], data.points[3]],
+                [hoverObj.points[2], hoverObj.points[3]]
+              );
+              
+              if(containers.lineWall){
+                console.log("interactionPoint", interactionPoint);
+                // рисуем точку пересечения
+                drawCircle(
+                  containers.lineWall,
+                  interactionPoint,
+                  10, 
+                  "rgba(255,0,0,1)"
+                );
+              }
+              
+            }
+          }
+
+        }
+        */
         
       }
     

@@ -147,6 +147,41 @@ function roundToPrecision(value: number, precision: number = 15): number {
   return parseFloat(value.toFixed(precision));
 }
 
+/**
+ * Возвращает точку пересечения двух линий.
+ * @param line0 - Первая линия.
+ * @param line1 - Вторая линия.
+ * @returns Точка пересечения.
+ * @see https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+ **/
+function getIntersectionPoint(
+  line0: Vector2[], 
+  line1: Vector2[]
+): Vector2 {
+  const x1 = line0[0].x;
+  const y1 = line0[0].y;
+  const x2 = line0[1].x;
+  const y2 = line0[1].y;
+  const x3 = line1[0].x;
+  const y3 = line1[0].y;
+  const x4 = line1[1].x;
+  const y4 = line1[1].y;
+
+  const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+  if (d === 0) {
+    return { x: 0, y: 0 };
+  }
+
+  const a = x1 * y2 - y1 * x2;
+  const b = x3 * y4 - y3 * x4;
+
+  const x = (a * (x3 - x4) - (x1 - x2) * b) / d;
+  const y = (a * (y3 - y4) - (y1 - y2) * b) / d;
+
+  return { x: x, y: y };
+}
+
 export {
   
   calculateMouseDistanceByAxes,
@@ -154,6 +189,7 @@ export {
   getDistanceBetweenVectors,
   getAngleBetweenVectors,
   getRectPointsV2,
-  roundToPrecision
+  roundToPrecision,
+  getIntersectionPoint
 
 };
