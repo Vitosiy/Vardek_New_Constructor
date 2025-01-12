@@ -5,7 +5,7 @@ import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 
 import { useC2DLeftMenuStore    } from "@/store/constructor2d/store/useLeftMenuStore";
-import { catalogSections, pathD } from '@/store/constructor2d/data/useCatalogSectionsData';
+import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
 
 const constructor2dMenu = useC2DLeftMenuStore();
 
