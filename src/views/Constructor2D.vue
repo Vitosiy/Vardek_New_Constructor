@@ -64,24 +64,33 @@ function dropHandler(ev: DragEvent): void {
     // Получаем координаты мыши при броске
     const { offsetX: eX, offsetY: eY } = ev;
 
+    const mergeWalls: { 
+      wallPoint0: null | string | number, 
+      wallPoint1: null | string | number 
+    } = {
+      wallPoint0: null, 
+      wallPoint1: null
+    };
+
     const oc = constructor2DStore.getOriginOfCoordinates;
 
-    const scale = constructor2DStore.getScale;
+    // const scale = constructor2DStore.getScale;
     const invScale = constructor2DStore.getInverseScale;
     
-    console.log("!!! scale: ", scale, " * invScale: ", invScale, " = ", scale * invScale);
+    // console.log("!!! scale: ", scale, " * invScale: ", invScale, " = ", scale * invScale);
     
     // позиция курсора мыши в координатах canvas
     const canvasPositionMouseX = eX - 30 - oc.x;
     const canvasPositionMouseY = eY - 30 - oc.y;
 
-    const positionObjectX = canvasPositionMouseX * invScale;
-    const positionObjectY = canvasPositionMouseY * invScale;
+    let positionObjectX = canvasPositionMouseX * invScale;
+    let positionObjectY = canvasPositionMouseY * invScale;
 
-    const hoverPointObject: { id: number; indexPoint: number } | null = plannerStore.getPointByPosition({
-      x: positionObjectX,
-      y: positionObjectY
-    });
+    const hoverPointObject: { id: number; indexPoint: number } | null = 
+      plannerStore.getPointByPosition({
+        x: positionObjectX,
+        y: positionObjectY
+      });
 
     // Если курсор попал на точку объекта, то обновляем хранилище
     if(hoverPointObject){
@@ -90,6 +99,22 @@ function dropHandler(ev: DragEvent): void {
         hoverPointObject.id,
         hoverPointObject.indexPoint
       );
+      
+      // присоединяем объект к точке
+      if(hoverPointObject.indexPoint === 1){
+      
+        const __hoverObj = plannerStore.getObjectById(hoverPointObject.id);
+        const hoverObj = JSON.parse(JSON.stringify(__hoverObj));
+        if(hoverObj && hoverObj.points && hoverObj.mergeWalls.wallPoint0 === null){
+          
+          positionObjectX = hoverObj.points[1].x;
+          positionObjectY = hoverObj.points[1].y;
+
+          mergeWalls.wallPoint1 = hoverObj.id;
+          
+        }
+
+      }
       
     }else{
 
@@ -109,9 +134,7 @@ function dropHandler(ev: DragEvent): void {
       position: { x: positionObjectX, y: positionObjectY },
       heightDirection: -1,
       angleDegrees: 0,
-      // добавить свойство для хранения объекта с которым нужно объединить,
-      // объект хранить в себе indexPoint и id объекта
-      // mergeObject: { id: null, indexPoint: null }
+      mergeWalls: mergeWalls
     });
 
   } catch (error) {

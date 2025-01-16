@@ -96,6 +96,7 @@ export default class Planner {
             if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
               // Если объект изменился
               const updatedObject = JSON.parse(JSON.stringify(newObject));
+              // console.log("updatedObject:", newObject.id);
               this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
             }
           });
@@ -212,6 +213,44 @@ export default class Planner {
 
     if(data.points){
 
+      /* точка пересечения
+      */
+      const mergeWalls = data.mergeWalls;
+
+      // console.log("Planner.js: mergeWalls ===>>> ", mergeWalls);
+
+      if(mergeWalls.wallPoint1 !== null){
+        
+        const wall_point1 = this.plannerStore.getObjectById(mergeWalls.wallPoint1);
+        if(wall_point1 && wall_point1.points){
+          
+          const interactionPoint = getIntersectionPoint(
+            [data.points[2], data.points[3]],
+            [wall_point1.points[2], wall_point1.points[3]]
+          );
+
+          data.points[3] = interactionPoint;
+          
+        }
+
+      }
+
+      if(mergeWalls.wallPoint0 !== null){
+        
+        const wall_point1 = this.plannerStore.getObjectById(mergeWalls.wallPoint0);
+        if(wall_point1 && wall_point1.points){
+          
+          const interactionPoint = getIntersectionPoint(
+            [data.points[2], data.points[3]],
+            [wall_point1.points[2], wall_point1.points[3]]
+          );
+
+          data.points[2] = interactionPoint;
+          
+        }
+
+      }
+
       // рисуем маску для wallBody
       if(containers.maskWall){
         rect(
@@ -322,40 +361,6 @@ export default class Planner {
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
-
-        /* точка пересечения
-        const hoverPointObject = this.constructorStore.getHoverObject;
-
-        console.log("hoverPointObject", hoverPointObject);
-
-        if(hoverPointObject.id){
-          
-          if(hoverPointObject.indexPoint === 1){
-          
-            const hoverObj = this.plannerStore.getObjectById(hoverPointObject.id);
-            if(hoverObj && hoverObj.points){
-              
-              const interactionPoint = getIntersectionPoint(
-                [data.points[2], data.points[3]],
-                [hoverObj.points[2], hoverObj.points[3]]
-              );
-              
-              if(containers.lineWall){
-                console.log("interactionPoint", interactionPoint);
-                // рисуем точку пересечения
-                drawCircle(
-                  containers.lineWall,
-                  interactionPoint,
-                  10, 
-                  "rgba(255,0,0,1)"
-                );
-              }
-              
-            }
-          }
-
-        }
-        */
         
       }
     
@@ -385,7 +390,7 @@ export default class Planner {
 
       // Найти объект по ID
       this.interactiveWallStore.setActiveObjectID(id);
-      console.log("test", id);
+      // console.log("test", id);
 
     }
 
