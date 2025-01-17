@@ -2,7 +2,7 @@
 
 import { MathUtils } from "three";
 
-import { ref, onMounted, Ref, onUnmounted } from "vue";
+import { ref, onMounted, Ref, onUnmounted, reactive } from "vue";
 
 // import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
@@ -64,6 +64,8 @@ function dropHandler(ev: DragEvent): void {
     // Получаем координаты мыши при броске
     const { offsetX: eX, offsetY: eY } = ev;
 
+    const __id = 'wall_'+plannerStore.getCountObjects;
+    
     const mergeWalls: { 
       wallPoint0: null | string | number, 
       wallPoint1: null | string | number 
@@ -101,16 +103,21 @@ function dropHandler(ev: DragEvent): void {
       );
       
       // присоединяем объект к точке
-      if(hoverPointObject.indexPoint === 1){
+      if(hoverPointObject.indexPoint === 1){ // если курсор над точкой 1
       
-        const __hoverObj = plannerStore.getObjectById(hoverPointObject.id);
+        const __hoverObj = plannerStore.getObjectById(hoverPointObject.id); // находим объект которому принадлжеит точка 1
         const hoverObj = JSON.parse(JSON.stringify(__hoverObj));
         if(hoverObj && hoverObj.points && hoverObj.mergeWalls.wallPoint0 === null){
           
+          // присвваиваем положение точки 1 найденного объекта новому
           positionObjectX = hoverObj.points[1].x;
           positionObjectY = hoverObj.points[1].y;
 
+          // указываем что точка 1 у найденного олбъекта (hoverObj.id)
           mergeWalls.wallPoint1 = hoverObj.id;
+          if (__hoverObj) {
+            __hoverObj.mergeWalls.wallPoint0 = __id;
+          }
           
         }
 
@@ -127,14 +134,15 @@ function dropHandler(ev: DragEvent): void {
     
     // добавляем "товар" объект в Store
     plannerStore.addObj({
-      id: MathUtils.generateUUID(),
+      // id: MathUtils.generateUUID(),
+      id: __id,
       name: draggedData,
       width: 150,
       height: 30,
       position: { x: positionObjectX, y: positionObjectY },
       heightDirection: -1,
       angleDegrees: 0,
-      mergeWalls: mergeWalls
+      mergeWalls: reactive(mergeWalls)
     });
 
   } catch (error) {

@@ -63,6 +63,7 @@ export default class Planner {
     this.activeObjectGraphic = new PIXI.Graphics();
     this.app.stage.addChild(this.activeObjectGraphic);
 
+    // следим за добавлением нового объекта
     this.unwatchList.push(
       watch(
         () => this.plannerStore.objects.length, // Следим за длиной массива
@@ -77,7 +78,7 @@ export default class Planner {
               if (!this.drawObjects.some((el) => el.id === newObject.id)) {
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
-                this.drawObject(newObject);
+                this.drawObject(newObject, true);
               }
             }
           }
@@ -85,6 +86,8 @@ export default class Planner {
       )
     );
     
+    /*/
+    // следим за изменениями в объекте
     this.unwatchList.push(
       // отслеживаем изменения в объекте
       watch(
@@ -92,12 +95,25 @@ export default class Planner {
         (newVal, oldVal) => {
           newVal.forEach((newObject, index) => {
             const oldObject = oldVal?.[index];
-      
+            
             if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              
               // Если объект изменился
               const updatedObject = JSON.parse(JSON.stringify(newObject));
               // console.log("updatedObject:", newObject.id);
               this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
+              if(updatedObject.mergeWalls.wallPoint1 !== null){
+                const __mergeObj = this.plannerStore.getObjectById(updatedObject.mergeWalls.wallPoint1);
+                const mergeObj = JSON.parse(JSON.stringify(__mergeObj));
+                if(mergeObj){
+                  // this.drawObject(mergeObj);
+                  this.plannerStore.setNewPointPosition(
+                    updatedObject.mergeWalls.wallPoint1,
+                    1,
+                    updatedObject.points[0]
+                  );
+                }
+              }
             }
           });
         },
@@ -105,6 +121,63 @@ export default class Planner {
       )
     );
 
+    // следим за изменениями параметров mergeWalls в объекте
+    this.unwatchList.push(
+      watch(
+        // Следим только за id и mergeWalls
+        () => this.plannerStore.objects.map(obj => ({
+          id: obj.id,
+          mergeWalls: { ...obj.mergeWalls }, // Делаем копию mergeWalls для отслеживания изменений
+        })),
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+            if (!oldObject) return;
+    
+            // Проверяем изменения в mergeWalls.wallPoint0 и mergeWalls.wallPoint1
+            const isWallPointChanged =
+              newObject.mergeWalls.wallPoint0 !== oldObject.mergeWalls.wallPoint0 ||
+              newObject.mergeWalls.wallPoint1 !== oldObject.mergeWalls.wallPoint1;
+    
+            if (isWallPointChanged) {
+              // Получаем оригинальный объект из plannerStore.objects
+              const plannerObject = this.plannerStore.objects.find(obj => obj.id === newObject.id);
+    
+              if (plannerObject) {
+                this.drawObject(plannerObject); // Передаём оригинальный объект в drawObject
+              } else {
+                console.warn(`Объект с ID ${newObject.id} не найден в plannerStore.objects`);
+              }
+            }
+          });
+        },
+        { deep: true } // Глубокое отслеживание для вложенных объектов
+      )
+    );
+    */
+
+
+    this.unwatchList.push(
+      // отслеживаем изменения в объекте
+      watch(
+        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+            
+            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              
+              // Если объект изменился
+              const updatedObject = JSON.parse(JSON.stringify(newObject));
+              this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
+
+            }
+          });
+        },
+        { deep: true } // Глубокое слежение за изменениями
+      )
+    );
+    
     this.unwatchList.push(
       watch(
         () => this.constructorStore.originOfCoordinates,
@@ -130,19 +203,6 @@ export default class Planner {
         }
       )
     );
-
-    // подписываемся на объект в constructionStore hoverObject
-    // this.unwatchList.push(
-    //   watch(
-    //     () => this.constructorStore.hoverObject,
-    //     (newValue) => {
-    //       if(newValue){
-    //         // console.log("!!! >>> hoverObject", newValue);
-    //       }
-    //     },
-    //     { deep: true } // Глубокое слежение за изменениями
-    //   )
-    // );
     
   }
 
@@ -192,17 +252,17 @@ export default class Planner {
     return { id: data.id, containers };
   }
 
-  private drawObject(data: PlannerObject): void {
+  private drawObject(data: PlannerObject, activeWall: boolean = false): void {
 
     switch (data.name) {
       case "wall":
-        this.drawWall(data);
+        this.drawWall(data, activeWall);
         break;
     }
 
   }
 
-  private drawWall(data: PlannerObject): void {
+  private drawWall(data: PlannerObject, activeWall: boolean = false): void {
 
     // Найти объект по ID
     const obj = this.drawObjects.find((el) => el.id === data.id);
@@ -212,43 +272,51 @@ export default class Planner {
     const { containers } = obj;
 
     if(data.points){
+      
+      { // обновление точки, если есть слияние стен
 
-      /* точка пересечения
-      */
-      const mergeWalls = data.mergeWalls;
-
-      // console.log("Planner.js: mergeWalls ===>>> ", mergeWalls);
-
-      if(mergeWalls.wallPoint1 !== null){
-        
-        const wall_point1 = this.plannerStore.getObjectById(mergeWalls.wallPoint1);
-        if(wall_point1 && wall_point1.points){
+        // точка пересечения
+        const mergeWalls = data.mergeWalls;
+        // если стартовая точка соединена с сдругой стеной, тогда вычисляем координаты общей точки 
+        if(mergeWalls.wallPoint1 !== null){
           
-          const interactionPoint = getIntersectionPoint(
-            [data.points[2], data.points[3]],
-            [wall_point1.points[2], wall_point1.points[3]]
-          );
+          const mergeObj = this.plannerStore.getObjectById(mergeWalls.wallPoint1);
+          if(mergeObj){
+            const wall_point1 = JSON.parse(JSON.stringify(mergeObj));
+            if(wall_point1 && wall_point1.points){
+              
+              const interactionPoint = getIntersectionPoint(
+                [data.points[2], data.points[3]],
+                [wall_point1.points[2], wall_point1.points[3]]
+              );
 
-          data.points[3] = interactionPoint;
-          
+              if(interactionPoint.x != 0 && interactionPoint.y != 0) data.points[3] = interactionPoint;
+              
+            }
+          }
+
         }
 
-      }
+        // если конечная точка соединена с сдругой стеной, тогда вычисляем координаты общей точки
+        if(mergeWalls.wallPoint0 !== null){
 
-      if(mergeWalls.wallPoint0 !== null){
-        
-        const wall_point1 = this.plannerStore.getObjectById(mergeWalls.wallPoint0);
-        if(wall_point1 && wall_point1.points){
-          
-          const interactionPoint = getIntersectionPoint(
-            [data.points[2], data.points[3]],
-            [wall_point1.points[2], wall_point1.points[3]]
-          );
+          const mergeObj = this.plannerStore.getObjectById(mergeWalls.wallPoint0);
+          if(mergeObj){
+            const wall_point0 = JSON.parse(JSON.stringify(mergeObj));
+            if(wall_point0 && wall_point0.points){
+              
+              const interactionPoint = getIntersectionPoint(
+                [data.points[2], data.points[3]],
+                [wall_point0.points[2], wall_point0.points[3]]
+              );
 
-          data.points[2] = interactionPoint;
-          
+              if(interactionPoint.x != 0 && interactionPoint.y != 0) data.points[2] = interactionPoint;
+              
+            }
+          }
+
         }
-
+        
       }
 
       // рисуем маску для wallBody
@@ -375,7 +443,7 @@ export default class Planner {
         );
       }
 
-      this.interactiveWallStore.setActiveObjectID(data.id);
+      if(activeWall) this.interactiveWallStore.setActiveObjectID(data.id);
       // this.activeObject = data.id;
 
     }
@@ -390,7 +458,6 @@ export default class Planner {
 
       // Найти объект по ID
       this.interactiveWallStore.setActiveObjectID(id);
-      // console.log("test", id);
 
     }
 

@@ -259,6 +259,9 @@ export default class StartPointActiveObject {
       const co = this.constructorStore.getOriginOfCoordinates;
       const inverseScale = this.constructorStore.getInverseScale;
 
+      const __activeWall = this.plannerStore.getObjectById(this.interactiveWallStore.activeObjectID);
+      const wall = JSON.parse(JSON.stringify(__activeWall));
+
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
@@ -267,6 +270,19 @@ export default class StartPointActiveObject {
           y: (e.global.y - co.y - 30) * inverseScale
         }
       );
+
+      if(wall.mergeWalls.wallPoint1 !== null && this.interactiveWallStore.activePoint === 0){
+
+        this.plannerStore.setNewPointPosition(
+          wall.mergeWalls.wallPoint1,
+          1,
+          {
+            x: (e.global.x - co.x - 30) * inverseScale,
+            y: (e.global.y - co.y - 30) * inverseScale
+          }
+        );
+        
+      }
 
     }
     

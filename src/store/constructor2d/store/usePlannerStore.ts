@@ -23,30 +23,6 @@ import { configWall } from "@/store/constructor2d/data/usePlannerData";
 export const usePlanner2DStore = defineStore('planner2DStore', () => {
   const objects = ref<PlannerObject[]>([]);
 
-  const setMergeWall = (
-    id: number | string,
-    indexPoint: number, 
-    mergeWall: string | number | null) => {
-
-    // Находим объект по id
-    const wall = objects.value.find(obj => obj.id === id);
-
-    if (!wall) {
-      console.warn(`Object с id ${id} не найден.`);
-      return;
-    }
-
-    // Проверяем, что индекс точки корректен
-    if (!wall.points || indexPoint < 0 || indexPoint >= wall.points.length) {
-      console.warn(`Индекс точки ${indexPoint} выходит за границы массива.`);
-      return;
-    }
-    
-    if(indexPoint === 0) wall.mergeWalls.wallPoint0 = mergeWall;
-    if(indexPoint === 1) wall.mergeWalls.wallPoint1 = mergeWall;
-
-  };
-
   const addObj = (item: PlannerObject) => {
 
     let config = null;
@@ -67,12 +43,6 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     item.points = points;
     item.width = config.width;
     item.height = config.height;
-
-    if(item.mergeWalls.wallPoint0 !== null){
-      setMergeWall(item.mergeWalls.wallPoint0, 1, item.id);
-    }else if(item.mergeWalls.wallPoint1 !== null){
-      setMergeWall(item.mergeWalls.wallPoint1, 0, item.id);
-    }
     
     objects.value.push(item);
     
@@ -165,15 +135,17 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     }
   }); 
 
+  const getCountObjects = computed(() => objects.value.length);
+
   return {
     objects,
     
     addObj,
     removeObj,
     setNewPointPosition,
-    setMergeWall,
     
     getObjectById,
-    getPointByPosition
+    getPointByPosition,
+    getCountObjects
   };
 });
