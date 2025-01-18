@@ -1,16 +1,18 @@
 <script lang="ts" setup>
 
-import { MathUtils } from "three";
+// import { MathUtils } from "three";
 
 import { ref, onMounted, Ref, onUnmounted, reactive } from "vue";
 
 // import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
+import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 
 // const leftMenuStore = useC2DLeftMenuStore();
 const plannerStore = usePlanner2DStore();
 const constructor2DStore = useConstructor2DStore();
+const interactiveWallStore = useC2DInteractiveWallStore();
 
 import Constructor2D from '@/Constructor2D';
 
@@ -142,8 +144,11 @@ function dropHandler(ev: DragEvent): void {
       position: { x: positionObjectX, y: positionObjectY },
       heightDirection: -1,
       angleDegrees: 0,
+      updateTime: 0,
       mergeWalls: reactive(mergeWalls)
     });
+
+    interactiveWallStore.setActiveObjectID(__id);
 
   } catch (error) {
     console.error("Произошла ошибка в обработчике перетаскивания:", error);

@@ -82,11 +82,14 @@ export default class StartPointActiveObject {
           newVal.forEach((newObject, index) => {
             const oldObject = oldVal?.[index];
       
-            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-              // Если объект изменился
-              const updatedObject = JSON.parse(JSON.stringify(newObject));
-              this.draw(updatedObject); // Выполняем действие с изменённым объектом
+            if(!oldObject || newObject.updateTime === oldObject.updateTime){
+              if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+                // Если объект изменился
+                const updatedObject = JSON.parse(JSON.stringify(newObject));
+                this.draw(updatedObject); // Выполняем действие с изменённым объектом
+              }
             }
+
           });
         },
         { deep: true } // Глубокое слежение за изменениями
@@ -280,6 +283,22 @@ export default class StartPointActiveObject {
             x: (e.global.x - co.x - 30) * inverseScale,
             y: (e.global.y - co.y - 30) * inverseScale
           }
+        );
+        
+      }
+      
+      if(wall.mergeWalls.wallPoint1 !== null && this.interactiveWallStore.activePoint === 1){
+
+        this.plannerStore.updatedObject(
+          wall.mergeWalls.wallPoint1
+        );
+        
+      }
+
+      if(wall.mergeWalls.wallPoint0 !== null && this.interactiveWallStore.activePoint === 0){
+
+        this.plannerStore.updatedObject(
+          wall.mergeWalls.wallPoint0
         );
         
       }

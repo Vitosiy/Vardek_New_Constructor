@@ -61,6 +61,7 @@ export interface PlannerObject {
   points?: Vector2[];
   heightDirection: -1 | 1;
   angleDegrees: number;
+  updateTime: number;
   mergeWalls: {
     wallPoint0: string | number | null, 
     wallPoint1: string | number | null

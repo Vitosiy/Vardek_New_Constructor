@@ -33,7 +33,7 @@ import {
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
-  drawCircle,
+  // drawCircle,
 } from "./../../utils/Shape";
 
 export default class Planner {
@@ -78,7 +78,7 @@ export default class Planner {
               if (!this.drawObjects.some((el) => el.id === newObject.id)) {
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
-                this.drawObject(newObject, true);
+                this.drawObject(newObject);
               }
             }
           }
@@ -177,6 +177,39 @@ export default class Planner {
         { deep: true } // Глубокое слежение за изменениями
       )
     );
+
+    this.unwatchList.push(
+      watch(
+        // Следим только за id и mergeWalls
+        () => this.plannerStore.objects.map(obj => ({
+          id: obj.id,
+          mergeWalls: { ...obj.mergeWalls }, // Делаем копию mergeWalls для отслеживания изменений
+        })),
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+            if (!oldObject) return;
+    
+            // Проверяем изменения в mergeWalls.wallPoint0 и mergeWalls.wallPoint1
+            const isWallPointChanged =
+              newObject.mergeWalls.wallPoint0 !== oldObject.mergeWalls.wallPoint0 ||
+              newObject.mergeWalls.wallPoint1 !== oldObject.mergeWalls.wallPoint1;
+    
+            if (isWallPointChanged) {
+              // Получаем оригинальный объект из plannerStore.objects
+              const plannerObject = this.plannerStore.objects.find(obj => obj.id === newObject.id);
+    
+              if (plannerObject) {
+                this.drawObject(plannerObject); // Передаём оригинальный объект в drawObject
+              } else {
+                console.warn(`Объект с ID ${newObject.id} не найден в plannerStore.objects`);
+              }
+            }
+          });
+        },
+        { deep: true } // Глубокое отслеживание для вложенных объектов
+      )
+    );
     
     this.unwatchList.push(
       watch(
@@ -252,17 +285,17 @@ export default class Planner {
     return { id: data.id, containers };
   }
 
-  private drawObject(data: PlannerObject, activeWall: boolean = false): void {
+  private drawObject(data: PlannerObject): void {
 
     switch (data.name) {
       case "wall":
-        this.drawWall(data, activeWall);
+        this.drawWall(data);
         break;
     }
 
   }
 
-  private drawWall(data: PlannerObject, activeWall: boolean = false): void {
+  private drawWall(data: PlannerObject): void {
 
     // Найти объект по ID
     const obj = this.drawObjects.find((el) => el.id === data.id);
@@ -443,7 +476,7 @@ export default class Planner {
         );
       }
 
-      if(activeWall) this.interactiveWallStore.setActiveObjectID(data.id);
+      // if(activeWall) this.interactiveWallStore.setActiveObjectID(data.id);
       // this.activeObject = data.id;
 
     }

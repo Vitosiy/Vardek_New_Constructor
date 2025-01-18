@@ -56,6 +56,20 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     }
   };
 
+  const updatedObject = (id: number | string) => {
+
+    // Находим объект по id
+    const targetObject = objects.value.find(obj => obj.id === id);
+
+    if (!targetObject) {
+      console.warn(`Object с id ${id} не найден.`);
+      return;
+    }
+
+    targetObject.updateTime = Date.now();
+
+  };
+
   const setNewPointPosition = (id: number | string, indexPoint: number, position: Vector2) => {
 
     // Находим объект по id
@@ -143,6 +157,8 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     addObj,
     removeObj,
     setNewPointPosition,
+
+    updatedObject,
     
     getObjectById,
     getPointByPosition,

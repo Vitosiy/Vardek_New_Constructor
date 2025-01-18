@@ -71,10 +71,12 @@ export default class ArrowRulerActiveObject {
         (newVal, oldVal) => {
           newVal.forEach((newObject, index) => {
             const oldObject = oldVal?.[index];
-            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-              // Если объект изменился, вызываем метод отрисовки
-              const updatedObject = JSON.parse(JSON.stringify(newObject));
-              this.draw(updatedObject);
+            if(!oldObject || newObject.updateTime === oldObject.updateTime){
+              if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+                // Если объект изменился, вызываем метод отрисовки
+                const updatedObject = JSON.parse(JSON.stringify(newObject));
+                this.draw(updatedObject);
+              }
             }
           });
         },
