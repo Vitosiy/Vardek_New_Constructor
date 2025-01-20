@@ -305,24 +305,6 @@ export default class StartPointActiveObject {
         );
         
       }
-      
-      /*
-      if(wall.mergeWalls.wallPoint1 !== null && this.interactiveWallStore.activePoint === 1){
-
-        this.plannerStore.updatedObject(
-          wall.mergeWalls.wallPoint1
-        );
-        
-      }
-
-      if(wall.mergeWalls.wallPoint0 !== null && this.interactiveWallStore.activePoint === 0){
-
-        this.plannerStore.updatedObject(
-          wall.mergeWalls.wallPoint0
-        );
-        
-      }
-      */
 
     }
     
