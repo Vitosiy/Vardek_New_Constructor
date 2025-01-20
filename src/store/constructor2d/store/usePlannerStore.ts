@@ -70,6 +70,17 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
 
   };
 
+  const updatedMergeWalls = (rootWallID: number | string) => {
+
+    objects.value.forEach((obj) => {
+      // Исключаем объект с rootWallID
+      if (obj.id !== rootWallID) {
+        obj.updateTime = Date.now(); // Обновляем время изменения
+      }
+    });
+    
+  }
+
   const setNewPointPosition = (id: number | string, indexPoint: number, position: Vector2) => {
 
     // Находим объект по id
@@ -159,6 +170,7 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     setNewPointPosition,
 
     updatedObject,
+    updatedMergeWalls,
     
     getObjectById,
     getPointByPosition,

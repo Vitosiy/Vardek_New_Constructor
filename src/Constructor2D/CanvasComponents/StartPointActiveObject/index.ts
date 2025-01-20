@@ -285,8 +285,28 @@ export default class StartPointActiveObject {
           }
         );
         
+      }else if(wall.mergeWalls.wallPoint0 !== null && this.interactiveWallStore.activePoint === 1){
+
+        this.plannerStore.setNewPointPosition(
+          wall.mergeWalls.wallPoint0,
+          0,
+          {
+            x: (e.global.x - co.x - 30) * inverseScale,
+            y: (e.global.y - co.y - 30) * inverseScale
+          }
+        );
+        
+      }
+
+      if(wall.mergeWalls.wallPoint1 !== null || wall.mergeWalls.wallPoint0 !== null){
+
+        this.plannerStore.updatedMergeWalls(
+          this.interactiveWallStore.activeObjectID
+        );
+        
       }
       
+      /*
       if(wall.mergeWalls.wallPoint1 !== null && this.interactiveWallStore.activePoint === 1){
 
         this.plannerStore.updatedObject(
@@ -302,6 +322,7 @@ export default class StartPointActiveObject {
         );
         
       }
+      */
 
     }
     
