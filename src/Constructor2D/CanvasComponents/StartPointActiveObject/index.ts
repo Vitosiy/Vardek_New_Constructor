@@ -253,64 +253,57 @@ export default class StartPointActiveObject {
     
   }
 
-  private handleMouseMove (e: PIXI.FederatedPointerEvent): void {
-
+  private handleMouseMove(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
-    
-    if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
-      
+  
+    if (
+      this.interactiveWallStore.statusLeftDownMouse &&
+      this.interactiveWallStore.activePoint != null
+    ) {
       const co = this.constructorStore.getOriginOfCoordinates;
       const inverseScale = this.constructorStore.getInverseScale;
-
-      const __activeWall = this.plannerStore.getObjectById(this.interactiveWallStore.activeObjectID);
+  
+      const mousePosition = {
+        x: (e.global.x - co.x - 30) * inverseScale,
+        y: (e.global.y - co.y - 30) * inverseScale,
+      };
+  
+      const __activeWall = this.plannerStore.getObjectById(
+        this.interactiveWallStore.activeObjectID
+      );
       const wall = JSON.parse(JSON.stringify(__activeWall));
-
+  
+      // Обновляем позицию активной точки
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
-        {
-          x: (e.global.x - co.x - 30) * inverseScale,
-          y: (e.global.y - co.y - 30) * inverseScale
-        }
+        mousePosition
       );
-
-      if(wall.mergeWalls.wallPoint1 !== null && this.interactiveWallStore.activePoint === 0){
-
+  
+      // Обрабатываем привязанные стены
+      if (this.interactiveWallStore.activePoint === 0 && wall.mergeWalls.wallPoint1 !== null) {
         this.plannerStore.setNewPointPosition(
           wall.mergeWalls.wallPoint1,
           1,
-          {
-            x: (e.global.x - co.x - 30) * inverseScale,
-            y: (e.global.y - co.y - 30) * inverseScale
-          }
+          mousePosition
         );
-        
-      }else if(wall.mergeWalls.wallPoint0 !== null && this.interactiveWallStore.activePoint === 1){
-
+      } else if (this.interactiveWallStore.activePoint === 1 && wall.mergeWalls.wallPoint0 !== null) {
         this.plannerStore.setNewPointPosition(
           wall.mergeWalls.wallPoint0,
           0,
-          {
-            x: (e.global.x - co.x - 30) * inverseScale,
-            y: (e.global.y - co.y - 30) * inverseScale
-          }
+          mousePosition
         );
-        
       }
-
-      if(wall.mergeWalls.wallPoint1 !== null || wall.mergeWalls.wallPoint0 !== null){
-
-        this.plannerStore.updatedMergeWalls(
-          this.interactiveWallStore.activeObjectID
-        );
-        
+  
+      // Обновляем соединённые стены, если есть слияние
+      if (wall.mergeWalls.wallPoint1 !== null || wall.mergeWalls.wallPoint0 !== null) {
+        this.plannerStore.updatedMergeWalls(this.interactiveWallStore.activeObjectID);
       }
-
     }
-    
+  
     e.stopPropagation(); // Останавливаем всплытие события
-    
   }
+  
 
   public clearGraphic(): void{
 
