@@ -8,6 +8,7 @@ import { ref, onMounted, Ref, onUnmounted, reactive } from "vue";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
+import { configWall } from "@/store/constructor2d/data/usePlannerData";
 
 // const leftMenuStore = useC2DLeftMenuStore();
 const plannerStore = usePlanner2DStore();
@@ -23,7 +24,7 @@ const canvas2d: Ref<HTMLCanvasElement | undefined> = ref();
 
 document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
 
-let App2d: Constructor2D | null = null; 
+let App2d: Constructor2D | null = null;
 
 onMounted(async () => {
 
@@ -104,10 +105,12 @@ function dropHandler(ev: DragEvent): void {
         hoverPointObject.indexPoint
       );
       
+      console.log(hoverPointObject);
+      
       // присоединяем объект к точке
       if(hoverPointObject.indexPoint === 1){ // если курсор над точкой 1
       
-        const __hoverObj = plannerStore.getObjectById(hoverPointObject.id); // находим объект которому принадлжеит точка 1
+        const __hoverObj = plannerStore.getObjectById(hoverPointObject.id); // находим объект которому принадлежит точка 1
         const hoverObj = JSON.parse(JSON.stringify(__hoverObj));
         if(hoverObj && hoverObj.points && hoverObj.mergeWalls.wallPoint0 === null){
           
@@ -115,7 +118,7 @@ function dropHandler(ev: DragEvent): void {
           positionObjectX = hoverObj.points[1].x;
           positionObjectY = hoverObj.points[1].y;
 
-          // указываем что точка 1 у найденного олбъекта (hoverObj.id)
+          // указываем что точка 1 у найденного объекта (hoverObj.id)
           mergeWalls.wallPoint1 = hoverObj.id;
           if (__hoverObj) {
             __hoverObj.mergeWalls.wallPoint0 = __id;
@@ -123,6 +126,27 @@ function dropHandler(ev: DragEvent): void {
           
         }
 
+      }else if(hoverPointObject.indexPoint === 0){ // если курсор над точкой 0
+
+        const __hoverObj = plannerStore.getObjectById(hoverPointObject.id); // находим объект которому принадлежит точка 1
+        const hoverObj = JSON.parse(JSON.stringify(__hoverObj));
+
+        if(hoverObj && hoverObj.points && hoverObj.mergeWalls.wallPoint1 === null){
+          
+          // присвваиваем положение точки 1 найденного объекта новому
+          positionObjectX = hoverObj.points[0].x - configWall.width;
+          positionObjectY = hoverObj.points[0].y;
+
+          console.log("hoverObj.points[0]", hoverObj.points[0]);
+
+          // указываем что точка 1 у найденного объекта (hoverObj.id)
+          if (__hoverObj) {
+            mergeWalls.wallPoint0 = hoverObj.id; // точка новой стены для слияние с другой
+            __hoverObj.mergeWalls.wallPoint1 = __id; // точка стены с которой нужно слить новую
+          }
+
+        }
+          
       }
       
     }else{
@@ -139,11 +163,11 @@ function dropHandler(ev: DragEvent): void {
       // id: MathUtils.generateUUID(),
       id: __id,
       name: draggedData,
-      width: 150,
-      height: 30,
+      width: configWall.width,
+      height: configWall.height,
       position: { x: positionObjectX, y: positionObjectY },
-      heightDirection: -1,
-      angleDegrees: 0,
+      heightDirection: configWall.heightDirection,
+      angleDegrees: configWall.angleDegrees,
       updateTime: 0,
       mergeWalls: reactive(mergeWalls)
     });

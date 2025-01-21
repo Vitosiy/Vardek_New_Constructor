@@ -85,77 +85,6 @@ export default class Planner {
         }
       )
     );
-    
-    /*/
-    // следим за изменениями в объекте
-    this.unwatchList.push(
-      // отслеживаем изменения в объекте
-      watch(
-        () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
-        (newVal, oldVal) => {
-          newVal.forEach((newObject, index) => {
-            const oldObject = oldVal?.[index];
-            
-            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-              
-              // Если объект изменился
-              const updatedObject = JSON.parse(JSON.stringify(newObject));
-              // console.log("updatedObject:", newObject.id);
-              this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
-              if(updatedObject.mergeWalls.wallPoint1 !== null){
-                const __mergeObj = this.plannerStore.getObjectById(updatedObject.mergeWalls.wallPoint1);
-                const mergeObj = JSON.parse(JSON.stringify(__mergeObj));
-                if(mergeObj){
-                  // this.drawObject(mergeObj);
-                  this.plannerStore.setNewPointPosition(
-                    updatedObject.mergeWalls.wallPoint1,
-                    1,
-                    updatedObject.points[0]
-                  );
-                }
-              }
-            }
-          });
-        },
-        { deep: true } // Глубокое слежение за изменениями
-      )
-    );
-
-    // следим за изменениями параметров mergeWalls в объекте
-    this.unwatchList.push(
-      watch(
-        // Следим только за id и mergeWalls
-        () => this.plannerStore.objects.map(obj => ({
-          id: obj.id,
-          mergeWalls: { ...obj.mergeWalls }, // Делаем копию mergeWalls для отслеживания изменений
-        })),
-        (newVal, oldVal) => {
-          newVal.forEach((newObject, index) => {
-            const oldObject = oldVal?.[index];
-            if (!oldObject) return;
-    
-            // Проверяем изменения в mergeWalls.wallPoint0 и mergeWalls.wallPoint1
-            const isWallPointChanged =
-              newObject.mergeWalls.wallPoint0 !== oldObject.mergeWalls.wallPoint0 ||
-              newObject.mergeWalls.wallPoint1 !== oldObject.mergeWalls.wallPoint1;
-    
-            if (isWallPointChanged) {
-              // Получаем оригинальный объект из plannerStore.objects
-              const plannerObject = this.plannerStore.objects.find(obj => obj.id === newObject.id);
-    
-              if (plannerObject) {
-                this.drawObject(plannerObject); // Передаём оригинальный объект в drawObject
-              } else {
-                console.warn(`Объект с ID ${newObject.id} не найден в plannerStore.objects`);
-              }
-            }
-          });
-        },
-        { deep: true } // Глубокое отслеживание для вложенных объектов
-      )
-    );
-    */
-
 
     this.unwatchList.push(
       // отслеживаем изменения в объекте
@@ -267,7 +196,16 @@ export default class Planner {
     // containers.normalIndicator.eventMode = 'static';
     // containers.textWallWidth.eventMode = 'static';
     // containers.textWallLength.eventMode = 'static';
+
     containers.eventGraphic.eventMode = 'static';
+    // Изменяем курсор на pointer при наведении
+    containers.eventGraphic.on("mouseover", () => {
+      containers.eventGraphic.cursor = "pointer";
+    });
+    // Убираем курсор при уходе мыши
+    containers.eventGraphic.on("mouseout", () => {
+      containers.eventGraphic.cursor = "default"; // Возвращаем стандартный курсор
+    });
     containers.eventGraphic.on("pointerdown", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
