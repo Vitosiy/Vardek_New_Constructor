@@ -199,13 +199,13 @@ export default class Planner {
 
     containers.eventGraphic.eventMode = 'static';
     // Изменяем курсор на pointer при наведении
-    containers.eventGraphic.on("mouseover", () => {
-      containers.eventGraphic.cursor = "pointer";
-    });
-    // Убираем курсор при уходе мыши
-    containers.eventGraphic.on("mouseout", () => {
-      containers.eventGraphic.cursor = "default"; // Возвращаем стандартный курсор
-    });
+    // containers.eventGraphic.on("mouseover", () => {
+    //   containers.eventGraphic.cursor = "pointer";
+    // });
+    // // Убираем курсор при уходе мыши
+    // containers.eventGraphic.on("mouseout", () => {
+    //   containers.eventGraphic.cursor = "default"; // Возвращаем стандартный курсор
+    // });
     containers.eventGraphic.on("pointerdown", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(

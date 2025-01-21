@@ -214,17 +214,24 @@ export default class StartPointActiveObject {
 
   private setupInteractions(): void {
 
-    this.circleStartPoint
+    const startPoint = this.circleStartPoint;
+    const endPoint = this.circleEndPoint;
+
+    startPoint
       // если нажали на точку стены
       .on('pointerdown', this.handleMouseDown.bind(this, 0))
       // если отпустили кнопку на точке стены
-      .on('pointerup', this.handleMouseUp.bind(this));
+      .on('pointerup', this.handleMouseUp.bind(this))
+      .on("mouseover", () => { startPoint.cursor = "pointer"; })
+      .on("mouseout", () => { startPoint.cursor = "default"; });
 
-    this.circleEndPoint
+    endPoint
       // если нажали на точку стены
       .on('pointerdown', this.handleMouseDown.bind(this, 1))
       // если отпустили кнопку на точке стены
-      .on('pointerup', this.handleMouseUp.bind(this));
+      .on('pointerup', this.handleMouseUp.bind(this))
+      .on("mouseover", () => { endPoint.cursor = "pointer"; })
+      .on("mouseout", () => { endPoint.cursor = "default"; });
 
     // если перемещаем курсор с нажатой кнопкой 
     this.app.stage.on('pointermove', this.handleMouseMove.bind(this));

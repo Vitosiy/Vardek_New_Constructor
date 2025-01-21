@@ -105,8 +105,6 @@ function dropHandler(ev: DragEvent): void {
         hoverPointObject.indexPoint
       );
       
-      console.log(hoverPointObject);
-      
       // присоединяем объект к точке
       if(hoverPointObject.indexPoint === 1){ // если курсор над точкой 1
       
@@ -136,8 +134,6 @@ function dropHandler(ev: DragEvent): void {
           // присвваиваем положение точки 1 найденного объекта новому
           positionObjectX = hoverObj.points[0].x - configWall.width;
           positionObjectY = hoverObj.points[0].y;
-
-          console.log("hoverObj.points[0]", hoverObj.points[0]);
 
           // указываем что точка 1 у найденного объекта (hoverObj.id)
           if (__hoverObj) {
