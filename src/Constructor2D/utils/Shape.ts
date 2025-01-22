@@ -44,6 +44,7 @@ function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
   fillColor: number = 0xff0000, // Цвет заливки (по умолчанию красный)
   lineColor: number = 0x000000, // Цвет обводки (по умолчанию чёрный)
   lineWidth: number = 2         // Толщина линии обводки
+  angleDegrees: number = 0
   */
 
   if(data.width && data.height){
@@ -65,6 +66,17 @@ function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
       });
     }
     graphic.fill(data.fillColor ?? "rgba(0,0,0,0)");
+
+    const angleRadians = (data.angleDegrees ?? 0) * (Math.PI / 180);
+
+    // Устанавливаем точку вращения (pivot) в центр графики
+    graphic.pivot.set(data.center.x, data.center.y);
+
+    // Устанавливаем позицию графики
+    graphic.position.set(data.center.x, data.center.y);
+
+    // Устанавливаем угол поворота
+    graphic.rotation = angleRadians;
 
   }
     
@@ -239,7 +251,7 @@ function drawArrow(
   startPoint: Vector2,
   width: number, // Длина стрелки
   angleDegrees: number, // Угол направления стрелки в градусах
-  color: number = 0x000000, // Цвет стрелки
+  color: {line: number, head: number} | number = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   triangleSize: number = 12, // Размер треугольника (основание и высота)
   clearGraphics: boolean = false // Флаг: очищать графику или нет,
@@ -257,11 +269,15 @@ function drawArrow(
     y: (startPoint.y) + Math.sin(angleRadians) * (width),
   };
 
+  // Убедимся, что цвет линии и головы стрелки корректно обрабатывается
+  const lineColor = typeof color === "object" ? color.line : color;
+  const headColor = typeof color === "object" ? color.head : color;
+
   // Рисуем основную линию
   graphics.moveTo((startPoint.x), (startPoint.y));
   graphics.lineTo(endPoint.x, endPoint.y);
   graphics.stroke({
-    color: color,
+    color: lineColor,
     width: lineWidth,
   });
 
@@ -285,7 +301,7 @@ function drawArrow(
   graphics.lineTo(leftPoint.x, leftPoint.y); // Левая вершина треугольника
   graphics.lineTo(rightPoint.x, rightPoint.y); // Правая вершина треугольника
   graphics.closePath(); // Замыкаем треугольник
-  graphics.fill(color);
+  graphics.fill(headColor);
 }
 
 function drawArrowHead(

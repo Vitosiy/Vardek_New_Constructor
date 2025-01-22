@@ -162,8 +162,9 @@ export default class StartPointActiveObject {
           width: 10,
           height: 10,
           // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
-          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
-          lineWidth: 1         // Толщина линии обводки
+          lineColor: configWall.color.arrowLineWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1, // Толщина линии обводки
+          angleDegrees: configWall.angleDegrees + obj.angleDegrees
         }
       );
 
@@ -195,8 +196,9 @@ export default class StartPointActiveObject {
           width: 10,
           height: 10,
           // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
-          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
-          lineWidth: 1         // Толщина линии обводки
+          lineColor: configWall.color.arrowLineWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1, // Толщина линии обводки
+          angleDegrees: configWall.angleDegrees + obj.angleDegrees
         }
       );
 

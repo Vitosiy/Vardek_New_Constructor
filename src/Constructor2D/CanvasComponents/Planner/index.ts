@@ -332,7 +332,10 @@ export default class Planner {
           data.points[0],
           data.width,
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
-          configWall.color.arrowHeadWall, // Цвет стрелки
+          {
+            line: configWall.color.arrowLineWall, // Цвет стрелки
+            head: configWall.color.arrowHeadLineWall
+          },
           1, // Толщина линии
           12, // Размер треугольника (основание и высота)
           true
@@ -346,7 +349,7 @@ export default class Planner {
           0, //data.height, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
           {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHeadWall, // Цвет стрелки
+          configWall.color.arrowHead, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
@@ -359,7 +362,7 @@ export default class Planner {
           (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
           {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHeadWall, // Цвет стрелки
+          configWall.color.arrowHead, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
@@ -372,7 +375,7 @@ export default class Planner {
           (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
           {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
           configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHeadWall, // Цвет стрелки
+          configWall.color.arrowHead, // Цвет стрелки
           12, // Размер треугольника (основание и высота)
           false // не очищаем графику
         );
