@@ -80,9 +80,6 @@ export default class Planner {
               const newObject = JSON.parse(JSON.stringify(lastAddedObject));
       
               if (!this.drawObjects.some((el) => el.id === newObject.id)) {
-                if(this.activeWallID){
-                  this.plannerStore.updatedObject(this.activeWallID);
-                }
                 this.setActiveObject("wall", newObject.id);
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
@@ -192,7 +189,14 @@ export default class Planner {
     if(!type) return;
 
     if(type === 'wall'){
+
+      const oldActive = this.activeWallID;
+
       this.activeWallID = id;
+      
+      // обновляем стену, которая была ранее активной
+      if(oldActive) this.plannerStore.updatedObject(oldActive);
+      
     }
     
   }
@@ -482,10 +486,6 @@ export default class Planner {
       const oldActive = this.activeWallID;
       
       if(id !== oldActive){
-
-        if(oldActive){
-          this.plannerStore.updatedObject(oldActive);
-        }
 
         // указать активный объект в сторе для перерисовки
         this.interactiveWallStore.setActiveObjectID(id);
