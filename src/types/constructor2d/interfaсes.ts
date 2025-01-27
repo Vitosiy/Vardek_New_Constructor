@@ -49,7 +49,8 @@ export interface PlannerObjectContainers {
   endPoint?: GraphicsOrNull;
   normalIndicator?: GraphicsOrNull;
   textWallWidth?: PIXI.Text | null; // гирина стены
-  textWallLength?: PIXI.Text | null; // длина стены
+  textRulerWall?: PIXI.Text | null; // длина стены
+  rulerWall?: GraphicsOrNull;
 }
 
 export interface PlannerObject {

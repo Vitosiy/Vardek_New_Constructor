@@ -110,6 +110,7 @@ function getDistanceBetweenVectors(vecA: Vector2, vecB: Vector2): number {
   return Math.sqrt(dx * dx + dy * dy); // Евклидово расстояние
 }
 
+// функция получения угла между векторами
 function getAngleBetweenVectors(center: Vector2, start: Vector2, end: Vector2): number {
   // Создаём векторы
   const v1 = { x: start.x - center.x, y: start.y - center.y };

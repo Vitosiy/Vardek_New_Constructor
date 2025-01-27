@@ -212,7 +212,8 @@ export default class Planner {
       endPoint: new PIXI.Graphics(),
       normalIndicator: new PIXI.Graphics(),
       textWallWidth: new PIXI.Text(),
-      textWallLength: new PIXI.Text(),
+      textRulerWall: new PIXI.Text(),
+      rulerWall: new PIXI.Graphics(),
       eventGraphic: new PIXI.Graphics(),
     };
 
@@ -224,7 +225,8 @@ export default class Planner {
     // containers.endPoint.eventMode = 'static';
     // containers.normalIndicator.eventMode = 'static';
     // containers.textWallWidth.eventMode = 'static';
-    // containers.textWallLength.eventMode = 'static';
+    // containers.textRulerWall.eventMode = 'static';
+    // containers.rulerWall.eventMode = 'static';
 
     containers.eventGraphic.eventMode = 'static';
     // Изменяем курсор на pointer при наведении
@@ -245,7 +247,8 @@ export default class Planner {
       containers.endPoint,
       containers.normalIndicator,
       containers.textWallWidth,
-      containers.textWallLength,
+      containers.textRulerWall,
+      containers.rulerWall,
       containers.eventGraphic,
     );
 
@@ -455,6 +458,29 @@ export default class Planner {
             true
           );
           
+        }
+        
+      }
+
+      if(containers.rulerWall){
+
+        if(activeWallID){
+
+          drawLine(
+            containers.rulerWall,
+            data.points[0],
+            data.width,
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
+            configWall.color.arrowHead,
+            0.6, // Толщина линии
+            true,
+            (data.height + 20) * data.heightDirection
+          );
+
+        }else{
+
+          containers.rulerWall.clear();
+
         }
         
       }

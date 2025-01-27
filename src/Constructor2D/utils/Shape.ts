@@ -450,7 +450,8 @@ function drawLine(
   angleDegrees: number, // Угол направления стрелки в градусах
   color: number = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
-  clearGraphics: boolean = false // Флаг: очищать графику или нет,
+  clearGraphics: boolean = false, // Флаг: очищать графику или нет
+  stepY: number = 0 // точка смещения по y
 ): void {
 
   if(clearGraphics || clearGraphics !== undefined){
@@ -462,13 +463,24 @@ function drawLine(
 
   // Вычисляем конечную точку линии на основе длины и угла
   const endPoint = {
-    x: (startPoint.x) + Math.cos(angleRadians) * (width),
-    y: (startPoint.y) + Math.sin(angleRadians) * (width),
+    x: startPoint.x + Math.cos(angleRadians) * width,
+    y: startPoint.y + Math.sin(angleRadians) * width,
   };
 
-  // Рисуем основную линию
-  graphics.moveTo((startPoint.x), (startPoint.y));
-  graphics.lineTo(endPoint.x, endPoint.y);
+  // Смещаем начальную и конечную точки по нормали на stepY
+  const normalAngleRadians = angleRadians + Math.PI / 2;
+  const startPointShifted = {
+    x: startPoint.x + Math.cos(normalAngleRadians) * stepY,
+    y: startPoint.y + Math.sin(normalAngleRadians) * stepY,
+  };
+  const endPointShifted = {
+    x: endPoint.x + Math.cos(normalAngleRadians) * stepY,
+    y: endPoint.y + Math.sin(normalAngleRadians) * stepY,
+  };
+
+  // Рисуем основную линию с учетом смещения
+  graphics.moveTo(startPointShifted.x, startPointShifted.y);
+  graphics.lineTo(endPointShifted.x, endPointShifted.y);
   graphics.stroke({
     color: color,
     width: lineWidth,
