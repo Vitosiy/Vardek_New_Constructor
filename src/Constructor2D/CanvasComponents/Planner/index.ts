@@ -33,7 +33,9 @@ import {
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
+  drawShape,
   // drawCircle,
+  drawLine,
 } from "./../../utils/Shape";
 
 export default class Planner {
@@ -48,6 +50,8 @@ export default class Planner {
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
+
+  activeWallID: string | number | null = null;
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -76,6 +80,10 @@ export default class Planner {
               const newObject = JSON.parse(JSON.stringify(lastAddedObject));
       
               if (!this.drawObjects.some((el) => el.id === newObject.id)) {
+                if(this.activeWallID){
+                  this.plannerStore.updatedObject(this.activeWallID);
+                }
+                this.setActiveObject("wall", newObject.id);
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
                 this.drawObject(newObject);
@@ -86,8 +94,8 @@ export default class Planner {
       )
     );
 
+    // отслеживаем изменения в объекте
     this.unwatchList.push(
-      // отслеживаем изменения в объекте
       watch(
         () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
         (newVal, oldVal) => {
@@ -101,15 +109,16 @@ export default class Planner {
               this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
 
             }
+
           });
         },
         { deep: true } // Глубокое слежение за изменениями
       )
     );
 
+    // Следим только за id и mergeWalls
     this.unwatchList.push(
       watch(
-        // Следим только за id и mergeWalls
         () => this.plannerStore.objects.map(obj => ({
           id: obj.id,
           mergeWalls: { ...obj.mergeWalls }, // Делаем копию mergeWalls для отслеживания изменений
@@ -140,6 +149,7 @@ export default class Planner {
       )
     );
     
+    // сдедим за смещением начальной координаты сцены
     this.unwatchList.push(
       watch(
         () => this.constructorStore.originOfCoordinates,
@@ -155,6 +165,7 @@ export default class Planner {
       )
     );
 
+    // следим за изменением размеры сцены (scale)
     this.unwatchList.push(
       watch(
         () => this.constructorStore.scale,
@@ -171,6 +182,20 @@ export default class Planner {
   // private init(): void {
   //   // Отрисовка сохраненной сцены
   // }
+
+  // уcтановка активного объекта на сцене
+  public setActiveObject(
+    type: string | null = null, 
+    id: string | number | null = null
+  ): void {
+
+    if(!type) return;
+
+    if(type === 'wall'){
+      this.activeWallID = id;
+    }
+    
+  }
 
   private createDrawObject(data: PlannerObject): DrawObjects {
     
@@ -241,6 +266,8 @@ export default class Planner {
   
     // Получить контейнеры из объекта
     const { containers } = obj;
+
+    const activeWallID = this.activeWallID === data.id ? true : false;
 
     if(data.points){
       
@@ -319,90 +346,112 @@ export default class Planner {
 
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
 
-        // рисуем пунктирную рамку стены
-        drawDashedOutline(containers.bodyWall, data.points);
-        
+        // если эта стена активная, то рисуем пунктирную рамку, иначе сплошной линией
+        if(activeWallID){
+          // рисуем пунктирную рамку стены
+          drawDashedOutline(containers.bodyWall, data.points);
+        }else{
+          // рисуем сплошную линию
+          drawShape(containers.bodyWall, data.points);
+        }
+    
       }
       
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
 
-        drawArrow(
-          containers.lineWall,
-          data.points[0],
-          data.width,
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
-          {
-            line: configWall.color.arrowLineWall, // Цвет стрелки
-            head: configWall.color.arrowHeadLineWall
-          },
-          1, // Толщина линии
-          12, // Размер треугольника (основание и высота)
-          true
-        );
+        if(activeWallID){
+          drawArrow(
+            containers.lineWall,
+            data.points[0],
+            data.width,
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
+            {
+              line: configWall.color.arrowLineWall, // Цвет стрелки
+              head: configWall.color.arrowHeadLineWall
+            },
+            2, // Толщина линии
+            12, // Размер треугольника (основание и высота)
+            true
+          );
 
-        // рисуем указатель внутренне стороны стены (стрелка без линии)
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width * 0.3, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          0, //data.height, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHead, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
-        );
+          // рисуем указатель внутренне стороны стены (стрелка без линии)
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width * 0.3, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            0, //data.height, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.arrowHead, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        // рисуем указатель начала стены (стрелка без линии)
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          0, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHead, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
-        );
+          // рисуем указатель начала стены (стрелка без линии)
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            0, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.arrowHead, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        // рисуем указатель конца стены (стрелка без линии)
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHead, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
-        );
+          // рисуем указатель конца стены (стрелка без линии)
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.arrowHead, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          0, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.green, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
-        );
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            0, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.green, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          (data.heightDirection === -1 ? -data.height : data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.green, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false // не очищаем графику
-        );
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            (data.heightDirection === -1 ? -data.height : data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.green, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
+
+        }else{
+
+          // containers.lineWall.clear(); // Очистка предыдущего содержимого
+          drawLine(
+            containers.lineWall,
+            data.points[0],
+            data.width,
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
+            configWall.color.bodyLine,
+            2, // Толщина линии
+            true
+          );
+          
+        }
         
       }
     
@@ -430,8 +479,23 @@ export default class Planner {
 
     if (e.button == 0){
 
-      // Найти объект по ID
-      this.interactiveWallStore.setActiveObjectID(id);
+      const oldActive = this.activeWallID;
+      
+      if(id !== oldActive){
+
+        if(oldActive){
+          this.plannerStore.updatedObject(oldActive);
+        }
+
+        // указать активный объект в сторе для перерисовки
+        this.interactiveWallStore.setActiveObjectID(id);
+        this.setActiveObject("wall", id);
+        
+        if(this.activeWallID){
+          this.plannerStore.updatedObject(this.activeWallID);
+        }
+
+      }
 
     }
 

@@ -154,6 +154,8 @@ function dropHandler(ev: DragEvent): void {
 
     }
     
+
+    interactiveWallStore.setActiveObjectID(__id);
     // добавляем "товар" объект в Store
     plannerStore.addObj({
       // id: MathUtils.generateUUID(),
@@ -167,8 +169,6 @@ function dropHandler(ev: DragEvent): void {
       updateTime: 0,
       mergeWalls: reactive(mergeWalls)
     });
-
-    interactiveWallStore.setActiveObjectID(__id);
 
   } catch (error) {
     console.error("Произошла ошибка в обработчике перетаскивания:", error);

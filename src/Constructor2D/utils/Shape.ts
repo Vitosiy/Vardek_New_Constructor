@@ -406,50 +406,73 @@ function drawCircle(
   graphics.fill(color);
 }
 
-function line(
-  // graphic: PIXI.Graphics,
-  // startPoint: Vector2,
-  // width: number, // длина линии
-  // height: number, // отступ по оси Y от координат startPoint
-  // color: number | string, // цвет линии
-  // angleDegrees: number, // угол вопорота, относительно startPoint
-  // heightDirection: 1 | -1 = -1, // позиция токеч линии по оси Y относительно startPoint
+function drawShape(
+  graphics: PIXI.Graphics,
+  points: Vector2[], // Массив точек для контура
+  color: {
+    stroke?: number | string, // Цвет линии
+    fill?: number | string // Цвет заливки
+  } = {},
+  lineWidth: number = 1 // Толщина линии
 ): void {
 
-  /*
-  // 1. Вычисляем стартовую точку с учетом отступа по оси Y
-  const p1 = {
-    x: startPoint.x,
-    y: startPoint.y + height * 2 * heightDirection,
-  };
+  if (points.length < 2) {
+    console.warn("Недостаточно точек для построения контура.");
+    return;
+  }
 
-  // 2. Вычисляем вторую точку с учетом ширины и отступа по оси Y
-  const p2 = {
-    x: startPoint.x + width,
-    y: startPoint.y + height * 2 * heightDirection,
-  };
+  // Перебираем точки попарно
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
 
-  // 3. Поворачиваем точки на заданный угол относительно startPoint
+    // Рисуем линию
+    if(i==0) graphics.moveTo(point.x, point.y);
+    graphics.lineTo(point.x, point.y);
+    if((points.length - 1) === i){
+      graphics.lineTo(points[0].x, points[0].y);
+    }
+  }
+
+  if (color.fill) {
+    graphics.fill(color.fill);
+  }
+
+  graphics.stroke({
+    color: color.stroke ?? 0x000000,
+    width: lineWidth
+  });
+}
+
+function drawLine(
+  graphics: PIXI.Graphics,
+  startPoint: Vector2,
+  width: number, // Длина стрелки
+  angleDegrees: number, // Угол направления стрелки в градусах
+  color: number = 0x000000, // Цвет стрелки
+  lineWidth: number = 1, // Толщина линии
+  clearGraphics: boolean = false // Флаг: очищать графику или нет,
+): void {
+
+  if(clearGraphics || clearGraphics !== undefined){
+    graphics.clear(); // Очистка графики
+  }
+
+  // Преобразуем угол из градусов в радианы
   const angleRadians = (angleDegrees * Math.PI) / 180;
 
-  const rotatePoint = (point: { x: number; y: number }) => {
-    const dx = point.x - startPoint.x;
-    const dy = point.y - startPoint.y;
-
-    return {
-      x: startPoint.x + dx * Math.cos(angleRadians) - dy * Math.sin(angleRadians),
-      y: startPoint.y + dx * Math.sin(angleRadians) + dy * Math.cos(angleRadians),
-    };
+  // Вычисляем конечную точку линии на основе длины и угла
+  const endPoint = {
+    x: (startPoint.x) + Math.cos(angleRadians) * (width),
+    y: (startPoint.y) + Math.sin(angleRadians) * (width),
   };
 
-  const rotatedP1 = rotatePoint(p1);
-  const rotatedP2 = rotatePoint(p2);
-
-  // 4. Рисуем линию
-  graphic.lineStyle(1, typeof color === "string" ? PIXI.utils.string2hex(color) : color);
-  graphic.moveTo(rotatedP1.x, rotatedP1.y);
-  graphic.lineTo(rotatedP2.x, rotatedP2.y);
-  */
+  // Рисуем основную линию
+  graphics.moveTo((startPoint.x), (startPoint.y));
+  graphics.lineTo(endPoint.x, endPoint.y);
+  graphics.stroke({
+    color: color,
+    width: lineWidth,
+  });
   
 }
 
@@ -461,5 +484,6 @@ export {
   drawArrow,
   drawArrowHead,
   drawCircle,
-  line
+  drawShape,
+  drawLine
 }

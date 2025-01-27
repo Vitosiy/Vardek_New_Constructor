@@ -5,8 +5,8 @@ const configWall: any = {
   angleDegrees: 0,
   color: {
     background: 0xffffff,
-    bodyLine: 0x000000,
-    borderLine: 0x000000,
+    bodyLine: 0x131313,
+    borderLine: 0x131313,
     line76deg: 0xA3A9B5,
     arrowLineWall: 0xDA444C,
     arrowHeadLineWall: 0xB19F53,

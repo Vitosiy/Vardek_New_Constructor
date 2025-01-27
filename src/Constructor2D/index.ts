@@ -19,7 +19,7 @@ import {
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
-// import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
@@ -49,7 +49,7 @@ export default class Constructor2D {
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
   private interactiveWallStore = useC2DInteractiveWallStore();
-  // private plannerStore = usePlanner2DStore();
+  private plannerStore = usePlanner2DStore();
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -198,7 +198,10 @@ export default class Constructor2D {
     if (e.button !== 0) return;
 
     if (!this.interactiveWallStore.statusLeftDownMouse) {
+      const activeObj = this.interactiveWallStore.getActiveObjectID;
+      if(activeObj != 0) this.plannerStore.updatedObject(activeObj); 
       this.interactiveWallStore.setActiveObjectID(0);
+      this.components.planner?.setActiveObject("wall", null);
     }
 
   }
