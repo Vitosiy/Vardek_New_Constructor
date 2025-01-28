@@ -2,6 +2,7 @@ import {
   watch
 } from 'vue';
 import * as PIXI from 'pixi.js';
+import { MathUtils } from "three";
 // import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
@@ -14,10 +15,6 @@ import {
   Vector2,
   // Vector2,
 } from "@/types/constructor2d/interfaсes";
-
-import { 
-  getIntersectionPoint
-} from "./../../utils/Math";
 
 import { 
   configWall
@@ -41,7 +38,12 @@ import {
 } from "./../../utils/Shape";
 
 import {
-  rotatePoint
+  rotatePoint,
+  getDistanceBetweenVectors,
+  getIntersectionPoint,
+  getMidpoint,
+  offsetVectorBySegmentNormal,
+  offsetVectorBySegment
 } from "./../../utils/Math";
 
 export default class Planner {
@@ -90,6 +92,7 @@ export default class Planner {
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
                 this.drawObject(newObject);
+                this.plannerStore.updatedMergeWalls(newObject.id);
               }
             }
           }
@@ -220,7 +223,13 @@ export default class Planner {
       textWallWidth: new PIXI.Text(),
       rulerWall: new PIXI.Graphics(),
       containerTextRulerWall: new PIXI.Container(),
-      textRulerWall: new PIXI.Text(),
+      textRulerWall: new PIXI.Text({
+        text: "",
+        style: {
+          fontSize: 9,
+          fill: 0x5D6069,
+        },
+      }),
       eventGraphic: new PIXI.Graphics(),
     };
 
@@ -471,9 +480,11 @@ export default class Planner {
         
       }
 
-      if(containers.rulerWall){
+      if(containers.rulerWall && containers.containerTextRulerWall){
 
-        if(activeWallID){
+        if(this.activeWallID){
+
+          containers.rulerWall.visible = true;
 
           const linePoints = drawLine(
             containers.rulerWall,
@@ -511,13 +522,37 @@ export default class Planner {
 
           if(containers.textRulerWall){
 
-            //
+            containers.containerTextRulerWall.visible = true;
+            containers.textRulerWall.text = "";
+
+            const distance = getDistanceBetweenVectors(linePoints[0], linePoints[1]);
+
+            containers.textRulerWall.text = Math.round(distance).toString() + " cм";
+
+            const pointText = offsetVectorBySegmentNormal(
+              [linePoints[0], linePoints[1]],
+              offsetVectorBySegment(
+                [linePoints[0], linePoints[1]],
+                getMidpoint(linePoints[0], linePoints[1]),
+                -containers.textRulerWall.width / 2
+              ),
+              12 * data.heightDirection
+            );
+            containers.containerTextRulerWall.x = pointText.x;
+            containers.containerTextRulerWall.y = pointText.y;
+
+            containers.containerTextRulerWall.pivot.x = 0.5;
+            containers.containerTextRulerWall.pivot.y = 0.5;
+
+            containers.containerTextRulerWall.rotation = MathUtils.degToRad(configWall.angleDegrees + data.angleDegrees);
             
           }
 
         }else{
 
           containers.rulerWall.clear();
+          containers.rulerWall.visible = false;
+          containers.containerTextRulerWall.visible = false;
 
         }
         
@@ -557,6 +592,7 @@ export default class Planner {
         
         if(this.activeWallID){
           this.plannerStore.updatedObject(this.activeWallID);
+          this.plannerStore.updatedMergeWalls(this.activeWallID);
         }
 
       }

@@ -201,6 +201,7 @@ export default class Constructor2D {
       const activeObj = this.interactiveWallStore.getActiveObjectID;
       if(activeObj != 0) this.plannerStore.updatedObject(activeObj); 
       this.interactiveWallStore.setActiveObjectID(0);
+      this.plannerStore.updatedMergeWalls(activeObj);
       this.components.planner?.setActiveObject("wall", null);
     }
 

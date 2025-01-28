@@ -206,6 +206,75 @@ function rotatePoint(point: Vector2, center: Vector2, angleDegrees: number): Vec
   };
 }
 
+/**
+ * Функция, которая принимает 2 вектора и высчитывает середину между ними.
+ * @param vecA Первый вектор
+ * @param vecB Второй вектор
+ * @returns Вектор, представляющий середину между двумя точками
+ */
+function getMidpoint(vecA: Vector2, vecB: Vector2): Vector2 {
+  const midX = (vecA.x + vecB.x) / 2;
+  const midY = (vecA.y + vecB.y) / 2;
+  return { x: midX, y: midY };
+}
+
+/**
+ * Функция принимает отрезок (2 точки) и вектор, который нужно смещать по нормали отрезка.
+ * @param segment - Отрезок, представленный двумя точками.
+ * @param vector - Вектор, который нужно смещать.
+ * @param distance - Расстояние, на которое нужно сместить вектор по нормали.
+ * @returns Новый вектор, смещённый по нормали отрезка.
+ */
+function offsetVectorBySegmentNormal(segment: [Vector2, Vector2], vector: Vector2, distance: number): Vector2 {
+  const [pointA, pointB] = segment;
+
+  // Вычисляем вектор от pointA до pointB
+  const segmentVector = { x: pointB.x - pointA.x, y: pointB.y - pointA.y };
+
+  // Вычисляем нормаль к вектору отрезка
+  const normal = { x: -segmentVector.y, y: segmentVector.x };
+
+  // Нормализуем нормаль
+  const magnitude = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
+  const normalizedNormal = { x: normal.x / magnitude, y: normal.y / magnitude };
+
+  // Смещаем вектор по нормали
+  const offsetVector = {
+    x: vector.x + normalizedNormal.x * distance,
+    y: vector.y + normalizedNormal.y * distance,
+  };
+
+  return offsetVector;
+}
+
+/**
+ * Функция, которая смещает вектор относительно отрезка на заданное расстояние.
+ * @param segment - Отрезок, представленный двумя точками.
+ * @param vector - Вектор, который нужно сместить.
+ * @param distance - Расстояние, на которое нужно сместить вектор.
+ * @returns Новый вектор, смещённый относительно отрезка.
+ */
+function offsetVectorBySegment(segment: [Vector2, Vector2], vector: Vector2, distance: number): Vector2 {
+  const [pointA, pointB] = segment;
+
+  // Вычисляем вектор от pointA до pointB
+  const segmentVector = { x: pointB.x - pointA.x, y: pointB.y - pointA.y };
+
+  // Вычисляем длину отрезка
+  const segmentLength = Math.sqrt(segmentVector.x * segmentVector.x + segmentVector.y * segmentVector.y);
+
+  // Нормализуем вектор отрезка
+  const normalizedSegmentVector = { x: segmentVector.x / segmentLength, y: segmentVector.y / segmentLength };
+
+  // Смещаем вектор вдоль отрезка
+  const offsetVector = {
+    x: vector.x + normalizedSegmentVector.x * distance,
+    y: vector.y + normalizedSegmentVector.y * distance,
+  };
+
+  return offsetVector;
+}
+
 export {
   
   calculateMouseDistanceByAxes,
@@ -215,6 +284,9 @@ export {
   getRectPointsV2,
   roundToPrecision,
   getIntersectionPoint,
-  rotatePoint
+  rotatePoint,
+  getMidpoint,
+  offsetVectorBySegmentNormal,
+  offsetVectorBySegment,
 
 };
