@@ -3,6 +3,7 @@ import {
   // ref
 } from 'vue';
 import * as PIXI from 'pixi.js';
+import { MathUtils } from "three";
 // import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
@@ -28,6 +29,10 @@ import {
   drawCircle,
   rectV2,
 } from "../../utils/Shape";
+
+import {
+  getAngleBetweenVectors
+} from "../../utils/Math";
 
 export default class StartPointActiveObject {
 
@@ -175,6 +180,30 @@ export default class StartPointActiveObject {
         10, 
         configWall.color.mediumBlue
       );
+
+      { // рисуем арку и показываем угол
+
+        if(obj.mergeWalls.wallPoint1){
+
+          const mergeWallPoint0 = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(obj.mergeWalls.wallPoint1)));
+
+          const p0 = mergeWallPoint0.points[0];
+          const p1 = obj.points[0];
+          const p2 = obj.points[1];
+
+          const radius = 24;
+
+          const startAngle = MathUtils.degToRad(obj.angleDegrees); // Начинаем арку перпендикулярно линии (p1, p2)
+
+          const vAngle = -getAngleBetweenVectors(p1, p0, p2);
+          const endAngle = MathUtils.degToRad(vAngle + obj.angleDegrees);   // Заканчиваем арку перпендикулярно линии (p0, p1)
+
+          this.circleStartPoint.arc(p1.x, p1.y, radius, startAngle, endAngle);
+          this.circleStartPoint.stroke({ width: 1, color: configWall.color.borderLine });
+
+        }
+
+      }
 
     }
 
