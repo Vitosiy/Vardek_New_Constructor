@@ -11,6 +11,7 @@ import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInter
 import {
   PlannerObject,
   PlannerObjectContainers,
+  Vector2,
   // Vector2,
 } from "@/types/constructor2d/interfaсes";
 
@@ -36,7 +37,12 @@ import {
   drawShape,
   // drawCircle,
   drawLine,
+
 } from "./../../utils/Shape";
+
+import {
+  rotatePoint
+} from "./../../utils/Math";
 
 export default class Planner {
 
@@ -212,12 +218,15 @@ export default class Planner {
       endPoint: new PIXI.Graphics(),
       normalIndicator: new PIXI.Graphics(),
       textWallWidth: new PIXI.Text(),
-      textRulerWall: new PIXI.Text(),
       rulerWall: new PIXI.Graphics(),
+      containerTextRulerWall: new PIXI.Container(),
+      textRulerWall: new PIXI.Text(),
       eventGraphic: new PIXI.Graphics(),
     };
 
     this.container.addChild(containers.root);
+
+    containers.containerTextRulerWall.addChild(containers.textRulerWall);
 
     // containers.bodyWall.eventMode = 'static';
     // containers.lineWall.eventMode = 'static';
@@ -247,8 +256,8 @@ export default class Planner {
       containers.endPoint,
       containers.normalIndicator,
       containers.textWallWidth,
-      containers.textRulerWall,
       containers.rulerWall,
+      containers.containerTextRulerWall,
       containers.eventGraphic,
     );
 
@@ -466,7 +475,7 @@ export default class Planner {
 
         if(activeWallID){
 
-          drawLine(
+          const linePoints = drawLine(
             containers.rulerWall,
             data.points[0],
             data.width,
@@ -476,6 +485,35 @@ export default class Planner {
             true,
             (data.height + 20) * data.heightDirection
           );
+
+          for(let i=0, len=linePoints.length; i<len; i++){ // граница линии начальной точки
+
+            // Вычисляем точки p0 и p1 со смещением 8
+            const p0: Vector2 = { x: linePoints[i].x - 5, y: linePoints[i].y };
+            const p1: Vector2 = { x: linePoints[i].x + 5, y: linePoints[i].y };
+
+            const rotatedP0 = rotatePoint(p0, linePoints[i], configWall.angleDegrees + data.angleDegrees + 100);
+            const rotatedP1 = rotatePoint(p1, linePoints[i], configWall.angleDegrees + data.angleDegrees + 100);
+
+            drawShape(
+              containers.rulerWall,
+              [
+                rotatedP0,
+                rotatedP1
+              ], // Массив точек для контура
+              {
+                stroke: configWall.color.arrowHead
+              },
+              0.6 // Толщина линии
+            )
+
+          }
+
+          if(containers.textRulerWall){
+
+            //
+            
+          }
 
         }else{
 

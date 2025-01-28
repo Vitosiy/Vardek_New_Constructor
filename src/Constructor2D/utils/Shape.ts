@@ -256,7 +256,7 @@ function drawArrow(
   triangleSize: number = 12, // Размер треугольника (основание и высота)
   clearGraphics: boolean = false // Флаг: очищать графику или нет,
 ): void {
-  if(clearGraphics || clearGraphics !== undefined){
+  if(clearGraphics){
     graphics.clear(); // Очистка графики
   }
 
@@ -413,12 +413,17 @@ function drawShape(
     stroke?: number | string, // Цвет линии
     fill?: number | string // Цвет заливки
   } = {},
-  lineWidth: number = 1 // Толщина линии
+  lineWidth: number = 1, // Толщина линии
+  clearGraphics: boolean = false, // Флаг: очищать графику или нет
 ): void {
 
   if (points.length < 2) {
     console.warn("Недостаточно точек для построения контура.");
     return;
+  }
+
+  if(clearGraphics){
+    graphics.clear(); // Очистка графики
   }
 
   // Перебираем точки попарно
@@ -451,10 +456,10 @@ function drawLine(
   color: number = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   clearGraphics: boolean = false, // Флаг: очищать графику или нет
-  stepY: number = 0 // точка смещения по y
-): void {
+  stepNormal: number = 0 // смещение линии по нормали
+): Vector2[] {
 
-  if(clearGraphics || clearGraphics !== undefined){
+  if(clearGraphics){
     graphics.clear(); // Очистка графики
   }
 
@@ -467,15 +472,15 @@ function drawLine(
     y: startPoint.y + Math.sin(angleRadians) * width,
   };
 
-  // Смещаем начальную и конечную точки по нормали на stepY
+  // Смещаем начальную и конечную точки по нормали на stepNormal
   const normalAngleRadians = angleRadians + Math.PI / 2;
   const startPointShifted = {
-    x: startPoint.x + Math.cos(normalAngleRadians) * stepY,
-    y: startPoint.y + Math.sin(normalAngleRadians) * stepY,
+    x: startPoint.x + Math.cos(normalAngleRadians) * stepNormal,
+    y: startPoint.y + Math.sin(normalAngleRadians) * stepNormal,
   };
   const endPointShifted = {
-    x: endPoint.x + Math.cos(normalAngleRadians) * stepY,
-    y: endPoint.y + Math.sin(normalAngleRadians) * stepY,
+    x: endPoint.x + Math.cos(normalAngleRadians) * stepNormal,
+    y: endPoint.y + Math.sin(normalAngleRadians) * stepNormal,
   };
 
   // Рисуем основную линию с учетом смещения
@@ -485,6 +490,11 @@ function drawLine(
     color: color,
     width: lineWidth,
   });
+
+  return [
+    startPointShifted, 
+    endPointShifted
+  ];
   
 }
 

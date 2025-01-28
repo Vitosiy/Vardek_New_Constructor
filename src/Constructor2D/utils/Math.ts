@@ -183,6 +183,29 @@ function getIntersectionPoint(
   return { x: x, y: y };
 }
 
+// Функция для поворота точки вокруг другой точки на заданный угол (в радианах)
+function rotatePoint(point: Vector2, center: Vector2, angleDegrees: number): Vector2 {
+
+  const angle = (angleDegrees * Math.PI) / 180;
+  
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+
+  // Смещаем точку относительно центра
+  const translatedX = point.x - center.x;
+  const translatedY = point.y - center.y;
+
+  // Поворачиваем точку
+  const rotatedX = translatedX * cosA - translatedY * sinA;
+  const rotatedY = translatedX * sinA + translatedY * cosA;
+
+  // Возвращаем точку в исходную систему координат
+  return {
+      x: rotatedX + center.x,
+      y: rotatedY + center.y,
+  };
+}
+
 export {
   
   calculateMouseDistanceByAxes,
@@ -191,6 +214,7 @@ export {
   getAngleBetweenVectors,
   getRectPointsV2,
   roundToPrecision,
-  getIntersectionPoint
+  getIntersectionPoint,
+  rotatePoint
 
 };
