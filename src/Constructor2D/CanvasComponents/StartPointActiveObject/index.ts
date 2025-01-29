@@ -217,9 +217,7 @@ export default class StartPointActiveObject {
 
           const degTextAngle = vAngle < 0 ? 360 + vAngle : vAngle
           
-          const radius = degTextAngle < 63 
-            ? (degTextAngle < 27 ? 120 : 60) 
-            : 24;
+          const radius = Math.max(24, 120 - (degTextAngle * 96 / 90));
 
           const startAngle = MathUtils.degToRad(obj.angleDegrees); // Начинаем арку перпендикулярно линии (p1, p2)
           const endAngle = MathUtils.degToRad(vAngle + obj.angleDegrees);   // Заканчиваем арку перпендикулярно линии (p0, p1)
@@ -250,14 +248,14 @@ export default class StartPointActiveObject {
             );
             
             // рисуем кружок
-            this.circleAngleMask.circle(circlePosition.x, circlePosition.y, 10);
-            this.circleAngleMask.fill({
-              color: 0xffffff
-            });
+            // this.circleAngleMask.circle(circlePosition.x, circlePosition.y, 10);
+            // this.circleAngleMask.fill({
+            //   color: 0xffffff
+            // });
 
-            this.angleTextConatainer.position.x = circlePosition.x - 5;
-            this.angleTextConatainer.position.y = circlePosition.y - 5;
-            this.angleText.text = degTextAngle.toFixed(2) + "°";
+            this.angleTextConatainer.position.x = circlePosition.x;
+            this.angleTextConatainer.position.y = circlePosition.y;
+            this.angleText.text = degTextAngle.toFixed(2).replace('.', ',') + "°";
 
           }
 
