@@ -31,7 +31,9 @@ import {
 } from "../../utils/Shape";
 
 import {
-  getAngleBetweenVectors
+  getAngleBetweenVectors,
+  offsetVectorBySegment,
+  rotatePoint
 } from "../../utils/Math";
 
 export default class StartPointActiveObject {
@@ -44,6 +46,10 @@ export default class StartPointActiveObject {
 
   private startPointRect: PIXI.Graphics;
   private endPointRect: PIXI.Graphics;
+
+  private angleText: PIXI.Text; // текст отображающий угол
+  private angleTextConatainer: PIXI.Container; // контейнер, в который будет добавлен текст, цель контейнера в поцизионировании на холсте
+  private circleAngleMask: PIXI.Graphics; // маска окружность, чтобы вычасть из линии арки для отображения текста
   
   // private gridStore = useGridStore();
   // private rulerStore = useRulers2DStore();
@@ -76,6 +82,20 @@ export default class StartPointActiveObject {
     this.circleEndPoint = new PIXI.Graphics();
     this.circleEndPoint.eventMode = 'static';
     this.container.addChild(this.circleEndPoint);
+    
+    this.circleAngleMask = new PIXI.Graphics();
+    this.container.addChild(this.circleAngleMask);
+
+    this.angleText = new PIXI.Text({
+      text: "",
+      style: {
+        fontSize: 15,
+        fill: 0x5D6069
+      }
+    });
+    this.angleTextConatainer = new PIXI.Container();
+    this.angleTextConatainer.addChild(this.angleText);
+    this.container.addChild(this.angleTextConatainer);
 
     this.setupInteractions();
     
@@ -154,6 +174,8 @@ export default class StartPointActiveObject {
       const position = obj.points[0];
 
       this.circleStartPoint.clear();
+      this.circleAngleMask.clear();
+      this.angleText.text = "";
 
       if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 0){
         this.startPointRect.visible = true;
@@ -191,15 +213,53 @@ export default class StartPointActiveObject {
           const p1 = obj.points[0];
           const p2 = obj.points[1];
 
-          const radius = 24;
+          const vAngle = -getAngleBetweenVectors(p1, p0, p2);
+
+          const degTextAngle = vAngle < 0 ? 360 + vAngle : vAngle
+          
+          const radius = degTextAngle < 63 
+            ? (degTextAngle < 27 ? 120 : 60) 
+            : 24;
 
           const startAngle = MathUtils.degToRad(obj.angleDegrees); // Начинаем арку перпендикулярно линии (p1, p2)
-
-          const vAngle = -getAngleBetweenVectors(p1, p0, p2);
           const endAngle = MathUtils.degToRad(vAngle + obj.angleDegrees);   // Заканчиваем арку перпендикулярно линии (p0, p1)
 
           this.circleStartPoint.arc(p1.x, p1.y, radius, startAngle, endAngle);
           this.circleStartPoint.stroke({ width: 1, color: configWall.color.borderLine });
+
+          /*
+          angleText
+          angleTextConatainer
+          circleAngleMask
+          */
+
+          {          
+
+            const circlePointOffsetSegment = offsetVectorBySegment(
+              [p1, p2],
+              p1,
+              radius
+            );
+
+            const angle = (vAngle < 0 ? -((360-vAngle) / 2) : (vAngle / 2));
+
+            const circlePosition = rotatePoint(
+              circlePointOffsetSegment,
+              p1,
+              angle
+            );
+            
+            // рисуем кружок
+            this.circleAngleMask.circle(circlePosition.x, circlePosition.y, 10);
+            this.circleAngleMask.fill({
+              color: 0xffffff
+            });
+
+            this.angleTextConatainer.position.x = circlePosition.x - 5;
+            this.angleTextConatainer.position.y = circlePosition.y - 5;
+            this.angleText.text = degTextAngle.toFixed(2) + "°";
+
+          }
 
         }
 
