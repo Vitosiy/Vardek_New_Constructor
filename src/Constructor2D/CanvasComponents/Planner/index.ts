@@ -226,7 +226,7 @@ export default class Planner {
       textRulerWall: new PIXI.Text({
         text: "",
         style: {
-          fontSize: 9,
+          fontSize: 16,
           fill: 0x5D6069,
         },
       }),
@@ -536,7 +536,7 @@ export default class Planner {
                 getMidpoint(linePoints[0], linePoints[1]),
                 -containers.textRulerWall.width / 2
               ),
-              12 * data.heightDirection
+              18 * data.heightDirection
             );
             containers.containerTextRulerWall.x = pointText.x;
             containers.containerTextRulerWall.y = pointText.y;

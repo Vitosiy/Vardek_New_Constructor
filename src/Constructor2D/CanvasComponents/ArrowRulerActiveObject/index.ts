@@ -46,7 +46,7 @@ export default class ArrowRulerActiveObject {
     this.xText = new PIXI.Text({
       text: "", // Текст будет добавляться динамически
       style: {
-        fontSize: 9, // Размер шрифта
+        fontSize: 16, // Размер шрифта
         fill: 0x5d6069, // Цвет текста
       },
     });
@@ -58,7 +58,7 @@ export default class ArrowRulerActiveObject {
     this.yText = new PIXI.Text({
       text: "",
       style: {
-        fontSize: 9,
+        fontSize: 16,
         fill: 0x5d6069,
       },
     });
@@ -153,7 +153,7 @@ export default class ArrowRulerActiveObject {
       true
     );
     this.xText!.text = `${Math.round((distanceY) * 10)} см`;
-    this.xText!.x = (position.x) - 14;
+    this.xText!.x = (position.x) - 24;
     this.xText!.y = ((distanceY / 2) + (this.xText!.width / 2));
     this.xText!.rotation = MathUtils.degToRad(rotateDegY);
 
@@ -171,7 +171,7 @@ export default class ArrowRulerActiveObject {
       true
     );
     this.yText!.text = `${Math.round((distanceX) * 10)} см`;
-    this.yText!.y = (position.y) - 14;
+    this.yText!.y = (position.y) - 24;
     this.yText!.x = ((distanceX / 2) - (this.yText!.width / 2));
   }
 
