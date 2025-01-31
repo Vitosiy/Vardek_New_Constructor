@@ -1,8 +1,9 @@
 import {
   watch,
-  ref
+  // ref
 } from 'vue';
 import * as PIXI from 'pixi.js';
+import { MathUtils } from "three";
 // import { useGridStore } from '@/store/constructor2d/store/useGridStore';
 // import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
@@ -29,6 +30,12 @@ import {
   rectV2,
 } from "../../utils/Shape";
 
+import {
+  getAngleBetweenVectors,
+  offsetVectorBySegment,
+  rotatePoint
+} from "../../utils/Math";
+
 export default class StartPointActiveObject {
 
   private app: PIXI.Application;
@@ -39,6 +46,10 @@ export default class StartPointActiveObject {
 
   private startPointRect: PIXI.Graphics;
   private endPointRect: PIXI.Graphics;
+
+  private angleText: PIXI.Text; // текст отображающий угол
+  private angleTextConatainer: PIXI.Container; // контейнер, в который будет добавлен текст, цель контейнера в поцизионировании на холсте
+  private circleAngleMask: PIXI.Graphics; // маска окружность, чтобы вычасть из линии арки для отображения текста
   
   // private gridStore = useGridStore();
   // private rulerStore = useRulers2DStore();
@@ -71,6 +82,20 @@ export default class StartPointActiveObject {
     this.circleEndPoint = new PIXI.Graphics();
     this.circleEndPoint.eventMode = 'static';
     this.container.addChild(this.circleEndPoint);
+    
+    this.circleAngleMask = new PIXI.Graphics();
+    this.container.addChild(this.circleAngleMask);
+
+    this.angleText = new PIXI.Text({
+      text: "",
+      style: {
+        fontSize: 15,
+        fill: 0x5D6069
+      }
+    });
+    this.angleTextConatainer = new PIXI.Container();
+    this.angleTextConatainer.addChild(this.angleText);
+    this.container.addChild(this.angleTextConatainer);
 
     this.setupInteractions();
     
@@ -82,11 +107,14 @@ export default class StartPointActiveObject {
           newVal.forEach((newObject, index) => {
             const oldObject = oldVal?.[index];
       
-            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-              // Если объект изменился
-              const updatedObject = JSON.parse(JSON.stringify(newObject));
-              this.draw(updatedObject); // Выполняем действие с изменённым объектом
+            if(!oldObject || newObject.updateTime === oldObject.updateTime){
+              if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+                // Если объект изменился
+                const updatedObject = JSON.parse(JSON.stringify(newObject));
+                this.draw(updatedObject); // Выполняем действие с изменённым объектом
+              }
             }
+
           });
         },
         { deep: true } // Глубокое слежение за изменениями
@@ -111,7 +139,7 @@ export default class StartPointActiveObject {
     this.unwatchList.push(
       watch (
         () => this.interactiveWallStore.activeObjectID,
-        (newVal, oldVal) => {
+        (newVal) => {
 
           if(newVal){
             const obj = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(newVal)));
@@ -141,15 +169,13 @@ export default class StartPointActiveObject {
     if(!obj.points) return;
 
     this.container.visible = true;
-    
-    this.interactiveWallStore.setActiveObjectID(obj.id);
 
     { // start point
       const position = obj.points[0];
-      position.x = position.x * this.constructorStore.getInverseScale;
-      position.y = position.y * this.constructorStore.getInverseScale;
 
       this.circleStartPoint.clear();
+      this.circleAngleMask.clear();
+      this.angleText.text = "";
 
       if(this.interactiveWallStore.activePoint != null && this.interactiveWallStore.activePoint == 0){
         this.startPointRect.visible = true;
@@ -163,8 +189,9 @@ export default class StartPointActiveObject {
           width: 10,
           height: 10,
           // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
-          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
-          lineWidth: 1         // Толщина линии обводки
+          lineColor: configWall.color.arrowLineWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1, // Толщина линии обводки
+          angleDegrees: configWall.angleDegrees + obj.angleDegrees
         }
       );
 
@@ -175,6 +202,72 @@ export default class StartPointActiveObject {
         10, 
         configWall.color.mediumBlue
       );
+
+      { // рисуем арку и показываем угол
+
+        if(obj.mergeWalls.wallPoint1){
+
+          const mergeWallPoint0 = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(obj.mergeWalls.wallPoint1)));
+
+          const p0 = mergeWallPoint0.points[0];
+          const p1 = obj.points[0];
+          const p2 = obj.points[1];
+
+          const vAngle = -getAngleBetweenVectors(p1, p0, p2);
+
+          const degTextAngle = vAngle < 0 ? 360 + vAngle : vAngle
+          
+          const radius = Math.max(24, 120 - (degTextAngle * 96 / 90));
+
+          const startAngle = MathUtils.degToRad(obj.angleDegrees); // Начинаем арку перпендикулярно линии (p1, p2)
+          const endAngle = MathUtils.degToRad(vAngle + obj.angleDegrees);   // Заканчиваем арку перпендикулярно линии (p0, p1)
+
+          this.circleStartPoint.arc(p1.x, p1.y, radius, startAngle, endAngle);
+          this.circleStartPoint.stroke({ width: 1, color: configWall.color.borderLine });
+
+          /*
+          angleText
+          angleTextConatainer
+          circleAngleMask
+          */
+
+          {          
+
+            const circlePointOffsetSegment = offsetVectorBySegment(
+              [p1, p2],
+              p1,
+              radius
+            );
+
+            const angle = (vAngle < 0 ? -((360-vAngle) / 2) : (vAngle / 2));
+
+            const circlePosition = rotatePoint(
+              circlePointOffsetSegment,
+              p1,
+              angle
+            );
+            
+            // рисуем кружок
+            this.circleAngleMask.circle(circlePosition.x, circlePosition.y, 10);
+            this.circleAngleMask.fill({
+              color: 0xffffff
+            });
+
+            this.angleText.text = degTextAngle.toFixed(2).replace('.', ',') + "°";
+
+            this.angleTextConatainer.pivot.x = 5; // this.angleText.width / 2;
+            this.angleTextConatainer.pivot.y = this.angleText.height / 2;
+
+            this.angleTextConatainer.rotation = MathUtils.degToRad(angle + obj.angleDegrees);
+
+            this.angleTextConatainer.position.x = circlePosition.x;
+            this.angleTextConatainer.position.y = circlePosition.y;
+
+          }
+
+        }
+
+      }
 
     }
 
@@ -196,8 +289,9 @@ export default class StartPointActiveObject {
           width: 10,
           height: 10,
           // fillColor: "rgba(255,0,0,0.0)", // Цвет заливки (по умолчанию красный)
-          lineColor: configWall.color.arrowHeadWall, // Цвет обводки (по умолчанию чёрный)
-          lineWidth: 1         // Толщина линии обводки
+          lineColor: configWall.color.arrowLineWall, // Цвет обводки (по умолчанию чёрный)
+          lineWidth: 1, // Толщина линии обводки
+          angleDegrees: configWall.angleDegrees + obj.angleDegrees
         }
       );
 
@@ -215,17 +309,24 @@ export default class StartPointActiveObject {
 
   private setupInteractions(): void {
 
-    this.circleStartPoint
+    const startPoint = this.circleStartPoint;
+    const endPoint = this.circleEndPoint;
+
+    startPoint
       // если нажали на точку стены
       .on('pointerdown', this.handleMouseDown.bind(this, 0))
       // если отпустили кнопку на точке стены
-      .on('pointerup', this.handleMouseUp.bind(this));
+      .on('pointerup', this.handleMouseUp.bind(this))
+      .on("mouseover", () => { startPoint.cursor = "pointer"; })
+      .on("mouseout", () => { startPoint.cursor = "default"; });
 
-    this.circleEndPoint
+    endPoint
       // если нажали на точку стены
       .on('pointerdown', this.handleMouseDown.bind(this, 1))
       // если отпустили кнопку на точке стены
-      .on('pointerup', this.handleMouseUp.bind(this));
+      .on('pointerup', this.handleMouseUp.bind(this))
+      .on("mouseover", () => { endPoint.cursor = "pointer"; })
+      .on("mouseout", () => { endPoint.cursor = "default"; });
 
     // если перемещаем курсор с нажатой кнопкой 
     this.app.stage.on('pointermove', this.handleMouseMove.bind(this));
@@ -254,29 +355,57 @@ export default class StartPointActiveObject {
     
   }
 
-  private handleMouseMove (e: PIXI.FederatedPointerEvent): void {
-
+  private handleMouseMove(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
-    
-    if(this.interactiveWallStore.statusLeftDownMouse && this.interactiveWallStore.activePoint != null){
-      
+  
+    if (
+      this.interactiveWallStore.statusLeftDownMouse &&
+      this.interactiveWallStore.activePoint != null
+    ) {
       const co = this.constructorStore.getOriginOfCoordinates;
-      const scale = this.constructorStore.getScale;
-
+      const inverseScale = this.constructorStore.getInverseScale;
+  
+      const mousePosition = {
+        x: (e.global.x - co.x - 30) * inverseScale,
+        y: (e.global.y - co.y - 30) * inverseScale,
+      };
+  
+      const __activeWall = this.plannerStore.getObjectById(
+        this.interactiveWallStore.activeObjectID
+      );
+      const wall = JSON.parse(JSON.stringify(__activeWall));
+  
+      // Обновляем позицию активной точки
       this.plannerStore.setNewPointPosition(
         this.interactiveWallStore.activeObjectID,
         this.interactiveWallStore.activePoint,
-        {
-          x: e.global.x - co.x - 30,
-          y: e.global.y - co.y - 30
-        }
+        mousePosition
       );
-
+  
+      // Обрабатываем привязанные стены
+      if (this.interactiveWallStore.activePoint === 0 && wall.mergeWalls.wallPoint1 !== null) {
+        this.plannerStore.setNewPointPosition(
+          wall.mergeWalls.wallPoint1,
+          1,
+          mousePosition
+        );
+      } else if (this.interactiveWallStore.activePoint === 1 && wall.mergeWalls.wallPoint0 !== null) {
+        this.plannerStore.setNewPointPosition(
+          wall.mergeWalls.wallPoint0,
+          0,
+          mousePosition
+        );
+      }
+  
+      // Обновляем соединённые стены, если есть слияние
+      if (wall.mergeWalls.wallPoint1 !== null || wall.mergeWalls.wallPoint0 !== null) {
+        this.plannerStore.updatedMergeWalls(this.interactiveWallStore.activeObjectID);
+      }
     }
-    
+  
     e.stopPropagation(); // Останавливаем всплытие события
-    
   }
+  
 
   public clearGraphic(): void{
 
@@ -299,7 +428,15 @@ export default class StartPointActiveObject {
     this.app.stage.off('pointermove', this.handleMouseMove);
 
     // Очистка и уничтожение графики
-    [this.circleStartPoint, this.circleEndPoint, this.startPointRect, this.endPointRect].forEach(graphic => {
+    [
+      this.circleStartPoint, 
+      this.circleEndPoint, 
+      this.startPointRect, 
+      this.endPointRect,
+      this.circleAngleMask,
+      this.angleText,
+      this.angleTextConatainer,
+    ].forEach(graphic => {
       if (graphic) {
         graphic.destroy(true);
         this.container.removeChild(graphic);
@@ -317,6 +454,9 @@ export default class StartPointActiveObject {
     this.circleEndPoint = null!;
     this.startPointRect = null!;
     this.endPointRect = null!;
+    this.circleAngleMask = null!;
+    this.angleText = null!;
+    this.angleTextConatainer = null!;
     this.container = null!;
     this.app = null!;
   }

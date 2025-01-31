@@ -71,10 +71,12 @@ export default class ArrowRulerActiveObject {
         (newVal, oldVal) => {
           newVal.forEach((newObject, index) => {
             const oldObject = oldVal?.[index];
-            if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
-              // Если объект изменился, вызываем метод отрисовки
-              const updatedObject = JSON.parse(JSON.stringify(newObject));
-              this.draw(updatedObject);
+            if(!oldObject || newObject.updateTime === oldObject.updateTime){
+              if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+                // Если объект изменился, вызываем метод отрисовки
+                const updatedObject = JSON.parse(JSON.stringify(newObject));
+                this.draw(updatedObject);
+              }
             }
           });
         },
@@ -146,14 +148,13 @@ export default class ArrowRulerActiveObject {
       distanceY,
       rotateDegY,
       configWall.color.tapeLineColor,
-      1,
+      0.6,
       12,
-      true,
-      this.constructorStore!.getInverseScale
+      true
     );
-    this.xText!.text = `${Math.round((distanceY * this.constructorStore!.getInverseScale) * 10)} см`;
-    this.xText!.x = (position.x * this.constructorStore!.getInverseScale) - 24;
-    this.xText!.y = ((distanceY / 2) + (this.xText!.width / 2)) * this.constructorStore!.getInverseScale;
+    this.xText!.text = `${Math.round((distanceY) * 10)} см`;
+    this.xText!.x = (position.x) - 24;
+    this.xText!.y = ((distanceY / 2) + (this.xText!.width / 2));
     this.xText!.rotation = MathUtils.degToRad(rotateDegY);
 
     // Отрисовка горизонтальной стрелки (ось X)
@@ -165,14 +166,13 @@ export default class ArrowRulerActiveObject {
       distanceX,
       rotateDegX,
       configWall.color.tapeLineColor,
-      1,
+      0.6,
       12,
-      true,
-      this.constructorStore!.getInverseScale
+      true
     );
-    this.yText!.text = `${Math.round((distanceX * this.constructorStore!.getInverseScale) * 10)} см`;
-    this.yText!.y = (position.y * this.constructorStore!.getInverseScale) - 24;
-    this.yText!.x = ((distanceX / 2) - (this.yText!.width / 2)) * this.constructorStore!.getInverseScale;
+    this.yText!.text = `${Math.round((distanceX) * 10)} см`;
+    this.yText!.y = (position.y) - 24;
+    this.yText!.x = ((distanceX / 2) - (this.yText!.width / 2));
   }
 
   // Метод для скрытия графики

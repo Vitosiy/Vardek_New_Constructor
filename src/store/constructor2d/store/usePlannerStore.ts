@@ -16,9 +16,9 @@ import {
 
 import { configWall } from "@/store/constructor2d/data/usePlannerData";
 
-import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
+// import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 
-const interactiveWallStore = useConstructor2DStore();
+// const interactiveWallStore = useConstructor2DStore();
 
 export const usePlanner2DStore = defineStore('planner2DStore', () => {
   const objects = ref<PlannerObject[]>([]);
@@ -31,20 +31,18 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
 
     item.heightDirection = config.heightDirection;
     item.angleDegrees = config.angleDegrees;
-
-    const scale = interactiveWallStore.getScale;
     
     const points = getRectPoints(
-      config.width * scale,
-      config.height * scale,
+      config.width,
+      config.height,
       item.position,
       item.heightDirection,
       item.angleDegrees
     );
 
     item.points = points;
-    item.width = config.width * scale;
-    item.height = config.height * scale;
+    item.width = config.width;
+    item.height = config.height;
     
     objects.value.push(item);
     
@@ -57,6 +55,31 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
       console.warn(`Index ${index} is out of bounds.`);
     }
   };
+
+  const updatedObject = (id: number | string) => {
+
+    // Находим объект по id
+    const targetObject = objects.value.find(obj => obj.id === id);
+
+    if (!targetObject) {
+      console.warn(`Object с id ${id} не найден.`);
+      return;
+    }
+
+    targetObject.updateTime = Date.now();
+
+  };
+
+  const updatedMergeWalls = (rootWallID: number | string) => {
+
+    objects.value.forEach((obj) => {
+      // Исключаем объект с rootWallID
+      if (obj.id !== rootWallID) {
+        obj.updateTime = Date.now(); // Обновляем время изменения
+      }
+    });
+    
+  }
 
   const setNewPointPosition = (id: number | string, indexPoint: number, position: Vector2) => {
 
@@ -113,11 +136,44 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     return (id: number | string) => objects.value.find(obj => obj.id === id);
   });
 
+  // Геттер, который принимает аргументы положения курсора и 
+  // находит точку 0 или 1, которая находится под курсором. 
+  // Поиск осуществляется во всех объектах
+  const getPointByPosition = computed(() => {
+    return (position: Vector2): { id: number; indexPoint: number } | null => {
+      let result: { id: number | string; indexPoint: number } | null = null;
+      objects.value.forEach(obj => {
+        if (obj.points) {
+          obj.points.forEach((point, index) => {
+            if(index === 0 || index === 1){
+              if (getDistanceBetweenVectors(point, position) < 10) {
+                result = {
+                  id: obj.id,
+                  indexPoint: index
+                };
+              }
+            }
+          });
+        }
+      });
+      return result
+    }
+  }); 
+
+  const getCountObjects = computed(() => objects.value.length);
+
   return {
     objects,
+    
     addObj,
     removeObj,
     setNewPointPosition,
-    getObjectById
+
+    updatedObject,
+    updatedMergeWalls,
+    
+    getObjectById,
+    getPointByPosition,
+    getCountObjects
   };
 });

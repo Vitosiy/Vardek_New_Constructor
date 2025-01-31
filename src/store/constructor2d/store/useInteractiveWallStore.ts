@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 export const useC2DInteractiveWallStore = defineStore('useC2DInteractiveWallStore', () => {
 
@@ -15,20 +15,27 @@ export const useC2DInteractiveWallStore = defineStore('useC2DInteractiveWallStor
 
   const setActiveObjectID = (value: string | number) => {
     activeObjectID.value = value;
+    // console.log("\n\r\n\rsetActiveObjectID:", activeObjectID.value);
   }
 
   const setActivePoint = (value: number | null) => {
     activePoint.value = value;
   }
 
+  const getActiveObjectID =  computed(() => activeObjectID.value);
+
   return {
+    
     activeObjectID,
     statusLeftDownMouse,
     activePoint,
 
+    getActiveObjectID,
+
     setActiveObjectID,
     setStatusLeftDownMouse,
     setActivePoint
+    
   };
 
 });

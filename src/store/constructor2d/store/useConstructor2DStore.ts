@@ -12,7 +12,14 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     positionPoint: reactive<Vector2>({ x: 0, y: 0 }),
   });
 
-  const originOfCoordinates = reactive<Vector2>({ x: 0, y: 0 });
+  // граница смещения объекта на холсте
+  // данный параметр используется для ограничения смещения объекта по осям x и y
+  const objectOffsetLimit = ref<number>(0);
+
+  const originOfCoordinates = reactive<Vector2>({ 
+    x: objectOffsetLimit.value, 
+    y: objectOffsetLimit.value 
+  });
 
   const segment = reactive({
     indent: 5,
@@ -27,6 +34,13 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
   const scaleMax = ref<number>(2);
   const scaleSpeed = ref<number>(0.01);
 
+  // реактивная переменная для хранения id объекта и индекс точки, 
+  // которая находится под курсором
+  const hoverObject = reactive({
+    id: null as number | string | null,
+    indexPoint: null as number | null,
+  });
+  
   // Действия
   const toggleRightBtn = () => {
     mouse.rightBtn = !mouse.rightBtn;
@@ -38,8 +52,8 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
   };
 
   const updateOriginOfCoordinates = (x: number, y: number) => {
-    originOfCoordinates.x = x;
-    originOfCoordinates.y = y;
+    if(x <= objectOffsetLimit.value) originOfCoordinates.x = x;
+    if(y <= objectOffsetLimit.value) originOfCoordinates.y = y;
   };
 
   const updataRightClickPosition = (x: number, y: number) => {
@@ -73,6 +87,12 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
       inverseScale.value = ns === 1 ? 1 : 1 / ns;
     }
 
+    // console.log(
+    //   "scale:", scale.value, 
+    //   "inverseScale:", inverseScale.value, 
+    //   parseFloat((scale.value * inverseScale.value).toFixed(15))
+    // );
+
   };
 
   const setScaleSpeed = (value: number) => {
@@ -96,6 +116,15 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     segment.width = width;
   };
 
+  const setHoverObject = (id: number | string | null, indexPoint: number | null) => {
+    hoverObject.id = id;
+    hoverObject.indexPoint = indexPoint;
+  };
+
+  const setObjectOffsetLimit = (value: number) => {
+    objectOffsetLimit.value = value;
+  };
+
   // Геттеры
   const getOriginOfCoordinates = computed(() => originOfCoordinates);
   const getColorAxisLine = computed(() => colorAxisLine.value);
@@ -105,6 +134,8 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
   const getScaleMax = computed(() => scaleMax.value);
   const getScaleSpeed = computed(() => scaleSpeed.value);
   const getSegment = computed(() => segment);
+  const getHoverObject = computed(() => hoverObject);
+  const getObjectOffsetLimit = computed(() => objectOffsetLimit.value);
 
   // Экспортируем состояние, действия, геттеры и сеттеры
   return {
@@ -115,6 +146,8 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     scale,
     inverseScale,
     scaleSpeed,
+    hoverObject,
+    objectOffsetLimit,
 
     toggleRightBtn,
     updatePositionPoint,
@@ -127,6 +160,8 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     setScaleSpeed,
     setScaleRange,
     setSegment,
+    setHoverObject,
+    setObjectOffsetLimit,
 
     getOriginOfCoordinates,
     getColorAxisLine,
@@ -136,5 +171,7 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     getScaleMax,
     getScaleSpeed,
     getSegment,
+    getHoverObject,
+    getObjectOffsetLimit,
   };
 });

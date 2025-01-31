@@ -2,8 +2,9 @@ import {
   watch
 } from 'vue';
 import * as PIXI from 'pixi.js';
-import { useGridStore } from '@/store/constructor2d/store/useGridStore';
-import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
+import { MathUtils } from "three";
+// import { useGridStore } from '@/store/constructor2d/store/useGridStore';
+// import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
@@ -12,6 +13,7 @@ import {
   PlannerObject,
   PlannerObjectContainers,
   Vector2,
+  // Vector2,
 } from "@/types/constructor2d/interfaсes";
 
 import { 
@@ -29,24 +31,35 @@ import {
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
-  drawCircle,
+  drawShape,
+  // drawCircle,
+  drawLine,
+
 } from "./../../utils/Shape";
+
+import {
+  rotatePoint,
+  getDistanceBetweenVectors,
+  getIntersectionPoint,
+  getMidpoint,
+  offsetVectorBySegmentNormal,
+  offsetVectorBySegment
+} from "./../../utils/Math";
 
 export default class Planner {
 
   private app: PIXI.Application;
-  private container: PIXI.Container;
+  container: PIXI.Container;
 
   private activeObjectGraphic:  PIXI.Graphics;
   
   private drawObjects: DrawObjects[] = [];
-  private activeObject: string | number = '';
-  
-  private gridStore = useGridStore();
-  private rulerStore = useRulers2DStore();
+
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
+
+  activeWallID: string | number | null = null;
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -62,6 +75,7 @@ export default class Planner {
     this.activeObjectGraphic = new PIXI.Graphics();
     this.app.stage.addChild(this.activeObjectGraphic);
 
+    // следим за добавлением нового объекта
     this.unwatchList.push(
       watch(
         () => this.plannerStore.objects.length, // Следим за длиной массива
@@ -74,35 +88,74 @@ export default class Planner {
               const newObject = JSON.parse(JSON.stringify(lastAddedObject));
       
               if (!this.drawObjects.some((el) => el.id === newObject.id)) {
+                this.setActiveObject("wall", newObject.id);
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
                 this.drawObject(newObject);
+                this.plannerStore.updatedMergeWalls(newObject.id);
               }
             }
           }
         }
       )
     );
-    
+
+    // отслеживаем изменения в объекте
     this.unwatchList.push(
-      // отслеживаем изменения в объекте
       watch(
         () => this.plannerStore.objects.map(obj => ({ ...obj })), // "Копируем" объекты для отслеживания
         (newVal, oldVal) => {
           newVal.forEach((newObject, index) => {
             const oldObject = oldVal?.[index];
-      
+            
             if (oldObject && JSON.stringify(newObject) !== JSON.stringify(oldObject)) {
+              
               // Если объект изменился
               const updatedObject = JSON.parse(JSON.stringify(newObject));
               this.drawObject(updatedObject); // Выполняем действие с изменённым объектом
+
             }
+
           });
         },
         { deep: true } // Глубокое слежение за изменениями
       )
     );
 
+    // Следим только за id и mergeWalls
+    this.unwatchList.push(
+      watch(
+        () => this.plannerStore.objects.map(obj => ({
+          id: obj.id,
+          mergeWalls: { ...obj.mergeWalls }, // Делаем копию mergeWalls для отслеживания изменений
+        })),
+        (newVal, oldVal) => {
+          newVal.forEach((newObject, index) => {
+            const oldObject = oldVal?.[index];
+            if (!oldObject) return;
+    
+            // Проверяем изменения в mergeWalls.wallPoint0 и mergeWalls.wallPoint1
+            const isWallPointChanged =
+              newObject.mergeWalls.wallPoint0 !== oldObject.mergeWalls.wallPoint0 ||
+              newObject.mergeWalls.wallPoint1 !== oldObject.mergeWalls.wallPoint1;
+    
+            if (isWallPointChanged) {
+              // Получаем оригинальный объект из plannerStore.objects
+              const plannerObject = this.plannerStore.objects.find(obj => obj.id === newObject.id);
+    
+              if (plannerObject) {
+                this.drawObject(plannerObject); // Передаём оригинальный объект в drawObject
+              } else {
+                console.warn(`Объект с ID ${newObject.id} не найден в plannerStore.objects`);
+              }
+            }
+          });
+        },
+        { deep: true } // Глубокое отслеживание для вложенных объектов
+      )
+    );
+    
+    // сдедим за смещением начальной координаты сцены
     this.unwatchList.push(
       watch(
         () => this.constructorStore.originOfCoordinates,
@@ -118,6 +171,7 @@ export default class Planner {
       )
     );
 
+    // следим за изменением размеры сцены (scale)
     this.unwatchList.push(
       watch(
         () => this.constructorStore.scale,
@@ -131,8 +185,29 @@ export default class Planner {
     
   }
 
-  private init(): void {
-    // Отрисовка сохраненной сцены
+  // private init(): void {
+  //   // Отрисовка сохраненной сцены
+  // }
+
+  // уcтановка активного объекта на сцене
+  public setActiveObject(
+    type: string | null = null, 
+    id: string | number | null = null
+  ): void {
+
+    if(!type) return;
+
+    if(type === 'wall'){
+
+      const oldActive = this.activeWallID;
+
+      this.activeWallID = id;
+      
+      // обновляем стену, которая была ранее активной
+      if(oldActive) this.plannerStore.updatedObject(oldActive);
+      
+    }
+    
   }
 
   private createDrawObject(data: PlannerObject): DrawObjects {
@@ -146,11 +221,21 @@ export default class Planner {
       endPoint: new PIXI.Graphics(),
       normalIndicator: new PIXI.Graphics(),
       textWallWidth: new PIXI.Text(),
-      textWallLength: new PIXI.Text(),
+      rulerWall: new PIXI.Graphics(),
+      containerTextRulerWall: new PIXI.Container(),
+      textRulerWall: new PIXI.Text({
+        text: "",
+        style: {
+          fontSize: 16,
+          fill: 0x5D6069,
+        },
+      }),
       eventGraphic: new PIXI.Graphics(),
     };
 
     this.container.addChild(containers.root);
+
+    containers.containerTextRulerWall.addChild(containers.textRulerWall);
 
     // containers.bodyWall.eventMode = 'static';
     // containers.lineWall.eventMode = 'static';
@@ -158,9 +243,19 @@ export default class Planner {
     // containers.endPoint.eventMode = 'static';
     // containers.normalIndicator.eventMode = 'static';
     // containers.textWallWidth.eventMode = 'static';
-    // containers.textWallLength.eventMode = 'static';
+    // containers.textRulerWall.eventMode = 'static';
+    // containers.rulerWall.eventMode = 'static';
+
     containers.eventGraphic.eventMode = 'static';
-    // containers.eventGraphic.on("pointerup", this.handlerEventGraphic.bind(this, data.id));
+    // Изменяем курсор на pointer при наведении
+    // containers.eventGraphic.on("mouseover", () => {
+    //   containers.eventGraphic.cursor = "pointer";
+    // });
+    // // Убираем курсор при уходе мыши
+    // containers.eventGraphic.on("mouseout", () => {
+    //   containers.eventGraphic.cursor = "default"; // Возвращаем стандартный курсор
+    // });
+    containers.eventGraphic.on("pointerdown", this.handlerEventGraphic.bind(this, data.id));
 
     containers.root.addChild(
       containers.maskWall,
@@ -170,7 +265,8 @@ export default class Planner {
       containers.endPoint,
       containers.normalIndicator,
       containers.textWallWidth,
-      containers.textWallLength,
+      containers.rulerWall,
+      containers.containerTextRulerWall,
       containers.eventGraphic,
     );
 
@@ -196,13 +292,60 @@ export default class Planner {
     // Получить контейнеры из объекта
     const { containers } = obj;
 
+    const activeWallID = this.activeWallID === data.id ? true : false;
+
     if(data.points){
       
+      { // обновление точки, если есть слияние стен
+
+        // точка пересечения
+        const mergeWalls = data.mergeWalls;
+        // если стартовая точка соединена с сдругой стеной, тогда вычисляем координаты общей точки 
+        if(mergeWalls.wallPoint1 !== null){
+          
+          const mergeObj = this.plannerStore.getObjectById(mergeWalls.wallPoint1);
+          if(mergeObj){
+            const wall_point1 = JSON.parse(JSON.stringify(mergeObj));
+            if(wall_point1 && wall_point1.points){
+              
+              const interactionPoint = getIntersectionPoint(
+                [data.points[2], data.points[3]],
+                [wall_point1.points[2], wall_point1.points[3]]
+              );
+
+              if(interactionPoint.x != 0 && interactionPoint.y != 0) data.points[3] = interactionPoint;
+              
+            }
+          }
+
+        }
+
+        // если конечная точка соединена с сдругой стеной, тогда вычисляем координаты общей точки
+        if(mergeWalls.wallPoint0 !== null){
+
+          const mergeObj = this.plannerStore.getObjectById(mergeWalls.wallPoint0);
+          if(mergeObj){
+            const wall_point0 = JSON.parse(JSON.stringify(mergeObj));
+            if(wall_point0 && wall_point0.points){
+              
+              const interactionPoint = getIntersectionPoint(
+                [data.points[2], data.points[3]],
+                [wall_point0.points[2], wall_point0.points[3]]
+              );
+
+              if(interactionPoint.x != 0 && interactionPoint.y != 0) data.points[2] = interactionPoint;
+              
+            }
+          }
+
+        }
+        
+      }
+
       // рисуем маску для wallBody
       if(containers.maskWall){
         rect(
           containers.maskWall,
-          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
@@ -223,107 +366,201 @@ export default class Planner {
           data.heightDirection, // heightDirection
           configWall.color.line76deg, // Цвет линий
           1, // Толщина линий
-          configWall.angleDegrees + data.angleDegrees,
-          this.constructorStore.getScale,
-          this.constructorStore.getInverseScale
+          configWall.angleDegrees + data.angleDegrees
         );
 
         if(containers.maskWall) containers.bodyWall.mask = containers.maskWall;
 
-        // рисуем пунктирную рамку стены
-        drawDashedOutline(containers.bodyWall, data.points, this.constructorStore.getInverseScale);
-        
+        // если эта стена активная, то рисуем пунктирную рамку, иначе сплошной линией
+        if(activeWallID){
+          // рисуем пунктирную рамку стены
+          drawDashedOutline(containers.bodyWall, data.points);
+        }else{
+          // рисуем сплошную линию
+          drawShape(containers.bodyWall, data.points);
+        }
+    
       }
       
       // рисуем стрелку-вектор стены
       if(containers.lineWall){
 
-        drawArrow(
-          containers.lineWall,
-          data.points[0],
-          data.width,
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
-          configWall.color.arrowHeadWall, // Цвет стрелки
-          1, // Толщина линии
-          12, // Размер треугольника (основание и высота)
-          true,
-          this.constructorStore.getInverseScale
-        );
+        if(activeWallID){
+          drawArrow(
+            containers.lineWall,
+            data.points[0],
+            data.width,
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
+            {
+              line: configWall.color.arrowLineWall, // Цвет стрелки
+              head: configWall.color.arrowHeadLineWall
+            },
+            2, // Толщина линии
+            12, // Размер треугольника (основание и высота)
+            true
+          );
 
-        // рисуем указатель внутренне стороны стены (стрелка без линии)
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width * 0.3, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          0, //data.height, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHeadWall, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
-        );
+          // рисуем указатель внутренне стороны стены (стрелка без линии)
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width * 0.3, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            0, //data.height, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.arrowHead, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        // рисуем указатель начала стены (стрелка без линии)
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          0, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHeadWall, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
-        );
+          // рисуем указатель начала стены (стрелка без линии)
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            0, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.arrowHead, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        // рисуем указатель конца стены (стрелка без линии)
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.arrowHeadWall, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
-        );
+          // рисуем указатель конца стены (стрелка без линии)
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            (data.heightDirection === 1 ? data.height : -data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.arrowHead, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          0, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.green, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
-        );
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            0, // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === -1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.green, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
 
-        drawArrowHead(
-          containers.lineWall,
-          data.points[0], // позиция начала стены
-          data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
-          (data.heightDirection === -1 ? -data.height : data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
-          {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
-          configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
-          configWall.color.green, // Цвет стрелки
-          12, // Размер треугольника (основание и высота)
-          false, // не очищаем графику
-          this.constructorStore.getInverseScale
-        );
+          drawArrowHead(
+            containers.lineWall,
+            data.points[0], // позиция начала стены
+            data.width * 0.4, // расстояние по x от начала data.points[0], где нужно нарисовать стрелку
+            (data.heightDirection === -1 ? -data.height : data.height), // number | расстояние по y от начала data.points[0], где нужно нарисовать стрелку
+            {axis: "y", value: (data.heightDirection === 1 ? 1 : -1)}, // направление стрелки {axis: x | y, value: 1 | -1}
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах относительно data.points[0]
+            configWall.color.green, // Цвет стрелки
+            12, // Размер треугольника (основание и высота)
+            false // не очищаем графику
+          );
+
+        }else{
+
+          // containers.lineWall.clear(); // Очистка предыдущего содержимого
+          drawLine(
+            containers.lineWall,
+            data.points[0],
+            data.width,
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
+            configWall.color.bodyLine,
+            2, // Толщина линии
+            true
+          );
+          
+        }
+        
+      }
+
+      if(containers.rulerWall && containers.containerTextRulerWall){
+
+        if(this.activeWallID){
+
+          containers.rulerWall.visible = true;
+
+          const linePoints = drawLine(
+            containers.rulerWall,
+            data.points[0],
+            data.width,
+            configWall.angleDegrees + data.angleDegrees, // Угол направления стрелки в градусах
+            configWall.color.arrowHead,
+            0.6, // Толщина линии
+            true,
+            (data.height + 20) * data.heightDirection
+          );
+
+          for(let i=0, len=linePoints.length; i<len; i++){ // граница линии начальной точки
+
+            // Вычисляем точки p0 и p1 со смещением 8
+            const p0: Vector2 = { x: linePoints[i].x - 5, y: linePoints[i].y };
+            const p1: Vector2 = { x: linePoints[i].x + 5, y: linePoints[i].y };
+
+            const rotatedP0 = rotatePoint(p0, linePoints[i], configWall.angleDegrees + data.angleDegrees + 100);
+            const rotatedP1 = rotatePoint(p1, linePoints[i], configWall.angleDegrees + data.angleDegrees + 100);
+
+            drawShape(
+              containers.rulerWall,
+              [
+                rotatedP0,
+                rotatedP1
+              ], // Массив точек для контура
+              {
+                stroke: configWall.color.arrowHead
+              },
+              0.6 // Толщина линии
+            )
+
+          }
+
+          if(containers.textRulerWall){
+
+            containers.containerTextRulerWall.visible = true;
+            containers.textRulerWall.text = "";
+
+            const distance = getDistanceBetweenVectors(linePoints[0], linePoints[1]);
+
+            containers.textRulerWall.text = Math.round(distance).toString() + " cм";
+
+            const pointText = offsetVectorBySegmentNormal(
+              [linePoints[0], linePoints[1]],
+              offsetVectorBySegment(
+                [linePoints[0], linePoints[1]],
+                getMidpoint(linePoints[0], linePoints[1]),
+                -containers.textRulerWall.width / 2
+              ),
+              18 * data.heightDirection
+            );
+            containers.containerTextRulerWall.x = pointText.x;
+            containers.containerTextRulerWall.y = pointText.y;
+
+            containers.containerTextRulerWall.pivot.x = 0.5;
+            containers.containerTextRulerWall.pivot.y = 0.5;
+
+            containers.containerTextRulerWall.rotation = MathUtils.degToRad(configWall.angleDegrees + data.angleDegrees);
+            
+          }
+
+        }else{
+
+          containers.rulerWall.clear();
+          containers.rulerWall.visible = false;
+          containers.containerTextRulerWall.visible = false;
+
+        }
         
       }
     
       if(containers.eventGraphic){
         rect(
           containers.eventGraphic,
-          this.constructorStore.getInverseScale,
           {
             points: data.points,
             heightDirection: data.heightDirection,
@@ -331,10 +568,8 @@ export default class Planner {
           }
         );
       }
-      /*
-      */
 
-      this.interactiveWallStore.activeObjectID = data.id;
+      // if(activeWall) this.interactiveWallStore.setActiveObjectID(data.id);
       // this.activeObject = data.id;
 
     }
@@ -345,20 +580,35 @@ export default class Planner {
 
     e.preventDefault();
 
-    // Найти объект по ID
-    this.interactiveWallStore.setActiveObjectID(id);
+    if (e.button == 0){
+
+      const oldActive = this.activeWallID;
+      
+      if(id !== oldActive){
+
+        // указать активный объект в сторе для перерисовки
+        this.interactiveWallStore.setActiveObjectID(id);
+        this.setActiveObject("wall", id);
+        
+        if(this.activeWallID){
+          this.plannerStore.updatedObject(this.activeWallID);
+          this.plannerStore.updatedMergeWalls(this.activeWallID);
+        }
+
+      }
+
+    }
 
     e.stopPropagation(); // Останавливаем всплытие события
 
   }
 
   public destroy(): void {
-
     // Отписываемся от всех наблюдателей
     this.unwatchList.forEach(unwatch => unwatch());
     this.unwatchList = []; // Очищаем массив для безопасности
   
-    // Удаляем графику из сцены
+     // Удаляем графику из сцены
     this.drawObjects.forEach(drawObject => {
       const { containers } = drawObject;
 
@@ -367,15 +617,23 @@ export default class Planner {
         const graphic = containers[key as keyof PlannerObjectContainers];
         if (graphic && typeof graphic.destroy === "function") {
           try {
-            // Уничтожаем с рекурсивным удалением дочерних объектов
-            graphic.destroy(true);
-            // Убираем из контейнера
-            if (this.container.children.includes(graphic)) {
+            // Уничтожаем графику, только если она существует
+            if (!graphic.destroyed) {
+              graphic.destroy(true); // Уничтожаем графику рекурсивно
+            }
+
+            // Убираем из контейнера, если графика существует
+            if (this.container && this.container.children.includes(graphic)) {
               this.container.removeChild(graphic);
             }
+
+            // Обнуляем ссылку
+            containers[key as keyof PlannerObjectContainers] = null!;
           } catch (error) {
             console.warn(`Failed to destroy graphic: ${key}`, error);
           }
+        } else {
+          console.warn(`Skipping destroy for graphic: ${key}, as it is null or undefined`);
         }
       }
     });
@@ -384,21 +642,28 @@ export default class Planner {
   
     // Уничтожаем основной контейнер
     if (this.container) {
-      this.container.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
-      this.app.stage.removeChild(this.container); // Убираем контейнер со сцены
-      this.container = null!; // Обнуляем ссылку
+      try {
+        this.container.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
+        this.app.stage.removeChild(this.container); // Убираем контейнер со сцены
+        this.container = null!; // Обнуляем ссылку
+      } catch (error) {
+        console.warn("Failed to destroy main container", error);
+      }
     }
   
     // Уничтожаем графику активного объекта
     if (this.activeObjectGraphic) {
-      this.activeObjectGraphic.destroy(true);
-      this.app.stage.removeChild(this.activeObjectGraphic);
-      this.activeObjectGraphic = null!;
+      try {
+        this.activeObjectGraphic.destroy(true);
+        this.app.stage.removeChild(this.activeObjectGraphic);
+        this.activeObjectGraphic = null!;
+      } catch (error) {
+        console.warn("Failed to destroy active object graphic", error);
+      }
     }
   
     // Обнуляем другие ссылки
     this.app = null!;
-    this.activeObject = '';
-  }
+  }  
   
 }

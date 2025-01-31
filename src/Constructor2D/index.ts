@@ -1,6 +1,6 @@
 import {
   watch,
-  ref
+  // ref
 } from 'vue';
 import * as PIXI from 'pixi.js';
 
@@ -19,6 +19,7 @@ import {
 
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
+import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
@@ -48,6 +49,7 @@ export default class Constructor2D {
 
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
   private interactiveWallStore = useC2DInteractiveWallStore();
+  private plannerStore = usePlanner2DStore();
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -59,7 +61,7 @@ export default class Constructor2D {
     this.unwatchList.push(
       watch (
         () => this.interactiveWallStore.activeObjectID,
-        (newVal, oldVal) => {
+        (newVal) => {
           if (newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse) {
             this.clearAllGraphics();
           }
@@ -151,7 +153,7 @@ export default class Constructor2D {
     if (!stage) return;
 
     stage
-      .on('click', this.onClick.bind(this))
+      .on('pointerdown', this.onClick.bind(this))
       .on('rightdown', this.onRightDown.bind(this))
       .on('rightup', this.onRightUp.bind(this))
       .on('pointerout', this.onRightUp.bind(this))
@@ -165,7 +167,7 @@ export default class Constructor2D {
     if (!stage) return;
 
     stage
-      .off('click', this.onClick)
+      .off('pointerdown', this.onClick)
       .off('rightdown', this.onRightDown)
       .off('rightup', this.onRightUp)
       .off('pointerout', this.onRightUp)
@@ -192,10 +194,17 @@ export default class Constructor2D {
     e.preventDefault();
 
     if (!this.app2d) return;
+    
+    if (e.button !== 0) return;
 
     if (!this.interactiveWallStore.statusLeftDownMouse) {
+      const activeObj = this.interactiveWallStore.getActiveObjectID;
+      if(activeObj != 0) this.plannerStore.updatedObject(activeObj); 
       this.interactiveWallStore.setActiveObjectID(0);
+      this.plannerStore.updatedMergeWalls(activeObj);
+      this.components.planner?.setActiveObject("wall", null);
     }
+
   }
 
   private onRightDown(e: PIXI.FederatedPointerEvent): void {
@@ -222,7 +231,6 @@ export default class Constructor2D {
     this.constructorStore.updatePositionPoint(e.global.x, e.global.y);
 
     if (this.constructorStore.mouse.rightBtn) {
-      const scale = this.constructorStore.getInverseScale;
 
       const { distanceX, distanceY } = calculateMouseDistanceByAxes(
         {
@@ -235,10 +243,10 @@ export default class Constructor2D {
       const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
       const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
 
-      this.constructorStore.updateOriginOfCoordinates(
-        newX < 0 ? newX : 0,
-        newY < 0 ? newY : 0
-      );
+      this.constructorStore.updateOriginOfCoordinates( newX, newY );
+      
     }
+
   }
+
 }
