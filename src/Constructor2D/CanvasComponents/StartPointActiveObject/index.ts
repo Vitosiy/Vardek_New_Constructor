@@ -428,7 +428,15 @@ export default class StartPointActiveObject {
     this.app.stage.off('pointermove', this.handleMouseMove);
 
     // Очистка и уничтожение графики
-    [this.circleStartPoint, this.circleEndPoint, this.startPointRect, this.endPointRect].forEach(graphic => {
+    [
+      this.circleStartPoint, 
+      this.circleEndPoint, 
+      this.startPointRect, 
+      this.endPointRect,
+      this.circleAngleMask,
+      this.angleText,
+      this.angleTextConatainer,
+    ].forEach(graphic => {
       if (graphic) {
         graphic.destroy(true);
         this.container.removeChild(graphic);
@@ -446,6 +454,9 @@ export default class StartPointActiveObject {
     this.circleEndPoint = null!;
     this.startPointRect = null!;
     this.endPointRect = null!;
+    this.circleAngleMask = null!;
+    this.angleText = null!;
+    this.angleTextConatainer = null!;
     this.container = null!;
     this.app = null!;
   }
