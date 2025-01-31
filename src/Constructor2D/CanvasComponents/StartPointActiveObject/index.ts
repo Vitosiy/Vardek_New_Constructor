@@ -248,14 +248,20 @@ export default class StartPointActiveObject {
             );
             
             // рисуем кружок
-            // this.circleAngleMask.circle(circlePosition.x, circlePosition.y, 10);
-            // this.circleAngleMask.fill({
-            //   color: 0xffffff
-            // });
+            this.circleAngleMask.circle(circlePosition.x, circlePosition.y, 10);
+            this.circleAngleMask.fill({
+              color: 0xffffff
+            });
+
+            this.angleText.text = degTextAngle.toFixed(2).replace('.', ',') + "°";
+
+            this.angleTextConatainer.pivot.x = 5; // this.angleText.width / 2;
+            this.angleTextConatainer.pivot.y = this.angleText.height / 2;
+
+            this.angleTextConatainer.rotation = MathUtils.degToRad(angle + obj.angleDegrees);
 
             this.angleTextConatainer.position.x = circlePosition.x;
             this.angleTextConatainer.position.y = circlePosition.y;
-            this.angleText.text = degTextAngle.toFixed(2).replace('.', ',') + "°";
 
           }
 
