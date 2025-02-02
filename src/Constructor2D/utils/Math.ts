@@ -275,6 +275,28 @@ function offsetVectorBySegment(segment: [Vector2, Vector2], vector: Vector2, dis
   return offsetVector;
 }
 
+// вычислить по массиву точек их центр
+/**
+ * Вычисляет центр массива точек.
+ * @param points - Массив точек.
+ * @returns Центр точек.
+ */
+function getCenterOfPoints(points: Vector2[]): Vector2 {
+  const center = points.reduce(
+    (acc, point) => {
+      acc.x += point.x;
+      acc.y += point.y;
+      return acc;
+    },
+    { x: 0, y: 0 }
+  );
+
+  center.x /= points.length;
+  center.y /= points.length;
+
+  return center;
+}
+
 export {
   
   calculateMouseDistanceByAxes,
@@ -288,5 +310,6 @@ export {
   getMidpoint,
   offsetVectorBySegmentNormal,
   offsetVectorBySegment,
+  getCenterOfPoints,
 
 };
