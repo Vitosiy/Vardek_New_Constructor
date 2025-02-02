@@ -8,6 +8,7 @@ import { MathUtils } from "three";
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
 import {
   PlannerObject,
@@ -43,7 +44,8 @@ import {
   getIntersectionPoint,
   getMidpoint,
   offsetVectorBySegmentNormal,
-  offsetVectorBySegment
+  offsetVectorBySegment,
+  // getCenterOfPoints
 } from "./../../utils/Math";
 
 export default class Planner {
@@ -58,6 +60,7 @@ export default class Planner {
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
+  private roomStore = useSchemeTransition();
 
   activeWallID: string | number | null = null;
 
@@ -91,6 +94,10 @@ export default class Planner {
                 this.setActiveObject("wall", newObject.id);
                 const newDrawObject = this.createDrawObject(newObject);
                 this.drawObjects.push(newDrawObject);
+                this.roomStore.setWall({
+                  idRoom: this.roomStore.getSchemeTransitionData[0].id,
+                  wall: newObject
+                });
                 this.drawObject(newObject);
                 this.plannerStore.updatedMergeWalls(newObject.id);
               }
@@ -567,6 +574,18 @@ export default class Planner {
             color: "rgba(255,0,0,0)" //configWall.color.background // Цвет заливки
           }
         );
+        
+        /*
+        // объекь для показа центра стены
+        const centerObject = getCenterOfPoints(data.points);
+        drawCircle(
+          containers.eventGraphic,
+          centerObject,
+          10, 
+          "rgba(0,100,0,1)"
+        );
+        */
+
       }
 
       // if(activeWall) this.interactiveWallStore.setActiveObjectID(data.id);

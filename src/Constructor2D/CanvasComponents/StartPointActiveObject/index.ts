@@ -9,6 +9,7 @@ import { MathUtils } from "three";
 import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
 import {
   PlannerObject,
@@ -56,6 +57,7 @@ export default class StartPointActiveObject {
   private constructorStore = useConstructor2DStore();
   private plannerStore = usePlanner2DStore();
   private interactiveWallStore = useC2DInteractiveWallStore();
+  private roomStore = useSchemeTransition();
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -350,6 +352,16 @@ export default class StartPointActiveObject {
     e.preventDefault();
 
     this.interactiveWallStore.setStatusLeftDownMouse(false);
+    
+    { // Обновляем стену в схеме
+      const __activeObject = this.plannerStore.getObjectById(this.interactiveWallStore.getActiveObjectID);
+      const activeObject = JSON.parse(JSON.stringify(__activeObject));
+
+      this.roomStore.setWall({
+        idRoom: this.roomStore.getSchemeTransitionData[0].id,
+        wall: activeObject
+      });
+    }
     
     e.stopPropagation(); // Останавливаем всплытие события
     
