@@ -17,6 +17,7 @@ const alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
 
 export class MeshEvents {
 
+
     root: THREETypes.TApplication;
     scene: THREETypes.TScene
     events: ReturnType<typeof useEventBus> = useEventBus()
@@ -31,6 +32,8 @@ export class MeshEvents {
     _APP: THREETypes.TObject = useAppData().getAppData
     modelState = useModelState()
     millHelper = new GUI()
+
+    _APP: THREETypes.TObject = useAppData().getAppData
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
     private onChangeFasadeTexture: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
@@ -302,6 +305,12 @@ export class MeshEvents {
                     this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
                 }
             })
+
+            if (this.root._trafficManager) {
+                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_COLOR = data.ID
+            }
+
+
         })
 
     }
@@ -453,22 +462,37 @@ export class MeshEvents {
         console.log(fasade)
     }
 
-    // Доделать под разный выбранный фасад
-    toggleFasade(fasadeNdx: number) {
+    // // Доделать под разный выбранный фасад
+    // toggleFasade(fasadeNdx: number) {
 
-        if (!this._currentMesh) return;
+    //     if (!this._currentMesh) return;
+
+    //     const props = this._currentMesh?.userData.PROPS
+
+    //     const fasade = props.FASADE[fasadeNdx]
+
+    //     fasade.visible = false
+
+    //     this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+
+    // }
+
+    // Доделать под разный выбранный фасад
+    toggleFasade() {
+
+        if(!this._currentMesh) return;
 
         const props = this._currentMesh?.userData.PROPS
+        const fasade = props.FASADE
 
-        const fasade = props.FASADE[fasadeNdx]
+        Object.values(fasade).forEach((item: any) => {
 
-        fasade.visible = false
+            item.visible = false
 
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-
-    }
-
-    hideTable() {
+            if (this.root._trafficManager) {
+                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
+            }
+        })
 
     }
 
@@ -559,6 +583,14 @@ export class MeshEvents {
 
         this.onChangeMilling = ({ data, fasadeNdx }) => {
             this.changeMilling({ data, fasadeNdx })
+        }
+
+        this.onChangePaletteColor = (data) => {
+            this.changePaletteColor(data)
+        }
+
+        this.onChangeGlassColor = (data) => {
+            this.changeGlassColor(data)
         }
 
         this.onChangeModelSize = (data) => {

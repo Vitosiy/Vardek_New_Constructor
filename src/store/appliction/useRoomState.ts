@@ -3,6 +3,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"
+import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 
 import * as THREEInterfases from "../../types/interfases"
 
@@ -10,7 +11,10 @@ import * as THREEInterfases from "../../types/interfases"
 
 export const useRoomState = defineStore('RoomState', () => {
 
+  const roomsStore = useSchemeTransition()
+
   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || [] );
+
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
