@@ -1,17 +1,23 @@
 <script setup lang="ts">
 //@ts-nocheck
 import { ref } from 'vue'
-import { MathUtils } from "three";
+// import { MathUtils } from "three";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 
 import { useC2DLeftMenuStore    } from "@/store/constructor2d/store/useLeftMenuStore";
-import { catalogSections, pathD } from '@/store/constructor2d/data/useCatalogSectionsData';
+import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
 
 const constructor2dMenu = useC2DLeftMenuStore();
 
 const menuItemActive = ref<string | null>(null);
 const goodItemActive = ref<string | null>(null);
+
+const invisibleElement = document.createElement('div');
+invisibleElement.style.width = '1px';
+invisibleElement.style.height = '1px';
+invisibleElement.style.opacity = '0'; // Убедимся, что он полностью невидим
+document.body.appendChild(invisibleElement);
 
 function handleClick(id: string): void {
   
@@ -45,7 +51,9 @@ function goodItemDrag(e: DragEvent, id: string): void {
     
     // Настраиваем данные для перетаскивания (drag-and-drop).
     e.dataTransfer?.setData('good', item.nameMode); // Передаём имя модели товара.
-    e.dataTransfer.effectAllowed = 'move';         // Указываем, что элемент можно перемещать.
+    // e.dataTransfer.effectAllowed = 'move';         // Указываем, что элемент можно перемещать.
+    // Скрываем отображение перетаскиваемого объекта
+    e.dataTransfer?.setDragImage(invisibleElement, -9999, -9999);
   }
 }
 
@@ -110,7 +118,6 @@ function goodItemDrag(e: DragEvent, id: string): void {
 </template>
 
 <style lang="scss" scoped>
-
 .options {
   width: 315px;
   flex-shrink: 0;
@@ -119,6 +126,11 @@ function goodItemDrag(e: DragEvent, id: string): void {
   background: #f6f5fa;
   transform-style: preserve-3d;
   z-index: 1;
+  -webkit-user-select: none; /* Safari и старые версии Chrome */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* Internet Explorer 10+ */
+  user-select: none;  
+  
   &__container {
     display: flex;
     flex-direction: column;

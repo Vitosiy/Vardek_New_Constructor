@@ -62,7 +62,7 @@ onMounted(() => {
 
 </script>
 
-<template>
+<!-- <template>
     <MainHeader/>
     <MainPopUp/>
     <InfoPopUp />
@@ -72,8 +72,19 @@ onMounted(() => {
         <CustomiserMenu/>
         <RouterView/>
     </div>
-</template>
+</template> -->
 
+<template>
+  <MainHeader/>
+  <MainPopUp/>
+  <InfoPopUp />
+  <div class="main__container">
+      <OptionsMenu v-if="route.name === 'Constructor3d' && ready"/>
+      <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
+      <CustomiserMenu/>
+      <RouterView/>
+  </div>
+</template>
 
 // import MainHeader from '@/components/header/MainHeader.vue'
 // import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
@@ -97,3 +108,5 @@ onMounted(() => {
   flex-wrap: nowrap;
 }
 </style>
+
+// New_Constructor_flow/src/layouts/DefaultLayout.vue

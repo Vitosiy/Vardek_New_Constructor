@@ -35,6 +35,55 @@ function rect(graphic: PIXI.Graphics, data: RectData): PIXI.Graphics {
   
 }
 
+function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
+
+  /* data:
+  center: Vector2, 
+  width: number, 
+  height: number,
+  fillColor: number = 0xff0000, // Цвет заливки (по умолчанию красный)
+  lineColor: number = 0x000000, // Цвет обводки (по умолчанию чёрный)
+  lineWidth: number = 2         // Толщина линии обводки
+  angleDegrees: number = 0
+  */
+
+  if(data.width && data.height){
+  
+    // Вычисляем верхний левый угол из центра
+    const x = data.center.x - data.width / 2;
+    const y = data.center.y - data.height / 2;
+
+    // Очищаем графику перед рисованием (опционально)
+    graphic.clear();
+
+    // Рисуем прямоугольник
+    // graphic.beginFill(0xff0000); // Устанавливаем цвет заливки (например, красный)
+    graphic.rect(x, y, data.width, data.height); // Рисуем прямоугольник
+    if(data.lineColor){
+      graphic.stroke({
+        width: data.lineWidth ?? 1,
+        color: data.lineColor ?? "rgba(0,0,0,0)"
+      });
+    }
+    graphic.fill(data.fillColor ?? "rgba(0,0,0,0)");
+
+    const angleRadians = (data.angleDegrees ?? 0) * (Math.PI / 180);
+
+    // Устанавливаем точку вращения (pivot) в центр графики
+    graphic.pivot.set(data.center.x, data.center.y);
+
+    // Устанавливаем позицию графики
+    graphic.position.set(data.center.x, data.center.y);
+
+    // Устанавливаем угол поворота
+    graphic.rotation = angleRadians;
+
+  }
+    
+  return graphic;
+
+}
+
 function drawVerticalLines(
   graphics: PIXI.Graphics,
   startPoint: Vector2,
@@ -54,29 +103,29 @@ function drawVerticalLines(
 
   height += 100;
 
-  const numLines = Math.floor(width / spacing); // Количество линий, помещающихся в ширину
+  const numLines = Math.floor((width) / spacing); // Количество линий, помещающихся в ширину
 
   // Функция для поворота точки вокруг startPoint
   const rotatePoint = (x: number, y: number, origin: Vector2, angle: number): Vector2 => {
     const cosAngle = Math.cos(angle);
     const sinAngle = Math.sin(angle);
 
-    const dx = x - origin.x;
-    const dy = y - origin.y;
+    const dx = x - (origin.x);
+    const dy = y - (origin.y);
 
-    const rotatedX = dx * cosAngle - dy * sinAngle + origin.x;
-    const rotatedY = dx * sinAngle + dy * cosAngle + origin.y;
+    const rotatedX = dx * cosAngle - dy * sinAngle + (origin.x);
+    const rotatedY = dx * sinAngle + dy * cosAngle + (origin.y);
 
     return { x: rotatedX, y: rotatedY };
   };
 
   for (let i = 0; i <= numLines; i++) {
-    const xStart = startPoint.x + i * spacing; // X-координата начальной точки линии
-    const yStart = startPoint.y; // Y-координата начальной точки линии
+    const xStart = (startPoint.x) + i * spacing; // X-координата начальной точки линии
+    const yStart = (startPoint.y); // Y-координата начальной точки линии
 
     // Вычисляем смещение конечной точки с учетом heightDirection
-    const xOffset = height * Math.cos(baseAngleRadians); // Горизонтальное смещение
-    const yOffset = height * Math.sin(baseAngleRadians) * heightDirection; // Вертикальное смещение
+    const xOffset = (height) * Math.cos(baseAngleRadians); // Горизонтальное смещение
+    const yOffset = (height) * Math.sin(baseAngleRadians) * heightDirection; // Вертикальное смещение
 
     const xEnd = xStart + xOffset; // X-координата конечной точки
     const yEnd = yStart + yOffset; // Y-координата конечной точки
@@ -101,7 +150,7 @@ function drawDashedOutline(
   dashLength: number = 4, // Длина каждого штриха
   gapLength: number = 2, // Длина промежутка между штрихами
   color: number = 0x000000, // Цвет линии
-  lineWidth: number = 1 // Толщина линии
+  lineWidth: number = 1, // Толщина линии
 ): void {
   if (points.length < 2) {
     console.warn("Недостаточно точек для построения контура.");
@@ -110,8 +159,16 @@ function drawDashedOutline(
 
   // Перебираем точки попарно
   for (let i = 0; i < points.length - 1; i++) {
-    const startPoint = points[i]; // Текущая точка
-    const endPoint = points[i + 1]; // Следующая точка
+    const p0 = {
+      x: points[i].x,
+      y: points[i].y
+    };
+    const p1 = {
+      x: points[i + 1].x,
+      y: points[i + 1].y
+    };
+    const startPoint = p0; // points[i]; // Текущая точка
+    const endPoint = p1; // points[i + 1]; // Следующая точка
 
     // Вычисляем разницу координат
     const dx = endPoint.x - startPoint.x;
@@ -151,8 +208,16 @@ function drawDashedOutline(
   }
 
   // Соединяем последнюю точку с первой для замкнутого контура
-  const startPoint = points[points.length - 1];
-  const endPoint = points[0];
+  const p0 = {
+    x: points[points.length - 1].x,
+    y: points[points.length - 1].y
+  };
+  const p1 = {
+    x: points[0].x,
+    y: points[0].y
+  };
+  const startPoint = p0; // points[points.length - 1];
+  const endPoint = p1; // points[0];
   const dx = endPoint.x - startPoint.x;
   const dy = endPoint.y - startPoint.y;
   const lineLength = Math.sqrt(dx * dx + dy * dy);
@@ -186,12 +251,12 @@ function drawArrow(
   startPoint: Vector2,
   width: number, // Длина стрелки
   angleDegrees: number, // Угол направления стрелки в градусах
-  color: number = 0x000000, // Цвет стрелки
+  color: {line: number, head: number} | number = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   triangleSize: number = 12, // Размер треугольника (основание и высота)
-  clearGraphics?: boolean // Флаг: очищать графику или нет
+  clearGraphics: boolean = false // Флаг: очищать графику или нет,
 ): void {
-  if(clearGraphics || clearGraphics !== undefined){
+  if(clearGraphics){
     graphics.clear(); // Очистка графики
   }
 
@@ -200,15 +265,19 @@ function drawArrow(
 
   // Вычисляем конечную точку линии на основе длины и угла
   const endPoint = {
-    x: startPoint.x + Math.cos(angleRadians) * width,
-    y: startPoint.y + Math.sin(angleRadians) * width,
+    x: (startPoint.x) + Math.cos(angleRadians) * (width),
+    y: (startPoint.y) + Math.sin(angleRadians) * (width),
   };
 
+  // Убедимся, что цвет линии и головы стрелки корректно обрабатывается
+  const lineColor = typeof color === "object" ? color.line : color;
+  const headColor = typeof color === "object" ? color.head : color;
+
   // Рисуем основную линию
-  graphics.moveTo(startPoint.x, startPoint.y);
+  graphics.moveTo((startPoint.x), (startPoint.y));
   graphics.lineTo(endPoint.x, endPoint.y);
   graphics.stroke({
-    color: color,
+    color: lineColor,
     width: lineWidth,
   });
 
@@ -232,7 +301,7 @@ function drawArrow(
   graphics.lineTo(leftPoint.x, leftPoint.y); // Левая вершина треугольника
   graphics.lineTo(rightPoint.x, rightPoint.y); // Правая вершина треугольника
   graphics.closePath(); // Замыкаем треугольник
-  graphics.fill(color);
+  graphics.fill(headColor);
 }
 
 function drawArrowHead(
@@ -256,15 +325,15 @@ function drawArrowHead(
   const halfBase = size / 2;
 
   // 1. Сначала вычисляем точку рисования стрелки (без поворота)
-  const baseX = startPoint.x + distanceX;
-  const baseY = startPoint.y + distanceY;
+  const baseX = (startPoint.x) + distanceX;
+  const baseY = (startPoint.y) + distanceY;
 
   // 2. Поворачиваем точку (baseX, baseY) относительно startPoint на угол angleRadians
-  const deltaX = baseX - startPoint.x;
-  const deltaY = baseY - startPoint.y;
+  const deltaX = baseX - (startPoint.x);
+  const deltaY = baseY - (startPoint.y);
 
-  const rotatedX = startPoint.x + deltaX * Math.cos(angleRadians) - deltaY * Math.sin(angleRadians);
-  const rotatedY = startPoint.y + deltaX * Math.sin(angleRadians) + deltaY * Math.cos(angleRadians);
+  const rotatedX = (startPoint.x) + deltaX * Math.cos(angleRadians) - deltaY * Math.sin(angleRadians);
+  const rotatedY = (startPoint.y) + deltaX * Math.sin(angleRadians) + deltaY * Math.cos(angleRadians);
 
   // Теперь rotatedX и rotatedY — это точка рисования стрелки с учетом смещения и поворота
 
@@ -337,11 +406,106 @@ function drawCircle(
   graphics.fill(color);
 }
 
+function drawShape(
+  graphics: PIXI.Graphics,
+  points: Vector2[], // Массив точек для контура
+  color: {
+    stroke?: number | string, // Цвет линии
+    fill?: number | string // Цвет заливки
+  } = {},
+  lineWidth: number = 1, // Толщина линии
+  clearGraphics: boolean = false, // Флаг: очищать графику или нет
+): void {
+
+  if (points.length < 2) {
+    console.warn("Недостаточно точек для построения контура.");
+    return;
+  }
+
+  if(clearGraphics){
+    graphics.clear(); // Очистка графики
+  }
+
+  // Перебираем точки попарно
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+
+    // Рисуем линию
+    if(i==0) graphics.moveTo(point.x, point.y);
+    graphics.lineTo(point.x, point.y);
+    if((points.length - 1) === i){
+      graphics.lineTo(points[0].x, points[0].y);
+    }
+  }
+
+  if (color.fill) {
+    graphics.fill(color.fill);
+  }
+
+  graphics.stroke({
+    color: color.stroke ?? 0x000000,
+    width: lineWidth
+  });
+}
+
+function drawLine(
+  graphics: PIXI.Graphics,
+  startPoint: Vector2,
+  width: number, // Длина стрелки
+  angleDegrees: number, // Угол направления стрелки в градусах
+  color: number = 0x000000, // Цвет стрелки
+  lineWidth: number = 1, // Толщина линии
+  clearGraphics: boolean = false, // Флаг: очищать графику или нет
+  stepNormal: number = 0 // смещение линии по нормали
+): Vector2[] {
+
+  if(clearGraphics){
+    graphics.clear(); // Очистка графики
+  }
+
+  // Преобразуем угол из градусов в радианы
+  const angleRadians = (angleDegrees * Math.PI) / 180;
+
+  // Вычисляем конечную точку линии на основе длины и угла
+  const endPoint = {
+    x: startPoint.x + Math.cos(angleRadians) * width,
+    y: startPoint.y + Math.sin(angleRadians) * width,
+  };
+
+  // Смещаем начальную и конечную точки по нормали на stepNormal
+  const normalAngleRadians = angleRadians + Math.PI / 2;
+  const startPointShifted = {
+    x: startPoint.x + Math.cos(normalAngleRadians) * stepNormal,
+    y: startPoint.y + Math.sin(normalAngleRadians) * stepNormal,
+  };
+  const endPointShifted = {
+    x: endPoint.x + Math.cos(normalAngleRadians) * stepNormal,
+    y: endPoint.y + Math.sin(normalAngleRadians) * stepNormal,
+  };
+
+  // Рисуем основную линию с учетом смещения
+  graphics.moveTo(startPointShifted.x, startPointShifted.y);
+  graphics.lineTo(endPointShifted.x, endPointShifted.y);
+  graphics.stroke({
+    color: color,
+    width: lineWidth,
+  });
+
+  return [
+    startPointShifted, 
+    endPointShifted
+  ];
+  
+}
+
 export {
   rect,
+  rectV2,
   drawVerticalLines,
   drawDashedOutline,
   drawArrow,
   drawArrowHead,
-  drawCircle
+  drawCircle,
+  drawShape,
+  drawLine
 }

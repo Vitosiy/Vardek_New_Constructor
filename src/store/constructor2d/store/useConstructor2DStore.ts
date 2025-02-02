@@ -1,93 +1,177 @@
-import { defineStore } from 'pinia';
+import { ref, reactive, computed } from "vue";
+import { defineStore } from "pinia";
 
-import {
-  Vector2
-} from "@/types/constructor2d/interfaсes";
+import { Vector2 } from "@/types/constructor2d/interfaсes";
 
-interface Mouse {
-  rightBtn: boolean;
-  rightClickPosition: Vector2;
-  prevOriginOfCoordinates: Vector2;
-  positionPoint: Vector2;
-}
+export const useConstructor2DStore = defineStore("constructor2DStore", () => {
+  // Состояния
+  const mouse = reactive({
+    rightBtn: false,
+    rightClickPosition: reactive<Vector2>({ x: 0, y: 0 }),
+    prevOriginOfCoordinates: reactive<Vector2>({ x: 0, y: 0 }),
+    positionPoint: reactive<Vector2>({ x: 0, y: 0 }),
+  });
 
-interface Segment {
-  indent: number,
-  width: number
-}
+  // граница смещения объекта на холсте
+  // данный параметр используется для ограничения смещения объекта по осям x и y
+  const objectOffsetLimit = ref<number>(0);
 
-interface State {
-  mouse: Mouse;
-  originOfCoordinates: Vector2;
-  segment: Segment;
-  colorAxisLine: number | string;
-}
+  const originOfCoordinates = reactive<Vector2>({ 
+    x: objectOffsetLimit.value, 
+    y: objectOffsetLimit.value 
+  });
 
-export const useConstructor2DStore = defineStore('constructor2DStore', {
+  const segment = reactive({
+    indent: 5,
+    width: 5,
+  });
+
+  const colorAxisLine = ref<number | string>(0xDA444C);
+
+  const scale = ref<number>(1); // это для размера холста планировщика
+  const inverseScale = ref<number>(1); // противоположное значение от переменной scale
+  const scaleMin = ref<number>(0.3);
+  const scaleMax = ref<number>(2);
+  const scaleSpeed = ref<number>(0.01);
+
+  // реактивная переменная для хранения id объекта и индекс точки, 
+  // которая находится под курсором
+  const hoverObject = reactive({
+    id: null as number | string | null,
+    indexPoint: null as number | null,
+  });
   
-  state: (): State => ({
+  // Действия
+  const toggleRightBtn = () => {
+    mouse.rightBtn = !mouse.rightBtn;
+  };
 
-    mouse: {
-      
-      rightBtn: false,
+  const updatePositionPoint = (x: number, y: number) => {
+    mouse.positionPoint.x = x;
+    mouse.positionPoint.y = y;
+  };
 
-      rightClickPosition: {
-        x: 0,
-        y: 0
-      },
+  const updateOriginOfCoordinates = (x: number, y: number) => {
+    if(x <= objectOffsetLimit.value) originOfCoordinates.x = x;
+    if(y <= objectOffsetLimit.value) originOfCoordinates.y = y;
+  };
 
-      prevOriginOfCoordinates: {
-        x: 0,
-        y: 0
-      },
-      
-      positionPoint: {
-        x: 0,
-        y: 0
-      }
+  const updataRightClickPosition = (x: number, y: number) => {
+    mouse.rightClickPosition.x = x;
+    mouse.rightClickPosition.y = y;
+  };
 
-    },
+  const updatePrevOriginOfCoordinates = (x: number, y: number) => {
+    mouse.prevOriginOfCoordinates.x = x;
+    mouse.prevOriginOfCoordinates.y = y;
+  };
 
-    originOfCoordinates: {
-      x: 30,
-      y: 30
-    },
+  const setColorAxisLine = (color: number | string) => {
+    colorAxisLine.value = color;
+  };
 
-    segment: {
-      indent: 5,
-      width: 5
-    },
+  const setScale = (newScale: number) => {
 
-    colorAxisLine: 0xDA444C
+    // Ограничиваем значение scale в диапазоне [0.01, 3]
+    const ns = Math.min(
+      Math.max(newScale, scaleMin.value),
+      scaleMax.value
+    );
 
-  }),
-  
-  actions: {
+    scale.value = ns;
 
-    toggleRightBtn() {
-      this.mouse.rightBtn = !this.mouse.rightBtn;
-    },
+    // Если scale меньше 1, inverseScale становится больше 1, и наоборот
+    if (ns < 1) {
+      inverseScale.value = 1 / ns;
+    } else {
+      inverseScale.value = ns === 1 ? 1 : 1 / ns;
+    }
 
-    updatePositionPoint(x: number, y: number) {
-      this.mouse.positionPoint.x = x;
-      this.mouse.positionPoint.y = y;
-    },
+    // console.log(
+    //   "scale:", scale.value, 
+    //   "inverseScale:", inverseScale.value, 
+    //   parseFloat((scale.value * inverseScale.value).toFixed(15))
+    // );
 
-    updateOriginOfCoordinates(x: number, y: number) {
-      this.originOfCoordinates.x = x;
-      this.originOfCoordinates.y = y;
-    },
+  };
 
-    updataRightClickPosition(x: number, y: number) {
-      this.mouse.rightClickPosition.x = x;
-      this.mouse.rightClickPosition.y = y;
-    },
+  const setScaleSpeed = (value: number) => {
 
-    updatePrevOriginOfCoordinates(x: number, y: number) {
-      this.mouse.prevOriginOfCoordinates.x = x;
-      this.mouse.prevOriginOfCoordinates.y = y;
+    scaleSpeed.value = value;
+    
+  };
+
+  const setScaleRange = (type: "min" | "max", value: number) => {
+
+    if (type === "min") {
+      scaleMin.value = value;
+    }else if (type === "max") {
+      scaleMax.value = value;
     }
     
-  },
-  
+  }
+
+  const setSegment = (indent: number, width: number) => {
+    segment.indent = indent;
+    segment.width = width;
+  };
+
+  const setHoverObject = (id: number | string | null, indexPoint: number | null) => {
+    hoverObject.id = id;
+    hoverObject.indexPoint = indexPoint;
+  };
+
+  const setObjectOffsetLimit = (value: number) => {
+    objectOffsetLimit.value = value;
+  };
+
+  // Геттеры
+  const getOriginOfCoordinates = computed(() => originOfCoordinates);
+  const getColorAxisLine = computed(() => colorAxisLine.value);
+  const getScale = computed(() => scale.value);
+  const getInverseScale = computed(() => inverseScale.value);
+  const getScaleMin = computed(() => scaleMin.value);
+  const getScaleMax = computed(() => scaleMax.value);
+  const getScaleSpeed = computed(() => scaleSpeed.value);
+  const getSegment = computed(() => segment);
+  const getHoverObject = computed(() => hoverObject);
+  const getObjectOffsetLimit = computed(() => objectOffsetLimit.value);
+
+  // Экспортируем состояние, действия, геттеры и сеттеры
+  return {
+    mouse,
+    originOfCoordinates,
+    segment,
+    colorAxisLine,
+    scale,
+    inverseScale,
+    scaleSpeed,
+    hoverObject,
+    objectOffsetLimit,
+
+    toggleRightBtn,
+    updatePositionPoint,
+    updateOriginOfCoordinates,
+    updataRightClickPosition,
+    updatePrevOriginOfCoordinates,
+
+    setColorAxisLine,
+    setScale,
+    setScaleSpeed,
+    setScaleRange,
+    setSegment,
+    setHoverObject,
+    setObjectOffsetLimit,
+
+    getOriginOfCoordinates,
+    getColorAxisLine,
+    getScale,
+    getInverseScale,
+    getScaleMin,
+    getScaleMax,
+    getScaleSpeed,
+    getSegment,
+    getHoverObject,
+    getObjectOffsetLimit,
+  };
 });

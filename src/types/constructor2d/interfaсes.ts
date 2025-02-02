@@ -41,6 +41,7 @@ export interface DropData {
 // Интерфейс для объектов визуализации на 2д сцене
 export interface PlannerObjectContainers {
   root?: PIXI.Container | null; // родительский контейнер для всех елементов стены
+  eventGraphic?: GraphicsOrNull;
   maskWall?: GraphicsOrNull;
   bodyWall?: GraphicsOrNull;
   lineWall?: GraphicsOrNull;
@@ -48,7 +49,9 @@ export interface PlannerObjectContainers {
   endPoint?: GraphicsOrNull;
   normalIndicator?: GraphicsOrNull;
   textWallWidth?: PIXI.Text | null; // гирина стены
-  textWallLength?: PIXI.Text | null; // длина стены
+  containerTextRulerWall?: PIXI.Container | null;
+  textRulerWall?: PIXI.Text | null; // длина стены
+  rulerWall?: GraphicsOrNull;
 }
 
 export interface PlannerObject {
@@ -60,6 +63,11 @@ export interface PlannerObject {
   points?: Vector2[];
   heightDirection: -1 | 1;
   angleDegrees: number;
+  updateTime: number;
+  mergeWalls: {
+    wallPoint0: string | number | null, 
+    wallPoint1: string | number | null
+  };
 }
 
 // Utils Shapes
