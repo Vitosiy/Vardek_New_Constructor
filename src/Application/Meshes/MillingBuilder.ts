@@ -1,148 +1,151 @@
 // @ts-nocheck 
 
 import * as THREE from 'three';
+import * as THREETypes from "@/types/types"
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { CSG } from 'three-csg-ts';
+import { SUBTRACTION, Brush, Evaluator } from 'three-bvh-csg';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
+import { OBB } from 'three/examples/jsm/math/OBB.js';
+
+import { PatternBuilder } from './PatternBuilder';
+import { BuildersHelper } from './BuildersHelper';
 
 import { MILLINGS } from '@/Application/F-millings';
 
-export class MillingBuilder {
+export class MillingBuilder extends BuildersHelper {
   svgLoader: SVGLoader = new SVGLoader();
   millingsStore = MILLINGS
+  patternBuilder: PatternBuilder
+  private result = null
 
-  constructor() {
-    // console.log(this.millingsStore, 'CREATE MILLINGS')
+  constructor(root) {
+    super(root)
+
+
   }
 
   createMillingFasade(object, fasadePosition, millingParams: number, defaultGeometry) {
 
     /** Данные для корректировки положения булевой геометрии */
 
+    // console.log(millingParams, 'millingParams')
+
     let millingData = this.millingsStore[millingParams] ? this.millingsStore[millingParams] : this.millingsStore[2462671]
-
+    /** Для дебагинга */
     // let millingData = millingParams
-
-
     let startGeometry = defaultGeometry.clone()
+    let csgStartGeometry = CSG.fromGeometry(startGeometry.geometry);
+    let clonedfasadePosition = JSON.parse(JSON.stringify(fasadePosition))
 
-    let back_bsp;
-    try {
-      back_bsp = CSG.fromGeometry(startGeometry.geometry);
-    } catch {
-      return;
-    }
+    let brush_1 = new Brush(startGeometry.geometry);
+    let evaluator = new Evaluator()
 
-    switch (millingParams) {
+    let result
+
+    switch (millingData) {
+
       case 2475715:
-        const hendless = this.hendlesCreate(fasadePosition, millingParams, object);
+        const hendless = this.hendlesCreate(clonedfasadePosition, millingData, object);
         const shape_bsp = CSG.fromMesh(hendless);
-        back_bsp = back_bsp.subtract(shape_bsp);
+        csgStartGeometryback_bsp = back_bsp.subtract(shape_bsp);
         break;
 
       default:
-        const shapesArray = millingData
-          .map(figure => this.extractShape(fasadePosition, figure))
-          .filter(Boolean);
 
-        console.log(shapesArray, 'shapesArray')
+        const shapesArray = millingData.map(figure => this.extractShape(clonedfasadePosition, figure)).flat(Infinity).filter(Boolean);
 
-        shapesArray.forEach(({ shape, extrudeSettings, topPosition, boolParams, pattern }) => {
+        // console.log(shapesArray, 'SHAPES')
 
-          if (boolParams) {
-            console.log(extrudeSettings, boolParams.depth.direction)
+        shapesArray.forEach((figureParams, key) => {
+
+          let mesh, boolMesh, patternMesh, booleanCSGMesh
+
+          switch (figureParams.type) {
+            case 'svg':
+              boolMesh = this.svgShapeCreate(figureParams, fasadePosition, startGeometry);
+              break;
+
+            case 'capsule':
+              boolMesh = this.capsuleCreate(figureParams, fasadePosition);
+              break
           }
 
+          switch (typeof figureParams.pattern) {
 
-          const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings || { steps: 1, depth: 2, bevelEnabled: false });
-          const material = new THREE.MeshPhongMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
-          material.color.convertSRGBToLinear();
+            case 'object':
+              mesh = new PatternBuilder({
+                boolMesh,
+                figureParams,
+                fasadePosition,
+                type: figureParams.type
+              })._PatternMesh;
+              // object.add(mesh) // Визуализация фрезеровки
 
-          geometry.computeBoundingBox()
-          const shapeMesh = new THREE.Mesh(geometry, material);
+              break;
 
-          let box = new THREE.Box3().setFromObject(shapeMesh)
-          let vec = new THREE.Vector3();
-          let size = box.getSize(vec)
+            default:
+              boolMesh.updateMatrixWorld(true);
+              mesh = boolMesh;
 
-          console.log(size, 'SIZE')
-
-          if (boolParams) {
-
-            /** POSITION */
-
-            boolParams.position?.front ? shapeMesh.position.z = fasadePosition.FASADE_DEPTH * 0.5 + boolParams.position.front : ''
-
-            boolParams.position?.bottom ? shapeMesh.position.y = -fasadePosition.FASADE_HEIGHT * 0.5 + (size.x * 0.5 + boolParams.depth.offset) : ''
-            boolParams.position?.top ? shapeMesh.position.y = fasadePosition.FASADE_HEIGHT * 0.5 - (size.x * 0.5 + boolParams.depth.offset) : ''
-
-            boolParams.position?.left ? shapeMesh.position.x = fasadePosition.FASADE_WIDTH * 0.5 - (size.x * 0.5 + boolParams.depth.offset) : ''
-            boolParams.position?.right ? shapeMesh.position.x = -fasadePosition.FASADE_WIDTH * 0.5 + (size.x * 0.5 + boolParams.depth.offset) : ''
-
-
-            boolParams.position?.centerHorizontal ? shapeMesh.position.x = -size.z * 0.5 : ''
-            boolParams.position?.centerVertical ? shapeMesh.position.y = -size.z * 0.5 : ''
-            /** ROTATION */
-
-            boolParams.rotate?.x ? shapeMesh.rotation.x = boolParams.rotate.x : ''
-            boolParams.rotate?.z ? shapeMesh.rotation.z = boolParams.rotate.z : ''
-            boolParams.rotate?.y ? shapeMesh.rotation.y = boolParams.rotate.y : ''
-
+              // object.add(boolMesh) // Визуализация фрезеровки
+              break;
           }
 
-          else {
+          ({ brush_1, csgStartGeometry } = this.processMesh(mesh, brush_1, evaluator, csgStartGeometry, figureParams.lib));
 
-            shapeMesh.rotation.y = -Math.PI;
-            shapeMesh.position.z = -fasadePosition.FASADE_DEPTH * 0.5 + size.z;
+          // switch (typeof figureParams.pattern) {
+          //   // /** Если есть паттерн */
+          //   case 'object':
+          //     let patternBuild = new PatternBuilder(
+          //       {
+          //         boolMesh,
+          //         figureParams,
+          //         fasadePosition,
+          //         type: figureParams.type
+          //       }
+          //     )
+          //     patternMesh = patternBuild._PatternMesh
+          //     // object.add(patternMesh) /** Визуализация boolean фрезеровки */
+          //     // object.add(boolMesh)
+          //     switch (figureParams.lib) {
 
-          }
+          //       case 'bvh':
+          //         let patternBrush = new Brush(patternMesh.geometry, patternMesh.material);
+          //         patternBrush.position.copy(patternMesh.position)
+          //         patternBrush.updateMatrixWorld();
+          //         result = evaluator.evaluate(brush_1, patternBrush, SUBTRACTION);
+          //         brush_1 = new Brush(result.geometry);
+          //         break;
+          //       default:
+          //         console.log('CSG')
+          //         booleanCSGMesh = CSG.fromMesh(patternMesh);
+          //         csgStartGeometry = csgStartGeometry.subtract(booleanCSGMesh);
+          //         break;
+          //     }
+          //     break;
 
-          if (topPosition) {
-            shapeMesh.position.y = (fasadePosition.FASADE_HEIGHT * 0.5) + topPosition
-          }
+          //   case 'undefined':
+          //     boolMesh.updateMatrixWorld(true)
+          //     // object.add(boolMesh) /** Визуализация boolean фрезеровки */
+          //     switch (figureParams.lib) {
 
-          /** Если есть паттерн */
+          //       case 'bvh':
+          //         let boolBrush = new Brush(boolMesh.geometry, boolMesh.material);
+          //         boolBrush.position.copy(boolMesh.position);
+          //         boolBrush.updateMatrixWorld();
+          //         result = evaluator.evaluate(brush_1, boolBrush, SUBTRACTION);
+          //         brush_1 = new Brush(result.geometry);
+          //         break;
 
-          if (pattern) {
-
-            const patternCount = this.calculateFit(
-              {
-                containerLength: fasadePosition.FASADE_WIDTH,
-                itemLength: pattern.offset
-              }
-            )
-
-            const startGeometry = shapeMesh.geometry.clone()
-
-            const patternGeometry = this.mergePattern(
-              {
-                geometry: startGeometry,
-                count: patternCount,
-                offsetX: pattern.offset
-              }
-            )
-
-            const patternMesh = new THREE.Mesh(patternGeometry, material)
-            patternMesh.rotation.copy(shapeMesh.rotation)
-            patternMesh.position.copy(shapeMesh.position)
-
-            patternMesh.updateMatrixWorld(true)
-
-            // object.add(patternMesh)
-
-            const shape_bsp = CSG.fromMesh(patternMesh);
-            back_bsp = back_bsp.subtract(shape_bsp);
-
-          }
-
-          else {
-            shapeMesh.updateMatrixWorld(true)
-            
-            // object.add(shapeMesh)
-
-            const shape_bsp = CSG.fromMesh(shapeMesh);
-            back_bsp = back_bsp.subtract(shape_bsp);
-          }
+          //       default:
+          //         booleanCSGMesh = CSG.fromMesh(boolMesh);
+          //         csgStartGeometry = csgStartGeometry.subtract(booleanCSGMesh);
+          //         break;
+          //     }
+          //     break;
+          // }
 
         });
 
@@ -150,15 +153,270 @@ export class MillingBuilder {
     }
 
     // Преобразуем BSP-геометрию обратно
-    const newGeometry = CSG.toGeometry(back_bsp, new THREE.Matrix4());
 
-    this.applyPlanarMappingToFaces(newGeometry)
+    console.log(result, 'after--')
 
+    let newGeometry = this.result ? this.result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
+
+    /** Создаём UV развёртку для новой геометрии */
+
+    this.planarUV(newGeometry)
+
+    /** Удаляем старую геометрию */
+    object.geometry.dispose()
+    object.geometry = null
     object.geometry = newGeometry;
+
+    /** Очищяем память от временной геометрии */
+    newGeometry.dispose()
+    newGeometry = null
 
   }
 
-  private hendlesCreate(fasadePosition, millingParams, object) {
+  private svgShapeCreate(figureParams, fasadePosition, startGeometry) {
+
+    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition
+
+    const geometries = figureParams.shape.map((path) => {
+
+      const shape = path.toShapes();
+
+      if (path.userData.holes) {
+        shape[0].holes = path.userData.holes;
+      }
+
+      return new THREE.ExtrudeGeometry(
+        shape,
+        figureParams.extrudeSettings || { steps: 1, depth: 2, bevelEnabled: false }
+      );
+    });
+
+    const mergedGeometry = mergeGeometries(geometries);
+    mergedGeometry.computeBoundingBox();
+
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3 });
+    material.color.convertSRGBToLinear();
+
+    const shapeMesh = new THREE.Mesh(mergedGeometry, material);
+
+    let size
+
+    if (figureParams.boolParams) {
+
+      const { depth, position, rotate, type } = figureParams.boolParams;
+
+      // Ротация
+      if (type === 'rotate') {
+        shapeMesh.rotation.set(rotate.x || 0, rotate.y || 0, rotate.z || 0);
+      }
+
+      const box = new THREE.Box3().setFromObject(shapeMesh);
+      size = box.getSize(new THREE.Vector3());
+
+      // Позиция
+      shapeMesh.position.set(
+        position.right ? -FASADE_WIDTH * 0.5 + (size.x * 0.5 + depth.offset || 0) :
+          position.left ? FASADE_WIDTH * 0.5 - (size.x * 0.5 + depth.offset || 0) :
+            position.centerHorizontal ? -size.z * 0.5 : 0,
+
+        position.bottom ? -FASADE_HEIGHT * 0.5 + (size.x * 0.5 + depth.offset || 0) :
+          position.top ? FASADE_HEIGHT * 0.5 - (size.x * 0.5 + depth.offset || 0) :
+            position.centerVertical ? -size.z * 0.5 : 0,
+
+        position.front ? FASADE_DEPTH * 0.5 + position.front :
+          -FASADE_DEPTH * 0.5 + size.z
+      );
+
+      // Дополнительная ротация, если тип не "rotate"
+      if (type !== 'rotate') {
+        shapeMesh.rotation.set(
+          rotate.x || shapeMesh.rotation.x,
+          rotate.y || shapeMesh.rotation.y,
+          rotate.z || shapeMesh.rotation.z
+        );
+      }
+
+    } else {
+      // Дефолтное значение для случая отсутствия boolParams
+      const box = new THREE.Box3().setFromObject(shapeMesh);
+      size = box.getSize(new THREE.Vector3());
+
+      shapeMesh.rotation.y = -Math.PI;
+      shapeMesh.position.z = -FASADE_DEPTH * 0.5 + size.z;
+    }
+
+    if (figureParams.topPosition) {
+      shapeMesh.position.y = (FASADE_HEIGHT * 0.5) + figureParams.topPosition
+    }
+
+    shapeMesh.userData.fasadePosition = fasadePosition
+    shapeMesh.userData.startSize = size
+
+    // Дополнительная позиция
+    if (figureParams.position) {
+      const { x, y, z, inpostOffset = 0 } = figureParams.position;
+
+      if (y) {
+        switch (y) {
+          case "inpostTop":
+            shapeMesh.position.y = FASADE_HEIGHT * 0.5 - size.y * 0.5 - inpostOffset
+            break
+          case "inpostBottom":
+            shapeMesh.position.y = -FASADE_HEIGHT * 0.5 + size.y * 0.5 + inpostOffset
+            break
+          default:
+            shapeMesh.position.y += y;
+            break
+        }
+      }
+      if (x && typeof x !== 'string') shapeMesh.position.x += x;
+      if (z && typeof z !== 'string') shapeMesh.position.z += z;
+    }
+
+    // Дополнительная ротация
+    if (figureParams.rotation) {
+      const { x, y, z } = figureParams.rotation;
+      if (x) shapeMesh.rotation.x = x;
+      if (y) shapeMesh.rotation.y = y;
+      if (z) shapeMesh.rotation.z = z;
+    }
+
+    shapeMesh.position.z += FASADE_DEPTH + 4 /** Корректировка */
+
+    return shapeMesh
+  }
+
+  private capsuleCreate(figureParams, fasadePosition) {
+
+    let capsuleWidth
+
+    switch (figureParams.length) {
+
+      case 'FASADE_HEIGHT':
+
+        capsuleWidth = fasadePosition.FASADE_HEIGHT - figureParams.padding * 2 - figureParams.radius;
+        break;
+      case 'FASADE_WIDTH':
+
+        capsuleWidth = fasadePosition.FASADE_WIDTH - figureParams.padding * 2 - figureParams.radius;
+        break;
+      default:
+
+        capsuleWidth = parseInt(figureParams.length)
+    }
+
+    // if (figureParams.pattern) {
+    //   if (figureParams.pattern.rotation) {
+    //     capsuleWidth = (((capsuleWidth * 0.5) / Math.sin(figureParams.pattern.rotation.z)) * 2)
+    //   }
+    // }
+
+    if (figureParams.percent) {
+      capsuleWidth *= figureParams.percent
+    }
+
+    const geometry = new THREE.CapsuleGeometry(figureParams.radius, capsuleWidth, figureParams.capSegments, figureParams.radialSegments);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.1 });
+    const capsule = new THREE.Mesh(geometry, material)
+
+    const box = new THREE.Box3().setFromObject(capsule)
+    const vec = new THREE.Vector3();
+    const size = box.getSize(vec);
+
+    let position = { x: 0, y: 0, z: 0 }
+
+    if (figureParams.position) {
+
+      const { x, y, z } = figureParams.position;
+
+      if (x) {
+        switch (x) {
+          case 'center':
+            position.x = 0
+            capsule.rotateY(Math.PI)
+            break;
+          case 'right':
+            position.x = -fasadePosition.FASADE_WIDTH + (fasadePosition.FASADE_WIDTH * 0.5 + figureParams.radius * 2)
+            break;
+          case 'left':
+            position.x = fasadePosition.FASADE_WIDTH - (fasadePosition.FASADE_WIDTH * 0.5 + figureParams.radius * 2)
+            // capsule.rotateY(Math.PI)
+            break;
+          default:
+            position.x = x
+        }
+      }
+
+      if (y) {
+        switch (y) {
+          case 'center':
+            position.y = fasadePosition.FASADE_HEIGHT * 0.5;
+            break;
+          case 'bottom':
+            position.y = -fasadePosition.FASADE_HEIGHT * 0.5
+            break;
+          case 'top':
+            position.y = fasadePosition.FASADE_HEIGHT
+            break;
+          default:
+            position.y = y
+            break;
+        }
+      }
+
+      if (z) {
+        switch (z) {
+          case 'center':
+            position.z = -fasadePosition.FASADE_DEPTH;
+            break;
+          default:
+            position.z = z
+        }
+      }
+
+    }
+
+    switch (typeof figureParams.rotation) {
+      case 'object':
+        if (figureParams.rotation.x) {
+
+          capsule.rotation.x = figureParams.rotation.x
+        }
+        if (figureParams.rotation.y) {
+
+          capsule.rotation.y = figureParams.rotation.y
+        }
+        if (figureParams.rotation.z) {
+
+          capsule.rotation.z = figureParams.rotation.z
+        }
+      case undefined:
+        break
+    }
+
+    capsule.position.x = position.x
+    capsule.position.y = position.y
+    capsule.position.z = position.z
+
+    if (figureParams.offsetX) {
+      capsule.position.x += figureParams.offsetX
+    }
+
+    if (figureParams.offsetY) {
+      capsule.position.y += figureParams.offsetY
+    }
+
+    capsule.position.z += fasadePosition.FASADE_DEPTH + 4
+
+    capsule.userData.fasadePosition = fasadePosition
+
+    capsule.userData.startSize = size
+
+
+    return capsule;
+  }
+
+  private hendlesCreate(fasadePosition, millingData, object) {
 
     let shape = new THREE.Shape();
     let c = Math.PI / 180;
@@ -189,43 +447,128 @@ export class MillingBuilder {
     return shapeMesh
   }
 
-  private extractShape(fasadePosition, figure) {
+  private extractShape(fasadePosition, data) {
 
-    const figureParams = figure.figureParams.find(({ condition }) => {
-      return this.matchesCondition(fasadePosition, condition)
-    })
+    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition
 
-    if (!figureParams) return null;
+    let width = FASADE_WIDTH
+    // const height = FASADE_HEIGHT * 0.60
+    let height = FASADE_HEIGHT
 
-    const shape = this.parseSVG(
-      {
-        svgStr: figureParams.figure.svg,
-        width: fasadePosition.FASADE_WIDTH / 2 + (figureParams.figure.widthOffset || 0),
-        height: fasadePosition.FASADE_HEIGHT / 2 + (figureParams.figure.heightOffset || 0),
-        radius: figureParams.figure.radius
-      }
-    );
 
-    const holes = this.parseSVG(
-      {
-        svgStr: figureParams.hole.svg,
-        width: fasadePosition.FASADE_WIDTH / 2 + (figureParams.hole.widthOffset || 0),
-        height: fasadePosition.FASADE_HEIGHT / 2 + (figureParams.hole.heightOffset || 0),
-        isHole: true
-      }
-    );
+    switch (data.type) {
 
-    holes.forEach(hole => shape.holes.push(...hole.toShapes()));
+      case 'capsule':
 
-    let boolParams = figureParams.figure.boolParams
+        let figureParams = this.matchesCondition(fasadePosition, data.capsuleParams.condition)
 
-    if (boolParams) {
+        if (!figureParams) return
 
-      figure.extrudeSettings.depth = fasadePosition[boolParams.depth.size] - boolParams.depth.offset * 2
+        const params = data.capsuleParams;
+        params.type = data.type
+
+        return params;
+
+      case 'svg':
+
+        let svgParams = data.figureParams.map(item => {
+
+          // console.log(item, '--ITEM')
+
+          let figureParams = this.matchesCondition(fasadePosition, item.condition)
+
+          if (!figureParams) return null;
+
+          const { figure, hole, inpost } = item
+
+          const { boolParams, pattern, position, rotation, pading } = figure
+
+
+          if (inpost) {
+            let { inpostOffset = 0 } = position;
+            switch (inpost) {
+              case "top":
+                height = FASADE_HEIGHT * 0.6 - inpostOffset * 0.5
+                break;
+              case "bottom":
+                height = FASADE_HEIGHT * 0.4 - inpostOffset * 0.5
+                break;
+
+            }
+          }
+
+          const shape = this.parseSVG(
+            {
+              svgStr: figure.svg,
+              width: width * 0.5 + (figure.widthOffset || 0),
+              height: height * 0.5 + (figure.heightOffset || 0),
+              radius: figure.radius
+            }
+          );
+
+          if (hole.svg.length > 0) {
+
+            const holes = this.parseSVG(
+              {
+                svgStr: hole.svg,
+                width: width * 0.5 + (hole.widthOffset || 0),
+                height: height * 0.5 + (hole.heightOffset || 0),
+                radius: figure.radius,
+                isHole: true
+              }
+            );
+
+            // console.log(holes, "HOLES")
+
+            holes.forEach((hole, key) => {
+              shape[key].userData.holes = [...hole.toShapes()]
+              return
+            });
+
+          }
+
+          if (boolParams) {
+
+            let { depth } = boolParams
+
+            if (boolParams?.type === 'rotate' && pattern) {
+              data.extrudeSettings.depth = (((width * 0.5) / Math.sin(pattern.rotation.y)) * 2)
+            }
+            else {
+
+              let extrudeSize = depth.size === 'FASADE_HEIGHT' ? height : depth.size === 'FASADE_WIDTH' ? width : 0
+
+              data.extrudeSettings.depth = extrudeSize + depth.offset * 2 ||
+                depth.size + depth.offset * 2 ||
+                0
+            }
+
+          }
+
+          if (pattern) {
+            data.extrudeSettings.depth *= pattern.multiply
+          }
+
+          return {
+            type: data.type,
+            lib: data.lib,
+            shape,
+            extrudeSettings: data.extrudeSettings,
+            topPosition: figure.topPosition,
+            inpost,
+            boolParams,
+            pattern,
+            position,
+            rotation,
+            pading
+          };
+
+        })
+
+        return svgParams
 
     }
 
-    return { shape, extrudeSettings: figure.extrudeSettings, topPosition: figureParams.figure.topPosition, boolParams, pattern: figureParams.figure.pattern };
   }
 
   private matchesCondition({ FASADE_WIDTH, FASADE_HEIGHT }, { width, height }) {
@@ -238,23 +581,31 @@ export class MillingBuilder {
 
   private parseSVG({ svgStr, width, height, radius, isHole = false }: { svgStr: string, width: number, height: number, radius?: number, isHole?: boolean }): THREE.Shape | THREE.Shape[] {
     // Заменяем wth, hgh и radius на реальные значения
+
     svgStr = svgStr.replaceAll("wth", width.toString()).replaceAll("hgh", height.toString());
     if (radius) {
       svgStr = svgStr.replaceAll("radius", radius.toString());
     }
 
     // Обрабатываем выражения в скобках, суммируя их
-    svgStr = svgStr.replace(/\(([^)]+)\)/g, (match, expr) => {
-      console.log(expr)
 
-      // Суммируем значения, разделенные запятыми, в выражении внутри скобок
-      const sum = eval(expr)
+    while (/\(([^()]+)\)/g.test(svgStr)) {
+      svgStr = svgStr.replace(/\(([^()]+)\)/g, (match, expr) => {
+        // console.log("Внутреннее выражение:", expr);
 
-      console.log(sum)
-      return sum.toString(); // Возвращаем вычисленное значение
-    });
+        // Вычисляем значение текущего выражения
+        // const computedValue = Math.floor(Math.abs(eval(expr))); // Обрабатываем выражение
+
+        const computedValue = Math.floor(Math.abs(this.calculate(expr)))
+
+        // console.log("Вычисленное значение:", computedValue);
+
+        return computedValue.toString(); // Заменяем выражение на результат
+      });
+    }
 
     // Дополнительная обработка для вычислений без скобок (если нужно)
+
     svgStr = svgStr
       .split(/, | /)
       .map(item => item.includes(",") ? item.split(",").reduce((sum, val) => sum + parseFloat(val), 0) : item)
@@ -263,145 +614,38 @@ export class MillingBuilder {
     console.log(svgStr, 'svgStr после вычислений');
 
     // Парсим SVG через SVGLoader
-    const paths = this.svgLoader.parse(svgStr).paths;
-    return isHole ? paths : paths[0]?.toShapes()[0];
+    const paths = this.svgLoader.parse(svgStr).paths
+
+    return paths;
+
   }
 
-  assignUVs(bufferGeometry) {
-    // Проверяем наличие атрибута позиции
-    const position = bufferGeometry.attributes.position;
-    if (!position) {
-      console.warn('Geometry does not have position attribute.');
-      return;
-    }
+  private processMesh(mesh, brush_1, evaluator, csgStartGeometry, lib) {
+    switch (lib) {
+      case 'bvh': {
+        const brush = new Brush(mesh.geometry, mesh.material);
+        brush.position.copy(mesh.position);
+        brush.updateMatrixWorld();
+        this.result = evaluator.evaluate(brush_1, brush, SUBTRACTION);
+        brush_1 = new Brush(this.result.geometry);
 
-    // Получаем массив индексов или создаем его, если он отсутствует
-    const indices = bufferGeometry.index?.array || Array.from({ length: position.count }, (_, i) => i);
-    const positionsArray = position.array; // Кэшируем массив позиций для оптимизации
-
-    const uvs = [];
-
-    // Кэш для уже вычисленных UV-координат
-    const uvCache = new Map();
-
-    // Вспомогательная функция для получения UV из кэша или вычисления
-    const getOrCalculateUV = (index) => {
-      if (!uvCache.has(index)) {
-        const uv = this.calculateUV(positionsArray, index);
-        uvCache.set(index, uv);
+        break;
       }
-      return uvCache.get(index);
-    };
-
-    // Обрабатываем треугольники
-    for (let i = 0; i < indices.length; i += 3) {
-      const [a, b, c] = [indices[i], indices[i + 1], indices[i + 2]].map(getOrCalculateUV);
-      uvs.push(...a, ...b, ...c);
+      default:
+        csgStartGeometry = csgStartGeometry.subtract(CSG.fromMesh(mesh));
+        break;
     }
-
-    // Устанавливаем UV-координаты как атрибут
-    bufferGeometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    return { brush_1, csgStartGeometry };
   }
 
-  private calculateUV(positions, index) {
-    const [x, y, z] = [positions[index * 3], positions[index * 3 + 1], positions[index * 3 + 2]];
-    return [x, z];
-  }
 
-  applyPlanarMappingToFaces(bufferGeometry) {
-    const position = bufferGeometry.attributes.position;
-    const uvs = [];
-    const positionsArray = position.array;
-    const faces = bufferGeometry.index.array; // Индексы треугольников
-
-    // Создаем вспомогательную переменную для нормалей
-    const normal = new THREE.Vector3();
-
-    // Функция для вычисления UV-координат в зависимости от нормали
-    const computeUV = (v, axis1, axis2) => {
-      // Нормализуем координаты
-      return new THREE.Vector2((v[axis1] + 1) / 2, (v[axis2] + 1) / 2);
-    };
-
-    // Перебираем все треугольники
-    for (let i = 0; i < faces.length; i += 3) {
-      const [a, b, c] = [faces[i], faces[i + 1], faces[i + 2]];
-
-      // Получаем позиции каждой вершины
-      const va = new THREE.Vector3().fromBufferAttribute(position, a);
-      const vb = new THREE.Vector3().fromBufferAttribute(position, b);
-      const vc = new THREE.Vector3().fromBufferAttribute(position, c);
-
-      // Рассчитываем нормаль этой грани
-      new THREE.Triangle(va, vb, vc).getNormal(normal);
-
-      // Вычисляем UV-координаты в зависимости от нормали
-      let uvA, uvB, uvC;
-      if (Math.abs(normal.x) > Math.abs(normal.y) && Math.abs(normal.x) > Math.abs(normal.z)) {
-        // Нормаль по оси X
-        uvA = computeUV(va, 'y', 'z');
-        uvB = computeUV(vb, 'y', 'z');
-        uvC = computeUV(vc, 'y', 'z');
-      } else if (Math.abs(normal.y) > Math.abs(normal.x) && Math.abs(normal.y) > Math.abs(normal.z)) {
-        // Нормаль по оси Y
-        uvA = computeUV(va, 'x', 'z');
-        uvB = computeUV(vb, 'x', 'z');
-        uvC = computeUV(vc, 'x', 'z');
-      } else {
-        // Нормаль по оси Z
-        uvA = computeUV(va, 'x', 'y');
-        uvB = computeUV(vb, 'x', 'y');
-        uvC = computeUV(vc, 'x', 'y');
-      }
-
-      // Добавляем UV-координаты
-      uvs.push(...uvA.toArray(), ...uvB.toArray(), ...uvC.toArray());
+  calculate(expression) {
+    try {
+      const func = new Function("return " + expression);
+      return func();
+    } catch (error) {
+      return "Недопустимое выражение!";
     }
-
-    // Устанавливаем UV-координаты
-    bufferGeometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
-  }
-
-  /** Для паттернов */
-
-  mergePattern({ geometry, count, offsetX, offsetY, offsetZ }) {
-    const geometries = [];
-
-    // Создание и смещение копий
-    for (let i = 0; i <= count; i++) {
-      const cloneGeometry = geometry.clone();
-
-      // Создаем матрицу смещения
-      const offsetMatrix = new THREE.Matrix4();
-      offsetMatrix.makeTranslation(i * offsetX, 0, 0);
-
-      // Применяем смещение
-      cloneGeometry.applyMatrix4(offsetMatrix);
-
-      // Добавляем в массив
-      geometries.push(cloneGeometry);
-    }
-
-    // Объединяем все геометрии
-    const mergedGeometry = mergeGeometries(geometries);
-
-    // Создаем материал и mesh
-    return mergedGeometry
-  }
-
-  calculateFit({ containerLength, itemLength, gap = 0 }) {
-
-    if (itemLength + gap <= 0 || containerLength <= 0) {
-      return 0; // Невозможно разместить фигуры
-    }
-
-    // Полезная длина (за исключением последнего отступа)
-    const totalItemLength = itemLength + gap;
-
-    // Количество элементов, которые помещаются в контейнер
-    const count = Math.floor((containerLength + gap) / totalItemLength);
-
-    return count;
   }
 
 }

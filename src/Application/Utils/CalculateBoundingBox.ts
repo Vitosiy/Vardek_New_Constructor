@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import * as THREE from 'three';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 
@@ -62,12 +60,10 @@ export class OBBHelper {
 
     helper: THREE.Object3D | null = null
 
-
-
-    add(obb: OBB) {
+    add(obb: OBB, color:string = '#6385ff') {
 
         const geometry = new THREE.BoxGeometry(obb.halfSize.x * 2, obb.halfSize.y * 2, obb.halfSize.z * 2);
-        const material = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+        const material = new THREE.MeshBasicMaterial({ color, wireframe: true });
         this.helper = new THREE.Mesh(geometry, material);
         this.helper.userData.obb = obb
 
@@ -88,7 +84,6 @@ export class OBBHelper {
     }
 
     update() {
-        console.log('sssss', this.helper!.userData.obb.center)
         this.helper!.position.copy(this.helper!.userData.obb.center);
     }
 

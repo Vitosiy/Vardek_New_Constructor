@@ -156,7 +156,7 @@ function roundToPrecision(value: number, precision: number = 15): number {
  * @see https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
  **/
 function getIntersectionPoint(
-  line0: Vector2[], 
+  line0: Vector2[],
   line1: Vector2[]
 ): Vector2 {
   const x1 = line0[0].x;
@@ -187,7 +187,7 @@ function getIntersectionPoint(
 function rotatePoint(point: Vector2, center: Vector2, angleDegrees: number): Vector2 {
 
   const angle = (angleDegrees * Math.PI) / 180;
-  
+
   const cosA = Math.cos(angle);
   const sinA = Math.sin(angle);
 
@@ -201,8 +201,8 @@ function rotatePoint(point: Vector2, center: Vector2, angleDegrees: number): Vec
 
   // Возвращаем точку в исходную систему координат
   return {
-      x: rotatedX + center.x,
-      y: rotatedY + center.y,
+    x: rotatedX + center.x,
+    y: rotatedY + center.y,
   };
 }
 
@@ -294,11 +294,17 @@ function getCenterOfPoints(points: Vector2[]): Vector2 {
   center.x /= points.length;
   center.y /= points.length;
 
-  return center;
+  let xyzConverted = {
+    x: center.x,
+    z: center.y,
+    y: 1500
+  }
+
+  return xyzConverted
 }
 
 export {
-  
+
   calculateMouseDistanceByAxes,
   getRectPoints,
   getDistanceBetweenVectors,

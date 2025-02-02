@@ -1,7 +1,8 @@
+
+//@ts-nocheck
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
-
 
 import { RoomManager } from "../Room/RoomManager"
 import { MeshEvents } from "../Meshes/Utils/Events"
@@ -27,14 +28,15 @@ export class World {
     eventsStore: ReturnType<typeof useEventBus>
 
     trafficManager: TrafficManager | null
-    room: any
+    room: THREETypes.TRoomManager | null = null
     lights: AppLights | any
     enviroment: any
-    meshEvents: MeshEvents | null = null
+    // meshEvents: MeshEvents | null = null
 
     private onCreateRoom: () => void;
     private onSaveRoom: () => void;
     private onLoadRoom: (data: number) => void;
+    private onFirstCreate: () => void;
 
     constructor(root: THREETypes.TApplication) {
 
@@ -51,44 +53,46 @@ export class World {
 
         this.lights = new AppLights(root)
 
-        this.room = null;
-
-        this.resources.on('cubeTextureLoaded', () => {
-
-            this.enviroment = new Environment(this.root)
-
-            // console.log(this.startData.getStartRoomData)
-
-            // this.setRoom()
-
-            this.scene.add(new THREE.AxesHelper(2000))
-            this.room = new RoomManager(this.root, this.lights);
-            this.room.update()
-
-            this.lights.setLight(this.room._wallsGroupSize, 3)
-
-            this.trafficManager = new TrafficManager(root, this.room)
-
-            this.vueEvents()
-        })
+        // this.room = null;
 
         this.onCreateRoom = this.createRoom.bind(this)
         this.onSaveRoom = this.saveRoom.bind(this)
         this.onLoadRoom = this.loadRoom.bind(this)
+
+        // this.firstCreate()
+
+
+        this.scene.add(new THREE.AxesHelper(2000))
+        this.room = new RoomManager(this.root, this.lights);
+        this.room.update()
+
+        this.lights.setLight(this.room._wallsGroupSize, 2)
+        this.trafficManager = new TrafficManager(this.root, this.room)
+        this.vueEvents()
+
+        // this.meshEvents = new MeshEvents(root)
+
+        // this.resources.on('cubeTextureLoaded', ()=>{
+        //     this.enviroment = new Environment(this.root)
+        // })
+
+    }
+
+    firstCreate() {
+        // this.enviroment = new Environment(this.root)
+        this.scene.add(new THREE.AxesHelper(2000))
+        this.room = new RoomManager(this.root, this.lights);
+        this.room.update()
+
+        this.lights.setLight(this.room._wallsGroupSize, 2)
+        this.trafficManager = new TrafficManager(this.root, this.room)
+        this.vueEvents()
     }
 
     setRoom() {
 
         this.scene.add(new THREE.AxesHelper(2000))
-        // this.room = new RoomManager(this.root, this.lights);
         this.room.loadRoom(this.lights)
-
-
-        // this.room.on('A:RoomLoaded',()=>{
-        //     console.log('EEEEEEEEEEEE')
-        //     this.room.update()
-        // })
-
         this.room.update()
         this.room.updateWallMaterial(this.room.wallTexture)
     }
@@ -97,13 +101,9 @@ export class World {
 
         this.roomsStore.clearTempRoomSize();
         this.roomsStore.clearCurrentRoomId();
-
-        // this.room.removeVueEvents();
-        // this.room = null;
         this.deepDispose.clearScene(this.scene);
-
         this.setRoom();
-        this.lights.setLight(this.room._wallsGroupSize, 3)
+        this.lights.setLight(this.room._wallsGroupSize, 2)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room)
@@ -145,25 +145,15 @@ export class World {
         /** Добавляем ID комнаты в хранилище */
         this.roomsStore.setCurrentRoomId(roomId);
 
-        // this.room.removeVueEvents();
-        // this.room = null;
         this.deepDispose.clearScene(this.scene);
 
         this.setRoom();
-        this.lights.setLight(this.room._wallsGroupSize, 3)
+        this.lights.setLight(this.room._wallsGroupSize, 2)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room)
 
         }
-
-
-        // this.room.off('A:RoomLoaded',()=>{
-        //     console.log('EEEEEEEEEEEE')
-        // })
-
-
-        // console.log(this.roomsStore.getRooms)
     }
 
     vueEvents() {
@@ -184,14 +174,24 @@ export class World {
         this.eventsStore.on('A:Save', this.onSaveRoom)
         this.eventsStore.on('A:Load', this.onLoadRoom)
 
-
-        this.meshEvents = new MeshEvents(this.root)
-
     }
 
     removeVueEvents() {
+        // this.resources.off('cubeTextureLoaded', this.onFirstCreate);
         this.eventsStore.off('A:Create', this.onCreateRoom);
         this.eventsStore.off('A:Save', this.onSaveRoom)
         this.eventsStore.off('A:Load', this.onLoadRoom)
+        // this.meshEvents?.removeVueEvents()
+
+        this.room?.removeVueEvents();
+        this.trafficManager?.moveManager.dispose();
+        this.trafficManager?.removeVueEvents();
+        this.trafficManager?.dragAndDropManager.dispose();
+
+        this.lights = null
+        this.enviroment = null
+        this.room = null;
+        // this.meshEvents = null
+        this.trafficManager = null
     }
 }

@@ -1,4 +1,4 @@
-// @ts-nocheck 
+//@ts-nocheck
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
@@ -9,7 +9,7 @@ import { BuildProduct } from './BuildProduct'
 export class JsonBuilder {
 
     parent: BuildProduct
-    // resources: THREETypes.TResources
+    resources: THREETypes.TResources
 
     constructor(parent: BuildProduct) {
         this.parent = parent
@@ -18,10 +18,32 @@ export class JsonBuilder {
 
     createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
 
-        let json = data.json ? data.json : data
-        let group = new THREE.Object3D();
-        let obj: THREETypes.TObject = {};
+        // console.log(data, 'PARENT_data')
 
+        const json = data.json ? data.json : data
+        const group = new THREE.Object3D();
+        const obj: THREETypes.TObject = {};
+
+        // if (!Array.isArray(json.items)) {
+
+        //     console.log(parent_size,'PSZ')
+
+        //     let expdata = null
+        //     let modelData = null
+
+        //     let clone = JSON.parse(JSON.stringify(json.items))
+
+        //     expdata = this.parent.expressionsReplace(clone, {
+        //         "#FWIDTH#": parent_size.x,
+        //         "#FHEIGHT#": parent_size.y,
+        //         "#FDEPTH#": parent_size.z,
+        //     })
+
+        //     // console.log(expdata, 'Expdata')
+        //     json.items = Object.values(expdata)
+        // }
+
+        // console.log(json, Array.isArray(json.items), 'JSON')
 
         json.items.forEach((item: THREETypes.TObject, key: number) => {
             let material, geometry, textureUrl: string
@@ -92,7 +114,7 @@ export class JsonBuilder {
                         break;
                     case "PlaneGeometry":
                         geometry = this.createPlaneGeometry(item.geometry, parent_size)
-                            
+
                 }
                 obj[item.id] = new THREE.Mesh(geometry, material);
                 obj[item.id].receiveShadow = true;
@@ -106,14 +128,18 @@ export class JsonBuilder {
 
             if (item.position) {
                 obj[item.id].position.set(eval(item.position.x), eval(item.position.y), eval(item.position.z));
+                // obj[item.id].userData.position = obj[item.id].position
             }
             if (item.rotation) {
                 obj[item.id].rotation.set(eval(item.rotation.x), eval(item.rotation.y), eval(item.rotation.z));
+                // obj[item.id].userData.rotation = item.rotation
             }
 
             if (item.id === 'back') {
                 obj[item.id].position.y = 0
             }
+
+
 
             group.add(obj[item.id])
             group.applyMatrix4(group.matrixWorld)
@@ -134,7 +160,7 @@ export class JsonBuilder {
         return geometry
     }
 
-    createPlaneGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject){
+    createPlaneGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
         let geometry = new THREE.PlaneGeometry(
             parseInt(geometry_data.opt.x), parseInt(geometry_data.opt.y)
         )
@@ -188,16 +214,6 @@ export class JsonBuilder {
         // geometry!.computeBoundingBox();
         return geometry
     }
-
-    // getTexture(material: any, url: string) {
-    //     this.resources.startLoading(url, 'texture', (file) => {
-    //         if (file instanceof THREE.Texture) {
-    //             file.colorSpace = THREE.SRGBColorSpace
-    //             material.map = file
-    //             material.needsUpdate = true;
-    //         }
-    //     });
-    // }
 
     update(parent: BuildProduct) {
         this.parent = parent

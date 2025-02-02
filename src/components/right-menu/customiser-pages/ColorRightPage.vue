@@ -33,6 +33,8 @@ const showPalette = ref<boolean>(false);
 
 const paletteColorsData = ref<{ [key: string]: any }>({});
 
+const productData = ref<{ [key: string]: any }>({});
+
 /** Доступные модели фасадов для продукта */
 const productFasades = ref<{ [key: string]: any }>({});
 /**  Список типов FASADE для фасалдов модели */
@@ -47,6 +49,7 @@ const tabsList = ref<any[]>([]);
 const selectPalette = ref<any>(null);
 const selectGlass = ref<any>(null);
 const selectMilling = ref<any>(null);
+const selectWindow = ref<any>(null);
 
 /**------------------------------ */
 
@@ -56,6 +59,8 @@ onMounted(() => {
   productFasades.value = objectData?.PROPS.CONFIG.FASADE_PROPS;
 
   fasades.value = modelState.getCurrentModelFasadesData;
+
+  productData.value = { ...objectData?.PROPS };
 
   createTabList(productFasades.value);
 });
@@ -108,8 +113,13 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
   currentFasadeId.value = fasadeNdx;
   selectedFasade.value = data.ID;
 
-  modelState.createCurrentPaletteData(data.ID);
-  modelState.createCurrentMillingData(data.ID);
+  const productId = productData.value.PRODUCT;
+
+  console.log(data);
+
+  modelState.createCurrentPaletteData(data.ID, productId);
+  modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
+  modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
 
   eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
 };
@@ -130,6 +140,11 @@ const changeMilling = () => {
   });
 };
 
+/* Окна*/
+
+const changeWindow = (fasadeNdx) => {
+  eventBus.emit("A:ChangeWindow", { data: selectWindow.value, fasadeNdx });
+};
 </script>
 
 <template>
@@ -180,6 +195,29 @@ const changeMilling = () => {
       </select>
     </div>
 
+    <div
+      v-if="
+        Object.keys(modelState.getCurrentWindowsData).length > 0 &&
+        selectedFasade
+      "
+    >
+      <select
+        class="palette-textures--items"
+        id="palette"
+        v-model="selectWindow"
+        name="millig"
+        @change="changeWindow(fasad_ndx)"
+      >
+        <option
+          v-for="(window, key) in modelState.getCurrentWindowsData"
+          :key="window + key"
+          :value="window"
+        >
+          {{ window }}
+        </option>
+      </select>
+    </div>
+
     <defaultTab
       :tabs="tabsList"
       initialTab="Корпус"
@@ -190,7 +228,6 @@ const changeMilling = () => {
         :key="tab.name"
         v-slot:[tab.name]
       >
-        <!-- <div>{{ tab.contant }}</div> -->
 
         <div class="customiser-section">
           <p class="customiser-section__title">{{ tab.title }}</p>
@@ -204,7 +241,7 @@ const changeMilling = () => {
                 modelValue=""
               />
 
-              <!-- Текстура объекта -->
+
 
               <div class="item-group">
                 <div v-if="tab.name == 'Корпус'">

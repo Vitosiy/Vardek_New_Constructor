@@ -1,5 +1,4 @@
 //@ts-nocheck
-
 import * as THREE from 'three';
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
@@ -16,7 +15,7 @@ import { useSceneState } from '@/store/appliction/useSceneState';
 import SetObject from '../Utils/SetObject';
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { Room } from './Room';
-import CreateShape from '../2DScene/CreateShape';
+// import CreateShape from '../2DScene/CreateShape';
 
 
 export class RoomManager extends Room {
@@ -25,9 +24,9 @@ export class RoomManager extends Room {
     private roomState: ReturnType<typeof useRoomState> = useRoomState()
     private modelState: ReturnType<typeof useModelState> = useModelState()
 
-    createShape: CreateShape
+    // createShape: CreateShape
     setObject: SetObject
-    geometryBuilder: GeometryBuilder
+    geometryBuilder: GeometryBuilder | null
     contant: { [key: string]: any } = {};
     heightClamp: number = useSceneState().getStartHeightClamp
     heightLine: THREE.Object3D[] = []
@@ -37,9 +36,9 @@ export class RoomManager extends Room {
         super(root, light)
 
         this.scene = root.scene
-        this.setObject = new SetObject()
-        this.geometryBuilder = new GeometryBuilder(root)
-        this.createShape = new CreateShape(root.canvas, root.camera.instance as THREE.Camera, root.scene, root)
+        this.setObject = root.setObject
+        this.geometryBuilder = root.geometryBuilder
+        // this.createShape = new CreateShape(root.canvas, root.camera.instance as THREE.Camera, root.scene, root)
 
         this.addVueEvents()
     }
@@ -106,13 +105,6 @@ export class RoomManager extends Room {
 
         const position = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
 
-        // console.log(object.userData.obb.center, 'obb.center')
-        // console.log(targetPosition, 'targetPosition')
-
-        // const roomBounds = this.getRoomBounds();
-        // const smallBoxSize = objectBox.getSize(new THREE.Vector3());
-        // let objectOBB = object.userData.obb
-
         const objectPos = this.roomInterseck({ object, wall, position, targetRotation, obb })
 
         return {
@@ -121,34 +113,6 @@ export class RoomManager extends Room {
             quaternion: object.quaternion
         }
 
-        // const heightMagnetThreshold = smallBoxSize.y / 2;
-
-        // const adjustedPosition = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
-
-        // const closestWall = this.getClosestWallDistance(adjustedPosition);
-
-        // // Если объект достаточно близко к стене, примагничиваем его
-        // if (closestWall.distance <= maxDistance) {
-        //     const snappedPosition = this.snapToWall(adjustedPosition, closestWall.wall as THREE.Box3, smallBoxSize);
-        //     const clampedPosition = this.clampPositionToWall(snappedPosition, roomBounds, objectBox, object, closestWall.rotation);
-
-        //     return clampedPosition;
-        // }
-        // else {
-
-        //     const clampedPosition = this.clampPositionToWall(adjustedPosition, roomBounds, objectBox, object, closestWall.rotation);
-
-        //     let rotation = Object.keys(object.userData.PROPS.CONFIG.ROTATION).length > 0 ? object.userData.PROPS.CONFIG.ROTATION : new THREE.Euler(0, 0, 0, 'XYZ');
-        //     let quaternion = closestWall.quaternion ?? new THREE.Quaternion()
-
-        //     const data = {
-        //         position: clampedPosition.position,
-        //         rotation,
-        //         quaternion
-        //     };
-
-        //     return data
-        // }
     }
 
     private roomInterseck({ object, wall, position, targetRotation }: { object: THREE.Object3D; wall: THREE.Object3D; position: THREE.Vector3, targetRotation?: THREE.Euler }): { position: THREE.Vector3; rotation: THREE.Euler } {
@@ -166,6 +130,7 @@ export class RoomManager extends Room {
         const obb = new OBB().fromBox3(aabb);
 
         let minDistance = Infinity;
+        let curWall = null;
 
         /** Для загрузки контента из стора при запуске приложения */
 
@@ -193,24 +158,39 @@ export class RoomManager extends Room {
             switch (wall.userData.name) {
                 case "floor":
 
-                    this._roomTotal.forEach(singleWall => {
+                    for (let wallNdx in this._roomTotal) {
 
+                        let singleWall = this._roomTotal[wallNdx]
                         const wallOBB = singleWall.userData.obb;
-                        if (!wallOBB || singleWall.userData.name === "floor") return;
+                        if (!wallOBB || singleWall.userData.name === "floor") break
 
-                        const wallNormal = singleWall.userData.plane.normal.clone().normalize();
-                        const distanceToPlane = Math.abs(wallNormal.dot(adjustPosition) + singleWall.userData.plane.constant);
+                        if (obb.intersectsOBB(wallOBB)) {
 
-                        if (obb.intersectsOBB(wallOBB) && distanceToPlane < minDistance) {
+                            const wallNormal = singleWall.userData.plane.normal.clone().normalize();
+                            const distanceToPlane = Math.abs(wallNormal.dot(adjustPosition) + singleWall.userData.plane.constant);
+                            const correction = wallNormal.clone().multiplyScalar(distanceToPlane);
 
-                            minDistance = distanceToPlane;
+                            if (distanceToPlane <= object.userData.trueDepth * 2) {
+                                adjustPosition.sub(correction);
+                            }
 
-                            let correctData = this.getClampedPosition({ position: adjustPosition, rotation, wall: singleWall, object, obb })
+                            // let g = new THREE.BoxGeometry(20, 20, 20)
+                            // let c = new THREE.MeshBasicMaterial({ color: 0xff00ff })
+                            // let m = new THREE.Mesh(g, c)
+                            // m.position.copy(adjustPosition)
+                            // this.scene.add(m)
+
+                            // console.log(singleWall.userData.name)
+
+                            let correctData = this.getClampedPosition({ position: adjustPosition, rotation, wall: singleWall, object, obb, floor: true })
 
                             adjustPosition = correctData.correctPosition
                             rotation.copy(correctData.correctRotation)
+
+                            break
                         }
-                    });
+
+                    }
 
                     break
                 default:
@@ -228,10 +208,12 @@ export class RoomManager extends Room {
 
         /** Проверка на положение объекта только на полу */
 
-        adjustPosition.y = object.userData.modelVector == "element_down" ? size.y - 0.001 : Math.max(
-            (size.y - 0.001),
-            Math.min(position.y, roomBound.max.y - (size.y - 0.001))
-        );
+        // adjustPosition.y = object.userData.modelVector == "element_down" ? size.y - 0.001 : Math.max(
+        //     (size.y - 0.001),
+        //     Math.min(position.y, roomBound.max.y - (size.y - 0.001))
+        // );
+
+        adjustPosition.y = Math.max((size.y - 0.001), Math.min(position.y, roomBound.max.y - (size.y - 0.001)))
 
         // Обновляем конфигурацию объекта
         object.userData.PROPS.CONFIG = { ...object.userData.PROPS.CONFIG, ROTATION: rotation, POSITION: adjustPosition };
@@ -239,25 +221,22 @@ export class RoomManager extends Room {
         return { position: adjustPosition, rotation };
     }
 
-    private getClampedPosition({ position, rotation, wall, object, obb }: { position: THREE.Vector3, rotation: THREE.Euler, wall: THREE.Mesh, object: THREE.Object3D, obb: OBB }) {
+    private getClampedPosition({ position, rotation, wall, object, obb, floor }: { position: THREE.Vector3, rotation: THREE.Euler, wall: THREE.Mesh, object: THREE.Object3D, obb: OBB, floor?: boolean }) {
 
-        const correctPosition = position.clone()
+        let correctPosition = position.clone()
         const correctRotation = rotation.clone()
         const wallCoordinates = wall.userData.coordinates
 
         if (!wallCoordinates) {
 
-            // console.log('DEEE', object.userData)
-
             let correct = object.userData.PROPS.CONFIG.ROTATION.clone()
-            correct.y  += Math.PI / 2;
+            correct.y += Math.PI / 2;
 
             return {
                 correctPosition: object.userData.PROPS.CONFIG.POSITION,
                 correctRotation: object.userData.PROPS.CONFIG.ROTATION,
             }
         }
-
 
         const wallNormal = wall.userData.plane.normal.clone().normalize();
         const distanceToPlane = wall.userData.plane.distanceToPoint(correctPosition);
@@ -286,13 +265,22 @@ export class RoomManager extends Room {
         // console.log(distanceToPlane, 'distanceToPlane')
 
         if (distanceToExtrene === 0) return {
+
             correctPosition: object.userData.PROPS.CONFIG.POSITION,
             correctRotation: object.userData.PROPS.CONFIG.ROTATION,
         }
 
         if (distanceToExtrene <= object.userData.trueLength) {
-            const correction = vectorToCenter.clone().multiplyScalar(object.userData.trueLength - distanceToExtrene);
-            correctPosition.add(correction);
+            let correction
+            if (!floor) {
+                correction = vectorToCenter.clone().multiplyScalar(object.userData.trueLength - distanceToExtrene);
+                correctPosition.add(correction);
+            }
+            else {
+                correction = vectorToCenter.clone().multiplyScalar(object.userData.trueLength);
+                correctPosition = trueExtremePoint.clone().add(correction)
+            }
+
         }
 
         if (distanceToPlane <= correctSize) {
@@ -300,7 +288,7 @@ export class RoomManager extends Room {
             correctPosition.add(correction);
         }
 
-        if (wall.userData.name !== "floor") {
+        if (wall.userData.name != "floor") {
             !wall.rotation.equals(correctRotation) ? correctRotation.copy(wall.rotation) : ''
         }
 
@@ -352,62 +340,6 @@ export class RoomManager extends Room {
     //     return roomBox;
     // }
 
-    private clampPositionToWall(position: THREE.Vector3, roomBox: THREE.Box3, objectBox: THREE.Box3, object: THREE.Object3D, rotate?: THREE.Vector3 | THREE.Euler | null, quaternion?: THREE.Quaternion): THREEInterfases.IClampPosition {
-        const bigBox = roomBox;
-
-        // Получаем размеры маленького бокса
-        const smallBoxSize = new THREE.Vector3();
-        const boundingBoxCenter = new THREE.Vector3();
-        const smallBox = objectBox;
-        smallBox.getSize(smallBoxSize);
-        smallBox.getCenter(boundingBoxCenter);
-
-
-        // Ограничиваем координаты позиции по границам большого бокса
-        let clampedX = Math.max(bigBox.min.x + smallBoxSize.x / 2, Math.min(position.x, bigBox.max.x - smallBoxSize.x / 2));
-        let clampedY = Math.max(0 + smallBoxSize.y / 2, Math.min(position.y, bigBox.max.y - smallBoxSize.y / 2));
-
-        let clampedZ = Math.max(bigBox.min.z + smallBoxSize.z / 2, Math.min(position.z, bigBox.max.z - smallBoxSize.z / 2));
-
-        // if (object.userData.PROPS.CONFIG.ORIGIN) {
-        //     clampedY -= smallBoxSize.y / 2
-        // }
-
-        return {
-            position: new THREE.Vector3(clampedX, clampedY, clampedZ),
-            rotation: rotate as THREE.Vector3 | THREE.Euler | null,
-            quaternion: quaternion as THREE.Quaternion
-        };
-    }
-
-    private getClosestWallDistance(position: THREE.Vector3) {
-        let closestDistance = Infinity;
-        let closestWall = null;
-        let rotation = null;
-        let quaternion = null
-
-
-        // Проверяем каждую стену и вычисляем расстояние до неё
-        for (const wall of this._roomWalls) {
-            const wallBox = new THREE.Box3().setFromObject(wall);
-
-            // Вычисляем расстояние от позиции до ближайшей точки стены
-            const distance = wallBox.distanceToPoint(position);
-
-
-            // Обновляем ближайшую стену
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestWall = wallBox;
-                rotation = wall.rotation.clone();
-                quaternion = new THREE.Quaternion();
-                quaternion.setFromEuler(wall.rotation).normalize()
-            }
-        }
-
-        return { distance: closestDistance, wall: closestWall, rotation, quaternion };
-    }
-
     private snapToHeight(
         position: THREE.Vector3,
         objectBox: THREE.Box3,
@@ -444,26 +376,6 @@ export class RoomManager extends Room {
     }
 
     /** Функция примагничивания объекта к стене */
-
-    private snapToWall(position: THREE.Vector3, wallBox: THREE.Box3, objectSize: THREE.Vector3,): THREE.Vector3 {
-        const snappedPosition = position.clone();
-
-        // Примагничиваем по X
-        if (position.x < wallBox.min.x) {
-            snappedPosition.x = wallBox.min.x - objectSize.x / 2;
-        } else if (position.x > wallBox.max.x) {
-            snappedPosition.x = wallBox.max.x + objectSize.x / 2;
-        }
-
-        // Примагничиваем по Z
-        if (position.z < wallBox.min.z) {
-            snappedPosition.z = wallBox.min.z - objectSize.z / 2;
-        } else if (position.z > wallBox.max.z) {
-            snappedPosition.z = wallBox.max.z + objectSize.z / 2;
-        }
-
-        return snappedPosition;
-    }
 
     drawSnapHeightLines(snapHeight: number): void {
         this.disposeSnapHeightLines()
@@ -579,7 +491,6 @@ export class RoomManager extends Room {
         if (this.roomState.getCurrentRoomId?.content) {
 
             let data = this.roomState.getCurrentRoomId.content
-            console.log(data, 'data')
 
             data.forEach(item => {
 
@@ -588,8 +499,6 @@ export class RoomManager extends Room {
                 const rotation = model.rotation
                 const loadData = model.data ?? ''
                 const size = model.size ?? ''
-
-                // console.log(size, 'SIZE!!')
 
                 this.geometryBuilder.craeteModel(this.modelState.getModels[model.id] as THREEInterfases.IModelsData, (object) => {
                     this.setObject.create({ scene: this.scene, config: this.modelState.getModels[model.id], object, rotate: rotation, point, roomManager: this })
@@ -652,7 +561,12 @@ export class RoomManager extends Room {
             this.eventsStore.off('A:Height-clamp', this.boundHeightClampValue);
             this.heightClamp = useSceneState().getStartHeightClamp;
         }
+
+        this.geometryBuilder = null
+        this.setObject = null
+        this.geometryBuilder = null
     }
+
     /**------------------------------------------------------------ */
     findClosestPoint(middlePoint, point1, point2) {
         // Вычисляем расстояния

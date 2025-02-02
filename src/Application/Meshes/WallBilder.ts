@@ -45,7 +45,7 @@ export class WallBuilder {
             mesh.geometry.boundingBox as THREE.Box3
         )
 
-        mesh.userData.plane = this.convertPlaneGeometryToPlane(mesh)
+        mesh.userData.plane = this.convertPlaneGeometryToPlane(mesh);
 
         /** Получаем перпендикулярный вектор нормали */
 

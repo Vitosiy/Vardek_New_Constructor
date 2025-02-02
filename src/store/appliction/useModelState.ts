@@ -1,5 +1,4 @@
-// @ts-nocheck 31
-
+//@ts-nocheck
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
@@ -57,12 +56,13 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_SECTION = _APP.FASADE_SECTION;
     const _FASADE_POSITION = _APP.FASADE_POSITION;
     const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
-
+    const _PRODUCTS = _APP.CATALOG.PRODUCTS
     const _PALETTE = _APP.PALETTE
     const _MILLING = _APP.MILLING
+    const _SHOWCASE = _APP.SHOWCASE
 
 
-    const models = ref<{ [key: string]: {} }>(_APP.CATALOG.PRODUCTS)
+    const models = ref<{ [key: string]: {} }>(_PRODUCTS)
 
     const currentModel = ref<THREE.Object3D | null>(null)
 
@@ -71,6 +71,8 @@ export const useModelState = defineStore('ModelState', () => {
     const currentPaletteData = ref<{ [key: string]: IPalette }>({})
 
     const currentMillingData = ref<IMilling[]>([])
+
+    const currentWindowsData = ref<number[]>([])
 
     const setCurrentModel = (object: THREE.Object3D | null) => {
         currentModel.value = object
@@ -85,7 +87,7 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Работа с фасадами */
-    
+
     const createCurrentModelFasadesData = (value: number[]) => {
 
         const groupedFasades: { [key: string]: number[] } = {};
@@ -146,26 +148,56 @@ export const useModelState = defineStore('ModelState', () => {
         return currentPaletteData.value
     })
 
-    const createCurrentMillingData = (value: number) => {
-        if (_FASADE[value].ATTACH_MILLINGS.length && _FASADE[value].ATTACH_MILLINGS[0] != null) {
-            currentMillingData.value = _FASADE[value].ATTACH_MILLINGS;
+    const createCurrentMillingData = ({ fasadeId, productId }) => {
+        console.log(fasadeId)
+
+
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
+
+            currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;
             let millings: IMilling[] = []
-            let fasadeMilling:number[] = _FASADE[value].ATTACH_MILLINGS
+            let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
+            let percept = {}
+
+            let millings_2: IMilling[] = []
+            let prodMilling: number[] = _PRODUCTS[productId].MILLING
 
             fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
-                millings.push(
-                    _MILLING[mill]
-                )
+                percept[mill] = _MILLING[mill]
             })
+
+            prodMilling.filter(mill => percept[mill] != undefined).map((mill) => { millings.push(percept[mill]) })
+
             currentMillingData.value = millings
 
             return
         }
+
+
         currentMillingData.value = []
     }
 
     const getCurrentMillingData = computed(() => {
         return currentMillingData.value
+    })
+
+    const createCurrentWindowsData = ({ fasadeId, productId }) => {
+
+        // console.log(_PRODUCTS[productId].type_showcase)
+
+
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] != null) {
+            currentWindowsData.value = [..._PRODUCTS[productId].type_showcase]
+        }
+
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] == null) {
+            currentWindowsData.value = []
+            currentWindowsData.value.push(_PRODUCTS[productId].type_showcase[0])
+        }
+    }
+
+    const getCurrentWindowsData = computed(() => {
+        return currentWindowsData.value
     })
 
 
@@ -183,7 +215,10 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPaletteData,
 
         createCurrentMillingData,
-        getCurrentMillingData
+        getCurrentMillingData,
+
+        createCurrentWindowsData,
+        getCurrentWindowsData
     }
 
 });

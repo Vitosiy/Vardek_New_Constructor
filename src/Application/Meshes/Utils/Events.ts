@@ -1,5 +1,5 @@
-//@ts-nocheck
 
+//@ts-nocheck
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import GUI from 'lil-gui';
@@ -13,10 +13,9 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { MILLINGS } from '@/Application/F-millings';
 import { directionToColor } from 'three/webgpu';
 
-const alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
+let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
 
 export class MeshEvents {
-
 
     root: THREETypes.TApplication;
     scene: THREETypes.TScene
@@ -26,20 +25,20 @@ export class MeshEvents {
     dispose: DeepDispose
     buildProduct: BuildProduct
     buildMilling: THREETypes.TMillingBuilder
+    buildWindow: THREETypes.TWindowBuilder
     buildPalette: THREETypes.TPaletteBulider
-    millings = MILLINGS
+    millings: any | null = MILLINGS
 
     _APP: THREETypes.TObject = useAppData().getAppData
     modelState = useModelState()
-    millHelper = new GUI()
-
-    _APP: THREETypes.TObject = useAppData().getAppData
+    // millHelper = new GUI()
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
     private onChangeFasadeTexture: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
     private onChangePaletteColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
     private onChangeGlassColor: (data: number | string) => void;
     private onChangeMilling: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
+    private onChangeWindow: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
     private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
     private onToggleFasade: (fasad_ndx: number) => void;
 
@@ -49,7 +48,11 @@ export class MeshEvents {
         this.scene = root._scene
         this.resources = root._resources
         this.dispose = new DeepDispose()
-        this.buildProduct = root.world.room.geometryBuilder.buildProduct
+
+        console.log(root.geometryBuilder, 'ROOM')
+
+        // this.buildProduct = root.world.room.geometryBuilder.buildProduct
+        this.buildProduct = root.geometryBuilder.buildProduct
 
 
         this.onChangeModuleTexture = this.changeModuleTexture.bind(root)
@@ -65,6 +68,8 @@ export class MeshEvents {
 
         this.buildMilling = this.buildProduct.milling_builder
         this.buildPalette = this.buildProduct.palette_bulider
+        this.buildWindow = this.buildProduct.window_builder
+
     }
 
     get _currentMesh() {
@@ -113,23 +118,26 @@ export class MeshEvents {
     changeFasadeTexture({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
         if (!this._currentMesh) return;
 
-        console.log('changeFasadeTexture')
+        const props = this._currentMesh.userData.PROPS
+        const fasade = props.FASADE[fasadeNdx]
+        const window = props.CONFIG.SHOWCASE
 
         if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
             this.modelState.createCurrentPaletteData(data.ID)
             let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
 
-            console.log(palette, 'palette')
+            // console.log(props.FASADE[fasadeNdx], 'changeFasadeTexture')
 
             this.changePaletteColor({ data: palette, fasadeNdx })
             return
         }
 
-        const props = this._currentMesh.userData.PROPS
-        const fasade = props.FASADE[fasadeNdx]
-
         if (data.ATTACH_MILLINGS && data.ATTACH_MILLINGS[0] == null) {
             fasade.geometry = props.FASADE_DEFAULT[fasadeNdx].geometry.clone()
+        }
+
+        if (window != null) {
+            this.changeWindow({ data: window[0], fasadeNdx });
         }
 
         const textureSize = {
@@ -150,15 +158,13 @@ export class MeshEvents {
                             textureSize
                         })
                 }
-
             })
 
             this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
             this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = data.ID
             this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null
 
-
-            console.log(this._currentMesh, 'this._currentMesh---1')
+            // console.log(this._currentMesh, 'this._currentMesh---1')
 
             return;
         }
@@ -167,13 +173,13 @@ export class MeshEvents {
 
             fasade.visible = true
 
-            if (children instanceof THREE.Mesh) {
+            if (children instanceof THREE.Mesh && children.userData.type != 'glass') {
 
                 !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
 
                 children.material = new THREE.MeshStandardMaterial();
 
-                this.resources.startLoading(`${alumTextures}metal_roughness.jpg`, 'texture', (file) => {
+                this.resources.startLoading(`${alumTextures}metal_roughness.jpg`, 'localTexture', (file) => {
                     children.material.roughnessMap = file
                     children.material.roughnessMap.wrapS = children.material.roughnessMap.wrapT = THREE.RepeatWrapping;
                     children.material.roughnessMap.repeat.set(
@@ -183,9 +189,10 @@ export class MeshEvents {
                     children.material.roughnessMap.offset.set(0.5, 0.5);
                 })
 
-                this.resources.startLoading(`${alumTextures}metal_metallic.jpg`, 'texture', (file) => {
+                this.resources.startLoading(`${alumTextures}metal_metallic.jpg`, 'localTexture', (file) => {
                     children.material.metallicMap = file
-                    children.material.metallicMap.wrapS = children.material.metallicMap.wrapT = THREE.RepeatWrapping;
+                    children.material.metallicMap.wrapS = THREE.RepeatWrapping;
+                    children.material.metallicMap.wrapT = THREE.RepeatWrapping;
                     children.material.metallicMap.repeat.set(
                         1 / 512,
                         1 / 512
@@ -208,10 +215,6 @@ export class MeshEvents {
 
             }
 
-            // this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-            // if (this.root._trafficManager) {
-            //     this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW[fasadeNdx] = fasade.visible
-            // }
         })
 
         this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
@@ -224,7 +227,7 @@ export class MeshEvents {
 
         if (!this._currentMesh) return;
 
-        console.log('changePaletteColor')
+        // console.log('changePaletteColor')
 
         const props = this._currentMesh.userData.PROPS
         const fasade = props.FASADE[fasadeNdx]
@@ -305,12 +308,6 @@ export class MeshEvents {
                     this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
                 }
             })
-
-            if (this.root._trafficManager) {
-                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_COLOR = data.ID
-            }
-
-
         })
 
     }
@@ -318,69 +315,432 @@ export class MeshEvents {
     changeMilling({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
         if (!this._currentMesh) return;
 
-        console.log('changePaletteColor')
-
         const props = this._currentMesh.userData.PROPS
-
-        let fasade: THREE.Mesh = props.FASADE[fasadeNdx]
+        const fasade: THREE.Mesh = props.FASADE[fasadeNdx]
         const fasadeProps = props.CONFIG.FASADE_POSITIONS
+        const defaultGeometry = props.FASADE_DEFAULT[fasadeNdx]
 
         // let millingData = [
         //     {
-        //         name: "Line",
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         lib: 'bvh',
         //         extrudeSettings: {
         //             steps: 1,
-        //             depth: 1,
+        //             depth: 2,
         //             bevelEnabled: true,
-        //             bevelThickness: 0,
-        //             bevelSize: 0,
+        //             bevelThickness: 2,
+        //             bevelSize: 5,
         //             bevelOffset: 0,
         //             bevelSegments: 1,
         //         },
         //         figureParams: [
         //             {
         //                 nameCondition: "default",
+        //                 inpost: 'top',
         //                 condition: {
         //                     width: {
-        //                         min: 146,
+        //                         min: 296,
         //                         max: Infinity,
         //                     },
         //                     height: {
-        //                         min: 146,
+        //                         min: 20,
         //                         max: Infinity,
         //                     },
         //                 },
         //                 figure: {
-        //                     svg: `<path d="M 0 3 L -5.2 0 L 5.2 0 Z"/>
-        //                         `,
-        //                     widthOffset: 0,
-        //                     heightOffset: 0,
-        //                     pattern:{
-        //                         offset:30
-        //                     },
-        //                     boolParams: {
-        //                         depth: {
-        //                             offset: 3,
-        //                             size: "FASADE_HEIGHT"
-        //                         },
-        //                         position: {
-        //                             top: false,
-        //                             bottom: true,
-        //                             front: -8,
-        //                             left: true,
-        //                             right: false,
-        //                             centerVertical: true
-        //                         },
-        //                         rotate: {
-        //                             x: -Math.PI * 0.5,
-        //                             z: -Math.PI
-        //                         }
+        //                     svg: `<path d="
+        //                         M 0 -hgh 
+        //                         L (wth - radius) -hgh 
+        //                         A radius radius 0 0 1 wth -(hgh - radius) 
+        //                         L wth (hgh - radius) 
+        //                         A radius radius 0 0 1 (wth - radius) hgh 
+        //                         L -(wth - radius) hgh 
+        //                         A radius radius 0 0 1 -wth (hgh - radius) 
+        //                         L -wth -(hgh - radius) 
+        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
+        //                         Z" 
+        //                     />`,
+        //                     // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
+        //                     widthOffset: -55,
+        //                     heightOffset: -55,
+        //                     radius: 5.34,
+        //                     position: {
+        //                         inpostOffset: 70,
+        //                         y: 'inpostTop',
+        //                         z: -4,
         //                     }
         //                 },
         //                 hole: {
-        //                     svg: ``,
-        //                     widthOffset: -0,
-        //                     heightOffset: -0,
+        //                     svg: `<path d="M 0 -hgh 
+        //                         L (wth - radius) -hgh 
+        //                         A radius radius 0 0 1 wth -(hgh - radius) 
+        //                         L wth (hgh - radius) 
+        //                         A radius radius 0 0 1 (wth - radius) hgh 
+        //                         L -(wth - radius) hgh 
+        //                         A radius radius 0 0 1 -wth (hgh - radius) 
+        //                         L -wth -(hgh - radius) 
+        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
+        //                         Z" 
+        //                     />`,
+        //                     widthOffset: -55,
+        //                     heightOffset: -55,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_3",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 2,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+    
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 inpost: 'top',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -65,
+        //                     heightOffset: -62,
+        //                     position: {
+        //                         inpostOffset: 83,
+        //                         y: 'inpostTop',
+        //                         z: -4,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -68,
+        //                     heightOffset: -65,
+   
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_4",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 2,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+    
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 inpost: 'top',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -78,
+        //                     heightOffset: -70,
+        //                     position: {
+        //                         inpostOffset: 93,
+        //                         y: 'inpostTop',
+        //                         z: -4,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -78,
+        //                     heightOffset: -70,
+
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_5",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 2,
+        //             bevelOffset: 0,
+        //             bevelSegments: 2,
+    
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 inpost: 'top',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -79,
+        //                     heightOffset: -70,
+        //                     position: {
+        //                         inpostOffset: 95,
+        //                         y: 'inpostTop',
+        //                         z: -2,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -100,
+        //                     heightOffset: -100,
+ 
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 2,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 5,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                inpost: 'bottom',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 0 -hgh 
+        //                         L (wth - radius) -hgh 
+        //                         A radius radius 0 0 1 wth -(hgh - radius) 
+        //                         L wth (hgh - radius) 
+        //                         A radius radius 0 0 1 (wth - radius) hgh 
+        //                         L -(wth - radius) hgh 
+        //                         A radius radius 0 0 1 -wth (hgh - radius) 
+        //                         L -wth -(hgh - radius) 
+        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
+        //                         Z" 
+        //                     />`,
+        //                     // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
+        //                     widthOffset: -55,
+        //                     heightOffset: -55,
+        //                     radius: 5.34,
+        //                     position: {
+        //                         inpostOffset: 70,
+        //                         y: 'inpostBottom',
+        //                         z: -4,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M 0 -hgh 
+        //                         L (wth - radius) -hgh 
+        //                         A radius radius 0 0 1 wth -(hgh - radius) 
+        //                         L wth (hgh - radius) 
+        //                         A radius radius 0 0 1 (wth - radius) hgh 
+        //                         L -(wth - radius) hgh 
+        //                         A radius radius 0 0 1 -wth (hgh - radius) 
+        //                         L -wth -(hgh - radius) 
+        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
+        //                         Z" 
+        //                     />`,
+        //                     widthOffset: -55,
+        //                     heightOffset: -55,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_3",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 2,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+    
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                inpost: 'bottom',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -65,
+        //                     heightOffset: -62,
+        //                     position: {
+        //                         inpostOffset: 83,
+        //                         y: 'inpostBottom',
+        //                         z: -4,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -68,
+        //                     heightOffset: -65,
+   
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_4",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 2,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+    
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                inpost: 'bottom',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -78,
+        //                     heightOffset: -70,
+        //                     position: {
+        //                         inpostOffset: 93,
+        //                         y: 'inpostBottom',
+        //                         z: -4,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -78,
+        //                     heightOffset: -70,
+
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "milling_5",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 2,
+        //             bevelSize: 2,
+        //             bevelOffset: 0,
+        //             bevelSegments: 2,
+    
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                inpost: 'bottom',
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -79,
+        //                     heightOffset: -70,
+        //                     position: {
+        //                         inpostOffset: 95,
+        //                         y: 'inpostBottom',
+        //                         z: -2,
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -100,
+        //                     heightOffset: -100,
+ 
         //                 },
         //             },
         //         ],
@@ -388,15 +748,17 @@ export class MeshEvents {
         //     {
         //         name: "corner_milling_1",
         //         isCorner: true,
+        //         type: 'svg',
+        //         lib: 'bvh',
         //         extrudeSettings: {
-        //             steps: 0,
-        //             depth: 0,
+        //             steps: 1,
+        //             depth: 1.5,
         //             bevelEnabled: true,
         //             bevelThickness: 4,
         //             bevelSize: 7.5,
         //             bevelOffset: -7.5,
-        //             bevelSegments: 1,
-
+        //             bevelSegments: 2,
+    
         //         },
         //         figureParams: [
         //             {
@@ -415,6 +777,9 @@ export class MeshEvents {
         //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
         //                     widthOffset: 7.5,
         //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -4,
+        //                     }
         //                 },
         //                 hole: {
         //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -438,61 +803,71 @@ export class MeshEvents {
 
         let millingData = this.millings[data] ? data : 2462671
 
-        const fasadePosition = { FASADE_WIDTH: eval(fasadeProps[fasadeNdx].FASADE_WIDTH), FASADE_HEIGHT: eval(fasadeProps[fasadeNdx].FASADE_HEIGHT), FASADE_DEPTH: eval(fasadeProps[fasadeNdx].FASADE_DEPTH) };
-        console.log(fasadePosition, '---fasadePosition')
+        const fasadePosition = {
+            FASADE_WIDTH: eval(fasadeProps[fasadeNdx].FASADE_WIDTH),
+            FASADE_HEIGHT: eval(fasadeProps[fasadeNdx].FASADE_HEIGHT),
+            FASADE_DEPTH: eval(fasadeProps[fasadeNdx].FASADE_DEPTH)
+        };
+        // console.log(fasadePosition, '---fasadePosition')
+
+        this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, defaultGeometry);
 
 
-        this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, props.FASADE_DEFAULT[fasadeNdx]);
+        // this.createMillingHelper(millingData, () => this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, defaultGeometry));
 
-        // let hendles = this.millHelper.addFolder('РУЧКА')
-        // hendles.add(hendlesPoss, 'y').min(-fasadeProps[fasadeNdx].FASADE_HEIGHT).max(fasadeProps[fasadeNdx].FASADE_HEIGHT).step(1).name('Y').onChange(() => this.buildMilling.createMillingFasade(fasade, fasadePosition, hendlesPoss, props.FASADE_DEFAULT[fasadeNdx]))
-        // hendles.add(hendlesPoss, 'x').min(-fasadeProps[fasadeNdx].FASADE_WIDTH).max(fasadeProps[fasadeNdx].FASADE_WIDTH).step(1).name('X').onChange(() => this.buildMilling.createMillingFasade(fasade, fasadePosition, hendlesPoss, props.FASADE_DEFAULT[fasadeNdx]))
-        // hendles.add(hendlesPoss, 'z').min(-fasadeProps[fasadeNdx].FASADE_DEPTH).max(fasadeProps[fasadeNdx].FASADE_DEPTH).step(1).name('Z').onChange(() => this.buildMilling.createMillingFasade(fasade, fasadePosition, hendlesPoss, props.FASADE_DEFAULT[fasadeNdx]))
+        props.CONFIG.FASADE_PROPS[fasadeNdx].MILLING = data
+        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
 
-        // hendles.add(hendlesPoss, 'rotationX', 0, 360).name('Rotation X').onChange(()=>this.buildMilling.createMillingFasade(fasade, fasadePosition, hendlesPoss, props.FASADE_DEFAULT[fasadeNdx]))
-        // hendles.add(hendlesPoss, 'rotationY', 0, 360).name('Rotation Y').onChange(()=>this.buildMilling.createMillingFasade(fasade, fasadePosition, hendlesPoss, props.FASADE_DEFAULT[fasadeNdx]))
-        // hendles.add(hendlesPoss, 'rotationZ', 0, 360).name('Rotation Z').onChange(()=>this.buildMilling.createMillingFasade(fasade, fasadePosition, hendlesPoss, props.FASADE_DEFAULT[fasadeNdx]))
-
-        // this.createMillingHelper(millingData, () => this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, props.FASADE_DEFAULT[fasadeNdx]));
-
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].MILLING = data
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-
-        console.log(props)
-        console.log(fasade)
+        // console.log(props)
+        // console.log(fasade)
     }
 
-    // // Доделать под разный выбранный фасад
-    // toggleFasade(fasadeNdx: number) {
+    changeWindow({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
+        if (!this._currentMesh) return;
 
-    //     if (!this._currentMesh) return;
+        const props = this._currentMesh.userData.PROPS
+        const fasade: THREE.Mesh = props.FASADE[fasadeNdx]
+        const fasadeProps = props.CONFIG.FASADE_POSITIONS;
+        const defaultGeometry = props.FASADE_DEFAULT[fasadeNdx]
 
-    //     const props = this._currentMesh?.userData.PROPS
+        const fasadePosition = {
+            FASADE_WIDTH: eval(fasadeProps[fasadeNdx].FASADE_WIDTH),
+            FASADE_HEIGHT: eval(fasadeProps[fasadeNdx].FASADE_HEIGHT),
+            FASADE_DEPTH: eval(fasadeProps[fasadeNdx].FASADE_DEPTH)
+        };
 
-    //     const fasade = props.FASADE[fasadeNdx]
+        // this.buildMilling.createMillingFasade(fasade,
+        //     fasadePosition,
+        //     data,
+        //     defaultGeometry)
 
-    //     fasade.visible = false
+        this.buildWindow.createWindow({
+            fasade,
+            fasadePosition,
+            data,
+            defaultGeometry
+        });
 
-    //     this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-
-    // }
+        props.CONFIG.FASADE_PROPS[fasadeNdx].WINDOW = data
+        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+    }
 
     // Доделать под разный выбранный фасад
-    toggleFasade() {
+    toggleFasade(fasadeNdx: number) {
 
-        if(!this._currentMesh) return;
+        if (!this._currentMesh) return;
 
         const props = this._currentMesh?.userData.PROPS
-        const fasade = props.FASADE
 
-        Object.values(fasade).forEach((item: any) => {
+        const fasade = props.FASADE[fasadeNdx]
 
-            item.visible = false
+        fasade.visible = false
 
-            if (this.root._trafficManager) {
-                this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
-            }
-        })
+        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+
+    }
+
+    hideTable() {
 
     }
 
@@ -520,12 +895,13 @@ export class MeshEvents {
         this._currentMesh.userData.trueDepth = data.depth * 0.5
         this._currentMesh.userData.trueHeight = data.height * 0.5
         this._currentMesh.userData.trueLength = data.width * 0.5
-        this._currentMesh.userData.trueSizes = [data.depth * 0.5, data.height * 0.5, data.width * 0.5]
+        this._currentMesh.userData.trueSizes = {
+            z: data.depth * 0.5, y: size.y * 0.5, x: data.width * 0.5
+        }
+
     }
 
     changeColor({ object, url, textureSize, type }: { object: THREE.Object3D, url: string, textureSize?: THREETypes.TObject, type?: string }) {
-
-        console.log(url)
 
         object.traverse(children => {
             if (children instanceof THREE.Mesh) {
@@ -544,7 +920,8 @@ export class MeshEvents {
                         children.material.map = file
 
                         if (textureSize) {
-                            children.material.map.wrapS = children.material.map.wrapT = THREE.RepeatWrapping;
+                            children.material.map.wrapS = THREE.RepeatWrapping;
+                            children.material.map.wrapT = THREE.RepeatWrapping;
                             children.material.map.repeat.set(
                                 1 / textureSize.x,
                                 1 / textureSize.y
@@ -585,12 +962,8 @@ export class MeshEvents {
             this.changeMilling({ data, fasadeNdx })
         }
 
-        this.onChangePaletteColor = (data) => {
-            this.changePaletteColor(data)
-        }
-
-        this.onChangeGlassColor = (data) => {
-            this.changeGlassColor(data)
+        this.onChangeWindow = ({ data, fasadeNdx }) => {
+            this.changeWindow({ data, fasadeNdx })
         }
 
         this.onChangeModelSize = (data) => {
@@ -601,11 +974,15 @@ export class MeshEvents {
             this.toggleFasade(fasad_ndx)
         }
 
+
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeFasadeTexture', this.onChangeFasadeTexture);
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
         this.events.on('A:ChangeMilling', this.onChangeMilling)
+        this.events.on('A:ChangeWindow', this.onChangeWindow)
+
         this.events.on('A:Model-resize', this.onChangeModelSize)
         this.events.on('A:Toggle-Fasad', this.onToggleFasade)
 
@@ -620,6 +997,8 @@ export class MeshEvents {
         this.events.off('A:ChangeGlassColor', this.onChangeGlassColor);
         this.events.off('A:ChangeMilling', this.onChangeMilling)
         this.events.off('A:Toggle-Fasad', this.onToggleFasade)
+        alumTextures = null
+        this.millings = null
         this.currentProduct = null
     }
 
@@ -628,22 +1007,24 @@ export class MeshEvents {
         this.millHelper.reset()
 
         data.forEach((item, key) => {
+            if (item.type == 'capsule') return;
+
             let start = {}
             start[item.name] = this.millHelper.addFolder(item.name)
 
             start[item.name].add(item.extrudeSettings, 'steps').min(-16).max(16).step(1).name('steps').onChange(() => {
                 fu()
             })
-            start[item.name].add(item.extrudeSettings, 'depth').min(-16).max(16).step(0.1).name('depth').onChange(() => {
+            start[item.name].add(item.extrudeSettings, 'depth').min(-20).max(20).step(0.01).name('depth').onChange(() => {
                 fu()
             })
-            start[item.name].add(item.extrudeSettings, 'bevelThickness').min(-16).max(16).step(0.01).name('bevelThickness').onChange(() => {
+            start[item.name].add(item.extrudeSettings, 'bevelThickness').min(-20).max(20).step(1).name('bevelThickness').onChange(() => {
                 fu()
             })
-            start[item.name].add(item.extrudeSettings, 'bevelSize').min(-16).max(16).step(0.1).name('bevelSize').onChange(() => {
+            start[item.name].add(item.extrudeSettings, 'bevelSize').min(-40).max(40).step(1).name('bevelSize').onChange(() => {
                 fu()
             })
-            start[item.name].add(item.extrudeSettings, 'bevelOffset').min(-16).max(16).step(0.01).name('bevelOffset').onChange(() => {
+            start[item.name].add(item.extrudeSettings, 'bevelOffset').min(-40).max(40).step(1).name('bevelOffset').onChange(() => {
                 fu()
             })
             start[item.name].add(item.extrudeSettings, 'bevelSegments').min(0).max(16).step(1).name('bevelSegments').onChange(() => {

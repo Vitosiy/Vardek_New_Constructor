@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck 
 
 import * as THREE from 'three'
 import * as THREEInterfases from "@/types/interfases"
@@ -19,6 +19,8 @@ import { Filters } from './Utils/Filters'
 import { JsonBuilder } from './JsonProductBuilder'
 import { ModelsBuilder } from './ModelsBuilder'
 import { MillingBuilder } from './MillingBuilder';
+import { WindowBuilder } from './WindowBuilder';
+
 import { FasadeBuilder } from './FasadeBuilder';
 import { PaletteBulider } from './PaletteBuilder';
 import { BuildersHelper } from "./BuildersHelper"
@@ -31,14 +33,14 @@ export class BuildProduct extends BuildersHelper {
     project = useSceneState().getCurrentProjectParams;
     modelState = useModelState();
 
-    ruler: Ruler = new Ruler()
+    ruler: THREETypes.TRuler
     filters: Filters;
     json_builder: JsonBuilder;
     models_builder: ModelsBuilder;
     milling_builder: MillingBuilder;
+    window_builder: WindowBuilder;
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBulider
-
 
     heightCorrect: number = 0
 
@@ -46,13 +48,18 @@ export class BuildProduct extends BuildersHelper {
         super(root)
 
         this.root = root
+        this.ruler = root.ruler
+        console.log(this.ruler, 'BP')
+
         this.resources = root._resources
         this.filters = new Filters(root)
         this.json_builder = new JsonBuilder(this);
         this.models_builder = new ModelsBuilder(this)
         this.fasade_builder = new FasadeBuilder(this)
-        this.milling_builder = new MillingBuilder()
+        this.milling_builder = new MillingBuilder(root)
+        this.window_builder = new WindowBuilder(root)
         this.palette_bulider = new PaletteBulider(this)
+   
 
     }
 
@@ -76,6 +83,8 @@ export class BuildProduct extends BuildersHelper {
 
         let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
 
+        // console.log(model)
+
         if (!!type.DAE) return;
 
         onLoad(model as THREE.Object3D)
@@ -89,7 +98,7 @@ export class BuildProduct extends BuildersHelper {
 
         /** Проверяем на загружаемы контент */
         let props: THREETypes.TObject = !loadedProps ? this.createStartProps(product_data) : loadedProps;
-        
+
         parent_group.userData.PROPS = props
 
         /** Если модель */
@@ -101,7 +110,7 @@ export class BuildProduct extends BuildersHelper {
 
         /** Если json  */ /** Если есть загружаемые размеры */
 
-        let product = loaded_size? this.createProductBody(parent_group, loaded_size) : this.createProductBody(parent_group)
+        let product = loaded_size ? this.createProductBody(parent_group, loaded_size) : this.createProductBody(parent_group)
 
         parent_group.add(product as THREE.Object3D)
 
@@ -122,10 +131,10 @@ export class BuildProduct extends BuildersHelper {
         parent_group.userData.trueDepth = productSize.z * 0.5
         parent_group.userData.trueHeight = productSize.y * 0.5
         parent_group.userData.trueLength = productSize.x * 0.5
+
         parent_group.userData.trueSizes = {
             z: productSize.z * 0.5, y: productSize.y * 0.5, x: productSize.x * 0.5
         }
-
 
         return parent_group
     }
@@ -146,7 +155,7 @@ export class BuildProduct extends BuildersHelper {
             HIDDEN: false,
             LEG: {},
             MILLINGS: [],
-            PRODUCT: product_data,
+            PRODUCT: product_data.ID,
             RASPILLIST: [],
             RASPILFRAGMENT: [],
             SHELF: [],
@@ -154,6 +163,7 @@ export class BuildProduct extends BuildersHelper {
             SECTIONSOBJ: [],
             SECTIONCONTROL: [],
             TABLETOP: {},
+            WINDOW_DEFAULT: []
         }
 
         let params = this.createProductObject(product_data)
@@ -164,14 +174,15 @@ export class BuildProduct extends BuildersHelper {
 
     createProductObject(product_data: THREETypes.TObject, self: BuildProduct = this) {
 
+        // console.log(product_data, 'product_data')
+
         let PARAMS: THREETypes.TObject = {
-            BASKET: {},
             DISABLE_MOVE: false,
             ELEMENT_TYPE: product_data.element_type,
             ID: product_data.ID,
 
             FASADE_PROPS: [],
-            FASADE_SIZE: {},
+            FASADE_SIZE: [],
             FASADE_HEIGHT: {},
             FASADE_POSITIONS: [],
 
@@ -198,6 +209,7 @@ export class BuildProduct extends BuildersHelper {
                 SIZE_EDIT_DEPTH_MIN: null,
                 SIZE_EDIT_DEPTH_MAX: null
             },
+            SHOWCASE: null,
             POSITION: null,
             ROTATION: null,
         }
@@ -210,13 +222,18 @@ export class BuildProduct extends BuildersHelper {
         // };
 
 
-        if (product_data.FASADE_SIZES[0]) {
+        if (product_data.FASADE_SIZES.length) {
+
 
             let fasade_list = this.filters.filterFasadeSizer(product_data.FASADE_SIZES, false) as any[] /** Дополнить тип / интерфейс */
 
-            Object.entries(fasade_list).forEach(([key, fasade]) => {
-                PARAMS.FASADE_SIZE["FASADESIZE" + key] = fasade[0];
-            })
+            if ((Object.values(fasade_list).length > 0)) {
+                
+                Object.values(fasade_list).forEach((fasade, key) => {
+                    PARAMS.FASADE_SIZE.push(fasade)
+                })
+            }
+
         };
 
         if (product_data.FACADE.length && product_data.FACADE[0]) {
@@ -230,6 +247,10 @@ export class BuildProduct extends BuildersHelper {
             modulecolor_list.forEach((item: number) => {
                 PARAMS.MODULE_COLOR_LIST.push(this._FASADE[item])
             })
+        }
+
+        if (product_data.type_showcase.length && product_data.type_showcase[0] != null) {
+            PARAMS.SHOWCASE = [...product_data.type_showcase]
         }
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
@@ -289,7 +310,8 @@ export class BuildProduct extends BuildersHelper {
         this._SHELF_POSITION[product_id] ? this.createShelf(total, model_props, this._SHELF_POSITION[product_id]) : "";
 
         /** Добавляем ножки если есть */
-        model_props.PRODUCT.leg_length ? this.buildLegs(model_props, data, total, getHeightCorrect) : "";
+        this._PRODUCTS[product_id].leg_length ? this.buildLegs(model_props, data, total, getHeightCorrect) : "";
+
 
         /** Добавляем фасад */
         Object.keys(model_props.CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(total, model_props, data) : "";
@@ -312,7 +334,6 @@ export class BuildProduct extends BuildersHelper {
     createBody(group: THREE.Object3D, data: THREETypes.TObject, props: THREETypes.TObject) {
 
         let fasade = this._FASADE[props.CONFIG.MODULE_COLOR]
-
         let body = this.json_builder.createMesh({ data, fasade })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
@@ -551,7 +572,8 @@ export class BuildProduct extends BuildersHelper {
     buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D, height_correct?: (value: number, type: string) => number) {
 
         let size = props.CONFIG.SIZE
-        let leg_length = props.PRODUCT.leg_length
+        // let leg_length = props.PRODUCT.leg_length
+        let leg_length = this.modelState.getModels[props.PRODUCT].leg_length
         let legs = new THREE.Object3D()
         let model = model_data
         let start_position = this.getStartPosition(size)

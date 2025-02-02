@@ -1,7 +1,8 @@
-//@ts-nocheck
 
+//@ts-nocheck
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
+import { useAppData } from "@/store/appliction/useAppData"
 
 import { GlobalsData } from './Utils/Globals'
 
@@ -9,6 +10,21 @@ export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
     scene: THREE.Scene
+
+    // private _APP: THREETypes.TObject = useAppData().getAppData
+    // private _COLOR: THREETypes.TObject = this._APP.COLOR
+    // _FASADE: THREETypes.TObject = this._APP.FASADE;
+    // private _FASADESIZE: THREETypes.TObject = this._APP.FASADESIZE;
+    // private _FASADENUMBERSIZE: THREETypes.TObject = this._APP.FASADENUMBERSIZE;
+    // private _FASADE_SECTION: THREETypes.TObject = this._APP.FASADE_SECTION;
+    // private _FASADE_POSITION: THREETypes.TObject = this._APP.FASADE_POSITION;
+    // private _FASADE_GROUPS: THREETypes.TObject = this._APP.FASADE_GROUPS
+    // private _MILLING: THREETypes.TObject = this._APP.MILLING
+    // _MODELS: THREETypes.TObject = this._APP.MODELS
+    // private _PRODUCTS: THREETypes.TObject = this._APP.CATALOG.PRODUCTS
+    // private _SHELF_POSITION: THREETypes.TObject = this._APP.PRODUCT_SHELF_POSITION
+    // _SHOWCASE: THREETypes.TObject = this._APP.SHOWCASE
+
     constructor(root: THREETypes.TApplication) {
 
         super();
@@ -133,11 +149,12 @@ export class BuildersHelper extends GlobalsData {
     };
 
     getStartPosition(size: THREETypes.TObject) {
-        return { x: -size.width / 2, y: -size.height / 2, z: -size.depth / 2 };
+        return { x: -size.width * 0.5, y: -size.height * 0.5, z: -size.depth * 0.5 };
     };
 
     checkColor(product: THREETypes.TObject) {
         let self = this
+        let curProduct = this._PRODUCTS[product.PRODUCT]
 
         let color = product.CONFIG.BASKET.COLOR
             ? this._COLOR[product.CONFIG.BASKET.COLOR]
@@ -153,12 +170,12 @@ export class BuildersHelper extends GlobalsData {
 
         function checkModuleColor() {
             if (!self._FASADE[product.CONFIG.BASKET.MODULECOLOR]) {
-                product.CONFIG.BASKET.MODULECOLOR = product.PRODUCT.MODULECOLOR[0];
+                product.CONFIG.BASKET.MODULECOLOR = curProduct.MODULECOLOR[0];
 
                 // показать сообщение
                 //   self.scope.alerts[product.MODULECOLOR[0]] = "Цвет корпуса изменен.";
 
-                return self._FASADE[product.PRODUCT.MODULECOLOR[0]];
+                return self._FASADE[curProduct.MODULECOLOR[0]];
             }
 
             return self._FASADE[product.CONFIG.BASKET.MODULECOLOR];
@@ -288,4 +305,46 @@ export class BuildersHelper extends GlobalsData {
         return false
     }
 
+    getRandomInt(min: number, max: number) {
+        const minCeiled = Math.ceil(min);
+        const maxFloored = Math.floor(max);
+        return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+    }
+
+    planarUV(geometry) {
+
+        geometry.computeBoundingBox();
+
+        var max = geometry.boundingBox.max,
+            min = geometry.boundingBox.min;
+        var offset = new THREE.Vector2(0 - min.x, 0 - min.y);
+        var range = new THREE.Vector2(max.x - min.x, max.y - min.y);
+        // var faces = geometry.faces;
+
+        const faces = geometry.getAttribute('position');
+
+        for (let i = 0; i < faces.count; i += 3) {
+
+            const a = i;
+            const b = i + 1;
+            const c = i + 2;
+
+        }
+
+        geometry.getAttribute('uv')[0] = [];
+
+        for (var i = 0; i < faces.length; i++) {
+
+            var v1 = geometry.vertices[faces[i].a],
+                v2 = geometry.vertices[faces[i].b],
+                v3 = geometry.vertices[faces[i].c];
+
+            geometry.faceVertexUvs[0].push([
+                new THREE.Vector2((v1.x + offset.x) / range.x, (v1.y + offset.y) / range.y),
+                new THREE.Vector2((v2.x + offset.x) / range.x, (v2.y + offset.y) / range.y),
+                new THREE.Vector2((v3.x + offset.x) / range.x, (v3.y + offset.y) / range.y)
+            ]);
+        }
+        geometry.uvsNeedUpdate = true;
+    }
 }

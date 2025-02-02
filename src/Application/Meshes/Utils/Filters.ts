@@ -57,19 +57,22 @@ export class Filters extends GlobalsData {
 
     filterFasadePosition(items: THREETypes.TObject, product: THREETypes.TObject) {
 
-        let fasadePositionList = product.FASADE_POSITION
+        const fasadePositionList = product.FASADE_POSITION
+        const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
+        const sizes = items.FASADE_SIZES
 
-        let sortFasadePositionList = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER)
+
+        let sortFasadePositionList = sizes && sizes.length > 0 ? sizes : fasadeSorted
 
         // console.log(fasadePositionList, '---fasadePositionList', sortFasadePositionList, '--sortFasadePositionList')
 
         sortFasadePositionList.forEach((fasade: number, key) => {
 
-            let fasadeProps: { TYPE: number, SHOW: boolean, LIST: number, COLOR: number } = {}
+            const fasadeProps: { TYPE: number, SHOW: boolean, LIST: number, COLOR: number } = {}
 
-            let fasadePosition = this._FASADE_POSITION[fasade]
+            const fasadePosition = this._FASADE_POSITION[fasade]
 
-            let fasadeNumber = fasadePosition.FASADE_NUMBER - 1
+            const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
             // console.log(`fasadeNumber-${fasadeNumber}, key-${key}`)
 
@@ -116,7 +119,7 @@ export class Filters extends GlobalsData {
 
     filterFasadeSizer(items: THREETypes.TObject, number: boolean | number) {
 
-        // console.log(items, 'HH')
+        console.log('HH')
 
         const fasadeSize = this._FASADESIZE;
         const fasadeNumberSize = this._FASADENUMBERSIZE;
@@ -128,22 +131,25 @@ export class Filters extends GlobalsData {
             // Перебираем все элементы массива items
             Object.values(items).forEach(size => {
 
+                if (size === null) return
+
                 // Для каждого размера проходим по фасадным элементам
                 Object.entries(fasadeNumberSize[size]).forEach(([key, fasadeSizeIds]: any[]) => {
 
                     // Фильтруем только те фасадные элементы, которые существуют в fasadeSize
                     const validFasadeIds = fasadeSizeIds.filter((fasadeSizeId: any) => fasadeSize[fasadeSizeId]);
+                    if (!validFasadeIds.length > 0) return
 
-                    if (validFasadeIds.length > 0) {
-                        // Если ключ уже существует, используем существующий массив, иначе создаем новый
-                        result[key] = result[key] || [];
-                        // Добавляем отфильтрованные фасады в массив
-                        result[key].push(...validFasadeIds);
-                        // Сортируем массив по полю SORT
-                        result[key].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
-                    }
+                    // Если ключ уже существует, используем существующий массив, иначе создаем новый
+                    result[key] = result[key] || [];
+                    // Добавляем отфильтрованные фасады в массив
+                    result[key].push(...validFasadeIds);
+                    // Сортируем массив по полю SORT
+                    result[key].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+
                 });
             });
+
 
             return result;
         }
@@ -177,50 +183,35 @@ export class Filters extends GlobalsData {
         return items.filter((colorId: number) => this._FASADE[colorId]);
     }
 
-    filterModuleColorID(items: THREETypes.TObject, criteria: THREETypes.TObject) {
-        const tmp = {};
-        const ids = criteria?.IDS || false;
-        const s = criteria?.filter?.toLowerCase() || false;
+    // filterModuleColorID(items: THREETypes.TObject, criteria: THREETypes.TObject) {
+    //     const tmp = {};
+    //     const ids = criteria?.IDS || false;
+    //     const s = criteria?.filter?.toLowerCase() || false;
 
-        items.forEach((itemId: any) => {
-            const item = this._FASADE[itemId] || itemId;
+    //     items.forEach((itemId: any) => {
+    //         const item = this._FASADE[itemId] || itemId;
 
-            if (
-                item?.ID &&
-                (!s || item.NAME?.toLowerCase().includes(s)) &&
-                item.ELEMENT_TYPE !== "plinth"
-            ) {
-                const section = this._FASADE_SECTION[item.IBLOCK_SECTION_ID];
-                const groupId = section?.UF_GROUP_CONSTRUCTOR;
+    //         if (!item?.ID && (!s || item.NAME?.toLowerCase().includes(s)) && item.ELEMENT_TYPE !== "plinth") return
 
-                if (groupId && (!ids || ids.includes(item.ID))) {
-                    if (!tmp[groupId]) tmp[groupId] = [];
 
-                    if (
-                        self.scope.app.optionsTabName !== "defaultModuleColor" ||
-                        (item.ID !== 1042113 && item.ID !== 2307265 && item.ID !== 2307267)
-                    ) {
-                        tmp[groupId].push(item.ID);
-                    }
-                }
-            }
-        });
+    //         const section = this._FASADE_SECTION[item.IBLOCK_SECTION_ID];
+    //         const groupId = section?.UF_GROUP_CONSTRUCTOR;
 
-        // const tmpl = {};
+    //         if (!groupId && (ids || !ids.includes(item.ID))) return
 
-        // Object.keys(tmp).forEach((i) => {
-        //     if (
-        //         self.scope.app.optionsTabName !== "defaultModuleColor" ||
-        //         (i !== "1294117" && i !== "953073")
-        //     ) {
-        //         tmpl[i] = {
-        //             ...self.scope.app.FASADE_GROUPS[i],
-        //             FASADES: tmp[i],
-        //         };
-        //     }
-        // });
 
-        // return tmpl;
-    }
+    //         if (!tmp[groupId]) tmp[groupId] = [];
+
+    //         if (
+    //             self.scope.app.optionsTabName !== "defaultModuleColor" ||
+    //             (item.ID !== 1042113 && item.ID !== 2307265 && item.ID !== 2307267)
+    //         ) {
+    //             tmp[groupId].push(item.ID);
+    //         }
+
+
+    //     });
+
+    // }
 
 } 

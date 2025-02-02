@@ -36,15 +36,16 @@ export class Resources extends EventEmitter {
         this.loaders.cubeTextureLoader = new THREE.CubeTextureLoader(this.loadingManager);
 
         this.loadingManager.onStart = (file, itemsLoaded, itemsTotal) => {
-            console.log('Started loading file: ' + file + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+            // console.log('Started loading file: ' + file + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
         };
 
-        this.loadingManager.onLoad = () => {
-            console.log('Loading complete!');
+        this.loadingManager.onLoad = (file) => {
+
+            // console.log(file,'Loading complete!');
         }
 
         this.loadingManager.onError = (file) => {
-            console.log('There was an error loading ' + file)
+            // console.log('There was an error loading ' + file)
         }
     }
 
@@ -57,7 +58,7 @@ export class Resources extends EventEmitter {
     startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void): void {
 
         let truePath
-        
+
         switch (type) {
 
             case 'GLTF':
@@ -85,7 +86,6 @@ export class Resources extends EventEmitter {
                 let example = 'https://dev.vardek.online/upload/iblock/fa8/fa8d309c7d9927fd467936994c5ff446.FBX'
 
                 this.loaders?.fbxLoader.load(truePath as string, (file: any) => {
-                    console.log(file)
 
                     if (callback) {
                         this.data = file
@@ -108,6 +108,27 @@ export class Resources extends EventEmitter {
             case 'texture':
                 truePath = this.replaceUrls(path)
                 this.loaders?.textureLoader.load(truePath as string, (file: any) => {
+
+                    if (callback) {
+                        this.data = file
+                        callback(file)
+                    }
+                }, () => {
+
+                },
+                    () => {
+                        if (callback) {
+
+                            callback(false)
+                        }
+                    }
+                )
+
+                break
+
+            case 'localTexture':
+
+                this.loaders?.textureLoader.load(path as string, (file: any) => {
 
                     if (callback) {
                         this.data = file

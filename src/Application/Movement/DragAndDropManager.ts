@@ -1,22 +1,14 @@
-// @ts-nocheck 
-
+//@ts-nocheck
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
-import { OBB } from 'three/examples/jsm/math/OBB.js';
-
-import { GeometryBuilder } from "../Meshes/GeometryBuilder";
-
-import {RoomManager} from "../Room/RoomManager";
-import SetObject from "../Utils/SetObject";
-
 
 export class DragAndDropManager {
 
     canvas: HTMLElement;
     scene: THREE.Scene;
 
-    geometryBuilder: GeometryBuilder;
+    geometryBuilder: THREE.TGeometryBuilder;
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     camera: THREE.Camera
@@ -25,7 +17,7 @@ export class DragAndDropManager {
     trafficManager: THREETypes.TTrafficManager
     boxHelper: THREETypes.TCustomBoxHelper
 
-    setObject: SetObject
+    setObject: THREETypes.SetObject
 
     roomParams: { [key: string]: number | 0 } | THREEInterfases.IWallSizes
 
@@ -52,7 +44,7 @@ export class DragAndDropManager {
         this.roomParams = room._roomParams
 
         this.setupDragAndDrop();
-        this.setObject = new SetObject()
+        this.setObject = trafficManager.root.setObject
     }
 
     setupDragAndDrop() {
@@ -120,6 +112,7 @@ export class DragAndDropManager {
             }
         }
     }
+    
     updateRoomData(roomManager: RoomManager) {
         this.roomManager = roomManager
     }

@@ -1,4 +1,4 @@
-// @ts-nocheck 31
+//@ts-nocheck
 
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
@@ -8,14 +8,13 @@ import * as THREETypes from "@/types/types"
 // import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
-import { Octree } from 'three/addons/math/Octree.js';
-import { OctreeHelper } from 'three/addons/helpers/OctreeHelper.js';
+// import { Octree } from 'three/addons/math/Octree.js';
+// import { OctreeHelper } from 'three/addons/helpers/OctreeHelper.js';
 
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState"
 
 import { WallBuilder } from "../Meshes/WallBilder";
-
 import { OBBHelper } from "../Utils/CalculateBoundingBox";
 
 
@@ -52,7 +51,7 @@ export class Room {
     floorTexture: number | string = 0
 
     obbHelper = new OBBHelper();
-    worldOctree = new Octree();
+    // worldOctree = new Octree();
     roomBounds: THREE.Box3 = new THREE.Box3()
 
     constructor(parent: THREETypes.TApplication, light: any) {
@@ -291,16 +290,15 @@ export class Room {
         this.roomsStore.setFloorTexture(materialId)
     }
 
-    private createRoomOctree() {
-        this.worldOctree.fromGraphNode(this.wallsGroup)
-        this.worldOctree.split(16)
+    // private createRoomOctree() {
+    //     this.worldOctree.fromGraphNode(this.wallsGroup)
+    //     this.worldOctree.split(16)
 
-        const helper = new OctreeHelper(this.worldOctree, 0x00ff00);
-        helper.visible = true;
-        this.scene.add(helper);
+    //     const helper = new OctreeHelper(this.worldOctree, 0x00ff00);
+    //     helper.visible = true;
+    //     this.scene.add(helper);
 
-        console.log(this.worldOctree)
-    }
+    // }
 
     private getRoomBounds(): THREE.Box3 {
         const roomBox = new THREE.Box3();

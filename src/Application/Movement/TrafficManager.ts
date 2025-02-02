@@ -14,8 +14,6 @@ import { MoveManager } from "./MoveManager";
 
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
-import { GeometryBuilder } from "../Meshes/GeometryBuilder";
-import { Ruler } from "../Utils/Ruler";
 
 export class TrafficManager {
 
@@ -23,7 +21,7 @@ export class TrafficManager {
     canvas: HTMLElement;
     scene: THREE.Scene;
 
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    events: ReturnType<typeof useEventBus> = useEventBus()
     modelState: ReturnType<typeof useModelState> = useModelState()
 
     raycaster: THREE.Raycaster = new THREE.Raycaster()
@@ -31,16 +29,18 @@ export class TrafficManager {
     camera: THREE.Camera | null = null
     controls: OrbitControls | null = null
     room: THREETypes.TRoomManager
-    geometryBuilder: GeometryBuilder
+    geometryBuilder: THREETypes.TGeometryBuilder
 
     despose: DeepDispose
     dragAndDropManager: DragAndDropManager
-    moveManager: MoveManager
+    moveManager: MoveManager | null = null
     boxHelper: CustomBoxHelper
     currentObject: THREE.Object3D | null = null
-    ruler: Ruler
+    ruler: THREETypes.Ruler
     rulerLines: THREE.Object3D[] = [];
     rullerSizeLines: THREE.Object3D[] = [];
+
+    private onRemoveFromRoom: () => void;
 
     // constructor(canvas: HTMLElement, scene: THREE.Scene, room: RoomManager, camera: THREE.Camera, controls: OrbitControls) {
 
@@ -53,22 +53,27 @@ export class TrafficManager {
         this.camera = root._camera
         this.room = room
 
+        this.ruler = root.ruler
+
+        this.ruler.setParams(
+            {
+                scene: root._scene,
+                room,
+                rulerLines: this.rulerLines,
+                rullerSizeLines: this.rullerSizeLines
+            })
+
+
         this.despose = new DeepDispose()
         this.boxHelper = new CustomBoxHelper(null, this.scene, root)
-        // this.geometryBuilder = new GeometryBuilder(root);
-        this.geometryBuilder = room.geometryBuilder
-
+        this.geometryBuilder = root.geometryBuilder
         this.dragAndDropManager = new DragAndDropManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.mouse, this.raycaster, this.boxHelper, this)
         this.moveManager = new MoveManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.controls as OrbitControls, this.mouse, this.raycaster, this.boxHelper, this)
-
-        this.ruler = new Ruler(root._scene, room, this.rulerLines, this.rullerSizeLines)
 
         this.vueEvents()
     }
 
     get _currentObject() {
-
-
         return this.currentObject
     }
 
@@ -78,20 +83,27 @@ export class TrafficManager {
         // if(!object) return
 
         this.currentObject = object
-        
-        if(object){
-            this.modelState.createCurrentModelFasadesData(object.userData.PROPS.PRODUCT.FACADE)
+
+        if (object) {
+
+            let product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+
+
+            this.modelState.createCurrentModelFasadesData(product.FACADE);
+
+            // console.log(object, 'object')
         }
-        else{
+        else {
             this.modelState.clearCurrentModelFasadesData()
         }
-      
-        this.eventsStore.emit("A:Selected", {
+
+        this.events.emit("A:Selected", {
             object: object?.userData,
             roomContant: this.room._roomContant
         })
 
     }
+
     get _sizes() {
         return this.root._sizes
     }
@@ -115,6 +127,9 @@ export class TrafficManager {
     }
 
     removeFromRoom() {
+
+        // console.log(this._currentObject, 'CurrentObject')
+
         if (!this._currentObject) return
 
         this.room.remove(this._currentObject.id)
@@ -123,44 +138,29 @@ export class TrafficManager {
         this.ruler.clearRuler();
     }
 
-    removeFromBasket(basketProduct: any) {
-        const object = this.scene.getObjectById(basketProduct.id)
-
-        if (!object) return
-
-
-        this.boxHelper.removeBoxHelper()
-        this.ruler.clearRuler();
-        this.room.remove(object.id)
-        this.despose.clearObject(object, this.scene)
-        // this._currentObject = this.scene.getObjectById(basketProduct.id)
-        // this.removeFromRoom()
-        // if (basketProduct) return
-        this._currentObject = null
-        // this.despose.clearObject(basketProduct, this.scene)
-    }
-
     vueEvents() {
 
-        this.eventsStore.on('A:RemoveModel', () => {
+        this.onRemoveFromRoom = () => {
             this.removeFromRoom()
-        })
+        }
 
-        this.eventsStore.on('A:RemoveModelFromBasket', (basketProduct: any) => {
-            this.removeFromBasket(basketProduct)
-        })
+        this.events.on('A:RemoveModel', this.onRemoveFromRoom)
 
-        this.eventsStore.on('A:CameraToggle', (value: boolean) => {
-            if (value) {
-                this.moveManager.dispose()
-                this.dragAndDropManager.dispose()
-                return
-            }
-            console.log('Perspective');
-            this.moveManager.updateControl(this.root._orbitControls as OrbitControls)
-            this.moveManager.setupModelMove();
-            this.dragAndDropManager.setupDragAndDrop()
-        })
+        // this.eventsStore.on('A:CameraToggle', (value: boolean) => {
+        //     if (value) {
+        //         this.moveManager.dispose()
+        //         this.dragAndDropManager.dispose()
+        //         return
+        //     }
+        //     console.log('Perspective');
+        //     this.moveManager.updateControl(this.root._orbitControls as OrbitControls)
+        //     this.moveManager.setupModelMove();
+        //     this.dragAndDropManager.setupDragAndDrop()
+        // })
+    }
+
+    removeVueEvents() {
+        this.events.off('A:RemoveModel', this.onRemoveFromRoom)
     }
 
 }

@@ -1,4 +1,4 @@
-// @ts-nocheck 
+// @ts-nocheck
 
 import * as THREE from "three";
 import * as THREETypes from "@/types/types"
@@ -17,11 +17,11 @@ import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 export class MoveManager {
 
     eventBuss: ReturnType<typeof useEventBus> = useEventBus()
-    canvas: HTMLElement;
-    scene: THREE.Scene;
-    raycaster: THREE.Raycaster;
-    mouse: THREE.Vector2;
-    camera: THREE.Camera;
+    canvas: HTMLElement | null = null;
+    scene: THREE.Scene | null = null;
+    raycaster: THREE.Raycaster | null = null;
+    mouse: THREE.Vector2 | null = null;
+    camera: THREE.Camera | null = null;
     controls: OrbitControls
     trafficManager: TrafficManager
     objectFactory: GeometryBuilder
@@ -41,6 +41,8 @@ export class MoveManager {
     private onTouchStartBound: (event: TouchEvent) => void;
     private onTouchMoveBound: (event: TouchEvent) => void;
     private onTouchEndBound: (event: TouchEvent) => void;
+
+
 
     constructor(canvas: HTMLElement, scene: THREE.Scene, room: THREETypes.TRoomManager, camera: THREE.Camera, controls: OrbitControls, mouse: THREE.Vector2, raycaster: THREE.Raycaster, boxHelper: CustomBoxHelper, trafficManager: TrafficManager) {
         this.canvas = canvas;
@@ -66,6 +68,7 @@ export class MoveManager {
 
         this.setupModelMove();
         this.addVueEvents()
+
     }
 
     setupModelMove() {
@@ -93,7 +96,6 @@ export class MoveManager {
                 this.trafficManager.ruler.clearRuler()
                 // Убираем выбранный объект 
                 this.trafficManager._currentObject = null
-                break;
         }
     }
 
@@ -186,6 +188,8 @@ export class MoveManager {
         const intersects = this.raycaster.intersectObjects(this.roomManager._roomTotalContant);
 
         if (intersects.length > 0) {
+
+
             const point = intersects[0].point;
             const firstObject = intersects[0].object;
 
@@ -207,6 +211,7 @@ export class MoveManager {
             this.trafficManager._currentObject = this.selectedObject
 
             // Создаём линейку до объектов
+
             this.trafficManager.ruler.drawRulerToObjects(this.selectedObject)
 
             // Передаём координаты мыши для отрисовкм меню
@@ -284,13 +289,21 @@ export class MoveManager {
         this.trafficManager.ruler.drawRulerToObjects(this.selectedObject)
     }
 
-
     dispose() {
         this.canvas.removeEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.removeEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.removeEventListener('mouseup', this.onMouseUpBound, false);
         this.canvas.removeEventListener('wheel', this.onWheelBound, false);
 
+        this.canvas.removeEventListener('touchstart', this.onTouchStartBound, false);
+        this.canvas.removeEventListener('touchmove', this.onTouchMoveBound, false);
+        this.canvas.removeEventListener('touchend', this.onTouchEndBound, false);
+
+        this.canvas = null;
+        this.scene = null;
+        this.raycaster = null;
+        this.mouse = null;
+        this.camera = null;
     }
 
     updateRoomData(roomManager: THREETypes.TRoomManager) {

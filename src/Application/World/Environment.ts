@@ -1,8 +1,8 @@
-// @ts-nocheck
 
+//@ts-nocheck
 
 import * as THREE from "three"
-import * as THREEInterfases from "@/types/interfases"
+// import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
 import { useEventBus } from '@/store/appliction/useEventBus';
@@ -15,7 +15,7 @@ export class Environment {
     eventsStore: ReturnType<typeof useEventBus>
     scene: THREE.Scene
 
-    resources: any
+    resources: THREETypes.TResources
     environmentMap: { [key: string]: any } = {}
 
     constructor(parent: THREETypes.TApplication) {
@@ -50,7 +50,6 @@ export class Environment {
             })
         }
         this.environmentMap.updateMaterials()
-        console.log('Hight addEnvironmentMap')
     }
 
     toggleEnvironmentMap(enable: boolean) {
@@ -76,15 +75,15 @@ export class Environment {
         switch (params) {
             case 'low':
                 this.toggleEnvironmentMap(false)
-                console.log(params, 'Low')
+                // console.log(params, 'Low')
                 break
             case 'medium':
                 this.toggleEnvironmentMap(false)
-                console.log(params, 'Medium')
+                // console.log(params, 'Medium')
                 break
             case 'hight':
                 this.addEnvironmentMap()
-                console.log(params, 'Hight')
+                // console.log(params, 'Hight')
                 break
             default:
                 throw new Error(`Качество ${params}`);

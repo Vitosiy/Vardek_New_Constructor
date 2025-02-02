@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 
 import { defineStore } from 'pinia';
@@ -11,9 +12,12 @@ import * as THREEInterfases from "../../types/interfases"
 
 export const useRoomState = defineStore('RoomState', () => {
 
-  const roomsStore = useSchemeTransition()
+//   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
-  const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || [] );
+const roomsStore = useSchemeTransition();
+const roomsData = roomsStore.getSchemeTransitionData 
+const rooms = ref<THREEInterfases.IRoom[]>(roomsData|| [] );
+
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
@@ -28,6 +32,8 @@ export const useRoomState = defineStore('RoomState', () => {
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {
+      // console.log(room, 'room')
+
       room.content = content;
       room.size = size;
     }

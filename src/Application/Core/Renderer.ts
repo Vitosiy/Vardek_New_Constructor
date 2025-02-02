@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as THREE from "three"
 // import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
@@ -18,12 +19,14 @@ export class Renderer {
     scene: THREE.Scene | null = null
 
     instance: THREE.WebGLRenderer | any
-    labelRenderer:CSS2DRenderer = new CSS2DRenderer();
+    labelRenderer: CSS2DRenderer = new CSS2DRenderer();
     ratio: number
 
     enviroment: any
     resources: any
     antialiasing: boolean
+
+    onSetQuality: (value: string) => void
 
     constructor(parent: THREETypes.TApplication) {
 
@@ -38,6 +41,8 @@ export class Renderer {
         this.ratio = this.sizes.pixelRatio
 
         this.eventsStore = useEventBus()
+
+        this.onSetQuality = this.setQuality.bind(parent)
 
         this.setInstance();
         this.setLableRenderer()
@@ -65,7 +70,7 @@ export class Renderer {
         this.instance.setSize(this.sizes.width, this.sizes.height);
         this.instance.setPixelRatio(this.sizes.pixelRatio);
         this.instance.setClearColor('#cccccc')
-        this.instance.logarithmicDepthBuffer = true 
+        this.instance.logarithmicDepthBuffer = true
         // this.instance.shadowMap.autoUpdate = true;
         this.canvas.appendChild(this.instance.domElement)
 
@@ -163,9 +168,40 @@ export class Renderer {
 
     vueEvents() {
 
-        this.eventsStore.on('A:Quality', (value: string) => {
+        this.onSetQuality = (value) => {
             this.setQuality(value)
-        })
+        }
+
+        this.eventsStore.on('A:Quality', this.onSetQuality)
 
     }
+
+    removeVueEvents() {
+        this.eventsStore.off('A:Quality', this.onSetQuality)
+
+        this.canvas.removeChild(this.instance.domElement);
+        this.cleanupCSS2DRenderer(this.labelRenderer)
+
+        this.instance.dispose(); // Освобождаем ресурсы рендерера
+        this.instance.renderLists.dispose();
+        this.instance.forceContextLoss(); // Принудительно завершаем WebGL-контекст
+        this.instance.domElement = null; // Удаляем ссылку на DOM-элемент
+        this.instance = null; // Удаляем ссылку на рендерер
+
+        
+    }
+
+    cleanupCSS2DRenderer(labelRenderer) {
+
+        const labelRendererElements = labelRenderer.domElement.querySelectorAll('*');
+        labelRendererElements.forEach((element) => {
+          element.remove();
+        });
+
+        if (labelRenderer.domElement.parentElement) {
+          labelRenderer.domElement.parentElement.removeChild(labelRenderer.domElement);
+        }
+      
+        labelRenderer = null;
+      }
 }

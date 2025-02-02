@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 // import { APP } from '@/Application/F-sources';
 
-import { 
+import {
 	getCenterOfPoints
 } from "@/Constructor2D/utils/Math";
 
@@ -88,17 +88,19 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				//     }
 				// ],
 				walls: [],
-				floor: null, /** ID текстуры пола */
-				wall: null,/** ID текстуры стен */
+				wall: '44144',
+				floor: '44020'
 			},
-			content: { /** Наполняемый контетн из 2D редактора (объёмные стены / переферия) */
-				'2d': [
+			content: [
+			],
+			// content: { /** Наполняемый контетн из 2D редактора (объёмные стены / переферия) */
+			// 	'2d': [
 
-				],
-				'3d': [
+			// 	],
+			// 	'3d': [
 
-				]
-			},
+			// 	]
+			// },
 		},
 
 	]);
@@ -137,7 +139,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		const wData = {
 			id: data.wall.id,
 			width: data.wall.width,
-			height: data.wall.height,
+			height: 3000,
 			position: centerWall,
 			rotation: {
 				isEuler: true,

@@ -5,12 +5,14 @@ import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
 import { useEventBus } from '@/store/appliction/useEventBus';
+import { useModelState } from '@/store/appliction/useModelState';
 
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 
-export default class SetObject {
+export class SetObject {
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    modelState = useModelState();
 
     scene: THREE.Scene | null = null
     modelData: any
@@ -18,6 +20,7 @@ export default class SetObject {
     point: THREE.Vector3 | null = null
     roomManager: THREETypes.TRoomManager | null = null
     trafficManager: THREETypes.TTrafficManager | null = null
+  
     boxHelper: THREETypes.TCustomBoxHelper | null = null
 
     create({ scene, config, object, point, rotate, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
@@ -35,7 +38,7 @@ export default class SetObject {
         }
 
         object.userData.globalData = config.ID;
-        object.userData.modelVector = object.userData.PROPS.PRODUCT.element_type;
+        object.userData.modelVector = this.modelState.getModels[object.userData.PROPS.PRODUCT].element_type;
 
         // /** Проверяем положение объекта внутри комнаты */
 
@@ -110,6 +113,9 @@ export default class SetObject {
             boxHelper.addBoxHelper(object);
             return
         }
+
+        boxHelper.removeBoxHelper();
+        boxHelper.addBoxHelper(object);
     }
 
     isEmpty(obj: {}) {

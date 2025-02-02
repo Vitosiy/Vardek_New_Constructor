@@ -1,5 +1,4 @@
-// @ts-nocheck 31
-
+//@ts-nocheck
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 
@@ -24,7 +23,7 @@ export class ModelsBuilder {
 
         const arrows = new THREE.Object3D()
         const model = props.CONFIG.MODEL
-
+        // console.log(model, 'TT')
 
 
         this.resources.startLoading(url, model.model_type, (file: any) => {
@@ -32,49 +31,43 @@ export class ModelsBuilder {
             if (!file) {
                 console.error('Модель не может быть загружена', file)
             }
+
+            const parentObject = new THREE.Object3D()
+
+            // console.log(model.id, 'CCreate')
+
             //3689569
 
-            let aabb = new THREE.Box3().setFromObject(file);
+            const aabb = new THREE.Box3().setFromObject(file);
             const center = new THREE.Vector3();
             aabb.getCenter(center);
             let size = aabb.getSize(center)
 
-
             file.traverse((child: any) => {
                 if (child instanceof THREE.Mesh) {
+                    
+                    // child.geometry.center();
 
-                    if (model.scale > 1) {
-                        // Центрируем геометрию
-                        child.geometry.center();
-                        // Масштабируем объект
-                        child.scale.set(model.scale, model.scale, model.scale);
-                        child.position.y = 0
-                        child.position.x = 0
-                        child.position.z = 0
-                    }
-
-                    else{
-                        child.position.sub(center);
-                        child.position.y += size.y / 2
-                        child.position.x = 0
-                        child.position.z = 0
-                    }
-
+                    child.scale.set(model.scale, model.scale, model.scale)
+                    child.position.sub(center);
+                    child.position.y += size.y / 2
+                    child.position.x =0
+                    child.position.z =0
+                    // child.geometry.translate(0, -size.y * 0.5, 0);
+                  
 
                     if (child.material.map) {
                         child.material.map.encoding = THREE.SRGBColorSpace;
                         child.material.emissiveMap = child.material.map;
                         child.material.emissive = new THREE.Color(0xffffff);
                         child.material.emissiveIntensity = 0.1
-                        // child.material.needsUpdate = true;
+                        child.material.needsUpdate = true;
 
                         child.material.map.generateMipmaps = true;
                         child.material.map.minFilter = THREE.LinearMipmapLinearFilter; // Включение mipmaps
-                        child.material.map.maxFilter = THREE.LinearFilter;
                         child.material.map.needsUpdate = true; // Обновление текстуры
 
                     }
-
                     if (child.material.normalMap) {
                         child.material.normalMap.generateMipmaps = true;
                         child.material.normalMap.minFilter = THREE.LinearMipmapLinearFilter;
@@ -84,30 +77,6 @@ export class ModelsBuilder {
 
             })
 
-            if (model.scale > 1) {
-                file.position.copy(center);
-            }
-
-            file.userData.PROPS = props
-
-
-            // parentObject.updateMatrixWorld(true)
-
-            let box = new THREE.Box3().setFromObject(file);
-            let boxSize = box.getSize(center)
-
-            let obb = new OBB();
-            obb = obb.fromBox3(box);
-
-
-            file.userData.obb = obb
-            file.userData.trueDepth = boxSize.z * 0.5
-            file.userData.trueHeight = boxSize.y * 0.5
-            file.userData.trueLength = boxSize.x * 0.5
-            file.userData.trueSizes = {
-                z: boxSize.z * 0.5, y: boxSize.y * 0.5, x: boxSize.x * 0.5
-            }
-
             /** Добавляем стрелки размеров */
 
             let ruler = this.ruler.drawRullerObjects(file)
@@ -116,6 +85,35 @@ export class ModelsBuilder {
                     arrows.add(item[i])
                 }
             })
+
+            // file.add(file)
+            file.userData.PROPS = props
+
+
+            parentObject.position.sub(center);
+            parentObject.traverse(child => {
+                if (child instanceof THREE.Mesh) {
+                    // Создаем матрицу смещения
+                    // const offsetMatrix = new THREE.Matrix4();
+                    // // offsetMatrix.makeTranslation(-size.x * 0.5, -size.y * 0.5, -size.z * 0.5);
+                    // // Применяем смещение
+                    // child.geometry.applyMatrix4(offsetMatrix);
+                }
+            })
+
+
+            // parentObject.updateMatrixWorld(true)
+
+            let obb = new OBB();
+            obb = obb.fromBox3(aabb);
+
+            file.userData.obb = obb
+            file.userData.trueDepth = size.z * 0.5
+            file.userData.trueHeight = size.y * 0.5
+            file.userData.trueLength = size.x * 0.5
+            file.userData.trueSizes = {
+                z: size.z * 0.5, y: size.y * 0.5, x: size.x * 0.5
+            }
 
             file.add(arrows)
 

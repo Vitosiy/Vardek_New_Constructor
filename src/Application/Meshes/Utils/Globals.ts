@@ -1,5 +1,5 @@
-//@ts-nocheck
 
+//@ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
@@ -17,6 +17,7 @@ export class GlobalsData {
     _FASADE_GROUPS: THREETypes.TObject = this._APP.FASADE_GROUPS
     _MILLING: THREETypes.TObject = this._APP.MILLING    
     _MODELS: THREETypes.TObject = this._APP.MODELS
+    _PRODUCTS:THREETypes.TObject = this._APP.CATALOG.PRODUCTS
     _SHELF_POSITION: THREETypes.TObject = this._APP.PRODUCT_SHELF_POSITION
 
     constructor(){

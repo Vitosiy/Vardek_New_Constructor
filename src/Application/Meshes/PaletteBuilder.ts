@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 
@@ -11,11 +12,8 @@ export class PaletteBulider{
     }
 
     createPaletteColor({ fasade, data, fasadeNdx, props }: { fasade: THREE.Object3D, data: number | string, fasadeNdx: number, props: { [key: string]: any } }) {
-
-
+        
         const palette = this.parent._APP.PALETTE[data]
-
-        // console.log(palette, '--PPPP')
 
         if (palette.DETAIL_PICTURE != null) {
 

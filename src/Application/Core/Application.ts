@@ -7,6 +7,10 @@ import { Camera } from "./Camera";
 import { Renderer } from "./Renderer";
 import { World } from "./World";
 
+import { GeometryBuilder } from '../Meshes/GeometryBuilder';
+import { MeshEvents } from "../Meshes/Utils/Events"
+import {SetObject} from "../Utils/SetObject";
+import { Ruler } from "../Utils/Ruler";
 
 import { useEventBus } from '../../store/appliction/useEventBus';
 import { useAppData } from "@/store/appliction/useAppData";
@@ -22,34 +26,47 @@ export class Application {
     appData: ReturnType<typeof useAppData> = useAppData();
     // meshEvents: MeshEvents | null = null
 
-    canvas: HTMLElement;
-    sizes: Sizes;
-    time: Time;
-    scene: THREE.Scene;
-    camera: Camera;
-    renderer: Renderer;
-    resources: Resources = new Resources();
-    enviromentData: { [key: string]: any } = ENVIROMENT_MAP[0]
-    world: World;
+    canvas: HTMLElement | null;
+    sizes: Sizes | null = null;
+    time: Time | null = null;
+    scene: THREE.Scene  | null = null;;
+    camera: Camera | null = null;
+    renderer: Renderer | null = null;
+    resources: Resources | null = null
+    enviromentData: { [key: string]: any } | null = ENVIROMENT_MAP[0]
+
+    world: World | null = null;
+    geometryBuilder: GeometryBuilder | null
+    meshEvents: MeshEvents | null = null
+    setObject: SetObject | null = null
+    ruler: Ruler | null = null
 
     draft: boolean = false
 
     constructor(canvas: HTMLElement) {
 
-        (window as any).aplication = this // Для разработки
+        // (window as any).aplication = this // Для разработки
 
         /** Инициализация */
-
+        this.resources = new Resources();
         this.canvas = canvas
 
-        this.sizes = new Sizes(this.canvas)
+        this.sizes = new Sizes(canvas)
         this.time = new Time()
         this.scene = new THREE.Scene()
         this.camera = new Camera(this)
-
         this.renderer = new Renderer(this)
+
+        this.ruler = new Ruler();
+        this.geometryBuilder = new GeometryBuilder(this);
+        this.meshEvents = new MeshEvents(this);
+        this.setObject = new SetObject();
+
+
         this.world = new World(this)
-        this.resources.startLoading(this.enviromentData.texture, this.enviromentData.type)
+
+
+        this.resources.startLoading(this.enviromentData!.texture, this.enviromentData!.type)
 
         // /** Привязка методов */
 
@@ -60,19 +77,19 @@ export class Application {
         this.time.on('tick', this.update)
 
         this.vueEvents()
-        this.checkLostContext()
+        // this.checkLostContext()
     }
 
     get _camera() {
-        return this.camera.instance
+        return this.camera!.instance
     }
 
     get _orbitControls() {
-        return this.camera.controls
+        return this.camera!.controls
     }
 
     get _renderer() {
-        return this.renderer.instance
+        return this.renderer!.instance
     }
 
     get _scene() {
@@ -96,89 +113,69 @@ export class Application {
     }
 
     get _trafficManager() {
-        return this.world.trafficManager
+        return this.world!.trafficManager
     }
 
     resize() {
-        this.camera.resize()
-        this.renderer.resize()
+        this.camera!.resize()
+        this.renderer!.resize()
     }
 
     update() {
-        this.camera.update()
-        this.renderer.update()
+        this.camera!.update()
+        this.renderer!.update()
     }
 
     destroy() {
 
-        this.sizes.off('resize')
-        this.time.off('tick')
-        this.removeVueEvents()
-        this.clearScene(this.scene, this.renderer.instance)
+        this.sizes!.off('resize')
+        this.sizes!.destroy();
+        this.time!.off('tick')
+        this.time?.tickStop();
+        this.world!.removeVueEvents();
+        this.renderer!.removeVueEvents();
+        this.meshEvents!.removeVueEvents();
+        this.world!.deepDispose.clearTotal(this.scene!);
+      
+        this.meshEvents = null
+        this.enviromentData = null
+        this.setObject = null
+        this.resources = null
+        this.sizes = null
+        this.time = null
+        this.scene = null
+        this.camera = null
+        this.renderer = null
+        this.geometryBuilder = null
+        this.world = null
+        this.canvas = null
+        // this.clearScene(this.scene, this.renderer.instance)
 
     }
 
-    clearScene(scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
-        if (!scene || !renderer) return;
-
-        // Очистка сцены
-        const objects = [...scene.children];
-        objects.forEach((child) => {
-            // Удаление геометрий, материалов и текстур
-            if (child instanceof THREE.Mesh) {
-                child.geometry.dispose();
-                if (Array.isArray(child.material)) {
-                    child.material.forEach((material) => {
-                        material.map?.dispose();
-                        material.dispose();
-                    });
-                } else {
-                    child.material.map?.dispose();
-                    child.material.dispose();
-                }
-            }
-            // Удаление объекта из сцены
-            scene.remove(child);
-        });
-
-        // Очищаем WebGL контекст
-        renderer.dispose();
-
-        // Удаляем все слушатели событий и контролы
-        renderer.domElement.remove();
-    }
-
-    checkLostContext() {
-        this.canvas.addEventListener('webglcontextlost', (event) => {
-            event.preventDefault();
-            console.log('WebGL context lost');
-        }, false);
-    }
+    // checkLostContext() {
+    //     this.canvas.addEventListener('webglcontextlost', (event) => {
+    //         event.preventDefault();
+    //         console.log('WebGL context lost');
+    //     }, false);
+    // }
 
     udateCamera(value: boolean) {
-        this.camera.ortoCamera = value
-        this.camera.setInstance()
-        this.renderer.camera = this.camera.instance
-        this.renderer.setInstance()
+        this.camera!.ortoCamera = value
+        this.camera!.setInstance()
+        this.renderer!.camera = this.camera!.instance
+        this.renderer!.setInstance()
     }
 
     vueEvents() {
 
-        this.eventsStore.on('A:CameraToggle', (value: boolean) => {
-            this.draft = value
-            this.udateCamera(value)
-            this.world.room.createShape.hideDraft()
-        })
+        // this.eventsStore.on('A:CameraToggle', (value: boolean) => {
+        //     this.draft = value
+        //     this.udateCamera(value)
+        //     this.world!.room.createShape.hideDraft()
+        // })
 
         // this.meshEvents = new MeshEvents(this)
     }
 
-    removeVueEvents() {
-        // if (this.meshEvents) {
-        //     this.meshEvents.removeVueEvents();
-        //     this.meshEvents = null
-        //     console.log('remove!')
-        // }
-        this.world.removeVueEvents()
-    }
 }
