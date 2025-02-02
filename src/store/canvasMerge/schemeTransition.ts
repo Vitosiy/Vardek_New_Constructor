@@ -1,4 +1,4 @@
-import { MathUtils, Euler } from "three";
+import { MathUtils } from "three";
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 // import { APP } from '@/Application/F-sources';
