@@ -13,6 +13,8 @@ import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
 import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
 import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
 
+import { threejsScene } from "./threejsScene/index";
+
 /*
 import {
   DropData
@@ -85,6 +87,9 @@ export default class Constructor2D {
     });
     this.app2d.stage.hitArea = this.app2d.screen;
     this.app2d.stage.eventMode = 'static';
+
+    // test threejs scene
+    threejsScene();
 
     this.initComponents();
     this.setupInteractions();

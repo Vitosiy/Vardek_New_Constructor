@@ -294,13 +294,12 @@ function getCenterOfPoints(points: Vector2[]): Vector2 {
   center.x /= points.length;
   center.y /= points.length;
 
-  let xyzConverted = {
+  let xyConverted = {
     x: center.x,
-    z: center.y,
-    y: 1500
+    y: center.y
   }
 
-  return xyzConverted
+  return xyConverted
 }
 
 export {

@@ -353,16 +353,6 @@ export default class StartPointActiveObject {
 
     this.interactiveWallStore.setStatusLeftDownMouse(false);
     
-    { // Обновляем стену в схеме
-      const __activeObject = this.plannerStore.getObjectById(this.interactiveWallStore.getActiveObjectID);
-      const activeObject = JSON.parse(JSON.stringify(__activeObject));
-
-      this.roomStore.setWall({
-        idRoom: this.roomStore.getSchemeTransitionData[0].id,
-        wall: activeObject
-      });
-    }
-    
     e.stopPropagation(); // Останавливаем всплытие события
     
   }
@@ -408,10 +398,36 @@ export default class StartPointActiveObject {
           mousePosition
         );
       }
+    
+      { // Обновляем стену в схеме
+        const __activeObject = this.plannerStore.getObjectById(this.interactiveWallStore.getActiveObjectID);
+        const activeObject = JSON.parse(JSON.stringify(__activeObject));
+  
+        this.roomStore.setWall({
+          idRoom: this.roomStore.getSchemeTransitionData[0].id,
+          wall: activeObject
+        });
+      }
   
       // Обновляем соединённые стены, если есть слияние
       if (wall.mergeWalls.wallPoint1 !== null || wall.mergeWalls.wallPoint0 !== null) {
         this.plannerStore.updatedMergeWalls(this.interactiveWallStore.activeObjectID);
+
+        if(wall.mergeWalls.wallPoint1) {
+          const wallData = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(wall.mergeWalls.wallPoint1)));
+          this.roomStore.setWall({
+            idRoom: this.roomStore.getSchemeTransitionData[0].id,
+            wall: wallData
+          });
+        }
+        if(wall.mergeWalls.wallPoint0) {
+          const wallData = JSON.parse(JSON.stringify(this.plannerStore.getObjectById(wall.mergeWalls.wallPoint0)));
+          this.roomStore.setWall({
+            idRoom: this.roomStore.getSchemeTransitionData[0].id,
+            wall: wallData
+          });
+        }
+
       }
     }
   
