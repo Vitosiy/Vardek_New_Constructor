@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 
-//@ts-nocheck
-
-import { MathUtils } from "three";
+// import { MathUtils } from "three";
 
 import { ref, onMounted, Ref, onUnmounted, reactive } from "vue";
 

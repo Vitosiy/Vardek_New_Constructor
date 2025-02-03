@@ -1,5 +1,5 @@
 import {
-  reactive,
+  // reactive,
   watch
 } from 'vue';
 import * as THREE from "three";
