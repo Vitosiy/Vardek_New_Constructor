@@ -11,7 +11,7 @@ import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
 import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
 import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
 
-// import { threejsScene } from "./threejsScene/index";
+import { threejsScene } from "./threejsScene/index";
 
 /*
 import {
@@ -87,13 +87,14 @@ export default class Constructor2D {
     this.app2d.stage.eventMode = 'static';
 
     // test threejs scene
-    // threejsScene();
+    threejsScene();
 
     this.initComponents();
     this.setupInteractions();
 
     this.handleResize();
     window.addEventListener('resize', this.handleResize.bind(this));
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
   private initComponents(): void {
@@ -102,6 +103,21 @@ export default class Constructor2D {
     this.components.planner = new Planner(this.app2d!);
     this.components.startPointActiveObject = new StartPointActiveObject(this.app2d!);
     this.components.rulers = new Rulers(this.app2d!);
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    event.preventDefault();
+    if (event.key === "Delete" || event.key === "Backspace") {
+      const activeObj = this.interactiveWallStore.getActiveObjectID;
+      if(this.components.planner && activeObj){
+        
+        this.interactiveWallStore.setActiveObjectID(0);
+        // // this.plannerStore.updatedMergeWalls(activeObj);
+        this.components.planner?.setActiveObject("wall", null);
+        // this.components.planner.removeObject(activeObj);
+        
+      }
+    }
   }
 
   private handleResize(): void {
@@ -136,6 +152,7 @@ export default class Constructor2D {
 
       // Удаляем resize listener
       window.removeEventListener('resize', this.handleResize.bind(this));
+      window.removeEventListener('keydown', this.handleKeyDown.bind(this));
 
       // Удаляем все компоненты
       for (const key in this.components) {
