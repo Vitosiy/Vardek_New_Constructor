@@ -181,11 +181,35 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	};
 
-	const getRoomDataFor3DScene = computed(() => {
+	const getRoomDataFor3DScene = (idRoom: string | number): any => {
+		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);
 
-		//
-		
-	});
+		if (!data) return;
+
+		const roomData = JSON.parse(JSON.stringify(data));
+		const walls = roomData.size.walls;
+
+		// определить центр масс всех стен
+		const center = walls.reduce((acc: any, wall: any) => {
+			acc.x += wall.position.x;
+			acc.y += wall.position.y;
+			acc.z += wall.position.z;
+			return acc;
+		}, { x: 0, y: 0, z: 0 });
+
+		center.x /= walls.length;
+		center.y /= walls.length;
+		center.z /= walls.length;
+
+		// сместить центр масс в центр координат (0, 0, 0) вместе со стенами
+		walls.forEach((wall: any) => {
+			wall.position.x -= center.x;
+			wall.position.y -= center.y;
+			wall.position.z -= center.z;
+		});
+
+		return roomData;
+	};
 
 	const getSchemeTransitionData = computed(() => {
 		return SchemeTransitionData.value
