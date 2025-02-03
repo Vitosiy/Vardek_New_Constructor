@@ -1,6 +1,6 @@
 import { MathUtils } from "three";
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, reactive } from 'vue';
 // import { APP } from '@/Application/F-sources';
 
 import {
@@ -15,7 +15,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			id: MathUtils.generateUUID(), /** ID комнаты */
 			label: "Гостинная", /** Лейбл */
 			description: "Гостевая комната", /** Описание */
-			size: {
+			size: reactive({
 				/** Данные для форпмирования стен комнат */
 				// walls: [
 				//     {
@@ -90,7 +90,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				walls: [],
 				wall: '44144',
 				floor: '44020'
-			},
+			}),
 			content: [
 			],
 			// content: { /** Наполняемый контетн из 2D редактора (объёмные стены / переферия) */
@@ -134,18 +134,22 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		// centerWall.y /= data.wall.points.length;
 		// centerWall.z /= data.wall.points.length;
 
-		const centerWall = getCenterOfPoints(data.wall.points);
+		const centerWall = getCenterOfPoints([data.wall.points[0], data.wall.points[1]]);
 
 		const wData = {
 			id: data.wall.id,
-			width: data.wall.width,
-			height: 3000,
-			position: centerWall,
+			width: data.wall.width * 10,
+			height: 300 * 10,
+			position: {
+				x: centerWall.x * 10,
+				y: ( 300 * 10 ) / 2,
+				z: centerWall.y * 10
+			},
 			rotation: {
 				isEuler: true,
-				_x: 0,
-				_y: MathUtils.degToRad(data.wall.angleDegrees),
-				_z: 0,
+				_x: MathUtils.degToRad(0),
+				_y: MathUtils.degToRad(-data.wall.angleDegrees),
+				_z: MathUtils.degToRad(0),
 				_order: "XYZ"
 			},
 			side: 0
@@ -177,13 +181,50 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	};
 
+	const getRoomDataFor3DScene = (idRoom: string | number): any => {
+		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);
+
+		if (!data) return;
+
+		const roomData = JSON.parse(JSON.stringify(data));
+		const walls = roomData.size.walls;
+
+		// определить центр масс всех стен
+		const center = walls.reduce((acc: any, wall: any) => {
+			acc.x += wall.position.x;
+			acc.y += wall.position.y;
+			acc.z += wall.position.z;
+			return acc;
+		}, { x: 0, y: 0, z: 0 });
+
+		center.x /= walls.length;
+		center.y /= walls.length;
+		center.z /= walls.length;
+
+		// сместить центр масс в центр координат (0, 0, 0) вместе со стенами
+		walls.forEach((wall: any) => {
+			wall.position.x -= center.x;
+			wall.position.y -= center.y;
+			wall.position.z -= center.z;
+		});
+
+		return roomData;
+	};
+
 	const getSchemeTransitionData = computed(() => {
 		return SchemeTransitionData.value
 	})
 
+	const getWalls = computed(() => {
+		return SchemeTransitionData.value[0].size.walls
+	});
+
 	return {
+		SchemeTransitionData,
 		getSchemeTransitionData,
+		getRoomDataFor3DScene,
 		setAppData,
+		getWalls,
 
 		setWall,
 		removeWall

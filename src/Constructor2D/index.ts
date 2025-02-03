@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import {
   watch,
   // ref
@@ -12,6 +10,8 @@ import Planner from "./CanvasComponents/Planner";
 import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
 import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
 import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
+
+// import { threejsScene } from "./threejsScene/index";
 
 /*
 import {
@@ -85,6 +85,9 @@ export default class Constructor2D {
     });
     this.app2d.stage.hitArea = this.app2d.screen;
     this.app2d.stage.eventMode = 'static';
+
+    // test threejs scene
+    // threejsScene();
 
     this.initComponents();
     this.setupInteractions();
