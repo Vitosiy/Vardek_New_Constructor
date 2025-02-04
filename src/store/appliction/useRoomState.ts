@@ -12,11 +12,11 @@ import * as THREEInterfases from "../../types/interfases"
 
 export const useRoomState = defineStore('RoomState', () => {
 
-//   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
+  //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
-const roomsStore = useSchemeTransition();
-const roomsData = roomsStore.getSchemeTransitionData 
-const rooms = ref<THREEInterfases.IRoom[]>(roomsData|| [] );
+  const roomsStore = useSchemeTransition();
+  const roomsData = roomsStore.getSchemeTransitionData
+  const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
 
 
   const currentRoomId = ref<number | null>(null);
@@ -33,6 +33,7 @@ const rooms = ref<THREEInterfases.IRoom[]>(roomsData|| [] );
 
     if (room) {
       // console.log(room, 'room')
+
 
       room.content = content;
       room.size = size;
@@ -85,7 +86,19 @@ const rooms = ref<THREEInterfases.IRoom[]>(roomsData|| [] );
     return tempRoomSize.value
   });
 
+
   const getCurrentRoomId = computed(() => {
+    let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
+
+    const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
+
+    if(centerized){
+      currentRoom.size = centerized?.size ?? currentRoom?.size;
+    }
+
+    console.log(currentRoom, '--cR', centerized, '--centrR')
+
+
     return rooms.value.find(value => value.id === currentRoomId.value)
   });
 

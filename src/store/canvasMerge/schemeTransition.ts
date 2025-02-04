@@ -204,7 +204,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		// сместить центр масс в центр координат (0, 0, 0) вместе со стенами
 		walls.forEach((wall: any) => {
 			wall.position.x -= center.x;
-			wall.position.y -= center.y;
+			wall.position.y = 1500;
 			wall.position.z -= center.z;
 		});
 

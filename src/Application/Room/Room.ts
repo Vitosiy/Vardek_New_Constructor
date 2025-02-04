@@ -135,6 +135,8 @@ export class Room {
             return
         }
 
+        console.log(this.roomsStore.getCurrentRoomId.size)
+
         this.roomsStore.setCurrentRoomSize(this.roomsStore.getCurrentRoomId.size)
         this.params = this.roomsStore.getCurrentRoomId.size
         this.resizeParams = this.roomsStore.getCurrentRoomId.size

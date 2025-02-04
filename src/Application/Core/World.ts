@@ -59,8 +59,6 @@ export class World {
         this.onSaveRoom = this.saveRoom.bind(this)
         this.onLoadRoom = this.loadRoom.bind(this)
 
-        // this.firstCreate()
-
 
         this.scene.add(new THREE.AxesHelper(2000))
         this.room = new RoomManager(this.root, this.lights);
@@ -78,16 +76,6 @@ export class World {
 
     }
 
-    firstCreate() {
-        // this.enviroment = new Environment(this.root)
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room = new RoomManager(this.root, this.lights);
-        this.room.update()
-
-        this.lights.setLight(this.room._wallsGroupSize, 2)
-        this.trafficManager = new TrafficManager(this.root, this.room)
-        this.vueEvents()
-    }
 
     setRoom() {
 
