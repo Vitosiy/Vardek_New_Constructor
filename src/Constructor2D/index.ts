@@ -22,6 +22,7 @@ import {
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
@@ -52,6 +53,7 @@ export default class Constructor2D {
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
   private interactiveWallStore = useC2DInteractiveWallStore();
   private plannerStore = usePlanner2DStore();
+  private roomStore = useSchemeTransition();
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -94,6 +96,7 @@ export default class Constructor2D {
 
     this.handleResize();
     window.addEventListener('resize', this.handleResize.bind(this));
+    window.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
   private initComponents(): void {
@@ -102,6 +105,24 @@ export default class Constructor2D {
     this.components.planner = new Planner(this.app2d!);
     this.components.startPointActiveObject = new StartPointActiveObject(this.app2d!);
     this.components.rulers = new Rulers(this.app2d!);
+  }
+
+  private handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === "Delete" || event.key === "Backspace") {
+      const activeObj = this.interactiveWallStore.getActiveObjectID;
+      if(this.components.planner && activeObj){
+        
+        this.interactiveWallStore.setActiveObjectID(0);
+        // // this.plannerStore.updatedMergeWalls(activeObj);
+        this.components.planner?.setActiveObject("wall", null);
+        this.plannerStore.removeObj(activeObj);
+        this.roomStore.removeWall({
+          idRoom: this.roomStore.getSchemeTransitionData[0].id,
+          idWall: activeObj
+        });
+        
+      }
+    }
   }
 
   private handleResize(): void {
@@ -136,6 +157,7 @@ export default class Constructor2D {
 
       // Удаляем resize listener
       window.removeEventListener('resize', this.handleResize.bind(this));
+      window.removeEventListener('keydown', this.handleKeyDown.bind(this));
 
       // Удаляем все компоненты
       for (const key in this.components) {

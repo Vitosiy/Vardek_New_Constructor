@@ -107,6 +107,27 @@ export default class Planner {
       )
     );
 
+    // следим за удалением объекта
+    this.unwatchList.push(
+      watch(
+        () => this.plannerStore.objects.map(obj => obj.id),
+        (newIds, oldIds) => {
+          const removedIds = oldIds.filter(id => !newIds.includes(id));
+          removedIds.forEach(id => {
+            const index = this.drawObjects.findIndex(obj => obj.id === id);
+            if (index !== -1) {
+              this.removeObject({
+                type: "wall",
+                id: id
+              });
+            }
+          });
+        },
+        { deep: true }
+      )
+    );
+
+
     // отслеживаем изменения в объекте
     this.unwatchList.push(
       watch(
@@ -145,7 +166,7 @@ export default class Planner {
             const isWallPointChanged =
               newObject.mergeWalls.wallPoint0 !== oldObject.mergeWalls.wallPoint0 ||
               newObject.mergeWalls.wallPoint1 !== oldObject.mergeWalls.wallPoint1;
-    
+              
             if (isWallPointChanged) {
               // Получаем оригинальный объект из plannerStore.objects
               const plannerObject = this.plannerStore.objects.find(obj => obj.id === newObject.id);
@@ -597,8 +618,6 @@ export default class Planner {
 
   private handlerEventGraphic(id: number | string, e:PIXI.FederatedPointerEvent):void {
 
-    e.preventDefault();
-
     if (e.button == 0){
 
       const oldActive = this.activeWallID;
@@ -620,6 +639,53 @@ export default class Planner {
 
     e.stopPropagation(); // Останавливаем всплытие события
 
+  }
+
+  public removeObject(data:any): void {
+
+    /*
+    data.type = "wall"
+    data.id = number | string
+    */
+
+    // this.roomStore.removeWall({
+    //   idRoom: this.roomStore.getSchemeTransitionData[0].id,
+    //   idWall: id
+    // });
+
+    const objIndex = this.drawObjects.findIndex((el) => el.id === data.id);
+
+    if(objIndex !== -1){
+      const obj = this.drawObjects[objIndex];
+
+      obj.containers.eventGraphic?.off("pointerdown", this.handlerEventGraphic.bind(this, obj.id));
+
+      for (const key in obj.containers) {
+        if(key !== 'root'){
+          const graphic = obj.containers[key as keyof PlannerObjectContainers];
+          if (graphic){
+            if(!graphic.destroyed) {
+              graphic.destroy(true); // Удаляем графику рекурсивно
+            }
+            obj.containers[key as keyof PlannerObjectContainers] = null!; // Обнуляем ссылку
+            delete obj.containers[key as keyof PlannerObjectContainers];
+          }
+        }
+      }
+
+      if(obj.containers.root){
+        obj.containers.root.destroy({ children: true, texture: true }); // Удаляем все дочерние элементы и текстуры
+        this.container.removeChild(obj.containers.root);
+        obj.containers.root = null!; // Обнуляем ссылку
+        delete obj.containers.root;
+      }
+
+      // console.log(this.drawObjects);
+      
+      this.drawObjects.splice(objIndex, 1);
+
+    }
+    
   }
 
   public destroy(): void {
