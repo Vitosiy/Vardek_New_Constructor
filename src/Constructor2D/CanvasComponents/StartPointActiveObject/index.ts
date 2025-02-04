@@ -375,6 +375,7 @@ export default class StartPointActiveObject {
       const __activeWall = this.plannerStore.getObjectById(
         this.interactiveWallStore.activeObjectID
       );
+      if(!__activeWall) return;
       const wall = JSON.parse(JSON.stringify(__activeWall));
   
       // Обновляем позицию активной точки

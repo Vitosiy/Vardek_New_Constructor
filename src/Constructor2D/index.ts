@@ -11,7 +11,7 @@ import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
 import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
 import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
 
-import { threejsScene } from "./threejsScene/index";
+// import { threejsScene } from "./threejsScene/index";
 
 /*
 import {
@@ -22,6 +22,7 @@ import {
 import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
 import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
 import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
@@ -52,6 +53,7 @@ export default class Constructor2D {
   private constructorStore = useConstructor2DStore(); // constructor2D хранилище
   private interactiveWallStore = useC2DInteractiveWallStore();
   private plannerStore = usePlanner2DStore();
+  private roomStore = useSchemeTransition();
 
   // Массив для хранения функций отписки
   private unwatchList: (() => void)[] = [];
@@ -87,7 +89,7 @@ export default class Constructor2D {
     this.app2d.stage.eventMode = 'static';
 
     // test threejs scene
-    threejsScene();
+    // threejsScene();
 
     this.initComponents();
     this.setupInteractions();
@@ -106,7 +108,6 @@ export default class Constructor2D {
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    event.preventDefault();
     if (event.key === "Delete" || event.key === "Backspace") {
       const activeObj = this.interactiveWallStore.getActiveObjectID;
       if(this.components.planner && activeObj){
@@ -114,7 +115,11 @@ export default class Constructor2D {
         this.interactiveWallStore.setActiveObjectID(0);
         // // this.plannerStore.updatedMergeWalls(activeObj);
         this.components.planner?.setActiveObject("wall", null);
-        // this.components.planner.removeObject(activeObj);
+        this.plannerStore.removeObj(activeObj);
+        this.roomStore.removeWall({
+          idRoom: this.roomStore.getSchemeTransitionData[0].id,
+          idWall: activeObj
+        });
         
       }
     }

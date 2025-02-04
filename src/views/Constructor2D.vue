@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 
-// import { MathUtils } from "three";
+import { MathUtils } from "three";
 
 import { ref, onMounted, Ref, onUnmounted, reactive } from "vue";
 
@@ -67,7 +67,7 @@ function dropHandler(ev: DragEvent): void {
     // Получаем координаты мыши при броске
     const { offsetX: eX, offsetY: eY } = ev;
 
-    const __id = 'wall_'+plannerStore.getCountObjects;
+    const __id = 'wall_'+plannerStore.getCountObjects+"_"+MathUtils.generateUUID();
     
     const mergeWalls: { 
       wallPoint0: null | string | number, 

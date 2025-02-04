@@ -51,9 +51,30 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     
   };
 
-  const removeObj = (index: number) => {
-    if (index >= 0 && index < objects.value.length) {
+  const removeObj = (id: number | string) => {
+    if (id) {
+      const index = objects.value.findIndex(obj => obj.id === id);
+      let obj = JSON.parse(JSON.stringify(objects.value[index])); // Копируем объект
       objects.value.splice(index, 1);
+
+      if(obj.mergeWalls.wallPoint0){
+        const objP0 = objects.value.find(o => o.id === obj.mergeWalls.wallPoint0);
+        if(objP0){
+          objP0.mergeWalls.wallPoint1 = null;
+          // updatedObject(objP0.mergeWalls.wallPoint0);
+        }
+      }
+
+      if(obj.mergeWalls.wallPoint1){
+        const objP1 = objects.value.find(o => o.id === obj.mergeWalls.wallPoint1);
+        if(objP1){
+          objP1.mergeWalls.wallPoint0 = null;
+          // updatedObject(objP1.mergeWalls.wallPoint1);
+        }
+      }
+
+      obj = null;
+
     } else {
       console.warn(`Index ${index} is out of bounds.`);
     }
@@ -65,11 +86,12 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
     const targetObject = objects.value.find(obj => obj.id === id);
 
     if (!targetObject) {
-      console.warn(`Object с id ${id} не найден.`);
+      // console.warn(`Object с id ${id} не найден.`);
       return;
     }
 
     targetObject.updateTime = Date.now();
+    // updatedMergeWalls(id);
 
   };
 
