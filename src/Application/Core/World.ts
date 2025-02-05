@@ -70,9 +70,9 @@ export class World {
 
         // this.meshEvents = new MeshEvents(root)
 
-        // this.resources.on('cubeTextureLoaded', ()=>{
-        //     this.enviroment = new Environment(this.root)
-        // })
+        this.resources.on('cubeTextureLoaded', ()=>{
+            this.enviroment = new Environment(this.root)
+        })
 
     }
 

@@ -208,12 +208,12 @@ export class RoomManager extends Room {
 
         /** Проверка на положение объекта только на полу */
 
-        // adjustPosition.y = object.userData.modelVector == "element_down" ? size.y - 0.001 : Math.max(
-        //     (size.y - 0.001),
-        //     Math.min(position.y, roomBound.max.y - (size.y - 0.001))
-        // );
+        adjustPosition.y = object.userData.modelVector == "element_down" ? size.y - 0.001 : Math.max(
+            (size.y - 0.001),
+            Math.min(position.y, roomBound.max.y - (size.y - 0.001))
+        );
 
-        adjustPosition.y = Math.max((size.y - 0.001), Math.min(position.y, roomBound.max.y - (size.y - 0.001)))
+        // adjustPosition.y = Math.max((size.y - 0.001), Math.min(position.y, roomBound.max.y - (size.y - 0.001)))
 
         // Обновляем конфигурацию объекта
         object.userData.PROPS.CONFIG = { ...object.userData.PROPS.CONFIG, ROTATION: rotation, POSITION: adjustPosition };

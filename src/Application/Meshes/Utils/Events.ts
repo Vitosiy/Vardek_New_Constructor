@@ -10,7 +10,7 @@ import { BuildProduct } from '../BuildProduct';
 import { useAppData } from '@/store/appliction/useAppData';
 import { useModelState } from "@/store/appliction/useModelState";
 
-import { MILLINGS } from '@/Application/F-millings';
+import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
 import { directionToColor } from 'three/webgpu';
 
 let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
@@ -27,11 +27,12 @@ export class MeshEvents {
     buildMilling: THREETypes.TMillingBuilder
     buildWindow: THREETypes.TWindowBuilder
     buildPalette: THREETypes.TPaletteBulider
-    millings: any | null = MILLINGS
+    private millings: any | null = MILLINGS
+    private additionaMillinglKeys: any | null = additionaMillinglKeys
 
     _APP: THREETypes.TObject = useAppData().getAppData
     modelState = useModelState()
-    // millHelper = new GUI()
+    millHelper = new GUI()
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
     private onChangeFasadeTexture: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
@@ -324,20 +325,19 @@ export class MeshEvents {
         //     {
         //         name: "milling_1",
         //         type: 'svg',
-        //         lib: 'bvh',
+        //         // lib: 'bvh',
         //         extrudeSettings: {
         //             steps: 1,
-        //             depth: 2,
+        //             depth: 0,
         //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 5,
+        //             bevelThickness: 20,
+        //             bevelSize: 0,
         //             bevelOffset: 0,
         //             bevelSegments: 1,
         //         },
         //         figureParams: [
         //             {
         //                 nameCondition: "default",
-        //                 inpost: 'top',
         //                 condition: {
         //                     width: {
         //                         min: 296,
@@ -365,426 +365,28 @@ export class MeshEvents {
         //                     widthOffset: -55,
         //                     heightOffset: -55,
         //                     radius: 5.34,
-        //                     position: {
-        //                         inpostOffset: 70,
-        //                         y: 'inpostTop',
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M 0 -hgh 
-        //                         L (wth - radius) -hgh 
-        //                         A radius radius 0 0 1 wth -(hgh - radius) 
-        //                         L wth (hgh - radius) 
-        //                         A radius radius 0 0 1 (wth - radius) hgh 
-        //                         L -(wth - radius) hgh 
-        //                         A radius radius 0 0 1 -wth (hgh - radius) 
-        //                         L -wth -(hgh - radius) 
-        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
-        //                         Z" 
-        //                     />`,
-        //                     widthOffset: -55,
-        //                     heightOffset: -55,
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_3",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 3,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 2,
-        //             bevelOffset: 0,
-        //             bevelSegments: 1,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                 inpost: 'top',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -65,
-        //                     heightOffset: -62,
-        //                     position: {
-        //                         inpostOffset: 83,
-        //                         y: 'inpostTop',
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -68,
-        //                     heightOffset: -65,
-   
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_4",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 3,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 2,
-        //             bevelOffset: 0,
-        //             bevelSegments: 1,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                 inpost: 'top',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -78,
-        //                     heightOffset: -70,
-        //                     position: {
-        //                         inpostOffset: 93,
-        //                         y: 'inpostTop',
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -78,
-        //                     heightOffset: -70,
+        //                     boolParams: {
+        //                         depth: {
+        //                             offset: 20,
+        //                             size: 0
+        //                         },
+        //                         position: {
+        //                             // top: false,
+        //                             // bottom: true,
+        //                             front: -20,
+        //                             // left: true,
+        //                             // right: false,
+        //                             // centerVertical: false
+        //                         },
+        //                         rotate:{
 
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_5",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 3,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 2,
-        //             bevelOffset: 0,
-        //             bevelSegments: 2,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                 inpost: 'top',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -79,
-        //                     heightOffset: -70,
-        //                     position: {
-        //                         inpostOffset: 95,
-        //                         y: 'inpostTop',
-        //                         z: -2,
+        //                         }
         //                     }
         //                 },
         //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -100,
-        //                     heightOffset: -100,
- 
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_1",
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 2,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 5,
-        //             bevelOffset: 0,
-        //             bevelSegments: 1,
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                inpost: 'bottom',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="
-        //                         M 0 -hgh 
-        //                         L (wth - radius) -hgh 
-        //                         A radius radius 0 0 1 wth -(hgh - radius) 
-        //                         L wth (hgh - radius) 
-        //                         A radius radius 0 0 1 (wth - radius) hgh 
-        //                         L -(wth - radius) hgh 
-        //                         A radius radius 0 0 1 -wth (hgh - radius) 
-        //                         L -wth -(hgh - radius) 
-        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
-        //                         Z" 
-        //                     />`,
-        //                     // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
+        //                     svg: ``,
         //                     widthOffset: -55,
         //                     heightOffset: -55,
-        //                     radius: 5.34,
-        //                     position: {
-        //                         inpostOffset: 70,
-        //                         y: 'inpostBottom',
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M 0 -hgh 
-        //                         L (wth - radius) -hgh 
-        //                         A radius radius 0 0 1 wth -(hgh - radius) 
-        //                         L wth (hgh - radius) 
-        //                         A radius radius 0 0 1 (wth - radius) hgh 
-        //                         L -(wth - radius) hgh 
-        //                         A radius radius 0 0 1 -wth (hgh - radius) 
-        //                         L -wth -(hgh - radius) 
-        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
-        //                         Z" 
-        //                     />`,
-        //                     widthOffset: -55,
-        //                     heightOffset: -55,
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_3",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 3,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 2,
-        //             bevelOffset: 0,
-        //             bevelSegments: 1,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                inpost: 'bottom',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -65,
-        //                     heightOffset: -62,
-        //                     position: {
-        //                         inpostOffset: 83,
-        //                         y: 'inpostBottom',
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -68,
-        //                     heightOffset: -65,
-   
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_4",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 3,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 2,
-        //             bevelOffset: 0,
-        //             bevelSegments: 1,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                inpost: 'bottom',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -78,
-        //                     heightOffset: -70,
-        //                     position: {
-        //                         inpostOffset: 93,
-        //                         y: 'inpostBottom',
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -78,
-        //                     heightOffset: -70,
-
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "milling_5",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 3,
-        //             bevelEnabled: true,
-        //             bevelThickness: 2,
-        //             bevelSize: 2,
-        //             bevelOffset: 0,
-        //             bevelSegments: 2,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                inpost: 'bottom',
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -79,
-        //                     heightOffset: -70,
-        //                     position: {
-        //                         inpostOffset: 95,
-        //                         y: 'inpostBottom',
-        //                         z: -2,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -100,
-        //                     heightOffset: -100,
- 
-        //                 },
-        //             },
-        //         ],
-        //     },
-        //     {
-        //         name: "corner_milling_1",
-        //         isCorner: true,
-        //         type: 'svg',
-        //         lib: 'bvh',
-        //         extrudeSettings: {
-        //             steps: 1,
-        //             depth: 1.5,
-        //             bevelEnabled: true,
-        //             bevelThickness: 4,
-        //             bevelSize: 7.5,
-        //             bevelOffset: -7.5,
-        //             bevelSegments: 2,
-    
-        //         },
-        //         figureParams: [
-        //             {
-        //                 nameCondition: "default",
-        //                 condition: {
-        //                     width: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: 7.5,
-        //                     heightOffset: 7.5,
-        //                     position: {
-        //                         z: -4,
-        //                     }
-        //                 },
-        //                 hole: {
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                     widthOffset: -7.5,
-        //                     heightOffset: -7.5,
         //                 },
         //             },
         //         ],
@@ -801,7 +403,9 @@ export class MeshEvents {
 
         }
 
-        let millingData = this.millings[data] ? data : 2462671
+        let millingData = this.millings[data] || this.additionaMillinglKeys[data] ? data : 2462671
+
+        console.log(this.millings[data], this.additionaMillinglKeys[data])
 
         const fasadePosition = {
             FASADE_WIDTH: eval(fasadeProps[fasadeNdx].FASADE_WIDTH),

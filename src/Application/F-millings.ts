@@ -1,8 +1,204 @@
 
 
+export const additionaMillinglKeys = {
+    // Модерн
+    2839850: "566720",
+    2503106: "566720",
+    2462671: "566720",
+    // Понца
+    4717207: "4717183",
+    // Прямоугольник
+    2503119: "566722",
+    1108825: "566722",
+    // Прямоугольник ШК
+    3971922: "3971693",
+    // Прямоугольник ШК с импостом
+    3971700: "3971902",
+    // Прямоугольник Фолк
+    566721: "2839854",
+    2503118: "2839854",
+    // Прямоугольник Фолк ШК
+    3971921: "3971694",
+    // Прямоугольник Фолк ШК  с импостом
+    3971903: "3971699",
+    // Альби_2
+    5591073: "5591094",
+    // Мальта
+    4717212: "4717193",
+    // Капри
+    4717211: "4717192",
+    //Кёльн
+    5591077: "5591090",
+    //Ливерпуль 2
+    5591071: "5591096",
+    // Шато
+    5591072: "5591095",
+    //Честер_2
+    5591074: "5591093",
+    // Лидс_2
+    5591075: "5591092",
+    // Интегрированная ручка R3
+    1970236: "2475715",
+    2839840: "2475715",
+    // Интегрированная ручка R3 Тип 2 
+    3716540: "3716541",
+    3716626: "3716541",
+    // Интегрированная ручка R3 Тип 3
+    3716546: "3716547",
+    3716629: "3716547",
+    // Каприччио R4
+    2503107: "2462673",
+    2839849: "2462673",
+    //Каприччио R4 с импостом
+    3971687: "3971899",
+    // Мюнхен 3
+    5591080: "5591083",
+    //Мюнхен 3 с импостом
+    5591084: "5591081",
+    // Даллас
+    2503131: "2051525",
+    2839857: "2051525",
+    //Дрезден_2
+    5591078: "5591086",
+
+    //Даллас с импостом
+    3971900: "3971686",
+    // Бавария ШК
+    3971915: "3971695",
+    // Бавария ШК с импостом
+    3971909: "3971705",
+    // Сатурн тип 1
+    1948276: "2503142",
+    // Сатурн тип 2
+    1948277: "2503143",
+    // Сатурн тип 3
+    1948278: "2503144",
+    // Сатурн тип 4
+    1948279: "2503145",
+    // Вертикаль широкая
+    2503154: "1906033",
+    // Вертикаль узкая
+    2503153: "1906032",
+    // Море
+    2113837: "2503127",
+    // Море ШК
+    3971685: "3971916",
+    // Море ШК с импостом
+    3971907: "3971704",
+    // Шторм
+    2590054: "2590053",
+    // Леон
+    2503128: "2113841",
+    // Параллель Тип 1 фр.слев
+    3077218: "3077223",
+    // Параллель Тип 1 фр.справ
+    3077219: "3077225",
+    // Параллель Тип 2 фр.снизу
+    3077221: "3077229",
+    // Параллель Тип 2 фр.сверху
+    3077222: "3077226",
+    // Параллель Тип 3
+    2113840: 2503155,
+    // Флорида
+    2113843: "2503130",
+    // Бруклин
+    2503129: "2113842",
+    // Челси
+    2618171: "2607518",
+    // Шеврон Тип 1 /
+    4657054: "4657049",
+    // Шеврон Тип 2 \
+    4657056: "4657050",
+    // Неаполь
+    2503120: "768926",
+    2839853: "768926",
+    266931: "768926",
+    // Неаполь ШК
+    3971917: "3971690",
+    // Неаполь ШК с импостом
+    3971906: "3971703",
+    // Квадро
+    87106: "266923",
+    7380: "266923",
+    266926: "266923",
+    // Вуд Тип 1
+    2503136: "2051528",
+    // Вуд Тип 2
+    2503133: "2051530",
+    // Премьера
+    2503121: "2839852",
+    768929: "2839852",
+    266927: "2839852",
+    // Премьера ШК
+    3971918: "3971691",
+    // Премьера ШК с импостом
+    3971905: "3971702",
+    // Кампо 
+    2839851: "2503117",
+    566715: "2503117",
+    // Кампо ШК 
+    3971688: "3971920",
+    //	Кампо ШК с импостом
+    3971904: "3971701",
+    // Танго
+    7381: "797456",
+    250094: "797456",
+    // Рондо
+    7382: 266921
+
+}
+
 //@ts-nocheck
 export const MILLINGS = {
-    2462671: [
+
+    566720: [
+        {
+            name: "corner_milling_1",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: false,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 0,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            z: 8
+                        },
+                    },
+
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+            ],
+        },
+    ], //Модерн
+
+    4717183: [
         {
             name: "corner_milling_1",
             isCorner: true,
@@ -14,7 +210,7 @@ export const MILLINGS = {
                 bevelThickness: 4,
                 bevelSize: 7.5,
                 bevelOffset: -7.5,
-                bevelSegments: 1,
+                bevelSegments: 2,
 
             },
             figureParams: [
@@ -34,6 +230,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -198,58 +397,6 @@ export const MILLINGS = {
             },
             figureParams: [
                 {
-                    nameCondition: "small_width",
-                    condition: {
-                        width: {
-                            min: 175,
-                            max: 295,
-                        },
-                        height: {
-                            min: 396,
-                            max: 2500,
-                        },
-                    },
-                    figure: {
-                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -40,
-                        heightOffset: -60,
-                        position: {
-                            z: -4
-                        }
-                    },
-                    hole: {
-                        svg: `<path d="M -wth,+26 -hgh,+26 L -wth,+26 hgh,-26 L wth,-26 hgh,-26 L wth,-26 -hgh,+26 L -wth,+26 -hgh,+26 Z"/>`,
-                        widthOffset: -40,
-                        heightOffset: -60,
-                    },
-                },
-                {
-                    nameCondition: "small_height",
-                    condition: {
-                        width: {
-                            min: 396,
-                            max: 1250,
-                        },
-                        height: {
-                            min: 175,
-                            max: 295,
-                        },
-                    },
-                    figure: {
-                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -60,
-                        heightOffset: -40,
-                        position: {
-                            z: -4
-                        }
-                    },
-                    hole: {
-                        svg: `<path d="M -wth,+26 -hgh,+26 L -wth,+26 hgh,-26 L wth,-26 hgh,-26 L wth,-26 -hgh,+26 L -wth,+26 -hgh,+26 Z"/>`,
-                        widthOffset: -60,
-                        heightOffset: -40,
-                    },
-                },
-                {
                     nameCondition: "default",
                     condition: {
                         width: {
@@ -263,16 +410,16 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -57,
-                        heightOffset: -57,
+                        widthOffset: -70,
+                        heightOffset: -70,
                         position: {
                             z: -4
                         }
                     },
                     hole: {
                         svg: `<path d="M -wth,+41 -hgh,+41 L -wth,+41 hgh,-41 L wth,-41 hgh,-41 L wth,-41 -hgh,+41 L -wth,+41 -hgh,+41 Z"/>`,
-                        widthOffset: -57,
-                        heightOffset: -57,
+                        widthOffset: -70,
+                        heightOffset: -70,
                     },
                 },
             ],
@@ -479,7 +626,7 @@ export const MILLINGS = {
                 depth: 3,
                 bevelEnabled: true,
                 bevelThickness: 3,
-                bevelSize: 2,
+                bevelSize: 3,
                 bevelOffset: 3,
                 bevelSegments: 1,
             },
@@ -563,10 +710,10 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 2,
                 bevelEnabled: true,
                 bevelThickness: 2,
-                bevelSize: 2,
+                bevelSize: 3,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -575,7 +722,7 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 201,
+                            min: 177,
                             max: Infinity,
                         },
                         height: {
@@ -584,14 +731,17 @@ export const MILLINGS = {
                         },
                     },
                     figure: {
-                        svg: `<path d="M -wth,62 -hgh,62 L wth,-62 -hgh,62 L wth,-62 hgh,-62 L -wth,62 hgh,-62 L -wth,62 -hgh,62 Z "/>`,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -68,
+                        heightOffset: -68,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
-                        svg: `<path d="M -wth,70 -hgh,70 L wth,-70 -hgh,70 L wth,-70 hgh,-70 L -wth,70 hgh,-70 L -wth,70 -hgh,70 Z"/>`,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -73,
+                        heightOffset: -73,
                     },
                 },
             ],
@@ -601,11 +751,11 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 4,
                 bevelEnabled: true,
                 bevelThickness: 4,
-                bevelSize: 4,
-                bevelOffset: 4,
+                bevelSize: 3,
+                bevelOffset: 0,
                 bevelSegments: 1,
             },
             figureParams: [
@@ -613,7 +763,7 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 201,
+                            min: 177,
                             max: Infinity,
                         },
                         height: {
@@ -622,66 +772,32 @@ export const MILLINGS = {
                         },
                     },
                     figure: {
-                        svg: `<path d="M -wth,72 -hgh,72 L wth,-72 -hgh,72 L wth,-72 hgh,-72 L -wth,72 hgh,-72 L -wth,72 -hgh,72 Z"/>`,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -60,
+                        heightOffset: -60,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
-                        svg: `<path d="M -wth,76 -hgh,76 L wth,-76 -hgh,76 L wth,-76 hgh,-76 L -wth,76 hgh,-76 L -wth,76 -hgh,76 Z"/>`,
-                        widthOffset: 8,
-                        heightOffset: 8,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -81,
+                        heightOffset: -81,
                     },
                 },
             ],
         },
-        {
-            name: "milling_3",
-            type: 'svg',
-            extrudeSettings: {
-                steps: 1,
-                depth: 0,
-                bevelEnabled: true,
-                bevelThickness: 2,
-                bevelSize: 2,
-                bevelOffset: 2,
-                bevelSegments: 1,
-            },
-            figureParams: [
-                {
-                    nameCondition: "default",
-                    condition: {
-                        width: {
-                            min: 201,
-                            max: Infinity,
-                        },
-                        height: {
-                            min: 201,
-                            max: Infinity,
-                        },
-                    },
-                    figure: {
-                        svg: `<path d="M -wth,76 -hgh,76 L wth,-76 -hgh,76 L wth,-76 hgh,-76 L -wth,76 hgh,-76 L -wth,76 -hgh,76 Z"/>`,
-                        widthOffset: 0,
-                        heightOffset: 0,
-                    },
-                    hole: {
-                        svg: `<path d="M -wth,80 -hgh,80 L wth,-80 -hgh,80 L wth,-80 hgh,-80 L -wth,80 hgh,-80 L -wth,80 -hgh,80 Z"/>`,
-                        widthOffset: 4,
-                        heightOffset: 4,
-                    },
-                },
-            ],
-        },
+
         {
             name: "Small_width",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 2,
                 bevelEnabled: true,
                 bevelThickness: 4,
-                bevelSize: 4,
-                bevelOffset: 4,
+                bevelSize: 3,
+                bevelOffset: 0,
                 bevelSegments: 1,
             },
             figureParams: [
@@ -698,14 +814,17 @@ export const MILLINGS = {
                         },
                     },
                     figure: {
-                        svg: `<path d="M -wth,72 -hgh,72 L wth,-72 -hgh,72 L wth,-72 hgh,-72 L -wth,72 hgh,-72 L -wth,72 -hgh,72 Z"/>`,
-                        widthOffset: 14,
-                        heightOffset: 7,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -62,
+                        heightOffset: -62,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
-                        svg: `<path d="M -wth,76 -hgh,76 L wth,-76 -hgh,76 L wth,-76 hgh,-76 L -wth,76 hgh,-76 L -wth,76 -hgh,76 Z"/>`,
-                        widthOffset: 16,
-                        heightOffset: 8,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -65,
+                        heightOffset: -65,
                     },
                 },
             ],
@@ -721,7 +840,7 @@ export const MILLINGS = {
                 bevelThickness: 4,
                 bevelSize: 7.5,
                 bevelOffset: -7.5,
-                bevelSegments: 1,
+                bevelSegments: 2,
 
             },
             figureParams: [
@@ -741,6 +860,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -754,14 +876,78 @@ export const MILLINGS = {
 
     4717192: [
         {
-            name: "milling_1",
+            name: "Laer_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                                M -(wth - radius) -hgh 
+                                L (wth - radius) -hgh 
+                                A radius radius 0 0 1 wth -(hgh - radius) 
+                                L wth (hgh - radius) 
+                                A radius radius 0 0 1 (wth - radius) hgh 
+                                L -(wth - radius) hgh 
+                                A radius radius 0 0 1 -wth (hgh - radius) 
+                                L -wth -(hgh - radius) 
+                                A radius radius 0 0 1 -(wth - radius) -hgh 
+                                Z" 
+                            />`,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                        radius: 5.34,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="
+                                M -(wth - radius) -hgh 
+                                L (wth - radius) -hgh 
+                                A radius radius 0 0 1 wth -(hgh - radius) 
+                                L wth (hgh - radius) 
+                                A radius radius 0 0 1 (wth - radius) hgh 
+                                L -(wth - radius) hgh 
+                                A radius radius 0 0 1 -wth (hgh - radius) 
+                                L -wth -(hgh - radius) 
+                                A radius radius 0 0 1 -(wth - radius) -hgh 
+                                Z" 
+                            />`,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Laer_2",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
                 depth: 0,
                 bevelEnabled: true,
                 bevelThickness: 5,
-                bevelSize: 5,
+                bevelSize: 1,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -780,13 +966,16 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -55.5,
-                        heightOffset: -55.5,
+                        widthOffset: -59,
+                        heightOffset: -59,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -55.5,
-                        heightOffset: -55.5,
+                        widthOffset: -59,
+                        heightOffset: -59,
                     },
                 },
             ],
@@ -796,10 +985,10 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 4,
                 bevelEnabled: true,
-                bevelThickness: 7.2,
-                bevelSize: 7.2,
+                bevelThickness: 4,
+                bevelSize: 8,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -818,17 +1007,120 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -80.5,
-                        heightOffset: -80.5,
+                        widthOffset: -75,
+                        heightOffset: -75,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -97.5,
-                        heightOffset: -97.5,
+                        widthOffset: -95,
+                        heightOffset: -95,
                     },
                 },
             ],
         },
+        {
+            name: "corner_milling_1",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1.5,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 7.5,
+                bevelOffset: -7.5,
+                bevelSegments: 2,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: 7.5,
+                        heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -7.5,
+                        heightOffset: -7.5,
+                    },
+                },
+            ],
+        },
+    ], // Капри
+
+    1892744: [
+        {
+            name: "Laer_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                                M -(wth - radius) -hgh 
+                                L (wth - radius) -hgh 
+                                A radius radius 0 0 1 wth -(hgh - radius) 
+                                L wth (hgh - radius) 
+                                A radius radius 0 0 1 (wth - radius) hgh 
+                                L -(wth - radius) hgh 
+                                A radius radius 0 0 1 -wth (hgh - radius) 
+                                L -wth -(hgh - radius) 
+                                A radius radius 0 0 1 -(wth - radius) -hgh 
+                                Z" 
+                            />`,
+                        widthOffset: -15,
+                        heightOffset: -15,
+                        radius: 5.34,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -65,
+                        heightOffset: -65,
+                    },
+                },
+            ],
+        },
+
         {
             name: "corner_milling_1",
             isCorner: true,
@@ -860,6 +1152,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -869,7 +1164,7 @@ export const MILLINGS = {
                 },
             ],
         },
-    ], // Капри
+    ], // Капри 19
 
     5591090: [
         {
@@ -879,8 +1174,8 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 3,
-                bevelSize: 5.24,
+                bevelThickness: 4,
+                bevelSize: 4,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -911,9 +1206,12 @@ export const MILLINGS = {
                                 Z" 
                             />`,
                         // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
-                        widthOffset: -25,
-                        heightOffset: -25,
-                        radius: 5.34
+                        widthOffset: -15,
+                        heightOffset: -15,
+                        radius: 5.34,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -954,6 +1252,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -967,13 +1268,13 @@ export const MILLINGS = {
 
     5591096: [
         {
-            name: "milling_1",
+            name: "Laer_1",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 5,
                 bevelEnabled: true,
-                bevelThickness: 4,
+                bevelThickness: 3,
                 bevelSize: 4,
                 bevelOffset: 0,
                 bevelSegments: 1,
@@ -995,24 +1296,27 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -19,
                         heightOffset: -19,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
-                        svg: ``,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -70,
                     },
                 },
             ],
         },
         {
-            name: "milling_2",
+            name: "Laer_2",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 5,
                 bevelEnabled: true,
-                bevelThickness: 6,
-                bevelSize: 6,
+                bevelThickness: 2,
+                bevelSize: 4,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -1033,11 +1337,14 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -70,
                         heightOffset: -70,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -122,
-                        heightOffset: -122,
+                        widthOffset: -120,
+                        heightOffset: -120,
                     },
                 },
             ],
@@ -1050,8 +1357,8 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 6,
-                bevelSize: 6,
+                bevelThickness: 1,
+                bevelSize: 3,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -1070,13 +1377,16 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -70.5,
-                        heightOffset: -70.5,
+                        widthOffset: -19,
+                        heightOffset: -19,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
-                        svg: ``,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        svg: `path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -70,
                     },
                 },
             ],
@@ -1113,6 +1423,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1130,9 +1443,9 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 2,
                 bevelEnabled: true,
-                bevelThickness: 4,
+                bevelThickness: 3,
                 bevelSize: 4,
                 bevelOffset: 0,
                 bevelSegments: 1,
@@ -1154,6 +1467,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -70,
                         heightOffset: -70,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1168,9 +1484,9 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 3,
                 bevelEnabled: true,
-                bevelThickness: 6,
+                bevelThickness: 2,
                 bevelSize: 4,
                 bevelOffset: 0,
                 bevelSegments: 1,
@@ -1192,6 +1508,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -89,
                         heightOffset: -89,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1232,6 +1551,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1273,6 +1595,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -19,
                         heightOffset: -19,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1294,7 +1619,7 @@ export const MILLINGS = {
                 bevelThickness: 4,
                 bevelSize: 7.5,
                 bevelOffset: -7.5,
-                bevelSegments: 1,
+                bevelSegments: 2,
 
             },
             figureParams: [
@@ -1314,6 +1639,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1333,7 +1661,7 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 4,
+                bevelThickness: 3,
                 bevelSize: 4,
                 bevelOffset: 0,
                 bevelSegments: 1,
@@ -1355,6 +1683,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -19,
                         heightOffset: -19,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1371,8 +1702,8 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 6,
-                bevelSize: 6,
+                bevelThickness: 3,
+                bevelSize: 7,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -1393,6 +1724,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -70,
                         heightOffset: -70,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1414,7 +1748,7 @@ export const MILLINGS = {
                 bevelThickness: 4,
                 bevelSize: 7.5,
                 bevelOffset: -7.5,
-                bevelSegments: 1,
+                bevelSegments: 2,
 
             },
             figureParams: [
@@ -1434,6 +1768,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1475,6 +1812,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -19,
                         heightOffset: -19,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1514,6 +1854,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -19,
                         heightOffset: -19,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1535,7 +1878,7 @@ export const MILLINGS = {
                 bevelThickness: 4,
                 bevelSize: 7.5,
                 bevelOffset: -7.5,
-                bevelSegments: 1,
+                bevelSegments: 2,
 
             },
             figureParams: [
@@ -1555,6 +1898,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1572,10 +1918,10 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 2,
                 bevelEnabled: true,
-                bevelThickness: 4,
-                bevelSize: 7,
+                bevelThickness: 2,
+                bevelSize: 5,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -1584,12 +1930,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
-                            max: Infinity,
+                            min: 176,
+                            max: 950,
                         },
                         height: {
-                            min: 146,
-                            max: Infinity,
+                            min: 176,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -1606,8 +1952,49 @@ export const MILLINGS = {
                                 Z" 
                             />`,
                         widthOffset: -55,
+                        heightOffset: -70,
+                        radius: 6,
+                        possition: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+                {
+                    nameCondition: "Small_width",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 146,
+                            max: 175,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                                M -(wth - radius) -hgh 
+                                L (wth - radius) -hgh 
+                                A radius radius 0 0 1 wth -(hgh - radius) 
+                                L wth (hgh - radius) 
+                                A radius radius 0 0 1 (wth - radius) hgh 
+                                L -(wth - radius) hgh 
+                                A radius radius 0 0 1 -wth (hgh - radius) 
+                                L -wth -(hgh - radius) 
+                                A radius radius 0 0 1 -(wth - radius) -hgh 
+                                Z" 
+                            />`,
+                        widthOffset: -70,
                         heightOffset: -55,
-                        radius: 5.34
+                        radius: 6,
+                        possition: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1625,10 +2012,10 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 1.5,
                 bevelEnabled: true,
-                bevelThickness: 4,
+                bevelThickness: 1,
                 bevelSize: 7.5,
                 bevelOffset: -7.5,
-                bevelSegments: 1,
+                bevelSegments: 2,
 
             },
             figureParams: [
@@ -1648,6 +2035,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        possition: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -1752,12 +2142,12 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 10,
+                depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 4,
-                bevelSize: 7,
-                bevelOffset: 0,
-                bevelSegments: 16,
+                bevelThickness: 3,
+                bevelSize: -3,
+                bevelOffset: 4,
+                bevelSegments: 1,
             },
             figureParams: [
                 {
@@ -1779,7 +2169,10 @@ export const MILLINGS = {
                         widthOffset: 0,
                         heightOffset: 0,
                         topPosition: 5,
-                        radius: 0
+                        radius: 0,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: ``,
@@ -1960,36 +2353,66 @@ export const MILLINGS = {
                 },
             ],
         },
-    ], //Капричо
+    ], //Каприччио R4
 
-    5591083: [
+    3971899: [
         {
             name: "milling_1",
-            hem: true,
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
+                depth: 2,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7,
+                bevelOffset: 0,
+                bevelSegments: 1,
             },
             figureParams: [
                 {
-                    nameCondition: "default",
+                    nameCondition: "laer_1 default",
+                    inpost: 'top',
                     condition: {
                         width: {
-                            min: 0,
+                            min: 296,
                             max: Infinity,
                         },
                         height: {
-                            min: 0,
+                            min: 457,
                             max: Infinity,
                         },
                     },
                     figure: {
-                        svg: `<path d="M 0 0 L 16.5 0 C 16 -2 15 -3 13.5 -3 L 7.6 -3 C 6.5 -3 5.9 -3.6 5.5 -4.3 C 4.9 -5.4 4 -5.5 3 -5.5 L 2 -5.5 C 1 -5.5 0 -6.5 0 -7.5 L 0 0 Z"/>`,
+                        svg: `<path d="
+                                M -(wth - 70) -(hgh ) 
+                                L -(wth - 73) -(hgh ) 
+                                L -(wth - 73) -(hgh - 95) 
+                                L (wth - 73) -(hgh - 95) 
+                                L (wth - 73) -(hgh ) 
+                                L (wth - 70) -(hgh) 
+
+                                L (wth - 70) (hgh + 70)
+                                L (wth - 73) (hgh + 70) 
+                                L (wth - 73) (hgh )
+                                L -(wth - 73) (hgh) 
+                                L -(wth - 73) (hgh + 70 )
+                                L -(wth - 70) (hgh + 70 ) 
+                                Z"/>`,
                         widthOffset: 0,
                         heightOffset: 0,
+                        position: {
+                            inpostOffset: 35,
+                            y: 'inpostTop',
+                            z: -2,
+                        }
                     },
                     hole: {
-                        svg: ``,
+                        svg: `<path d="
+                                M -(wth - 73) -(hgh - 95) 
+                                L (wth - 73) -(hgh - 95) 
+                                L (wth - 73) (hgh )
+                                L -(wth - 73) (hgh) 
+                                Z"/>`,
                         widthOffset: 0,
                         heightOffset: 0,
                     },
@@ -1997,16 +2420,129 @@ export const MILLINGS = {
             ],
         },
         {
-            name: "milling_2",
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 2,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "laer_1 default",
+                    inpost: 'bottom',
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 457,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                                M -(wth - 70) -(hgh ) 
+                                L -(wth - 73) -(hgh ) 
+                                L -(wth - 73) -(hgh - 70 ) 
+                                L (wth - 73) -(hgh - 70 ) 
+                                L (wth - 73) -(hgh) 
+                                L (wth - 70) -(hgh) 
+
+                                L (wth - 70) (hgh)
+                                L (wth - 73) (hgh) 
+                                L (wth - 73) (hgh - 43)
+                                L -(wth - 73) (hgh - 43) 
+                                L -(wth - 73) (hgh)
+                                L -(wth - 70) (hgh) 
+                                Z"/>`,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            // inpostOffset: 70,
+                            y: 'inpostBottom',
+                            z: -2,
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="
+                        M -(wth - 73) -(hgh - 29) 
+                        L (wth - 73) -(hgh - 29) 
+                        L (wth - 73) (hgh )
+                        L -(wth - 73) (hgh) 
+                        Z"/>`,
+                        widthOffset: 0,
+                        heightOffset: -43,
+                        position: {
+                            // inpostOffset: 70,
+                            y: 'inpostBottom',
+                            z: -2,
+                        }
+                    },
+                },
+            ],
+        },
+        {
+            name: "Start",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1.5,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7.5,
+                bevelOffset: -7.5,
+                bevelSegments: 2,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: 7.5,
+                        heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -7.5,
+                        heightOffset: -7.5,
+                    },
+                },
+            ],
+        },
+    ],  //Каприччио R4 с импостом
+
+    5591083: [
+        {
+            name: "milling_1",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
                 depth: 0.1,
                 bevelEnabled: true,
-                bevelThickness: 3.1,
-                bevelSize: 5.49,
-                bevelOffset: -5.49,
-                bevelSegments: 1,
+                bevelThickness: 2.9,
+                bevelSize: 6.99,
+                bevelOffset: -6.99,
+                bevelSegments: 1
             },
             figureParams: [
                 {
@@ -2027,16 +2563,15 @@ export const MILLINGS = {
                         heightOffset: 7,
                     },
                     hole: {
-                        svg: `
-                                    <path d="
-                                    M -wth,+7 -hgh,+7 L -wth,+48 -hgh,+7 L -wth,+48 hgh,-7 L -wth,+7 hgh,-7 Z
-                                    M -wth,+62 -hgh,+7 L wth,-62 -hgh,+7 L wth,-62 -hgh,+63 L -wth,+62 -hgh,+63 Z
-                                    M wth,-48 -hgh,+7 L wth,-7 -hgh,+7 L wth,-7 hgh,-7 L wth,-48 hgh,-7 Z
-                                    M -wth,+62 hgh,-63 L wth,-62 hgh,-63 L wth,-62 hgh,-7 L -wth,+62 hgh,-7 Z"/>
-                            `,
+                        svg: `<svg>
+                          <path M -wth,+7 -hgh,+7 L -wth,+48 -hgh,+7 L -wth,+48 hgh,-7 L -wth,+7 hgh,-7 Z
+                          M -wth,+62 -hgh,+7 L wth,-62 -hgh,+7 L wth,-62 -hgh,+63 L -wth,+62 -hgh,+63 Z
+                          M wth,-48 -hgh,+7 L wth,-7 -hgh,+7 L wth,-7 hgh,-7 L wth,-48 hgh,-7 Z
+                          M -wth,+62 hgh,-63 L wth,-62 hgh,-63 L wth,-62 hgh,-7 L -wth,+62 hgh,-7 Z"/>
+                      </svg>`,
                         widthOffset: 0,
                         heightOffset: 0,
-                    },
+                    }
                 },
                 {
                     nameCondition: "small_height",
@@ -2057,14 +2592,14 @@ export const MILLINGS = {
                     },
                     hole: {
                         svg: `
-                                    <path d="M -wth,+7 -hgh,+7 L -wth,+63 -hgh,+7 L -wth,+63 hgh,-7 L -wth,+7 hgh,-7 Z
-                                    M -wth,+77 -hgh,+7 L wth,-77 -hgh,+7 L wth,-77 -hgh,+48 L -wth,+77 -hgh,+48 Z
-                                    M wth,-63 -hgh,+7 L wth,-7 -hgh,+7 L wth,-7 hgh,-7 L wth,-63 hgh,-7 Z
-                                    M -wth,+77 hgh,-48 L wth,-77 hgh,-48 L wth,-77 hgh,-7 L -wth,+77 hgh,-7 Z"/>
-                                `,
+                          <path d="M -wth,+7 -hgh,+7 L -wth,+63 -hgh,+7 L -wth,+63 hgh,-7 L -wth,+7 hgh,-7 Z
+                          M -wth,+77 -hgh,+7 L wth,-77 -hgh,+7 L wth,-77 -hgh,+48 L -wth,+77 -hgh,+48 Z
+                          M wth,-63 -hgh,+7 L wth,-7 -hgh,+7 L wth,-7 hgh,-7 L wth,-63 hgh,-7 Z
+                          M -wth,+77 hgh,-48 L wth,-77 hgh,-48 L wth,-77 hgh,-7 L -wth,+77 hgh,-7 Z
+                      `,
                         widthOffset: 0,
                         heightOffset: 0,
-                    },
+                    }
                 },
                 {
                     nameCondition: "default",
@@ -2080,24 +2615,189 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh Z"/>`,
-                        widthOffset: 16.5,
-                        heightOffset: 16.5,
+                        widthOffset: 7,
+                        heightOffset: 7,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `
-                                    <path d="M -wth,+16.5 -hgh,+22 L -wth,+74.5 -hgh,+82.3 L -wth,+74.5 hgh,-82.3 L -wth,+16.5 hgh,-22 Z
-                                    M -wth,+22 -hgh,+16.5 L wth,-22 -hgh,+16.5 L +wth,-82.3 -hgh,+74.5 L -wth,+82.3 -hgh,+74.5 Z
-                                    M wth,-74.5 -hgh,+82.3 L wth,-16.5 -hgh,+22 L wth,-16.5 hgh,-22 L wth,-74.5 hgh,-82.3 Z
-                                    M -wth,+82.3 hgh,-74.5 L wth,-82.3 hgh,-74.5 L wth,-22 hgh,-16.5 L -wth,+22 hgh,-16.5 Z
-                                    M -wth,+85.5 -hgh,+85.5 L wth,-85.5 -hgh,+85.5 L wth,-85.5 hgh,-85.5 L -wth,+85.5 hgh,-85.5 Z"/>
-                                `,
+                          <path d="
+                          M -wth,+7 -hgh,+7 L -wth,+63 -hgh,+7 L -wth,+63 hgh,-7 L -wth,+7 hgh,-7 Z
+                          M -wth,+77 -hgh,+7 L wth,-77 -hgh,+7 L wth,-77 -hgh,+63 L -wth,+77 -hgh,+63 Z
+                          M wth,-63 -hgh,+7 L wth,-7 -hgh,+7 L wth,-7 hgh,-7 L wth,-63 hgh,-7 Z
+                          M -wth,+77 hgh,-63 L wth,-77 hgh,-63 L wth,-77 hgh,-7 L -wth,+77 hgh,-7 Z
+                          "/>
+                     `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    }
+                },
+            ],
+        },
+    ], // Мюнхен 3
+
+    5591081: [
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 2,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "laer_1 default",
+                    inpost: 'top',
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 457,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                                M -(wth - 70) -(hgh ) 
+                                L -(wth - 73) -(hgh ) 
+                                L -(wth - 73) -(hgh - 95) 
+                                L (wth - 73) -(hgh - 95) 
+                                L (wth - 73) -(hgh ) 
+                                L (wth - 70) -(hgh) 
+
+                                L (wth - 70) (hgh + 70)
+                                L (wth - 73) (hgh + 70) 
+                                L (wth - 73) (hgh )
+                                L -(wth - 73) (hgh) 
+                                L -(wth - 73) (hgh + 70 )
+                                L -(wth - 70) (hgh + 70 ) 
+                                Z"/>`,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            inpostOffset: 35,
+                            y: 'inpostTop',
+                            z: -2,
+                        }
+                    },
+                    hole: {
+                        svg: ``,
                         widthOffset: 0,
                         heightOffset: 0,
                     },
                 },
             ],
         },
-    ],
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 2,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "laer_1 default",
+                    inpost: 'bottom',
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 457,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                                M -(wth - 70) -(hgh ) 
+                                L -(wth - 73) -(hgh ) 
+                                L -(wth - 73) -(hgh - 70 ) 
+                                L (wth - 73) -(hgh - 70 ) 
+                                L (wth - 73) -(hgh) 
+                                L (wth - 70) -(hgh) 
+
+                                L (wth - 70) (hgh)
+                                L (wth - 73) (hgh) 
+                                L (wth - 73) (hgh - 43)
+                                L -(wth - 73) (hgh - 43) 
+                                L -(wth - 73) (hgh)
+                                L -(wth - 70) (hgh) 
+                                Z"/>`,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            // inpostOffset: 70,
+                            y: 'inpostBottom',
+                            z: -2,
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Start",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1.5,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7.5,
+                bevelOffset: -7.5,
+                bevelSegments: 2,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: 7.5,
+                        heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -7.5,
+                        heightOffset: -7.5,
+                    },
+                },
+            ],
+        },
+    ], // Мюнхен 3 с импостом
 
     2051525: [
         {
@@ -2253,66 +2953,112 @@ export const MILLINGS = {
         },
     ], // Даллас
 
+    3971686: [
+        {
+            name: "milling_2",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 5,
+                bevelEnabled: true,
+                bevelThickness: 2,
+                bevelSize: 5,
+                bevelOffset: -5,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 176,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 176,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh Z"/>`,
+                        widthOffset: 5,
+                        heightOffset: 5,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `
+                                    <path d="
+                                    M -wth -hgh,+5 
+                                    L -wth,+74.5 -hgh,+82.3 
+                                    L -wth,+74.5 hgh,-82.3 
+                                    L -wth hgh,-5 
+                                    Z
+
+                                    M -wth,+5 -hgh 
+                                    L wth,-5 -hgh 
+                                    L +wth,-82.3 -hgh,+74.5 
+                                    L -wth,+82.3 -hgh,+74.5 
+                                    Z
+
+                                    M wth,-74.5 -hgh,+82.3 
+                                    L wth -hgh,+5 
+                                    L wth hgh,-5 
+                                    L wth,-74.5 hgh,-82.3 
+                                    Z
+
+                                    M -wth,+82.3 hgh,-74.5 
+                                    L wth,-82.3 hgh,-74.5 
+                                    L wth,-5 hgh 
+                                    L -wth,+5 hgh 
+                                    Z
+
+                                    M -wth,+85.5 -hgh,+85.5
+                                    L wth,-85.5 -hgh,+85.5
+                                    L wth,-85.5 -(hgh / 3 - 5)
+                                    L -wth,+85.5 -(hgh / 3 - 5)
+                                    Z
+
+                                    M -wth,+85.5 -(hgh / 3 - 95)
+                                    L wth,-85.5 -(hgh / 3  - 95)
+                                    L wth,-85.5 (hgh - 85.5)
+                                    L -wth,+85.5 (hgh - 85.5)
+                                    Z
+
+                                   
+                                    M -(wth - 85.5) -(hgh / 3 - 16) 
+                                     L (wth - 85.5) -(hgh / 3 - 16)
+                                     L (wth - 85.5) -(hgh / 3  - 83)
+                                    L -(wth - 85.5) -(hgh / 3 - 83)
+                         
+                                    Z
+                                    "/>
+                                    
+                               `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+
+            ],
+        },
+    ],//Даллас с импостом
+
     3971695: [
         {
             name: "milling_1",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0.01,
+                depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 3.99,
-                bevelSize: 7,
-                bevelOffset: -7,
+                bevelThickness: 4,
+                bevelSize: 4,
+                bevelOffset: 0,
                 bevelSegments: 1,
             },
             figureParams: [
-                {
-                    nameCondition: "small_width",
-                    condition: {
-                        width: {
-                            min: 146,
-                            max: 195,
-                        },
-                        height: {
-                            min: 716,
-                            max: 2500,
-                        },
-                    },
-                    figure: {
-                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -48,
-                        heightOffset: -63,
-                    },
-                    hole: {
-                        svg: `<path d="M -wth,+14 -hgh,+14 L -wth,+14 hgh,-14 L wth,-14 hgh,-14 L wth,-14 -hgh,+14 L -wth,+14 -hgh,+14 Z"/>`,
-                        widthOffset: -48,
-                        heightOffset: -63,
-                    },
-                },
-                {
-                    nameCondition: "small_height",
-                    condition: {
-                        width: {
-                            min: 396,
-                            max: 900,
-                        },
-                        height: {
-                            min: 150,
-                            max: 195,
-                        },
-                    },
-                    figure: {
-                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -63,
-                        heightOffset: -48,
-                    },
-                    hole: {
-                        svg: `<path d="M -wth,+14 -hgh,+14 L -wth,+14 hgh,-14 L wth,-14 hgh,-14 L wth,-14 -hgh,+14 L -wth,+14 -hgh,+14 Z"/>`,
-                        widthOffset: -63,
-                        heightOffset: -48,
-                    },
-                },
                 {
                     nameCondition: "default",
                     condition: {
@@ -2329,9 +3075,12 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -63,
                         heightOffset: -63,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
-                        svg: `<path d="M -wth,+14 -hgh,+14 L -wth,+14 hgh,-14 L wth,-14 hgh,-14 L wth,-14 -hgh,+14 L -wth,+14 -hgh,+14 Z"/>`,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -63,
                         heightOffset: -63,
                     },
@@ -2343,11 +3092,11 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0.01,
+                depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 0.99,
-                bevelSize: 9.99,
-                bevelOffset: -9.99,
+                bevelThickness: 3,
+                bevelSize: 2,
+                bevelOffset: 0,
                 bevelSegments: 1,
             },
             figureParams: [
@@ -2365,18 +3114,138 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: 10,
-                        heightOffset: 10,
+                        widthOffset: -15,
+                        heightOffset: -15,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -10,
-                        heightOffset: -10,
+                        widthOffset: -15,
+                        heightOffset: -15,
                     },
                 },
             ],
         },
-    ],
+    ], // Бавария ШК
+
+    3971705: [
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "Top",
+                    inpost: 'top',
+                    condition: {
+                        width: {
+                            min: 196,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 196,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -35,
+                        position: {
+                            inpostOffset: 70,
+                            y: 'inpostTop',
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -35,
+                    },
+                },
+                {
+                    nameCondition: "Bottom",
+                    inpost: 'bottom',
+                    condition: {
+                        width: {
+                            min: 196,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 196,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -45,
+                        position: {
+                            inpostOffset: 70,
+                            y: 'inpostBottom',
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -45,
+                    },
+                },
+            ],
+        },
+        {
+            name: "corner_milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 2,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -15,
+                        heightOffset: -15,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -15,
+                        heightOffset: -15,
+                    },
+                },
+            ],
+        },
+    ], // Бавария ШК с импостом
 
     2503142: [
         {
@@ -2410,6 +3279,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -2448,6 +3320,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh Z"/>`,
                         widthOffset: 0,
                         heightOffset: 0,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d=" 
@@ -2511,6 +3386,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -2549,6 +3427,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh Z"/>`,
                         widthOffset: 0,
                         heightOffset: 0,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d=" 
@@ -2612,6 +3493,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -2642,14 +3526,17 @@ export const MILLINGS = {
                             max: 950,
                         },
                         height: {
-                            min: 176,
-                            max: Infinity,
+                            min: 356,
+                            max: 600,
                         },
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh Z"/>`,
                         widthOffset: 0,
                         heightOffset: 0,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d=" 
@@ -2713,6 +3600,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -2743,14 +3633,17 @@ export const MILLINGS = {
                             max: 950,
                         },
                         height: {
-                            min: 176,
-                            max: Infinity,
+                            min: 356,
+                            max: 600,
                         },
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh Z"/>`,
                         widthOffset: 0,
                         heightOffset: 0,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d=" 
@@ -3100,7 +3993,7 @@ export const MILLINGS = {
         },
     ], // Море
 
-    2113837: [
+    3971916: [
         {
             name: "Line",
             type: 'svg',
@@ -3255,6 +4148,287 @@ export const MILLINGS = {
         },
     ],// Море ШК
 
+    3971704: [
+        {
+            name: "Pattrn",
+            type: 'svg',
+            // type:'bvh',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    inpost: 'top',
+                    condition: {
+                        width: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 0 -5 C -4 -4.8 -4.8 -0.5 -8.6 0 L 8.6 0 C 4.8 -0.5 4 -4.8 0 -5 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        // padding: 40,
+                        pattern: {
+                            offsetX: 0.01,
+                            multiply: 1,
+
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: -70,
+                                size: "FASADE_HEIGHT"
+                            },
+                            position: {
+                                top: false,
+                                bottom: true,
+                                left: true,
+                                right: false,
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI
+                            }
+                        },
+                        position: {
+                            inpostOffset: 70,
+                            offsetY: -49,
+                            y: 'inpostTop',
+                            z: 0,
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Laer_2",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    inpost: 'top',
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -57,
+                        position: {
+                            inpostOffset: 115,
+                            z: -4,
+                            y: 'inpostTop'
+
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -57,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Pattrn",
+            type: 'svg',
+            // type:'bvh',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    inpost: 'bottom',
+                    condition: {
+                        width: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 0 -5 C -4 -4.8 -4.8 -0.5 -8.6 0 L 8.6 0 C 4.8 -0.5 4 -4.8 0 -5 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        // padding: 40,
+                        pattern: {
+                            offsetX: 0.01,
+                            multiply: 1,
+
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: -70,
+                                size: "FASADE_HEIGHT"
+                            },
+                            position: {
+                                top: false,
+                                bottom: true,
+                                left: true,
+                                right: false,
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI
+                            }
+                        },
+                        position: {
+                            inpostOffset: 70,
+                            offsetY: 49,
+                            y: 'inpostBottom',
+                            z: 0,
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Laer_2",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    inpost: 'bottom',
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -59,
+                        position: {
+                            inpostOffset: 115,
+                            z: -4,
+                            y: 'inpostBottom'
+
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -59,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "corner_milling_1",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 0,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 7.5,
+                bevelOffset: -7.5,
+                bevelSegments: 2,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: 7.5,
+                        heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -7.5,
+                        heightOffset: -7.5,
+                    },
+                },
+            ],
+        },
+    ], // Море ШК с импостом
+
     2590053: [
         {
             name: "Line",
@@ -3273,12 +4447,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
-                            max: Infinity,
+                            min: 296,
+                            max: 1250,
                         },
                         height: {
-                            min: 146,
-                            max: Infinity,
+                            min: 360,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -3289,13 +4463,60 @@ export const MILLINGS = {
                         pattern: {
                             offsetX: 3.7,
                             multiply: 2,
-                            count: 2,
+                            count: 3,
 
                         },
                         boolParams: {
                             depth: {
                                 offset: 0,
                                 size: "FASADE_HEIGHT",
+                            },
+                            position: {
+                                front: -12,
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI,
+                                y: Math.PI * 0.75
+                            }
+                        },
+                        position: {
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -0,
+                        heightOffset: -0,
+                    },
+                },
+                {
+                    nameCondition: "small_height",
+                    condition: {
+                        width: {
+                            min: 295,
+                            max: 900,
+                        },
+                        height: {
+                            min: 176,
+                            max: 600,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 0 -3 C -2.5 -3 -5.5 -2.5 -7.2 0 L 7.2 0 C 5.5 -2.5 2.5 -3 0 -3 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        pattern: {
+                            offsetX: 3.7,
+                            multiply: 2,
+                            count: 1,
+
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: 0,
+                                size: "FASADE_WIDTH",
                             },
                             position: {
                                 front: -12,
@@ -3378,12 +4599,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
-                            max: Infinity,
+                            min: 296,
+                            max: 1250,
                         },
                         height: {
-                            min: 146,
-                            max: Infinity,
+                            min: 360,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -3394,12 +4615,60 @@ export const MILLINGS = {
                         pattern: {
                             offsetX: 0.01,
                             multiply: 2,
-                            count: 2
+                            count: 3
                         },
                         boolParams: {
                             depth: {
                                 offset: 0,
                                 size: "FASADE_HEIGHT",
+                            },
+                            position: {
+
+                                front: 0,
+
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI,
+                                y: Math.PI * 0.75
+                            }
+                        },
+                        position: {
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -0,
+                        heightOffset: -0,
+                    },
+                },
+                {
+                    nameCondition: "small_height",
+                    condition: {
+                        width: {
+                            min: 295,
+                            max: 900,
+                        },
+                        height: {
+                            min: 176,
+                            max: 600,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 10.25 0 L 3 -3 A 1 1 0 0 0 -3 -3 L -10.25 0 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        pattern: {
+                            offsetX: 0.01,
+                            multiply: 2,
+                            count: 1
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: 0,
+                                size: "FASADE_WIDTH",
                             },
                             position: {
 
@@ -3864,87 +5133,7 @@ export const MILLINGS = {
             ],
         },
     ], // Параллель Тип 2 фр.сверху
-    2113843: [
-        {
-            name: "Line",
-            type: 'capsule',
-            capsuleParams: {
-                radius: 4,
-                length: 'FASADE_HEIGHT',
-                capSegments: 4,
-                radialSegments: 8,
-                padding: 20,
-                // offsetX: -20.5,
 
-                condition: {
-                    width: {
-                        min: 20,
-                        max: Infinity,
-                    },
-                    height: {
-                        min: 20,
-                        max: Infinity,
-                    },
-                },
-
-                pattern: {
-                    offsetX: 25.9,
-                    count: 1
-                },
-
-                position: {
-                    x: 'left',
-                    z: -4
-                },
-                rotation: {
-                    y: Math.PI
-                }
-
-            }
-        },
-        {
-
-            name: "corner_milling_1",
-            type: 'svg',
-            isCorner: true,
-            extrudeSettings: {
-                steps: 0,
-                depth: 0,
-                bevelEnabled: true,
-                bevelThickness: 3,
-                bevelSize: 3.5,
-                bevelOffset: -7.5,
-                bevelSegments: 1,
-
-            },
-            figureParams: [
-                {
-                    nameCondition: "default",
-                    condition: {
-                        width: {
-                            min: 20,
-                            max: Infinity,
-                        },
-                        height: {
-                            min: 20,
-                            max: Infinity,
-                        },
-                    },
-                    figure: {
-                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: 7.5,
-                        heightOffset: 7.5,
-                    },
-                    hole: {
-                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -7.5,
-                        heightOffset: -7.5,
-                    },
-                },
-            ],
-        },
-    ],// Флорида
-    
     2503130: [
         {
             name: "Line",
@@ -4044,12 +5233,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
-                            max: Infinity,
+                            min: 296,
+                            max: 1250,
                         },
                         height: {
-                            min: 146,
-                            max: Infinity,
+                            min: 360,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -4060,12 +5249,58 @@ export const MILLINGS = {
                         pattern: {
                             offsetX: 31.4,
                             multiply: 2,
-                            count: 2
+                            count: 3
                         },
                         boolParams: {
                             depth: {
                                 offset: 0,
                                 size: "FASADE_HEIGHT",
+                            },
+                            position: {
+                                front: -12,
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI,
+                                y: Math.PI * 0.75
+                            }
+                        },
+                        position: {
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+                {
+                    nameCondition: "small_height",
+                    condition: {
+                        width: {
+                            min: 295,
+                            max: 900,
+                        },
+                        height: {
+                            min: 176,
+                            max: 600,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 0 -4 C -2.5 -4 -3.6 -1 -4 0 L 4 0 C 3.6 -1 2.5 -4 0 -4 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        pattern: {
+                            offsetX: 31.4,
+                            multiply: 2,
+                            count: 1
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: 0,
+                                size: "FASADE_WIDTH",
                             },
                             position: {
                                 front: -12,
@@ -4119,6 +5354,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -4146,12 +5384,12 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 176,
-                        max: Infinity,
+                        min: 396,
+                        max: 1250,
                     },
                     height: {
-                        min: 396,
-                        max: Infinity,
+                        min: 176,
+                        max: 356,
                     },
                 },
 
@@ -4162,6 +5400,8 @@ export const MILLINGS = {
                 }
             }
         },
+
+
         {
             name: "Line_2",
             type: 'capsule',
@@ -4177,7 +5417,7 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 176,
+                        min: 201,
                         max: Infinity,
                     },
                     height: {
@@ -4198,6 +5438,44 @@ export const MILLINGS = {
 
             }
         },
+
+        {
+            name: "Line_rotated_right_small_height",
+            type: 'capsule',
+            capsuleParams: {
+                radius: 3,
+                length: 'FASADE_WIDTH',
+                capSegments: 1,
+                radialSegments: 3,
+                padding: 0,
+                offsetX: -131,
+                offsetY: 0,
+                percent: 1,
+
+                condition: {
+                    width: {
+                        min: 396,
+                        max: 1250,
+                    },
+                    height: {
+                        min: 176,
+                        max: 356,
+                    },
+                },
+
+                position: {
+                    x: 'left',
+                    y: 'center',
+                    z: -5
+                },
+
+                rotation: {
+                    z: Math.PI * 0.25
+                }
+
+            }
+        },
+
         {
             name: "Line_3",
             type: 'capsule',
@@ -4213,15 +5491,14 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 176,
-                        max: Infinity,
+                        min: 396,
+                        max: 1250,
                     },
                     height: {
-                        min: 396,
-                        max: Infinity,
+                        min: 176,
+                        max: 356,
                     },
                 },
-
                 position: {
                     x: 'right',
                     z: -5
@@ -4229,6 +5506,7 @@ export const MILLINGS = {
 
             }
         },
+
         {
             name: "Line_4",
             type: 'capsule',
@@ -4244,7 +5522,7 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 176,
+                        min: 201,
                         max: Infinity,
                     },
                     height: {
@@ -4263,6 +5541,42 @@ export const MILLINGS = {
                 }
             }
         },
+
+        {
+            name: "Line_4_rotaited_left_small_height",
+            type: 'capsule',
+            capsuleParams: {
+                radius: 3,
+                length: 'FASADE_WIDTH',
+                capSegments: 1,
+                radialSegments: 3,
+                padding: 0,
+                offsetX: 131,
+                offsetY: 0,
+                percent: 1,
+
+                condition: {
+                    width: {
+                        min: 396,
+                        max: 1250,
+                    },
+                    height: {
+                        min: 176,
+                        max: 356,
+                    },
+                },
+
+                position: {
+                    x: 'right',
+                    y: 'bottom',
+                    z: -5
+                },
+                rotation: {
+                    z: Math.PI * 0.25
+                }
+            }
+        },
+
         {
 
             name: "Correct",
@@ -4283,11 +5597,11 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 176,
+                            min: 201,
                             max: Infinity,
                         },
                         height: {
-                            min: 70,
+                            min: 71,
                             max: Infinity,
                         },
                     },
@@ -4319,8 +5633,9 @@ export const MILLINGS = {
                 },
             ],
         },
+
         {
-            name: "Line",
+            name: "Pattern",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
@@ -4336,12 +5651,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
-                            max: Infinity,
+                            min: 176,
+                            max: 1250,
                         },
                         height: {
-                            min: 146,
-                            max: Infinity,
+                            min: 356,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -4383,6 +5698,137 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Pattern_small_width",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 70,
+                            max: 201,
+                        },
+                        height: {
+                            min: 146,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 0 -3 L -5.2 0 L 5.2 0 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        pattern: {
+                            offsetX: 45,
+                            multiply: 1,
+                            count: 8
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: 0,
+                                size: "FASADE_HEIGHT",
+                            },
+                            position: {
+
+                                front: 0,
+
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI,
+                                y: Math.PI * 0.75
+                            }
+                        },
+                        position: {
+                            z: 1.5
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -0,
+                        heightOffset: -0,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Pattern_small_HEIGHT",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 396,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 176,
+                            max: 356,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M 0 -3 L -5.2 0 L 5.2 0 Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        pattern: {
+                            offsetX: 45,
+                            multiply: 1,
+                            count: 2
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: 0,
+                                size: "FASADE_WIDTH",
+                            },
+                            position: {
+
+                                front: 0,
+
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI,
+                                y: Math.PI * 0.75
+                            }
+                        },
+                        position: {
+                            z: 1.5
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -0,
+                        heightOffset: -0,
+                    },
+                },
+            ],
+        },
+
         {
             name: "corner_milling_1",
             type: 'svg',
@@ -4439,12 +5885,12 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 176,
-                        max: Infinity,
+                        min: 100,
+                        max: 1250,
                     },
                     height: {
-                        min: 70,
-                        max: Infinity,
+                        min: 536,
+                        max: 2500,
                     },
                 },
 
@@ -4483,12 +5929,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 176,
-                            max: Infinity,
+                            min: 100,
+                            max: 1250,
                         },
                         height: {
-                            min: 70,
-                            max: Infinity,
+                            min: 536,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -4545,6 +5991,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -4570,12 +6019,12 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 176,
-                        max: Infinity,
+                        min: 100,
+                        max: 1250,
                     },
                     height: {
-                        min: 70,
-                        max: Infinity,
+                        min: 536,
+                        max: 2500,
                     },
                 },
 
@@ -4615,12 +6064,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 176,
-                            max: Infinity,
+                            min: 100,
+                            max: 1250,
                         },
                         height: {
-                            min: 70,
-                            max: Infinity,
+                            min: 536,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -4675,6 +6124,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -5251,10 +6703,10 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 3.5,
-                bevelSize: 11,
+                bevelThickness: 3,
+                bevelSize: 4,
                 bevelOffset: 0,
-                bevelSegments: 8,
+                bevelSegments: 1,
             },
             figureParams: [
                 {
@@ -5285,12 +6737,79 @@ export const MILLINGS = {
                         // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
                         widthOffset: -47,
                         heightOffset: -47,
-                        radius: 5.34
+                        radius: 10,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d=" 
+                        M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z"/>`,
+                        widthOffset: -47,
+                        heightOffset: -47,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "corner_milling_1",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 8,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="                         
+                             M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z"/>`,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                        radius: 6,
+                        position: {
+                            z: -4
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -49,
-                        heightOffset: -49,
+                        widthOffset: -80,
+                        heightOffset: -80,
                     },
                 },
             ],
@@ -8557,7 +10076,7 @@ export const MILLINGS = {
         },
     ], //Кампо 
 
-    566715: [
+    3971920: [
         {
             name: "Laer_1",
             isCorner: true,
@@ -9710,10 +11229,10 @@ export const MILLINGS = {
             // lib: 'bvh',
             extrudeSettings: {
                 steps: 1,
-                depth: 10,
+                depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 1,
-                bevelSize: 2,
+                bevelThickness: 20,
+                bevelSize: 0,
                 bevelOffset: 0,
                 bevelSegments: 1,
             },
@@ -9759,6 +11278,8 @@ export const MILLINGS = {
                                 // left: true,
                                 // right: false,
                                 // centerVertical: false
+                            },
+                            rotate: {
                             }
                         }
                     },

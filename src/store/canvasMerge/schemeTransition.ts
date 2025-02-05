@@ -13,8 +13,8 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		{
 			id: MathUtils.generateUUID(), /** ID комнаты */
-			label: "Гостинная", /** Лейбл */
-			description: "Гостевая комната", /** Описание */
+			label: "Новая комната", /** Лейбл */
+			description: "Новая комната", /** Описание */
 			size: reactive({
 				/** Данные для форпмирования стен комнат */
 				// walls: [
