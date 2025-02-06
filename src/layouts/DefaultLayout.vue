@@ -4,12 +4,13 @@
 import { onMounted, ref } from "vue";
 import { useAppData } from "@/store/appliction/useAppData";
 
-import MainHeader from '@/components/header/MainHeader.vue'
-import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
-import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
-import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
-import MainPopUp from '@/components/popUp/MainPopUp.vue'
+import MainHeader from "@/components/header/MainHeader.vue";
+import OptionsMenu from "@/components/left-menu/OptionsMenu.vue";
+import OptionsMenu2D from "@/components/left-menu/constructor2d/OptionsMenu.vue";
+import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
+import MainPopUp from "@/components/popUp/MainPopUp.vue";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
+import { indexDBCreator } from "@/layouts/utils/IndexDBCreator.ts";
 
 import { useRoute } from "vue-router";
 
@@ -18,6 +19,18 @@ const route = useRoute();
 const ready = ref<boolean>(false);
 
 const loadEvents = async () => {
+  console.log(window);
+
+  let requestDB = indexedDB.open('storage', 1)
+
+  requestDB.onsuccess = () => {
+    console.log(requestDB.result, 'base exist');
+  }
+
+  requestDB.onupgradeneeded = () => {
+    console.log('makaryok');
+  }
+
   try {
     console.log("Start");
 
@@ -39,12 +52,12 @@ const loadEvents = async () => {
     // Проверка на тип контента в ответе
     const contentType = response.headers.get("content-type");
     let data;
-
-    if (contentType && contentType.includes("application/json")) {
-
-      data = await response.json(); // Если JSON
-      useAppData().setAppData(data.DATA);
-      ready.value = true;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json(); // Если JSON
+        useAppData().setAppData(data.DATA);
+        ready.value = true;
+        indexDBCreator(data.DATA);
 
       console.log("Полученные JSON данные:", useAppData().getAppData);
     } else {
@@ -59,7 +72,6 @@ const loadEvents = async () => {
 onMounted(() => {
   loadEvents();
 });
-
 </script>
 
 <!-- <template>
@@ -75,30 +87,23 @@ onMounted(() => {
 </template> -->
 
 <template>
-  <MainHeader/>
-  <MainPopUp/>
+  <MainHeader />
+  <MainPopUp />
   <InfoPopUp />
   <div class="main__container">
-      <OptionsMenu v-if="route.name === 'Constructor3d' && ready"/>
-      <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
-      <CustomiserMenu/>
-      <RouterView/>
+    <OptionsMenu v-if="route.name === 'Constructor3d' && ready" />
+    <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
+    <CustomiserMenu />
+    <RouterView />
   </div>
 </template>
 
-// import MainHeader from '@/components/header/MainHeader.vue'
-// import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
-// import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
-// import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
-// import MainPopUp from '@/components/popUp/MainPopUp.vue'
-
-// import { useRoute } from "vue-router";
-
-// const route = useRoute();
-
-
-
-
+// import MainHeader from '@/components/header/MainHeader.vue' // import
+OptionsMenu from '@/components/left-menu/OptionsMenu.vue' // import
+OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue' //
+import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue' //
+import MainPopUp from '@/components/popUp/MainPopUp.vue' // import { useRoute }
+from "vue-router"; // const route = useRoute();
 
 <style lang="scss" scoped>
 .main__container {
