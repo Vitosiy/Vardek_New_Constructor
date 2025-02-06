@@ -18,19 +18,10 @@ const route = useRoute();
 
 const ready = ref<boolean>(false);
 
+let indexedDataBase: IDBDatabase;
+
 const loadEvents = async () => {
-  console.log(window);
-
-  let requestDB = indexedDB.open('storage', 1)
-
-  requestDB.onsuccess = () => {
-    console.log(requestDB.result, 'base exist');
-  }
-
-  requestDB.onupgradeneeded = () => {
-    console.log('makaryok');
-  }
-
+  let result;
   try {
     console.log("Start");
 
@@ -52,14 +43,14 @@ const loadEvents = async () => {
     // Проверка на тип контента в ответе
     const contentType = response.headers.get("content-type");
     let data;
-      
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json(); // Если JSON
-        useAppData().setAppData(data.DATA);
-        ready.value = true;
-        indexDBCreator(data.DATA);
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json(); // Если JSON
+      useAppData().setAppData(data.DATA);
+      ready.value = true;
 
       console.log("Полученные JSON данные:", useAppData().getAppData);
+      return data.DATA
     } else {
       data = await response.text(); // Если текст или HTML
       console.log("Полученные текстовые данные:", data);
@@ -70,7 +61,50 @@ const loadEvents = async () => {
 };
 
 onMounted(() => {
-  loadEvents();
+  console.log('mounted default layout');
+  
+  let openRequest = indexedDB.open("storage", 1);
+
+  // слушатель отрабатывает при первой инициации базы
+  openRequest.onupgradeneeded = () => {
+    indexedDataBase = openRequest.result;
+    indexedDataBase.createObjectStore("data", { keyPath: "name" });
+  };
+
+  openRequest.onsuccess = () => {
+    indexedDataBase = openRequest.result;
+    let transaction = indexedDataBase.transaction("data", "readwrite");
+    let data = transaction.objectStore("data");
+    let req = data.getAll()
+    
+    req.onsuccess = async () => {
+      if(req.result.length) {
+        console.log(req.result, 'already comlete');
+        //TODO засинхронизировать стор
+
+        useAppData().setAppData(req.result[0]);
+        console.log(useAppData().getAppData, 'appData');
+        
+        return
+      }
+
+      let fetchData = await loadEvents();
+      let new_transaction = indexedDataBase.transaction("data", "readwrite");
+      let new_data = new_transaction.objectStore("data");
+      
+      let request =  new_data.add({...{name: 'db'}, ...fetchData}) 
+      request.onsuccess = () => {
+        console.log('fetch added to base'); 
+      };
+      request.onerror = function () {
+        console.log("Ошибка", request.error);
+      };
+    }
+  };
+
+  openRequest.onerror = () => {
+    console.log('error to db');
+  }
 });
 </script>
 
