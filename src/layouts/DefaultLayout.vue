@@ -4,11 +4,11 @@
 import { onMounted, ref } from "vue";
 import { useAppData } from "@/store/appliction/useAppData";
 
-import MainHeader from '@/components/header/MainHeader.vue'
-import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
-import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
-import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
-import MainPopUp from '@/components/popUp/MainPopUp.vue'
+import MainHeader from "@/components/header/MainHeader.vue";
+import OptionsMenu from "@/components/left-menu/OptionsMenu.vue";
+import OptionsMenu2D from "@/components/left-menu/constructor2d/OptionsMenu.vue";
+import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
+import MainPopUp from "@/components/popUp/MainPopUp.vue";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 
 import { useRoute } from "vue-router";
@@ -16,6 +16,8 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 
 const ready = ref<boolean>(false);
+
+let indexedDataBase: IDBDatabase;
 
 const loadEvents = async () => {
   try {
@@ -41,12 +43,12 @@ const loadEvents = async () => {
     let data;
 
     if (contentType && contentType.includes("application/json")) {
-
       data = await response.json(); // Если JSON
       useAppData().setAppData(data.DATA);
       ready.value = true;
 
       console.log("Полученные JSON данные:", useAppData().getAppData);
+      return data.DATA
     } else {
       data = await response.text(); // Если текст или HTML
       console.log("Полученные текстовые данные:", data);
@@ -57,9 +59,48 @@ const loadEvents = async () => {
 };
 
 onMounted(() => {
-  loadEvents();
-});
+  /* подключение к indexedDB */
+  let openRequest = indexedDB.open("storage", 1);
 
+  /* слушатель срабатывает при первой инициализации базы */
+  openRequest.onupgradeneeded = (): void => {
+    indexedDataBase = openRequest.result;
+    /* создание объекта хранилища куда будут загружены  данные с базы */
+    indexedDataBase.createObjectStore("data", { keyPath: "name" });
+  };
+
+  /* слушатель срабатывает каждый раз при перезагрузке страницы */
+  openRequest.onsuccess = (): void => {
+    indexedDataBase = openRequest.result;
+    /* создание тестовой транзакции для проверки загружены ли данные в локальную базу */
+    let transaction = indexedDataBase.transaction("data", "readwrite");
+    let data = transaction.objectStore("data");
+    let req = data.getAll() /* запрос на содержимое базы */
+    
+    req.onsuccess = async (): void => {
+      if(req.result.length) { /* если локальная база не пуста, все содержимое загружается в стор */
+        useAppData().setAppData(req.result[0]);
+        return
+      }
+
+      /* если база пуста, происходит загрузка данных с удаленной базы */
+      let fetchResponse = await loadEvents();
+
+      /* создание новой транзакции и добавление данных в локальную базу*/
+      let new_transaction = indexedDataBase.transaction("data", "readwrite");
+      let new_data = new_transaction.objectStore("data");
+      let request =  new_data.add({...{name: 'db'}, ...fetchResponse}) 
+      request.onerror = function (): void {
+        console.log("Ошибка", request.error);
+      };
+    }
+  };
+
+  /* слушатель обработки ошибок подключения к indexedDB */
+  openRequest.onerror = (): void => {
+    console.log('error to db');
+  }
+});
 </script>
 
 <!-- <template>
@@ -75,30 +116,23 @@ onMounted(() => {
 </template> -->
 
 <template>
-  <MainHeader/>
-  <MainPopUp/>
+  <MainHeader />
+  <MainPopUp />
   <InfoPopUp />
   <div class="main__container">
-      <OptionsMenu v-if="route.name === 'Constructor3d' && ready"/>
-      <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
-      <CustomiserMenu/>
-      <RouterView/>
+    <OptionsMenu v-if="route.name === 'Constructor3d' && ready" />
+    <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
+    <CustomiserMenu />
+    <RouterView />
   </div>
 </template>
 
-// import MainHeader from '@/components/header/MainHeader.vue'
-// import OptionsMenu from '@/components/left-menu/OptionsMenu.vue'
-// import OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue'
-// import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue'
-// import MainPopUp from '@/components/popUp/MainPopUp.vue'
-
-// import { useRoute } from "vue-router";
-
-// const route = useRoute();
-
-
-
-
+// import MainHeader from '@/components/header/MainHeader.vue' // import
+OptionsMenu from '@/components/left-menu/OptionsMenu.vue' // import
+OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue' //
+import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue' //
+import MainPopUp from '@/components/popUp/MainPopUp.vue' // import { useRoute }
+from "vue-router"; // const route = useRoute();
 
 <style lang="scss" scoped>
 .main__container {
