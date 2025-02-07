@@ -10,7 +10,6 @@ import OptionsMenu2D from "@/components/left-menu/constructor2d/OptionsMenu.vue"
 import CustomiserMenu from "@/components/right-menu/CustomiserMenu.vue";
 import MainPopUp from "@/components/popUp/MainPopUp.vue";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
-import { indexDBCreator } from "@/layouts/utils/IndexDBCreator.ts";
 
 import { useRoute } from "vue-router";
 
@@ -21,7 +20,6 @@ const ready = ref<boolean>(false);
 let indexedDataBase: IDBDatabase;
 
 const loadEvents = async () => {
-  let result;
   try {
     console.log("Start");
 
@@ -61,48 +59,45 @@ const loadEvents = async () => {
 };
 
 onMounted(() => {
-  console.log('mounted default layout');
-  
+  /* подключение к indexedDB */
   let openRequest = indexedDB.open("storage", 1);
 
-  // слушатель отрабатывает при первой инициации базы
-  openRequest.onupgradeneeded = () => {
+  /* слушатель срабатывает при первой инициализации базы */
+  openRequest.onupgradeneeded = (): void => {
     indexedDataBase = openRequest.result;
+    /* создание объекта хранилища куда будут загружены  данные с базы */
     indexedDataBase.createObjectStore("data", { keyPath: "name" });
   };
 
-  openRequest.onsuccess = () => {
+  /* слушатель срабатывает каждый раз при перезагрузке страницы */
+  openRequest.onsuccess = (): void => {
     indexedDataBase = openRequest.result;
+    /* создание тестовой транзакции для проверки загружены ли данные в локальную базу */
     let transaction = indexedDataBase.transaction("data", "readwrite");
     let data = transaction.objectStore("data");
-    let req = data.getAll()
+    let req = data.getAll() /* запрос на содержимое базы */
     
-    req.onsuccess = async () => {
-      if(req.result.length) {
-        console.log(req.result, 'already comlete');
-        //TODO засинхронизировать стор
-
+    req.onsuccess = async (): void => {
+      if(req.result.length) { /* если локальная база не пуста, все содержимое загружается в стор */
         useAppData().setAppData(req.result[0]);
-        console.log(useAppData().getAppData, 'appData');
-        
         return
       }
 
-      let fetchData = await loadEvents();
+      /* если база пуста, происходит загрузка данных с удаленной базы */
+      let fetchResponse = await loadEvents();
+
+      /* создание новой транзакции и добавление данных в локальную базу*/
       let new_transaction = indexedDataBase.transaction("data", "readwrite");
       let new_data = new_transaction.objectStore("data");
-      
-      let request =  new_data.add({...{name: 'db'}, ...fetchData}) 
-      request.onsuccess = () => {
-        console.log('fetch added to base'); 
-      };
-      request.onerror = function () {
+      let request =  new_data.add({...{name: 'db'}, ...fetchResponse}) 
+      request.onerror = function (): void {
         console.log("Ошибка", request.error);
       };
     }
   };
 
-  openRequest.onerror = () => {
+  /* слушатель обработки ошибок подключения к indexedDB */
+  openRequest.onerror = (): void => {
     console.log('error to db');
   }
 });
