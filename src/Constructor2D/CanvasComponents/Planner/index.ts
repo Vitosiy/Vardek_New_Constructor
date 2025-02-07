@@ -127,7 +127,6 @@ export default class Planner {
       )
     );
 
-
     // отслеживаем изменения в объекте
     this.unwatchList.push(
       watch(
@@ -210,12 +209,23 @@ export default class Planner {
         }
       )
     );
+
+    this.init();
     
   }
 
-  // private init(): void {
-  //   // Отрисовка сохраненной сцены
-  // }
+  private init(): void {
+    const objs = JSON.parse(JSON.stringify(this.plannerStore.getObjects));
+    if(objs.length > 0){
+      for (let i=0, len=objs.length; i<len; i++) {
+        const obj = objs[i];
+        const newDrawObject = this.createDrawObject(obj);
+        this.drawObjects.push(newDrawObject);
+        this.drawObject(obj);
+        this.plannerStore.updatedMergeWalls(obj.id);
+      }
+    }
+  }
 
   // уcтановка активного объекта на сцене
   public setActiveObject(

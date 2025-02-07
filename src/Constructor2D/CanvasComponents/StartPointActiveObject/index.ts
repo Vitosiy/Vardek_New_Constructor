@@ -377,6 +377,95 @@ export default class StartPointActiveObject {
       );
       if(!__activeWall) return;
       const wall = JSON.parse(JSON.stringify(__activeWall));
+      
+      const countObject = this.plannerStore.getCountObjects;
+      
+      if (countObject > 2){
+        // если при перемещении точки стены попадает на другую точку другой стены, то делаем слияние
+        if (this.interactiveWallStore.activePoint === 0 && wall.mergeWalls.wallPoint1 === null) {
+
+          const hoverPointObject: { id: number; indexPoint: number } | null = 
+            this.plannerStore.getPointByPosition({
+              x: mousePosition.x,
+              y: mousePosition.y
+            });
+
+          if(hoverPointObject){
+        
+            this.constructorStore.setHoverObject(
+              hoverPointObject.id,
+              hoverPointObject.indexPoint
+            );
+            
+            // присоединяем объект к точке
+            if(hoverPointObject.indexPoint === 1){ // если курсор над точкой 1
+        
+              const __hoverObj = this.plannerStore.getObjectById(hoverPointObject.id); // находим объект которому принадлежит точка 1
+
+              if(__hoverObj){
+                
+                const hoverObj = JSON.parse(JSON.stringify(__hoverObj));
+
+                if(hoverObj.mergeWalls.wallPoint0 === null){
+
+                  // присвваиваем положение точки 1 найденного объекта новому
+                  mousePosition.x = hoverObj.points[1].x;
+                  mousePosition.y = hoverObj.points[1].y;
+
+                  __activeWall.mergeWalls.wallPoint1 = hoverPointObject.id;
+                  __hoverObj.mergeWalls.wallPoint0 = wall.id;
+                  
+                }
+
+              }
+
+            }
+
+          }
+
+        } else if (this.interactiveWallStore.activePoint === 1 && wall.mergeWalls.wallPoint0 === null) {
+
+          const hoverPointObject: { id: number; indexPoint: number } | null = 
+            this.plannerStore.getPointByPosition({
+              x: mousePosition.x,
+              y: mousePosition.y
+            });
+
+          if(hoverPointObject){
+        
+            this.constructorStore.setHoverObject(
+              hoverPointObject.id,
+              hoverPointObject.indexPoint
+            );
+            
+            // присоединяем объект к точке
+            if(hoverPointObject.indexPoint === 0){ // если курсор над точкой 1
+        
+              const __hoverObj = this.plannerStore.getObjectById(hoverPointObject.id); // находим объект которому принадлежит точка 1
+
+              if(__hoverObj){
+                
+                const hoverObj = JSON.parse(JSON.stringify(__hoverObj));
+
+                if(hoverObj.mergeWalls.wallPoint1 === null){
+
+                  // присвваиваем положение точки 1 найденного объекта новому
+                  mousePosition.x = hoverObj.points[0].x;
+                  mousePosition.y = hoverObj.points[0].y;
+
+                  __activeWall.mergeWalls.wallPoint0 = hoverPointObject.id;
+                  __hoverObj.mergeWalls.wallPoint1 = wall.id;
+                  
+                }
+
+              }
+
+            }
+            
+          }
+
+        }
+      }
   
       // Обновляем позицию активной точки
       this.plannerStore.setNewPointPosition(

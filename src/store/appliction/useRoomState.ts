@@ -15,9 +15,12 @@ export const useRoomState = defineStore('RoomState', () => {
   //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
   const roomsStore = useSchemeTransition();
-  const roomsData = roomsStore.getSchemeTransitionData
-  const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
+  let roomsData = roomsStore.getSchemeTransitionData.concat(rooms_mok)
 
+  console.log(roomsData, 'roomsData', rooms_mok, 'rooms_mok')
+  
+  const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
+ 
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
