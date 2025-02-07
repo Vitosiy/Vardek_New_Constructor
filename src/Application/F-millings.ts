@@ -1,4 +1,4 @@
-
+//@ts-nocheck
 
 export const additionaMillinglKeys = {
     // Модерн
@@ -7341,7 +7341,7 @@ export const MILLINGS = {
                         // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
                         widthOffset: -55,
                         heightOffset: -55,
-                        radius: 5.34,
+                        radius: 6,
                         position: {
                             z: -4
                         }
@@ -7405,7 +7405,7 @@ export const MILLINGS = {
                         // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
                         widthOffset: -59,
                         heightOffset: -59,
-                        radius: 5.34,
+                        radius: 6,
 
                     },
                     hole: {
@@ -7541,7 +7541,7 @@ export const MILLINGS = {
                             max: Infinity,
                         },
                         height: {
-                            min: 20,
+                            min: 296,
                             max: Infinity,
                         },
                     },

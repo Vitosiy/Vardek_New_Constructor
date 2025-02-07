@@ -1,3 +1,4 @@
+//@ts-nocheck
 import {
   watch
 } from 'vue';

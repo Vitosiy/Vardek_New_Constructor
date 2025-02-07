@@ -31,19 +31,15 @@ export class MillingBuilder extends BuildersHelper {
 
     /** Данные для корректировки положения булевой геометрии */
 
-    console.log(millingParams)
-
-    console.log(this.additionaMillinglKeys[millingParams])
 
     const millingKey = this.additionaMillinglKeys[millingParams] ?? millingParams
 
     // console.log(this.addAdditionalKeys(this.millingsStor, this.additionaMillinglKeys), 'millingParams')
 
-
-
     const millingData = this.millingsStore[millingKey] ? this.millingsStore[millingKey] : this.millingsStore[2462671]
     /** Для дебагинга */
     // let millingData = millingParams
+    //
     let startGeometry = defaultGeometry.clone()
     let csgStartGeometry = CSG.fromGeometry(startGeometry.geometry);
     let clonedfasadePosition = JSON.parse(JSON.stringify(fasadePosition))
