@@ -19,7 +19,9 @@ export const useCustomiserStore = defineStore('customiser', () => {
   const customisers = ref<CustomiserType[]>(['ruler'])
 
   const toggleCustomiserPopup = () => {
+    console.log(isCustomiserOpen.value, 'КАСТОМАЙЗЕР');
     isCustomiserOpen.value = !isCustomiserOpen.value;
+    
   }
 
   function switchCustomiser(type: CustomiserType) {

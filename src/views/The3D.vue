@@ -167,6 +167,9 @@ onMounted(() => {
 
     // Пописать интерфейс *item*
     eventBus.on("A:Selected", (item: any) => {
+      console.log('the 3d onselected', item);
+      //TODO функция срабатывает при скролле. Спросить о стандартном поведении.
+      
       let object = item.object;
 
       let roomContant = item.roomContant;
@@ -208,6 +211,7 @@ onMounted(() => {
       controllerPositionData.value = object?.MOUSE_POSITION;
 
       productData.value = { ...object?.PROPS };
+      useModelState().setCurrentModel(item.object)
     });
   }
 });

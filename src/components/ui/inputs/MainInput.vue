@@ -1,3 +1,4 @@
+<!-- v-if="isChangeEnabled"  -->
 <template>
   <input 
     :class="inputClass"
@@ -6,15 +7,13 @@
     :max="max"
     v-model="inputValue"
     :placeholder="placeholder" 
-    :style="inputStyle" 
+    :style="inputStyle"
   />
-
-
 </template>
 
 <script setup>
 import { ref, watch, toRefs } from "vue";
-
+// TODO написать логику ограничения размеров min/max
 const props = defineProps({
 modelValue: {
   type: [String, Number],
@@ -44,17 +43,34 @@ inputStyle: {
   type: Object,
   default: () => ({}),
 },
+inputInfo: {
+  type: String,
+}
 });
 
+const isChangeEnable = () => {
+  console.log((props.min !== null) && (props.max !== null), 'IS_CHANGE_ENABLE');
+  
+ return (props.min !== null) && (props.max !== null)
+}
 
 const emit = defineEmits(["update:modelValue"]);
 
+const inputInfo = props.inputInfo
+
+// const update = (e) => {
+  
+//   console.log('OUTPUT OF INPUT', {inputInfo:  e.target.value});
+  
+//   // emit("update:modelValue", {inputInfo:  e.target.value});
+// }
 
 const inputValue = ref(props.modelValue);
 
 watch(inputValue, (newValue) => {
-let value = newValue;
-emit("update:modelValue", value);
+  console.log('WATCHER', newValue);
+  isChangeEnable()
+emit("update:modelValue", newValue);
 });
 
 watch(
@@ -69,15 +85,16 @@ watch(
 
 <style lang="scss" scoped>
 .input__search {
-width: 100%;
-height: 50px;
-min-height: 50px;
-font-size: 16px;
-padding: 0 32px;
-box-sizing: border-box;
-&.right-menu {
-  height: 39px;
-  padding: 0 15px;
-}
+  width: 100% !important; 
+  height: 50px;
+  min-height: 50px;
+  font-size: 16px;
+  padding: 0 32px;
+  box-sizing: border-box;
+    &.right-menu {
+      width: 100%;
+      height: 39px;
+      padding: 0 15px;
+    }
 }
 </style>

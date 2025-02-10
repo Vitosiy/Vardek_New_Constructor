@@ -75,6 +75,8 @@ export const useModelState = defineStore('ModelState', () => {
     const currentWindowsData = ref<number[]>([])
 
     const setCurrentModel = (object: THREE.Object3D | null) => {
+        console.log('CURRENT MODEL', object);
+        
         currentModel.value = object
     }
 
