@@ -23,6 +23,7 @@ import { WindowBuilder } from './WindowBuilder';
 
 import { FasadeBuilder } from './FasadeBuilder';
 import { PaletteBulider } from './PaletteBuilder';
+import { AlumBulider } from './AlumBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
 
 export class BuildProduct extends BuildersHelper {
@@ -41,15 +42,17 @@ export class BuildProduct extends BuildersHelper {
     window_builder: WindowBuilder;
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBulider
+    alum_builder: AlumBulider
 
     heightCorrect: number = 0
 
     constructor(root: THREETypes.TApplication) {
         super(root)
 
+        console.trace('BuildProduct')
+
         this.root = root
         this.ruler = root.ruler
-        console.log(this.ruler, 'BP')
 
         this.resources = root._resources
         this.filters = new Filters(root)
@@ -59,7 +62,8 @@ export class BuildProduct extends BuildersHelper {
         this.milling_builder = new MillingBuilder(root)
         this.window_builder = new WindowBuilder(root)
         this.palette_bulider = new PaletteBulider(this)
-   
+        this.alum_builder = new AlumBulider(this)
+
 
     }
 
@@ -183,9 +187,8 @@ export class BuildProduct extends BuildersHelper {
 
             FASADE_PROPS: [],
             FASADE_SIZE: [],
-            FASADE_HEIGHT: {},
             FASADE_POSITIONS: [],
-
+            FASADE_TYPE: [],
             HANDLES: {},
             HANDLES_POSITION: {},
             HAVETABLETOP: true,
@@ -228,7 +231,7 @@ export class BuildProduct extends BuildersHelper {
             let fasade_list = this.filters.filterFasadeSizer(product_data.FASADE_SIZES, false) as any[] /** Дополнить тип / интерфейс */
 
             if ((Object.values(fasade_list).length > 0)) {
-                
+
                 Object.values(fasade_list).forEach((fasade, key) => {
                     PARAMS.FASADE_SIZE.push(fasade)
                 })
@@ -313,8 +316,15 @@ export class BuildProduct extends BuildersHelper {
         this._PRODUCTS[product_id].leg_length ? this.buildLegs(model_props, data, total, getHeightCorrect) : "";
 
 
+        console.log(model_props, data, '--PROP')
+
         /** Добавляем фасад */
-        Object.keys(model_props.CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(total, model_props, data) : "";
+        Object.keys(model_props.CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(
+            {
+                group: total,
+                props: model_props,
+                model_data: data,
+            }) : "";
 
         /** Корректировка положения общего Box3 по высоте  */
         total.position.y += height_correct / 2

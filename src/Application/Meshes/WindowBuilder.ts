@@ -1,9 +1,16 @@
 //@ts-nocheck
 import * as THREE from 'three';
 import * as THREETypes from "@/types/types"
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
+import { CSG } from 'three-csg-ts';
+
 import { MillingBuilder } from './MillingBuilder';
+import { useModelState } from "@/store/appliction/useModelState";
 
 export class WindowBuilder extends MillingBuilder {
+
+    private modelState = useModelState()
+    private svgLoader: SVGLoader = new SVGLoader();
 
     constructor(root: THREETypes.TApplication) {
         super(root)
@@ -13,42 +20,127 @@ export class WindowBuilder extends MillingBuilder {
         fasade,
         fasadePosition,
         data,
-        defaultGeometry
+        defaultGeometry,
+        alum
 
     }) {
-        this.createMillingFasade(fasade, fasadePosition, data, defaultGeometry);
-        this.createGlass(fasade, fasadePosition)
+
+        console.log(alum, '--createWindow')
+
+        const windowData = alum ?? data
+
+        this.createMillingFasade(fasade, fasadePosition, windowData, defaultGeometry);
+        this.createGlass(fasade, fasadePosition, alum)
+        this.createHeandless(fasade, fasadePosition)
     }
 
-    createGlass(fasade, fasadePosition) {
-        const aabb = new THREE.Box3().setFromObject(fasade);
-        const size = new THREE.Vector3()
-        aabb.getSize(size);
-        const offset = 10
+    createGlass(fasade, fasadePosition, alum) {
+
+        let offset = alum ? 2 : 10
+        let zPos = alum ? 10 : 10
+
+        const { FASADE_WIDTH, FASADE_HEIGHT } = fasade.userData.trueSize
+
+        const glassId = this.modelState.getCurrentGlassData[0]
+        const glassColor = `#${glassId.COLOR}`
+
+        console.log(glassId.NAME)
+        const roughness = glassId.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
+
 
         const params = {
-            width: size.x - offset,
-            height: size.y - offset,
+            width: FASADE_WIDTH - offset,
+            height: FASADE_HEIGHT - offset,
             depth: 5,
-            material:{
+            material: {
                 reflectivity: 1,
-                transmission: 1.0,
-                roughness: 0.1,
-                metalness: 0.2,
-                color: new THREE.Color(0xffffff),
-                ior: 1.2,
-                thickness: 10.0,
+                transmission: 0.95,
+                roughness: roughness,
+                metalness: 0.25,
+                color: glassColor,
+                ior: 1.5,
+                thickness: 0.5,
+                clearcoat: 0.1,
+                clearcoatRoughness: 0.1,
+                opacity: 0.8,
             }
 
         }
 
         const geometry = new THREE.BoxGeometry(params.width, params.height, params.depth);
         const material = new THREE.MeshPhysicalMaterial({ ...params.material });
-        const mesh = new THREE.Mesh(geometry,material);
-        mesh.position.z = 10
+        material.encoding = THREE.SRGBColorSpace;
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.z = zPos
         mesh.userData.type = 'glass'
-        fasade.add(mesh)
+
+        if (!fasade.children.some(obj => obj.userData.type === 'glass')) {
+            fasade.add(mesh)
+        }
     }
 
+    changeGlassColor({ fasade, glassId }) {
+
+
+        console.log(glassId)
+
+        const glassData = this._GLASS[glassId]
+
+        console.log(glassData)
+        
+        const glassColor = `#${glassData.COLOR}`
+        const roughness = glassData.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
+
+
+        fasade.traverse(children => {
+            if (children instanceof THREE.Mesh && children.userData.type == 'glass') {
+                children.material.color.set(glassColor)
+                children.material.roughness = roughness
+                children.material.needsUpdate = true
+            }
+        })
+    }
+
+    createHeandless(fasade, fasadePosition, incomePosition) {
+
+        const type = this.modelState.getCurrentFasadeTypesData
+        const { FASADE_WIDTH, FASADE_HEIGHT, FASADE_DEPTH } = fasade.userData.trueSize
+        if (!type.length > 0) return
+
+        const hendlePath = `
+        <svg>
+        <path d=" M -1.5 0 L 1.5 0 L 1.5 -12 L -10 -12 L -10 -10 L -1.523 -7 Z"/>
+        </svg>`
+
+        const paths = this.svgLoader.parse(hendlePath).paths
+        console.log(paths)
+        const shape = paths[0].toShapes()
+        const depth = FASADE_WIDTH * 0.85
+
+        const geometry = new THREE.ExtrudeGeometry(
+            shape,
+            { steps: 1, depth, bevelEnabled: false }
+        );
+        const material = new THREE.MeshStandardMaterial({ color: 0x00ffff, transparent: true, opacity: 1 });
+        const shapeMesh = new THREE.Mesh(geometry, material);
+        shapeMesh.position.z = 16
+        shapeMesh.position.x = depth * -0.5
+        shapeMesh.position.y = FASADE_HEIGHT * -0.5 + 1.5
+        shapeMesh.rotateY(Math.PI * 0.5)
+        shapeMesh.rotateZ(Math.PI * -0.5)
+
+        shapeMesh.userData.type = 'hendless'
+        if (!fasade.children.some(obj => obj.userData.type === 'hendless')) {
+            fasade.add(shapeMesh)
+        }
+
+
+
+
+        // console.log(paths)
+
+
+    }
 
 }  

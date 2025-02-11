@@ -179,8 +179,9 @@ export class Renderer {
     removeVueEvents() {
         this.eventsStore.off('A:Quality', this.onSetQuality)
 
-        this.canvas.removeChild(this.instance.domElement);
-        this.cleanupCSS2DRenderer(this.labelRenderer)
+        // this.canvas.removeChild(this.instance.domElement);
+        this.cleanupRenderer(this.instance)
+        this.cleanupRenderer(this.labelRenderer)
 
         this.instance.dispose(); // Освобождаем ресурсы рендерера
         this.instance.renderLists.dispose();
@@ -191,17 +192,17 @@ export class Renderer {
         
     }
 
-    cleanupCSS2DRenderer(labelRenderer) {
+    cleanupRenderer(Renderer) {
 
-        const labelRendererElements = labelRenderer.domElement.querySelectorAll('*');
-        labelRendererElements.forEach((element) => {
+        const RendererElements = Renderer.domElement.querySelectorAll('*');
+        RendererElements.forEach((element) => {
           element.remove();
         });
 
-        if (labelRenderer.domElement.parentElement) {
-          labelRenderer.domElement.parentElement.removeChild(labelRenderer.domElement);
+        if (Renderer.domElement.parentElement) {
+            Renderer.domElement.parentElement.removeChild(Renderer.domElement);
         }
       
-        labelRenderer = null;
+        Renderer = null;
       }
 }

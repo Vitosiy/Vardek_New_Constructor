@@ -10,34 +10,38 @@ import { BuildProduct } from '../BuildProduct';
 import { useAppData } from '@/store/appliction/useAppData';
 import { useModelState } from "@/store/appliction/useModelState";
 
+import { BuildersHelper } from '../BuildersHelper';
+
 import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
 import { directionToColor } from 'three/webgpu';
 
 let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
 
-export class MeshEvents {
+export class MeshEvents extends BuildersHelper {
 
     root: THREETypes.TApplication;
     scene: THREETypes.TScene
     events: ReturnType<typeof useEventBus> = useEventBus()
-    currentProduct: THREE.Object3D | null = null
+    // currentProduct: THREE.Object3D | null = null
     resources: THREETypes.TResources
     dispose: DeepDispose
     buildProduct: BuildProduct
     buildMilling: THREETypes.TMillingBuilder
     buildWindow: THREETypes.TWindowBuilder
     buildPalette: THREETypes.TPaletteBulider
+    buildAlum: THREETypes.TAlumBulider
     private millings: any | null = MILLINGS
     private additionaMillinglKeys: any | null = additionaMillinglKeys
+    private alumTextures = alumTextures
 
     _APP: THREETypes.TObject = useAppData().getAppData
     modelState = useModelState()
-    millHelper = new GUI()
+    // millHelper = new GUI()
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
-    private onChangeFasadeTexture: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
+    private onChangeFasade: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
     private onChangePaletteColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
-    private onChangeGlassColor: (data: number | string) => void;
+    private onChangeGlassColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
     private onChangeMilling: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
     private onChangeWindow: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
     private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
@@ -45,19 +49,23 @@ export class MeshEvents {
 
     constructor(root: THREETypes.TApplication) {
 
+        super(root)
+
+        // console.trace('MeshEvents')
+
         this.root = root
         this.scene = root._scene
         this.resources = root._resources
         this.dispose = new DeepDispose()
 
-        console.log(root.geometryBuilder, 'ROOM')
+        // console.log(root.geometryBuilder, 'ROOM')
 
         // this.buildProduct = root.world.room.geometryBuilder.buildProduct
         this.buildProduct = root.geometryBuilder.buildProduct
 
 
         this.onChangeModuleTexture = this.changeModuleTexture.bind(root)
-        this.onChangeFasadeTexture = this.changeFasadeTexture.bind(root)
+        this.onChangeFasade = this.changeFasade.bind(root)
         this.onChangePaletteColor = this.changePaletteColor.bind(root)
         this.onChangeGlassColor = this.changeGlassColor.bind(root)
         this.onChangeMilling = this.changeMilling.bind(root)
@@ -70,22 +78,56 @@ export class MeshEvents {
         this.buildMilling = this.buildProduct.milling_builder
         this.buildPalette = this.buildProduct.palette_bulider
         this.buildWindow = this.buildProduct.window_builder
+        this.buildAlum = this.buildProduct.alum_builder
 
     }
 
     get _currentMesh() {
-        return this.root._trafficManager?.currentObject
+        return this.root._trafficManager?._currentObject
     }
-    // set _currentMesh(value) {
-    //     this.currentProduct = this.root._trafficManager?._currentObject
-    // }
+
+    resetFasade(fasadeNdx, incomingModel) {
+        if (!this._currentMesh) return;
+
+        const ptoductProps = this._currentMesh.userData.PROPS
+        const { CONFIG, FASADE, FASADE_DEFAULT } = ptoductProps
+        const { FASADE_PROPS } = CONFIG
+        const rootFasadeParent = FASADE_DEFAULT[fasadeNdx].userData.rootFasadeParent
+        const fasadeExist = FASADE[fasadeNdx] !== null
+
+        const rebuild = (fasadeNdx) => {
+            this.buildProduct.fasade_builder.getFasade(
+                {
+                    group: rootFasadeParent,
+                    props: ptoductProps,
+                    model_data: CONFIG.MODEL,
+                    fasadeNdx,
+                    incomingModel
+                })
+        }
+
+        if (!fasadeExist) {
+            console.log('here')
+            rebuild(fasadeNdx)
+        }
+
+        if (incomingModel) {
+            FASADE_PROPS[fasadeNdx].ALUM = incomingModel
+            console.log('here_2')
+            this.deliteFasade(fasadeNdx)
+            rebuild(fasadeNdx, incomingModel)
+        }
+    }
+
     /** Цвкет корпуса */
     changeModuleTexture(data: { [key: string]: any }) {
 
         if (!this._currentMesh) return;
 
-        let body = this._currentMesh?.userData.PROPS.BODY
-        let shelf = this._currentMesh?.userData.PROPS.SHELF
+        const product = this._currentMesh
+
+        let body = product.userData.PROPS.BODY
+        let shelf = product.userData.PROPS.SHELF
 
         body?.traverse((children: THREE.Object3D) => {
             if (children instanceof THREE.Mesh) {
@@ -108,7 +150,7 @@ export class MeshEvents {
             })
         })
 
-        this._currentMesh.userData.PROPS.CONFIG.MODULE_COLOR = data.ID
+        product.PROPS.CONFIG.MODULE_COLOR = data.ID
 
         // if (this.root._trafficManager) {
         //     this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.MODULE_COLOR = data.ID
@@ -116,42 +158,54 @@ export class MeshEvents {
     }
 
     /** Цвет Фасада */
-    changeFasadeTexture({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
+    changeFasade({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
+
         if (!this._currentMesh) return;
 
-        const props = this._currentMesh.userData.PROPS
-        const fasade = props.FASADE[fasadeNdx]
-        const window = props.CONFIG.SHOWCASE
+        const product = this._currentMesh
+        const incomingModel = data.MODEL
 
-        if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
-            this.modelState.createCurrentPaletteData(data.ID)
-            let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
+        this.resetFasade(fasadeNdx, incomingModel)
 
-            // console.log(props.FASADE[fasadeNdx], 'changeFasadeTexture')
-
-            this.changePaletteColor({ data: palette, fasadeNdx })
-            return
-        }
-
-        if (data.ATTACH_MILLINGS && data.ATTACH_MILLINGS[0] == null) {
-            fasade.geometry = props.FASADE_DEFAULT[fasadeNdx].geometry.clone()
-        }
-
-        if (window != null) {
-            this.changeWindow({ data: window[0], fasadeNdx });
-        }
+        const ptoductProps = product.userData.PROPS
+        const { CONFIG, FASADE, FASADE_DEFAULT } = ptoductProps
+        const { FASADE_PROPS } = CONFIG
+        const window = CONFIG.SHOWCASE
+        const applyWindow = FASADE_PROPS[fasadeNdx].WINDOW
+        const fasade = FASADE[fasadeNdx] ?? FASADE_DEFAULT[fasadeNdx]
+        FASADE_PROPS[fasadeNdx].ALUM = incomingModel
 
         const textureSize = {
             x: data.TEXTURE_WIDTH,
             y: data.TEXTURE_HEIGHT,
         }
 
-        if (!data.COLOR) {
-            fasade.visible = true;
+        if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
+            console.log('PALETTE')
+            this.modelState.createCurrentPaletteData(data.ID)
+            let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
+            this.changePaletteColor({ data: palette, fasadeNdx })
+            return
+        }
 
+        /**Проверка на наличие у входящего фасад фрезеровки и окна  */
+        if (data.ATTACH_MILLINGS && data.ATTACH_MILLINGS[0] == null && window == null) {
+            fasade.geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
+            console.log('ATTACH')
+        }
+
+        /**Проверка устанавливалось ли окно раньше */
+        if (window != null && applyWindow === null || window != null && incomingModel == null) {
+            console.log('WINDOW')
+            this.changeWindow({ data: window[0], fasadeNdx });
+        }
+
+        if (!data.COLOR) {
+
+            console.log('COLOR')
+            fasade.visible = true;
             fasade.traverse((children: THREE.Object3D) => {
                 if (children instanceof THREE.Mesh) {
-
                     this.changeColor(
                         {
                             object: children,
@@ -161,66 +215,19 @@ export class MeshEvents {
                 }
             })
 
-            this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-            this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = data.ID
-            this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null
-
-            // console.log(this._currentMesh, 'this._currentMesh---1')
+            FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+            FASADE_PROPS[fasadeNdx].COLOR = data.ID
+            FASADE_PROPS[fasadeNdx].PALETTE = null
 
             return;
         }
 
-        fasade.traverse((children: THREE.Object3D) => {
+        this.createAlumColor({ data, fasadeNdx })
 
-            fasade.visible = true
 
-            if (children instanceof THREE.Mesh && children.userData.type != 'glass') {
-
-                !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
-
-                children.material = new THREE.MeshStandardMaterial();
-
-                this.resources.startLoading(`${alumTextures}metal_roughness.jpg`, 'localTexture', (file) => {
-                    children.material.roughnessMap = file
-                    children.material.roughnessMap.wrapS = children.material.roughnessMap.wrapT = THREE.RepeatWrapping;
-                    children.material.roughnessMap.repeat.set(
-                        1 / 512,
-                        1 / 512
-                    );
-                    children.material.roughnessMap.offset.set(0.5, 0.5);
-                })
-
-                this.resources.startLoading(`${alumTextures}metal_metallic.jpg`, 'localTexture', (file) => {
-                    children.material.metallicMap = file
-                    children.material.metallicMap.wrapS = THREE.RepeatWrapping;
-                    children.material.metallicMap.wrapT = THREE.RepeatWrapping;
-                    children.material.metallicMap.repeat.set(
-                        1 / 512,
-                        1 / 512
-                    );
-                    children.material.metallicMap.offset.set(0.5, 0.5);
-                })
-
-                children.material.color.set(`${data.COLOR}`)
-                children.material.metalness = 0.5
-                children.material.roughness = 0.5
-
-                // children.material.clearcoat = 1
-                // children.material.clearcoatRoughness = 0
-
-                children.material.receiveShadow = true;
-                children.material.castShadow = true;
-                children.material.encoding = THREE.SRGBColorSpace;
-
-                children.material.needsUpdate = true;
-
-            }
-
-        })
-
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = data.ID
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null
+        FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+        FASADE_PROPS[fasadeNdx].COLOR = data.ID
+        FASADE_PROPS[fasadeNdx].PALETTE = null
 
     }
 
@@ -228,88 +235,39 @@ export class MeshEvents {
 
         if (!this._currentMesh) return;
 
-        // console.log('changePaletteColor')
-
         const props = this._currentMesh.userData.PROPS
-        const fasade = props.FASADE[fasadeNdx]
+        const { FASADE, CONFIG } = props
+        const { FASADE_PROPS } = CONFIG
+        const fasade = FASADE[fasadeNdx]
 
         this.buildPalette.createPaletteColor({ fasade, data, fasadeNdx, props })
 
     }
 
-    changeGlassColor(data: number | string) {
+    createAlumColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
+        if (!this._currentMesh) return;
+
+        const props = this._currentMesh.userData.PROPS
+        const { FASADE, CONFIG } = props
+        const { FASADE_PROPS } = CONFIG
+        const fasade = FASADE[fasadeNdx]
+
+        this.buildAlum.createAlum({ fasade, data })
+    }
+
+
+    changeGlassColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
 
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
-        const fasade = props.FASADE
-        const GLASS = this._APP.GLASS[data]
+        const { FASADE, CONFIG } = props
+        const { FASADE_PROPS } = CONFIG
+        const fasade = FASADE[fasadeNdx]
 
-        if (GLASS.DETAIL_PICTURE != null && GLASS.COLOR === null) {
+        this.buildWindow.changeGlassColor({ fasade, glassId: data })
 
-            Object.values(fasade).forEach((item: any) => {
-
-                item.visible = true;
-
-                const box = new THREE.Box3().setFromObject(item);
-                const vec = new THREE.Vector3()
-                const fasadeSize = box.getSize(vec)
-
-                item.traverse((children: THREE.Object3D) => {
-
-                    if (children instanceof THREE.Mesh) {
-
-                        !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
-
-                        this.changeColor(
-                            {
-                                object: children,
-                                url: GLASS.DETAIL_PICTURE,
-                                type: "Glass",
-                                textureSize: fasadeSize
-                            })
-                    }
-                })
-
-                if (this.root._trafficManager) {
-                    this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
-                }
-            })
-
-            return
-        }
-
-        Object.values(fasade).forEach((item: any) => {
-
-            item.traverse((children: THREE.Object3D) => {
-
-                item.visible = true;
-
-                if (children instanceof THREE.Mesh) {
-
-                    !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
-
-                    children.material = new THREE.MeshStandardMaterial();
-                    children.material.color.set(`#${GLASS.COLOR}`)
-                    children.material.metalness = 0.7
-                    children.material.roughness = 0.05
-
-                    children.material.clearcoat = 1
-                    children.material.clearcoatRoughness = 0
-
-                    children.material.receiveShadow = true;
-                    children.material.castShadow = true;
-                    children.material.encoding = THREE.SRGBColorSpace;
-
-                    children.material.needsUpdate = true;
-
-                }
-
-                if (this.root._trafficManager) {
-                    this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.FASADE_SHOW = item.visible
-                }
-            })
-        })
+        FASADE_PROPS[fasadeNdx].GLASS = data
 
     }
 
@@ -317,9 +275,11 @@ export class MeshEvents {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
-        const fasade: THREE.Mesh = props.FASADE[fasadeNdx]
-        const fasadeProps = props.CONFIG.FASADE_POSITIONS
-        const defaultGeometry = props.FASADE_DEFAULT[fasadeNdx]
+        const { FASADE, FASADE_DEFAULT, CONFIG } = props
+        const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG
+
+        const fasade: THREE.Mesh = FASADE[fasadeNdx]
+        const defaultGeometry = FASADE_DEFAULT[fasadeNdx]
 
         // let millingData = [
         //     {
@@ -349,39 +309,43 @@ export class MeshEvents {
         //                     },
         //                 },
         //                 figure: {
-        //                     svg: `<path d="
-        //                         M 0 -hgh 
-        //                         L (wth - radius) -hgh 
-        //                         A radius radius 0 0 1 wth -(hgh - radius) 
-        //                         L wth (hgh - radius) 
-        //                         A radius radius 0 0 1 (wth - radius) hgh 
-        //                         L -(wth - radius) hgh 
-        //                         A radius radius 0 0 1 -wth (hgh - radius) 
-        //                         L -wth -(hgh - radius) 
-        //                         A radius radius 0 0 1 -(wth - radius) -hgh 
-        //                         Z" 
-        //                     />`,
-        //                     // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
+
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+        //                     widthOffset: -3,
+        //                     heightOffset: -3,
+        //                     position:{
+        //                         z:-20
+        //                     }
+
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
         //                     widthOffset: -55,
         //                     heightOffset: -55,
-        //                     radius: 5.34,
-        //                     boolParams: {
-        //                         depth: {
-        //                             offset: 20,
-        //                             size: 0
-        //                         },
-        //                         position: {
-        //                             // top: false,
-        //                             // bottom: true,
-        //                             front: -20,
-        //                             // left: true,
-        //                             // right: false,
-        //                             // centerVertical: false
-        //                         },
-        //                         rotate:{
+        //                 },
+        //             },
 
-        //                         }
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+        //                     widthOffset: -15,
+        //                     heightOffset: -15,
+        //                     position:{
+        //                         z:-35
         //                     }
+
         //                 },
         //                 hole: {
         //                     svg: ``,
@@ -393,24 +357,14 @@ export class MeshEvents {
         //     },
         // ]
 
-        let hendlesPoss = {
-            y: 0,
-            x: 0,
-            z: 0,
-            rotationX: THREE.MathUtils.radToDeg(fasade.rotation.x), // переводим из радиан в градусы
-            rotationY: THREE.MathUtils.radToDeg(fasade.rotation.y),
-            rotationZ: THREE.MathUtils.radToDeg(fasade.rotation.z),
-
-        }
-
         let millingData = this.millings[data] || this.additionaMillinglKeys[data] ? data : 2462671
 
-        console.log(this.millings[data], this.additionaMillinglKeys[data])
+        // console.log(this.millings[data], this.additionaMillinglKeys[data])
 
         const fasadePosition = {
-            FASADE_WIDTH: eval(fasadeProps[fasadeNdx].FASADE_WIDTH),
-            FASADE_HEIGHT: eval(fasadeProps[fasadeNdx].FASADE_HEIGHT),
-            FASADE_DEPTH: eval(fasadeProps[fasadeNdx].FASADE_DEPTH)
+            FASADE_WIDTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_WIDTH),
+            FASADE_HEIGHT: eval(FASADE_POSITIONS[fasadeNdx].FASADE_HEIGHT),
+            FASADE_DEPTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_DEPTH)
         };
         // console.log(fasadePosition, '---fasadePosition')
 
@@ -419,25 +373,26 @@ export class MeshEvents {
 
         // this.createMillingHelper(millingData, () => this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, defaultGeometry));
 
-        props.CONFIG.FASADE_PROPS[fasadeNdx].MILLING = data
-        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+        FASADE_PROPS[fasadeNdx].MILLING = data
+        FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
 
-        // console.log(props)
-        // console.log(fasade)
     }
 
     changeWindow({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
-        const fasade: THREE.Mesh = props.FASADE[fasadeNdx]
-        const fasadeProps = props.CONFIG.FASADE_POSITIONS;
-        const defaultGeometry = props.FASADE_DEFAULT[fasadeNdx]
+        const { FASADE, FASADE_DEFAULT, CONFIG } = props
+        const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG
+
+        const fasade: THREE.Mesh = FASADE[fasadeNdx]
+        const defaultGeometry = FASADE_DEFAULT[fasadeNdx]
+        const alum = FASADE_PROPS[fasadeNdx].ALUM
 
         const fasadePosition = {
-            FASADE_WIDTH: eval(fasadeProps[fasadeNdx].FASADE_WIDTH),
-            FASADE_HEIGHT: eval(fasadeProps[fasadeNdx].FASADE_HEIGHT),
-            FASADE_DEPTH: eval(fasadeProps[fasadeNdx].FASADE_DEPTH)
+            FASADE_WIDTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_WIDTH),
+            FASADE_HEIGHT: eval(FASADE_POSITIONS[fasadeNdx].FASADE_HEIGHT),
+            FASADE_DEPTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_DEPTH)
         };
 
         // this.buildMilling.createMillingFasade(fasade,
@@ -449,25 +404,67 @@ export class MeshEvents {
             fasade,
             fasadePosition,
             data,
-            defaultGeometry
+            defaultGeometry,
+            alum
         });
 
-        props.CONFIG.FASADE_PROPS[fasadeNdx].WINDOW = data
-        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+        FASADE_PROPS[fasadeNdx].WINDOW = data
+        FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
     }
 
-    // Доделать под разный выбранный фасад
+    // Скрыть фасад
     toggleFasade(fasadeNdx: number) {
 
         if (!this._currentMesh) return;
 
-        const props = this._currentMesh?.userData.PROPS
-
+        const product = this._currentMesh
+        const props = product.userData.PROPS
         const fasade = props.FASADE[fasadeNdx]
 
-        fasade.visible = false
+        if (fasade === null) return
+        fasade.visible = !fasade.visible
+        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
 
-        this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+    }
+
+    // Удалить фасад
+    deliteFasade(fasadeNdx: number) {
+        if (!this._currentMesh) return;
+
+        const product = this._currentMesh
+        const props = product.userData.PROPS
+        const fasadeMeshId = props.FASADE[fasadeNdx]?.uuid
+
+        // product.children.forEach(i => {
+        //     i.children.forEach(ii=>{
+        //         if (ii.uuid === fasadeMeshId) {
+        //             this.dispose.clearObjectFromParrent(ii)
+        //         }
+        //     })
+        // })
+
+        try {
+            if (product instanceof THREE.Object3D && typeof product.traverse === 'function') {
+                product.traverse(children => {
+                    if (children.uuid === fasadeMeshId) {
+                        this.dispose.clearObjectFromParrent(children)
+                    }
+                })
+                // props.FASADE = props.FASADE.filter((item, key) => item.uuid != fasadeMeshId)
+
+                props.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = null
+                props.CONFIG.FASADE_PROPS[fasadeNdx].MILLING = null
+                props.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null
+                props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = false
+            }
+        }
+        catch (e) {
+        }
+        props.FASADE[fasadeNdx] = null
+
+
+        console.log(props.FASADE)
+
 
     }
 
@@ -505,61 +502,21 @@ export class MeshEvents {
 
     }
 
-    changeColor({ object, url, textureSize, type }: { object: THREE.Object3D, url: string, textureSize?: THREETypes.TObject, type?: string }) {
-
-        object.traverse(children => {
-            if (children instanceof THREE.Mesh) {
-
-                children.userData.ORIGINAL_COLOR != null ? children.material = children.userData.ORIGINAL_COLOR : ''
-
-                this.resources.startLoading(url, 'texture', (file) => {
-
-                    if (type === "Palette" || type === "Glass") {
-                        children.material = new THREE.MeshStandardMaterial()
-                    }
-
-                    if (file instanceof THREE.Texture) {
-
-                        file.colorSpace = THREE.SRGBColorSpace
-                        children.material.map = file
-
-                        if (textureSize) {
-                            children.material.map.wrapS = THREE.RepeatWrapping;
-                            children.material.map.wrapT = THREE.RepeatWrapping;
-                            children.material.map.repeat.set(
-                                1 / textureSize.x,
-                                1 / textureSize.y
-                            );
-                            children.material.map.offset.set(0.5, 0.5);
-                        }
-                        if (type === "Palette") {
-                            children.material.metalness = 0.7
-                            children.material.roughness = 0.05
-                            children.material.clearcoat = 1
-                            children.material.clearcoatRoughness = 0
-                            children.material.needsUpdate = true;
-                        }
-                    }
-                });
-            }
-        })
-    }
-
     addVueEvents() {
         this.onChangeModuleTexture = (data) => {
             this.changeModuleTexture(data)
         }
 
-        this.onChangeFasadeTexture = ({ data, fasadeNdx }) => {
-            this.changeFasadeTexture({ data, fasadeNdx })
+        this.onChangeFasade = ({ data, fasadeNdx }) => {
+            this.changeFasade({ data, fasadeNdx })
         }
 
         this.onChangePaletteColor = ({ data, fasadeNdx }) => {
             this.changePaletteColor({ data, fasadeNdx })
         }
 
-        this.onChangeGlassColor = (data) => {
-            this.changeGlassColor(data)
+        this.onChangeGlassColor = ({ data, fasadeNdx }) => {
+            this.changeGlassColor({ data, fasadeNdx })
         }
 
         this.onChangeMilling = ({ data, fasadeNdx }) => {
@@ -578,10 +535,8 @@ export class MeshEvents {
             this.toggleFasade(fasad_ndx)
         }
 
-
-
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
-        this.events.on('A:ChangeFasadeTexture', this.onChangeFasadeTexture);
+        this.events.on('A:ChangeFasade', this.onChangeFasade);
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
         this.events.on('A:ChangeMilling', this.onChangeMilling)
@@ -601,9 +556,9 @@ export class MeshEvents {
         this.events.off('A:ChangeGlassColor', this.onChangeGlassColor);
         this.events.off('A:ChangeMilling', this.onChangeMilling)
         this.events.off('A:Toggle-Fasad', this.onToggleFasade)
-        alumTextures = null
+        this.alumTextures = null
         this.millings = null
-        this.currentProduct = null
+        // this.currentProduct = null
     }
 
     createMillingHelper(data, fu) {

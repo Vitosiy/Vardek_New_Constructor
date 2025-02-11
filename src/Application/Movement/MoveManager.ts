@@ -36,7 +36,6 @@ export class MoveManager {
     private onMouseDownBound: (event: MouseEvent) => void;
     private onMouseMoveBound: (event: MouseEvent) => void;
     private onMouseUpBound: (event: MouseEvent) => void;
-    private onWheelBound: (event: WheelEvent) => void;
 
     private onTouchStartBound: (event: TouchEvent) => void;
     private onTouchMoveBound: (event: TouchEvent) => void;
@@ -60,7 +59,6 @@ export class MoveManager {
         this.onMouseDownBound = this.onMouseDown.bind(this)
         this.onMouseMoveBound = this.onMouseMove.bind(this)
         this.onMouseUpBound = this.onMouseUp.bind(this)
-        this.onWheelBound = this.onWheel.bind(this)
 
         this.onTouchStartBound = this.onTouchStart.bind(this)
         this.onTouchMoveBound = this.onTouchMove.bind(this)
@@ -76,7 +74,6 @@ export class MoveManager {
         this.canvas.addEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.addEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.addEventListener('mouseup', this.onMouseUpBound, false);
-        this.canvas.addEventListener('wheel', this.onWheelBound, false);
 
         // Для сенсорных событий (мобильные устройства)
         this.canvas.addEventListener('touchstart', this.onTouchStartBound, false);
@@ -105,14 +102,6 @@ export class MoveManager {
 
     private onMouseUp(event: MouseEvent) {
         this.handleInteractionEnd();
-    }
-
-    private onWheel(event: WheelEvent) {
-        this.boxHelper.removeBoxHelper()
-        /** Убираем линейку */
-        this.trafficManager.ruler.clearRuler()
-        // Убираем выбранный объект 
-        this.trafficManager._currentObject = null
     }
 
     private onTouchStart(event: TouchEvent) {
@@ -293,7 +282,6 @@ export class MoveManager {
         this.canvas.removeEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.removeEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.removeEventListener('mouseup', this.onMouseUpBound, false);
-        this.canvas.removeEventListener('wheel', this.onWheelBound, false);
 
         this.canvas.removeEventListener('touchstart', this.onTouchStartBound, false);
         this.canvas.removeEventListener('touchmove', this.onTouchMoveBound, false);

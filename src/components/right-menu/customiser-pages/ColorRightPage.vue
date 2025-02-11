@@ -109,7 +109,7 @@ const changeModuleTexture = (data: { [key: string]: any }) => {
   eventBus.emit("A:ChangeModuleTexture", data);
 };
 
-const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
+const changeFasade = (data: { [key: string]: any }, fasadeNdx) => {
   currentFasadeId.value = fasadeNdx;
   selectedFasade.value = data.ID;
 
@@ -117,11 +117,13 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
 
   console.log(data);
 
-  modelState.createCurrentPaletteData(data.ID, productId);
+  modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
+  modelState.createCurrentPaletteData(data.ID);
+  modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
   modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
   modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
 
-  eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
+  eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
 };
 
 /** Палитра */
@@ -145,6 +147,12 @@ const changeMilling = () => {
 const changeWindow = (fasadeNdx) => {
   eventBus.emit("A:ChangeWindow", { data: selectWindow.value, fasadeNdx });
 };
+
+/** Стекло */
+const changeGlassColor = (fasadeNdx) => {
+  eventBus.emit("A:ChangeGlassColor", {data:selectGlass.value, fasadeNdx: currentFasadeId.value});
+};
+
 </script>
 
 <template>
@@ -218,6 +226,29 @@ const changeWindow = (fasadeNdx) => {
       </select>
     </div>
 
+    <div
+      v-if="
+        Object.keys(modelState.getCurrentGlassData).length > 0 &&
+        selectedFasade
+      "
+    >
+      <select
+        class="palette-textures--items"
+        id="palette"
+        v-model="selectGlass"
+        name="millig"
+        @change="changeGlassColor(fasad_ndx)"
+      >
+        <option
+          v-for="(glass, key) in modelState.getCurrentGlassData"
+           :key="glass + key"
+          :value="glass.ID"
+        >
+          {{ glass.NAME }}
+        </option>
+      </select>
+    </div>
+
     <defaultTab
       :tabs="tabsList"
       initialTab="Корпус"
@@ -228,7 +259,6 @@ const changeWindow = (fasadeNdx) => {
         :key="tab.name"
         v-slot:[tab.name]
       >
-
         <div class="customiser-section">
           <p class="customiser-section__title">{{ tab.title }}</p>
 
@@ -240,8 +270,6 @@ const changeWindow = (fasadeNdx) => {
                 placeholder="Поиск..."
                 modelValue=""
               />
-
-
 
               <div class="item-group">
                 <div v-if="tab.name == 'Корпус'">
@@ -283,7 +311,7 @@ const changeWindow = (fasadeNdx) => {
                         v-for="(fasade, ndx) in fasade_type.FASADES"
                         :key="key + fasade"
                         @click="
-                          changeFasadeTexture(
+                          changeFasade(
                             _FASADE[fasade],
                             tabIndex - 1
                           ) /** -1 т.к. отсчёт идёт после корпуса */
@@ -298,7 +326,6 @@ const changeWindow = (fasadeNdx) => {
                           <p class="name__text">
                             {{ _FASADE[fasade].NAME }}
                           </p>
-
                         </div>
                       </div>
                     </details>
@@ -310,6 +337,7 @@ const changeWindow = (fasadeNdx) => {
         </div>
       </template>
     </defaultTab>
+
   </div>
 </template>
 

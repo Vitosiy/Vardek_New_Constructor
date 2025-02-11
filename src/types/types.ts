@@ -5,10 +5,13 @@ import { RoomManager } from "@/Application/Room/RoomManager";
 import { Resources } from "@/Application/Utils/Resources";
 import { Ruler } from "@/Application/Utils/Ruler";
 import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
-import { BuildProduct } from "@/Application/Meshes/BuildProduct"; 
+import { BuildProduct } from "@/Application/Meshes/BuildProduct";
 import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
 import { PaletteBulider } from "@/Application/Meshes/PaletteBuilder";
+import { WindowBuilder } from "@/Application/Meshes/WindowBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
+import { SetObject } from "@/Application/Utils/SetObject";
+import { AlumBulider } from "@/Application/Meshes/AlumBuilder";
 
 
 export type TApplication = Application
@@ -21,7 +24,10 @@ export type TScene = THREE.Scene
 export type TCustomBoxHelper = CustomBoxHelper
 export type TBuildProduct = BuildProduct
 export type TMillingBuilder = MillingBuilder
+export type TWindowBuilder = WindowBuilder
 export type TPaletteBulider = PaletteBulider
+export type TSetObject = SetObject
+export type TAlumBulider = AlumBulider
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 

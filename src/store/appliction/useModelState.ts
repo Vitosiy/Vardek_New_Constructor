@@ -48,6 +48,8 @@ interface IMilling {
 
 export const useModelState = defineStore('ModelState', () => {
 
+    // console.log(useAppData().getAppData)
+
     const _APP = useAppData().getAppData;
     const _COLOR = _APP.COLOR;
     const _FASADE = _APP.FASADE;
@@ -60,6 +62,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _PALETTE = _APP.PALETTE
     const _MILLING = _APP.MILLING
     const _SHOWCASE = _APP.SHOWCASE
+    const _GLASS = _APP.GLASS
 
 
     const models = ref<{ [key: string]: {} }>(_PRODUCTS)
@@ -74,6 +77,10 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentWindowsData = ref<number[]>([])
 
+    const currentFasadeTypesData = ref<number[]>([])
+
+    const currentGlassData = ref<number[]>([])
+
     const setCurrentModel = (object: THREE.Object3D | null) => {
         currentModel.value = object
     }
@@ -86,7 +93,8 @@ export const useModelState = defineStore('ModelState', () => {
         return models.value
     })
 
-    /** Работа с фасадами */
+    /** ------- Работа с фасадами -------- */
+
 
     const createCurrentModelFasadesData = (value: number[]) => {
 
@@ -125,6 +133,7 @@ export const useModelState = defineStore('ModelState', () => {
         return currentModelFasadesData.value
     })
 
+    /** Палитра */
     const createCurrentPaletteData = (value: number) => {
 
         if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
@@ -148,8 +157,8 @@ export const useModelState = defineStore('ModelState', () => {
         return currentPaletteData.value
     })
 
+    /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId }) => {
-        console.log(fasadeId)
 
 
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
@@ -158,8 +167,6 @@ export const useModelState = defineStore('ModelState', () => {
             let millings: IMilling[] = []
             let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
             let percept = {}
-
-            let millings_2: IMilling[] = []
             let prodMilling: number[] = _PRODUCTS[productId].MILLING
 
             fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
@@ -168,7 +175,9 @@ export const useModelState = defineStore('ModelState', () => {
 
             prodMilling.filter(mill => percept[mill] != undefined).map((mill) => { millings.push(percept[mill]) })
 
-            currentMillingData.value = millings
+            millings.sort((a, b) => a.SORT - b.SORT)
+
+            currentMillingData.value = millings.sort((a, b) => a.SORT - b.SORT)
 
             return
         }
@@ -181,6 +190,7 @@ export const useModelState = defineStore('ModelState', () => {
         return currentMillingData.value
     })
 
+    /** Витрины */
     const createCurrentWindowsData = ({ fasadeId, productId }) => {
 
         // console.log(_PRODUCTS[productId].type_showcase)
@@ -198,6 +208,38 @@ export const useModelState = defineStore('ModelState', () => {
 
     const getCurrentWindowsData = computed(() => {
         return currentWindowsData.value
+    })
+
+    /** Типы фасада (интегрированная ручка) */
+    const createCurrentFasadeTypesData = ({ fasadeId, productId }) => {
+        const incomeTypes = _FASADE[fasadeId].fasade_type
+        const productPositions = _PRODUCTS[productId].FASADE_POSITION
+        const defaultTypes = productPositions.reduce((acc, index) =>
+            acc.concat(_FASADE_POSITION[index]?.fasade_type || []),
+            []);
+
+        currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
+
+    }
+
+    const getCurrentFasadeTypesData = computed(() => {
+        return currentFasadeTypesData.value
+    })
+
+    /** Стёкла */
+    const createCurrentGlassData = ({ fasadeId, productId }) => {
+        const incomeGlass = _FASADE[fasadeId].ATTACH_GLASS
+        const productGlass = _PRODUCTS[productId].GLASS
+
+        const glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
+        const currentClass = glassArray.reduce((acc, index) =>
+            acc.concat(_GLASS[index] || []),
+            []);
+        currentGlassData.value = currentClass;
+    }
+
+    const getCurrentGlassData = computed(() => {
+        return currentGlassData.value
     })
 
 
@@ -218,7 +260,13 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentMillingData,
 
         createCurrentWindowsData,
-        getCurrentWindowsData
+        getCurrentWindowsData,
+
+        createCurrentFasadeTypesData,
+        getCurrentFasadeTypesData,
+
+        createCurrentGlassData,
+        getCurrentGlassData,
     }
 
 });

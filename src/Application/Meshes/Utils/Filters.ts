@@ -5,6 +5,7 @@ import { GlobalsData } from "./Globals"
 import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useModelState } from "@/store/appliction/useModelState"
+import { unwatchFile } from "fs"
 
 export class Filters extends GlobalsData {
 
@@ -52,67 +53,66 @@ export class Filters extends GlobalsData {
     }
 
     filteFasadeColor(items: THREETypes.TObject) {
-        return items.filter((colorId: number) => this._FASADE[colorId]);
+        return items.filter((colorId: number) => this._FASADE[colorId]).sort((a, b) => a.SORT - b.SORT);
     }
 
-    filterFasadePosition(items: THREETypes.TObject, product: THREETypes.TObject) {
+    filterFasadePosition(params: THREETypes.TObject, product: THREETypes.TObject) {
+
+
+        const { FASADE_PROPS } = params
+
+        // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
+        console.log(product.FASADE_POSITION, 'FP')
 
         const fasadePositionList = product.FASADE_POSITION
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
-        const sizes = items.FASADE_SIZES
 
+        params.FASADE_TYPE = fasadeSorted.reduce((acc, index) =>
+            acc.concat(this._FASADE_POSITION[index]?.fasade_type || []),
+            []);
 
-        let sortFasadePositionList = sizes && sizes.length > 0 ? sizes : fasadeSorted
+        const sizes = product.FASADE_SIZES
 
-        // console.log(fasadePositionList, '---fasadePositionList', sortFasadePositionList, '--sortFasadePositionList')
+        let sortFasadePositionList = sizes.length > 0 && sizes[0] != null ? sizes : fasadeSorted
 
         sortFasadePositionList.forEach((fasade: number, key) => {
-
-            const fasadeProps: { TYPE: number, SHOW: boolean, LIST: number, COLOR: number } = {}
 
             const fasadePosition = this._FASADE_POSITION[fasade]
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
-            // console.log(`fasadeNumber-${fasadeNumber}, key-${key}`)
+            const fasad = typeof FASADE_PROPS[fasadeNumber] === 'object' && FASADE_PROPS[fasadeNumber].TYPE ?
+                FASADE_PROPS[fasadeNumber].TYPE :
+                this.project.default_fasade_up
 
-            let fasad, fasadeId
 
-            if (typeof items.FASADE_PROPS[fasadeNumber] === 'object' && items.FASADE_PROPS[fasadeNumber].TYPE) {
-                fasad = items.FASADE_PROPS[fasadeNumber].TYPE;
-                fasadeId = items.FASADE_PROPS[fasadeNumber].TYPE
+            const fasadeProps: {
+                TYPE: number | null,
+                SHOW: boolean | null,
+                LIST: number | null,
+                COLOR: number | null,
+                TYPE: number | null,
+                MILLING: number | null,
+                PALETTE: number | null,
+                WINDOW: number | null,
+                ALUM: number | null
+                GLASS: number | null
+
+            } = {
+                /** --- FASADE_PROPS ---*/
+                COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
+                SHOW: false,
+                LIST: fasadePosition.ID,
+                BODY: fasad,
+                MILLING: null,
+                PALETTE: null,
+                WINDOW: null,
+                ALUM: null,
+                GLASS: null
+
             }
-            else {
-                fasad = this.project.default_fasade_up
-                fasadeId = this.project.default_fasade_up;
-            }
 
-            // console.log(fasadeId, 'fasadeId')
-
-            // items.FASADE_TYPE[fasadeNumber] = ''
-
-            /** ---FASADELIST--- */
-
-            // items.FASADE_TYPE[fasadeNumber] = fasad;
-            // items.FASADE_LIST.push(fasadePosition.ID)
-
-            /** ---FASADECOLOR--- */
-            if (items.FASADE_PROPS.length < fasadePositionList.length) {
-                // items.FASADE_COLOR.push(this.project.default_fasade_up)
-                fasadeProps.COLOR = this.project.default_fasade_up
-            }
-
-            /** --- FASADE_SHOW ---*/
-
-            // items.FASADE_SHOW.push(false)
-
-            fasadeProps.SHOW = false
-            fasadeProps.LIST = fasadePosition.ID
-            fasadeProps.TYPE = fasad
-            fasadeProps.MILLING = null
-            fasadeProps.PALETTE = null
-
-            items.FASADE_PROPS.push(fasadeProps)
+            FASADE_PROPS.push(fasadeProps)
         })
 
     }
@@ -168,16 +168,16 @@ export class Filters extends GlobalsData {
         return result;
     }
 
-    filterColor(items: THREETypes.TObject, criteria: THREETypes.TObject) {
+    // filterColor(items: THREETypes.TObject, criteria: THREETypes.TObject) {
 
-        this.trafficManager = this.root._trafficManager
+    //     this.trafficManager = this.root._trafficManager
 
-        const selected = this.trafficManager!._currentObject
+    //     const selected = this.trafficManager!._currentObject
 
-        const product = criteria ?? selected
+    //     const product = criteria ?? selected
 
-        return product.COLOR.map((item: number) => items[item]).filter(Boolean);
-    }
+    //     return product.COLOR.map((item: number) => items[item]).filter(Boolean);
+    // }
 
     filterModuleColor(items: THREETypes.TObject) {
         return items.filter((colorId: number) => this._FASADE[colorId]);

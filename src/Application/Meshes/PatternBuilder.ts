@@ -175,11 +175,10 @@ export class PatternBuilder {
 
         const svgPadding = boolParams?.depth?.offset ? boolParams.depth.offset * 2 : 0;
 
-
         const { FASADE_WIDTH, FASADE_HEIGHT } = fasadePosition
 
-
         const defaultWidth = FASADE_WIDTH + svgPadding;
+        
         const defaultHeight = FASADE_HEIGHT
 
         // console.log(padding, '--Padding')

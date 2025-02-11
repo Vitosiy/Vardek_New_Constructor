@@ -7,8 +7,6 @@ import { CSG } from 'three-csg-ts';
 import { SUBTRACTION, Brush, Evaluator } from 'three-bvh-csg';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-import { OBB } from 'three/examples/jsm/math/OBB.js';
-
 import { PatternBuilder } from './PatternBuilder';
 import { BuildersHelper } from './BuildersHelper';
 
@@ -16,13 +14,15 @@ import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
 
 export class MillingBuilder extends BuildersHelper {
   private svgLoader: SVGLoader = new SVGLoader();
-  private millingsStore = MILLINGS
-  private additionaMillinglKeys = additionaMillinglKeys
+   millingsStore = MILLINGS
+   additionaMillinglKeys = additionaMillinglKeys
   patternBuilder: PatternBuilder
   private result = null
+  private 
 
   constructor(root) {
     super(root)
+    console.trace('MillingBuilder')
 
 
   }
@@ -31,15 +31,14 @@ export class MillingBuilder extends BuildersHelper {
 
     /** Данные для корректировки положения булевой геометрии */
 
-
     const millingKey = this.additionaMillinglKeys[millingParams] ?? millingParams
 
     // console.log(this.addAdditionalKeys(this.millingsStor, this.additionaMillinglKeys), 'millingParams')
 
     const millingData = this.millingsStore[millingKey] ? this.millingsStore[millingKey] : this.millingsStore[2462671]
+    // console.log(millingData, 'millingData')
     /** Для дебагинга */
-    // let millingData = millingParams
-    //
+    // const millingData = millingParams
     let startGeometry = defaultGeometry.clone()
     let csgStartGeometry = CSG.fromGeometry(startGeometry.geometry);
     let clonedfasadePosition = JSON.parse(JSON.stringify(fasadePosition))
@@ -100,6 +99,57 @@ export class MillingBuilder extends BuildersHelper {
 
           ({ brush_1, csgStartGeometry } = this.processMesh(mesh, brush_1, evaluator, csgStartGeometry, figureParams.lib));
 
+          // switch (typeof figureParams.pattern) {
+          //   // /** Если есть паттерн */
+          //   case 'object':
+          //     let patternBuild = new PatternBuilder(
+          //       {
+          //         boolMesh,
+          //         figureParams,
+          //         fasadePosition,
+          //         type: figureParams.type
+          //       }
+          //     )
+          //     patternMesh = patternBuild._PatternMesh
+          //     // object.add(patternMesh) /** Визуализация boolean фрезеровки */
+          //     // object.add(boolMesh)
+          //     switch (figureParams.lib) {
+
+          //       case 'bvh':
+          //         let patternBrush = new Brush(patternMesh.geometry, patternMesh.material);
+          //         patternBrush.position.copy(patternMesh.position)
+          //         patternBrush.updateMatrixWorld();
+          //         result = evaluator.evaluate(brush_1, patternBrush, SUBTRACTION);
+          //         brush_1 = new Brush(result.geometry);
+          //         break;
+          //       default:
+          //         console.log('CSG')
+          //         booleanCSGMesh = CSG.fromMesh(patternMesh);
+          //         csgStartGeometry = csgStartGeometry.subtract(booleanCSGMesh);
+          //         break;
+          //     }
+          //     break;
+
+          //   case 'undefined':
+          //     boolMesh.updateMatrixWorld(true)
+          //     // object.add(boolMesh) /** Визуализация boolean фрезеровки */
+          //     switch (figureParams.lib) {
+
+          //       case 'bvh':
+          //         let boolBrush = new Brush(boolMesh.geometry, boolMesh.material);
+          //         boolBrush.position.copy(boolMesh.position);
+          //         boolBrush.updateMatrixWorld();
+          //         result = evaluator.evaluate(brush_1, boolBrush, SUBTRACTION);
+          //         brush_1 = new Brush(result.geometry);
+          //         break;
+
+          //       default:
+          //         booleanCSGMesh = CSG.fromMesh(boolMesh);
+          //         csgStartGeometry = csgStartGeometry.subtract(booleanCSGMesh);
+          //         break;
+          //     }
+          //     break;
+          // }
 
         });
 
@@ -107,9 +157,6 @@ export class MillingBuilder extends BuildersHelper {
     }
 
     // Преобразуем BSP-геометрию обратно
-
-    console.log(result, 'after--')
-
     let newGeometry = this.result ? this.result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
 
     /** Создаём UV развёртку для новой геометрии */

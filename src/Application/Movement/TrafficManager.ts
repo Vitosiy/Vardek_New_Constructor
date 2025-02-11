@@ -90,8 +90,8 @@ export class TrafficManager {
 
 
             this.modelState.createCurrentModelFasadesData(product.FACADE);
+            this.modelState.setCurrentModel(object)
 
-            // console.log(object, 'object')
         }
         else {
             this.modelState.clearCurrentModelFasadesData()
@@ -136,6 +136,7 @@ export class TrafficManager {
         this.despose.clearObject(this._currentObject, this.scene)
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
+        this.currentObject = null
     }
 
     vueEvents() {

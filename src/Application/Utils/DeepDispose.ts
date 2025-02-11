@@ -150,7 +150,31 @@ export class DeepDispose {
             }
             this.clearParent(child);  // Рекурсивно удаляем дочерние
             object.remove(child);  // Удаляем из родителя
+
+
         }
+    }
+
+    clearObjectFromParrent(object: THREE.Object3D) {
+        while (object.children.length > 0) {
+            const child = object.children[0];
+
+            if (child instanceof THREE.Mesh) {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach((mat) => mat.dispose());
+                    } else {
+                        child.material.dispose();
+                    }
+                }
+            }
+            this.clearObjectFromParrent(child);  // Рекурсивно удаляем дочерние
+            object.remove(child);  // Удаляем из родителя
+
+
+        }
+        object.parent.remove(object)
     }
 
     clearTotal(scene: THREE.Scene) {

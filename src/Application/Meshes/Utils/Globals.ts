@@ -19,6 +19,7 @@ export class GlobalsData {
     _MODELS: THREETypes.TObject = this._APP.MODELS
     _PRODUCTS:THREETypes.TObject = this._APP.CATALOG.PRODUCTS
     _SHELF_POSITION: THREETypes.TObject = this._APP.PRODUCT_SHELF_POSITION
+    _GLASS:THREETypes.TObject = this._APP.GLASS
 
     constructor(){
         

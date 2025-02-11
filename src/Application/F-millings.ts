@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 
 export const additionaMillinglKeys = {
     // Модерн
@@ -7341,7 +7341,7 @@ export const MILLINGS = {
                         // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
                         widthOffset: -55,
                         heightOffset: -55,
-                        radius: 6,
+                        radius: 5.34,
                         position: {
                             z: -4
                         }
@@ -7405,7 +7405,7 @@ export const MILLINGS = {
                         // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
                         widthOffset: -59,
                         heightOffset: -59,
-                        radius: 6,
+                        radius: 5.34,
 
                     },
                     hole: {
@@ -7541,7 +7541,7 @@ export const MILLINGS = {
                             max: Infinity,
                         },
                         height: {
-                            min: 296,
+                            min: 20,
                             max: Infinity,
                         },
                     },
@@ -11443,7 +11443,278 @@ export const MILLINGS = {
                 },
             ],
         },
-    ]/** Окно_6*/
+    ],/** Окно_6*/
+
+    2058258: [
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 20,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -3,
+                        heightOffset: -3,
+                        position: {
+                            z: -20
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -20,
+                        heightOffset: -20,
+                        position: {
+                            z: -35
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+    ], /** Алюминевая рамка _1 */
+
+    2058253: [
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 20,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -20,
+                        heightOffset: -20,
+                        position: {
+                            z: -35
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+    ], /** Алюминевая рамка _2 */
+
+    2058270: [
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 20,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -3,
+                        heightOffset: -3,
+                        position: {
+                            z: -20
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -45,
+                        heightOffset: -45,
+                        position: {
+                            z: -35
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+    ], /** Алюминевая рамка _3 */
+
+    1451266: [
+        {
+            name: "milling_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 20,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -3,
+                        heightOffset: -3,
+                        position: {
+                            z: -20
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
+                        widthOffset: -35,
+                        heightOffset: -35,
+                        position: {
+                            z: -35
+                        }
+
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+    ], /** Алюминевая рамка _4 */
 }
 
 

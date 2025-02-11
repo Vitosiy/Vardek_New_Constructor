@@ -11,20 +11,6 @@ export class BuildersHelper extends GlobalsData {
     resources: THREETypes.TResources
     scene: THREE.Scene
 
-    // private _APP: THREETypes.TObject = useAppData().getAppData
-    // private _COLOR: THREETypes.TObject = this._APP.COLOR
-    // _FASADE: THREETypes.TObject = this._APP.FASADE;
-    // private _FASADESIZE: THREETypes.TObject = this._APP.FASADESIZE;
-    // private _FASADENUMBERSIZE: THREETypes.TObject = this._APP.FASADENUMBERSIZE;
-    // private _FASADE_SECTION: THREETypes.TObject = this._APP.FASADE_SECTION;
-    // private _FASADE_POSITION: THREETypes.TObject = this._APP.FASADE_POSITION;
-    // private _FASADE_GROUPS: THREETypes.TObject = this._APP.FASADE_GROUPS
-    // private _MILLING: THREETypes.TObject = this._APP.MILLING
-    // _MODELS: THREETypes.TObject = this._APP.MODELS
-    // private _PRODUCTS: THREETypes.TObject = this._APP.CATALOG.PRODUCTS
-    // private _SHELF_POSITION: THREETypes.TObject = this._APP.PRODUCT_SHELF_POSITION
-    // _SHOWCASE: THREETypes.TObject = this._APP.SHOWCASE
-
     constructor(root: THREETypes.TApplication) {
 
         super();
@@ -225,8 +211,12 @@ export class BuildersHelper extends GlobalsData {
 
     changeColor({ object, url, textureSize, type }: { object: THREE.Object3D, url: string, textureSize?: THREETypes.TObject, type?: string }) {
 
+        // console.log(object, 'OBJECT IN COLOR')
+
         object.traverse(children => {
             if (children instanceof THREE.Mesh) {
+
+                if (children.userData.type === 'glass') return
 
                 children.userData.ORIGINAL_COLOR != null ? children.material = children.userData.ORIGINAL_COLOR : ''
 
@@ -256,6 +246,8 @@ export class BuildersHelper extends GlobalsData {
                             children.material.clearcoatRoughness = 0
                             children.material.needsUpdate = true;
                         }
+
+                        children.material.needsUpdate = true;
                     }
                 });
             }
@@ -347,4 +339,10 @@ export class BuildersHelper extends GlobalsData {
         }
         geometry.uvsNeedUpdate = true;
     }
+
+    addAdditionalKeys = (obj, additionalKeys) => (
+        Object.entries(additionalKeys).forEach(([newKey, existingKey]) =>
+            obj[newKey] = obj[existingKey] ?? console.warn(`Ключ "${existingKey}" не найден в объекте.`)
+        ), obj
+    );
 }

@@ -223,6 +223,7 @@ export interface ISetProduct {
     config: THREETypes.TObject,
     object: THREE.Object3D,
     point: THREE.Vector3,
+    rotate: THREE.Vector3 | THREE.Euler | null,
 
     roomManager: THREETypes.TRoomManager,
     trafficManager?: THREETypes.TTrafficManager,
