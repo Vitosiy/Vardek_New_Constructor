@@ -1,19 +1,29 @@
 <template>
   <input 
+    v-if="isChangeEnable()"
+    ref="input"
     :class="inputClass"
     :type="type"
-    :min="min"
-    :max="max"
+    :min="props.min"
+    :max="props.max"
+    v-model="inputValue"
+    :placeholder="placeholder"
+  />
+  <input 
+    v-else
+    ref="input"
+    :class="inputClass"
+    :type="type"
+    :min="props.min"
+    :max="props.max"
     v-model="inputValue"
     :placeholder="placeholder" 
-    :style="inputStyle" 
+    readonly
   />
-
-
 </template>
 
 <script setup>
-import { ref, watch, toRefs } from "vue";
+import { ref, watch, toRefs, useTemplateRef } from "vue";
 
 const props = defineProps({
 modelValue: {
@@ -22,11 +32,11 @@ modelValue: {
 },
 min: {
   type: Number,
-  default: 1,
+  default: null,
 },
 max: {
   type: Number,
-  default: 10,
+  default: null,
 },
 type: {
   type: String,
@@ -46,22 +56,35 @@ inputStyle: {
 },
 });
 
+const input = useTemplateRef('input')
+
+const isChangeEnable = () => {
+ return (props.min !== null) && (props.max !== null)
+}
+
+const customValidation = (value) => {
+  if((value === '' || (value > props.max) || (value < props.min)) ) return false
+  return true
+}
 
 const emit = defineEmits(["update:modelValue"]);
-
 
 const inputValue = ref(props.modelValue);
 
 watch(inputValue, (newValue) => {
-let value = newValue;
-emit("update:modelValue", value);
+  if(input.value.checkValidity() && customValidation(newValue)) {
+    input.value.style.color = 'black'
+    emit("update:modelValue", newValue);
+    return
+  }
+  input.value.style.color = 'red'
 });
 
 watch(
-() => props.modelValue,
-(newValue) => {
-  inputValue.value = newValue;
-}
+  () => props.modelValue,
+  (newValue) => {
+    inputValue.value = newValue;
+  }
 );
 
 
@@ -69,15 +92,16 @@ watch(
 
 <style lang="scss" scoped>
 .input__search {
-width: 100%;
-height: 50px;
-min-height: 50px;
-font-size: 16px;
-padding: 0 32px;
-box-sizing: border-box;
-&.right-menu {
-  height: 39px;
-  padding: 0 15px;
-}
+  width: 100% !important; 
+  height: 50px;
+  min-height: 50px;
+  font-size: 16px;
+  padding: 0 32px;
+  box-sizing: border-box;
+    &.right-menu {
+      width: 100%;
+      height: 39px;
+      padding: 0 15px;
+    }
 }
 </style>

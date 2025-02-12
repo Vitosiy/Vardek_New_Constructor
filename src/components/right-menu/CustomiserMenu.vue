@@ -13,6 +13,7 @@ import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.v
 import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
 
 import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
+import { useModelState } from "@/store/appliction/useModelState";
 
 const customiserStore = useCustomiserStore();
 

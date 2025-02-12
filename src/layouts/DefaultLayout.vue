@@ -94,6 +94,7 @@ onMounted(() => {
         console.log("Ошибка", request.error);
       };
     }
+    ready.value = true;
   };
 
   /* слушатель обработки ошибок подключения к indexedDB */

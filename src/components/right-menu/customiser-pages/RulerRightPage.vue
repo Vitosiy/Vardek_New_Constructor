@@ -1,23 +1,32 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
-
+import { reactive } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 const eventBus = useEventBus();
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useObjectData } from "@/store/appliction/useObjectData";
+import { useModelState } from "@/store/appliction/useModelState";
 
-const objectStore = useObjectData().getObjectData;
+const modelState = useModelState().getCurrentModel;
 
+let resizeData: { width: any; height: any; depth: any } = {
+  width: modelState.trueLength*2,
+  height: modelState.trueHeight*2,
+  depth: modelState.trueDepth*2,
+};
 
-const resizeModel = () => {
-    let data: { width: any; height: any; depth: any } = {
-      width: objectStore.PROPS.PRODUCT.width,
-      height: objectStore.PROPS.PRODUCT.height,
-      depth: objectStore.PROPS.PRODUCT.depth,
-    };
-    eventBus.emit("A:Model-resize", data);
-  }
+let sizeEditData = {
+  widthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
+  widthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
+  heightMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
+  heightMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
+  depthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
+  depthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
+}
 
+const resizeModel = (value: object) => {
+  eventBus.emit("A:Model-resize", {... resizeData, ... value});
+}
 
 </script>
 
@@ -25,39 +34,37 @@ const resizeModel = () => {
   <div class="ruler">
     <!-- component -->
     <div class="customiser-section">
-      <p class="customiser-section__title">Размер товара {{ objectStore.PROPS.PRODUCT.width }}</p>
+      <p class="customiser-section__title">Размер товара</p>
       <div class="settings-size">
         <div class="size-item">
-          <p class="item__label text-grey" @click="resizeModel">Ширина</p>
-          <MainInput class="input__search right-menu" v-model="objectStore.PROPS.PRODUCT.width" type="text" placeholder="3000 мм" />
+          <p class="item__label text-grey">Ширина</p>
+          <MainInput class="input__search right-menu"
+                     v-model="resizeData.width" 
+                     @update:modelValue="resizeModel" 
+                     type="number"   
+                     :min="sizeEditData.widthMin"
+                     :max="sizeEditData.widthMax"
+          />
         </div>
         <div class="size-item">
           <p class="item__label text-grey ">Высота</p>
-          <MainInput class="input__search right-menu" v-model="objectStore.PROPS.PRODUCT.height" type="text" placeholder="3000 мм" />
+          <MainInput class="input__search right-menu" 
+                    v-model="resizeData.height"
+                    @update:modelValue="resizeModel" 
+                    type="number"
+                    :min="sizeEditData.heightMin"
+                    :max="sizeEditData.heightMax"  
+           />
         </div>
         <div class="size-item">
           <p class="item__label text-grey ">Глубина</p>
-          <MainInput class="input__search right-menu" v-model="objectStore.PROPS.PRODUCT.depth" type="text" placeholder="3000 мм" />
-        </div>
-      </div>
-    </div>
-    <div class="customiser-section">
-      <p class="customiser-section__title">Расстояние от стен</p>
-      <div class="settings-walls">
-        <div class="walls-item">
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="300" />
-          <img src="../../../assets/svg/right-menu/wallW.svg" alt="" class="wall__icon" />
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="300" />
-        </div>
-        <div class="walls-item">
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="300" />
-          <img src="../../../assets/svg/right-menu/wallH.svg" alt="" class="wall__icon" />
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="300" />
-        </div>
-        <div class="walls-item">
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="300" />
-          <img src="../../../assets/svg/right-menu/wallZ.svg" alt="" class="wall__icon" />
-          <MainInput class="input__search right-menu" v-model="textValue" type="text" placeholder="300" />
+          <MainInput class="input__search right-menu" 
+                      v-model="resizeData.depth" 
+                      @update:modelValue="resizeModel" 
+                      type="number"
+                      :min="sizeEditData.depthMin"
+                      :max="sizeEditData.depthMax" 
+          />
         </div>
       </div>
     </div>
@@ -84,6 +91,9 @@ const resizeModel = () => {
       display: flex;
       align-items: center;
       gap: 10px;
+      .size-item {
+        width: 33%;
+      }
       .item__label {
         margin-bottom: 2px;
       }
