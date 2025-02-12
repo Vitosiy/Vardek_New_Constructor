@@ -48,13 +48,7 @@ interface IMilling {
 
 export const useModelState = defineStore('ModelState', () => {
 
-<<<<<<< HEAD
-    // console.log(useAppData().getAppData)
-
     const _APP = useAppData().getAppData;
-=======
-    const _APP = useAppData().getAppData;    
->>>>>>> 06193f881f5689996c8c758775d9ee1224c865de
     const _COLOR = _APP.COLOR;
     const _FASADE = _APP.FASADE;
     const _FASADESIZE = _APP.FASADESIZE;
