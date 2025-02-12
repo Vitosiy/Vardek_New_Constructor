@@ -1,19 +1,30 @@
-<!-- v-if="isChangeEnabled"  -->
 <template>
   <input 
+    v-if="isChangeEnable()"
+    ref="input"
     :class="inputClass"
     :type="type"
-    :min="min"
-    :max="max"
+    :min="props.min"
+    :max="props.max"
+    v-model="inputValue"
+    :placeholder="placeholder"
+  />
+  <input 
+    v-else
+    ref="input"
+    :class="inputClass"
+    :type="type"
+    :min="props.min"
+    :max="props.max"
     v-model="inputValue"
     :placeholder="placeholder" 
-    :style="inputStyle"
+    readonly
   />
 </template>
 
 <script setup>
-import { ref, watch, toRefs } from "vue";
-// TODO написать логику ограничения размеров min/max
+import { ref, watch, toRefs, useTemplateRef } from "vue";
+
 const props = defineProps({
 modelValue: {
   type: [String, Number],
@@ -21,11 +32,11 @@ modelValue: {
 },
 min: {
   type: Number,
-  default: 1,
+  default: null,
 },
 max: {
   type: Number,
-  default: 10,
+  default: null,
 },
 type: {
   type: String,
@@ -43,41 +54,37 @@ inputStyle: {
   type: Object,
   default: () => ({}),
 },
-inputInfo: {
-  type: String,
-}
 });
 
+const input = useTemplateRef('input')
+
 const isChangeEnable = () => {
-  console.log((props.min !== null) && (props.max !== null), 'IS_CHANGE_ENABLE');
-  
  return (props.min !== null) && (props.max !== null)
+}
+
+const customValidation = (value) => {
+  if((value === '' || (value > props.max) || (value < props.min)) ) return false
+  return true
 }
 
 const emit = defineEmits(["update:modelValue"]);
 
-const inputInfo = props.inputInfo
-
-// const update = (e) => {
-  
-//   console.log('OUTPUT OF INPUT', {inputInfo:  e.target.value});
-  
-//   // emit("update:modelValue", {inputInfo:  e.target.value});
-// }
-
 const inputValue = ref(props.modelValue);
 
 watch(inputValue, (newValue) => {
-  console.log('WATCHER', newValue);
-  isChangeEnable()
-emit("update:modelValue", newValue);
+  if(input.value.checkValidity() && customValidation(newValue)) {
+    input.value.style.color = 'black'
+    emit("update:modelValue", newValue);
+    return
+  }
+  input.value.style.color = 'red'
 });
 
 watch(
-() => props.modelValue,
-(newValue) => {
-  inputValue.value = newValue;
-}
+  () => props.modelValue,
+  (newValue) => {
+    inputValue.value = newValue;
+  }
 );
 
 

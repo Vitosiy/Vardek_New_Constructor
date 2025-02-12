@@ -476,7 +476,6 @@ export class MeshEvents {
     }
 
     changeModelSize(data: { width: number, height: number, depth: number }) {
-        console.log('CHANGE MODEL SIZE', data);
 
         if (!this._currentMesh) return
 

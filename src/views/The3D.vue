@@ -62,6 +62,7 @@ interface IProductSizeEdit {
   size: TSize | null;
 }
 
+// TODO прокинуть сюда данные из indexedDB при перезагрузке. Проблема: DefaultLayout грузится позже этого компонента
 const appData = useAppData().getAppData;
 const startData = useSceneState();
 const roomStore = useRoomState();
@@ -167,7 +168,6 @@ onMounted(() => {
 
     // Пописать интерфейс *item*
     eventBus.on("A:Selected", (item: any) => {
-      console.log('the 3d onselected', item);
       //TODO функция срабатывает при скролле. Спросить о стандартном поведении.
       
       let object = item.object;
