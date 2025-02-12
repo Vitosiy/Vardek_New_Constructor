@@ -81,7 +81,7 @@ const toggleInfoPopup = () => {
 };
 
 const closePopup = () => {
-  console.log(roomContantData);
+  // console.log(roomContantData);
   popupStore.closePopup('basket');
 };
 </script>

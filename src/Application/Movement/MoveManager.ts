@@ -7,30 +7,39 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { GeometryBuilder } from "../Meshes/GeometryBuilder";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import { TrafficManager } from "./TrafficManager";
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 
 export class MoveManager {
 
-    eventBuss: ReturnType<typeof useEventBus> = useEventBus()
+    eventBuss: ReturnType<typeof useEventBus> = useEventBus();
+    modelState: ReturnType<typeof useModelState> = useModelState();
+    uniformState: ReturnType<typeof useUniformState> = useUniformState();
+    uniformEvents: THREETypes.TUniformTextureEvents
+
+    keybordListeners: TKeybordListeners
+    root: THREETypes.TApplication
     canvas: HTMLElement | null = null;
     scene: THREE.Scene | null = null;
     raycaster: THREE.Raycaster | null = null;
     mouse: THREE.Vector2 | null = null;
     camera: THREE.Camera | null = null;
     controls: OrbitControls
-    trafficManager: TrafficManager
+    trafficManager: THREETypes.TrafficManager
     objectFactory: GeometryBuilder
+    uniformTextureBuilder: THREETypes.TUniformTextureBuilder
 
     roomManager: THREETypes.TRoomManager
     boxHelper: CustomBoxHelper
 
     selectedObject: THREE.Object3D | null = null;
     obbHelper: OBBHelper = new OBBHelper()
+
     // rulerLines: THREE.Object3D[] = []
 
     private onMouseDownBound: (event: MouseEvent) => void;
@@ -41,20 +50,44 @@ export class MoveManager {
     private onTouchMoveBound: (event: TouchEvent) => void;
     private onTouchEndBound: (event: TouchEvent) => void;
 
+    private onKeyDown: (event) => void;
 
 
-    constructor(canvas: HTMLElement, scene: THREE.Scene, room: THREETypes.TRoomManager, camera: THREE.Camera, controls: OrbitControls, mouse: THREE.Vector2, raycaster: THREE.Raycaster, boxHelper: CustomBoxHelper, trafficManager: TrafficManager) {
-        this.canvas = canvas;
-        this.scene = scene;
-        this.camera = camera;
-        this.controls = controls
-        this.roomManager = room;
+
+    // private unionMode: boolean = false
+    // private preGrouping: boolean = false
+    // private groupAddition: boolean = false
+
+    constructor(
+        {
+            root,
+            room,
+            mouse,
+            raycaster,
+            trafficManager
+        }: {
+            root: THREETypes.TApplication,
+            room: THREETypes.TRoomManager,
+            mouse: THREE.Vector2,
+            raycaster: THREE.Raycaster,
+            trafficManager: TrafficManager
+        }) {
+
+
+        this.canvas = root._canvas;
+        this.scene = root._scene;
+        this.camera = root._camera;
+        this.controls = root._orbitControls
         this.trafficManager = trafficManager
+        this.roomManager = room;
+        this.keybordListeners = root.keybordListeners
 
         this.raycaster = raycaster;
         this.mouse = mouse;
         this.objectFactory = trafficManager.geometryBuilder
-        this.boxHelper = boxHelper
+        this.uniformTextureBuilder = this.objectFactory.buildProduct.uniform_texture_builder // Переходящий рисунок
+        this.uniformEvents = this.uniformTextureBuilder.uniformEvents
+        this.boxHelper = root._customBoxHelper
 
         this.onMouseDownBound = this.onMouseDown.bind(this)
         this.onMouseMoveBound = this.onMouseMove.bind(this)
@@ -64,8 +97,11 @@ export class MoveManager {
         this.onTouchMoveBound = this.onTouchMove.bind(this)
         this.onTouchEndBound = this.onTouchEnd.bind(this)
 
+        this.onKeyDown = this.keyDown.bind(this)
+
         this.setupModelMove();
-        this.addVueEvents()
+        this.addVueEvents();
+        this.setupKeys();
 
     }
 
@@ -124,7 +160,8 @@ export class MoveManager {
         this.boxHelper._boxHelperCheck ? this.boxHelper.removeBoxHelper() : ''
         this.updateMousePosition(clientX, clientY);
         this.selectObject();
-        if (this.selectedObject) {
+
+        if (this.selectedObject && !this.uniformTextureBuilder._unionMode) {
             // // Создаём линию разметки высоты
             this.roomManager.drawSnapHeightLines(this.roomManager.heightClamp)
         }
@@ -133,6 +170,8 @@ export class MoveManager {
 
     // Универсальная функция для перемещения объекта (мышь или касание)
     private handleInteractionMove(clientX: number, clientY: number) {
+        if (this.uniformEvents._unionMode) return
+
         if (this.selectedObject) {
             this.updateMousePosition(clientX, clientY);
             this.moveSelectedObject();
@@ -142,15 +181,18 @@ export class MoveManager {
 
     // Универсальная функция для завершения взаимодействия (мышь или касание)
     private handleInteractionEnd() {
-        if (this.selectedObject) {
-            this.selectedObject.userData.PROPS.CONFIG.POSITION = this.selectedObject.position
-            this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation
+        /**Проверка на выбранный объект и режим выбора группы */
+        if (this.selectedObject && !this.uniformEvents._unionMode) {
+
+            const { CONFIG } = this.selectedObject.userData.PROPS
+
+            CONFIG.POSITION = this.selectedObject.position
+            CONFIG.ROTATION = this.selectedObject.rotation
 
             this.selectedObject.userData.MOUSE_POSITION = {
                 x: this.selectedObject.position.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
                 y: this.selectedObject.position.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
             }
-
 
             this.eventBuss.emit('A:Move', true);
         }
@@ -160,14 +202,12 @@ export class MoveManager {
         this.roomManager.disposeSnapHeightLines();
     }
 
-
     private updateMousePosition(clientX: number, clientY: number) {
         this.mouse.x = ((clientX - this.canvas.getBoundingClientRect().left) / this.canvas.clientWidth) * 2 - 1;
         this.mouse.y = -((clientY - this.canvas.getBoundingClientRect().top) / this.canvas.clientHeight) * 2 + 1;
     }
 
     // Выбор Объекта 
-
     private selectObject() {
 
         this.roomManager._rulerContant = false
@@ -190,20 +230,46 @@ export class MoveManager {
             this.selectedObject = this.getRootObject(firstObject);
             this.selectedObject.userData.current = true
 
-            // Проверяем наличие BoxHelper 
-            !this.boxHelper._boxHelperCheck ? this.boxHelper.addBoxHelper(this.selectedObject) : '';
-
             this.selectedObject.userData.MOUSE_POSITION = {
                 x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
                 y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
             }
+
+            /** Переходящий рисунок */
+            if (this.uniformEvents._unionMode) {
+                /** предварительный выбор объектов в новую группу */
+                if (this.uniformEvents._preGroup) {
+                    this.uniformTextureBuilder.preGrouping(this.selectedObject)
+                    this.boxHelper.createSelectGroup(this.selectedObject)
+                }
+                /** добавление объекта в группу */
+                if (this.uniformEvents._groupAddition) {
+
+                    this.boxHelper.clearSelect()
+                    this.uniformEvents.desablePreGrouping()
+                    this.uniformTextureBuilder.clearTemporaryGroups()
+
+                    this.uniformTextureBuilder.addToUniformGroup(this.selectedObject)
+                }
+                /** Удаление объекта из группы */
+                if (this.uniformEvents._degrouping) {
+       
+                    this.boxHelper.clearSelect()
+                    this.uniformEvents.desablePreGrouping()
+                    this.uniformTextureBuilder.clearTemporaryGroups()
+
+                    this.uniformTextureBuilder.removeFromUniformGroup(this.selectedObject)
+                }
+
+                return
+            }
+
+            // Проверяем наличие BoxHelper 
+            !this.boxHelper._boxHelperCheck ? this.boxHelper.addBoxHelper(this.selectedObject) : '';
             // Передаём данные выбранного объекта для events
             this.trafficManager._currentObject = this.selectedObject
-
             // Создаём линейку до объектов
-
             this.trafficManager.ruler.drawRulerToObjects(this.selectedObject)
-
             // Передаём координаты мыши для отрисовкм меню
             this.trafficManager._camera.updateProjectionMatrix();
 
@@ -213,10 +279,18 @@ export class MoveManager {
         this.boxHelper.removeBoxHelper()
         /** Убираем линейку */
         this.trafficManager.ruler.clearRuler()
-
         // Убираем выбранный объект 
         this.trafficManager._currentObject = null
 
+        if (this.uniformEvents._unionMode) {
+            this.boxHelper.clearSelect()
+            this.uniformEvents.desablePreGrouping()
+            this.uniformTextureBuilder.clearTemporaryGroups()
+            this.uniformEvents.desableGroupAddition()
+            this.uniformEvents.desableDegrouping()
+        }
+
+        return
     }
 
     private getRootObject(object: THREE.Object3D): THREE.Object3D {
@@ -224,10 +298,13 @@ export class MoveManager {
         while (root.parent && root.parent.type !== 'Scene') {
             root = root.parent;
         }
+
         return root;
     }
 
     private moveSelectedObject() {
+
+        if (this.unionMode) return
 
         if (!this.roomManager._roomFloor || !this.selectedObject) return;
 
@@ -252,24 +329,16 @@ export class MoveManager {
             this.selectedObject.position.copy(adjustedPosition.position);
             this.selectedObject.rotation.copy(adjustedPosition.rotation)
 
-            this.selectedObject.updateWorldMatrix(true, true)
-            this.selectedObject.updateMatrix();
+            // this.selectedObject.updateWorldMatrix(true, true)
+            // this.selectedObject.updateMatrix();
 
-            let obb = new OBB();
-            const aabb = new THREE.Box3().setFromObject(this.selectedObject);
-            obb = obb.fromBox3(aabb);
-            obb.applyMatrix4(this.selectedObject.matrixWorld)
+            // let obb = new OBB();
+            // const aabb = new THREE.Box3().setFromObject(this.selectedObject);
+            // obb = obb.fromBox3(aabb);
+            // obb.applyMatrix4(this.selectedObject.matrixWorld)
 
-            this.selectedObject.userData.obb = obb
-            // const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(this.selectedObject.quaternion);
-
-            // const rotationMatrix3 = new THREE.Matrix3().setFromMatrix4(rotationMatrix);
-            // obb.rotation.copy(rotationMatrix3);
-
-            // this.selectedObject.userData.obb.applyMatrix4(this.selectedObject.matrixWorld)
-
+            // this.selectedObject.userData.obb = obb
             this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
-            // this.selectedObject.userData.PROPS.CONFIG.POSITION = this.selectedObject.position;
             // Обновляем BoxHelper для визуализации
             this.boxHelper.updateBoxHelper();
 
@@ -288,6 +357,9 @@ export class MoveManager {
         this.canvas.removeEventListener('touchmove', this.onTouchMoveBound, false);
         this.canvas.removeEventListener('touchend', this.onTouchEndBound, false);
 
+        document.removeEventListener('keydown', this.onKeyDown, false);
+        // document.removeEventListener('keyup', this.onKeyUp, false);
+
         this.canvas = null;
         this.scene = null;
         this.raycaster = null;
@@ -298,10 +370,16 @@ export class MoveManager {
     updateRoomData(roomManager: THREETypes.TRoomManager) {
         this.selectedObject = null
         this.roomManager = roomManager
+
+        /** Сбрасываем состояния переходящего рисунка */
+        this.uniformEvents.desableUnionMode()
+        this.uniformEvents.desablePreGrouping()
+        this.uniformEvents.desableGroupAddition()
+        // this.uniformTextureBuilder.clearTemporaryGroups()
+        // this.uniformTextureBuilder.clearUniformGroups()
     }
 
     updateControl(controls: OrbitControls) {
-
         this.controls = controls
     }
 
@@ -309,9 +387,70 @@ export class MoveManager {
         return false
     }
 
+    setupKeys() {
+        this.keybordListeners.addKeydownCallback(this.onKeyDown)
+    }
+
+    keyDown(event) {
+
+        if (event.repeat) return
+
+        if (event.shiftKey) {
+
+            this.uniformEvents.togleUnionMode()
+            this.uniformEvents.desablePreGrouping()
+            this.uniformEvents.desableGroupAddition()
+
+
+            if (this.uniformEvents._unionMode) {
+                /** Убираем хелпер */
+                this.boxHelper.removeBoxHelper()
+                /** Убираем линейку */
+                this.trafficManager.ruler.clearRuler()
+
+                this.boxHelper.toggleGroupBox(true, this.uniformTextureBuilder._groupsBoxHelper)
+            }
+            else {
+                this.boxHelper.clearSelect()
+                this.uniformState.setPreGroup(0)
+                this.uniformTextureBuilder.clearTemporaryGroups()
+                this.uniformEvents.desableGroupAddition()
+                this.uniformEvents.desableDegrouping()
+                this.boxHelper.toggleGroupBox(false, this.uniformTextureBuilder._groupsBoxHelper)
+
+            }
+
+            // console.log(this.uniformEvents._unionMode)
+        }
+
+    }
+
     addVueEvents() {
         this.eventBuss.emit('A:Move', () => {
             this.checkMove()
         })
+
+        this.eventBuss.on('A:Pre-Create-Uniform-Group', () => {
+            this.uniformEvents.enablePreGrouping()
+            this.uniformEvents.desableGroupAddition()
+            this.uniformEvents.desableDegrouping()
+            // console.log(this.uniformState.getUniformModeData)
+
+        })
+
+        this.eventBuss.on('A:Add-To-Uniform-Group', (groupId) => {
+
+            this.uniformEvents.enableGroupAddition(groupId)
+            this.uniformEvents.desablePreGrouping()
+
+        })
+
+        this.eventBuss.on('A:Remove-From-Uniform-Group', (groupId) => {
+
+            this.uniformEvents.enableDegrouping(groupId)
+            this.uniformEvents.desablePreGrouping()
+
+        })
     }
+
 }

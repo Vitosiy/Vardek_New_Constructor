@@ -22,11 +22,13 @@ const customiserStore = useCustomiserStore();
 let eventBus = useEventBus()
 
 const togglePopup = () => {
+
   customiserStore.toggleCustomiserPopup();
 };
 
 onMounted(() => {
   eventBus.on('A:MouseDown', () => {
+
     if(customiserStore.isCustomiserOpen) {
       togglePopup()
     }

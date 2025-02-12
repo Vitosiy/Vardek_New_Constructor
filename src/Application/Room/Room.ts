@@ -135,8 +135,6 @@ export class Room {
             return
         }
 
-        console.log(this.roomsStore.getCurrentRoomId.size)
-
         this.roomsStore.setCurrentRoomSize(this.roomsStore.getCurrentRoomId.size)
         this.params = this.roomsStore.getCurrentRoomId.size
         this.resizeParams = this.roomsStore.getCurrentRoomId.size
@@ -225,17 +223,6 @@ export class Room {
 
         })
 
-        // this.updateWallMaterial(this.wallTexture)
-
-        // this.scene.traverse(child=>{
-        //     if(child instanceof THREE.Mesh){
-        //         console.log(child)
-        //     }
-        // })
-
-        // this.trigger('A:RoomLoaded')
-        // console.log('done')
-
         /** Helpers для OBB  пола */
 
         // this.createRoomOctree()
@@ -252,27 +239,26 @@ export class Room {
         // this.walls.forEach(wall => {
         //     this.wallBuilder.updateTexture(wall as THREE.Mesh, 'wall', materialId, wall.userData.dimensions);
         // })
+        this.scene.traverse(child => {
+            if (child instanceof THREE.Object3D && child.userData.elementType == 'element_room') {
 
-        this.scene.traverse(child=>{
-            if(child instanceof THREE.Object3D && child.userData.elementType ){
-    
-                child.traverse(children=>{
-                    if(children instanceof THREE.Mesh && !children.userData.isArrowHelper && children.userData.name !='floor' ){
-                        let demention 
-                        if(children.userData.dimensions){
+                let demention
+                child.traverse(children => {
+                    if (children instanceof THREE.Mesh && !children.userData.isArrowHelper && children.userData.name != 'floor') {
+                        if (children.userData.dimensions) {
                             demention = children.userData.dimensions
                             this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention);
-                            //   console.log(demention, children,  '1')
+                            return
                         }
-                        else{
+                        const parent = this.getRootObject(children)
+                        const { DEPTH, HEIGHT } = parent.userData.trueSizes
 
-                            let parent = this.getRootObject(children)
-                            demention = [parent.userData.trueDepth*2, parent.userData.trueHeight*2]
-                            this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention)
-                            // console.log(demention, children,  '2')
-                        }
+                        demention = [DEPTH * 2, HEIGHT * 2]
+                        this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention)
+
                     }
                 })
+
             }
         })
 
@@ -292,15 +278,6 @@ export class Room {
         this.roomsStore.setFloorTexture(materialId)
     }
 
-    // private createRoomOctree() {
-    //     this.worldOctree.fromGraphNode(this.wallsGroup)
-    //     this.worldOctree.split(16)
-
-    //     const helper = new OctreeHelper(this.worldOctree, 0x00ff00);
-    //     helper.visible = true;
-    //     this.scene.add(helper);
-
-    // }
 
     private getRoomBounds(): THREE.Box3 {
         const roomBox = new THREE.Box3();
@@ -323,38 +300,4 @@ export class Room {
         return root;
     }
 
-    // setSize(width: number, height: number, depth: number, thickness: number) {
-
-    //     // Обновляем параметры комнаты
-    //     const sizes = {
-    //         width,
-    //         height,
-    //         depth,
-    //         thickness,
-    //         wall: this.wallTexture,
-    //         floor: this.floorTexture
-    //     }
-
-    //     this._roomParams = sizes
-
-    //     // Удаляем комнату из сцены
-
-    //     this.walls.forEach(wall => {
-    //         this.dispose.clearRoom(wall, this.scene)
-    //         this.scene.remove(wall)
-    //     })
-
-    //     this.сeiling ? this.scene.remove(this.сeiling) : ''
-    //     this.floor ? this.scene.remove(this.floor) : ''
-
-    //     // Пересоздаём комнату с новыми размерами
-
-    //     this.createRoom(sizes)
-    //     this.setRoom()
-
-    //     this.roomsStore.setCurrentRoomSize(sizes)
-    //     this.roomLight.setLightPosition(sizes, 3)
-
-    //     console.log(this.roomsStore.getCurrentRoomSize)
-    // }
 }

@@ -1,7 +1,10 @@
 //@ts-nocheck
+import { toRaw } from 'vue';
+
 import * as THREE from 'three';
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
+import * as UniformTypes from '@/types/uniformTextureTypes'
 
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 // import { Capsule } from 'three/addons/math/Capsule.js';
@@ -11,6 +14,7 @@ import { useEventBus } from '@/store/appliction/useEventBus';
 import { useRoomState } from '@/store/appliction/useRoomState';
 import { useModelState } from '@/store/appliction/useModelState';
 import { useSceneState } from '@/store/appliction/useSceneState';
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import SetObject from '../Utils/SetObject';
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
@@ -23,10 +27,13 @@ export class RoomManager extends Room {
     private eventsStore: ReturnType<typeof useEventBus> = useEventBus()
     private roomState: ReturnType<typeof useRoomState> = useRoomState()
     private modelState: ReturnType<typeof useModelState> = useModelState()
+    private uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
     // createShape: CreateShape
+    root: THREETypes.TApplication
     setObject: SetObject
     geometryBuilder: GeometryBuilder | null
+    uniformTextureBuilder: THREE.TUniformTextureBuilder
     contant: { [key: string]: any } = {};
     heightClamp: number = useSceneState().getStartHeightClamp
     heightLine: THREE.Object3D[] = []
@@ -34,10 +41,12 @@ export class RoomManager extends Room {
     constructor(root: THREETypes.TApplication, light: any) {
 
         super(root, light)
-
+        this.root = root
         this.scene = root.scene
         this.setObject = root.setObject
         this.geometryBuilder = root.geometryBuilder
+        this.uniformTextureBuilder = root.geometryBuilder?.buildProduct.uniform_texture_builder
+
         // this.createShape = new CreateShape(root.canvas, root.camera.instance as THREE.Camera, root.scene, root)
 
         this.addVueEvents()
@@ -100,12 +109,14 @@ export class RoomManager extends Room {
 
         let heightClamp = this.heightClamp
         const objectBox = new THREE.Box3().setFromObject(object);
-        const obb = object.userData.obb
-        const heightMagnetThreshold = object.userData.trueHeight;
+
+        const { DEPTH, HEIGHT, WIDTH } = object.userData.trueSizes
+
+        const heightMagnetThreshold = HEIGHT;
 
         const position = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
 
-        const objectPos = this.roomInterseck({ object, wall, position, targetRotation, obb })
+        const objectPos = this.roomInterseck({ object, wall, position, targetRotation })
 
         return {
             position: objectPos.position,
@@ -123,7 +134,7 @@ export class RoomManager extends Room {
         // console.log(adjustPosition, 'AP')
 
         const rotation = object.userData.PROPS.CONFIG.ROTATION ?? new THREE.Euler(0, 0, 0, 'XYZ');
-        const size = object.userData.trueSizes
+        const { DEPTH, HEIGHT, WIDTH } = object.userData.trueSizes
 
         const roomBound = this._roomBounds;
         const aabb = new THREE.Box3().setFromObject(object);
@@ -170,7 +181,7 @@ export class RoomManager extends Room {
                             const distanceToPlane = Math.abs(wallNormal.dot(adjustPosition) + singleWall.userData.plane.constant);
                             const correction = wallNormal.clone().multiplyScalar(distanceToPlane);
 
-                            if (distanceToPlane <= object.userData.trueDepth * 2) {
+                            if (distanceToPlane <= DEPTH * 2) {
                                 adjustPosition.sub(correction);
                             }
 
@@ -208,12 +219,12 @@ export class RoomManager extends Room {
 
         /** Проверка на положение объекта только на полу */
 
-        adjustPosition.y = object.userData.modelVector == "element_down" ? size.y - 0.001 : Math.max(
-            (size.y - 0.001),
-            Math.min(position.y, roomBound.max.y - (size.y - 0.001))
+        adjustPosition.y = object.userData.elementType == "element_down" ? HEIGHT - 0.001 : Math.max(
+            (HEIGHT - 0.001),
+            Math.min(position.y, roomBound.max.y - (HEIGHT - 0.001))
         );
 
-        // adjustPosition.y = Math.max((size.y - 0.001), Math.min(position.y, roomBound.max.y - (size.y - 0.001)))
+        // adjustPosition.y = Math.max((HEIGHT - 0.001), Math.min(position.y, roomBound.max.y - (HEIGHT - 0.001)))
 
         // Обновляем конфигурацию объекта
         object.userData.PROPS.CONFIG = { ...object.userData.PROPS.CONFIG, ROTATION: rotation, POSITION: adjustPosition };
@@ -227,14 +238,22 @@ export class RoomManager extends Room {
         const correctRotation = rotation.clone()
         const wallCoordinates = wall.userData.coordinates
 
+        const { PROPS } = object.userData
+        const { CONFIG, TABLETOP } = PROPS
+        const { POSITION, ROTATION } = CONFIG
+
+        const tableTopDepth = Object.keys(TABLETOP).length > 0 ? TABLETOP.userData.trueSize.TABLETOP_DEPTH : null
+
+        const { DEPTH, HEIGHT, WIDTH } = object.userData.trueSizes
+
         if (!wallCoordinates) {
 
-            let correct = object.userData.PROPS.CONFIG.ROTATION.clone()
+            let correct = ROTATION.clone()
             correct.y += Math.PI / 2;
 
             return {
-                correctPosition: object.userData.PROPS.CONFIG.POSITION,
-                correctRotation: object.userData.PROPS.CONFIG.ROTATION,
+                correctPosition: POSITION,
+                correctRotation: ROTATION,
             }
         }
 
@@ -246,13 +265,7 @@ export class RoomManager extends Room {
 
         const side = this.getFacingSideFromOBB(object, wall, obb);
 
-        // console.log(side,'SIDE')
-
-        // const correctSize = side === "left" || side === "right" ? object.userData.trueLength : object.userData.trueDepth;
-
-        const correctSize = object.userData.trueDepth;
-
-        // console.log(wallCoordinates, '----wallCoordinates')
+        const correctSize = tableTopDepth ? tableTopDepth * 0.5 : DEPTH - 10.5;
 
         let trueExtremePoint = this.findClosestPoint(position, wallCoordinates[0], wallCoordinates[1]).clone()
 
@@ -262,29 +275,27 @@ export class RoomManager extends Room {
 
         const distanceToExtrene = trueExtremePoint.distanceTo(position)
 
-        // console.log(distanceToPlane, 'distanceToPlane')
-
         if (distanceToExtrene === 0) return {
 
-            correctPosition: object.userData.PROPS.CONFIG.POSITION,
-            correctRotation: object.userData.PROPS.CONFIG.ROTATION,
+            correctPosition: POSITION,
+            correctRotation: ROTATION,
         }
 
-        if (distanceToExtrene <= object.userData.trueLength) {
+        if (distanceToExtrene <= WIDTH) {
             let correction
             if (!floor) {
-                correction = vectorToCenter.clone().multiplyScalar(object.userData.trueLength - distanceToExtrene);
+                correction = vectorToCenter.clone().multiplyScalar(WIDTH - distanceToExtrene);
                 correctPosition.add(correction);
             }
             else {
-                correction = vectorToCenter.clone().multiplyScalar(object.userData.trueLength);
+                correction = vectorToCenter.clone().multiplyScalar(WIDTH - 0.5);
                 correctPosition = trueExtremePoint.clone().add(correction)
             }
 
         }
 
         if (distanceToPlane <= correctSize) {
-            let correction = wallNormal.clone().multiplyScalar(correctSize - distanceToPlane - 5);
+            let correction = wallNormal.clone().multiplyScalar(correctSize - distanceToPlane - 0.5);
             correctPosition.add(correction);
         }
 
@@ -292,7 +303,6 @@ export class RoomManager extends Room {
             !wall.rotation.equals(correctRotation) ? correctRotation.copy(wall.rotation) : ''
         }
 
-        object.userData.preventWall = wall.userData.name
 
         return {
             correctPosition,
@@ -321,24 +331,8 @@ export class RoomManager extends Room {
             return Math.abs(sides[a]) > Math.abs(sides[b]) ? a : b;
         });
 
-        // console.log(closestSide)
-
         return closestSide;
     }
-
-
-    // private getRoomBounds(): THREE.Box3 {
-    //     const roomBox = new THREE.Box3();
-
-    //     // Объединяем границы всех стен и пола
-    //     for (const wall of this._roomWalls) {
-    //         roomBox.union(new THREE.Box3().setFromObject(wall));
-    //     }
-
-    //     roomBox.union(new THREE.Box3().setFromObject(this._roomFloor as THREE.Object3D));
-
-    //     return roomBox;
-    // }
 
     private snapToHeight(
         position: THREE.Vector3,
@@ -483,6 +477,11 @@ export class RoomManager extends Room {
     /** Удаление объекта из сцены */
 
     remove(id: number) {
+        const product = this.contant[id]
+        if (product.userData.PROPS.CONFIG.UNIFORM_TEXTURE.group !== null) {
+            this.uniformTextureBuilder.removeFromUniformGroup(product)
+        }
+
         delete this.contant[id]
     }
 
@@ -506,17 +505,18 @@ export class RoomManager extends Room {
                 )
 
             })
-            return
+            // return
         }
-        this.contant = {}
+        // console.log(this.contant, '  this.contant')
+        const uniformGroups: UniformTypes.TUniformGroupMembership[] = toRaw(this.uniformState.getUniformGroupMembership) // Получаем доступ непосредственно к объектам, убирая proxy от VUE
+        this.uniformTextureBuilder.clearUniformGroups()
+        this.uniformTextureBuilder.loadUniformGroup(uniformGroups)
+        this.uniformState.clearUniformGroupMembership();
+
     }
 
     addVueEvents() {
 
-        // this.boundSetSize = ({ width, height, depth, thickness }) => {
-
-        //     this.setSize(width, height, depth, thickness);
-        // };
 
         this.boundWallMaterial = (material) => {
 
@@ -532,8 +532,6 @@ export class RoomManager extends Room {
             this.heightClamp = value
         }
 
-
-        // this.eventsStore.on('A:Room-resize', this.boundSetSize);
 
         this.eventsStore.on('A:ChangeWallTexture', this.boundWallMaterial)
 

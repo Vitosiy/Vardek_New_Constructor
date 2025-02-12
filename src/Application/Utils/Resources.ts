@@ -55,7 +55,7 @@ export class Resources extends EventEmitter {
         // return  obj
     }
 
-    startLoading(path: string | readonly string[], type: string, callback?: (file: unknown | null | boolean) => void): void {
+    startLoading(path: string | readonly string[], type: string, callback?: (...args: any[]) => void): void {
 
         let truePath
 
@@ -88,7 +88,7 @@ export class Resources extends EventEmitter {
                 this.loaders?.fbxLoader.load(truePath as string, (file: any) => {
 
                     if (callback) {
-                        this.data = file
+
 
                         callback(file)
                     }
@@ -99,7 +99,7 @@ export class Resources extends EventEmitter {
                 truePath = this.replaceUrls(path)
                 this.loaders?.daeLoader.load(truePath as string, (file: any) => {
                     if (callback) {
-                        this.data = file
+
                         callback(file)
                     }
                 });
@@ -110,7 +110,7 @@ export class Resources extends EventEmitter {
                 this.loaders?.textureLoader.load(truePath as string, (file: any) => {
 
                     if (callback) {
-                        this.data = file
+
                         callback(file)
                     }
                 }, () => {
@@ -131,15 +131,15 @@ export class Resources extends EventEmitter {
                 this.loaders?.textureLoader.load(path as string, (file: any) => {
 
                     if (callback) {
-                        this.data = file
                         callback(file)
                     }
+
                 }, () => {
 
                 },
-                    () => {
+                    (e) => {
                         if (callback) {
-
+                            console.log(e)
                             callback(false)
                         }
                     }
@@ -163,6 +163,6 @@ export class Resources extends EventEmitter {
                 throw new Error(`Unknown source type: ${type}`);
         }
 
-        return this.data
+
     }
 }

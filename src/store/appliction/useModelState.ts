@@ -61,6 +61,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _MILLING = _APP.MILLING
     const _SHOWCASE = _APP.SHOWCASE
     const _GLASS = _APP.GLASS
+    const _PATINA = _APP.PATINA
 
 
     const models = ref<{ [key: string]: {} }>(_PRODUCTS)
@@ -78,6 +79,8 @@ export const useModelState = defineStore('ModelState', () => {
     const currentFasadeTypesData = ref<number[]>([])
 
     const currentGlassData = ref<number[]>([])
+
+    const currentPatinaData = ref<number[]>([])
 
     const setCurrentModel = (object: THREE.Object3D | null) => {
         currentModel.value = object
@@ -118,7 +121,7 @@ export const useModelState = defineStore('ModelState', () => {
         const result = Object.entries(_FASADE_GROUPS).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0);
+        })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
 
         currentModelFasadesData.value = result
     }
@@ -227,7 +230,6 @@ export const useModelState = defineStore('ModelState', () => {
     const createCurrentGlassData = ({ fasadeId, productId }) => {
         const incomeGlass = _FASADE[fasadeId].ATTACH_GLASS
         const productGlass = _PRODUCTS[productId].GLASS
-
         const glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
         const currentClass = glassArray.reduce((acc, index) =>
             acc.concat(_GLASS[index] || []),
@@ -237,6 +239,19 @@ export const useModelState = defineStore('ModelState', () => {
 
     const getCurrentGlassData = computed(() => {
         return currentGlassData.value
+    })
+
+    /** Патина */
+
+    const createCurrentPatinaData = ({ fasadeId, productId }) => {
+        const incomePatina = _FASADE[fasadeId].PATINA
+        const currentPataina = incomePatina.filter(key => _PATINA.hasOwnProperty(key)).map(key => _PATINA[key])
+        
+        currentPatinaData.value = currentPataina
+    }
+
+    const getCurrentPatinaData = computed(() => {
+        return currentPatinaData.value
     })
 
 
@@ -264,6 +279,9 @@ export const useModelState = defineStore('ModelState', () => {
 
         createCurrentGlassData,
         getCurrentGlassData,
+
+        createCurrentPatinaData,
+        getCurrentPatinaData,
     }
 
 });

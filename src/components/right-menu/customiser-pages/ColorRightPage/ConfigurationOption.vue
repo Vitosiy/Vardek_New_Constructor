@@ -1,54 +1,70 @@
 <script lang="ts" setup>
-import { defineProps, computed, defineEmits } from 'vue';
-import default_url from '@/assets/svg/surface-redactor/default.svg'
-import delete_url from '@/assets/svg/surface-redactor/delete.svg'
+import { defineProps, computed, defineEmits } from "vue";
+import default_url from "@/assets/svg/surface-redactor/default.svg";
+import delete_url from "@/assets/svg/surface-redactor/delete.svg";
 import { _URL } from "@/types/constants";
-
 
 const props = defineProps({
   type: String,
-  data: Object
-})
+  data: Object,
+  additionalClass: String,
+});
 
-const emit = defineEmits(['choose-option', 'delete-choise'])
+const emit = defineEmits(["choose-option", "delete-choise"]);
 
 let title = computed(() => {
-  if(props.type === 'surface') return 'Тип покрытия'
-  if(props.type === 'milling') return 'Тип фрезеровки'
-  if(props.type === 'palette') return 'Цвет покрытия'
-})
+  if (props.type === "surface") return "Тип покрытия";
+  if (props.type === "milling") return "Тип фрезеровки";
+  if (props.type === "palette") return "Цвет покрытия";
+  if (props.type === "patina") return "Цвет патины";
+});
 
 let name = computed(() => {
-  return props.data?.name ? props.data.name : ''
-})
+  return props.data?.name ? props.data.name : "";
+});
 
 let imgSrc = computed(() => {
-  return props.data?.imgSrc ? _URL + props.data.imgSrc : default_url
-})
+  return props.data?.imgSrc ? _URL + props.data.imgSrc : default_url;
+});
 
-let isColorChosed = computed(() =>{
-  return props.data?.hex ? true : false
-})
+let isColorChosed = computed(() => {
+  return props.data?.hex ? true : false;
+});
 
 let chooseOption = () => {
-  emit('choose-option', props.type)
-}
+  emit("choose-option", props.type);
+};
 
-const deleteChoise = () => { // TODO функция удаления отложена до решения Александра
-  emit('delete-choise', props.type)
-}
-
+const deleteChoise = () => {
+  // TODO функция удаления отложена до решения Александра
+  emit("delete-choise", props.type);
+};
 </script>
 
 <template>
-  <div class="config">
+  <div class="config" :class="props.additionalClass">
     <div class="config__top">
-      <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="" @click="chooseOption">
+      <img
+        v-if="props.type !== 'palette'"
+        class="config__img"
+        :src="imgSrc"
+        alt=""
+        @click="chooseOption"
+      />
       <div v-else @click="chooseOption">
-        <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="">
-        <div v-else class="config__color" :style="{ backgroundColor: `#${props.data?.hex}` }" ></div>
+        <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="" />
+        <div
+          v-else
+          class="config__color"
+          :style="{ backgroundColor: `#${props.data?.hex}` }"
+        ></div>
       </div>
-      <img class="config__delete" :src="delete_url" alt="" @click="deleteChoise"> 
+      <img
+        class="config__delete"
+        :src="delete_url"
+        alt=""
+        @click="deleteChoise"
+      />
     </div>
     <div class="config__bottom">
       <div class="config__title">
@@ -60,7 +76,6 @@ const deleteChoise = () => { // TODO функция удаления отлож�
     </div>
   </div>
 </template>
-
 
 <style lang="scss" scoped>
 .config {
@@ -99,5 +114,10 @@ const deleteChoise = () => { // TODO функция удаления отлож�
   &__title {
     color: rgb(131, 133, 135);
   }
+
+}
+.disabled{
+  pointer-events: none;
+  background-color: rgba(228, 140, 140, 0.133);
 }
 </style>

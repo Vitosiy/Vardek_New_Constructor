@@ -24,6 +24,7 @@ import { WindowBuilder } from './WindowBuilder';
 import { FasadeBuilder } from './FasadeBuilder';
 import { PaletteBulider } from './PaletteBuilder';
 import { AlumBulider } from './AlumBuilder.ts';
+import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
 
 export class BuildProduct extends BuildersHelper {
@@ -43,13 +44,15 @@ export class BuildProduct extends BuildersHelper {
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBulider
     alum_builder: AlumBulider
+    patina_builder: PatinaBuilder
+    uniform_texture_builder: UniformTextureBuilder
 
     heightCorrect: number = 0
 
     constructor(root: THREETypes.TApplication) {
         super(root)
 
-        console.trace('BuildProduct')
+        // console.trace('BuildProduct')
 
         this.root = root
         this.ruler = root.ruler
@@ -63,8 +66,7 @@ export class BuildProduct extends BuildersHelper {
         this.window_builder = new WindowBuilder(root)
         this.palette_bulider = new PaletteBulider(this)
         this.alum_builder = new AlumBulider(this)
-
-
+        this.uniform_texture_builder = new UniformTextureBuilder(root, this)
     }
 
     get _heightCorrect() {
@@ -123,21 +125,16 @@ export class BuildProduct extends BuildersHelper {
         const aabb = new THREE.Box3().setFromObject(parent_group);
         const productSize = new THREE.Vector3();
 
-        let obb = new OBB();
-        obb = obb.fromBox3(aabb);
-
         /** Для корректного примагничивания к стенам */
         aabb.getSize(productSize);
 
         /** Присваиваем тип объекта */
         parent_group.userData.elementType = product_data.element_type
 
-        parent_group.userData.trueDepth = productSize.z * 0.5
-        parent_group.userData.trueHeight = productSize.y * 0.5
-        parent_group.userData.trueLength = productSize.x * 0.5
-
         parent_group.userData.trueSizes = {
-            z: productSize.z * 0.5, y: productSize.y * 0.5, x: productSize.x * 0.5
+            DEPTH: productSize.z * 0.5,
+            HEIGHT: productSize.y * 0.5,
+            WIDTH: productSize.x * 0.5
         }
 
         return parent_group
@@ -215,6 +212,15 @@ export class BuildProduct extends BuildersHelper {
             SHOWCASE: null,
             POSITION: null,
             ROTATION: null,
+
+            UNIFORM_TEXTURE: {
+                group: null,
+                level: null,
+                index: null,
+                column_index: null,
+                backupFasadId: null,
+                color: null
+            }
         }
 
         PARAMS.HAVETABLETOP = (product_data.tabletop != null && this.project.table_top_type_auto) as boolean
@@ -316,7 +322,7 @@ export class BuildProduct extends BuildersHelper {
         this._PRODUCTS[product_id].leg_length ? this.buildLegs(model_props, data, total, getHeightCorrect) : "";
 
 
-        console.log(model_props, data, '--PROP')
+        // console.log(model_props, data, '--PROP')
 
         /** Добавляем фасад */
         Object.keys(model_props.CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(
@@ -329,10 +335,10 @@ export class BuildProduct extends BuildersHelper {
         /** Корректировка положения общего Box3 по высоте  */
         total.position.y += height_correct / 2
 
-        /** Корректировка по глубине */
-        if (!size) {
-            total.position.z -= 10
-        }
+        // /** Корректировка по глубине */
+        // if (!size) {
+        //     // total.position.z -= 5
+        // }
 
         model_props.CONFIG.HEIGHTCORRECT = height_correct
 
@@ -354,6 +360,17 @@ export class BuildProduct extends BuildersHelper {
         group.add(body)
 
         props.BODY = body
+
+        const box = new THREE.Box3().setFromObject(body);
+        const size = box.getSize(new THREE.Vector3());
+
+        body.userData.trueSize = {
+            BODY_WIDTH: size.x,
+            BODY_HEIGHT: size.y,
+            BODY_DEPTH: size.z,
+        }
+
+        // console.log(size,  body.userData, 'size')
 
         /** Добавляем стреки размеров */
         this.addArrowSize(group, body, props)
@@ -489,6 +506,17 @@ export class BuildProduct extends BuildersHelper {
 
         tableBody.position.setY(start_position.y + sizes.height + 38 / 2);
         tableBody.position.setZ(start_position.z + 300);
+
+        /** Для корректного примагничивания к стенам */
+        const box = new THREE.Box3().setFromObject(tableBody);
+        const size = box.getSize(new THREE.Vector3());
+
+        tableBody.userData.trueSize = {
+            TABLETOP_WIDTH: size.x,
+            TABLETOP_HEIGHT: size.y,
+            TABLETOP_DEPTH: size.z,
+        }
+
 
         tableBody.name = 'TABLETOP'
         group.add(tableBody)

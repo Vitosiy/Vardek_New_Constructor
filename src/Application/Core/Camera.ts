@@ -16,6 +16,7 @@ export class Camera {
     eventBuss: ReturnType<typeof useEventBus> = useEventBus()
     sizes: Sizes
     canvas: HTMLElement
+    parent: THREETypes.TApplication
 
     scene: THREE.Scene
     instance: THREE.Camera | any = null
@@ -23,105 +24,73 @@ export class Camera {
     params: THREEInterfases.ICameraData
     ortoParams: THREEInterfases.IOrtoCameraData
     ortoCamera: boolean = false
+    screenSpacePanning: boolean = false
+    keybordListeners: TKeybordListeners
+
+    private onKeyDown: (event) => void;
+    private onKeyUp: (event) => void
 
 
     constructor(parent: THREETypes.TApplication) {
 
+        this.parent = parent
+        this.keybordListeners = parent.keybordListeners
         this.sizes = parent.sizes
         this.canvas = parent.canvas
         this.params = useSceneState().getStartCameraData
         this.ortoParams = useSceneState().getStartOrtoCameraData
-
         this.scene = parent.scene
+
+        this.onKeyDown = this.keyDown.bind(this)
+        this.onKeyUp = this.keyUp.bind(this)
 
         this.setInstance();
         this.setOrbitControls();
+        this.setupKeys()
     }
 
     get _controls() {
         return this.controls
     }
 
-    setInstance(): void {
+    setupKeys() {
+        this.keybordListeners.addKeydownCallback(this.onKeyDown)
+        this.keybordListeners.addKeyupCallback(this.onKeyUp)
+    }
 
-        switch (this.ortoCamera) {
-            case false:
-                this.scene.children.forEach(child => {
-                    if (child instanceof THREE.PerspectiveCamera) {
-                        this.instance = child
-                        this.instance.lookAt(this.params.target.x, this.params.target.y, this.params.target.z)
-                        this.resetOrbitControls()
-                        this.resize()
-                        return
-                    }
-                })
+    keyDown(event) {
 
-                if (!(this.instance instanceof THREE.PerspectiveCamera) && this.instance == null) {
-                    this.instance = new THREE.PerspectiveCamera(this.params.fov, this.sizes.width / this.sizes.height, this.params.near, this.params.far)
-                    this.instance.position.set(...this.params.position)
-                    this.instance.lookAt(this.params.target.x, this.params.target.y, this.params.target.z)
-                    this.scene.add(this.instance)
-                    this.resize()
-                }
-
-                break;
-
-            case true:
-
-                this.scene.children.forEach(child => {
-                    if (child instanceof THREE.OrthographicCamera) {
-                        this.instance = child
-                        this.instance.position.set(...this.ortoParams.position)
-                        this.instance.rotateZ(Math.PI * 0.5)
-                        this.resetOrbitControls()
-                        this.resize()
-                        return
-                    }
-                })
-
-                if (!(this.instance instanceof THREE.OrthographicCamera)) {
-
-                    this.instance = new THREE.OrthographicCamera(this.sizes.width / -2 * 0.01,
-                        this.sizes.width / 2 * 0.01,
-                        this.sizes.height / 2 * 0.01,
-                        this.sizes.height / -2 * 0.01,
-                        0.01,
-                        100)
-
-                    // this.instance.position.set(...this.ortoParams.position);
-
-                    this.instance.position.set(...this.ortoParams.position);
-                    this.instance.lookAt(new THREE.Vector3(0, 0, 0))
-                    this.instance.rotation.z = Math.PI * 0.5;
-                    this.instance.updateMatrixWorld();
-                    this.scene.add(this.instance)
-
-                    this.resetOrbitControls()
-                    this.resize()
-
-                }
-                break;
+        if (event.ctrlKey || event.metaKey) {
+           
+            this.controls.screenSpacePanning = true
+            // console.log('screenSpacePanning TRUE')
         }
+    }
+
+    keyUp(event) {
+
+        if (!event.ctrlKey || !event.metaKey) {
+            this.controls.screenSpacePanning = false
+            // console.log('screenSpacePanning FALSE')
+        }
+
+    }
+
+    screenPanningChange() {
+        this.screenSpacePanning = !this.screenSpacePanning
+    }
+
+    setInstance(): void {
+        this.instance = new THREE.PerspectiveCamera(this.params.fov, this.sizes.width / this.sizes.height, this.params.near, this.params.far)
+        this.instance.position.set(...this.params.position)
+        this.instance.lookAt(this.params.target.x, this.params.target.y, this.params.target.z)
+        this.scene.add(this.instance)
+        this.resize()
     }
 
     setOrbitControls(): void {
 
-
         this.controls = new OrbitControls(this.instance as THREE.Camera, this.canvas)
-
-        // Вращение камеры
-        if (this.instance instanceof THREE.OrthographicCamera) {
-
-            this.controls.minZoom = 0.5 * 0.001
-            this.controls.maxZoom = 3 * 0.001
-            this.controls.target.set(0, 0, 0)
-            this.controls.minAzimuthAngle = Math.PI * 0.5; // Ограничить вращение по оси Z
-            this.controls.maxAzimuthAngle = Math.PI * 0.5;
-            this.controls.update();
-            this.controls.enableRotate = false;
-           
-            return
-        }
 
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.2
@@ -159,6 +128,9 @@ export class Camera {
     update() {
         if (this.instance instanceof THREE.OrthographicCamera) return
         this.controls!.update()
+    }
+
+    removeCamera() {
     }
 
 }

@@ -23,7 +23,7 @@ const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 const _MILLING = _APP.MILLING;
 
-console.log(_MILLING, 'MILLINGS');
+// console.log(_MILLING, 'MILLINGS');
 
 
 /** Состояния выбранной модели */
@@ -95,8 +95,6 @@ const createTabList = (fasadsCount) => {
     });
   });
 
-  console.log(data, fasadsCount.length, "--createTabList");
-
   tabsList.value = data;
 };
 
@@ -115,24 +113,25 @@ const changeModuleTexture = (data: { [key: string]: any }) => {
 };
 
 const changeFasade = (data: { [key: string]: any }, fasadeNdx) => {
-  currentFasadeId.value = fasadeNdx;
-  selectedFasade.value = data.ID;
 
-  const productId = productData.value.PRODUCT;
+  // currentFasadeId.value = fasadeNdx;
+  // selectedFasade.value = data.ID;
 
-  console.log('DATA', data);
-  console.log('INDEX', fasadeNdx);
-  console.log('PRODUCT_ID', productId);
+  // const productId = productData.value.PRODUCT;
+
+  // console.log('DATA', data);
+  // console.log('INDEX', fasadeNdx);
+  // console.log('PRODUCT_ID', productId);
   
 
-  modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
-  modelState.createCurrentPaletteData(data.ID);
-  modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
-  modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
-  modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentPaletteData(data.ID);
+  // modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
 
-  eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
-  eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
+  // eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
+  // eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
 };
 
 /** Палитра */
@@ -145,9 +144,6 @@ const changePaletteColor = () => {
 
 /** Фрезеровка */
 const changeMilling = () => {
-  console.log('SELECT MILLING', selectMilling.value);
-  console.log('INDEX', currentFasadeId.value);
-  
   eventBus.emit("A:ChangeMilling", {
     data: selectMilling.value,
     fasadeNdx: currentFasadeId.value,

@@ -65,10 +65,19 @@ export class TrafficManager {
 
 
         this.despose = new DeepDispose()
-        this.boxHelper = new CustomBoxHelper(null, this.scene, root)
+        this.boxHelper = root._customBoxHelper
         this.geometryBuilder = root.geometryBuilder
         this.dragAndDropManager = new DragAndDropManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.mouse, this.raycaster, this.boxHelper, this)
-        this.moveManager = new MoveManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.controls as OrbitControls, this.mouse, this.raycaster, this.boxHelper, this)
+
+
+        this.moveManager = new MoveManager({
+            root,
+            room: this.room,
+            mouse: this.mouse,
+            raycaster: this.raycaster,
+            trafficManager: this
+
+        })
 
         this.vueEvents()
     }
@@ -95,6 +104,7 @@ export class TrafficManager {
         }
         else {
             this.modelState.clearCurrentModelFasadesData()
+            this.modelState.setCurrentModel(null)
         }
 
         this.events.emit("A:Selected", {

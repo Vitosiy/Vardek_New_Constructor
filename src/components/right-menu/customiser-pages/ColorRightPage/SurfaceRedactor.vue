@@ -39,11 +39,14 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   const productId = productData.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE } = data
   
-  modelState.createCurrentPaletteData(ID, productId);
+  modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
+  modelState.createCurrentPaletteData(ID);
+  modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
   modelState.createCurrentMillingData({ fasadeId: ID, productId });
   modelState.createCurrentWindowsData({ fasadeId: ID, productId });
+  modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
   
-  eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
+  eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
   emit("select_material", { name: NAME, imgSrc: DETAIL_PICTURE })
 };
 

@@ -1,4 +1,5 @@
 //@ts-nocheck
+import { toRaw } from 'vue';
 import * as THREE from 'three';
 import * as THREETypes from "@/types/types"
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
@@ -25,7 +26,7 @@ export class WindowBuilder extends MillingBuilder {
 
     }) {
 
-        console.log(alum, '--createWindow')
+        // console.log(alum, '--createWindow')
 
         const windowData = alum ?? data
 
@@ -41,11 +42,19 @@ export class WindowBuilder extends MillingBuilder {
 
         const { FASADE_WIDTH, FASADE_HEIGHT } = fasade.userData.trueSize
 
-        const glassId = this.modelState.getCurrentGlassData[0]
-        const glassColor = `#${glassId.COLOR}`
+        const glassId = toRaw(this.modelState.getCurrentGlassData[0])
+        // console.log(glassId, '--glassId')
 
-        console.log(glassId.NAME)
-        const roughness = glassId.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
+        const glassColor = glassId ? `#${glassId.COLOR}` : '#ffffff'
+
+        let roughness
+
+        if (glassId) {
+            roughness = glassId.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
+        }
+        else {
+            roughness = 0.05
+        }
 
 
         const params = {
@@ -78,20 +87,16 @@ export class WindowBuilder extends MillingBuilder {
         if (!fasade.children.some(obj => obj.userData.type === 'glass')) {
             fasade.add(mesh)
         }
+
     }
 
     changeGlassColor({ fasade, glassId }) {
 
-
-        console.log(glassId)
-
         const glassData = this._GLASS[glassId]
-
-        console.log(glassData)
-        
         const glassColor = `#${glassData.COLOR}`
         const roughness = glassData.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
 
+        // console.log(roughness, glassData, 'AFCHANGE')
 
         fasade.traverse(children => {
             if (children instanceof THREE.Mesh && children.userData.type == 'glass') {
@@ -114,7 +119,7 @@ export class WindowBuilder extends MillingBuilder {
         </svg>`
 
         const paths = this.svgLoader.parse(hendlePath).paths
-        console.log(paths)
+        // console.log(paths)
         const shape = paths[0].toShapes()
         const depth = FASADE_WIDTH * 0.85
 

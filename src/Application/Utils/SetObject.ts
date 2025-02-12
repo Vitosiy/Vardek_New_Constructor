@@ -6,49 +6,53 @@ import * as THREETypes from "@/types/types"
 
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useModelState } from '@/store/appliction/useModelState';
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 
 export class SetObject {
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
-    modelState = useModelState();
+    modelState: ReturnType<typeof useModelState> = useModelState();
+    uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
+    root: THREETypes.TApplication | null = null
     scene: THREE.Scene | null = null
     modelData: any
     object: THREE.Object3D | null = null
     point: THREE.Vector3 | null = null
     roomManager: THREETypes.TRoomManager | null = null
     trafficManager: THREETypes.TTrafficManager | null = null
-  
+
     boxHelper: THREETypes.TCustomBoxHelper | null = null
+
+    constructor(root: THREETypes.TApplication) {
+        this.root = root
+    }
 
     create({ scene, config, object, point, rotate, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
 
+        const { CONFIG } = object.userData.PROPS
+        const { POSITION, ROTATION, UNIFORM_TEXTURE } = CONFIG
 
-        const positionEmpty = object.userData.PROPS.CONFIG.POSITION == null;
-        const rotationEmpty = object.userData.PROPS.CONFIG.ROTATION == null;
+        this.uniformState.checkUniformGroupMembership(object)
 
-        let position = object.userData.PROPS.CONFIG.POSITION ?? new THREE.Vector3(point.x, point.y, point.z)
-        let rotation = object.userData.PROPS.CONFIG.ROTATION ?? new THREE.Euler(0, 0, 0, 'XYZ')
+        const positionEmpty = POSITION == null;
+        const rotationEmpty = ROTATION == null;
 
-        if(rotate){
-            object.userData.PROPS.CONFIG.POSITION = new THREE.Vector3(point.x, point.y, point.z)
-            object.userData.PROPS.CONFIG.ROTATION = new THREE.Euler(rotate._x, rotate._y,rotate._z, 'XYZ')
+        let position = POSITION ?? new THREE.Vector3(point.x, point.y, point.z)
+        let rotation = ROTATION ?? new THREE.Euler(0, 0, 0, 'XYZ')
+
+        if (rotate) {
+            CONFIG.POSITION = new THREE.Vector3(point.x, point.y, point.z)
+            CONFIG.ROTATION = new THREE.Euler(rotate._x, rotate._y, rotate._z, 'XYZ')
         }
 
         object.userData.globalData = config.ID;
-        object.userData.modelVector = this.modelState.getModels[object.userData.PROPS.PRODUCT].element_type;
 
         // /** Проверяем положение объекта внутри комнаты */
 
-        object.userData.current = true
         object.position.copy(point);
-
-        // object.matrixAutoUpdate = false;
-        // object.updateMatrix()
-
-        // object.userData.obb.applyMatrix4(object.matrixWorld)
 
         const aabb = new THREE.Box3().setFromObject(object);
         let obb = new OBB();
@@ -56,49 +60,35 @@ export class SetObject {
         obb.applyMatrix4(object.matrixWorld)
         object.userData.obb = obb
 
-        let adjustedPosition
+        const adjustedPosition = positionEmpty && rotationEmpty
+            ? roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
+            : { position, rotation };
 
-        if (positionEmpty && rotationEmpty) {
-            // console.log('EMPTY')
-            adjustedPosition = roomManager.adjustPositionWithRaycasting(
-                {
-                    object,
-                    targetPosition: point,
-                    targetRotation: rotate,
-                    wall
-                })
-        }
-        else {
-            // console.log('NOT_EMPTY')
-            adjustedPosition = { position, rotation }
-        }
-
-        // let adjustedPosition = positionEmpty && rotationEmpty ? roomManager.adjustPositionWithRaycasting(
-        //     {
-        //         object,
-        //         targetPosition: point,
-        //         targetRotation: rotate,
-        //         wall
-        //     }) : { position, rotation }
-
-        // let adjustedPosition = { position, rotation }
 
         object.position.copy(adjustedPosition.position);
         object.rotation.copy(adjustedPosition.rotation)
         object.userData.obb.applyMatrix4(object.matrixWorld)
 
-        object.userData.PROPS.CONFIG.POSITION = object.position.clone();
-        object.userData.PROPS.CONFIG.ROTATION = object.rotation.clone();
+        CONFIG.POSITION = object.position.clone();
+        CONFIG.ROTATION = object.rotation.clone();
+
+        object.userData.current = true
 
         scene.add(object);
 
-        if (object.userData.helper) {
-            scene.add(object.userData.helper)
-        }
+        /** Добавляем helper */
+        object.userData.helper ? scene.add(object.userData.helper) : ''
 
         /** Добавляем объект в RoomContant для последующего использования */
-
         roomManager._roomContant = object
+
+        /** Режим объединения в группы для переходящей текстуры */
+        if (this.uniformState.getUniformModeData.uniformMode) {
+
+            // const uniformTextureBuilder = this.root._trafficManager?.geometryBuilder.buildProduct.uniform_texture_builder
+            // uniformTextureBuilder.preGrouping(object)
+            return
+        }
 
         // Передаём данные созданного объекта для events
 
@@ -117,9 +107,5 @@ export class SetObject {
         boxHelper.removeBoxHelper();
         boxHelper.addBoxHelper(object);
     }
-
-    isEmpty(obj: {}) {
-        return Object.keys(obj).length === 0
-    };
 
 }

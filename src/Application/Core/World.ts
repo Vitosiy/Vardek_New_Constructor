@@ -15,6 +15,7 @@ import { DeepDispose } from "../Utils/DeepDispose"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from '@/store/appliction/useEventBus';
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 export class World {
 
@@ -23,9 +24,11 @@ export class World {
 
     deepDispose: DeepDispose
     resources: any
-    roomsStore: ReturnType<typeof useRoomState>
-    sceneState: ReturnType<typeof useSceneState>
-    eventsStore: ReturnType<typeof useEventBus>
+
+    sceneState: ReturnType<typeof useSceneState>= useSceneState()
+    roomsStore: ReturnType<typeof useRoomState>=  useRoomState()
+    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
     trafficManager: TrafficManager | null
     room: THREETypes.TRoomManager | null = null
@@ -40,9 +43,6 @@ export class World {
 
     constructor(root: THREETypes.TApplication) {
 
-        this.sceneState = useSceneState()
-        this.roomsStore = useRoomState()
-        this.eventsStore = useEventBus()
         this.deepDispose = new DeepDispose()
 
         this.trafficManager = null
@@ -58,6 +58,8 @@ export class World {
         this.onCreateRoom = this.createRoom.bind(this)
         this.onSaveRoom = this.saveRoom.bind(this)
         this.onLoadRoom = this.loadRoom.bind(this)
+
+        // this.firstCreate()
 
 
         this.scene.add(new THREE.AxesHelper(2000))
@@ -76,6 +78,16 @@ export class World {
 
     }
 
+    firstCreate() {
+        // this.enviroment = new Environment(this.root)
+        this.scene.add(new THREE.AxesHelper(2000))
+        this.room = new RoomManager(this.root, this.lights);
+        this.room.update()
+
+        this.lights.setLight(this.room._wallsGroupSize, 2)
+        this.trafficManager = new TrafficManager(this.root, this.room)
+        this.vueEvents()
+    }
 
     setRoom() {
 
@@ -103,7 +115,7 @@ export class World {
 
         if (!this.roomsStore.getCurrentRoomId) {
 
-            console.log('Комнаты ещё нет')
+            // console.log('Комнаты ещё нет')
 
             this.roomsStore.setCurrentRoomId(this.roomsStore.rooms.length)
 
@@ -128,7 +140,10 @@ export class World {
     }
 
     loadRoom(roomId: number) {
-
+        this.uniformState.clearUniformGroupMembership();
+        this.uniformState.clearUniformGroupsStors()
+        
+        console.log(this.uniformState.getUniformGroupMembership)
 
         /** Добавляем ID комнаты в хранилище */
         this.roomsStore.setCurrentRoomId(roomId);

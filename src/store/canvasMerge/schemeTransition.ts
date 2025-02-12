@@ -219,7 +219,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	const setAppData = (value: any) => {
 		SchemeTransitionData.value = value
-		console.log(SchemeTransitionData.value);
+		// console.log(SchemeTransitionData.value);
 	};
 
 	// добавление / обновление стены

@@ -4,22 +4,22 @@ import * as THREE from "three";
 import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { OBBHelper } from "./CalculateBoundingBox";
-import { separateArrows } from "./CalculateBoundingBox";
 
 export class CustomBoxHelper {
 
     private scene: THREE.Scene
     private selectedObject: THREE.Object3D | null = null;
-    private boxHelper: THREE.Mesh |THREE.BoxHelper| null = null;
+    private boxHelper: THREE.Mesh | THREE.BoxHelper | null = null;
     private root: THREETypes.TApplication
-    private obbh: OBBHelper
+    private uniformGroupsSelected: THREE.Object3D[] = [];
+    private uniformSelectBoxHelperStore: THREE.Box3Helper[] = []
+    // private obbh: OBBHelper
 
-    constructor(selectedObject: THREE.Mesh | null, scene: THREE.Scene, root: THREETypes.TApplication) {
+    constructor(root: THREETypes.TApplication) {
 
-        this.scene = scene
-        this.selectedObject = selectedObject
         this.root = root
-        this.obbh = new OBBHelper()
+        this.scene = root._scene
+        // this.obbh = new OBBHelper()
 
     }
 
@@ -35,13 +35,13 @@ export class CustomBoxHelper {
         this.boxHelper = value
     }
 
-    addBoxHelper(object: any) {
+    addBoxHelper(object: THREE.Object3D) {
 
         this.selectedObject = object
 
         if (this.selectedObject) {
 
-            this.boxHelper= new THREE.BoxHelper(this.selectedObject,  0x00ff00)
+            this.boxHelper = new THREE.BoxHelper(this.selectedObject, 0x00ff00)
 
             // console.log(this.boxHelper, '!!this.boxHelper')
             this.boxHelper.material.depthTest = false;
@@ -54,36 +54,6 @@ export class CustomBoxHelper {
             this.scene.add(this.boxHelper);
             this.boxHelper.update()
 
-            // const obb = this.selectedObject.userData.obb
-            // const size = this.selectedObject.userData.trueSizes
-
-            // const trashhold = 15
-
-
-            // const geometry = new THREE.BoxGeometry(size.x * 2 + trashhold, size.y * 2 + trashhold, size.z * 2 + trashhold);
-            // const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.25 });
-            // this.boxHelper = new THREE.Mesh(geometry, material);
-            // this.boxHelper.userData.obb = obb
-            // this.boxHelper.userData.name = 'boxHelper'
-            // this.boxHelper.renderOrder = 1
-
-
-            // const matrix4 = new THREE.Matrix4();
-            // matrix4.setFromMatrix3(obb.rotation);
-
-            // const quaternion = new THREE.Quaternion();
-            // quaternion.setFromRotationMatrix(matrix4);
-
-            // this.boxHelper.position.copy(this.selectedObject.position);
-
-            // this.boxHelper.rotation.copy(this.selectedObject.rotation);
-
-            // // this.boxHelper.updateMatrixWorld(true)
-
-            // this.scene.add(this.boxHelper);
-
-            // this.updateBoxHelper()
-
         }
     }
 
@@ -91,8 +61,6 @@ export class CustomBoxHelper {
 
         if (this.boxHelper && this.selectedObject) {
             this.boxHelper.update()
-            // this.boxHelper.position.copy(this.selectedObject.position)
-            // this.boxHelper.rotation.copy(this.selectedObject.rotation)
         }
     }
 
@@ -103,5 +71,144 @@ export class CustomBoxHelper {
             (this.boxHelper.material as THREE.Material).dispose();
             this.boxHelper = null;
         }
+    }
+
+    /** Для Переходящего рисунка uniformTextureBuilder */
+
+    createGroupBox(
+        {
+            object,
+            color,
+            store,
+        }: {
+            object: THREE.Object3D,
+            color: string,
+            store: THREE.BoxHelper[],
+            toSelect?: boolean
+        }) {
+
+        const boxHelper = new THREE.BoxHelper(object, color)
+
+        // console.log(this.boxHelper, '!!this.boxHelper')
+        boxHelper.material.depthTest = false;
+        boxHelper.material.depthWrite = false;
+        boxHelper.material.opacity = 1
+        boxHelper.material.transparent = true
+        boxHelper.renderOrder = 1
+        object.userData.groupBoxHelper = boxHelper
+
+        this.scene.add(boxHelper);
+        store.push(boxHelper)
+    }
+
+
+    toggleGroupBox(value: boolean, store: THREE.BoxHelper[]) {
+        this.clearGroupBoxStore(this.uniformSelectBoxHelperStore)
+  
+        if (store.length > 0) {
+            store.forEach(box => {
+                box.visible = value
+                box.update()
+            })
+        }
+    }
+
+    hideGroupBox(store: THREE.BoxHelper[]) {
+
+        store.forEach(box => {
+            box.visible = false
+        })
+    }
+
+    removeGroupBox(object: THREE.Object3D, store: THREE.BoxHelper[]):THREE.BoxHelper[] {
+
+        const box = object.userData.groupBoxHelper
+        if (box === null) return
+
+        const preUpdatedGroups = store.filter((element) => {
+            return element.uuid !== box.uuid
+        });
+
+        box.geometry.dispose();
+        (box.material as THREE.Material).dispose();
+        object.userData.groupBoxHelper = null;
+
+        this.scene.remove(box);
+
+        return preUpdatedGroups
+
+    }
+
+    clearGroupBoxStore(store: THREE.BoxHelper[]) {
+        store.forEach((box: THREE.BoxHelper) => {
+            box.geometry.dispose();
+            (box.material as THREE.Material).dispose();
+            this.scene.remove(box);
+        })
+        store = []
+    }
+
+
+    createSelectGroup(object) {
+
+        if ('groupBoxHelper' in object.userData) {
+            if (object.userData.groupBoxHelper !== null) return
+        }
+
+
+        const preUpdatedGroups: THREE.Object3D = this.uniformGroupsSelected.filter((element) => {
+            return element.uuid !== object.uuid
+        });
+
+        if (preUpdatedGroups.length === this.uniformGroupsSelected.length) {
+            this.uniformGroupsSelected.push(object);
+            const helper = this.createSelectBox(object)
+            this.uniformSelectBoxHelperStore.push(helper)
+
+
+        } else {
+            this.uniformGroupsSelected = preUpdatedGroups;
+            const preHelpered = this.uniformSelectBoxHelperStore.reduce((acc, item) => {
+                if (item.userData.id !== object.uuid) {
+                    acc.push(item)
+                }
+                if (item.userData.id === object.uuid) {
+                    this.removeSelectBox(item)
+                }
+                return acc
+            }, [])
+
+            this.uniformSelectBoxHelperStore = preHelpered
+
+
+        }
+    }
+
+    clearSelect() {
+        this.uniformGroupsSelected = []
+        this.clearGroupBoxStore(this.uniformSelectBoxHelperStore)
+    }
+
+    createSelectBox(object: THREE.Object3D) {
+
+        const boxHelper = new THREE.BoxHelper(object, '#FFA500')
+
+        boxHelper.material.depthTest = false;
+        boxHelper.material.depthWrite = false;
+        boxHelper.material.opacity = 1
+        boxHelper.material.transparent = true
+        boxHelper.renderOrder = 1
+        boxHelper.userData.id = object.uuid
+        this.scene.add(boxHelper);
+
+        return boxHelper
+
+
+    }
+
+    removeSelectBox(box: THREE.BoxHelper) {
+        box.geometry.dispose();
+        (box.material as THREE.Material).dispose();
+        this.scene.remove(box);
     }
 }

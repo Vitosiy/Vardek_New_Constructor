@@ -109,8 +109,6 @@ export default class CreateShape {
             this.isDrawing = true;
         }
 
-        console.log(this.scene)
-
     }
 
     updateMouseMove(event: MouseEvent) {

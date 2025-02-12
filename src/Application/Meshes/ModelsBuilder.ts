@@ -108,11 +108,9 @@ export class ModelsBuilder {
             obb = obb.fromBox3(aabb);
 
             file.userData.obb = obb
-            file.userData.trueDepth = size.z * 0.5
-            file.userData.trueHeight = size.y * 0.5
-            file.userData.trueLength = size.x * 0.5
+
             file.userData.trueSizes = {
-                z: size.z * 0.5, y: size.y * 0.5, x: size.x * 0.5
+                DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
             }
 
             file.add(arrows)

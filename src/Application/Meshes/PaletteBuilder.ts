@@ -2,7 +2,7 @@
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 
-export class PaletteBulider{
+export class PaletteBulider {
 
     parent: THREETypes.TBuildProduct
 
@@ -12,8 +12,13 @@ export class PaletteBulider{
     }
 
     createPaletteColor({ fasade, data, fasadeNdx, props }: { fasade: THREE.Object3D, data: number | string, fasadeNdx: number, props: { [key: string]: any } }) {
-        
+
         const palette = this.parent._APP.PALETTE[data]
+        const fasadeId = props.CONFIG.FASADE_PROPS[fasadeNdx].COLOR ?? 567323
+        const fasadeDataName = this.parent._FASADE[fasadeId].NAME.toLowerCase()
+
+        const roughnessValue = fasadeDataName.includes('матовый') ? 0.5 : 0.02
+
 
         if (palette.DETAIL_PICTURE != null) {
 
@@ -57,10 +62,7 @@ export class PaletteBulider{
                 children.material.color.set(`#${palette.HTML}`)
                 children.material.metalness = 0.7
 
-                children.material.roughness = 0.05
-
-                children.material.clearcoat = 1
-                children.material.clearcoatRoughness = 0
+                children.material.roughness = roughnessValue
 
                 children.material.receiveShadow = true;
                 children.material.castShadow = true;
@@ -68,8 +70,14 @@ export class PaletteBulider{
 
                 children.material.needsUpdate = true;
 
+                fasade.userData.millingMaterial = children.material
+
+                
+
             }
         })
+
+
 
         props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
         props.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = palette.ID
@@ -77,3 +85,4 @@ export class PaletteBulider{
     }
 
 }
+

@@ -8,7 +8,7 @@ import { useSceneState } from "@/store/appliction/useSceneState"
 
 export class AppLights {
     parent: THREETypes.TApplication
-    eventsStore: ReturnType<typeof useEventBus>
+    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
     scene: THREE.Scene
     params: any
     private lights: THREE.Light[] = []
@@ -19,10 +19,8 @@ export class AppLights {
         this.parent = parent
         this.scene = parent.scene
 
-
         this.params = useSceneState().getStartLightsData
-
-        this.eventsStore = useEventBus()
+        this.setQuality('low')
         this.vueEvents()
 
     }
@@ -38,10 +36,13 @@ export class AppLights {
         pointLight.castShadow = params.castShadow as boolean;
         pointLight.shadow.mapSize.set(params.mapSize as number, params.mapSize as number)
         // pointLight.shadow.bias = params.bias as number
-        pointLight.shadow.normalBias = 0.02
-        pointLight.shadow.bias = -0.0001
-        pointLight.shadow.camera.near = 0.1;
+        // pointLight.shadow.normalBias = 0.02
+        // pointLight.shadow.bias = 0.0001
+        pointLight.shadow.camera.near = 0.5;
         pointLight.shadow.camera.far = 6000;
+
+        pointLight.shadow.normalBias = 0
+        pointLight.shadow.bias = -0.001
 
         this.lights.push(pointLight)
         this.scene.add(pointLight)
@@ -112,10 +113,12 @@ export class AppLights {
                     if (light instanceof THREE.PointLight) {
                         light.shadow.map?.dispose()
                         light.shadow.map = null;
-                        light.shadow.mapSize.set(256, 256)
+                        light.shadow.mapSize.set(512, 512)
+   
+                        light.shadow.normalBias = 0
+                        light.shadow.bias = -0.001
+
                         light.shadow.needsUpdate = true;
-                        light.shadow.camera.near = 0.5;
-                        light.shadow.camera.far = 6000;
                     }
                 })
                 break;
@@ -125,11 +128,12 @@ export class AppLights {
                     if (light instanceof THREE.PointLight) {
                         light.shadow.map?.dispose()
                         light.shadow.map = null;
-
                         light.shadow.mapSize.set(512 * 2, 512 * 2)
+
+                        light.shadow.normalBias = 0
+                        light.shadow.bias = -0.0005
+
                         light.shadow.needsUpdate = true;
-                        light.shadow.camera.near = 0.5;
-                        light.shadow.camera.far = 6000;
                     }
                 })
                 break;
@@ -140,9 +144,12 @@ export class AppLights {
                         light.shadow.map?.dispose()
                         light.shadow.map = null;
                         light.shadow.mapSize.set(512 * 4, 512 * 4)
+
+  
+                        light.shadow.normalBias = 0
+                        light.shadow.bias = -0.0005
+
                         light.shadow.needsUpdate = true;
-                        light.shadow.camera.near = 0.5;
-                        light.shadow.camera.far = 6000;
                     }
                 })
                 break;

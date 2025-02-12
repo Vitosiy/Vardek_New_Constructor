@@ -7,7 +7,8 @@ export const useAppData = defineStore('AppData', () => {
 
     const setAppData = (value: any) => {
         appData.value = value
-        console.log(appData.value, 'Данные с бэка в сторе');
+        // console.log(appData.value, 'Данные с бэка в сторе');
+        console.log('Данные с бэка в сторе')
     }
 
     const getAppData = computed(() => {

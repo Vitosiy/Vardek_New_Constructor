@@ -47,9 +47,8 @@ export class Filters extends GlobalsData {
         const result = Object.entries(this._FASADE_GROUPS).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0);
+        })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
 
-        // console.log(result)
     }
 
     filteFasadeColor(items: THREETypes.TObject) {
@@ -62,7 +61,7 @@ export class Filters extends GlobalsData {
         const { FASADE_PROPS } = params
 
         // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
-        console.log(product.FASADE_POSITION, 'FP')
+
 
         const fasadePositionList = product.FASADE_POSITION
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
@@ -85,31 +84,35 @@ export class Filters extends GlobalsData {
                 FASADE_PROPS[fasadeNumber].TYPE :
                 this.project.default_fasade_up
 
+            // console.log(params.FASADE_PROPS.length < fasadePositionList.length ? this.project.default_fasade_up : null, 'hhhhhh')
+
 
             const fasadeProps: {
-                TYPE: number | null,
                 SHOW: boolean | null,
-                LIST: number | null,
+                POSITION: number | null,
                 COLOR: number | null,
                 TYPE: number | null,
                 MILLING: number | null,
                 PALETTE: number | null,
                 WINDOW: number | null,
-                ALUM: number | null
-                GLASS: number | null
+                ALUM: number | null,
+                GLASS: number | null,
+                PATINA: number | null,
 
             } = {
                 /** --- FASADE_PROPS ---*/
-                COLOR: this.project.default_fasade_up,  // params.FASADE_PROPS.length  < fasadePositionList.length ? null : this.project.default_fasade_up,
+                // COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
+                COLOR: this.project.default_fasade_up,
                 SHOW: false,
-                LIST: fasadePosition.ID,
+                POSITION: fasadePosition.ID,
                 BODY: fasad,
                 MILLING: null,
                 PALETTE: null,
                 WINDOW: null,
                 ALUM: null,
-                GLASS: null
-
+                GLASS: null,
+                PATINA: null,
+                TYPE: null,
             }
 
             FASADE_PROPS.push(fasadeProps)
@@ -118,8 +121,6 @@ export class Filters extends GlobalsData {
     }
 
     filterFasadeSizer(items: THREETypes.TObject, number: boolean | number) {
-
-        console.log('HH')
 
         const fasadeSize = this._FASADESIZE;
         const fasadeNumberSize = this._FASADENUMBERSIZE;

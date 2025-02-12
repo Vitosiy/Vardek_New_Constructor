@@ -7,42 +7,46 @@ import { CSG } from 'three-csg-ts';
 import { SUBTRACTION, Brush, Evaluator } from 'three-bvh-csg';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-import { PatternBuilder } from './PatternBuilder';
-import { BuildersHelper } from './BuildersHelper';
+// import { PatternBuilder } from './MillingsUtils/PatternBuilder';
+// import { BuildersHelper } from './BuildersHelper';
+import { MillingsUtils } from './MillingsUtils/MillingsUtils';
 
 import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
 
-export class MillingBuilder extends BuildersHelper {
+import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
+import { isConstructorDeclaration } from 'typescript';
+
+export class MillingBuilder extends MillingsUtils {
   private svgLoader: SVGLoader = new SVGLoader();
-   millingsStore = MILLINGS
-   additionaMillinglKeys = additionaMillinglKeys
-  patternBuilder: PatternBuilder
+  private millingsStore = MILLINGS
+  private additionaMillinglKeys = additionaMillinglKeys
   private result = null
-  private 
+  root: THREETypes.TApplication | null = null
+  currentObject: THREE.Object3D
+
 
   constructor(root) {
     super(root)
-    console.trace('MillingBuilder')
-
-
+    this.root = root
   }
 
-  createMillingFasade(object, fasadePosition, millingParams: number, defaultGeometry) {
+  createMillingFasade(object, fasadePosition, millingParams: number, defaultGeometry, patina) {
 
     /** Данные для корректировки положения булевой геометрии */
 
     const millingKey = this.additionaMillinglKeys[millingParams] ?? millingParams
 
-    // console.log(this.addAdditionalKeys(this.millingsStor, this.additionaMillinglKeys), 'millingParams')
-
     const millingData = this.millingsStore[millingKey] ? this.millingsStore[millingKey] : this.millingsStore[2462671]
     // console.log(millingData, 'millingData')
+
+
     /** Для дебагинга */
     // const millingData = millingParams
+    // const startMaterial = object.material.clone()
+
     let startGeometry = defaultGeometry.clone()
     let csgStartGeometry = CSG.fromGeometry(startGeometry.geometry);
     let clonedfasadePosition = JSON.parse(JSON.stringify(fasadePosition))
-
     let brush_1 = new Brush(startGeometry.geometry);
     let evaluator = new Evaluator()
 
@@ -79,12 +83,12 @@ export class MillingBuilder extends BuildersHelper {
           switch (typeof figureParams.pattern) {
 
             case 'object':
-              mesh = new PatternBuilder({
+              mesh = this.patternBuilder.createPatternMesh({
                 boolMesh,
                 figureParams,
                 fasadePosition,
                 type: figureParams.type
-              })._PatternMesh;
+              })
               // object.add(mesh) // Визуализация фрезеровки
 
               break;
@@ -99,58 +103,6 @@ export class MillingBuilder extends BuildersHelper {
 
           ({ brush_1, csgStartGeometry } = this.processMesh(mesh, brush_1, evaluator, csgStartGeometry, figureParams.lib));
 
-          // switch (typeof figureParams.pattern) {
-          //   // /** Если есть паттерн */
-          //   case 'object':
-          //     let patternBuild = new PatternBuilder(
-          //       {
-          //         boolMesh,
-          //         figureParams,
-          //         fasadePosition,
-          //         type: figureParams.type
-          //       }
-          //     )
-          //     patternMesh = patternBuild._PatternMesh
-          //     // object.add(patternMesh) /** Визуализация boolean фрезеровки */
-          //     // object.add(boolMesh)
-          //     switch (figureParams.lib) {
-
-          //       case 'bvh':
-          //         let patternBrush = new Brush(patternMesh.geometry, patternMesh.material);
-          //         patternBrush.position.copy(patternMesh.position)
-          //         patternBrush.updateMatrixWorld();
-          //         result = evaluator.evaluate(brush_1, patternBrush, SUBTRACTION);
-          //         brush_1 = new Brush(result.geometry);
-          //         break;
-          //       default:
-          //         console.log('CSG')
-          //         booleanCSGMesh = CSG.fromMesh(patternMesh);
-          //         csgStartGeometry = csgStartGeometry.subtract(booleanCSGMesh);
-          //         break;
-          //     }
-          //     break;
-
-          //   case 'undefined':
-          //     boolMesh.updateMatrixWorld(true)
-          //     // object.add(boolMesh) /** Визуализация boolean фрезеровки */
-          //     switch (figureParams.lib) {
-
-          //       case 'bvh':
-          //         let boolBrush = new Brush(boolMesh.geometry, boolMesh.material);
-          //         boolBrush.position.copy(boolMesh.position);
-          //         boolBrush.updateMatrixWorld();
-          //         result = evaluator.evaluate(brush_1, boolBrush, SUBTRACTION);
-          //         brush_1 = new Brush(result.geometry);
-          //         break;
-
-          //       default:
-          //         booleanCSGMesh = CSG.fromMesh(boolMesh);
-          //         csgStartGeometry = csgStartGeometry.subtract(booleanCSGMesh);
-          //         break;
-          //     }
-          //     break;
-          // }
-
         });
 
         break;
@@ -159,14 +111,38 @@ export class MillingBuilder extends BuildersHelper {
     // Преобразуем BSP-геометрию обратно
     let newGeometry = this.result ? this.result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
 
+
     /** Создаём UV развёртку для новой геометрии */
+
+
+    // const { geometry, material } = this.createPatinaColor(newGeometry, startMaterial)
+
+    // const { geometry, material } = this.createPatinaColor({ geometry: newGeometry, startMaterial })
 
     this.planarUV(newGeometry)
 
     /** Удаляем старую геометрию */
     object.geometry.dispose()
     object.geometry = null
-    object.geometry = newGeometry;
+    // object.geometry = newGeometry;
+
+    if (patina != null) {
+      const startMaterial = object.userData.millingMaterial
+      const { geometry, material } = this.patinaBuilder.createPatinaColor({ geometry: newGeometry, patinaId: patina, startMaterial })
+      object.geometry = geometry;
+      object.material = material
+    }
+    else {
+      object.geometry = newGeometry;
+    }
+
+
+    // object.material = material
+    // object.geometry = geometry;
+
+    // const helper = new VertexNormalsHelper(object, 10, 0x00ffff);
+    // this.scene.add(helper);
+
 
     /** Очищяем память от временной геометрии */
     newGeometry.dispose()
@@ -306,12 +282,6 @@ export class MillingBuilder extends BuildersHelper {
 
         capsuleWidth = parseInt(figureParams.length)
     }
-
-    // if (figureParams.pattern) {
-    //   if (figureParams.pattern.rotation) {
-    //     capsuleWidth = (((capsuleWidth * 0.5) / Math.sin(figureParams.pattern.rotation.z)) * 2)
-    //   }
-    // }
 
     if (figureParams.percent) {
       capsuleWidth *= figureParams.percent
@@ -598,7 +568,7 @@ export class MillingBuilder extends BuildersHelper {
         // Вычисляем значение текущего выражения
         // const computedValue = Math.floor(Math.abs(eval(expr))); // Обрабатываем выражение
 
-        const computedValue = Math.floor(Math.abs(this.calculate(expr)))
+        const computedValue = Math.floor(Math.abs(this.calculateFromString(expr)))
 
         // console.log("Вычисленное значение:", computedValue);
 
@@ -639,14 +609,14 @@ export class MillingBuilder extends BuildersHelper {
     }
     return { brush_1, csgStartGeometry };
   }
-
-  private calculate(expression) {
-    try {
-      const func = new Function("return " + expression);
-      return func();
-    } catch (error) {
-      return "Недопустимое выражение!";
-    }
-  }
+  
+  // private calculate(expression) {
+  //   try {
+  //     const func = new Function("return " + expression);
+  //     return func();
+  //   } catch (error) {
+  //     return "Недопустимое выражение!";
+  //   }
+  // }
 
 }
