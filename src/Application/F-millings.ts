@@ -1,5 +1,5 @@
 
-
+//@ts-nocheck
 export const additionaMillinglKeys = {
     // Модерн
     2839850: "566720",
@@ -11717,7 +11717,7 @@ export const MILLINGS = {
     ], /** Алюминевая рамка _4 */
 }
 
-
+//@ts-nocheck
 const exampleHard = [
     {
         name: "Left",
