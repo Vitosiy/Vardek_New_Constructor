@@ -16,12 +16,14 @@ import { useModelState } from "@/store/appliction/useModelState";
 
 const eventBus = useEventBus();
 const objectData = useObjectData().getObjectData;
+
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 const _MILLING = _APP.MILLING;
 
 /** Состояния выбранной модели */
 const modelState = useModelState();
+console.log(useModelState().getCurrentModel, 'MODEL STATE COLOR');
 
 const productColor = ref<{ [key: string]: any }>({});
 
@@ -54,13 +56,13 @@ const selectWindow = ref<any>(null);
 /**------------------------------ */
 
 onMounted(() => {
-  productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST;
+  productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST; // корпус
 
-  productFasades.value = objectData?.PROPS.CONFIG.FASADE_PROPS;
+  productFasades.value = objectData?.PROPS.CONFIG.FASADE_PROPS; // количество фасадов модели
 
-  fasades.value = modelState.getCurrentModelFasadesData;
+  fasades.value = modelState.getCurrentModelFasadesData; // текущий фасады редактирования ?
 
-  productData.value = { ...objectData?.PROPS };
+  productData.value = { ...objectData?.PROPS }; // претендент на удаление. Дублирование данных
 
   createTabList(productFasades.value);
 });

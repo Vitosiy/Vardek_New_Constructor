@@ -3,6 +3,7 @@
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
+import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue"
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
 import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage.vue";
 
@@ -46,6 +47,9 @@ const togglePopup = () => {
       <div class="cusomiser-main">
         <RulerPage v-if="customiserStore.customisers == 'ruler'" />
         <ColorPage v-if="customiserStore.customisers == 'color'" />
+        <!--
+          <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
+        -->
         <MovingPage v-if="customiserStore.customisers == 'moving'" />
         <FigurePage v-if="customiserStore.customisers == 'figure'" />
       </div>

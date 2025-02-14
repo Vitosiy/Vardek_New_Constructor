@@ -3,17 +3,17 @@
     <!-- Навигация -->
     <div class="tabs-navigation">
       <button
-        v-for="tab in tabs"
+        v-for="(tab, i) in tabs"
         :key="tab.name"
         :class="{ active: selectedTab === tab.name }"
-        @click="selectTab(tab.name)"
+        @click="selectTab(tab.name, i)"
       >
         {{ tab.label }}
       </button>
     </div>
 
     <!-- Содержимое выбранного таба -->
-    <div class="tabs-content">
+    <!-- <div class="tabs-content">
       <div
         v-for="tab in tabs"
         :key="tab.name"
@@ -21,7 +21,7 @@
       >
         <slot :name="tab.name" v-if="selectedTab === tab.name" />
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -58,7 +58,8 @@ selectedTab.value =
   props.initialTab || (props.tabs.length > 0 ? props.tabs[0].name : null);
 
 // Метод для смены таба
-const selectTab = (name: string) => {
+const selectTab = (name: string, index: number) => {
+  
   selectedTab.value = name;
   emit("tab-change", name);
 };
