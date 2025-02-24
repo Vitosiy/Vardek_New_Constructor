@@ -1,15 +1,10 @@
-//@ts-nocheck
-import {
-  watch
-} from 'vue';
 import * as PIXI from 'pixi.js';
 import { MathUtils } from "three";
-import { useRulers2DStore } from '@/store/constructor2d/store/useRulersStore';
-import { useConstructor2DStore } from "@/store/constructor2d/store/useConstructor2DStore";
 
 export default class Rulers {
   
   private app: PIXI.Application; // Экземпляр приложения PIXI, используется для управления графикой и сценой
+  private parent: any;
   private container: PIXI.Container; // Главный контейнер для всех элементов линейки (графика, текстовые метки)
   
   private topRulerSegmentsGraphics: PIXI.Graphics; // Графика для отображения сегментов верхней линейки
@@ -19,23 +14,27 @@ export default class Rulers {
   private leftRulerSegmentNumbers: PIXI.Container; // Контейнер для числовых меток левой линейки
   
   private pureSquareGraphics: PIXI.Graphics; // Графика для отображения квадрата начала координат (точка пересечения осей)
+
+  public config: any = {
+
+    visibleText: true,
+    limitMaxSegmentsForText: 15,
+
+    space: 30,
+    segmentSize: 100,
+    edgeColor: 0x5D6069,
+    segmentText: 100,
   
-  private rulerStore = useRulers2DStore(); // Стор для управления состоянием и параметрами линейки
-  private constructorStore = useConstructor2DStore(); // Стор для управления состоянием конструктора 2D  
-
-  private visibleTextRuler: boolean = true;
-  private limitMaxSegmentsForText = 15;
-
-  // Массив для хранения функций отписки
-  private unwatchList: (() => void)[] = [];
-
-  constructor(pixiApp: PIXI.Application) {
+  }
+  
+  constructor(pixiApp: PIXI.Application, parent: any) {
 
     if (!pixiApp) { // Проверяем, был ли передан экземпляр PIXI.Application
       throw new Error("PIXI.Application instance is required"); // Если не передан, выбрасываем ошибку
     }
     
     this.app = pixiApp; // Присваиваем переданный экземпляр PIXI.Application переменной app
+    this.parent = parent;
     
     this.container = new PIXI.Container(); // Создаём новый контейнер для всех элементов линейки
     this.app.stage.addChild(this.container); // Добавляем этот контейнер на сцену приложения PIXI
@@ -54,103 +53,41 @@ export default class Rulers {
     
     this.pureSquareGraphics = new PIXI.Graphics(); // Инициализируем графику для квадрата начала координат
     this.container.addChild(this.pureSquareGraphics); // Добавляем графику квадрата в общий контейнер
-    
-    // this.constructorStore.$subscribe(() => { // Подписываемся на изменения в состоянии конструктора
-    //   this.handleConstructorStoreChange(); // Вызываем метод для обработки изменений в состоянии конструктора
-    // });
-    
-    this.init(); // Вызываем метод инициализации (рисование линейки и квадрата)
 
-    this.unwatchList.push(
-      // Используем watch для наблюдения за изменениями в store
-      watch(
-        () => this.constructorStore, // Источник данных, за которым наблюдаем
-        () => {
-          this.handleConstructorStoreChange(); // Вызываем обработчик изменений
-        },
-        { deep: true } // Глубокое отслеживание (необходимо, если наблюдаем за вложенными объектами)
-      )
-    );
-    
-    this.unwatchList.push(
-      watch(
-        () => this.constructorStore.scale,
-        (scale) => {
-
-          // const width = (this.app.renderer.width - 30) * this.constructorStore.getInverseScale; // Вычисляем доступную ширину линейки по холсту
-
-          // const segmentSize = this.rulerStore.getSegmentSize * (1 / scale); // размер деления линейки (сегмент линейки)егмента линейки)
-          
-          // let countSegments = Math.ceil(width / segmentSize); // получаем количество сегментов
-
-          // console.log("countSegments:", this.app.renderer.width, scale, countSegments);
-
-          // const cs = Math.ceil(width*widthInverse) / (segmentSize * scale));
-
-          // this.rulerStore.setSegmentSize(segmentSize * scale);
-          // this.rulerStore.setTextSegment(i * cs);
-
-          /*
-          if(countSegments > 10){
-
-            for(let i=2;;i++){
-
-              const cs = Math.ceil(width / ((segmentSize * i) * scale));
-              
-              if(cs > 20){
-                
-                this.rulerStore.setSegmentSize(ss);
-                this.rulerStore.setTextSegment(i * cs);
-                
-                break;
-              }
-              
-            }
-
-          }
-          */
-      
-          this.drawRulers(); // Перерисовываем линейки
-        }
-      )
-    );
-  
-  }
-
-  private init(): void { // Метод инициализации линейки и элементов
     this.drawRulers(); // Вызываем метод для рисования верхней и левой линейки
-
     this.drawPureSquare(); // Рисуем квадрат в точке пересечения линеек
+
   }
 
   public drawRulers(): void { // Метод для рисования всех линеек
 
     if(!this.app || !this.app.renderer) return;
     
-    this.visibleTextRuler = true;
+    this.config.visibleText = true;
 
     { // count top segments
-      const width = this.app.renderer.width - this.rulerStore.rulerSpace;
-      const segmentWidth = this.rulerStore.segmentSize * this.constructorStore.getScale;
+      const width = this.app.renderer.width - this.config.space;
+      const segmentWidth = this.config.segmentSize * this.parent.config.scale;
       const countSegments = Math.ceil(width / segmentWidth);
-      if(countSegments >= this.limitMaxSegmentsForText) this.visibleTextRuler = false;
+      if(countSegments >= this.config.limitMaxSegmentsForText) this.config.visibleText = false;
     }
 
     { // count legt segments
-      const length = this.app.renderer.height - this.rulerStore.rulerSpace;
-      const segmentWidth = this.rulerStore.segmentSize * this.constructorStore.getScale;
+      const length = this.app.renderer.height - this.config.space;
+      const segmentWidth = this.config.segmentSize * this.parent.config.scale;
       const countSegments = Math.ceil(length / segmentWidth);
-      if(countSegments >= this.limitMaxSegmentsForText) this.visibleTextRuler = false;
+      if(countSegments >= this.config.limitMaxSegmentsForText) this.config.visibleText = false;
     }
-    
+
     this.drawTopRuler(); // Вызываем метод для рисования верхней линейки
     this.drawLeftRuler(); // Вызываем метод для рисования левой линейки
+    
   }
 
   public drawPureSquare(): void { // Метод для рисования квадрата пересечения линеек
 
-    const size = this.rulerStore.rulerSpace; // Получаем размер квадрата из стора линейки
-    const color = this.rulerStore.edgeColor; // Получаем цвет линий из стора линейки
+    const size = this.config.space; // Получаем размер квадрата из стора линейки
+    const color = this.config.edgeColor; // Получаем цвет линий из стора линейки
 
     this.pureSquareGraphics.rect(0, 0, size, size); // Создаём прямоугольник с координатами (0, 0) и размером size
     this.pureSquareGraphics.fill(0xffffff); // Заливаем квадрат белым цветом
@@ -164,18 +101,18 @@ export default class Rulers {
     this.pureSquareGraphics.stroke({ color: color }); // Применяем цвет линии для правой границы
 
   }
-
+  
   private drawTopRuler(): void { // Метод для рисования верхней линейки
-    const startRulerCoordinatesX = this.constructorStore.originOfCoordinates.x + 30; // Определяем начальную координату нуля по оси X
+    const startRulerCoordinatesX = this.parent.config.originOfCoordinates.x + 30; // Определяем начальную координату нуля по оси X
 
     this.topRulerSegmentsGraphics.clear(); // Очищаем графику сегментов верхней линейки
     this.topRulerSegmentNumbers.removeChildren(); // Удаляем все числовые метки верхней линейки
 
-    const height = this.rulerStore.rulerSpace; // Получаем высоту линейки из стора линейки
+    const height = this.config.space; // Получаем высоту линейки из стора линейки
     const width = this.app.renderer.width - height; // Вычисляем доступную ширину линейки
     const startPositionX = height; // Устанавливаем начальную позицию X для рисования линейки
-    const color = this.rulerStore.edgeColor; // Устанавливаем цвет линий линейки из стора линейки
-    const segmentWidth = this.rulerStore.segmentSize * this.constructorStore.getScale; // Получаем ширину одного сегмента линейки
+    const color = this.config.edgeColor; // Устанавливаем цвет линий линейки из стора линейки
+    const segmentWidth = this.config.segmentSize * this.parent.config.scale; // Получаем ширину одного сегмента линейки
 
     this.topRulerSegmentsGraphics.rect(startPositionX, 0, width, height); // Рисуем прямоугольник фона линейки
     this.topRulerSegmentsGraphics.fill({ color: 0xffffff }); // Заливаем фон белым цветом
@@ -196,10 +133,10 @@ export default class Rulers {
       this.topRulerSegmentsGraphics.lineTo(x - segmentWidth, height); // Конец горизонтальной линии сегмента
       this.topRulerSegmentsGraphics.stroke({ color: color }); // Рисуем горизонтальную линию
 
-      if(this.visibleTextRuler){
+      if(this.config.visibleText){
         if (i > 0) { // Проверяем, что сегмент не первый, чтобы добавить метку
           const label = new PIXI.Text({ // Создаём текстовую метку
-            text: `${-i * this.rulerStore.getTextSegment * 10}`, // Текст метки, вычисляется как отрицательная координата
+            text: `${-i * this.config.segmentText * 10}`, // Текст метки, вычисляется как отрицательная координата
             style: {
               fontSize: 16, // Размер текста метки
               fill: color, // Цвет текста метки
@@ -229,9 +166,9 @@ export default class Rulers {
         this.topRulerSegmentsGraphics.stroke({ color: color }); // Рисуем горизонтальную линию
       }
 
-      if(this.visibleTextRuler){
+      if(this.config.visibleText){
         const label = new PIXI.Text({ // Создаём текстовую метку
-          text: `${i * this.rulerStore.getTextSegment * 10}`, // Текст метки, вычисляется как положительная координата
+          text: `${i * this.config.segmentText * 10}`, // Текст метки, вычисляется как положительная координата
           style: {
             fontSize: 16, // Размер текста метки
             fill: color, // Цвет текста метки
@@ -243,20 +180,20 @@ export default class Rulers {
       }
     }
   }
-
+    
   private drawLeftRuler(): void { // Метод для рисования левой линейки
-    const startRulerCoordinatesX = this.constructorStore.originOfCoordinates.y + 30; // Устанавливаем точку отсчета 0 по оси Y
+    const startRulerCoordinatesX = this.parent.config.originOfCoordinates.y + 30; // Устанавливаем точку отсчета 0 по оси Y
 
     this.leftRulerSegmentsGraphics.clear(); // Очищаем графику для сегментов левой линейки
     this.leftRulerSegmentNumbers.removeChildren(); // Удаляем все метки из контейнера числовых меток
 
-    const width = this.rulerStore.rulerSpace; // Получаем ширину левой линейки из стора
+    const width = this.config.space; // Получаем ширину левой линейки из стора
     const height = this.app.renderer.height - width; // Рассчитываем доступную высоту для левой линейки
 
     const startPositionY = width; // Определяем начальную позицию по оси Y
-    const color = this.rulerStore.edgeColor; // Устанавливаем цвет линий левой линейки из стора
+    const color = this.config.edgeColor; // Устанавливаем цвет линий левой линейки из стора
 
-    const segmentHeight = this.rulerStore.segmentSize * this.constructorStore.getScale; // Получаем высоту одного сегмента линейки
+    const segmentHeight = this.config.segmentSize * this.parent.config.scale; // Получаем высоту одного сегмента линейки
 
     this.leftRulerSegmentsGraphics.rect(0, startPositionY, width, height); // Рисуем фон левой линейки в виде прямоугольника
     this.leftRulerSegmentsGraphics.fill({ color: 0xffffff }); // Заливаем фон белым цветом
@@ -277,10 +214,10 @@ export default class Rulers {
       this.leftRulerSegmentsGraphics.lineTo(width, y - segmentHeight); // Рисуем вертикальную линию сегмента
       this.leftRulerSegmentsGraphics.stroke({ color: color }); // Применяем цвет линии
 
-      if(this.visibleTextRuler){
+      if(this.config.visibleText){
         if (i > 0) { // Условие: текстовую метку добавляем только если это не первый сегмент
           const label = new PIXI.Text({ // Создаём текстовую метку для сегмента
-            text: `${-i * this.rulerStore.getTextSegment * 10}`, // Значение метки (отрицательное для сегментов выше нуля)
+            text: `${-i * this.config.segmentText * 10}`, // Значение метки (отрицательное для сегментов выше нуля)
             style: {
               fontSize: 16, // Устанавливаем размер шрифта
               fill: color, // Устанавливаем цвет текста
@@ -308,9 +245,9 @@ export default class Rulers {
       this.leftRulerSegmentsGraphics.lineTo(width, y + segmentHeight); // Рисуем вертикальную линию сегмента
       this.leftRulerSegmentsGraphics.stroke({ color: color }); // Применяем цвет линии
 
-      if(this.visibleTextRuler){
+      if(this.config.visibleText){
         const label = new PIXI.Text({ // Создаём текстовую метку для сегмента
-          text: `${i * this.rulerStore.getTextSegment * 10}`, // Значение метки (положительное для сегментов ниже нуля)
+          text: `${i * this.config.segmentText * 10}`, // Значение метки (положительное для сегментов ниже нуля)
           style: {
             fontSize: 16, // Устанавливаем размер шрифта
             fill: color, // Устанавливаем цвет текста
@@ -328,17 +265,7 @@ export default class Rulers {
 
   }
 
-  private handleConstructorStoreChange(): void { // Метод для обработки изменений в состоянии конструктора
-
-    this.drawRulers(); // Перерисовываем линейки при изменении данных в сторе конструктора
-
-  }
-
   public destroy(): void {
-
-    // Отписываемся от всех наблюдателей
-    this.unwatchList.forEach(unwatch => unwatch());
-    this.unwatchList = []; // Очищаем массив для безопасности
     
     // Очистка верхней линейки
     if (this.topRulerSegmentsGraphics) {
@@ -372,8 +299,9 @@ export default class Rulers {
       this.container = null!;
     }
 
+    this.config = null;
     // Обнуление ссылок
     this.app = null!;
   }
 
-}
+};

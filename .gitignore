@@ -27,3 +27,4 @@ Ideas
 *.sw?
 *.dump.ts
 *.dump.vue
+*__dump

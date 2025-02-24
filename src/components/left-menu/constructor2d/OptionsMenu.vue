@@ -1,11 +1,15 @@
 <script setup lang="ts">
 //@ts-nocheck
-import { ref } from 'vue'
+import { 
+  ref,
+  onMounted,
+  onUnmounted
+} from 'vue'
 // import { MathUtils } from "three";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 
-import { useC2DLeftMenuStore    } from "@/store/constructor2d/store/useLeftMenuStore";
+import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
 
 const constructor2dMenu = useC2DLeftMenuStore();
@@ -13,49 +17,69 @@ const constructor2dMenu = useC2DLeftMenuStore();
 const menuItemActive = ref<string | null>(null);
 const goodItemActive = ref<string | null>(null);
 
-const invisibleElement = document.createElement('div');
-invisibleElement.style.width = '1px';
-invisibleElement.style.height = '1px';
-invisibleElement.style.opacity = '0'; // Убедимся, что он полностью невидим
-document.body.appendChild(invisibleElement);
+let img = new Image();
+img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
 
-function handleClick(id: string): void {
-  
-  menuItemActive.value = menuItemActive.value === id ? null : id;
-  goodItemActive.value = null;
+// Функция для обработки кликов по элементам товаров
+let handleGoodClick = (event: Event) => {
+  const target = (event.target as HTMLElement).closest('.goods-item'); // Ищем ближайший родительский .goods-item
+  if (target) {
+    const id = target.dataset.id;
 
-  const activeSection = catalogSections.find((el) => el.id === menuItemActive.value);
-  constructor2dMenu.setInteractionMode(activeSection?.nameMode || '');
-  
-}
+    menuItemActive.value = menuItemActive.value === id ? null : id;
+    goodItemActive.value = null;
 
-function goodItemDrag(e: DragEvent, id: string): void {
-  // Функция обрабатывает клик по элементу товара в каталоге.
-  // Принимает два параметра:
-  // - e: объект события DragEvent (например, для перетаскивания элемента);
-  // - id: строка, идентификатор товара.
-  
-  // Находим текущую активную секцию каталога по её id, хранимом в menuItemActive.
-  const section = catalogSections.find((el) => el.id === menuItemActive.value);
-  
-  // В найденной секции ищем товар с заданным идентификатором id.
-  const item = section?.goods?.find((el) => el.id === id);
+    const activeSection = catalogSections.find((el) => el.id === menuItemActive.value);
+    constructor2dMenu.setInteractionMode(activeSection?.nameMode || '');
+  }
+};
 
-  if (item) {
-    // Если товар найден, выполняются следующие действия:
-    // Устанавливаем идентификатор текущего активного товара.
-    goodItemActive.value = id;
+let goodItemDrag = (e: DragEvent): void => {
+  const target = (event.target as HTMLElement).closest('.goods-list-item__icon'); // Ищем ближайший родительский .goods-list-item__icon
+  if(target){
+    const id = target.dataset.id;
     
-    // Вызываем метод `setGoodActive`, чтобы отметить товар активным в меню конструктора.
-    constructor2dMenu.setGoodActive(item.nameMode);
+    // Находим текущую активную секцию каталога по её id, хранимом в menuItemActive.
+    const section = catalogSections.find((el) => el.id === menuItemActive.value);
     
-    // Настраиваем данные для перетаскивания (drag-and-drop).
-    e.dataTransfer?.setData('good', item.nameMode); // Передаём имя модели товара.
-    // e.dataTransfer.effectAllowed = 'move';         // Указываем, что элемент можно перемещать.
-    // Скрываем отображение перетаскиваемого объекта
-    e.dataTransfer?.setDragImage(invisibleElement, -9999, -9999);
+    // В найденной секции ищем товар с заданным идентификатором id.
+    const item = section?.goods?.find((el) => el.id === id);
+
+    if (item) {
+      // Если товар найден, выполняются следующие действия:
+      // Устанавливаем идентификатор текущего активного товара.
+      goodItemActive.value = id;
+      
+      // Вызываем метод `setGoodActive`, чтобы отметить товар активным в меню конструктора.
+      constructor2dMenu.setGoodActive(item.nameMode);
+      
+      // Настраиваем данные для перетаскивания (drag-and-drop).
+      e.dataTransfer?.setData('good', item.nameMode); // Передаём имя модели товара.
+      e.dataTransfer.setDragImage(img, 0, 0);
+    }
   }
 }
+
+// если добавляется компонент в DOM
+onMounted(() => {
+
+  document.addEventListener('click', handleGoodClick);
+  document.addEventListener('dragstart', goodItemDrag);
+  
+});
+
+// если удаляется компонент из DOM
+onUnmounted(() => {
+
+  document.removeEventListener('click', handleGoodClick);
+  document.removeEventListener('dragstart', goodItemDrag);
+  handleGoodClick = null;
+  goodItemDrag = null;
+  img = null;
+  constructor2dMenu.setInteractionMode(''); // Сброс режима взаимодействия
+  constructor2dMenu.setGoodActive(''); // Сброс активного товара
+  
+});
 
 </script>
 
@@ -89,7 +113,7 @@ function goodItemDrag(e: DragEvent, id: string): void {
             <div :key="index" 
               class="goods-item" 
               :class="item.id === menuItemActive ? 'active' : ''" 
-              @click="handleClick(item.id)">
+              :data-id="item.id">
               <div class="goods-item__image">
                 <svg :width="item.icon.width" :height="item.icon.height" :viewBox="item.icon.viewBox" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fill-rule="evenodd" clip-rule="evenodd" :d="item.icon.d" fill="#5D6069"/>
@@ -103,8 +127,8 @@ function goodItemDrag(e: DragEvent, id: string): void {
               <div class="goods-list-item" v-if="item.goods" v-for="(gItem, i) in item.goods" :key="i">
                 <div class="goods-list-item__icon" 
                   :class="gItem.id === goodItemActive ? 'active' : ''"
-                  draggable="true" @dragstart="goodItemDrag($event, gItem.id)">
-                  <img v-if="gItem.icon !== ''" :src="'./src/assets/img/'+gItem.icon">
+                  draggable="true" :data-id="gItem.id">
+                  <img v-if="gItem.icon !== ''" :src="`/images/${gItem.icon}`">
                 </div>
                 <p>{{ gItem.name }}</p>
               </div>

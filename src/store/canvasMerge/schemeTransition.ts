@@ -5,7 +5,7 @@ import { computed, ref, reactive } from 'vue';
 
 import {
 	getCenterOfPoints
-} from "@/Constructor2D/utils/Math";
+} from "@/Constructor2D/utils/Math/index";
 
 export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
@@ -155,8 +155,20 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			side: 0
 		}
 
-		if (indexWall < 0) {
-			room.size.walls.push(wData);
+		if (indexWall == -1) {
+			if(data.wall.mergeWalls.wallPoint0){
+				const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint0);
+				if(indexMergeWall != -1){
+					room.size.walls.splice(indexMergeWall, 0, wData);
+				}
+			}else if(data.wall.mergeWalls.wallPoint1){
+				const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint1);
+				if(indexMergeWall != -1){
+					room.size.walls.splice(indexMergeWall + 1, 0, wData);
+				}
+			}else {
+				room.size.walls.push(wData);
+			}
 		} else {
 			room.size.walls[indexWall] = wData;
 		}

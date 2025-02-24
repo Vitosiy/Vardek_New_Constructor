@@ -1,37 +1,19 @@
-import {
-  watch,
-  // ref
-} from 'vue';
 import * as PIXI from 'pixi.js';
 
-import Grid from "./CanvasComponents/Grid";
-import Rulers from "./CanvasComponents/Rulers";
-import Planner from "./CanvasComponents/Planner";
-import ArrowRulerActiveObject from "./CanvasComponents/ArrowRulerActiveObject";
-import StartPointActiveObject from "./CanvasComponents/StartPointActiveObject";
-import SizeTextActiveObject from "./CanvasComponents/SizeTextActiveObject";
+import Grid from "./Layers/Grid";
+import Rulers from "./Layers/Rulers";
+import Planner from "./Layers/Planner";
+import ArrowRulerActiveObject from "./Layers/ArrowRulerActiveObject";
+import StartPointActiveObject from "./Layers/StartPointActiveObject";
 
-// import { threejsScene } from "./threejsScene/index";
-
-/*
-import {
-  DropData
-} from "@/types/constructor2d/interfaсes";
-*/
-
-import { useConstructor2DStore } from '@/store/constructor2d/store/useConstructor2DStore';
-import { useC2DInteractiveWallStore } from "@/store/constructor2d/store/useInteractiveWallStore";
-import { usePlanner2DStore } from "@/store/constructor2d/store/usePlannerStore";
-import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import {
   calculateMouseDistanceByAxes
 } from "./utils/Math";
 
-interface Components {
+interface Layers {
   grid: Grid | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
-  sizeTextActiveObject: SizeTextActiveObject | null;
   startPointActiveObject: StartPointActiveObject | null;
   rulers: Rulers | null;
 }
@@ -41,42 +23,66 @@ export default class Constructor2D {
   private container: HTMLElement;
   private canvas: HTMLCanvasElement;
   private app2d: PIXI.Application | null = null;
-  private components: Components = {
+  public layers: Layers = {
     grid: null,
     arrowRulerActiveObject: null,
     planner: null,
-    sizeTextActiveObject: null,
     startPointActiveObject: null,
     rulers: null,
   };
 
-  private constructorStore = useConstructor2DStore(); // constructor2D хранилище
-  private interactiveWallStore = useC2DInteractiveWallStore();
-  private plannerStore = usePlanner2DStore();
-  private roomStore = useSchemeTransition();
+  public config: any | null = {
 
-  // Массив для хранения функций отписки
-  private unwatchList: (() => void)[] = [];
+    scale: 1,
+    speedScale: 0.01,
+    minScale: 0.3,
+    maxScale: 2,
+    inverseScale: 1,
+
+    originOfCoordinates: {
+      x: 0,
+      y: 0
+    },
+    
+  }
+
+  // параметры состояния
+  public state: any | null = {
+
+    mouse: {
+      left: false,
+      right: false,
+      downCoordinates: {
+        x: 0,
+        y: 0
+      }
+    },
+
+    keys: {
+      ctrl: false,
+      shift: false
+    },
+
+    oldOriginOfCoordinates: {
+      x: 0,
+      y: 0
+    },
+    
+  }
 
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
+    
+    if (!container || !canvas) {
+      throw new Error('Container and canvas elements are required.');
+    }
     this.container = container;
     this.canvas = canvas;
 
-    this.unwatchList.push(
-      watch (
-        () => this.interactiveWallStore.activeObjectID,
-        (newVal) => {
-          if (newVal === 0 && !this.interactiveWallStore.statusLeftDownMouse) {
-            this.clearAllGraphics();
-          }
-        }
-      )
-    );
   }
 
   async init(): Promise<void> {
     if (this.app2d) return;
-
+        
     this.app2d = new PIXI.Application();
     await this.app2d.init({
       canvas: this.canvas,
@@ -86,137 +92,31 @@ export default class Constructor2D {
       resolution: window.devicePixelRatio || 1
     });
     this.app2d.stage.hitArea = this.app2d.screen;
-    this.app2d.stage.eventMode = 'static';
+    this.app2d.stage.eventMode = 'static'; // чтобы работали события на root-контейнере
 
-    // test threejs scene
-    // threejsScene();
+    // this.app2d?.ticker.add(() => {
+    //   console.log(this.app2d?.ticker.FPS);
+    // });
 
-    this.initComponents();
-    this.setupInteractions();
+    this.layers.grid = new Grid(this.app2d, this);
+    this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
+    this.layers.planner = new Planner(this.app2d!, this);
+    this.layers.startPointActiveObject = new StartPointActiveObject(this.app2d!, this);
+    this.layers.rulers = new Rulers(this.app2d!, this);
 
-    this.handleResize();
-    window.addEventListener('resize', this.handleResize.bind(this));
-    window.addEventListener('keydown', this.handleKeyDown.bind(this));
-  }
-
-  private initComponents(): void {
-    this.components.grid = new Grid(this.app2d!);
-    this.components.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!);
-    this.components.planner = new Planner(this.app2d!);
-    this.components.startPointActiveObject = new StartPointActiveObject(this.app2d!);
-    this.components.rulers = new Rulers(this.app2d!);
-  }
-
-  private handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === "Delete" || event.key === "Backspace") {
-      const activeObj = this.interactiveWallStore.getActiveObjectID;
-      if(this.components.planner && activeObj){
-        
-        this.interactiveWallStore.setActiveObjectID(0);
-        // // this.plannerStore.updatedMergeWalls(activeObj);
-        this.components.planner?.setActiveObject("wall", null);
-        this.plannerStore.removeObj(activeObj);
-        this.roomStore.removeWall({
-          idRoom: this.roomStore.getSchemeTransitionData[0].id,
-          idWall: activeObj
-        });
-        
-      }
-    }
-  }
-
-  private handleResize(): void {
-    if (this.app2d) {
-      this.app2d.renderer.resize(this.container.clientWidth, this.container.clientHeight);
-      if(this.components.rulers) this.components.rulers.drawRulers();
-      if(this.components.grid) this.components.grid.drawGrid();
-      if(this.components.grid) this.components.grid.drawGridAxisLines();
-    }
-  }
-
-  public addDoor(): void {
-    if (!this.components.planner) return;
-    // Логика добавления двери в Store
-  }
-
-  public clearAllGraphics(): void {
-    this.components.startPointActiveObject?.clearGraphic();
-    this.components.arrowRulerActiveObject?.clearGraphic();
-    this.components.sizeTextActiveObject?.clearGraphic();
-  }
-
-  destroy(): void {
-    if (this.app2d) {
-    
-      // Отписываемся от всех наблюдателей
-      this.unwatchList.forEach(unwatch => unwatch());
-      this.unwatchList = []; // Очищаем массив наблюдателей для безопасности
-
-      // Удаляем обработчики событий с канвы
-      this.removeInteractions();
-
-      // Удаляем resize listener
-      window.removeEventListener('resize', this.handleResize.bind(this));
-      window.removeEventListener('keydown', this.handleKeyDown.bind(this));
-
-      // Удаляем все компоненты
-      for (const key in this.components) {
-        const component = this.components[key as keyof Components];
-        if (component && typeof component.destroy === 'function') {
-          component.destroy();
-        }
-        this.components[key as keyof Components] = null;
-      }
-
-      // Уничтожаем приложение PIXI
-      this.app2d.destroy(true, { children: true });
-      this.app2d = null;
-    }
-  }
-
-  private setupInteractions(): void {
-    const stage = this.app2d?.stage;
-
-    if (!stage) return;
-
-    stage
-      .on('pointerdown', this.onClick.bind(this))
+    this.app2d.stage
       .on('rightdown', this.onRightDown.bind(this))
       .on('rightup', this.onRightUp.bind(this))
-      .on('pointerout', this.onRightUp.bind(this))
       .on('pointermove', this.onPointerMove.bind(this))
+      .on('pointerout', this.onRightUp.bind(this))
+      .on('pointerdown', this.onClick.bind(this))
       .on('wheel', this.onWheel.bind(this));
+
+    window.addEventListener('resize', this.handleResize.bind(this));
+    window.addEventListener('keydown', this.handleKeyDown.bind(this)); // нажатие на кнопку backspace или другие
+    
   }
-
-  private removeInteractions(): void {
-    const stage = this.app2d?.stage;
-
-    if (!stage) return;
-
-    stage
-      .off('pointerdown', this.onClick)
-      .off('rightdown', this.onRightDown)
-      .off('rightup', this.onRightUp)
-      .off('pointerout', this.onRightUp)
-      .off('pointermove', this.onPointerMove)
-      .off('wheel', this.onWheel);
-  }
-
-  private onWheel(e: WheelEvent): void {
-    e.preventDefault();
-
-    let currentScale: number = this.constructorStore.getScale;
-    const scaleSpeed: number = this.constructorStore.getScaleSpeed;
-
-    if (e.deltaY < 0) {
-      currentScale += scaleSpeed;
-    } else if (e.deltaY > 0) {
-      currentScale -= scaleSpeed;
-    }
-
-    this.constructorStore.setScale(currentScale);
-  }
-
+  
   private onClick(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
 
@@ -224,56 +124,164 @@ export default class Constructor2D {
     
     if (e.button !== 0) return;
 
-    if (!this.interactiveWallStore.statusLeftDownMouse) {
-      const activeObj = this.interactiveWallStore.getActiveObjectID;
-      if(activeObj != 0) this.plannerStore.updatedObject(activeObj); 
-      this.interactiveWallStore.setActiveObjectID(0);
-      this.plannerStore.updatedMergeWalls(activeObj);
-      this.components.planner?.setActiveObject("wall", null);
+    if (
+      !this.state.mouse.left && 
+      this.layers.planner && 
+      this.layers.planner.state.activeWall
+    ) {
+      this.layers.planner?.deactiveWalls();
+      this.layers.arrowRulerActiveObject?.clearGraphic();
+      this.layers.startPointActiveObject?.activate(false);
     }
 
   }
 
+  // если нажали на правую кнопку мыши в области холста
   private onRightDown(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
 
-    this.constructorStore.toggleRightBtn();
-    this.constructorStore.updataRightClickPosition(e.global.x, e.global.y);
-    this.constructorStore.updatePrevOriginOfCoordinates(
-      this.constructorStore.originOfCoordinates.x,
-      this.constructorStore.originOfCoordinates.y
-    );
+    this.state.oldOriginOfCoordinates.x = this.config.originOfCoordinates.x;
+    this.state.oldOriginOfCoordinates.y = this.config.originOfCoordinates.y;
+    
+    this.state.mouse.downCoordinates.x = e.global.x;
+    this.state.mouse.downCoordinates.y = e.global.y;
+    
+    this.state.mouse.right = true;
+    
   }
 
+  // если отпустили правую кнопку мыши в области холста
   private onRightUp(e: PIXI.FederatedPointerEvent): void {
     e.preventDefault();
-    if(this.constructorStore.mouse.rightBtn){
-      this.constructorStore.toggleRightBtn();
+    
+    this.state.mouse.right = false;
+    
+  }
+
+  // если происхожит смещение курсора над областью холста
+  private onPointerMove(e: PIXI.FederatedPointerEvent): void {
+
+    e.preventDefault();
+
+    if (this.state.mouse.right) {
+
+      // рассчитываем расстояние между точкой клика правой кнопкой мыши и курсором
+      const { distanceX, distanceY } = calculateMouseDistanceByAxes(
+        {
+          x: e.global.x,
+          y: e.global.y,
+        },
+        this.state.mouse.downCoordinates
+      );
+
+      const newX = this.state.oldOriginOfCoordinates.x - distanceX;
+      const newY = this.state.oldOriginOfCoordinates.y - distanceY;
+  
+      this.config.originOfCoordinates.x = newX <= 0 ? newX : 0;
+      this.config.originOfCoordinates.y = newY <= 0 ? newY : 0;
+
+      this.layers.grid?.drawGrid(); // обновляем сетку
+      this.layers.rulers?.drawRulers(); // обновляем линейки
+      this.layers.planner!.updateScenePosition(); // обновляем слой с объектами
+      this.layers.arrowRulerActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
+      this.layers.startPointActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
+      
+    }
+    
+  }
+
+  private onWheel(e: WheelEvent): void {
+    e.preventDefault();
+
+    if (!this.state.mouse.right) {
+
+      { // set scale
+
+        let currentScale: number = this.config.scale;
+        const scaleSpeed: number = this.config.speedScale;
+
+        if (e.deltaY < 0) {
+          currentScale += scaleSpeed;
+        } else if (e.deltaY > 0) {
+          currentScale -= scaleSpeed;
+        }
+
+        const ns = Math.min(
+          Math.max(currentScale, this.config.minScale),
+          this.config.maxScale
+        );
+
+        this.config.scale = ns;
+
+        // Если scale меньше 1, inverseScale становится больше 1, и наоборот
+        if (ns < 1) {
+          this.config.inverseScale = 1 / ns;
+        } else {
+          this.config.inverseScale = ns === 1 ? 1 : 1 / ns;
+        }
+
+        this.layers.grid!.scale = this.config.scale; // обновляем сетку
+        this.layers.rulers?.drawRulers(); // обновляем линейки
+        this.layers.planner!.scale = this.config.scale; // обновляем сетку
+        this.layers.arrowRulerActiveObject!.scale = this.config.scale; // обновляем стрелки
+        this.layers.startPointActiveObject!.scale = this.config.scale; // обновляем стрелки
+
+      }
+
     }
   }
 
-  private onPointerMove(e: PIXI.FederatedPointerEvent): void {
-    e.preventDefault();
+  private handleResize(): void {
+    if (this.app2d) {
+      this.app2d.renderer.resize(this.container.clientWidth, this.container.clientHeight);
+      if(this.layers.rulers) this.layers.rulers.drawRulers();
+      if(this.layers.grid) this.layers.grid.drawGrid();
+    } 
+  }
 
-    this.constructorStore.updatePositionPoint(e.global.x, e.global.y);
+  private handleKeyDown(e: KeyboardEvent): void {
 
-    if (this.constructorStore.mouse.rightBtn) {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      if (this.layers.planner) {
+        this.layers.planner.deleteSelectedObject();
+      }
+    }
+    
+  }
+  
+  public destroy(): void {
+    if (this.app2d) {
 
-      const { distanceX, distanceY } = calculateMouseDistanceByAxes(
-        {
-          x: this.constructorStore.mouse.positionPoint.x,
-          y: this.constructorStore.mouse.positionPoint.y,
-        },
-        this.constructorStore.mouse.rightClickPosition
-      );
+      // Удаляем resize listener
+      window.removeEventListener('resize', this.handleResize.bind(this));
+      window.removeEventListener('keydown', this.handleKeyDown.bind(this));
 
-      const newX = this.constructorStore.mouse.prevOriginOfCoordinates.x - distanceX;
-      const newY = this.constructorStore.mouse.prevOriginOfCoordinates.y - distanceY;
+      this.app2d.stage
+        .off('rightdown', this.onRightDown.bind(this))
+        .off('rightup', this.onRightUp.bind(this))
+        .off('pointermove', this.onPointerMove.bind(this))
+        .off('pointerout', this.onRightUp.bind(this))
+        .off('pointerdown', this.onClick.bind(this))
+        .off('wheel', this.onWheel.bind(this));
 
-      this.constructorStore.updateOriginOfCoordinates( newX, newY );
+      // Удаляем все компоненты
+      for (const key in this.layers) {
+        const component = this.layers[key as keyof Layers];
+        if (component && typeof component.destroy === 'function') {
+          component.destroy();
+        }
+        this.layers[key as keyof Layers] = null;
+      }
+
+      this.state = null;
+      this.config = null;
+
+      // Уничтожаем приложение PIXI
+      this.app2d.destroy(true, { children: true });
+      this.app2d = null;
       
     }
-
+    
   }
 
 }

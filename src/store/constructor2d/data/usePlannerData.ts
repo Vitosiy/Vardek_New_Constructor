@@ -2,7 +2,7 @@ const configWall: any = {
   width: 150,
   height: 30,
   heightDirection: -1,
-  angleDegrees: 0,
+  angleDegrees: 0, // + вращение по часовой стрелке, - против часовой стрелки
   color: {
     background: 0xffffff,
     bodyLine: 0x131313,

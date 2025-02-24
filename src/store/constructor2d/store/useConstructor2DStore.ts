@@ -137,6 +137,8 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
   const getHoverObject = computed(() => hoverObject);
   const getObjectOffsetLimit = computed(() => objectOffsetLimit.value);
 
+  const getRightBtn = computed(() => mouse.rightBtn);
+
   // Экспортируем состояние, действия, геттеры и сеттеры
   return {
     mouse,
@@ -173,5 +175,6 @@ export const useConstructor2DStore = defineStore("constructor2DStore", () => {
     getSegment,
     getHoverObject,
     getObjectOffsetLimit,
+    getRightBtn,
   };
 });

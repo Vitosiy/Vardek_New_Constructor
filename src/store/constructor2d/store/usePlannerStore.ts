@@ -15,7 +15,7 @@ import {
   getRectPointsV2,
   getDistanceBetweenVectors,
   getAngleBetweenVectors
-} from "@/Constructor2D/utils/Math";
+} from "@/Constructor2D-1__dump/utils/Math";
 
 import { configWall } from "@/store/constructor2d/data/usePlannerData";
 
@@ -27,25 +27,19 @@ export const usePlanner2DStore = defineStore('planner2DStore', () => {
   const objects = ref<PlannerObject[]>([]);
 
   const addObj = (item: PlannerObject) => {
-
-    let config = null;
-
-    if(item.name === "wall") config = configWall;
-
-    item.heightDirection = config.heightDirection;
-    item.angleDegrees = config.angleDegrees;
     
-    const points = getRectPoints(
-      config.width,
-      config.height,
-      item.position,
-      item.heightDirection,
-      item.angleDegrees
-    );
+    // const points = getRectPoints(
+    //   item.width,
+    //   item.height,
+    //   item.position,
+    //   item.heightDirection,
+    //   item.angleDegrees
+    // );
 
-    item.points = points;
-    item.width = config.width;
-    item.height = config.height;
+    // item.points = points;
+    
+    // item.width = config.width;
+    // item.height = config.height;
     
     objects.value.push(item);
     

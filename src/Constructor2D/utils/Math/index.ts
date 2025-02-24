@@ -2,20 +2,22 @@ import {
   Vector2
 } from "@/types/constructor2d/interfaсes";
 
-function calculateMouseDistanceByAxes(previous: Vector2, current: Vector2): { distanceX: number; distanceY: number } {
+const calculateMouseDistanceByAxes = 
+(previous: Vector2, current: Vector2): 
+{ distanceX: number; distanceY: number } => {
   const distanceX = current.x - previous.x; // Расстояние по оси X
   const distanceY = current.y - previous.y; // Расстояние по оси Y
 
   return { distanceX, distanceY };
 }
 
-function getRectPoints(
+const getRectPoints = (
   width: number,
   height: number,
   startPoint: Vector2,
   heightDirection: 1 | -1 = 1,
   angleDegrees: number = 0
-): [Vector2, Vector2, Vector2, Vector2] {
+): [Vector2, Vector2, Vector2, Vector2] => {
   // Преобразуем угол из градусов в радианы
   const angleRadians = (angleDegrees * Math.PI) / 180;
 
@@ -57,14 +59,14 @@ function getRectPoints(
   return [rotatedTopLeft, rotatedTopRight, rotatedBottomRight, rotatedBottomLeft];
 }
 
-function getRectPointsV2(
+const getRectPointsV2 = (
   width: number,
   height: number,
   startPoint: Vector2,
   endPoint: Vector2,
   heightDirection: 1 | -1 = 1,
   angleDegrees: number = 0
-): [Vector2, Vector2, Vector2, Vector2] {
+): [Vector2, Vector2, Vector2, Vector2] => {
 
   endPoint = { x: endPoint.x, y: endPoint.y };
 
@@ -104,14 +106,18 @@ function getRectPointsV2(
  * @param vecB Второй вектор
  * @returns Расстояние между двумя точками
  */
-function getDistanceBetweenVectors(vecA: Vector2, vecB: Vector2): number {
+const getDistanceBetweenVectors = (vecA: Vector2, vecB: Vector2): number => {
   const dx = vecB.x - vecA.x; // Разница по оси x
   const dy = vecB.y - vecA.y; // Разница по оси y
   return Math.sqrt(dx * dx + dy * dy); // Евклидово расстояние
 }
 
 // функция получения угла между векторами
-function getAngleBetweenVectors(center: Vector2, start: Vector2, end: Vector2): number {
+const getAngleBetweenVectors = (
+  center: Vector2, 
+  start: Vector2, 
+  end: Vector2
+): number => {
   // Создаём векторы
   const v1 = { x: start.x - center.x, y: start.y - center.y };
   const v2 = { x: end.x - center.x, y: end.y - center.y };
@@ -144,7 +150,7 @@ function getAngleBetweenVectors(center: Vector2, start: Vector2, end: Vector2): 
  * @param precision - Количество знаков после запятой.
  * @returns Округлённое число.
  */
-function roundToPrecision(value: number, precision: number = 15): number {
+const roundToPrecision = (value: number, precision: number = 15): number => {
   return parseFloat(value.toFixed(precision));
 }
 
@@ -155,36 +161,54 @@ function roundToPrecision(value: number, precision: number = 15): number {
  * @returns Точка пересечения.
  * @see https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
  **/
-function getIntersectionPoint(
+const getIntersectionPoint = (
   line0: Vector2[],
   line1: Vector2[]
-): Vector2 {
-  const x1 = line0[0].x;
-  const y1 = line0[0].y;
-  const x2 = line0[1].x;
-  const y2 = line0[1].y;
-  const x3 = line1[0].x;
-  const y3 = line1[0].y;
-  const x4 = line1[1].x;
-  const y4 = line1[1].y;
+): Vector2 | null => {
+  // Извлекаем координаты точек
+  const p1 = line0[0];
+  const p2 = line0[1];
+  const p3 = line1[0];
+  const p4 = line1[1];
 
-  const d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  // Вычисляем направляющие векторы линий
+  const dx1 = p2.x - p1.x;
+  const dy1 = p2.y - p1.y;
+  const dx2 = p4.x - p3.x;
+  const dy2 = p4.y - p3.y;
 
-  if (d === 0) {
-    return { x: 0, y: 0 };
+  // Вычисляем определитель
+  const D = dx1 * dy2 - dy1 * dx2;
+
+  // Если определитель близок к нулю, линии параллельны
+  if (Math.abs(D) < 1e-9) {
+    // Проверяем, совпадают ли линии
+    const rx = p3.x - p1.x;
+    const ry = p3.y - p1.y;
+    const cross = rx * dy1 - ry * dx1;
+    if (Math.abs(cross) < 1e-9) {
+      // Линии совпадают, точек пересечения бесконечно много
+      return null;
+    } else {
+      // Линии параллельны и не пересекаются
+      return null;
+    }
   }
 
-  const a = x1 * y2 - y1 * x2;
-  const b = x3 * y4 - y3 * x4;
+  // Находим параметры t и s для точки пересечения
+  const rx = p3.x - p1.x;
+  const ry = p3.y - p1.y;
+  const t = (rx * dy2 - ry * dx2) / D;
 
-  const x = (a * (x3 - x4) - (x1 - x2) * b) / d;
-  const y = (a * (y3 - y4) - (y1 - y2) * b) / d;
+  // Вычисляем координаты точки пересечения
+  const x = p1.x + t * dx1;
+  const y = p1.y + t * dy1;
 
-  return { x: x, y: y };
-}
+  return { x, y };
+};
 
 // Функция для поворота точки вокруг другой точки на заданный угол (в радианах)
-function rotatePoint(point: Vector2, center: Vector2, angleDegrees: number): Vector2 {
+const rotatePoint = (point: Vector2, center: Vector2, angleDegrees: number): Vector2 => {
 
   const angle = (angleDegrees * Math.PI) / 180;
 
@@ -206,13 +230,36 @@ function rotatePoint(point: Vector2, center: Vector2, angleDegrees: number): Vec
   };
 }
 
+const rotatePointsAroundCenter = (
+  points: Vector2[],
+  center: Vector2,
+  angleDegrees: number
+): Vector2[] => {
+
+  const angle = (angleDegrees * Math.PI) / 180;
+
+  return points.map(point => {
+    const x = point.x - center.x;
+    const y = point.y - center.y;
+
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+
+    return {
+      x: cosA * x - sinA * y + center.x,
+      y: sinA * x + cosA * y + center.y
+    };
+  });
+
+}
+
 /**
  * Функция, которая принимает 2 вектора и высчитывает середину между ними.
  * @param vecA Первый вектор
  * @param vecB Второй вектор
  * @returns Вектор, представляющий середину между двумя точками
  */
-function getMidpoint(vecA: Vector2, vecB: Vector2): Vector2 {
+const getMidpoint = (vecA: Vector2, vecB: Vector2): Vector2 => {
   const midX = (vecA.x + vecB.x) / 2;
   const midY = (vecA.y + vecB.y) / 2;
   return { x: midX, y: midY };
@@ -225,7 +272,9 @@ function getMidpoint(vecA: Vector2, vecB: Vector2): Vector2 {
  * @param distance - Расстояние, на которое нужно сместить вектор по нормали.
  * @returns Новый вектор, смещённый по нормали отрезка.
  */
-function offsetVectorBySegmentNormal(segment: [Vector2, Vector2], vector: Vector2, distance: number): Vector2 {
+const offsetVectorBySegmentNormal = 
+(segment: [Vector2, Vector2], vector: Vector2, distance: number): 
+Vector2 => {
   const [pointA, pointB] = segment;
 
   // Вычисляем вектор от pointA до pointB
@@ -254,7 +303,9 @@ function offsetVectorBySegmentNormal(segment: [Vector2, Vector2], vector: Vector
  * @param distance - Расстояние, на которое нужно сместить вектор.
  * @returns Новый вектор, смещённый относительно отрезка.
  */
-function offsetVectorBySegment(segment: [Vector2, Vector2], vector: Vector2, distance: number): Vector2 {
+const offsetVectorBySegment = 
+(segment: [Vector2, Vector2], vector: Vector2, distance: number): 
+Vector2 => {
   const [pointA, pointB] = segment;
 
   // Вычисляем вектор от pointA до pointB
@@ -275,13 +326,12 @@ function offsetVectorBySegment(segment: [Vector2, Vector2], vector: Vector2, dis
   return offsetVector;
 }
 
-// вычислить по массиву точек их центр
 /**
  * Вычисляет центр массива точек.
  * @param points - Массив точек.
  * @returns Центр точек.
  */
-function getCenterOfPoints(points: Vector2[]): Vector2 {
+const getCenterOfPoints = (points: Vector2[]): Vector2 => {
   const center = points.reduce(
     (acc, point) => {
       acc.x += point.x;
@@ -302,6 +352,8 @@ function getCenterOfPoints(points: Vector2[]): Vector2 {
   return xyConverted
 }
 
+
+
 export {
 
   calculateMouseDistanceByAxes,
@@ -316,5 +368,6 @@ export {
   offsetVectorBySegmentNormal,
   offsetVectorBySegment,
   getCenterOfPoints,
+  rotatePointsAroundCenter,
 
 };

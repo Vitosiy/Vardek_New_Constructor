@@ -71,9 +71,23 @@ export interface PlannerObject {
 }
 
 // Utils Shapes
-//
 export interface RectData {
   points: Vector2[]; // 4 точки для прямоугольника
   heightDirection: -1 | 1;
   color: number | string; // Цвет заливки
+}
+
+export interface DrawObjects {
+  id: string | number,
+  containers: PlannerObjectContainers
+}
+
+export interface MergeWalls { 
+  wallPoint0: null | string | number, // id стены которая присоединяется 0 точкой
+  wallPoint1: null | string | number  // id стены которая присоединяется 1 точкой
+}
+
+export interface HoverPointObject { 
+  id: number | string; 
+  indexPoint: number 
 }

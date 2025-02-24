@@ -5,12 +5,14 @@ import {
   RectData
 } from "@/types/constructor2d/interfaсes";
 
-function rect(graphic: PIXI.Graphics, data: RectData): PIXI.Graphics {
+const rect = (graphic: PIXI.Graphics, data: RectData): PIXI.Graphics => {
 
   /*
   data = {
     points: [Vector2, Vector2, Vector2, Vector2]; // 4 точки для прямоугольника
     color: number | string; // Цвет заливки
+    angleDegress: number = 0; // 
+    rotatePoint: Vector2 | null = null;
   }
   */
 
@@ -35,7 +37,7 @@ function rect(graphic: PIXI.Graphics, data: RectData): PIXI.Graphics {
   
 }
 
-function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
+const rectV2 = (graphic: PIXI.Graphics, data: any): PIXI.Graphics => {
 
   /* data:
   center: Vector2, 
@@ -84,17 +86,17 @@ function rectV2(graphic: PIXI.Graphics, data: any): PIXI.Graphics{
 
 }
 
-function drawVerticalLines(
+const drawVerticalLines = (
   graphics: PIXI.Graphics,
   startPoint: Vector2,
   width: number,
   height: number,
   spacing: number = 30,
   heightDirection: 1 | -1 = -1, // Направление линий по оси Y
-  color: number = 0x000000, // Цвет линий
+  color: number | string = 0x000000, // Цвет линий
   lineWidth: number = 1, // Толщина линий
   rotationDegrees: number = 0 // Угол поворота линий вокруг startPoint
-): void {
+): void  => {
   graphics.clear(); // Очистка предыдущего содержимого
 
   const baseAngleDegrees = 76; // Базовый угол линий
@@ -144,14 +146,14 @@ function drawVerticalLines(
   }
 }
 
-function drawDashedOutline(
+const drawDashedOutline = (
   graphics: PIXI.Graphics,
   points: Vector2[], // Массив точек для контура
   dashLength: number = 4, // Длина каждого штриха
   gapLength: number = 2, // Длина промежутка между штрихами
   color: number = 0x000000, // Цвет линии
   lineWidth: number = 1, // Толщина линии
-): void {
+): void => {
   if (points.length < 2) {
     console.warn("Недостаточно точек для построения контура.");
     return;
@@ -246,16 +248,16 @@ function drawDashedOutline(
   
 }
 
-function drawArrow(
+const drawArrow = (
   graphics: PIXI.Graphics,
   startPoint: Vector2,
   width: number, // Длина стрелки
   angleDegrees: number, // Угол направления стрелки в градусах
-  color: {line: number, head: number} | number = 0x000000, // Цвет стрелки
+  color: {line: number | string, head: number | string} | number | string = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   triangleSize: number = 12, // Размер треугольника (основание и высота)
   clearGraphics: boolean = false // Флаг: очищать графику или нет,
-): void {
+): void => {
   if(clearGraphics){
     graphics.clear(); // Очистка графики
   }
@@ -304,17 +306,17 @@ function drawArrow(
   graphics.fill(headColor);
 }
 
-function drawArrowHead(
+const drawArrowHead = (
   graphics: PIXI.Graphics,
   startPoint: Vector2, // Позиция начала стрелки
   distanceX: number, // Расстояние от начала стрелки до треугольника
   distanceY: number, // Расстояние от начала стрелки до треугольника
   arrowDirection: { axis: 'x' | 'y'; value: 1 | -1 }, // Направление стрелки
   angleDegrees: number, // Угол поворота стрелки относительно начала
-  color: number = 0x000000, // Цвет стрелки
+  color: number | string = 0x000000, // Цвет стрелки
   size: number = 12, // Размер треугольника (основание и высота)
   clearGraphics: boolean = true // Флаг: очищать графику или нет
-): void {
+): void => {
   if (clearGraphics) {
     graphics.clear(); // Очистка графики, если требуется
   }
@@ -386,12 +388,12 @@ function drawArrowHead(
   graphics.fill(color); // Заканчиваем рисование
 }
 
-function drawCircle(
+const drawCircle = (
   graphics: PIXI.Graphics,
   startPoint: Vector2,
   size: number, 
   color: string | number
-): void {
+): void => {
   // Определяем центр геометрии
   const centerX: number = startPoint.x;
   const centerY: number = startPoint.y;
@@ -406,7 +408,7 @@ function drawCircle(
   graphics.fill(color);
 }
 
-function drawShape(
+const drawShape = (
   graphics: PIXI.Graphics,
   points: Vector2[], // Массив точек для контура
   color: {
@@ -415,7 +417,7 @@ function drawShape(
   } = {},
   lineWidth: number = 1, // Толщина линии
   clearGraphics: boolean = false, // Флаг: очищать графику или нет
-): void {
+): void => {
 
   if (points.length < 2) {
     console.warn("Недостаточно точек для построения контура.");
@@ -448,16 +450,16 @@ function drawShape(
   });
 }
 
-function drawLine(
+const drawLine = (
   graphics: PIXI.Graphics,
   startPoint: Vector2,
   width: number, // Длина стрелки
   angleDegrees: number, // Угол направления стрелки в градусах
-  color: number = 0x000000, // Цвет стрелки
+  color: number | string = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   clearGraphics: boolean = false, // Флаг: очищать графику или нет
   stepNormal: number = 0 // смещение линии по нормали
-): Vector2[] {
+): Vector2[] => {
 
   if(clearGraphics){
     graphics.clear(); // Очистка графики
