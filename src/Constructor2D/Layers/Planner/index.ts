@@ -37,6 +37,12 @@ import {
   drawLine,
 } from "../../utils/Shape";
 
+import { handlerOverEventGraphic } from "./methods/events/handlerOver/index";
+import { handlerOutEventGraphic } from "./methods/events/handlerOut/index";
+import { handlerDownEventGraphic } from "./methods/events/handlerDown/index";
+import { handlerStageMouseUp } from "./methods/events/handlerStageMouseUp/index";
+import { handlerStageMouseMove } from "./methods/events/handlerStageMouseMove/index";
+
 export default class Planner {
 
   private app: PIXI.Application;
@@ -86,6 +92,13 @@ export default class Planner {
     
   }
 
+  // events
+  private handlerOverEventGraphic: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerOutEventGraphic: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerDownEventGraphic: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerStageMouseUp: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerStageMouseMove: (e:PIXI.FederatedPointerEvent) => void;
+
   constructor(pixiApp: PIXI.Application, parent: any) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
@@ -97,6 +110,13 @@ export default class Planner {
 
     this.activeObjectGraphic = new PIXI.Graphics();
     this.app.stage.addChild(this.activeObjectGraphic);
+
+    // event methods
+    this.handlerOverEventGraphic = handlerOverEventGraphic;
+    this.handlerOutEventGraphic = handlerOutEventGraphic;
+    this.handlerDownEventGraphic = handlerDownEventGraphic.bind(this);
+    this.handlerStageMouseUp = handlerStageMouseUp.bind(this);
+    this.handlerStageMouseMove = handlerStageMouseMove.bind(this);
 
     this.init();
   }
@@ -116,6 +136,10 @@ export default class Planner {
         }
       }
     }
+
+    this.app.stage
+      .on("pointerup", this.handlerStageMouseUp)
+      .on("mousemove", this.handlerStageMouseMove);
 
   }
 
@@ -189,9 +213,9 @@ export default class Planner {
       y: positionObjectY
     });
 
-    let angleDegreesConnectWall = 0;
-    let directionX = 1;
-    let directionY = 1;
+    let angleDegreesConnectWall: number = 0;
+    let directionX: number = 1;
+    let directionY: number = 1;
 
     if(hoverPointObject){
 
@@ -511,15 +535,14 @@ export default class Planner {
     
         if(dataWall.containers.eventGraphic){
           dataWall.containers.eventGraphic.eventMode = 'static';
-          // Изменяем курсор на pointer при наведении
-          dataWall.containers.eventGraphic.on("mouseover", this.handlerOverEventGraphic.bind(this, dataWall.containers.eventGraphic));
-          // Убираем курсор при уходе мыши
-          dataWall.containers.eventGraphic.on("mouseout", this.handlerOutEventGraphic.bind(this, dataWall.containers.eventGraphic));
-          // При клике делаем объект активным и перерисовываем
-          dataWall.containers.eventGraphic.on("pointerdown", this.handlerEventGraphic.bind(this, dataWall.id));
+          (dataWall.containers.eventGraphic as PIXI.Graphics & { wallId?: string | number }).wallId = dataWall.id;
 
-          dataWall.containers.eventGraphic.on("pointerup", this.handlerUpEventGraphic.bind(this/*, dataWall.id*/));
-          this.app.stage.on("mousemove", this.handlerMoveEventGraphic.bind(this));
+          // Изменяем курсор на pointer при наведении
+          dataWall.containers.eventGraphic.on("mouseover", this.handlerOverEventGraphic);
+          // Убираем курсор при уходе мыши
+          dataWall.containers.eventGraphic.on("mouseout", this.handlerOutEventGraphic);
+          // При клике делаем объект активным и перерисовываем
+          dataWall.containers.eventGraphic.on("pointerdown", this.handlerDownEventGraphic);
         }
 
         if(dataWall.containers.root){
@@ -1041,146 +1064,6 @@ export default class Planner {
     this.container.y = this.parent.config.originOfCoordinates.y + 30;
     
   }
-  
-  private handlerOverEventGraphic(graphic: PIXI.Graphics): void{
-    graphic.cursor = "pointer";
-  }
-
-  private handlerOutEventGraphic(graphic: PIXI.Graphics): void{
-    graphic.cursor = "defalut";
-  }
- 
-  private handlerEventGraphic(id: number | string, e:PIXI.FederatedPointerEvent):void {
-    
-    if (e.button == 0){
-
-      this.state.mouseLeft = true;
-
-      const prevActiveObject = this.state.activeWall;
-
-      this.state.activeWall = id;
-      this.state.activePointWall = 0;
-
-      const addedwall = this.objectWalls.find(el => el.id === id);
-
-      if (addedwall && addedwall.points) {
-        this.state.oldPosition = JSON.parse(JSON.stringify(addedwall.points));
-      }
-      
-      this.state.positionDown.x = e.global.x;
-      this.state.positionDown.y = e.global.y;
-      
-      if(id !== prevActiveObject){
-
-        if(!prevActiveObject){
-          this.redrawAllObjects();
-        }else{
-          this.drawWall(prevActiveObject);
-          this.drawWall(id);
-        }
-        
-        // рендеринг стрелок
-        this.parent.layers.arrowRulerActiveObject.draw(addedwall?.points[this.state.activePointWall]);
-
-        // рендеринг активных точек
-        this.parent.layers.startPointActiveObject.activate(
-          [
-            addedwall?.points[0],
-            addedwall?.points[1]
-          ], 
-          this.state.activePointWall
-        );
-
-        if(addedwall){
-          this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(addedwall.angleDegrees);
-          this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(addedwall.angleDegrees);
-        }
-
-      }
-
-    }
-
-    e.stopPropagation(); // Останавливаем всплытие события
-
-  }
-
-  private handlerUpEventGraphic(/*id: number | string,*/ e:PIXI.FederatedPointerEvent):void {
-    
-    this.state.mouseLeft = false;
-    this.state.oldPosition = [];
-    this.state.positionDown = {x: 0, y: 0};
-
-    e.stopPropagation(); // Останавливаем всплытие события
-  }
-
-  private handlerMoveEventGraphic(e:PIXI.FederatedPointerEvent): void {
-
-    if(this.state.mouseLeft && this.state.activeWall){
-
-      const id = this.state.activeWall;
-
-      const mousePostion: Vector2 = {
-        x: e.global.x,
-        y: e.global.y
-      };
-
-      const distance: Vector2 = {
-        x: mousePostion.x - this.state.positionDown.x,
-        y: mousePostion.y - this.state.positionDown.y
-      };
-
-      const dataWall = this.objectWalls.find(el => el.id === id);
-
-      if(dataWall){
-
-        let status = true;
-        dataWall.points.forEach((p: Vector2, index: number) => {
-          if(
-            this.state.oldPosition[index].x + distance.x < 0 || 
-            this.state.oldPosition[index].y + distance.y < 0
-          ){
-            status = false;
-          }
-        });
-
-        if(status){
-        
-          dataWall.points.forEach((p: Vector2, index: number) => {
-            p.x = this.state.oldPosition[index].x + distance.x;
-            p.y = this.state.oldPosition[index].y + distance.y;
-          });
-
-          if(dataWall.mergeWalls.wallPoint0){
-            this.updateMergeWallProperties(
-              0, 
-              dataWall.points[1], 
-              dataWall.mergeWalls.wallPoint0
-            );
-          }
-
-          if(dataWall.mergeWalls.wallPoint1){
-            this.updateMergeWallProperties(
-              1,
-              dataWall.points[0],
-              dataWall.mergeWalls.wallPoint1
-            );
-          }
-
-          const listRelatedWalls: (string | number)[] = this.getMergeWallsIDForUpdate(id);
-          // визуализация списка стен и доабвляемая в списке
-          this.drawListWalls(listRelatedWalls);
-
-          this.parent.layers.startPointActiveObject.activate([dataWall.points[0], dataWall.points[1]]);
-          this.parent.layers.arrowRulerActiveObject.draw(dataWall.points[this.state.activePointWall ?? 0]);
-        }
-
-      }
-
-      e.stopPropagation(); // Останавливаем всплытие события
-      
-    }
-    
-  }
 
   public deleteSelectedObject(): void {
 
@@ -1199,9 +1082,9 @@ export default class Planner {
             try {
 
               if(key === "eventGraphic" && graphic instanceof PIXI.Graphics){
-                graphic.off("mouseover", this.handlerOverEventGraphic.bind(this, graphic));
-                graphic.off("mouseout", this.handlerOutEventGraphic.bind(this, graphic));
-                graphic.off("pointerdown", this.handlerEventGraphic.bind(this, this.objectWalls[indexWall].id));
+                graphic.off("mouseover", this.handlerOverEventGraphic);
+                graphic.off("mouseout", this.handlerOutEventGraphic);
+                graphic.off("pointerdown", this.handlerDownEventGraphic);
               }
               
               // Уничтожаем графику, только если она существует
@@ -1285,9 +1168,10 @@ export default class Planner {
             try {
 
               if(key === "eventGraphic" && graphic instanceof PIXI.Graphics){
-                graphic.off("mouseover", this.handlerOverEventGraphic.bind(this, graphic));
-                graphic.off("mouseout", this.handlerOutEventGraphic.bind(this, graphic));
-                graphic.off("pointerdown", this.handlerEventGraphic.bind(this, drawObject.id));
+                graphic
+                  .off("mouseover", this.handlerOverEventGraphic)
+                  .off("mouseout", this.handlerOutEventGraphic)
+                  .off("pointerdown", this.handlerDownEventGraphic);
               }
               
               // Уничтожаем графику, только если она существует
@@ -1313,6 +1197,11 @@ export default class Planner {
       }
 
     });
+
+
+    this.app.stage
+      .off("pointerup", this.handlerStageMouseUp)
+      .off("mousemove", this.handlerStageMouseMove);
 
     if (this.activeObjectGraphic) {
       this.activeObjectGraphic.destroy(true);
