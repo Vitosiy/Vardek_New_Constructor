@@ -62,6 +62,9 @@ export interface Config {
 export interface State {
   activeWall: null | string | number;
   activePointWall: null | 0 | 1;
+  mouseLeft: boolean;
+  positionDown: Vector2;
+  oldPosition: Vector2[];
 };
 
 export interface ArgumentDataAddWall {

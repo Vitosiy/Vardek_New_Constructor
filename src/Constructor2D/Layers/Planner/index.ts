@@ -75,7 +75,14 @@ export default class Planner {
   public state: State = {
 
     activeWall: null, // null | string | number
-    activePointWall: null // null | 0 | 1
+    activePointWall: null, // null | 0 | 1
+
+    mouseLeft: false, // left mouse button
+    positionDown: { // позиция курсора, когда нажали кнопку мыши
+      x: 0,
+      y: 0
+    },
+    oldPosition: []
     
   }
 
@@ -510,6 +517,9 @@ export default class Planner {
           dataWall.containers.eventGraphic.on("mouseout", this.handlerOutEventGraphic.bind(this, dataWall.containers.eventGraphic));
           // При клике делаем объект активным и перерисовываем
           dataWall.containers.eventGraphic.on("pointerdown", this.handlerEventGraphic.bind(this, dataWall.id));
+
+          dataWall.containers.eventGraphic.on("pointerup", this.handlerUpEventGraphic.bind(this/*, dataWall.id*/));
+          this.app.stage.on("mousemove", this.handlerMoveEventGraphic.bind(this));
         }
 
         if(dataWall.containers.root){
@@ -1044,10 +1054,21 @@ export default class Planner {
     
     if (e.button == 0){
 
+      this.state.mouseLeft = true;
+
       const prevActiveObject = this.state.activeWall;
 
       this.state.activeWall = id;
       this.state.activePointWall = 0;
+
+      const addedwall = this.objectWalls.find(el => el.id === id);
+
+      if (addedwall && addedwall.points) {
+        this.state.oldPosition = JSON.parse(JSON.stringify(addedwall.points));
+      }
+      
+      this.state.positionDown.x = e.global.x;
+      this.state.positionDown.y = e.global.y;
       
       if(id !== prevActiveObject){
 
@@ -1057,8 +1078,6 @@ export default class Planner {
           this.drawWall(prevActiveObject);
           this.drawWall(id);
         }
-
-        const addedwall = this.objectWalls.find(el => el.id === id);
         
         // рендеринг стрелок
         this.parent.layers.arrowRulerActiveObject.draw(addedwall?.points[this.state.activePointWall]);
@@ -1083,6 +1102,84 @@ export default class Planner {
 
     e.stopPropagation(); // Останавливаем всплытие события
 
+  }
+
+  private handlerUpEventGraphic(/*id: number | string,*/ e:PIXI.FederatedPointerEvent):void {
+    
+    this.state.mouseLeft = false;
+    this.state.oldPosition = [];
+    this.state.positionDown = {x: 0, y: 0};
+
+    e.stopPropagation(); // Останавливаем всплытие события
+  }
+
+  private handlerMoveEventGraphic(e:PIXI.FederatedPointerEvent): void {
+
+    if(this.state.mouseLeft && this.state.activeWall){
+
+      const id = this.state.activeWall;
+
+      const mousePostion: Vector2 = {
+        x: e.global.x,
+        y: e.global.y
+      };
+
+      const distance: Vector2 = {
+        x: mousePostion.x - this.state.positionDown.x,
+        y: mousePostion.y - this.state.positionDown.y
+      };
+
+      const dataWall = this.objectWalls.find(el => el.id === id);
+
+      if(dataWall){
+
+        let status = true;
+        dataWall.points.forEach((p: Vector2, index: number) => {
+          if(
+            this.state.oldPosition[index].x + distance.x < 0 || 
+            this.state.oldPosition[index].y + distance.y < 0
+          ){
+            status = false;
+          }
+        });
+
+        if(status){
+        
+          dataWall.points.forEach((p: Vector2, index: number) => {
+            p.x = this.state.oldPosition[index].x + distance.x;
+            p.y = this.state.oldPosition[index].y + distance.y;
+          });
+
+          if(dataWall.mergeWalls.wallPoint0){
+            this.updateMergeWallProperties(
+              0, 
+              dataWall.points[1], 
+              dataWall.mergeWalls.wallPoint0
+            );
+          }
+
+          if(dataWall.mergeWalls.wallPoint1){
+            this.updateMergeWallProperties(
+              1,
+              dataWall.points[0],
+              dataWall.mergeWalls.wallPoint1
+            );
+          }
+
+          const listRelatedWalls: (string | number)[] = this.getMergeWallsIDForUpdate(id);
+          // визуализация списка стен и доабвляемая в списке
+          this.drawListWalls(listRelatedWalls);
+
+          this.parent.layers.startPointActiveObject.activate([dataWall.points[0], dataWall.points[1]]);
+          this.parent.layers.arrowRulerActiveObject.draw(dataWall.points[this.state.activePointWall ?? 0]);
+        }
+
+      }
+
+      e.stopPropagation(); // Останавливаем всплытие события
+      
+    }
+    
   }
 
   public deleteSelectedObject(): void {
