@@ -6,18 +6,20 @@ import { useModelState } from "@/store/appliction/useModelState";
 
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 import MaterialRedactor from "./MaterialRedactor.vue";
+import CorpusMaterialRedactor from "./CorpusMaterialRedactor.vue";
 
-console.log(useModelState().getCurrentModel, 'MATERIAL REDACTOR');
+console.log(useModelState().getCurrentModel, 'CURRENT MODEL MATERIAL REDACTOR');
 
 const modelState = useModelState().getCurrentModel
-console.log();
+const fasadeList = modelState.PROPS.CONFIG.FASADE_PROPS
+const productData = modelState.getCurrentModel;
+
+console.log(fasadeList, 'FASADE LIST');
 
 
 const tabsList = ref<any[]>([]);
-const itemType = ref<string>('Корпус');
-const materialList = ref<Array>(modelState.PROPS.CONFIG.MODULE_COLOR_LIST)
-const itemMaterialData = ref<{ [key: string]: any }>({})
-
+const tabIndex = ref<Number>(1)
+const isCorpusSelected = ref<boolean>(true)
 
 const createTabList = (fasadsCount: Array<object>) => {
   let data = [
@@ -29,8 +31,6 @@ const createTabList = (fasadsCount: Array<object>) => {
   ];
   
   fasadsCount.forEach((item, key) => {
-    console.log(item, `ФАСАД ${key}`);
-    
     data.push({
       name: `Фасад ${key + 1}`,
       label: `Фасад ${key + 1}`,
@@ -38,31 +38,35 @@ const createTabList = (fasadsCount: Array<object>) => {
       type: item.TYPE,
     });
   });
-
-  console.log(data, fasadsCount.length, "--createTabList");
   
   return data;
 };
 
 onMounted(() => {
   // productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST;
-  console.log(modelState.PROPS.CONFIG.MODULE_COLOR_LIST, 'КОРПУС');
-  console.log(modelState.PROPS.CONFIG.FASADE_PROPS, 'МАССИВ ФАСАДОВ');
+
+  // console.log(modelState.PROPS.CONFIG.MODULE_COLOR_LIST, 'КОРПУС');
+  // console.log(modelState.PROPS.CONFIG.FASADE_PROPS, 'МАССИВ ФАСАДОВ');
+
   // console.log(modelState.PROPS.CONFIG.FASADE_PROPS, 'НЕЧТО');
-  console.log(useModelState().getCurrentModelFasadesData, 'ВОЗМОЖНЫЕ ВАРИАНТЫ ФАСАДОВ');
+
+  // console.log(useModelState().getCurrentModelFasadesData, 'ВОЗМОЖНЫЕ ВАРИАНТЫ ФАСАДОВ');
+  // console.log(fasadeMillingList, 'MILLING');
   
   // productFasades.value = objectData?.PROPS.CONFIG.FASADE_PROPS;
   // fasades.value = modelState.getCurrentModelFasadesData;
-  tabsList.value = createTabList(modelState.PROPS.CONFIG.FASADE_PROPS)
+  tabsList.value = createTabList(fasadeList)
 })
 
-const handleTabChange = (index: number) => {
-  console.log(index, 'PARENT');
+const handleTabChange = ({ index, name }) => {
   if(index) {
-    materialList.value = useModelState().getCurrentModelFasadesData
+    tabIndex.value = index
+    isCorpusSelected.value = false
+    // console.log('FASADE: ', fasadeList[index]);
     return
   }
-  materialList.value = modelState.PROPS.CONFIG.MODULE_COLOR_LIST
+  tabIndex.value = index
+  isCorpusSelected.value = true // TODO вычитать единицу из таб-индекса здесь
 }
 
 </script>
@@ -75,6 +79,9 @@ const handleTabChange = (index: number) => {
       @tab-change="handleTabChange"
     >
     </defaultTab>
-    <MaterialRedactor :materialList="materialList" />
+    <CorpusMaterialRedactor v-if="isCorpusSelected" />
+    <div v-else v-for="(fasadeData, index) in fasadeList">
+      <MaterialRedactor v-if="tabIndex - 1 === index" :fasadeData="fasadeData" :tabIndex="tabIndex"/>
+    </div>
   </div>
 </template>

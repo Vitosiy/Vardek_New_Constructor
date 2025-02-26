@@ -21,9 +21,11 @@ const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 const _MILLING = _APP.MILLING;
 
+console.log(_MILLING, 'MILLINGS');
+
+
 /** Состояния выбранной модели */
 const modelState = useModelState();
-console.log(useModelState().getCurrentModel, 'MODEL STATE COLOR');
 
 const productColor = ref<{ [key: string]: any }>({});
 
@@ -63,6 +65,9 @@ onMounted(() => {
   fasades.value = modelState.getCurrentModelFasadesData; // текущий фасады редактирования ?
 
   productData.value = { ...objectData?.PROPS }; // претендент на удаление. Дублирование данных
+
+  console.log(objectData, ']]]]]]]]]]]]]]]]]]]]]', useModelState().getCurrentModel);
+  
 
   createTabList(productFasades.value);
 });
@@ -117,12 +122,14 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
 
   const productId = productData.value.PRODUCT;
 
-  console.log(data);
+  console.log('DATA', data);
+  console.log('INDEX', fasadeNdx);
+  console.log('PRODUCT_ID', productId);
+  
 
   modelState.createCurrentPaletteData(data.ID, productId);
   modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
   modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
-
   eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
 };
 
@@ -136,6 +143,9 @@ const changePaletteColor = () => {
 
 /** Фрезеровка */
 const changeMilling = () => {
+  console.log('SELECT MILLING', selectMilling.value);
+  console.log('INDEX', currentFasadeId.value);
+  
   eventBus.emit("A:ChangeMilling", {
     data: selectMilling.value,
     fasadeNdx: currentFasadeId.value,

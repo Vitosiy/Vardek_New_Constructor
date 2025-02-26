@@ -90,7 +90,7 @@ export class TrafficManager {
 
 
             this.modelState.createCurrentModelFasadesData(product.FACADE);
-
+            
             // console.log(object, 'object')
         }
         else {

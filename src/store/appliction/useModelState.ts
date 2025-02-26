@@ -149,7 +149,7 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     const createCurrentMillingData = ({ fasadeId, productId }) => {
-        console.log(fasadeId)
+        console.log(fasadeId, 'FASADE ID', productId, 'PRODUCT ID')
 
 
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {

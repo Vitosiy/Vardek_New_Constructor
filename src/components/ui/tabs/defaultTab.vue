@@ -13,15 +13,17 @@
     </div>
 
     <!-- Содержимое выбранного таба -->
-    <!-- <div class="tabs-content">
+    <div class="tabs-content">
       <div
-        v-for="tab in tabs"
-        :key="tab.name"
+      v-for="tab in tabs"
+      :key="tab.name"
 
       >
         <slot :name="tab.name" v-if="selectedTab === tab.name" />
       </div>
-    </div> -->
+    </div>
+    <!-- 
+   -->
   </div>
 </template>
 
@@ -61,7 +63,8 @@ selectedTab.value =
 const selectTab = (name: string, index: number) => {
   
   selectedTab.value = name;
-  emit("tab-change", name);
+  emit("tab-change", {index: index, name: name});
+  // emit("tab-change", index);
 };
 </script>
 
