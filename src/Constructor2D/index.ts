@@ -7,8 +7,17 @@ import ArrowRulerActiveObject from "./Layers/ArrowRulerActiveObject";
 import StartPointActiveObject from "./Layers/StartPointActiveObject";
 
 import {
-  calculateMouseDistanceByAxes
-} from "./utils/Math";
+  IConfig,
+  IState,
+} from './interfaces';
+
+import { handlerMouseRightDown } from "./methods/events/handlerMouseRightDown/index";
+import { handlerMouseRightUp } from "./methods/events/handlerMouseRightUp/index";
+import { handlerPointerMove } from "./methods/events/handlerPointerMove/index";
+import { handlerMouseLeftDown } from "./methods/events/handlerMouseLeftDown/index";
+import { handlerWheel } from "./methods/events/handlerWheel/index";
+import { handleWindowResize } from "./methods/events/handleWindowResize/index";
+import { handleKeyDown } from "./methods/events/handleKeyDown/index";
 
 interface Layers {
   grid: Grid | null;
@@ -31,7 +40,7 @@ export default class Constructor2D {
     rulers: null,
   };
 
-  public config: any | null = {
+  public config: IConfig = {
 
     scale: 1,
     speedScale: 0.01,
@@ -47,7 +56,7 @@ export default class Constructor2D {
   }
 
   // параметры состояния
-  public state: any | null = {
+  public state: IState = {
 
     mouse: {
       left: false,
@@ -70,6 +79,14 @@ export default class Constructor2D {
     
   }
 
+  private handlerMouseRightDown: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerMouseRightUp: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerPointerMove: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerMouseLeftDown: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerWheel: (e: WheelEvent) => void;
+  private handleWindowResize: () => void;
+  private handleKeyDown: (e: KeyboardEvent) => void;
+
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
     
     if (!container || !canvas) {
@@ -77,6 +94,14 @@ export default class Constructor2D {
     }
     this.container = container;
     this.canvas = canvas;
+
+    this.handlerMouseRightDown = handlerMouseRightDown.bind(this);
+    this.handlerMouseRightUp = handlerMouseRightUp.bind(this);
+    this.handlerPointerMove = handlerPointerMove.bind(this);
+    this.handlerMouseLeftDown = handlerMouseLeftDown.bind(this);
+    this.handlerWheel = handlerWheel.bind(this);
+    this.handleWindowResize = handleWindowResize.bind(this);
+    this.handleKeyDown = handleKeyDown.bind(this);
 
   }
 
@@ -94,10 +119,6 @@ export default class Constructor2D {
     this.app2d.stage.hitArea = this.app2d.screen;
     this.app2d.stage.eventMode = 'static'; // чтобы работали события на root-контейнере
 
-    // this.app2d?.ticker.add(() => {
-    //   console.log(this.app2d?.ticker.FPS);
-    // });
-
     this.layers.grid = new Grid(this.app2d, this);
     this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
     this.layers.planner = new Planner(this.app2d!, this);
@@ -105,147 +126,15 @@ export default class Constructor2D {
     this.layers.rulers = new Rulers(this.app2d!, this);
 
     this.app2d.stage
-      .on('rightdown', this.onRightDown.bind(this))
-      .on('rightup', this.onRightUp.bind(this))
-      .on('pointermove', this.onPointerMove.bind(this))
-      .on('pointerout', this.onRightUp.bind(this))
-      .on('pointerdown', this.onClick.bind(this))
-      .on('wheel', this.onWheel.bind(this));
+      .on('rightdown', this.handlerMouseRightDown)
+      .on('rightup', this.handlerMouseRightUp)
+      .on('pointermove', this.handlerPointerMove)
+      .on('pointerout', this.handlerMouseRightUp)
+      .on('pointerdown', this.handlerMouseLeftDown)
+      .on('wheel', this.handlerWheel);
 
-    window.addEventListener('resize', this.handleResize.bind(this));
-    window.addEventListener('keydown', this.handleKeyDown.bind(this)); // нажатие на кнопку backspace или другие
-    
-  }
-  
-  private onClick(e: PIXI.FederatedPointerEvent): void {
-    e.preventDefault();
-
-    if (!this.app2d) return;
-    
-    if (e.button !== 0) return;
-
-    if (
-      !this.state.mouse.left && 
-      this.layers.planner && 
-      this.layers.planner.state.activeWall
-    ) {
-      this.layers.planner?.deactiveWalls();
-      this.layers.arrowRulerActiveObject?.clearGraphic();
-      this.layers.startPointActiveObject?.activate(false);
-    }
-
-  }
-
-  // если нажали на правую кнопку мыши в области холста
-  private onRightDown(e: PIXI.FederatedPointerEvent): void {
-    e.preventDefault();
-
-    this.state.oldOriginOfCoordinates.x = this.config.originOfCoordinates.x;
-    this.state.oldOriginOfCoordinates.y = this.config.originOfCoordinates.y;
-    
-    this.state.mouse.downCoordinates.x = e.global.x;
-    this.state.mouse.downCoordinates.y = e.global.y;
-    
-    this.state.mouse.right = true;
-    
-  }
-
-  // если отпустили правую кнопку мыши в области холста
-  private onRightUp(e: PIXI.FederatedPointerEvent): void {
-    e.preventDefault();
-    
-    this.state.mouse.right = false;
-    
-  }
-
-  // если происхожит смещение курсора над областью холста
-  private onPointerMove(e: PIXI.FederatedPointerEvent): void {
-
-    e.preventDefault();
-
-    if (this.state.mouse.right) {
-
-      // рассчитываем расстояние между точкой клика правой кнопкой мыши и курсором
-      const { distanceX, distanceY } = calculateMouseDistanceByAxes(
-        {
-          x: e.global.x,
-          y: e.global.y,
-        },
-        this.state.mouse.downCoordinates
-      );
-
-      const newX = this.state.oldOriginOfCoordinates.x - distanceX;
-      const newY = this.state.oldOriginOfCoordinates.y - distanceY;
-  
-      this.config.originOfCoordinates.x = newX <= 0 ? newX : 0;
-      this.config.originOfCoordinates.y = newY <= 0 ? newY : 0;
-
-      this.layers.grid?.drawGrid(); // обновляем сетку
-      this.layers.rulers?.drawRulers(); // обновляем линейки
-      this.layers.planner!.updateScenePosition(); // обновляем слой с объектами
-      this.layers.arrowRulerActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
-      this.layers.startPointActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
-      
-    }
-    
-  }
-
-  private onWheel(e: WheelEvent): void {
-    e.preventDefault();
-
-    if (!this.state.mouse.right) {
-
-      { // set scale
-
-        let currentScale: number = this.config.scale;
-        const scaleSpeed: number = this.config.speedScale;
-
-        if (e.deltaY < 0) {
-          currentScale += scaleSpeed;
-        } else if (e.deltaY > 0) {
-          currentScale -= scaleSpeed;
-        }
-
-        const ns = Math.min(
-          Math.max(currentScale, this.config.minScale),
-          this.config.maxScale
-        );
-
-        this.config.scale = ns;
-
-        // Если scale меньше 1, inverseScale становится больше 1, и наоборот
-        if (ns < 1) {
-          this.config.inverseScale = 1 / ns;
-        } else {
-          this.config.inverseScale = ns === 1 ? 1 : 1 / ns;
-        }
-
-        this.layers.grid!.scale = this.config.scale; // обновляем сетку
-        this.layers.rulers?.drawRulers(); // обновляем линейки
-        this.layers.planner!.scale = this.config.scale; // обновляем сетку
-        this.layers.arrowRulerActiveObject!.scale = this.config.scale; // обновляем стрелки
-        this.layers.startPointActiveObject!.scale = this.config.scale; // обновляем стрелки
-
-      }
-
-    }
-  }
-
-  private handleResize(): void {
-    if (this.app2d) {
-      this.app2d.renderer.resize(this.container.clientWidth, this.container.clientHeight);
-      if(this.layers.rulers) this.layers.rulers.drawRulers();
-      if(this.layers.grid) this.layers.grid.drawGrid();
-    } 
-  }
-
-  private handleKeyDown(e: KeyboardEvent): void {
-
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-      if (this.layers.planner) {
-        this.layers.planner.deleteSelectedObject();
-      }
-    }
+    window.addEventListener('resize', this.handleWindowResize);
+    window.addEventListener('keydown', this.handleKeyDown); // нажатие на кнопку backspace или другие
     
   }
   
@@ -253,16 +142,16 @@ export default class Constructor2D {
     if (this.app2d) {
 
       // Удаляем resize listener
-      window.removeEventListener('resize', this.handleResize.bind(this));
-      window.removeEventListener('keydown', this.handleKeyDown.bind(this));
+      window.removeEventListener('resize', this.handleWindowResize);
+      window.removeEventListener('keydown', this.handleKeyDown);
 
       this.app2d.stage
-        .off('rightdown', this.onRightDown.bind(this))
-        .off('rightup', this.onRightUp.bind(this))
-        .off('pointermove', this.onPointerMove.bind(this))
-        .off('pointerout', this.onRightUp.bind(this))
-        .off('pointerdown', this.onClick.bind(this))
-        .off('wheel', this.onWheel.bind(this));
+        .off('rightdown', this.handlerMouseRightDown)
+        .off('rightup', this.handlerMouseRightUp)
+        .off('pointermove', this.handlerPointerMove)
+        .off('pointerout', this.handlerMouseRightUp)
+        .off('pointerdown', this.handlerMouseLeftDown)
+        .off('wheel', this.handlerWheel);
 
       // Удаляем все компоненты
       for (const key in this.layers) {
@@ -272,9 +161,6 @@ export default class Constructor2D {
         }
         this.layers[key as keyof Layers] = null;
       }
-
-      this.state = null;
-      this.config = null;
 
       // Уничтожаем приложение PIXI
       this.app2d.destroy(true, { children: true });

@@ -1,0 +1,30 @@
+import * as PIXI from "pixi.js";
+import { Vector2 } from "@/types/constructor2d/interfaсes";
+
+export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): void {
+
+  const graphic = e.currentTarget as PIXI.Graphics & { indexPoint: number };
+  const indexPoint = graphic.indexPoint;
+  
+  e.preventDefault();
+
+  e.stopPropagation(); // Останавливаем всплытие события
+  
+  if(indexPoint == 0){
+    this.circleStartPoint.cursor = "pointer";
+  }else if(indexPoint == 1){
+    this.circleEndPoint.cursor = "pointer";
+  }
+  this.app.stage.cursor = "pointer";
+
+  // эта переменная для того, чтобы потом корректно перемещать активную точку по холсту
+  this.state.downActivePointerPosition = this.getPointerPosition(e.global.x, e.global.y);
+
+  this.parent.layers.planner.state.activePointWall = indexPoint;
+  this.parent.state.mouse.left = true;
+
+  const dataWall: { id: string, points: Vector2[] } | undefined = 
+    this.parent.layers.planner.objectWalls.find((el: { id: string }) => el.id === this.parent.layers.planner.state.activeWall);
+  if(dataWall) this.parent.layers.arrowRulerActiveObject.draw(dataWall.points[indexPoint]);
+
+};
