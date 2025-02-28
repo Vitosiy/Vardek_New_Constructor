@@ -35,6 +35,8 @@ export function handlerMouseMove(this: any, e: PIXI.FederatedPointerEvent): void
         this.endPointRect.y = position.y;
       }
 
+      this.drawAngleBetweenWalls();
+
       this.parent.layers.planner.updateWallPoint(position);
 
     }

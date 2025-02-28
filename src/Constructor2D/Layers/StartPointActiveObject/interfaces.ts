@@ -6,6 +6,7 @@ export interface Config {
   colorText: number | string;
   colorRect: number | string;
   colorCircle: number | string;
+  colorAngleArc: number | string;
   
 };
 

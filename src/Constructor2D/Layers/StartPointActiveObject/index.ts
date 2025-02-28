@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { MathUtils } from "three";
+// import { MathUtils } from "three";
 
 import {
   Vector2,
@@ -22,6 +22,8 @@ import { handlerMouseMove } from "./methods/events/handlerMouseMove/index";
 import { handlerMouseUp } from "./methods/events/handlerMouseUp/index";
 import { handlerCanvasMouseLeave } from "./methods/events/handlerCanvasMouseLeave/index";
 
+import { drawAngleBetweenWalls } from "./methods/drawAngleBetweenWalls/index";
+
 export default class StartPointActiveObject {
 
   private app: PIXI.Application;
@@ -34,6 +36,7 @@ export default class StartPointActiveObject {
   private startPointRect: PIXI.Graphics;
   private endPointRect: PIXI.Graphics;
 
+  private angleBetweenWalls: PIXI.Graphics; // линия арки между стенами
   private angleText: PIXI.Text; // текст отображающий угол
   private angleTextConatainer: PIXI.Container; // контейнер, в который будет добавлен текст, цель контейнера в поцизионировании на холсте
   private circleAngleMask: PIXI.Graphics; // маска окружность, чтобы вычасть из линии арки для отображения текста
@@ -45,12 +48,15 @@ export default class StartPointActiveObject {
   private handlerMouseUp: (e:PIXI.FederatedPointerEvent) => void;
   private handlerCanvasMouseLeave: (e: MouseEvent) => void;
 
+  private drawAngleBetweenWalls: () => void;
+
   private config: Config = {
 
     fontSize: 15,
     colorText: 0x5D6069,
     colorRect: 0xDA444C,
     colorCircle: 0x4285F4,
+    colorAngleArc: 0x131313,
     
   };
 
@@ -86,9 +92,10 @@ export default class StartPointActiveObject {
     this.circleEndPoint.eventMode = 'static';
     this.container.addChild(this.circleEndPoint);
     
+    this.angleBetweenWalls = new PIXI.Graphics();
+    this.container.addChild(this.angleBetweenWalls);
     this.circleAngleMask = new PIXI.Graphics();
     this.container.addChild(this.circleAngleMask);
-
     this.angleText = new PIXI.Text({
       text: "",
       style: {
@@ -106,6 +113,8 @@ export default class StartPointActiveObject {
     this.handlerMouseMove = handlerMouseMove.bind(this);
     this.handlerMouseUp = handlerMouseUp.bind(this);
     this.handlerCanvasMouseLeave = handlerCanvasMouseLeave.bind(this);
+
+    this.drawAngleBetweenWalls = drawAngleBetweenWalls.bind(this);
 
     // рисуем графику
     this.initGraphic();
@@ -226,6 +235,8 @@ export default class StartPointActiveObject {
         this.endPointRect.visible = indexPoint == 1 ? true : false;
         
       }
+
+      this.drawAngleBetweenWalls();
       
       this.container.visible = true;
       
@@ -287,6 +298,7 @@ export default class StartPointActiveObject {
       this.circleAngleMask,
       this.angleText,
       this.angleTextConatainer,
+      this.angleBetweenWalls,
     ].forEach(graphic => {
       if (graphic) {
         graphic.destroy(true);
