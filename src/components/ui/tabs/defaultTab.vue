@@ -13,16 +13,16 @@
     </div>
 
     <!-- Содержимое выбранного таба -->
-    <div class="tabs-content">
-      <div
-      v-for="tab in tabs"
-      :key="tab.name"
-
-      >
-        <slot :name="tab.name" v-if="selectedTab === tab.name" />
-      </div>
-    </div>
     <!-- 
+      <div class="tabs-content">
+        <div
+        v-for="tab in tabs"
+        :key="tab.name"
+  
+        >
+          <slot :name="tab.name" v-if="selectedTab === tab.name" />
+        </div>
+      </div>
    -->
   </div>
 </template>
@@ -61,25 +61,27 @@ selectedTab.value =
 
 // Метод для смены таба
 const selectTab = (name: string, index: number) => {
-  
   selectedTab.value = name;
   emit("tab-change", {index: index, name: name});
-  // emit("tab-change", index);
 };
 </script>
 
 <style scoped lang="scss">
 .tabs-navigation {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 16px;
+  box-sizing: border-box;
+  // border: 1px solid red;
 }
 button {
-
   border: none;
   border-radius: 15px;
   font-size: 16px;
   padding: 15px 25px;
+  min-width: 120px;
   font-weight: 600;
   outline: none;
   background: $bg;

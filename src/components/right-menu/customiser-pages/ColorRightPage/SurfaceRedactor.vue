@@ -41,9 +41,13 @@ onMounted(() => {
 })
 
 
-const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
+const changeFasadeTexture = (id, fasadeNdx) => {
+  console.log(id, 'ID ON FASADE CHANGE');
   // currentFasadeId.value = fasadeNdx;
   // selectedFasade.value = data.ID;
+  let data = _FASADE[id]
+  console.log(data, '_FASADE[ID]');
+  
   const productId = productData.PROPS.PRODUCT;
 
   modelState.createCurrentPaletteData(data.ID, productId);
@@ -51,7 +55,7 @@ const changeFasadeTexture = (data: { [key: string]: any }, fasadeNdx) => {
   modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
 
   eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
-  emit("select_material")
+  emit("select_material", { name: data.NAME, imgSrc: data.DETAIL_PICTURE })
 };
 
 const onSearchChange = (e) => {
@@ -67,30 +71,34 @@ const onSearchChange = (e) => {
   <div>
     <input class="search" type="text" placeholder="Поиск" @input="onSearchChange">
   </div>
-  <!-- Все возможные материалы -->
-  <div v-if="!isSearch" v-for="materials in props.materialList">
-    <details>
-      <summary>
-        {{ materials.NAME }}
-      </summary>
-      <div v-for="id in materials.FASADES">
-        <div class="item" @click="changeFasadeTexture(_FASADE[id], props.tabIndex)">
-          <img class="item__img" :src="_URL + _FASADE[id].DETAIL_PICTURE" alt="">
-          <div class="item__name">
-            {{ _FASADE[id].NAME }}
+  <div class="list">
+    <!-- Все возможные материалы -->
+    <div v-if="!isSearch" v-for="materials in props.materialList" class="list__details">
+      <details>
+        <summary>
+          {{ materials.NAME }}
+        </summary>
+        <div v-for="id in materials.FASADES">
+          <div class="item" @click="changeFasadeTexture(id, props.tabIndex)">
+            <img class="item__img" :src="_URL + _FASADE[id].DETAIL_PICTURE" alt="">
+            <div class="item__name">
+              {{ _FASADE[id].NAME }}
+            </div>
           </div>
         </div>
-      </div>
-    </details>
-  </div>
-  <!-- отфильтрованные материалы-->
-  <div v-else v-for="id in filteredMaterialList">
-      <div class="item" @click="changeFasadeTexture(_FASADE[id], props.tabIndex)">
-          <img class="item__img" :src="_URL + _FASADE[id].DETAIL_PICTURE" alt="">
-          <div class="item__name">
-            {{ _FASADE[id].NAME }}
-          </div>
-      </div>
+      </details>
+    </div>
+    <!--
+    -->
+    <!-- отфильтрованные материалы-->
+    <div v-else v-for="id in filteredMaterialList">
+        <div class="item" @click="changeFasadeTexture(id, props.tabIndex)">
+            <img class="item__img" :src="_URL + _FASADE[id].DETAIL_PICTURE" alt="">
+            <div class="item__name">
+              {{ _FASADE[id].NAME }}
+            </div>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -99,15 +107,78 @@ const onSearchChange = (e) => {
   height: 40px;
   width: 100%;
   border-radius: 5px;
+  padding-left: 15px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  overflow: scroll;
+  height: 100%;
+  // border: 1px solid red;
+
+  details {
+    position: relative;
+    margin: 4px 4px 4px 0px;
+    padding: 15px;
+    border: 1px solid #a3a9b5;
+    border-radius: 15px;
+    font-family: Gilroy;
+    color: rgba(93, 96, 105, 1);
+  }
+
+  details summary {
+    font-weight: bold;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  details[open] {
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details summary::before {
+    content: "\276F";
+
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    display: inline-block;
+    transform: rotate(90deg);
+    transition: transform 0.2s ease-in-out;
+  }
+
+  details[open] summary::before {
+    transform: rotate(-90deg);
+  }
+}
+
+.list::-webkit-scrollbar {
+    width: 8px;
 }
 
 .item {
   display: flex;
   flex-direction: row;
+  align-items: center;
   cursor: pointer;
+  height: 60px;
+  // border: 1px solid red;
+  border-radius: 5px;
+  background-color: #e7e7e7;
+  margin-bottom: 4px;
 
   &__img {
-    height: 20px;
+    height: 45px;
+    border-radius: 5px;
+    margin-left: 10px;
+  }
+  
+  &__name {
+    margin-left: 30px;
   }
 }
 </style>

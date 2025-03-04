@@ -65,23 +65,20 @@ const handleTabChange = ({ index, name }) => {
     // console.log('FASADE: ', fasadeList[index]);
     return
   }
-  tabIndex.value = index
-  isCorpusSelected.value = true // TODO вычитать единицу из таб-индекса здесь
+  tabIndex.value = index // TODO вычитать единицу из таб-индекса здесь?
+  isCorpusSelected.value = true 
 }
 
 </script>
 
 <template>
-  <div>
-    <defaultTab
-      :tabs="tabsList"
-      initialTab="Корпус"
-      @tab-change="handleTabChange"
-    >
-    </defaultTab>
-    <CorpusMaterialRedactor v-if="isCorpusSelected" />
-    <div v-else v-for="(fasadeData, index) in fasadeList">
-      <MaterialRedactor v-if="tabIndex - 1 === index" :fasadeData="fasadeData" :tabIndex="tabIndex"/>
-    </div>
-  </div>
+  <defaultTab
+  :tabs="tabsList"
+  initialTab="Корпус"
+  @tab-change="handleTabChange" />
+  <CorpusMaterialRedactor v-if="isCorpusSelected" />
+  <MaterialRedactor v-else :key="tabIndex" :fasadeData="fasadeList[tabIndex - 1]" :tabIndex="tabIndex"/>
 </template>
+
+<style lang="scss" scoped>
+</style>

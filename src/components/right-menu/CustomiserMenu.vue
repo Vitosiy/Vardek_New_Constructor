@@ -44,15 +44,16 @@ const togglePopup = () => {
         </div>
         <img src="@/assets/svg/right-menu/close.svg" class="close__button" @click="togglePopup" />
       </div>
-      <div class="cusomiser-main">
-        <RulerPage v-if="customiserStore.customisers == 'ruler'" />
-        <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
+      
+      <RulerPage v-if="customiserStore.customisers == 'ruler'" />
+      <ModelsItemSelector v-if="customiserStore.customisers == 'color'"
+        class="cusomiser-main__surface-redactor" />
         <!--
           <ColorPage v-if="customiserStore.customisers == 'color'" />
         -->
-        <MovingPage v-if="customiserStore.customisers == 'moving'" />
-        <FigurePage v-if="customiserStore.customisers == 'figure'" />
-      </div>
+      <MovingPage v-if="customiserStore.customisers == 'moving'" />
+      <FigurePage v-if="customiserStore.customisers == 'figure'" />
+
     </div>
   </div>
 </template>
@@ -60,6 +61,7 @@ const togglePopup = () => {
 <style lang="scss" scoped>
 .customiser {
   width: 100%;
+  height: 85%;
   max-width: 551px;
   position: absolute;
   top: 106px;
@@ -77,6 +79,7 @@ const togglePopup = () => {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    height: 100%;
 
     .customiser-header {
       width: 100%;
@@ -102,4 +105,5 @@ const togglePopup = () => {
     }
   }
 }
+
 </style>

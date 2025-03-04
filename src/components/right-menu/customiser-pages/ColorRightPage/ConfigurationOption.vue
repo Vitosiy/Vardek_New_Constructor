@@ -1,27 +1,61 @@
 <script lang="ts" setup>
-import { defineProps, computed } from 'vue';
+import { defineProps, computed, defineEmits } from 'vue';
+import default_url from '@/assets/svg/surface-redactor/default.svg'
+import delete_url from '@/assets/svg/surface-redactor/delete.svg'
+import { _URL } from "@/types/constants";
+
 
 const props = defineProps({
   type: String,
   data: Object
 })
 
+const emit = defineEmits(['choose-option', 'delete-choise'])
+
 let title = computed(() => {
   if(props.type === 'surface') return 'Тип покрытия'
   if(props.type === 'milling') return 'Тип фрезеровки'
   if(props.type === 'palette') return 'Цвет покрытия'
 })
+
+let name = computed(() => {
+  return props.data?.name ? props.data.name : ''
+})
+
+let imgSrc = computed(() => {
+  return props.data?.imgSrc ? _URL + props.data.imgSrc : default_url
+})
+
+let isColorChosed = computed(() =>{
+  return props.data?.hex ? true : false
+})
+
+let chooseOption = () => {
+  emit('choose-option', props.type)
+}
+
+const deleteChoise = () => {
+  emit('delete-choise', props.type)
+}
+
 </script>
 
 <template>
   <div class="config">
     <div class="config__top">
-      <img class="config__img" src="../../../../assets/svg/surface-redactor/Frame 1793.svg" alt="">
-      <img class="config__delete" src="../../../../assets/svg/surface-redactor/delete.svg" alt="">
+      <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="" @click="chooseOption">
+      <div v-else @click="chooseOption">
+        <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="">
+        <div v-else class="config__color" :style="{ backgroundColor: `#${props.data?.hex}` }" ></div>
+      </div>
+      <img class="config__delete" :src="delete_url" alt="" @click="deleteChoise">
     </div>
     <div class="config__bottom">
       <div class="config__title">
         {{ title }}
+      </div>
+      <div>
+        {{ name }}
       </div>
     </div>
   </div>
@@ -46,11 +80,20 @@ let title = computed(() => {
     width: 100%;
   }
 
-  &__bottom {
+  &__img {
+    cursor: pointer;
+  }
+
+  &__color {
+    height: 50px;
+    width: 50px;
+    border-radius: 5px;
+    cursor: pointer;
   }
 
   &__delete {
     height: 25px;
+    cursor: pointer;
   }
 
   &__title {
