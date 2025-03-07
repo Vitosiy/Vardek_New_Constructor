@@ -70,11 +70,10 @@ const selectTab = (name: string, index: number) => {
 .tabs-navigation {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content:flex-start;
   gap: 8px;
   margin-bottom: 16px;
   box-sizing: border-box;
-  // border: 1px solid red;
 }
 button {
   border: none;
@@ -93,18 +92,10 @@ button:hover {
 }
 
 button.active {
-  // background-color: #007bff;
-  // color: white;
-  
   background: $red;
   color: $white;
-
 }
 .tabs-content {
   margin-top: 16px;
-  /* padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #f9f9f9; */
 }
 </style>

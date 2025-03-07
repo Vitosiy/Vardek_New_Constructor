@@ -44,7 +44,6 @@ const changeModuleTexture = (data: { [key: string]: any }) => {
   align-items: center;
   cursor: pointer;
   height: 60px;
-  // border: 1px solid red;
   border-radius: 5px;
   background-color: #e7e7e7;
   margin-bottom: 8px;

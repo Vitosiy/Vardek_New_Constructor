@@ -13,19 +13,25 @@ import MovingButton from "@/components/ui/buttons/right-menu/MovingRightButton.v
 import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.vue";
 import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
 
+import { onMounted } from "vue";
 import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
 import { useModelState } from "@/store/appliction/useModelState";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 const customiserStore = useCustomiserStore();
+let eventBus = useEventBus()
 
 const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
 
-// const customise = defineProps({
-//   productData: Object,
-//   productSize: Object
-// })
+onMounted(() => {
+  eventBus.on('A:MouseDown', () => {
+    if(customiserStore.isCustomiserOpen) {
+      togglePopup()
+    }
+  })
+})
 
 </script>
 
@@ -46,10 +52,9 @@ const togglePopup = () => {
       </div>
       
       <RulerPage v-if="customiserStore.customisers == 'ruler'" />
-      <ModelsItemSelector v-if="customiserStore.customisers == 'color'"
-        class="cusomiser-main__surface-redactor" />
-        <!--
-          <ColorPage v-if="customiserStore.customisers == 'color'" />
+      <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
+      <!--
+        <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
         -->
       <MovingPage v-if="customiserStore.customisers == 'moving'" />
       <FigurePage v-if="customiserStore.customisers == 'figure'" />

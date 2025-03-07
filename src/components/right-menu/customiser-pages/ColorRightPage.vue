@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
-
+/**
+ * ИЗНАЧАЛЬНЫЙ УСТАВРЕВШИЙ КОМПОНЕНТ. ОСТАВЛЕН ДЛЯ СВЕРКИ С НОВОЙ ВЕРСИЕЙ
+ */
 import { ref, watch, onMounted, computed } from "vue";
 import { _URL } from "@/types/constants";
 
@@ -65,10 +67,6 @@ onMounted(() => {
   fasades.value = modelState.getCurrentModelFasadesData; // текущий фасады редактирования ?
 
   productData.value = { ...objectData?.PROPS }; // претендент на удаление. Дублирование данных
-
-  console.log(objectData, ']]]]]]]]]]]]]]]]]]]]]', useModelState().getCurrentModel);
-  
-
   createTabList(productFasades.value);
 });
 

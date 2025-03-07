@@ -22,7 +22,7 @@ const changePaletteColor = (color) => {
     data: color.ID,
     fasadeNdx: props.tabIndex,
   });
-  emit('select_color', { name: color.name, data: '', hex: color.HTML})
+  emit('select_color', { name: color.NAME, data: '', hex: color.HTML}) // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {
@@ -57,18 +57,22 @@ const onSearchChange = (e) => {
 
 <style lang="scss" scoped>
 .search {
+  position: absolute;
+  top: 10px;
   height: 40px;
-  width: 100%;
+  width: 95%;
   border-radius: 5px;
   padding-left: 15px;
 }
 
 .list {
   overflow: scroll;
+  height: 100%;
+  margin-top: 40px;
 }
 
 .list::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .item {
@@ -77,7 +81,6 @@ const onSearchChange = (e) => {
   align-items: center;
   cursor: pointer;
   height: 60px;
-  // border: 1px solid red;
   border-radius: 5px;
   background-color: #e7e7e7;
   margin-bottom: 4px;

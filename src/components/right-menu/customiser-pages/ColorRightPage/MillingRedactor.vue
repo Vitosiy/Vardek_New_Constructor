@@ -20,12 +20,12 @@ const isSearch = computed(() => {
 })
 
 
-const selectMilling = (milling) => {
-  eventBus.emit("A:selectMilling", {
+const changeMilling = (milling) => {
+  eventBus.emit("A:ChangeMilling", {
     data: milling.ID,
     fasadeNdx: props.tabIndex,
   });
-  emit('select_milling', { name: milling.NAME, imgSrc: milling.DETAIL_PICTURE })
+  emit('select_milling', { name: milling.NAME, imgSrc: milling.DETAIL_PICTURE }) // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {
@@ -44,12 +44,12 @@ const onSearchChange = (e) => {
   </div>
   <div class="list">
     <!-- Все виды фрезировок -->
-    <div v-if="!isSearch" class="item" v-for="milling in props.millingList" @click="selectMilling( milling )">
+    <div v-if="!isSearch" class="item" v-for="milling in props.millingList" @click="changeMilling( milling )">
       <img class="item__img" :src="_URL + milling.DETAIL_PICTURE" alt="">
       <div class="item__name">{{ milling.NAME }}</div>
     </div>
     <!-- Отфильтрованные в поиске -->
-    <div v-else class="item" v-for="milling in filteredMillingList" @click="selectMilling( milling )">
+    <div v-else class="item" v-for="milling in filteredMillingList" @click="changeMilling( milling )">
       <img class="item__img" :src="_URL + milling.DETAIL_PICTURE" alt="">
       <div class="item__name">{{ milling.NAME }}</div>
     </div>
@@ -58,18 +58,22 @@ const onSearchChange = (e) => {
 
 <style scoped lang="scss">
 .search {
+  position: absolute;
+  top: 10px;
   height: 40px;
-  width: 100%;
+  width: 95%;
   border-radius: 5px;
   padding-left: 15px;
 }
 
 .list {
   overflow: scroll;
+  height: 100%;
+  margin-top: 40px;
 }
 
 .list::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .item {

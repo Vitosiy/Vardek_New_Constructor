@@ -117,6 +117,7 @@ export class MeshEvents {
 
     /** Цвет Фасада */
     changeFasadeTexture({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
+
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -124,13 +125,14 @@ export class MeshEvents {
         const window = props.CONFIG.SHOWCASE
 
         if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
+            
             this.modelState.createCurrentPaletteData(data.ID)
             let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
 
             // console.log(props.FASADE[fasadeNdx], 'changeFasadeTexture')
 
             this.changePaletteColor({ data: palette, fasadeNdx })
-            return
+            // return // TODO закоментил временно, блокирует запись COLOR в PROPS.CONFIG.FASADE_PROPS. Решить в будущем что делать
         }
 
         if (data.ATTACH_MILLINGS && data.ATTACH_MILLINGS[0] == null) {
@@ -160,7 +162,7 @@ export class MeshEvents {
                         })
                 }
             })
-
+            
             this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
             this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = data.ID
             this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null

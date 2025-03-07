@@ -34,7 +34,7 @@ let chooseOption = () => {
   emit('choose-option', props.type)
 }
 
-const deleteChoise = () => {
+const deleteChoise = () => { // TODO функция удаления отложена до решения Александра
   emit('delete-choise', props.type)
 }
 
@@ -48,7 +48,7 @@ const deleteChoise = () => {
         <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="">
         <div v-else class="config__color" :style="{ backgroundColor: `#${props.data?.hex}` }" ></div>
       </div>
-      <img class="config__delete" :src="delete_url" alt="" @click="deleteChoise">
+      <img class="config__delete" :src="delete_url" alt="" @click="deleteChoise"> 
     </div>
     <div class="config__bottom">
       <div class="config__title">

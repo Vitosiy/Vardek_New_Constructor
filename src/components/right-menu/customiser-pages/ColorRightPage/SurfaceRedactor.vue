@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
 
-import { defineProps, defineEmits, onMounted, computed, ref } from 'vue';
+import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -21,7 +21,7 @@ const productData = modelState.getCurrentModel;
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
-const totalMaterialList = computed(() => {
+const totalMaterialList = computed(() => { // разворачивание основного двумерного массива для функции поиска
   let arr = []
   props.materialList.forEach(list => {
     arr.push(list.FASADES)
@@ -30,32 +30,21 @@ const totalMaterialList = computed(() => {
   return result
 })
 
-const filteredMaterialList = ref<Array>([])
+const filteredMaterialList = ref<Array>([]) // отфильтрованный массив поиска
 const isSearch = computed(() => {
   return filteredMaterialList.value.length > 0 ? true : false
 })
 
-onMounted(() => {
-  // console.log('MATERIAL LIST', props.materialList);
-  
-})
-
-
-const changeFasadeTexture = (id, fasadeNdx) => {
-  console.log(id, 'ID ON FASADE CHANGE');
-  // currentFasadeId.value = fasadeNdx;
-  // selectedFasade.value = data.ID;
-  let data = _FASADE[id]
-  console.log(data, '_FASADE[ID]');
-  
+const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   const productId = productData.PROPS.PRODUCT;
-
-  modelState.createCurrentPaletteData(data.ID, productId);
-  modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
-  modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
-
+  let { ID, NAME, DETAIL_PICTURE } = data
+  
+  modelState.createCurrentPaletteData(ID, productId);
+  modelState.createCurrentMillingData({ fasadeId: ID, productId });
+  modelState.createCurrentWindowsData({ fasadeId: ID, productId });
+  
   eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
-  emit("select_material", { name: data.NAME, imgSrc: data.DETAIL_PICTURE })
+  emit("select_material", { name: NAME, imgSrc: DETAIL_PICTURE })
 };
 
 const onSearchChange = (e) => {
@@ -64,58 +53,73 @@ const onSearchChange = (e) => {
   filteredMaterialList.value = filtered
 
   if(e.target.value === '') filteredMaterialList.value = []
-}
+} 
 </script>
 
 <template>
-  <div>
-    <input class="search" type="text" placeholder="Поиск" @input="onSearchChange">
-  </div>
-  <div class="list">
-    <!-- Все возможные материалы -->
-    <div v-if="!isSearch" v-for="materials in props.materialList" class="list__details">
-      <details>
-        <summary>
-          {{ materials.NAME }}
-        </summary>
-        <div v-for="id in materials.FASADES">
-          <div class="item" @click="changeFasadeTexture(id, props.tabIndex)">
-            <img class="item__img" :src="_URL + _FASADE[id].DETAIL_PICTURE" alt="">
-            <div class="item__name">
-              {{ _FASADE[id].NAME }}
+    <div>
+      <input
+        class="search"
+        type="text"
+        placeholder="Поиск"
+        @input="onSearchChange"
+      />
+    </div>
+    <div class="list">
+      <!-- Все возможные материалы -->
+      <div
+        v-if="!isSearch"
+        v-for="materials in props.materialList"
+        class="list__details"
+      >
+        <details>
+          <summary>
+            {{ materials.NAME }}
+          </summary>
+          <div v-for="id in materials.FASADES">
+            <div class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
+              <img
+                class="item__img"
+                :src="_URL + _FASADE[id].DETAIL_PICTURE"
+                alt=""
+              />
+              <div class="item__name">
+                {{ _FASADE[id].NAME }}
+              </div>
             </div>
           </div>
+        </details>
+      </div>
+      <!-- отфильтрованные материалы-->
+      <div v-else v-for="id in filteredMaterialList">
+        <div class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
+          <img
+            class="item__img"
+            :src="_URL + _FASADE[id].DETAIL_PICTURE"
+            alt=""
+          />
+          <div class="item__name">
+            {{ _FASADE[id].NAME }}
+          </div>
         </div>
-      </details>
+      </div>
     </div>
-    <!--
-    -->
-    <!-- отфильтрованные материалы-->
-    <div v-else v-for="id in filteredMaterialList">
-        <div class="item" @click="changeFasadeTexture(id, props.tabIndex)">
-            <img class="item__img" :src="_URL + _FASADE[id].DETAIL_PICTURE" alt="">
-            <div class="item__name">
-              {{ _FASADE[id].NAME }}
-            </div>
-        </div>
-    </div>
-  </div>
 </template>
 
 <style scoped lang="scss">
 .search {
+  position: absolute;
+  top: 10px;
   height: 40px;
-  width: 100%;
+  width: 95%;
   border-radius: 5px;
   padding-left: 15px;
 }
 
 .list {
-  display: flex;
-  flex-direction: column;
   overflow: scroll;
   height: 100%;
-  // border: 1px solid red;
+  margin-top: 40px;
 
   details {
     position: relative;
@@ -157,7 +161,7 @@ const onSearchChange = (e) => {
 }
 
 .list::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .item {
@@ -176,7 +180,7 @@ const onSearchChange = (e) => {
     border-radius: 5px;
     margin-left: 10px;
   }
-  
+
   &__name {
     margin-left: 30px;
   }

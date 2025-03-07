@@ -23,12 +23,10 @@ const props = defineProps({
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
   
-const modelState = useModelState() 
+const modelState = useModelState() // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
 const materialList = modelState.getCurrentModelFasadesData
 const productData = modelState.getCurrentModel;
 const productId = productData.PROPS.PRODUCT;
-
-
 
 let currentEditableOption = ref<String>('surface')
 
@@ -40,30 +38,15 @@ let isSurfaceSelected = ref<boolean>(false)
 
 let millingList = ref<Array>([])
 let isMillingExist = ref<boolean>(false)
-// let isMillingExist = ref<null | Boolean>(props.fasadeData.MILLING)
-// let isMillingExist = computed(() => {
-//   console.log('computed', millingList.value);
-  
-//   return props.fasadeData.MILLING ? true :  millingList.value.length > 0
-// })
 
 let paletteList = ref<Object>({})
 let isPalleteExist = ref<boolean>(false)
-// let isPalleteExist = computed(() => {
-//   return props.fasadeData.PALETTE ? props.fasadeData.PALETTE : paletteList.value.length > 0
-// })
 
 
 const onSelectMaterial = (data) => {
-  console.log(data, 'DATA');
-  
-  // console.log(useModelState().getCurrentMillingData, 'MILLING');
-  // console.log(useModelState().getCurrentPaletteData, 'PALETE');
   isSurfaceSelected.value = true
   millingList.value = modelState.getCurrentMillingData
-  isMillingExist.value = millingList.value.length > 0
-  // console.log(isMillingExist.value, 'is milling exist');
-  
+  isMillingExist.value = millingList.value.length > 0 
   
   paletteList.value = modelState.getCurrentPaletteData
   isPalleteExist.value = Object.keys(paletteList.value).length > 0
@@ -79,7 +62,7 @@ const onSelectPalette = (data) => {
   currentPaletteData.value = data
 }
 
-const deleteSelectedOptions = (type: String) => {
+const deleteSelectedOptions = (type: String) => { // TODO доделать после согласования
   console.log('DELETE', type);
 }
 
@@ -89,21 +72,38 @@ const setCurrentEditableOption = (name: String) => {
 }
 
 onMounted(() => {
-  // console.log(modelState.getCurrentModel, 'MODEL STATE');
   let currentFasadeData = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1]
-  let { MILLING, PALETTE, COLOR } = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1]
-  console.log(currentFasadeData, 'FASADE DATA',COLOR, MILLING, PALETTE);
+  let { MILLING, PALETTE, COLOR, SHOW } = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1]
   
-  // console.log(props.tabIndex - 1, 'TABINDEX');
-  
-  // modelState.createCurrentMillingData(_FASADE ,productId)
-  // console.log(props.fasadeData, 'FASADE_DATA', isMillingExist.value);
-  if(COLOR) isSurfaceSelected.value = true
-  if(MILLING) isMillingExist.value = true
-  if(PALETTE) isPalleteExist.value = true
 
-  let milingData = modelState.getCurrentMillingData
-  console.log(milingData, 'MILLING DATA');
+  // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
+  let dataOfFasadeType = _FASADE[COLOR]
+  if(dataOfFasadeType.ATTACH_MILLINGS[0]) {
+    millingList.value = modelState.getCurrentMillingData
+    isMillingExist.value = true
+  }
+  if(dataOfFasadeType.PALETTE[0]) {
+    paletteList.value = modelState.getCurrentPaletteData
+    isPalleteExist.value = true
+  } 
+  
+
+  // проверка уже установленных значений фасада, фрезеровки и цвета
+  if(COLOR) {
+    let { NAME, DETAIL_PICTURE } = _FASADE[COLOR]
+    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE }
+    isSurfaceSelected.value = true
+  }
+  if(MILLING) {
+    let { NAME, DETAIL_PICTURE } = modelState.getCurrentMillingData.find(milling => milling.ID === MILLING)
+    currentMillingData.value = { name: NAME, imgSrc: DETAIL_PICTURE }
+    isMillingExist.value = true
+  } 
+  if(PALETTE) {
+    let { NAME, HTML } = modelState.getCurrentPaletteData[PALETTE]
+    currentPaletteData.value = { name: NAME, hex: HTML }
+    isPalleteExist.value = true
+  } 
   
 })
 
@@ -116,8 +116,7 @@ onMounted(() => {
         <ConfigurationOption
         :type="'surface'" 
         :data="currentSurfaceData" 
-        @choose-option="setCurrentEditableOption"
-        @delete-choise="" />
+        @choose-option="setCurrentEditableOption" />
 
         <ConfigurationOption v-if="isMillingExist"
         :type="'milling'" 
@@ -130,22 +129,22 @@ onMounted(() => {
         @choose-option="setCurrentEditableOption" />
       </div>
       <div class="container__list">
-
+        
         <SurfaceRedactor v-if="currentEditableOption === 'surface'" 
         :materialList="materialList" 
         :tabIndex="props.tabIndex - 1"  
-        @select_material="onSelectMaterial"/>
+        @select_material="onSelectMaterial" />
+
 
         <MillingRedactor v-if="currentEditableOption === 'milling'" 
         :millingList="millingList" 
         :tabIndex="props.tabIndex - 1" 
-        @select_milling="onSelectMilling"/>
+        @select_milling="onSelectMilling" />
 
         <ColorRedactor v-if="currentEditableOption === 'palette'" 
         :paletteList="paletteList" 
         :tabIndex="props.tabIndex - 1" 
-        @select_color="onSelectPalette"/>
-
+        @select_color="onSelectPalette" />
       </div>
     </div>
   
@@ -155,8 +154,7 @@ onMounted(() => {
 .container {
   display: flex;
   flex-direction: column;
-  // justify-content: space-between;
-  gap: 10px;
+  gap: 15px;
   border: 1px solid rgb(195, 195, 195);
   border-radius: 10px;
   padding: 15px;
@@ -170,6 +168,7 @@ onMounted(() => {
   }
 
   &__list {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -177,15 +176,20 @@ onMounted(() => {
     border-radius: 10px;
     padding: 10px;
     height: 100%;
+    overflow-y: scroll;
     box-sizing: border-box;
+  }
+
+  &__list::-webkit-scrollbar {
+    width: 8px;
   }
 }
 
 .configuration {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  // margin-bottom: 10px;
+  justify-content:flex-start;
+  gap: 17px;
 
   &__item {
     height: 50px;
