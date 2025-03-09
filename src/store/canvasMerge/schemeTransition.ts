@@ -317,24 +317,24 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
     // Работаем с копией стен
     const walls = roomData.size.walls;
 
-		// // определить центр масс всех стен
-		// const center = walls.reduce((acc: any, wall: any) => {
-		// 	acc.x += wall.position.x;
-		// 	acc.y += wall.position.y;
-		// 	acc.z += wall.position.z;
-		// 	return acc;
-		// }, { x: 0, y: 0, z: 0 });
+		// определить центр масс всех стен
+		const center = walls.reduce((acc: any, wall: any) => {
+			acc.x += wall.position.x;
+			acc.y += wall.position.y;
+			acc.z += wall.position.z;
+			return acc;
+		}, { x: 0, y: 0, z: 0 });
 
-		// center.x /= walls.length;
-		// center.y /= walls.length;
-		// center.z /= walls.length;
+		center.x /= walls.length;
+		center.y /= walls.length;
+		center.z /= walls.length;
 
-		// // сместить центр масс в центр координат (0, 0, 0) вместе со стенами
-		// walls.forEach((wall: any) => {
-		// 	wall.position.x -= center.x;
-		// 	wall.position.y = 1500;
-		// 	wall.position.z -= center.z;
-		// });
+		// сместить центр масс в центр координат (0, 0, 0) вместе со стенами
+		walls.forEach((wall: any) => {
+			wall.position.x -= center.x;
+			wall.position.y = 1500;
+			wall.position.z -= center.z;
+		});
 
 		roomData.size.walls = walls; /// <<<< ТУТ ОШИБКА!!!! данные не меняются. Где ошибка ?
 
