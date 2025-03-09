@@ -75,9 +75,9 @@ export interface ArgumentDataAddWall {
 export interface MergeWalls {
   wallPoint0: number | string | null;
   wallPoint1: number | string | null;
-}
+};
 
 export interface HoverPointObject { 
   id: number | string; 
   indexPoint: number 
-}
+};

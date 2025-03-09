@@ -43,6 +43,8 @@ import { handlerDownEventGraphic } from "./methods/events/handlerDown/index";
 import { handlerStageMouseUp } from "./methods/events/handlerStageMouseUp/index";
 import { handlerStageMouseMove } from "./methods/events/handlerStageMouseMove/index";
 
+import { initRoom } from "./methods/initRoom/index";
+
 export default class Planner {
 
   private app: PIXI.Application;
@@ -99,6 +101,8 @@ export default class Planner {
   private handlerStageMouseUp: (e:PIXI.FederatedPointerEvent) => void;
   private handlerStageMouseMove: (e:PIXI.FederatedPointerEvent) => void;
 
+  private initRoom: () => (0 | 1);
+
   constructor(pixiApp: PIXI.Application, parent: any) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
@@ -118,23 +122,33 @@ export default class Planner {
     this.handlerStageMouseUp = handlerStageMouseUp.bind(this);
     this.handlerStageMouseMove = handlerStageMouseMove.bind(this);
 
+    this.initRoom = initRoom.bind(this);
+
     this.init();
   }
 
   // инициализация объектов для визуализации при запуске приложения
   private init(): void {
 
-    const objs = this.objectWalls;
-    if(objs.length > 0){
-      for (let i=0, len=objs.length; i<len; i++) {
-        const id = objs[i].id;
-        // создаем контейнеры для визуализации стены
-        const result = this.createDrawContainers(id);
-        // визуализируем объект
-        if(result){
-          this.drawWall(id);
+    const result = this.initRoom();
+
+    if(result){
+
+      const objs = this.objectWalls;
+      if(objs.length > 0){
+        for (let i=0, len=objs.length; i<len; i++) {
+          const id = objs[i].id;
+          // создаем контейнеры для визуализации стены
+          const result = this.createDrawContainers(id);
+          // визуализируем объект
+          if(result){
+            this.drawWall(id);
+          }
         }
       }
+
+      console.log("init walls:", this.objectWalls);
+
     }
 
     this.app.stage
