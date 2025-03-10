@@ -86,8 +86,6 @@ onMounted(() => {
     isPalleteExist.value = true
   } 
   
-  // console.log(_FASADE[COLOR], '_FASADE');
-  
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
   if(COLOR) {
