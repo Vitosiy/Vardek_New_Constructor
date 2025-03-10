@@ -100,7 +100,7 @@ export class Filters extends GlobalsData {
 
             } = {
                 /** --- FASADE_PROPS ---*/
-                COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
+                COLOR: this.project.default_fasade_up,  // params.FASADE_PROPS.length  < fasadePositionList.length ? null : this.project.default_fasade_up,
                 SHOW: false,
                 LIST: fasadePosition.ID,
                 BODY: fasad,

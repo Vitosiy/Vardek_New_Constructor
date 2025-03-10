@@ -158,7 +158,6 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId }) => {
 
-
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
 
             currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;

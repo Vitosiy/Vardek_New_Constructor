@@ -3,6 +3,7 @@
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
+import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue"
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
 import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage.vue";
 
@@ -12,19 +13,25 @@ import MovingButton from "@/components/ui/buttons/right-menu/MovingRightButton.v
 import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.vue";
 import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
 
+import { onMounted } from "vue";
 import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
 import { useModelState } from "@/store/appliction/useModelState";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 const customiserStore = useCustomiserStore();
+let eventBus = useEventBus()
 
 const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
 
-// const customise = defineProps({
-//   productData: Object,
-//   productSize: Object
-// })
+onMounted(() => {
+  eventBus.on('A:MouseDown', () => {
+    if(customiserStore.isCustomiserOpen) {
+      togglePopup()
+    }
+  })
+})
 
 </script>
 
@@ -43,12 +50,15 @@ const togglePopup = () => {
         </div>
         <img src="@/assets/svg/right-menu/close.svg" class="close__button" @click="togglePopup" />
       </div>
-      <div class="cusomiser-main">
-        <RulerPage v-if="customiserStore.customisers == 'ruler'" />
-        <ColorPage v-if="customiserStore.customisers == 'color'" />
-        <MovingPage v-if="customiserStore.customisers == 'moving'" />
-        <FigurePage v-if="customiserStore.customisers == 'figure'" />
-      </div>
+      
+      <RulerPage v-if="customiserStore.customisers == 'ruler'" />
+      <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
+      <!--
+        <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
+        -->
+      <MovingPage v-if="customiserStore.customisers == 'moving'" />
+      <FigurePage v-if="customiserStore.customisers == 'figure'" />
+
     </div>
   </div>
 </template>
@@ -56,6 +66,7 @@ const togglePopup = () => {
 <style lang="scss" scoped>
 .customiser {
   width: 100%;
+  height: 85%;
   max-width: 551px;
   position: absolute;
   top: 106px;
@@ -73,6 +84,7 @@ const togglePopup = () => {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    height: 100%;
 
     .customiser-header {
       width: 100%;
@@ -98,4 +110,5 @@ const togglePopup = () => {
     }
   }
 }
+
 </style>

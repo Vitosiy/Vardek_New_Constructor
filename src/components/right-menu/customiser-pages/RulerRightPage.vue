@@ -9,12 +9,14 @@ import { useModelState } from "@/store/appliction/useModelState";
 
 const modelState = useModelState().getCurrentModel;
 
-let resizeData: { width: any; height: any; depth: any } = {
-  width: modelState.trueLength*2,
-  height: modelState.trueHeight*2,
-  depth: modelState.trueDepth*2,
+/* данные размера модели */
+let resizeData: { width: number; height: number; depth: number } = {
+  width: modelState.PROPS.CONFIG.SIZE.width,
+  height: modelState.PROPS.CONFIG.SIZE.height,
+  depth: modelState.PROPS.CONFIG.SIZE.depth,
 };
 
+/* данные ограничения размера модели */
 let sizeEditData = {
   widthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
   widthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,

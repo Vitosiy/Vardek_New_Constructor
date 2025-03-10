@@ -31,6 +31,8 @@ const changeHeightClamp = () => {
     eventBus.emit("A:Height-clamp", clampHeight.value);
 };
 
+let text = 'garage' // TODO Временная заглушка. Валятся ошибки. Позже разобраться что требуется
+
 </script>
 
 <template>

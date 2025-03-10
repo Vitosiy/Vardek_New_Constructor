@@ -82,6 +82,7 @@ export class MoveManager {
     }
 
     private onMouseDown(event: MouseEvent) {
+        this.eventBuss.emit('A:MouseDown');
         switch (event.button) {
             case 0:
                 this.handleInteractionStart(event.clientX, event.clientY);

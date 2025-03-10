@@ -19,6 +19,7 @@ import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
 
 const customiserStore = useCustomiserStore();
 
+let o = 'class' //TODO заглушка. Разобраться, что зачем.
 
 </script>
 <style lang="scss" scoped>
