@@ -75,8 +75,6 @@ onMounted(() => {
   let currentFasadeData = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1]
   let { MILLING, PALETTE, COLOR, SHOW } = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1]
   
-  console.log(COLOR ,_FASADE, '!!!');
-  
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
   let dataOfFasadeType = _FASADE[COLOR]
   if(dataOfFasadeType.ATTACH_MILLINGS[0]) {
@@ -87,6 +85,8 @@ onMounted(() => {
     paletteList.value = modelState.getCurrentPaletteData
     isPalleteExist.value = true
   } 
+  
+  // console.log(_FASADE[COLOR], '_FASADE');
   
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
