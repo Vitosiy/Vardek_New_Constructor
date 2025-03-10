@@ -12,7 +12,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	const SchemeTransitionData = ref<{ [key: string]: any }[]>([
 
 		{
-			id: MathUtils.generateUUID(), /** ID комнаты */
+			id: "room_001", //MathUtils.generateUUID(), /** ID комнаты */
 			label: "Новая комната", /** Лейбл */
 			description: "Новая комната", /** Описание */
 			size: reactive({
@@ -87,6 +87,118 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				//         "side": 0
 				//     }
 				// ],
+				/*
+				walls: [
+					{
+							"id": "wall_vertical__d9fad3eb-b7cc-4094-b0fb-00a72511b6a1",
+							"width": 3234.1804574739404,
+							"height": 3000,
+							"position": {
+									"x": 1306.03515625,
+									"y": 1500,
+									"z": 4839.21875
+							},
+							"rotation": {
+									"isEuler": true,
+									"_x": 0,
+									"_y": 1.5249441714330672,
+									"_z": 0,
+									"_order": "XYZ"
+							},
+							"side": 0
+					},
+					{
+							"id": "wall__a6e58d91-79d2-42d2-8b27-7fa5a7248f23",
+							"width": 1506.104633582064,
+							"height": 3000,
+							"position": {
+									"x": 2133.18359375,
+									"y": 1500,
+									"z": 3229.9609375
+							},
+							"rotation": {
+									"isEuler": true,
+									"_x": 0,
+									"_y": -0.008144029514458645,
+									"_z": 0,
+									"_order": "XYZ"
+							},
+							"side": 0
+					},
+					{
+							"id": "wall_vertical__782ddff3-8033-48bc-a7ba-a73cfb69617e",
+							"width": 1830.724074319094,
+							"height": 3000,
+							"position": {
+									"x": 3175.5859375,
+									"y": 1500,
+									"z": 2367.67578125
+							},
+							"rotation": {
+									"isEuler": true,
+									"_x": 0,
+									"_y": 1.2491469835581261,
+									"_z": 0,
+									"_order": "XYZ"
+							},
+							"side": 0
+					},
+					{
+							"id": "wall__be7c8066-63a4-453a-a15c-ce6df02bcfaf",
+							"width": 1966.1290407412712,
+							"height": 3000,
+							"position": {
+									"x": 4427.0703125,
+									"y": 1500,
+									"z": 1701.15234375
+							},
+							"rotation": {
+									"isEuler": true,
+									"_x": 0,
+									"_y": -0.20684442276034878,
+									"_z": 0,
+									"_order": "XYZ"
+							},
+							"side": 0
+					},
+					{
+							"id": "wall_vertical__420f7d63-2b3e-4bda-808d-e7795d843b8c",
+							"width": 3872.5689342414116,
+							"height": 3000,
+							"position": {
+									"x": 5874.58984375,
+									"y": 1500,
+									"z": 3777.5
+							},
+							"rotation": {
+									"isEuler": true,
+									"_x": 0,
+									"_y": -1.317401774915874,
+									"_z": 0,
+									"_order": "XYZ"
+							},
+							"side": 0
+					},
+					{
+							"id": "wall__0f011272-6bb8-4dc8-b438-ccc00ee3cd8f",
+							"width": 5190.522366587906,
+							"height": 3000,
+							"position": {
+									"x": 3795.95703125,
+									"y": 1500,
+									"z": 6053.28125
+							},
+							"rotation": {
+									"isEuler": true,
+									"_x": 0,
+									"_y": -2.9863307889906676,
+									"_z": 0,
+									"_order": "XYZ"
+							},
+							"side": 0
+					}
+				],
+				*/
 				walls: [],
 				wall: '44144',
 				floor: '44020'
@@ -199,7 +311,11 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		if (!data) return;
 
 		const roomData = JSON.parse(JSON.stringify(data));
-		const walls = roomData.size.walls;
+
+    if (!roomData.size || !roomData.size.walls) return roomData;
+
+    // Работаем с копией стен
+    const walls = roomData.size.walls;
 
 		// определить центр масс всех стен
 		const center = walls.reduce((acc: any, wall: any) => {
@@ -220,6 +336,10 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			wall.position.z -= center.z;
 		});
 
+		roomData.size.walls = walls; /// <<<< ТУТ ОШИБКА!!!! данные не меняются. Где ошибка ?
+
+		console.log('>>>>>>>>> run getRoomDataFor3DScene')
+		
 		return roomData;
 	};
 
@@ -231,12 +351,19 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		return SchemeTransitionData.value[0].size.walls
 	});
 
+	const getRoomById = computed(() => {
+		return (id: string | number) => {
+			return SchemeTransitionData.value.find((item: any) => item.id === id);
+		}
+	});
+
 	return {
 		SchemeTransitionData,
 		getSchemeTransitionData,
 		getRoomDataFor3DScene,
 		setAppData,
 		getWalls,
+		getRoomById,
 
 		setWall,
 		removeWall

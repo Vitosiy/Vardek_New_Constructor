@@ -15,7 +15,7 @@ export const useRoomState = defineStore('RoomState', () => {
   //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
   const roomsStore = useSchemeTransition();
-  let roomsData = roomsStore.getSchemeTransitionData.concat(rooms_mok)
+  let roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)))
 
   console.log(roomsData, 'roomsData', rooms_mok, 'rooms_mok')
   
@@ -91,6 +91,8 @@ export const useRoomState = defineStore('RoomState', () => {
 
 
   const getCurrentRoomId = computed(() => {
+
+    
     let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
 
     const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
