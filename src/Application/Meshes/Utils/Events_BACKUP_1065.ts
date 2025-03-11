@@ -158,18 +158,13 @@ export class MeshEvents extends BuildersHelper {
     }
 
     /** Цвет Фасада */
-<<<<<<< HEAD
     changeFasade({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
-=======
-    changeFasadeTexture({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
->>>>>>> feature/color_panel
 
         if (!this._currentMesh) return;
 
         const product = this._currentMesh
         const incomingModel = data.MODEL
 
-<<<<<<< HEAD
         this.resetFasade(fasadeNdx, incomingModel)
 
         const ptoductProps = product.userData.PROPS
@@ -179,26 +174,6 @@ export class MeshEvents extends BuildersHelper {
         const applyWindow = FASADE_PROPS[fasadeNdx].WINDOW
         const fasade = FASADE[fasadeNdx] ?? FASADE_DEFAULT[fasadeNdx]
         FASADE_PROPS[fasadeNdx].ALUM = incomingModel
-=======
-        if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
-            
-            this.modelState.createCurrentPaletteData(data.ID)
-            let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
-
-            // console.log(props.FASADE[fasadeNdx], 'changeFasadeTexture')
-
-            this.changePaletteColor({ data: palette, fasadeNdx })
-            // return // TODO закоментил временно, блокирует запись COLOR в PROPS.CONFIG.FASADE_PROPS. Решить в будущем что делать
-        }
-
-        if (data.ATTACH_MILLINGS && data.ATTACH_MILLINGS[0] == null) {
-            fasade.geometry = props.FASADE_DEFAULT[fasadeNdx].geometry.clone()
-        }
-
-        if (window != null) {
-            this.changeWindow({ data: window[0], fasadeNdx });
-        }
->>>>>>> feature/color_panel
 
         const textureSize = {
             x: data.TEXTURE_WIDTH,
@@ -239,19 +214,10 @@ export class MeshEvents extends BuildersHelper {
                         })
                 }
             })
-<<<<<<< HEAD
 
             FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
             FASADE_PROPS[fasadeNdx].COLOR = data.ID
             FASADE_PROPS[fasadeNdx].PALETTE = null
-=======
-            
-            this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-            this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = data.ID
-            this._currentMesh.userData.PROPS.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null
-
-            // console.log(this._currentMesh, 'this._currentMesh---1')
->>>>>>> feature/color_panel
 
             return;
         }
