@@ -32,6 +32,10 @@ const loadEvents = async () => {
 
     const response = await fetch(url, {
       method: "GET",
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE"
+      }
     });
 
     if (!response.ok) {
@@ -128,12 +132,16 @@ onMounted(() => {
   </div>
 </template>
 
+<!--
+  
 // import MainHeader from '@/components/header/MainHeader.vue' // import
 OptionsMenu from '@/components/left-menu/OptionsMenu.vue' // import
 OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue' //
 import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue' //
 import MainPopUp from '@/components/popUp/MainPopUp.vue' // import { useRoute }
 from "vue-router"; // const route = useRoute();
+
+-->
 
 <style lang="scss" scoped>
 .main__container {

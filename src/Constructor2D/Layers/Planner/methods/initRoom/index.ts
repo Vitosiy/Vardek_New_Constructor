@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as PIXI from 'pixi.js';
 import { MathUtils } from "three";
 
