@@ -40,6 +40,7 @@ const onSearchChange = (e) => {
   <div>
     <input class="search" type="text" placeholder="Поиск" @input="onSearchChange">
   </div>
+  <!---->
   <div class="list">
     <!-- Все виды цветов -->
     <div class="item" v-if="!isSearch" v-for="color in Object.values(props.paletteList)" @click="changePaletteColor(color)">

@@ -125,6 +125,7 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
 
         const product = this._currentMesh
+        
 
         let body = product.userData.PROPS.BODY
         let shelf = product.userData.PROPS.SHELF
@@ -544,7 +545,6 @@ export class MeshEvents extends BuildersHelper {
 
         this.events.on('A:Model-resize', this.onChangeModelSize)
         this.events.on('A:Toggle-Fasad', this.onToggleFasade)
-
     }
 
     removeVueEvents() {

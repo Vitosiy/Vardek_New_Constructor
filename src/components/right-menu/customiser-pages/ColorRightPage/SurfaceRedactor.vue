@@ -43,8 +43,8 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   modelState.createCurrentMillingData({ fasadeId: ID, productId });
   modelState.createCurrentWindowsData({ fasadeId: ID, productId });
   
-  eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
-  emit("select_material", { name: NAME, imgSrc: DETAIL_PICTURE })
+  eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
+  emit("select_material", { name: NAME, imgSrc: DETAIL_PICTURE });
 };
 
 const onSearchChange = (e) => {
@@ -90,6 +90,9 @@ const onSearchChange = (e) => {
           </div>
         </details>
       </div>
+      <!--
+
+      -->
       <!-- отфильтрованные материалы-->
       <div v-else v-for="id in filteredMaterialList">
         <div class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
@@ -103,6 +106,10 @@ const onSearchChange = (e) => {
           </div>
         </div>
       </div>
+
+      <!--
+      
+      -->
     </div>
 </template>
 

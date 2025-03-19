@@ -111,41 +111,44 @@ onMounted(() => {
 <template>
   <div class="container">
     <div class="container__title">Конфигурация фасада {{ props.tabIndex }}</div>
-      <div class="configuration" v-if="isSurfaceSelected">
-        <ConfigurationOption
-        :type="'surface'" 
-        :data="currentSurfaceData" 
-        @choose-option="setCurrentEditableOption" />
+    
+    <div class="configuration" v-if="isSurfaceSelected">
+      <ConfigurationOption
+      :type="'surface'" 
+      :data="currentSurfaceData" 
+      @choose-option="setCurrentEditableOption" />
 
-        <ConfigurationOption v-if="isMillingExist"
-        :type="'milling'" 
-        :data="currentMillingData" 
-        @choose-option="setCurrentEditableOption" />
+      <ConfigurationOption v-if="isMillingExist"
+      :type="'milling'" 
+      :data="currentMillingData" 
+      @choose-option="setCurrentEditableOption" />
 
-        <ConfigurationOption v-if="isPalleteExist"
-        :type="'palette'" 
-        :data="currentPaletteData" 
-        @choose-option="setCurrentEditableOption" />
-      </div>
-      <div class="container__list">
-        
-        <SurfaceRedactor v-if="currentEditableOption === 'surface'" 
-        :materialList="materialList" 
-        :tabIndex="props.tabIndex - 1"  
-        @select_material="onSelectMaterial" />
-
-
-        <MillingRedactor v-if="currentEditableOption === 'milling'" 
-        :millingList="millingList" 
-        :tabIndex="props.tabIndex - 1" 
-        @select_milling="onSelectMilling" />
-
-        <ColorRedactor v-if="currentEditableOption === 'palette'" 
-        :paletteList="paletteList" 
-        :tabIndex="props.tabIndex - 1" 
-        @select_color="onSelectPalette" />
-      </div>
+      <ConfigurationOption v-if="isPalleteExist"
+      :type="'palette'" 
+      :data="currentPaletteData" 
+      @choose-option="setCurrentEditableOption" />
     </div>
+    <div class="container__list">
+      
+      <SurfaceRedactor v-if="currentEditableOption === 'surface'" 
+      :materialList="materialList" 
+      :tabIndex="props.tabIndex - 1"  
+      @select_material="onSelectMaterial" />
+
+      <MillingRedactor v-if="currentEditableOption === 'milling'" 
+      :millingList="millingList" 
+      :tabIndex="props.tabIndex - 1" 
+      @select_milling="onSelectMilling" />
+
+      <ColorRedactor v-if="currentEditableOption === 'palette'" 
+      :paletteList="paletteList" 
+      :tabIndex="props.tabIndex - 1" 
+      @select_color="onSelectPalette" />
+      <!--
+  
+      -->
+    </div>
+  </div>
   
 </template>
 
@@ -157,8 +160,8 @@ onMounted(() => {
   border: 1px solid rgb(195, 195, 195);
   border-radius: 10px;
   padding: 15px;
+  max-height: 100vh;
   overflow: hidden;
-  height: 100%;
   box-sizing: border-box;
 
   &__title {
@@ -169,13 +172,15 @@ onMounted(() => {
   &__list {
     position: relative;
     display: flex;
+    justify-content: space-between;
     flex-direction: column;
     gap: 8px;
     border: 1px solid rgb(131, 131, 131);
     border-radius: 10px;
-    padding: 10px;
+    padding: 10px 10px 0px 10px;
     height: 100%;
-    overflow-y: scroll;
+    // height: 100px;
+    overflow: scroll;
     box-sizing: border-box;
   }
 
