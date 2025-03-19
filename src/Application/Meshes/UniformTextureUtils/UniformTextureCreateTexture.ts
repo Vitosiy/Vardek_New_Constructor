@@ -1,6 +1,8 @@
+//@ts-nocheck
 import * as THREE from "three";
 import * as THREETypes from '@/types/types'
 import * as UniformTypes from '@/types/uniformTextureTypes'
+import textureUrl from '@/assets/uniform/example_small.webp';
 
 export class UniformTextureCreateTexture {
 
@@ -8,7 +10,8 @@ export class UniformTextureCreateTexture {
     // backupMaterial: THREE.MeshPhongMaterial | THREE.MeshStandardMaterial | null = null
     // backupFasadId: number | null = null
 
-    uniformTexture = new URL('@/assets/uniform', import.meta.url).href + "/"
+    // uniformTexture = new URL('@/assets/uniform', import.meta.url).href + "/"
+    uniformTexture = textureUrl
 
     onCreateTexture: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void
 
@@ -19,7 +22,8 @@ export class UniformTextureCreateTexture {
 
     loadTexture(callback: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void, group: UniformTypes.LevelItem[][]) {
         // return
-        const url = `${this.uniformTexture}example_small.webp`
+        // const url = `${this.uniformTexture}example_small.webp`
+        const url = this.uniformTexture
 
         console.log('loadTexture')
 

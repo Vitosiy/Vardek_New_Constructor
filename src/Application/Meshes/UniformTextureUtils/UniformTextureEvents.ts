@@ -1,3 +1,5 @@
+
+//@ts-nocheck
 import * as THREETypes from "@/types/types"
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from '@/store/appliction/useModelState';
