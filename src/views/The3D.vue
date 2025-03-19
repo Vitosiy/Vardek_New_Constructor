@@ -12,6 +12,7 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useObjectData } from "@/store/appliction/useObjectData";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -67,6 +68,7 @@ const appData = useAppData().getAppData;
 const startData = useSceneState();
 const roomStore = useRoomState();
 const eventBus = useEventBus();
+let uniformState = useUniformState();
 
 const modelState = useModelState();
 const models = useAppData().getAppData.CATALOG.PRODUCTS;
@@ -420,9 +422,54 @@ const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
 
+/** Работа с группами */
+
+const preCreateUniformGroup = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Pre-Create-Uniform-Group");
+  }
+};
+
+const сreateUniformGroup = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Create-Uniform-Group");
+  }
+};
+
+const deliteUniformGroup = (id) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Delite-Uniform-Group", id);
+  }
+};
+
+const addToUniformGroup = (id) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Add-To-Uniform-Group", id);
+  }
+};
+
+const removeFromUniformGroup = (id) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Remove-From-Uniform-Group", id);
+  }
+};
+
 const activeController = computed(() => {
+  if (uniformState.getUniformModeData.uniformMode) {
+    controller.value = false;
+  }
+
   return {
-    "model-controller--active": controller.value,
+    "model-controller--active":
+      controller.value && !uniformState.getUniformModeData.uniformMode,
+  };
+});
+
+const pregropping = computed(() => {
+  const pregroupMode = uniformState.getPreGrouping;
+  return {
+    btn_green: !pregroupMode,
+    btn_red: pregroupMode,
   };
 });
 
@@ -436,18 +483,61 @@ const controllerPosition = computed(() => {
 <template>
   <div ref="sceneContainer" class="scene-container"></div>
 
-  <div class="inputs">
+  <!-- <div class="inputs">
     <customInput v-model="clampHeight" :min="758" :max="2000" :step="10" />
     <button class="btn" @click="changeHeightClamp">Поменять</button>
+  </div> -->
+
+  <div
+    class="uniform__container"
+    v-if="
+      uniformState.getUniformGroups.length > 0 &&
+      uniformState.getUniformModeData.uniformMode
+    "
+  >
+    <div
+      class="uniform__item"
+      v-for="(item, key) in uniformState.getUniformGroups"
+      :key="key + item.id"
+    >
+      <p class="uniform__name" :style="[`background-color: ${item.color}`]">Группа {{ item.id + 1 }}</p>
+      <button class="uniform__btn" @click="deliteUniformGroup(item.id)">
+        УДАЛИТЬ ГРУППУ
+      </button>
+
+      <button class="uniform__btn" @click="addToUniformGroup(item.id)">
+        ДОБАВИТЬ ЭЛЕМЕНТ
+      </button>
+
+      <button class="uniform__btn" @click="removeFromUniformGroup(item.id)">
+        Убрать ЭЛЕМЕНТ
+      </button>
+    </div>
   </div>
 
-  <!-- <div class="inputs">
-    <customInput v-model="inputValue.width" :min="1" :max="10" :step="1" />
-    <customInput v-model="inputValue.height" :min="1" :max="10" :step="1" />
-    <customInput v-model="inputValue.depth" :min="1" :max="10" :step="1" />
+  <div class="ui-panel--right">
+    <!-- <button class="btn" @click="save">Сохранить</button>
+    <button class="btn" @click="create">Создать новую</button> -->
+    <button
+      style="margin-top: 2rem"
+      v-show="uniformState.getUniformModeData.uniformMode"
+      :class="['btn', pregropping]"
+      @click="preCreateUniformGroup"
+    >
+      Создать новую группу
+    </button>
 
-    <button class="btn" @click="resizeRoom">Resize</button>
-  </div> -->
+    <button
+      class="btn btn_green"
+      v-show="
+        uniformState.getPreGroup > 0 &&
+        uniformState.getUniformModeData.uniformMode
+      "
+      @click="сreateUniformGroup"
+    >
+      Создать
+    </button>
+  </div>
 
   <div class="quality">
     <div>
@@ -596,6 +686,25 @@ const controllerPosition = computed(() => {
 </template>
 
 <style lang="scss" scoped>
+.uniform {
+  &__container {
+    position: absolute;
+    top: 30%;
+    right: 0;
+    transform: translate(0, 0);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background-color: white;
+  }
+
+  &__item {
+    display: flex;
+    gap: 1rem;
+  }
+}
+
+
 .scene-container {
   width: 100dvw;
   height: 100dvh;
@@ -791,7 +900,8 @@ const controllerPosition = computed(() => {
   }
 }
 
-.btn {
+.btn,
+.uniform__btn {
   width: fit-content;
   padding: 0.5rem;
   background-color: rgb(99, 133, 255);
@@ -807,6 +917,22 @@ const controllerPosition = computed(() => {
 
   &:hover {
     background-color: rgba(99, 133, 255, 0.581);
+  }
+
+  &_red {
+    background-color: rgb(255, 111, 111);
+    pointer-events: none;
+    cursor: none;
+    &:hover {
+      background-color: rgba(255, 111, 111, 0.581);
+    }
+  }
+
+  &_green {
+    background-color: rgb(111, 255, 152);
+    &:hover {
+      background-color: rgba(111, 255, 152, 0.581);
+    }
   }
 }
 

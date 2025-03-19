@@ -345,4 +345,22 @@ export class BuildersHelper extends GlobalsData {
             obj[newKey] = obj[existingKey] ?? console.warn(`Ключ "${existingKey}" не найден в объекте.`)
         ), obj
     );
+
+    getRootObject(object: THREE.Object3D): THREE.Object3D {
+        let root = object;
+        while (root.parent && root.parent.type !== 'Scene') {
+            root = root.parent;
+        }
+
+        return root;
+    }
+
+    calculateFromString(expression) {
+        try {
+          const func = new Function("return " + expression);
+          return func();
+        } catch (error) {
+          return "Недопустимое выражение!";
+        }
+      }
 }

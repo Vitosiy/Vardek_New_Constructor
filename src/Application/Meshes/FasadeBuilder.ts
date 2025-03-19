@@ -1,15 +1,24 @@
-//@ts-nocheck
+/**@ts-nocheck */
 
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 // import * as THREEInterfases from "@/types/interfases"
 
+type TFasadePartPosition = {
+    WIDTH: number | null,
+    FASADE_NUMBER: number | null
+    TYPE_POSITION: string | null,
+}
+
 
 export class FasadeBuilder {
 
     parent: THREETypes.TBuildProduct
+    uniformeTextureStartData: TFasadePartPosition[] = []
+
     constructor(parent: THREETypes.TBuildProduct) {
         this.parent = parent
+
     }
 
     getFasade(
@@ -30,7 +39,9 @@ export class FasadeBuilder {
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE } = CONFIG
         const start_position = this.parent.getStartPosition(SIZE);
 
-        FASADE_PROPS.forEach((value, key) => {
+        this.indexedFasadeToUtiformTexturing(props)
+
+        FASADE_PROPS.forEach((value, key, props_array) => {
 
             const fasade_position = this.getFasadePosition(CONFIG, key);
             const fasade_id = FASADE_PROPS[key].BODY
@@ -42,7 +53,8 @@ export class FasadeBuilder {
                     fasade_id,
                     props,
                     key,
-                    incomingModel
+                    incomingModel,
+                    props_array
                 }) as THREE.Object3D;
 
             let box = new THREE.Box3().setFromObject(fasade)
@@ -80,7 +92,7 @@ export class FasadeBuilder {
             /** Пересоздаём меш фасада если тот был удалён */
             if (FASADE[fasadeNdx!] === null && fasadeNdx === key) {
 
-                console.log('Delited')
+                // console.log('Delited')
                 FASADE[key] = fasade
                 // fasade.visible = props.CONFIG.FASADE_PROPS[key].SHOW
                 fasade.visible = true
@@ -103,9 +115,11 @@ export class FasadeBuilder {
             /** Отрисовываем Фрезу */
             if (value.MILLING != null) {
 
+                const patina = value.PATINA
 
-                this.parent.milling_builder.createMillingFasade(fasade, fasadePosition, value.MILLING, props.FASADE_DEFAULT[key])
+                this.parent.milling_builder.createMillingFasade(fasade, fasadePosition, value.MILLING, props.FASADE_DEFAULT[key], patina)
             }
+
 
             /** Отрисовываем окна */
             if (value.WINDOW != null) {
@@ -122,12 +136,10 @@ export class FasadeBuilder {
                 this.parent.window_builder.createWindow(params)
             }
 
-            /** Отрисовываем Алюминия */
+            /** Отрисовываем Алюминий */
             if (value.ALUM != null && FASADE_PROPS[key].COLOR != null) {
 
                 const incomeFasadeData = this.parent._FASADE[FASADE_PROPS[key].COLOR]
-
-                console.log(incomeFasadeData, '--incomeFasadeData')
 
                 this.parent.alum_builder.createAlum({ fasade, data: incomeFasadeData })
             }
@@ -137,31 +149,34 @@ export class FasadeBuilder {
                 this.parent.window_builder.changeGlassColor({ fasade, glassId: FASADE_PROPS[key].GLASS })
             }
 
-            console.log(fasade)
+            // console.log(fasade)
 
         })
 
+        this.uniformeTextureStartData = []
     }
 
     createFasade(
         {
             fasade_position,
             start_position,
-            fasade_id, props,
+            fasade_id,
+            props,
             key,
-            incomingModel
+            incomingModel,
+            props_array
         }: {
             fasade_position: THREETypes.TObject,
             start_position: THREETypes.TObject,
-            fasade_id: number | string,
+            fasade_id: number,
             props: THREETypes.TObject,
-            key: number | string,
+            key: number,
             incomingModel?: number,
+            props_array: THREETypes.TObject[]
         }
     ) {
 
         const fasadeData = this.parent._FASADE[fasade_id];
-        console.log(fasadeData, 'fasadeModel')
 
         let fasade;
 
@@ -172,10 +187,11 @@ export class FasadeBuilder {
         const currentFasade = props.CONFIG.FASADE_PROPS[key].COLOR
 
 
+
         let geometry_config = {
-            x: eval(fasade_position.FASADE_WIDTH),
+            x: this.parent.calculateFromString(fasade_position.FASADE_WIDTH),
             y: geometry_height,
-            z: eval(fasade_position.FASADE_DEPTH),
+            z: this.parent.calculateFromString(fasade_position.FASADE_DEPTH),
         }
 
         let geometry = this.parent.createExtrudeBoxGeometry(geometry_config);
@@ -193,9 +209,9 @@ export class FasadeBuilder {
             this.parent.getTexture({ material, url, texture_size })
         }
 
-        console.log(model, 'F-model')
+        // console.log(model, 'F-model')
         // const fasadeModel = this.parent._MODELS[fasade_position.FASADE_MODEL]
-        console.log(model, 'F-model_2')
+        // console.log(model, 'F-model_2')
 
         // console.log(geometry_config, "geometry_config")
 
@@ -237,24 +253,30 @@ export class FasadeBuilder {
 
         if (fasadeData.TYPE == "no_fasade") {
             fasade = new THREE.Mesh(geometry, material)
+            fasade.geometry.computeBoundingBox()
         }
+
+        fasade!.userData.partPosition = this.uniformeTextureStartData[key]
 
         // let product_model_type = props.CONFIG.MODEL?.type ?? "left";
         // const position = this.setFasadePosition(fasade, fasade_position, product_model_type, props, start_position);
-        fasade.geometry.computeBoundingBox()
 
+        // fasade!.userData.partPosition = this.numberingToUniform(fasade_position, props, props_array,key)
 
         return fasade
 
 
     }
 
-    getFasadePosition(props: THREETypes.TObject, key: string | number) {
-        const fasade_list = props.FASADE_PROPS[key].LIST || props.FASADE_PROPS[0].LIST;
+    private getFasadePosition(props: THREETypes.TObject, key: string | number) {
+        const fasade_list = props.FASADE_PROPS[key].POSITION || props.FASADE_PROPS[0].POSITION;
         const expressions = props.EXPRESSIONS;
         // const fasadeThickness = 18;
 
+        // console.log(fasade_list)
+
         let fasade_position = this.parent._FASADE_POSITION[fasade_list];
+
         // const product_id = fasade_position?.PRODUCT || props.PRODUCT.ID
 
         let fasade_width = props.SIZE.width
@@ -267,12 +289,12 @@ export class FasadeBuilder {
                     "#Z#": props.SIZE.depth,
                 }))
         let fasadePositionsData = {
-            FASADE_WIDTH: eval(fasade_position.FASADE_WIDTH),
-            FASADE_HEIGHT: eval(fasade_position.FASADE_HEIGHT),
-            FASADE_DEPTH: eval(fasade_position.FASADE_DEPTH),
-            POSITION_X: eval(fasade_position.POSITION_X),
-            POSITION_Y: eval(fasade_position.POSITION_Y),
-            POSITION_Z: eval(fasade_position.POSITION_Z),
+            FASADE_WIDTH: this.parent.calculateFromString(fasade_position.FASADE_WIDTH),
+            FASADE_HEIGHT: this.parent.calculateFromString(fasade_position.FASADE_HEIGHT),
+            FASADE_DEPTH: this.parent.calculateFromString(fasade_position.FASADE_DEPTH),
+            POSITION_X: this.parent.calculateFromString(fasade_position.POSITION_X),
+            POSITION_Y: this.parent.calculateFromString(fasade_position.POSITION_Y),
+            POSITION_Z: this.parent.calculateFromString(fasade_position.POSITION_Z),
             ROTATE_X: fasade_position.ROTATE_X,
             ROTATE_Y: fasade_position.ROTATE_Y,
             ROTATE_Z: fasade_position.ROTATE_Z,
@@ -286,15 +308,20 @@ export class FasadeBuilder {
 
         /** Добавляем размеры и положене фасада в CONFIG */
         if (this.parent.addIfNotExists(props.FASADE_POSITIONS, fasadePositionsData)) {
-            props.FASADE_POSITIONS.push(
-                fasadePositionsData
-            )
+            if (props.FASADE_POSITIONS.length < 1) {
+                props.FASADE_POSITIONS.push(
+                    fasadePositionsData
+                )
+            }
+            else {
+                props.FASADE_POSITIONS[key] = fasadePositionsData
+            }
         }
 
         return fasade_position
     }
 
-    setFasadePosition(fasade: THREE.Mesh, fasade_position: THREETypes.TObject, product_model_type: string, props: THREETypes.TObject, start_position: THREETypes.TObject) {
+    private setFasadePosition(fasade: THREE.Mesh, fasade_position: THREETypes.TObject, product_model_type: string, props: THREETypes.TObject, start_position: THREETypes.TObject) {
         // fasade.rotation.set(0, 0, 0);
         // fasade.rotateY(Math.PI)
 
@@ -313,12 +340,12 @@ export class FasadeBuilder {
 
 
 
-        let posx = eval(fasade_position.POSITION_X);
-        let posy = eval(fasade_position.POSITION_Y);
-        let posz = eval(fasade_position.POSITION_Z);
+        let posx = this.parent.calculateFromString(fasade_position.POSITION_X);
+        let posy = this.parent.calculateFromString(fasade_position.POSITION_Y);
+        let posz = this.parent.calculateFromString(fasade_position.POSITION_Z);
 
-        posx += start_position.x + eval(fasade_position.FASADE_WIDTH) * 0.5;
-        posy += start_position.y + eval(fasade_position.FASADE_HEIGHT) * 0.5;
+        posx += start_position.x + this.parent.calculateFromString(fasade_position.FASADE_WIDTH) * 0.5;
+        posy += start_position.y + this.parent.calculateFromString(fasade_position.FASADE_HEIGHT) * 0.5;
         posz += start_position.z
 
         let position = new THREE.Vector3(posx, posy, posz);
@@ -326,7 +353,7 @@ export class FasadeBuilder {
 
     }
 
-    calcFasadePosition(props: THREETypes.TObject, fasade_position: THREETypes.TObject) {
+    private calcFasadePosition(props: THREETypes.TObject, fasade_position: THREETypes.TObject) {
 
         const fasade_sizes = [eval(fasade_position.FASADE_HEIGHT)];
 
@@ -340,6 +367,156 @@ export class FasadeBuilder {
         });
 
         return fasadeSectionPositions;
+    }
+
+    // Для переходящего рисунка
+    private numberingToUniform(FASADE_PROPS, CONFIG, BODY) {
+
+        const numered: TFasadePartPosition[] = []
+
+        FASADE_PROPS.forEach((prop, propNdx) => {
+
+            const fasade_position = this.getFasadePosition(CONFIG, propNdx);
+
+            const { BODY_WIDTH } = BODY.userData.trueSize
+            const { FASADE_WIDTH } = fasade_position
+            const fasadeWidth = this.parent.calculateFromString(FASADE_WIDTH)
+
+            // console.log(fasade_position, 'fasade_position')
+
+
+            const partPosition: TFasadePartPosition = {
+                TYPE_POSITION: null,
+                WIDTH: null,
+                FASADE_NUMBER: null,
+            }
+
+            partPosition.TYPE_POSITION = fasadeWidth < BODY_WIDTH - 4 ? partPosition.TYPE_POSITION = 'STRING' : partPosition.TYPE_POSITION = 'DEFAULT'
+            partPosition.WIDTH = fasadeWidth
+            partPosition.FASADE_NUMBER = propNdx
+
+            numered.push(partPosition)
+
+            // console.log(numered)
+
+        })
+
+        const hasDefaultType = numered.some(obj => obj.TYPE_POSITION === 'DEFAULT');
+        const hasStringType = numered.some(obj => obj.TYPE_POSITION === 'STRING');
+        const hasMixedTypes = hasDefaultType && hasStringType;
+
+        const result = {
+            numeredArray: numered,
+            hasMixedTypes
+        }
+
+        // console.log(result)
+
+        return result
+
+    }
+
+    private rearrangeFasadeNumbers(inputArray) {
+        const outputArray = [];
+        let tempArray = [];
+        const result = []
+        const def = []
+        let str = []
+        let strNdx
+
+        // Шаг 1: Изменяем порядок элементов с TYPE_POSITION: "STRING"
+        for (let i = 0; i < inputArray.length; i++) {
+            if (inputArray[i].TYPE_POSITION === "DEFAULT") {
+                if (tempArray.length > 0) {
+                    outputArray.push(...tempArray.reverse()); // Добавляем элементы в обратном порядке
+                    tempArray = []; // Очищаем временный массив
+                }
+                outputArray.push(inputArray[i]); // Добавляем элемент с DEFAULT
+            } else if (inputArray[i].TYPE_POSITION === "STRING") {
+                tempArray.push(inputArray[i]); // Добавляем элемент с STRING во временный массив
+            }
+        }
+
+        // Если остались элементы в tempArray, добавляем их в outputArray
+        if (tempArray.length > 0) {
+            outputArray.push(...tempArray.reverse());
+        }
+
+        // Шаг 2: Обновляем значения FASADE_NUMBER
+        let currentFasadeNumber = outputArray.length - 1; // Начинаем с максимального значения
+
+
+        for (let i = 0; i < outputArray.length; i++) {
+            if (outputArray[i].TYPE_POSITION === "DEFAULT") {
+                outputArray[i].FASADE_NUMBER = currentFasadeNumber;
+                currentFasadeNumber--;
+            } else if (outputArray[i].TYPE_POSITION === "STRING") {
+                outputArray[i].FASADE_NUMBER = currentFasadeNumber;
+                currentFasadeNumber--;
+            }
+        }
+
+        // Шаг 3: Группируем значения STRING с лева на право
+        outputArray.forEach((item, ndx, array) => {
+            
+            if (item.TYPE_POSITION === "DEFAULT") def.push({ id: ndx + 1, type: item })
+
+            if (ndx > 0 && array[ndx - 1].TYPE_POSITION === "DEFAULT") {
+                strNdx = ndx
+                str.push({
+                    id: ndx,
+                    subStr: []
+                })
+
+            }
+
+            if (item.TYPE_POSITION === "STRING") {
+                str.forEach(elem => {
+                    if (elem.id === strNdx) {
+                        elem.subStr.push(item)
+                    }
+                })
+
+            }
+
+        })
+
+        str.forEach(item => {
+            item.subStr.reverse()
+        })
+
+        def.forEach((item, ndx) => {
+
+            result.push(item.type)
+
+            str.forEach(elem => {
+                if (elem.id === item.id) {
+                    result.push(elem.subStr)
+                }
+            })
+        })
+
+        return result.flat();
+    }
+
+    private indexedFasadeToUtiformTexturing(props) {
+
+        const { CONFIG, BODY } = props
+        const { FASADE_PROPS } = CONFIG
+
+        const numeredFasade = this.numberingToUniform(FASADE_PROPS, CONFIG, BODY)
+
+        // console.log(this.rearrangeFasadeNumbers(this.originalArray), 'numeredFasade')
+
+
+
+
+        if (numeredFasade.hasMixedTypes) {
+            numeredFasade.numeredArray = this.rearrangeFasadeNumbers(numeredFasade.numeredArray)
+        }
+
+        this.uniformeTextureStartData = numeredFasade.numeredArray
+
     }
 
 }

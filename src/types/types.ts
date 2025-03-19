@@ -12,6 +12,9 @@ import { WindowBuilder } from "@/Application/Meshes/WindowBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
 import { SetObject } from "@/Application/Utils/SetObject";
 import { AlumBulider } from "@/Application/Meshes/AlumBuilder";
+import { UniformTextureBuilder } from "@/Application/Meshes/UniformTextureBuilder";
+import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
+import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
 
 
 export type TApplication = Application
@@ -28,6 +31,9 @@ export type TWindowBuilder = WindowBuilder
 export type TPaletteBulider = PaletteBulider
 export type TSetObject = SetObject
 export type TAlumBulider = AlumBulider
+export type TUniformTextureBuilder = UniformTextureBuilder
+export type TKeybordListeners = KeybordListeners
+export type TUniformTextureEvents = UniformTextureEvents
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 

@@ -89,6 +89,7 @@ export class WallBuilder {
         mesh.userData.perpendicular = perpendicular
         mesh.userData.middleVector = vector
         mesh.userData.center = center
+        mesh.userData.elementType = 'element_room'
 
         return mesh;
     }
@@ -174,6 +175,7 @@ export class WallBuilder {
         floorMesh.userData.name = 'floor'
 
         floorMesh.userData.plane = this.convertPlaneGeometryToPlane(floorMesh)
+        floorMesh.userData.elementType = 'element_room'
 
         return floorMesh;
     }
@@ -238,9 +240,9 @@ export class WallBuilder {
                         file.colorSpace = THREE.SRGBColorSpace
                         material.color = new THREE.Color('#ffffff')
                         material.map = file;  // Устанавливаем загруженную текстуру как карту материала
-                        material.needsUpdate = true;  // Обновляем материал после изменения
                         material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
                         material.map.repeat.set(0.001, 0.001)
+                        material.needsUpdate = true;  // Обновляем материал после изменения
                         // material.map.repeat.set(
                         //     (dimensions[0]),
                         //     (dimensions[1])

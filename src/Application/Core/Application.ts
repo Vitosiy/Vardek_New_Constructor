@@ -6,11 +6,14 @@ import { Time } from "../Utils/Time"
 import { Camera } from "./Camera";
 import { Renderer } from "./Renderer";
 import { World } from "./World";
+import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { MeshEvents } from "../Meshes/Utils/Events"
-import {SetObject} from "../Utils/SetObject";
+import { SetObject } from "../Utils/SetObject";
 import { Ruler } from "../Utils/Ruler";
+import { SystemInfo } from "../Utils/SystemInfo";
+import { KeybordListeners } from "../Utils/KeybordListeners";
 
 import { useEventBus } from '../../store/appliction/useEventBus';
 import { useAppData } from "@/store/appliction/useAppData";
@@ -29,7 +32,7 @@ export class Application {
     canvas: HTMLElement | null;
     sizes: Sizes | null = null;
     time: Time | null = null;
-    scene: THREE.Scene  | null = null;;
+    scene: THREE.Scene | null = null;;
     camera: Camera | null = null;
     renderer: Renderer | null = null;
     resources: Resources | null = null
@@ -40,6 +43,9 @@ export class Application {
     meshEvents: MeshEvents | null = null
     setObject: SetObject | null = null
     ruler: Ruler | null = null
+    systemInfo: SystemInfo | null = null
+    keybordListeners: KeybordListeners | null = null
+    customBoxHelper: CustomBoxHelper | null = null
 
     draft: boolean = false
 
@@ -48,6 +54,9 @@ export class Application {
         // (window as any).aplication = this // Для разработки
 
         /** Инициализация */
+
+        this.systemInfo = new SystemInfo()
+        this.keybordListeners = new KeybordListeners(this)
         this.resources = new Resources();
         this.canvas = canvas
 
@@ -57,11 +66,11 @@ export class Application {
         this.camera = new Camera(this)
         this.renderer = new Renderer(this)
 
+        this.customBoxHelper = new CustomBoxHelper(this)
         this.ruler = new Ruler();
         this.geometryBuilder = new GeometryBuilder(this);
         this.meshEvents = new MeshEvents(this);
-        this.setObject = new SetObject();
-
+        this.setObject = new SetObject(this);
 
         this.world = new World(this)
 
@@ -116,6 +125,18 @@ export class Application {
         return this.world!.trafficManager
     }
 
+    get _geometryBuilder() {
+        return this.geometryBuilder
+    }
+
+    get _systemInfo() {
+        return this.systemInfo
+    }
+
+    get _customBoxHelper() {
+        return this.customBoxHelper
+    }
+
     resize() {
         this.camera!.resize()
         this.renderer!.resize()
@@ -127,16 +148,18 @@ export class Application {
     }
 
     destroy() {
-
+        this.keybordListeners?.removeKeyListeners()
         this.sizes!.off('resize')
         this.sizes!.destroy();
         this.time!.off('tick')
         this.time?.tickStop();
+        this.camera?.removeCamera()
         this.world!.removeVueEvents();
         this.renderer!.removeVueEvents();
         this.meshEvents!.removeVueEvents();
         this.world!.deepDispose.clearTotal(this.scene!);
-      
+
+        this.keybordListeners = null
         this.meshEvents = null
         this.enviromentData = null
         this.setObject = null

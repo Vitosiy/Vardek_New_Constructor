@@ -1,5 +1,6 @@
 
 //@ts-nocheck
+import { toRaw } from 'vue';
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import GUI from 'lil-gui';
@@ -9,11 +10,15 @@ import { DeepDispose } from '@/Application/Utils/DeepDispose';
 import { BuildProduct } from '../BuildProduct';
 import { useAppData } from '@/store/appliction/useAppData';
 import { useModelState } from "@/store/appliction/useModelState";
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import { BuildersHelper } from '../BuildersHelper';
 
 import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
 import { directionToColor } from 'three/webgpu';
+
+import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
+
 
 let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
 
@@ -22,6 +27,7 @@ export class MeshEvents extends BuildersHelper {
     root: THREETypes.TApplication;
     scene: THREETypes.TScene
     events: ReturnType<typeof useEventBus> = useEventBus()
+    uniformState: ReturnType<typeof useUniformState> = useUniformState()
     // currentProduct: THREE.Object3D | null = null
     resources: THREETypes.TResources
     dispose: DeepDispose
@@ -30,6 +36,7 @@ export class MeshEvents extends BuildersHelper {
     buildWindow: THREETypes.TWindowBuilder
     buildPalette: THREETypes.TPaletteBulider
     buildAlum: THREETypes.TAlumBulider
+    buildUniformTexture: THREETypes.TUniformTextureBuilder
     private millings: any | null = MILLINGS
     private additionaMillinglKeys: any | null = additionaMillinglKeys
     private alumTextures = alumTextures
@@ -44,8 +51,12 @@ export class MeshEvents extends BuildersHelper {
     private onChangeGlassColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
     private onChangeMilling: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
     private onChangeWindow: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
+    private onDrawPatina: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
     private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
     private onToggleFasade: (fasad_ndx: number) => void;
+    private onDeliteFasade: (fasad_ndx: number) => void;
+    private onCreateUniformGroup: () => void
+    private onDeliteUniformGroup: (id: number) => void
 
     constructor(root: THREETypes.TApplication) {
 
@@ -58,9 +69,6 @@ export class MeshEvents extends BuildersHelper {
         this.resources = root._resources
         this.dispose = new DeepDispose()
 
-        // console.log(root.geometryBuilder, 'ROOM')
-
-        // this.buildProduct = root.world.room.geometryBuilder.buildProduct
         this.buildProduct = root.geometryBuilder.buildProduct
 
 
@@ -69,9 +77,13 @@ export class MeshEvents extends BuildersHelper {
         this.onChangePaletteColor = this.changePaletteColor.bind(root)
         this.onChangeGlassColor = this.changeGlassColor.bind(root)
         this.onChangeMilling = this.changeMilling.bind(root)
+        this.onDrawPatina = this.drawPatina.bind(root)
+        this.onCreateUniformGroup = this.сreateUniformGroup.bind(root)
+        this.onDeliteUniformGroup = this.deliteUniformGroup.bind(root)
 
         this.onChangeModelSize = this.changeModelSize.bind(root)
         this.onToggleFasade = this.toggleFasade.bind(root)
+        this.onDeliteFasade = this.deliteFasade.bind(root)
 
         this.addVueEvents()
 
@@ -79,6 +91,7 @@ export class MeshEvents extends BuildersHelper {
         this.buildPalette = this.buildProduct.palette_bulider
         this.buildWindow = this.buildProduct.window_builder
         this.buildAlum = this.buildProduct.alum_builder
+        this.buildUniformTexture = this.buildProduct.uniform_texture_builder
 
     }
 
@@ -107,15 +120,25 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (!fasadeExist) {
-            console.log('here')
+            // console.log('resetFasade here_1')
             rebuild(fasadeNdx)
         }
 
         if (incomingModel) {
             FASADE_PROPS[fasadeNdx].ALUM = incomingModel
-            console.log('here_2')
+            // console.log('resetFasade here_2')
             this.deliteFasade(fasadeNdx)
             rebuild(fasadeNdx, incomingModel)
+            return
+        }
+
+        if (FASADE_PROPS[fasadeNdx].MILLING != null) {
+            // console.log('resetFasade here_3')
+            FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
+            FASADE[fasadeNdx].userData.millingMaterial = null
+            FASADE_PROPS[fasadeNdx].MILLING = null
+            FASADE_PROPS[fasadeNdx].PATINA = null
+            return
         }
     }
 
@@ -126,8 +149,10 @@ export class MeshEvents extends BuildersHelper {
 
         const product = this._currentMesh
 
-        let body = product.userData.PROPS.BODY
-        let shelf = product.userData.PROPS.SHELF
+        const { CONFIG, SHELF, BODY } = product.userData.PROPS
+
+        let body = BODY
+        let shelf = SHELF
 
         body?.traverse((children: THREE.Object3D) => {
             if (children instanceof THREE.Mesh) {
@@ -150,7 +175,7 @@ export class MeshEvents extends BuildersHelper {
             })
         })
 
-        product.PROPS.CONFIG.MODULE_COLOR = data.ID
+        CONFIG.MODULE_COLOR = data.ID
 
         // if (this.root._trafficManager) {
         //     this.root._trafficManager.currentObject!.userData.PROPS.CONFIG.MODULE_COLOR = data.ID
@@ -161,16 +186,28 @@ export class MeshEvents extends BuildersHelper {
     changeFasade({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) {
 
         if (!this._currentMesh) return;
+        /** Выбран без фасада */
+        if (data.ID === 7397) {
+            this.deliteFasade(fasadeNdx)
+            return
+        }
 
         const product = this._currentMesh
         const incomingModel = data.MODEL
+        const ptoductProps = product.userData.PROPS
+
+        if (product.userData.PROPS.CONFIG.UNIFORM_TEXTURE.group !== null) {
+            this.buildUniformTexture.removeFromUniformGroup(this._currentMesh)
+        }
+
 
         this.resetFasade(fasadeNdx, incomingModel)
 
-        const ptoductProps = product.userData.PROPS
+
         const { CONFIG, FASADE, FASADE_DEFAULT } = ptoductProps
         const { FASADE_PROPS } = CONFIG
         const window = CONFIG.SHOWCASE
+
         const applyWindow = FASADE_PROPS[fasadeNdx].WINDOW
         const fasade = FASADE[fasadeNdx] ?? FASADE_DEFAULT[fasadeNdx]
         FASADE_PROPS[fasadeNdx].ALUM = incomingModel
@@ -182,22 +219,23 @@ export class MeshEvents extends BuildersHelper {
 
         if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
             console.log('PALETTE')
+
+            FASADE_PROPS[fasadeNdx].COLOR = data.ID
             this.modelState.createCurrentPaletteData(data.ID)
             let palette = Object.keys(this.modelState.getCurrentPaletteData)[0]
             this.changePaletteColor({ data: palette, fasadeNdx })
-            return
-        }
 
-        /**Проверка на наличие у входящего фасад фрезеровки и окна  */
-        if (data.ATTACH_MILLINGS && data.ATTACH_MILLINGS[0] == null && window == null) {
-            fasade.geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
-            console.log('ATTACH')
+            return
         }
 
         /**Проверка устанавливалось ли окно раньше */
         if (window != null && applyWindow === null || window != null && incomingModel == null) {
             console.log('WINDOW')
             this.changeWindow({ data: window[0], fasadeNdx });
+        }
+        else {
+            FASADE_PROPS[fasadeNdx].MILLING = null
+            FASADE_PROPS[fasadeNdx].PATINA = null
         }
 
         if (!data.COLOR) {
@@ -212,8 +250,10 @@ export class MeshEvents extends BuildersHelper {
                             url: data.TEXTURE,
                             textureSize
                         })
+                    fasade.userData.backupMaterial = children.material
                 }
             })
+
 
             FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
             FASADE_PROPS[fasadeNdx].COLOR = data.ID
@@ -223,7 +263,6 @@ export class MeshEvents extends BuildersHelper {
         }
 
         this.createAlumColor({ data, fasadeNdx })
-
 
         FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
         FASADE_PROPS[fasadeNdx].COLOR = data.ID
@@ -242,6 +281,8 @@ export class MeshEvents extends BuildersHelper {
 
         this.buildPalette.createPaletteColor({ fasade, data, fasadeNdx, props })
 
+        console.log(fasade.userData.millingMaterial, 'FJF')
+
     }
 
     createAlumColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
@@ -254,7 +295,6 @@ export class MeshEvents extends BuildersHelper {
 
         this.buildAlum.createAlum({ fasade, data })
     }
-
 
     changeGlassColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
 
@@ -280,19 +320,113 @@ export class MeshEvents extends BuildersHelper {
 
         const fasade: THREE.Mesh = FASADE[fasadeNdx]
         const defaultGeometry = FASADE_DEFAULT[fasadeNdx]
+        const patina = FASADE_PROPS[fasadeNdx].PATINA
 
         // let millingData = [
         //     {
         //         name: "milling_1",
         //         type: 'svg',
-        //         // lib: 'bvh',
         //         extrudeSettings: {
         //             steps: 1,
-        //             depth: 0,
+        //             depth: 1.5,
         //             bevelEnabled: true,
-        //             bevelThickness: 20,
-        //             bevelSize: 0,
-        //             bevelOffset: 0,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 13,
+        //             bevelOffset: -13,
+        //             bevelSegments: 2,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "small_width",
+        //                 condition: {
+        //                     width: {
+        //                         min: 175,
+        //                         max: 295,
+        //                     },
+        //                     height: {
+        //                         min: 396,
+        //                         max: 2500,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -40,
+        //                     heightOffset: -60,
+        //                     position: {
+        //                         z: -4
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth,+26 -hgh,+26 L -wth,+26 hgh,-26 L wth,-26 hgh,-26 L wth,-26 -hgh,+26 L -wth,+26 -hgh,+26 Z"/>`,
+        //                     widthOffset: -40,
+        //                     heightOffset: -60,
+        //                 },
+        //             },
+        //             {
+        //                 nameCondition: "small_height",
+        //                 condition: {
+        //                     width: {
+        //                         min: 396,
+        //                         max: 1250,
+        //                     },
+        //                     height: {
+        //                         min: 175,
+        //                         max: 295,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -60,
+        //                     heightOffset: -40,
+        //                     position: {
+        //                         z: -4
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth,+26 -hgh,+26 L -wth,+26 hgh,-26 L wth,-26 hgh,-26 L wth,-26 -hgh,+26 L -wth,+26 -hgh,+26 Z"/>`,
+        //                     widthOffset: -60,
+        //                     heightOffset: -40,
+        //                 },
+        //             },
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 296,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -57,
+        //                     heightOffset: -57,
+        //                     position: {
+        //                         z: -4
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth,+41 -hgh,+41 L -wth,+41 hgh,-41 L wth,-41 hgh,-41 L wth,-41 -hgh,+41 L -wth,+41 -hgh,+41 Z"/>`,
+        //                     widthOffset: -57,
+        //                     heightOffset: -57,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
         //             bevelSegments: 1,
         //         },
         //         figureParams: [
@@ -300,7 +434,7 @@ export class MeshEvents extends BuildersHelper {
         //                 nameCondition: "default",
         //                 condition: {
         //                     width: {
-        //                         min: 296,
+        //                         min: 20,
         //                         max: Infinity,
         //                     },
         //                     height: {
@@ -309,48 +443,17 @@ export class MeshEvents extends BuildersHelper {
         //                     },
         //                 },
         //                 figure: {
-
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
-        //                     widthOffset: -3,
-        //                     heightOffset: -3,
-        //                     position:{
-        //                         z:-20
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
         //                     }
-
         //                 },
         //                 hole: {
-        //                     svg: ``,
-        //                     widthOffset: -55,
-        //                     heightOffset: -55,
-        //                 },
-        //             },
-
-        //             {
-        //                 nameCondition: "default",
-        //                 condition: {
-        //                     width: {
-        //                         min: 296,
-        //                         max: Infinity,
-        //                     },
-        //                     height: {
-        //                         min: 20,
-        //                         max: Infinity,
-        //                     },
-        //                 },
-        //                 figure: {
-
-        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh  L -wth -hgh  Z"/>`,
-        //                     widthOffset: -15,
-        //                     heightOffset: -15,
-        //                     position:{
-        //                         z:-35
-        //                     }
-
-        //                 },
-        //                 hole: {
-        //                     svg: ``,
-        //                     widthOffset: -55,
-        //                     heightOffset: -55,
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
         //                 },
         //             },
         //         ],
@@ -368,13 +471,44 @@ export class MeshEvents extends BuildersHelper {
         };
         // console.log(fasadePosition, '---fasadePosition')
 
-        this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, defaultGeometry);
+        this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, defaultGeometry, patina);
 
 
         // this.createMillingHelper(millingData, () => this.buildMilling.createMillingFasade(fasade, fasadePosition, millingData, defaultGeometry));
 
         FASADE_PROPS[fasadeNdx].MILLING = data
         FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+
+    }
+
+    drawPatina({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
+
+        if (!this._currentMesh) return;
+
+        // console.log(data, 'PATINA')
+
+        // return;
+
+        const props = this._currentMesh.userData.PROPS
+        const { FASADE, CONFIG } = props
+        const { FASADE_PROPS } = CONFIG
+        const fasade = FASADE[fasadeNdx]
+
+        const fasadeGeometry = fasade.geometry
+        const startMaterial = fasade.userData.millingMaterial
+
+        const { geometry, material } = this.buildMilling.patinaBuilder.createPatinaColor({ geometry: fasadeGeometry, patinaId: data, startMaterial })
+        fasade.geometry = geometry
+        fasade.material = material
+        fasade.material.needsUpdate = true
+
+        // const helper = new VertexNormalsHelper(fasade, 100, 0xff00ff);
+        // this.scene.add(helper);
+
+        console.log(material)
+
+        FASADE_PROPS[fasadeNdx].PATINA = data
+
 
     }
 
@@ -410,7 +544,26 @@ export class MeshEvents extends BuildersHelper {
 
         FASADE_PROPS[fasadeNdx].WINDOW = data
         FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+        FASADE_PROPS[fasadeNdx].GLASS = FASADE_PROPS[fasadeNdx].GLASS ?? toRaw(this.modelState.getCurrentGlassData[0].ID)
+
     }
+
+    /** Работа с группами */
+
+    сreateUniformGroup() {
+
+        this.buildUniformTexture.crteateUniformGroup({})
+        this.uniformState.setPreGroup(0)
+        /** Очищаем helper для выделения объектов */
+        this.root._customBoxHelper?.clearSelect()
+
+    }
+
+    deliteUniformGroup(id: number) {
+
+        this.buildUniformTexture.deliteUniformGroup(id)
+    }
+
 
     // Скрыть фасад
     toggleFasade(fasadeNdx: number) {
@@ -429,11 +582,19 @@ export class MeshEvents extends BuildersHelper {
 
     // Удалить фасад
     deliteFasade(fasadeNdx: number) {
+
         if (!this._currentMesh) return;
 
+
         const product = this._currentMesh
-        const props = product.userData.PROPS
-        const fasadeMeshId = props.FASADE[fasadeNdx]?.uuid
+        const { PROPS } = product.userData
+        const { CONFIG, FASADE } = PROPS
+        const { FASADE_PROPS, UNIFORM_TEXTURE } = CONFIG
+        const fasadeMeshId = FASADE[fasadeNdx]?.uuid
+
+        if (UNIFORM_TEXTURE.group !== null) {
+            this.buildUniformTexture.removeFromUniformGroup(product)
+        }
 
         // product.children.forEach(i => {
         //     i.children.forEach(ii=>{
@@ -452,22 +613,28 @@ export class MeshEvents extends BuildersHelper {
                 })
                 // props.FASADE = props.FASADE.filter((item, key) => item.uuid != fasadeMeshId)
 
-                props.CONFIG.FASADE_PROPS[fasadeNdx].COLOR = null
-                props.CONFIG.FASADE_PROPS[fasadeNdx].MILLING = null
-                props.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = null
-                props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = false
+                FASADE_PROPS[fasadeNdx].COLOR = 7397
+                FASADE_PROPS[fasadeNdx].MILLING = null
+                FASADE_PROPS[fasadeNdx].PALETTE = null
+                FASADE_PROPS[fasadeNdx].SHOW = false
+                FASADE_PROPS[fasadeNdx].GLASS = null
+                FASADE_PROPS[fasadeNdx].PATINA = null
+                CONFIG.UNIFORM_TEXTURE = {
+                    group: null,
+                    level: null,
+                    index: null,
+                    column_index: null,
+                    backupFasadId: null,
+                    color: null
+                }
             }
         }
         catch (e) {
         }
-        props.FASADE[fasadeNdx] = null
-
-
-        console.log(props.FASADE)
-
-
+        FASADE[fasadeNdx] = null
     }
 
+    // Скрыть столешницу
     hideTable() {
 
     }
@@ -476,7 +643,10 @@ export class MeshEvents extends BuildersHelper {
 
         if (!this._currentMesh) return
 
-        const position = this._currentMesh!.userData.PROPS.CONFIG.POSITION as THREE.Vector3
+        const { CONFIG } = this._currentMesh!.userData.PROPS
+        const { POSITION, UNIFORM_TEXTURE } = CONFIG
+
+        // const position = this._currentMesh!.userData.PROPS.CONFIG.POSITION as THREE.Vector3
 
         /** Очищаем родительский объект */
         this.dispose.clearParent(this._currentMesh as THREE.Object3D)
@@ -485,7 +655,7 @@ export class MeshEvents extends BuildersHelper {
         let body = this.buildProduct.createProductBody(this._currentMesh as THREE.Object3D, data);
         /** Добавляем к родителю */
         this._currentMesh?.add(body as THREE.Object3D);
-        this._currentMesh?.position.set(position.x, position.y, position.z)
+        this._currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
         this._currentMesh?.updateMatrixWorld(true);
 
         const aabb = new THREE.Box3().setFromObject(this._currentMesh);
@@ -493,12 +663,38 @@ export class MeshEvents extends BuildersHelper {
         aabb.getSize(size);
 
         /** Для корректного примагничивания к стенам */
-        this._currentMesh.userData.trueDepth = data.depth * 0.5
-        this._currentMesh.userData.trueHeight = data.height * 0.5
-        this._currentMesh.userData.trueLength = data.width * 0.5
         this._currentMesh.userData.trueSizes = {
-            z: data.depth * 0.5, y: size.y * 0.5, x: data.width * 0.5
+            DEPTH: data.depth * 0.5, HEIGHT: size.y * 0.5, WIDTH: data.width * 0.5
         }
+        /** Пересоздаём UNIFORM_TEXTURE*/
+        if (UNIFORM_TEXTURE.group !== null) {
+
+            const uniformGroupCash = { ...UNIFORM_TEXTURE }
+
+            const currentUniformGroup = this.buildUniformTexture._uniformGroups.find(group => {
+                return group.id === uniformGroupCash.group
+            })
+
+            if (currentUniformGroup?.parts.flat().length < 2) {
+                this.buildUniformTexture.removeFromUniformGroup(this._currentMesh)
+                this.buildUniformTexture.loadUniformGroup([{
+                    objects: [this._currentMesh],
+                    id: uniformGroupCash.group,
+                    fasadId: uniformGroupCash.backupFasadId
+                }])
+            }
+            else {
+                this.buildUniformTexture.removeFromUniformGroup(this._currentMesh)
+                this.buildUniformTexture.addToUniformGroup(this._currentMesh, uniformGroupCash.group)
+                /** Скрываем helper переходящего рисунка */
+            }
+
+            this.root._customBoxHelper.hideGroupBox(this.buildUniformTexture._groupsBoxHelper)
+
+
+        }
+
+        this.root._customBoxHelper.updateBoxHelper()
 
     }
 
@@ -527,6 +723,19 @@ export class MeshEvents extends BuildersHelper {
             this.changeWindow({ data, fasadeNdx })
         }
 
+        this.onDrawPatina = ({ data, fasadeNdx }) => {
+            this.drawPatina({ data, fasadeNdx })
+        }
+
+        this.onCreateUniformGroup = () => {
+            this.сreateUniformGroup()
+        }
+
+        this.onDeliteUniformGroup = (id) => {
+            this.deliteUniformGroup(id)
+        }
+
+
         this.onChangeModelSize = (data) => {
             this.changeModelSize(data as { width: number, height: number, depth: number })
         }
@@ -535,30 +744,45 @@ export class MeshEvents extends BuildersHelper {
             this.toggleFasade(fasad_ndx)
         }
 
+        this.onDeliteFasade = (fasad_ndx) => {
+            this.deliteFasade(fasad_ndx)
+        }
+
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeFasade', this.onChangeFasade);
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
-        this.events.on('A:ChangeMilling', this.onChangeMilling)
-        this.events.on('A:ChangeWindow', this.onChangeWindow)
+        this.events.on('A:ChangeMilling', this.onChangeMilling);
+        this.events.on('A:ChangeWindow', this.onChangeWindow);
+        this.events.on('A:DrawPatina', this.onDrawPatina);
+
+        this.events.on('A:Create-Uniform-Group', this.onCreateUniformGroup);
+        this.events.on('A:Delite-Uniform-Group', this.onDeliteUniformGroup);
 
         this.events.on('A:Model-resize', this.onChangeModelSize)
         this.events.on('A:Toggle-Fasad', this.onToggleFasade)
+        this.events.on('A:Delite-Fasad', this.onDeliteFasade)
 
     }
 
     removeVueEvents() {
-        this.events.off('A:ChangeModuleTexture', this.onChangeModuleTexture)
-        this.events.off('A:Model-resize', this.onChangeModelSize)
         this.events.off('A:ChangeModuleTexture', this.onChangeModuleTexture);
-        this.events.off('A:ChangeFasadeTexture', this.onChangeFasadeTexture);
+        this.events.off('A:ChangeFasade', this.onChangeFasade);
         this.events.off('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.off('A:ChangeGlassColor', this.onChangeGlassColor);
-        this.events.off('A:ChangeMilling', this.onChangeMilling)
+        this.events.off('A:ChangeMilling', this.onChangeMilling);
+        this.events.off('A:ChangeWindow', this.onChangeWindow);
+        this.events.off('A:DrawPatina', this.onDrawPatina);
+
+        this.events.off('A:Create-Uniform-Group', this.onCreateUniformGroup);
+        this.events.off('A:Delite-Uniform-Group', this.onDeliteUniformGroup);
+
+        this.events.off('A:Model-resize', this.onChangeModelSize)
         this.events.off('A:Toggle-Fasad', this.onToggleFasade)
+        this.events.off('A:Delite-Fasad', this.onDeliteFasade)
         this.alumTextures = null
         this.millings = null
-        // this.currentProduct = null
     }
 
     createMillingHelper(data, fu) {

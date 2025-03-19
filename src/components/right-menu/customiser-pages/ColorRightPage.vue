@@ -111,28 +111,31 @@ const changeColorPage = ({ type, key }) => {
 };
 
 const changeModuleTexture = (data: { [key: string]: any }) => {
+  console.log('HH')
   eventBus.emit("A:ChangeModuleTexture", data);
 };
 
 const changeFasade = (data: { [key: string]: any }, fasadeNdx) => {
-  currentFasadeId.value = fasadeNdx;
-  selectedFasade.value = data.ID;
+  console.log('Chdnge')
 
-  const productId = productData.value.PRODUCT;
+  // currentFasadeId.value = fasadeNdx;
+  // selectedFasade.value = data.ID;
 
-  console.log('DATA', data);
-  console.log('INDEX', fasadeNdx);
-  console.log('PRODUCT_ID', productId);
+  // const productId = productData.value.PRODUCT;
+
+  // console.log('DATA', data);
+  // console.log('INDEX', fasadeNdx);
+  // console.log('PRODUCT_ID', productId);
   
 
-  modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
-  modelState.createCurrentPaletteData(data.ID);
-  modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
-  modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
-  modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentPaletteData(data.ID);
+  // modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentMillingData({ fasadeId: data.ID, productId });
+  // modelState.createCurrentWindowsData({ fasadeId: data.ID, productId });
 
-  eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
-  eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
+  // eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
+  // eventBus.emit("A:ChangeFasadeTexture", { data, fasadeNdx });
 };
 
 /** Палитра */

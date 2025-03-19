@@ -68,8 +68,7 @@ export class DeepDispose {
                 if (child.material) {
                     if (Array.isArray(child.material)) {
                         child.material.forEach((material) => {
-                            material.
-                                material.map?.dispose();
+                            material.map?.dispose();
                             material.dispose();
                         });
                     } else {
@@ -187,25 +186,14 @@ export class DeepDispose {
             }
 
             if (object.material) {
-                if (Array.isArray(object.material)) {
-                    // Если материал — это массив материалов
-                    object.material.forEach(material => {
-                        if (material.map) material.map.dispose(); // Освобождаем текстуру
-                        if (material.lightMap) material.lightMap.dispose();
-                        if (material.bumpMap) material.bumpMap.dispose();
-                        if (material.normalMap) material.normalMap.dispose();
-                        if (material.specularMap) material.specularMap.dispose();
-                        material.dispose(); // Освобождаем материал
+                const materials = Array.isArray(object.material) ? object.material : [object.material];
+
+                materials.forEach(material => {
+                    ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap'].forEach(mapType => {
+                        if (material[mapType]) material[mapType].dispose();
                     });
-                } else {
-                    // Если материал — это одиночный материал
-                    if (object.material.map) object.material.map.dispose(); // Освобождаем текстуру
-                    if (object.material.lightMap) object.material.lightMap.dispose();
-                    if (object.material.bumpMap) object.material.bumpMap.dispose();
-                    if (object.material.normalMap) object.material.normalMap.dispose();
-                    if (object.material.specularMap) object.material.specularMap.dispose();
-                    object.material.dispose(); // Освобождаем материал
-                }
+                    material.dispose();
+                });
             }
 
             if (object instanceof CSS2DObject) {
