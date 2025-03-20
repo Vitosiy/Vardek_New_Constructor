@@ -130,8 +130,6 @@ export class Resources extends EventEmitter {
 
                 this.loaders?.textureLoader.load(path as string, (file: any) => {
 
-                    console.log('TEXTURE')
-
                     if (callback) {
                         callback(file)
                     }

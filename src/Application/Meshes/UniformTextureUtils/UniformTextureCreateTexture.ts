@@ -25,7 +25,7 @@ export class UniformTextureCreateTexture {
         // const url = `${this.uniformTexture}example_small.webp`
         const url = this.uniformTexture
 
-        console.log('loadTexture')
+        // console.log('loadTexture')
 
         this.resources!.startLoading(url, 'localTexture', (texture: THREE.Texture) => {
 
@@ -116,7 +116,7 @@ export class UniformTextureCreateTexture {
                     return
                 }
 
-                console.log('HERE_2', levelNdx)
+                // console.log('HERE_2', levelNdx)
 
                 this.elementTexured({
                     element,
@@ -155,7 +155,7 @@ export class UniformTextureCreateTexture {
     ) {
         // return
 
-        console.log(elementNdx, '--elementNdx')
+        // console.log(elementNdx, '--elementNdx')
 
         let totalWidth = 0
         let totalHeight = 0
@@ -173,7 +173,7 @@ export class UniformTextureCreateTexture {
 
         if (hasMixedTypes) {
             // Особая обработка для смешанных типов
-            console.log('hasMixedTypes');
+            // console.log('hasMixedTypes');
 
             // Сортируем фасады по типу для более предсказуемой обработки
             const sortedFasades = [...FASADE].sort((a, b) => {
@@ -223,16 +223,16 @@ export class UniformTextureCreateTexture {
                 let prevWidthToString, prevHeightToString, prevHeightToDefault;
 
                 if (fasadeNdx > 0 && TYPE_POSITION === "DEFAULT") {
-                    console.log('--DEFAULT')
+                    // console.log('--DEFAULT')
 
-                    console.log(totalHeightToDefault, '--totalHeightToDefault')
+                    // console.log(totalHeightToDefault, '--totalHeightToDefault')
 
                     prevHeightToDefault = fasadeArray[fasadeNdx - 1].userData.trueSize.FASADE_HEIGHT
 
                     correctHeightToDefault += prevHeightToDefault
                     totalHeightToDefault += FASADE_HEIGHT
 
-                    console.log(totalHeightToDefault, 'prevHeightToDefault')
+                    // console.log(totalHeightToDefault, 'prevHeightToDefault')
                 }
 
                 if (fasadeNdx > 0 && TYPE_POSITION === "STRING") {
@@ -287,11 +287,11 @@ export class UniformTextureCreateTexture {
                 fasade.visible = true;
             });
 
-            console.log(totalHeightToDefault, 'MIX')
+            // console.log(totalHeightToDefault, 'MIX')
         }
         if ((hasStringType || hasStringType && FASADE.length < 2) && !hasMixedTypes) {
 
-            console.log('hasStringType')
+            // console.log('hasStringType')
 
             FASADE.forEach((fasade, fasadeNdx, fasadeArray) => {
 
@@ -347,7 +347,7 @@ export class UniformTextureCreateTexture {
         }
         if (hasDefaultType && !hasMixedTypes) {
 
-            console.log('hasDefaultType')
+            // console.log('hasDefaultType')
 
             const sortedFasades = [...FASADE].sort((a, b) => {
                 const typeA = a.userData.partPosition.FASADE_NUMBER;
@@ -368,7 +368,7 @@ export class UniformTextureCreateTexture {
                 if (totalWidth === 0) totalWidth = FASADE_WIDTH;
                 if (totalHeight === 0) totalHeight = FASADE_HEIGHT;
 
-                console.log(totalHeight, '--COOOOL')
+                // console.log(totalHeight, '--COOOOL')
 
                 let prevHeight
 
@@ -378,7 +378,7 @@ export class UniformTextureCreateTexture {
                     totalHeight += FASADE_HEIGHT
                 }
 
-                console.log(totalLevelHeightCorrect, totalLevelHeight, '--DEFCORR')
+                // console.log(totalLevelHeightCorrect, totalLevelHeight, '--DEFCORR')
 
                 this.textured({
                     fasade,
@@ -473,7 +473,7 @@ export class UniformTextureCreateTexture {
         const startCorrect = elementNdx > 0 ? totalLevelWidthCorrect : 0;
         const startHeightCorrect = levelNdx > 0 ? FASADE_HEIGHT : 0
 
-        console.log(startHeightCorrect, levelNdx, 'levelNdx')
+        // console.log(startHeightCorrect, levelNdx, 'levelNdx')
 
         const startWidth = FASADE_WIDTH + totalLevelWidth;
         const startHeight = FASADE_HEIGHT + totalLevelHeight + totalLevelHeightCorrect + columnCorrect;

@@ -1,12 +1,15 @@
 //@ts-nocheck
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
+import roughness from '@/assets/metall/metal_roughness.jpg';
+import metallic from '@/assets/metall/metal_metallic.jpg';
 
 export class AlumBulider {
 
     parent: THREETypes.TBuildProduct
     resources: THREETypes.TResources
-    alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
+    roughness:ReturnType<typeof roughness> = roughness
+    metallic:ReturnType<typeof metallic> = metallic
 
     constructor(parent: THREETypes.TBuildProduct) {
 
@@ -26,7 +29,7 @@ export class AlumBulider {
 
                 children.material = new THREE.MeshStandardMaterial();
 
-                this.resources.startLoading(`${this.alumTextures}metal_roughness.jpg`, 'localTexture', (file) => {
+                this.resources.startLoading(this.roughness, 'localTexture', (file) => {
                     children.material.roughnessMap = file
                     children.material.roughnessMap.wrapS = children.material.roughnessMap.wrapT = THREE.RepeatWrapping;
                     children.material.roughnessMap.repeat.set(
@@ -37,7 +40,7 @@ export class AlumBulider {
                     children.material.needsUpdate = true;
                 })
 
-                this.resources.startLoading(`${this.alumTextures}metal_metallic.jpg`, 'localTexture', (file) => {
+                this.resources.startLoading(this.metallic, 'localTexture', (file) => {
                     children.material.metallicMap = file
                     children.material.metallicMap.wrapS = THREE.RepeatWrapping;
                     children.material.metallicMap.wrapT = THREE.RepeatWrapping;

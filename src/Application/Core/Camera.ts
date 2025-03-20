@@ -63,7 +63,7 @@ export class Camera {
         if (event.ctrlKey || event.metaKey) {
            
             this.controls.screenSpacePanning = true
-            console.log('screenSpacePanning TRUE')
+            // console.log('screenSpacePanning TRUE')
         }
     }
 
@@ -71,7 +71,7 @@ export class Camera {
 
         if (!event.ctrlKey || !event.metaKey) {
             this.controls.screenSpacePanning = false
-            console.log('screenSpacePanning FALSE')
+            // console.log('screenSpacePanning FALSE')
         }
 
     }

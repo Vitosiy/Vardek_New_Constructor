@@ -22,8 +22,6 @@ export class PaletteBulider {
 
         if (palette.DETAIL_PICTURE != null) {
 
-            console.log('wwwww')
-
             const box = new THREE.Box3().setFromObject(fasade);
             const vec = new THREE.Vector3()
             const fasadeSize = box.getSize(vec)

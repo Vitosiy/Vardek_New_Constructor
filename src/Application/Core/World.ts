@@ -115,7 +115,7 @@ export class World {
 
         if (!this.roomsStore.getCurrentRoomId) {
 
-            console.log('Комнаты ещё нет')
+            // console.log('Комнаты ещё нет')
 
             this.roomsStore.setCurrentRoomId(this.roomsStore.rooms.length)
 

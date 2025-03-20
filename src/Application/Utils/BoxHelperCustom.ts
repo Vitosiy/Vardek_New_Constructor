@@ -4,7 +4,6 @@ import * as THREE from "three";
 import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { OBBHelper } from "./CalculateBoundingBox";
-import { separateArrows } from "./CalculateBoundingBox";
 
 export class CustomBoxHelper {
 
@@ -17,8 +16,6 @@ export class CustomBoxHelper {
     // private obbh: OBBHelper
 
     constructor(root: THREETypes.TApplication) {
-
-        // console.trace('--BOX-H')
 
         this.root = root
         this.scene = root._scene
@@ -107,6 +104,7 @@ export class CustomBoxHelper {
 
     toggleGroupBox(value: boolean, store: THREE.BoxHelper[]) {
         this.clearGroupBoxStore(this.uniformSelectBoxHelperStore)
+  
         if (store.length > 0) {
             store.forEach(box => {
                 box.visible = value
@@ -116,15 +114,14 @@ export class CustomBoxHelper {
     }
 
     hideGroupBox(store: THREE.BoxHelper[]) {
-        console.log(store, '--storeBoxHelper')
+
         store.forEach(box => {
             box.visible = false
         })
     }
 
-    removeGroupBox(object: THREE.Object3D, store: THREE.BoxHelper[]) {
+    removeGroupBox(object: THREE.Object3D, store: THREE.BoxHelper[]):THREE.BoxHelper[] {
 
-        console.log(object, '--OB')
         const box = object.userData.groupBoxHelper
         if (box === null) return
 
@@ -132,13 +129,13 @@ export class CustomBoxHelper {
             return element.uuid !== box.uuid
         });
 
-        store = preUpdatedGroups as THREE.BoxHelper[]
-
         box.geometry.dispose();
         (box.material as THREE.Material).dispose();
         object.userData.groupBoxHelper = null;
 
         this.scene.remove(box);
+
+        return preUpdatedGroups
 
     }
 

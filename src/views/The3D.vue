@@ -220,6 +220,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   console.log("onBeforeUnmount");
+  uniformState.resetUniformState()
 
   VerdekConstructor?.destroy();
   VerdekConstructor = null;
@@ -229,17 +230,17 @@ onBeforeUnmount(() => {
 
 watch(shadows, () => {
   toggleShadow(shadows.value);
-  console.log(shadows.value);
+
 });
 
 watch(refraction, () => {
   toggleRefraction(refraction.value);
-  console.log(refraction.value);
+
 });
 
 watch(pointLightValue, () => {
   changePointLightPower(pointLightValue.value);
-  console.log(pointLightValue.value);
+
 });
 
 // watch(paletteColorsData, () => {
@@ -306,14 +307,13 @@ const toggleiew = () => {
 
 const changeWallTexture = () => {
   if (VerdekConstructor) {
-    console.log(wallTexture.value);
+
     eventBus.emit("A:ChangeWallTexture", wallTexture.value);
   }
 };
 
 const changeFloorTexture = () => {
   if (VerdekConstructor) {
-    console.log(floorTexture.value);
     eventBus.emit("A:ChangeFloorTexture", floorTexture.value);
   }
 };
@@ -366,7 +366,6 @@ const onDrag = (event: any, model: { [key: string]: any } | string) => {
 const removeModel = () => {
   if (VerdekConstructor) {
     eventBus.emit("A:RemoveModel");
-    console.log(totalContent.value, "roomContant");
     controller.value = false;
   }
 };
@@ -422,7 +421,7 @@ const togglePopup = () => {
   customiserStore.toggleCustomiserPopup();
 };
 
-/** Работа с группами */
+/** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
   if (VerdekConstructor) {

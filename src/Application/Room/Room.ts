@@ -239,7 +239,6 @@ export class Room {
         // this.walls.forEach(wall => {
         //     this.wallBuilder.updateTexture(wall as THREE.Mesh, 'wall', materialId, wall.userData.dimensions);
         // })
-        console.log('55')
         this.scene.traverse(child => {
             if (child instanceof THREE.Object3D && child.userData.elementType == 'element_room') {
 

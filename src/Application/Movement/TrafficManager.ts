@@ -75,7 +75,6 @@ export class TrafficManager {
             room: this.room,
             mouse: this.mouse,
             raycaster: this.raycaster,
-            boxHelper: this.boxHelper,
             trafficManager: this
 
         })

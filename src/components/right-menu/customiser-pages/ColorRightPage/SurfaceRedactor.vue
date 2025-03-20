@@ -46,8 +46,6 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   modelState.createCurrentWindowsData({ fasadeId: ID, productId });
   modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
   
-  console.log('Start')
-  
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
   emit("select_material", { name: NAME, imgSrc: DETAIL_PICTURE })
 };

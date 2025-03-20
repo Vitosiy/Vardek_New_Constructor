@@ -235,8 +235,6 @@ export const useModelState = defineStore('ModelState', () => {
             acc.concat(_GLASS[index] || []),
             []);
         currentGlassData.value = currentClass;
-
-        console.log(currentClass, 'currentClass')
     }
 
     const getCurrentGlassData = computed(() => {
@@ -248,8 +246,7 @@ export const useModelState = defineStore('ModelState', () => {
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
         const incomePatina = _FASADE[fasadeId].PATINA
         const currentPataina = incomePatina.filter(key => _PATINA.hasOwnProperty(key)).map(key => _PATINA[key])
-
-        console.log(currentPataina)
+        
         currentPatinaData.value = currentPataina
     }
 

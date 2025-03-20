@@ -190,10 +190,10 @@ export class PatternBuilder {
                 };
             case 'xy':
 
-                console.log({
-                    x: calculatePadding(defaultWidth),
-                    y: calculatePadding(defaultHeight, capsuleRadius)
-                })
+                // console.log({
+                //     x: calculatePadding(defaultWidth),
+                //     y: calculatePadding(defaultHeight, capsuleRadius)
+                // })
 
                 return {
                     x: calculatePadding(defaultWidth),

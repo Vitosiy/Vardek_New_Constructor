@@ -16,7 +16,6 @@ const selectPatina = ref<any>(null);
 
 
 const changePatina = (patina) => {
-    console.log(patina)
   eventBus.emit("A:DrawPatina", {
     data: patina.ID,
     fasadeNdx: props.tabIndex,

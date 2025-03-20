@@ -26,7 +26,7 @@ export class WindowBuilder extends MillingBuilder {
 
     }) {
 
-        console.log(alum, '--createWindow')
+        // console.log(alum, '--createWindow')
 
         const windowData = alum ?? data
 
@@ -43,7 +43,7 @@ export class WindowBuilder extends MillingBuilder {
         const { FASADE_WIDTH, FASADE_HEIGHT } = fasade.userData.trueSize
 
         const glassId = toRaw(this.modelState.getCurrentGlassData[0])
-        console.log(glassId, '--glassId')
+        // console.log(glassId, '--glassId')
 
         const glassColor = glassId ? `#${glassId.COLOR}` : '#ffffff'
 
@@ -96,7 +96,7 @@ export class WindowBuilder extends MillingBuilder {
         const glassColor = `#${glassData.COLOR}`
         const roughness = glassData.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
 
-        console.log(roughness, glassData, 'AFCHANGE')
+        // console.log(roughness, glassData, 'AFCHANGE')
 
         fasade.traverse(children => {
             if (children instanceof THREE.Mesh && children.userData.type == 'glass') {
@@ -119,7 +119,7 @@ export class WindowBuilder extends MillingBuilder {
         </svg>`
 
         const paths = this.svgLoader.parse(hendlePath).paths
-        console.log(paths)
+        // console.log(paths)
         const shape = paths[0].toShapes()
         const depth = FASADE_WIDTH * 0.85
 

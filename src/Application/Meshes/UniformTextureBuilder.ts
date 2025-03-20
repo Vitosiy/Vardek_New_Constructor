@@ -48,6 +48,10 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         return this.groupsBoxHelper
     }
 
+    set _groupsBoxHelper(value) {
+        this.groupsBoxHelper = value
+    }
+
     loadUniformGroup(groups: UniformTypes.TUniformGroupMembership[]) {
 
         if (groups.length < 1) return;
@@ -76,7 +80,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
     crteateUniformGroup({ objects, id, maxHeight, maxWidth, fasadeId, groupColor }) {
 
-        console.log(objects, id, maxHeight, maxWidth, fasadeId, groupColor, 'DATA')
+        // console.log(objects, id, maxHeight, maxWidth, fasadeId, groupColor, 'DATA')
 
         let organizedLevels, indexedParts, groupId, fasad
 
@@ -109,12 +113,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
                 currentHeight: this.currentGroupHeight
             },
             color: indexedParts.color
-
-
         };
-
-        console.log(newGroup, '--newGroup')
-
 
         // Создаём новый массив с добавленной группой
         const updatedGroups = [...this.uniformGroups, newGroup];
@@ -138,15 +137,11 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         this.backupMaterial = null
         this.backupFasadId = null
 
-        console.log(this.uniformGroups)
-
     }
 
     /** удаление группы */
     deliteUniformGroup(id: number) {
         // Создаём новый массив без удалённой группы
-
-        console.log(this.uniformGroups)
 
         let updatedGroups = this.uniformGroups.map(element => {
 
@@ -155,9 +150,11 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
                 const flatedUniformGroup = this.createTexture.flattenArray(element.parts.flat())
 
-                console.log(flatedUniformGroup, 'DEL GROUP')
+                // console.log(flatedUniformGroup, 'DEL GROUP')
 
                 flatedUniformGroup.forEach((item) => {
+
+                    this.groupsBoxHelper = this.helper.removeGroupBox(item, this.groupsBoxHelper)
 
                     const { CONFIG } = item!.userData.PROPS
                     const { UNIFORM_TEXTURE } = CONFIG
@@ -169,7 +166,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
                     // UNIFORM_TEXTURE.backupFasadId = null
                     UNIFORM_TEXTURE.color = null
 
-                    this.helper.removeGroupBox(item, this.groupsBoxHelper)
+
                     this.restoreFasadeTexture(item) //Восстанавливаем материал
 
                 })
@@ -179,9 +176,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         }).filter((group) => {
             return group.id !== id
         });
-
-        console.log(updatedGroups, 'updatedGroups')
-
 
         this.uniformGroups = updatedGroups; // Обновляем локальное состояние
         this.uniformEvents.uniformState.setUniformGroups(updatedGroups); // Обновляем состояние в хранилище
@@ -216,8 +210,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
 
         this.backupFasadId = this.backupFasadId ?? FASADE_PROPS.filter(element => parseInt(element.COLOR) !== 7397)[0].COLOR  // Создаём общий индекс материала фасада
-
-        /** получаем ограничения по размерам */
         const rootFasadeData = this.parent._FASADE[this.backupFasadId as number]
 
 
@@ -227,14 +219,11 @@ export class UniformTextureBuilder extends UniformTextureUtils {
             return
         }
 
-        // console.log(fasadData)
-        // this.createTexture.backupMaterial = this.createTexture.backupMaterial ?? FASADE.filter(element => element.userData.backupMaterial)[0].userData.backupMaterial; // Создаём общий материала фасада
         this.backupMaterial = this.backupMaterial ?? await this.getBackupTexture(rootFasadeData) as THREE.MeshPhongMaterial | THREE.MeshStandardMaterial | null; // Создаём общий материала фасада
 
-
-        /** получаем ограничения по размерам */
         this.maxGroupHeight = rootFasadeData.MAX_HEIGHT ?? this.maxGroupHeight
         this.maxGroupWidth = rootFasadeData.MAX_WIDTH ?? this.maxGroupWidth
+
 
         const updatedGroups = (this.temporaryGroups as THREE.Object3D[]).filter((element) => {
             return element.uuid !== product.uuid
@@ -262,8 +251,14 @@ export class UniformTextureBuilder extends UniformTextureUtils {
             totalHeight += this.createTexture.getMaxLevelHeight(level)
         })
 
+        // console.log(levelsWidth)
 
         totalWidth = Math.max(...levelsWidth);
+
+        // console.log(totalWidth, totalHeight, '--TTWH')
+        // console.log(this.maxGroupHeight, this.maxGroupWidth, '--MMWH')
+
+
         //--------------------------------------------------------------------------------------------------
 
         if (totalHeight > this.maxGroupHeight || totalWidth > this.maxGroupWidth) {
@@ -399,8 +394,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
             }, [])
 
-        console.log(uniformedFasadesData, 'uniformedFasadesData')
-
         return uniformedFasadesData
     }
 
@@ -417,13 +410,9 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         const groupId = this.uniformEvents._groupIdToCorrect ?? group
 
-        console.log(groupId, this.uniformGroups, '---AD')
-
         let currentGroup = this.uniformGroups.find(group => {
             return group.id === groupId
         })
-
-        console.log(currentGroup, '---currentGroup')
 
         let groupSize = currentGroup!.groupSize
         let fasadeId = currentGroup!.fasadeId
@@ -498,17 +487,14 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
     /** Удалить из группы */
     removeFromUniformGroup(product: THREE.Object3D) {
-        console.log('REMOVE')
+        // console.log('REMOVE')
 
         if (this.uniformGroups.length < 1) return
-
-        this.helper.removeGroupBox(product, this.groupsBoxHelper)
 
         const { CONFIG, FASADE } = product.userData.PROPS
         const { UNIFORM_TEXTURE } = CONFIG
 
         const groupId = this.uniformEvents._groupIdToCorrect ?? UNIFORM_TEXTURE.group
-        console.log(groupId, '--REM--groupId')
 
         let currentGroup = this.uniformGroups.find(group => {
             return group.id === groupId
@@ -519,11 +505,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         if (UNIFORM_TEXTURE.level === null) return
 
-        UNIFORM_TEXTURE.group = null
-        UNIFORM_TEXTURE.level = null
-        UNIFORM_TEXTURE.index = null
-        UNIFORM_TEXTURE.column_index = null
-        UNIFORM_TEXTURE.color = null
 
         // Убираем объект из уровня
         const updatedGroups = (flatedUniformGroup as THREE.Object3D[]).filter((element) => {
@@ -546,10 +527,19 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         currentGroup!.parts = indexedParts.group
 
-        // Воccтанавливаем изначальный материал
-        this.createTexture.loadTexture(this.createTexture.onCreateTexture, indexedParts.group)
+        UNIFORM_TEXTURE.group = null
+        UNIFORM_TEXTURE.level = null
+        UNIFORM_TEXTURE.index = null
+        UNIFORM_TEXTURE.column_index = null
+        UNIFORM_TEXTURE.color = null
 
-        this.restoreFasadeTexture(product)
+        this.groupsBoxHelper = this.helper.removeGroupBox(product, this._groupsBoxHelper)
+
+
+        // Воccтанавливаем изначальный материал
+        this.restoreFasadeTexture(product);
+        // Пересобираем группу
+        this.createTexture.loadTexture(this.createTexture.onCreateTexture, indexedParts.group);
 
 
 
@@ -560,8 +550,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         const { CONFIG, FASADE } = product.userData.PROPS
         const { FASADE_PROPS, UNIFORM_TEXTURE } = CONFIG
-
-        console.log(UNIFORM_TEXTURE, '-- restore -- UNIFORM_TEXTURE')
         // const backupMaterial =  await this.getBackupTexture(this.parent._FASADE[UNIFORM_TEXTURE.backupFasadId])
 
         FASADE.forEach(async (fasade: THREE.Object3D) => {
@@ -632,7 +620,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
     async getBackupTexture(data) {
         try {
             const material = await this.createBackupTexture(data);
-            console.log('Material created:', material);
+            // console.log('Material created:', material);
             return material
 
         } catch (error) {
@@ -643,10 +631,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
     clearTemporaryGroups() {
         this.temporaryGroups = []
         this.temporaryCheckSizesGroup = []
-        this.maxGroupWidth = 0
-        this.maxGroupHeight = 0
-        this.currentGroupWidth = 0
-        this.currentGroupHeight = 0
     }
 
     clearUniformGroups() {

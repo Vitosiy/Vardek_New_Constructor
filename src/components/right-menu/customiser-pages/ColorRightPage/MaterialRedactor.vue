@@ -48,7 +48,6 @@ const patinaList = ref<Array>([]);
 const isPatinaExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
-  console.log(data, "--DATA");
 
   isSurfaceSelected.value = true;
   millingList.value = modelState.getCurrentMillingData;
@@ -66,10 +65,6 @@ const onSelectMaterial = (data) => {
 
 const onSelectMilling = (data) => {
   currentMillingData.value = data;
-
-  console.log(currentMillingData.value, "MILL");
-
-  // console.log(isPatinaExist.value, '--PATINA')
 };
 
 const onSelectPalette = (data) => {
@@ -121,8 +116,6 @@ onMounted(() => {
     isPatinaExist.value = true;
   }
 
-  console.log(dataOfFasadeType, "dataOfFasadeType");
-
   // console.log(_FASADE[COLOR], '_FASADE');
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
@@ -148,7 +141,6 @@ onMounted(() => {
 
   if (PATINA) {
 
-    console.log(modelState.getCurrentPatinaData, 'GP')
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentPatinaData.find(
       (patina) => patina.ID === PATINA
     );;

@@ -7,7 +7,6 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { GeometryBuilder } from "../Meshes/GeometryBuilder";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import { TrafficManager } from "./TrafficManager";
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -31,7 +30,7 @@ export class MoveManager {
     mouse: THREE.Vector2 | null = null;
     camera: THREE.Camera | null = null;
     controls: OrbitControls
-    trafficManager: TrafficManager
+    trafficManager: THREETypes.TrafficManager
     objectFactory: GeometryBuilder
     uniformTextureBuilder: THREETypes.TUniformTextureBuilder
 
@@ -65,14 +64,12 @@ export class MoveManager {
             room,
             mouse,
             raycaster,
-            boxHelper,
             trafficManager
         }: {
             root: THREETypes.TApplication,
             room: THREETypes.TRoomManager,
             mouse: THREE.Vector2,
             raycaster: THREE.Raycaster,
-            boxHelper: CustomBoxHelper,
             trafficManager: TrafficManager
         }) {
 
@@ -90,7 +87,7 @@ export class MoveManager {
         this.objectFactory = trafficManager.geometryBuilder
         this.uniformTextureBuilder = this.objectFactory.buildProduct.uniform_texture_builder // Переходящий рисунок
         this.uniformEvents = this.uniformTextureBuilder.uniformEvents
-        this.boxHelper = boxHelper
+        this.boxHelper = root._customBoxHelper
 
         this.onMouseDownBound = this.onMouseDown.bind(this)
         this.onMouseMoveBound = this.onMouseMove.bind(this)
@@ -247,7 +244,7 @@ export class MoveManager {
                 }
                 /** добавление объекта в группу */
                 if (this.uniformEvents._groupAddition) {
-                    console.log('1')
+
                     this.boxHelper.clearSelect()
                     this.uniformEvents.desablePreGrouping()
                     this.uniformTextureBuilder.clearTemporaryGroups()
@@ -256,7 +253,7 @@ export class MoveManager {
                 }
                 /** Удаление объекта из группы */
                 if (this.uniformEvents._degrouping) {
-                    console.log('2')
+       
                     this.boxHelper.clearSelect()
                     this.uniformEvents.desablePreGrouping()
                     this.uniformTextureBuilder.clearTemporaryGroups()
@@ -374,8 +371,6 @@ export class MoveManager {
         this.selectedObject = null
         this.roomManager = roomManager
 
-        console.log('UPDATE')
-
         /** Сбрасываем состояния переходящего рисунка */
         this.uniformEvents.desableUnionMode()
         this.uniformEvents.desablePreGrouping()
@@ -425,7 +420,7 @@ export class MoveManager {
 
             }
 
-            console.log(this.uniformEvents._unionMode)
+            // console.log(this.uniformEvents._unionMode)
         }
 
     }
@@ -439,7 +434,7 @@ export class MoveManager {
             this.uniformEvents.enablePreGrouping()
             this.uniformEvents.desableGroupAddition()
             this.uniformEvents.desableDegrouping()
-            console.log(this.uniformState.getUniformModeData)
+            // console.log(this.uniformState.getUniformModeData)
 
         })
 

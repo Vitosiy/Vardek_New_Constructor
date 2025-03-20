@@ -23,7 +23,7 @@ const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 const _MILLING = _APP.MILLING;
 
-console.log(_MILLING, 'MILLINGS');
+// console.log(_MILLING, 'MILLINGS');
 
 
 /** Состояния выбранной модели */
@@ -95,8 +95,6 @@ const createTabList = (fasadsCount) => {
     });
   });
 
-  console.log(data, fasadsCount.length, "--createTabList");
-
   tabsList.value = data;
 };
 
@@ -111,12 +109,10 @@ const changeColorPage = ({ type, key }) => {
 };
 
 const changeModuleTexture = (data: { [key: string]: any }) => {
-  console.log('HH')
   eventBus.emit("A:ChangeModuleTexture", data);
 };
 
 const changeFasade = (data: { [key: string]: any }, fasadeNdx) => {
-  console.log('Chdnge')
 
   // currentFasadeId.value = fasadeNdx;
   // selectedFasade.value = data.ID;
@@ -148,9 +144,6 @@ const changePaletteColor = () => {
 
 /** Фрезеровка */
 const changeMilling = () => {
-  console.log('SELECT MILLING', selectMilling.value);
-  console.log('INDEX', currentFasadeId.value);
-  
   eventBus.emit("A:ChangeMilling", {
     data: selectMilling.value,
     fasadeNdx: currentFasadeId.value,
