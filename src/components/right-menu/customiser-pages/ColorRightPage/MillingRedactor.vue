@@ -42,18 +42,18 @@ const onSearchChange = (e) => {
   <div>
     <input class="search" type="text" placeholder="Поиск" @input="onSearchChange">
   </div>
-  <div class="list">
+  <ul class="list">
     <!-- Все виды фрезировок -->
-    <div v-if="!isSearch" class="item" v-for="milling in props.millingList" @click="changeMilling( milling )">
+    <li v-if="!isSearch" class="item" v-for="milling in props.millingList" @click="changeMilling( milling )">
       <img class="item__img" :src="_URL + milling.DETAIL_PICTURE" alt="">
       <div class="item__name">{{ milling.NAME }}</div>
-    </div>
+    </li>
     <!-- Отфильтрованные в поиске -->
-    <div v-else class="item" v-for="milling in filteredMillingList" @click="changeMilling( milling )">
+    <li v-else class="item" v-for="milling in filteredMillingList" @click="changeMilling( milling )">
       <img class="item__img" :src="_URL + milling.DETAIL_PICTURE" alt="">
       <div class="item__name">{{ milling.NAME }}</div>
-    </div>
-  </div>
+    </li>
+  </ul>
 </template>
 
 <style scoped lang="scss">

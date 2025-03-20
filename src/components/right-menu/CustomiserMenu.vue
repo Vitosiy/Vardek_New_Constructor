@@ -68,7 +68,8 @@ onMounted(() => {
 <style lang="scss" scoped>
 .customiser {
   width: 100%;
-  height: 85%;
+  // height: 85%;
+  max-height: 85vh;
   max-width: 551px;
   position: absolute;
   top: 106px;
@@ -81,12 +82,14 @@ onMounted(() => {
   transition: 0.5s ease-in-out;
   transform: translateZ(-10px);
   box-sizing: border-box;
+  overflow: hidden;
 
   &__container {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    height: 100%;
+    max-height: 85vh;
+    padding-bottom: 25px;
 
     .customiser-header {
       width: 100%;

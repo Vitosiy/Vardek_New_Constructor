@@ -31,11 +31,7 @@ const loadEvents = async () => {
     // url.searchParams.append('style_id', '43830');
 
     const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE"
-      }
+      method: "GET"
     });
 
     if (!response.ok) {

@@ -9,6 +9,7 @@ interface Tab {
 import { defineProps, watch, ref, onMounted, computed, reactive } from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 import ConfigurationOption from "./ConfigurationOption.vue";
 import SurfaceRedactor from "./SurfaceRedactor.vue";
@@ -24,8 +25,15 @@ const props = defineProps({
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
+<<<<<<< HEAD
 const modelState = useModelState(); // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
 const materialList = modelState.getCurrentModelFasadesData;
+=======
+const eventBus = useEventBus();
+  
+const modelState = useModelState() // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
+const materialList = modelState.getCurrentModelFasadesData
+>>>>>>> feature/resize-fix
 const productData = modelState.getCurrentModel;
 const productId = productData.PROPS.PRODUCT;
 
@@ -49,6 +57,7 @@ const isPatinaExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
 
+<<<<<<< HEAD
   isSurfaceSelected.value = true;
   millingList.value = modelState.getCurrentMillingData;
   isMillingExist.value = millingList.value.length > 0;
@@ -62,6 +71,19 @@ const onSelectMaterial = (data) => {
 
   currentSurfaceData.value = data;
 };
+=======
+  currentSurfaceData.value = data
+  if (isPalleteExist.value) {
+    let { NAME, HTML, ID } = paletteList.value[Object.keys(paletteList.value)[0]]
+    currentPaletteData.value = { name: NAME, hex: HTML }
+
+    eventBus.emit("A:ChangePaletteColor", {
+    data: ID,
+    fasadeNdx: props.tabIndex - 1,
+  });
+  }
+}
+>>>>>>> feature/resize-fix
 
 const onSelectMilling = (data) => {
   currentMillingData.value = data;
@@ -223,8 +245,8 @@ onMounted(() => {
   border: 1px solid rgb(195, 195, 195);
   border-radius: 10px;
   padding: 15px;
+  max-height: 100vh;
   overflow: hidden;
-  height: 100%;
   box-sizing: border-box;
 
   &__title {
@@ -235,11 +257,12 @@ onMounted(() => {
   &__list {
     position: relative;
     display: flex;
+    justify-content: space-between;
     flex-direction: column;
     gap: 8px;
     border: 1px solid rgb(131, 131, 131);
     border-radius: 10px;
-    padding: 10px;
+    padding: 10px 10px 0px 10px;
     height: 100%;
     overflow-y: scroll;
     box-sizing: border-box;

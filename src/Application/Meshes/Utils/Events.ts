@@ -159,6 +159,7 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
 
         const product = this._currentMesh
+        
 
         const { CONFIG, SHELF, BODY } = product.userData.PROPS
 

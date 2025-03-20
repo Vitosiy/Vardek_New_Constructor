@@ -61,6 +61,3 @@ const handleTabChange = ({ index, name }) => {
   <CorpusMaterialRedactor v-if="isCorpusSelected" />
   <MaterialRedactor v-else :key="tabIndex" :fasadeData="fasadeList[tabIndex - 1]" :tabIndex="tabIndex"/>
 </template>
-
-<style lang="scss" scoped>
-</style>
