@@ -42,21 +42,9 @@ const deleteChoise = () => {
 </script>
 
 <template>
-<<<<<<< HEAD
-  <div class="config" :class="props.additionalClass">
-    <div class="config__top">
-      <img
-        v-if="props.type !== 'palette'"
-        class="config__img"
-        :src="imgSrc"
-        alt=""
-        @click="chooseOption"
-      />
-=======
   <div class="config" @click="chooseOption">
     <div class="config__top">
       <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
->>>>>>> feature/resize-fix
       <div v-else @click="chooseOption">
         <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="" />
         <div

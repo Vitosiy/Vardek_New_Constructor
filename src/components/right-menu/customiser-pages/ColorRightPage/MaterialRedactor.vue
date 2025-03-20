@@ -25,15 +25,10 @@ const props = defineProps({
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
-<<<<<<< HEAD
-const modelState = useModelState(); // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
-const materialList = modelState.getCurrentModelFasadesData;
-=======
 const eventBus = useEventBus();
   
 const modelState = useModelState() // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
 const materialList = modelState.getCurrentModelFasadesData
->>>>>>> feature/resize-fix
 const productData = modelState.getCurrentModel;
 const productId = productData.PROPS.PRODUCT;
 
@@ -57,7 +52,6 @@ const isPatinaExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
 
-<<<<<<< HEAD
   isSurfaceSelected.value = true;
   millingList.value = modelState.getCurrentMillingData;
   isMillingExist.value = millingList.value.length > 0;
@@ -69,9 +63,6 @@ const onSelectMaterial = (data) => {
   patinaList.value = modelState.getCurrentPatinaData;
   isPatinaExist.value = patinaList.value.length > 0;
 
-  currentSurfaceData.value = data;
-};
-=======
   currentSurfaceData.value = data
   if (isPalleteExist.value) {
     let { NAME, HTML, ID } = paletteList.value[Object.keys(paletteList.value)[0]]
@@ -83,7 +74,6 @@ const onSelectMaterial = (data) => {
   });
   }
 }
->>>>>>> feature/resize-fix
 
 const onSelectMilling = (data) => {
   currentMillingData.value = data;
