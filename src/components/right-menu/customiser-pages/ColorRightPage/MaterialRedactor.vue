@@ -89,7 +89,13 @@ const onSelectPatina = (data) => {
 
 const deleteSelectedOptions = (type: String) => {
   // TODO доделать после согласования
-  console.log("DELETE", type);
+  console.log("DELETE", type, props.tabIndex);
+  if(type == 'surface') {
+    eventBus.emit('A:Delite-Fasad', props.tabIndex - 1);
+  }
+  if(type === 'milling') {
+    eventBus.emit('A:DeliteMilling', props.tabIndex - 1);
+  }
 };
 
 const millingStatus = computed(() => {
@@ -170,6 +176,7 @@ onMounted(() => {
         :type="'surface'"
         :data="currentSurfaceData"
         @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
@@ -177,6 +184,7 @@ onMounted(() => {
         :type="'milling'"
         :data="currentMillingData"
         @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
@@ -184,6 +192,7 @@ onMounted(() => {
         :type="'palette'"
         :data="currentPaletteData"
         @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
@@ -192,6 +201,7 @@ onMounted(() => {
         :data="currentPatinaData"
         :additionalClass="millingStatus"
         @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
     </div>
 

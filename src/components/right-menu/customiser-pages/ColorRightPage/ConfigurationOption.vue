@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+//@ts-nocheck
+
 import { defineProps, computed, defineEmits } from "vue";
 import default_url from "@/assets/svg/surface-redactor/default.svg";
 import delete_url from "@/assets/svg/surface-redactor/delete.svg";
@@ -35,8 +37,8 @@ let chooseOption = () => {
   emit("choose-option", props.type);
 };
 
-const deleteChoise = () => {
-  // TODO функция удаления отложена до решения Александра
+const deleteChoise = (event) => {
+  event.stopPropagation()
   emit("delete-choise", props.type);
 };
 </script>
