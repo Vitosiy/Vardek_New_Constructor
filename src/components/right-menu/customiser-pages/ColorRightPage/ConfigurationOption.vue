@@ -41,9 +41,9 @@ const deleteChoise = () => { // TODO функция удаления отлож�
 </script>
 
 <template>
-  <div class="config">
+  <div class="config" @click="chooseOption">
     <div class="config__top">
-      <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="" @click="chooseOption">
+      <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
       <div v-else @click="chooseOption">
         <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="">
         <div v-else class="config__color" :style="{ backgroundColor: `#${props.data?.hex}` }" ></div>
@@ -51,11 +51,14 @@ const deleteChoise = () => { // TODO функция удаления отлож�
       <img class="config__delete" :src="delete_url" alt="" @click="deleteChoise"> 
     </div>
     <div class="config__bottom">
-      <div class="config__title">
-        {{ title }}
-      </div>
       <div>
-        {{ name }}
+        <p class="config__title">{{ title }}</p>
+      </div>
+      <div class="config__name">
+        <p>{{ name }}</p>
+        <!--
+        
+        -->
       </div>
     </div>
   </div>
@@ -66,11 +69,13 @@ const deleteChoise = () => { // TODO функция удаления отлож�
 .config {
   display: flex;
   flex-direction: column;
-  height: 150px;
-  width: 150px;
-  padding: 8px;
-  border-radius: 5px;
+  height: 15vh;
+  width: 15vh;
+  padding: 0.8vh;
+  border-radius: 1vh;
   box-shadow: 4px 4px 4px 4px rgba(34, 60, 80, 0.11);
+  overflow: hidden;
+  cursor: pointer;
 
   &__top {
     display: flex;
@@ -80,24 +85,58 @@ const deleteChoise = () => { // TODO функция удаления отлож�
     width: 100%;
   }
 
+  &__bottom {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
   &__img {
+    height: 50px;
     cursor: pointer;
+
+    @media (min-width: 1200px) { 
+      height: 60px;
+    }
   }
 
   &__color {
     height: 50px;
     width: 50px;
-    border-radius: 5px;
+    border-radius: 12px;
     cursor: pointer;
+
+    @media (min-width: 1200px) { 
+      height: 60px;
+    }
   }
 
   &__delete {
-    height: 25px;
+    height: 20px;
     cursor: pointer;
+
+    @media (min-width: 1200px) { 
+      height: 25px;
+    }
   }
 
   &__title {
     color: rgb(131, 133, 135);
+    font-size: small;
+
+    @media (min-width: 1200px) { 
+      font-size: medium;
+    }
+  }
+
+  &__name {
+    font-size: small;
+    line-height: 16px;
+
+    @media (min-width: 1200px) { 
+      font-size: medium;
+      line-height: 20px;
+    }
   }
 }
 </style>

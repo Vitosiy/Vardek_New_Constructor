@@ -9,6 +9,7 @@ interface Tab {
 import { defineProps, watch, ref, onMounted, computed, reactive } from 'vue';
 import { useModelState } from '@/store/appliction/useModelState';
 import { useAppData } from "@/store/appliction/useAppData";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 import ConfigurationOption from './ConfigurationOption.vue';
 import SurfaceRedactor from './SurfaceRedactor.vue';
@@ -22,6 +23,8 @@ const props = defineProps({
 
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
+
+const eventBus = useEventBus();
   
 const modelState = useModelState() // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
 const materialList = modelState.getCurrentModelFasadesData
@@ -52,6 +55,15 @@ const onSelectMaterial = (data) => {
   isPalleteExist.value = Object.keys(paletteList.value).length > 0
 
   currentSurfaceData.value = data
+  if (isPalleteExist.value) {
+    let { NAME, HTML, ID } = paletteList.value[Object.keys(paletteList.value)[0]]
+    currentPaletteData.value = { name: NAME, hex: HTML }
+
+    eventBus.emit("A:ChangePaletteColor", {
+    data: ID,
+    fasadeNdx: props.tabIndex - 1,
+  });
+  }
 }
 
 const onSelectMilling = (data) => {
@@ -179,8 +191,7 @@ onMounted(() => {
     border-radius: 10px;
     padding: 10px 10px 0px 10px;
     height: 100%;
-    // height: 100px;
-    overflow: scroll;
+    overflow-y: scroll;
     box-sizing: border-box;
   }
 

@@ -65,9 +65,9 @@ const onSearchChange = (e) => {
         @input="onSearchChange"
       />
     </div>
-    <div class="list">
+    <ul class="list">
       <!-- Все возможные материалы -->
-      <div
+      <li
         v-if="!isSearch"
         v-for="materials in props.materialList"
         class="list__details"
@@ -76,41 +76,43 @@ const onSearchChange = (e) => {
           <summary>
             {{ materials.NAME }}
           </summary>
-          <div v-for="id in materials.FASADES">
-            <div class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
-              <img
-                class="item__img"
-                :src="_URL + _FASADE[id].DETAIL_PICTURE"
-                alt=""
-              />
-              <div class="item__name">
-                {{ _FASADE[id].NAME }}
+          <ul>
+            <li v-for="id in materials.FASADES">
+              <div class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
+                <img
+                  class="item__img"
+                  :src="_URL + _FASADE[id].DETAIL_PICTURE"
+                  alt=""
+                />
+                <div class="item__name">
+                  <p>{{ _FASADE[id].NAME }}</p> 
+                </div>
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
         </details>
-      </div>
+      </li>
       <!--
 
       -->
       <!-- отфильтрованные материалы-->
-      <div v-else v-for="id in filteredMaterialList">
-        <div class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
+      <ul v-else v-for="id in filteredMaterialList">
+        <li class="item" @click="changeFasadeTexture(_FASADE[id], id, props.tabIndex)">
           <img
             class="item__img"
             :src="_URL + _FASADE[id].DETAIL_PICTURE"
             alt=""
           />
           <div class="item__name">
-            {{ _FASADE[id].NAME }}
+           <p>{{ _FASADE[id].NAME }}</p> 
           </div>
-        </div>
-      </div>
+        </li>
+      </ul>
 
       <!--
       
       -->
-    </div>
+    </ul>
 </template>
 
 <style scoped lang="scss">
@@ -177,7 +179,6 @@ const onSearchChange = (e) => {
   align-items: center;
   cursor: pointer;
   height: 60px;
-  // border: 1px solid red;
   border-radius: 5px;
   background-color: #e7e7e7;
   margin-bottom: 4px;
