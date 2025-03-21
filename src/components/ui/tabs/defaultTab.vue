@@ -11,19 +11,6 @@
         {{ tab.label }}
       </button>
     </div>
-
-    <!-- Содержимое выбранного таба -->
-    <!-- 
-      <div class="tabs-content">
-        <div
-        v-for="tab in tabs"
-        :key="tab.name"
-  
-        >
-          <slot :name="tab.name" v-if="selectedTab === tab.name" />
-        </div>
-      </div>
-   -->
   </div>
 </template>
 
@@ -70,23 +57,30 @@ const selectTab = (name: string, index: number) => {
 .tabs-navigation {
   display: flex;
   flex-wrap: wrap;
-  justify-content:flex-start;
+  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 16px;
   box-sizing: border-box;
 }
+
 button {
   border: none;
   border-radius: 15px;
   font-size: 16px;
-  padding: 15px 25px;
-  min-width: 120px;
+  padding: 10px 20px;
+  min-width: 60px;
   font-weight: 600;
+  font-size: small;
   outline: none;
   background: $bg;
   color: $strong-grey;
   transition: background-color 0.2s, transform 0.1s;
+
+  @media (min-width: 1500px) { 
+    font-size: medium;
+    padding: 15px 25px;
+  }
 }
+
 button:hover {
   background-color: #e0e0e0;
 }
@@ -98,4 +92,5 @@ button.active {
 .tabs-content {
   margin-top: 16px;
 }
+
 </style>

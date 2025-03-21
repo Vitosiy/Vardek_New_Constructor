@@ -27,7 +27,7 @@ const _FASADE = _APP.FASADE;
 
 const eventBus = useEventBus();
   
-const modelState = useModelState() // TODO работу со стором надо переносить в стор. Отделять бизнес-логику от визуализации
+const modelState = useModelState()
 const materialList = modelState.getCurrentModelFasadesData
 const productData = modelState.getCurrentModel;
 const productId = productData.PROPS.PRODUCT;
@@ -87,14 +87,37 @@ const onSelectPatina = (data) => {
   currentPatinaData.value = data;
 };
 
+
+/** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
-  // TODO доделать после согласования
-  console.log("DELETE", type, props.tabIndex);
+  console.log('DELETE', type, );
+  
   if(type == 'surface') {
     eventBus.emit('A:Delite-Fasad', props.tabIndex - 1);
+    let { NAME, DETAIL_PICTURE } = _FASADE[7397]
+    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE }
+    isMillingExist.value = false
+    isPalleteExist.value = false
   }
   if(type === 'milling') {
     eventBus.emit('A:DeliteMilling', props.tabIndex - 1);
+    currentMillingData.value = { name: '', imgSrc: null }
+    eventBus.emit('A:DelitePatina', props.tabIndex - 1);
+    currentPatinaData.value = {name: '', imgSrc: null}
+  }
+  
+  if(type === 'palette') {
+    let { ID, NAME, HTML } = Object.values(paletteList.value)[0]
+    eventBus.emit("A:ChangePaletteColor", {
+      data: ID,
+      fasadeNdx: props.tabIndex - 1,
+    });
+    currentPaletteData.value = { name: NAME, hex: HTML }
+  }
+
+  if(type === 'patina') {
+    eventBus.emit('A:DelitePatina', props.tabIndex - 1);
+    currentPatinaData.value = {name: '', imgSrc: null}
   }
 };
 
@@ -134,8 +157,6 @@ onMounted(() => {
     isPatinaExist.value = true;
   }
 
-  // console.log(_FASADE[COLOR], '_FASADE');
-
   // проверка уже установленных значений фасада, фрезеровки и цвета
   if (COLOR) {
     const { NAME, DETAIL_PICTURE } = _FASADE[COLOR];
@@ -161,7 +182,7 @@ onMounted(() => {
 
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentPatinaData.find(
       (patina) => patina.ID === PATINA
-    );;
+    );
     currentPatinaData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
     isPatinaExist.value = true;
   }
@@ -278,12 +299,16 @@ onMounted(() => {
   flex-direction: row;
   justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 17px;
-
+  gap: 8px;
+  
   &__item {
     height: 50px;
     border: 1px solid grey;
     border-radius: 5px;
+  }
+  
+  @media (min-width: 1500px) { 
+    gap: 17px;
   }
 }
 </style>
