@@ -19,6 +19,8 @@ import { handlerWheel } from "./methods/events/handlerWheel/index";
 import { handleWindowResize } from "./methods/events/handleWindowResize/index";
 import { handleKeyDown } from "./methods/events/handleKeyDown/index";
 
+import { useEventBus } from '@/store/constructor2d/useEventBus';
+
 interface Layers {
   grid: Grid | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
@@ -86,6 +88,8 @@ export default class Constructor2D {
   private handlerWheel: (e: WheelEvent) => void;
   private handleWindowResize: () => void;
   private handleKeyDown: (e: KeyboardEvent) => void;
+
+  public eventBus: ReturnType<typeof useEventBus> = useEventBus();
 
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
     

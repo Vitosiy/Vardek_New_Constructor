@@ -6,6 +6,8 @@ import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
 import { Vector2 } from '@/types/constructor2d/interfaсes';
 
+import { Events } from '@/store/constructor2d/events';
+
 import {
   ObjectWall,
   ObjectWallContainers,
@@ -43,6 +45,8 @@ import { handlerOutEventGraphic } from "./methods/events/handlerOut/index";
 import { handlerDownEventGraphic } from "./methods/events/handlerDown/index";
 import { handlerStageMouseUp } from "./methods/events/handlerStageMouseUp/index";
 import { handlerStageMouseMove } from "./methods/events/handlerStageMouseMove/index";
+import { eventModifyWall } from "./methods/events/eventModifyWall/index";
+import { eventRemoveWall } from "./methods/events/eventRemoveWall/index";
 
 import { initRoom } from "./methods/initRoom/index";
 
@@ -101,6 +105,8 @@ export default class Planner {
   private handlerDownEventGraphic: (e:PIXI.FederatedPointerEvent) => void;
   private handlerStageMouseUp: (e:PIXI.FederatedPointerEvent) => void;
   private handlerStageMouseMove: (e:PIXI.FederatedPointerEvent) => void;
+  private eventModifyWall: (data: {width: number, height: number}) => void;
+  private eventRemoveWall: () => void;
 
   private initRoom: () => (0 | 1);
 
@@ -122,6 +128,11 @@ export default class Planner {
     this.handlerDownEventGraphic = handlerDownEventGraphic.bind(this);
     this.handlerStageMouseUp = handlerStageMouseUp.bind(this);
     this.handlerStageMouseMove = handlerStageMouseMove.bind(this);
+    this.eventModifyWall = eventModifyWall.bind(this);
+    this.eventRemoveWall = eventRemoveWall.bind(this);
+
+    this.parent.eventBus.on(Events.C2D_MODIFY_WALL, this.eventModifyWall);
+    this.parent.eventBus.on(Events.C2D_REMOVE_WALL, this.eventRemoveWall);
 
     this.initRoom = initRoom.bind(this);
 
@@ -435,6 +446,16 @@ export default class Planner {
 
         this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(wallData.angleDegrees);
         this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(wallData.angleDegrees);
+
+        // отображаем форму модификации стены
+        this.parent.eventBus.emit(Events.C2D_SHOW_FORM_MODIFY_WALL, {
+          width: addedwall.width*10,
+          height: addedwall.height*10,
+          position: {
+            x: addedwall.points[0].x + this.parent.config.originOfCoordinates.x,
+            y: addedwall.points[0].y + this.parent.config.originOfCoordinates.y
+          }
+        });
         
       }
 
@@ -839,7 +860,7 @@ export default class Planner {
 
             const distance = getDistanceBetweenVectors(linePoints[0], linePoints[1]);
 
-            containers.textRulerWall.text = (Number(distance.toFixed(1))*10).toString() + " cм";
+            containers.textRulerWall.text = (Number(distance.toFixed(1))*10).toString() + " мм";
 
             const pointText = offsetVectorBySegmentNormal(
               [linePoints[0], linePoints[1]],
@@ -929,9 +950,9 @@ export default class Planner {
 
   }
 
-  public updateWallPoint(position: Vector2): void {
+  public updateWallPoint(position: Vector2, __indexPoint: 0 | 1 | null = null): void {
 
-    const indexPoint = this.state.activePointWall;
+    const indexPoint = __indexPoint !== null ? __indexPoint : this.state.activePointWall;
     const indexDataWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);
 
     if(indexDataWall == -1) return;
@@ -1008,6 +1029,15 @@ export default class Planner {
 
     const listRelatedWalls: (string | number)[] = this.getMergeWallsIDForUpdate(dataWall.id);
     this.drawListWalls(listRelatedWalls);
+
+    this.parent.eventBus.emit(Events.C2D_UPDATE_FORM_MODIFY_WALL, {
+      width: Number(dataWall.width.toFixed(1))*10,
+      height: Number(dataWall.height.toFixed(1))*10,
+      position: {
+        x: dataWall.points[0].x + this.parent.config.originOfCoordinates.x,
+        y: dataWall.points[0].y + this.parent.config.originOfCoordinates.y
+      }
+    });
     
   }
 
@@ -1077,6 +1107,22 @@ export default class Planner {
 
     this.container.x = this.parent.config.originOfCoordinates.x + 30;
     this.container.y = this.parent.config.originOfCoordinates.y + 30;
+
+    const indexPoint = this.state.activePointWall;
+    const indexDataWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);
+
+    if(indexDataWall == -1) return;
+
+    const dataWall = this.objectWalls[indexDataWall];
+
+    this.parent.eventBus.emit(Events.C2D_UPDATE_FORM_MODIFY_WALL, {
+      width: Number(dataWall.width.toFixed(1))*10,
+      height: Number(dataWall.height.toFixed(1))*10,
+      position: {
+        x: dataWall.points[0].x + this.parent.config.originOfCoordinates.x,
+        y: dataWall.points[0].y + this.parent.config.originOfCoordinates.y
+      }
+    });
     
   }
 
@@ -1217,6 +1263,9 @@ export default class Planner {
     this.app.stage
       .off("pointerup", this.handlerStageMouseUp)
       .off("mousemove", this.handlerStageMouseMove);
+
+    this.parent.eventBus.off(Events.C2D_MODIFY_WALL, this.eventModifyWall);
+    this.parent.eventBus.off(Events.C2D_REMOVE_WALL, this.eventRemoveWall);
 
     if (this.activeObjectGraphic) {
       this.activeObjectGraphic.destroy(true);

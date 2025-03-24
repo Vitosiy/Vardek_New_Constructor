@@ -1,6 +1,7 @@
 import { MathUtils } from "three";
 import * as PIXI from "pixi.js";
 import { ObjectWall } from "./../../../interfaces";
+import { Events } from "@/store/constructor2d/events";
 
 export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent): void {
 
@@ -50,6 +51,15 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
         this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(addedwall.angleDegrees);
         this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(addedwall.angleDegrees);
       }
+
+      this.parent.eventBus.emit(Events.C2D_SHOW_FORM_MODIFY_WALL, {
+        width: Number(addedwall.width.toFixed(1))*10,
+        height: Number(addedwall.height.toFixed(1))*10,
+        position: {
+          x: addedwall.points[0].x + this.parent.config.originOfCoordinates.x,
+          y: addedwall.points[0].y + this.parent.config.originOfCoordinates.y
+        }
+      });
 
     }
 
