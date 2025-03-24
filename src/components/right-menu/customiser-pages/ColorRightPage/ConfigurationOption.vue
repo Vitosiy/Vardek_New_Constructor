@@ -44,7 +44,7 @@ const deleteChoise = (event) => {
 </script>
 
 <template>
-  <div class="config" @click="chooseOption">
+  <div :class="`config ${props.additionalClass}`" @click="chooseOption">
     <div class="config__top">
       <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
       <div v-else @click="chooseOption">
@@ -100,6 +100,8 @@ const deleteChoise = (event) => {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    height: 50%;
+    overflow: hidden;
   }
 
   &__img {
@@ -134,6 +136,7 @@ const deleteChoise = (event) => {
   &__title {
     color: rgb(131, 133, 135);
     font-size: small;
+    flex: 2;
 
     @media (min-width: 1500px) { 
       font-size: medium;
@@ -141,6 +144,7 @@ const deleteChoise = (event) => {
   }
 
   &__name {
+    flex: 1;
     font-size: small;
     line-height: 16px;
 

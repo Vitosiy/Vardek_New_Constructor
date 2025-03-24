@@ -90,7 +90,6 @@ const onSelectPatina = (data) => {
 
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
-  console.log('DELETE', type, );
   
   if(type == 'surface') {
     eventBus.emit('A:Delite-Fasad', props.tabIndex - 1);
@@ -122,7 +121,7 @@ const deleteSelectedOptions = (type: String) => {
 };
 
 const millingStatus = computed(() => {
-  if (!Object.keys(currentMillingData.value).length > 0) {
+  if (!currentMillingData.value.imgSrc) { 
     return "disabled";
   }
 });
@@ -134,13 +133,19 @@ const setCurrentEditableOption = (name: String) => {
 
 onMounted(() => {
   const currentFasadeData =
-    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
-
+  productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+  
   const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
-    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
-
+  productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+  
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
   let dataOfFasadeType = _FASADE[COLOR];
+
+  modelState.createCurrentPaletteData(COLOR);
+  modelState.createCurrentMillingData({ fasadeId: COLOR, productId });
+  modelState.createCurrentPatinaData({ fasadeId: COLOR, productId });
+  modelState.createCurrentGlassData({ fasadeId: COLOR, productId });
+  modelState.createCurrentWindowsData({ fasadeId: COLOR, productId });
 
   if (dataOfFasadeType.ATTACH_MILLINGS[0]) {
     millingList.value = modelState.getCurrentMillingData;
@@ -164,6 +169,7 @@ onMounted(() => {
     isSurfaceSelected.value = true;
   }
 
+
   if (MILLING) {
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentMillingData.find(
       (milling) => milling.ID === MILLING
@@ -179,13 +185,12 @@ onMounted(() => {
   }
 
   if (PATINA) {
-
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentPatinaData.find(
       (patina) => patina.ID === PATINA
     );
     currentPatinaData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
     isPatinaExist.value = true;
-  }
+  }  
 });
 </script>
 

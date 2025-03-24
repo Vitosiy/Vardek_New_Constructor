@@ -57,7 +57,7 @@ const selectTab = (name: string, index: number) => {
 .tabs-navigation {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   box-sizing: border-box;
 }
