@@ -312,7 +312,7 @@ onMounted(() => {
     border-radius: 5px;
   }
   
-  @media (min-width: 1500px) { 
+  @media (min-height: 1000px) { 
     gap: 17px;
   }
 }

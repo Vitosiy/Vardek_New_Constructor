@@ -68,7 +68,6 @@ onMounted(() => {
 <style lang="scss" scoped>
 .customiser {
   width: 100%;
-  // height: 85%;
   max-height: 85vh;
   max-width: 551px;
   position: absolute;

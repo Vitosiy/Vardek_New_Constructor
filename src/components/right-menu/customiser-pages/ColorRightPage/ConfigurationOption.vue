@@ -108,7 +108,7 @@ const deleteChoise = (event) => {
     height: 50px;
     cursor: pointer;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       height: 60px;
     }
   }
@@ -119,7 +119,7 @@ const deleteChoise = (event) => {
     border-radius: 12px;
     cursor: pointer;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       height: 60px;
     }
   }
@@ -128,7 +128,7 @@ const deleteChoise = (event) => {
     height: 20px;
     cursor: pointer;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       height: 25px;
     }
   }
@@ -138,7 +138,7 @@ const deleteChoise = (event) => {
     font-size: small;
     flex: 2;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       font-size: medium;
     }
   }
@@ -148,13 +148,14 @@ const deleteChoise = (event) => {
     font-size: small;
     line-height: 16px;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       font-size: medium;
       line-height: 20px;
     }
   }
 
 }
+
 .disabled{
   pointer-events: none;
   background-color: rgba(228, 140, 140, 0.133);
