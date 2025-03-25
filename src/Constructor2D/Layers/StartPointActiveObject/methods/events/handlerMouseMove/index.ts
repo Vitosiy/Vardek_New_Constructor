@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { Vector2 } from "@/types/constructor2d/interfaсes";
+// import { Vector2 } from "@/types/constructor2d/interfaсes";
 
 export function handlerMouseMove(this: any, e: PIXI.FederatedPointerEvent): void {
 
@@ -18,22 +18,7 @@ export function handlerMouseMove(this: any, e: PIXI.FederatedPointerEvent): void
 
     { // меняем позицию индикатора активной точки
   
-      const position: Vector2 = {
-        x: __position.x < 0 ? 0 : __position.x,
-        y: __position.y < 0 ? 0 : __position.y,
-      };
-      
-      if(indexPoint == 0){
-        this.circleStartPoint.x = position.x;
-        this.circleStartPoint.y = position.y;
-        this.startPointRect.x = position.x
-        this.startPointRect.y = position.y;
-      }else if(indexPoint == 1){
-        this.circleEndPoint.x = position.x;
-        this.circleEndPoint.y = position.y;
-        this.endPointRect.x = position.x;
-        this.endPointRect.y = position.y;
-      }
+      const position = this.updatePositionIndicatorPoint(__position);
 
       this.drawAngleBetweenWalls();
 

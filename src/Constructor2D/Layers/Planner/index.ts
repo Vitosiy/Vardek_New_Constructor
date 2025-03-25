@@ -27,6 +27,7 @@ import {
   getMidpoint,
   getAngleBetweenVectors,
   getIntersectionPoint,
+  adjustP1ForPerpendicularity,
 } from "@/Constructor2D/utils/Math";
 
 import { 
@@ -36,7 +37,7 @@ import {
   drawArrow,
   drawArrowHead,
   drawShape,
-  // drawCircle,
+  drawCircle,
   drawLine,
 } from "../../utils/Shape";
 
@@ -158,8 +159,6 @@ export default class Planner {
           }
         }
       }
-
-      console.log("init walls:", this.objectWalls);
 
     }
 
@@ -1091,6 +1090,80 @@ export default class Planner {
       }
 
     });
+    
+  }
+
+  // расположение 2-х стен под углом 90 градусов
+  public arrangeWallsAt_90_DegreeAngle(): void {
+
+
+    
+    if(this.state.activeWall !== null && this.state.activePointWall !== null){
+      
+      const indexWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);
+      
+      if(indexWall != -1){
+        
+        const dataWall = this.objectWalls[indexWall];
+        if(!dataWall) return;
+
+        if(this.state.activePointWall == 0){
+
+          if(!dataWall.mergeWalls.wallPoint1) return;
+
+          const indexMergeWall = this.objectWalls.findIndex(el => el.id === dataWall.mergeWalls.wallPoint1);
+          if(indexMergeWall == -1) return;
+
+          const dataMergeWall = this.objectWalls[indexMergeWall];
+
+          const p0 = dataMergeWall.points[0];
+          const p1 = dataWall.points[0];
+          const p2 = dataWall.points[1];
+          
+          const newP1 = adjustP1ForPerpendicularity(p0, p1, p2);
+
+          this.updateWallPoint(newP1);
+
+          this.parent.layers.startPointActiveObject.updatePositionIndicatorPoint(newP1);
+          this.parent.layers.startPointActiveObject.drawAngleBetweenWalls();
+
+          /* helper
+          const graphic = new PIXI.Graphics();
+          this.container.addChild(graphic);
+
+          drawCircle(
+            graphic,
+            newP1,
+            10, 
+            "rgba(0,100,0,1)"
+          );
+          */
+          
+        }else if(this.state.activePointWall == 1){
+
+          if(!dataWall.mergeWalls.wallPoint0) return;
+
+          const indexMergeWall = this.objectWalls.findIndex(el => el.id === dataWall.mergeWalls.wallPoint0);
+          if(indexMergeWall == -1) return;
+
+          const dataMergeWall = this.objectWalls[indexMergeWall];
+
+          const p0 = dataWall.points[0];
+          const p1 = dataWall.points[1];
+          const p2 = dataMergeWall.points[1];
+          
+          const newP0 = adjustP1ForPerpendicularity(p0, p1, p2);
+
+          this.updateWallPoint(newP0);
+
+          this.parent.layers.startPointActiveObject.updatePositionIndicatorPoint(newP0);
+          this.parent.layers.startPointActiveObject.drawAngleBetweenWalls();
+          
+        }
+
+      }
+
+    }
     
   }
 
