@@ -66,12 +66,10 @@ const deleteChoise = (event) => {
       <div>
         <p class="config__title">{{ title }}</p>
       </div>
-      <div class="config__name">
-        <p>{{ name }}</p>
+        <p class="config__name">{{ name }}</p>
         <!--
         
         -->
-      </div>
     </div>
   </div>
 </template>
@@ -147,6 +145,8 @@ const deleteChoise = (event) => {
     flex: 1;
     font-size: small;
     line-height: 16px;
+    text-overflow: ellipsis;
+    overflow: hidden;
 
     @media (min-height: 1000px) { 
       font-size: medium;
