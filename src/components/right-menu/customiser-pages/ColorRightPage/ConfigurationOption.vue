@@ -134,7 +134,7 @@ const deleteChoise = (event) => {
   &__title {
     color: rgb(131, 133, 135);
     font-size: small;
-    flex: 2;
+    // flex: 2;
 
     @media (min-height: 1000px) { 
       font-size: medium;
@@ -142,15 +142,14 @@ const deleteChoise = (event) => {
   }
 
   &__name {
-    flex: 1;
     font-size: small;
-    line-height: 16px;
+    line-height: 14px;
     text-overflow: ellipsis;
     overflow: hidden;
 
     @media (min-height: 1000px) { 
       font-size: medium;
-      line-height: 20px;
+      line-height: 10px;
     }
   }
 
