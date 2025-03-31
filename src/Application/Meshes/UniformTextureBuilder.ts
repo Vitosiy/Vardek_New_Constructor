@@ -197,10 +197,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         }, []).includes(true)
 
 
-        if (!limited) {
-            alert(`Переходящий рисунок можно создать только для материалов из списка Шпон Вардек 19мм`)
-            return
-        }
+
 
 
         const fasaded = FASADE_PROPS.filter((element) => element.COLOR !== null && element.COLOR !== 7397).length > 0
@@ -223,6 +220,10 @@ export class UniformTextureBuilder extends UniformTextureUtils {
             return
         }
 
+        if (!limited && this.backupFasadId === null) {
+            alert(`Переходящий рисунок можно создать только для материалов из списка Шпон Вардек 19мм`)
+            return
+        }
 
         this.backupFasadId = this.backupFasadId ?? FASADE_PROPS.filter(element => parseInt(element.COLOR) !== 7397)[0].COLOR  // Создаём общий индекс материала фасада
         const rootFasadeData = this.parent._FASADE[this.backupFasadId as number]
@@ -574,6 +575,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
             fasade.traverse(children => {
                 if (children instanceof THREE.Mesh && children.material) {
+                    if (children.userData.type === 'glass') return
                     const materials = Array.isArray(children.material) ? children.material : [children.material];
 
                     materials.forEach(material => {

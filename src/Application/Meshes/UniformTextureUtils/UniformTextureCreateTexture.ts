@@ -530,7 +530,13 @@ export class UniformTextureCreateTexture {
         }
 
         fasade.traverse(children => {
+
+            
             if (children instanceof THREE.Mesh) {
+
+                if (children.userData.type === 'glass') return
+
+                
                 const cloned = children.material.clone();
                 cloned.map = texture.clone();
 
