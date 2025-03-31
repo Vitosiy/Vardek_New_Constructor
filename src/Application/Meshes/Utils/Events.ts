@@ -159,7 +159,7 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
 
         const product = this._currentMesh
-        
+
 
         const { CONFIG, SHELF, BODY } = product.userData.PROPS
 
@@ -229,6 +229,16 @@ export class MeshEvents extends BuildersHelper {
             y: data.TEXTURE_HEIGHT,
         }
 
+        /**Проверка устанавливалось ли окно раньше */
+        if (window != null && applyWindow === null || window != null && incomingModel == null) {
+            // console.log('WINDOW')
+            this.changeWindow({ data: window[0], fasadeNdx });
+        }
+        else {
+            FASADE_PROPS[fasadeNdx].MILLING = null
+            FASADE_PROPS[fasadeNdx].PATINA = null
+        }
+
         if (data.PALETTE.length > 0 && data.PALETTE[0] != null) {
             // console.log('PALETTE')
 
@@ -238,16 +248,6 @@ export class MeshEvents extends BuildersHelper {
             this.changePaletteColor({ data: palette, fasadeNdx })
 
             return
-        }
-
-        /**Проверка устанавливалось ли окно раньше */
-        if (window != null && applyWindow === null || window != null && incomingModel == null) {
-            // console.log('WINDOW')
-            this.changeWindow({ data: window[0], fasadeNdx });
-        }
-        else {
-            FASADE_PROPS[fasadeNdx].MILLING = null
-            FASADE_PROPS[fasadeNdx].PATINA = null
         }
 
         if (!data.COLOR) {
@@ -545,10 +545,10 @@ export class MeshEvents extends BuildersHelper {
         const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE_PROPS[fasadeNdx]
-        
+
         fasade.PATINA = null
         this.changeMilling({ data: fasade.MILLING, fasadeNdx })
-   
+
     }
 
     changeWindow({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {

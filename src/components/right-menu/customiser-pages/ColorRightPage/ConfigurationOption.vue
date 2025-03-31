@@ -44,7 +44,7 @@ const deleteChoise = (event) => {
 </script>
 
 <template>
-  <div class="config" @click="chooseOption">
+  <div class="config" @click="chooseOption" :class="[props.additionalClass]">
     <div class="config__top">
       <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
       <div v-else @click="chooseOption">

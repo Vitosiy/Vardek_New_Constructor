@@ -26,9 +26,9 @@ const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
 const eventBus = useEventBus();
-  
-const modelState = useModelState()
-const materialList = modelState.getCurrentModelFasadesData
+
+const modelState = useModelState();
+const materialList = modelState.getCurrentModelFasadesData;
 const productData = modelState.getCurrentModel;
 const productId = productData.PROPS.PRODUCT;
 
@@ -38,6 +38,8 @@ const currentSurfaceData = ref<Object>({});
 const currentMillingData = ref<Object>({});
 const currentPaletteData = ref<Object>({});
 const currentPatinaData = ref<Object>({});
+const currentWindowsData = ref<Object>({});
+const currentGlassData = ref<Object>({});
 
 const isSurfaceSelected = ref<boolean>(false);
 
@@ -51,7 +53,6 @@ const patinaList = ref<Array>([]);
 const isPatinaExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
-
   isSurfaceSelected.value = true;
   millingList.value = modelState.getCurrentMillingData;
   isMillingExist.value = millingList.value.length > 0;
@@ -63,17 +64,18 @@ const onSelectMaterial = (data) => {
   patinaList.value = modelState.getCurrentPatinaData;
   isPatinaExist.value = patinaList.value.length > 0;
 
-  currentSurfaceData.value = data
+  currentSurfaceData.value = data;
   if (isPalleteExist.value) {
-    let { NAME, HTML, ID } = paletteList.value[Object.keys(paletteList.value)[0]]
-    currentPaletteData.value = { name: NAME, hex: HTML }
+    let { NAME, HTML, ID } =
+      paletteList.value[Object.keys(paletteList.value)[0]];
+    currentPaletteData.value = { name: NAME, hex: HTML };
 
     eventBus.emit("A:ChangePaletteColor", {
-    data: ID,
-    fasadeNdx: props.tabIndex - 1,
-  });
+      data: ID,
+      fasadeNdx: props.tabIndex - 1,
+    });
   }
-}
+};
 
 const onSelectMilling = (data) => {
   currentMillingData.value = data;
@@ -87,44 +89,41 @@ const onSelectPatina = (data) => {
   currentPatinaData.value = data;
 };
 
-
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
-  console.log('DELETE', type, );
-  
-  if(type == 'surface') {
-    eventBus.emit('A:Delite-Fasad', props.tabIndex - 1);
-    let { NAME, DETAIL_PICTURE } = _FASADE[7397]
-    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE }
-    isMillingExist.value = false
-    isPalleteExist.value = false
+  console.log("DELETE", type);
+
+  if (type == "surface") {
+    eventBus.emit("A:Delite-Fasad", props.tabIndex - 1);
+    let { NAME, DETAIL_PICTURE } = _FASADE[7397];
+    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
+    isMillingExist.value = false;
+    isPalleteExist.value = false;
   }
-  if(type === 'milling') {
-    eventBus.emit('A:DeliteMilling', props.tabIndex - 1);
-    currentMillingData.value = { name: '', imgSrc: null }
-    eventBus.emit('A:DelitePatina', props.tabIndex - 1);
-    currentPatinaData.value = {name: '', imgSrc: null}
+  if (type === "milling") {
+    eventBus.emit("A:DeliteMilling", props.tabIndex - 1);
+    currentMillingData.value = { name: "", imgSrc: null };
+    eventBus.emit("A:DelitePatina", props.tabIndex - 1);
+    currentPatinaData.value = { name: "", imgSrc: null };
   }
-  
-  if(type === 'palette') {
-    let { ID, NAME, HTML } = Object.values(paletteList.value)[0]
+
+  if (type === "palette") {
+    let { ID, NAME, HTML } = Object.values(paletteList.value)[0];
     eventBus.emit("A:ChangePaletteColor", {
       data: ID,
       fasadeNdx: props.tabIndex - 1,
     });
-    currentPaletteData.value = { name: NAME, hex: HTML }
+    currentPaletteData.value = { name: NAME, hex: HTML };
   }
 
-  if(type === 'patina') {
-    eventBus.emit('A:DelitePatina', props.tabIndex - 1);
-    currentPatinaData.value = {name: '', imgSrc: null}
+  if (type === "patina") {
+    eventBus.emit("A:DelitePatina", props.tabIndex - 1);
+    currentPatinaData.value = { name: "", imgSrc: null };
   }
 };
 
 const millingStatus = computed(() => {
-  if (!Object.keys(currentMillingData.value).length > 0) {
-    return "disabled";
-  }
+  if (!currentMillingData.value) return "disabled";
 });
 
 /** Выбор панели редактирования фрезеровки или цвета, если такая опция существует */
@@ -133,18 +132,44 @@ const setCurrentEditableOption = (name: String) => {
 };
 
 onMounted(() => {
+  const product = productData.PROPS.PRODUCT;
+
   const currentFasadeData =
     productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
 
-  const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
+  const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS, BODY } =
     productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+
+  currentPaletteData.value = modelState.createCurrentPaletteData(COLOR);
+
+  currentGlassData.value = modelState.createCurrentGlassData({
+    fasadeId: COLOR,
+    productId: product,
+  });
+
+  currentMillingData.value = modelState.createCurrentMillingData({
+    fasadeId: COLOR,
+    productId: product,
+  });
+
+  currentWindowsData.value = modelState.createCurrentWindowsData({
+    fasadeId: COLOR,
+    productId: product,
+  });
+
+  currentPatinaData.value = modelState.createCurrentPatinaData({
+    fasadeId: COLOR,
+    productId: product,
+  });
+
+  console.log(currentPatinaData.value, "PT");
 
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
   let dataOfFasadeType = _FASADE[COLOR];
 
   if (dataOfFasadeType.ATTACH_MILLINGS[0]) {
     millingList.value = modelState.getCurrentMillingData;
-    isMillingExist.value = true;
+    if (millingList.value.length > 0) isMillingExist.value = true;
   }
 
   if (dataOfFasadeType.PALETTE[0]) {
@@ -154,7 +179,7 @@ onMounted(() => {
 
   if (dataOfFasadeType.PATINA[0]) {
     patinaList.value = modelState.getCurrentPatinaData;
-    isPatinaExist.value = true;
+    if (patinaList.value.length > 0) isPatinaExist.value = true;
   }
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
@@ -165,6 +190,7 @@ onMounted(() => {
   }
 
   if (MILLING) {
+    console.log("MILLING");
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentMillingData.find(
       (milling) => milling.ID === MILLING
     );
@@ -179,6 +205,7 @@ onMounted(() => {
   }
 
   if (PATINA) {
+    console.log("PATINA");
 
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentPatinaData.find(
       (patina) => patina.ID === PATINA
@@ -300,14 +327,14 @@ onMounted(() => {
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
-  
+
   &__item {
     height: 50px;
     border: 1px solid grey;
     border-radius: 5px;
   }
-  
-  @media (min-width: 1500px) { 
+
+  @media (min-width: 1500px) {
     gap: 17px;
   }
 }

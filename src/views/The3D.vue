@@ -681,7 +681,7 @@ const controllerPosition = computed(() => {
       <UpControllerButton />
       <OpenFacadeButton />
     </div>
-  </div>
+  </div> 
 </template>
 
 <style lang="scss" scoped>

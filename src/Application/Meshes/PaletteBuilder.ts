@@ -56,6 +56,8 @@ export class PaletteBulider {
 
             if (children instanceof THREE.Mesh) {
 
+                if (children.userData.type === 'glass') return
+
                 !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
 
                 children.material = new THREE.MeshStandardMaterial();
@@ -72,7 +74,7 @@ export class PaletteBulider {
 
                 fasade.userData.millingMaterial = children.material
 
-                
+
 
             }
         })

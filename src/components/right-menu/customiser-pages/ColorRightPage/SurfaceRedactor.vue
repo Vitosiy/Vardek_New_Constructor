@@ -38,7 +38,7 @@ const isSearch = computed(() => {
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   const productId = productData.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE } = data
-  
+
   modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
   modelState.createCurrentPaletteData(ID);
   modelState.createCurrentGlassData({ fasadeId: data.ID, productId });

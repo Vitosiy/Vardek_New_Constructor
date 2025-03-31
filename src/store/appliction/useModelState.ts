@@ -161,7 +161,7 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId }) => {
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] === null) {
 
             currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;
             let millings: IMilling[] = []
@@ -244,9 +244,15 @@ export const useModelState = defineStore('ModelState', () => {
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
+        console.log('PATINA')
+        if (_PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] !== null) {
+            console.log('W')
+            return
+        }
+
         const incomePatina = _FASADE[fasadeId].PATINA
         const currentPataina = incomePatina.filter(key => _PATINA.hasOwnProperty(key)).map(key => _PATINA[key])
-        
+
         currentPatinaData.value = currentPataina
     }
 

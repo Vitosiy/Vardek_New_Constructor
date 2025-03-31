@@ -188,6 +188,21 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         const { CONFIG, FASADE } = product.userData.PROPS
         const { UNIFORM_TEXTURE, FASADE_PROPS } = CONFIG
+
+        const start = this.createUniformFasadesData(product)
+        const fasadeListLimit = start.filter((element) => element.NAME === 'Шпон Вардек 19мм')[0].FASADES
+        const limited = FASADE_PROPS.reduce((acc, el) => {
+            acc.push(fasadeListLimit.includes(el.COLOR))
+            return acc
+        }, []).includes(true)
+
+
+        if (!limited) {
+            alert(`Переходящий рисунок можно создать только для материалов из списка Шпон Вардек 19мм`)
+            return
+        }
+
+
         const fasaded = FASADE_PROPS.filter((element) => element.COLOR !== null && element.COLOR !== 7397).length > 0
 
         let totalHeight = 0
