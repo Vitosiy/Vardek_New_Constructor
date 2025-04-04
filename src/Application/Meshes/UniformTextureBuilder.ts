@@ -443,7 +443,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         // -------- На принадлежность группе ------------
 
         if (UNIFORM_TEXTURE.group !== null) {
-            alert(`Объект уже пренадлежит группе ${UNIFORM_TEXTURE.group}`)
+            alert(`Объект уже пренадлежит группе ${UNIFORM_TEXTURE.group + 1}`)
             return
         }
 

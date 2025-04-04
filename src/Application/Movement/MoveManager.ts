@@ -417,6 +417,7 @@ export class MoveManager {
                 this.uniformEvents.desableGroupAddition()
                 this.uniformEvents.desableDegrouping()
                 this.boxHelper.toggleGroupBox(false, this.uniformTextureBuilder._groupsBoxHelper)
+                this.selectedObject = null
 
             }
 

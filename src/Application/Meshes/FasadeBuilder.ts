@@ -391,7 +391,7 @@ export class FasadeBuilder {
                 FASADE_NUMBER: null,
             }
 
-            partPosition.TYPE_POSITION = fasadeWidth < BODY_WIDTH - 4 ? partPosition.TYPE_POSITION = 'STRING' : partPosition.TYPE_POSITION = 'DEFAULT'
+            partPosition.TYPE_POSITION = fasadeWidth < BODY_WIDTH - 4 ? partPosition.TYPE_POSITION = 'ROW' : partPosition.TYPE_POSITION = 'COL'
             partPosition.WIDTH = fasadeWidth
             partPosition.FASADE_NUMBER = propNdx
 
@@ -401,9 +401,9 @@ export class FasadeBuilder {
 
         })
 
-        const hasDefaultType = numered.some(obj => obj.TYPE_POSITION === 'DEFAULT');
-        const hasStringType = numered.some(obj => obj.TYPE_POSITION === 'STRING');
-        const hasMixedTypes = hasDefaultType && hasStringType;
+        const hasColType = numered.some(obj => obj.TYPE_POSITION === 'COL');
+        const hasRowType = numered.some(obj => obj.TYPE_POSITION === 'ROW');
+        const hasMixedTypes = hasColType && hasRowType;
 
         const result = {
             numeredArray: numered,

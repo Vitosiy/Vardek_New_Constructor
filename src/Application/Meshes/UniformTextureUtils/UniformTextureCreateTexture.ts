@@ -167,9 +167,9 @@ export class UniformTextureCreateTexture {
         const { BODY_WIDTH, BODY_HEIGHT } = BODY.userData.trueSize
 
         // Проверка на смешанные типы в одном объекте
-        const hasDefaultType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'DEFAULT');
-        const hasStringType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'STRING');
-        const hasMixedTypes = hasDefaultType && hasStringType;
+        const hasColType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'COL');
+        const hasRowType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'ROW');
+        const hasMixedTypes = hasColType && hasRowType;
 
         if (hasMixedTypes) {
             // Особая обработка для смешанных типов
@@ -289,7 +289,7 @@ export class UniformTextureCreateTexture {
 
             // console.log(totalHeightToDefault, 'MIX')
         }
-        if ((hasStringType || hasStringType && FASADE.length < 2) && !hasMixedTypes) {
+        if ((hasRowType || hasRowType && FASADE.length < 2) && !hasMixedTypes) {
 
             // console.log('hasStringType')
 
@@ -345,7 +345,7 @@ export class UniformTextureCreateTexture {
             })
 
         }
-        if (hasDefaultType && !hasMixedTypes) {
+        if (hasColType && !hasMixedTypes) {
 
             // console.log('hasDefaultType')
 
@@ -482,7 +482,7 @@ export class UniformTextureCreateTexture {
         if (hasMixedTypes) {
 
 
-            if (TYPE_POSITION === 'DEFAULT') {
+            if (TYPE_POSITION === 'COL') {
 
                 startedWidth = (startCorrect * correctCount) + (startWidth * correctCount)
                 startedHeight = (startHeight * correctCount)
@@ -495,7 +495,7 @@ export class UniformTextureCreateTexture {
                 }
             }
 
-            if (TYPE_POSITION === 'STRING') {
+            if (TYPE_POSITION === 'ROW') {
 
                 startedWidth = (startCorrect * correctCount) + (startWidth * correctCount);
                 startedHeight = (startHeight * correctCount);
@@ -507,7 +507,7 @@ export class UniformTextureCreateTexture {
             }
         }
 
-        if (TYPE_POSITION === 'DEFAULT' && !hasMixedTypes) {
+        if (TYPE_POSITION === 'COL' && !hasMixedTypes) {
 
             startedWidth = (startCorrect * correctCount) + (startWidth * correctCount)
             startedHeight = (startHeight * correctCount)
@@ -518,7 +518,7 @@ export class UniformTextureCreateTexture {
             }
         }
 
-        if ((TYPE_POSITION === 'STRING' || fasadeCount < 2) && !hasMixedTypes) {
+        if ((TYPE_POSITION === 'ROW' || fasadeCount < 2) && !hasMixedTypes) {
 
             startedWidth = (startCorrect * correctCount) + (startWidth * correctCount)
             startedHeight = (startHeight * correctCount)
@@ -553,7 +553,7 @@ export class UniformTextureCreateTexture {
                 // Применение текстуры с учетом смешанных типов
                 if (hasMixedTypes) {
                     // Логика для смешанных типов
-                    if (TYPE_POSITION === 'DEFAULT') {
+                    if (TYPE_POSITION === 'COL') {
                         if (fasadeNdx === 0) {
                             cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
                         } else {
@@ -561,7 +561,7 @@ export class UniformTextureCreateTexture {
                         }
                     }
 
-                    if (TYPE_POSITION === 'STRING') {
+                    if (TYPE_POSITION === 'ROW') {
                         if (fasadeNdx === 0) {
                             cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
                         } else {
@@ -570,7 +570,7 @@ export class UniformTextureCreateTexture {
                     }
                 }
 
-                if ((TYPE_POSITION === 'STRING' || fasadeCount < 2) && !hasMixedTypes) {
+                if ((TYPE_POSITION === 'ROW' || fasadeCount < 2) && !hasMixedTypes) {
                     // Логика для STRING или одиночных фасадов
                     if (fasadeNdx === 0) {
                         cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
@@ -579,7 +579,7 @@ export class UniformTextureCreateTexture {
                     }
                 }
 
-                if (TYPE_POSITION === 'DEFAULT' && !hasMixedTypes) {
+                if (TYPE_POSITION === 'COL' && !hasMixedTypes) {
                     // Логика для DEFAULT
                     if (fasadeNdx === 0) {
                         cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
@@ -591,7 +591,7 @@ export class UniformTextureCreateTexture {
 
                 cloned.map.matrixAutoUpdate = false;
                 cloned.needsUpdate = true;
-                // cloned.map.wrapS = cloned.map.wrapT = THREE.RepeatWrapping;
+                cloned.map.wrapS = cloned.map.wrapT = THREE.RepeatWrapping;
                 children.material = cloned;
                 children.material.needsUpdate = true;
             }

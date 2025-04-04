@@ -101,6 +101,8 @@ export class TrafficManager {
             this.modelState.createCurrentModelFasadesData(product.FACADE);
             this.modelState.setCurrentModel(object)
 
+            console.log(object.userData)
+
         }
         else {
             this.modelState.clearCurrentModelFasadesData()
