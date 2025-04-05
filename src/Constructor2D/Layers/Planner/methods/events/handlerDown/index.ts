@@ -52,16 +52,9 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
         this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(addedwall.angleDegrees);
       }
 
-      this.parent.eventBus.emit(Events.C2D_SHOW_FORM_MODIFY_WALL, {
-        width: Number(addedwall.width.toFixed(1))*10,
-        height: Number(addedwall.height.toFixed(1))*10,
-        position: {
-          x: addedwall.points[0].x + this.parent.config.originOfCoordinates.x,
-          y: addedwall.points[0].y + this.parent.config.originOfCoordinates.y
-        }
-      });
-
     }
+
+    this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
 
   }
   

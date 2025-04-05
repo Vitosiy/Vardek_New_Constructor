@@ -28,6 +28,7 @@ import {
   getAngleBetweenVectors,
   getIntersectionPoint,
   adjustP1ForPerpendicularity,
+  doesVectorIntersectSegment,
 } from "@/Constructor2D/utils/Math";
 
 import { 
@@ -624,15 +625,80 @@ export default class Planner {
         
         if(otherWall){
 
-          const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+          const activeWallHeight = obj.height;
+          const mergeWallHeight = otherWall.height;
 
-          const line_0: [Vector2, Vector2] = [points[2], points[3]];
-          const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+          if(activeWallHeight === mergeWallHeight){ // если толщина стен одинаковая
 
-          const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+            const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
 
-          if(intersectionPoint){
-            points[2] = intersectionPoint;
+            const line_0: [Vector2, Vector2] = [points[2], points[3]];
+            const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+            const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+            if(intersectionPoint){
+              points[2] = intersectionPoint;
+            }
+
+          }else if(activeWallHeight > mergeWallHeight){ // если толщина активной стены больше
+            
+            const isIntersect = doesVectorIntersectSegment(
+              [
+                obj.points[1],
+                obj.points[2]
+              ],
+              [
+                otherWall.points[2], 
+                otherWall.points[3]
+              ]
+            );
+            if (isIntersect) {
+              isIntersect.x = Math.round(isIntersect.x * 100) / 100;
+              isIntersect.y = Math.round(isIntersect.y * 100) / 100;
+            }
+
+            if(!isIntersect){
+              const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+              const line_0: [Vector2, Vector2] = [points[2], points[3]];
+              const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+              const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+              if(intersectionPoint){
+                points[2] = intersectionPoint;
+              }
+            }
+
+          }else if(activeWallHeight < mergeWallHeight){ // если толщина активной стены меньше
+
+            const isIntersect = doesVectorIntersectSegment(
+              [
+                otherWall.points[0],
+                otherWall.points[3]
+              ],
+              [
+                obj.points[3], 
+                obj.points[2]
+              ]
+            );
+
+            if(isIntersect){
+              points[2] = isIntersect;
+            }else{
+              const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+              const line_0: [Vector2, Vector2] = [points[2], points[3]];
+              const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+              const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+              if(intersectionPoint){
+                points[2] = intersectionPoint;
+              }
+            }
+
           }
           
         } else {
@@ -649,15 +715,76 @@ export default class Planner {
         
         if(otherWall){
 
-          const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+          const activeWallHeight = obj.height;
+          const mergeWallHeight = otherWall.height;
 
-          const line_0: [Vector2, Vector2] = [points[2], points[3]];
-          const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+          if(activeWallHeight === mergeWallHeight){ // если толщина стен одинаковая
 
-          const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+            const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
 
-          if(intersectionPoint){
-            points[3] = intersectionPoint;
+            const line_0: [Vector2, Vector2] = [points[2], points[3]];
+            const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+            const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+            if(intersectionPoint){
+              points[3] = intersectionPoint;
+            }
+
+          }else if(activeWallHeight > mergeWallHeight){ // если толщина активной стены больше
+
+            const isIntersect = doesVectorIntersectSegment(
+              [
+                obj.points[0],
+                obj.points[3]
+              ],
+              [
+                otherWall.points[3], 
+                otherWall.points[2]
+              ]
+            );
+
+            if(!isIntersect){
+              const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+              const line_0: [Vector2, Vector2] = [points[2], points[3]];
+              const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+              const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+              if(intersectionPoint){
+                points[3] = intersectionPoint;
+              }
+            }
+            
+          }else if(activeWallHeight < mergeWallHeight){ // если толщина активной стены меньше
+
+            const isIntersect = doesVectorIntersectSegment(
+              [
+                otherWall.points[1],
+                otherWall.points[2]
+              ],
+              [
+                obj.points[2], 
+                obj.points[3]
+              ]
+            );
+
+            if(isIntersect){
+              points[3] = isIntersect;
+            }else{
+              const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+              const line_0: [Vector2, Vector2] = [points[2], points[3]];
+              const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+              const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+              if(intersectionPoint){
+                points[3] = intersectionPoint;
+              }
+            }
+            
           }
           
         } else {
@@ -1028,15 +1155,6 @@ export default class Planner {
 
     const listRelatedWalls: (string | number)[] = this.getMergeWallsIDForUpdate(dataWall.id);
     this.drawListWalls(listRelatedWalls);
-
-    this.parent.eventBus.emit(Events.C2D_UPDATE_FORM_MODIFY_WALL, {
-      width: Number(dataWall.width.toFixed(1))*10,
-      height: Number(dataWall.height.toFixed(1))*10,
-      position: {
-        x: dataWall.points[0].x + this.parent.config.originOfCoordinates.x,
-        y: dataWall.points[0].y + this.parent.config.originOfCoordinates.y
-      }
-    });
     
   }
 
@@ -1096,8 +1214,6 @@ export default class Planner {
   // расположение 2-х стен под углом 90 градусов
   public arrangeWallsAt_90_DegreeAngle(): void {
 
-
-    
     if(this.state.activeWall !== null && this.state.activePointWall !== null){
       
       const indexWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);

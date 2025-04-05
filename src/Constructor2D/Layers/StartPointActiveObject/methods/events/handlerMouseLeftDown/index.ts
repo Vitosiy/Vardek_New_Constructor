@@ -1,6 +1,8 @@
 import * as PIXI from "pixi.js";
 import { Vector2 } from "@/types/constructor2d/interfaсes";
 
+import { Events } from '@/store/constructor2d/events';
+
 export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): void {
 
   const graphic = e.currentTarget as PIXI.Graphics & { indexPoint: number };
@@ -32,5 +34,7 @@ export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): 
   const dataWall: { id: string, points: Vector2[] } | undefined = 
     this.parent.layers.planner.objectWalls.find((el: { id: string }) => el.id === this.parent.layers.planner.state.activeWall);
   if(dataWall) this.parent.layers.arrowRulerActiveObject.draw(dataWall.points[indexPoint]);
+
+  this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
 
 };

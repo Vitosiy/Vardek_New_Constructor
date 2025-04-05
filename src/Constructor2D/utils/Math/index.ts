@@ -154,12 +154,11 @@ const roundToPrecision = (value: number, precision: number = 15): number => {
 }
 
 /**
- * Возвращает точку пересечения двух линий.
- * @param line0 - Первая линия.
- * @param line1 - Вторая линия.
- * @returns Точка пересечения.
- * @see https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
- **/
+ * Возвращает точку пересечения двух бесконечных линий.
+ * @param line0 - Первая линия (массив из двух точек, через которые она проходит).
+ * @param line1 - Вторая линия (массив из двух точек, через которые она проходит).
+ * @returns Точка пересечения или null, если линии параллельны или совпадают.
+ */
 const getIntersectionPoint = (
   line0: Vector2[],
   line1: Vector2[]
@@ -170,7 +169,7 @@ const getIntersectionPoint = (
   const p3 = line1[0];
   const p4 = line1[1];
 
-  // Вычисляем направляющие векторы линий
+  // Вычисляем направляющие векторы
   const dx1 = p2.x - p1.x;
   const dy1 = p2.y - p1.y;
   const dx2 = p4.x - p3.x;
@@ -179,27 +178,15 @@ const getIntersectionPoint = (
   // Вычисляем определитель
   const D = dx1 * dy2 - dy1 * dx2;
 
-  // Если определитель близок к нулю, линии параллельны
+  // Если определитель близок к нулю, линии параллельны или совпадают
   if (Math.abs(D) < 1e-9) {
-    // Проверяем, совпадают ли линии
-    const rx = p3.x - p1.x;
-    const ry = p3.y - p1.y;
-    const cross = rx * dy1 - ry * dx1;
-    if (Math.abs(cross) < 1e-9) {
-      // Линии совпадают, точек пересечения бесконечно много
-      return null;
-    } else {
-      // Линии параллельны и не пересекаются
-      return null;
-    }
+    return null;
   }
 
-  // Находим параметры t и s для точки пересечения
-  const rx = p3.x - p1.x;
-  const ry = p3.y - p1.y;
-  const t = (rx * dy2 - ry * dx2) / D;
+  // Вычисляем параметр t для первой линии
+  const t = ((p3.x - p1.x) * dy2 - (p3.y - p1.y) * dx2) / D;
 
-  // Вычисляем координаты точки пересечения
+  // Находим точку пересечения
   const x = p1.x + t * dx1;
   const y = p1.y + t * dy1;
 
@@ -409,6 +396,48 @@ function adjustP1ForPerpendicularity(p0: Vector2, p1: Vector2, p2: Vector2): Vec
   return dist1 < dist2 ? p1Prime1 : p1Prime2;
 }
 
+/**
+ * Функция проверяет, пересекает ли вектор отрезок, и возвращает координаты точки пересечения или null.
+ * @param segment - Отрезок, представленный двумя точками.
+ * @param vector - Вектор, представленный двумя точками (начало и направление).
+ * @returns Координаты точки пересечения или null, если пересечения нет.
+ */
+const doesVectorIntersectSegment = (
+  segment: [Vector2, Vector2],
+  vector: [Vector2, Vector2]
+): Vector2 | null => {
+  const [segStart, segEnd] = segment;
+  const [vecStart, vecEnd] = vector;
+
+  // Вычисляем направляющие векторы
+  const segDir = { x: segEnd.x - segStart.x, y: segEnd.y - segStart.y };
+  const vecDir = { x: vecEnd.x - vecStart.x, y: vecEnd.y - vecStart.y };
+
+  // Определитель для проверки параллельности
+  const det = segDir.x * vecDir.y - segDir.y * vecDir.x;
+
+  // Если определитель близок к нулю, линии параллельны
+  if (Math.abs(det) < 1e-9) {
+    return null;
+  }
+
+  // Вычисляем параметры t и u для точки пересечения
+  const t = ((vecStart.x - segStart.x) * vecDir.y - (vecStart.y - segStart.y) * vecDir.x) / det;
+  const u = ((vecStart.x - segStart.x) * segDir.y - (vecStart.y - segStart.y) * segDir.x) / det;
+
+  // Проверяем, находится ли точка пересечения внутри отрезка и в направлении вектора
+  if (t >= 0 && t <= 1 && u >= 0) {
+    // Вычисляем координаты точки пересечения
+    const intersection = {
+      x: segStart.x + t * segDir.x,
+      y: segStart.y + t * segDir.y,
+    };
+    return intersection;
+  }
+
+  return null;
+};
+
 export {
 
   calculateMouseDistanceByAxes,
@@ -425,5 +454,6 @@ export {
   getCenterOfPoints,
   rotatePointsAroundCenter,
   adjustP1ForPerpendicularity,
+  doesVectorIntersectSegment,
 
 };
