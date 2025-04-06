@@ -163,6 +163,8 @@ export default class Planner {
 
     }
 
+    this.redrawHalfRoom();
+
     this.app.stage
       .on("pointerup", this.handlerStageMouseUp)
       .on("mousemove", this.handlerStageMouseMove);
@@ -447,6 +449,8 @@ export default class Planner {
         this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(wallData.angleDegrees);
         this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(wallData.angleDegrees);
 
+        this.redrawHalfRoom();
+        
         // отображаем форму модификации стены
         this.parent.eventBus.emit(Events.C2D_SHOW_FORM_MODIFY_WALL, {
           width: addedwall.width*10,
@@ -529,7 +533,7 @@ export default class Planner {
     
   }
 
-  // создаем контейнеры для визуализации
+  // создаем контейнеры для визуализации cтены
   private createDrawContainers(id: string | number): number{
 
     const indexWall = this.objectWalls.findIndex(el => el.id === id);
@@ -1044,6 +1048,35 @@ export default class Planner {
 
   }
 
+  public redrawHalfRoom(): void {
+
+    const roomPoints: Vector2[] = [];
+
+    for(let i=0, len=this.objectWalls.length; i<len; i++){
+      const wall = this.objectWalls[i];
+      if(wall.mergeWalls.wallPoint0 || wall.mergeWalls.wallPoint1){
+        const exist_0 = roomPoints.findIndex((point: Vector2) => point.x === wall.points[0].x && point.y === wall.points[0].y);
+        if(exist_0 == -1) roomPoints.push(wall.points[0]);
+        const exist_1 = roomPoints.findIndex((point: Vector2) => point.x === wall.points[1].x && point.y === wall.points[1].y);
+        if(exist_1 == -1) roomPoints.push(wall.points[1]);
+      }
+    }
+
+    if(roomPoints.length > 3){
+      
+      this.parent.layers.halfRoom.drawHalfRoom([
+        {
+          id: 1,
+          points: roomPoints,
+        }
+      ]);
+
+    }else{
+      this.parent.layers.halfRoom.removeHalfRoom();
+    }
+
+  }
+
   public drawListWalls(list: (number | string)[]): void {
 
     list.forEach((id: string | number) => {
@@ -1051,6 +1084,8 @@ export default class Planner {
       this.drawWall(id);
       
     });
+
+    this.redrawHalfRoom();
     
   }
 
@@ -1388,6 +1423,8 @@ export default class Planner {
         this.redrawAllObjects();
         this.parent.layers.arrowRulerActiveObject?.clearGraphic();
         this.parent.layers.startPointActiveObject?.activate(false);
+
+        this.redrawHalfRoom();
         
       }
       

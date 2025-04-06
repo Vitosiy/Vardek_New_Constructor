@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 
 import Grid from "./Layers/Grid";
+import HalfRoom from "./Layers/HalfRoom";
 import Rulers from "./Layers/Rulers";
 import Planner from "./Layers/Planner";
 import ArrowRulerActiveObject from "./Layers/ArrowRulerActiveObject";
@@ -23,6 +24,7 @@ import { useEventBus } from '@/store/constructor2d/useEventBus';
 
 interface Layers {
   grid: Grid | null;
+  halfRoom: HalfRoom | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
   startPointActiveObject: StartPointActiveObject | null;
@@ -36,6 +38,7 @@ export default class Constructor2D {
   private app2d: PIXI.Application | null = null;
   public layers: Layers = {
     grid: null,
+    halfRoom: null, // пол комнаты
     arrowRulerActiveObject: null,
     planner: null,
     startPointActiveObject: null,
@@ -124,6 +127,7 @@ export default class Constructor2D {
     this.app2d.stage.eventMode = 'static'; // чтобы работали события на root-контейнере
 
     this.layers.grid = new Grid(this.app2d, this);
+    this.layers.halfRoom = new HalfRoom(this.app2d, this);
     this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
     this.layers.planner = new Planner(this.app2d!, this);
     this.layers.startPointActiveObject = new StartPointActiveObject(this.app2d!, this);

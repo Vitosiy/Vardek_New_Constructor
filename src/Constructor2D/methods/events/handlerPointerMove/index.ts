@@ -24,6 +24,7 @@ export function handlerPointerMove(this: any, e: PIXI.FederatedPointerEvent): vo
     this.config.originOfCoordinates.y = newY <= 0 ? newY : 0;
 
     this.layers.grid?.drawGrid(); // обновляем сетку
+    this.layers.halfRoom.updateScenePosition(); // обновляем пол комнаты
     this.layers.rulers?.drawRulers(); // обновляем линейки
     this.layers.planner!.updateScenePosition(); // обновляем слой с объектами
     this.layers.arrowRulerActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
