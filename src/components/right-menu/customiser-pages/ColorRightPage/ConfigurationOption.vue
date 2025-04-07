@@ -44,7 +44,7 @@ const deleteChoise = (event) => {
 </script>
 
 <template>
-  <div class="config" @click="chooseOption">
+  <div :class="`config ${props.additionalClass}`" @click="chooseOption">
     <div class="config__top">
       <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
       <div v-else @click="chooseOption">
@@ -66,12 +66,10 @@ const deleteChoise = (event) => {
       <div>
         <p class="config__title">{{ title }}</p>
       </div>
-      <div class="config__name">
-        <p>{{ name }}</p>
+        <p class="config__name">{{ name }}</p>
         <!--
         
         -->
-      </div>
     </div>
   </div>
 </template>
@@ -100,13 +98,15 @@ const deleteChoise = (event) => {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    height: 50%;
+    overflow: hidden;
   }
 
   &__img {
     height: 50px;
     cursor: pointer;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       height: 60px;
     }
   }
@@ -117,7 +117,7 @@ const deleteChoise = (event) => {
     border-radius: 12px;
     cursor: pointer;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       height: 60px;
     }
   }
@@ -126,7 +126,7 @@ const deleteChoise = (event) => {
     height: 20px;
     cursor: pointer;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       height: 25px;
     }
   }
@@ -134,23 +134,27 @@ const deleteChoise = (event) => {
   &__title {
     color: rgb(131, 133, 135);
     font-size: small;
+    // flex: 2;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       font-size: medium;
     }
   }
 
   &__name {
     font-size: small;
-    line-height: 16px;
+    line-height: 14px;
+    text-overflow: ellipsis;
+    overflow: hidden;
 
-    @media (min-width: 1500px) { 
+    @media (min-height: 1000px) { 
       font-size: medium;
-      line-height: 20px;
+      line-height: 10px;
     }
   }
 
 }
+
 .disabled{
   pointer-events: none;
   background-color: rgba(228, 140, 140, 0.133);

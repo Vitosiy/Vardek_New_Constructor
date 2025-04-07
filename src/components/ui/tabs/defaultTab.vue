@@ -57,7 +57,7 @@ const selectTab = (name: string, index: number) => {
 .tabs-navigation {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   box-sizing: border-box;
 }
@@ -75,7 +75,7 @@ button {
   color: $strong-grey;
   transition: background-color 0.2s, transform 0.1s;
 
-  @media (min-width: 1500px) { 
+  @media (min-height: 1000px) { 
     font-size: medium;
     padding: 15px 25px;
   }
