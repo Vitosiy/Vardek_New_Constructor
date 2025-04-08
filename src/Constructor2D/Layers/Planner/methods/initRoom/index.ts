@@ -8,6 +8,7 @@ import {
   rotatePointsAroundCenter,
   offsetVectorBySegmentNormal,
   getAngleBetweenVectors,
+  getDistanceBetweenVectors,
 } from "./../../../../utils/Math/index";
 
 import {
@@ -153,19 +154,11 @@ export function initRoom(this: any): (0 | 1) {
 
     const wall = this.objectWalls[i];
 
-    const wallPoint0 = this.objectWalls.find((item: ObjectWall) => {
-        return item.id !== wall.id && 
-        wall.points[0].x.toFixed(3) === item.points[1].x.toFixed(3) && 
-        wall.points[0].y.toFixed(3) === item.points[1].y.toFixed(3);
-    });
+    const wallPoint0 = getPointByPosition.bind(this)(wall.points[0], wall.id);
 
     wall.mergeWalls.wallPoint1 = wallPoint0?.id ?? null;
 
-    const wallPoint1 = this.objectWalls.find((item: ObjectWall) => {
-        return item.id !== wall.id && 
-        wall.points[1].x.toFixed(3) === item.points[0].x.toFixed(3) && 
-        wall.points[1].y.toFixed(3) === item.points[0].y.toFixed(3)
-    });
+    const wallPoint1  = getPointByPosition.bind(this)(wall.points[1], wall.id);
 
     wall.mergeWalls.wallPoint0 = wallPoint1?.id ?? null;
     
@@ -174,3 +167,25 @@ export function initRoom(this: any): (0 | 1) {
   return 1;
 
 };
+
+ // поискт совпадающей точки с координатами аргумента
+function getPointByPosition(
+  position: Vector2, 
+  ignoreObject: number | string | null = null
+): { id: number | string; indexPoint: number } | null {
+
+  for (const obj of this.objectWalls) {
+    const ignore = (ignoreObject !== null && obj.id === ignoreObject) ? true : false;
+    
+    if (obj.points && !ignore) {
+      for (let index = 0; index < 2; index++) {
+        const point = obj.points[index];
+        if (getDistanceBetweenVectors(point, position) < 10) {
+          return { id: obj.id, indexPoint: index };
+        }
+      }
+    }
+  }
+  return null;
+
+}
