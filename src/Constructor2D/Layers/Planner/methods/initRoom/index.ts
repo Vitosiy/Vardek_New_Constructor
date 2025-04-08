@@ -85,7 +85,7 @@ export function initRoom(this: any): (0 | 1) {
       id: roomWallData.id,
       name: "wall",
       width: roomWallData.width / 10,
-      height: 30, //roomWallData.height / 10,
+      height: roomWallData.depth / 10,
       heightDirection: this.config.wall.heightDirection,
       angleDegrees: MathUtils.radToDeg(roomWallData.rotation._y),
       updateTime: Date.now(),
@@ -155,16 +155,16 @@ export function initRoom(this: any): (0 | 1) {
 
     const wallPoint0 = this.objectWalls.find((item: ObjectWall) => {
         return item.id !== wall.id && 
-        wall.points[0].x.toFixed(6) === item.points[1].x.toFixed(6) && 
-        wall.points[0].y.toFixed(6) === item.points[1].y.toFixed(6);
+        wall.points[0].x.toFixed(3) === item.points[1].x.toFixed(3) && 
+        wall.points[0].y.toFixed(3) === item.points[1].y.toFixed(3);
     });
 
     wall.mergeWalls.wallPoint1 = wallPoint0?.id ?? null;
 
     const wallPoint1 = this.objectWalls.find((item: ObjectWall) => {
         return item.id !== wall.id && 
-        wall.points[1].x.toFixed(6) === item.points[0].x.toFixed(6) && 
-        wall.points[1].y.toFixed(6) === item.points[0].y.toFixed(6)
+        wall.points[1].x.toFixed(3) === item.points[0].x.toFixed(3) && 
+        wall.points[1].y.toFixed(3) === item.points[0].y.toFixed(3)
     });
 
     wall.mergeWalls.wallPoint0 = wallPoint1?.id ?? null;

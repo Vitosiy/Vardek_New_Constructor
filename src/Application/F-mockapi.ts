@@ -27,6 +27,7 @@ export const rooms_mok = [
                 {
                     "width": 2747.411223548689,
                     "height": 3000,
+                    "depth": 4000,
                     "position": {
                         "x": -1663.0922903659855,
                         "y": 1500,
