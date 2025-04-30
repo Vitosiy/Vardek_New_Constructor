@@ -32,7 +32,7 @@ export class Application {
     canvas: HTMLElement | null;
     sizes: Sizes | null = null;
     time: Time | null = null;
-    scene: THREE.Scene | null = null;;
+    scene: THREE.Scene | null = null;
     camera: Camera | null = null;
     renderer: Renderer | null = null;
     resources: Resources | null = null
