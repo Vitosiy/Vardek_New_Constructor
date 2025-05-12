@@ -2,6 +2,8 @@
 
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 
+import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
+
 import {
   Vector2,
 } from "@/types/constructor2d/interfaсes";
@@ -87,8 +89,10 @@ onUnmounted(() => {
 
 <style lang="scss" setup>
 #app2D {
+  position: relative;
   display: flex;
   width: 100%;
+  overflow: hidden;
 
   #constructor2D{
     width: 100%;
@@ -101,5 +105,6 @@ onUnmounted(() => {
   <div ref="root2d" id="app2D">
     <canvas ref="canvas2d" id="constructor2D"
       @dragover.prevent></canvas>
+    <ModifyWall />
   </div>
 </template>

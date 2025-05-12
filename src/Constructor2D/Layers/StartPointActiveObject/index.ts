@@ -49,7 +49,7 @@ export default class StartPointActiveObject {
   private handlerMouseUp: (e:PIXI.FederatedPointerEvent) => void;
   private handlerCanvasMouseLeave: (e: MouseEvent) => void;
 
-  private drawAngleBetweenWalls: () => void;
+  public drawAngleBetweenWalls: () => void;
 
   private config: Config = {
 
@@ -258,6 +258,31 @@ export default class StartPointActiveObject {
       x: (x - co.x - 30) * inverseScale,
       y: (y - co.y - 30) * inverseScale,
     };
+    
+  }
+
+  public updatePositionIndicatorPoint(__position: Vector2): Vector2 {
+
+    const indexPoint = this.parent.layers.planner.state.activePointWall;
+  
+    const position: Vector2 = {
+      x: __position.x < 0 ? 0 : __position.x,
+      y: __position.y < 0 ? 0 : __position.y,
+    };
+    
+    if(indexPoint == 0){
+      this.circleStartPoint.x = position.x;
+      this.circleStartPoint.y = position.y;
+      this.startPointRect.x = position.x
+      this.startPointRect.y = position.y;
+    }else if(indexPoint == 1){
+      this.circleEndPoint.x = position.x;
+      this.circleEndPoint.y = position.y;
+      this.endPointRect.x = position.x;
+      this.endPointRect.y = position.y;
+    }
+
+    return position;
     
   }
 

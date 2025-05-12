@@ -8,6 +8,7 @@ import {
   rotatePointsAroundCenter,
   offsetVectorBySegmentNormal,
   getAngleBetweenVectors,
+  getDistanceBetweenVectors,
 } from "./../../../../utils/Math/index";
 
 import {
@@ -85,7 +86,7 @@ export function initRoom(this: any): (0 | 1) {
       id: roomWallData.id,
       name: "wall",
       width: roomWallData.width / 10,
-      height: 30, //roomWallData.height / 10,
+      height: roomWallData.depth / 10,
       heightDirection: this.config.wall.heightDirection,
       angleDegrees: MathUtils.radToDeg(roomWallData.rotation._y),
       updateTime: Date.now(),
@@ -153,19 +154,11 @@ export function initRoom(this: any): (0 | 1) {
 
     const wall = this.objectWalls[i];
 
-    const wallPoint0 = this.objectWalls.find((item: ObjectWall) => {
-        return item.id !== wall.id && 
-        wall.points[0].x.toFixed(6) === item.points[1].x.toFixed(6) && 
-        wall.points[0].y.toFixed(6) === item.points[1].y.toFixed(6);
-    });
+    const wallPoint0 = this.getPointByPosition.bind(this)(wall.points[0], wall.id);
 
     wall.mergeWalls.wallPoint1 = wallPoint0?.id ?? null;
 
-    const wallPoint1 = this.objectWalls.find((item: ObjectWall) => {
-        return item.id !== wall.id && 
-        wall.points[1].x.toFixed(6) === item.points[0].x.toFixed(6) && 
-        wall.points[1].y.toFixed(6) === item.points[0].y.toFixed(6)
-    });
+    const wallPoint1  = this.getPointByPosition.bind(this)(wall.points[1], wall.id);
 
     wall.mergeWalls.wallPoint0 = wallPoint1?.id ?? null;
     

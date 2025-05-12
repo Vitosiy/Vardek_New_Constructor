@@ -2,14 +2,13 @@ import {
   Vector2
 } from "@/types/constructor2d/interfaсes";
 
-const calculateMouseDistanceByAxes = 
-(previous: Vector2, current: Vector2): 
-{ distanceX: number; distanceY: number } => {
-  const distanceX = current.x - previous.x; // Расстояние по оси X
-  const distanceY = current.y - previous.y; // Расстояние по оси Y
+const calculateMouseDistanceByAxes =
+  (previous: Vector2, current: Vector2): { distanceX: number; distanceY: number } => {
+    const distanceX = current.x - previous.x; // Расстояние по оси X
+    const distanceY = current.y - previous.y; // Расстояние по оси Y
 
-  return { distanceX, distanceY };
-}
+    return { distanceX, distanceY };
+  }
 
 const getRectPoints = (
   width: number,
@@ -114,8 +113,8 @@ const getDistanceBetweenVectors = (vecA: Vector2, vecB: Vector2): number => {
 
 // функция получения угла между векторами
 const getAngleBetweenVectors = (
-  center: Vector2, 
-  start: Vector2, 
+  center: Vector2,
+  start: Vector2,
   end: Vector2
 ): number => {
   // Создаём векторы
@@ -155,12 +154,11 @@ const roundToPrecision = (value: number, precision: number = 15): number => {
 }
 
 /**
- * Возвращает точку пересечения двух линий.
- * @param line0 - Первая линия.
- * @param line1 - Вторая линия.
- * @returns Точка пересечения.
- * @see https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
- **/
+ * Возвращает точку пересечения двух бесконечных линий.
+ * @param line0 - Первая линия (массив из двух точек, через которые она проходит).
+ * @param line1 - Вторая линия (массив из двух точек, через которые она проходит).
+ * @returns Точка пересечения или null, если линии параллельны или совпадают.
+ */
 const getIntersectionPoint = (
   line0: Vector2[],
   line1: Vector2[]
@@ -171,7 +169,7 @@ const getIntersectionPoint = (
   const p3 = line1[0];
   const p4 = line1[1];
 
-  // Вычисляем направляющие векторы линий
+  // Вычисляем направляющие векторы
   const dx1 = p2.x - p1.x;
   const dy1 = p2.y - p1.y;
   const dx2 = p4.x - p3.x;
@@ -180,27 +178,15 @@ const getIntersectionPoint = (
   // Вычисляем определитель
   const D = dx1 * dy2 - dy1 * dx2;
 
-  // Если определитель близок к нулю, линии параллельны
+  // Если определитель близок к нулю, линии параллельны или совпадают
   if (Math.abs(D) < 1e-9) {
-    // Проверяем, совпадают ли линии
-    const rx = p3.x - p1.x;
-    const ry = p3.y - p1.y;
-    const cross = rx * dy1 - ry * dx1;
-    if (Math.abs(cross) < 1e-9) {
-      // Линии совпадают, точек пересечения бесконечно много
-      return null;
-    } else {
-      // Линии параллельны и не пересекаются
-      return null;
-    }
+    return null;
   }
 
-  // Находим параметры t и s для точки пересечения
-  const rx = p3.x - p1.x;
-  const ry = p3.y - p1.y;
-  const t = (rx * dy2 - ry * dx2) / D;
+  // Вычисляем параметр t для первой линии
+  const t = ((p3.x - p1.x) * dy2 - (p3.y - p1.y) * dx2) / D;
 
-  // Вычисляем координаты точки пересечения
+  // Находим точку пересечения
   const x = p1.x + t * dx1;
   const y = p1.y + t * dy1;
 
@@ -272,29 +258,29 @@ const getMidpoint = (vecA: Vector2, vecB: Vector2): Vector2 => {
  * @param distance - Расстояние, на которое нужно сместить вектор по нормали.
  * @returns Новый вектор, смещённый по нормали отрезка.
  */
-const offsetVectorBySegmentNormal = 
-(segment: [Vector2, Vector2], vector: Vector2, distance: number): 
-Vector2 => {
-  const [pointA, pointB] = segment;
+const offsetVectorBySegmentNormal =
+  (segment: [Vector2, Vector2], vector: Vector2, distance: number):
+    Vector2 => {
+    const [pointA, pointB] = segment;
 
-  // Вычисляем вектор от pointA до pointB
-  const segmentVector = { x: pointB.x - pointA.x, y: pointB.y - pointA.y };
+    // Вычисляем вектор от pointA до pointB
+    const segmentVector = { x: pointB.x - pointA.x, y: pointB.y - pointA.y };
 
-  // Вычисляем нормаль к вектору отрезка
-  const normal = { x: -segmentVector.y, y: segmentVector.x };
+    // Вычисляем нормаль к вектору отрезка
+    const normal = { x: -segmentVector.y, y: segmentVector.x };
 
-  // Нормализуем нормаль
-  const magnitude = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
-  const normalizedNormal = { x: normal.x / magnitude, y: normal.y / magnitude };
+    // Нормализуем нормаль
+    const magnitude = Math.sqrt(normal.x * normal.x + normal.y * normal.y);
+    const normalizedNormal = { x: normal.x / magnitude, y: normal.y / magnitude };
 
-  // Смещаем вектор по нормали
-  const offsetVector = {
-    x: vector.x + normalizedNormal.x * distance,
-    y: vector.y + normalizedNormal.y * distance,
-  };
+    // Смещаем вектор по нормали
+    const offsetVector = {
+      x: vector.x + normalizedNormal.x * distance,
+      y: vector.y + normalizedNormal.y * distance,
+    };
 
-  return offsetVector;
-}
+    return offsetVector;
+  }
 
 /**
  * Функция, которая смещает вектор относительно отрезка на заданное расстояние.
@@ -303,28 +289,28 @@ Vector2 => {
  * @param distance - Расстояние, на которое нужно сместить вектор.
  * @returns Новый вектор, смещённый относительно отрезка.
  */
-const offsetVectorBySegment = 
-(segment: [Vector2, Vector2], vector: Vector2, distance: number): 
-Vector2 => {
-  const [pointA, pointB] = segment;
+const offsetVectorBySegment =
+  (segment: [Vector2, Vector2], vector: Vector2, distance: number):
+    Vector2 => {
+    const [pointA, pointB] = segment;
 
-  // Вычисляем вектор от pointA до pointB
-  const segmentVector = { x: pointB.x - pointA.x, y: pointB.y - pointA.y };
+    // Вычисляем вектор от pointA до pointB
+    const segmentVector = { x: pointB.x - pointA.x, y: pointB.y - pointA.y };
 
-  // Вычисляем длину отрезка
-  const segmentLength = Math.sqrt(segmentVector.x * segmentVector.x + segmentVector.y * segmentVector.y);
+    // Вычисляем длину отрезка
+    const segmentLength = Math.sqrt(segmentVector.x * segmentVector.x + segmentVector.y * segmentVector.y);
 
-  // Нормализуем вектор отрезка
-  const normalizedSegmentVector = { x: segmentVector.x / segmentLength, y: segmentVector.y / segmentLength };
+    // Нормализуем вектор отрезка
+    const normalizedSegmentVector = { x: segmentVector.x / segmentLength, y: segmentVector.y / segmentLength };
 
-  // Смещаем вектор вдоль отрезка
-  const offsetVector = {
-    x: vector.x + normalizedSegmentVector.x * distance,
-    y: vector.y + normalizedSegmentVector.y * distance,
-  };
+    // Смещаем вектор вдоль отрезка
+    const offsetVector = {
+      x: vector.x + normalizedSegmentVector.x * distance,
+      y: vector.y + normalizedSegmentVector.y * distance,
+    };
 
-  return offsetVector;
-}
+    return offsetVector;
+  }
 
 /**
  * Вычисляет центр массива точек.
@@ -352,7 +338,105 @@ const getCenterOfPoints = (points: Vector2[]): Vector2 => {
   return xyConverted
 }
 
+function adjustP1ForPerpendicularity(p0: Vector2, p1: Vector2, p2: Vector2): Vector2 {
+  // Векторы исходных линий
+  const v1 = { x: p1.x - p0.x, y: p1.y - p0.y };
+  const v2 = { x: p2.x - p1.x, y: p2.y - p1.y };
 
+  // Условие перпендикулярности: v1 · v2 = 0
+  // (p1.x-p0.x)(p2.x-p1.x) + (p1.y-p0.y)(p2.y-p1.y) = 0
+
+  // Если уже перпендикулярны (с учетом погрешности вычислений)
+  if (Math.abs(v1.x * v2.x + v1.y * v2.y) < 1e-10) {
+    return p1;
+  }
+
+  // Находим параметрическое решение для новой точки p1'
+  // Через систему уравнений:
+  // 1. (p1'.x-p0.x)(p2.x-p1'.x) + (p1'.y-p0.y)(p2.y-p1'.y) = 0
+  // 2. Минимизируем расстояние между p1 и p1'
+
+  // Решение через проекцию на окружность перпендикулярности
+  const center = {
+    x: (p0.x + p2.x) / 2,
+    y: (p0.y + p2.y) / 2
+  };
+  const radius = Math.sqrt(Math.pow(p2.x - p0.x, 2) + Math.pow(p2.y - p0.y, 2)) / 2;
+
+  // Вектор от центра к исходной точке p1
+  const dx = p1.x - center.x;
+  const dy = p1.y - center.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  // Если точка уже на окружности (но не перпендикулярна - значит коллинеарны)
+  if (Math.abs(distance - radius) < 1e-10) {
+    // Особый случай - возвращаем точку под 90 градусов от текущего положения
+    const angle = Math.atan2(dy, dx) + Math.PI / 2;
+    return {
+      x: center.x + radius * Math.cos(angle),
+      y: center.y + radius * Math.sin(angle)
+    };
+  }
+
+  // Проецируем на окружность
+  const scale = radius / distance;
+  const p1Prime1 = {
+    x: center.x + dx * scale,
+    y: center.y + dy * scale
+  };
+  const p1Prime2 = {
+    x: center.x - dx * scale,
+    y: center.y - dy * scale
+  };
+
+  // Выбираем ближайшую точку к исходной p1
+  const dist1 = Math.sqrt(Math.pow(p1Prime1.x - p1.x, 2) + Math.pow(p1Prime1.y - p1.y, 2));
+  const dist2 = Math.sqrt(Math.pow(p1Prime2.x - p1.x, 2) + Math.pow(p1Prime2.y - p1.y, 2));
+
+  return dist1 < dist2 ? p1Prime1 : p1Prime2;
+}
+
+/**
+ * Функция проверяет, пересекает ли вектор отрезок, и возвращает координаты точки пересечения или null.
+ * @param segment - Отрезок, представленный двумя точками.
+ * @param vector - Вектор, представленный двумя точками (начало и направление).
+ * @returns Координаты точки пересечения или null, если пересечения нет.
+ */
+const doesVectorIntersectSegment = (
+  segment: [Vector2, Vector2],
+  vector: [Vector2, Vector2]
+): Vector2 | null => {
+  const [segStart, segEnd] = segment;
+  const [vecStart, vecEnd] = vector;
+
+  // Вычисляем направляющие векторы
+  const segDir = { x: segEnd.x - segStart.x, y: segEnd.y - segStart.y };
+  const vecDir = { x: vecEnd.x - vecStart.x, y: vecEnd.y - vecStart.y };
+
+  // Определитель для проверки параллельности
+  const det = segDir.x * vecDir.y - segDir.y * vecDir.x;
+
+  // Если определитель близок к нулю, линии параллельны
+  if (Math.abs(det) < 1e-9) {
+    return null;
+  }
+
+  // Вычисляем параметры t и u для точки пересечения
+  const t = ((vecStart.x - segStart.x) * vecDir.y - (vecStart.y - segStart.y) * vecDir.x) / det;
+  const u = ((vecStart.x - segStart.x) * segDir.y - (vecStart.y - segStart.y) * segDir.x) / det;
+
+  // Проверяем, находится ли точка пересечения внутри отрезка и в направлении вектора
+  if (t >= 0 && t <= 1 && u >= 0) {
+    // Вычисляем координаты точки пересечения
+    const intersection = {
+      x: segStart.x + t * segDir.x,
+      y: segStart.y + t * segDir.y,
+    };
+    return intersection;
+  }
+
+  return null;
+};
 
 export {
 
@@ -369,5 +453,7 @@ export {
   offsetVectorBySegment,
   getCenterOfPoints,
   rotatePointsAroundCenter,
+  adjustP1ForPerpendicularity,
+  doesVectorIntersectSegment,
 
 };

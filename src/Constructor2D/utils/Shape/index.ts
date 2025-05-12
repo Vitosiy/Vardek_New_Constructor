@@ -35,7 +35,31 @@ const rect = (graphic: PIXI.Graphics, data: RectData): PIXI.Graphics => {
   // Возвращаем объект graphics
   return graphic;
   
-}
+};
+
+const shape = (graphic: PIXI.Graphics, points: Vector2[], color: number | string): void => {
+
+  /*
+  points: [{x: number, y: number}, {x: number, y: number}, ...]; // 4 точки для прямоугольника
+  */
+
+  if (points.length < 4) {
+    throw new Error("Data must contain exactly 4 points.");
+  }
+
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+
+    // Рисуем линию
+    if(i==0) graphic.moveTo(point.x, point.y);
+    graphic.lineTo(point.x, point.y);
+    if((points.length - 1) === i){
+      graphic.lineTo(points[0].x, points[0].y);
+    }
+  }
+  graphic.fill(color); // Устанавливаем цвет заливки
+  
+};
 
 const rectV2 = (graphic: PIXI.Graphics, data: any): PIXI.Graphics => {
 
@@ -502,6 +526,7 @@ const drawLine = (
 
 export {
   rect,
+  shape,
   rectV2,
   drawVerticalLines,
   drawDashedOutline,

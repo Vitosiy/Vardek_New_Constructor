@@ -6,6 +6,8 @@ import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
 import { Vector2 } from '@/types/constructor2d/interfaсes';
 
+import { Events } from '@/store/constructor2d/events';
+
 import {
   ObjectWall,
   ObjectWallContainers,
@@ -25,6 +27,8 @@ import {
   getMidpoint,
   getAngleBetweenVectors,
   getIntersectionPoint,
+  adjustP1ForPerpendicularity,
+  doesVectorIntersectSegment,
 } from "@/Constructor2D/utils/Math";
 
 import { 
@@ -34,7 +38,7 @@ import {
   drawArrow,
   drawArrowHead,
   drawShape,
-  // drawCircle,
+  drawCircle,
   drawLine,
 } from "../../utils/Shape";
 
@@ -43,6 +47,8 @@ import { handlerOutEventGraphic } from "./methods/events/handlerOut/index";
 import { handlerDownEventGraphic } from "./methods/events/handlerDown/index";
 import { handlerStageMouseUp } from "./methods/events/handlerStageMouseUp/index";
 import { handlerStageMouseMove } from "./methods/events/handlerStageMouseMove/index";
+import { eventModifyWall } from "./methods/events/eventModifyWall/index";
+import { eventRemoveWall } from "./methods/events/eventRemoveWall/index";
 
 import { initRoom } from "./methods/initRoom/index";
 
@@ -101,6 +107,8 @@ export default class Planner {
   private handlerDownEventGraphic: (e:PIXI.FederatedPointerEvent) => void;
   private handlerStageMouseUp: (e:PIXI.FederatedPointerEvent) => void;
   private handlerStageMouseMove: (e:PIXI.FederatedPointerEvent) => void;
+  private eventModifyWall: (data: {width: number, height: number}) => void;
+  private eventRemoveWall: () => void;
 
   private initRoom: () => (0 | 1);
 
@@ -122,6 +130,11 @@ export default class Planner {
     this.handlerDownEventGraphic = handlerDownEventGraphic.bind(this);
     this.handlerStageMouseUp = handlerStageMouseUp.bind(this);
     this.handlerStageMouseMove = handlerStageMouseMove.bind(this);
+    this.eventModifyWall = eventModifyWall.bind(this);
+    this.eventRemoveWall = eventRemoveWall.bind(this);
+
+    this.parent.eventBus.on(Events.C2D_MODIFY_WALL, this.eventModifyWall);
+    this.parent.eventBus.on(Events.C2D_REMOVE_WALL, this.eventRemoveWall);
 
     this.initRoom = initRoom.bind(this);
 
@@ -148,9 +161,9 @@ export default class Planner {
         }
       }
 
-      console.log("init walls:", this.objectWalls);
-
     }
+
+    this.redrawHalfRoom();
 
     this.app.stage
       .on("pointerup", this.handlerStageMouseUp)
@@ -435,6 +448,18 @@ export default class Planner {
 
         this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(wallData.angleDegrees);
         this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(wallData.angleDegrees);
+
+        this.redrawHalfRoom();
+        
+        // отображаем форму модификации стены
+        this.parent.eventBus.emit(Events.C2D_SHOW_FORM_MODIFY_WALL, {
+          width: addedwall.width*10,
+          height: addedwall.height*10,
+          position: {
+            x: addedwall.points[0].x + this.parent.config.originOfCoordinates.x,
+            y: addedwall.points[0].y + this.parent.config.originOfCoordinates.y
+          }
+        });
         
       }
 
@@ -508,7 +533,7 @@ export default class Planner {
     
   }
 
-  // создаем контейнеры для визуализации
+  // создаем контейнеры для визуализации cтены
   private createDrawContainers(id: string | number): number{
 
     const indexWall = this.objectWalls.findIndex(el => el.id === id);
@@ -597,22 +622,96 @@ export default class Planner {
     const mergeWalls = obj.mergeWalls;
 
     { // рассчитываем новые координаты точек 2 и 3, если есть присоединенная стена
-
+      
       if(mergeWalls.wallPoint0){
 
         const otherWall: ObjectWall | undefined = this.objectWalls.find(el => el.id === mergeWalls.wallPoint0);
         
         if(otherWall){
 
-          const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+          const __p0 = obj.points[0];
+          const __p1 = otherWall.points[0];
+          const __p2 = otherWall.points[1];
+  
+          const vAngle = -getAngleBetweenVectors(__p1, __p0, __p2);
+          const degTextAngle = vAngle < 0 ? 360 + vAngle : vAngle;
 
-          const line_0: [Vector2, Vector2] = [points[2], points[3]];
-          const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+          if(degTextAngle > 35){
+            const activeWallHeight = obj.height;
+            const mergeWallHeight = otherWall.height;
 
-          const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+            if(activeWallHeight === mergeWallHeight){ // если толщина стен одинаковая
 
-          if(intersectionPoint){
-            points[2] = intersectionPoint;
+              const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+              const line_0: [Vector2, Vector2] = [points[2], points[3]];
+              const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+              const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+              if(intersectionPoint){
+                points[2] = intersectionPoint;
+              }
+
+            }else if(activeWallHeight > mergeWallHeight){ // если толщина активной стены больше
+              
+              const isIntersect = doesVectorIntersectSegment(
+                [
+                  obj.points[1],
+                  obj.points[2]
+                ],
+                [
+                  otherWall.points[2], 
+                  otherWall.points[3]
+                ]
+              );
+              if (isIntersect) {
+                isIntersect.x = Math.round(isIntersect.x * 100) / 100;
+                isIntersect.y = Math.round(isIntersect.y * 100) / 100;
+              }
+
+              if(!isIntersect){
+                const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+                const line_0: [Vector2, Vector2] = [points[2], points[3]];
+                const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+                const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+                if(intersectionPoint){
+                  points[2] = intersectionPoint;
+                }
+              }
+
+            }else if(activeWallHeight < mergeWallHeight){ // если толщина активной стены меньше
+
+              const isIntersect = doesVectorIntersectSegment(
+                [
+                  otherWall.points[0],
+                  otherWall.points[3]
+                ],
+                [
+                  obj.points[3], 
+                  obj.points[2]
+                ]
+              );
+
+              if(isIntersect){
+                points[2] = isIntersect;
+              }else{
+                const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+                const line_0: [Vector2, Vector2] = [points[2], points[3]];
+                const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+                const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+                if(intersectionPoint){
+                  points[2] = intersectionPoint;
+                }
+              }
+
+            }
           }
           
         } else {
@@ -629,15 +728,85 @@ export default class Planner {
         
         if(otherWall){
 
-          const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+          const __p0 = otherWall.points[0];
+          const __p1 = obj.points[0];
+          const __p2 = obj.points[1];
+  
+          const vAngle = -getAngleBetweenVectors(__p1, __p0, __p2);
+          const degTextAngle = vAngle < 0 ? 360 + vAngle : vAngle;
 
-          const line_0: [Vector2, Vector2] = [points[2], points[3]];
-          const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+          if(degTextAngle > 35){
+            const activeWallHeight = obj.height;
+            const mergeWallHeight = otherWall.height;
 
-          const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+            if(activeWallHeight === mergeWallHeight){ // если толщина стен одинаковая
 
-          if(intersectionPoint){
-            points[3] = intersectionPoint;
+              const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+              const line_0: [Vector2, Vector2] = [points[2], points[3]];
+              const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+              const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+              if(intersectionPoint){
+                points[3] = intersectionPoint;
+              }
+
+            }else if(activeWallHeight > mergeWallHeight){ // если толщина активной стены больше
+
+              const isIntersect = doesVectorIntersectSegment(
+                [
+                  obj.points[0],
+                  obj.points[3]
+                ],
+                [
+                  otherWall.points[3], 
+                  otherWall.points[2]
+                ]
+              );
+
+              if(!isIntersect){
+                const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+                const line_0: [Vector2, Vector2] = [points[2], points[3]];
+                const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+                const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+                if(intersectionPoint){
+                  points[3] = intersectionPoint;
+                }
+              }
+              
+            }else if(activeWallHeight < mergeWallHeight){ // если толщина активной стены меньше
+
+              const isIntersect = doesVectorIntersectSegment(
+                [
+                  otherWall.points[1],
+                  otherWall.points[2]
+                ],
+                [
+                  obj.points[2], 
+                  obj.points[3]
+                ]
+              );
+
+              if(isIntersect){
+                points[3] = isIntersect;
+              }else{
+                const pointsOtherWall: Vector2[] = JSON.parse(JSON.stringify(otherWall.points));
+
+                const line_0: [Vector2, Vector2] = [points[2], points[3]];
+                const line_1: [Vector2, Vector2] = [pointsOtherWall[2], pointsOtherWall[3]];
+
+                const intersectionPoint: Vector2 | null = getIntersectionPoint(line_0, line_1);
+
+                if(intersectionPoint){
+                  points[3] = intersectionPoint;
+                }
+              }
+              
+            }
           }
           
         } else {
@@ -839,7 +1008,7 @@ export default class Planner {
 
             const distance = getDistanceBetweenVectors(linePoints[0], linePoints[1]);
 
-            containers.textRulerWall.text = (Number(distance.toFixed(1))*10).toString() + " cм";
+            containers.textRulerWall.text = (Number(distance.toFixed(1))*10).toString() + " мм";
 
             const pointText = offsetVectorBySegmentNormal(
               [linePoints[0], linePoints[1]],
@@ -897,6 +1066,35 @@ export default class Planner {
 
   }
 
+  public redrawHalfRoom(): void {
+
+    const roomPoints: Vector2[] = [];
+
+    for(let i=0, len=this.objectWalls.length; i<len; i++){
+      const wall = this.objectWalls[i];
+      if(wall.mergeWalls.wallPoint0 || wall.mergeWalls.wallPoint1){
+        const exist_0 = roomPoints.findIndex((point: Vector2) => point.x === wall.points[0].x && point.y === wall.points[0].y);
+        if(exist_0 == -1) roomPoints.push(wall.points[0]);
+        const exist_1 = roomPoints.findIndex((point: Vector2) => point.x === wall.points[1].x && point.y === wall.points[1].y);
+        if(exist_1 == -1) roomPoints.push(wall.points[1]);
+      }
+    }
+
+    if(roomPoints.length > 3){
+      
+      this.parent.layers.halfRoom.drawHalfRoom([
+        {
+          id: 1,
+          points: roomPoints,
+        }
+      ]);
+
+    }else{
+      this.parent.layers.halfRoom.removeHalfRoom();
+    }
+
+  }
+
   public drawListWalls(list: (number | string)[]): void {
 
     list.forEach((id: string | number) => {
@@ -904,6 +1102,8 @@ export default class Planner {
       this.drawWall(id);
       
     });
+
+    this.redrawHalfRoom();
     
   }
 
@@ -929,9 +1129,9 @@ export default class Planner {
 
   }
 
-  public updateWallPoint(position: Vector2): void {
+  public updateWallPoint(position: Vector2, __indexPoint: 0 | 1 | null = null): void {
 
-    const indexPoint = this.state.activePointWall;
+    const indexPoint = __indexPoint !== null ? __indexPoint : this.state.activePointWall;
     const indexDataWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);
 
     if(indexDataWall == -1) return;
@@ -1064,6 +1264,78 @@ export default class Planner {
     
   }
 
+  // расположение 2-х стен под углом 90 градусов
+  public arrangeWallsAt_90_DegreeAngle(): void {
+
+    if(this.state.activeWall !== null && this.state.activePointWall !== null){
+      
+      const indexWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);
+      
+      if(indexWall != -1){
+        
+        const dataWall = this.objectWalls[indexWall];
+        if(!dataWall) return;
+
+        if(this.state.activePointWall == 0){
+
+          if(!dataWall.mergeWalls.wallPoint1) return;
+
+          const indexMergeWall = this.objectWalls.findIndex(el => el.id === dataWall.mergeWalls.wallPoint1);
+          if(indexMergeWall == -1) return;
+
+          const dataMergeWall = this.objectWalls[indexMergeWall];
+
+          const p0 = dataMergeWall.points[0];
+          const p1 = dataWall.points[0];
+          const p2 = dataWall.points[1];
+          
+          const newP1 = adjustP1ForPerpendicularity(p0, p1, p2);
+
+          this.updateWallPoint(newP1);
+
+          this.parent.layers.startPointActiveObject.updatePositionIndicatorPoint(newP1);
+          this.parent.layers.startPointActiveObject.drawAngleBetweenWalls();
+
+          /* helper
+          const graphic = new PIXI.Graphics();
+          this.container.addChild(graphic);
+
+          drawCircle(
+            graphic,
+            newP1,
+            10, 
+            "rgba(0,100,0,1)"
+          );
+          */
+          
+        }else if(this.state.activePointWall == 1){
+
+          if(!dataWall.mergeWalls.wallPoint0) return;
+
+          const indexMergeWall = this.objectWalls.findIndex(el => el.id === dataWall.mergeWalls.wallPoint0);
+          if(indexMergeWall == -1) return;
+
+          const dataMergeWall = this.objectWalls[indexMergeWall];
+
+          const p0 = dataWall.points[0];
+          const p1 = dataWall.points[1];
+          const p2 = dataMergeWall.points[1];
+          
+          const newP0 = adjustP1ForPerpendicularity(p0, p1, p2);
+
+          this.updateWallPoint(newP0);
+
+          this.parent.layers.startPointActiveObject.updatePositionIndicatorPoint(newP0);
+          this.parent.layers.startPointActiveObject.drawAngleBetweenWalls();
+          
+        }
+
+      }
+
+    }
+    
+  }
+
   public deactiveWalls(): void {
     
     this.state.activeWall = null;
@@ -1077,6 +1349,22 @@ export default class Planner {
 
     this.container.x = this.parent.config.originOfCoordinates.x + 30;
     this.container.y = this.parent.config.originOfCoordinates.y + 30;
+
+    const indexPoint = this.state.activePointWall;
+    const indexDataWall = this.objectWalls.findIndex(el => el.id === this.state.activeWall);
+
+    if(indexDataWall == -1) return;
+
+    const dataWall = this.objectWalls[indexDataWall];
+
+    this.parent.eventBus.emit(Events.C2D_UPDATE_FORM_MODIFY_WALL, {
+      width: Number(dataWall.width.toFixed(1))*10,
+      height: Number(dataWall.height.toFixed(1))*10,
+      position: {
+        x: dataWall.points[0].x + this.parent.config.originOfCoordinates.x,
+        y: dataWall.points[0].y + this.parent.config.originOfCoordinates.y
+      }
+    });
     
   }
 
@@ -1153,6 +1441,8 @@ export default class Planner {
         this.redrawAllObjects();
         this.parent.layers.arrowRulerActiveObject?.clearGraphic();
         this.parent.layers.startPointActiveObject?.activate(false);
+
+        this.redrawHalfRoom();
         
       }
       
@@ -1217,6 +1507,9 @@ export default class Planner {
     this.app.stage
       .off("pointerup", this.handlerStageMouseUp)
       .off("mousemove", this.handlerStageMouseMove);
+
+    this.parent.eventBus.off(Events.C2D_MODIFY_WALL, this.eventModifyWall);
+    this.parent.eventBus.off(Events.C2D_REMOVE_WALL, this.eventRemoveWall);
 
     if (this.activeObjectGraphic) {
       this.activeObjectGraphic.destroy(true);

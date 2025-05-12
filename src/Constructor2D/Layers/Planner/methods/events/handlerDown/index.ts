@@ -1,6 +1,7 @@
 import { MathUtils } from "three";
 import * as PIXI from "pixi.js";
 import { ObjectWall } from "./../../../interfaces";
+import { Events } from "@/store/constructor2d/events";
 
 export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent): void {
 
@@ -52,6 +53,8 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
       }
 
     }
+
+    this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
 
   }
   

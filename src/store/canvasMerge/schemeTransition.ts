@@ -252,6 +252,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			id: data.wall.id,
 			width: data.wall.width * 10,
 			height: 300 * 10,
+			depth: data.wall.height * 10,
 			position: {
 				x: centerWall.x * 10,
 				y: ( 300 * 10 ) / 2,

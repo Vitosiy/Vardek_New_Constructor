@@ -88,7 +88,7 @@ export default class ArrowRulerActiveObject {
       12,
       true
     );
-    this.xText!.text = `${Math.round((distanceY) * this.config.dotLenght)} см`;
+    this.xText!.text = `${Math.round((distanceY) * this.config.dotLenght)} мм`;
     this.xText!.x = (position.x) - 24;
     this.xText!.y = ((distanceY / 2) + (this.xText!.width / 2));
     this.xText!.rotation = MathUtils.degToRad(rotateDegY);
@@ -106,7 +106,7 @@ export default class ArrowRulerActiveObject {
       12,
       true
     );
-    this.yText!.text = `${Math.round((distanceX) * this.config.dotLenght)} см`;
+    this.yText!.text = `${Math.round((distanceX) * this.config.dotLenght)} мм`;
     this.yText!.y = (position.y) - 24;
     this.yText!.x = ((distanceX / 2) - (this.yText!.width / 2));
   }

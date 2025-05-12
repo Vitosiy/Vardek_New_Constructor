@@ -11,12 +11,12 @@ export function handlerStageMouseMove(this: any, e: PIXI.FederatedPointerEvent):
 
     const mousePostion: Vector2 = {
       x: e.global.x,
-      y: e.global.y
+      y: e.global.y,
     };
 
     const distance: Vector2 = {
-      x: mousePostion.x - this.state.positionDown.x,
-      y: mousePostion.y - this.state.positionDown.y
+      x: (mousePostion.x - this.state.positionDown.x) * this.parent.config.inverseScale,
+      y: (mousePostion.y - this.state.positionDown.y) * this.parent.config.inverseScale
     };
 
     const dataWall = this.objectWalls.find((el: ObjectWall) => el.id === id);
