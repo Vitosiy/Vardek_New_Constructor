@@ -190,14 +190,14 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         const { UNIFORM_TEXTURE, FASADE_PROPS } = CONFIG
 
         const start = this.createUniformFasadesData(product)
+
         const fasadeListLimit = start.filter((element) => element.NAME === 'Шпон Вардек 19мм')[0].FASADES
+        
         const limited = FASADE_PROPS.reduce((acc, el) => {
+
             acc.push(fasadeListLimit.includes(el.COLOR))
             return acc
         }, []).includes(true)
-
-
-
 
 
         const fasaded = FASADE_PROPS.filter((element) => element.COLOR !== null && element.COLOR !== 7397).length > 0
@@ -205,9 +205,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         let totalHeight = 0
         let totalWidth = 0
         let levelsWidth: number[] = []
-
-        // const f = this.createUniformFasadesData(product)
-        // console.log(f)
 
 
         if (UNIFORM_TEXTURE.group != null) {

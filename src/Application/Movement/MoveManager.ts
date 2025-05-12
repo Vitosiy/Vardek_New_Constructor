@@ -356,8 +356,6 @@ export class MoveManager {
         this.canvas.removeEventListener('touchstart', this.onTouchStartBound, false);
         this.canvas.removeEventListener('touchmove', this.onTouchMoveBound, false);
         this.canvas.removeEventListener('touchend', this.onTouchEndBound, false);
-
-        document.removeEventListener('keydown', this.onKeyDown, false);
         // document.removeEventListener('keyup', this.onKeyUp, false);
 
         this.canvas = null;

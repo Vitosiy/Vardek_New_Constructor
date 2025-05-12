@@ -4,7 +4,8 @@ import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
 import { _URL } from "@/types/constants";
 
-import { Ref, ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
+import {  ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
+
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";

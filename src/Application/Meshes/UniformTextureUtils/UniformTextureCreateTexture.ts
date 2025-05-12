@@ -13,11 +13,13 @@ export class UniformTextureCreateTexture {
     // uniformTexture = new URL('@/assets/uniform', import.meta.url).href + "/"
     uniformTexture = textureUrl
 
+
     onCreateTexture: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void
 
     constructor(root: THREETypes.TApplication) {
         this.resources = root._resources
         this.onCreateTexture = this.createTexture.bind(this)
+
     }
 
     loadTexture(callback: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void, group: UniformTypes.LevelItem[][]) {
@@ -36,6 +38,7 @@ export class UniformTextureCreateTexture {
         })
 
     }
+
 
     createTexture(levels: UniformTypes.LevelItem[][], texture: THREE.Texture) {
 
@@ -116,7 +119,7 @@ export class UniformTextureCreateTexture {
                     return
                 }
 
-                // console.log('HERE_2', levelNdx)
+                console.log('HERE_2', levelNdx)
 
                 this.elementTexured({
                     element,
@@ -167,9 +170,9 @@ export class UniformTextureCreateTexture {
         const { BODY_WIDTH, BODY_HEIGHT } = BODY.userData.trueSize
 
         // Проверка на смешанные типы в одном объекте
-        const hasColType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'COL');
-        const hasRowType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'ROW');
-        const hasMixedTypes = hasColType && hasRowType;
+        const hasDefaultType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'col');
+        const hasStringType = FASADE.some(obj => obj.userData.partPosition.TYPE_POSITION === 'row');
+        const hasMixedTypes = hasDefaultType && hasStringType;
 
         if (hasMixedTypes) {
             // Особая обработка для смешанных типов
@@ -206,14 +209,14 @@ export class UniformTextureCreateTexture {
 
                 // fasade.userData.backupMaterial = this.backupMaterial ?? fasade.userData.backupMaterial;
 
-                if (TYPE_POSITION === "STRING") {
+                if (TYPE_POSITION === "row") {
 
                     if (totalWidthToString === 0) totalWidthToString = FASADE_WIDTH;
                     if (totalHeightToString === 0) totalHeightToString = FASADE_HEIGHT;
 
                 }
 
-                if (TYPE_POSITION === "DEFAULT") {
+                if (TYPE_POSITION === "col") {
 
                     if (totalWidthToDefault === 0) totalWidthToDefault = FASADE_WIDTH;
                     if (totalHeightToDefault === 0) totalHeightToDefault = firstFasade;
@@ -222,9 +225,9 @@ export class UniformTextureCreateTexture {
 
                 let prevWidthToString, prevHeightToString, prevHeightToDefault;
 
-                if (fasadeNdx > 0 && TYPE_POSITION === "DEFAULT") {
+                if (fasadeNdx > 0 && TYPE_POSITION === "col") {
+                    
                     // console.log('--DEFAULT')
-
                     // console.log(totalHeightToDefault, '--totalHeightToDefault')
 
                     prevHeightToDefault = fasadeArray[fasadeNdx - 1].userData.trueSize.FASADE_HEIGHT
@@ -235,7 +238,7 @@ export class UniformTextureCreateTexture {
                     // console.log(totalHeightToDefault, 'prevHeightToDefault')
                 }
 
-                if (fasadeNdx > 0 && TYPE_POSITION === "STRING") {
+                if (fasadeNdx > 0 && TYPE_POSITION === "row") {
 
                     prevWidthToString = fasadeArray[fasadeNdx - 1].userData.trueSize.FASADE_WIDTH;
                     prevHeightToString = fasadeArray[fasadeNdx - 1].userData.trueSize.FASADE_HEIGHT;
@@ -289,7 +292,7 @@ export class UniformTextureCreateTexture {
 
             // console.log(totalHeightToDefault, 'MIX')
         }
-        if ((hasRowType || hasRowType && FASADE.length < 2) && !hasMixedTypes) {
+        if ((hasStringType || hasStringType && FASADE.length < 2) && !hasMixedTypes) {
 
             // console.log('hasStringType')
 
@@ -345,7 +348,7 @@ export class UniformTextureCreateTexture {
             })
 
         }
-        if (hasColType && !hasMixedTypes) {
+        if (hasDefaultType && !hasMixedTypes) {
 
             // console.log('hasDefaultType')
 
@@ -482,7 +485,7 @@ export class UniformTextureCreateTexture {
         if (hasMixedTypes) {
 
 
-            if (TYPE_POSITION === 'COL') {
+            if (TYPE_POSITION === 'col') {
 
                 startedWidth = (startCorrect * correctCount) + (startWidth * correctCount)
                 startedHeight = (startHeight * correctCount)
@@ -495,7 +498,7 @@ export class UniformTextureCreateTexture {
                 }
             }
 
-            if (TYPE_POSITION === 'ROW') {
+            if (TYPE_POSITION === 'row') {
 
                 startedWidth = (startCorrect * correctCount) + (startWidth * correctCount);
                 startedHeight = (startHeight * correctCount);
@@ -507,7 +510,7 @@ export class UniformTextureCreateTexture {
             }
         }
 
-        if (TYPE_POSITION === 'COL' && !hasMixedTypes) {
+        if (TYPE_POSITION === 'col' && !hasMixedTypes) {
 
             startedWidth = (startCorrect * correctCount) + (startWidth * correctCount)
             startedHeight = (startHeight * correctCount)
@@ -518,7 +521,7 @@ export class UniformTextureCreateTexture {
             }
         }
 
-        if ((TYPE_POSITION === 'ROW' || fasadeCount < 2) && !hasMixedTypes) {
+        if ((TYPE_POSITION === 'row' || fasadeCount < 2) && !hasMixedTypes) {
 
             startedWidth = (startCorrect * correctCount) + (startWidth * correctCount)
             startedHeight = (startHeight * correctCount)
@@ -530,13 +533,7 @@ export class UniformTextureCreateTexture {
         }
 
         fasade.traverse(children => {
-
-            
             if (children instanceof THREE.Mesh) {
-
-                if (children.userData.type === 'glass') return
-
-                
                 const cloned = children.material.clone();
                 cloned.map = texture.clone();
 
@@ -553,7 +550,7 @@ export class UniformTextureCreateTexture {
                 // Применение текстуры с учетом смешанных типов
                 if (hasMixedTypes) {
                     // Логика для смешанных типов
-                    if (TYPE_POSITION === 'COL') {
+                    if (TYPE_POSITION === 'col') {
                         if (fasadeNdx === 0) {
                             cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
                         } else {
@@ -561,7 +558,7 @@ export class UniformTextureCreateTexture {
                         }
                     }
 
-                    if (TYPE_POSITION === 'ROW') {
+                    if (TYPE_POSITION === 'row') {
                         if (fasadeNdx === 0) {
                             cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
                         } else {
@@ -570,7 +567,7 @@ export class UniformTextureCreateTexture {
                     }
                 }
 
-                if ((TYPE_POSITION === 'ROW' || fasadeCount < 2) && !hasMixedTypes) {
+                if ((TYPE_POSITION === 'row' || fasadeCount < 2) && !hasMixedTypes) {
                     // Логика для STRING или одиночных фасадов
                     if (fasadeNdx === 0) {
                         cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
@@ -579,7 +576,7 @@ export class UniformTextureCreateTexture {
                     }
                 }
 
-                if (TYPE_POSITION === 'COL' && !hasMixedTypes) {
+                if (TYPE_POSITION === 'col' && !hasMixedTypes) {
                     // Логика для DEFAULT
                     if (fasadeNdx === 0) {
                         cloned.map.matrix.setUvTransform(startedWidth, startedHeight, textureScale, textureScale, 0, 0, 0);
@@ -591,7 +588,7 @@ export class UniformTextureCreateTexture {
 
                 cloned.map.matrixAutoUpdate = false;
                 cloned.needsUpdate = true;
-                cloned.map.wrapS = cloned.map.wrapT = THREE.RepeatWrapping;
+                // cloned.map.wrapS = cloned.map.wrapT = THREE.RepeatWrapping;
                 children.material = cloned;
                 children.material.needsUpdate = true;
             }

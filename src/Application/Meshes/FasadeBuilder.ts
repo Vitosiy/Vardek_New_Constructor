@@ -382,35 +382,28 @@ export class FasadeBuilder {
             const { FASADE_WIDTH } = fasade_position
             const fasadeWidth = this.parent.calculateFromString(FASADE_WIDTH)
 
-            // console.log(fasade_position, 'fasade_position')
-
-
             const partPosition: TFasadePartPosition = {
                 TYPE_POSITION: null,
                 WIDTH: null,
                 FASADE_NUMBER: null,
             }
 
-            partPosition.TYPE_POSITION = fasadeWidth < BODY_WIDTH - 4 ? partPosition.TYPE_POSITION = 'ROW' : partPosition.TYPE_POSITION = 'COL'
+            partPosition.TYPE_POSITION = fasadeWidth < BODY_WIDTH - 4 ? partPosition.TYPE_POSITION = 'row' : partPosition.TYPE_POSITION = 'col'
             partPosition.WIDTH = fasadeWidth
             partPosition.FASADE_NUMBER = propNdx
 
             numered.push(partPosition)
 
-            // console.log(numered)
-
         })
 
-        const hasColType = numered.some(obj => obj.TYPE_POSITION === 'COL');
-        const hasRowType = numered.some(obj => obj.TYPE_POSITION === 'ROW');
+        const hasColType = numered.some(obj => obj.TYPE_POSITION === 'col');
+        const hasRowType = numered.some(obj => obj.TYPE_POSITION === 'row');
         const hasMixedTypes = hasColType && hasRowType;
 
         const result = {
             numeredArray: numered,
             hasMixedTypes
         }
-
-        // console.log(result)
 
         return result
 
@@ -426,14 +419,14 @@ export class FasadeBuilder {
 
         // Шаг 1: Изменяем порядок элементов с TYPE_POSITION: "STRING"
         for (let i = 0; i < inputArray.length; i++) {
-            if (inputArray[i].TYPE_POSITION === "DEFAULT") {
+            if (inputArray[i].TYPE_POSITION === "col") {
                 if (tempArray.length > 0) {
                     outputArray.push(...tempArray.reverse()); // Добавляем элементы в обратном порядке
                     tempArray = []; // Очищаем временный массив
                 }
-                outputArray.push(inputArray[i]); // Добавляем элемент с DEFAULT
-            } else if (inputArray[i].TYPE_POSITION === "STRING") {
-                tempArray.push(inputArray[i]); // Добавляем элемент с STRING во временный массив
+                outputArray.push(inputArray[i]); // Добавляем элемент с col
+            } else if (inputArray[i].TYPE_POSITION === "row") {
+                tempArray.push(inputArray[i]); // Добавляем элемент с row во временный массив
             }
         }
 
@@ -447,21 +440,21 @@ export class FasadeBuilder {
 
 
         for (let i = 0; i < outputArray.length; i++) {
-            if (outputArray[i].TYPE_POSITION === "DEFAULT") {
+            if (outputArray[i].TYPE_POSITION === "col") {
                 outputArray[i].FASADE_NUMBER = currentFasadeNumber;
                 currentFasadeNumber--;
-            } else if (outputArray[i].TYPE_POSITION === "STRING") {
+            } else if (outputArray[i].TYPE_POSITION === "row") {
                 outputArray[i].FASADE_NUMBER = currentFasadeNumber;
                 currentFasadeNumber--;
             }
         }
 
-        // Шаг 3: Группируем значения STRING с лева на право
+        // Шаг 3: Группируем значения row с лева на право
         outputArray.forEach((item, ndx, array) => {
             
-            if (item.TYPE_POSITION === "DEFAULT") def.push({ id: ndx + 1, type: item })
+            if (item.TYPE_POSITION === "col") def.push({ id: ndx + 1, type: item })
 
-            if (ndx > 0 && array[ndx - 1].TYPE_POSITION === "DEFAULT") {
+            if (ndx > 0 && array[ndx - 1].TYPE_POSITION === "col") {
                 strNdx = ndx
                 str.push({
                     id: ndx,
@@ -470,7 +463,7 @@ export class FasadeBuilder {
 
             }
 
-            if (item.TYPE_POSITION === "STRING") {
+            if (item.TYPE_POSITION === "row") {
                 str.forEach(elem => {
                     if (elem.id === strNdx) {
                         elem.subStr.push(item)
@@ -518,5 +511,4 @@ export class FasadeBuilder {
         this.uniformeTextureStartData = numeredFasade.numeredArray
 
     }
-
 }
