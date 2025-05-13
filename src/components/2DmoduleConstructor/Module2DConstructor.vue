@@ -1,18 +1,12 @@
 <script setup>
 import { reactive, computed, ref, toRaw } from "vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
-import { CUTTER_PARAMS } from "./CutterConst";
+import { UI_PARAMS, EN_RU_NAME} from "./UMConstructorConst.ts";
 import {useMenuStore} from "@/store/appStore/useMenuStore";
-import RulerButton from "@/components/ui/buttons/right-menu/RulerRightButton.vue";
-import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.vue";
-import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
-import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage.vue";
-import ColorButton from "@/components/ui/buttons/right-menu/ColorRightButton.vue";
-import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
-import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue";
-import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
-import MovingButton from "@/components/ui/buttons/right-menu/MovingRightButton.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import * as THREE from "three";
+import * as THREETypes from "@/types/types";
+import {useModelState} from "@/store/appliction/useModelState";
 // import SettingsPanel from './components/SettingsPanel.vue';
 // import SettingsTable from './components/SettingsTable.vue';
 // import ControlButtons from './components/ControlButtons.vue';
@@ -24,9 +18,11 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
-} = CUTTER_PARAMS;
+} = UI_PARAMS;
 
 const menuStore = useMenuStore();
+
+const builder = THREETypes.TUniversalGeometryBuilder
 
 const grid = ref([
   // Каждая колонка — это массив строк (горизонтальных секций)
@@ -44,21 +40,24 @@ const grid = ref([
   ],
 ]);
 
+const sections = ref([
+  // Каждая колонка — это массив строк (горизонтальных секций)
+  [
+    {
+      width: 3000,
+      height: 1200,
+      roundCut: {},
+      holes: [],
+      type: "row",
+      xOffset: 0,
+      yOffset: 0,
+      colide: null,
+    },
+  ],
+]);
+
 const selectedCell = ref({ col: 0, row: 0 });
 const correct = ref({ change: false });
-const holeOptions = ref(false);
-
-const getHole = computed(() => {
-  const colNdx = selectedCell.value.col;
-  const rowNdx = selectedCell.value.row;
-  const curRow = grid.value[colNdx][rowNdx];
-
-  if (curRow.holes.length > 0) {
-    return curRow.holes;
-  }
-  return false;
-});
-
 const splitterContainer = ref(null);
 
 const getMaxAreaHeight = computed(() => {
@@ -122,73 +121,6 @@ const addHorizontalCut = (colIndex) => {
   column.forEach((row) => {
     adjustObjectPosition(row);
   });
-};
-
-const addRoundСut = (colIndex) => {
-  correct.value.change = true;
-  if (selectedCell.value.col === null || selectedCell.value.row === null) {
-    alert("Пожалуйста, выберите секцию для добавления круглого выреза");
-    return;
-  }
-
-  const column = grid.value[selectedCell.value.col];
-  const row = column[selectedCell.value.row];
-
-  let extremum = row.width < row.height ? row.width : row.height;
-  if (extremum > 600) extremum = 600;
-
-  // Добавляем круглый вырез с дефолтными параметрами
-  row.roundCut = {
-    diameter: extremum, // мм
-    x: 0, // центр по X
-    y: 0, // центр по Y
-  };
-  correct.value.change = false;
-};
-
-const addSquareHole = () => {
-  correct.value.change = true;
-
-  if (selectedCell.value.col === null || selectedCell.value.row === null) {
-    alert("Пожалуйста, выберите секцию для добавления прямоугольного выреза");
-    return;
-  }
-
-  const column = grid.value[selectedCell.value.col];
-  const row = column[selectedCell.value.row];
-
-  let extremum = row.width < row.height ? row.width - 50 : row.height - 100;
-  if (extremum > 600) extremum = 600;
-  const width = extremum; // По умолчанию 300 мм или меньше
-  const height = extremum; // По умолчанию 200 мм или меньше
-
-  // // Определяем максимально допустимые размеры отверстия
-  // let maxWidth = row.width - 100; // 60% от ширины секции
-  // let maxHeight = row.height - 100; // 60% от высоты секции
-
-  // // Ограничиваем максимальный размер отверстия до 500 мм
-  // if (maxWidth > 500) maxWidth = 500;
-  // if (maxHeight > 500) maxHeight = 500;
-
-  // // Минимальный размер отверстия - 100 мм
-  // const width = Math.max(100, Math.min(maxWidth, 300)); // По умолчанию 300 мм или меньше
-  // const height = Math.max(100, Math.min(maxHeight, 300)); // По умолчанию 200 мм или меньше
-
-  // Добавляем прямоугольное отверстие с дефолтными параметрами в центре секции
-  row.holes.push({
-    type: "rect",
-    width: width,
-    height: height,
-    x: 0, // центр по X (относительно центра секции)
-    y: 0, // центр по Y (относительно центра секции)
-    lable: "Прямоугольный разрез",
-  });
-
-  correct.value.change = false;
-};
-
-const toggleHoleOptions = () => {
-  holeOptions.value = !holeOptions.value;
 };
 
 const showServices = () => {
@@ -389,12 +321,6 @@ const updateSectionHeight = (colIndex, rowIndex, event) => {
   ensureTotalHeight(colIndex);
 };
 
-const updateHole = () => {
-  correct.value.change = true;
-
-  correct.value.change = false;
-};
-
 const ensureTotalWidth = () => {
   const sum = grid.value.reduce((acc, column) => acc + column[0].width, 0);
   const diff = TOTAL_LENGTH - sum;
@@ -515,72 +441,9 @@ const deliteHorizontalCut = (rowIndex, colIndex) => {
   correct.value.change = false;
 };
 
-const deliteHole = (ndx) => {
-  correct.value.change = true;
-  const colNdx = selectedCell.value.col;
-  const rowNdx = selectedCell.value.row;
-  const curRow = grid.value[colNdx][rowNdx];
-
-  curRow.holes = curRow.holes.filter((el, index) => {
-    return index !== ndx;
-  });
-
-  correct.value.change = false;
-};
-
 const handleCellSelect = (colIndex, rowIndex) => {
   selectedCell.value = { col: colIndex, row: rowIndex };
   console.log(selectedCell.value);
-};
-
-const isRoundCutSelected = (colIndex) => {
-  if (selectedCell.value.col === null || selectedCell.value.row === null) {
-    return false;
-  }
-
-  if (selectedCell.value.col !== colIndex) {
-    return false;
-  }
-
-  const column = grid.value[selectedCell.value.col];
-  const row = column[selectedCell.value.row];
-
-  return row.roundCut && "diameter" in row.roundCut;
-};
-
-const getRoundCutDiameter = (colIndex) => {
-  if (!isRoundCutSelected(colIndex)) return 150;
-
-  const column = grid.value[selectedCell.value.col];
-  const row = column[selectedCell.value.row];
-
-  return row.roundCut.diameter;
-};
-
-const updateRoundCutDiameter = (colIndex, newDiameter) => {
-  correct.value.change = true;
-
-  if (!isRoundCutSelected(colIndex)) return;
-
-  const column = grid.value[selectedCell.value.col];
-  const row = column[selectedCell.value.row];
-
-  // Parse and validate the new diameter
-  let diameter = parseInt(newDiameter);
-
-  // Ensure the diameter is within limits
-  let extremum = row.width < row.height ? row.width : row.height;
-  if (extremum > 600) extremum = 600;
-
-  diameter = Math.max(150, Math.min(extremum, diameter));
-
-  // Update the diameter
-  row.roundCut.diameter = diameter;
-
-  // Adjust position to ensure the circle remains within bounds
-  adjustObjectPosition(row);
-
-  correct.value.change = false;
 };
 
 const adjustObjectPosition = (data) => {
@@ -616,13 +479,56 @@ const reset = () => {
   grid.value.push([{ width: 3000, height: 600, holes: [], type: "vrt" }]);
 };
 
-const save = () => {
-  localStorage.setItem("grid", JSON.stringify(grid).value);
+const save = (event) => {
+  try {
+    const productData = menuStore.catalogFilterProductsId[0]
+
+    this.mouse.x = ((event.clientX - this.canvas.getBoundingClientRect().left) / this.canvas.clientWidth) * 2 - 1;
+    this.mouse.y = -((event.clientY - this.canvas.getBoundingClientRect().top) / this.canvas.clientHeight) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+
+    const intersects = this.raycaster.intersectObjects([...this.roomManager._roomWalls, this.roomManager._roomFloor]);
+
+    const point = intersects[0].point;
+    const surface = intersects[0].object;
+
+    builder.createModel(productData, (object) => {
+
+      object.userData.MOUSE_POSITION = {
+        x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
+        y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
+      };
+
+      let config = object.userData.PROPS.CONFIG;
+
+      this.setObject.create({
+        scene: this.scene,
+        config,
+        object,
+        point,
+        roomManager: this.roomManager,
+        trafficManager: this.trafficManager,
+        boxHelper: this.boxHelper,
+        wall: surface
+      });
+    });
+
+  } catch (error) {
+    console.error('Error build:', error);
+  }
+
+  menuStore.closeMenu('2dModuleConstructor')
 };
 
 const close = () => {
   console.log("Закрытие окна");
 };
+
+const showData = () => {
+  console.log("");
+};
+
 </script>
 
 <template>
@@ -642,6 +548,35 @@ const close = () => {
         </div>
 
         <section class="actions-wrapper">
+
+            <div
+                class="actions-items--wrapper"
+                v-for="(value, sizeIndex) in menuStore.catalogFilterProductsId[0].userData.PROPS.CONFIG.SIZE"
+                :key="sizeIndex"
+            >
+              <div class="actions-items-item">
+                <button
+                    class="actions-btn actions-icon actions-icon--bottom"
+                >
+                </button>
+                <div class="actions-inputs">
+                  <p class="actions-title">
+                    {{ EN_RU_NAME[sizeIndex] }}
+                  </p>
+                  <div
+                  >
+                    <input
+                        type="number"
+                        step="10"
+                        min="150"
+                        class="actions-input"
+                        v-model="menuStore.catalogFilterProductsId[0].userData.PROPS.CONFIG.SIZE[sizeIndex]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
           <div
               class="actions-container"
               v-for="(column, colIndex) in grid"
@@ -740,6 +675,7 @@ const close = () => {
                 <div class="actions-items--right-items">
                   <button
                       class="actions-btn add-divider-btn"
+                      @click="showData"
                   >
                     Кнопка
                   </button>
@@ -749,6 +685,12 @@ const close = () => {
           </div>
         </section>
 
+        <button
+            class="actions-btn add-divider-btn save-btn"
+            @click="save"
+        >
+          Сохранить
+        </button>
       </div>
     </div>
   </div>
@@ -1008,5 +950,14 @@ const close = () => {
   position: absolute;
   top: 10px;
   right: 10px;
+}
+
+.save-btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  color: white;
+  background: #33de0c;
+  font-size: 1rem;
 }
 </style>

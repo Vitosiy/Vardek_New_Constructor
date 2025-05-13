@@ -20,6 +20,7 @@ export class BuildersHelper extends GlobalsData {
 
     createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
         let model_data = { ...data }
+        let color = this._FASADE[props.CONFIG.MODULE_COLOR]
 
         model_data = this.expressionsReplace(
             model_data,
@@ -27,6 +28,10 @@ export class BuildersHelper extends GlobalsData {
                 "#X#": size.width,
                 "#Y#": size.height,
                 "#Z#": size.depth,
+                "#MATERIAL_THICKNESS#": color?.DEPTH,
+                "#HORIZONT#": props.CONFIG.NOBOTTOM ? 0 :
+                    props.CONFIG.HORIZONT || props.CONFIG.HORIZONT === 0 ? props.CONFIG.HORIZONT :
+                        props.EXPRESSIONS["#HORIZONT#"] || 78,  //78 - стандартная высота цоколя на случай отсутствия данных
             },
         )
 

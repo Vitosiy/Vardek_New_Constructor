@@ -1,4 +1,4 @@
-export const CUTTER_PARAMS = {
+export const UI_PARAMS = {
     TOTAL_LENGTH: 3000, // Общая длина в миллиметрах
     TOTAL_HEIGHT: 1200, // Общая высота в миллиметрах
     MAX_AREA_WIDTH: 800, // Максимальная ширина области в пикселях
@@ -8,4 +8,10 @@ export const CUTTER_PARAMS = {
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
     BACKGROUND_COLOR: "#FFFFFF",
     HOLE_OFFSET: 10// Отступ от краёв
+}
+
+export const EN_RU_NAME = {
+    height: "Высота",
+    width: "Ширина",
+    depth: "Глубина",
 }

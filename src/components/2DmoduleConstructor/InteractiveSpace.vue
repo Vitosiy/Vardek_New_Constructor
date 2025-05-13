@@ -9,7 +9,7 @@ import {
   toRaw,
 } from "vue";
 import { Application, Container, Graphics, Text } from "pixi.js";
-import { CUTTER_PARAMS } from "./CutterConst.ts";
+import { UI_PARAMS} from "./UMConstructorConst.ts";
 
 const props = defineProps({
   grid: {
@@ -53,7 +53,7 @@ const {
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
   HOLE_OFFSET,
-} = CUTTER_PARAMS;
+} = UI_PARAMS;
 
 const dragState = reactive({
   isDragging: false,
@@ -209,7 +209,6 @@ const createSector = ({
   colIndex,
   rowIndex,
 }) => {
-  row.colide = new HolesCollision();
 
   let color;
   let circle = "diameter" in row.roundCut;
@@ -236,13 +235,6 @@ const createSector = ({
   cellGraphics.cursor = "pointer";
 
   sections.push(cellGraphics);
-  /** Создаём круглый разрез */
-  createRoundCut({ x, y, row, colIndex, rowIndex });
-  /** Создаём отверсти */
-
-  row.holes.forEach((data) => {
-    createHole({ data, x, y, row, colIndex, rowIndex });
-  });
 
   /** Создаём нумерацию сектора */
   createSectioNum({ x, y, width, height, row, colIndex, rowIndex });
@@ -250,10 +242,6 @@ const createSector = ({
   cellGraphics.on("pointerdown", () => {
     selectCell(colIndex, rowIndex);
   });
-  /**Создание вертикального выреза */
-  createVerticalCut({ width, height, row, col, colIndex });
-  /**Создание горизонтального выреза */
-  createHorozontalCut({ width, height, row, col, colIndex, rowIndex });
 };
 
 // Отрисовываем номер ячейки
