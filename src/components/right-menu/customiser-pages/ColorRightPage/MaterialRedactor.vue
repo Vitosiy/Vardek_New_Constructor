@@ -91,16 +91,6 @@ const onSelectPatina = (data) => {
 
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
-<<<<<<< HEAD
-  console.log("DELETE", type);
-
-  if (type == "surface") {
-    eventBus.emit("A:Delite-Fasad", props.tabIndex - 1);
-    let { NAME, DETAIL_PICTURE } = _FASADE[7397];
-    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
-    isMillingExist.value = false;
-    isPalleteExist.value = false;
-=======
   
   if(type == 'surface') {
     eventBus.emit('A:Delite-Fasad', props.tabIndex - 1);
@@ -108,7 +98,6 @@ const deleteSelectedOptions = (type: String) => {
     currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE }
     isMillingExist.value = false
     isPalleteExist.value = false
->>>>>>> develop
   }
   if (type === "milling") {
     eventBus.emit("A:DeliteMilling", props.tabIndex - 1);
@@ -133,13 +122,9 @@ const deleteSelectedOptions = (type: String) => {
 };
 
 const millingStatus = computed(() => {
-<<<<<<< HEAD
-  if (!currentMillingData.value) return "disabled";
-=======
   if (!currentMillingData.value.imgSrc) { 
     return "disabled";
   }
->>>>>>> develop
 });
 
 /** Выбор панели редактирования фрезеровки или цвета, если такая опция существует */
@@ -151,43 +136,11 @@ onMounted(() => {
   const product = productData.PROPS.PRODUCT;
 
   const currentFasadeData =
-<<<<<<< HEAD
-    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
-
-  const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS, BODY } =
-    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
-
-  currentPaletteData.value = modelState.createCurrentPaletteData(COLOR);
-
-  currentGlassData.value = modelState.createCurrentGlassData({
-    fasadeId: COLOR,
-    productId: product,
-  });
-
-  currentMillingData.value = modelState.createCurrentMillingData({
-    fasadeId: COLOR,
-    productId: product,
-  });
-
-  currentWindowsData.value = modelState.createCurrentWindowsData({
-    fasadeId: COLOR,
-    productId: product,
-  });
-
-  currentPatinaData.value = modelState.createCurrentPatinaData({
-    fasadeId: COLOR,
-    productId: product,
-  });
-
-  console.log(currentPatinaData.value, "PT");
-
-=======
   productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
   
   const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
   productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
   
->>>>>>> develop
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
   let dataOfFasadeType = _FASADE[COLOR];
 
@@ -236,11 +189,6 @@ onMounted(() => {
   }
 
   if (PATINA) {
-<<<<<<< HEAD
-    console.log("PATINA");
-
-=======
->>>>>>> develop
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentPatinaData.find(
       (patina) => patina.ID === PATINA
     );
@@ -367,13 +315,8 @@ onMounted(() => {
     border: 1px solid grey;
     border-radius: 5px;
   }
-<<<<<<< HEAD
-
-  @media (min-width: 1500px) {
-=======
   
   @media (min-height: 1000px) { 
->>>>>>> develop
     gap: 17px;
   }
 }

@@ -1,0 +1,1444 @@
+<script setup>
+import { useEventBus } from "@/store/appliction/useEventBus";
+import {
+  onMounted,
+  onBeforeMount,
+  onBeforeUnmount,
+  reactive,
+  computed,
+  ref,
+  toRaw,
+  watch,
+  defineExpose,
+} from "vue";
+import Visualization from "./TableTopVisualization.vue";
+import CutOptions from "./OptionsMenu/CutOptions.vue";
+import CutServise from "./OptionsMenu/CutServise.vue";
+import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
+import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
+
+const eventBus = useEventBus();
+
+const emit = defineEmits(["save-table-data"]);
+
+const {
+  MAX_AREA_WIDTH,
+  TOTAL_LENGTH,
+  TOTAL_HEIGHT,
+  BACKGROUND_COLOR,
+  MIN_SECTION_WIDTH,
+  MIN_SECTION_HEIGHT,
+} = CUTTER_PARAMS;
+
+let shapeAdjuster = null;
+
+const props = defineProps({
+  grid: {
+    type: Array,
+    default: CUTTER_PARAMS.DEFAULT,
+  },
+  size: {
+    type: Number,
+    default: 600,
+  },
+});
+
+const isMounted = ref(false);
+const visualizationRef = ref(null);
+const serviseData = ref([]);
+const grid = ref([]);
+const totalHeight = ref(0);
+
+const tempHole = ref({});
+
+const selectedCell = ref({ col: 0, row: 0 });
+const correct = ref({ change: false });
+const holeOptions = ref({ show: false, section: { col: 0, row: 0 } });
+const cutServise = ref({ show: false, section: { col: 0, row: 0 } });
+const splitterContainer = ref(null);
+const step = ref(1);
+
+const getHole = computed(() => {
+  const colNdx = selectedCell.value.col;
+  const rowNdx = selectedCell.value.row;
+
+  const curRow = grid.value[colNdx][rowNdx];
+
+  if (curRow.holes.length > 0) {
+    return curRow.holes;
+  }
+  return [];
+});
+// Получаем текущую секцию
+const getCurrentSection = computed(() => {
+  if (!isMounted.value) return;
+  const rowNdx = selectedCell.value.row ?? 0;
+  const colNdx = selectedCell.value.col ?? 0;
+
+  const currentColl = grid.value[colNdx];
+  const currentRow = currentColl[rowNdx];
+  return { currentRow, currentColl };
+});
+// Получаем данные услуг секции
+const getCurrentSectionServiseData = computed(() => {
+  if (!isMounted.value) return;
+  return getCurrentSection.value.currentRow.serviseData ?? [];
+});
+
+const getRoundSectionValidation = computed(() => {
+  return (col, row) => {
+    if (!isMounted.value) return;
+    try {
+      const currentColl = grid.value[col];
+      const currentRow = currentColl[row];
+
+      if ("radius" in currentRow.roundCut) return true;
+      return false;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+});
+
+const checkRounded = computed(() => {
+  if (!isMounted.value) return;
+  const row = getCurrentSection.value.currentRow;
+  if ("radius" in row.roundCut) return true;
+  return false;
+});
+
+const updateTotalHeight = (value) => {
+  totalHeight.value = parseInt(value);
+
+  visualizationRef.value.updateTotalHeight(value);
+  // visualizationRef.value.renderGrid();
+  reset();
+  visualizationRef.value.selectCell(0, 0);
+};
+
+const getMaxAreaHeight = (value) => {
+  return (value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+};
+
+// const getMaxAreaHeight = computed(() => {
+//   return (totalHeight.value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+// });
+
+const showCurrentCol = (colIndex) => {
+  selectedCell.value = { col: colIndex, row: 0 };
+  visualizationRef.value.selectCell(colIndex, 0);
+  holeOptions.value.show = false;
+  cutServise.value.show = false;
+};
+
+const addVerticalCut = (colIndex) => {
+  const column = grid.value[colIndex];
+  const halfWidth = column[0].width / 2;
+
+  if (halfWidth < 150 || !((column[0].width / 2) % step.value == 0)) return;
+
+  // Обновляем ширину текущей колонки
+  column.forEach((row) => {
+    row.width = halfWidth;
+    row.holes = [];
+    row.roundCut = {};
+  });
+
+  // Создаем новую колонку с такими же параметрами
+  const newColumn = column.map((row) => ({
+    ...row,
+    roundCut: {},
+    holes: [],
+    width: halfWidth,
+    serviseData: createServiseData(),
+  }));
+
+  grid.value.splice(colIndex + 1, 0, newColumn);
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+  console.log(grid.value, "55555");
+};
+
+const addHorizontalCut = (colIndex, rowIndex) => {
+  selectedCell.value.row = rowIndex;
+  selectedCell.value.col = colIndex;
+  visualizationRef.value.selectCell(colIndex, rowIndex, true);
+
+  const column = grid.value[colIndex];
+
+  column.forEach((row) => {
+    row.holes = [];
+    row.roundCut = {};
+  });
+
+  const curRow = getCurrentSection.value.currentRow;
+
+  const lastRow = column[column.length - 1];
+  // const halfHeight = Math.floor(lastRow.height / 2);
+
+  const halfHeight = Math.floor(curRow.height / 2);
+
+  if (halfHeight < 150 || !(curRow.height % step.value == 0)) return;
+
+  // Обновляем высоту последней строки
+  curRow.height = halfHeight;
+  const serviseData = createServiseData();
+
+  // Добавляем новую строку в эту колонку
+  column.splice(rowIndex, 0, {
+    width: curRow.width,
+    height: curRow.height, // Оставшаяся высота
+    roundCut: {},
+    holes: [],
+    serviseData: serviseData,
+  });
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const addRoundСut = (colIndex) => {
+  const column = grid.value[selectedCell.value.col];
+  const row = column[selectedCell.value.row];
+  row.holes = [];
+
+  let extremum = row.width < row.height ? row.width : row.height;
+  if (extremum > 300) extremum = 300;
+
+  if (extremum < 300) {
+    alert("Высота и ширина секции должны быть не меньше 300 мм.");
+    return;
+  }
+
+  // Добавляем круглый вырез с дефолтными параметрами
+  row.roundCut = {
+    radius: extremum,
+  };
+
+  clearServiseData(row);
+
+  visualizationRef.value.renderGrid();
+};
+
+const createHoleDataToCheck = (type, row, col) => {
+  let width, height, radius, tempHole;
+
+  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+
+  if (extremum > 600) extremum = 300;
+
+  width = extremum;
+  height = extremum;
+  radius = extremum;
+
+  switch (type) {
+    case "rect":
+      tempHole = {
+        type: "rect",
+        width,
+        height,
+      };
+      break;
+
+    case "circle":
+      tempHole = {
+        type: "circle",
+        radius,
+      };
+      break;
+  }
+
+  return visualizationRef.value.checkPositionHoleToCreate(tempHole);
+};
+
+const addHole = (type) => {
+  const col = grid.value[selectedCell.value.col];
+  const row = col[selectedCell.value.row];
+
+  const startHoleData = createHoleDataToCheck(type, row, col);
+
+  if (!startHoleData) {
+    alert("Позиция не найдена");
+    return;
+  }
+
+  if (selectedCell.value.col === null || selectedCell.value.row === null) {
+    alert("Пожалуйста, выберите секцию для добавления прямоугольного выреза");
+    return;
+  }
+
+  let preperedData;
+
+  switch (type) {
+    case "rect":
+      preperedData = {
+        ...startHoleData,
+        lable: "Прямоугольный разрез",
+        holeId: row.holes.length,
+        Mwidth: 600,
+        Mheight: 600,
+      };
+      break;
+    case "circle":
+      preperedData = {
+        ...startHoleData,
+        lable: "Круглый разрез",
+        holeId: row.holes.length,
+        Mradius: 600,
+      };
+      break;
+  }
+
+  row.holes.push(preperedData);
+
+  // // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const showHoleOptions = (colIndex, rowIndex) => {
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  cutServise.value.show = false;
+  holeOptions.value.show = true;
+  holeOptions.value.section.col = colIndex;
+  holeOptions.value.section.row = rowIndex;
+};
+
+const showCutServises = (colIndex, rowIndex) => {
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+  holeOptions.value.show = false;
+  cutServise.value.show = true;
+  cutServise.value.section.col = colIndex;
+  cutServise.value.section.row = rowIndex;
+};
+
+const toggleHoleOptions = (colIndex, rowIndex) => {
+  cutServise.value.show = false;
+  holeOptions.value.show = !holeOptions.value.show;
+};
+
+const toggleCutServise = (colIndex, rowIndex) => {
+  holeOptions.value.show = false;
+  cutServise.value.show = !cutServise.value.show;
+};
+
+const getCutServiseActive = computed(() => {
+  return (col, row) => {
+    if (!isMounted.value) return;
+    const { section, show } = cutServise.value;
+    return { active: col === section.col && row === section.row && show };
+  };
+});
+
+const getHoleOptionsActive = computed(() => {
+  return (col, row) => {
+    if (!isMounted.value) return;
+    const { section, show } = holeOptions.value;
+    return { active: col === section.col && row === section.row && show };
+  };
+});
+
+const convertServisData = (value, type, pos) => {
+  const data = getCurrentSection.value.currentRow.serviseData;
+
+  const servise = data.find((el) => el.NAME.toLowerCase() === type);
+
+  data.forEach((el) => {
+    el.pos === servise.pos ? (el.value = false) : "";
+    (el.pos === "LEFT" && servise.pos.includes(el.pos)) ||
+    (servise.pos === "LEFT" && el.pos.includes("LEFT"))
+      ? (el.value = false)
+      : "";
+    (el.pos === "RIGHT" && servise.pos.includes(el.pos)) ||
+    (servise.pos === "RIGHT" && el.pos.includes("RIGHT"))
+      ? (el.value = false)
+      : "";
+  });
+
+  servise.value = value;
+  visualizationRef.value.renderGrid();
+};
+
+const updateServiseWidth = (value, type) => {
+  const newValue = parseInt(value);
+  const data = getCurrentSection.value.currentRow.serviseData;
+  const row = getCurrentSection.value.currentRow;
+  const servise = data.find((el) => el.NAME.toLowerCase() === type);
+
+  if (newValue >= row.width) {
+    servise.width = row.width;
+  } else {
+    servise.width = newValue;
+  }
+
+  servise.width = newValue;
+  visualizationRef.value.renderGrid();
+};
+
+const updateSectionWidth = (value, colIndex, rowIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "width",
+      value: newValue,
+      col: colIndex,
+    });
+  }
+  // Обновляем значение в grid для синхронизации
+  const clone = grid.value.map((item) => item);
+  if (adjustedValue) {
+    clone[colIndex].forEach((row) => (row.width = adjustedValue));
+  }
+  grid.value = clone;
+};
+
+const updateSectionHeight = (value, colIndex, rowIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    const adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "height",
+      value: newValue,
+      col: colIndex,
+      row: rowIndex,
+    });
+  }
+  // Обновляем значение в grid для синхронизации
+  const clone = grid.value.map((item) => item);
+  if (adjustedValue) {
+    grid.value[colIndex][rowIndex].height = adjustedValue;
+  }
+  grid.value = clone;
+};
+
+const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
+  const gridCopy = grid.value.map((item) => item);
+  const column = gridCopy[colIndex];
+  const row = column[rowIndex];
+  const pixiSector = row.sector;
+
+  const prevValue = row.roundCut.radius;
+  let newValue = parseInt(value);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const shapeData = {
+    radius: newValue,
+    x: row.roundCut.x,
+    y: row.roundCut.y,
+  };
+
+  const check = shapeAdjuster.checkToCollision(
+    pixiSector,
+    "circleSector",
+    shapeData
+  );
+
+  check ? (row.roundCut.radius = newValue) : (row.roundCut.radius = prevValue);
+
+  grid.value = gridCopy;
+  visualizationRef.value.renderGrid();
+};
+
+const updateHole = (event, key, type, holeType) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
+
+  const gridCopy = grid.value.map((item) => item);
+  // const gridCopy = grid.value
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.holes[key];
+
+  const prevValue = currentRow.holes[key][type]; //Предыдущее значение
+
+  let newValue = parseInt(event.target.value);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData[type] = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  currenthole[`M${type}`] = 600;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole[type] = newValue;
+  } else {
+    currenthole[type] = prevValue;
+    currenthole[`M${type}`] = prevValue;
+  }
+
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const changeHolePositionX = (event, key, type, holeType, value) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
+
+  const gridCopy = grid.value.map((item) => item);
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.holes[key];
+
+  const prevValue = currentRow.holes[key].x; //Предыдущее значение
+
+  const newValue = prevValue + value;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData.x = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole.x = newValue;
+  } else {
+    currenthole.x = prevValue;
+  }
+
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const changeHolePositionY = (event, key, type, holeType, value) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
+
+  const gridCopy = grid.value.map((item) => item);
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.holes[key];
+
+  const prevValue = currentRow.holes[key].y; //Предыдущее значение
+
+  const newValue = prevValue + value;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData.y = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole.y = newValue;
+  } else {
+    currenthole.y = prevValue;
+  }
+
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deliteVerticalCut = (colIndex) => {
+  const current = grid.value[colIndex];
+  const next = grid.value[colIndex + 1];
+  const prev = grid.value[colIndex - 1];
+
+  const combinedWidth = next
+    ? current[0].width + next[0].width
+    : current[0].width + prev[0].width;
+
+  if (next) {
+    next.forEach((elem) => {
+      elem.width = combinedWidth;
+    });
+  } else {
+    prev.forEach((elem) => {
+      elem.width = combinedWidth;
+    });
+  }
+
+  if (grid.value.length > 1) {
+    grid.value.splice(colIndex, 1);
+  }
+
+  selectedCell.value.row = 0;
+  selectedCell.value.col = 0;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deliteHorizontalCut = (rowIndex, colIndex) => {
+  // const column = grid.value[colIndex];
+  const clone = grid.value.map((item) => item);
+  const currentCol = clone[colIndex];
+  const currentRow = currentCol[rowIndex];
+
+  const next = currentCol[rowIndex + 1];
+  const prev = currentCol[rowIndex - 1];
+
+  const combinedWidth = next
+    ? currentRow.height + next.height
+    : currentRow.height + prev.height;
+
+  next ? (next.height = combinedWidth) : (prev.height = combinedWidth);
+
+  if (currentCol.length > 1) {
+    currentCol.splice(rowIndex, 1);
+  }
+
+  currentCol.forEach((row) => {
+    row.roundCut = {};
+  });
+
+  grid.value = clone;
+
+  // Обновляем текущий сектор
+  selectedCell.value.row = 0;
+  selectedCell.value.col = colIndex;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deliteRoundCut = (colIndex, rowIndex) => {
+  const col = grid.value[colIndex];
+  const row = col[rowIndex];
+
+  row.roundCut = {};
+  visualizationRef.value.renderGrid();
+};
+
+const deliteHole = (ndx) => {
+  const colNdx = selectedCell.value.col;
+  const rowNdx = selectedCell.value.row;
+  const curRow = grid.value[colNdx][rowNdx];
+
+  curRow.holes = curRow.holes.filter((el, index) => {
+    return index !== ndx;
+  });
+
+  visualizationRef.value.renderGrid();
+};
+
+const handleCellSelect = (colIndex, rowIndex, type) => {
+  selectedCell.value = { col: colIndex, row: rowIndex };
+
+  const roundSector = grid.value[colIndex][rowIndex];
+  if ("radius" in roundSector.roundCut) {
+    holeOptions.value.show = false;
+    cutServise.value.show = false;
+    return;
+  }
+
+  holeOptions.value.section.col = colIndex;
+  holeOptions.value.section.row = rowIndex;
+  cutServise.value.section.col = colIndex;
+  cutServise.value.section.row = rowIndex;
+};
+
+const createServiseData = () => {
+  const convertParams = CUTTER_PARAMS.CUT_SERVISES.reduce((acc, el) => {
+    const param = {
+      ID: el.ID,
+      NAME: el.NAME,
+      value: false,
+      pos: el.pos,
+      radius: el.radius,
+      width: el.width,
+      corner: el.corner,
+    };
+    acc.push(param);
+    return acc;
+  }, []);
+
+  console.log(convertParams);
+
+  return convertParams;
+};
+
+const clearServiseData = (row) => {
+  row.serviseData.forEach((el) => {
+    el.value = false;
+  });
+};
+
+const reset = (reset = false) => {
+  grid.value.length = 0;
+  grid.value.push([
+    {
+      width: TOTAL_LENGTH,
+      height: totalHeight.value,
+      roundCut: {},
+      holes: [],
+      serviseData: CUTTER_PARAMS.CUT_SERVISES,
+    },
+  ]);
+  holeOptions.value = { show: false, section: { col: 0, row: 0 } };
+  cutServise.value = { show: false, section: { col: 0, row: 0 } };
+  visualizationRef.value.renderGrid();
+  if (reset) {
+    visualizationRef.value.selectCell(0, 0);
+  }
+};
+
+const save = () => {
+  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY"];
+
+  const clone = grid.value.reduce((acc, el) => {
+    const correct = el.reduce((acc, el) => {
+      let clone = {};
+      for (let value in el) {
+        if (!garbage.includes(value)) {
+          clone[value] = el[value];
+        }
+      }
+      acc.push(clone);
+      return acc;
+    }, []);
+    acc.push(correct);
+    return acc;
+  }, []);
+
+  console.log(totalHeight.value, "V");
+
+  const data = {
+    canvasHeight: totalHeight.value,
+    data: clone,
+  };
+
+  emit("save-table-data", data);
+};
+
+defineExpose({
+  shapeAdjuster,
+});
+
+onBeforeMount(() => {
+  console.log(props, "PROPS");
+  totalHeight.value = props.size;
+  // Делаем клон для реактивности
+  grid.value = toRaw(props.grid).map((item) => item);
+});
+
+onMounted(() => {
+  shapeAdjuster = new ShapeAdjuster();
+  createServiseData();
+  isMounted.value = true;
+});
+
+onBeforeUnmount(() => {
+  console.log("close");
+  shapeAdjuster = null;
+  grid.value = null;
+});
+</script>
+
+<template>
+  <div class="splitter-wrapper">
+    <div
+      class="splitter-container splitter-container--left"
+      ref="splitterContainer"
+    >
+      <div class="splitter-header">
+        <div class="splitter-header--title"><h1>Настройки распила</h1></div>
+        <div class="actions-inputs">
+          <p class="actions-title">Высота полотна</p>
+          <div class="actions-input--container">
+            <input
+              type="number"
+              step="10"
+              min="200"
+              max="1200"
+              class="actions-input"
+              :value="totalHeight"
+              @input="updateTotalHeight($event.target.value)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="splitter-content">
+        <Visualization
+          v-if="isMounted"
+          ref="visualizationRef"
+          :step="step"
+          :grid="grid"
+          :correct="correct"
+          :container="splitterContainer"
+          :max-area-height="props.size"
+          :tempHole="tempHole"
+          @cell-selected="handleCellSelect"
+        />
+      </div>
+
+      <section class="actions-wrapper">
+        <div class="actions-header">
+          <div
+            :class="[
+              'actions-header--container',
+              { active: colIndex === selectedCell.col },
+            ]"
+            v-for="(column, colIndex) in grid"
+            :key="colIndex"
+          >
+            <button
+              v-if="grid.length > 1"
+              class="actions-btn actions-icon"
+              @click="deliteVerticalCut(colIndex)"
+            >
+              <img
+                class="actions-icon--delite"
+                src="/icons/delite.svg"
+                alt=""
+              />
+            </button>
+            <p
+              class="actions-title actions-title--part"
+              @click="showCurrentCol(colIndex)"
+            >
+              {{ colIndex + 1 }} группа
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="actions-container"
+          v-for="(column, colIndex) in grid"
+          :key="colIndex"
+        >
+          <div
+            class="actions-items--wrapper"
+            v-if="selectedCell.col === colIndex"
+          >
+            <div
+              v-for="(row, rowIndex) in column"
+              :key="rowIndex"
+              :class="[
+                'actions-items--container',
+                {
+                  active:
+                    rowIndex === selectedCell.row &&
+                    colIndex === selectedCell.col,
+                },
+              ]"
+            >
+              <article class="actions-items actions-items--left">
+                <div class="actions-items--left-wrapper">
+                  <div class="actions-items--title">
+                    <button
+                      v-if="column.length > 1"
+                      class="actions-btn actions-icon"
+                      @click="deliteHorizontalCut(rowIndex, colIndex)"
+                    >
+                      <img
+                        class="actions-icon--delite"
+                        src="/icons/delite.svg"
+                        alt=""
+                      />
+                    </button>
+                    <p class="actions-title actions-title--part">
+                      {{ colIndex + 1 }}.{{ rowIndex + 1 }} часть
+                    </p>
+                  </div>
+
+                  <div class="actions-items--width" v-if="!row.roundCut.radius">
+                    <div class="actions-inputs">
+                      <p class="actions-title">Ширина</p>
+                      <div
+                        :class="[
+                          'actions-input--container',
+                          grid.length <= 1 ? 'disable' : '',
+                        ]"
+                      >
+                        <input
+                          type="number"
+                          :step="step"
+                          min="150"
+                          class="actions-input"
+                          :value="column[0].width"
+                          @input="
+                            updateSectionWidth(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="actions-items--height">
+                    <div class="actions-inputs">
+                      <p class="actions-title">
+                        Высота {{ colIndex + 1 }}.{{ rowIndex + 1 }}
+                      </p>
+                      <div
+                        :class="[
+                          'actions-input--container',
+                          column.length <= 1 ? 'disable' : '',
+                        ]"
+                      >
+                        <input
+                          type="number"
+                          :step="step"
+                          min="150"
+                          class="actions-input"
+                          :value="row.height"
+                          @input="
+                            updateSectionHeight(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="actions-items--diametr"
+                    v-if="row.roundCut.radius"
+                  >
+                    <button
+                      v-if="row.roundCut.radius"
+                      @click="deliteRoundCut(colIndex, rowIndex)"
+                      class="actions-btn actions-icon actions-icon--bottom"
+                    >
+                      <img
+                        class="actions-icon--delite actions-icon--delite-center"
+                        src="/icons/delite.svg"
+                        alt=""
+                      />
+                    </button>
+                    <div class="actions-inputs">
+                      <p class="actions-title">
+                        Диаметр {{ colIndex + 1 }}.{{ rowIndex + 1 }}
+                      </p>
+                      <div class="actions-input--container">
+                        <input
+                          type="number"
+                          step="5"
+                          min="300"
+                          max="600"
+                          class="actions-input"
+                          :value="row.roundCut.radius"
+                          @input="
+                            updateRoundCutDiameter(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="actions-items actions-items--right">
+                <div class="actions-items--right-items">
+                  <button
+                    class="actions-btn actions-btn--default"
+                    @click="addVerticalCut(colIndex)"
+                  >
+                    Верт.распил
+                  </button>
+
+                  <button
+                    class="actions-btn actions-btn--default"
+                    @click="addHorizontalCut(colIndex, rowIndex)"
+                  >
+                    Горизон.распил
+                  </button>
+
+                  <button
+                    class="actions-btn actions-btn--default"
+                    @click="addRoundСut(colIndex)"
+                    v-if="!getRoundSectionValidation(colIndex, rowIndex)"
+                  >
+                    Круг.распил
+                  </button>
+
+                  <button
+                    :class="[
+                      'actions-btn actions-btn--default',
+                      getHoleOptionsActive(colIndex, rowIndex),
+                    ]"
+                    v-if="!getRoundSectionValidation(colIndex, rowIndex)"
+                    @click="showHoleOptions(colIndex, rowIndex)"
+                  >
+                    Разрез
+                  </button>
+
+                  <button
+                    :class="[
+                      'actions-btn actions-btn--default',
+                      getCutServiseActive(colIndex, rowIndex),
+                    ]"
+                    v-if="!getRoundSectionValidation(colIndex, rowIndex)"
+                    @click="showCutServises(colIndex, rowIndex)"
+                  >
+                    Услуги
+                  </button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="actions-footer">
+        <button class="actions-btn actions-btn--footer" @click="reset(true)">
+          Сбросить
+        </button>
+        <div class="actions-footer--save">
+          <button class="actions-btn actions-btn--footer" @click="save">
+            Сохранить
+          </button>
+          <slot name="close"></slot>
+        </div>
+      </section>
+    </div>
+    <div
+      class="splitter-container splitter-container--right"
+      v-if="
+        (holeOptions.show && !checkRounded && !cutServise.show) ||
+        (cutServise.show && !checkRounded && !holeOptions.show)
+      "
+    >
+      <CutOptions
+        v-if="holeOptions.show"
+        :holes="getHole"
+        :step="step"
+        @cut-addHole="addHole"
+        @cut-deleteHole="deliteHole"
+        @cut-updateHole="updateHole"
+        @cut-toggleHoleOptions="toggleHoleOptions"
+        @cut-changePositionX="changeHolePositionX"
+        @cut-changePositionY="changeHolePositionY"
+      />
+
+      <CutServise
+        v-if="cutServise.show"
+        :servise-data="getCurrentSectionServiseData"
+        :current-section="getCurrentSection"
+        @cut-toggleCutServise="toggleCutServise"
+        @cut-servisData="convertServisData"
+        @cut-updateServise="updateServiseWidth"
+      />
+    </div>
+  </div>
+</template>
+
+<style lang="scss">
+.splitter {
+  &-wrapper {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+    height: 85vh;
+    max-width: 85vw;
+
+    font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
+      sans-serif;
+  }
+
+  &-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    width: 100%;
+
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+
+    &--left {
+      max-width: 60vw;
+    }
+
+    &--right {
+      max-width: 25vw;
+      max-height: 55vh;
+      overflow: hidden;
+    }
+  }
+
+  &-content {
+    display: flex;
+    justify-content: center;
+    height: 320px;
+  }
+
+  &-title {
+    font-weight: 400;
+    color: #131313;
+  }
+
+  &-header {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    &--title {
+      display: flex;
+      align-items: end;
+    }
+  }
+}
+
+.actions {
+  &-wrapper {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-right: 0.5rem;
+  }
+
+  &-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    &--save {
+      display: flex;
+      gap: 1rem;
+    }
+  }
+
+  &-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 450px;
+    overflow-y: scroll;
+    padding-right: 0.5rem;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+      /* Ширина скроллбара */
+    }
+
+    &::-webkit-scrollbar-button {
+      display: none;
+      /* Убираем стрелки */
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      /* Цвет ползунка */
+      border-radius: 4px;
+    }
+  }
+
+  &-header {
+    display: flex;
+    align-items: center;
+    // gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem 0;
+    border-bottom: 1px solid #ecebf1;
+    border-top: 1px solid #ecebf1;
+
+    &--container {
+      display: flex;
+      align-items: center;
+      // gap: 0.5rem;
+      padding-right: 0.5rem;
+      border-right: 1px solid #ecebf1;
+      border-bottom: 1px solid transparent;
+      cursor: pointer;
+
+      &.active {
+        border-bottom: 1px solid #da444c;
+      }
+    }
+  }
+
+  &-items {
+    display: flex;
+    flex-wrap: wrap;
+    // gap: 1rem;
+    align-items: center;
+
+    &--wrapper {
+      display: flex;
+      flex-direction: column;
+
+      width: 100%;
+      padding: 0 0 1rem 0;
+    }
+
+    &--container {
+      display: flex;
+      width: 100%;
+      padding: 1rem 0;
+      border-bottom: 1px solid #ecebf1;
+
+      // &:first-child {
+      //   padding-top: 0;
+      // }
+
+      &.active {
+        background-color: #f1f1f5;
+      }
+    }
+
+    &--left,
+    &--right {
+      width: 100%;
+    }
+
+    &--left {
+      align-items: start;
+      max-width: 45%;
+
+      &-wrapper {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-left: 1rem;
+        // max-width: calc(50% - 1rem);
+      }
+    }
+
+    &--right {
+      max-width: calc(65% - 1rem);
+      margin-left: 1rem;
+
+      &-items {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+    }
+
+    &--height,
+    &--diametr,
+    &--width {
+      display: flex;
+      width: 150px;
+
+      &-item {
+        display: flex;
+        align-items: flex-start;
+        height: fit-content;
+        // gap: 0.5rem;
+      }
+    }
+
+    &--title {
+      display: flex;
+      align-items: center;
+      align-self: end;
+      margin-bottom: 0.5rem;
+    }
+
+    // &--diametr {
+    //   display: flex;
+    //   flex-wrap: wrap;
+    //   gap: 1rem;
+
+    //   &-wrapper {
+    //     max-width: 25%;
+    //   }
+
+    //   &-item {
+    //     display: flex;
+    //     align-items: flex-start;
+    //     width: 100%;
+    //     height: fit-content;
+    //     // gap: 0.5rem;
+    //   }
+    // }
+
+    // &--width {
+    //   display: flex;
+    //   gap: 1rem;
+    //   align-items: start;
+    //   flex-wrap: wrap;
+    //   width: 100%;
+    //   max-width: 20%;
+    //   height: 100%;
+    // }
+
+    // &--diametr,
+    // &--height {
+    //   &-wrapper {
+    //     width: 100%;
+    //     margin-left: 1rem;
+    //     border-right: 1px solid #ecebf1;
+    //   }
+    // }
+  }
+
+  &-title {
+    font-size: 1rem;
+    color: #a3a9b5;
+
+    // &--part {
+    //   margin-bottom: 0.5rem;
+    // }
+  }
+
+  &-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 150px;
+  }
+
+  &-input {
+    padding: 0.5rem 1rem;
+    width: 100%;
+    max-width: 125px;
+    border: none;
+    border-radius: 15px;
+    background-color: #ecebf1;
+    color: #6d6e73;
+    font-size: 1rem;
+    font-weight: 600;
+
+    &:focus {
+      outline: none;
+    }
+
+    &--container {
+      position: relative;
+
+      &::before {
+        content: "mm";
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 60px;
+        transform: translate(0, -50%);
+
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6d6e73;
+      }
+    }
+  }
+
+  &-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ecebf1;
+    border-radius: 15px;
+    background-color: #ffffff;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #5d6069;
+    outline: none;
+
+    &--default,
+    &--footer {
+      transition-property: background-color, color, border;
+      transition-timing-function: ease;
+      transition-duration: 0.25s;
+      @media (hover: hover) {
+        /* when hover is supported */
+        &:hover {
+          color: white;
+          background-color: #da444c;
+          border: 1px solid transparent;
+        }
+      }
+    }
+    &--footer {
+      background-color: #ecebf1;
+    }
+
+    &:focus {
+      outline: none;
+    }
+    &.active {
+      border-color: #da444c;
+      color: #181818;
+      transition-property: background-color, color, border;
+      transition-timing-function: ease;
+      transition-duration: 0.25s;
+
+      @media (hover: hover) {
+        /* when hover is supported */
+        &:hover {
+          color: white;
+          background-color: #da444c;
+        }
+      }
+    }
+  }
+
+  &-icon {
+    border: none;
+    background-color: transparent;
+    padding: 0 5px;
+
+    &--delite,
+    &--close,
+    &--help {
+      width: 18px;
+      height: 18px;
+    }
+
+    &--add {
+      width: 12px;
+      height: 12px;
+    }
+
+    &--delite {
+      &-center {
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    &--bottom {
+      align-self: flex-end;
+      padding: 5px;
+    }
+
+    &--position {
+      width: 25px;
+      height: 25px;
+    }
+  }
+}
+
+.line {
+  &-bottom {
+    width: 100%;
+    padding-bottom: 10px;
+    border-bottom: 1px solid black;
+  }
+}
+
+.disable {
+  pointer-events: none;
+  cursor: auto;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+</style>

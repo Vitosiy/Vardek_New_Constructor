@@ -184,6 +184,20 @@ export class Filters extends GlobalsData {
         return items.filter((colorId: number) => this._FASADE[colorId]);
     }
 
+    filterUslugi(product_uslugi: number[]) {
+
+        const filtered = product_uslugi.filter(el => this._USLUGI[el])
+        const filteredData = filtered.reduce((acc, el) => {
+            acc.push(this._USLUGI[el])
+            return acc
+
+        }, [])
+
+
+        return filteredData
+
+    }
+
     // filterModuleColorID(items: THREETypes.TObject, criteria: THREETypes.TObject) {
     //     const tmp = {};
     //     const ids = criteria?.IDS || false;

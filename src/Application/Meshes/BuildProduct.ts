@@ -157,8 +157,7 @@ export class BuildProduct extends BuildersHelper {
             LEG: {},
             MILLINGS: [],
             PRODUCT: product_data.ID,
-            RASPILLIST: [],
-            RASPILFRAGMENT: [],
+            RASPIL: [],
             SHELF: [],
             SEPARATED: [],
             SECTIONSOBJ: [],
@@ -167,13 +166,13 @@ export class BuildProduct extends BuildersHelper {
             WINDOW_DEFAULT: []
         }
 
-        let params = this.createProductObject(product_data)
+        let params = this.createProductObject(product_data, props)
         props.CONFIG = params
 
         return props
     }
 
-    createProductObject(product_data: THREETypes.TObject, self: BuildProduct = this) {
+    createProductObject(product_data: THREETypes.TObject, props) {
 
         // console.log(product_data, 'product_data')
 
@@ -220,7 +219,8 @@ export class BuildProduct extends BuildersHelper {
                 column_index: null,
                 backupFasadId: null,
                 color: null
-            }
+            },
+            USLUGI: []
         }
 
         PARAMS.HAVETABLETOP = (product_data.tabletop != null && this.project.table_top_type_auto) as boolean
@@ -260,6 +260,13 @@ export class BuildProduct extends BuildersHelper {
 
         if (product_data.type_showcase.length && product_data.type_showcase[0] != null) {
             PARAMS.SHOWCASE = [...product_data.type_showcase]
+        }
+
+        //-------------------------- 19.05.2025---------------------------
+
+        if (product_data.USLUGI.length && product_data.USLUGI[0] != null) {
+            PARAMS.USLUGI = this.filters.filterUslugi(product_data.USLUGI)
+            props.RASPIL = this.createStartTopTableCutData(PARAMS.USLUGI, product_data)
         }
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);

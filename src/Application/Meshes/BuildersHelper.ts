@@ -5,7 +5,7 @@ import * as THREETypes from "@/types/types"
 import { useAppData } from "@/store/appliction/useAppData"
 
 import { GlobalsData } from './Utils/Globals'
-
+import { CUTTER_PARAMS } from "@/ConstructorTabletop/CutterScripts/CutterConst"
 export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
@@ -357,10 +357,32 @@ export class BuildersHelper extends GlobalsData {
 
     calculateFromString(expression) {
         try {
-          const func = new Function("return " + expression);
-          return func();
+            const func = new Function("return " + expression);
+            return func();
         } catch (error) {
-          return "Недопустимое выражение!";
+            return "Недопустимое выражение!";
         }
-      }
+    }
+
+    createStartTopTableCutData(uslugi, product_data) {
+
+        const { width, depth } = product_data
+        const startCutData = {
+            canvasHeight: depth,
+            data: [
+                [
+                    {
+                        width,
+                        height: depth,
+                        roundCut: {},
+                        holes: [],
+                        serviseData: CUTTER_PARAMS.CUT_SERVISES
+
+                    }
+                ]
+            ]
+        }
+
+        return startCutData
+    }
 }

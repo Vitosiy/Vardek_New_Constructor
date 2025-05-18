@@ -30,7 +30,7 @@ export class SetObject {
         this.root = root
     }
 
-    create({ scene, config, object, point, rotate, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
+    create({ scene, object, point, rotate, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
 
         const { CONFIG } = object.userData.PROPS
         const { POSITION, ROTATION, UNIFORM_TEXTURE } = CONFIG
@@ -48,7 +48,7 @@ export class SetObject {
             CONFIG.ROTATION = new THREE.Euler(rotate._x, rotate._y, rotate._z, 'XYZ')
         }
 
-        object.userData.globalData = config.ID;
+        object.userData.globalData = CONFIG.ID;
 
         // /** Проверяем положение объекта внутри комнаты */
 

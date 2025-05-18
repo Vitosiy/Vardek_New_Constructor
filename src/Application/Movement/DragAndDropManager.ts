@@ -92,11 +92,8 @@ export class DragAndDropManager {
                             y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
                         };
     
-                        let config = object.userData.PROPS.CONFIG;
-
                         this.setObject.create({
                             scene:this.scene, 
-                            config, 
                             object, 
                             point, 
                             roomManager:this.roomManager, 

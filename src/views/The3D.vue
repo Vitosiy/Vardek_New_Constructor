@@ -4,7 +4,7 @@ import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
 import { _URL } from "@/types/constants";
 
-import {  ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -20,6 +20,8 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
+import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
+import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
 import ContentControllerButton from "@/components/ui/buttons/right-menu/controller/ContentControllerButton.vue";
@@ -78,8 +80,6 @@ const floorMaterials = useAppData().getAppData.FLOOR;
 const customiserStore = useCustomiserStore();
 const objectData = useObjectData(); /** Текущий объект */
 const roomContantData = useRoomContantData();
-
-
 
 const _FASADE = appData.FASADE;
 const _MILLING = appData.MILLING;
@@ -157,7 +157,12 @@ const showGlass = ref<boolean>(false);
 
 const selectGlass = ref<any>(null);
 const selectMilling = ref<any>(null);
-/** ---------------------------------------------- */
+
+/** ----------------- 19.05.25 ----------------------------- */
+
+//Распил
+const CutData = ref({});
+const isModalOpen = ref(false);
 
 onMounted(() => {
   if (sceneContainer.value) {
@@ -170,84 +175,79 @@ onMounted(() => {
     });
 
     // Пописать интерфейс *item*
-    eventBus.on("A:Selected", (item: any) => {
-      //TODO функция срабатывает при скролле. Спросить о стандартном поведении.
-      
-      let object = item.object;
-
-      let roomContant = item.roomContant;
-      totalContent.value = roomContant;
-
-      // let roomContant = item.roomContant;
-      // totalContent.value = roomContant;
-      
-      if (!object) {
-        controller.value = false;
-        return;
-      }
-
-      objectData.setObjectData(object);
-      roomContantData.setRoomContantData(totalContent.value);
-
-      getProductSizeProps(
-        object?.PROPS.CONFIG.SIZE,
-        object?.PROPS.CONFIG.SIZE_EDIT
-      );
-      
-      controller.value = true;
-      
-      getCurrentProduct(object);
-
-      controller.value = true;
-
-      // /**  Список FASADE для корпуса модели */
-      // productColor.value = object?.PROPS.CONFIG.MODULE_COLOR_LIST;
-
-      // /** Доступные модели фасадов для продукта */
-      // productFasades.value = object?.PROPS.CONFIG.FASADE_PROPS;
-
-      /** Получаем список типов FASADE для фасалдов модели */
-      // fasades.value = modelState.getCurrentModelFasadesData;
-      // console.log(fasades.value, 'FVALUE')
-
-      /**  Координаты мыши */
-      controllerPositionData.value = object?.MOUSE_POSITION;
-
-      productData.value = { ...object?.PROPS };
-      useModelState().setCurrentModel(item.object)
-    });
+    eventBus.on("A:Selected", selected);
   }
 });
 
 onBeforeUnmount(() => {
   console.log("onBeforeUnmount");
-  uniformState.resetUniformState()
+  uniformState.resetUniformState();
 
   VerdekConstructor?.destroy();
   VerdekConstructor = null;
-
-
 });
 
 watch(shadows, () => {
   toggleShadow(shadows.value);
-
 });
 
 watch(refraction, () => {
   toggleRefraction(refraction.value);
-
 });
 
 watch(pointLightValue, () => {
   changePointLightPower(pointLightValue.value);
-
 });
 
 // watch(paletteColorsData, () => {
 //   showPalette.value =
 //     Object.keys(paletteColorsData.value).length > 0 ? true : false;
 // });
+
+const selected = (item: any) => {
+  let object = item.object;
+
+  let roomContant = item.roomContant;
+  totalContent.value = roomContant;
+
+  // let roomContant = item.roomContant;
+  // totalContent.value = roomContant;
+
+  if (!object) {
+    controller.value = false;
+    CutData.value = {};
+    return;
+  }
+
+  const { PROPS } = object;
+  const { CONFIG, RASPIL } = object.PROPS;
+
+  objectData.setObjectData(object);
+  roomContantData.setRoomContantData(totalContent.value);
+
+  getProductSizeProps(CONFIG.SIZE, CONFIG.SIZE_EDIT);
+
+  controller.value = true;
+
+  product.value = object;
+
+  controller.value = true;
+
+  /**  Координаты мыши */
+  controllerPositionData.value = object?.MOUSE_POSITION;
+
+  productData.value = { ...PROPS };
+  console.log();
+
+  if (!("data" in RASPIL)) return;
+  if (RASPIL.data.length) {
+    CutData.value = {
+      data: RASPIL.data,
+      size: RASPIL.canvasHeight,
+    };
+  }
+  useModelState().setCurrentModel(item.object);
+};
 
 const resizeRoom = () => {
   if (VerdekConstructor) {
@@ -308,7 +308,6 @@ const toggleiew = () => {
 
 const changeWallTexture = () => {
   if (VerdekConstructor) {
-
     eventBus.emit("A:ChangeWallTexture", wallTexture.value);
   }
 };
@@ -478,6 +477,25 @@ const controllerPosition = computed(() => {
     transform: `translate(${controllerPositionData.value.x}px, ${controllerPositionData.value.y}px )`,
   };
 });
+
+/** Работа о сталешницами */
+
+const getTableTopData = (data: string) => {
+  console.log(JSON.parse(data));
+};
+
+const saveTableData = ({ data, canvasHeight }) => {
+  if (!product.value) return;
+
+  console.log(data, "DATA");
+  product.value.PROPS.RASPIL = { data, canvasHeight };
+  console.log(product.value.PROPS.RASPIL, "RASPIL");
+};
+
+const closeTableRTedactor = () => {
+  // CutData.value = {};
+  isModalOpen.value = false;
+};
 </script>
 
 <template>
@@ -500,7 +518,9 @@ const controllerPosition = computed(() => {
       v-for="(item, key) in uniformState.getUniformGroups"
       :key="key + item.id"
     >
-      <p class="uniform__name" :style="[`background-color: ${item.color}`]">Группа {{ item.id + 1 }}</p>
+      <p class="uniform__name" :style="[`background-color: ${item.color}`]">
+        Группа {{ item.id + 1 }}
+      </p>
       <button class="uniform__btn" @click="deliteUniformGroup(item.id)">
         УДАЛИТЬ ГРУППУ
       </button>
@@ -533,7 +553,7 @@ const controllerPosition = computed(() => {
         uniformState.getPreGroup > 0 &&
         uniformState.getUniformModeData.uniformMode
       "
-      @click="сreateUniformGroup"
+      @click="сreateUniformGroup;"
     >
       Создать
     </button>
@@ -560,8 +580,19 @@ const controllerPosition = computed(() => {
     </button> -->
   </div>
 
-  <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load" style="top: 15rem; left:25rem" >
-    <option v-for="(room, key) in roomStore.getRooms" :key="key" :value="room.id">
+  <select
+    class="example"
+    id="rooms"
+    v-model="selectValue"
+    name="rooms"
+    @change="load"
+    style="top: 15rem; left: 25rem"
+  >
+    <option
+      v-for="(room, key) in roomStore.getRooms"
+      :key="key"
+      :value="room.id"
+    >
       {{ room.label }}
     </option>
   </select>
@@ -681,8 +712,40 @@ const controllerPosition = computed(() => {
       <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
       <UpControllerButton />
       <OpenFacadeButton />
+
+      <Modal
+        v-if="CutData.data"
+        :container="`modal--tableTop`"
+        @open-modal="isModalOpen = true"
+        @close-modal="closeTableRTedactor"
+      >
+        <template #modalBody="{ onModalClose }" class="modal--tableTop">
+          <TableTopManager
+            :grid="CutData.data"
+            :size="CutData.size"
+            @save-table-data="saveTableData"
+            v-if="isModalOpen"
+          >
+            <template #close>
+              <button
+                @click="
+                  () => {
+                    onModalClose();
+                  }
+                "
+                class="actions-btn actions-btn--footer"
+              >
+                Закрыть
+              </button>
+            </template>
+          </TableTopManager>
+        </template>
+        <template #modalOpen="{ onModalOpen }">
+          <button class="cut-btn" @click="onModalOpen"><img class="cut-icon" src="/icons/cut.svg" alt=""></button>
+        </template>
+      </Modal>
     </div>
-  </div> 
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -703,7 +766,6 @@ const controllerPosition = computed(() => {
     gap: 1rem;
   }
 }
-
 
 .scene-container {
   width: 100dvw;
@@ -923,6 +985,7 @@ const controllerPosition = computed(() => {
     background-color: rgb(255, 111, 111);
     pointer-events: none;
     cursor: none;
+
     &:hover {
       background-color: rgba(255, 111, 111, 0.581);
     }
@@ -930,6 +993,7 @@ const controllerPosition = computed(() => {
 
   &_green {
     background-color: rgb(111, 255, 152);
+
     &:hover {
       background-color: rgba(111, 255, 152, 0.581);
     }
@@ -978,6 +1042,40 @@ const controllerPosition = computed(() => {
   &--image {
     width: 25px;
     aspect-ratio: 1;
+  }
+}
+
+.modal {
+  &--tableTop {
+    border: none;
+    width: 95vw;
+    height: 95vh;
+    display: none;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+.cut{
+  &-btn{
+    width: 50px;
+    height: 50px;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background-color: #ecebf1;
+    border: 2px solid #ffffff;
+    border-radius: 360px;
+    cursor: pointer;
+    transition: 0.05s;
+    pointer-events: auto;
+    transform: translate(65px, -30px);
+  }
+  &-icon{
+    width: 25px;
+    height: 25px;
   }
 }
 </style>
