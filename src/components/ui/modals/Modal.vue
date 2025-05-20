@@ -13,7 +13,6 @@ const dialogBody = ref(null);
 
 const openModal = () => {
   dialogBody.value?.showModal();
-  console.log('OPEN')
   emit("open-modal", true);
 };
 
@@ -42,13 +41,15 @@ onMounted(() => {
 </template>
 <style scoped>
 .modal {
-  display: none; /* Скрываем по умолчанию */
+  /* display: none;  */
   width: 100%;
   max-width: 85vw;
   padding: 0;
   border: none;
   background-color: transparent;
-
+  transform: scale(0);
+  filter: blur(10px);
+  transition: all ease-in 0.45s;
 }
 
 .modal:focus {
@@ -56,8 +57,10 @@ onMounted(() => {
 }
 
 .modal[open] {
-  display: block;
-      pointer-events: auto;
+  /* display: block; */
+  transform: scale(1);
+  filter: blur(0px);
+  pointer-events: auto;
 }
 
 .modal::backdrop {

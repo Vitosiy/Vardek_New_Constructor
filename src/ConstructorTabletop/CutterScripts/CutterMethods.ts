@@ -1,4 +1,5 @@
 
+// @ts-nocheck 31
 import { CUTTER_PARAMS } from "./CutterConst";
 import { Application, Container, Graphics, Text, TextStyle, GraphicsPath } from "pixi.js";
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import { computed, ref, toRefs } from "vue";
 import { SERVISE_ERRORS } from "@/ConstructorTabletop/CutterScripts/CutterConst";
 import Tooltip from "./Tooltip.vue";

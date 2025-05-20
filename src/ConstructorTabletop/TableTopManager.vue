@@ -1,4 +1,5 @@
-<script setup>
+<script setup lang="ts">
+// @ts-nocheck
 import { useEventBus } from "@/store/appliction/useEventBus";
 import {
   onMounted,
@@ -10,6 +11,7 @@ import {
   toRaw,
   watch,
   defineExpose,
+  nextTick,
 } from "vue";
 import Visualization from "./TableTopVisualization.vue";
 import CutOptions from "./OptionsMenu/CutOptions.vue";
@@ -37,7 +39,7 @@ const props = defineProps({
     type: Array,
     default: CUTTER_PARAMS.DEFAULT,
   },
-  size: {
+  canvasHeight: {
     type: Number,
     default: 600,
   },
@@ -694,14 +696,18 @@ const reset = (reset = false) => {
   }
 };
 
-const save = () => {
+const saveGrid = () => {
   const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY"];
-
   const clone = grid.value.reduce((acc, el) => {
     const correct = el.reduce((acc, el) => {
       let clone = {};
       for (let value in el) {
         if (!garbage.includes(value)) {
+          if (value === "roundCut") {
+            if ("graphic" in el[value]) {
+              delete el[value].graphic;
+            }
+          }
           clone[value] = el[value];
         }
       }
@@ -712,31 +718,31 @@ const save = () => {
     return acc;
   }, []);
 
-  console.log(totalHeight.value, "V");
-
   const data = {
     canvasHeight: totalHeight.value,
     data: clone,
   };
 
-  emit("save-table-data", data);
+  // emit("save-table-data", data);
+  return data;
 };
 
 defineExpose({
-  shapeAdjuster,
+  saveGrid,
 });
 
 onBeforeMount(() => {
-  console.log(props, "PROPS");
-  totalHeight.value = props.size;
+  totalHeight.value = props.canvasHeight;
   // Делаем клон для реактивности
-  grid.value = toRaw(props.grid).map((item) => item);
+  grid.value = JSON.parse(JSON.stringify(props.grid));
 });
 
 onMounted(() => {
   shapeAdjuster = new ShapeAdjuster();
   createServiseData();
-  isMounted.value = true;
+  nextTick().then(() => {
+    isMounted.value = true;
+  });
 });
 
 onBeforeUnmount(() => {
@@ -778,7 +784,7 @@ onBeforeUnmount(() => {
           :grid="grid"
           :correct="correct"
           :container="splitterContainer"
-          :max-area-height="props.size"
+          :max-area-height="props.canvasHeight"
           :tempHole="tempHole"
           @cell-selected="handleCellSelect"
         />
@@ -1007,9 +1013,10 @@ onBeforeUnmount(() => {
           Сбросить
         </button>
         <div class="actions-footer--save">
-          <button class="actions-btn actions-btn--footer" @click="save">
+          <!-- <button class="actions-btn actions-btn--footer" @click="save">
             Сохранить
-          </button>
+          </button> -->
+          <slot name="save"></slot>
           <slot name="close"></slot>
         </div>
       </section>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck 
 import { ref, toRefs } from "vue";
 
 const props = defineProps({

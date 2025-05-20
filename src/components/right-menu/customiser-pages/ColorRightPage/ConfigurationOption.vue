@@ -39,7 +39,7 @@ let chooseOption = () => {
 
 const deleteChoise = (event) => {
   event.stopPropagation()
-  emit("delete-choise", props.type);
+  emit("delete-choise", props.type)
 };
 </script>
 

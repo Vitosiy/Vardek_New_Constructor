@@ -161,8 +161,11 @@ const selectMilling = ref<any>(null);
 /** ----------------- 19.05.25 ----------------------------- */
 
 //Распил
+const tableTopManager = ref();
 const CutData = ref({});
 const isModalOpen = ref(false);
+const gridSaved = ref(false);
+const CutCash = ref({});
 
 onMounted(() => {
   if (sceneContainer.value) {
@@ -216,6 +219,7 @@ const selected = (item: any) => {
   if (!object) {
     controller.value = false;
     CutData.value = {};
+    CutCash.value = {};
     return;
   }
 
@@ -227,6 +231,9 @@ const selected = (item: any) => {
 
   getProductSizeProps(CONFIG.SIZE, CONFIG.SIZE_EDIT);
 
+  // CutData.value = {};
+  // CutCash.value = {};
+
   controller.value = true;
 
   product.value = object;
@@ -237,15 +244,19 @@ const selected = (item: any) => {
   controllerPositionData.value = object?.MOUSE_POSITION;
 
   productData.value = { ...PROPS };
-  console.log();
 
-  if (!("data" in RASPIL)) return;
-  if (RASPIL.data.length) {
-    CutData.value = {
-      data: RASPIL.data,
-      size: RASPIL.canvasHeight,
-    };
-  }
+  if (!RASPIL.data) return;
+
+  CutData.value = {
+    data: RASPIL.data,
+    canvasHeight: RASPIL.canvasHeight,
+  };
+
+  CutCash.value = {
+    data: RASPIL.data,
+    canvasHeight: RASPIL.canvasHeight,
+  };
+
   useModelState().setCurrentModel(item.object);
 };
 
@@ -480,21 +491,25 @@ const controllerPosition = computed(() => {
 
 /** Работа о сталешницами */
 
-const getTableTopData = (data: string) => {
-  console.log(JSON.parse(data));
-};
-
 const saveTableData = ({ data, canvasHeight }) => {
   if (!product.value) return;
+  const newData = tableTopManager.value.saveGrid();
+  // product.value.PROPS.RASPIL = { data, canvasHeight };
+  product.value.PROPS.RASPIL = newData;
 
-  console.log(data, "DATA");
-  product.value.PROPS.RASPIL = { data, canvasHeight };
-  console.log(product.value.PROPS.RASPIL, "RASPIL");
+  gridSaved.value = true;
 };
 
-const closeTableRTedactor = () => {
-  // CutData.value = {};
+const openTableRedactor = () => {
+  isModalOpen.value = true;
+};
+
+const closeTableRedactor = () => {
+  if (!gridSaved.value) product.value.PROPS.RASPIL = CutCash.value;
+
+  CutData.value = product.value.PROPS.RASPIL;
   isModalOpen.value = false;
+  gridSaved.value = false;
 };
 </script>
 
@@ -506,18 +521,11 @@ const closeTableRTedactor = () => {
     <button class="btn" @click="changeHeightClamp">Поменять</button>
   </div> -->
 
-  <div
-    class="uniform__container"
-    v-if="
-      uniformState.getUniformGroups.length > 0 &&
-      uniformState.getUniformModeData.uniformMode
-    "
-  >
-    <div
-      class="uniform__item"
-      v-for="(item, key) in uniformState.getUniformGroups"
-      :key="key + item.id"
-    >
+  <div class="uniform__container" v-if="
+    uniformState.getUniformGroups.length > 0 &&
+    uniformState.getUniformModeData.uniformMode
+  ">
+    <div class="uniform__item" v-for="(item, key) in uniformState.getUniformGroups" :key="key + item.id">
       <p class="uniform__name" :style="[`background-color: ${item.color}`]">
         Группа {{ item.id + 1 }}
       </p>
@@ -538,23 +546,14 @@ const closeTableRTedactor = () => {
   <div class="ui-panel--right">
     <!-- <button class="btn" @click="save">Сохранить</button>
     <button class="btn" @click="create">Создать новую</button> -->
-    <button
-      style="margin-top: 2rem"
-      v-show="uniformState.getUniformModeData.uniformMode"
-      :class="['btn', pregropping]"
-      @click="preCreateUniformGroup"
-    >
+    <button style="margin-top: 2rem" v-show="uniformState.getUniformModeData.uniformMode" :class="['btn', pregropping]"
+      @click="preCreateUniformGroup">
       Создать новую группу
     </button>
 
-    <button
-      class="btn btn_green"
-      v-show="
-        uniformState.getPreGroup > 0 &&
-        uniformState.getUniformModeData.uniformMode
-      "
-      @click="сreateUniformGroup;"
-    >
+    <button class="btn btn_green" @click="сreateUniformGroup" v-show="uniformState.getPreGroup > 0 &&
+      uniformState.getUniformModeData.uniformMode
+      ">
       Создать
     </button>
   </div>
@@ -580,19 +579,8 @@ const closeTableRTedactor = () => {
     </button> -->
   </div>
 
-  <select
-    class="example"
-    id="rooms"
-    v-model="selectValue"
-    name="rooms"
-    @change="load"
-    style="top: 15rem; left: 25rem"
-  >
-    <option
-      v-for="(room, key) in roomStore.getRooms"
-      :key="key"
-      :value="room.id"
-    >
+  <select class="example" id="rooms" v-model="selectValue" name="rooms" @change="load" style="top: 15rem; left: 25rem">
+    <option v-for="(room, key) in roomStore.getRooms" :key="key" :value="room.id">
       {{ room.label }}
     </option>
   </select>
@@ -698,10 +686,7 @@ const closeTableRTedactor = () => {
     <button class="btn" @click="removeModel">Удалить</button>
   </div> -->
 
-  <div
-    :class="['model-controller', activeController]"
-    :style="controllerPosition"
-  >
+  <div :class="['model-controller', activeController]" :style="controllerPosition">
     <div class="controller-left">
       <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
       <ControllerButton />
@@ -713,35 +698,31 @@ const closeTableRTedactor = () => {
       <UpControllerButton />
       <OpenFacadeButton />
 
-      <Modal
-        v-if="CutData.data"
-        :container="`modal--tableTop`"
-        @open-modal="isModalOpen = true"
-        @close-modal="closeTableRTedactor"
-      >
+      <Modal v-if="CutData.data" :container="`modal--tableTop`" @open-modal="openTableRedactor"
+        @close-modal="closeTableRedactor">
         <template #modalBody="{ onModalClose }" class="modal--tableTop">
-          <TableTopManager
-            :grid="CutData.data"
-            :size="CutData.size"
-            @save-table-data="saveTableData"
-            v-if="isModalOpen"
-          >
+          <TableTopManager ref="tableTopManager" :grid="CutData.data" :canvasHeight="CutData.canvasHeight"
+            v-if="isModalOpen">
+            <template #save>
+              <button class="actions-btn actions-btn--footer" @click="saveTableData">
+                Сохранить
+              </button>
+            </template>
             <template #close>
-              <button
-                @click="
-                  () => {
-                    onModalClose();
-                  }
-                "
-                class="actions-btn actions-btn--footer"
-              >
+              <button @click="
+                () => {
+                  onModalClose();
+                }
+              " class="actions-btn actions-btn--footer">
                 Закрыть
               </button>
             </template>
           </TableTopManager>
         </template>
         <template #modalOpen="{ onModalOpen }">
-          <button class="cut-btn" @click="onModalOpen"><img class="cut-icon" src="/icons/cut.svg" alt=""></button>
+          <button class="cut-btn" @click="onModalOpen">
+            <img class="cut-icon" src="/icons/cut.svg" alt="" />
+          </button>
         </template>
       </Modal>
     </div>
@@ -900,8 +881,7 @@ const closeTableRTedactor = () => {
     left: 30px;
     top: -30px;
 
-    .left-line {
-    }
+    .left-line {}
   }
 
   .controller-right {
@@ -909,8 +889,7 @@ const closeTableRTedactor = () => {
     left: 80px;
     top: 30px;
 
-    .right-line {
-    }
+    .right-line {}
   }
 
   &_controls {
@@ -1056,8 +1035,8 @@ const closeTableRTedactor = () => {
   }
 }
 
-.cut{
-  &-btn{
+.cut {
+  &-btn {
     width: 50px;
     height: 50px;
     position: absolute;
@@ -1073,7 +1052,8 @@ const closeTableRTedactor = () => {
     pointer-events: auto;
     transform: translate(65px, -30px);
   }
-  &-icon{
+
+  &-icon {
     width: 25px;
     height: 25px;
   }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+// @ts-nocheck 
+import { ref, computed, onMounted } from "vue";
 
 interface Props {
   content: string;
