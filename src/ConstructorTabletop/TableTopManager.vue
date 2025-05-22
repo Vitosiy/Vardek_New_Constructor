@@ -16,6 +16,7 @@ import {
 import Visualization from "./TableTopVisualization.vue";
 import CutOptions from "./OptionsMenu/CutOptions.vue";
 import CutServise from "./OptionsMenu/CutServise.vue";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
 import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
 import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
 
@@ -453,6 +454,8 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
 };
 
 const updateHole = (event, key, type, holeType) => {
+  console.log("ww");
+
   const rowNdx = selectedCell.value.row;
   const colNdx = selectedCell.value.col;
 
@@ -465,11 +468,14 @@ const updateHole = (event, key, type, holeType) => {
 
   const prevValue = currentRow.holes[key][type]; //Предыдущее значение
 
-  let newValue = parseInt(event.target.value);
+  // let newValue = parseInt(event.target.value);
+  let newValue = parseInt(event);
   newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
 
   const holeData = JSON.parse(JSON.stringify(currenthole));
   holeData[type] = newValue;
+
+  console.log(holeData, "0");
 
   const pixiSector = currentRow.sector;
 
@@ -479,7 +485,9 @@ const updateHole = (event, key, type, holeType) => {
 
   if (check) {
     currenthole[type] = newValue;
+    console.log("1");
   } else {
+    console.log("2");
     currenthole[type] = prevValue;
     currenthole[`M${type}`] = prevValue;
   }
@@ -763,7 +771,15 @@ onBeforeUnmount(() => {
         <div class="actions-inputs">
           <p class="actions-title">Высота полотна</p>
           <div class="actions-input--container">
-            <input
+            <MainInput
+              @update:modelValue="updateTotalHeight"
+              :inputClass="'actions-input'"
+              v-model="totalHeight"
+              :min="200"
+              :max="1200"
+              :type="'number'"
+            />
+            <!-- <input
               type="number"
               step="10"
               min="200"
@@ -771,7 +787,7 @@ onBeforeUnmount(() => {
               class="actions-input"
               :value="totalHeight"
               @input="updateTotalHeight($event.target.value)"
-            />
+            /> -->
           </div>
         </div>
       </div>
@@ -1108,6 +1124,10 @@ onBeforeUnmount(() => {
       display: flex;
       align-items: end;
     }
+
+    .actions-inputs {
+      max-width: 150px;
+    }
   }
 }
 
@@ -1157,7 +1177,8 @@ onBeforeUnmount(() => {
   &-header {
     display: flex;
     align-items: center;
-    // gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     justify-content: center;
     width: 100%;
     padding: 1rem 0;
@@ -1241,7 +1262,7 @@ onBeforeUnmount(() => {
     &--diametr,
     &--width {
       display: flex;
-      width: 150px;
+      width: fit-content;
 
       &-item {
         display: flex;
@@ -1310,7 +1331,7 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 4px;
     width: 100%;
-    max-width: 150px;
+    max-width: 100px;
   }
 
   &-input {
@@ -1338,7 +1359,8 @@ onBeforeUnmount(() => {
         top: 50%;
         left: 60px;
         transform: translate(0, -50%);
-
+        pointer-events: none;
+        z-index: 0;
         font-size: 0.75rem;
         font-weight: 600;
         color: #6d6e73;

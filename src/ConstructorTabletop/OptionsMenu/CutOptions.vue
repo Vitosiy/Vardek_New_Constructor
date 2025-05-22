@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// @ts-nocheck 
+// @ts-nocheck
 import { ref, toRefs } from "vue";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
 
 const props = defineProps({
   holes: {
@@ -35,6 +36,7 @@ const updateHole = (
   valueType: string,
   holeType: string
 ) => {
+  console.log(event);
   emit("cut-updateHole", event, key, valueType, holeType);
 };
 
@@ -156,7 +158,18 @@ const toggleHoleOptions = () => {
           <div class="actions-inputs" v-if="hole.width">
             <p class="actions-title">Ширина</p>
             <div class="actions-input--container">
-              <input
+              <MainInput
+                :type="'number'"
+                :step="10"
+                :min="150"
+                :max="hole.Mwidth"
+                :inputClass="'actions-input'"
+                v-model="hole.width"
+                @update:modelValue="
+                  (newValue) => updateHole(newValue, key, 'width', 'rect')
+                "
+              />
+              <!-- <input
                 type="number"
                 step="10"
                 min="150"
@@ -164,13 +177,24 @@ const toggleHoleOptions = () => {
                 class="actions-input"
                 :value="hole.width"
                 @input="updateHole($event, key, 'width', 'rect')"
-              />
+              /> -->
             </div>
           </div>
           <div class="actions-inputs" v-if="hole.height">
             <p class="actions-title">Высота</p>
             <div class="actions-input--container">
-              <input
+              <MainInput
+                :type="'number'"
+                :step="10"
+                :min="150"
+                :max="hole.Mheight"
+                :inputClass="'actions-input'"
+                v-model="hole.height"
+                @update:modelValue="
+                  (newValue) => updateHole(newValue, key, 'height', 'rect')
+                "
+              />
+              <!-- <input
                 type="number"
                 step="10"
                 min="150"
@@ -178,21 +202,32 @@ const toggleHoleOptions = () => {
                 class="actions-input"
                 :value="hole.height"
                 @input="updateHole($event, key, 'height', 'rect')"
-              />
+              /> -->
             </div>
           </div>
           <div class="actions-inputs" v-else>
             <p class="actions-title">Диаметр</p>
             <div class="actions-input--container">
-              <input
+              <MainInput
+                :type="'number'"
+                :step="10"
+                :min="150"
+                :max="hole.Mradius"
+                :inputClass="'actions-input'"
+                v-model="hole.radius"
+                @update:modelValue="
+                  (newValue) => updateHole(newValue, key, 'radius', 'circle')
+                "
+              />
+              <!-- <input
                 type="number"
                 step="10"
                 min="150"
                 :max="hole.Mradius"
                 class="actions-input"
                 :value="hole.radius"
-                @input="updateHole($event, key, 'radius', 'circle')"
-              />
+                @input="updateHole($event.target.value, key, 'radius', 'circle')"
+              /> -->
             </div>
           </div>
         </div>
@@ -470,6 +505,7 @@ const toggleHoleOptions = () => {
     }
   }
 }
+
 .width {
   &-max {
     max-width: 100% !important;

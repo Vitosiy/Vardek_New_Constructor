@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { computed, ref, toRefs } from "vue";
 import { SERVISE_ERRORS } from "@/ConstructorTabletop/CutterScripts/CutterConst";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
 import Tooltip from "./Tooltip.vue";
 
 const props = defineProps({
@@ -47,9 +48,10 @@ const getMaxWidth = computed(() => {
 
 const updateEuroWidth = (event: Event, type: string) => {
   const typeLow = type.toLowerCase();
-  if (event!.target!.value <= 1) event!.target!.value = 1;
+  // if (event!.target!.value <= 1) event!.target!.value = 1;
+    // if (event!.target!.value <= 1) event!.target!.value = 1;
 
-  emit("cut-updateServise", event!.target!.value, typeLow);
+  emit("cut-updateServise", event, typeLow);
 };
 </script>
 
@@ -98,7 +100,17 @@ const updateEuroWidth = (event: Event, type: string) => {
         <div class="actions-inputs" v-if="item.width && item.value">
           <p class="actions-title">Ширина</p>
           <div class="actions-input--container">
-            <input
+            <MainInput
+              :inputClass="'actions-input'"
+              v-model="item.width"
+              :min="200"
+              :max="getMaxWidth"
+              :type="'number'"
+              @update:modelValue="
+                (newValue) => updateEuroWidth(newValue, item.NAME)
+              "
+            />
+            <!-- <input
               type="number"
               :step="step"
               min="300"
@@ -106,7 +118,7 @@ const updateEuroWidth = (event: Event, type: string) => {
               class="actions-input"
               :value="item.width"
               @input.number="updateEuroWidth($event, item.NAME)"
-            />
+            /> -->
           </div>
         </div>
       </div>
