@@ -1,15 +1,23 @@
-<script setup>
-import { reactive, computed, ref, toRaw } from "vue";
+<script setup lang="ts">
+import {
+  onMounted,
+  onBeforeUnmount,
+  reactive,
+  computed,
+  ref,
+    Ref,
+  toRaw,
+  watch,
+} from "vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
-import { UI_PARAMS, EN_RU_NAME} from "./UMConstructorConst.ts";
+import ProductOptions from "./utils/ProductOptions.vue";
+import { ShapeAdjuster } from "./utils/Methods";
+import { UI_PARAMS} from "./utils/UMConstructorConst.ts";
 import {useMenuStore} from "@/store/appStore/useMenuStore";
-import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
-import * as THREE from "three";
 import * as THREETypes from "@/types/types";
-import {useModelState} from "@/store/appliction/useModelState";
-// import SettingsPanel from './components/SettingsPanel.vue';
-// import SettingsTable from './components/SettingsTable.vue';
-// import ControlButtons from './components/ControlButtons.vue';
+import {FillingObject, GridCell, GridSection} from "@/types/constructor2d/interfaсes.ts";
+import * as THREE from "three";
+
 
 const {
   MAX_AREA_WIDTH,
@@ -20,376 +28,392 @@ const {
   MIN_SECTION_HEIGHT,
 } = UI_PARAMS;
 
+let shapeAdjuster = null;
 const menuStore = useMenuStore();
-
+const productData = ref(false)
 const builder = THREETypes.TUniversalGeometryBuilder
 
-const grid = ref([
-  // Каждая колонка — это массив строк (горизонтальных секций)
-  [
-    {
-      width: 3000,
-      height: 1200,
-      roundCut: {},
-      holes: [],
-      type: "row",
-      xOffset: 0,
-      yOffset: 0,
-      colide: null,
-    },
-  ],
-]);
 
-const sections = ref([
-  // Каждая колонка — это массив строк (горизонтальных секций)
-  [
-    {
-      width: 3000,
-      height: 1200,
-      roundCut: {},
-      holes: [],
-      type: "row",
-      xOffset: 0,
-      yOffset: 0,
-      colide: null,
-    },
-  ],
-]);
+
+const visualizationRef = ref(null);
+const grid = computed(() => {
+
+  if (productData.value) {
+    const PROPS = productData.value.userData.PROPS;
+    if(!PROPS.CONFIG.MODULEGRID) {
+
+      let cell: GridCell = {
+        number: 1,
+        width: PROPS.CONFIG.SIZE.width - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2,
+        height: PROPS.CONFIG.SIZE.height - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"],
+      }
+
+      let section: GridSection = {
+        number: 1,
+        width: PROPS.CONFIG.SIZE.width,
+        height: PROPS.CONFIG.SIZE.height,
+        cells: [cell],
+      }
+
+      PROPS.CONFIG.MODULEGRID = [section]
+    }
+    return PROPS.CONFIG.MODULEGRID
+  }
+})
+
+const tempFilling: Ref<FillingObject> = ref({
+  product: 0,
+  id: 0,
+  type: "any",
+  position: new THREE.Vector3(),
+  size: new THREE.Vector3(),
+  color: 0,
+});
 
 const selectedCell = ref({ col: 0, row: 0 });
 const correct = ref({ change: false });
-const splitterContainer = ref(null);
+const holeOptions = ref(false);
+const constructor2dContainer = ref(null);
 
-const getMaxAreaHeight = computed(() => {
-  return (TOTAL_HEIGHT * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+const getHole = computed(() => {
+  const colNdx = selectedCell.value.col;
+  const rowNdx = selectedCell.value.row;
+
+  const curRow = grid.value[colNdx][rowNdx];
+
+  if (curRow.fillings.length > 0) {
+    return curRow.fillings;
+  }
+  return [];
+});
+// Получаем текущую секцию
+const getCurrentSection = computed(() => {
+  const rowNdx = selectedCell.value.row ?? 0;
+  const colNdx = selectedCell.value.col ?? 0;
+
+  const currentColl = grid.value[colNdx];
+  const currentRow = currentColl[rowNdx];
+  return { currentRow, currentColl };
 });
 
-// console.log(getMaxAreaHeight.value)
+const getMaxAreaHeight = computed(() => {
+    return (TOTAL_HEIGHT * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+});
 
-const addVerticalCut = (colIndex) => {
-  correct.value.change = true;
+const addSection = (colIndex) => {
+  const section = grid.value[colIndex];
+  const halfWidth = section[0].width / 2;
 
-  const column = grid.value[colIndex];
-  const halfWidth = column[0].width / 2;
-
-  if (halfWidth < 150 || !((column[0].width / 2) % 10 == 0)) return;
+  if (halfWidth < 150 || !((section[0].width / 2) % 10 == 0)) return;
 
   // Обновляем ширину текущей колонки
-  column.forEach((row) => {
+  section.forEach((row) => {
     row.width = halfWidth;
+    row.cells = [];
+    row.roundCut = {};
   });
 
   // Создаем новую колонку с такими же параметрами
-  const newColumn = column.map((row) => ({
+  const newColumn = section.map((row) => ({
     ...row,
-    roundCut: {},
-    holes: [],
+    cells: [],
     width: halfWidth,
   }));
 
   grid.value.splice(colIndex + 1, 0, newColumn);
-  ensureTotalWidth();
 
-  column.forEach((row) => {
-    adjustObjectPosition(row);
-  });
-
-  // correct.value.change = false;
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
 };
 
-const addHorizontalCut = (colIndex) => {
-  correct.value.change = true;
-  const column = grid.value[colIndex];
-  const lastRow = column[column.length - 1];
-  const halfHeight = Math.floor(lastRow.height / 2);
+const addCell = (colIndex, rowIndex) => {
+  const cell = grid.value[colIndex].cells[rowIndex];
 
-  if (halfHeight < 150 || !(lastRow.height % 10 == 0)) return;
+  cell.forEach((row) => {
+    row.fillings = [];
+  });
+
+  const halfHeight = Math.floor(cell.height / 2);
+
+  if (halfHeight < 150 || !(cell.height % 10 == 0)) return;
 
   // Обновляем высоту последней строки
-  lastRow.height = halfHeight;
+  cell.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  column.push({
-    width: lastRow.width,
-    height: lastRow.height, // Оставшаяся высота
-    roundCut: {},
-    holes: [],
-    type: "hrz",
+  cell.push({
+    width: cell.width,
+    height: cell.height, // Оставшаяся высота
+    fillings: [],
   });
-  correct.value.change = false;
 
-  column.forEach((row) => {
-    adjustObjectPosition(row);
-  });
+  console.log(cell, "cell");
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
 };
+
+
+const createHoleDataToCheck = (type, row, col) => {
+  let width, height, radius, tempFilling;
+
+  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+
+  if (extremum > 600) extremum = 300;
+
+  width = extremum;
+  height = extremum;
+  radius = extremum;
+
+  switch (type) {
+    case "rect":
+      tempFilling = {
+        type: "rect",
+        width,
+        height,
+      };
+      break;
+
+    case "circle":
+      tempFilling = {
+        type: "circle",
+        radius,
+      };
+      break;
+  }
+
+  return visualizationRef.value.checkPositionHoleToCreate(tempFilling);
+};
+
+const addHole = (type) => {
+  const col = grid.value[selectedCell.value.col];
+  const row = col[selectedCell.value.row];
+
+  const startHoleData = createHoleDataToCheck(type, row, col);
+
+  if (!startHoleData) {
+    alert("Позиция не найдена");
+    return;
+  }
+
+  if (selectedCell.value.col === null || selectedCell.value.row === null) {
+    alert("Пожалуйста, выберите секцию для добавления прямоугольного выреза");
+    return;
+  }
+
+  let preperedData;
+
+  switch (type) {
+    case "rect":
+      preperedData = {
+        ...startHoleData,
+        lable: "Прямоугольный разрез",
+        holeId: row.fillings.length,
+        Mwidth: 600,
+        Mheight: 600,
+      };
+      break;
+    case "circle":
+      preperedData = {
+        ...startHoleData,
+        lable: "Круглый разрез",
+        holeId: row.fillings.length,
+        Mradius: 600,
+      };
+      break;
+  }
+
+  row.fillings.push(preperedData);
+
+  console.log(preperedData);
+  // // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
 
 const showServices = () => {
   console.log("showServices");
 };
 
-const updateSectionWidth = (colIndex, newWidthCol) => {
-  correct.value.change = true;
 
-  const gridCopy = toRaw(grid.value).map((item) => item);
-  const curCol = gridCopy[colIndex];
-  const nextCol = gridCopy[colIndex + 1];
-  const prevCol = gridCopy[colIndex - 1];
-  const minSize = getMinSize(curCol);
 
-  let curMinSize, nextMinSize, prevMinSize;
+const updateSectionWidth = (value, colIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
 
-  curMinSize = getMinSize(curCol);
-
-  if (nextCol) {
-    nextMinSize = getMinSize(nextCol);
-  }
-  if (prevCol) {
-    prevMinSize = getMinSize(prevCol);
-  }
-
-  if (parseInt(curCol[0].width) <= curMinSize) {
-    // Обновляем длинну каждой строки в колонке
-    curCol.forEach((elem) => {
-      elem.width = curMinSize;
-      adjustObjectPosition(elem);
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "width",
+      value: newValue,
+      col: colIndex,
     });
   }
-
-  // Обновляем длинну каждой строки в колонке
-  curCol.forEach((elem) => {
-    elem.width = curCol[0].width;
-    adjustObjectPosition(elem);
-  });
-
-  if (colIndex === gridCopy.length - 1) {
-    // Если индекс последний, обновляем предпоследний элемент
-    const sumBefore = calcSumBefore({
-      array: gridCopy,
-      ndx: colIndex,
-      start: 0,
-      type: "col",
-    });
-
-    let newWidth =
-      prevCol[0].width + TOTAL_LENGTH - sumBefore - curCol[0].width;
-
-    if (newWidth <= prevMinSize) {
-      newWidth = prevMinSize;
-      curCol.width =
-        TOTAL_LENGTH -
-        calcSumBefore({
-          array: gridCopy,
-          ndx: colIndex,
-          start: 0,
-          type: "col",
-        });
-    }
-
-    prevCol.forEach((elem) => {
-      elem.width = newWidth;
-      adjustObjectPosition(elem);
-    });
-  } else {
-    // В противном случае обновляем следующий элемент
-
-    if (parseInt(curCol[0].width) <= MIN_SECTION_WIDTH) {
-      curCol.forEach((elem) => {
-        elem.width = MIN_SECTION_WIDTH;
-      });
-    }
-
-    const sumBefore = calcSumBefore({
-      array: gridCopy,
-      ndx: colIndex,
-      start: 0,
-      type: "col",
-    });
-
-    const sumAfter = calcSumBefore({
-      array: gridCopy,
-      ndx: gridCopy.length,
-      start: colIndex + 2,
-      type: "col",
-    });
-
-    let newWidth = TOTAL_LENGTH - sumBefore - sumAfter - curCol[0].width;
-
-    if (newWidth <= nextMinSize) {
-      newWidth = nextMinSize;
-    }
-
-    nextCol.forEach((elem) => {
-      elem.width = newWidth;
-      adjustObjectPosition(elem);
-    });
+  // Обновляем значение в grid для синхронизации
+  const clone = grid.value.map((item) => item);
+  if (adjustedValue) {
+    clone[colIndex].forEach((row) => (row.width = adjustedValue));
   }
-
-  grid.value = gridCopy;
-
-  ensureTotalWidth();
+  grid.value = clone;
 };
 
-const updateSectionHeight = (colIndex, rowIndex, event) => {
-  correct.value.change = true;
+const updateSectionHeight = (value, colIndex, rowIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    const adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "height",
+      value: newValue,
+      col: colIndex,
+      row: rowIndex,
+    });
+  }
+  // Обновляем значение в grid для синхронизации
+  const clone = grid.value.map((item) => item);
+  if (adjustedValue) {
+    grid.value[colIndex][rowIndex].height = adjustedValue;
+  }
+  grid.value = clone;
+};
+
+const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
+  const gridCopy = grid.value.map((item) => item);
+  const cell = gridCopy[colIndex];
+  const row = cell[rowIndex];
+  const pixiSector = row.sector;
+
+  const prevValue = row.roundCut.radius;
+  let newValue = parseInt(value);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const shapeData = {
+    radius: newValue,
+    x: row.roundCut.x,
+    y: row.roundCut.y,
+  };
+
+  const check = shapeAdjuster.checkToCollision(
+      pixiSector,
+      "circleSector",
+      shapeData
+  );
+
+  check ? (row.roundCut.radius = newValue) : (row.roundCut.radius = prevValue);
+
+  grid.value = gridCopy;
+  visualizationRef.value.renderGrid();
+};
+
+const updateHole = (event, key, type, holeType) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
 
   const gridCopy = grid.value.map((item) => item);
-  const currentColl = gridCopy[colIndex];
+  // const gridCopy = grid.value
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
 
-  const currentRow = currentColl[rowIndex];
-  const nextRow = currentColl[rowIndex + 1];
-  const prevRow = currentColl[rowIndex - 1];
+  const currenthole = currentRow.fillings[key];
 
-  let currentRowSize, nextRowSize, prevRowSize;
+  const prevValue = currentRow.fillings[key][type]; //Предыдущее значение
 
-  // Определяем минимальные размеры секции
-  if ("diameter" in currentRow.roundCut) {
-    currentRowSize = currentRow.roundCut.diameter;
+  let newValue = parseInt(event.target.value);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData[type] = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  currenthole[`M${type}`] = 600;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole[type] = newValue;
   } else {
-    currentRowSize = MIN_SECTION_WIDTH;
-  }
-
-  if (nextRow && "diameter" in nextRow.roundCut) {
-    nextRowSize = nextRow.roundCut.diameter;
-  } else {
-    nextRowSize = MIN_SECTION_WIDTH;
-  }
-
-  if (prevRow && "diameter" in prevRow.roundCut) {
-    prevRowSize = prevRow.roundCut.diameter;
-  } else {
-    prevRowSize = MIN_SECTION_WIDTH;
-  }
-
-  let newHeight;
-
-  if (parseInt(currentRow.height) <= currentRowSize) {
-    currentRow.height = currentRowSize;
-  }
-
-  adjustObjectPosition(currentRow);
-
-  if (rowIndex === currentColl.length - 1) {
-    const sumBefore = calcSumBefore({
-      array: currentColl,
-      ndx: rowIndex,
-      start: 0,
-      type: "row",
-    });
-
-    newHeight = prevRow.height + TOTAL_HEIGHT - sumBefore - currentRow.height;
-
-    if (newHeight <= prevRowSize) {
-      newHeight = prevRowSize;
-      currentRow.height =
-        TOTAL_HEIGHT -
-        calcSumBefore({
-          array: currentColl,
-          ndx: rowIndex,
-          start: 0,
-          type: "row",
-        });
-    }
-    prevRow.height = newHeight;
-    adjustObjectPosition(prevRow);
-  } else {
-    const sumBefore = calcSumBefore({
-      array: currentColl,
-      ndx: rowIndex,
-      start: 0,
-      type: "row",
-    });
-
-    const sumAfter = calcSumBefore({
-      array: currentColl,
-      ndx: currentColl.length,
-      start: rowIndex + 2,
-      type: "row",
-    });
-
-    newHeight = TOTAL_HEIGHT - sumBefore - sumAfter - currentRow.height;
-
-    if (newHeight <= nextRowSize) {
-      newHeight = nextRowSize;
-    }
-
-    nextRow.height = newHeight;
-    adjustObjectPosition(nextRow);
+    currenthole[type] = prevValue;
+    currenthole[`M${type}`] = prevValue;
   }
 
   grid.value = gridCopy;
 
-  ensureTotalHeight(colIndex);
+  visualizationRef.value.renderGrid();
 };
 
-const ensureTotalWidth = () => {
-  const sum = grid.value.reduce((acc, column) => acc + column[0].width, 0);
-  const diff = TOTAL_LENGTH - sum;
+const changeHolePositionX = (event, key, type, holeType, value) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
 
-  if (diff !== 0) {
-    const widestColIndex = grid.value.reduce(
-      (maxIdx, column, idx) =>
-        column[0].width > grid.value[maxIdx][0].width ? idx : maxIdx,
-      0
-    );
-    grid.value[widestColIndex].forEach((row) => {
-      row.width += diff;
-    });
+  const gridCopy = grid.value.map((item) => item);
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.fillings[key];
+
+  const prevValue = currentRow.fillings[key].x; //Предыдущее значение
+
+  const newValue = prevValue + value;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData.x = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole.x = newValue;
+  } else {
+    currenthole.x = prevValue;
   }
 
-  correct.value.change = false;
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
 };
 
-const ensureTotalHeight = (colIndex) => {
-  const column = grid.value[colIndex];
+const changeHolePositionY = (event, key, type, holeType, value) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
 
-  const totalHeight = column.reduce((acc, row) => acc + row.height, 0);
-  const diff = TOTAL_HEIGHT - totalHeight;
+  const gridCopy = grid.value.map((item) => item);
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
 
-  if (diff !== 0) {
-    const tallestRowIndex = column.reduce(
-      (maxIdx, row, idx) => (row.height > column[maxIdx].height ? idx : maxIdx),
-      0
-    );
+  const currenthole = currentRow.fillings[key];
 
-    console.log(tallestRowIndex, "--tallestRowIndex");
+  const prevValue = currentRow.fillings[key].y; //Предыдущее значение
 
-    column[tallestRowIndex].height = Math.max(
-      MIN_SECTION_HEIGHT,
-      column[tallestRowIndex].height + diff
-    );
+  const newValue = prevValue + value;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData.y = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole.y = newValue;
+  } else {
+    currenthole.y = prevValue;
   }
 
-  correct.value.change = false;
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
 };
 
-const calcSumBefore = ({ array, ndx, start, type }) => {
-  const copyArray = array.map((item) => item);
-  switch (type) {
-    case "col":
-      return copyArray
-        .slice(start, ndx)
-        .reduce((acc, curr) => acc + curr[0].width, 0);
-    case "row":
-      return copyArray
-        .slice(start, ndx)
-        .reduce((acc, curr) => acc + curr.height, 0);
-  }
-};
-
-const deliteVerticalCut = (colIndex) => {
-  correct.value.change = true;
-
-  const clone = grid.value.map((item) => item);
-
-  const current = clone[colIndex];
-  const next = clone[colIndex + 1];
-  const prev = clone[colIndex - 1];
-
-  console.log(next, prev, "next, prev");
+const deleteVerticalCut = (colIndex) => {
+  const current = grid.value[colIndex];
+  const next = grid.value[colIndex + 1];
+  const prev = grid.value[colIndex - 1];
 
   const combinedWidth = next
-    ? current[0].width + next[0].width
-    : current[0].width + prev[0].width;
+      ? current[0].width + next[0].width
+      : current[0].width + prev[0].width;
 
   if (next) {
     next.forEach((elem) => {
@@ -401,18 +425,18 @@ const deliteVerticalCut = (colIndex) => {
     });
   }
 
-  if (clone.length > 1) {
-    clone.splice(colIndex, 1);
+  if (grid.value.length > 1) {
+    grid.value.splice(colIndex, 1);
   }
 
-  grid.value = clone;
+  selectedCell.value.row = 0;
+  selectedCell.value.col = 0;
 
-  ensureTotalWidth();
+  visualizationRef.value.renderGrid();
 };
 
-const deliteHorizontalCut = (rowIndex, colIndex) => {
-  correct.value.change = true;
-
+const deleteHorizontalCut = (rowIndex, colIndex) => {
+  // const cell = grid.value[colIndex];
   const clone = grid.value.map((item) => item);
   const currentCol = clone[colIndex];
   const currentRow = currentCol[rowIndex];
@@ -420,68 +444,60 @@ const deliteHorizontalCut = (rowIndex, colIndex) => {
   const next = currentCol[rowIndex + 1];
   const prev = currentCol[rowIndex - 1];
 
-  // console.log(next, prev, "next, prev");
-
   const combinedWidth = next
-    ? currentRow.height + next.height
-    : currentRow.height + prev.height;
+      ? currentRow.height + next.height
+      : currentRow.height + prev.height;
 
   next ? (next.height = combinedWidth) : (prev.height = combinedWidth);
-
-  // console.log(currentCol);
 
   if (currentCol.length > 1) {
     currentCol.splice(rowIndex, 1);
   }
 
-  // console.log(currentCol);
+  currentCol.forEach((row) => {
+    row.roundCut = {};
+  });
 
   grid.value = clone;
 
-  correct.value.change = false;
+  // Обновляем текущий сектор
+  selectedCell.value.row = 0;
+  selectedCell.value.col = colIndex;
+
+  visualizationRef.value.renderGrid();
 };
 
-const handleCellSelect = (colIndex, rowIndex) => {
+const deleteRoundCut = (colIndex, rowIndex) => {
+  const col = grid.value[colIndex];
+  const row = col[rowIndex];
+
+  row.roundCut = {};
+  visualizationRef.value.renderGrid();
+};
+
+const deleteHole = (ndx) => {
+  const colNdx = selectedCell.value.col;
+  const rowNdx = selectedCell.value.row;
+  const curRow = grid.value[colNdx][rowNdx];
+
+  curRow.fillings = curRow.fillings.filter((el, index) => {
+    return index !== ndx;
+  });
+
+  visualizationRef.value.renderGrid();
+};
+
+const handleCellSelect = (colIndex, rowIndex, type) => {
   selectedCell.value = { col: colIndex, row: rowIndex };
-  console.log(selectedCell.value);
-};
-
-const adjustObjectPosition = (data) => {
-  // Если в секции есть круглый вырез
-  if (data.roundCut && "diameter" in data.roundCut) {
-    const radius = data.roundCut.diameter / 2;
-
-    // Ограничения по X
-    const minX = -data.width / 2 + radius;
-    const maxX = data.width / 2 - radius;
-
-    // Ограничения по Y
-    const minY = -data.height / 2 + radius;
-    const maxY = data.height / 2 - radius;
-
-    // Применяем ограничения
-    data.roundCut.x = Math.max(minX, Math.min(maxX, data.roundCut.x));
-    data.roundCut.y = Math.max(minY, Math.min(maxY, data.roundCut.y));
+  const roundSector = grid.value[colIndex][rowIndex];
+  if ("radius" in roundSector.roundCut) {
+    holeOptions.value = false;
   }
-};
-
-const getMinSize = (col) => {
-  let curRound = col
-    .filter((elem) => elem.roundCut.diameter)
-    .sort((a, b) => b.roundCut.diameter - a.roundCut.diameter)[0];
-
-  let min = curRound ? curRound.roundCut.diameter : MIN_SECTION_WIDTH;
-  return min;
-};
-
-const reset = () => {
-  grid.value.length = 0;
-  grid.value.push([{ width: 3000, height: 600, holes: [], type: "vrt" }]);
 };
 
 const save = (event) => {
   try {
-    const productData = menuStore.catalogFilterProductsId[0]
+    localStorage.setItem("grid", JSON.stringify(grid.value));
 
     this.mouse.x = ((event.clientX - this.canvas.getBoundingClientRect().left) / this.canvas.clientWidth) * 2 - 1;
     this.mouse.y = -((event.clientY - this.canvas.getBoundingClientRect().top) / this.canvas.clientHeight) * 2 + 1;
@@ -525,81 +541,71 @@ const close = () => {
   console.log("Закрытие окна");
 };
 
-const showData = () => {
-  console.log("");
-};
+onMounted(() => {
+  shapeAdjuster = new ShapeAdjuster();
+});
 
+onBeforeUnmount(() => {
+  shapeAdjuster = null;
+});
+
+watch(menuStore, () => {
+  if(menuStore.openMenus == '2dModuleConstructor' && menuStore.catalogFilterProductsId[0])
+    productData.value = menuStore.catalogFilterProductsId[0]
+})
 </script>
 
 <template>
-  <div class="constructor2d" v-if="menuStore.openMenus == '2dModuleConstructor'">
-    <div class="constructor2d__container">
-      <p class="constructor2d-title">Редактор модуля</p>
-      <ClosePopUpButton class="menu__close" @close="menuStore.closeMenu('2dModuleConstructor')" />
-      <div class="constructor2d-header">
+  <div class="constructor2d-wrapper" v-if="menuStore.openMenus == '2dModuleConstructor'">
+
+    <div
+        class="constructor2d-container"
+    >
+      <div
+          class="constructor2d-container constructor2d-container--left"
+          ref="constructor2dContainer"
+      >
+        <h1>Редактор модуля</h1>
+
         <div class="constructor2d-content">
           <InteractiveSpace
+              ref="visualizationRef"
               :grid="grid"
               :correct="correct"
-              :container="splitterContainer"
+              :container="constructor2dContainer"
               :maxAreaHeight="getMaxAreaHeight"
+              :tempFilling="tempFilling"
               @cell-selected="handleCellSelect"
           />
         </div>
 
         <section class="actions-wrapper">
-
-            <div
-                class="actions-items--wrapper"
-                v-for="(value, sizeIndex) in menuStore.catalogFilterProductsId[0].userData.PROPS.CONFIG.SIZE"
-                :key="sizeIndex"
-            >
-              <div class="actions-items-item">
-                <button
-                    class="actions-btn actions-icon actions-icon--bottom"
-                >
-                </button>
-                <div class="actions-inputs">
-                  <p class="actions-title">
-                    {{ EN_RU_NAME[sizeIndex] }}
-                  </p>
-                  <div
-                  >
-                    <input
-                        type="number"
-                        step="10"
-                        min="150"
-                        class="actions-input"
-                        v-model="menuStore.catalogFilterProductsId[0].userData.PROPS.CONFIG.SIZE[sizeIndex]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
           <div
               class="actions-container"
-              v-for="(column, colIndex) in grid"
+              v-for="(section, colIndex) in grid"
               :key="colIndex"
           >
-            <div class="actions-header">
+            <div class="actions-header" v-if="selectedCell.col === colIndex">
               <button
                   v-if="grid.length > 1"
                   class="actions-btn actions-icon"
-                  @click="deliteVerticalCut(colIndex)"
+                  @click="deleteVerticalCut(colIndex)"
               >
                 <img
                     class="actions-icon--delite"
-                    src="@/assets/svg/right-menu/musorka.svg"
+                    src="../../assets/svg/trash.svg"
                     alt=""
                 />
               </button>
               <p class="actions-title actions-title--part">
-                Секция №{{ colIndex + 1 }}
+                {{ colIndex + 1 }} часть
               </p>
             </div>
 
-            <div class="actions-items--wrapper">
+            <div
+                class="actions-items--wrapper"
+                v-if="selectedCell.col === colIndex"
+            >
               <article class="actions-items actions-items--left">
                 <div class="actions-items--width">
                   <div class="actions-inputs">
@@ -615,56 +621,65 @@ const showData = () => {
                           step="10"
                           min="150"
                           class="actions-input"
-                          v-model="column[0].width"
-                          @change="
-                        updateSectionWidth(colIndex, $event.target.value)
-                      "
+                          :value="section.width"
+                          @input="updateSectionWidth($event.target.value, colIndex)"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div class="actions-items--height">
-                  <div
-                      class="actions-items--height-item"
-                      v-for="(row, rowIndex) in column"
-                      :key="rowIndex"
-                  >
-                    <button
-                        v-if="column.length > 1"
-                        @click="deliteHorizontalCut(rowIndex, colIndex)"
-                        class="actions-btn actions-icon actions-icon--bottom"
+                <!-- Высота -->
+                <div class="actions-items--height-wrapper">
+                  <div class="actions-items--height">
+                    <div
+                        class="actions-items--height-item"
+                        v-for="(cell, rowIndex) in section.cells"
+                        :key="rowIndex"
                     >
-                      <img
-                          class="actions-icon--delite actions-icon--delite-center"
-                          src="@/assets/svg/right-menu/musorka.svg"
-                          alt=""
-                      />
-                    </button>
-                    <div class="actions-inputs">
-                      <p class="actions-title">
-                        Высота {{ colIndex + 1 }}.{{ rowIndex + 1 }}
-                      </p>
-                      <div
-                          :class="[
-                        'actions-input--container',
-                        column.length <= 1 ? 'disable' : '',
-                      ]"
+                      <button
+                          class="actions-btn cancel-btn"
+                          @click="addCell(colIndex, rowIndex)"
                       >
-                        <input
-                            type="number"
-                            step="10"
-                            min="150"
-                            class="actions-input"
-                            v-model="row.height"
-                            @change="
-                          updateSectionHeight(
-                            colIndex,
-                            rowIndex,
-                            $event.target.value
-                          )
-                        "
+                        Доб. полку
+                      </button>
+
+                      <button
+                          v-if="section.cells.length > 1"
+                          @click="deleteHorizontalCut(rowIndex, colIndex)"
+                          class="actions-btn actions-icon actions-icon--bottom"
+                      >
+                        <img
+                            class="actions-icon--delite actions-icon--delite-center"
+                            src="../../assets/svg/trash.svg"
+                            alt=""
                         />
+                      </button>
+
+                      <div class="actions-inputs">
+                        <p class="actions-title">
+                          Высота {{ colIndex + 1 }}.{{ rowIndex + 1 }}
+                        </p>
+                        <div
+                            :class="[
+                          'actions-input--container',
+                          cell.length <= 1 ? 'disable' : '',
+                        ]"
+                        >
+                          <input
+                              type="number"
+                              step="10"
+                              min="150"
+                              class="actions-input"
+                              :value="section.height"
+                              @input="
+                            updateSectionHeight(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -675,78 +690,102 @@ const showData = () => {
                 <div class="actions-items--right-items">
                   <button
                       class="actions-btn add-divider-btn"
-                      @click="showData"
+                      @click="addSection(colIndex)"
                   >
-                    Кнопка
+                    Раздел. секцию
                   </button>
                 </div>
               </article>
             </div>
           </div>
         </section>
-
-        <button
-            class="actions-btn add-divider-btn save-btn"
-            @click="save"
-        >
-          Сохранить
-        </button>
       </div>
+
+      <div
+          class="constructor2d-container constructor2d-container--right"
+      >
+        <h1>Опции</h1>
+
+        <ProductOptions
+            v-if="holeOptions"
+            :fillings="getHole"
+            @cut-addHole="addHole"
+            @cut-deleteHole="deleteHole"
+            @cut-updateHole="updateHole"
+            @cut-toggleHoleOptions="toggleHoleOptions"
+            @cut-changePositionX="changeHolePositionX"
+            @cut-changePositionY="changeHolePositionY"
+        />
+      </div>
+
     </div>
+
+    <button
+        class="actions-btn add-divider-btn save-btn"
+        @click="save"
+    >
+      Сохранить
+    </button>
+
+    <button
+        class="actions-btn add-divider-btn close-btn"
+        @click="menuStore.closeMenu('2dModuleConstructor')"
+    >
+      Отмена
+    </button>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .constructor2d {
-  width: 100%;
-  // height: 85%;
-  max-height: 100vh;
-  max-width: 1700px;
-  position: absolute;
-  top: 106px;
-  right: 20px;
-  padding: 15px;
-  background: $white;
-  box-shadow: 0px 0px 10px 0px #3030301a;
-  z-index: 10;
-  border-radius: 15px;
-  transition: 0.5s ease-in-out;
-  transform: translateZ(-10px);
-  box-sizing: border-box;
-  overflow: hidden;
-
-  &__container {
+  &-wrapper {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    gap: 1rem;
+    justify-content: center;
+    font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
+    sans-serif;
+    position: absolute;
+    top: 95px;
+    right: 10px;
+    width: 100%;
+    height: 90%;
     max-height: 100vh;
-    padding-bottom: 25px;
+    max-width: 1715px;
+  }
 
-    .constructor2d-header {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+  &-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
 
-      .constructor2d-links {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+    width: 100%;
 
-      .close__button {
-        cursor: pointer;
-      }
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+
+    &--left {
+      flex-direction: column;
+      max-width: 70vw;
+    }
+
+    &--right {
+      flex-direction: column;
+      max-width: 15vw;
+      max-height: 80vh;
+      overflow: hidden;
     }
   }
+
   &-content {
     display: flex;
     justify-content: center;
   }
+
   &-title {
-    margin-right: 50px;
-    font-size: 18px;
-    font-weight: 600;
+    font-weight: 400;
+    color: #131313;
   }
 }
 
@@ -757,14 +796,20 @@ const showData = () => {
     max-height: 450px;
     overflow-y: scroll;
     padding-right: 0.5rem;
+
     &::-webkit-scrollbar {
-      width: 5px; /* Ширина скроллбара */
+      width: 5px;
+      /* Ширина скроллбара */
     }
+
     &::-webkit-scrollbar-button {
-      display: none; /* Убираем стрелки */
+      display: none;
+      /* Убираем стрелки */
     }
+
     &::-webkit-scrollbar-thumb {
-      background: #888; /* Цвет ползунка */
+      background: #888;
+      /* Цвет ползунка */
       border-radius: 4px;
     }
   }
@@ -773,12 +818,15 @@ const showData = () => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-bottom: 1px solid #ecebf1;
+    // border-bottom: 1px solid #ecebf1;
+
     &:first-child {
-      border-top: 1px solid #ecebf1;
+      // border-top: 1px solid #ecebf1;
     }
+
     // transform: scale(0.7);
   }
+
   &-header {
     display: flex;
     align-items: center;
@@ -787,7 +835,9 @@ const showData = () => {
     width: 100%;
     padding: 1rem 0;
     border-bottom: 1px solid #ecebf1;
+    border-top: 1px solid #ecebf1;
   }
+
   &-items {
     display: flex;
     flex-wrap: wrap;
@@ -805,14 +855,15 @@ const showData = () => {
       width: 100%;
       // max-width: 50%;
     }
+
     &--left {
       align-items: start;
-      max-width: 50%;
+      max-width: 75%;
     }
 
     &--right {
       display: block;
-      max-width: calc(50% - 1rem);
+      max-width: calc(25% - 1rem);
       margin-left: 1rem;
 
       &-items {
@@ -826,15 +877,32 @@ const showData = () => {
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      width: 100%;
-      height: 100%;
-      max-width: calc(70% - 1rem);
-      margin-left: 1rem;
-      border-right: 1px solid #ecebf1;
+
+      &-wrapper {
+        max-width: calc(50% - 1rem);
+      }
 
       &-item {
         display: flex;
         align-items: flex-start;
+        height: fit-content;
+        // gap: 0.5rem;
+      }
+    }
+
+    &--diametr {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+
+      &-wrapper {
+        max-width: 25%;
+      }
+
+      &-item {
+        display: flex;
+        align-items: flex-start;
+        width: 100%;
         height: fit-content;
         // gap: 0.5rem;
       }
@@ -846,11 +914,22 @@ const showData = () => {
       align-items: start;
       flex-wrap: wrap;
       width: 100%;
-      max-width: 30%;
+      max-width: 20%;
       height: 100%;
       border-right: 1px solid #ecebf1;
     }
+
+    &--diametr,
+    &--height {
+      &-wrapper {
+        height: 100%;
+        width: 100%;
+        margin-left: 1rem;
+        border-right: 1px solid #ecebf1;
+      }
+    }
   }
+
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
@@ -884,6 +963,7 @@ const showData = () => {
 
     &--container {
       position: relative;
+
       &::before {
         content: "mm";
         display: block;
@@ -913,22 +993,30 @@ const showData = () => {
     &:focus {
       outline: none;
     }
+
+    &.active {
+      border-color: red;
+      color: #181818;
+    }
   }
 
   &-icon {
     border: none;
     background-color: transparent;
-    padding: 5px;
+    padding: 0 5px;
 
     &--delite,
-    &--close {
+    &--close,
+    &--help {
       width: 18px;
       height: 18px;
     }
+
     &--add {
       width: 12px;
       height: 12px;
     }
+
     &--delite {
       &-center {
         margin-bottom: 0.5rem;
@@ -937,6 +1025,12 @@ const showData = () => {
 
     &--bottom {
       align-self: flex-end;
+      padding: 5px;
+    }
+
+    &--position {
+      width: 25px;
+      height: 25px;
     }
   }
 }
@@ -947,15 +1041,20 @@ const showData = () => {
 }
 
 .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.save-btn {
+  width: 150px;
   position: absolute;
   bottom: 15px;
   right: 15px;
+  color: white;
+  background: #fc1a1a;
+  font-size: 1rem;
+}
+
+.save-btn {
+  width: 150px;
+  position: absolute;
+  bottom: 15px;
+  right: 175px;
   color: white;
   background: #33de0c;
   font-size: 1rem;

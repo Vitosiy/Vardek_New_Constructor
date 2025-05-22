@@ -45,6 +45,9 @@ export class BuildersHelper extends GlobalsData {
 
     getProductSize(PARAMS: any, product_data: THREETypes.TObject) {
 
+        const MATERIAL_THICKNESS = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH || 18
+        const HORIZONT = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT || PARAMS.HORIZONT === 0 ? PARAMS.HORIZONT : 78
+
         PARAMS.EXPRESSIONS = {
             "#MWIDTH#": product_data.width,
             "#MODUL_MWIDTH#": product_data.width,
@@ -59,6 +62,8 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_DEPTH#": product_data.depth,
             "#Z#": product_data.depth,
             "#SIZEEDITJOINDEPTH#": product_data.SIZE_EDIT_JOINDEPTH_MIN,
+            "#MATERIAL_THICKNESS#": MATERIAL_THICKNESS,
+            "#HORIZONT#": HORIZONT,
         };
 
         Object.entries(PARAMS.FASADE_SIZE).forEach(([key, item]) => {

@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import * as THREE from "three";
 
 type GraphicsOrNull = PIXI.Graphics | null;
 
@@ -90,4 +91,27 @@ export interface MergeWalls {
 export interface HoverPointObject { 
   id: number | string; 
   indexPoint: number 
+}
+
+export interface FillingObject {
+  product: number;
+  id: number;
+  type: "shelf" | "drawer" | "any";
+  position: THREE.Vector3;
+  size: THREE.Vector3;
+  color: number;
+}
+
+export interface GridCell {
+  number: number;
+  width: number;
+  height: number;
+  fillings?: Array<FillingObject>;
+}
+
+export interface GridSection {
+  number: number;
+  width: number;
+  height: number;
+  cells: Array<GridCell>;
 }

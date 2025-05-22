@@ -1,21 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import {
   onMounted,
   onUnmounted,
   ref,
-  watch,
   computed,
   reactive,
-  toRaw,
+  defineExpose,
 } from "vue";
-import { Application, Container, Graphics, Text } from "pixi.js";
-import { UI_PARAMS} from "./UMConstructorConst.ts";
+import {
+  Application,
+  Container,
+  Graphics,
+  Text,
+} from "pixi.js";
+import { Shape, ShapeAdjuster, Section } from "./utils/Methods";
+import { UI_PARAMS} from "./utils/UMConstructorConst.ts";
 
 const props = defineProps({
   grid: {
     type: Array,
     required: true,
   },
+
   maxAreaHeight: {
     type: Number,
     default: 320,
@@ -26,15 +32,20 @@ const props = defineProps({
   },
 
   container: {},
+  tempHole: { type: Object },
 });
 
-const emit = defineEmits(["cell-selected"]);
+const emit = defineEmits(["cell-selected", "position-non"]);
 
-const canvasContainer = ref(null);
-const eventCheck = ref(null);
-const selectedCell = ref({ col: 0, row: 0 });
+const canvasContainer = ref();
+const selectedCell = ref({ col: 0, cell: 0 });
 
-let app, sectionsContainer, holesContainer, lablesContainer;
+let app: Application,
+    sectionsContainer: Container,
+    cellsContainer: Container,
+    lablesContainer: Container,
+    dementionContainer: Container,
+    shapeAdjuster: ShapeAdjuster;
 let curCol = null;
 let curRow = null;
 let draggedObject = null;
@@ -43,7 +54,8 @@ let cursorCheck = false;
 let sections = [];
 let sectionLables = [];
 let deviders = [];
-let holes = [];
+let cells = [];
+let dementions = [];
 
 const {
   MAX_AREA_WIDTH,
@@ -52,44 +64,37 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
-  HOLE_OFFSET,
 } = UI_PARAMS;
 
 const dragState = reactive({
   isDragging: false,
   type: null, // "vertical" или "horizontal"
+
   colIndex: null,
   rowIndex: null, // Для горизонтального перетаскивания
+
   startX: 0,
   startY: 0,
+
   startLeftWidth: 0,
   startRightWidth: 0,
+
+  minXleft: 150,
+  minXRight: 150,
+
   startTopHeight: 0,
   startBottomHeight: 0,
+
+  minTop: 150,
+  minBottom: 150,
+
   element: null,
-
-  curRoundMax: null,
-  nextRoundMax: null,
-});
-
-const holeDragState = reactive({
-  isDragging: false,
-  isResizing: false,
-  sectionIndex: null,
-  holeIndex: null,
-  startHoleSize: 0,
-  sectionElement: null,
-  col: null,
-  row: null,
-  newX: 0,
-  newY: 0,
-  holeData: null,
 });
 
 const pixelRatio = computed(() => TOTAL_LENGTH / MAX_AREA_WIDTH);
 
 const getMaxAreaHeight = computed(
-  () => (TOTAL_HEIGHT * MAX_AREA_WIDTH) / TOTAL_LENGTH
+    () => (TOTAL_HEIGHT * MAX_AREA_WIDTH) / TOTAL_LENGTH
 );
 
 const getPixelWidth = (mmWidth) => {
@@ -124,44 +129,41 @@ const init = async () => {
   });
 
   sectionsContainer = new Container();
-  holesContainer = new Container();
+  cellsContainer = new Container();
   lablesContainer = new Container();
+  dementionContainer = new Container();
 
-  sectionsContainer.interactive = true;
-  holesContainer.interactive = true;
+  // sectionsContainer.interactive = true;
+  cellsContainer.interactive = true;
   lablesContainer.interactiveChildren = false;
+  dementionContainer.interactiveChildren = false;
 
   app.stage.addChild(sectionsContainer);
-  app.stage.addChild(holesContainer);
+  app.stage.addChild(cellsContainer);
   app.stage.addChild(lablesContainer);
+  app.stage.addChild(dementionContainer);
 
   app.stage.eventMode = "static";
   app.stage.hitArea = app.screen;
+
+  shapeAdjuster = new ShapeAdjuster();
 
   renderGrid();
 };
 
 const renderGrid = () => {
-  sectionsContainer.removeChildren();
-  holesContainer.removeChildren();
-  lablesContainer.removeChildren();
-
-  sections = [];
-  sectionLables = [];
-  deviders = [];
-  holes = [];
+  clearRender();
 
   let xOffset = 0;
 
-  props.grid.forEach((column, colIndex) => {
-    const pxWidth = getPixelWidth(column[0].width);
+  props.grid.forEach((section, colIndex) => {
+    const pxWidth = getPixelWidth(section.width);
 
     let yOffset = 0;
 
-    column.forEach((row, rowIndex, col) => {
-      const pxHeight = getPixelHeight(row.height);
-      row.xOffset = xOffset;
-      row.yOffset = yOffset;
+      const pxHeight = getPixelHeight(section.height);
+    section.xOffset = xOffset;
+    section.yOffset = yOffset;
 
       // Отрисовываем секцию
 
@@ -171,99 +173,140 @@ const renderGrid = () => {
         width: pxWidth,
         height: pxHeight,
         colIndex,
-        rowIndex,
-        row,
-        col,
+        rowIndex: 1,
+        cellData:section,
+        col: 1,
       });
 
       //Добавляем отступ по вертикали
       yOffset += pxHeight;
-    });
     //Добавляем отступ по горизонтали
     xOffset += pxWidth;
+
+    // Создаём ограничения для секторов по ширине
+    const colBond = shapeAdjuster.createColumnBounds(sections, colIndex);
+
+    section.cells.forEach((cell) => {
+      cell.shapesBond = colBond;
+      cell.maxX = shapeAdjuster.convertToTen(getMmWidth(colBond.maxX));
+      cell.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
+    });
   });
 
-  const union = [...sections, deviders].flat();
+  sections.forEach((elem) => {
+    app.stage.addChildAt(elem, 0);
+  });
+
+  deviders.forEach((elem) => {
+    sectionsContainer.addChild(elem);
+  });
+
+  cells.forEach((elem) => {
+    cellsContainer.addChild(elem);
+  });
 
   sectionLables.forEach((elem) => {
     lablesContainer.addChild(elem);
   });
 
-  union.forEach((elem) => {
-    sectionsContainer.addChild(elem);
-  });
-
-  holes.forEach((elem) => {
-    holesContainer.addChild(elem);
+  dementions.forEach((elem) => {
+    dementionContainer.addChild(elem);
   });
 };
 
 // Создаём сектора
 const createSector = ({
-  x,
-  y,
-  width,
-  height,
-  row,
-  col,
-  colIndex,
-  rowIndex,
-}) => {
+                        x,
+                        y,
+                        width,
+                        height,
+                        cellData,
+                        col,
+                        colIndex,
+                        rowIndex,
+                      }) => {
+  const sector = new Container();
 
-  let color;
-  let circle = "diameter" in row.roundCut;
+  sector.position.set(x, y);
+
+  sector.shapes = [];
+  sector.sectorData = cellData;
+  sector.sections = sections;
+  sector.cellsContainer = cellsContainer;
+
+  sector.colNdx = colIndex;
+  sector.rowNdx = rowIndex;
+  const cell = new Section(cellData, width, height, sector);
 
   if (
-    selectedCell.value.col === colIndex &&
-    selectedCell.value.row === rowIndex
+      selectedCell.value.col === colIndex &&
+      selectedCell.value.cell === rowIndex
   ) {
-    color = 0xe0f7fa;
+    cell.highlightGraphics.visible = true;
   } else {
-    color = "#ECEBF1";
+    cell.highlightGraphics.visible = false;
   }
 
-  if (circle) {
-    color = "#ffffff";
-  }
+  cell.cellGraphics.eventMode = "static";
+  cell.cellGraphics.cursor = "pointer";
 
-  const cellGraphics = new Graphics();
+  sector.addChild(cell.cellGraphics);
+  sector.addChild(cell.highlightGraphics);
 
-  cellGraphics.rect(0, 0, width, height);
-  cellGraphics.fill(color);
-  cellGraphics.position.set(x, y);
-  cellGraphics.eventMode = "static";
-  cellGraphics.cursor = "pointer";
+  sections.push(sector);
 
-  sections.push(cellGraphics);
+  /** Создаём отверсти */
+  cell.fillings?.forEach((filling) => {
+    createHole(filling, sector);
+  });
 
-  /** Создаём нумерацию сектора */
-  createSectioNum({ x, y, width, height, row, colIndex, rowIndex });
+  // /** Создаём нумерацию сектора */
+  createSectioNum({ x, y, width, height, cell, colIndex, rowIndex });
 
-  cellGraphics.on("pointerdown", () => {
+  cell.cellGraphics.on("pointerdown", () => {
     selectCell(colIndex, rowIndex);
+  });
+  // /**Создание вертикального выреза */
+  createVerticalCut({ width, height, cell, col, colIndex, sector });
+  // /**Создание горизонтального выреза */
+  createHorozontalCut({ width, height, cell, col, colIndex, rowIndex, sector });
+
+  // Создаём ограничения для секторов по высоте
+
+  const sectorBounds = shapeAdjuster.getTotalBounds(sector, cell);
+  sector.bound = sectorBounds;
+
+  cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+  cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+
+  cell.sector = sector;
+
+  // Рендер линейки расстояний до границ сектора
+  sector.shapes.forEach((el) => {
+    el.drawBoundaryDistances();
   });
 };
 
 // Отрисовываем номер ячейки
-const createSectioNum = ({ x, y, width, height, row, colIndex, rowIndex }) => {
-  const pxWidth = getPixelWidth(row.width);
-  const pxHeight = getPixelHeight(row.height);
+const createSectioNum = ({ x, y, width, height, cell, colIndex, rowIndex }) => {
+  const pxWidth = getPixelWidth(cell.width);
+  const pxHeight = getPixelHeight(cell.height);
 
   const cellNumber = new Text({
     text: `${colIndex + 1}.${rowIndex + 1}`,
     style: { fontSize: 14, fill: "#131313", align: "center" },
   });
   cellNumber.anchor.set(0.5);
-  cellNumber.x = row.xOffset + pxWidth / 2;
-  cellNumber.y = row.yOffset + pxHeight / 2;
+  cellNumber.x = cell.xOffset + pxWidth / 2;
+  cellNumber.y = cell.yOffset + pxHeight / 2;
 
   const cellNumberBackground = new Graphics();
   cellNumberBackground.roundRect(
-    row.xOffset + pxWidth / 2 - 12.5,
-    row.yOffset + pxHeight / 2 - 12,
-    25,
-    25,
-    5
+      cell.xOffset + pxWidth / 2 - 12.5,
+      cell.yOffset + pxHeight / 2 - 12,
+      25,
+      25,
+      5
   );
   cellNumberBackground.fill("#ffffff");
   cellNumberBackground.stroke({ width: 1, color: "#A3A9B5" });
@@ -275,27 +318,172 @@ const createSectioNum = ({ x, y, width, height, row, colIndex, rowIndex }) => {
   sectionLables.push(cellNumber);
 };
 
+// Отрисовываем вертикальный вырез
+const createVerticalCut = ({ width, height, cell, col, colIndex, sector }) => {
+  if (!(colIndex < props.grid.length - 1)) return;
+
+  const pxWidth = getPixelWidth(cell.width);
+  const totalHeight = col.reduce((sum, cell) => sum + cell.height, 0);
+  const convertTotalHeight = getPixelHeight(totalHeight);
+
+  const divider = new Graphics();
+  const dashVert = new Graphics();
+
+  divider.rect(0, 0, 10, convertTotalHeight);
+
+  divider.fill("#A3A9B5");
+  divider.alpha = 0;
+
+  divider.eventMode = "static";
+  divider.cursor = "col-resize";
+  divider.col = colIndex;
+
+  dashVert.rect(0, 0, 0, convertTotalHeight);
+  dashVert.stroke({ width: 1, color: "#5D6069" });
+  divider.dev_name = `dev${divider.uid}`;
+
+  divider.position.set(cell.xOffset + pxWidth - 5, 0);
+  dashVert.position.set(cell.xOffset + pxWidth, 0);
+  divider.toColideCheck = dashVert;
+
+  // const dashedV = drawDashedLine({
+  //   startX: cell.xOffset + pxWidth,
+  //   startY: 0,
+  //   endX: cell.xOffset + pxWidth,
+  //   endY: convertTotalHeight,
+  //   graphics: dashVert,
+  // });
+
+  divider.on("pointerdown", onVerticalDragStart, divider);
+
+  deviders.push(dashVert, divider);
+};
+
+// Отрисовываем вертикальный вырез
+const createHorozontalCut = ({
+                               width,
+                               height,
+                               cell,
+                               col,
+                               colIndex,
+                               rowIndex,
+                               sector,
+                             }) => {
+  if (!(rowIndex < col.length - 1)) return;
+
+  const pxWidth = getPixelWidth(cell.width);
+  const pxHeight = getPixelHeight(cell.height);
+
+  const divider = new Graphics();
+  const dashHor = new Graphics();
+
+  divider.rect(cell.xOffset, cell.yOffset + pxHeight - 5, pxWidth, 10);
+  divider.fill("#A3A9B5");
+  divider.alpha = 0;
+  divider.eventMode = "static";
+  divider.cursor = "cell-resize";
+  divider.col = colIndex;
+  divider.cell = rowIndex;
+
+  // dragState.colIndex === colIndex && dragState.rowIndex === rowIndex
+  //   ? (divider.alpha = 0.5)
+  //   : (divider.alpha = 0);
+
+  // const dashedV = drawDashedLine({
+  //   startX: cell.xOffset,
+  //   startY: cell.yOffset + pxHeight,
+  //   endX: cell.xOffset + pxWidth,
+  //   endY: cell.yOffset + pxHeight,
+  //   graphics: dashHor,
+  // });
+
+  dashHor.rect(cell.xOffset, cell.yOffset + pxHeight, pxWidth, 0);
+  dashHor.stroke({ width: 1, color: "#5D6069" });
+
+  divider.on("pointerdown", onHorizontalDragStart, divider);
+
+  // deviders.push(dashedV, divider);
+  deviders.push(dashHor, divider);
+};
+
+// Создание отверстия
+
+const checkPositionHoleToCreate = (data) => {
+  const col = selectedCell.value.col;
+  const cell = selectedCell.value.cell;
+
+  let position, tempShape;
+
+  const sector = sections.find(
+      (elem) => elem.rowNdx === cell && elem.colNdx === col
+  );
+
+  tempShape = new Shape({
+    type: data.type,
+    sector,
+    position: { x: 0, y: 0 },
+    data,
+  });
+
+  /** Проверяем на возможность размещения отверстия */
+
+  position = shapeAdjuster.getRandomPosition(sector, tempShape);
+
+  if (!position) {
+    return false;
+  }
+  return {
+    x: Math.round(getMmWidth(position.x)),
+    y: Math.round(getMmWidth(position.y)),
+    width: data.width,
+    height: data.height,
+    type: data.type,
+    radius: data.radius,
+  };
+};
+
+const createHole = (data, sector) => {
+  const cell = new Shape({
+    type: data.type,
+    sector,
+    data,
+    select: selectCell,
+    render: renderGrid,
+    dementions,
+    dementionContainer,
+  });
+
+  cells.push(cell.graphic);
+  sector.shapes.push(cell);
+};
+
 // Выбор сектора, передача в родительский компонент
+
 const selectCell = (colIndex, rowIndex) => {
-  selectedCell.value = { col: colIndex, row: rowIndex };
+  selectedCell.value = { col: colIndex, cell: rowIndex };
+  toggleSectorColor(colIndex, rowIndex);
   emit("cell-selected", colIndex, rowIndex);
 };
 
+const toggleSectorColor = (colIndex, rowIndex) => {
+  const sector = props.grid[colIndex][rowIndex].sector;
+
+  sections.forEach((elem) => {
+    elem.children[1].visible = false;
+    // elem.children[0].alpha = 1;
+  });
+  sector.children[1].visible = true;
+  // sector.children[0].alpha = 0.5;
+};
+
 // Обработчик для вертикального перетаскивания (между колонками)
-const onVerticalDragStart = (event, colIndex) => {
-  event.stopPropagation();
+function onVerticalDragStart(event) {
+  // event.stopPropagation();
   cursorCheck = true;
+  const colIndex = this.col;
 
   const cur = props.grid[colIndex];
   const next = props.grid[colIndex + 1];
-
-  let curRound = cur
-    .filter((elem) => elem.roundCut.diameter)
-    .sort((a, b) => b.roundCut.diameter - a.roundCut.diameter)[0];
-
-  let nextRound = next
-    .filter((elem) => elem.roundCut.diameter)
-    .sort((a, b) => b.roundCut.diameter - a.roundCut.diameter)[0];
 
   // event.currentTarget.alpha = 0.5;
 
@@ -307,27 +495,39 @@ const onVerticalDragStart = (event, colIndex) => {
 
   dragState.startLeftWidth = cur[0].width;
   dragState.startRightWidth = next[0].width;
-  dragState.element = event.currentTarget;
 
-  dragState.curRoundMax = curRound;
-  dragState.nextRoundMax = nextRound;
+  dragState.minXleft = shapeAdjuster.getLeftSectionWidth(
+      cur[0].sector,
+      cur[0].maxX
+  );
+
+  dragState.minXRight = shapeAdjuster.getRightSectionWidth(
+      next[0].sector,
+      next[0].minX
+  );
+
+  dragState.element = this;
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
+
   // renderGrid();
-};
+}
 
 // Обработчик для горизонтального перетаскивания (между строками)
-const onHorizontalDragStart = (event, colIndex, rowIndex) => {
-  event.stopPropagation();
+function onHorizontalDragStart(event) {
+  // event.stopPropagation();
 
   cursorCheck = true;
+
+  const colIndex = this.col as number;
+  const rowIndex = this.cell as number;
 
   const cur = props.grid[colIndex][rowIndex];
   const next = props.grid[colIndex][rowIndex + 1];
 
   // event.currentTarget.alpha = 0.5;
-  dragState.element = event.currentTarge;
+  dragState.element = this;
   dragState.isDragging = true;
   dragState.type = "horizontal";
   dragState.colIndex = colIndex;
@@ -336,54 +536,16 @@ const onHorizontalDragStart = (event, colIndex, rowIndex) => {
   dragState.startTopHeight = cur.height;
   dragState.startBottomHeight = next.height;
 
-  console.log();
-
-  dragState.curRoundMax = cur;
-  dragState.nextRoundMax = next;
+  dragState.minTop = shapeAdjuster.getSectionTop(cur.sector, cur.maxY);
+  dragState.minBottom = shapeAdjuster.getSectionBottom(next.sector, next.minY);
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
-};
 
-const onHoleDragStart = ({ event, row, colIndex, rowIndex, x, y, hole }) => {
-  event.stopPropagation();
+  // renderGrid();
+}
 
-  const cur = toRaw(selectedCell.value);
-
-  const curSector = JSON.stringify({ col: colIndex, row: rowIndex });
-  const curCell = JSON.stringify(cur);
-
-  if (curCell !== curSector) {
-    const newCell = JSON.parse(curSector);
-    selectCell(newCell.col, newCell.row);
-  }
-
-  cursorCheck = true;
-
-  holeDragState.isDragging = true;
-  holeDragState.sectionElement = event.currentTarget;
-
-  // console.log(event.currentTarget.getBounds(), '--currentTarget');
-
-  // holeDragState.sectionElement.alpha = 0.4;
-  holeDragState.sectionElement.dragData = event.data;
-  holeDragState.sectionElement.dragging = true;
-  holeDragState.row = row;
-
-  if ("diametr" in row.roundCut) {
-    holeDragState.newX = row.roundCut.x;
-    holeDragState.newY = row.roundCut.y;
-  }
-
-  holeDragState.newX = x;
-  holeDragState.newY = y;
-  holeDragState.holeData = hole;
-
-  app.stage.on("pointermove", onDragHoleMove);
-  app.stage.on("pointerup", onHoleDragEnd);
-};
-
-const onDragMove = (event) => {
+function onDragMove(event) {
   if (!dragState.isDragging) return;
 
   const {
@@ -396,27 +558,20 @@ const onDragMove = (event) => {
     startRightWidth,
     startTopHeight,
     startBottomHeight,
+    minXleft,
+    minXRight,
+    minTop,
+    minBottom,
     element,
-    curRoundMax,
-    nextRoundMax,
   } = dragState;
 
-  let curMin, nextMin;
-
-  if (curRoundMax && "diameter" in curRoundMax.roundCut) {
-    curMin = curRoundMax.roundCut.diameter;
-  } else {
-    curMin = MIN_SECTION_WIDTH;
-  }
-
-  if (nextRoundMax && "diameter" in nextRoundMax.roundCut) {
-    nextMin = nextRoundMax.roundCut.diameter;
-  } else {
-    nextMin = MIN_SECTION_WIDTH;
-  }
-
   if (type === "vertical") {
+    let curMin = minXleft < MIN_SECTION_WIDTH ? MIN_SECTION_WIDTH : minXleft;
+    let nextMin = minXRight < MIN_SECTION_WIDTH ? MIN_SECTION_WIDTH : minXRight;
+
     const deltaPixels = event.data.global.x - startX;
+
+    element.position.x = Math.floor(event.data.global.x / 10) * 10;
 
     const deltaMm = Math.floor((deltaPixels * pixelRatio.value) / 10) * 10;
 
@@ -433,17 +588,20 @@ const onDragMove = (event) => {
       newLeftWidth = startLeftWidth + startRightWidth - nextMin;
     }
 
-    // Update grid dimensions
-    props.grid[colIndex].forEach((row) => {
-      row.width = newLeftWidth;
-      adjustObjectPosition(row);
+    props.grid[colIndex].forEach((cell) => {
+      cell.width = newLeftWidth;
     });
-    props.grid[colIndex + 1].forEach((row) => {
-      row.width = newRightWidth;
-      adjustObjectPosition(row);
+
+    props.grid[colIndex + 1].forEach((cell) => {
+      cell.width = newRightWidth;
     });
   } else if (type === "horizontal") {
+    let curMin = minTop < MIN_SECTION_WIDTH ? MIN_SECTION_WIDTH : minTop;
+    let nextMin = minBottom < MIN_SECTION_WIDTH ? MIN_SECTION_WIDTH : minBottom;
+
     const deltaPixels = event.data.global.y - startY;
+
+    element.position.y = Math.floor(event.data.global.y / 10) * 10;
 
     const deltaMm = Math.floor((deltaPixels * pixelRatio.value) / 10) * 10;
 
@@ -462,110 +620,10 @@ const onDragMove = (event) => {
 
     props.grid[colIndex][rowIndex].height = newTopHeight;
     props.grid[colIndex][rowIndex + 1].height = newBottomHeight;
-
-    adjustObjectPosition(props.grid[colIndex][rowIndex]);
-    adjustObjectPosition(props.grid[colIndex][rowIndex + 1]);
   }
 
   renderGrid();
-};
-
-const onDragHoleMove = (event) => {
-  if (!holeDragState.isDragging || !holeDragState.sectionElement) return;
-
-  let elem = holeDragState.sectionElement;
-
-  if (!elem.parent) return;
-
-  const holeOffset = 100;
-  const hole = holeDragState.holeData;
-  const row = holeDragState.row;
-
-  const newPosition = elem.parent.toLocal(event.global, null, elem.position);
-  const drowPosition = elem.dragData.getLocalPosition(elem.parent);
-
-  let pixelCenterX, pixelCenterY;
-
-  if (row.colide._currentPos.x !== null) {
-    pixelCenterX =
-      row.colide._currentPos.x - row.xOffset - getPixelWidth(row.width) * 0.5;
-    pixelCenterY =
-      row.colide._currentPos.y - row.yOffset - getPixelHeight(row.height) * 0.5;
-  } else {
-    pixelCenterX = newPosition.x - row.xOffset - getPixelWidth(row.width) * 0.5;
-    pixelCenterY =
-      newPosition.y - row.yOffset - getPixelHeight(row.height) * 0.5;
-  }
-
-  // pixelCenterX = newPosition.x - row.xOffset - getPixelWidth(row.width) * 0.5;
-  // pixelCenterY = newPosition.y - row.yOffset - getPixelHeight(row.height) * 0.5;
-
-
-  // Преобразуем пиксели обратно в миллиметры
-  let mmX = getMmWidth(pixelCenterX);
-  let mmY = getMmHeight(pixelCenterY);
-
-  let elmRadius;
-  let minX, maxX, minY, maxY;
-  let x, y;
-
-  if ("diameter" in row.roundCut) {
-    elmRadius = row.roundCut.diameter * 0.5;
-    minX = -row.width * 0.5 + elmRadius; // Левая граница
-    maxX = row.width * 0.5 - elmRadius; // Правая граница
-    minY = -row.height * 0.5 + elmRadius; // Верхняя граница
-    maxY = row.height * 0.5 - elmRadius; // Нижняя граница
-  } else {
-    minX = -row.width * 0.5 + hole.width * 0.5 + HOLE_OFFSET; // Левая граница
-    maxX = row.width * 0.5 - hole.width * 0.5 - HOLE_OFFSET; // Правая граница
-    minY = -row.height * 0.5 + hole.height * 0.5 + HOLE_OFFSET; // Верхняя граница
-    maxY = row.height * 0.5 - hole.height * 0.5 - HOLE_OFFSET; // Нижняя граница
-  }
-
-  // Применяем ограничения
-  mmX = Math.max(minX, Math.min(maxX, mmX));
-  mmY = Math.max(minY, Math.min(maxY, mmY));
-
-  const xMaxBound = Math.max(
-    drowPosition.x,
-    elem.sectorBounds.minX + row.xOffset
-  );
-  const yMaxBound = Math.max(
-    drowPosition.y,
-    elem.sectorBounds.minY + row.yOffset
-  );
-
-  if ("diameter" in row.roundCut) {
-    x = Math.min(xMaxBound, elem.sectorBounds.maxX + row.xOffset);
-    y = Math.min(yMaxBound, elem.sectorBounds.maxY + row.yOffset);
-  } else {
-    x =
-      Math.min(xMaxBound, elem.sectorBounds.maxX + row.xOffset) -
-      getPixelWidth(hole.width) * 0.5;
-    y =
-      Math.min(yMaxBound, elem.sectorBounds.maxY + row.yOffset) -
-      getPixelHeight(hole.height) * 0.5;
-  }
-
-  // Обновляем позицию элемента для немедленного отображения
-
-  // Позиционируем разрез
-  elem.position.set(x, y);
-
-  row.colide.update(elem);
-
-  if ("diameter" in row.roundCut) {
-    row.roundCut.x = Math.round(mmX);
-    row.roundCut.y = Math.round(mmY);
-  } else {
-    hole.x = Math.round(mmX);
-    hole.y = Math.round(mmY);
-
-    // console.log(hole.x, hole.y, "--POS");
-  }
-
-  // Передаём новое положение
-};
+}
 
 const onDragEnd = () => {
   dragState.isDragging = false;
@@ -582,49 +640,6 @@ const onDragEnd = () => {
   renderGrid();
 };
 
-const onHoleDragEnd = () => {
-  if (!holeDragState.sectionElement) return; // Исправлено условие: убрано === null
-  holeDragState.row.colide.reset();
-  holeDragState.sectionElement.alpha = 1; // Убираем подсветку
-  holeDragState.sectionElement.dragging = false;
-  holeDragState.sectionElement.dragData = null;
-  holeDragState.sectionElement = null;
-  holeDragState.startHoleSize = 0;
-  holeDragState.col = null;
-  holeDragState.row = null;
-  holeDragState.newX = 0;
-  holeDragState.newY = 0;
-  holeDragState.holeData = null;
-  app.stage.off("pointermove", onDragHoleMove);
-  app.stage.off("pointerup", onHoleDragEnd);
-  cursorCheck = false;
-};
-
-const adjustObjectPosition = (data) => {
-  // Если в секции есть круглый вырез
-  if (data.roundCut && "diameter" in data.roundCut) {
-    const radius = data.roundCut.diameter / 2;
-
-    // Ограничения по X
-    const minX = -data.width / 2 + radius;
-    const maxX = data.width / 2 - radius;
-
-    // Ограничения по Y
-    const minY = -data.height / 2 + radius;
-    const maxY = data.height / 2 - radius;
-
-    // Применяем ограничения
-    data.roundCut.x = Math.max(minX, Math.min(maxX, data.roundCut.x));
-    data.roundCut.y = Math.max(minY, Math.min(maxY, data.roundCut.y));
-  }
-
-  const collisionSystem = new HolesCollision();
-
-  if (data.holes.length > 0) {
-    data.colide.update();
-  }
-};
-
 const handleGlobalPointerMove = (event) => {
   if (!app.renderer || !cursorCheck) return;
 
@@ -634,15 +649,192 @@ const handleGlobalPointerMove = (event) => {
   const mouseY = event.clientY - canvasRect.top;
 
   if (
-    mouseX < 0 ||
-    mouseY < 0 ||
-    mouseX > app.renderer.width ||
-    mouseY > app.renderer.height
+      mouseX < 0 ||
+      mouseY < 0 ||
+      mouseX > app.renderer.width ||
+      mouseY > app.renderer.height
   ) {
     // console.log("Курсор вне холста (глобальная проверка)");
     onDragEnd();
-    onHoleDragEnd();
   }
+};
+
+const adjustSectionSize = (
+    colIndex,
+    rowIndex,
+    newValue,
+    dimension = "width"
+) => {
+  const minValue =
+      dimension === "width" ? MIN_SECTION_WIDTH : MIN_SECTION_HEIGHT;
+  newValue = Math.max(Math.floor(newValue / 10) * 10, minValue);
+  let calcValue;
+
+  const grid = props.grid;
+
+  if (dimension === "width") {
+    const section = grid[colIndex];
+
+    if (colIndex < grid.length - 1) {
+      const nextCol = grid[colIndex + 1];
+      const totalWidth = section[0].width + nextCol[0].width;
+
+      const minCurrent = Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getLeftSectionWidth(section[0].sector, section[0].maxX)
+      );
+
+      const minNext = Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getRightSectionWidth(nextCol[0].sector, nextCol[0].minX)
+      );
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          section,
+          nextCol,
+          totalWidth,
+          minCurrent,
+          minNext
+      );
+    } else if (colIndex > 0) {
+      const prevCol = grid[colIndex - 1];
+      const totalWidth = section[0].width + prevCol[0].width;
+
+      const minCurrent = Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getRightSectionWidth(section[0].sector, section[0].minX)
+      );
+
+      const minPrev = Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getLeftSectionWidth(prevCol[0].sector, prevCol[0].maxX)
+      );
+
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          section,
+          prevCol,
+          totalWidth,
+          minCurrent,
+          minPrev
+      );
+    } else {
+      section.forEach((cell) => (cell.width = newValue));
+    }
+  } else {
+    const section = grid[colIndex];
+    const currentRow = section[rowIndex];
+    if (rowIndex < section.length - 1) {
+      const nextRow = section[rowIndex + 1];
+      const totalHeight = currentRow.height + nextRow.height;
+      const minCurrent = Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionTop(currentRow.sector, currentRow.maxY)
+      );
+      const minNext = Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionBottom(nextRow.sector, nextRow.minY)
+      );
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          currentRow,
+          nextRow,
+          totalHeight,
+          minCurrent,
+          minNext
+      );
+    } else if (rowIndex > 0) {
+      const prevRow = section[rowIndex - 1];
+      const totalHeight = currentRow.height + prevRow.height;
+      const minCurrent = Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionBottom(currentRow.sector, currentRow.minY)
+      );
+      const minPrev = Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionTop(prevRow.sector, prevRow.maxY)
+      );
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          currentRow,
+          prevRow,
+          totalHeight,
+          minCurrent,
+          minPrev
+      );
+    } else {
+      currentRow.height = newValue;
+    }
+  }
+
+  renderGrid();
+  return calcValue;
+};
+
+const updateSizes = (
+    newValue,
+    dimension,
+    current,
+    adjacent,
+    total,
+    minCurrent,
+    minAdjacent
+) => {
+  if (newValue < minCurrent) newValue = minCurrent;
+  const newAdjacentSize = total - newValue;
+  if (newAdjacentSize < minAdjacent) newValue = total - minAdjacent;
+
+  if (dimension === "width") {
+    current.forEach((cell) => (cell.width = newValue));
+    adjacent.forEach((cell) => (cell.width = total - newValue));
+  } else {
+    current[dimension] = newValue;
+    adjacent[dimension] = total - newValue;
+  }
+
+  return newValue;
+};
+
+const adjustSizeFromExternal = ({
+                                  dimension,
+                                  value,
+                                  col,
+                                  cell,
+                                }: {
+  dimension: string;
+  value: number;
+  col: number;
+  cell?: number;
+}) =>
+{
+  if (col === null) {
+    console.warn("Не выбрана ячейка для изменения размера");
+    return;
+  }
+
+  return adjustSectionSize(col, cell, value, dimension);
+};
+
+const clearRender = () => {
+  sections.forEach((elem) => {
+    app.stage.removeChild(elem);
+    elem.destroy();
+  });
+
+  sections = [];
+  sectionLables = [];
+  deviders = [];
+  cells = [];
+  dementions = [];
+
+  sectionsContainer.removeChildren();
+  cellsContainer.removeChildren();
+  lablesContainer.removeChildren();
+  dementionContainer.removeChildren();
 };
 
 onMounted(() => {
@@ -655,21 +847,11 @@ onUnmounted(() => {
   app.destroy(true);
 });
 
-watch(
-  // () => props.grid,
-  () => props.correct,
-  () => {
-    if (!props.correct.change) {
-      console.log("??");
-      // console.log("renderGrid");
-      renderGrid();
-    }
-  },
-  { deep: true }
-);
-
-watch([selectedCell], () => {
-  renderGrid();
+defineExpose({
+  adjustSizeFromExternal,
+  renderGrid,
+  checkPositionHoleToCreate,
+  createHole,
 });
 </script>
 
@@ -681,10 +863,11 @@ watch([selectedCell], () => {
 
 <style>
 .visualization {
-  width: 1000px;
-  height: 780px;
+  width: 64vw;
+  height: 58vh;
   border: 1px solid #bbbbbb;
 }
+
 /*  height: 320px; */
 
 canvas {
