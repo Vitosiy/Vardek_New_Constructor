@@ -102,16 +102,33 @@ export interface FillingObject {
   color: number;
 }
 
+export interface GridCellsRow {
+  number: number;
+  width: number;
+  height: number;
+  fillings?: FillingObject[];
+}
+
 export interface GridCell {
   number: number;
   width: number;
   height: number;
-  fillings?: Array<FillingObject>;
+  cellsRows?: GridCellsRow[];
+  fillings?: FillingObject[];
 }
 
 export interface GridSection {
   number: number;
   width: number;
   height: number;
-  cells: Array<GridCell>;
+  cells: GridCell[];
+}
+
+export interface GridModule {
+  width: number;
+  height: number;
+  moduleThickness: number;
+  sections: GridSection[];
+  horizont?: number;
+  fasades?: [];
 }

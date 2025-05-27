@@ -47,6 +47,7 @@ export class BuildersHelper extends GlobalsData {
 
         const MATERIAL_THICKNESS = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH || 18
         const HORIZONT = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT || PARAMS.HORIZONT === 0 ? PARAMS.HORIZONT : 78
+        const FILLING = this._FILLING[product_data["FILLING"][0]] || {}
 
         PARAMS.EXPRESSIONS = {
             "#MWIDTH#": product_data.width,
@@ -64,6 +65,8 @@ export class BuildersHelper extends GlobalsData {
             "#SIZEEDITJOINDEPTH#": product_data.SIZE_EDIT_JOINDEPTH_MIN,
             "#MATERIAL_THICKNESS#": MATERIAL_THICKNESS,
             "#HORIZONT#": HORIZONT,
+            "#VSECTION_MAX#": FILLING?.VSECTION_MAX,
+            "#VSECTION_MIN#": FILLING?.VSECTION_MIN,
         };
 
         Object.entries(PARAMS.FASADE_SIZE).forEach(([key, item]) => {
