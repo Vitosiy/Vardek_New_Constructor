@@ -106,6 +106,7 @@ export interface GridCellsRow {
   number: number;
   width: number;
   height: number;
+  type: "rowCell";
   fillings?: FillingObject[];
 }
 
@@ -113,6 +114,7 @@ export interface GridCell {
   number: number;
   width: number;
   height: number;
+  type: "cell";
   cellsRows?: GridCellsRow[];
   fillings?: FillingObject[];
 }
@@ -121,6 +123,7 @@ export interface GridSection {
   number: number;
   width: number;
   height: number;
+  type: "section";
   cells: GridCell[];
 }
 
@@ -129,6 +132,7 @@ export interface GridModule {
   height: number;
   moduleThickness: number;
   sections: GridSection[];
+  type: "module";
   horizont?: number;
   fasades?: [];
 }

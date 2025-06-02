@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, computed, onMounted } from "vue";
 
 interface Props {
@@ -55,23 +56,23 @@ const hideTooltip = () => {
 };
 
 onMounted(()=>{
-    console.log(props.content, 'CONT')
+  console.log(props.content, 'CONT')
 })
 </script>
 
 <template>
   <div
-    class="tooltip-wrapper"
-    @mouseenter="showTooltip"
-    @mouseleave="hideTooltip"
+      class="tooltip-wrapper"
+      @mouseenter="showTooltip"
+      @mouseleave="hideTooltip"
   >
     <slot name="trigger"></slot>
     <transition name="fade">
       <div
-        v-if="isVisible"
-        class="tooltip"
-        :style="tooltipStyle"
-        :class="[`tooltip-${position}`, { 'tooltip-dark': theme === 'dark' }]"
+          v-if="isVisible"
+          class="tooltip"
+          :style="tooltipStyle"
+          :class="[`tooltip-${position}`, { 'tooltip-dark': theme === 'dark' }]"
       >
         <slot name="content">{{ content }}</slot>
       </div>

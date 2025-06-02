@@ -10,6 +10,7 @@ export class GlobalsData {
     _APP: THREETypes.TObject = useAppData().getAppData
     _COLOR: THREETypes.TObject = this._APP.COLOR
     _FASADE: THREETypes.TObject = this._APP.FASADE;
+    _FILLING: THREETypes.TObject = this._APP.FILLING;
     _FASADESIZE: THREETypes.TObject = this._APP.FASADESIZE;
     _FASADENUMBERSIZE: THREETypes.TObject = this._APP.FASADENUMBERSIZE;
     _FASADE_SECTION: THREETypes.TObject = this._APP.FASADE_SECTION;

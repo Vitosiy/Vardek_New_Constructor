@@ -1,5 +1,7 @@
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, toRefs } from "vue";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
 
 const props = defineProps({
   holes: {
@@ -29,22 +31,23 @@ const deliteHole = (key: number) => {
 };
 
 const updateHole = (
-  event: Event,
-  key: number,
-  valueType: string,
-  holeType: string
+    event: Event,
+    key: number,
+    valueType: string,
+    holeType: string
 ) => {
+  console.log(event);
   emit("cut-updateHole", event, key, valueType, holeType);
 };
 
 const changeHolePositionX = ({
-  event,
-  key,
-  valueType,
-  holeType,
-  hole,
-  direction,
-}: {
+                               event,
+                               key,
+                               valueType,
+                               holeType,
+                               hole,
+                               direction,
+                             }: {
   event: Event;
   key: number;
   valueType: string;
@@ -57,11 +60,11 @@ const changeHolePositionX = ({
   switch (direction) {
     case "left":
       dirrectionValue =
-        parseInt(event.target.value) - hole.distances[direction];
+          parseInt(event.target.value) - hole.distances[direction];
       break;
     case "right":
       dirrectionValue =
-        (parseInt(event.target.value) - hole.distances[direction]) * -1;
+          (parseInt(event.target.value) - hole.distances[direction]) * -1;
       break;
   }
 
@@ -69,13 +72,13 @@ const changeHolePositionX = ({
 };
 
 const changeHolePositionY = ({
-  event,
-  key,
-  valueType,
-  holeType,
-  hole,
-  direction,
-}: {
+                               event,
+                               key,
+                               valueType,
+                               holeType,
+                               hole,
+                               direction,
+                             }: {
   event: Event;
   key: number;
   valueType: string;
@@ -88,12 +91,12 @@ const changeHolePositionY = ({
   switch (direction) {
     case "top":
       dirrectionValue =
-        parseInt(event.target.value) - hole.distances[direction];
+          parseInt(event.target.value) - hole.distances[direction];
       break;
 
     case "bottom":
       dirrectionValue =
-        (parseInt(event.target.value) - hole.distances[direction]) * -1;
+          (parseInt(event.target.value) - hole.distances[direction]) * -1;
       break;
   }
 
@@ -113,49 +116,60 @@ const toggleHoleOptions = () => {
     <div class="splitter-container--cut-header">
       <h3 class="splitter-title">Разрез</h3>
       <button class="actions-btn actions-icon" @click="toggleHoleOptions">
-        <img class="actions-icon--close" src="../../../assets/svg/close.svg" alt="" />
+        <img class="actions-icon--close" src="/icons/close.svg" alt="" />
       </button>
     </div>
 
     <div class="splitter-container--cut-options">
       <div class="splitter-container--cut-options--add">
         <button
-          class="actions-btn actions-icon"
-          @click="addHole('rect')"
-          v-if="holes.length < 2"
+            class="actions-btn actions-icon"
+            @click="addHole('rect')"
+            v-if="holes.length < 2"
         >
-          <img class="actions-icon--add" src="../../../assets/svg/popup/add.svg" alt="" />
+          <img class="actions-icon--add" src="/icons/add.svg" alt="" />
         </button>
         <p>Прямогульный разрез</p>
       </div>
       <div class="splitter-container--cut-options--add">
         <button
-          class="actions-btn actions-icon"
-          @click="addHole('circle')"
-          v-if="holes.length < 2"
+            class="actions-btn actions-icon"
+            @click="addHole('circle')"
+            v-if="holes.length < 2"
         >
-          <img class="actions-icon--add" src="../../../assets/svg/popup/add.svg" alt="" />
+          <img class="actions-icon--add" src="/icons/add.svg" alt="" />
         </button>
         <p>Круглый разрез</p>
       </div>
     </div>
     <div class="splitter-container--cut-data" v-if="props.holes">
       <div
-        v-for="(hole, key) in holes"
-        :key="key + hole.type"
-        class="splitter-container--cut-items"
+          v-for="(hole, key) in holes"
+          :key="key + hole.type"
+          class="splitter-container--cut-items"
       >
         <div class="splitter-container--cut-header">
           <h3 class="splitter-title">{{ hole.lable }}</h3>
           <button class="actions-btn actions-icon" @click="deliteHole(key)">
-            <img class="actions-icon--delite" src="../../../assets/svg/trash.svg" alt="" />
+            <img class="actions-icon--delite" src="/icons/delite.svg" alt="" />
           </button>
         </div>
         <div class="splitter-container--cut-position">
           <div class="actions-inputs" v-if="hole.width">
             <p class="actions-title">Ширина</p>
             <div class="actions-input--container">
-              <input
+              <MainInput
+                  :type="'number'"
+                  :step="10"
+                  :min="150"
+                  :max="hole.Mwidth"
+                  :inputClass="'actions-input'"
+                  v-model="hole.width"
+                  @update:modelValue="
+                  (newValue) => updateHole(newValue, key, 'width', 'rect')
+                "
+              />
+              <!-- <input
                 type="number"
                 step="10"
                 min="150"
@@ -163,13 +177,24 @@ const toggleHoleOptions = () => {
                 class="actions-input"
                 :value="hole.width"
                 @input="updateHole($event, key, 'width', 'rect')"
-              />
+              /> -->
             </div>
           </div>
           <div class="actions-inputs" v-if="hole.height">
             <p class="actions-title">Высота</p>
             <div class="actions-input--container">
-              <input
+              <MainInput
+                  :type="'number'"
+                  :step="10"
+                  :min="150"
+                  :max="hole.Mheight"
+                  :inputClass="'actions-input'"
+                  v-model="hole.height"
+                  @update:modelValue="
+                  (newValue) => updateHole(newValue, key, 'height', 'rect')
+                "
+              />
+              <!-- <input
                 type="number"
                 step="10"
                 min="150"
@@ -177,37 +202,48 @@ const toggleHoleOptions = () => {
                 class="actions-input"
                 :value="hole.height"
                 @input="updateHole($event, key, 'height', 'rect')"
-              />
+              /> -->
             </div>
           </div>
           <div class="actions-inputs" v-else>
             <p class="actions-title">Диаметр</p>
             <div class="actions-input--container">
-              <input
+              <MainInput
+                  :type="'number'"
+                  :step="10"
+                  :min="150"
+                  :max="hole.Mradius"
+                  :inputClass="'actions-input'"
+                  v-model="hole.radius"
+                  @update:modelValue="
+                  (newValue) => updateHole(newValue, key, 'radius', 'circle')
+                "
+              />
+              <!-- <input
                 type="number"
                 step="10"
                 min="150"
                 :max="hole.Mradius"
                 class="actions-input"
                 :value="hole.radius"
-                @input="updateHole($event, key, 'radius', 'circle')"
-              />
+                @input="updateHole($event.target.value, key, 'radius', 'circle')"
+              /> -->
             </div>
           </div>
         </div>
 
         <div class="splitter-container--cut-actions">
-          <div class="actions-inputs" v-if="hole.radius">
+          <div class="actions-inputs width-max" v-if="hole.radius">
             <p class="actions-title">Расстояние от краев</p>
 
             <div class="splitter-container--cut-position">
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.left"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.left"
+                    @input="
                     changeHolePositionX({
                       event: $event,
                       key: key,
@@ -221,18 +257,18 @@ const toggleHoleOptions = () => {
               </div>
 
               <img
-                class="actions-icon--position"
-                src=""
-                alt=""
+                  class="actions-icon--position"
+                  src="/icons/position-x.svg"
+                  alt=""
               />
 
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.right"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.right"
+                    @input="
                     changeHolePositionX({
                       event: $event,
                       key: key,
@@ -249,11 +285,11 @@ const toggleHoleOptions = () => {
             <div class="splitter-container--cut-position">
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.top"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.top"
+                    @input="
                     changeHolePositionY({
                       event: $event,
                       key: key,
@@ -267,18 +303,18 @@ const toggleHoleOptions = () => {
               </div>
 
               <img
-                class="actions-icon--position"
-                src=""
-                alt=""
+                  class="actions-icon--position"
+                  src="/icons/position-y.svg"
+                  alt=""
               />
 
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.bottom"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.bottom"
+                    @input="
                     changeHolePositionY({
                       event: $event,
                       key: key,
@@ -293,16 +329,16 @@ const toggleHoleOptions = () => {
             </div>
           </div>
 
-          <div class="actions-inputs" v-else>
+          <div class="actions-inputs width-max" v-else>
             <p class="actions-title">Расстояние от краев</p>
             <div class="splitter-container--cut-position">
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.left"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.left"
+                    @input="
                     changeHolePositionX({
                       event: $event,
                       key: key,
@@ -316,18 +352,18 @@ const toggleHoleOptions = () => {
               </div>
 
               <img
-                class="actions-icon--position"
-                src=""
-                alt=""
+                  class="actions-icon--position"
+                  src="/icons/position-x.svg"
+                  alt=""
               />
 
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.right"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.right"
+                    @input="
                     changeHolePositionX({
                       event: $event,
                       key: key,
@@ -344,11 +380,11 @@ const toggleHoleOptions = () => {
             <div class="splitter-container--cut-position">
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.top"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.top"
+                    @input="
                     changeHolePositionY({
                       event: $event,
                       key: key,
@@ -362,18 +398,18 @@ const toggleHoleOptions = () => {
               </div>
 
               <img
-                class="actions-icon--position"
-                src=""
-                alt=""
+                  class="actions-icon--position"
+                  src="/icons/position-y.svg"
+                  alt=""
               />
 
               <div class="actions-input--container">
                 <input
-                  type="number"
-                  step="1"
-                  class="actions-input"
-                  :value="hole.distances.bottom"
-                  @input="
+                    type="number"
+                    step="1"
+                    class="actions-input"
+                    :value="hole.distances.bottom"
+                    @input="
                     changeHolePositionY({
                       event: $event,
                       key: key,
@@ -445,7 +481,7 @@ const toggleHoleOptions = () => {
       &-options {
         display: flex;
         flex-direction: column;
-        gap: 0.75 rem;
+        gap: 0.75rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #ecebf1;
 
@@ -467,6 +503,12 @@ const toggleHoleOptions = () => {
         align-items: center;
       }
     }
+  }
+}
+
+.width {
+  &-max {
+    max-width: 100% !important;
   }
 }
 </style>

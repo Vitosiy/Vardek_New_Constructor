@@ -9,14 +9,7 @@ import {
   toRaw,
   watch,
 } from "vue";
-import InteractiveSpace from "./InteractiveSpace.vue";
-import ProductOptions from "./utils/ProductOptions.vue";
-import { ShapeAdjuster } from "./utils/Methods";
-import { UI_PARAMS} from "./utils/UMConstructorConst.ts";
-import {useMenuStore} from "@/store/appStore/useMenuStore";
-import * as THREETypes from "@/types/types";
-import {GridModule, FillingObject, GridCell, GridSection, GridCellsRow} from "@/types/constructor2d/interfaсes.ts";
-import * as THREE from "three";
+
 
 
 const {
@@ -32,6 +25,7 @@ let shapeAdjuster = null;
 const menuStore = useMenuStore();
 const productData = ref(false)
 const builder = THREETypes.TUniversalGeometryBuilder
+const step = ref(1);
 
 const visualizationRef = ref(null);
 const module = computed(() => {
@@ -46,7 +40,7 @@ const module = computed(() => {
         cells: [],
       }
       
-      let module: GridModule = {
+      let _module: GridModule = {
         width: PROPS.CONFIG.SIZE.width,
         height: PROPS.CONFIG.SIZE.height,
         moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
@@ -54,7 +48,7 @@ const module = computed(() => {
         sections: [section],
       }
 
-      PROPS.CONFIG.MODULEGRID = module
+      PROPS.CONFIG.MODULEGRID = _module
     }
     return PROPS.CONFIG.MODULEGRID
   }
@@ -234,6 +228,42 @@ const showServices = () => {
 };
 
 
+const updateWidth = (value) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "width",
+      value: newValue,
+    });
+  }
+  // Обновляем значение в module для синхронизации
+  const clone = Object.assign({}, module.value);
+
+  if (adjustedValue) {
+    clone.width = newValue;
+  }
+  module.value = clone;
+};
+
+const updateHeight = (value) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "height",
+      value: newValue,
+    });
+  }
+  // Обновляем значение в module для синхронизации
+  const clone = Object.assign({}, module.value);
+  if (adjustedValue) {
+    clone.height = newValue;
+  }
+  module.value = clone;
+};
 
 const updateSectionWidth = (value, colIndex) => {
   const newValue = parseInt(value);
@@ -249,7 +279,7 @@ const updateSectionWidth = (value, colIndex) => {
   // Обновляем значение в module для синхронизации
   const clone = module.value.map((item) => item);
   if (adjustedValue) {
-    clone[colIndex].forEach((row) => (row.width = adjustedValue));
+    clone.sections[colIndex].forEach((row) => (row.width = adjustedValue));
   }
   module.value = clone;
 };
@@ -259,7 +289,7 @@ const updateSectionHeight = (value, colIndex, rowIndex) => {
   let adjustedValue;
 
   if (!isNaN(newValue) && visualizationRef.value) {
-    const adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
       dimension: "height",
       value: newValue,
       col: colIndex,
@@ -535,9 +565,10 @@ watch(menuStore, () => {
               :grid="module"
               :correct="correct"
               :container="constructor2dContainer"
-              :maxAreaHeight="getMaxAreaHeight"
               :tempFilling="tempFilling"
               @cell-selected="handleCellSelect"
+              :step="step"
+              :max-area-height="module.height"
           />
         </div>
 
@@ -555,12 +586,12 @@ watch(menuStore, () => {
                 >
                   <input
                       type="number"
-                      step="10"
+                      :step="step"
                       :min="productData.userData.PROPS.CONFIG.SIZE_EDIT_WIDTH_MIN"
                       :max="productData.userData.PROPS.CONFIG.SIZE_EDIT_WIDTH_MAX"
                       class="actions-input"
                       :value="module.width"
-                      @input="updateSectionWidth($event.target.value, colIndex)"
+                      @input="updateWidth($event.target.value)"
                   />
                 </div>
               </div>
@@ -573,12 +604,12 @@ watch(menuStore, () => {
                 >
                   <input
                       type="number"
-                      step="10"
+                      :step="step"
                       :min="productData.userData.PROPS.CONFIG.SIZE_EDIT_HEIGHT_MIN"
                       :max="productData.userData.PROPS.CONFIG.SIZE_EDIT_HEIGHT_MAX"
                       class="actions-input"
                       :value="module.height"
-                      @input="updateSectionWidth($event.target.value, colIndex)"
+                      @input="updateHeight($event.target.value)"
                   />
                 </div>
               </div>
@@ -737,7 +768,7 @@ watch(menuStore, () => {
     </button>
 
     <button
-        class="actions-btn add-divider-btn close-btn"
+        class="actions-btn add-divider-btn clos-btn"
         @click="menuStore.closeMenu('2dModuleConstructor')"
     >
       Отмена
@@ -1049,7 +1080,7 @@ watch(menuStore, () => {
   cursor: auto;
 }
 
-.close-btn {
+.clos-btn {
   width: 150px;
   position: absolute;
   bottom: 15px;
