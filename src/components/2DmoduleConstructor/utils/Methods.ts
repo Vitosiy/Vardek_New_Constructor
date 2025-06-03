@@ -507,7 +507,7 @@ class Shape extends Helpers {
 
     this.graphic.on("pointerdown", (event) => {
       this.graphic.cursor = "grabbing";
-      this.select(this.sector.colNdx, this.sector.rowNdx)
+      this.select(this.sector.secIndex, this.sector.cellIndex, this.sector.rowIndex)
       dragging = true;
       originalPosition = {
         x: self.graphic.position.x,

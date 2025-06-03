@@ -105,21 +105,21 @@ const getMaxWidth = computed((dimension, minmax) => {
 
 const tempHole = ref({});
 
-const selectedCell = ref({ col: 0, row: 0 , cell: 0});
+const selectedCell = ref({ sec: 0, cell: 0 , cell: 0});
 const correct = ref({ change: false });
-const holeOptions = ref({ show: false, section: { col: 0, row: 0 } });
-const cutServise = ref({ show: false, section: { col: 0, row: 0 } });
+const holeOptions = ref({ show: false, section: { sec: 0, cell: 0 } });
+const cutServise = ref({ show: false, section: { sec: 0, cell: 0 } });
 const constructor2dContainer = ref(null);
 const step = ref(1);
 
 // Получаем текущую секцию
 const getCurrentSection = computed(() => {
   if (!isMounted.value) return;
-  const rowNdx = selectedCell.value.row ?? 0;
-  const colNdx = selectedCell.value.col ?? 0;
+  const cellIndex = selectedCell.value.cell ?? 0;
+  const secIndex = selectedCell.value.sec ?? 0;
 
-  const currentColl = module.value[colNdx];
-  const currentRow = currentColl[rowNdx];
+  const currentColl = module.value[secIndex];
+  const currentRow = currentColl[cellIndex];
   return { currentRow, currentColl };
 });
 // Получаем данные услуг секции
@@ -129,11 +129,11 @@ const getCurrentSectionServiseData = computed(() => {
 });
 
 const getRoundSectionValidation = computed(() => {
-  return (col, row) => {
+  return (sec, cell) => {
     if (!isMounted.value) return;
     try {
-      const currentColl = module.value[col];
-      const currentRow = currentColl[row];
+      const currentColl = module.value[sec];
+      const currentRow = currentColl[cell];
 
       if ("radius" in currentRow.roundCut) return true;
       return false;
@@ -145,8 +145,8 @@ const getRoundSectionValidation = computed(() => {
 
 const checkRounded = computed(() => {
   if (!isMounted.value) return;
-  const row = getCurrentSection.value.currentRow;
-  if ("radius" in row.roundCut) return true;
+  const cell = getCurrentSection.value.currentRow;
+  if ("radius" in cell.roundCut) return true;
   return false;
 });
 
@@ -176,15 +176,15 @@ const getMaxAreaHeight = (value) => {
 //   return (totalHeight.value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
 // });
 
-const showCurrentCol = (colIndex) => {
-  selectedCell.value = { col: colIndex, row: 0 };
-  visualizationRef.value.selectCell(colIndex, 0);
+const showCurrentCol = (secIndex) => {
+  selectedCell.value = { sec: secIndex, cell: 0 };
+  visualizationRef.value.selectCell(secIndex, 0);
   holeOptions.value.show = false;
   cutServise.value.show = false;
 };
 
-const addSection = (sectionIndex) => {
-  const section = module.value.sections[sectionIndex];
+const addSection = (secIndex) => {
+  const section = module.value.sections[secIndex];
   const halfWidth = section.width / 2;
 
   if (halfWidth < 150 /*|| !((section.width / 2) % step.value == 0)*/)
@@ -205,37 +205,37 @@ const addSection = (sectionIndex) => {
     width: halfWidth,
     cells: [],
   }
-  module.value.sections.splice(sectionIndex + 1, 0, newColumn);
+  module.value.sections.splice(secIndex + 1, 0, newColumn);
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
   console.log(module.value.sections, "55555");
 };
 
-const addCell = (sectionIndex, cellIndex = 0) => {
-  selectedCell.value.col = sectionIndex;
+const addCell = (secIndex, cellIndex = 0) => {
+  selectedCell.value.sec = secIndex;
   selectedCell.value.cell = cellIndex;
-  visualizationRef.value.selectCell(sectionIndex, cellIndex, true);
+  visualizationRef.value.selectCell(secIndex, cellIndex, true);
 
   let cell;
-  if(module.value.sections[sectionIndex].cells.length > 0) {
-    cell = module.value.sections[sectionIndex].cells[cellIndex]
+  if(module.value.sections[secIndex].cells.length > 0) {
+    cell = module.value.sections[secIndex].cells[cellIndex]
   }
   else {
     cell = <GridCell>{
       number: 1,
-      width: module.value.sections[sectionIndex].width,
-      height: module.value.sections[sectionIndex].height,
+      width: module.value.sections[secIndex].width,
+      height: module.value.sections[secIndex].height,
       type: "cell",
     };
-    module.value.sections[sectionIndex].cells.push(cell);
+    module.value.sections[secIndex].cells.push(cell);
   }
 
-  cell.cellsRows?.forEach((row) => {
-    row.fillings = [];
+  cell.cellsRows?.forEach((cell) => {
+    cell.fillings = [];
   });
 
-  const lastCell = module.value.sections[sectionIndex].cells[module.value.sections[sectionIndex].cells.length - 1];
+  const lastCell = module.value.sections[secIndex].cells[module.value.sections[secIndex].cells.length - 1];
 
   const halfHeight = Math.floor((cell.height - module.value.moduleThickness) / 2);
 
@@ -245,7 +245,7 @@ const addCell = (sectionIndex, cellIndex = 0) => {
   cell.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  module.value.sections[sectionIndex].cells.splice(cellIndex, 0, {
+  module.value.sections[secIndex].cells.splice(cellIndex, 0, {
     ...cell,
     number: cell.number + 1,
   });
@@ -254,10 +254,51 @@ const addCell = (sectionIndex, cellIndex = 0) => {
   visualizationRef.value.renderGrid();
 };
 
-const createHoleDataToCheck = (type, row, col) => {
+const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
+  selectedCell.value.sec = secIndex;
+  selectedCell.value.cell = cellIndex;
+  selectedCell.value.row = rowIndex;
+  visualizationRef.value.selectCell(secIndex, cellIndex, true, rowIndex);
+
+  let row;
+  if(module.value.sections[secIndex].cells[cellIndex].cellsRows?.length > 0) {
+    row = module.value.sections[secIndex].cells[cellIndex].cellsRows[rowIndex];
+  }
+  else {
+    module.value.sections[secIndex].cells[cellIndex].cellsRows = []
+    row = <GridCellsRow>{
+      number: 1,
+      width: module.value.sections[secIndex].cells[cellIndex].width,
+      height: module.value.sections[secIndex].cells[cellIndex].height,
+      type: "rowCell",
+      fillings: [],
+    }
+    module.value.sections[secIndex].cells[cellIndex].cellsRows.push(row);
+  }
+
+  const lastRow = module.value.sections[secIndex].cells[cellIndex].cellsRows[module.value.sections[secIndex].cells[cellIndex].cellsRows.length - 1];
+
+  const halfWidth = Math.floor((row.width - module.value.moduleThickness) / 2);
+
+  if (halfWidth < 150 /*|| !(cell.height % step.value == 0)*/) return;
+
+  // Обновляем высоту последней строки
+  row.width = halfWidth;
+
+  // Добавляем новую строку в эту колонку
+  module.value.sections[secIndex].cells[cellIndex].cellsRows.splice(rowIndex, 0, {
+    ...row,
+    number: row.number + 1,
+  });
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const createHoleDataToCheck = (type, cell, sec) => {
   let width, height, radius, tempHole;
 
-  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+  let extremum = cell.width < cell.height ? cell.width * 0.5 : cell.height * 0.5;
 
   if (extremum > 600) extremum = 300;
 
@@ -286,17 +327,17 @@ const createHoleDataToCheck = (type, row, col) => {
 };
 
 const addHole = (type) => {
-  const col = module.value[selectedCell.value.col];
-  const row = col[selectedCell.value.row];
+  const sec = module.value[selectedCell.value.sec];
+  const cell = sec[selectedCell.value.cell];
 
-  const startHoleData = createHoleDataToCheck(type, row, col);
+  const startHoleData = createHoleDataToCheck(type, cell, sec);
 
   if (!startHoleData) {
     alert("Позиция не найдена");
     return;
   }
 
-  if (selectedCell.value.col === null || selectedCell.value.row === null) {
+  if (selectedCell.value.sec === null || selectedCell.value.cell === null) {
     alert("Пожалуйста, выберите секцию для добавления прямоугольного выреза");
     return;
   }
@@ -308,7 +349,7 @@ const addHole = (type) => {
       preperedData = {
         ...startHoleData,
         lable: "Прямоугольный разрез",
-        holeId: row.holes.length,
+        holeId: cell.holes.length,
         Mwidth: 600,
         Mheight: 600,
       };
@@ -317,82 +358,82 @@ const addHole = (type) => {
       preperedData = {
         ...startHoleData,
         lable: "Круглый разрез",
-        holeId: row.holes.length,
+        holeId: cell.holes.length,
         Mradius: 600,
       };
       break;
   }
 
-  row.holes.push(preperedData);
+  cell.holes.push(preperedData);
 
   // // Обновляем рендер
   visualizationRef.value.renderGrid();
 };
 
-const showCutServises = (colIndex, rowIndex) => {
-  visualizationRef.value.selectCell(colIndex, rowIndex);
+const showCutServises = (secIndex, cellIndex) => {
+  visualizationRef.value.selectCell(secIndex, cellIndex);
   holeOptions.value.show = false;
   cutServise.value.show = true;
-  cutServise.value.section.col = colIndex;
-  cutServise.value.section.row = rowIndex;
+  cutServise.value.section.sec = secIndex;
+  cutServise.value.section.cell = cellIndex;
 };
 
-const toggleHoleOptions = (colIndex, rowIndex) => {
+const toggleHoleOptions = (secIndex, cellIndex) => {
   cutServise.value.show = false;
   holeOptions.value.show = !holeOptions.value.show;
 };
 
 
 const getCutServiseActive = computed(() => {
-  return (col, row) => {
+  return (sec, cell) => {
     if (!isMounted.value) return;
     const { section, show } = cutServise.value;
-    return { active: col === section.col && row === section.row && show };
+    return { active: sec === section.sec && cell === section.cell && show };
   };
 });
 
-const updateSectionWidth = (value, colIndex, rowIndex) => {
+const updateSectionWidth = (value, secIndex, cellIndex) => {
   const newValue = parseInt(value);
   let adjustedValue;
 
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { col: colIndex, row: rowIndex };
-  visualizationRef.value.selectCell(colIndex, rowIndex);
+  selectedCell.value = { sec: secIndex, cell: cellIndex };
+  visualizationRef.value.selectCell(secIndex, cellIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     adjustedValue = visualizationRef.value.adjustSizeFromExternal({
       dimension: "width",
       value: newValue,
-      col: colIndex,
+      sec: secIndex,
     });
   }
   // Обновляем значение в module для синхронизации
   const clone = module.value.map((item) => item);
   if (adjustedValue) {
-    clone[colIndex].forEach((row) => (row.width = adjustedValue));
+    clone[secIndex].forEach((cell) => (cell.width = adjustedValue));
   }
   module.value = clone;
 };
 
-const updateSectionHeight = (value, colIndex, rowIndex) => {
+const updateSectionHeight = (value, secIndex, cellIndex) => {
   const newValue = parseInt(value);
   let adjustedValue;
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { col: colIndex, row: rowIndex };
-  visualizationRef.value.selectCell(colIndex, rowIndex);
+  selectedCell.value = { sec: secIndex, cell: cellIndex };
+  visualizationRef.value.selectCell(secIndex, cellIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     const adjustedValue = visualizationRef.value.adjustSizeFromExternal({
       dimension: "height",
       value: newValue,
-      col: colIndex,
-      row: rowIndex,
+      sec: secIndex,
+      cell: cellIndex,
     });
   }
   // Обновляем значение в module для синхронизации
   const clone = module.value.map((item) => item);
   if (adjustedValue) {
-    module.value[colIndex][rowIndex].height = adjustedValue;
+    module.value[secIndex][cellIndex].height = adjustedValue;
   }
   module.value = clone;
 };
@@ -400,13 +441,13 @@ const updateSectionHeight = (value, colIndex, rowIndex) => {
 const updateHole = (event, key, type, holeType) => {
   console.log("ww");
 
-  const rowNdx = selectedCell.value.row;
-  const colNdx = selectedCell.value.col;
+  const cellIndex = selectedCell.value.cell;
+  const secIndex = selectedCell.value.sec;
 
   const gridCopy = module.value.map((item) => item);
   // const gridCopy = module.value
-  const currentColl = gridCopy[colNdx];
-  const currentRow = currentColl[rowNdx];
+  const currentColl = gridCopy[secIndex];
+  const currentRow = currentColl[cellIndex];
 
   const currenthole = currentRow.holes[key];
 
@@ -442,12 +483,12 @@ const updateHole = (event, key, type, holeType) => {
 };
 
 const changeHolePositionX = (event, key, type, holeType, value) => {
-  const rowNdx = selectedCell.value.row;
-  const colNdx = selectedCell.value.col;
+  const cellIndex = selectedCell.value.cell;
+  const secIndex = selectedCell.value.sec;
 
   const gridCopy = module.value.map((item) => item);
-  const currentColl = gridCopy[colNdx];
-  const currentRow = currentColl[rowNdx];
+  const currentColl = gridCopy[secIndex];
+  const currentRow = currentColl[cellIndex];
 
   const currenthole = currentRow.holes[key];
 
@@ -474,12 +515,12 @@ const changeHolePositionX = (event, key, type, holeType, value) => {
 };
 
 const changeHolePositionY = (event, key, type, holeType, value) => {
-  const rowNdx = selectedCell.value.row;
-  const colNdx = selectedCell.value.col;
+  const cellIndex = selectedCell.value.cell;
+  const secIndex = selectedCell.value.sec;
 
   const gridCopy = module.value.map((item) => item);
-  const currentColl = gridCopy[colNdx];
-  const currentRow = currentColl[rowNdx];
+  const currentColl = gridCopy[secIndex];
+  const currentRow = currentColl[cellIndex];
 
   const currenthole = currentRow.holes[key];
 
@@ -506,10 +547,10 @@ const changeHolePositionY = (event, key, type, holeType, value) => {
   visualizationRef.value.renderGrid();
 };
 
-const deleteSection = (sectionIndex) => {
-  const current = module.value.sections[sectionIndex];
-  const next = module.value.sections[sectionIndex + 1];
-  const prev = module.value.sections[sectionIndex - 1];
+const deleteSection = (secIndex) => {
+  const current = module.value.sections[secIndex];
+  const next = module.value.sections[secIndex + 1];
+  const prev = module.value.sections[secIndex - 1];
 
   const combinedWidth = next
       ? current.width + next.width
@@ -528,18 +569,18 @@ const deleteSection = (sectionIndex) => {
   }
 
   if (module.value.sections.length > 1) {
-    module.value.sections.splice(sectionIndex, 1);
+    module.value.sections.splice(secIndex, 1);
   }
 
-  selectedCell.value.row = 0;
-  selectedCell.value.col = 0;
+  selectedCell.value.cell = 0;
+  selectedCell.value.sec = 0;
 
   visualizationRef.value.renderGrid();
 };
 
-const deleteCell = (cellIndex, sectionIndex) => {
+const deleteCell = (cellIndex, secIndex) => {
   const clone = Object.assign({},module.value);
-  const currentSection = clone.sections[sectionIndex];
+  const currentSection = clone.sections[secIndex];
   const currentCell = currentSection.cells[cellIndex];
 
   const next = currentSection.cells[cellIndex + 1];
@@ -555,19 +596,54 @@ const deleteCell = (cellIndex, sectionIndex) => {
     currentSection.cells.splice(cellIndex, 1);
   }
 
+  if (currentSection.cells.length <= 1)
+    currentSection.cells.length = 0
+
   module.value = clone;
 
   // Обновляем текущий сектор
-  selectedCell.value.row = 0;
-  selectedCell.value.col = sectionIndex;
+  selectedCell.value.cell = 0;
+  selectedCell.value.sec = secIndex;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
+  const clone = Object.assign({},module.value);
+  const currentSection = clone.sections[secIndex];
+  const currentCell = currentSection.cells[cellIndex];
+  const currentRow = currentCell.cellsRows[rowIndex];
+
+  const next = currentCell.cellsRows[rowIndex + 1];
+  const prev = currentCell.cellsRows[rowIndex - 1];
+
+  const combinedWidth = next
+      ? currentCell.width + next.width
+      : currentCell.width + prev.width;
+
+  next ? (next.width = combinedWidth) : (prev.width = combinedWidth);
+
+  if (currentCell.cellsRows.length > 1) {
+    currentCell.cellsRows.splice(cellIndex, 1);
+  }
+
+  if (currentCell.cellsRows.length <= 1)
+    delete currentCell.cellsRows
+
+  module.value = clone;
+
+  // Обновляем текущий сектор
+  selectedCell.value.cell = cellIndex;
+  selectedCell.value.sec = secIndex;
+  selectedCell.value.row = null;
 
   visualizationRef.value.renderGrid();
 };
 
 const deleteHole = (ndx) => {
-  const colNdx = selectedCell.value.col;
-  const rowNdx = selectedCell.value.row;
-  const curRow = module.value[colNdx][rowNdx];
+  const secIndex = selectedCell.value.sec;
+  const cellIndex = selectedCell.value.cell;
+  const curRow = module.value[secIndex][cellIndex];
 
   curRow.holes = curRow.holes.filter((el, index) => {
     return index !== ndx;
@@ -576,13 +652,13 @@ const deleteHole = (ndx) => {
   visualizationRef.value.renderGrid();
 };
 
-const handleCellSelect = (colIndex, rowIndex, type) => {
-  selectedCell.value = { col: colIndex, row: rowIndex };
+const handleCellSelect = (secIndex, cellIndex, type) => {
+  selectedCell.value = { sec: secIndex, cell: cellIndex };
 
-  holeOptions.value.section.col = colIndex;
-  holeOptions.value.section.row = rowIndex;
-  cutServise.value.section.col = colIndex;
-  cutServise.value.section.row = rowIndex;
+  holeOptions.value.section.sec = secIndex;
+  holeOptions.value.section.cell = cellIndex;
+  cutServise.value.section.sec = secIndex;
+  cutServise.value.section.cell = cellIndex;
 };
 
 const createServiseData = () => {
@@ -605,8 +681,8 @@ const createServiseData = () => {
   return convertParams;
 };
 
-const clearServiseData = (row) => {
-  row.serviseData.forEach((el) => {
+const clearServiseData = (cell) => {
+  cell.serviseData.forEach((el) => {
     el.value = false;
   });
 };
@@ -765,15 +841,15 @@ watch(menuStore, () => {
             <div
                 :class="[
               'actions-header--container',
-              { active: sectionIndex === selectedCell.col },
+              { active: secIndex === selectedCell.sec },
             ]"
-                v-for="(section, sectionIndex) in module.sections"
-                :key="sectionIndex"
+                v-for="(section, secIndex) in module.sections"
+                :key="secIndex"
             >
               <button
                   v-if="module.sections.length > 1"
                   class="actions-btn actions-icon"
-                  @click="deleteSection(sectionIndex)"
+                  @click="deleteSection(secIndex)"
               >
                 <img
                     class="actions-icon--delete"
@@ -783,21 +859,21 @@ watch(menuStore, () => {
               </button>
               <p
                   class="actions-title actions-title--part"
-                  @click="showCurrentCol(sectionIndex)"
+                  @click="showCurrentCol(secIndex)"
               >
-                {{ sectionIndex + 1 }} секция
+                {{ secIndex + 1 }} секция
               </p>
             </div>
           </div>
 
           <div
               class="actions-container"
-              v-for="(section, sectionIndex) in module.sections"
-              :key="sectionIndex"
+              v-for="(section, secIndex) in module.sections"
+              :key="secIndex"
           >
             <div
                 class="actions-items--wrapper"
-                v-if="selectedCell.col === sectionIndex"
+                v-if="selectedCell.sec === secIndex"
             >
               <div class="actions-items--width">
                 <div class="actions-inputs">
@@ -814,8 +890,7 @@ watch(menuStore, () => {
                         @input="
                             updateSectionWidth(
                               $event.target.value,
-                              sectionIndex,
-                              cellIndex
+                              secIndex
                             )
                           "
                     />
@@ -826,7 +901,7 @@ watch(menuStore, () => {
               <div class="actions-items--height">
                 <div class="actions-inputs">
                   <p class="actions-title">
-                    Высота {{ sectionIndex + 1 }}
+                    Высота {{ secIndex + 1 }}
                   </p>
                   <div
                       :class="['actions-input--container']"
@@ -840,8 +915,7 @@ watch(menuStore, () => {
                         @input="
                             updateSectionHeight(
                               $event.target.value,
-                              sectionIndex,
-                              cellIndex
+                              secIndex
                             )
                           "
                     />
@@ -855,8 +929,8 @@ watch(menuStore, () => {
                 'actions-items--container',
                 {
                   active:
-                    cellIndex === selectedCell.row &&
-                    sectionIndex === selectedCell.col,
+                    cellIndex === selectedCell.cell &&
+                    secIndex === selectedCell.sec,
                 },
               ]"
               >
@@ -866,7 +940,7 @@ watch(menuStore, () => {
                       <button
                           v-if="section.cells.length > 1"
                           class="actions-btn actions-icon"
-                          @click="deleteCell(cellIndex, sectionIndex)"
+                          @click="deleteCell(cellIndex, secIndex)"
                       >
                         <img
                             class="actions-icon--delete"
@@ -875,7 +949,7 @@ watch(menuStore, () => {
                         />
                       </button>
                       <p class="actions-title actions-title--part">
-                        {{ sectionIndex + 1 }}.{{ cellIndex + 1 }} часть
+                        {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
                       </p>
                     </div>
 
@@ -891,13 +965,7 @@ watch(menuStore, () => {
                               min="150"
                               class="actions-input"
                               :value="section.width"
-                              @input="
-                            updateSectionWidth(
-                              $event.target.value,
-                              sectionIndex,
-                              cellIndex
-                            )
-                          "
+                              disabled
                           />
                         </div>
                       </div>
@@ -906,7 +974,7 @@ watch(menuStore, () => {
                     <div class="actions-items--height">
                       <div class="actions-inputs">
                         <p class="actions-title">
-                          Высота {{ sectionIndex + 1 }}.{{ cellIndex + 1 }}
+                          Высота
                         </p>
                         <div
                             :class="['actions-input--container']"
@@ -920,7 +988,7 @@ watch(menuStore, () => {
                               @input="
                             updateSectionHeight(
                               $event.target.value,
-                              sectionIndex,
+                              secIndex,
                               cellIndex
                             )
                           "
@@ -937,32 +1005,127 @@ watch(menuStore, () => {
                     <button
                         :class="[
                       'actions-btn actions-btn--default',
-                      getCutServiseActive(sectionIndex, cellIndex),
+                      getCutServiseActive(secIndex, cellIndex),
                     ]"
-                        @click="showCutServises(sectionIndex, cellIndex)"
+                        @click="showCutServises(secIndex, cellIndex)"
                     >
                       Услуги
                     </button>
+                    <button
+                        :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                        @click="addCell(secIndex, cellIndex)"
+                    >
+                      Добавить ячейку
+                    </button>
+
+                    <button
+                        v-if="!cell.cellsRows?.length"
+                        :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                        @click="addRowCell(secIndex, cellIndex, 0)"
+                    >
+                      Верт. разделитель
+                    </button>
                   </div>
                 </article>
+
+                <div
+                    v-for="(row, rowIndex) in cell.cellsRows"
+                    :key="rowIndex"
+                    :class="[
+                'actions-items--container',
+                {
+                  active:
+                    cellIndex === selectedCell.cell &&
+                    secIndex === selectedCell.sec && rowIndex === selectedCell.row,
+                },
+              ]"
+                >
+                  <article class="actions-items actions-items--left">
+                    <div class="actions-items--left-wrapper">
+                      <div class="actions-items--title">
+                        <button
+                            v-if="cell.cellsRows.length > 1"
+                            class="actions-btn actions-icon"
+                            @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
+                        >
+                          <img
+                              class="actions-icon--delete"
+                              src="/icons/delite.svg"
+                              alt=""
+                          />
+                        </button>
+                        <p class="actions-title actions-title--part">
+                          {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
+                        </p>
+                      </div>
+
+                      <div class="actions-items--width">
+                        <div class="actions-inputs">
+                          <p class="actions-title">Ширина</p>
+                          <div
+                              :class="['actions-input--container']"
+                          >
+                            <input
+                                type="number"
+                                :step="step"
+                                min="150"
+                                class="actions-input"
+                                :value="row.width"
+                                @input="
+                            updateSectionWidth(
+                              $event.target.value,
+                              secIndex,
+                              cellIndex,
+                              rowIndex
+                            )
+                          "
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </article>
+
+                  <article class="actions-items actions-items--right">
+                    <div class="actions-items--right-items">
+                      <button
+                          :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                          @click="addRowCell(secIndex, cellIndex, rowIndex)"
+                      >
+                        Верт. разделитель
+                      </button>
+                    </div>
+                  </article>
+
+                </div>
+
               </div>
             </div>
+
             <article class="actions-items actions-items--right">
               <div class="actions-items--right-items">
                 <button
                     :class="[
                       'actions-btn actions-btn--default'
                     ]"
-                    @click="addSection(sectionIndex)"
+                    @click="addSection(secIndex)"
                 >
                   Добавить секцию
                 </button>
 
                 <button
+                    v-if="!section.cells.length"
                     :class="[
                       'actions-btn actions-btn--default'
                     ]"
-                    @click="addCell(sectionIndex, cellIndex)"
+                    @click="addCell(secIndex, 0)"
                 >
                   Добавить ячейку
                 </button>
@@ -1027,7 +1190,7 @@ watch(menuStore, () => {
 
   &-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: cell;
     gap: 1rem;
 
     width: 100%;

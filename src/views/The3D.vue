@@ -21,7 +21,7 @@ import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
 import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
-import Module2DConstructor from "@/components/2DmoduleConstructor/Module2DConstructor.vue";
+import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
@@ -819,7 +819,7 @@ const closeUMRedactor = () => {
           @close-modal="closeUMRedactor"
       >
         <template #modalBody="{ onModalClose }" class="modal--tableTop">
-          <Module2DConstructor
+          <Module2DConstructor2
               ref="universalModule2DConstructor"
               :grid="universalModuleData.data"
               :canvasHeight="universalModuleData.canvasHeight"
@@ -845,7 +845,7 @@ const closeUMRedactor = () => {
                 Закрыть
               </button>
             </template>
-          </Module2DConstructor>
+          </Module2DConstructor2>
         </template>
         <template #modalOpen="{ onModalOpen }">
           <button class="cut-btn" @click="onModalOpen">
