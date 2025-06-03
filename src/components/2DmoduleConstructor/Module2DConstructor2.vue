@@ -185,7 +185,7 @@ const showCurrentCol = (secIndex) => {
 
 const addSection = (secIndex) => {
   const section = module.value.sections[secIndex];
-  const halfWidth = section.width / 2;
+  const halfWidth =  Math.floor((section.width - module.value.moduleThickness) / 2);
 
   if (halfWidth < 150 /*|| !((section.width / 2) % step.value == 0)*/)
     return;
@@ -193,6 +193,7 @@ const addSection = (secIndex) => {
   // Обновляем ширину текущей колонки
   section.cells.forEach((cell) => {
     cell.width = halfWidth;
+    cell.cellsRows = []
   });
 
   section.width = halfWidth;
@@ -231,9 +232,8 @@ const addCell = (secIndex, cellIndex = 0) => {
     module.value.sections[secIndex].cells.push(cell);
   }
 
-  cell.cellsRows?.forEach((cell) => {
-    cell.fillings = [];
-  });
+  if(cell.cellsRows)
+   delete cell.cellsRows
 
   const lastCell = module.value.sections[secIndex].cells[module.value.sections[secIndex].cells.length - 1];
 
@@ -788,41 +788,43 @@ watch(menuStore, () => {
       >
         <div class="constructor2d-header">
           <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
+        </div>
 
-          <div
-              class="constructor2d-container"
-          >
-            <div class="actions-inputs">
-              <p class="actions-title">Высота модуля</p>
-              <div class="actions-input--container">
-                <MainInput
-                    @update:modelValue="updateTotalHeight"
-                    :inputClass="'actions-input'"
-                    v-model="totalHeight"
-                    :min="getMinHeight"
-                    :max="getMaxHeight"
-                    :type="'number'"
-                />
+        <div class="constructor2d-content">
+
+          <div class="module-sizes">
+            <div
+                class="constructor2d-container constructor2d-container--module-size"
+            >
+              <div class="actions-inputs">
+                <p class="actions-title">Высота модуля</p>
+                <div class="actions-input--container">
+                  <MainInput
+                      @update:modelValue="updateTotalHeight"
+                      :inputClass="'actions-input'"
+                      v-model="totalHeight"
+                      :min="getMinHeight"
+                      :max="getMaxHeight"
+                      :type="'number'"
+                  />
+                </div>
               </div>
-            </div>
-            <div class="actions-inputs">
-              <p class="actions-title">Ширина модуля</p>
-              <div class="actions-input--container">
-                <MainInput
-                    @update:modelValue="updateTotalWidth"
-                    :inputClass="'actions-input'"
-                    v-model="totalWidth"
-                    :min="getMinWidth"
-                    :max="getMaxWidth"
-                    :type="'number'"
-                />
+              <div class="actions-inputs">
+                <p class="actions-title">Ширина модуля</p>
+                <div class="actions-input--container">
+                  <MainInput
+                      @update:modelValue="updateTotalWidth"
+                      :inputClass="'actions-input'"
+                      v-model="totalWidth"
+                      :min="getMinWidth"
+                      :max="getMaxWidth"
+                      :type="'number'"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-        </div>
-
-        <div class="constructor2d-content">
           <InteractiveSpace
               ref="visualizationRef"
               :step="step"
@@ -1190,7 +1192,7 @@ watch(menuStore, () => {
 
   &-container {
     display: flex;
-    flex-direction: cell;
+    flex-direction: row;
     gap: 1rem;
 
     width: 100%;
@@ -1211,6 +1213,11 @@ watch(menuStore, () => {
       max-height: 80vh;
       overflow: hidden;
     }
+
+    &--module-size{
+      display: flex;
+      flex-direction: column;
+    }
   }
 
   &-content {
@@ -1222,12 +1229,44 @@ watch(menuStore, () => {
     font-weight: 400;
     color: #131313;
   }
+
+  &-header {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    &--title {
+      display: flex;
+      align-items: end;
+    }
+
+    .actions-inputs {
+      max-width: 150px;
+    }
+  }
 }
 
 .actions {
   &-wrapper {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    padding-right: 0.5rem;
+  }
+
+  &-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    &--save {
+      display: flex;
+      gap: 1rem;
+    }
+  }
+
+  &-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-height: 450px;
     overflow-y: scroll;
     padding-right: 0.5rem;
@@ -1249,28 +1288,30 @@ watch(menuStore, () => {
     }
   }
 
-  &-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    // border-bottom: 1px solid #ecebf1;
-
-    &:first-child {
-      // border-top: 1px solid #ecebf1;
-    }
-
-    // transform: scale(0.7);
-  }
-
   &-header {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     justify-content: center;
     width: 100%;
     padding: 1rem 0;
     border-bottom: 1px solid #ecebf1;
     border-top: 1px solid #ecebf1;
+
+    &--container {
+      display: flex;
+      align-items: center;
+      // gap: 0.5rem;
+      padding-right: 0.5rem;
+      border-right: 1px solid #ecebf1;
+      border-bottom: 1px solid transparent;
+      cursor: pointer;
+
+      &.active {
+        border-bottom: 1px solid #da444c;
+      }
+    }
   }
 
   &-items {
@@ -1281,24 +1322,47 @@ watch(menuStore, () => {
 
     &--wrapper {
       display: flex;
+      flex-direction: column;
+
+      width: 100%;
+      padding: 0 0 1rem 0;
+    }
+
+    &--container {
+      display: flex;
       width: 100%;
       padding: 1rem 0;
+      border-bottom: 1px solid #ecebf1;
+
+      // &:first-child {
+      //   padding-top: 0;
+      // }
+
+      &.active {
+        background-color: #f1f1f5;
+      }
     }
 
     &--left,
     &--right {
       width: 100%;
-      // max-width: 50%;
     }
 
     &--left {
       align-items: start;
-      max-width: 75%;
+      max-width: 45%;
+
+      &-wrapper {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-left: 1rem;
+        // max-width: calc(50% - 1rem);
+      }
     }
 
     &--right {
-      display: block;
-      max-width: calc(25% - 1rem);
+      max-width: calc(65% - 1rem);
       margin-left: 1rem;
 
       &-items {
@@ -1308,61 +1372,63 @@ watch(menuStore, () => {
       }
     }
 
-    &--height {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-
-      &-wrapper {
-        max-width: calc(50% - 1rem);
-      }
-
-      &-item {
-        display: flex;
-        align-items: flex-start;
-        height: fit-content;
-        // gap: 0.5rem;
-      }
-    }
-
-    &--diametr {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-
-      &-wrapper {
-        max-width: 25%;
-      }
-
-      &-item {
-        display: flex;
-        align-items: flex-start;
-        width: 100%;
-        height: fit-content;
-        // gap: 0.5rem;
-      }
-    }
-
+    &--height,
+    &--diametr,
     &--width {
       display: flex;
-      gap: 1rem;
-      align-items: start;
-      flex-wrap: wrap;
-      width: 100%;
-      max-width: 20%;
-      height: 100%;
-      border-right: 1px solid #ecebf1;
-    }
+      width: fit-content;
 
-    &--diametr,
-    &--height {
-      &-wrapper {
-        height: 100%;
-        width: 100%;
-        margin-left: 1rem;
-        border-right: 1px solid #ecebf1;
+      &-item {
+        display: flex;
+        align-items: flex-start;
+        height: fit-content;
+        // gap: 0.5rem;
       }
     }
+
+    &--title {
+      display: flex;
+      align-items: center;
+      align-self: end;
+      margin-bottom: 0.5rem;
+    }
+
+    // &--diametr {
+    //   display: flex;
+    //   flex-wrap: wrap;
+    //   gap: 1rem;
+
+    //   &-wrapper {
+    //     max-width: 25%;
+    //   }
+
+    //   &-item {
+    //     display: flex;
+    //     align-items: flex-start;
+    //     width: 100%;
+    //     height: fit-content;
+    //     // gap: 0.5rem;
+    //   }
+    // }
+
+    // &--width {
+    //   display: flex;
+    //   gap: 1rem;
+    //   align-items: start;
+    //   flex-wrap: wrap;
+    //   width: 100%;
+    //   max-width: 20%;
+    //   height: 100%;
+    // }
+
+    // &--diametr,
+    // &--height {
+    //   &-wrapper {
+    //     width: 100%;
+    //     margin-left: 1rem;
+    //     border-right: 1px solid #ecebf1;
+    //   }
+    // }
   }
 
   &-title {
@@ -1379,12 +1445,13 @@ watch(menuStore, () => {
     flex-direction: column;
     gap: 4px;
     width: 100%;
+    max-width: 100px;
   }
 
   &-input {
     padding: 0.5rem 1rem;
     width: 100%;
-    max-width: 110px;
+    max-width: 125px;
     border: none;
     border-radius: 15px;
     background-color: #ecebf1;
@@ -1406,7 +1473,8 @@ watch(menuStore, () => {
         top: 50%;
         left: 60px;
         transform: translate(0, -50%);
-
+        pointer-events: none;
+        z-index: 0;
         font-size: 0.75rem;
         font-weight: 600;
         color: #6d6e73;
@@ -1425,13 +1493,41 @@ watch(menuStore, () => {
     color: #5d6069;
     outline: none;
 
+    &--default,
+    &--footer {
+      transition-property: background-color, color, border;
+      transition-timing-function: ease;
+      transition-duration: 0.25s;
+      @media (hover: hover) {
+        /* when hover is supported */
+        &:hover {
+          color: white;
+          background-color: #da444c;
+          border: 1px solid transparent;
+        }
+      }
+    }
+    &--footer {
+      background-color: #ecebf1;
+    }
+
     &:focus {
       outline: none;
     }
-
     &.active {
-      border-color: red;
+      border-color: #da444c;
       color: #181818;
+      transition-property: background-color, color, border;
+      transition-timing-function: ease;
+      transition-duration: 0.25s;
+
+      @media (hover: hover) {
+        /* when hover is supported */
+        &:hover {
+          color: white;
+          background-color: #da444c;
+        }
+      }
     }
   }
 
@@ -1440,7 +1536,7 @@ watch(menuStore, () => {
     background-color: transparent;
     padding: 0 5px;
 
-    &--delete,
+    &--delite,
     &--close,
     &--help {
       width: 18px;
@@ -1452,7 +1548,7 @@ watch(menuStore, () => {
       height: 12px;
     }
 
-    &--delete {
+    &--delite {
       &-center {
         margin-bottom: 0.5rem;
       }
@@ -1493,5 +1589,10 @@ watch(menuStore, () => {
   color: white;
   background: #33de0c;
   font-size: 1rem;
+}
+
+.module-sizes {
+  position: relative;
+  right: 18vh;
 }
 </style>

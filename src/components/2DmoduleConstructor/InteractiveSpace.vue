@@ -373,22 +373,17 @@ const createSector = ({
                         row = false,
                       }) => {
 
-  let sector;
-  if(!_sector) {
-    sector = new Container();
+  let sector = new Container();
 
-    sector.position.set(x, y);
+  sector.position.set(x, y);
 
-    sector.shapes = [];
-    sector.sectorData = cellData;
-    sector.sections = sections;
+  sector.shapes = [];
+  sector.sectorData = cellData;
+  sector.sections = sections;
 
-    sector.secIndex = sectionIndex;
-    sector.cellIndex = cellIndex;
-    sector.rowIndex = rowIndex;
-  }
-  else
-    sector = _sector
+  sector.secIndex = sectionIndex;
+  sector.cellIndex = cellIndex;
+  sector.rowIndex = rowIndex;
 
   const cell = new Section(cellData, width, height, sector);
 
@@ -409,6 +404,9 @@ const createSector = ({
 
   if(!_sector)
     sections.push(sector);
+  else
+    _sector.addChild(sector);
+
   // /** Создаём нумерацию сектора */
   createSectioNum({ x, y, width, height, cell: cellData, sectionIndex, cellIndex, rowIndex });
 
@@ -473,7 +471,8 @@ const createSectioNum = ({ x, y, width, height, cell, sectionIndex, cellIndex, r
 
 // Отрисовываем вертикальный вырез
 const createVerticalCut = ({ width, height, cell, section, sectionIndex, sector }) => {
-  if (!(sectionIndex < props.module.length - 1)) return;
+  if (!(sectionIndex < props.module.sections.length - 1))
+    return;
 
   const pxWidth = getPixelWidth(cell.width);
   const totalHeight = section.reduce((sum, cell) => sum + cell.height, 0);
@@ -1018,6 +1017,9 @@ defineExpose({
   canvas {
     border: 1px solid #bbbbbb;
   }
+
+  position: relative;
+  right: 17vh;
 }
 
 /*  height: 320px;
