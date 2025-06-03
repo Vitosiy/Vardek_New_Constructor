@@ -15,6 +15,7 @@ import { AlumBulider } from "@/Application/Meshes/AlumBuilder";
 import { UniformTextureBuilder } from "@/Application/Meshes/UniformTextureBuilder";
 import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 
 export type TApplication = Application
@@ -34,6 +35,7 @@ export type TAlumBulider = AlumBulider
 export type TUniformTextureBuilder = UniformTextureBuilder
 export type TKeybordListeners = KeybordListeners
 export type TUniformTextureEvents = UniformTextureEvents
+export type TUniversalGeometryBuilder = UniversalGeometryBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 

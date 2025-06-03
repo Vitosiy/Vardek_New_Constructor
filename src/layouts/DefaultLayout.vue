@@ -12,6 +12,7 @@ import MainPopUp from "@/components/popUp/MainPopUp.vue";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 
 import { useRoute } from "vue-router";
+import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 
 const route = useRoute();
 
@@ -125,6 +126,7 @@ onMounted(() => {
     <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
     <CustomiserMenu />
     <RouterView />
+    <Module2DConstructor2/>
   </div>
 </template>
 

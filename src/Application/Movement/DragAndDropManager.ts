@@ -2,6 +2,7 @@
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
+import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
 
 export class DragAndDropManager {
 
@@ -84,24 +85,32 @@ export class DragAndDropManager {
                 if (intersects.length > 0) {
                     const point = intersects[0].point;
                     const surface = intersects[0].object;
-    
-                    this.geometryBuilder.craeteModel(productData, (object) => {
 
-                        object.userData.MOUSE_POSITION = {
-                            x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
-                            y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
-                        };
-    
-                        this.setObject.create({
-                            scene:this.scene, 
-                            object, 
-                            point, 
-                            roomManager:this.roomManager, 
-                            trafficManager:this.trafficManager, 
-                            boxHelper:this.boxHelper,
-                            wall:surface
+                    if(productData.moduleType || productData.ID == 3954672) {
+                        this.geometryBuilder.craeteModel(productData, (object) => {
+                            const menuStore = useMenuStore();
+                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object])
                         });
-                    });
+                    }
+                    else {
+                        this.geometryBuilder.craeteModel(productData, (object) => {
+
+                            object.userData.MOUSE_POSITION = {
+                                x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
+                                y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
+                            };
+
+                            this.setObject.create({
+                                scene: this.scene,
+                                object,
+                                point,
+                                roomManager: this.roomManager,
+                                trafficManager: this.trafficManager,
+                                boxHelper: this.boxHelper,
+                                wall: surface
+                            });
+                        });
+                    }
                 }
             } catch (error) {
                 console.error('Error parsing JSON data:', error);

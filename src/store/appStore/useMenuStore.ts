@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-type MenuType = 'tech' | 'roomPar' | 'customiser';
+type MenuType = 'tech' | 'roomPar' | 'customiser' | '2dModuleConstructor';
 
 export const useMenuStore = defineStore('menu', () => {
 

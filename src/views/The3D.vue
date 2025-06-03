@@ -21,6 +21,7 @@ import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
 import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
+import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
@@ -160,6 +161,13 @@ const selectMilling = ref<any>(null);
 
 /** ----------------- 19.05.25 ----------------------------- */
 
+//Универсальный модуль
+const universalModule2DConstructor = ref();
+const universalModuleData = ref({});
+const isUMModalOpen = ref(false);
+const gridUMSaved = ref(false);
+const universalModuleCash = ref({});
+
 //Распил
 const tableTopManager = ref();
 const CutData = ref({});
@@ -245,19 +253,32 @@ const selected = (item: any) => {
 
   productData.value = { ...PROPS };
 
-  if (!RASPIL.data) return;
+  if(RASPIL?.data) {
+    CutData.value = {
+      data: RASPIL.data,
+      canvasHeight: RASPIL.canvasHeight,
+    };
 
-  CutData.value = {
-    data: RASPIL.data,
-    canvasHeight: RASPIL.canvasHeight,
-  };
+    CutCash.value = {
+      data: RASPIL.data,
+      canvasHeight: RASPIL.canvasHeight,
+    };
 
-  CutCash.value = {
-    data: RASPIL.data,
-    canvasHeight: RASPIL.canvasHeight,
-  };
+    useModelState().setCurrentModel(item.object);
+  }
+  else if(CONFIG.MODULEGRID) {
+    universalModuleData.value = {
+      data: CONFIG.MODULEGRID,
+      canvasHeight: CONFIG.MODULEGRID.canvasHeight,
+    };
 
-  useModelState().setCurrentModel(item.object);
+    universalModuleData.value = {
+      data: CONFIG.MODULEGRID,
+      canvasHeight: CONFIG.MODULEGRID.canvasHeight,
+    };
+
+    useModelState().setCurrentModel(item.object);
+  }
 };
 
 const resizeRoom = () => {
@@ -508,6 +529,30 @@ const closeTableRedactor = () => {
   isModalOpen.value = false;
   gridSaved.value = false;
 };
+//
+
+/** Редактор УМ */
+
+const saveUMData = ({ data, canvasHeight }) => {
+  if (!product.value)
+    return;
+  universalModuleCash.value= product.value.PROPS.CONFIG.MODULEGRID = universalModule2DConstructor.value.saveGrid();
+  gridUMSaved.value = true;
+};
+
+const openUMRedactor = () => {
+  isUMModalOpen.value = true;
+};
+
+const closeUMRedactor = () => {
+  if (!gridUMSaved.value) product.value.PROPS.CONFIG.MODULEGRID = universalModuleCash.value;
+
+  universalModuleData.value = product.value.PROPS.CONFIG.MODULEGRID;
+  isUMModalOpen.value = false;
+  gridUMSaved.value = false;
+};
+//
+
 </script>
 
 <template>
@@ -759,6 +804,48 @@ const closeTableRedactor = () => {
               </button>
             </template>
           </TableTopManager>
+        </template>
+        <template #modalOpen="{ onModalOpen }">
+          <button class="cut-btn" @click="onModalOpen">
+            <img class="cut-icon" src="/icons/cut.svg" alt="" />
+          </button>
+        </template>
+      </Modal>
+
+      <Modal
+          v-if="universalModuleData.data"
+          :container="`modal--tableTop`"
+          @open-modal="openUMRedactor"
+          @close-modal="closeUMRedactor"
+      >
+        <template #modalBody="{ onModalClose }" class="modal--tableTop">
+          <Module2DConstructor2
+              ref="universalModule2DConstructor"
+              :grid="universalModuleData.data"
+              :canvasHeight="universalModuleData.canvasHeight"
+              v-if="isUMModalOpen"
+          >
+            <template #save>
+              <button
+                  class="actions-btn actions-btn--footer"
+                  @click="saveUMData"
+              >
+                Сохранить
+              </button>
+            </template>
+            <template #close>
+              <button
+                  @click="
+                  () => {
+                    onModalClose();
+                  }
+                "
+                  class="actions-btn actions-btn--footer"
+              >
+                Закрыть
+              </button>
+            </template>
+          </Module2DConstructor2>
         </template>
         <template #modalOpen="{ onModalOpen }">
           <button class="cut-btn" @click="onModalOpen">
