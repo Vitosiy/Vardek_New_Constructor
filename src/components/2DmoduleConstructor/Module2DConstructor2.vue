@@ -153,7 +153,8 @@ const checkRounded = computed(() => {
 const updateTotalHeight = (value) => {
   totalHeight.value = parseInt(value);
 
-  visualizationRef.value.updateTotalHeight(value);
+  //visualizationRef.value.updateTotalHeight(value);
+  visualizationRef.value.updateTotalSize(value, "height");
   // visualizationRef.value.renderGrid();
   reset();
   visualizationRef.value.selectCell(0, 0);
@@ -162,7 +163,8 @@ const updateTotalHeight = (value) => {
 const updateTotalWidth = (value) => {
   totalWidth.value = parseInt(value);
 
-  visualizationRef.value.updateTotalWidth(value);
+  //visualizationRef.value.updateTotalWidth(value);
+  visualizationRef.value.updateTotalSize(value, "width");
   // visualizationRef.value.renderGrid();
   reset();
   visualizationRef.value.selectCell(0, 0);
@@ -1205,6 +1207,7 @@ watch(menuStore, () => {
     &--left {
       flex-direction: column;
       max-width: 70vw;
+      overflow: scroll;
     }
 
     &--right {
@@ -1392,52 +1395,11 @@ watch(menuStore, () => {
       align-self: end;
       margin-bottom: 0.5rem;
     }
-
-    // &--diametr {
-    //   display: flex;
-    //   flex-wrap: wrap;
-    //   gap: 1rem;
-
-    //   &-wrapper {
-    //     max-width: 25%;
-    //   }
-
-    //   &-item {
-    //     display: flex;
-    //     align-items: flex-start;
-    //     width: 100%;
-    //     height: fit-content;
-    //     // gap: 0.5rem;
-    //   }
-    // }
-
-    // &--width {
-    //   display: flex;
-    //   gap: 1rem;
-    //   align-items: start;
-    //   flex-wrap: wrap;
-    //   width: 100%;
-    //   max-width: 20%;
-    //   height: 100%;
-    // }
-
-    // &--diametr,
-    // &--height {
-    //   &-wrapper {
-    //     width: 100%;
-    //     margin-left: 1rem;
-    //     border-right: 1px solid #ecebf1;
-    //   }
-    // }
   }
 
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
-
-    // &--part {
-    //   margin-bottom: 0.5rem;
-    // }
   }
 
   &-inputs {

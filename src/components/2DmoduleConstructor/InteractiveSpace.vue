@@ -97,47 +97,65 @@ const dragState = reactive({
   element: null,
 });
 
-const pixelRatio = computed(() => TOTAL_LENGTH / MAX_AREA_WIDTH);
 
 const TOTAL_HEIGHT = ref(0);
 const TOTAL_WIDTH = ref(0);
-
 const areaHeight = ref(0);
 const areaWidth = ref(0);
 
+const pixelRatio = computed(() => TOTAL_WIDTH.value / MAX_AREA_WIDTH);
+
 const getMaxAreaHeight = () =>
-    (TOTAL_HEIGHT.value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+    (TOTAL_HEIGHT.value * MAX_AREA_WIDTH) / TOTAL_WIDTH.value;
 
 const getMaxAreaWidth = () =>
-    (TOTAL_LENGTH * MAX_AREA_WIDTH) / TOTAL_HEIGHT.value;
+    (TOTAL_WIDTH.value * MAX_AREA_HEIGHT) / TOTAL_HEIGHT.value;
 
 const updateTotalHeight = (value) => {
   TOTAL_HEIGHT.value = parseInt(value);
   areaHeight.value = getMaxAreaHeight();
 
-  app.canvas.style.height = `${areaHeight.value}px`;
-  app.renderer.resize(TOTAL_LENGTH, areaHeight.value);
+  app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
+  app.renderer.resize(areaWidth.value, areaHeight.value);
 };
 
 const updateTotalWidth = (value) => {
-  areaWidth.value = parseInt(value);
+  TOTAL_WIDTH.value = parseInt(value);
+  areaWidth.value = getMaxAreaWidth();
 
-  app.canvas.style.width = `${TOTAL_LENGTH}px`;
-  app.renderer.resize(TOTAL_LENGTH, areaHeight.value);
+  app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
+  app.renderer.resize(areaWidth.value, areaHeight.value);
 };
+
+const updateTotalSize = (value, dimension) => {
+  if(dimension === "width") {
+    TOTAL_WIDTH.value = parseInt(value);
+  }
+  else {
+    TOTAL_HEIGHT.value = parseInt(value);
+  }
+
+  areaHeight.value = getMaxAreaHeight();
+  areaWidth.value = getMaxAreaWidth();
+
+  app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
+  app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
+  app.renderer.resize(MAX_AREA_WIDTH, MAX_AREA_HEIGHT);
+};
+
 
 const getPixelWidth = (mmWidth) => {
   // return Math.floor((mmWidth / TOTAL_LENGTH) * MAX_AREA_WIDTH);
-  return (mmWidth / TOTAL_LENGTH) * MAX_AREA_WIDTH;
+  return (mmWidth / TOTAL_WIDTH.value) * MAX_AREA_WIDTH;
 };
 
 const getPixelHeight = (mmHeight) => {
   // return Math.floor((mmHeight / TOTAL_HEIGHT) * getMaxAreaHeight.value);
-  return (mmHeight / TOTAL_HEIGHT.value) * areaHeight.value;
+  return (mmHeight / TOTAL_HEIGHT.value) * MAX_AREA_HEIGHT;
 };
 
 const getMmWidth = (pxWidth) => {
-  return (pxWidth / MAX_AREA_WIDTH) * TOTAL_LENGTH;
+  return (pxWidth / MAX_AREA_WIDTH) * TOTAL_WIDTH.value;
 };
 
 const init = async () => {
@@ -145,7 +163,7 @@ const init = async () => {
   await app.init({
     canvas: canvasContainer.value,
     width: MAX_AREA_WIDTH,
-    height: areaHeight.value,
+    height: MAX_AREA_HEIGHT,
     backgroundColor: BACKGROUND_COLOR,
     resolution: window.devicePixelRatio || 1,
     // autoDensity: true,
@@ -971,8 +989,9 @@ const addTicker = () => {
 
 onBeforeMount(() => {
   TOTAL_HEIGHT.value = props.maxAreaHeight;
-  areaWidth.value = props.maxAreaWidth;
+  TOTAL_WIDTH.value = props.maxAreaWidth;
   areaHeight.value = getMaxAreaHeight();
+  areaWidth.value = getMaxAreaWidth();
 });
 
 onMounted(() => {
@@ -993,6 +1012,7 @@ defineExpose({
   selectCell,
   updateTotalHeight,
   updateTotalWidth,
+  updateTotalSize,
   destroy,
 });
 
@@ -1020,6 +1040,8 @@ defineExpose({
 
   position: relative;
   right: 17vh;
+  height: 500px;
+  width: 1100px;
 }
 
 /*  height: 320px;
