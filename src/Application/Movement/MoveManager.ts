@@ -32,7 +32,9 @@ export class MoveManager {
     controls: OrbitControls
     trafficManager: THREETypes.TrafficManager
     objectFactory: GeometryBuilder
+    geometryBuilder: GeometryBuilder
     uniformTextureBuilder: THREETypes.TUniformTextureBuilder
+    ruler: THREETypes.TRuler
 
     roomManager: THREETypes.TRoomManager
     boxHelper: CustomBoxHelper
@@ -45,6 +47,7 @@ export class MoveManager {
     private onMouseDownBound: (event: MouseEvent) => void;
     private onMouseMoveBound: (event: MouseEvent) => void;
     private onMouseUpBound: (event: MouseEvent) => void;
+    private onWheelBound: (event: WheelEvent) => void;
 
     private onTouchStartBound: (event: TouchEvent) => void;
     private onTouchMoveBound: (event: TouchEvent) => void;
@@ -61,13 +64,11 @@ export class MoveManager {
     constructor(
         {
             root,
-            room,
             mouse,
             raycaster,
             trafficManager
         }: {
             root: THREETypes.TApplication,
-            room: THREETypes.TRoomManager,
             mouse: THREE.Vector2,
             raycaster: THREE.Raycaster,
             trafficManager: TrafficManager
@@ -79,19 +80,21 @@ export class MoveManager {
         this.camera = root._camera;
         this.controls = root._orbitControls
         this.trafficManager = trafficManager
-        this.roomManager = room;
+        this.roomManager = root._roomManager;
         this.keybordListeners = root.keybordListeners
 
         this.raycaster = raycaster;
         this.mouse = mouse;
-        this.objectFactory = trafficManager.geometryBuilder
-        this.uniformTextureBuilder = this.objectFactory.buildProduct.uniform_texture_builder // Переходящий рисунок
+        this.geometryBuilder = root._geometryBuilder
+        this.uniformTextureBuilder = this.geometryBuilder.buildProduct.uniform_texture_builder // Переходящий рисунок
         this.uniformEvents = this.uniformTextureBuilder.uniformEvents
         this.boxHelper = root._customBoxHelper
+        this.ruler = root._ruler
 
         this.onMouseDownBound = this.onMouseDown.bind(this)
         this.onMouseMoveBound = this.onMouseMove.bind(this)
         this.onMouseUpBound = this.onMouseUp.bind(this)
+        this.onWheelBound = this.onWheel.bind(this)
 
         this.onTouchStartBound = this.onTouchStart.bind(this)
         this.onTouchMoveBound = this.onTouchMove.bind(this)
@@ -110,6 +113,7 @@ export class MoveManager {
         this.canvas.addEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.addEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.addEventListener('mouseup', this.onMouseUpBound, false);
+        this.canvas.addEventListener('wheel', this.onWheelBound, false);
 
         // Для сенсорных событий (мобильные устройства)
         this.canvas.addEventListener('touchstart', this.onTouchStartBound, false);
@@ -125,11 +129,7 @@ export class MoveManager {
                 break;
             case 1:
             case 2:
-                this.boxHelper.removeBoxHelper()
-                /** Убираем линейку */
-                this.trafficManager.ruler.clearRuler()
-                // Убираем выбранный объект 
-                this.trafficManager._currentObject = null
+                this.clearSelectObject()
         }
     }
 
@@ -139,6 +139,10 @@ export class MoveManager {
 
     private onMouseUp(event: MouseEvent) {
         this.handleInteractionEnd();
+    }
+
+    private onWheel(event: WheelEvent) {
+        this.clearSelectObject()
     }
 
     private onTouchStart(event: TouchEvent) {
@@ -227,7 +231,10 @@ export class MoveManager {
             this.controls.enabled = false
 
             // Если это GLTF-модель, выбираем её как цель
-            this.selectedObject = this.getRootObject(firstObject);
+            const check = this.getRootObject(firstObject);
+            this.selectedObject = check
+
+
             this.selectedObject.userData.current = true
 
             this.selectedObject.userData.MOUSE_POSITION = {
@@ -253,7 +260,7 @@ export class MoveManager {
                 }
                 /** Удаление объекта из группы */
                 if (this.uniformEvents._degrouping) {
-       
+
                     this.boxHelper.clearSelect()
                     this.uniformEvents.desablePreGrouping()
                     this.uniformTextureBuilder.clearTemporaryGroups()
@@ -269,26 +276,14 @@ export class MoveManager {
             // Передаём данные выбранного объекта для events
             this.trafficManager._currentObject = this.selectedObject
             // Создаём линейку до объектов
-            this.trafficManager.ruler.drawRulerToObjects(this.selectedObject)
+            this.ruler.drawRulerToObjects(this.selectedObject)
             // Передаём координаты мыши для отрисовкм меню
             this.trafficManager._camera.updateProjectionMatrix();
 
             return
         }
 
-        this.boxHelper.removeBoxHelper()
-        /** Убираем линейку */
-        this.trafficManager.ruler.clearRuler()
-        // Убираем выбранный объект 
-        this.trafficManager._currentObject = null
-
-        if (this.uniformEvents._unionMode) {
-            this.boxHelper.clearSelect()
-            this.uniformEvents.desablePreGrouping()
-            this.uniformTextureBuilder.clearTemporaryGroups()
-            this.uniformEvents.desableGroupAddition()
-            this.uniformEvents.desableDegrouping()
-        }
+        this.clearSelectObject()
 
         return
     }
@@ -322,6 +317,8 @@ export class MoveManager {
             const point = intersects[0].point; // Точка пересечения с полом или стеной
             const surface = intersects[0].object // стена
 
+            this.selectedObject.userData.aabb = new THREE.Box3().setFromObject(this.selectedObject);
+
             const adjustedPosition = this.roomManager.adjustPositionWithRaycasting({
                 object: this.selectedObject, targetPosition: point, wall: surface
             });
@@ -329,29 +326,43 @@ export class MoveManager {
             this.selectedObject.position.copy(adjustedPosition.position);
             this.selectedObject.rotation.copy(adjustedPosition.rotation)
 
-            // this.selectedObject.updateWorldMatrix(true, true)
-            // this.selectedObject.updateMatrix();
 
-            // let obb = new OBB();
-            // const aabb = new THREE.Box3().setFromObject(this.selectedObject);
-            // obb = obb.fromBox3(aabb);
-            // obb.applyMatrix4(this.selectedObject.matrixWorld)
-
-            // this.selectedObject.userData.obb = obb
             this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
-            // Обновляем BoxHelper для визуализации
+
             this.boxHelper.updateBoxHelper();
 
         }
 
         // Обновляем линейку
-        this.trafficManager.ruler.drawRulerToObjects(this.selectedObject)
+        this.ruler.drawRulerToObjects(this.selectedObject)
+    }
+
+    clearSelectObject() {
+        this.boxHelper.removeBoxHelper()
+        /** Убираем линейку */
+        this.ruler.clearRuler()
+        // Убираем выбранный объект 
+        this.trafficManager._currentObject = null
+
+        if (this.uniformEvents._unionMode) {
+            this.boxHelper.clearSelect()
+            this.uniformEvents.desablePreGrouping()
+            this.uniformTextureBuilder.clearTemporaryGroups()
+            this.uniformEvents.desableGroupAddition()
+            this.uniformEvents.desableDegrouping()
+        }
+
+    }
+    clearSelectVisual() {
+        this.boxHelper.removeBoxHelper()
+        this.ruler.clearRuler()
     }
 
     dispose() {
         this.canvas.removeEventListener('mousedown', this.onMouseDownBound, false);
         this.canvas.removeEventListener('mousemove', this.onMouseMoveBound, false);
         this.canvas.removeEventListener('mouseup', this.onMouseUpBound, false);
+        this.canvas.removeEventListener('wheel', this.onWheelBound, false);
 
         this.canvas.removeEventListener('touchstart', this.onTouchStartBound, false);
         this.canvas.removeEventListener('touchmove', this.onTouchMoveBound, false);

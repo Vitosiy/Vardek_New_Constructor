@@ -44,6 +44,10 @@ const props = defineProps({
     type: Number,
     default: 600,
   },
+  modelHeight: {
+    type: Number,
+    default: 20,
+  },
 });
 
 const isMounted = ref(false);
@@ -716,7 +720,13 @@ const saveGrid = () => {
               delete el[value].graphic;
             }
           }
-          clone[value] = el[value];
+          if (value === "xOffset") {
+            clone[value] = shapeAdjuster.getMmWidth(el[value]);
+          } else if (value === "yOffset") {
+            clone[value] = shapeAdjuster.getMmHeight(el[value]);
+          } else {
+            clone[value] = el[value];
+          }
         }
       }
       acc.push(clone);
@@ -726,7 +736,10 @@ const saveGrid = () => {
     return acc;
   }, []);
 
+  console.log(clone, "clone");
+
   const data = {
+    modelHeight: props.modelHeight,
     canvasHeight: totalHeight.value,
     data: clone,
   };
@@ -1025,9 +1038,12 @@ onBeforeUnmount(() => {
         </div>
       </section>
       <section class="actions-footer">
-        <button class="actions-btn actions-btn--footer" @click="reset(true)">
-          Сбросить
-        </button>
+        <div class="actions-footer--delite">
+          <button class="actions-btn actions-btn--footer" @click="reset(true)">
+            Сбросить
+          </button>
+          <slot name="delite"></slot>
+        </div>
         <div class="actions-footer--save">
           <!-- <button class="actions-btn actions-btn--footer" @click="save">
             Сохранить
@@ -1143,7 +1159,7 @@ onBeforeUnmount(() => {
     display: flex;
     justify-content: space-between;
     margin-top: auto;
-    &--save {
+    &--save, &--delite  {
       display: flex;
       gap: 1rem;
     }

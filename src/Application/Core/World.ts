@@ -25,8 +25,8 @@ export class World {
     deepDispose: DeepDispose
     resources: any
 
-    sceneState: ReturnType<typeof useSceneState>= useSceneState()
-    roomsStore: ReturnType<typeof useRoomState>=  useRoomState()
+    sceneState: ReturnType<typeof useSceneState> = useSceneState()
+    roomsStore: ReturnType<typeof useRoomState> = useRoomState()
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
@@ -45,13 +45,13 @@ export class World {
 
         this.deepDispose = new DeepDispose()
 
-        this.trafficManager = null
+        // this.trafficManager = null
 
         this.root = root
         this.scene = root.scene
         this.resources = root.resources;
 
-        this.lights = new AppLights(root)
+        this.lights = root._lights
 
         // this.room = null;
 
@@ -59,34 +59,21 @@ export class World {
         this.onSaveRoom = this.saveRoom.bind(this)
         this.onLoadRoom = this.loadRoom.bind(this)
 
-        // this.firstCreate()
 
-
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room = new RoomManager(this.root, this.lights);
+        // this.scene.add(new THREE.AxesHelper(2000))
+        this.room = root._roomManager
         this.room.update()
 
         this.lights.setLight(this.room._wallsGroupSize, 2)
-        this.trafficManager = new TrafficManager(this.root, this.room)
+        this.trafficManager = root._trafficManager
         this.vueEvents()
 
         // this.meshEvents = new MeshEvents(root)
 
-        this.resources.on('cubeTextureLoaded', ()=>{
-            this.enviroment = new Environment(this.root)
+        this.resources.on('cubeTextureLoaded', () => {
+            this.enviroment = new Environment(root)
         })
 
-    }
-
-    firstCreate() {
-        // this.enviroment = new Environment(this.root)
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room = new RoomManager(this.root, this.lights);
-        this.room.update()
-
-        this.lights.setLight(this.room._wallsGroupSize, 2)
-        this.trafficManager = new TrafficManager(this.root, this.room)
-        this.vueEvents()
     }
 
     setRoom() {
@@ -142,7 +129,7 @@ export class World {
     loadRoom(roomId: number) {
         this.uniformState.clearUniformGroupMembership();
         this.uniformState.clearUniformGroupsStors()
-        
+
         console.log(this.uniformState.getUniformGroupMembership)
 
         /** Добавляем ID комнаты в хранилище */

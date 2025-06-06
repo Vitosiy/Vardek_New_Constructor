@@ -366,9 +366,11 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
-        const { width, depth } = product_data
+        const { width, depth, height } = product_data
         const startCutData = {
-            canvasHeight: depth,
+            groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы
+            modelHeight: height, // Высота для итогового объекта в THREE js
+            canvasHeight: depth, // Высота для PIXI js
             data: [
                 [
                     {
@@ -383,6 +385,29 @@ export class BuildersHelper extends GlobalsData {
             ]
         }
 
+        console.log(startCutData, 'startCutData')
+
         return startCutData
+    }
+
+    findElementsBySectorId(data, sectorId) {
+        let result = null;
+
+        // Рекурсивная функция для обхода массива
+        function traverse(arr) {
+            for (const item of arr) {
+                if (Array.isArray(item)) {
+                    // Если элемент — массив, рекурсивно обходим его
+                    traverse(item);
+                } else if (item && typeof item === 'object' && item.sectorId === sectorId) {
+                    // Если элемент — объект и его sectorId совпадает, добавляем в результат
+                    result = item;
+                }
+            }
+        }
+
+        traverse(data);
+
+        return result;
     }
 }

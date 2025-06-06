@@ -51,6 +51,16 @@ export class DeepDispose {
 
         objects.forEach((child) => {
 
+            child.traverse(elem => {
+                if (elem instanceof CSS2DObject) {
+                    // Удаляем элемент DOM, связанный с CSS2DObject
+                    if (elem.element && elem.element.parentNode) {
+                        elem.element.parentNode.removeChild(elem.element);
+                    }
+                }
+            })
+
+
             if (child instanceof THREE.Camera) {
                 // Не удаляем камеры и свет, оставляем их в сцене
                 return;
@@ -100,12 +110,14 @@ export class DeepDispose {
         }
 
         // Проверяем, является ли объект CSS2DObject
-        if (object instanceof CSS2DObject) {
-            // Удаляем элемент DOM, связанный с CSS2DObject
-            if (object.element && object.element.parentNode) {
-                object.element.parentNode.removeChild(object.element);
+        object.traverse(child => {
+            if (child instanceof CSS2DObject) {
+                // Удаляем элемент DOM, связанный с CSS2DObject
+                if (child.element && child.element.parentNode) {
+                    child.element.parentNode.removeChild(child.element);
+                }
             }
-        }
+        })
 
         if (object instanceof THREE.Mesh) {
             // Очистка геометрии
@@ -196,12 +208,14 @@ export class DeepDispose {
                 });
             }
 
-            if (object instanceof CSS2DObject) {
-                // Удаляем элемент DOM, связанный с CSS2DObject
-                if (object.element && object.element.parentNode) {
-                    object.element.parentNode.removeChild(object.element);
+            object.traverse(child => {
+                if (child instanceof CSS2DObject) {
+                    // Удаляем элемент DOM, связанный с CSS2DObject
+                    if (child.element && child.element.parentNode) {
+                        child.element.parentNode.removeChild(child.element);
+                    }
                 }
-            }
+            })
 
             if (object.texture) {
                 object.texture.dispose(); // Освобождаем текстуру

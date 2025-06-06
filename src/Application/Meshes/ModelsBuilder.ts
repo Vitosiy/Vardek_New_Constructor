@@ -45,16 +45,16 @@ export class ModelsBuilder {
 
             file.traverse((child: any) => {
                 if (child instanceof THREE.Mesh) {
-                    
+
                     // child.geometry.center();
 
                     child.scale.set(model.scale, model.scale, model.scale)
                     child.position.sub(center);
                     child.position.y += size.y / 2
-                    child.position.x =0
-                    child.position.z =0
+                    child.position.x = 0
+                    child.position.z = 0
                     // child.geometry.translate(0, -size.y * 0.5, 0);
-                  
+
 
                     if (child.material.map) {
                         child.material.map.encoding = THREE.SRGBColorSpace;
@@ -108,6 +108,7 @@ export class ModelsBuilder {
             obb = obb.fromBox3(aabb);
 
             file.userData.obb = obb
+            file.userData.aabb = aabb
 
             file.userData.trueSizes = {
                 DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5

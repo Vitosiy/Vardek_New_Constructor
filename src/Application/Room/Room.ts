@@ -3,6 +3,7 @@
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
+import { BuildersHelper } from "../Meshes/BuildersHelper";
 
 // import { OBB } from 'three/examples/jsm/math/OBB.js';
 // import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
@@ -18,7 +19,7 @@ import { WallBuilder } from "../Meshes/WallBilder";
 import { OBBHelper } from "../Utils/CalculateBoundingBox";
 
 
-export class Room {
+export class Room extends BuildersHelper {
 
     boundSetSize: ((payload: { width: number; height: number; depth: number, thickness: number }) => void) | null = null;
     boundWallMaterial: ((item: number) => void) | null = null
@@ -26,7 +27,7 @@ export class Room {
     boundHeightClampValue: ((item: number) => void) | null = null
 
 
-    private parent: THREETypes.TApplication
+    private root: THREETypes.TApplication
     private params: { [key: string]: any }
     private wallBuilder: WallBuilder
     // private resources: Resources = new Resources()
@@ -54,12 +55,14 @@ export class Room {
     // worldOctree = new Octree();
     roomBounds: THREE.Box3 = new THREE.Box3()
 
-    constructor(parent: THREETypes.TApplication, light: any) {
+    constructor(root: THREETypes.TApplication, light: any) {
 
-        this.wallBuilder = new WallBuilder(parent)
+        super(root)
 
-        this.parent = parent
-        this.scene = parent.scene
+        this.wallBuilder = new WallBuilder(root)
+
+        this.root = root
+        this.scene = root.scene
         this.roomLight = light
         this.params = {}
         this.resizeParams = {}

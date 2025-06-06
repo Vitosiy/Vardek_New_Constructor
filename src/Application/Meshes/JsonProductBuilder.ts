@@ -10,9 +10,11 @@ export class JsonBuilder {
 
     parent: BuildProduct
     resources: THREETypes.TResources
+    convert: Function
 
     constructor(parent: BuildProduct) {
         this.parent = parent
+        this.convert = parent.calculateFromString
         // this.resources = parent._resources
     }
 
@@ -127,11 +129,11 @@ export class JsonBuilder {
             }
 
             if (item.position) {
-                obj[item.id].position.set(eval(item.position.x), eval(item.position.y), eval(item.position.z));
+                      obj[item.id].position.set(this.convert(item.position.x), this.convert(item.position.y), this.convert(item.position.z));
                 // obj[item.id].userData.position = obj[item.id].position
             }
             if (item.rotation) {
-                obj[item.id].rotation.set(eval(item.rotation.x), eval(item.rotation.y), eval(item.rotation.z));
+                 obj[item.id].rotation.set(this.convert(item.rotation.x), this.convert(item.rotation.y), this.convert(item.rotation.z));
                 // obj[item.id].userData.rotation = item.rotation
             }
 
@@ -152,9 +154,9 @@ export class JsonBuilder {
     createGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
 
         let geometry = new THREE.BoxGeometry(
-            parseInt(geometry_data.opt.x),
-            parseInt(geometry_data.opt.y),
-            parseInt(geometry_data.opt.z)
+            this.convert(geometry_data.opt.x),
+            this.convert(geometry_data.opt.y),
+            this.convert(geometry_data.opt.z)
         )
         // geometry.computeBoundingBox();
         return geometry
@@ -162,7 +164,7 @@ export class JsonBuilder {
 
     createPlaneGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
         let geometry = new THREE.PlaneGeometry(
-            parseInt(geometry_data.opt.x), parseInt(geometry_data.opt.y)
+            this.convert(geometry_data.opt.x), this.convert(geometry_data.opt.y)
         )
         return geometry
     }

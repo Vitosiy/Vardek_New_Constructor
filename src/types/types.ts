@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Application } from "@/Application/Core/Application";
 import { TrafficManager } from "@/Application/Movement/TrafficManager";
+import { MoveManager } from "@/Application/Movement/MoveManager";
 import { RoomManager } from "@/Application/Room/RoomManager";
 import { Resources } from "@/Application/Utils/Resources";
 import { Ruler } from "@/Application/Utils/Ruler";
@@ -17,9 +18,11 @@ import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
 
 
+
 export type TApplication = Application
 export type TMeshEvents = MeshEvents
 export type TTrafficManager = TrafficManager
+export type TMoveManager = MoveManager
 export type TRoomManager = RoomManager
 export type TResources = Resources
 export type TRuler = Ruler

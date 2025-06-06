@@ -38,9 +38,9 @@ export class RoomManager extends Room {
     heightClamp: number = useSceneState().getStartHeightClamp
     heightLine: THREE.Object3D[] = []
 
-    constructor(root: THREETypes.TApplication, light: any) {
+    constructor(root: THREETypes.TApplication) {
 
-        super(root, light)
+        super(root, root._lights)
         this.root = root
         this.scene = root.scene
         this.setObject = root.setObject
@@ -105,10 +105,10 @@ export class RoomManager extends Room {
     }
 
 
-    adjustPositionWithRaycasting({ object, targetPosition, wall, targetRotation, maxDistance, snapHeight }: { object: THREE.Object3D, targetPosition: THREE.Vector3, targetRotation?: THREE.Euler, wall: THREE.Object3D, maxDistance: number, snapHeight?: number }): THREEInterfases.IClampPosition {
+    adjustPositionWithRaycasting({ object, targetPosition, wall, targetRotation, snapHeight }: { object: THREE.Object3D, targetPosition: THREE.Vector3, targetRotation?: THREE.Euler, wall: THREE.Object3D, snapHeight?: number }): THREEInterfases.IClampPosition {
 
         let heightClamp = this.heightClamp
-        const objectBox = new THREE.Box3().setFromObject(object);
+        const objectBox = object.userData.aabb
 
         const { DEPTH, HEIGHT, WIDTH } = object.userData.trueSizes
 
@@ -117,6 +117,9 @@ export class RoomManager extends Room {
         const position = this.snapToHeight(targetPosition, objectBox, heightClamp, heightMagnetThreshold);
 
         const objectPos = this.roomInterseck({ object, wall, position, targetRotation })
+
+        // const bb = new THREE.Box3Helper(objectBox, 'red')
+        // this.scene.add(bb)
 
         return {
             position: objectPos.position,
@@ -128,20 +131,14 @@ export class RoomManager extends Room {
 
     private roomInterseck({ object, wall, position, targetRotation }: { object: THREE.Object3D; wall: THREE.Object3D; position: THREE.Vector3, targetRotation?: THREE.Euler }): { position: THREE.Vector3; rotation: THREE.Euler } {
 
-        let adjustPosition = position.clone();
-
-        // console.log(object.userData.PROPS.CONFIG.ROTATION, 'AR')
-        // console.log(adjustPosition, 'AP')
+        let adjustPosition = position.clone()
 
         const rotation = object.userData.PROPS.CONFIG.ROTATION ?? new THREE.Euler(0, 0, 0, 'XYZ');
         const { DEPTH, HEIGHT, WIDTH } = object.userData.trueSizes
-
         const roomBound = this._roomBounds;
-        const aabb = new THREE.Box3().setFromObject(object);
+        const aabb = object.userData.aabb
         const obb = new OBB().fromBox3(aabb);
-
-        let minDistance = Infinity;
-        let curWall = null;
+        const MIN_DISTANCE = 0.1;
 
         /** Для загрузки контента из стора при запуске приложения */
 
@@ -168,41 +165,7 @@ export class RoomManager extends Room {
 
             switch (wall.userData.name) {
                 case "floor":
-
-                    for (let wallNdx in this._roomTotal) {
-
-                        let singleWall = this._roomTotal[wallNdx]
-                        const wallOBB = singleWall.userData.obb;
-                        if (!wallOBB || singleWall.userData.name === "floor") break
-
-                        if (obb.intersectsOBB(wallOBB)) {
-
-                            const wallNormal = singleWall.userData.plane.normal.clone().normalize();
-                            const distanceToPlane = Math.abs(wallNormal.dot(adjustPosition) + singleWall.userData.plane.constant);
-                            const correction = wallNormal.clone().multiplyScalar(distanceToPlane);
-
-                            if (distanceToPlane <= DEPTH * 2) {
-                                adjustPosition.sub(correction);
-                            }
-
-                            // let g = new THREE.BoxGeometry(20, 20, 20)
-                            // let c = new THREE.MeshBasicMaterial({ color: 0xff00ff })
-                            // let m = new THREE.Mesh(g, c)
-                            // m.position.copy(adjustPosition)
-                            // this.scene.add(m)
-
-                            // console.log(singleWall.userData.name)
-
-                            let correctData = this.getClampedPosition({ position: adjustPosition, rotation, wall: singleWall, object, obb, floor: true })
-
-                            adjustPosition = correctData.correctPosition
-                            rotation.copy(correctData.correctRotation)
-
-                            break
-                        }
-
-                    }
-
+                    this.getClampedFloorPosition({ object, adjustPosition, aabb, position })
                     break
                 default:
 
@@ -214,6 +177,7 @@ export class RoomManager extends Room {
                     break
             }
         }
+
 
         // console.log(object)
 
@@ -228,6 +192,7 @@ export class RoomManager extends Room {
 
         // Обновляем конфигурацию объекта
         object.userData.PROPS.CONFIG = { ...object.userData.PROPS.CONFIG, ROTATION: rotation, POSITION: adjustPosition };
+        object.userData.currentWall = wall
 
         return { position: adjustPosition, rotation };
     }
@@ -238,15 +203,25 @@ export class RoomManager extends Room {
         const correctRotation = rotation.clone()
         const wallCoordinates = wall.userData.coordinates
 
+
         const { PROPS } = object.userData
-        const { CONFIG, TABLETOP } = PROPS
+        const { CONFIG, TABLETOP, BODY } = PROPS
         const { POSITION, ROTATION } = CONFIG
-
-        const tableTopDepth = Object.keys(TABLETOP).length > 0 ? TABLETOP.userData.trueSize.TABLETOP_DEPTH : null
-
         const { DEPTH, HEIGHT, WIDTH } = object.userData.trueSizes
 
+        let BODY_WIDTH, BODY_DEPTH
+
+        if (BODY instanceof THREE.Object3D) {
+            BODY_WIDTH = BODY.userData.trueSize.BODY_WIDTH * 0.5
+            BODY_DEPTH = BODY.userData.trueSize.BODY_DEPTH * 0.5
+        }
+
+        const correctSize = BODY_DEPTH ?? DEPTH;
+        const currentWidth = BODY_WIDTH ?? WIDTH
+
+
         if (!wallCoordinates) {
+
 
             let correct = ROTATION.clone()
             correct.y += Math.PI / 2;
@@ -260,38 +235,35 @@ export class RoomManager extends Room {
         const wallNormal = wall.userData.plane.normal.clone().normalize();
         const distanceToPlane = wall.userData.plane.distanceToPoint(correctPosition);
 
-        const intersectionPoint = new THREE.Vector3();
-        obb.clampPoint(wall.userData.obb.center, intersectionPoint);
-
         const side = this.getFacingSideFromOBB(object, wall, obb);
 
-        const correctSize = tableTopDepth ? tableTopDepth * 0.5 : DEPTH - 10.5;
-
         let trueExtremePoint = this.findClosestPoint(position, wallCoordinates[0], wallCoordinates[1]).clone()
+        // let trueCenterPoint = this.findClosestPoint(obb.center, wallCoordinates[0], wallCoordinates[1]).clone()
 
         const vectorToCenter = new THREE.Vector3().subVectors(wall.userData.center, trueExtremePoint).normalize();
+        // const vectorFromCenter = new THREE.Vector3().subVectors(obb.center, trueExtremePoint).normalize();
 
         trueExtremePoint.y = position.y
+        // trueCenterPoint.y = position.y
 
         const distanceToExtrene = trueExtremePoint.distanceTo(position)
+        // const distanceFromExtrene = trueCenterPoint.distanceTo(obb.center)
 
-        if (distanceToExtrene === 0) return {
+        // const extrem = Math.pow(distanceFromExtrene, 2) < Math.pow(obb.halfSize.x, 2) + Math.pow(obb.halfSize.z, 2)
 
-            correctPosition: POSITION,
-            correctRotation: ROTATION,
+        if (distanceToExtrene === 0) {
+            return {
+                correctPosition: POSITION,
+                correctRotation: ROTATION,
+            }
         }
 
-        if (distanceToExtrene <= WIDTH) {
+        if (distanceToExtrene <= currentWidth) {
             let correction
             if (!floor) {
-                correction = vectorToCenter.clone().multiplyScalar(WIDTH - distanceToExtrene);
+                correction = vectorToCenter.clone().multiplyScalar(currentWidth - distanceToExtrene);
                 correctPosition.add(correction);
             }
-            else {
-                correction = vectorToCenter.clone().multiplyScalar(WIDTH - 0.5);
-                correctPosition = trueExtremePoint.clone().add(correction)
-            }
-
         }
 
         if (distanceToPlane <= correctSize) {
@@ -299,14 +271,87 @@ export class RoomManager extends Room {
             correctPosition.add(correction);
         }
 
+
         if (wall.userData.name != "floor") {
             !wall.rotation.equals(correctRotation) ? correctRotation.copy(wall.rotation) : ''
         }
 
-
         return {
             correctPosition,
             correctRotation
+        }
+    }
+
+    private getClampedFloorPosition({ object, adjustPosition, aabb, position }) {
+
+        const corrections = [];
+
+        for (let wallNdx in this._roomTotal) {
+
+            let singleWall = this._roomTotal[wallNdx]
+            const wallOBB = singleWall.userData.obb;
+            if (!wallOBB || singleWall.userData.name === "floor") break
+
+            const tempBox3 = aabb.clone();
+            const delta = position.clone().sub(object.position);
+            tempBox3.translate(delta)
+
+            if (wallOBB.intersectsBox3(tempBox3)) {
+
+                // Получаем центр AABB в новой позиции
+                const center = new THREE.Vector3();
+                tempBox3.getCenter(center);
+                // Находим ближайшую точку на поверхности OBB
+                const intersectionPoint = new THREE.Vector3();
+                wallOBB.clampPoint(center, intersectionPoint);
+
+                // Вычисляем вектор от точки пересечения к центру
+                const pushVector = center.clone().sub(intersectionPoint);
+
+                // Проверяем, ненулевой ли вектор
+                if (pushVector.lengthSq() < 0.0001) {
+                    // Если вектор нулевой (редкий случай), блокируем движение
+                    adjustPosition.copy(object.position);
+                    continue;
+                }
+                // Определяем пересекающую сторону AABB
+                const normal = pushVector.clone().normalize();
+                const absNormal = new THREE.Vector3(Math.abs(normal.x), Math.abs(normal.y), Math.abs(normal.z));
+                const halfSize = tempBox3.getSize(new THREE.Vector3()).multiplyScalar(0.5);
+
+                // Минимальное расстояние — расстояние до края AABB по доминирующей оси
+                let minDistance = Infinity;
+                if (absNormal.x > absNormal.y && absNormal.x > absNormal.z) {
+                    minDistance = halfSize.x / absNormal.x;
+                } else if (absNormal.y > absNormal.x && absNormal.y > absNormal.z) {
+                    minDistance = halfSize.y / absNormal.y;
+                } else {
+                    minDistance = halfSize.z / absNormal.z;
+                }
+                // Нормализуем вектор и вычисляем коррекцию
+                const correctNormal = pushVector.clone().normalize();
+                const penetrationDepth = pushVector.length();
+                const correction = correctNormal.multiplyScalar(penetrationDepth - minDistance);
+
+                corrections.push({ correction, penetrationDepth });
+
+
+            }
+
+        }
+        // Если нет пересечений, возвращаем новую позицию
+        if (corrections.length === 0) {
+            return
+        }
+        const sorted = corrections.sort((a, b) => a.penetrationDepth - b.penetrationDepth)
+        const totalCorrection = new THREE.Vector3();
+
+        for (const correction of corrections) {
+            totalCorrection.add(correction.correction);
+        }
+        adjustPosition.copy(position).sub(totalCorrection);
+        if (sorted.length > 1 && sorted[0].penetrationDepth > 0) {
+            adjustPosition.copy(object.position)
         }
     }
 
@@ -439,18 +484,17 @@ export class RoomManager extends Room {
     save() {
         let mokSave: any[] = []
         Object.values(this.contant).forEach(item => {
-            const model: THREETypes.TObject = {}
+            if (item.userData.elementType !== 'raspil') {
+                console.log(item, 'item')
 
-            model.id = item.userData.globalData
-
-            model.position = item.position.clone()
-            model.rotation = item.rotation.clone()
-
-            model.obb = item.userData.obb
-            model.data = this.convertProps(item.userData.PROPS)
-
-            mokSave.push(JSON.stringify(model))
-            // mokSave.push(model)
+                model.id = item.userData.globalData
+                model.position = item.position.clone()
+                model.rotation = item.rotation.clone()
+                model.obb = item.userData.obb
+                model.data = this.convertProps(item)
+                model.type = item.userData.elementType
+                mokSave.push(JSON.stringify(model))
+            }
         })
 
         // console.log(mokSave)
@@ -470,6 +514,23 @@ export class RoomManager extends Room {
         saveData.FASADE_DEFAULT = []
         saveData.TABLETOP = {}
         saveData.CONFIG.HEIGHTCORRECT = 0
+
+        if (saveData.RASPIL_LIST.length > 0) {
+
+            saveData.RASPIL_LIST.forEach(elem => {
+
+                if (elem) {
+                    const result = this.findElementsBySectorId(saveData.RASPIL.data, elem.sectorId)
+
+                    result.position = elem.position.clone()
+                    result.rotation = elem.rotation.clone()
+                }
+            })
+
+
+            return saveData
+
+        }
 
         return saveData
     }
@@ -500,7 +561,14 @@ export class RoomManager extends Room {
                 const size = model.size ?? ''
 
                 this.geometryBuilder.craeteModel(this.modelState.getModels[model.id] as THREEInterfases.IModelsData, (object) => {
-                    this.setObject.create({ scene: this.scene, config: this.modelState.getModels[model.id], object, rotate: rotation, point, roomManager: this })
+
+                    this.setObject.create({ object, rotate: rotation, point })
+
+                    if (loadData) {
+                        if (loadData.RASPIL_LIST.length > 0) {
+                            this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id)
+                        }
+                    }
                 }, loadData, size
                 )
 

@@ -1,6 +1,7 @@
 //@ts-nocheck
 
 import * as THREE from "three"
+import { toRaw } from 'vue';
 // import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -34,13 +35,13 @@ export class TrafficManager {
     despose: DeepDispose
     dragAndDropManager: DragAndDropManager
     moveManager: MoveManager | null = null
-    boxHelper: CustomBoxHelper
+    boxHelper: THREETypes.TCustomBoxHelper
     currentObject: THREE.Object3D | null = null
     ruler: THREETypes.Ruler
     rulerLines: THREE.Object3D[] = [];
     rullerSizeLines: THREE.Object3D[] = [];
 
-    private onRemoveFromRoom: () => void;
+    private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
 
     // constructor(canvas: HTMLElement, scene: THREE.Scene, room: RoomManager, camera: THREE.Camera, controls: OrbitControls) {
 
@@ -53,7 +54,7 @@ export class TrafficManager {
         this.camera = root._camera
         this.room = room
 
-        this.ruler = root.ruler
+        this.ruler = root._ruler
 
         this.ruler.setParams(
             {
@@ -67,17 +68,9 @@ export class TrafficManager {
         this.despose = new DeepDispose()
         this.boxHelper = root._customBoxHelper
         this.geometryBuilder = root.geometryBuilder
-        this.dragAndDropManager = new DragAndDropManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.mouse, this.raycaster, this.boxHelper, this)
 
-
-        this.moveManager = new MoveManager({
-            root,
-            room: this.room,
-            mouse: this.mouse,
-            raycaster: this.raycaster,
-            trafficManager: this
-
-        })
+        this.dragAndDropManager = new DragAndDropManager(root, this.mouse, this.raycaster, this)
+        this.moveManager = new MoveManager({ root, mouse: this.mouse, raycaster: this.raycaster, trafficManager: this })
 
         this.vueEvents()
     }
@@ -95,10 +88,11 @@ export class TrafficManager {
 
         if (object) {
 
-            let product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+            if (object.userData.elementType !== 'raspil') {
+                let product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+                this.modelState.createCurrentModelFasadesData(product.FACADE);
+            }
 
-
-            this.modelState.createCurrentModelFasadesData(product.FACADE);
             this.modelState.setCurrentModel(object)
 
             console.log(object.userData)
@@ -110,7 +104,7 @@ export class TrafficManager {
         }
 
         this.events.emit("A:Selected", {
-            object: object?.userData,
+            object: object,
             roomContant: this.room._roomContant
         })
 
@@ -129,20 +123,45 @@ export class TrafficManager {
         this.room = room
         this.rulerLines = []
 
-        this._currentObject = null
+        this.currentObject = null
         this.boxHelper._boxHelperCheck = null
         this.raycaster = new THREE.Raycaster();
 
         this.dragAndDropManager.updateRoomData(room)
         this.moveManager.updateRoomData(room)
-        this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
+        // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
-    removeFromRoom() {
+    removeFromRoom(product: Event | THREE.Object3D) {
 
         // console.log(this._currentObject, 'CurrentObject')
 
         if (!this._currentObject) return
+
+        if (product instanceof THREE.Object3D) {
+            const prod = toRaw(product)
+            const { RASPIL_LIST } = product.userData.PROPS
+
+            if (RASPIL_LIST.length > 0) {
+                RASPIL_LIST.forEach(elem => {
+                    this.room.remove(elem.id)
+                    this.despose.clearObject(elem, this.scene)
+                    this.boxHelper.removeBoxHelper()
+                    this.ruler.clearRuler();
+                    this.currentObject = null
+                })
+            }
+
+
+
+            this.room.remove(product.id)
+            this.despose.clearObject(product, this.scene)
+            this.boxHelper.removeBoxHelper()
+            this.ruler.clearRuler();
+            this.currentObject = null
+            return
+        }
+
 
         this.room.remove(this._currentObject.id)
         this.despose.clearObject(this._currentObject, this.scene)
@@ -153,8 +172,8 @@ export class TrafficManager {
 
     vueEvents() {
 
-        this.onRemoveFromRoom = () => {
-            this.removeFromRoom()
+        this.onRemoveFromRoom = (model) => {
+            this.removeFromRoom(model)
         }
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom)

@@ -1,5 +1,4 @@
 
-// @ts-nocheck 31
 import { CUTTER_PARAMS } from "./CutterConst";
 import { Application, Container, Graphics, Text, TextStyle, GraphicsPath } from "pixi.js";
 
@@ -80,6 +79,22 @@ class Helpers {
 
     return Math.round(value / this.step) * this.step;
 
+  }
+
+  preparePathToThree(path) {
+    // const clone = path.map(item => item)
+
+    const clone = path.map(item => {
+      if (item.action !== "closePath" && item.data && item.data.length > 0) {
+        return {
+          ...item,
+          data: item.data.map(num => this.getMmWidth(num))
+        };
+      }
+      return item;
+    });
+
+    return clone
   }
 
   getSectorBounds(sector: Container) {
@@ -1026,6 +1041,9 @@ class Section extends Helpers {
     // Отрисовываем пути на графике
     this.cellGraphics.path(cellPath).fill(defCellColor);
     this.highlightGraphics.path(highlightPath).fill(deffHighlightColor);
+    const instructions = cellPath.instructions
+    this.cellGraphics.cellPath = this.preparePathToThree(instructions)
+
 
     // Отрисовываем размеры
     this.drawDimensions(this.cellGraphics, topRight, topLeft, bottomRight, bottomLeft);
@@ -1057,13 +1075,24 @@ class Section extends Helpers {
 
     // Начинаем с верхнего левого угла
     if (topLeft.type === 'rounded') {
-      path.lineTo(x, y + tl_radius);
-      path.arcTo(x, y, x + tl_radius, y, tl_radius);
+      path.moveTo(x, y + tl_radius);
+      // path.arcTo(x, y, x + tl_radius, y, tl_radius);
+      const startX = x;
+      const startY = y + tl_radius;
+      const endX = x + tl_radius;
+      const endY = y
+      const controlX = x;
+      const controlY = y
+      path.lineTo(startX, startY);
+      path.quadraticCurveTo(controlX, controlY, endX, endY);
+      // path.lineTo(x, y);
+
+
     } else if (topLeft.type === 'corner') {
-      path.lineTo(x, y + tl_corner);
+      path.moveTo(x, y + tl_corner);
       path.lineTo(x + tl_corner, y);
     } else if (topLeft.type === 'inward') {
-      path.lineTo(x, y + tl_radius);
+      path.moveTo(x, y + tl_radius);
       const startX = x + tl_width - tl_radius;
       const startY = y + tl_radius;
       const endX = x + tl_width;
@@ -1080,11 +1109,19 @@ class Section extends Helpers {
 
     // Верхний правый угол
     if (topRight.type === 'rounded') {
+      // path.lineTo(x + this.width - tr_radius, y);
+      // path.arcTo(x + this.width, y, x + this.width, y + tr_radius, tr_radius);
       path.lineTo(x + this.width - tr_radius, y);
-      path.arcTo(x + this.width, y, x + this.width, y + tr_radius, tr_radius);
+      const endX = x + this.width;
+      const endY = y + tr_radius;
+      const controlX = x + this.width;
+      const controlY = y;
+      path.quadraticCurveTo(controlX, controlY, endX, endY);
+      // path.lineTo(x + this.width, y + tr_radius);
     } else if (topRight.type === 'corner') {
       path.lineTo(x + this.width - tr_corner, y);
       path.lineTo(x + this.width, y + tr_corner);
+
     } else if (topRight.type === 'inward') {
       path.lineTo(x + this.width - tr_width, y);
       const endX = x + this.width - (tr_width - tr_radius);
@@ -1098,8 +1135,18 @@ class Section extends Helpers {
     }
     // Нижний правый угол
     if (bottomRight.type === 'rounded') {
+      // path.lineTo(x + this.width, y + this.height - br_radius);
+      // path.arcTo(x + this.width, y + this.height, x + this.width - br_radius, y + this.height, br_radius);
       path.lineTo(x + this.width, y + this.height - br_radius);
-      path.arcTo(x + this.width, y + this.height, x + this.width - br_radius, y + this.height, br_radius);
+      const startX = x + this.width;
+      const startY = y + this.height - br_radius;
+      const endX = x + this.width - br_radius;
+      const endY = y + this.height;
+      const controlX = x + this.width;
+      const controlY = y + this.height;
+      path.lineTo(startX, startY);
+      path.quadraticCurveTo(controlX, controlY, endX, endY);
+      // path.lineTo(x + this.width, y + this.height);
     } else if (bottomRight.type === 'corner') {
       path.lineTo(x + this.width, y + this.height - br_corner);
       path.lineTo(x + this.width - br_corner, y + this.height);
@@ -1120,8 +1167,19 @@ class Section extends Helpers {
     }
     // Нижний левый угол
     if (bottomLeft.type === 'rounded') {
+      // path.lineTo(x + bl_radius, y + this.height);
+      // path.arcTo(x, y + this.height, x, y + this.height - bl_radius, bl_radius);
       path.lineTo(x + bl_radius, y + this.height);
-      path.arcTo(x, y + this.height, x, y + this.height - bl_radius, bl_radius);
+      const startX = x + bl_radius;
+      const startY = y + this.height;
+      const endX = x ;
+      const endY = y + this.height - bl_radius;
+      const controlX = x 
+      const controlY = y + this.height ;
+      path.lineTo(startX, startY);
+      path.quadraticCurveTo(controlX, controlY, endX, endY);
+
+      // path.lineTo(x, y + this.height - bl_radius);
     } else if (bottomLeft.type === 'corner') {
       path.lineTo(x + bl_corner, y + this.height);
       path.lineTo(x, y + this.height - bl_corner);

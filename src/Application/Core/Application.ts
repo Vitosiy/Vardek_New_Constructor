@@ -6,9 +6,14 @@ import { Time } from "../Utils/Time"
 import { Camera } from "./Camera";
 import { Renderer } from "./Renderer";
 import { World } from "./World";
+
 import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
+import { RoomManager } from "../Room/RoomManager"
+import { AppLights } from "../World/Lights"
+import { TrafficManager } from "../Movement/TrafficManager"
 
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
+import { TableTopCreator } from "../Meshes/СutBuilder/CutBuilder";
 import { MeshEvents } from "../Meshes/Utils/Events"
 import { SetObject } from "../Utils/SetObject";
 import { Ruler } from "../Utils/Ruler";
@@ -40,6 +45,11 @@ export class Application {
 
     world: World | null = null;
     geometryBuilder: GeometryBuilder | null
+    tableTopCreator: TableTopCreator | null
+    room: RoomManager | null
+    trafficManager
+    lights: AppLights | null
+
     meshEvents: MeshEvents | null = null
     setObject: SetObject | null = null
     ruler: Ruler | null = null
@@ -51,10 +61,10 @@ export class Application {
 
     constructor(canvas: HTMLElement) {
 
+
         // (window as any).aplication = this // Для разработки
 
         /** Инициализация */
-
         this.systemInfo = new SystemInfo()
         this.keybordListeners = new KeybordListeners(this)
         this.resources = new Resources();
@@ -66,14 +76,22 @@ export class Application {
         this.camera = new Camera(this)
         this.renderer = new Renderer(this)
 
-        this.customBoxHelper = new CustomBoxHelper(this)
+        this.customBoxHelper = new CustomBoxHelper(this);
         this.ruler = new Ruler();
         this.geometryBuilder = new GeometryBuilder(this);
         this.meshEvents = new MeshEvents(this);
+
         this.setObject = new SetObject(this);
+
+        this.lights = new AppLights(this)
+        this.room = new RoomManager(this)
+
+        this.trafficManager = new TrafficManager(this, this.room)
+
 
         this.world = new World(this)
 
+        this.tableTopCreator = new TableTopCreator(this)
 
         this.resources.startLoading(this.enviromentData!.texture, this.enviromentData!.type)
 
@@ -122,7 +140,8 @@ export class Application {
     }
 
     get _trafficManager() {
-        return this.world!.trafficManager
+        // return this.world!.trafficManager
+        return this.trafficManager
     }
 
     get _geometryBuilder() {
@@ -135,6 +154,22 @@ export class Application {
 
     get _customBoxHelper() {
         return this.customBoxHelper
+    }
+
+    get _roomManager() {
+        return this.room
+    }
+
+    get _lights() {
+        return this.lights
+    }
+
+    get _ruler() {
+        return this.ruler
+    }
+
+    get _setObject() {
+        return this.setObject
     }
 
     resize() {
