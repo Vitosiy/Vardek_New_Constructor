@@ -28,15 +28,6 @@ const eventBus = useEventBus();
 
 const emit = defineEmits(["save-table-data"]);
 
-const {
-  MAX_AREA_WIDTH,
-  TOTAL_LENGTH,
-  TOTAL_HEIGHT,
-  BACKGROUND_COLOR,
-  MIN_SECTION_WIDTH,
-  MIN_SECTION_HEIGHT,
-} = UI_PARAMS;
-
 let shapeAdjuster = null;
 const menuStore = useMenuStore();
 const productData = ref(false)
@@ -93,24 +84,33 @@ const totalWidth = ref(0);
 const getMinHeight = computed(() => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
 })
+
 const getMaxHeight = computed(() => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX
 })
+
 const getMinWidth = computed((dimension, minmax) => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN
 })
+
 const getMaxWidth = computed((dimension, minmax) => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX
 })
 
-const tempHole = ref({});
+const getMinDepth = computed((dimension, minmax) => {
+  return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN
+})
+
+const getMaxDepth = computed((dimension, minmax) => {
+  return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
+})
 
 const selectedCell = ref({ sec: 0, cell: 0 , cell: 0});
 const correct = ref({ change: false });
-const holeOptions = ref({ show: false, section: { sec: 0, cell: 0 } });
-const cutServise = ref({ show: false, section: { sec: 0, cell: 0 } });
+const cutServise = ref({ show: false, section: { sec: 0, cell: 0, row: null } });
 const constructor2dContainer = ref(null);
 const step = ref(1);
+const timer = ref(false);
 
 // Получаем текущую секцию
 const getCurrentSection = computed(() => {
@@ -128,60 +128,52 @@ const getCurrentSectionServiseData = computed(() => {
   return getCurrentSection.value.currentRow.serviseData ?? [];
 });
 
-const getRoundSectionValidation = computed(() => {
-  return (sec, cell) => {
-    if (!isMounted.value) return;
-    try {
-      const currentColl = module.value[sec];
-      const currentRow = currentColl[cell];
+const debounce = (callback, wait) => {
+  if(timer.value) {
+    clearTimeout(timer.value)
+  }
 
-      if ("radius" in currentRow.roundCut) return true;
-      return false;
-    } catch (e) {
-      console.error(e);
-    }
-  };
-});
+  timer.value = setTimeout(() => {
+    callback();
+    timer.value = false
+  }, wait)
+}
 
-const checkRounded = computed(() => {
-  if (!isMounted.value) return;
-  const cell = getCurrentSection.value.currentRow;
-  if ("radius" in cell.roundCut) return true;
-  return false;
-});
+const updateHorizont = (value) => {
+  debounce(() => {
+    const PROPS = productData.value.userData.PROPS;
+    PROPS.CONFIG.HORIZONT = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] = parseInt(value);
+    reset();
+  }, 1000)
+};
 
 const updateTotalHeight = (value) => {
-  totalHeight.value = parseInt(value);
+  debounce(() => {
+    totalHeight.value = parseInt(value);
 
-  //visualizationRef.value.updateTotalHeight(value);
-  visualizationRef.value.updateTotalSize(value, "height");
-  // visualizationRef.value.renderGrid();
-  reset();
-  visualizationRef.value.selectCell(0, 0);
+    //visualizationRef.value.updateTotalHeight(value);
+    visualizationRef.value.updateTotalSize(value, "height");
+    // visualizationRef.value.renderGrid();
+    reset();
+    visualizationRef.value.selectCell(0, 0);
+  }, 1000)
 };
 
 const updateTotalWidth = (value) => {
-  totalWidth.value = parseInt(value);
+  debounce(() => {
+    totalWidth.value = parseInt(value);
 
-  //visualizationRef.value.updateTotalWidth(value);
-  visualizationRef.value.updateTotalSize(value, "width");
-  // visualizationRef.value.renderGrid();
-  reset();
-  visualizationRef.value.selectCell(0, 0);
+    //visualizationRef.value.updateTotalWidth(value);
+    visualizationRef.value.updateTotalSize(value, "width");
+    // visualizationRef.value.renderGrid();
+    reset();
+    visualizationRef.value.selectCell(0, 0);
+  }, 1000)
 };
-
-const getMaxAreaHeight = (value) => {
-  return (value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
-};
-
-// const getMaxAreaHeight = computed(() => {
-//   return (totalHeight.value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
-// });
 
 const showCurrentCol = (secIndex) => {
-  selectedCell.value = { sec: secIndex, cell: 0 };
-  visualizationRef.value.selectCell(secIndex, 0);
-  holeOptions.value.show = false;
+  selectedCell.value = { sec: secIndex, cell: 0, row: null };
+  visualizationRef.value.selectCell(secIndex, 0, null);
   cutServise.value.show = false;
 };
 
@@ -297,110 +289,13 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
   visualizationRef.value.renderGrid();
 };
 
-const createHoleDataToCheck = (type, cell, sec) => {
-  let width, height, radius, tempHole;
-
-  let extremum = cell.width < cell.height ? cell.width * 0.5 : cell.height * 0.5;
-
-  if (extremum > 600) extremum = 300;
-
-  width = extremum;
-  height = extremum;
-  radius = extremum;
-
-  switch (type) {
-    case "rect":
-      tempHole = {
-        type: "rect",
-        width,
-        height,
-      };
-      break;
-
-    case "circle":
-      tempHole = {
-        type: "circle",
-        radius,
-      };
-      break;
-  }
-
-  return visualizationRef.value.checkPositionHoleToCreate(tempHole);
-};
-
-const addHole = (type) => {
-  const sec = module.value[selectedCell.value.sec];
-  const cell = sec[selectedCell.value.cell];
-
-  const startHoleData = createHoleDataToCheck(type, cell, sec);
-
-  if (!startHoleData) {
-    alert("Позиция не найдена");
-    return;
-  }
-
-  if (selectedCell.value.sec === null || selectedCell.value.cell === null) {
-    alert("Пожалуйста, выберите секцию для добавления прямоугольного выреза");
-    return;
-  }
-
-  let preperedData;
-
-  switch (type) {
-    case "rect":
-      preperedData = {
-        ...startHoleData,
-        lable: "Прямоугольный разрез",
-        holeId: cell.holes.length,
-        Mwidth: 600,
-        Mheight: 600,
-      };
-      break;
-    case "circle":
-      preperedData = {
-        ...startHoleData,
-        lable: "Круглый разрез",
-        holeId: cell.holes.length,
-        Mradius: 600,
-      };
-      break;
-  }
-
-  cell.holes.push(preperedData);
-
-  // // Обновляем рендер
-  visualizationRef.value.renderGrid();
-};
-
-const showCutServises = (secIndex, cellIndex) => {
-  visualizationRef.value.selectCell(secIndex, cellIndex);
-  holeOptions.value.show = false;
-  cutServise.value.show = true;
-  cutServise.value.section.sec = secIndex;
-  cutServise.value.section.cell = cellIndex;
-};
-
-const toggleHoleOptions = (secIndex, cellIndex) => {
-  cutServise.value.show = false;
-  holeOptions.value.show = !holeOptions.value.show;
-};
-
-
-const getCutServiseActive = computed(() => {
-  return (sec, cell) => {
-    if (!isMounted.value) return;
-    const { section, show } = cutServise.value;
-    return { active: sec === section.sec && cell === section.cell && show };
-  };
-});
-
-const updateSectionWidth = (value, secIndex, cellIndex) => {
+const updateSectionWidth = (value, secIndex) => {
   const newValue = parseInt(value);
   let adjustedValue;
 
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { sec: secIndex, cell: cellIndex };
-  visualizationRef.value.selectCell(secIndex, cellIndex);
+  selectedCell.value = { sec: secIndex, cell: null, row: null };
+  visualizationRef.value.selectCell(secIndex, null);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     adjustedValue = visualizationRef.value.adjustSizeFromExternal({
@@ -410,22 +305,47 @@ const updateSectionWidth = (value, secIndex, cellIndex) => {
     });
   }
   // Обновляем значение в module для синхронизации
-  const clone = module.value.map((item) => item);
+  const clone = Object.assign({}, module.value);
   if (adjustedValue) {
-    clone[secIndex].forEach((cell) => (cell.width = adjustedValue));
+    let curSection = clone.sections[secIndex]
+    let nextSection = clone.sections[secIndex + 1]
+    let delta = curSection.width - adjustedValue
+
+    curSection.width = adjustedValue
+    curSection.cells.forEach((cell, cellIndex) => {
+
+      if(cell.cellsRows) {
+        let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+        lastRow.width += delta;
+      }
+      cell.width = adjustedValue;
+    })
+
+    if(nextSection) {
+      nextSection.width += delta
+
+      nextSection.cells.forEach((cell, cellIndex) => {
+
+        if(cell.cellsRows) {
+          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+          lastRow.width += delta;
+        }
+        cell.width = nextSection.width;
+      })
+    }
   }
   module.value = clone;
 };
 
-const updateSectionHeight = (value, secIndex, cellIndex) => {
+const updateCellHeight = (value, secIndex, cellIndex) => {
   const newValue = parseInt(value);
   let adjustedValue;
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { sec: secIndex, cell: cellIndex };
+  selectedCell.value = { sec: secIndex, cell: cellIndex, row: null };
   visualizationRef.value.selectCell(secIndex, cellIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
-    const adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
       dimension: "height",
       value: newValue,
       sec: secIndex,
@@ -433,120 +353,58 @@ const updateSectionHeight = (value, secIndex, cellIndex) => {
     });
   }
   // Обновляем значение в module для синхронизации
-  const clone = module.value.map((item) => item);
+  const clone = Object.assign({}, module.value);
   if (adjustedValue) {
-    module.value[secIndex][cellIndex].height = adjustedValue;
+    let curCell = clone.sections[secIndex].cells[cellIndex]
+    let nextCell = clone.sections[secIndex].cells[cellIndex + 1]
+    let delta = curCell.height - adjustedValue
+
+    curCell.height = adjustedValue
+    curCell.cellsRows.forEach((row, rowIndex) => {
+      row.height = adjustedValue;
+    })
+
+    if(nextCell) {
+      nextCell.height += delta
+      nextCell.cellsRows.forEach((row, rowIndex) => {
+        row.height = adjustedValue;
+      })
+    }
   }
   module.value = clone;
 };
 
-const updateHole = (event, key, type, holeType) => {
-  console.log("ww");
+const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
 
-  const cellIndex = selectedCell.value.cell;
-  const secIndex = selectedCell.value.sec;
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
+  visualizationRef.value.selectCell(secIndex, cellIndex, false, rowIndex);
 
-  const gridCopy = module.value.map((item) => item);
-  // const gridCopy = module.value
-  const currentColl = gridCopy[secIndex];
-  const currentRow = currentColl[cellIndex];
-
-  const currenthole = currentRow.holes[key];
-
-  const prevValue = currentRow.holes[key][type]; //Предыдущее значение
-
-  // let newValue = parseInt(event.target.value);
-  let newValue = parseInt(event);
-  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
-
-  const holeData = JSON.parse(JSON.stringify(currenthole));
-  holeData[type] = newValue;
-
-  console.log(holeData, "0");
-
-  const pixiSector = currentRow.sector;
-
-  currenthole[`M${type}`] = 600;
-
-  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
-
-  if (check) {
-    currenthole[type] = newValue;
-    console.log("1");
-  } else {
-    console.log("2");
-    currenthole[type] = prevValue;
-    currenthole[`M${type}`] = prevValue;
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "width",
+      value: newValue,
+      sec: secIndex,
+      cell: cellIndex,
+      row: rowIndex,
+    });
   }
+  // Обновляем значение в module для синхронизации
+  const clone = Object.assign({}, module.value);
+  if (adjustedValue) {
+    let curRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex]
+    let nextRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex + 1]
+    let delta = curRow.width - adjustedValue
 
-  module.value = gridCopy;
+    curRow.width = adjustedValue
 
-  visualizationRef.value.renderGrid();
-};
-
-const changeHolePositionX = (event, key, type, holeType, value) => {
-  const cellIndex = selectedCell.value.cell;
-  const secIndex = selectedCell.value.sec;
-
-  const gridCopy = module.value.map((item) => item);
-  const currentColl = gridCopy[secIndex];
-  const currentRow = currentColl[cellIndex];
-
-  const currenthole = currentRow.holes[key];
-
-  const prevValue = currentRow.holes[key].x; //Предыдущее значение
-
-  const newValue = prevValue + value;
-
-  const holeData = JSON.parse(JSON.stringify(currenthole));
-  holeData.x = newValue;
-
-  const pixiSector = currentRow.sector;
-
-  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
-
-  if (check) {
-    currenthole.x = newValue;
-  } else {
-    currenthole.x = prevValue;
+    if(nextRow) {
+      nextRow.width += delta
+    }
   }
-
-  module.value = gridCopy;
-
-  visualizationRef.value.renderGrid();
-};
-
-const changeHolePositionY = (event, key, type, holeType, value) => {
-  const cellIndex = selectedCell.value.cell;
-  const secIndex = selectedCell.value.sec;
-
-  const gridCopy = module.value.map((item) => item);
-  const currentColl = gridCopy[secIndex];
-  const currentRow = currentColl[cellIndex];
-
-  const currenthole = currentRow.holes[key];
-
-  const prevValue = currentRow.holes[key].y; //Предыдущее значение
-
-  const newValue = prevValue + value;
-
-  const holeData = JSON.parse(JSON.stringify(currenthole));
-  holeData.y = newValue;
-
-  const pixiSector = currentRow.sector;
-
-  // Проверяем коллизию
-  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
-
-  if (check) {
-    currenthole.y = newValue;
-  } else {
-    currenthole.y = prevValue;
-  }
-
-  module.value = gridCopy;
-
-  visualizationRef.value.renderGrid();
+  module.value = clone;
 };
 
 const deleteSection = (secIndex) => {
@@ -642,68 +500,63 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
   visualizationRef.value.renderGrid();
 };
 
-const deleteHole = (ndx) => {
-  const secIndex = selectedCell.value.sec;
-  const cellIndex = selectedCell.value.cell;
-  const curRow = module.value[secIndex][cellIndex];
+const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null) => {
+  selectedCell.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
 
-  curRow.holes = curRow.holes.filter((el, index) => {
-    return index !== ndx;
-  });
-
-  visualizationRef.value.renderGrid();
-};
-
-const handleCellSelect = (secIndex, cellIndex, type) => {
-  selectedCell.value = { sec: secIndex, cell: cellIndex };
-
-  holeOptions.value.section.sec = secIndex;
-  holeOptions.value.section.cell = cellIndex;
   cutServise.value.section.sec = secIndex;
   cutServise.value.section.cell = cellIndex;
-};
-
-const createServiseData = () => {
-  const convertParams = UI_PARAMS.CUT_SERVISES.reduce((acc, el) => {
-    const param = {
-      ID: el.ID,
-      NAME: el.NAME,
-      value: false,
-      pos: el.pos,
-      radius: el.radius,
-      width: el.width,
-      corner: el.corner,
-    };
-    acc.push(param);
-    return acc;
-  }, []);
-
-  console.log(convertParams);
-
-  return convertParams;
-};
-
-const clearServiseData = (cell) => {
-  cell.serviseData.forEach((el) => {
-    el.value = false;
-  });
+  cutServise.value.section.row = rowIndex;
 };
 
 const reset = (reset = false) => {
   const PROPS = productData.value.userData.PROPS;
 
-  let section: GridSection = {
-    ...module.value.sections[0],
-    width: totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2,
-    height: totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"],
-    cells: [],
+  let sectionsTotalWidth = totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - (module.value.sections.length - 1) * PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"];
+  let sectionsTotalHeight = totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
+  let sectionsWidthSum = 0;
+
+  module.value.sections.forEach((section, secIndex) => {
+    sectionsWidthSum += section.width;
+  })
+
+  if(sectionsTotalWidth - sectionsWidthSum !== 0) {
+    let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
+    let lastSection = module.value.sections[module.value.sections.length - 1];
+    lastSection.width += deltaWidth
+
+    lastSection.cells.forEach((cell, cellIndex) => {
+
+      if(cell.cellsRows) {
+        let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+        lastRow.width += deltaWidth;
+      }
+      cell.width = lastSection.width;
+    })
+  }
+
+  if(sectionsTotalHeight - module.value.sections[0].height !== 0) {
+    let deltaHeight = sectionsTotalHeight - module.value.sections[0].height;
+
+    module.value.sections.forEach((section, secIndex) => {
+
+      if(section.cells?.length) {
+        let lastCell = section.cells[section.cells.length - 1]
+
+        if(lastCell.cellsRows) {
+          let lastRow = lastCell.cellsRows[lastCell.cellsRows.length - 1]
+          lastRow.height += deltaHeight;
+        }
+
+        lastCell.height += deltaHeight;
+      }
+      section.height += deltaHeight;
+    })
   }
 
   let _module: GridModule = {
     ...module.value,
     width: totalWidth.value,
     height: totalHeight.value,
-    sections: [section]
   }
 
   PROPS.CONFIG.MODULEGRID = module.value = _module
@@ -758,7 +611,6 @@ onBeforeMount(() => {
 
 onMounted(() => {
   shapeAdjuster = new ShapeAdjuster();
-  createServiseData();
   nextTick().then(() => {
     isMounted.value = true;
   });
@@ -773,8 +625,6 @@ onBeforeUnmount(() => {
 watch(menuStore, () => {
   if(menuStore.openMenus == '2dModuleConstructor' && menuStore.catalogFilterProductsId[0]) {
     productData.value = menuStore.catalogFilterProductsId[0]
-   // totalHeight.value = productData.value.userData.PROPS.CONFIG.SIZE.height
-    //totalWidth.value = productData.value.userData.PROPS.CONFIG.SIZE.width
   }
 })
 </script>
@@ -824,6 +674,32 @@ watch(menuStore, () => {
                   />
                 </div>
               </div>
+              <div class="actions-inputs">
+                <p class="actions-title">Глубина модуля</p>
+                <div class="actions-input--container">
+                  <MainInput
+                      :inputClass="'actions-input'"
+                      v-model="productData.userData.PROPS.CONFIG.SIZE.depth"
+                      :min="getMinDepth"
+                      :max="getMaxDepth"
+                      :type="'number'"
+                  />
+                </div>
+              </div>
+              <div class="actions-inputs">
+                <p class="actions-title">Цоколь</p>
+                <div class="actions-input--container">
+                  <MainInput
+                      @update:modelValue="updateHorizont"
+                      :inputClass="'actions-input'"
+                      v-model="productData.userData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
+                      min="0"
+                      max="150"
+                      :type="'number'"
+                      placeholder="0"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -835,7 +711,6 @@ watch(menuStore, () => {
               :container="constructor2dContainer"
               :max-area-height="props.canvasHeight"
               :max-area-width="props.canvasWidth"
-              :tempHole="tempHole"
               @cell-selected="handleCellSelect"
           />
         </div>
@@ -892,10 +767,10 @@ watch(menuStore, () => {
                         class="actions-input"
                         :value="section.width"
                         @input="
-                            updateSectionWidth(
+                            debounce(() => updateSectionWidth(
                               $event.target.value,
                               secIndex
-                            )
+                            ), 1000)
                           "
                     />
                   </div>
@@ -905,7 +780,7 @@ watch(menuStore, () => {
               <div class="actions-items--height">
                 <div class="actions-inputs">
                   <p class="actions-title">
-                    Высота {{ secIndex + 1 }}
+                    Высота
                   </p>
                   <div
                       :class="['actions-input--container']"
@@ -916,12 +791,7 @@ watch(menuStore, () => {
                         min="150"
                         class="actions-input"
                         :value="section.height"
-                        @input="
-                            updateSectionHeight(
-                              $event.target.value,
-                              secIndex
-                            )
-                          "
+                        disabled
                     />
                   </div>
                 </div>
@@ -990,11 +860,11 @@ watch(menuStore, () => {
                               class="actions-input"
                               :value="cell.height"
                               @input="
-                            updateSectionHeight(
+                            debounce(() => updateCellHeight(
                               $event.target.value,
                               secIndex,
                               cellIndex
-                            )
+                            ), 1000)
                           "
                           />
                         </div>
@@ -1006,15 +876,6 @@ watch(menuStore, () => {
 
                 <article class="actions-items actions-items--right">
                   <div class="actions-items--right-items">
-                    <button
-                        :class="[
-                      'actions-btn actions-btn--default',
-                      getCutServiseActive(secIndex, cellIndex),
-                    ]"
-                        @click="showCutServises(secIndex, cellIndex)"
-                    >
-                      Услуги
-                    </button>
                     <button
                         :class="[
                       'actions-btn actions-btn--default'
@@ -1080,12 +941,12 @@ watch(menuStore, () => {
                                 class="actions-input"
                                 :value="row.width"
                                 @input="
-                            updateSectionWidth(
+                            debounce(() => updateCellRowWidth(
                               $event.target.value,
                               secIndex,
                               cellIndex,
                               rowIndex
-                            )
+                            ), 1000)
                           "
                             />
                           </div>
@@ -1144,7 +1005,7 @@ watch(menuStore, () => {
       >
         <h1>Опции</h1>
 
-        <ProductOptions
+<!--        <ProductOptions
             v-if="holeOptions.show"
             :holes="getHole"
             :step="step"
@@ -1154,13 +1015,13 @@ watch(menuStore, () => {
             @cut-toggleHoleOptions="toggleHoleOptions"
             @cut-changePositionX="changeHolePositionX"
             @cut-changePositionY="changeHolePositionY"
-        />
+        />-->
       </div>
     </div>
 
     <button
         class="actions-btn add-divider-btn save-btn"
-        @click="save"
+        @click="saveGrid"
     >
       Сохранить
     </button>
