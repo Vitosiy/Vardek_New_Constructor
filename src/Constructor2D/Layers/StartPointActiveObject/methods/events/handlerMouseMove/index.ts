@@ -16,15 +16,15 @@ export function handlerMouseMove(this: any, e: PIXI.FederatedPointerEvent): void
 
     const __position = this.getPointerPosition(e.global.x, e.global.y);
 
-    { // меняем позицию индикатора активной точки
-  
-      const position = this.updatePositionIndicatorPoint(__position);
+    // меняем позицию индикатора активной точки
+    const position = this.updatePositionIndicatorPoint(__position);
 
-      this.drawAngleBetweenWalls();
+    // перерисовываем угол между стенами
+    this.drawAngleBetweenWalls();
 
-      this.parent.layers.planner.updateWallPoint(position);
+    // перерисовываем стену
+    this.parent.layers.planner.updateWallPoint(position);
 
-    }
 
   }
   

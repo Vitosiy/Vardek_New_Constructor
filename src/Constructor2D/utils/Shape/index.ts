@@ -43,9 +43,7 @@ const shape = (graphic: PIXI.Graphics, points: Vector2[], color: number | string
   points: [{x: number, y: number}, {x: number, y: number}, ...]; // 4 точки для прямоугольника
   */
 
-  if (points.length < 4) {
-    throw new Error("Data must contain exactly 4 points.");
-  }
+  if (points.length < 4) return;
 
   for (let i = 0; i < points.length; i++) {
     const point = points[i];

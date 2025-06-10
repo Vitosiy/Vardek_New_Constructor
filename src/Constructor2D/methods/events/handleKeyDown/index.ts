@@ -19,6 +19,13 @@ export function handleKeyDown(this: any, e: KeyboardEvent): void {
       this.layers.planner.deleteSelectedObject();
       this.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
     }
+  }else if(e.key === "Shift") {
+    if(this.layers.planner){
+      this.state.keys.shift = true;
+    }
+  }else if(e.key === "Control") {
+    this.state.keys.ctrl = true;
   }
+
   
 };
