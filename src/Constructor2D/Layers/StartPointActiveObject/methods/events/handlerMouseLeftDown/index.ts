@@ -12,11 +12,11 @@ export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): 
 
   e.stopPropagation(); // Останавливаем всплытие события
 
-  if (e.ctrlKey || e.metaKey) {
-    // если зажат ctrl/command то выравниваем стены, имеющие общую точку
-    this.parent.layers.planner.arrangeWallsAt_90_DegreeAngle();
-    return;
-  }
+  // if (e.ctrlKey || e.metaKey) {
+  //   // если зажат ctrl/command то выравниваем стены, имеющие общую точку
+  //   this.parent.layers.planner.arrangeWallsAt_90_DegreeAngle();
+  //   return;
+  // }
   
   if(indexPoint == 0){
     this.circleStartPoint.cursor = "pointer";

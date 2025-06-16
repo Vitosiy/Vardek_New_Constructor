@@ -203,8 +203,8 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				wall: '44144',
 				floor: '44020'
 			}),
-			content: [
-			],
+			content: reactive([
+			]),
 			// content: { /** Наполняемый контетн из 2D редактора (объёмные стены / переферия) */
 			// 	'2d': [
 
@@ -232,58 +232,95 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		if (!room) return;
 
-		const indexWall = room.size.walls.findIndex((item: any) => item.id === data.wall.id);
+		if (data.wall.name === 'dividing_wall') {
 
-		// // центр стены
-		// const centerWall = data.wall.points.reduce((acc: any, point: any) => {
-		// 	acc.x += point.x;
-		// 	acc.y += point.y;
-		// 	acc.z += point.z;
-		// 	return acc;
-		// }, { x: 0, y: 0, z: 0 });
+			const indexWall = room.content.findIndex((item: any) => item.uuid === data.wall.id);
 
-		// centerWall.x /= data.wall.points.length;
-		// centerWall.y /= data.wall.points.length;
-		// centerWall.z /= data.wall.points.length;
+			const centerWall = getCenterOfPoints([data.wall.points[0], data.wall.points[1]]);
 
-		const centerWall = getCenterOfPoints([data.wall.points[0], data.wall.points[1]]);
-
-		const wData = {
-			id: data.wall.id,
-			width: data.wall.width * 10,
-			height: 300 * 10,
-			depth: data.wall.height * 10,
-			position: {
-				x: centerWall.x * 10,
-				y: ( 300 * 10 ) / 2,
-				z: centerWall.y * 10
-			},
-			rotation: {
-				isEuler: true,
-				_x: MathUtils.degToRad(0),
-				_y: MathUtils.degToRad(-data.wall.angleDegrees),
-				_z: MathUtils.degToRad(0),
-				_order: "XYZ"
-			},
-			side: 0
-		}
-
-		if (indexWall == -1) {
-			if(data.wall.mergeWalls.wallPoint0){
-				const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint0);
-				if(indexMergeWall != -1){
-					room.size.walls.splice(indexMergeWall, 0, wData);
+			const wData = {
+				id: 166755,
+				uuid: data.wall.id,
+				position: {
+					x: centerWall.x * 10,
+					y: (300 * 10) / 2,
+					z: centerWall.y * 10
+				},
+				rotation: {
+					isEuler: true,
+					_x: MathUtils.degToRad(0),
+					_y: MathUtils.degToRad(-data.wall.angleDegrees),
+					_z: MathUtils.degToRad(0),
+					_order: "XYZ"
+				},
+				size: {
+					width: data.wall.width * 10,
+					height: 300 * 10,
+					depth: data.wall.height * 10
 				}
-			}else if(data.wall.mergeWalls.wallPoint1){
-				const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint1);
-				if(indexMergeWall != -1){
-					room.size.walls.splice(indexMergeWall + 1, 0, wData);
-				}
-			}else {
-				room.size.walls.push(wData);
 			}
+
+			if (indexWall == -1) {
+				room.content.push(wData);
+			}else{
+				room.content[indexWall] = wData;
+			}
+
 		} else {
-			room.size.walls[indexWall] = wData;
+
+			const indexWall = room.size.walls.findIndex((item: any) => item.id === data.wall.id);
+
+			// // центр стены
+			// const centerWall = data.wall.points.reduce((acc: any, point: any) => {
+			// 	acc.x += point.x;
+			// 	acc.y += point.y;
+			// 	acc.z += point.z;
+			// 	return acc;
+			// }, { x: 0, y: 0, z: 0 });
+
+			// centerWall.x /= data.wall.points.length;
+			// centerWall.y /= data.wall.points.length;
+			// centerWall.z /= data.wall.points.length;
+
+			const centerWall = getCenterOfPoints([data.wall.points[0], data.wall.points[1]]);
+
+			const wData = {
+				id: data.wall.id,
+				width: data.wall.width * 10,
+				height: 300 * 10,
+				depth: data.wall.height * 10,
+				position: {
+					x: centerWall.x * 10,
+					y: (300 * 10) / 2,
+					z: centerWall.y * 10
+				},
+				rotation: {
+					isEuler: true,
+					_x: MathUtils.degToRad(0),
+					_y: MathUtils.degToRad(-data.wall.angleDegrees),
+					_z: MathUtils.degToRad(0),
+					_order: "XYZ"
+				},
+				side: 0
+			}
+			if (indexWall == -1) {
+				if (data.wall.mergeWalls.wallPoint0) {
+					const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint0);
+					if (indexMergeWall != -1) {
+						room.size.walls.splice(indexMergeWall, 0, wData);
+					}
+				} else if (data.wall.mergeWalls.wallPoint1) {
+					const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint1);
+					if (indexMergeWall != -1) {
+						room.size.walls.splice(indexMergeWall + 1, 0, wData);
+					}
+				} else {
+					room.size.walls.push(wData);
+				}
+			} else {
+				room.size.walls[indexWall] = wData;
+			}
+
 		}
 
 	};
@@ -302,6 +339,11 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		if (indexWall >= 0) {
 			room.size.walls.splice(indexWall, 1);
+		}else if(indexWall == -1){
+			const indexWall = room.content.findIndex((item: any) => item.uuid === data.idWall);
+			if (indexWall >= 0) {
+				room.content.splice(indexWall, 1);
+			}
 		}
 
 	};
@@ -313,10 +355,10 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		const roomData = JSON.parse(JSON.stringify(data));
 
-    if (!roomData.size || !roomData.size.walls) return roomData;
+		if (!roomData.size || !roomData.size.walls) return roomData;
 
-    // Работаем с копией стен
-    const walls = roomData.size.walls;
+		// Работаем с копией стен
+		const walls = roomData.size.walls;
 
 		// определить центр масс всех стен
 		const center = walls.reduce((acc: any, wall: any) => {
@@ -337,10 +379,10 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			wall.position.z -= center.z;
 		});
 
-		roomData.size.walls = walls; /// <<<< ТУТ ОШИБКА!!!! данные не меняются. Где ошибка ?
+		roomData.size.walls = walls;
 
-		console.log('>>>>>>>>> run getRoomDataFor3DScene')
-		
+		console.log(roomData.content);
+
 		return roomData;
 	};
 

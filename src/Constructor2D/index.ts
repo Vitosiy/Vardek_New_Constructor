@@ -12,13 +12,14 @@ import {
   IState,
 } from './interfaces';
 
-import { handlerMouseRightDown } from "./methods/events/handlerMouseRightDown/index";
-import { handlerMouseRightUp } from "./methods/events/handlerMouseRightUp/index";
-import { handlerPointerMove } from "./methods/events/handlerPointerMove/index";
-import { handlerMouseLeftDown } from "./methods/events/handlerMouseLeftDown/index";
-import { handlerWheel } from "./methods/events/handlerWheel/index";
-import { handleWindowResize } from "./methods/events/handleWindowResize/index";
-import { handleKeyDown } from "./methods/events/handleKeyDown/index";
+import { handlerMouseRightDown } from "./methods/events/handlerMouseRightDown";
+import { handlerMouseRightUp } from "./methods/events/handlerMouseRightUp";
+import { handlerPointerMove } from "./methods/events/handlerPointerMove";
+import { handlerMouseLeftDown } from "./methods/events/handlerMouseLeftDown";
+import { handlerWheel } from "./methods/events/handlerWheel";
+import { handleWindowResize } from "./methods/events/handleWindowResize";
+import { handleKeyDown } from "./methods/events/handleKeyDown";
+import { handleKeyUp } from "./methods/events/handleKeyUp";
 
 import { useEventBus } from '@/store/constructor2d/useEventBus';
 
@@ -91,6 +92,7 @@ export default class Constructor2D {
   private handlerWheel: (e: WheelEvent) => void;
   private handleWindowResize: () => void;
   private handleKeyDown: (e: KeyboardEvent) => void;
+  private handleKeyUp: (e:KeyboardEvent) => void;
 
   public eventBus: ReturnType<typeof useEventBus> = useEventBus();
 
@@ -109,6 +111,7 @@ export default class Constructor2D {
     this.handlerWheel = handlerWheel.bind(this);
     this.handleWindowResize = handleWindowResize.bind(this);
     this.handleKeyDown = handleKeyDown.bind(this);
+    this.handleKeyUp = handleKeyUp.bind(this);
 
   }
 
@@ -143,15 +146,16 @@ export default class Constructor2D {
 
     window.addEventListener('resize', this.handleWindowResize);
     window.addEventListener('keydown', this.handleKeyDown); // нажатие на кнопку backspace или другие
+    window.addEventListener('keyup', this.handleKeyUp);
     
   }
   
   public destroy(): void {
     if (this.app2d) {
 
-      // Удаляем resize listener
       window.removeEventListener('resize', this.handleWindowResize);
       window.removeEventListener('keydown', this.handleKeyDown);
+      window.removeEventListener('keyup', this.handleKeyUp);
 
       this.app2d.stage
         .off('rightdown', this.handlerMouseRightDown)

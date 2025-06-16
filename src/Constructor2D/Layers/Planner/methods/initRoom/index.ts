@@ -30,6 +30,7 @@ export function initRoom(this: any): (0 | 1) {
   const room = JSON.parse(JSON.stringify(roomsStore.getRoomById(activeRoomID)));
 
   const dataRoomWalls = room.size.walls;
+  const dataDividingWall = room.content.filter((item: any) => item.id === 166755);
 
   /* HELPER for Walls
   const container = this.container;
@@ -77,6 +78,76 @@ export function initRoom(this: any): (0 | 1) {
     
   }
   */
+
+  for(let i=0, len=dataDividingWall.length; i<len; i++) {
+    const roomWallData = dataDividingWall[i];
+
+    const wallData: ObjectWall = {
+      id: roomWallData.uuid,
+      name: "dividing_wall",
+      width: roomWallData.size.width / 10,
+      height: roomWallData.size.depth / 10,
+      heightDirection: this.config.wall.heightDirection,
+      angleDegrees: MathUtils.radToDeg(roomWallData.rotation._y),
+      updateTime: Date.now(),
+      mergeWalls: {
+        wallPoint0: null,
+        wallPoint1: null
+      },
+      points: []
+    };
+
+    // высчитываем начальную точку стены относительно длины
+    const center: Vector2 = {
+      x: roomWallData.position.x / 10,
+      y: roomWallData.position.z / 10
+    }
+    const p0: Vector2 = {
+      x: (roomWallData.position.x / 10) - (wallData.width / 2),
+      y: roomWallData.position.z / 10
+    };
+    const p1: Vector2 = {
+      x: (roomWallData.position.x / 10) + (wallData.width / 2),
+      y: roomWallData.position.z / 10
+    };
+
+    // p0 и p1 повернуть вокруг center на угол roomWallData.rotation._y
+    const points = rotatePointsAroundCenter([p0, p1], center, -wallData.angleDegrees);
+
+    // обновить угол наклона стены
+    wallData.angleDegrees = getAngleBetweenVectors(
+      points[0],
+      {
+        x: points[0].x + 300,
+        y: points[0].y
+      },
+      points[1]
+    );
+
+    const point2: Vector2 = offsetVectorBySegmentNormal(
+      [
+        points[0],
+        points[1]
+      ],
+      points[1],
+      wallData.heightDirection * wallData.height
+    );
+
+    const point3: Vector2 = offsetVectorBySegmentNormal(
+      [
+        points[0],
+        points[1]
+      ],
+      points[0],
+      wallData.heightDirection * wallData.height
+    );
+
+    points.push(point2, point3);
+
+    wallData.points = points;
+    
+    this.objectWalls.push(wallData);
+  }
 
   for(let i=0, len=dataRoomWalls.length; i<len; i++) {
 

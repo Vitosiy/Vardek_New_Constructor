@@ -168,6 +168,7 @@ export const rooms_mok = [
         content: [
             {
                 "id": 166755,
+                "uuid": "id-dividing_wall-32452345234",
                 "position": {
                     "x": -650.4104513793745,
                     "y": 1499.9990000000005,
