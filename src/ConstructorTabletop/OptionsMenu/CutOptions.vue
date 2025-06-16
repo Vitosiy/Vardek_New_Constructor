@@ -158,7 +158,7 @@ const toggleHoleOptions = () => {
           <div class="actions-inputs" v-if="hole.width">
             <p class="actions-title">Ширина</p>
             <div class="actions-input--container">
-              <MainInput
+              <!-- <MainInput
                 :type="'number'"
                 :step="10"
                 :min="150"
@@ -168,22 +168,22 @@ const toggleHoleOptions = () => {
                 @update:modelValue="
                   (newValue) => updateHole(newValue, key, 'width', 'rect')
                 "
-              />
-              <!-- <input
+              /> -->
+              <input
                 type="number"
                 step="10"
                 min="150"
                 :max="hole.Mwidth"
                 class="actions-input"
                 :value="hole.width"
-                @input="updateHole($event, key, 'width', 'rect')"
-              /> -->
+                @input="updateHole($event.target.value, key, 'width', 'rect')"
+              />
             </div>
           </div>
           <div class="actions-inputs" v-if="hole.height">
             <p class="actions-title">Высота</p>
             <div class="actions-input--container">
-              <MainInput
+              <!-- <MainInput
                 :type="'number'"
                 :step="10"
                 :min="150"
@@ -193,16 +193,16 @@ const toggleHoleOptions = () => {
                 @update:modelValue="
                   (newValue) => updateHole(newValue, key, 'height', 'rect')
                 "
-              />
-              <!-- <input
+              /> -->
+              <input
                 type="number"
                 step="10"
                 min="150"
                 :max="hole.Mheight"
                 class="actions-input"
                 :value="hole.height"
-                @input="updateHole($event, key, 'height', 'rect')"
-              /> -->
+                @input="updateHole($event.target.value, key, 'height', 'rect')"
+              />
             </div>
           </div>
           <div class="actions-inputs" v-else>

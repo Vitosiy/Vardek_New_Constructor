@@ -1,4 +1,5 @@
 
+//@ts-nocheck
 import { CUTTER_PARAMS } from "./CutterConst";
 import { Application, Container, Graphics, Text, TextStyle, GraphicsPath } from "pixi.js";
 
@@ -1172,10 +1173,10 @@ class Section extends Helpers {
       path.lineTo(x + bl_radius, y + this.height);
       const startX = x + bl_radius;
       const startY = y + this.height;
-      const endX = x ;
+      const endX = x;
       const endY = y + this.height - bl_radius;
-      const controlX = x 
-      const controlY = y + this.height ;
+      const controlX = x
+      const controlY = y + this.height;
       path.lineTo(startX, startY);
       path.quadraticCurveTo(controlX, controlY, endX, endY);
 
@@ -1279,19 +1280,22 @@ class ShapeAdjuster extends Helpers {
   getRandomPosition(sector, shape) {
 
     const bounds = this.getSectorBounds(sector)
+    const padding = this.getPixelWidth(CUTTER_PARAMS.SECTOR_PADDING)
 
     const isCircle = shape.type === "circle";
     const margin = isCircle ? shape.radius : 0;
-    const width = isCircle ? shape.radius * 2 : shape.width;
-    const height = isCircle ? shape.radius * 2 : shape.height;
+
+    const width = isCircle ? (shape.radius) * 2 : shape.width
+    const height = isCircle ? (shape.radius) * 2 : shape.height;
+
 
     const origX = shape.graphic.position.x
     const origY = shape.graphic.position.y
 
     for (let i = 0; i < this.maxPositionAttempts; i++) {
 
-      const x = this.convertToTen(bounds.x + margin + Math.random() * (bounds.width - width));
-      const y = this.convertToTen(bounds.y + margin + Math.random() * (bounds.height - height));
+      const x = this.convertToTen(bounds.x + padding + margin + Math.random() * (bounds.width - padding * 2 - width));
+      const y = this.convertToTen(bounds.y + padding + margin + Math.random() * (bounds.height - padding * 2 - height));
 
       shape.graphic.position.x = x;
       shape.graphic.position.y = y;

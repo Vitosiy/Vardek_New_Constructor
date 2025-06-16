@@ -31,6 +31,7 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  SECTOR_PADDING,
 } = CUTTER_PARAMS;
 
 let shapeAdjuster = null;
@@ -149,6 +150,7 @@ const addVerticalCut = (colIndex) => {
     row.width = halfWidth;
     row.holes = [];
     row.roundCut = {};
+    row.serviseData = createServiseData();
   });
 
   // Создаем новую колонку с такими же параметрами
@@ -177,6 +179,7 @@ const addHorizontalCut = (colIndex, rowIndex) => {
   column.forEach((row) => {
     row.holes = [];
     row.roundCut = {};
+    row.serviseData = createServiseData();
   });
 
   const curRow = getCurrentSection.value.currentRow;
@@ -190,15 +193,13 @@ const addHorizontalCut = (colIndex, rowIndex) => {
 
   // Обновляем высоту последней строки
   curRow.height = halfHeight;
-  const serviseData = createServiseData();
-
   // Добавляем новую строку в эту колонку
   column.splice(rowIndex, 0, {
     width: curRow.width,
     height: curRow.height, // Оставшаяся высота
     roundCut: {},
     holes: [],
-    serviseData: serviseData,
+    serviseData: createServiseData()
   });
 
   // Обновляем рендер
@@ -210,15 +211,19 @@ const addRoundСut = (colIndex) => {
   const row = column[selectedCell.value.row];
   row.holes = [];
 
-  let extremum = row.width < row.height ? row.width : row.height;
-  if (extremum > 300) extremum = 300;
+  let extremum =
+    row.width < row.height
+      ? row.width - SECTOR_PADDING * 2
+      : row.height - SECTOR_PADDING * 2;
 
-  if (extremum < 300) {
-    alert("Высота и ширина секции должны быть не меньше 300 мм.");
+  if (
+    row.width < 300 + SECTOR_PADDING * 2 ||
+    row.height < 300 + SECTOR_PADDING * 2
+  ) {
+    alert("Высота и ширина секции должны быть не меньше 360 мм.");
     return;
   }
 
-  // Добавляем круглый вырез с дефолтными параметрами
   row.roundCut = {
     radius: extremum,
   };
@@ -231,9 +236,20 @@ const addRoundСut = (colIndex) => {
 const createHoleDataToCheck = (type, row, col) => {
   let width, height, radius, tempHole;
 
-  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+  let extremum =
+    row.width < row.height
+      ? row.width - SECTOR_PADDING * 2
+      : row.height - SECTOR_PADDING * 2;
 
-  if (extremum > 600) extremum = 300;
+  if (
+    row.width < 300 + SECTOR_PADDING * 2 ||
+    row.height < 300 + SECTOR_PADDING * 2
+  ) {
+    alert("Высота и ширина секции должны быть не меньше 360 мм.");
+    return;
+  }
+
+  if (extremum > 600) extremum = 600;
 
   width = extremum;
   height = extremum;
@@ -266,7 +282,7 @@ const addHole = (type) => {
   const startHoleData = createHoleDataToCheck(type, row, col);
 
   if (!startHoleData) {
-    alert("Позиция не найдена");
+    // alert("Позиция не найдена");
     return;
   }
 
@@ -1159,7 +1175,8 @@ onBeforeUnmount(() => {
     display: flex;
     justify-content: space-between;
     margin-top: auto;
-    &--save, &--delite  {
+    &--save,
+    &--delite {
       display: flex;
       gap: 1rem;
     }

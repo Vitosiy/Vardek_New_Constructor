@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/**// @ts-nocheck */
+//@ts-nocheck
 import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
 import { _URL } from "@/types/constants";
@@ -637,7 +637,7 @@ const deliteTable = () => {
 
     <button
       class="btn btn_green"
-      @click="сreateUniformGroup;"
+      @click="сreateUniformGroup"
       v-show="
         uniformState.getPreGroup > 0 &&
         uniformState.getUniformModeData.uniformMode
