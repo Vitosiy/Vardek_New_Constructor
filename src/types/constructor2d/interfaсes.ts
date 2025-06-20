@@ -102,6 +102,27 @@ export interface FillingObject {
   color: number;
 }
 
+export interface FasadeObject {
+  id: number;
+  position: THREE.Vector2;
+  width: number;
+  height: number;
+  material: FasadeMaterial;
+  type: "fasade";
+  error?: boolean;
+}
+export interface FasadeMaterial {
+  COLOR: number;
+  POSITION: number;
+  GLASS?: number;
+  MILLING?: number;
+  PALETTE?: number;
+  PATINA?: number;
+  TYPE?: number;
+  WINDOW?: number;
+  ALUM?: number;
+}
+
 export interface GridCellsRow {
   number: number;
   width: number;
@@ -125,6 +146,7 @@ export interface GridSection {
   height: number;
   type: "section";
   cells: GridCell[];
+  fasades?: FasadeObject[];
 }
 
 export interface GridModule {
@@ -134,5 +156,5 @@ export interface GridModule {
   sections: GridSection[];
   type: "module";
   horizont?: number;
-  fasades?: [];
+  fasades?: FasadeObject[];
 }

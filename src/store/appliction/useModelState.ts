@@ -87,9 +87,9 @@ export const useModelState = defineStore('ModelState', () => {
     }
 
     const getCurrentModel = computed(() => {
-        return currentModel.value
+        //return currentModel.value
+        return currentModel.value?.userData
     })
-
     const getModels = computed(() => {
         return models.value
     })
@@ -266,7 +266,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         setCurrentModel,
         getCurrentModel,
-
         createCurrentModelFasadesData,
         clearCurrentModelFasadesData,
         getCurrentModelFasadesData,

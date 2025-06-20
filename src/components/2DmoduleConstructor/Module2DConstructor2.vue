@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import { useEventBus } from "@/store/appliction/useEventBus";
+import {useEventBus} from "@/store/appliction/useEventBus";
 import {
   onMounted,
   onBeforeMount,
@@ -16,15 +16,25 @@ import {
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
-import { ShapeAdjuster } from "./utils/Methods";
-import { UI_PARAMS} from "./utils/UMConstructorConst.ts";
+import {ShapeAdjuster} from "./utils/Methods";
+import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
 import ProductOptions from "./utils/ProductOptions.vue";
 import {useMenuStore} from "@/store/appStore/useMenuStore";
 import * as THREETypes from "@/types/types";
-import {GridModule, FillingObject, GridCell, GridSection, GridCellsRow} from "@/types/constructor2d/interfaсes.ts";
+import {
+  GridModule,
+  FillingObject,
+  GridCell,
+  GridSection,
+  GridCellsRow,
+  FasadeObject,
+  FasadeMaterial
+} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 
+
 const eventBus = useEventBus();
+type constructorMode = 'module' | 'fasades' | 'fillings';
 
 const emit = defineEmits(["save-table-data"]);
 
@@ -45,19 +55,37 @@ const props = defineProps({
 });
 
 const isMounted = ref(false);
+const mode = ref<constructorMode>('module');
 const visualizationRef = ref(null);
 const serviseData = ref([]);
 const module = computed(() => {
 
   if (productData.value) {
     const PROPS = productData.value.userData.PROPS;
-    if(!PROPS.CONFIG.MODULEGRID) {
+    if (!PROPS.CONFIG.MODULEGRID) {
+      let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
+      let FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
+
       let section: GridSection = {
         number: 1,
         width: totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2,
         height: totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"],
         cells: [],
         type: "section",
+        fasades: [
+          [
+            <FasadeObject>{
+              id: 1,
+              width: FASADE.FASADE_WIDTH,
+              height: FASADE.FASADE_HEIGHT - FASADE.POSITION_Y,
+              position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+              material: <FasadeMaterial>{
+                ...FASADE_PROPS
+              },
+              type: "fasade",
+            }
+          ]
+        ]
       }
 
       let _module: GridModule = {
@@ -105,9 +133,11 @@ const getMaxDepth = computed((dimension, minmax) => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
 })
 
-const selectedCell = ref({ sec: 0, cell: 0 , cell: 0});
-const correct = ref({ change: false });
-const cutServise = ref({ show: false, section: { sec: 0, cell: 0, row: null } });
+const selectedCell = ref({sec: 0, cell: 0, row: 0});
+const selectedFasade = ref({sec: 0, cell: 0, row: 0});
+
+const correct = ref({change: false});
+const cutServise = ref({show: false, section: {sec: 0, cell: 0, row: null}});
 const constructor2dContainer = ref(null);
 const step = ref(1);
 const timer = ref(false);
@@ -117,19 +147,46 @@ const getCurrentSection = computed(() => {
   if (!isMounted.value) return;
   const cellIndex = selectedCell.value.cell ?? 0;
   const secIndex = selectedCell.value.sec ?? 0;
+  const rowIndex = selectedCell.value.row ?? 0;
 
-  const currentColl = module.value[secIndex];
-  const currentRow = currentColl[cellIndex];
-  return { currentRow, currentColl };
+  const currentSec = module.value.sections[secIndex];
+  const currentCell = currentSec.cells?.[cellIndex];
+  const currentRow = currentCell?.cellsRows?.[rowIndex];
+
+  return {currentSec, currentCell, currentRow};
 });
+
+// Получаем текущий фасад
+const getCurrentFasade = computed(() => {
+  if (!isMounted.value)
+    return;
+
+  const rowIndex = selectedFasade.value.row ?? 0;
+  const secIndex = selectedFasade.value.sec ?? 0;
+  const cellIndex = selectedFasade.value.cell ?? 0;
+
+  const currentSec = module.value.sections[secIndex];
+  const currentDoor = currentSec.fasades?.[cellIndex];
+  const currentCell = currentDoor?.[rowIndex];
+
+  return {currentSec, currentDoor, currentCell};
+});
+
 // Получаем данные услуг секции
 const getCurrentSectionServiseData = computed(() => {
   if (!isMounted.value) return;
   return getCurrentSection.value.currentRow.serviseData ?? [];
 });
 
+const changeConstructorMode = (_mode: constructorMode) => {
+  if (_mode) {
+    mode.value = _mode;
+    visualizationRef.value.changeConstructorMode(_mode);
+  }
+}
+
 const debounce = (callback, wait) => {
-  if(timer.value) {
+  if (timer.value) {
     clearTimeout(timer.value)
   }
 
@@ -139,6 +196,234 @@ const debounce = (callback, wait) => {
   }, wait)
 }
 
+//#region Фасады
+
+const showCurrentFasade = (secIndex) => {
+  selectedFasade.value = {sec: secIndex, cell: 0, row: null};
+  visualizationRef.value.selectCell(secIndex, 0, null);
+};
+
+const addDoor = (secIndex) => {
+  const PROPS = productData.value.userData.PROPS;
+  const FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
+  const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
+
+  const section = module.value.sections[secIndex];
+  const width = section.fasades[0]?.[0] ? Math.floor((section.fasades[0][0].width) / 2 - 2) :
+      secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
+          section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
+
+  let firstFasade;
+  if (section.fasades[0]) {
+    section.fasades[0].map(item => {
+      item.width = width
+    })
+
+    firstFasade = section.fasades[0][0];
+  } else {
+    firstFasade = <FasadeObject>{
+      id: 0,
+      width,
+      height: module.value.height - module.value.horizont - 4,
+      position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+      type: "fasade",
+      material: <FasadeMaterial>{
+        ...FASADE_PROPS
+      }
+    }
+  }
+
+  if (width < 150)
+    firstFasade.error = true
+  else
+    delete firstFasade.error
+
+  // Создаем новую колонку с такими же параметрами
+  const newDoor: FasadeObject = {
+    ...firstFasade,
+    number: firstFasade.number + 1,
+  }
+  newDoor.height = module.value.height - module.value.horizont - 4;
+
+  section.fasades.push([newDoor]);
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
+  selectedFasade.value.sec = secIndex;
+  selectedFasade.value.cell = doorIndex;
+  selectedFasade.value.row = segmentIndex;
+
+  visualizationRef.value.selectCell(secIndex, doorIndex, true, segmentIndex);
+
+  let segment = module.value.sections[secIndex].fasades[doorIndex][segmentIndex];
+  const halfHeight = Math.floor((segment.height - 4) / 2);
+  // Обновляем высоту последней строки
+  segment.height = halfHeight;
+
+  if (segment.width < 150 || segment.width < 150)
+    segment.error = true
+  else
+    delete segment.error;
+
+  // Добавляем новую строку в эту колонку
+  module.value.sections[secIndex].fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
+    ...segment,
+    position: new THREE.Vector2(segment.x, segment.position.y + 4 + segment.height),
+  });
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const deleteDoor = (secIndex, doorIndex) => {
+  const current = module.value.sections[secIndex].fasades[doorIndex];
+  const prev = module.value.sections[secIndex].fasades[doorIndex - 1];
+
+  const combinedWidth = prev
+      ? current[0].width + prev[0].width + 4
+      : current.width;
+
+  if (prev) {
+    prev.forEach((segment, index) => {
+      segment.width = combinedWidth;
+
+      if (segment.width < 150 || segment.width < 150)
+        segment.error = true
+      else
+        delete segment.error;
+    })
+  }
+
+  module.value.sections[secIndex].fasades.splice(doorIndex, 1);
+
+  selectedFasade.value.cell = 0;
+  selectedFasade.value.sec = 0;
+
+  visualizationRef.value.renderGrid();
+};
+
+const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
+  const clone = Object.assign({}, module.value);
+  const currentSection = clone.sections[secIndex].fasades[doorIndex];
+  const currentSegment = currentSection[segmentIndex];
+
+  const next = currentSection[segmentIndex + 1];
+  const prev = currentSection[segmentIndex - 1];
+
+  const combinedHeight = next
+      ? currentSegment.height + next.height
+      : currentSegment.height + prev.height;
+
+  next ? (next.height = combinedHeight) : (prev.height = combinedHeight);
+
+  if (currentSection.length > 1) {
+    currentSection.splice(segmentIndex, 1);
+  }
+
+  module.value = clone;
+
+  // Обновляем текущий сектор
+  selectedFasade.value.row = 0;
+  selectedFasade.value.cell = 0;
+  selectedFasade.value.sec = secIndex;
+
+  visualizationRef.value.renderGrid();
+};
+
+const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+  // Обновляем выбранную секцию для визуального отображения
+  selectedFasade.value = {sec: secIndex, cell: doorIndex, row: segmentIndex};
+  visualizationRef.value.selectCell(secIndex, doorIndex, segmentIndex);
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "height",
+      value: newValue,
+      sec: secIndex,
+      cell: doorIndex,
+      row: segmentIndex,
+    });
+  }
+  // Обновляем значение в module для синхронизации
+  const clone = Object.assign({}, module.value);
+  if (adjustedValue) {
+    let curCell = clone.sections[secIndex].fasades[doorIndex][segmentIndex];
+    let prevCell = clone.sections[secIndex].fasades[doorIndex][segmentIndex - 1];
+    let nextCell = clone.sections[secIndex].fasades[doorIndex][segmentIndex + 1];
+    let delta = curCell.height - adjustedValue
+
+    curCell.height = adjustedValue
+
+    if (prevCell) {
+      prevCell.height += delta
+    }
+    else if (nextCell) {
+      nextCell.height += delta
+    }
+
+  }
+  module.value = clone;
+};
+
+const updateFasades = () => {
+  const correctFasadeHeight = module.value.height - module.value.horizont - 4;
+  module.value.sections.forEach((section, secIndex) => {
+    if(section.fasades?.[0]) {
+      const countDoors = section.fasades.length;
+
+      const correctSectionFasadeWidth =
+          module.value.sections.length > 1 ?
+            secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
+              section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
+              module.value.width - 4;
+
+      const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
+
+      const sumDoorsWidth = section.fasades.reduce(
+          (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
+          0) / countDoors - ((countDoors - 1) * 2);
+      const sumDoorsHeight = section.fasades[0].reduce(
+          (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
+          0);
+
+      const deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
+      const deltaHeight = correctFasadeHeight - sumDoorsHeight;
+
+      if (deltaWidth !== 0) {
+        section.fasades.forEach((door, doorIndex) => {
+          door.forEach((segment, segmentIndex) => {
+            segment.width += deltaWidth;
+
+            if (segment.width < 150 || segment.width < 150)
+              segment.error = true
+            else
+              delete segment.error;
+          })
+        })
+      }
+
+      if (deltaHeight !== 0) {
+        section.fasades.forEach((door, doorIndex) => {
+          door[door.length - 1].height += deltaHeight;
+
+          if (door[door.length - 1].height < 150 || door[door.length - 1].width < 150)
+            door[door.length - 1].error = true
+          else
+            delete door[door.length - 1].error;
+        })
+      }
+    }
+  })
+};
+
+//#endregion
+
+//#region Модуль
 const updateHorizont = (value) => {
   debounce(() => {
     const PROPS = productData.value.userData.PROPS;
@@ -172,14 +457,14 @@ const updateTotalWidth = (value) => {
 };
 
 const showCurrentCol = (secIndex) => {
-  selectedCell.value = { sec: secIndex, cell: 0, row: null };
+  selectedCell.value = {sec: secIndex, cell: 0, row: null};
   visualizationRef.value.selectCell(secIndex, 0, null);
   cutServise.value.show = false;
 };
 
 const addSection = (secIndex) => {
   const section = module.value.sections[secIndex];
-  const halfWidth =  Math.floor((section.width - module.value.moduleThickness) / 2);
+  const halfWidth = Math.floor((section.width - module.value.moduleThickness) / 2);
 
   if (halfWidth < 150 /*|| !((section.width / 2) % step.value == 0)*/)
     return;
@@ -199,8 +484,10 @@ const addSection = (secIndex) => {
     number: section.number + 1,
     width: halfWidth,
     cells: [],
+    fasades: [],
   }
   module.value.sections.splice(secIndex + 1, 0, newColumn);
+  updateFasades();
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -213,10 +500,9 @@ const addCell = (secIndex, cellIndex = 0) => {
   visualizationRef.value.selectCell(secIndex, cellIndex, true);
 
   let cell;
-  if(module.value.sections[secIndex].cells.length > 0) {
+  if (module.value.sections[secIndex].cells.length > 0) {
     cell = module.value.sections[secIndex].cells[cellIndex]
-  }
-  else {
+  } else {
     cell = <GridCell>{
       number: 1,
       width: module.value.sections[secIndex].width,
@@ -226,8 +512,8 @@ const addCell = (secIndex, cellIndex = 0) => {
     module.value.sections[secIndex].cells.push(cell);
   }
 
-  if(cell.cellsRows)
-   delete cell.cellsRows
+  if (cell.cellsRows)
+    delete cell.cellsRows
 
   const lastCell = module.value.sections[secIndex].cells[module.value.sections[secIndex].cells.length - 1];
 
@@ -255,10 +541,9 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
   visualizationRef.value.selectCell(secIndex, cellIndex, true, rowIndex);
 
   let row;
-  if(module.value.sections[secIndex].cells[cellIndex].cellsRows?.length > 0) {
+  if (module.value.sections[secIndex].cells[cellIndex].cellsRows?.length > 0) {
     row = module.value.sections[secIndex].cells[cellIndex].cellsRows[rowIndex];
-  }
-  else {
+  } else {
     module.value.sections[secIndex].cells[cellIndex].cellsRows = []
     row = <GridCellsRow>{
       number: 1,
@@ -294,7 +579,7 @@ const updateSectionWidth = (value, secIndex) => {
   let adjustedValue;
 
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { sec: secIndex, cell: null, row: null };
+  selectedCell.value = {sec: secIndex, cell: null, row: null};
   visualizationRef.value.selectCell(secIndex, null);
 
   if (!isNaN(newValue) && visualizationRef.value) {
@@ -314,19 +599,19 @@ const updateSectionWidth = (value, secIndex) => {
     curSection.width = adjustedValue
     curSection.cells.forEach((cell, cellIndex) => {
 
-      if(cell.cellsRows) {
+      if (cell.cellsRows) {
         let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
         lastRow.width += delta;
       }
       cell.width = adjustedValue;
     })
 
-    if(nextSection) {
+    if (nextSection) {
       nextSection.width += delta
 
       nextSection.cells.forEach((cell, cellIndex) => {
 
-        if(cell.cellsRows) {
+        if (cell.cellsRows) {
           let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
           lastRow.width += delta;
         }
@@ -335,13 +620,15 @@ const updateSectionWidth = (value, secIndex) => {
     }
   }
   module.value = clone;
+  updateFasades();
+
 };
 
 const updateCellHeight = (value, secIndex, cellIndex) => {
   const newValue = parseInt(value);
   let adjustedValue;
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { sec: secIndex, cell: cellIndex, row: null };
+  selectedCell.value = {sec: secIndex, cell: cellIndex, row: null};
   visualizationRef.value.selectCell(secIndex, cellIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
@@ -364,7 +651,7 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
       row.height = adjustedValue;
     })
 
-    if(nextCell) {
+    if (nextCell) {
       nextCell.height += delta
       nextCell.cellsRows.forEach((row, rowIndex) => {
         row.height = adjustedValue;
@@ -379,7 +666,7 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
   let adjustedValue;
 
   // Обновляем выбранную секцию для визуального отображения
-  selectedCell.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
+  selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
   visualizationRef.value.selectCell(secIndex, cellIndex, false, rowIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
@@ -400,7 +687,7 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
 
     curRow.width = adjustedValue
 
-    if(nextRow) {
+    if (nextRow) {
       nextRow.width += delta
     }
   }
@@ -434,12 +721,13 @@ const deleteSection = (secIndex) => {
 
   selectedCell.value.cell = 0;
   selectedCell.value.sec = 0;
+  updateFasades();
 
   visualizationRef.value.renderGrid();
 };
 
 const deleteCell = (cellIndex, secIndex) => {
-  const clone = Object.assign({},module.value);
+  const clone = Object.assign({}, module.value);
   const currentSection = clone.sections[secIndex];
   const currentCell = currentSection.cells[cellIndex];
 
@@ -469,7 +757,7 @@ const deleteCell = (cellIndex, secIndex) => {
 };
 
 const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
-  const clone = Object.assign({},module.value);
+  const clone = Object.assign({}, module.value);
   const currentSection = clone.sections[secIndex];
   const currentCell = currentSection.cells[cellIndex];
   const currentRow = currentCell.cellsRows[rowIndex];
@@ -501,12 +789,14 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 };
 
 const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null) => {
-  selectedCell.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
+  selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
 
   cutServise.value.section.sec = secIndex;
   cutServise.value.section.cell = cellIndex;
   cutServise.value.section.row = rowIndex;
 };
+
+//#endregion
 
 const reset = (reset = false) => {
   const PROPS = productData.value.userData.PROPS;
@@ -519,14 +809,14 @@ const reset = (reset = false) => {
     sectionsWidthSum += section.width;
   })
 
-  if(sectionsTotalWidth - sectionsWidthSum !== 0) {
+  if (sectionsTotalWidth - sectionsWidthSum !== 0) {
     let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
     let lastSection = module.value.sections[module.value.sections.length - 1];
     lastSection.width += deltaWidth
 
     lastSection.cells.forEach((cell, cellIndex) => {
 
-      if(cell.cellsRows) {
+      if (cell.cellsRows) {
         let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
         lastRow.width += deltaWidth;
       }
@@ -534,15 +824,15 @@ const reset = (reset = false) => {
     })
   }
 
-  if(sectionsTotalHeight - module.value.sections[0].height !== 0) {
+  if (sectionsTotalHeight - module.value.sections[0].height !== 0) {
     let deltaHeight = sectionsTotalHeight - module.value.sections[0].height;
 
     module.value.sections.forEach((section, secIndex) => {
 
-      if(section.cells?.length) {
+      if (section.cells?.length) {
         let lastCell = section.cells[section.cells.length - 1]
 
-        if(lastCell.cellsRows) {
+        if (lastCell.cellsRows) {
           let lastRow = lastCell.cellsRows[lastCell.cellsRows.length - 1]
           lastRow.height += deltaHeight;
         }
@@ -560,6 +850,8 @@ const reset = (reset = false) => {
   }
 
   PROPS.CONFIG.MODULEGRID = module.value = _module
+
+  updateFasades();
 
   visualizationRef.value.renderGrid();
   if (reset) {
@@ -594,6 +886,7 @@ const saveGrid = () => {
     canvasWidth: totalWidth.value,
     data: clone,
   };
+  productData.value.userData.PROPS.CONFIG.MODULEGRID = clone
 
   // emit("save-table-data", data);
   return data;
@@ -623,7 +916,7 @@ onBeforeUnmount(() => {
 });
 
 watch(menuStore, () => {
-  if(menuStore.openMenus == '2dModuleConstructor' && menuStore.catalogFilterProductsId[0]) {
+  if (menuStore.openMenus == '2dModuleConstructor' && menuStore.catalogFilterProductsId[0]) {
     productData.value = menuStore.catalogFilterProductsId[0]
   }
 })
@@ -640,6 +933,49 @@ watch(menuStore, () => {
       >
         <div class="constructor2d-header">
           <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
+
+          <div
+              class="constructor2d-container constructor2d-header--mode-selector"
+          >
+            <article class="actions-items actions-items--right">
+              <div class="actions-items--right-items">
+                <button
+                    :class="[
+                      'actions-btn actions-btn--default', {
+                      active:
+                        mode === 'module'
+                      }
+                    ]"
+                    @click="changeConstructorMode('module')"
+                >
+                  Модуль
+                </button>
+                <button
+                    :class="[
+                      'actions-btn actions-btn--default', {
+                      active:
+                        mode === 'fillings'
+                      }
+                    ]"
+                    @click="changeConstructorMode('fillings')"
+                >
+                  Наполнение
+                </button>
+                <button
+                    :class="[
+                      'actions-btn actions-btn--default', {
+                      active:
+                        mode === 'fasades'
+                      }
+                    ]"
+                    @click="changeConstructorMode('fasades')"
+                >
+                  Фасады
+                </button>
+              </div>
+            </article>
+          </div>
+
         </div>
 
         <div class="constructor2d-content">
@@ -705,6 +1041,7 @@ watch(menuStore, () => {
 
           <InteractiveSpace
               ref="visualizationRef"
+              :mode="mode"
               :step="step"
               :module="module"
               :correct="correct"
@@ -715,7 +1052,7 @@ watch(menuStore, () => {
           />
         </div>
 
-        <section class="actions-wrapper">
+        <section class="actions-wrapper" v-if="mode === 'module'">
           <div class="actions-header">
             <div
                 :class="[
@@ -796,6 +1133,7 @@ watch(menuStore, () => {
                   </div>
                 </div>
               </div>
+
               <div
                   v-for="(cell, cellIndex) in section.cells"
                   :key="cellIndex"
@@ -810,6 +1148,7 @@ watch(menuStore, () => {
               >
                 <article class="actions-items actions-items--left">
                   <div class="actions-items--left-wrapper">
+
                     <div class="actions-items--title">
                       <button
                           v-if="section.cells.length > 1"
@@ -911,6 +1250,7 @@ watch(menuStore, () => {
                 >
                   <article class="actions-items actions-items--left">
                     <div class="actions-items--left-wrapper">
+
                       <div class="actions-items--title">
                         <button
                             v-if="cell.cellsRows.length > 1"
@@ -975,7 +1315,10 @@ watch(menuStore, () => {
             </div>
 
             <article class="actions-items actions-items--right">
-              <div class="actions-items--right-items">
+              <div
+                  class="actions-items--right-items"
+                  v-if="secIndex == selectedCell.sec"
+              >
                 <button
                     :class="[
                       'actions-btn actions-btn--default'
@@ -996,8 +1339,186 @@ watch(menuStore, () => {
                 </button>
               </div>
             </article>
+
           </div>
         </section>
+
+        <section class="actions-wrapper" v-if="mode === 'fasades'">
+
+          <div class="actions-header">
+            <div
+                :class="[
+              'actions-header--container',
+              { active: secIndex === selectedFasade.sec },
+            ]"
+                v-for="(section, secIndex) in module.sections"
+                :key="secIndex"
+            >
+              <p
+                  class="actions-title actions-title--part"
+                  @click="showCurrentFasade(secIndex)"
+              >
+                {{ secIndex + 1 }} секция
+              </p>
+            </div>
+          </div>
+
+          <div
+              class="actions-container"
+              v-for="(section, secIndex) in module.sections"
+              :key="secIndex"
+          >
+            <div
+                class="actions-items--wrapper"
+                v-if="selectedFasade.sec === secIndex"
+            >
+              <div
+                  v-for="(door, doorIndex) in section.fasades"
+                  :key="doorIndex"
+                  :class="[
+                    'actions-container'
+                  ]"
+              >
+
+                <article class="actions-items actions-items--left">
+                  <div class="actions-items--left-wrapper">
+                    <div class="actions-items--title">
+                      <button
+                          v-if="section.fasades.length > 0"
+                          class="actions-btn actions-icon"
+                          @click="deleteDoor(secIndex, doorIndex)"
+                      >
+                        <img
+                            class="actions-icon--delete"
+                            src="/icons/delite.svg"
+                            alt=""
+                        />
+                      </button>
+                      <p class="actions-title actions-title--part">
+                        Дверь №{{ doorIndex + 1 }}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <div
+                    v-for="(segment, segmentIndex) in door"
+                    :key="segmentIndex"
+                    :class="[
+                      'actions-items--container'
+                    ]"
+                >
+                  <article class="actions-items actions-items--left">
+                    <div class="actions-items--left-wrapper">
+
+                      <div class="actions-items--title">
+                        <button
+                            v-if="door.length > 1"
+                            class="actions-btn actions-icon"
+                            @click="removeFasadeSegment(secIndex, doorIndex, segmentIndex)"
+                        >
+                          <img
+                              class="actions-icon--delete"
+                              src="/icons/delite.svg"
+                              alt=""
+                          />
+                        </button>
+                        <p class="actions-title actions-title--part">
+                          Сегмент №{{ doorIndex + 1 }}.{{ segmentIndex + 1 }}
+                        </p>
+                      </div>
+
+                      <div class="actions-items--width">
+                        <div class="actions-inputs">
+                          <p class="actions-title">
+                            Ширина
+                          </p>
+                          <div
+                              :class="['actions-input--container']"
+                          >
+                            <input
+                                type="number"
+                                :step="step"
+                                min="150"
+                                class="actions-input"
+                                :value="segment.width"
+                                disabled
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="actions-items--height">
+                        <div class="actions-inputs">
+                          <p class="actions-title">
+                            Высота
+                          </p>
+                          <div
+                              :class="['actions-input--container']"
+                          >
+                            <input
+                                type="number"
+                                :step="step"
+                                min="150"
+                                class="actions-input"
+                                :value="segment.height"
+                                @input="
+                            debounce(() => updateFasadeHeight(
+                              $event.target.value,
+                              secIndex,
+                              doorIndex,
+                              segmentIndex
+                            ), 1000)
+                          "
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </article>
+
+                  <article class="actions-items actions-items--right">
+                    <div class="actions-items--right-items">
+                      <button
+                          :class="[
+                            'actions-btn actions-btn--default'
+                          ]"
+                          @click="splitFasade(secIndex, doorIndex, segmentIndex)"
+                      >
+                        Разделить фасад
+                      </button>
+                    </div>
+                  </article>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <article class="actions-items actions-items--right">
+              <div
+                  class="actions-items--right-items"
+                  v-if="secIndex == selectedFasade.sec"
+              >
+                <button
+                    v-if="section.fasades.length < 2"
+                    :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                    @click="addDoor(secIndex)"
+                >
+                  Добавить дверь
+                </button>
+
+              </div>
+            </article>
+
+          </div>
+        </section>
+
       </div>
 
       <div
@@ -1005,17 +1526,17 @@ watch(menuStore, () => {
       >
         <h1>Опции</h1>
 
-<!--        <ProductOptions
-            v-if="holeOptions.show"
-            :holes="getHole"
-            :step="step"
-            @cut-addHole="addHole"
-            @cut-deleteHole="deleteHole"
-            @cut-updateHole="updateHole"
-            @cut-toggleHoleOptions="toggleHoleOptions"
-            @cut-changePositionX="changeHolePositionX"
-            @cut-changePositionY="changeHolePositionY"
-        />-->
+        <!--        <ProductOptions
+                    v-if="holeOptions.show"
+                    :holes="getHole"
+                    :step="step"
+                    @cut-addHole="addHole"
+                    @cut-deleteHole="deleteHole"
+                    @cut-updateHole="updateHole"
+                    @cut-toggleHoleOptions="toggleHoleOptions"
+                    @cut-changePositionX="changeHolePositionX"
+                    @cut-changePositionY="changeHolePositionY"
+                />-->
       </div>
     </div>
 
@@ -1078,7 +1599,7 @@ watch(menuStore, () => {
       overflow: hidden;
     }
 
-    &--module-size{
+    &--module-size {
       display: flex;
       flex-direction: column;
     }
@@ -1098,9 +1619,18 @@ watch(menuStore, () => {
     display: flex;
     justify-content: center;
     gap: 2rem;
+    flex-direction: row;
+
     &--title {
       display: flex;
       align-items: end;
+      justify-content: center;
+    }
+
+    &--mode-selector {
+      display: flex;
+      align-items: end;
+      justify-content: center;
     }
 
     .actions-inputs {
@@ -1121,6 +1651,7 @@ watch(menuStore, () => {
     display: flex;
     justify-content: space-between;
     margin-top: auto;
+
     &--save {
       display: flex;
       gap: 1rem;
@@ -1330,6 +1861,7 @@ watch(menuStore, () => {
         }
       }
     }
+
     &--footer {
       background-color: #ecebf1;
     }
@@ -1337,7 +1869,8 @@ watch(menuStore, () => {
     &:focus {
       outline: none;
     }
-    &.active {
+
+    &.acthnive {
       border-color: #da444c;
       color: #181818;
       transition-property: background-color, color, border;

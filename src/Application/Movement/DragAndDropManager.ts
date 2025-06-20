@@ -90,6 +90,21 @@ export class DragAndDropManager {
                         this.geometryBuilder.craeteModel(productData, (object) => {
                             const menuStore = useMenuStore();
                             menuStore.openMenu('2dModuleConstructor', productData.ID, [object])
+
+                            object.userData.MOUSE_POSITION = {
+                                x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
+                                y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
+                            };
+
+                            this.setObject.create({
+                                scene: this.scene,
+                                object,
+                                point,
+                                roomManager: this.roomManager,
+                                trafficManager: this.trafficManager,
+                                boxHelper: this.boxHelper,
+                                wall: surface
+                            });
                         });
                     }
                     else {

@@ -23,6 +23,11 @@ const props = defineProps({
     required: true,
   },
 
+  mode: {
+    type: String,
+    default: "module",
+  },
+
   maxAreaHeight: {
     type: Number,
     default: 720,
@@ -102,6 +107,7 @@ const TOTAL_HEIGHT = ref(0);
 const TOTAL_WIDTH = ref(0);
 const areaHeight = ref(0);
 const areaWidth = ref(0);
+const mode = ref('module');
 
 const pixelRatio = computed(() => TOTAL_WIDTH.value / MAX_AREA_WIDTH);
 
@@ -242,6 +248,7 @@ const renderGrid = () => {
               rowIndex: cellRowIndex,
               row: cellRow,
               _sector: moduleSector,
+              gridType: "module",
             });
 
             //Добавляем отступ по вертикали
@@ -265,6 +272,7 @@ const renderGrid = () => {
             cellData: cell,
             section,
             _sector: moduleSector,
+            gridType: "module",
           });
 
         //Добавляем отступ по вертикали
@@ -294,6 +302,7 @@ const renderGrid = () => {
         cellData: section,
         section: [section],
         _sector: moduleSector,
+        gridType: "module",
       });
 
       //Добавляем отступ по вертикали
@@ -310,6 +319,53 @@ const renderGrid = () => {
     //Добавляем отступ по горизонтали
     xOffset += pxWidth;
   })
+
+
+  if(mode.value === "fasades") {
+    xOffset = getPixelWidth(2);
+    props.module?.sections.forEach((section, sectionIndex) => {
+      section.fasades.forEach((column, colIndex) => {
+        const pxWidth = getPixelWidth(column[0].width);
+        yOffset = getPixelHeight(2);
+
+        column.forEach((row, rowIndex, col) => {
+          const pxHeight = getPixelHeight(row.height);
+          row.xOffset = xOffset;
+          row.yOffset = yOffset;
+
+          // Отрисовываем секцию
+
+          createSector({
+            x: xOffset,
+            y: yOffset,
+            width: pxWidth,
+            height: pxHeight,
+            sectionIndex,
+            cellIndex: colIndex,
+            rowIndex: col.length > 1 ? rowIndex : null,
+            cellData: row,
+            section: col,
+            _sector: moduleSector,
+            gridType: 'fasades',
+          });
+
+          //Добавляем отступ по вертикали
+          yOffset += pxHeight + 4;
+        });
+        //Добавляем отступ по горизонтали
+        xOffset += pxWidth + 4;
+
+        // Создаём ограничения для секторов по ширине
+        const colBond = shapeAdjuster.createColumnBounds(sections, colIndex);
+
+        column.forEach((row) => {
+          row.shapesBond = colBond;
+          row.maxX = shapeAdjuster.convertToTen(getMmWidth(colBond.maxX));
+          row.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
+        });
+      });
+    })
+  }
 
   sections.forEach((elem) => {
     app.stage.addChildAt(elem, 0);
@@ -344,7 +400,7 @@ const createModule = ({
   sector.sectorData = moduleData;
   sector.sections = sections;
 
-  const cell = new Section(moduleData, width, height, sector);
+  const cell = new Section(moduleData, width, height, sector, false);
   cell.highlightGraphics.visible = false;
   cell.cellGraphics.eventMode = "static";
   cell.cellGraphics.cursor = "pointer";
@@ -353,16 +409,6 @@ const createModule = ({
   sector.addChild(cell.highlightGraphics);
 
   sections.push(sector);
-  // /** Создаём нумерацию сектора */
-  //createSectioNum({ x, y, width, height, cell, sectionIndex, cellIndex });
-
-  /*cell.cellGraphics.on("pointerdown", () => {
-    selectCell(null, null);
-  });*/
-  // /**Создание вертикального выреза */
-  //createVerticalCut({ width, height, cell, section, sectionIndex, sector });
-  // /**Создание горизонтального выреза */
-  //createHorozontalCut({ width, height, cell, section, sectionIndex, cellIndex, sector });
 
   // Создаём ограничения для секторов по высоте
   const sectorBounds = shapeAdjuster.getTotalBounds(sector, moduleData);
@@ -386,6 +432,7 @@ const createSector = ({
                         section,
                         sectionIndex,
                         cellIndex,
+                        gridType,
                         _sector = false,
                         rowIndex = null,
                         row = false,
@@ -403,7 +450,7 @@ const createSector = ({
   sector.cellIndex = cellIndex;
   sector.rowIndex = rowIndex;
 
-  const cell = new Section(cellData, width, height, sector);
+  const cell = new Section(cellData, width, height, sector, gridType === mode.value);
 
   if (
       selectedCell.value.sec === sectionIndex &&
@@ -425,31 +472,33 @@ const createSector = ({
   else
     _sector.addChild(sector);
 
-  // /** Создаём нумерацию сектора */
-  createSectioNum({ x, y, width, height, cell: cellData, sectionIndex, cellIndex, rowIndex });
+  if(gridType === mode.value) {
+    // /** Создаём нумерацию сектора */
+    createSectioNum({x, y, width, height, cell: cellData, sectionIndex, cellIndex, rowIndex});
 
-  cell.cellGraphics.on("pointerdown", () => {
-    selectCell(sectionIndex, cellIndex, rowIndex);
-  });
-  // /**Создание вертикального выреза */
-  createVerticalCut({ width, height, cell: cellData, section, sectionIndex, sector });
-  // /**Создание горизонтального выреза */
-  createHorozontalCut({ width, height, cell: cellData, section, sectionIndex, cellIndex, sector });
+    cell.cellGraphics.on("pointerdown", () => {
+      selectCell(sectionIndex, cellIndex, rowIndex);
+    });
+    // /**Создание вертикального выреза */
+    createVerticalCut({width, height, cell: cellData, section, sectionIndex, sector});
+    // /**Создание горизонтального выреза */
+    createHorozontalCut({width, height, cell: cellData, section, sectionIndex, cellIndex, sector});
 
-  // Создаём ограничения для секторов по высоте
+    // Создаём ограничения для секторов по высоте
 
-  const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
-  sector.bound = sectorBounds;
+    const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
+    sector.bound = sectorBounds;
 
-  cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-  cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+    cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+    cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
 
-  cell.sector = sector;
+    cell.sector = sector;
 
-  // Рендер линейки расстояний до границ сектора
-  sector.shapes.forEach((el) => {
-    el.drawBoundaryDistances();
-  });
+    // Рендер линейки расстояний до границ сектора
+    sector.shapes.forEach((el) => {
+      el.drawBoundaryDistances();
+    });
+  }
 };
 
 // Отрисовываем номер ячейки
@@ -581,11 +630,19 @@ const selectCell = (sectionIndex, cellIndex, parent = false, rowIndex = null) =>
   console.log(sectionIndex, cellIndex, rowIndex, "CR");
 
   selectedCell.value = { section: sectionIndex, cell: cellIndex , row: rowIndex};
-  toggleSectorColor(sectionIndex, cellIndex, rowIndex);
+
+  switch (mode.value){
+    case "module":
+      toggleSectionColor(sectionIndex, cellIndex, rowIndex);
+      break;
+    case "fasades":
+      toggleFasadeColor(sectionIndex, cellIndex, rowIndex);
+      break;
+  }
   if (!parent) emit("cell-selected", sectionIndex, cellIndex, rowIndex);
 };
 
-const toggleSectorColor = (sectionIndex, cellIndex, rowIndex = null) => {
+const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
   const sector = rowIndex !== null ? props.module.sections[sectionIndex].cells[cellIndex].cellsRows?.[rowIndex]?.sector :
     cellIndex ? props.module.sections[sectionIndex].cells[cellIndex].sector :
         sectionIndex ? props.module.sections[sectionIndex].sector :
@@ -598,6 +655,21 @@ const toggleSectorColor = (sectionIndex, cellIndex, rowIndex = null) => {
   });
   if(sector?.children[1])
     sector.children[1].visible = true;
+  // sector.children[0].alpha = 0.5;
+};
+
+const toggleFasadeColor = (sectionIndex, doorIndex, segmentIndex = 0) => {
+  const fasades = props.module.sections[sectionIndex].fasades
+  const door = fasades[doorIndex]
+  const segment = door?.[segmentIndex]?.sector
+
+  sections.forEach((elem) => {
+    if(elem.children[1])
+      elem.children[1].visible = false;
+    // elem.children[0].alpha = 1;
+  });
+  if(segment?.children[1])
+    segment.children[1].visible = true;
   // sector.children[0].alpha = 0.5;
 };
 
@@ -976,6 +1048,11 @@ const clearRender = () => {
   dementionContainer.removeChildren();
 };
 
+const changeConstructorMode = (_mode) => {
+  mode.value = _mode;
+  renderGrid();
+}
+
 const destroy = () => {
   app.destroy(true);
 };
@@ -990,6 +1067,7 @@ const addTicker = () => {
 onBeforeMount(() => {
   TOTAL_HEIGHT.value = props.maxAreaHeight;
   TOTAL_WIDTH.value = props.maxAreaWidth;
+  mode.value = props.mode;
   areaHeight.value = getMaxAreaHeight();
   areaWidth.value = getMaxAreaWidth();
 });
@@ -1014,6 +1092,7 @@ defineExpose({
   updateTotalWidth,
   updateTotalSize,
   destroy,
+  changeConstructorMode
 });
 
 // watch(

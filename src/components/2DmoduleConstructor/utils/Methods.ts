@@ -903,12 +903,13 @@ class Section extends Helpers {
   data: any;
   sector: Container;
 
-  constructor(data: any, width: number, height: number, sector: Container) {
+  constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true) {
     super();
     this.data = data;
     this.width = width;
     this.height = height;
     this.sector = sector;
+    this._drawDimensions = _drawDimensions;
 
     this.createSection();
   }
@@ -921,8 +922,13 @@ class Section extends Helpers {
     let bottomRight = data.bottomRight ?? { type: 'none' };
     let topLeft = data.topLeft ?? { type: 'none' };
     let topRight = data.topRight ?? { type: 'none' };
-    let defCellColor = data.type === "module" ? '#875003' : '#d2d0d7';
-    let deffHighlightColor = data.type === "module" ? '#875003' : '#ECEBF1';
+    let defCellColor = data.type === "module" ? '#875003' : data.type === "fasade" ? '#1E90FF' : '#d2d0d7';
+    let deffHighlightColor = data.type === "module" ? '#b86c02' : data.type === "fasade" ? '#80bfff' : '#ECEBF1';
+
+    if(data.error) {
+      defCellColor = '#ad0202'
+      deffHighlightColor = '#fa3c3c'
+    }
 
     // Очищаем графику перед отрисовкой
     this.cellGraphics.clear();
@@ -942,8 +948,10 @@ class Section extends Helpers {
     this.highlightGraphics.path(highlightPath).fill(deffHighlightColor);
 
     // Отрисовываем размеры
-    this.drawDimensions(this.cellGraphics, topRight, topLeft, bottomRight, bottomLeft);
-    this.drawDimensions(this.highlightGraphics, topRight, topLeft, bottomRight, bottomLeft);
+    if(this._drawDimensions){
+      this.drawDimensions(this.cellGraphics, topRight, topLeft, bottomRight, bottomLeft);
+      this.drawDimensions(this.highlightGraphics, topRight, topLeft, bottomRight, bottomLeft);
+    }
   }
 
   createPath(topRight, topLeft, bottomRight, bottomLeft): GraphicsPath {
