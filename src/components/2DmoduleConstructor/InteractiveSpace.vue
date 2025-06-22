@@ -50,7 +50,10 @@ const props = defineProps({
 
 const emit = defineEmits(["cell-selected", "position-non"]);
 const canvasContainer = ref();
-const selectedCell = ref({ section: 0, cell: 0, row: 0 });
+
+const selectedCell = ref({ sec: 0, cell: 0, row: null });
+const selectedFasade = ref({sec: 0, cell: 0, row: 0});
+const selectedFilling = ref({sec: 0, cell: 0, row: null, item: 0});
 
 let app: Application,
     sectionsContainer: Container,
@@ -102,11 +105,10 @@ const dragState = reactive({
   element: null,
 });
 
-
 const TOTAL_HEIGHT = ref(0);
 const TOTAL_WIDTH = ref(0);
-const areaHeight = ref(0);
-const areaWidth = ref(0);
+const areaHeight = ref(MAX_AREA_HEIGHT);
+const areaWidth = ref(MAX_AREA_WIDTH);
 const mode = ref('module');
 
 const pixelRatio = computed(() => TOTAL_WIDTH.value / MAX_AREA_WIDTH);
@@ -136,13 +138,14 @@ const updateTotalWidth = (value) => {
 const updateTotalSize = (value, dimension) => {
   if(dimension === "width") {
     TOTAL_WIDTH.value = parseInt(value);
+    areaWidth.value = getMaxAreaWidth();
+    areaHeight.value = getMaxAreaHeight();
   }
   else {
     TOTAL_HEIGHT.value = parseInt(value);
+    areaHeight.value = getMaxAreaHeight();
+    areaWidth.value = getMaxAreaWidth();
   }
-
-  areaHeight.value = getMaxAreaHeight();
-  areaWidth.value = getMaxAreaWidth();
 
   app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
   app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
@@ -217,7 +220,7 @@ const renderGrid = () => {
     moduleData: props.module,
   });
 
-  props.module?.sections.forEach((section, sectionIndex) => {
+  props.module?.sections.forEach((section, sectionIndex, _sections) => {
     const pxWidth = getPixelWidth(section.width);
 
     yOffset = getPixelHeight(props.module.moduleThickness);
@@ -298,9 +301,9 @@ const renderGrid = () => {
         width: pxWidth,
         height: pxHeight,
         sectionIndex,
-        cellIndex: 0,
+        cellIndex: null,
         cellData: section,
-        section: [section],
+        section: _sections,
         _sector: moduleSector,
         gridType: "module",
       });
@@ -342,7 +345,7 @@ const renderGrid = () => {
             height: pxHeight,
             sectionIndex,
             cellIndex: colIndex,
-            rowIndex: col.length > 1 ? rowIndex : null,
+            rowIndex: rowIndex,
             cellData: row,
             section: col,
             _sector: moduleSector,
@@ -390,8 +393,8 @@ const createModule = ({
                         width,
                         height,
                         moduleData,
-                      }) => {
-
+                      }) =>
+{
   const sector = new Container({isRenderGroup: true});
 
   sector.position.set(x, y);
@@ -436,7 +439,10 @@ const createSector = ({
                         _sector = false,
                         rowIndex = null,
                         row = false,
-                      }) => {
+                        itemIndex = null,
+                        item = false,
+                      }) =>
+{
 
   let sector = new Container();
 
@@ -451,10 +457,13 @@ const createSector = ({
   sector.rowIndex = rowIndex;
 
   const cell = new Section(cellData, width, height, sector, gridType === mode.value);
+  const seleted = gridType === "fasades" ? selectedFasade : gridType === "filling" ? selectedFilling : selectedCell;
 
   if (
-      selectedCell.value.sec === sectionIndex &&
-      selectedCell.value.cell === cellIndex
+      seleted.value.sec === sectionIndex &&
+      seleted.value.cell === cellIndex &&
+      seleted.value.row === rowIndex &&
+      (seleted.value.item === undefined || seleted.value.item === itemIndex)
   ) {
     cell.highlightGraphics.visible = true;
   } else {
@@ -472,32 +481,32 @@ const createSector = ({
   else
     _sector.addChild(sector);
 
+  cell.cellGraphics.on("pointerdown", () => {
+    selectCell(gridType, sectionIndex, cellIndex, false, rowIndex);
+  });
+
+  // Создаём ограничения для секторов по высоте
+  const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
+  sector.bound = sectorBounds;
+
+  cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+  cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+
+  cellData.sector = sector;
+
+  // Рендер линейки расстояний до границ сектора
+  sector.shapes.forEach((el) => {
+    el.drawBoundaryDistances();
+  });
+
   if(gridType === mode.value) {
     // /** Создаём нумерацию сектора */
     createSectioNum({x, y, width, height, cell: cellData, sectionIndex, cellIndex, rowIndex});
 
-    cell.cellGraphics.on("pointerdown", () => {
-      selectCell(sectionIndex, cellIndex, rowIndex);
-    });
     // /**Создание вертикального выреза */
     createVerticalCut({width, height, cell: cellData, section, sectionIndex, sector});
     // /**Создание горизонтального выреза */
     createHorozontalCut({width, height, cell: cellData, section, sectionIndex, cellIndex, sector});
-
-    // Создаём ограничения для секторов по высоте
-
-    const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
-    sector.bound = sectorBounds;
-
-    cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-    cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
-
-    cell.sector = sector;
-
-    // Рендер линейки расстояний до границ сектора
-    sector.shapes.forEach((el) => {
-      el.drawBoundaryDistances();
-    });
   }
 };
 
@@ -520,9 +529,9 @@ const createSectioNum = ({ x, y, width, height, cell, sectionIndex, cellIndex, r
 
   const cellNumberBackground = new Graphics();
   cellNumberBackground.roundRect(
-      cell.xOffset + pxWidth / 2 - 12.5,
+      cell.xOffset + pxWidth / 2 - 18,
       cell.yOffset + pxHeight / 2 - 12,
-      25,
+      36,
       25,
       5
   );
@@ -626,29 +635,34 @@ const createHorozontalCut = ({
 };
 
 // Выбор сектора, передача в родительский компонент
-const selectCell = (sectionIndex, cellIndex, parent = false, rowIndex = null) => {
+const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = null, item = null) => {
   console.log(sectionIndex, cellIndex, rowIndex, "CR");
 
-  selectedCell.value = { section: sectionIndex, cell: cellIndex , row: rowIndex};
-
-  switch (mode.value){
-    case "module":
-      toggleSectionColor(sectionIndex, cellIndex, rowIndex);
+  switch (type){
+    case "fillings":
+      selectedFilling.value = { sec: sectionIndex, cell: cellIndex , row: rowIndex, item: item};
+      toggleFillingColor(sectionIndex, cellIndex, rowIndex, item);
       break;
     case "fasades":
+      selectedFasade.value = { sec: sectionIndex, cell: cellIndex , row: rowIndex};
       toggleFasadeColor(sectionIndex, cellIndex, rowIndex);
       break;
+    default:
+      selectedCell.value = { sec: sectionIndex, cell: cellIndex , row: rowIndex};
+      toggleSectionColor(sectionIndex, cellIndex, rowIndex);
+      break;
   }
-  if (!parent) emit("cell-selected", sectionIndex, cellIndex, rowIndex);
+  if (!parent)
+    emit("cell-selected", sectionIndex, cellIndex, type, rowIndex);
 };
 
 const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
   const sector = rowIndex !== null ? props.module.sections[sectionIndex].cells[cellIndex].cellsRows?.[rowIndex]?.sector :
-    cellIndex ? props.module.sections[sectionIndex].cells[cellIndex].sector :
-        sectionIndex ? props.module.sections[sectionIndex].sector :
+    cellIndex !== null ? props.module.sections[sectionIndex].cells[cellIndex].sector :
+        sectionIndex !== null ? props.module.sections[sectionIndex].sector :
             props.module.sector;
 
-  sections.forEach((elem) => {
+  sections[0].children.forEach((elem) => {
     if(elem.children[1])
       elem.children[1].visible = false;
     // elem.children[0].alpha = 1;
@@ -661,15 +675,34 @@ const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
 const toggleFasadeColor = (sectionIndex, doorIndex, segmentIndex = 0) => {
   const fasades = props.module.sections[sectionIndex].fasades
   const door = fasades[doorIndex]
-  const segment = door?.[segmentIndex]?.sector
+  const segment = door?.[segmentIndex]
 
-  sections.forEach((elem) => {
+  const sector = segment?.sector || door?.sector;
+
+  sections[0].children.forEach((elem) => {
     if(elem.children[1])
       elem.children[1].visible = false;
     // elem.children[0].alpha = 1;
   });
-  if(segment?.children[1])
-    segment.children[1].visible = true;
+  if(sector?.children[1])
+    sector.children[1].visible = true;
+  // sector.children[0].alpha = 0.5;
+};
+
+const toggleFillingColor = (sectionIndex, cellIndex, rowIndex = null, itemIndex = null) => {
+  const curSegment = rowIndex !== null ? props.module.sections[sectionIndex].cells[cellIndex].cellsRows?.[rowIndex] :
+      cellIndex !== null ? props.module.sections[sectionIndex].cells[cellIndex] :
+          sectionIndex !== null ? props.module.sections[sectionIndex] :
+              props.module;
+  const sector = curSegment?.fillings?.[itemIndex]?.sector;
+
+  sections[0].children.forEach((elem) => {
+    if(elem.children[1])
+      elem.children[1].visible = false;
+    // elem.children[0].alpha = 1;
+  });
+  if(sector?.children[1])
+    sector.children[1].visible = true;
   // sector.children[0].alpha = 0.5;
 };
 
@@ -997,7 +1030,8 @@ const updateSizes = (
     total,
     minCurrent,
     minAdjacent
-) => {
+) =>
+{
   if (newValue < minCurrent) newValue = minCurrent;
   const newAdjacentSize = total - newValue;
   if (newAdjacentSize < minAdjacent) newValue = total - minAdjacent;
@@ -1023,7 +1057,8 @@ const adjustSizeFromExternal = ({
   value: number;
   section?: number;
   cell?: number;
-}) => {
+}) =>
+{
   if (section === null) {
     console.warn("Не выбрана ячейка для изменения размера");
     return;
@@ -1095,17 +1130,10 @@ defineExpose({
   changeConstructorMode
 });
 
-// watch(
-//   () => props.maxAreaHeight,
-//   () => {
-//     getMaxAreaHeight.value = props.maxAreaHeight;
-//     renderGrid();
-//   }
-// );
 </script>
 
 <template>
-  <div class="visualization" :style="`height:${areaHeight}px width:${areaWidth}px`">
+  <div class="visualization" :style="`height:${MAX_AREA_HEIGHT}px width:${MAX_AREA_WIDTH}px`">
     <canvas ref="canvasContainer"></canvas>
   </div>
   <!-- :style="'height:getMaxAreaHeight'" -->

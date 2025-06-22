@@ -89,8 +89,8 @@ const module = computed(() => {
       }
 
       let _module: GridModule = {
-        width: totalWidth.value,
-        height: totalHeight.value,
+        width: totalWidth,
+        height: totalHeight,
         moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
         horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
         sections: [section],
@@ -133,14 +133,15 @@ const getMaxDepth = computed((dimension, minmax) => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
 })
 
-const selectedCell = ref({sec: 0, cell: 0, row: 0});
+const selectedCell = ref({sec: 0, cell: 0, row: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
+const selectedFilling = ref({sec: 0, cell: 0, row: null, item: 0});
 
 const correct = ref({change: false});
-const cutServise = ref({show: false, section: {sec: 0, cell: 0, row: null}});
 const constructor2dContainer = ref(null);
 const step = ref(1);
 const timer = ref(false);
+
 
 // Получаем текущую секцию
 const getCurrentSection = computed(() => {
@@ -196,11 +197,192 @@ const debounce = (callback, wait) => {
   }, wait)
 }
 
+//#region Наполнение
+
+const fillingsOptions = ref({ show: false, section: { section: 0, col: 0, row: null } });
+
+const getFilling = computed(() => {
+  const secNdx = selectedCell.value.sec;
+  const colNdx = selectedCell.value.cell;
+  const rowNdx = selectedCell.value.row;
+
+  const curRow = rowNdx !== null ? module.value.sections[secNdx].cells[colNdx].cellsRows?.[rowNdx] :
+      colNdx ? module.value.sections[secNdx].cells[colNdx] :
+          secNdx ? module.value.sections[secNdx] :
+              module.value;
+
+  if (curRow.fillings?.length > 0) {
+    return curRow.fillings;
+  }
+
+  return [];
+});
+
+const createFillingDataToCheck = (type, sec, cell, row) => {
+  let width, height, radius, tempHole;
+
+  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+
+  if (extremum > 600) extremum = 300;
+
+  width = extremum;
+  height = extremum;
+
+  switch (type) {
+    case "rect":
+      tempHole = {
+        type: "rect",
+        width,
+        height,
+      };
+      break;
+  }
+
+  return visualizationRef.value.checkPositionHoleToCreate(tempHole);
+};
+
+const addFilling = (type) => {
+  const sec = module.value[selectedCell.value.sec];
+  const cell = sec.cells?.[selectedCell.value.cell];
+  const row = cell?.cellsRows?.[selectedCell.value.row];
+
+  const startFillingData = createFillingDataToCheck(type, sec, cell, row);
+
+  if (!startFillingData) {
+    alert("Позиция не найдена");
+    return;
+  }
+
+  if (selectedCell.value.sec === null || selectedCell.value.cell === null) {
+    alert("Пожалуйста, выберите секцию для добавления наполнения");
+    return;
+  }
+
+  let preperedData;
+
+  switch (type) {
+    case "rect":
+      preperedData = {
+        ...startFillingData,
+        lable: "Прямоугольный разрез",
+        fillingId: row.fillings.length,
+        Mwidth: 600,
+        Mheight: 600,
+      };
+      break;
+  }
+
+  if (row)
+    row.fillings.push(preperedData);
+  else if(cell)
+    cell.fillings.push(preperedData);
+  else
+    sec.fillings.push(preperedData);
+
+  // // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const deleteFilling = (ndx) => {
+  const sec = module.value.sections[selectedCell.value.sec];
+  const cell = sec.cells?.[selectedCell.value.cell];
+  const row = cell?.cellsRows?.[selectedCell.value.row];
+
+  const curRow = row || cell || sec;
+
+  curRow.fillings = curRow.fillings.filter((el, index) => {
+    return index !== ndx;
+  });
+
+  visualizationRef.value.renderGrid();
+};
+
+const updateFilling = (event, key, type, fillingType) => {
+  console.log("ww");
+
+  const gridCopy = Object.assign({}, module.value);
+
+  const sec = gridCopy.sections[selectedCell.value.sec];
+  const currentColl = sec.cells?.[selectedCell.value.cell];
+  const currentRow = currentColl?.cellsRows?.[selectedCell.value.row];
+
+  const currentfilling = currentRow.fillings[key];
+
+  const prevValue = currentRow.fillings[key][type]; //Предыдущее значение
+
+  // let newValue = parseInt(event.target.value);
+  let newValue = parseInt(event);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const fillingData = JSON.parse(JSON.stringify(currentfilling));
+  fillingData[type] = newValue;
+
+  console.log(fillingData, "0");
+
+  const pixiSector = currentRow.sector;
+
+  currentfilling[`M${type}`] = 600;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, fillingType, fillingData);
+
+  if (check) {
+    currentfilling[type] = newValue;
+    console.log("1");
+  } else {
+    console.log("2");
+    currentfilling[type] = prevValue;
+    currentfilling[`M${type}`] = prevValue;
+  }
+
+  module.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const toggleFillingOptions = (colIndex, rowIndex) => {
+  fillingsOptions.value.show = !fillingsOptions.value.show;
+};
+
+const changeFillingPositionY = (event, key, type, fillingType, value) => {
+
+  const gridCopy = Object.assign({}, module.value);
+
+  const sec = gridCopy.sections[selectedCell.value.sec];
+  const currentColl = sec.cells?.[selectedCell.value.cell];
+  const currentRow = currentColl?.cellsRows?.[selectedCell.value.row];
+
+  const currentfilling = currentRow.fillings[key];
+
+  const prevValue = currentRow.fillings[key].y; //Предыдущее значение
+
+  const newValue = prevValue + value;
+
+  const fillingData = JSON.parse(JSON.stringify(currentfilling));
+  fillingData.y = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = shapeAdjuster.checkToCollision(pixiSector, fillingType, fillingData);
+
+  if (check) {
+    currentfilling.y = newValue;
+  } else {
+    currentfilling.y = prevValue;
+  }
+
+  module.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+//#endregion
+
 //#region Фасады
 
 const showCurrentFasade = (secIndex) => {
-  selectedFasade.value = {sec: secIndex, cell: 0, row: null};
-  visualizationRef.value.selectCell(secIndex, 0, null);
+  selectedFasade.value = {sec: secIndex, cell: 0, row: 0};
+  visualizationRef.value.selectCell("fasades", secIndex, 0, 0);
 };
 
 const addDoor = (secIndex) => {
@@ -256,7 +438,7 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   selectedFasade.value.cell = doorIndex;
   selectedFasade.value.row = segmentIndex;
 
-  visualizationRef.value.selectCell(secIndex, doorIndex, true, segmentIndex);
+  visualizationRef.value.selectCell("fasades", secIndex, doorIndex, true, segmentIndex);
 
   let segment = module.value.sections[secIndex].fasades[doorIndex][segmentIndex];
   const halfHeight = Math.floor((segment.height - 4) / 2);
@@ -338,7 +520,7 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
   let adjustedValue;
   // Обновляем выбранную секцию для визуального отображения
   selectedFasade.value = {sec: secIndex, cell: doorIndex, row: segmentIndex};
-  visualizationRef.value.selectCell(secIndex, doorIndex, segmentIndex);
+  visualizationRef.value.selectCell("fasades", secIndex, doorIndex, segmentIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     adjustedValue = visualizationRef.value.adjustSizeFromExternal({
@@ -438,9 +620,8 @@ const updateTotalHeight = (value) => {
 
     //visualizationRef.value.updateTotalHeight(value);
     visualizationRef.value.updateTotalSize(value, "height");
-    // visualizationRef.value.renderGrid();
     reset();
-    visualizationRef.value.selectCell(0, 0);
+    visualizationRef.value.selectCell("module", 0, null);
   }, 1000)
 };
 
@@ -450,16 +631,14 @@ const updateTotalWidth = (value) => {
 
     //visualizationRef.value.updateTotalWidth(value);
     visualizationRef.value.updateTotalSize(value, "width");
-    // visualizationRef.value.renderGrid();
     reset();
-    visualizationRef.value.selectCell(0, 0);
+    visualizationRef.value.selectCell("module", 0, null);
   }, 1000)
 };
 
 const showCurrentCol = (secIndex) => {
-  selectedCell.value = {sec: secIndex, cell: 0, row: null};
-  visualizationRef.value.selectCell(secIndex, 0, null);
-  cutServise.value.show = false;
+  selectedCell.value = {sec: secIndex, cell: null, row: null};
+  visualizationRef.value.selectCell("module", secIndex, null, false);
 };
 
 const addSection = (secIndex) => {
@@ -497,7 +676,7 @@ const addSection = (secIndex) => {
 const addCell = (secIndex, cellIndex = 0) => {
   selectedCell.value.sec = secIndex;
   selectedCell.value.cell = cellIndex;
-  visualizationRef.value.selectCell(secIndex, cellIndex, true);
+  visualizationRef.value.selectCell("module", secIndex, cellIndex, true);
 
   let cell;
   if (module.value.sections[secIndex].cells.length > 0) {
@@ -538,7 +717,7 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
   selectedCell.value.sec = secIndex;
   selectedCell.value.cell = cellIndex;
   selectedCell.value.row = rowIndex;
-  visualizationRef.value.selectCell(secIndex, cellIndex, true, rowIndex);
+  visualizationRef.value.selectCell("module", secIndex, cellIndex, true, rowIndex);
 
   let row;
   if (module.value.sections[secIndex].cells[cellIndex].cellsRows?.length > 0) {
@@ -580,7 +759,7 @@ const updateSectionWidth = (value, secIndex) => {
 
   // Обновляем выбранную секцию для визуального отображения
   selectedCell.value = {sec: secIndex, cell: null, row: null};
-  visualizationRef.value.selectCell(secIndex, null);
+  visualizationRef.value.selectCell("module", secIndex, null);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     adjustedValue = visualizationRef.value.adjustSizeFromExternal({
@@ -629,7 +808,7 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
   let adjustedValue;
   // Обновляем выбранную секцию для визуального отображения
   selectedCell.value = {sec: secIndex, cell: cellIndex, row: null};
-  visualizationRef.value.selectCell(secIndex, cellIndex);
+  visualizationRef.value.selectCell("module", secIndex, cellIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     adjustedValue = visualizationRef.value.adjustSizeFromExternal({
@@ -667,7 +846,7 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
 
   // Обновляем выбранную секцию для визуального отображения
   selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
-  visualizationRef.value.selectCell(secIndex, cellIndex, false, rowIndex);
+  visualizationRef.value.selectCell("module", secIndex, cellIndex, false, rowIndex);
 
   if (!isNaN(newValue) && visualizationRef.value) {
     adjustedValue = visualizationRef.value.adjustSizeFromExternal({
@@ -788,12 +967,18 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
   visualizationRef.value.renderGrid();
 };
 
-const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null) => {
-  selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
-
-  cutServise.value.section.sec = secIndex;
-  cutServise.value.section.cell = cellIndex;
-  cutServise.value.section.row = rowIndex;
+const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null) => {
+  switch (type){
+    case "fasades":
+      selectedFasade.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
+      break;
+    case "fillings":
+      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
+      break;
+    default:
+      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
+      break;
+  }
 };
 
 //#endregion
@@ -845,8 +1030,8 @@ const reset = (reset = false) => {
 
   let _module: GridModule = {
     ...module.value,
-    width: totalWidth.value,
-    height: totalHeight.value,
+    width: totalWidth,
+    height: totalHeight,
   }
 
   PROPS.CONFIG.MODULEGRID = module.value = _module
@@ -855,7 +1040,7 @@ const reset = (reset = false) => {
 
   visualizationRef.value.renderGrid();
   if (reset) {
-    visualizationRef.value.selectCell(0, 0);
+    visualizationRef.value.selectCell("module", 0, null);
   }
 };
 
@@ -1424,7 +1609,7 @@ watch(menuStore, () => {
                           />
                         </button>
                         <p class="actions-title actions-title--part">
-                          Сегмент №{{ doorIndex + 1 }}.{{ segmentIndex + 1 }}
+                          Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{ segmentIndex + 1 }}
                         </p>
                       </div>
 
@@ -1519,24 +1704,319 @@ watch(menuStore, () => {
           </div>
         </section>
 
+        <section class="actions-wrapper" v-if="mode === 'fillings'">
+          <div class="actions-header">
+            <div
+                :class="[
+              'actions-header--container',
+              { active: secIndex === selectedCell.sec },
+            ]"
+                v-for="(section, secIndex) in module.sections"
+                :key="secIndex"
+            >
+              <button
+                  v-if="module.sections.length > 1"
+                  class="actions-btn actions-icon"
+                  @click="deleteSection(secIndex)"
+              >
+                <img
+                    class="actions-icon--delete"
+                    src="/icons/delite.svg"
+                    alt=""
+                />
+              </button>
+              <p
+                  class="actions-title actions-title--part"
+                  @click="showCurrentCol(secIndex)"
+              >
+                {{ secIndex + 1 }} секция
+              </p>
+            </div>
+          </div>
+
+          <div
+              class="actions-container"
+              v-for="(section, secIndex) in module.sections"
+              :key="secIndex"
+          >
+            <div
+                class="actions-items--wrapper"
+                v-if="selectedCell.sec === secIndex"
+            >
+              <div class="actions-items--width">
+                <div class="actions-inputs">
+                  <p class="actions-title">Ширина</p>
+                  <div
+                      :class="['actions-input--container']"
+                  >
+                    <input
+                        type="number"
+                        :step="step"
+                        min="150"
+                        class="actions-input"
+                        :value="section.width"
+                        @input="
+                            debounce(() => updateSectionWidth(
+                              $event.target.value,
+                              secIndex
+                            ), 1000)
+                          "
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="actions-items--height">
+                <div class="actions-inputs">
+                  <p class="actions-title">
+                    Высота
+                  </p>
+                  <div
+                      :class="['actions-input--container']"
+                  >
+                    <input
+                        type="number"
+                        :step="step"
+                        min="150"
+                        class="actions-input"
+                        :value="section.height"
+                        disabled
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                  v-for="(cell, cellIndex) in section.cells"
+                  :key="cellIndex"
+                  :class="[
+                'actions-items--container',
+                {
+                  active:
+                    cellIndex === selectedCell.cell &&
+                    secIndex === selectedCell.sec,
+                },
+              ]"
+              >
+                <article class="actions-items actions-items--left">
+                  <div class="actions-items--left-wrapper">
+
+                    <div class="actions-items--title">
+                      <button
+                          v-if="section.cells.length > 1"
+                          class="actions-btn actions-icon"
+                          @click="deleteCell(cellIndex, secIndex)"
+                      >
+                        <img
+                            class="actions-icon--delete"
+                            src="/icons/delite.svg"
+                            alt=""
+                        />
+                      </button>
+                      <p class="actions-title actions-title--part">
+                        {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
+                      </p>
+                    </div>
+
+                    <div class="actions-items--width">
+                      <div class="actions-inputs">
+                        <p class="actions-title">Ширина</p>
+                        <div
+                            :class="['actions-input--container']"
+                        >
+                          <input
+                              type="number"
+                              :step="step"
+                              min="150"
+                              class="actions-input"
+                              :value="section.width"
+                              disabled
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="actions-items--height">
+                      <div class="actions-inputs">
+                        <p class="actions-title">
+                          Высота
+                        </p>
+                        <div
+                            :class="['actions-input--container']"
+                        >
+                          <input
+                              type="number"
+                              :step="step"
+                              min="150"
+                              class="actions-input"
+                              :value="cell.height"
+                              @input="
+                            debounce(() => updateCellHeight(
+                              $event.target.value,
+                              secIndex,
+                              cellIndex
+                            ), 1000)
+                          "
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </article>
+
+                <article class="actions-items actions-items--right">
+                  <div class="actions-items--right-items">
+                    <button
+                        :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                        @click="addCell(secIndex, cellIndex)"
+                    >
+                      Добавить ячейку
+                    </button>
+
+                    <button
+                        v-if="!cell.cellsRows?.length"
+                        :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                        @click="addRowCell(secIndex, cellIndex, 0)"
+                    >
+                      Верт. разделитель
+                    </button>
+                  </div>
+                </article>
+
+                <div
+                    v-for="(row, rowIndex) in cell.cellsRows"
+                    :key="rowIndex"
+                    :class="[
+                'actions-items--container',
+                {
+                  active:
+                    cellIndex === selectedCell.cell &&
+                    secIndex === selectedCell.sec && rowIndex === selectedCell.row,
+                },
+              ]"
+                >
+                  <article class="actions-items actions-items--left">
+                    <div class="actions-items--left-wrapper">
+
+                      <div class="actions-items--title">
+                        <button
+                            v-if="cell.cellsRows.length > 1"
+                            class="actions-btn actions-icon"
+                            @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
+                        >
+                          <img
+                              class="actions-icon--delete"
+                              src="/icons/delite.svg"
+                              alt=""
+                          />
+                        </button>
+                        <p class="actions-title actions-title--part">
+                          {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
+                        </p>
+                      </div>
+
+                      <div class="actions-items--width">
+                        <div class="actions-inputs">
+                          <p class="actions-title">Ширина</p>
+                          <div
+                              :class="['actions-input--container']"
+                          >
+                            <input
+                                type="number"
+                                :step="step"
+                                min="150"
+                                class="actions-input"
+                                :value="row.width"
+                                @input="
+                            debounce(() => updateCellRowWidth(
+                              $event.target.value,
+                              secIndex,
+                              cellIndex,
+                              rowIndex
+                            ), 1000)
+                          "
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </article>
+
+                  <article class="actions-items actions-items--right">
+                    <div class="actions-items--right-items">
+                      <button
+                          :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                          @click="addRowCell(secIndex, cellIndex, rowIndex)"
+                      >
+                        Верт. разделитель
+                      </button>
+                    </div>
+                  </article>
+
+                </div>
+
+              </div>
+            </div>
+
+            <article class="actions-items actions-items--right">
+              <div
+                  class="actions-items--right-items"
+                  v-if="secIndex == selectedCell.sec"
+              >
+                <button
+                    :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                    @click="addSection(secIndex)"
+                >
+                  Добавить секцию
+                </button>
+
+                <button
+                    v-if="!section.cells.length"
+                    :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                    @click="addCell(secIndex, 0)"
+                >
+                  Добавить ячейку
+                </button>
+              </div>
+            </article>
+
+          </div>
+        </section>
+
       </div>
 
       <div
           class="constructor2d-container constructor2d-container--right"
       >
-        <h1>Опции</h1>
+        <div
+            v-if="mode === 'fillings'"
+        >
+          <h1>Наполнение</h1>
 
-        <!--        <ProductOptions
-                    v-if="holeOptions.show"
-                    :holes="getHole"
-                    :step="step"
-                    @cut-addHole="addHole"
-                    @cut-deleteHole="deleteHole"
-                    @cut-updateHole="updateHole"
-                    @cut-toggleHoleOptions="toggleHoleOptions"
-                    @cut-changePositionX="changeHolePositionX"
-                    @cut-changePositionY="changeHolePositionY"
-                />-->
+          <ProductOptions
+              v-if="fillingsOptions.show"
+              :fillings="getFilling"
+              :step="step"
+              @product-addFilling="addFilling"
+              @product-deleteFilling="deleteFilling"
+              @product-updateFilling="updateFilling"
+              @product-toggleFillingOptions="toggleFillingOptions"
+              @product-changePositionY="changeFillingPositionY"
+          />
+        </div>
+
       </div>
     </div>
 

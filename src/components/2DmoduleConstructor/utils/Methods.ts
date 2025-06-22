@@ -924,6 +924,7 @@ class Section extends Helpers {
     let topRight = data.topRight ?? { type: 'none' };
     let defCellColor = data.type === "module" ? '#875003' : data.type === "fasade" ? '#1E90FF' : '#d2d0d7';
     let deffHighlightColor = data.type === "module" ? '#b86c02' : data.type === "fasade" ? '#80bfff' : '#ECEBF1';
+    let opacity = data.type === "fasade" ? 0.8 : 1;
 
     if(data.error) {
       defCellColor = '#ad0202'
@@ -944,8 +945,8 @@ class Section extends Helpers {
     }
 
     // Отрисовываем пути на графике
-    this.cellGraphics.path(cellPath).fill(defCellColor);
-    this.highlightGraphics.path(highlightPath).fill(deffHighlightColor);
+    this.cellGraphics.path(cellPath).fill({color: defCellColor, alpha: opacity});
+    this.highlightGraphics.path(highlightPath).fill({color: deffHighlightColor, alpha: opacity});
 
     // Отрисовываем размеры
     if(this._drawDimensions){
@@ -1085,7 +1086,7 @@ class Section extends Helpers {
     const textStyle = new TextStyle({
       fontFamily: 'Arial',
       fontSize: 12,
-      fill: '#5D6069',
+      fill: '#1a1a1e',
     });
 
     // Метка ширины (по центру сверху)
