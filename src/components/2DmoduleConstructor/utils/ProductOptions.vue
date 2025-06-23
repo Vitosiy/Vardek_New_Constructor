@@ -2,6 +2,9 @@
 // @ts-nocheck
 import { ref, toRefs } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
+import MainSelect from "@/components/ui/selects/MainSelect.vue";
+import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
+import { _URL } from "@/types/constants";
 
 const props = defineProps({
   fillings: {
@@ -84,175 +87,38 @@ const toggleFillingOptions = () => {
 <template>
   <div class="splitter-container--product">
 
-    <div class="splitter-container--product-header">
-      <h3 class="splitter-title">Вставка</h3>
-      <button class="actions-btn actions-icon" @click="toggleFillingOptions">
-        <img class="actions-icon--close" src="/icons/close.svg" alt="" />
-      </button>
-    </div>
-
-    <div class="splitter-container--product-options">
-
-      <div class="splitter-container--product-options--add">
-        <button
-            class="actions-btn actions-icon"
-            @click="addFilling('rect')"
-            v-if="fillings.length < 2"
-        >
-          <img class="actions-icon--add" src="/icons/add.svg" alt="" />
-        </button>
-        <p>Ящик</p>
-      </div>
-
-    </div>
-
     <div class="splitter-container--product-data" v-if="props.fillings">
       <div
-          v-for="(filling, key) in fillings"
-          :key="key + filling.type"
+          v-for="(fillingGroup, key) in fillings"
+          :key="key + fillingGroup.groupName"
           class="splitter-container--product-items"
       >
         <div class="splitter-container--product-header">
-          <h3 class="splitter-title">{{ filling.lable }}</h3>
-          <button class="actions-btn actions-icon" @click="deliteFilling(key)">
-            <img class="actions-icon--delite" src="/icons/delite.svg" alt="" />
-          </button>
-        </div>
-        <div class="splitter-container--product-position">
-          <div class="actions-inputs" v-if="filling.width">
-            <p class="actions-title">Ширина</p>
-            <div class="actions-input--container">
-              <MainInput
-                  :type="'number'"
-                  :step="10"
-                  :min="150"
-                  :max="filling.Mwidth"
-                  :inputClass="'actions-input'"
-                  v-model="filling.width"
-                  @update:modelValue="
-                  (newValue) => updateFilling(newValue, key, 'width', 'rect')
-                "
-              />
-            </div>
-          </div>
-          <div class="actions-inputs" v-if="filling.height">
-            <p class="actions-title">Высота</p>
-            <div class="actions-input--container">
-              <MainInput
-                  :type="'number'"
-                  :step="10"
-                  :min="150"
-                  :max="filling.Mheight"
-                  :inputClass="'actions-input'"
-                  v-model="filling.height"
-                  @update:modelValue="
-                  (newValue) => updateFilling(newValue, key, 'height', 'rect')
-                "
-              />
-            </div>
-          </div>
+          <h3 class="splitter-title">{{ fillingGroup.groupName }}</h3>
         </div>
 
-        <div class="splitter-container--product-actions">
-          <div class="actions-inputs width-max" v-if="filling.radius">
-            <p class="actions-title">Позиция</p>
-
-            <div class="splitter-container--product-position">
-              <div class="actions-input--container">
-                <input
-                    type="number"
-                    step="1"
-                    class="actions-input"
-                    :value="filling.distances.top"
-                    @input="
-                    changeFillingPositionY({
-                      event: $event,
-                      key: key,
-                      valueType: 'radius',
-                      fillingType: 'circle',
-                      filling: filling,
-                      direction: 'top',
-                    })
-                  "
-                />
-              </div>
-
-              <img
-                  class="actions-icon--position"
-                  src="/icons/position-y.svg"
-                  alt=""
-              />
-
-              <div class="actions-input--container">
-                <input
-                    type="number"
-                    step="1"
-                    class="actions-input"
-                    :value="filling.distances.bottom"
-                    @input="
-                    changeFillingPositionY({
-                      event: $event,
-                      key: key,
-                      valueType: 'radius',
-                      fillingType: 'circle',
-                      filling: filling,
-                      direction: 'bottom',
-                    })
-                  "
-                />
-              </div>
-            </div>
+        <div
+            v-for="(filling, key) in fillingGroup.items"
+            :key="key + filling.NAME"
+            class="splitter-container--product-items"
+            @click="addFilling(filling)"
+        >
+          <div class="splitter-container--product-header">
+            <h3 class="splitter-title">{{ filling.NAME }}</h3>
           </div>
 
-          <div class="actions-inputs width-max" v-else>
-            <p class="actions-title">Позиция</p>
-            <div class="splitter-container--product-position">
-              <div class="actions-input--container">
-                <input
-                    type="number"
-                    step="1"
-                    class="actions-input"
-                    :value="filling.distances.top"
-                    @input="
-                    changeFillingPositionY({
-                      event: $event,
-                      key: key,
-                      valueType: 'height',
-                      fillingType: 'rect',
-                      filling: filling,
-                      direction: 'top',
-                    })
-                  "
-                />
-              </div>
+<!--          <div class="product_element_head">{{filling.NAME}}<span
+              v-if="filling.DATA_PETROVICH"> - артикул {{app.article[filling.DATA_PETROVICH].PROPERTIES.ARTICLE.VALUE}}</span>
+          </div>-->
 
-              <img
-                  class="actions-icon--position"
-                  src="/icons/position-y.svg"
-                  alt=""
-              />
-
-              <div class="actions-input--container">
-                <input
-                    type="number"
-                    step="1"
-                    class="actions-input"
-                    :value="filling.distances.bottom"
-                    @input="
-                    changeFillingPositionY({
-                      event: $event,
-                      key: key,
-                      valueType: 'height',
-                      fillingType: 'rect',
-                      filling: filling,
-                      direction: 'bottom',
-                    })
-                  "
-                />
-              </div>
-            </div>
+          <div class="product_element_img">
+            <img
+                :src="_URL + filling.PREVIEW_PICTURE"
+                 alt="{{filling.NAME}}"/>
           </div>
+
         </div>
+
       </div>
     </div>
   </div>
@@ -266,7 +132,7 @@ const toggleFillingOptions = () => {
       flex-direction: column;
       gap: 0.5rem;
       color: #a3a9b5;
-      overflow: hidden;
+      overflow-y: scroll;
 
       &-icon {
         cursor: pointer;
@@ -331,6 +197,39 @@ const toggleFillingOptions = () => {
         gap: 1rem;
         align-items: center;
       }
+
+      .product_element {
+        cursor: pointer;
+        float: left;
+        height: 160px;
+        width: 47%;
+        margin: 0 3px 4px;
+        border: 1px solid rgba(153, 153, 153, 0.8);
+        border-radius: 2px;
+        position: relative;
+      }
+      .product_element:hover {
+        border: 1px solid rgba(114, 114, 114, 0.8);
+      }
+      .product_element .product_element_head {
+        position: relative;
+        z-index: 100;
+        display: block;
+        width: 100%;
+        padding: 7px;
+        line-height: 13px;
+        font-size: 12px;
+        background: rgba(114, 114, 114, 0.3);
+      }
+      .product_element .product_element_img {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+      }
+
+
     }
   }
 }

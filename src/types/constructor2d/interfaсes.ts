@@ -96,10 +96,13 @@ export interface HoverPointObject {
 export interface FillingObject {
   product: number;
   id: number;
+  name: string;
+  image: string;
   type: "shelf" | "drawer" | "any";
-  position: THREE.Vector3;
+  position: number;
   size: THREE.Vector3;
   color: number;
+  fasade?: FasadeObject;
 }
 
 export interface FasadeObject {

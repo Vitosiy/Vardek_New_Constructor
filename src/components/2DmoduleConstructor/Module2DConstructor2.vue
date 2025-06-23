@@ -31,6 +31,7 @@ import {
   FasadeMaterial
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
+import {useAppData} from "@/store/appliction/useAppData.ts";
 
 
 const eventBus = useEventBus();
@@ -40,6 +41,8 @@ const emit = defineEmits(["save-table-data"]);
 
 let shapeAdjuster = null;
 const menuStore = useMenuStore();
+const APP = useAppData();
+
 const productData = ref(false)
 const builder = THREETypes.TUniversalGeometryBuilder
 
@@ -199,23 +202,27 @@ const debounce = (callback, wait) => {
 
 //#region Наполнение
 
-const fillingsOptions = ref({ show: false, section: { section: 0, col: 0, row: null } });
+const fillingsOptions = ref({show: false, section: selectedFilling});
 
 const getFilling = computed(() => {
-  const secNdx = selectedCell.value.sec;
-  const colNdx = selectedCell.value.cell;
-  const rowNdx = selectedCell.value.row;
+  const objectsMatrix = []
+  const projectData = APP.getAppData
 
-  const curRow = rowNdx !== null ? module.value.sections[secNdx].cells[colNdx].cellsRows?.[rowNdx] :
-      colNdx ? module.value.sections[secNdx].cells[colNdx] :
-          secNdx ? module.value.sections[secNdx] :
-              module.value;
+  const productInfo = projectData.CATALOG.PRODUCTS[productData.value.userData.globalData]
+  const fillingsGroups = Object.keys(productInfo.FILLING_SECTION)
 
-  if (curRow.fillings?.length > 0) {
-    return curRow.fillings;
-  }
+  fillingsGroups.map(groupID => {
+    let fillingsGroup = projectData.CATALOG.SECTIONS[groupID]
 
-  return [];
+    objectsMatrix.push({
+      groupName: fillingsGroup.NAME,
+      items: fillingsGroup.PRODUCTS.map(item => {
+                  return projectData.CATALOG.PRODUCTS[item]
+              }).filter(item => item)
+    })
+  })
+
+  return objectsMatrix;
 });
 
 const createFillingDataToCheck = (type, sec, cell, row) => {
@@ -274,7 +281,7 @@ const addFilling = (type) => {
 
   if (row)
     row.fillings.push(preperedData);
-  else if(cell)
+  else if (cell)
     cell.fillings.push(preperedData);
   else
     sec.fillings.push(preperedData);
@@ -375,6 +382,25 @@ const changeFillingPositionY = (event, key, type, fillingType, value) => {
 
   visualizationRef.value.renderGrid();
 };
+
+const showFillingOptions = (secIndex, cellIndex = null, rowIndex = null, itemIndex = 0) => {
+  visualizationRef.value.selectCell("fillings", secIndex, cellIndex, true, rowIndex, itemIndex);
+
+  fillingsOptions.value.show = true;
+  fillingsOptions.value.section.sec = cellIndex;
+  fillingsOptions.value.section.cell = cellIndex;
+  fillingsOptions.value.section.row = rowIndex;
+  fillingsOptions.value.section.item = itemIndex;
+};
+
+const getFillingOptionsActive = computed(() => {
+  return (sec, cell, row, item) => {
+    if (!isMounted.value)
+      return;
+    const { section, show } = fillingsOptions.value;
+    return { active: sec === section.sec && cell === section.cell && row === section.row && item === section.item && show };
+  };
+});
 
 //#endregion
 
@@ -543,8 +569,7 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 
     if (prevCell) {
       prevCell.height += delta
-    }
-    else if (nextCell) {
+    } else if (nextCell) {
       nextCell.height += delta
     }
 
@@ -555,13 +580,13 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
   module.value.sections.forEach((section, secIndex) => {
-    if(section.fasades?.[0]) {
+    if (section.fasades?.[0]) {
       const countDoors = section.fasades.length;
 
       const correctSectionFasadeWidth =
           module.value.sections.length > 1 ?
-            secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
-              section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
+              secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
+                  section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
               module.value.width - 4;
 
       const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
@@ -638,7 +663,8 @@ const updateTotalWidth = (value) => {
 
 const showCurrentCol = (secIndex) => {
   selectedCell.value = {sec: secIndex, cell: null, row: null};
-  visualizationRef.value.selectCell("module", secIndex, null, false);
+  visualizationRef.value.selectCell("module", secIndex, null);
+  fillingsOptions.value.show = false;
 };
 
 const addSection = (secIndex) => {
@@ -968,12 +994,13 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 };
 
 const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null) => {
-  switch (type){
+  switch (type) {
     case "fasades":
       selectedFasade.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
       break;
     case "fillings":
       selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
+      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
       break;
     default:
       selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
@@ -1035,7 +1062,7 @@ const reset = (reset = false) => {
   }
 
   PROPS.CONFIG.MODULEGRID = module.value = _module
-
+  fillingsOptions.value = { show: false, section: selectedFilling };
   updateFasades();
 
   visualizationRef.value.renderGrid();
@@ -1714,17 +1741,6 @@ watch(menuStore, () => {
                 v-for="(section, secIndex) in module.sections"
                 :key="secIndex"
             >
-              <button
-                  v-if="module.sections.length > 1"
-                  class="actions-btn actions-icon"
-                  @click="deleteSection(secIndex)"
-              >
-                <img
-                    class="actions-icon--delete"
-                    src="/icons/delite.svg"
-                    alt=""
-                />
-              </button>
               <p
                   class="actions-title actions-title--part"
                   @click="showCurrentCol(secIndex)"
@@ -1743,47 +1759,70 @@ watch(menuStore, () => {
                 class="actions-items--wrapper"
                 v-if="selectedCell.sec === secIndex"
             >
-              <div class="actions-items--width">
-                <div class="actions-inputs">
-                  <p class="actions-title">Ширина</p>
-                  <div
-                      :class="['actions-input--container']"
-                  >
-                    <input
-                        type="number"
-                        :step="step"
-                        min="150"
-                        class="actions-input"
-                        :value="section.width"
-                        @input="
-                            debounce(() => updateSectionWidth(
-                              $event.target.value,
-                              secIndex
-                            ), 1000)
-                          "
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div class="actions-items--height">
-                <div class="actions-inputs">
-                  <p class="actions-title">
-                    Высота
-                  </p>
-                  <div
-                      :class="['actions-input--container']"
-                  >
-                    <input
-                        type="number"
-                        :step="step"
-                        min="150"
-                        class="actions-input"
-                        :value="section.height"
-                        disabled
-                    />
+              <div
+                  v-for="(filling, fillingIndex) in section.fillings"
+                  :key="fillingIndex"
+                  :class="[
+                'actions-items--container',
+                {
+                  active:
+                    secIndex === selectedFilling.sec &&
+                    fillingIndex === selectedFilling.item
+                },
+              ]"
+              >
+                <article class="actions-items actions-items--left">
+                  <div class="actions-items--left-wrapper">
+
+                    <div class="actions-items--title">
+                      <p class="actions-title actions-title--part">
+                        {{ filling.name }} №{{ filling.id }}
+                      </p>
+                    </div>
+
+                    <div class="actions-items--width">
+                      <div class="actions-inputs">
+                        <p class="actions-title">Позиция</p>
+                        <div
+                            :class="['actions-input--container']"
+                        >
+                          <input
+                              type="number"
+                              :step="1"
+                              min="0"
+                              class="actions-input"
+                              :value="filling.position"
+                              disabled
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                        v-if="filling.fasade"
+                        class="actions-items--height">
+                      <div class="actions-inputs">
+                        <p class="actions-title">
+                          Высота фасада
+                        </p>
+                        <div
+                            :class="['actions-input--container']"
+                        >
+                          <input
+                              type="number"
+                              :step="step"
+                              min="150"
+                              class="actions-input"
+                              :value="filling.fasade.height"
+                              disabled
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
-                </div>
+                </article>
               </div>
 
               <div
@@ -1798,95 +1837,78 @@ watch(menuStore, () => {
                 },
               ]"
               >
-                <article class="actions-items actions-items--left">
-                  <div class="actions-items--left-wrapper">
+                <div class="actions-items--title">
+                  <p class="actions-title actions-title--part">
+                    {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
+                  </p>
+                </div>
 
-                    <div class="actions-items--title">
-                      <button
-                          v-if="section.cells.length > 1"
-                          class="actions-btn actions-icon"
-                          @click="deleteCell(cellIndex, secIndex)"
-                      >
-                        <img
-                            class="actions-icon--delete"
-                            src="/icons/delite.svg"
-                            alt=""
-                        />
-                      </button>
-                      <p class="actions-title actions-title--part">
-                        {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
-                      </p>
-                    </div>
+                <div
+                    v-for="(filling, fillingIndex) in cell.fillings"
+                    :key="fillingIndex"
+                    :class="[
+                'actions-items--container',
+                {
+                  active:
+                    secIndex === selectedFilling.sec &&
+                    cellIndex === selectedFilling.cell &&
+                    fillingIndex === selectedFilling.item
+                },
+              ]"
+                >
+                  <article class="actions-items actions-items--left">
+                    <div class="actions-items--left-wrapper">
 
-                    <div class="actions-items--width">
-                      <div class="actions-inputs">
-                        <p class="actions-title">Ширина</p>
-                        <div
-                            :class="['actions-input--container']"
-                        >
-                          <input
-                              type="number"
-                              :step="step"
-                              min="150"
-                              class="actions-input"
-                              :value="section.width"
-                              disabled
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="actions-items--height">
-                      <div class="actions-inputs">
-                        <p class="actions-title">
-                          Высота
+                      <div class="actions-items--title">
+                        <p class="actions-title actions-title--part">
+                          {{ filling.name }} №{{ filling.id }}
                         </p>
-                        <div
-                            :class="['actions-input--container']"
-                        >
-                          <input
-                              type="number"
-                              :step="step"
-                              min="150"
-                              class="actions-input"
-                              :value="cell.height"
-                              @input="
-                            debounce(() => updateCellHeight(
-                              $event.target.value,
-                              secIndex,
-                              cellIndex
-                            ), 1000)
-                          "
-                          />
+                      </div>
+
+                      <div class="actions-items--width">
+                        <div class="actions-inputs">
+                          <p class="actions-title">Позиция</p>
+                          <div
+                              :class="['actions-input--container']"
+                          >
+                            <input
+                                type="number"
+                                :step="1"
+                                min="0"
+                                class="actions-input"
+                                :value="filling.position"
+                                disabled
+                            />
+                          </div>
                         </div>
                       </div>
+
+                      <div
+                          v-if="filling.fasade"
+                          class="actions-items--height">
+                        <div class="actions-inputs">
+                          <p class="actions-title">
+                            Высота фасада
+                          </p>
+                          <div
+                              :class="['actions-input--container']"
+                          >
+                            <input
+                                type="number"
+                                :step="step"
+                                min="150"
+                                class="actions-input"
+                                :value="filling.fasade.height"
+                                disabled
+                            />
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
+                  </article>
 
-                  </div>
-                </article>
-
-                <article class="actions-items actions-items--right">
-                  <div class="actions-items--right-items">
-                    <button
-                        :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                        @click="addCell(secIndex, cellIndex)"
-                    >
-                      Добавить ячейку
-                    </button>
-
-                    <button
-                        v-if="!cell.cellsRows?.length"
-                        :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                        @click="addRowCell(secIndex, cellIndex, 0)"
-                    >
-                      Верт. разделитель
-                    </button>
-                  </div>
-                </article>
+                </div>
 
                 <div
                     v-for="(row, rowIndex) in cell.cellsRows"
@@ -1900,98 +1922,85 @@ watch(menuStore, () => {
                 },
               ]"
                 >
-                  <article class="actions-items actions-items--left">
-                    <div class="actions-items--left-wrapper">
+                  <div class="actions-items--title">
+                    <p class="actions-title actions-title--part">
+                      {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
+                    </p>
+                  </div>
 
-                      <div class="actions-items--title">
-                        <button
-                            v-if="cell.cellsRows.length > 1"
-                            class="actions-btn actions-icon"
-                            @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
-                        >
-                          <img
-                              class="actions-icon--delete"
-                              src="/icons/delite.svg"
-                              alt=""
-                          />
-                        </button>
-                        <p class="actions-title actions-title--part">
-                          {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
-                        </p>
-                      </div>
+                  <div
+                      v-for="(filling, fillingIndex) in row.fillings"
+                      :key="fillingIndex"
+                      :class="[
+                      'actions-items--container',
+                      {
+                        active:
+                          secIndex === selectedFilling.sec &&
+                          cellIndex === selectedFilling.cell &&
+                          rowIndex === selectedFilling.row &&
+                          fillingIndex === selectedFilling.item
+                      },
+                    ]"
+                  >
 
-                      <div class="actions-items--width">
-                        <div class="actions-inputs">
-                          <p class="actions-title">Ширина</p>
-                          <div
-                              :class="['actions-input--container']"
-                          >
-                            <input
-                                type="number"
-                                :step="step"
-                                min="150"
-                                class="actions-input"
-                                :value="row.width"
-                                @input="
-                            debounce(() => updateCellRowWidth(
-                              $event.target.value,
-                              secIndex,
-                              cellIndex,
-                              rowIndex
-                            ), 1000)
-                          "
-                            />
+                    <article class="actions-items actions-items--left">
+                      <div class="actions-items--left-wrapper">
+
+                        <div class="actions-items--title">
+                          <p class="actions-title actions-title--part">
+                            {{ filling.name }} №{{ filling.id }}
+                          </p>
+                        </div>
+
+                        <div class="actions-items--width">
+                          <div class="actions-inputs">
+                            <p class="actions-title">Позиция</p>
+                            <div
+                                :class="['actions-input--container']"
+                            >
+                              <input
+                                  type="number"
+                                  :step="1"
+                                  min="0"
+                                  class="actions-input"
+                                  :value="filling.position"
+                                  disabled
+                              />
+                            </div>
                           </div>
                         </div>
+
+                        <div
+                            v-if="filling.fasade"
+                            class="actions-items--height">
+                          <div class="actions-inputs">
+                            <p class="actions-title">
+                              Высота фасада
+                            </p>
+                            <div
+                                :class="['actions-input--container']"
+                            >
+                              <input
+                                  type="number"
+                                  :step="step"
+                                  min="150"
+                                  class="actions-input"
+                                  :value="filling.fasade.height"
+                                  disabled
+                              />
+                            </div>
+                          </div>
+                        </div>
+
                       </div>
+                    </article>
 
-                    </div>
-                  </article>
-
-                  <article class="actions-items actions-items--right">
-                    <div class="actions-items--right-items">
-                      <button
-                          :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                          @click="addRowCell(secIndex, cellIndex, rowIndex)"
-                      >
-                        Верт. разделитель
-                      </button>
-                    </div>
-                  </article>
-
+                  </div>
                 </div>
 
               </div>
+
             </div>
-
-            <article class="actions-items actions-items--right">
-              <div
-                  class="actions-items--right-items"
-                  v-if="secIndex == selectedCell.sec"
-              >
-                <button
-                    :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                    @click="addSection(secIndex)"
-                >
-                  Добавить секцию
-                </button>
-
-                <button
-                    v-if="!section.cells.length"
-                    :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                    @click="addCell(secIndex, 0)"
-                >
-                  Добавить ячейку
-                </button>
-              </div>
-            </article>
-
           </div>
         </section>
 
@@ -2006,7 +2015,6 @@ watch(menuStore, () => {
           <h1>Наполнение</h1>
 
           <ProductOptions
-              v-if="fillingsOptions.show"
               :fillings="getFilling"
               :step="step"
               @product-addFilling="addFilling"
@@ -2015,6 +2023,7 @@ watch(menuStore, () => {
               @product-toggleFillingOptions="toggleFillingOptions"
               @product-changePositionY="changeFillingPositionY"
           />
+<!--          v-if="fillingsOptions.show"-->
         </div>
 
       </div>
