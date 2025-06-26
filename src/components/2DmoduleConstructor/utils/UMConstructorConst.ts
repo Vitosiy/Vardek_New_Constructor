@@ -40,7 +40,7 @@ export const UI_PARAMS = {
         { ID: 3966035, NAME: "Кромка правый бок", pos: 'CENTER', value: false },
         { ID: 3966036, NAME: "Кромка левый бок", pos: 'CENTER', value: false },
     ],
-    SECTOR_PADDING: 30,
+    SECTOR_PADDING: 0,
     DEFAULT: [
         [
             {

@@ -99,8 +99,10 @@ export interface FillingObject {
   name: string;
   image: string;
   type: "shelf" | "drawer" | "any";
-  position: number;
+  position:  THREE.Vector2;
   size: THREE.Vector3;
+  width: number,
+  height: number,
   color: number;
   fasade?: FasadeObject;
 }
@@ -124,6 +126,25 @@ export interface FasadeMaterial {
   TYPE?: number;
   WINDOW?: number;
   ALUM?: number;
+}
+
+export enum MANUFACTURER {
+  innotech = 31,
+  иннотех = 31,
+  avantech = 29.25,
+  авантех = 29.25,
+  flowbox = 25,
+  флоубокс = 25,
+}
+
+export interface DrawerFasadeObject extends FasadeObject {
+  manufacturerOffset: MANUFACTURER;
+  minHeight: number;
+  maxHeight: number;
+  item: number;
+  sec: number | null;
+  cell?: number | null;
+  row?: number | null;
 }
 
 export interface GridCellsRow {
@@ -155,6 +176,7 @@ export interface GridSection {
 export interface GridModule {
   width: number;
   height: number;
+  depth?: number;
   moduleThickness: number;
   sections: GridSection[];
   type: "module";

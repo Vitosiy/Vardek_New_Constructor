@@ -1,34 +1,24 @@
 <script setup lang="ts">
 // @ts-nocheck
 import {useEventBus} from "@/store/appliction/useEventBus";
-import {
-  onMounted,
-  onBeforeMount,
-  onBeforeUnmount,
-  reactive,
-  computed,
-  ref,
-  toRaw,
-  watch,
-  defineExpose,
-  nextTick,
-} from "vue";
+import {computed, defineExpose, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
 import {ShapeAdjuster} from "./utils/Methods";
-import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
 import ProductOptions from "./utils/ProductOptions.vue";
 import {useMenuStore} from "@/store/appStore/useMenuStore";
 import * as THREETypes from "@/types/types";
 import {
-  GridModule,
+  DrawerFasadeObject,
+  FasadeMaterial,
+  FasadeObject,
   FillingObject,
   GridCell,
-  GridSection,
   GridCellsRow,
-  FasadeObject,
-  FasadeMaterial
+  GridModule,
+  GridSection,
+  MANUFACTURER
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
@@ -61,6 +51,11 @@ const isMounted = ref(false);
 const mode = ref<constructorMode>('module');
 const visualizationRef = ref(null);
 const serviseData = ref([]);
+
+const totalHeight = ref(0);
+const totalWidth = ref(0);
+const totalDepth = ref(0);
+
 const module = computed(() => {
 
   if (productData.value) {
@@ -68,6 +63,7 @@ const module = computed(() => {
     if (!PROPS.CONFIG.MODULEGRID) {
       let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
       let FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
+      totalDepth.value = PROPS.CONFIG.SIZE.depth
 
       let section: GridSection = {
         number: 1,
@@ -94,6 +90,7 @@ const module = computed(() => {
       let _module: GridModule = {
         width: totalWidth,
         height: totalHeight,
+        depth: totalDepth,
         moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
         horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
         sections: [section],
@@ -109,8 +106,7 @@ const module = computed(() => {
     return PROPS.CONFIG.MODULEGRID
   }
 });
-const totalHeight = ref(0);
-const totalWidth = ref(0);
+
 
 const getMinHeight = computed(() => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
@@ -225,66 +221,92 @@ const getFilling = computed(() => {
   return objectsMatrix;
 });
 
-const createFillingDataToCheck = (type, sec, cell, row) => {
-  let width, height, radius, tempHole;
+const createFillingDataToCheck = (product, sec, cell, row) => {
 
-  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+  let currentSpace = row || cell || sec;
+  let width = product.width
+  let height = product.height
 
-  if (extremum > 600) extremum = 300;
-
-  width = extremum;
-  height = extremum;
-
-  switch (type) {
-    case "rect":
-      tempHole = {
-        type: "rect",
-        width,
-        height,
-      };
-      break;
+  if (height > currentSpace.height || product.ACTUAL_DEPT > totalDepth.value) {
+    return false
   }
 
-  return visualizationRef.value.checkPositionHoleToCreate(tempHole);
+  if(width !== currentSpace.width)
+    width = currentSpace.width;
+
+  let tempFilling = {
+    width,
+    height,
+    data: product,
+  };
+
+  return visualizationRef.value.checkPositionFillingToCreate(tempFilling);
 };
 
-const addFilling = (type) => {
-  const sec = module.value[selectedCell.value.sec];
+const addFilling = (type, product, oldFillingObject = false) => {
+  const sec = module.value.sections[selectedCell.value.sec];
   const cell = sec.cells?.[selectedCell.value.cell];
   const row = cell?.cellsRows?.[selectedCell.value.row];
 
-  const startFillingData = createFillingDataToCheck(type, sec, cell, row);
+  const startFillingData = createFillingDataToCheck(product, sec, cell, row);
 
   if (!startFillingData) {
     alert("Позиция не найдена");
     return;
   }
 
-  if (selectedCell.value.sec === null || selectedCell.value.cell === null) {
+  if (!row && !cell && !sec) {
     alert("Пожалуйста, выберите секцию для добавления наполнения");
     return;
   }
 
-  let preperedData;
+  let currentFillingsArray = row || cell || sec
 
-  switch (type) {
-    case "rect":
-      preperedData = {
-        ...startFillingData,
-        lable: "Прямоугольный разрез",
-        fillingId: row.fillings.length,
-        Mwidth: 600,
-        Mheight: 600,
-      };
-      break;
+  if(!currentFillingsArray.fillings)
+    currentFillingsArray.fillings = []
+  currentFillingsArray = currentFillingsArray.fillings
+
+  let fillingObject = <FillingObject>{
+    product: product.ID,
+    id: currentFillingsArray.length + 1,
+    name: product.NAME,
+    image: product.PREVIEW_PICTURE,
+    type: "any",
+    position: new THREE.Vector2(startFillingData.x, startFillingData.y),
+    size: new THREE.Vector3(startFillingData.width, startFillingData.height, product.depth),
+    width: startFillingData.width,
+    height: startFillingData.height,
+    color: productData.value.userData.PROPS.CONFIG.MODULE_COLOR,
+  };
+
+  currentFillingsArray.push(fillingObject);
+
+  if (product.MIN_FASADE_SIZE) {
+    let baseFasade = sec.fasades[0][0] || module.value.sections[0].fasades[0][0]
+    let manufacturer_name = product.EN_NAME?.toLowerCase().split(/\s|,/).shift() || product.NAME?.toLowerCase().split(/\s|,/).shift();
+    let manufacturerOffset = MANUFACTURER[manufacturer_name]
+
+    fillingObject.type = "drawer"
+    fillingObject.fasade = <DrawerFasadeObject> {
+      id: 1,
+      width: baseFasade.width,
+      height: product.MIN_FASADE_SIZE,
+      minHeight: product.MIN_FASADE_SIZE,
+      maxHeight: product.MAX_FASADE_SIZE,
+      position: new THREE.Vector2(baseFasade.position.x, startFillingData.y - manufacturerOffset),
+      material: <FasadeMaterial>{
+        ...baseFasade.material,
+      },
+      type: "fasade",
+      manufacturerOffset,
+      item: currentFillingsArray.length - 1,
+      sec: selectedCell.value.sec || null,
+      cell: selectedCell.value.cell || null,
+      row: selectedCell.value.row || null,
+    }
+
+    updateFasades()
   }
-
-  if (row)
-    row.fillings.push(preperedData);
-  else if (cell)
-    cell.fillings.push(preperedData);
-  else
-    sec.fillings.push(preperedData);
 
   // // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -301,6 +323,7 @@ const deleteFilling = (ndx) => {
     return index !== ndx;
   });
 
+  updateFasades()
   visualizationRef.value.renderGrid();
 };
 
@@ -350,32 +373,34 @@ const toggleFillingOptions = (colIndex, rowIndex) => {
   fillingsOptions.value.show = !fillingsOptions.value.show;
 };
 
-const changeFillingPositionY = (event, key, type, fillingType, value) => {
+const changeFillingPositionY = (event, key, filling, value) => {
 
   const gridCopy = Object.assign({}, module.value);
 
   const sec = gridCopy.sections[selectedCell.value.sec];
   const currentColl = sec.cells?.[selectedCell.value.cell];
-  const currentRow = currentColl?.cellsRows?.[selectedCell.value.row];
+  const currentRow = currentColl?.cellsRows?.[selectedCell.value.row] || currentColl || sec;
 
   const currentfilling = currentRow.fillings[key];
+  const prevValue = currentfilling.position.y; //Предыдущее значение
 
-  const prevValue = currentRow.fillings[key].y; //Предыдущее значение
-
-  const newValue = prevValue + value;
+  let delta = +value - currentfilling.distances.bottom
+  delta = visualizationRef.value.getPixelHeight(delta)
+  const newValue = prevValue + delta;
 
   const fillingData = JSON.parse(JSON.stringify(currentfilling));
-  fillingData.y = newValue;
+  fillingData.position.y = newValue;
 
   const pixiSector = currentRow.sector;
 
   // Проверяем коллизию
-  const check = shapeAdjuster.checkToCollision(pixiSector, fillingType, fillingData);
+  const check = shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
 
   if (check) {
-    currentfilling.y = newValue;
+    currentfilling.position.y = newValue;
+    currentfilling.distances.bottom = +value;
   } else {
-    currentfilling.y = prevValue;
+    currentfilling.position.y = prevValue;
   }
 
   module.value = gridCopy;
@@ -575,11 +600,15 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 
   }
   module.value = clone;
+
+  visualizationRef.value.renderGrid();
+
 };
 
 const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
   module.value.sections.forEach((section, secIndex) => {
+    const drawersFasades = []
     if (section.fasades?.[0]) {
       const countDoors = section.fasades.length;
 
@@ -661,6 +690,16 @@ const updateTotalWidth = (value) => {
   }, 1000)
 };
 
+const updateTotalDepth = (value) => {
+  debounce(() => {
+    totalDepth.value = parseInt(value)
+    const PROPS = productData.value.userData.PROPS;
+
+    PROPS.CONFIG.SIZE.depth = parseInt(value);
+    reset();
+  }, 1000)
+};
+
 const showCurrentCol = (secIndex) => {
   selectedCell.value = {sec: secIndex, cell: null, row: null};
   visualizationRef.value.selectCell("module", secIndex, null);
@@ -699,7 +738,7 @@ const addSection = (secIndex) => {
   console.log(module.value.sections, "55555");
 };
 
-const addCell = (secIndex, cellIndex = 0) => {
+const addCell = (secIndex, cellIndex = null) => {
   selectedCell.value.sec = secIndex;
   selectedCell.value.cell = cellIndex;
   visualizationRef.value.selectCell("module", secIndex, cellIndex, true);
@@ -730,7 +769,7 @@ const addCell = (secIndex, cellIndex = 0) => {
   cell.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  module.value.sections[secIndex].cells.splice(cellIndex, 0, {
+  module.value.sections[secIndex].cells.splice(cellIndex || 0, 0, {
     ...cell,
     number: cell.number + 1,
   });
@@ -798,7 +837,7 @@ const updateSectionWidth = (value, secIndex) => {
   const clone = Object.assign({}, module.value);
   if (adjustedValue) {
     let curSection = clone.sections[secIndex]
-    let nextSection = clone.sections[secIndex + 1]
+    let nextSection = clone.sections[secIndex + 1] || clone.sections[secIndex - 1]
     let delta = curSection.width - adjustedValue
 
     curSection.width = adjustedValue
@@ -826,6 +865,7 @@ const updateSectionWidth = (value, secIndex) => {
   }
   module.value = clone;
   updateFasades();
+  visualizationRef.value.renderGrid();
 
 };
 
@@ -848,7 +888,7 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
   const clone = Object.assign({}, module.value);
   if (adjustedValue) {
     let curCell = clone.sections[secIndex].cells[cellIndex]
-    let nextCell = clone.sections[secIndex].cells[cellIndex + 1]
+    let nextCell = clone.sections[secIndex].cells[cellIndex + 1] || clone.sections[secIndex].cells[cellIndex - 1]
     let delta = curCell.height - adjustedValue
 
     curCell.height = adjustedValue
@@ -864,6 +904,8 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
     }
   }
   module.value = clone;
+  visualizationRef.value.renderGrid();
+
 };
 
 const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
@@ -887,7 +929,8 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
   const clone = Object.assign({}, module.value);
   if (adjustedValue) {
     let curRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex]
-    let nextRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex + 1]
+    let nextRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex + 1] ||
+        clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex - 1]
     let delta = curRow.width - adjustedValue
 
     curRow.width = adjustedValue
@@ -897,6 +940,8 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
     }
   }
   module.value = clone;
+  visualizationRef.value.renderGrid();
+
 };
 
 const deleteSection = (secIndex) => {
@@ -1059,6 +1104,7 @@ const reset = (reset = false) => {
     ...module.value,
     width: totalWidth,
     height: totalHeight,
+    depth: totalDepth,
   }
 
   PROPS.CONFIG.MODULEGRID = module.value = _module
@@ -1111,11 +1157,12 @@ defineExpose({
 onBeforeMount(() => {
   totalHeight.value = props.canvasHeight;
   totalWidth.value = props.canvasWidth;
+  totalDepth.value = 0
   // Делаем клон для реактивности
 });
 
 onMounted(() => {
-  shapeAdjuster = new ShapeAdjuster();
+  shapeAdjuster = new ShapeAdjuster({});
   nextTick().then(() => {
     isMounted.value = true;
   });
@@ -1132,6 +1179,20 @@ watch(menuStore, () => {
     productData.value = menuStore.catalogFilterProductsId[0]
   }
 })
+
+watch(visualizationRef, () => {
+  if (visualizationRef.value) {
+    shapeAdjuster = new ShapeAdjuster (
+        {
+          getMmWidth: visualizationRef.value.getMmWidth,
+          getMmHeight: visualizationRef.value.getMmHeight,
+          getPixelHeight: visualizationRef.value.getPixelHeight,
+          getPixelWidth: visualizationRef.value.getPixelWidth
+        }
+    );
+  }
+})
+
 </script>
 
 <template>
@@ -1222,10 +1283,12 @@ watch(menuStore, () => {
                   />
                 </div>
               </div>
+
               <div class="actions-inputs">
                 <p class="actions-title">Глубина модуля</p>
                 <div class="actions-input--container">
                   <MainInput
+                      @update:modelValue="updateTotalDepth"
                       :inputClass="'actions-input'"
                       v-model="productData.userData.PROPS.CONFIG.SIZE.depth"
                       :min="getMinDepth"
@@ -1234,6 +1297,7 @@ watch(menuStore, () => {
                   />
                 </div>
               </div>
+
               <div class="actions-inputs">
                 <p class="actions-title">Цоколь</p>
                 <div class="actions-input--container">
@@ -1545,7 +1609,7 @@ watch(menuStore, () => {
                     :class="[
                       'actions-btn actions-btn--default'
                     ]"
-                    @click="addCell(secIndex, 0)"
+                    @click="addCell(secIndex, null)"
                 >
                   Добавить ячейку
                 </button>
@@ -1790,10 +1854,13 @@ watch(menuStore, () => {
                           <input
                               type="number"
                               :step="1"
+                              :max="section.height - filling.height"
                               min="0"
                               class="actions-input"
-                              :value="filling.position"
-                              disabled
+                              :value="filling.distances.bottom"
+                              @input="debounce((event) => {
+                                changeFillingPositionY($event, fillingIndex, filling, $event.target.value)
+                                }, 1000)"
                           />
                         </div>
                       </div>
@@ -1874,10 +1941,13 @@ watch(menuStore, () => {
                             <input
                                 type="number"
                                 :step="1"
+                                :max="section.height - filling.height"
                                 min="0"
                                 class="actions-input"
-                                :value="filling.position"
-                                disabled
+                                :value="filling.distances.bottom"
+                                @input="debounce((event) => {
+                                changeFillingPositionY($event, fillingIndex, filling, $event.target.value)
+                                }, 1000)"
                             />
                           </div>
                         </div>
@@ -1961,10 +2031,13 @@ watch(menuStore, () => {
                               <input
                                   type="number"
                                   :step="1"
+                                  :max="section.height - filling.height"
                                   min="0"
                                   class="actions-input"
-                                  :value="filling.position"
-                                  disabled
+                                  :value="filling.distances.bottom"
+                                  @input="debounce((event) => {
+                                changeFillingPositionY($event, fillingIndex, filling, $event.target.value)
+                                }, 1000)"
                               />
                             </div>
                           </div>
@@ -2015,6 +2088,7 @@ watch(menuStore, () => {
           <h1>Наполнение</h1>
 
           <ProductOptions
+              class="constructor2d-container--right--content"
               :fillings="getFilling"
               :step="step"
               @product-addFilling="addFilling"
@@ -2086,6 +2160,12 @@ watch(menuStore, () => {
       max-width: 15vw;
       max-height: 80vh;
       overflow: hidden;
+
+      &--content {
+        max-height: 75vh;
+        overflow: auto;
+      }
+
     }
 
     &--module-size {

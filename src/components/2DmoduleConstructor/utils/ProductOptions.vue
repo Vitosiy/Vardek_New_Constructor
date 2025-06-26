@@ -1,10 +1,10 @@
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, toRefs } from "vue";
+import {ref, toRefs} from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
-import { _URL } from "@/types/constants";
+import {_URL} from "@/types/constants";
 
 const props = defineProps({
   fillings: {
@@ -14,7 +14,7 @@ const props = defineProps({
 });
 
 const optionsShow = ref(false);
-const { fillings } = toRefs(props);
+const {fillings} = toRefs(props);
 
 const emit = defineEmits([
   "product-addFilling",
@@ -24,8 +24,8 @@ const emit = defineEmits([
   "product-changePositionY",
 ]);
 
-const addFilling = (type: string) => {
-  emit("product-addFilling", type);
+const addFilling = (type: string, product: Object) => {
+  emit("product-addFilling", type, Object.assign({}, product));
 };
 
 const deliteFilling = (key: number) => {
@@ -37,28 +37,26 @@ const updateFilling = (
     key: number,
     valueType: string,
     fillingType: string
-) =>
-{
+) => {
   console.log(event);
   emit("product-updateFilling", event, key, valueType, fillingType);
 };
 
 const changeFillingPositionY = ({
-                               event,
-                               key,
-                               valueType,
-                               fillingType,
-                               filling,
-                               direction,
-                             }: {
+                                  event,
+                                  key,
+                                  valueType,
+                                  fillingType,
+                                  filling,
+                                  direction,
+                                }: {
   event: Event;
   key: number;
   valueType: string;
   fillingType: string;
   filling: any;
   direction: string;
-}) =>
-{
+}) => {
   let dirrectionValue;
 
   switch (direction) {
@@ -88,37 +86,42 @@ const toggleFillingOptions = () => {
   <div class="splitter-container--product">
 
     <div class="splitter-container--product-data" v-if="props.fillings">
-      <div
-          v-for="(fillingGroup, key) in fillings"
-          :key="key + fillingGroup.groupName"
-          class="splitter-container--product-items"
-      >
-        <div class="splitter-container--product-header">
-          <h3 class="splitter-title">{{ fillingGroup.groupName }}</h3>
-        </div>
 
+      <div class="accordion">
         <div
-            v-for="(filling, key) in fillingGroup.items"
-            :key="key + filling.NAME"
             class="splitter-container--product-items"
-            @click="addFilling(filling)"
+            v-for="(fillingGroup, key) in fillings"
+            :key="key + fillingGroup.groupName"
         >
-          <div class="splitter-container--product-header">
-            <h3 class="splitter-title">{{ filling.NAME }}</h3>
-          </div>
+          <details class="item-group">
+            <summary>
+              <h3 class="item-group__title">
+                {{ fillingGroup.groupName }}
+              </h3>
+            </summary>
 
-<!--          <div class="product_element_head">{{filling.NAME}}<span
-              v-if="filling.DATA_PETROVICH"> - артикул {{app.article[filling.DATA_PETROVICH].PROPERTIES.ARTICLE.VALUE}}</span>
-          </div>-->
-
-          <div class="product_element_img">
-            <img
-                :src="_URL + filling.PREVIEW_PICTURE"
-                 alt="{{filling.NAME}}"/>
-          </div>
-
+            <div
+                :class="[
+                          'item-group-color'
+                        ]"
+                style
+                v-for="(filling, key) in fillingGroup.items"
+                :key="key + filling.NAME"
+                @click="addFilling(fillingGroup.groupName, filling)"
+            >
+              <div class="item-group-name">
+                <img
+                    class="name__bg"
+                    :src="_URL + filling.PREVIEW_PICTURE"
+                    :alt="filling.NAME"
+                />
+                <p class="name__text">
+                  {{ filling.NAME }}
+                </p>
+              </div>
+            </div>
+          </details>
         </div>
-
       </div>
     </div>
   </div>
@@ -132,7 +135,6 @@ const toggleFillingOptions = () => {
       flex-direction: column;
       gap: 0.5rem;
       color: #a3a9b5;
-      overflow-y: scroll;
 
       &-icon {
         cursor: pointer;
@@ -148,7 +150,6 @@ const toggleFillingOptions = () => {
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
-        overflow-y: scroll;
 
         &::-webkit-scrollbar {
           width: 5px;
@@ -198,39 +199,104 @@ const toggleFillingOptions = () => {
         align-items: center;
       }
 
-      .product_element {
-        cursor: pointer;
-        float: left;
-        height: 160px;
-        width: 47%;
-        margin: 0 3px 4px;
-        border: 1px solid rgba(153, 153, 153, 0.8);
-        border-radius: 2px;
-        position: relative;
-      }
-      .product_element:hover {
-        border: 1px solid rgba(114, 114, 114, 0.8);
-      }
-      .product_element .product_element_head {
-        position: relative;
-        z-index: 100;
-        display: block;
-        width: 100%;
-        padding: 7px;
-        line-height: 13px;
-        font-size: 12px;
-        background: rgba(114, 114, 114, 0.3);
-      }
-      .product_element .product_element_img {
-        position: absolute;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
+      .item-group {
+        display: flex;
+        flex-direction: column;
+        color: #a3a9b5;
+        margin-right: 10px;
+
+        &__title {
+          font-size: 18px;
+          font-weight: 600;
+        }
+
+        &-color {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px;
+          margin: 10px 0;
+          border-radius: 15px;
+          background-color: $bg;
+          cursor: pointer;
+
+          .item-group-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            .name__bg {
+              max-width: 60px;
+              max-height: 60px;
+              border-radius: 15px;
+            }
+
+            .name__text {
+              font-weight: 500;
+            }
+          }
+
+          @media (hover: hover) {
+            /* when hover is supported */
+            &:hover {
+              color: white;
+              background-color: #da444c;
+              border: 1px solid transparent;
+            }
+          }
+        }
       }
 
 
     }
+  }
+}
+
+.accordion {
+
+  details {
+    position: relative;
+    margin: 16px 0;
+    padding: 15px;
+    border: 1px solid #a3a9b5;
+    border-radius: 15px;
+    @media (hover: hover) {
+      /* when hover is supported */
+      &:hover {
+        border-color: #da444c;
+      }
+    }
+  }
+
+  details summary {
+    font-weight: bold;
+    list-style: none;
+    cursor: pointer;
+
+  }
+
+  details[open] {
+    border-color: #da444c;
+
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details summary::before {
+    content: "\276F";
+
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    display: inline-block;
+    transform: rotate(90deg);
+    transition: transform 0.2s ease-in-out;
+  }
+
+  details[open] summary::before {
+    transform: rotate(-90deg);
   }
 }
 
