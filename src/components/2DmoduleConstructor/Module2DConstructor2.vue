@@ -277,6 +277,9 @@ const addFilling = (type, product, oldFillingObject = false) => {
     width: startFillingData.width,
     height: startFillingData.height,
     color: productData.value.userData.PROPS.CONFIG.MODULE_COLOR,
+    sec: selectedCell.value.sec,
+    cell: selectedCell.value.cell,
+    row: selectedCell.value.row,
   };
 
   currentFillingsArray.push(fillingObject);
@@ -385,8 +388,7 @@ const changeFillingPositionY = (event, key, filling, value) => {
   const prevValue = currentfilling.position.y; //Предыдущее значение
 
   let delta = +value - currentfilling.distances.bottom
-  delta = visualizationRef.value.getPixelHeight(delta)
-  const newValue = prevValue + delta;
+  const newValue = prevValue - delta
 
   const fillingData = JSON.parse(JSON.stringify(currentfilling));
   fillingData.position.y = newValue;
@@ -397,8 +399,7 @@ const changeFillingPositionY = (event, key, filling, value) => {
   const check = shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
 
   if (check) {
-    currentfilling.position.y = newValue;
-    currentfilling.distances.bottom = +value;
+    currentfilling.position.y = fillingData.position.y;
   } else {
     currentfilling.position.y = prevValue;
   }

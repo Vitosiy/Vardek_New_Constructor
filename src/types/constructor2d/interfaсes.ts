@@ -105,6 +105,9 @@ export interface FillingObject {
   height: number,
   color: number;
   fasade?: FasadeObject;
+  sec: number;
+  cell?: number;
+  row?: number;
 }
 
 export interface FasadeObject {

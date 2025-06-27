@@ -428,13 +428,14 @@ class Shape extends Helpers {
     data: THoleData
     sector: Container
     dementionContainer: Container
+    dragActive: boolean = true
 
     private distanceGraphics: Graphics | null = null; // Для хранения линий расстояний
     private distanceLabels: Text[] = []; // Для хранения текстовых меток
     private readonly padding: number = this.getPixelWidth(UI_PARAMS.SECTOR_PADDING); // Отступ от краев сектора в пикселях
 
 
-    constructor({type, sector, position, data, select, render, dementionContainer, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth }:
+    constructor({type, sector, position, data, select, render, dementionContainer, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth, dragActive }:
                 {
                     type: string,
                     sector: Container,
@@ -446,7 +447,8 @@ class Shape extends Helpers {
                     getMmWidth?: () => void,
                     getPixelHeight?: () => void,
                     getPixelWidth?: () => void,
-                    dementionContainer?: Container
+                    dementionContainer?: Container,
+                    dragActive: boolean,
                 }) {
         super()
 
@@ -479,30 +481,28 @@ class Shape extends Helpers {
         this.height = this.getPixelHeight(data.height);
 
         this.graphic.rect(0, 0, this.getPixelWidth(data.width), this.getPixelHeight(data.height))
-        this.graphic.fill("#ffffff")
-        this.graphic.stroke({width: 1, color: "#A3A9B5", alignment: 1});
-
+        this.graphic.fill("#b86c02")
+        this.graphic.stroke({width: 1, color: "#875003", alignment: 1});
 
         if (position) {
             this.graphic.position.x = this.getPixelWidth(position.x);
-            this.graphic.position.y = this.getPixelWidth(position.y);
+            this.graphic.position.y = this.getPixelHeight(position.y);
         } else {
             this.graphic.position.x = this.getPixelWidth(data.x);
-            this.graphic.position.y = this.getPixelWidth(data.y);
+            this.graphic.position.y = this.getPixelHeight(data.y);
         }
-
-        // Настройка позиции
-
-
-        // Настройка интерактивности
-        this.graphic.eventMode = "static";
-        this.graphic.cursor = "grab";
 
         // Сохраняем ссылку на класс в графическом объекте
         this.graphic.shapeInstance = this;
 
         // Настройка перетаскивания
-        this.setupDraggable();
+        if(dragActive) {
+            // Настройка интерактивности
+            this.graphic.eventMode = "static";
+            this.graphic.cursor = "grab";
+
+            this.setupDraggable();
+        }
     }
 
     // Настройка перетаскивания
@@ -530,19 +530,10 @@ class Shape extends Helpers {
         this.graphic.on("pointermove", (event) => {
             if (dragging) {
                 // Вычисляем новые позиции
-                const newX = event.global.x + dragOffset.x;
                 const newY = event.global.y + dragOffset.y;
 
                 // Ограничиваем позицию границами сектора с учетом отступа
-                let adjustedX = newX;
                 let adjustedY = newY;
-
-                // Ограничения по X
-                adjustedX = Math.max(
-                    this.sectorBounds.x + this.padding,
-                    Math.min(newX, this.sectorBounds.x + this.sectorBounds.width - self.width - this.padding)
-                );
-
 
                 // Ограничения по Y
                 adjustedY = Math.max(
@@ -550,25 +541,8 @@ class Shape extends Helpers {
                     Math.min(newY, this.sectorBounds.y + this.sectorBounds.height - self.height - this.padding)
                 );
 
-
                 // Сохраняем текущую позицию для восстановления в случае коллизии
-                const currentX = self.graphic.position.x;
                 const currentY = self.graphic.position.y;
-
-                // Пробуем движение по X
-                self.graphic.position.x = adjustedX;
-                let hasCollisionX = false;
-
-                for (const otherShape of this.shapes) {
-                    if (self !== otherShape && self.checkOverlap(otherShape)) {
-                        hasCollisionX = true;
-                        break;
-                    }
-                }
-
-                if (hasCollisionX) {
-                    self.graphic.position.x = currentX;
-                }
 
                 // Пробуем движение по Y
                 self.graphic.position.y = adjustedY;
@@ -615,7 +589,15 @@ class Shape extends Helpers {
     // Проверка перекрытия с другой фигурой
     checkOverlap(otherShape: Shape) {
 
-        if (this === otherShape) return false;
+        if (this === otherShape)
+            return false;
+
+        if(this.graphic.position.y + this.height > otherShape.graphic.position.y &&
+            this.graphic.position.y + this.height < otherShape.graphic.position.y + otherShape.height)
+            this.graphic.position.y = otherShape.graphic.position.y - 1 - this.height
+        else if(this.graphic.position.y <= otherShape.graphic.position.y + otherShape.height &&
+                    this.graphic.position.y >= otherShape.graphic.position.y)
+            this.graphic.position.y = otherShape.graphic.position.y + otherShape.height + 1
 
         // Проверка наложения прямоугольников
         return !(
@@ -633,11 +615,18 @@ class Shape extends Helpers {
             y: this.getPixelHeight(position.y)
         };
 
+        if (pxPos.y < this.sectorBounds.y + this.padding ) {
+            pxPos.y = this.sectorBounds.y + this.padding
+            position.y = Math.floor(this.getMmHeight(pxPos.y));
+        }
+        else if(pxPos.y + this.height > this.sectorBounds.y + this.sectorBounds.height - this.padding) {
+            pxPos.y = this.sectorBounds.y + this.sectorBounds.height - this.padding - this.height
+            position.y = Math.floor(this.getMmHeight(pxPos.y));
+        }
+
         return (
             pxPos.x >= this.sectorBounds.x + this.padding &&
-            pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width - this.padding &&
-            pxPos.y >= this.sectorBounds.y + this.padding &&
-            pxPos.y + this.height <= this.sectorBounds.y + this.sectorBounds.height - this.padding
+            pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width - this.padding
         );
     }
 
@@ -1115,7 +1104,7 @@ class ShapeAdjuster extends Helpers {
 
         for (let i = 0; i < this.maxPositionAttempts; i++) {
 
-            const x = this.convertToTen(bounds.x + margin + Math.random() * (bounds.width - width));
+            const x = this.convertToTen(bounds.x + margin * (bounds.width - width));
             const y = this.convertToTen(bounds.y + margin + Math.random() * (bounds.height - height));
 
             shape.graphic.position.x = x;

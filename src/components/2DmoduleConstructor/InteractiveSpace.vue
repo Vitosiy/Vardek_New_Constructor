@@ -191,14 +191,14 @@ const init = async () => {
   fillingsContainer = new Container();
 
   // sectionsContainer.interactive = true;
-  fillingsContainer.interactive = true,
+  fillingsContainer.interactive = true;
   lablesContainer.interactiveChildren = false;
   dementionContainer.interactiveChildren = false;
 
-  app.stage.addChild(sectionsContainer);
-  app.stage.addChild(lablesContainer);
   app.stage.addChild(dementionContainer);
   app.stage.addChild(fillingsContainer);
+  app.stage.addChild(sectionsContainer);
+  app.stage.addChild(lablesContainer);
 
   app.stage.eventMode = "static";
   app.stage.hitArea = app.screen;
@@ -544,33 +544,51 @@ const createFilling = (data, sector) => {
     getPixelWidth,
     dementions,
     dementionContainer,
+    dragActive: mode.value === "fillings",
   });
+
+  if(mode.value === "fillings")
+    createSectioNum({
+      x: getPixelWidth(filling.data.position.x),
+      y: getPixelHeight(filling.data.position.y),
+      width: filling.data.width,
+      height: filling.data.height,
+      cell: filling.data,
+      sectionIndex: filling.data.sec,
+      cellIndex: filling.data.cell,
+      rowIndex: filling.data.row,
+      itemIndex: filling.data.id
+    });
 
   fillings.push(filling.graphic);
   sector.shapes.push(filling);
 };
 
 // Отрисовываем номер ячейки
-const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, rowIndex = null}) => {
+const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, rowIndex = null, itemIndex = null}) => {
   const pxWidth = getPixelWidth(cell.width);
   const pxHeight = getPixelHeight(cell.height);
 
-  const cellNumber = rowIndex !== null ? new Text({
-        text: `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}`,
+  const xOffset = cell.xOffset || x;
+  const yOffset = cell.yOffset || y;
+
+  let text = rowIndex !== null ? `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}` : `${sectionIndex + 1}.${cellIndex + 1}`;
+  if(itemIndex)
+    text += ` ${itemIndex}`
+
+  const cellNumber = new Text({
+        text: text,
         style: {fontSize: 14, fill: "#131313", align: "center"},
       })
-      : new Text({
-        text: `${sectionIndex + 1}.${cellIndex + 1}`,
-        style: {fontSize: 14, fill: "#131313", align: "center"},
-      });
+
   cellNumber.anchor.set(0.5);
-  cellNumber.x = cell.xOffset + pxWidth / 2;
-  cellNumber.y = cell.yOffset + pxHeight / 2;
+  cellNumber.x = xOffset + pxWidth / 2;
+  cellNumber.y = yOffset + pxHeight / 2;
 
   const cellNumberBackground = new Graphics();
   cellNumberBackground.roundRect(
-      cell.xOffset + pxWidth / 2 - 18,
-      cell.yOffset + pxHeight / 2 - 12,
+      xOffset + pxWidth / 2 - 18,
+      yOffset + pxHeight / 2 - 12,
       36,
       25,
       5
