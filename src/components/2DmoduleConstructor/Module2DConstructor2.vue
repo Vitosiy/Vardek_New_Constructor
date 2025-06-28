@@ -99,9 +99,10 @@ const module = computed(() => {
 
       PROPS.CONFIG.MODULEGRID = _module
     }
-
-    //props.canvasHeight = totalHeight.value = PROPS.CONFIG.MODULEGRID.height;
-    //props.canvasWidth = totalWidth.value = PROPS.CONFIG.MODULEGRID.width;
+    else {
+      props.canvasHeight = totalHeight.value = PROPS.CONFIG.MODULEGRID.height;
+      props.canvasWidth = totalWidth.value = PROPS.CONFIG.MODULEGRID.width;
+    }
 
     return PROPS.CONFIG.MODULEGRID
   }
@@ -1120,34 +1121,28 @@ const reset = (reset = false) => {
 
 const saveGrid = () => {
   const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY"];
-  const clone = module.value.reduce((acc, el) => {
-    const correct = el.reduce((acc, el) => {
-      let clone = {};
-      for (let value in el) {
-        if (!garbage.includes(value)) {
-          if (value === "roundCut") {
-            if ("graphic" in el[value]) {
-              delete el[value].graphic;
-            }
-          }
-          clone[value] = el[value];
-        }
-      }
-      acc.push(clone);
-      return acc;
-    }, []);
-    acc.push(correct);
-    return acc;
-  }, []);
+
+  let tmpClone = Object.assign({}, module.value)
+  tmpClone.sections.forEach((section, secKey) => {
+    section.cells.forEach((cell, cellKey) => {
+      cell.cellsRows.forEach((row, rowKey) => {
+        garbage.map(garbageKey => delete row[garbageKey])
+      })
+      garbage.map(garbageKey => delete cell[garbageKey])
+    })
+    garbage.map(garbageKey => delete section[garbageKey])
+  })
+
+  garbage.map(garbageKey => delete tmpClone[garbageKey])
 
   const data = {
     canvasHeight: totalHeight.value,
     canvasWidth: totalWidth.value,
-    data: clone,
+    data: tmpClone,
   };
-  productData.value.userData.PROPS.CONFIG.MODULEGRID = clone
+  productData.value.userData.PROPS.CONFIG.MODULEGRID = tmpClone
 
-  // emit("save-table-data", data);
+  menuStore.closeMenu('2dModuleConstructor')
   return data;
 };
 
@@ -1323,8 +1318,8 @@ watch(visualizationRef, () => {
               :module="module"
               :correct="correct"
               :container="constructor2dContainer"
-              :max-area-height="props.canvasHeight"
-              :max-area-width="props.canvasWidth"
+              :max-area-height="totalHeight"
+              :max-area-width="totalWidth"
               @cell-selected="handleCellSelect"
           />
         </div>

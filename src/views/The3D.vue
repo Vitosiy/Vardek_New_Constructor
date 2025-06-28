@@ -32,6 +32,7 @@ import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/Open
 
 import Toggle from "@vueform/toggle";
 import Slider from "@vueform/slider";
+import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
 
 type TSize = {
   width: {
@@ -274,7 +275,9 @@ const selected = (item: any) => {
 
     universalModuleData.value = {
       data: CONFIG.MODULEGRID,
+      object: object,
       canvasHeight: CONFIG.MODULEGRID.canvasHeight,
+      canvasHeight: CONFIG.MODULEGRID.canvasWidth,
     };
 
     useModelState().setCurrentModel(item.object);
@@ -541,7 +544,11 @@ const saveUMData = ({ data, canvasHeight }) => {
 };
 
 const openUMRedactor = () => {
-  isUMModalOpen.value = true;
+  //isUMModalOpen.value = true;
+  const menuStore = useMenuStore();
+  menuStore.openMenu('2dModuleConstructor', universalModuleData.value.object.globalData, [{
+    userData: universalModuleData.value.object
+  }])
 };
 
 const closeUMRedactor = () => {
@@ -812,13 +819,19 @@ const closeUMRedactor = () => {
         </template>
       </Modal>
 
-      <Modal
+      <button
           v-if="universalModuleData.data"
-          :container="`modal--tableTop`"
+          class="cut-btn" @click="openUMRedactor">
+        <img class="cut-icon" src="/icons/cut.svg" alt="" />
+      </button>
+
+<!--      <Modal
+          v-if="universalModuleData.data"
+          :container="`modal&#45;&#45;tableTop`"
           @open-modal="openUMRedactor"
           @close-modal="closeUMRedactor"
       >
-        <template #modalBody="{ onModalClose }" class="modal--tableTop">
+        <template #modalBody="{ onModalClose }" class="modal&#45;&#45;tableTop">
           <Module2DConstructor2
               ref="universalModule2DConstructor"
               :grid="universalModuleData.data"
@@ -827,12 +840,13 @@ const closeUMRedactor = () => {
           >
             <template #save>
               <button
-                  class="actions-btn actions-btn--footer"
+                  class="actions-btn actions-btn&#45;&#45;footer"
                   @click="saveUMData"
               >
                 Сохранить
               </button>
             </template>
+
             <template #close>
               <button
                   @click="
@@ -840,11 +854,12 @@ const closeUMRedactor = () => {
                     onModalClose();
                   }
                 "
-                  class="actions-btn actions-btn--footer"
+                  class="actions-btn actions-btn&#45;&#45;footer"
               >
                 Закрыть
               </button>
             </template>
+
           </Module2DConstructor2>
         </template>
         <template #modalOpen="{ onModalOpen }">
@@ -852,7 +867,7 @@ const closeUMRedactor = () => {
             <img class="cut-icon" src="/icons/cut.svg" alt="" />
           </button>
         </template>
-      </Modal>
+      </Modal>-->
     </div>
   </div>
 </template>
