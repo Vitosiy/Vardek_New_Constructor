@@ -60,6 +60,7 @@ let app: Application,
     lablesContainer: Container,
     dementionContainer: Container,
     fillingsContainer: Container,
+    fasadesContainer: Container,
     shapeAdjuster: ShapeAdjuster;
 
 let cursorCheck = false;
@@ -71,6 +72,7 @@ const sectionLables: (Graphics | Text)[] = [];
 const deviders: Graphics[] = [];
 const dementions: Graphics[] = [];
 const fillings: Graphics[] = [];
+const fasades: Graphics[] = [];
 
 const {
   MAX_AREA_WIDTH,
@@ -189,15 +191,18 @@ const init = async () => {
   lablesContainer = new Container();
   dementionContainer = new Container();
   fillingsContainer = new Container();
+  fasadesContainer = new Container();
 
   // sectionsContainer.interactive = true;
   fillingsContainer.interactive = true;
+  fasadesContainer.interactive = true;
   lablesContainer.interactiveChildren = false;
   dementionContainer.interactiveChildren = false;
 
   app.stage.addChild(dementionContainer);
   app.stage.addChild(fillingsContainer);
   app.stage.addChild(sectionsContainer);
+  app.stage.addChild(fasadesContainer);
   app.stage.addChild(lablesContainer);
 
   app.stage.eventMode = "static";
@@ -395,6 +400,10 @@ const renderGrid = () => {
     fillingsContainer.addChild(elem);
   });
 
+  fasades.forEach((elem) => {
+    fasadesContainer.addChild(elem);
+  });
+
   sectionLables.forEach((elem) => {
     lablesContainer.addChild(elem);
   });
@@ -492,7 +501,10 @@ const createSector = ({
   sector.addChild(cell.cellGraphics);
   sector.addChild(cell.highlightGraphics);
 
-  if (!_sector)
+  if(gridType === "fasades") {
+    fasades.push(sector);
+  }
+  else if (!_sector)
     sections.push(sector);
   else
     _sector.addChild(sector);
@@ -778,13 +790,13 @@ const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
 };
 
 const toggleFasadeColor = (sectionIndex, doorIndex, segmentIndex = 0) => {
-  const fasades = props.module.sections[sectionIndex].fasades
-  const door = fasades[doorIndex]
+  const _fasades = props.module.sections[sectionIndex].fasades
+  const door = _fasades[doorIndex]
   const segment = door?.[segmentIndex]
 
   const sector = segment?.sector || door?.sector;
 
-  sections[0].children.forEach((elem) => {
+  fasades.forEach((elem) => {
     if (elem.children[1])
       elem.children[1].visible = false;
     // elem.children[0].alpha = 1;
@@ -1245,11 +1257,13 @@ const clearRender = () => {
   deviders.length = 0;
   dementions.length = 0;
   fillings.length = 0;
+  fasades.length = 0;
 
   sectionsContainer.removeChildren();
   lablesContainer.removeChildren();
   fillingsContainer.removeChildren();
   dementionContainer.removeChildren();
+  fasadesContainer.removeChildren();
 };
 
 const changeConstructorMode = (_mode) => {
