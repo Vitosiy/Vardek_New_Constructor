@@ -434,7 +434,6 @@ const createModule = ({
   cell.cellGraphics.cursor = "pointer";
 
   sector.addChild(cell.cellGraphics);
-  sector.addChild(cell.highlightGraphics);
 
   sections.push(sector);
 
@@ -559,7 +558,9 @@ const createFilling = (data, sector) => {
     dragActive: mode.value === "fillings",
   });
 
-  if(mode.value === "fillings")
+  data.sector = filling.sector;
+
+  if(mode.value === "fillings") {
     createSectioNum({
       x: getPixelWidth(filling.data.position.x),
       y: getPixelHeight(filling.data.position.y),
@@ -572,7 +573,24 @@ const createFilling = (data, sector) => {
       itemIndex: filling.data.id
     });
 
+    filling.graphic.on("pointerdown", () => {
+      selectCell("fillings", filling.data.sec, filling.data.cell, false, filling.data.row, filling.data.id);
+    });
+  }
+
+  if (
+      selectedFilling.value.sec === filling.data.sec &&
+      selectedFilling.value.cell === filling.data.cell &&
+      selectedFilling.value.row === filling.data.row &&
+      selectedFilling.value.item === filling.data.id
+  ) {
+    filling.highlightGraphics.visible = true;
+  } else {
+    filling.highlightGraphics.visible = false;
+  }
+
   fillings.push(filling.graphic);
+  fillings.push(filling.highlightGraphics);
   sector.shapes.push(filling);
 };
 
@@ -758,6 +776,7 @@ const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = nu
   switch (type) {
     case "fillings":
       selectedFilling.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, item: item};
+      selectedCell.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex};
       toggleFillingColor(sectionIndex, cellIndex, rowIndex, item);
       break;
     case "fasades":

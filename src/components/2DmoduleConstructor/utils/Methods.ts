@@ -421,6 +421,7 @@ class Shape extends Helpers {
     type: string
     sectorBounds: TBounds
     graphic: Graphics
+    highlightGraphics: Graphics
     width: number = 0
     height: number = 0
     radius: number = 0
@@ -457,6 +458,7 @@ class Shape extends Helpers {
         this.type = type;
         this.sectorBounds = this.getSectorBounds(sector);
         this.graphic = new Graphics();
+        this.highlightGraphics= new Graphics();
         this.shapes = sector.shapes
         this.data = data
         this.select = select
@@ -473,33 +475,46 @@ class Shape extends Helpers {
 
         this.dementionContainer = dementionContainer
 
-        this.graphic.data = data
-        this.graphic.holeId = data.id
-
         // Инициализация графики в зависимости от типа
         this.width = this.getPixelWidth(data.width);
         this.height = this.getPixelHeight(data.height);
 
+        this.graphic.data = data
+        this.graphic.holeId = data.id
+        this.highlightGraphics.data = data
+        this.highlightGraphics.holeId = data.id
+
         this.graphic.rect(0, 0, this.getPixelWidth(data.width), this.getPixelHeight(data.height))
-        this.graphic.fill("#b86c02")
-        this.graphic.stroke({width: 1, color: "#875003", alignment: 1});
+        this.graphic.fill("#875003")
+        this.graphic.stroke({width: 1, color: "#b86c02", alignment: 1});
+        this.highlightGraphics.rect(0, 0, this.getPixelWidth(data.width), this.getPixelHeight(data.height))
+        this.highlightGraphics.fill("#b86c02")
+        this.highlightGraphics.stroke({width: 1, color: "#875003", alignment: 1});
 
         if (position) {
             this.graphic.position.x = this.getPixelWidth(position.x);
             this.graphic.position.y = this.getPixelHeight(position.y);
+            this.highlightGraphics.position.x = this.getPixelWidth(position.x);
+            this.highlightGraphics.position.y = this.getPixelHeight(position.y);
         } else {
             this.graphic.position.x = this.getPixelWidth(data.x);
             this.graphic.position.y = this.getPixelHeight(data.y);
+            this.highlightGraphics.position.x = this.getPixelWidth(data.x);
+            this.highlightGraphics.position.y = this.getPixelHeight(data.y);
         }
 
         // Сохраняем ссылку на класс в графическом объекте
         this.graphic.shapeInstance = this;
+        this.highlightGraphics.shapeInstance = this;
+        this.highlightGraphics.visible = false;
 
         // Настройка перетаскивания
         if(dragActive) {
             // Настройка интерактивности
             this.graphic.eventMode = "static";
             this.graphic.cursor = "grab";
+            this.highlightGraphics.eventMode = "static";
+            this.highlightGraphics.cursor = "grab";
 
             this.setupDraggable();
         }
@@ -512,22 +527,22 @@ class Shape extends Helpers {
         let originalPosition = {x: 0, y: 0};
         const self = this;
 
-        this.graphic.on("pointerdown", (event) => {
-            this.graphic.cursor = "grabbing";
+        const pointerdown = (event, graphic) => {
+            graphic.cursor = "grabbing";
             this.select(this.sector.secIndex, this.sector.cellIndex, this.sector.rowIndex)
             dragging = true;
             originalPosition = {
-                x: self.graphic.position.x,
-                y: self.graphic.position.y
+                x: graphic.position.x,
+                y: graphic.position.y
             };
             dragOffset = {
-                x: self.graphic.position.x - event.global.x,
-                y: self.graphic.position.y - event.global.y,
+                x: graphic.position.x - event.global.x,
+                y: graphic.position.y - event.global.y,
             };
-            self.graphic.alpha = 0.7;
-        });
+            graphic.alpha = 0.7;
+        }
 
-        this.graphic.on("pointermove", (event) => {
+        const pointermove = (event, graphic) => {
             if (dragging) {
                 // Вычисляем новые позиции
                 const newY = event.global.y + dragOffset.y;
@@ -542,10 +557,11 @@ class Shape extends Helpers {
                 );
 
                 // Сохраняем текущую позицию для восстановления в случае коллизии
-                const currentY = self.graphic.position.y;
+                const currentY = graphic.position.y;
 
                 // Пробуем движение по Y
                 self.graphic.position.y = adjustedY;
+                self.highlightGraphics.position.y = adjustedY;
                 let hasCollisionY = false;
 
                 for (const otherShape of this.shapes) {
@@ -557,9 +573,15 @@ class Shape extends Helpers {
 
                 if (hasCollisionY) {
                     self.graphic.position.y = currentY;
+                    self.highlightGraphics.position.y = currentY;
                 }
             }
-        });
+        }
+
+        this.graphic.on("pointerdown", (event) => pointerdown(event, this.graphic));
+        this.graphic.on("pointermove", (event) => pointermove(event, this.graphic));
+        this.highlightGraphics.on("pointerdown", (event) => pointerdown(event, this.highlightGraphics));
+        this.highlightGraphics.on("pointermove", (event) => pointermove(event, this.highlightGraphics));
 
         const endDrag = () => {
             if (dragging) {
@@ -584,6 +606,8 @@ class Shape extends Helpers {
 
         this.graphic.on("pointerup", endDrag);
         this.graphic.on("pointerupoutside", endDrag);
+        this.highlightGraphics.on("pointerup", endDrag);
+        this.highlightGraphics.on("pointerupoutside", endDrag);
     }
 
     // Проверка перекрытия с другой фигурой
@@ -831,8 +855,6 @@ class Section extends Helpers {
     highlightGraphics: Graphics = new Graphics();
     width: number = 0;
     height: number = 0;
-    radiusEuro: number = 50;
-    radiusLarge: number = 50;
     data: any;
     sector: Container;
 
