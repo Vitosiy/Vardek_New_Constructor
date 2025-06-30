@@ -6,6 +6,7 @@ import Rulers from "./Layers/Rulers";
 import Planner from "./Layers/Planner";
 import ArrowRulerActiveObject from "./Layers/ArrowRulerActiveObject";
 import StartPointActiveObject from "./Layers/StartPointActiveObject";
+import DoorsAndWindows from './Layers/DoorsAndWindows';
 
 import {
   IConfig,
@@ -28,6 +29,7 @@ interface Layers {
   halfRoom: HalfRoom | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
+  doorsAndWindows: DoorsAndWindows | null;
   startPointActiveObject: StartPointActiveObject | null;
   rulers: Rulers | null;
 }
@@ -42,6 +44,7 @@ export default class Constructor2D {
     halfRoom: null, // пол комнаты
     arrowRulerActiveObject: null,
     planner: null,
+    doorsAndWindows: null, // двери и окна
     startPointActiveObject: null,
     rulers: null,
   };
@@ -133,6 +136,7 @@ export default class Constructor2D {
     this.layers.halfRoom = new HalfRoom(this.app2d, this);
     this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
     this.layers.planner = new Planner(this.app2d!, this);
+    this.layers.doorsAndWindows = new DoorsAndWindows(this.app2d!, this);
     this.layers.startPointActiveObject = new StartPointActiveObject(this.app2d!, this);
     this.layers.rulers = new Rulers(this.app2d!, this);
 

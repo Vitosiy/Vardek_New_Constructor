@@ -27,6 +27,7 @@ export function handlerPointerMove(this: any, e: PIXI.FederatedPointerEvent): vo
     this.layers.halfRoom.updateScenePosition(); // обновляем пол комнаты
     this.layers.rulers?.drawRulers(); // обновляем линейки
     this.layers.planner!.updateScenePosition(); // обновляем слой с объектами
+    this.layers.doorsAndWindows!.updateScenePosition(); // обновляем слой с дверями и окнами
     this.layers.arrowRulerActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
     this.layers.startPointActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
     

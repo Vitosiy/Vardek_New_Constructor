@@ -69,7 +69,7 @@ export interface State {
 
 export interface ArgumentDataAddWall {
   position: Vector2;
-  type: string;
+  type: "wall" | "wall_vertical" | "dividing_wall";
 };
 
 export interface MergeWalls {

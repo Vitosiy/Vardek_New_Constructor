@@ -42,7 +42,9 @@ export const catalogSections: CatalogSectionInt[] = [
       viewBox: "0 0 12 16",
       d: pathD.door
     },
-    goods: []
+    goods: [
+      { id: MathUtils.generateUUID(), name: 'Дверь', nameMode: 'door', icon: 'icon-window-c2d.png' },
+    ]
   },
   {
     id: MathUtils.generateUUID(),
@@ -54,7 +56,9 @@ export const catalogSections: CatalogSectionInt[] = [
       viewBox: "0 0 18 18",
       d: pathD.window
     },
-    goods: []
+    goods: [
+      { id: MathUtils.generateUUID(), name: 'Окно', nameMode: 'window', icon: 'icon-window-c2d.png' },
+    ]
   },
   {
     id: MathUtils.generateUUID(),

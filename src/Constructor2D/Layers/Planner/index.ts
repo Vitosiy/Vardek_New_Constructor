@@ -218,7 +218,6 @@ export default class Planner {
     // позиция курсора мыши на canvas'е
     const positionObjectX: number = (data.position.x - 30 - oc.x) * inverseScale;
     const positionObjectY: number = (data.position.y - 30 - oc.y) * inverseScale;
-
     const canvasPositionMouse: Vector2 = {
       x: positionObjectX,
       y: positionObjectY
@@ -432,6 +431,7 @@ export default class Planner {
 
     if (id) {
 
+      // создаем контейнеры для визуализации стены
       const result = this.createDrawContainers(id);
 
       if (result) {
@@ -1222,6 +1222,31 @@ export default class Planner {
 
   }
 
+  /**
+   * Находит точку соединения внутри полигона по заданной позиции.
+   *
+   * Проходит по списку объектов стен (`this.objectWalls`) и проверяет, находится ли переданная позиция `position`
+   * внутри какого-либо полигона, определённого точками стены, игнорируя объект с id `ignoreObject`, если он указан.
+   * Если позиция находится внутри полигона, вычисляет точку пересечения между позицией и первым ребром полигона
+   * с помощью `getIntersectVectorLine` и возвращает id соответствующего объекта и точку пересечения.
+   *
+   * @param position - Позиция, для которой ищется пересечение с полигонами.
+   * @param ignoreObject - (Необязательно) id объекта, который нужно игнорировать при поиске.
+   * @returns Объект с id найденного полигона и точкой пересечения, либо `null`, если пересечение не найдено.
+   *
+   * @remarks
+   * - Функция предполагает, что `this.objectWalls` — массив объектов с полями `id` и `points`.
+   * - Для геометрических вычислений используются вспомогательные функции `isPointInPolygon` и `getIntersectVectorLine`.
+   * - Для пересечения берётся только первое ребро полигона (`obj.points[0]` — `obj.points[1]`).
+   *
+   * @example
+   * ```typescript
+   * const result = getConnectionPointInPolygon(new Vector2(10, 20), 'wall-1');
+   * if (result) {
+   *   console.log(`Соединено со стеной ${result.id} в точке`, result.point);
+   * }
+   * ```
+   */
   private getConnectionPointInPolygon(
     position: Vector2,
     ignoreObject: number | string | null = null

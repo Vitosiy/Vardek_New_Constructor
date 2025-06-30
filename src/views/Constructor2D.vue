@@ -45,10 +45,21 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
     };
 
     if(App2d){
-      App2d.layers.planner?.addWall({
-        position: pointerPosition, 
-        type: draggedData
-      });
+      if(draggedData === "wall" || draggedData === "wall_vertical" || draggedData === "dividing_wall") {
+        // Добавляем стену в слой planner
+        App2d.layers.planner?.addWall({
+          position: pointerPosition, 
+          type: draggedData
+        });
+      } else if(draggedData === "door" || draggedData === "window") {
+        // Добавляем дверь или окно в слой doorsAndWindows
+        App2d.layers.doorsAndWindows?.addObject({
+          position: pointerPosition,
+          type: draggedData
+        });
+      } else {
+        console.warn("Неизвестный тип перетаскиваемого объекта:", draggedData);
+      }
     }
 
   } catch (error) {

@@ -74,7 +74,9 @@ export interface PlannerObject {
 export interface RectData {
   points: Vector2[]; // 4 точки для прямоугольника
   heightDirection: -1 | 1;
-  color: number | string; // Цвет заливки
+  color?: number | string; // Цвет заливки
+  colorEdge?: number | string, // Цвет обводки (по умолчанию чёрный)
+  widthEdge?: number, // Толщина линии обводки (по умолчанию 1)
 }
 
 export interface DrawObjects {
