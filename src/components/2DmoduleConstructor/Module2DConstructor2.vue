@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 import {useEventBus} from "@/store/appliction/useEventBus";
-import {computed, defineExpose, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
+import {computed, defineExpose, h, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
@@ -71,6 +71,8 @@ const module = computed(() => {
         height: totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"],
         cells: [],
         type: "section",
+        position: new THREE.Vector2(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + (totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2) / 2,
+            PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]),
         fasades: [
           [
             <FasadeObject>{
@@ -107,7 +109,6 @@ const module = computed(() => {
     return PROPS.CONFIG.MODULEGRID
   }
 });
-
 
 const getMinHeight = computed(() => {
   return productData.value.userData.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
@@ -381,9 +382,9 @@ const changeFillingPositionY = (event, key, filling, value) => {
 
   const gridCopy = Object.assign({}, module.value);
 
-  const sec = gridCopy.sections[selectedCell.value.sec];
-  const currentColl = sec.cells?.[selectedCell.value.cell];
-  const currentRow = currentColl?.cellsRows?.[selectedCell.value.row] || currentColl || sec;
+  const sec = gridCopy.sections[selectedFilling.value.sec];
+  const currentColl = sec.cells?.[selectedFilling.value.cell];
+  const currentRow = currentColl?.cellsRows?.[selectedFilling.value.row] || currentColl || sec;
 
   const currentfilling = currentRow.fillings[key];
   const prevValue = currentfilling.position.y; //Предыдущее значение
@@ -448,19 +449,23 @@ const addDoor = (secIndex) => {
       secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
           section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
 
-  let firstFasade;
+  let firstFasade, newDoorPosition;
   if (section.fasades[0]) {
     section.fasades[0].map(item => {
       item.width = width
     })
 
     firstFasade = section.fasades[0][0];
-  } else {
+    newDoorPosition = new THREE.Vector2(firstFasade.position.x + width + 4, firstFasade.position.y)
+  }
+  else {
+    let startX = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
+    newDoorPosition = new THREE.Vector2( startX, FASADE.POSITION_Y)
     firstFasade = <FasadeObject>{
       id: 0,
       width,
       height: module.value.height - module.value.horizont - 4,
-      position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+      position: newDoorPosition,
       type: "fasade",
       material: <FasadeMaterial>{
         ...FASADE_PROPS
@@ -477,8 +482,9 @@ const addDoor = (secIndex) => {
   const newDoor: FasadeObject = {
     ...firstFasade,
     number: firstFasade.number + 1,
+    position: newDoorPosition,
   }
-  newDoor.height = module.value.height - module.value.horizont - 4;
+  newDoor.height = module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
 
   section.fasades.push([newDoor]);
 
@@ -721,6 +727,7 @@ const addSection = (secIndex) => {
     cell.cellsRows = []
   });
 
+  section.position.x = section.position.x - (section.width / 2 - halfWidth / 2)
   section.width = halfWidth;
 
   // Создаем новую колонку с такими же параметрами
@@ -731,6 +738,7 @@ const addSection = (secIndex) => {
     width: halfWidth,
     cells: [],
     fasades: [],
+    position: new THREE.Vector2(section.position.x + section.width / 2 + module.value.moduleThickness + halfWidth / 2, section.position.y),
   }
   module.value.sections.splice(secIndex + 1, 0, newColumn);
   updateFasades();
@@ -745,35 +753,40 @@ const addCell = (secIndex, cellIndex = null) => {
   selectedCell.value.cell = cellIndex;
   visualizationRef.value.selectCell("module", secIndex, cellIndex, true);
 
+  let section = module.value.sections[secIndex];
+
   let cell;
-  if (module.value.sections[secIndex].cells.length > 0) {
-    cell = module.value.sections[secIndex].cells[cellIndex]
+  if (section.cells.length > 0) {
+    cell = section.cells[cellIndex]
   } else {
     cell = <GridCell>{
       number: 1,
-      width: module.value.sections[secIndex].width,
-      height: module.value.sections[secIndex].height,
+      width: section.width,
+      height: section.height,
       type: "cell",
+      position: new THREE.Vector2(section.position.x, section.position.y),
     };
-    module.value.sections[secIndex].cells.push(cell);
+    section.cells.push(cell);
   }
 
   if (cell.cellsRows)
     delete cell.cellsRows
 
-  const lastCell = module.value.sections[secIndex].cells[module.value.sections[secIndex].cells.length - 1];
+  const lastCell = section.cells[section.cells.length - 1];
 
   const halfHeight = Math.floor((cell.height - module.value.moduleThickness) / 2);
 
-  if (halfHeight < 150 /*|| !(cell.height % step.value == 0)*/) return;
+  if (halfHeight < 150 /*|| !(cell.height % step.value == 0)*/)
+    return;
 
   // Обновляем высоту последней строки
   cell.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  module.value.sections[secIndex].cells.splice(cellIndex || 0, 0, {
+  section.cells.splice(cellIndex || 0, 0, {
     ...cell,
     number: cell.number + 1,
+    position: new THREE.Vector2(cell.position.x, cell.position.y + halfHeight + module.value.moduleThickness),
   });
 
   // Обновляем рендер
@@ -786,34 +799,38 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
   selectedCell.value.row = rowIndex;
   visualizationRef.value.selectCell("module", secIndex, cellIndex, true, rowIndex);
 
+  const cell = module.value.sections[secIndex].cells[cellIndex]
+
   let row;
-  if (module.value.sections[secIndex].cells[cellIndex].cellsRows?.length > 0) {
-    row = module.value.sections[secIndex].cells[cellIndex].cellsRows[rowIndex];
+  if (cell.cellsRows?.length > 0) {
+    row = cell.cellsRows[rowIndex];
   } else {
-    module.value.sections[secIndex].cells[cellIndex].cellsRows = []
+    cell.cellsRows = []
     row = <GridCellsRow>{
       number: 1,
-      width: module.value.sections[secIndex].cells[cellIndex].width,
-      height: module.value.sections[secIndex].cells[cellIndex].height,
+      width: cell.width,
+      height: cell.height,
       type: "rowCell",
       fillings: [],
+      position: new THREE.Vector2(cell.position.x , cell.position.y),
     }
-    module.value.sections[secIndex].cells[cellIndex].cellsRows.push(row);
+    cell.cellsRows.push(row);
   }
-
-  const lastRow = module.value.sections[secIndex].cells[cellIndex].cellsRows[module.value.sections[secIndex].cells[cellIndex].cellsRows.length - 1];
 
   const halfWidth = Math.floor((row.width - module.value.moduleThickness) / 2);
 
-  if (halfWidth < 150 /*|| !(cell.height % step.value == 0)*/) return;
+  if (halfWidth < 150 /*|| !(cell.height % step.value == 0)*/)
+    return;
 
   // Обновляем высоту последней строки
+  row.position.x = row.position.x - (row.width / 2 - halfWidth / 2)
   row.width = halfWidth;
 
   // Добавляем новую строку в эту колонку
-  module.value.sections[secIndex].cells[cellIndex].cellsRows.splice(rowIndex, 0, {
+  cell.cellsRows.splice(rowIndex + 1, 0, {
     ...row,
     number: row.number + 1,
+    position: new THREE.Vector2(row.position.x + row.width / 2 + module.value.moduleThickness + halfWidth / 2, row.position.y),
   });
 
   // Обновляем рендер
@@ -843,24 +860,31 @@ const updateSectionWidth = (value, secIndex) => {
     let delta = curSection.width - adjustedValue
 
     curSection.width = adjustedValue
+    curSection.position.x -= delta/2
+
     curSection.cells.forEach((cell, cellIndex) => {
 
       if (cell.cellsRows) {
         let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
         lastRow.width += delta;
+        lastRow.position.x -= delta/2
       }
       cell.width = adjustedValue;
+      cell.position.x -= delta/2
     })
 
     if (nextSection) {
       nextSection.width += delta
+      nextSection.position.x += delta/2
 
       nextSection.cells.forEach((cell, cellIndex) => {
 
         if (cell.cellsRows) {
           let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
           lastRow.width += delta;
+          lastRow.position.x += delta/2
         }
+        cell.position.x += delta/2
         cell.width = nextSection.width;
       })
     }
@@ -894,14 +918,26 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
     let delta = curCell.height - adjustedValue
 
     curCell.height = adjustedValue
-    curCell.cellsRows.forEach((row, rowIndex) => {
+
+    if(nextCell?.position?.y < curCell.position.y)
+      curCell.position.y += delta
+
+    curCell.cellsRows?.forEach((row, rowIndex) => {
       row.height = adjustedValue;
+      if(row.position.y < curCell.position.y)
+        row.position.y += delta
     })
 
     if (nextCell) {
       nextCell.height += delta
-      nextCell.cellsRows.forEach((row, rowIndex) => {
+
+      if(nextCell.position.y > curCell.position.y)
+        nextCell.position.y -= delta
+
+      nextCell.cellsRows?.forEach((row, rowIndex) => {
         row.height = adjustedValue;
+        if(row.position.y > curCell.position.y)
+          row.position.y += delta
       })
     }
   }
@@ -936,9 +972,11 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
     let delta = curRow.width - adjustedValue
 
     curRow.width = adjustedValue
+    curRow.position.x -= delta / 2
 
     if (nextRow) {
       nextRow.width += delta
+     nextRow.position.x += delta / 2
     }
   }
   module.value = clone;
@@ -956,14 +994,22 @@ const deleteSection = (secIndex) => {
       : current.width + prev.width;
 
   if (next) {
+    next.position.x = next.position.x - next.width / 2 + combinedWidth / 2
     next.width = combinedWidth;
     next.cells?.forEach((elem) => {
+      elem.position.x = next.position.x
       elem.width = combinedWidth;
+      if(elem.cellsRows)
+        delete elem.cellsRows
     });
   } else {
+    prev.position.x = prev.position.x - prev.width / 2 + combinedWidth / 2
     prev.width = combinedWidth;
     prev.cells?.forEach((elem) => {
+      elem.position.x = prev.position.x
       elem.width = combinedWidth;
+      if(elem.cellsRows)
+        delete elem.cellsRows
     });
   }
 
@@ -986,11 +1032,11 @@ const deleteCell = (cellIndex, secIndex) => {
   const next = currentSection.cells[cellIndex + 1];
   const prev = currentSection.cells[cellIndex - 1];
 
-  const combinedWidth = next
+  const combinedHeight = next
       ? currentCell.height + next.height
       : currentCell.height + prev.height;
 
-  next ? (next.height = combinedWidth) : (prev.height = combinedWidth);
+  next ? (next.height = combinedHeight) : (prev.height = combinedHeight);
 
   if (currentSection.cells.length > 1) {
     currentSection.cells.splice(cellIndex, 1);
@@ -1021,10 +1067,12 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
       ? currentCell.width + next.width
       : currentCell.width + prev.width;
 
+
+  next ? (next.position.x = next.position.x - next.width / 2 + combinedWidth / 2) : (prev.position.x = prev.position.x - prev.width / 2 + combinedWidth / 2);
   next ? (next.width = combinedWidth) : (prev.width = combinedWidth);
 
   if (currentCell.cellsRows.length > 1) {
-    currentCell.cellsRows.splice(cellIndex, 1);
+    currentCell.cellsRows.splice(rowIndex, 1);
   }
 
   if (currentCell.cellsRows.length <= 1)
@@ -1120,28 +1168,43 @@ const reset = (reset = false) => {
 };
 
 const saveGrid = () => {
-  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY"];
+  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset"];
+  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings"];
+
+  //Рекурсивная очистка сетки от "технических" полей 2D конструктора
+  const removeGarbage = (object) => {
+    if(typeof object === "object" && !Array.isArray(object)) {
+
+      object = Object.entries(object).map(([key, value]) => {
+
+        if(nesting.includes(key)) {
+          value = value.map(item => {
+            return removeGarbage(item)
+          })
+        }
+
+        return[key, value]
+      })
+
+      object = object.filter(([key, value]) => !garbage.includes(key))
+      object = Object.fromEntries(object)
+    }
+
+    return object;
+  }
 
   let tmpClone = Object.assign({}, module.value)
-  tmpClone.sections.forEach((section, secKey) => {
-    section.cells.forEach((cell, cellKey) => {
-      cell.cellsRows.forEach((row, rowKey) => {
-        garbage.map(garbageKey => delete row[garbageKey])
-      })
-      garbage.map(garbageKey => delete cell[garbageKey])
-    })
-    garbage.map(garbageKey => delete section[garbageKey])
-  })
-
-  garbage.map(garbageKey => delete tmpClone[garbageKey])
+  tmpClone = removeGarbage(tmpClone)
 
   const data = {
     canvasHeight: totalHeight.value,
     canvasWidth: totalWidth.value,
     data: tmpClone,
   };
+
   productData.value.userData.PROPS.CONFIG.MODULEGRID = tmpClone
 
+  eventBus.emit("A:UM-update", tmpClone);
   menuStore.closeMenu('2dModuleConstructor')
   return data;
 };

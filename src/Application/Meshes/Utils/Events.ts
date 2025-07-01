@@ -18,6 +18,7 @@ import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
 import { directionToColor } from 'three/webgpu';
 
 import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
+import {BuildUniversalModule} from "@/Application/Meshes/UniversalModuleUtils/BuildUniversalModule.ts";
 
 
 let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
@@ -32,6 +33,7 @@ export class MeshEvents extends BuildersHelper {
     resources: THREETypes.TResources
     dispose: DeepDispose
     buildProduct: BuildProduct
+    buildUMProduct: BuildUniversalModule
     buildMilling: THREETypes.TMillingBuilder
     buildWindow: THREETypes.TWindowBuilder
     buildPalette: THREETypes.TPaletteBulider
@@ -61,6 +63,7 @@ export class MeshEvents extends BuildersHelper {
 
 
     private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
+    private onUpdateUMModel: (data: Object) => void;
     private onToggleFasade: (fasad_ndx: number) => void;
     private onDeliteFasade: (fasad_ndx: number) => void;
     private onCreateUniformGroup: () => void
@@ -78,7 +81,7 @@ export class MeshEvents extends BuildersHelper {
         this.dispose = new DeepDispose()
 
         this.buildProduct = root.geometryBuilder.buildProduct
-
+        this.buildUMProduct = root.universalGeometryBuilder.buildProduct
 
         this.onChangeModuleTexture = this.changeModuleTexture.bind(root)
         this.onChangeFasade = this.changeFasade.bind(root)
@@ -95,6 +98,8 @@ export class MeshEvents extends BuildersHelper {
         this.onDeliteUniformGroup = this.deliteUniformGroup.bind(root)
 
         this.onChangeModelSize = this.changeModelSize.bind(root)
+        this.onUpdateUMModel = this.updateUMModel.bind(root)
+
         this.onToggleFasade = this.toggleFasade.bind(root)
         this.onDeliteFasade = this.deliteFasade.bind(root)
 
@@ -673,6 +678,69 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
+    updateUMModel(data: object) {
+
+        if (!this._currentMesh)
+            return
+
+        const { PROPS } = this._currentMesh!.userData
+        const { CONFIG } = PROPS
+        const { POSITION, UNIFORM_TEXTURE } = CONFIG
+
+        // const position = this._currentMesh!.userData.PROPS.CONFIG.POSITION as THREE.Vector3
+
+        /** Очищаем родительский объект */
+        this.dispose.clearParent(this._currentMesh as THREE.Object3D)
+        let size = {width: data.width, height: data.height, depth: data.depth}
+
+        /** Пересоздаём по новым параметрам */
+        let body = this.buildUMProduct.createProductBody(this._currentMesh as THREE.Object3D, size, data);
+
+        /** Добавляем к родителю */
+        this._currentMesh?.add(body as THREE.Object3D);
+        this._currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
+        this._currentMesh?.updateMatrixWorld(true);
+
+        const aabb = new THREE.Box3().setFromObject(this._currentMesh);
+        size = new THREE.Vector3()
+        aabb.getSize(size);
+
+        /** Для корректного примагничивания к стенам */
+        this._currentMesh.userData.trueSizes = {
+            DEPTH: size.depth * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.width * 0.5
+        }
+        /** Пересоздаём UNIFORM_TEXTURE*/
+        if (UNIFORM_TEXTURE.group !== null) {
+
+            const uniformGroupCash = { ...UNIFORM_TEXTURE }
+
+            const currentUniformGroup = this.buildUniformTexture._uniformGroups.find(group => {
+                return group.id === uniformGroupCash.group
+            })
+
+            if (currentUniformGroup?.parts.flat().length < 2) {
+                this.buildUniformTexture.removeFromUniformGroup(this._currentMesh)
+                this.buildUniformTexture.loadUniformGroup([{
+                    objects: [this._currentMesh],
+                    id: uniformGroupCash.group,
+                    fasadId: uniformGroupCash.backupFasadId
+                }])
+            }
+            else {
+                this.buildUniformTexture.removeFromUniformGroup(this._currentMesh)
+                this.buildUniformTexture.addToUniformGroup(this._currentMesh, uniformGroupCash.group)
+                /** Скрываем helper переходящего рисунка */
+            }
+
+            this.root._customBoxHelper.hideGroupBox(this.buildUniformTexture._groupsBoxHelper)
+
+
+        }
+
+        this.root._customBoxHelper.updateBoxHelper()
+
+    }
+
     changeModelSize(data: { width: number, height: number, depth: number }) {
 
         if (!this._currentMesh) return
@@ -781,6 +849,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeModelSize(data as { width: number, height: number, depth: number })
         }
 
+        this.onUpdateUMModel = (data) => {
+            this.updateUMModel(data as Object)
+        }
+
         this.onToggleFasade = (fasad_ndx) => {
             this.toggleFasade(fasad_ndx)
         }
@@ -811,6 +883,8 @@ export class MeshEvents extends BuildersHelper {
 
         this.events.on('A:Delite-Fasad', this.onDeliteFasade)
 
+        this.events.on('A:UM-update', this.onUpdateUMModel)
+
     }
 
     removeVueEvents() {
@@ -831,6 +905,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.off('A:Delite-Uniform-Group', this.onDeliteUniformGroup);
 
         this.events.off('A:Model-resize', this.onChangeModelSize)
+        this.events.off('A:UM-update', this.onUpdateUMModel)
         this.events.off('A:Toggle-Fasad', this.onToggleFasade)
         this.events.off('A:Delite-Fasad', this.onDeliteFasade)
         this.alumTextures = null

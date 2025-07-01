@@ -154,6 +154,7 @@ export interface GridCellsRow {
   number: number;
   width: number;
   height: number;
+  position: THREE.Vector2;
   type: "rowCell";
   fillings?: FillingObject[];
 }
@@ -162,6 +163,7 @@ export interface GridCell {
   number: number;
   width: number;
   height: number;
+  position: THREE.Vector2;
   type: "cell";
   cellsRows?: GridCellsRow[];
   fillings?: FillingObject[];
@@ -171,6 +173,7 @@ export interface GridSection {
   number: number;
   width: number;
   height: number;
+  position: THREE.Vector2;
   type: "section";
   cells: GridCell[];
   fasades?: FasadeObject[];

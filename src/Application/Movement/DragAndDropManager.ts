@@ -3,6 +3,7 @@ import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 export class DragAndDropManager {
 
@@ -40,6 +41,7 @@ export class DragAndDropManager {
         this.raycaster = raycaster;
         this.mouse = mouse;
         this.geometryBuilder = trafficManager.geometryBuilder
+        this.universalGeometryBuilder = trafficManager.universalGeometryBuilder
         this.boxHelper = boxHelper
 
         this.roomParams = room._roomParams
@@ -87,15 +89,13 @@ export class DragAndDropManager {
                     const surface = intersects[0].object;
 
                     if(productData.moduleType || productData.ID == 3954672) {
-                        this.geometryBuilder.craeteModel(productData, (object) => {
+                        this.universalGeometryBuilder.craeteModel(productData, (object) => {
                             const menuStore = useMenuStore();
-                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object])
 
                             object.userData.MOUSE_POSITION = {
                                 x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
                                 y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
                             };
-
                             this.setObject.create({
                                 scene: this.scene,
                                 object,
@@ -105,6 +105,9 @@ export class DragAndDropManager {
                                 boxHelper: this.boxHelper,
                                 wall: surface
                             });
+
+                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object])
+                            //useModelState().setCurrentModel(object);
                         });
                     }
                     else {

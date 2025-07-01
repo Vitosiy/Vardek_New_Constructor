@@ -270,11 +270,6 @@ const selected = (item: any) => {
   else if(CONFIG.MODULEGRID) {
     universalModuleData.value = {
       data: CONFIG.MODULEGRID,
-      canvasHeight: CONFIG.MODULEGRID.canvasHeight,
-    };
-
-    universalModuleData.value = {
-      data: CONFIG.MODULEGRID,
       object: object,
       canvasHeight: CONFIG.MODULEGRID.canvasHeight,
       canvasHeight: CONFIG.MODULEGRID.canvasWidth,

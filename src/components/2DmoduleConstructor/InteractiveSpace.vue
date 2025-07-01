@@ -215,14 +215,17 @@ const init = async () => {
     getPixelWidth,
   });
   shapeAdjuster.setStep(props.step)
+  console.log('init')
+
   addTicker();
 
   renderGrid();
 };
 
 const renderGrid = () => {
-  clearRender();
+  console.log('renderGrid')
 
+  clearRender();
   let xOffset = 0;
   let yOffset = 0;
   let ModulepxWidth = getPixelWidth(props.module.width);
@@ -1096,7 +1099,8 @@ const adjustSectionSize = (
     module[dimension] = newValue
 
     calcValue = newValue
-  } else {
+  }
+  else {
     if (dimension === "width") {
       const column = module.sections[sectionIndex];
       const cell = column.cells?.[cellIndex];
@@ -1128,7 +1132,8 @@ const adjustSectionSize = (
             minCurrent,
             minNext
         );
-      } else if (sectionIndex > 0) {
+      }
+      else if (sectionIndex > 0) {
         const prevRow = rowIndex !== null ? cell.cellsRows[rowIndex - 1] :
             cellIndex !== null ? column.cells[cellIndex - 1] :
                 module.sections[sectionIndex - 1];
@@ -1154,15 +1159,43 @@ const adjustSectionSize = (
             minPrev
         );
       } else {
-        column.forEach((cell) => (cell.width = newValue));
+        if (row) {
+          const nextRow = cell.cellsRows[rowIndex + 1] || cell.cellsRows[rowIndex - 1]
+          const totalWidth = column.width + nextRow.width;
+
+          const minCurrent = Math.max(
+              MIN_SECTION_WIDTH,
+              shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
+          );
+
+          const minPrev = Math.max(
+              MIN_SECTION_WIDTH,
+              shapeAdjuster.getLeftSectionWidth(nextRow.sector, nextRow.maxX)
+          );
+
+          calcValue = updateSizes(
+              newValue,
+              dimension,
+              column,
+              nextRow,
+              totalWidth,
+              minCurrent,
+              minPrev
+          );
+        }
+        else {
+          column.cells.forEach((cell) => (cell.width = newValue));
+          column.width = newValue
+        }
       }
-    } else {
+    }
+    else {
       const column = module.sections[sectionIndex];
       const cell = column.cells?.[cellIndex];
       const row = cell?.cellsRows?.[rowIndex];
       const currentRow = row || cell || column
 
-      if (cellIndex < column.length - 1) {
+      if (cellIndex < column.cells?.length - 1) {
         const nextRow = rowIndex !== null ? cell.cellsRows[rowIndex + 1] :
             cellIndex !== null ? column.cells[cellIndex + 1] :
                 module.sections[sectionIndex + 1];
