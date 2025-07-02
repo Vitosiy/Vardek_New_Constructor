@@ -82,6 +82,7 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  MAX_SECTION_WIDTH,
 } = UI_PARAMS;
 
 const dragState = reactive({
@@ -1114,15 +1115,15 @@ const adjustSectionSize = (
 
         const totalWidth = currentRow.width + nextRow.width;
 
-        const minCurrent = Math.max(
+        const minCurrent = MIN_SECTION_WIDTH /*Math.max(
             MIN_SECTION_WIDTH,
             shapeAdjuster.getLeftSectionWidth(currentRow.sector, currentRow.maxX)
-        );
+        );*/
 
-        const minNext = Math.max(
+        const minNext = MIN_SECTION_WIDTH /*Math.max(
             MIN_SECTION_WIDTH,
             shapeAdjuster.getRightSectionWidth(nextRow.sector, nextRow.minX)
-        );
+        );*/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1139,16 +1140,16 @@ const adjustSectionSize = (
                 module.sections[sectionIndex - 1];
         const totalWidth = column.width + prevRow.width;
 
-        const minCurrent = Math.max(
+        const minCurrent = MIN_SECTION_WIDTH/* Math.max(
             MIN_SECTION_WIDTH,
             shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
-        );
+        );*/
 
-        const minPrev = Math.max(
+        const minPrev = MIN_SECTION_WIDTH /*Math.max(
             MIN_SECTION_WIDTH,
             shapeAdjuster.getLeftSectionWidth(prevRow.sector, prevRow.maxX)
         );
-
+*/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1163,15 +1164,15 @@ const adjustSectionSize = (
           const nextRow = cell.cellsRows[rowIndex + 1] || cell.cellsRows[rowIndex - 1]
           const totalWidth = column.width + nextRow.width;
 
-          const minCurrent = Math.max(
+          const minCurrent = MIN_SECTION_WIDTH /*Math.max(
               MIN_SECTION_WIDTH,
               shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
-          );
+          );*/
 
-          const minPrev = Math.max(
+          const minPrev = MIN_SECTION_WIDTH /*Math.max(
               MIN_SECTION_WIDTH,
               shapeAdjuster.getLeftSectionWidth(nextRow.sector, nextRow.maxX)
-          );
+          );*/
 
           calcValue = updateSizes(
               newValue,
@@ -1201,14 +1202,14 @@ const adjustSectionSize = (
                 module.sections[sectionIndex + 1];
 
         const totalHeight = currentRow.height + nextRow.height;
-        const minCurrent = Math.max(
+        const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionTop(currentRow.sector, currentRow.maxY)
-        );
-        const minNext = Math.max(
+        );*/
+        const minNext = MIN_SECTION_HEIGHT /*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionBottom(nextRow.sector, nextRow.minY)
-        );
+        );*/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1223,14 +1224,14 @@ const adjustSectionSize = (
             cellIndex !== null ? column.cells[cellIndex - 1] :
                 module.sections[sectionIndex - 1];
         const totalHeight = currentRow.height + prevRow.height;
-        const minCurrent = Math.max(
+        const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionBottom(currentRow.sector, currentRow.minY)
-        );
-        const minPrev = Math.max(
+        );*/
+        const minPrev = MIN_SECTION_HEIGHT /*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionTop(prevRow.sector, prevRow.maxY)
-        );
+        );*/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1245,6 +1246,134 @@ const adjustSectionSize = (
       }
     }
   }
+  renderGrid();
+  return calcValue;
+};
+
+const adjustFasadeSize = (
+    sectionIndex,
+    doorIndex,
+    segmentIndex,
+    newValue,
+    dimension = "height"
+) => {
+  const minValue =
+      dimension === "width" ? MIN_SECTION_WIDTH : MIN_SECTION_HEIGHT;
+  newValue = Math.max(Math.floor(newValue / props.step) * props.step, minValue);
+  let calcValue;
+
+  const module = props.module;
+
+  if (dimension === "width") {
+    const section = module.sections[sectionIndex];
+    const door = section.fasades?.[doorIndex];
+    const currentSegment = door?.[segmentIndex];
+
+    if (sectionIndex < module.sections.length - 1) {
+      const nextRow = door[segmentIndex + 1]
+
+      const totalWidth = currentSegment.width + nextRow.width;
+
+      const minCurrent = MIN_SECTION_WIDTH /*Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getLeftSectionWidth(currentRow.sector, currentRow.maxX)
+      );*/
+
+      const minNext = MIN_SECTION_WIDTH /*Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getRightSectionWidth(nextRow.sector, nextRow.minX)
+      );*/
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          currentSegment,
+          nextRow,
+          totalWidth,
+          minCurrent,
+          minNext
+      );
+    }
+    else if (sectionIndex > 0) {
+      const prevRow = door[segmentIndex - 1]
+
+      const totalWidth = currentSegment.width + prevRow.width;
+
+      const minCurrent = MIN_SECTION_WIDTH /* Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
+      );*/
+
+      const minPrev = MIN_SECTION_WIDTH /*Math.max(
+          MIN_SECTION_WIDTH,
+          shapeAdjuster.getLeftSectionWidth(prevRow.sector, prevRow.maxX)
+      );
+*/
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          currentSegment,
+          prevRow,
+          totalWidth,
+          minCurrent,
+          minPrev
+      );
+    } else {
+      calcValue = newValue
+    }
+  }
+  else {
+    const section = module.sections[sectionIndex];
+    const door = section.fasades?.[doorIndex];
+    const currentSegment = door?.[segmentIndex];
+
+    if (segmentIndex < door.length - 1) {
+      const nextRow = door[segmentIndex + 1]
+
+      const totalHeight = currentSegment.height + nextRow.height;
+      const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionTop(currentRow.sector, currentRow.maxY)
+      );*/
+      const minNext = MIN_SECTION_HEIGHT /*Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionBottom(nextRow.sector, nextRow.minY)
+      );*/
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          currentSegment,
+          nextRow,
+          totalHeight,
+          minCurrent,
+          minNext
+      );
+    }
+    else if (doorIndex > 0) {
+      const prevRow = door[segmentIndex - 1]
+      const totalHeight = currentSegment.height + prevRow.height;
+      const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionBottom(currentRow.sector, currentRow.minY)
+      );*/
+      const minPrev = MIN_SECTION_HEIGHT /*Math.max(
+          MIN_SECTION_HEIGHT,
+          shapeAdjuster.getSectionTop(prevRow.sector, prevRow.maxY)
+      );*/
+      calcValue = updateSizes(
+          newValue,
+          dimension,
+          currentSegment,
+          prevRow,
+          totalHeight,
+          minCurrent,
+          minPrev
+      );
+    }
+    else {
+      calcValue = newValue
+    }
+  }
+
   renderGrid();
   return calcValue;
 };
@@ -1282,20 +1411,27 @@ const adjustSizeFromExternal = ({
                                   value,
                                   sec = null,
                                   cell = null,
-                                  row = null
+                                  row = null,
+                                  type = 'module',
                                 }: {
   dimension: string;
   value: number;
   sec?: number;
   cell?: number;
   row?: number;
+  type?: string;
 }) => {
   if (sec === null) {
     console.warn("Не выбрана ячейка для изменения размера");
     return;
   }
 
-  return adjustSectionSize(sec, cell, row, value, dimension);
+  switch (type) {
+    case 'fasades':
+      return adjustFasadeSize(sec, cell, row, value, dimension);
+    default:
+      return adjustSectionSize(sec, cell, row, value, dimension);
+  }
 };
 
 const clearRender = () => {

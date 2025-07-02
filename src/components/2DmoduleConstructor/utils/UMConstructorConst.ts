@@ -3,8 +3,9 @@ export const UI_PARAMS = {
     TOTAL_HEIGHT: 1200, // Общая высота в миллиметрах
     MAX_AREA_WIDTH: 1100, // Максимальная ширина области в пикселях
     MAX_AREA_HEIGHT: 500, // Максимальная высота области в пикселях
-    MIN_SECTION_WIDTH: 150, // Минимальная ширина секции
-    MIN_SECTION_HEIGHT: 150, // Минимальная высота секции
+    MIN_SECTION_WIDTH: 114, // Минимальная ширина секции
+    MIN_SECTION_HEIGHT: 100, // Минимальная высота секции
+    MAX_SECTION_WIDTH: 900, // Максимальная ширина секции
     MIN_HOLE_SIZE_MM: 100, // Минимальный размер отверстия в мм
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
     BACKGROUND_COLOR: "#FFFFFF",

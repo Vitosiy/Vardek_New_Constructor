@@ -230,9 +230,13 @@ export class BuildUniversalModule extends BuildProduct {
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
             section.fillings?.map((filling) => {
                 const productInfo = this._PRODUCTS[filling.product]
+
+                if(!productInfo)
+                    return
+
                 const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, {width: filling.size.x, height: filling.size.y, depth: filling.size.z});
 
-                let productFilling = this.createSubProductObject(data)
+                let productFilling = this.createSubProductObject(data, PROPS)
                 let size = PROPS.CONFIG.SIZE
 
                 let start_position = this.getStartPosition(size)
@@ -248,8 +252,9 @@ export class BuildUniversalModule extends BuildProduct {
         return
     }
 
-    createSubProductObject(data: THREETypes.TObject) {
-        let body = this.json_builder.createMesh({ data })
+    createSubProductObject(data: THREETypes.TObject, props: THREETypes.TObject) {
+        let fasade = this._FASADE[props.CONFIG.MODULE_COLOR]
+        let body = this.json_builder.createMesh({ data, fasade })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
         body.matrixWorldNeedsUpdate = true

@@ -106,7 +106,7 @@ export class DragAndDropManager {
                                 wall: surface
                             });
 
-                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object])
+                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object.userData])
                             //useModelState().setCurrentModel(object);
                         });
                     }

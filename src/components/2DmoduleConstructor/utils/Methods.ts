@@ -38,6 +38,13 @@ type THoleData = {
     };
 }
 
+const {
+    MIN_SECTION_WIDTH,
+    MIN_SECTION_HEIGHT,
+    MAX_SECTION_WIDTH,
+
+} = UI_PARAMS;
+
 type TExtremum = { maxX: number, maxY: number, minX: number, minY: number }
 
 
@@ -121,7 +128,8 @@ class Helpers {
 
     getRightSectionWidth(sector, minX) {
 
-        if (minX < 150) return 150
+        if (minX < MIN_SECTION_WIDTH)
+            return MIN_SECTION_WIDTH
 
         const sBounds = sector.getBounds()
         const sMax = this.convertToTen(this.getMmWidth(sBounds.maxX))
@@ -131,7 +139,8 @@ class Helpers {
 
     getLeftSectionWidth(sector, maxX) {
 
-        if (maxX < 150) return 150
+        if (maxX < MIN_SECTION_WIDTH)
+            return MIN_SECTION_WIDTH
 
         const sBounds = sector.getBounds()
         const sMin = this.convertToTen(this.getMmWidth(sBounds.minX))
@@ -140,7 +149,9 @@ class Helpers {
 
     getSectionTop(sector, maxY) {
 
-        if (maxY < 150) return 150
+        if (maxY < MIN_SECTION_HEIGHT)
+            return MIN_SECTION_HEIGHT
+
         const sBounds = sector.getBounds()
         const sMin = this.convertToTen(this.getMmWidth(sBounds.minY))
         return maxY - sMin + UI_PARAMS.SECTOR_PADDING
@@ -148,7 +159,9 @@ class Helpers {
 
     getSectionBottom(sector, minY) {
 
-        if (minY < 150) return 150
+        if (minY < MIN_SECTION_HEIGHT)
+            return MIN_SECTION_HEIGHT
+
         const sBounds = sector.getBounds()
         const sMax = this.convertToTen(this.getMmWidth(sBounds.maxY))
         return sMax - minY + UI_PARAMS.SECTOR_PADDING

@@ -541,9 +541,7 @@ const saveUMData = ({ data, canvasHeight }) => {
 const openUMRedactor = () => {
   //isUMModalOpen.value = true;
   const menuStore = useMenuStore();
-  menuStore.openMenu('2dModuleConstructor', universalModuleData.value.object.globalData, [{
-    userData: universalModuleData.value.object
-  }])
+  menuStore.openMenu('2dModuleConstructor', universalModuleData.value.object.globalData, [universalModuleData.value.object])
 };
 
 const closeUMRedactor = () => {
