@@ -11,6 +11,7 @@ export class DragAndDropManager {
     scene: THREE.Scene;
 
     geometryBuilder: THREE.TGeometryBuilder;
+    universalGeometryBuilder: THREE.TUniversalGeometryBuilder;
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     camera: THREE.Camera

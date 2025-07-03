@@ -112,11 +112,15 @@ export interface FillingObject {
 
 export interface FasadeObject {
   id: number;
+  type: "fasade";
   position: THREE.Vector2;
   width: number;
   height: number;
   material: FasadeMaterial;
-  type: "fasade";
+  minY: number;
+  maxY: number;
+  minX?: number;
+  maxX?: number;
   error?: boolean;
 }
 export interface FasadeMaterial {

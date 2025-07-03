@@ -31,7 +31,7 @@ export class TrafficManager {
     controls: OrbitControls | null = null
     room: THREETypes.TRoomManager
     geometryBuilder: THREETypes.TGeometryBuilder
-    universalGeometryBuilder: UniversalGeometryBuilder;
+    universalGeometryBuilder: THREETypes.UniversalGeometryBuilder;
 
     despose: DeepDispose
     dragAndDropManager: DragAndDropManager

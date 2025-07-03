@@ -6,6 +6,9 @@ export const UI_PARAMS = {
     MIN_SECTION_WIDTH: 114, // Минимальная ширина секции
     MIN_SECTION_HEIGHT: 100, // Минимальная высота секции
     MAX_SECTION_WIDTH: 900, // Максимальная ширина секции
+    MIN_FASADE_HEIGHT: 360,
+    MIN_FASADE_WIDTH: 126,
+    MAX_FASADE_WIDTH: 600,
     MIN_HOLE_SIZE_MM: 100, // Минимальный размер отверстия в мм
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
     BACKGROUND_COLOR: "#FFFFFF",

@@ -23,11 +23,15 @@ import {
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 const {
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
   MAX_SECTION_WIDTH,
+  MIN_FASADE_HEIGHT,
+  MIN_FASADE_WIDTH,
+  MAX_FASADE_WIDTH,
 } = UI_PARAMS;
 
 const eventBus = useEventBus();
@@ -37,10 +41,10 @@ const emit = defineEmits(["save-table-data"]);
 
 let shapeAdjuster = null;
 const menuStore = useMenuStore();
-const APP = useAppData();
+const APP = useAppData().getAppData;
 
 const productData = ref(false)
-const builder = THREETypes.TUniversalGeometryBuilder
+const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const props = defineProps({
   canvasHeight: {
@@ -60,11 +64,6 @@ const props = defineProps({
 const isMounted = ref(false);
 const mode = ref<constructorMode>('module');
 const visualizationRef = ref(null);
-const serviseData = ref([]);
-
-const loadTotalHeight = ref(false);
-const loadTotalWidth = ref(false);
-const loadTotalDepth = ref(false);
 
 const totalHeight = ref(0);
 const totalWidth = ref(0);
@@ -75,9 +74,21 @@ const module = computed(() => {
   if (productData.value) {
     const PROPS = productData.value.PROPS;
     if (!PROPS.CONFIG.MODULEGRID) {
+
       let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
       let FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
       totalDepth.value = PROPS.CONFIG.SIZE.depth
+
+      let fasadeColor = APP.FASADE[FASADE_PROPS.COLOR]
+      let fasadePosition = APP.FASADE_POSITION[FASADE_PROPS.POSITION];
+      fasadePosition = builder.expressionsReplace(fasadePosition,
+          Object.assign(PROPS.CONFIG.EXPRESSIONS,
+              {
+                "#X#": totalWidth.value,
+                "#Y#": totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"],
+                "#Z#": totalDepth.value,
+              }))
+
 
       let section: GridSection = {
         number: 1,
@@ -98,6 +109,10 @@ const module = computed(() => {
                 ...FASADE_PROPS
               },
               type: "fasade",
+              minY: MIN_FASADE_HEIGHT,
+              maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+              maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+              minX: MIN_FASADE_WIDTH
             }
           ]
         ]
@@ -214,18 +229,17 @@ const fillingsOptions = ref({show: false, section: selectedFilling});
 
 const getFilling = computed(() => {
   const objectsMatrix = []
-  const projectData = APP.getAppData
 
-  const productInfo = projectData.CATALOG.PRODUCTS[productData.value.globalData]
+  const productInfo = APP.CATALOG.PRODUCTS[productData.value.globalData]
   const fillingsGroups = Object.keys(productInfo.FILLING_SECTION)
 
   fillingsGroups.map(groupID => {
-    let fillingsGroup = projectData.CATALOG.SECTIONS[groupID]
+    let fillingsGroup = APP.CATALOG.SECTIONS[groupID]
 
     objectsMatrix.push({
       groupName: fillingsGroup.NAME,
       items: fillingsGroup.PRODUCTS.map(item => {
-                  return projectData.CATALOG.PRODUCTS[item]
+                  return APP.CATALOG.PRODUCTS[item]
               }).filter(item => item)
     })
   })
@@ -457,6 +471,40 @@ const getFillingOptionsActive = computed(() => {
 
 //#region Фасады
 
+const getFasadePositionMinMax = (fasade) => {
+  const PROPS = productData.value.PROPS;
+  let fasadeColor = APP.FASADE[fasade.material.COLOR]
+  let fasadePosition = APP.FASADE_POSITION[fasade.material.POSITION];
+
+  const getExec = function (obj) {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
+        obj[key] = value;
+      } else {
+        obj[key] = eval(value);
+      }
+    });
+    return obj;
+  };
+
+  fasadePosition = getExec (
+      builder.expressionsReplace(fasadePosition,
+        Object.assign(PROPS.CONFIG.EXPRESSIONS,
+            {
+              "#X#": totalWidth.value,
+              "#Y#": totalHeight.value - module.value.horizont,
+              "#Z#": totalDepth.value,
+            }))
+  )
+
+  return {
+    minY: MIN_FASADE_HEIGHT,
+    maxY: fasadeColor.MAX_HEIGHT || fasadePosition.FASADE_HEIGHT,
+    maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+    minX: MIN_FASADE_WIDTH,
+  }
+}
+
 const showCurrentFasade = (secIndex) => {
   selectedFasade.value = {sec: secIndex, cell: 0, row: 0};
   visualizationRef.value.selectCell("fasades", secIndex, 0, 0);
@@ -494,9 +542,11 @@ const addDoor = (secIndex) => {
         ...FASADE_PROPS
       }
     }
+    let fasadeMinMax = getFasadePositionMinMax(firstFasade)
+    firstFasade = Object.assign(firstFasade, fasadeMinMax)
   }
 
-  if (width < 150)
+  if (width < firstFasade.minX)
     firstFasade.error = true
   else
     delete firstFasade.error
@@ -525,12 +575,13 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   let segment = module.value.sections[secIndex].fasades[doorIndex][segmentIndex];
   const halfHeight = Math.floor((segment.height - 4) / 2);
   // Обновляем высоту последней строки
-  segment.height = halfHeight;
 
-  if (segment.width < 150 || segment.width < 150)
+  if (halfHeight < segment.minY || segment.width < segment.minX)
     segment.error = true
   else
     delete segment.error;
+
+  segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
   module.value.sections[secIndex].fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
@@ -554,7 +605,7 @@ const deleteDoor = (secIndex, doorIndex) => {
     prev.forEach((segment, index) => {
       segment.width = combinedWidth;
 
-      if (segment.width < 150 || segment.width < 150)
+      if (segment.width < segment.minX || segment.height < segment.minY)
         segment.error = true
       else
         delete segment.error;
@@ -582,6 +633,13 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
       : currentSegment.height + prev.height + 4;
 
   next ? (next.height = combinedHeight) : (prev.height = combinedHeight);
+
+  let tmpSegment = next || prev
+  if (tmpSegment.width < tmpSegment.minX || tmpSegment.height < tmpSegment.minY)
+    tmpSegment.error = true
+  else
+    delete tmpSegment.error;
+
 
   if (currentSection.length > 1) {
     currentSection.splice(segmentIndex, 1);
@@ -624,11 +682,25 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 
     curCell.height = adjustedValue
 
+    if (curCell.width < curCell.minX || curCell.height < curCell.minY)
+      curCell.error = true
+    else
+      delete curCell.error;
+
     if (prevCell) {
-      prevCell.height += delta
-    } else if (nextCell) {
-      nextCell.height += delta
+      prevCell.height += delta;
+      prevCell.position.y += (-delta);
     }
+    else if (nextCell) {
+      nextCell.height += delta
+      curCell.position.y += delta;
+    }
+
+    let tmpSegment = prevCell || nextCell || {}
+    if (tmpSegment.width < tmpSegment.minX || tmpSegment.height < tmpSegment.minY)
+      tmpSegment.error = true
+    else
+      delete tmpSegment.error;
 
   }
   module.value = clone;
@@ -666,6 +738,11 @@ const updateFasades = () => {
         section.fasades.forEach((door, doorIndex) => {
           door.forEach((segment, segmentIndex) => {
 
+            let fasadeMinMax = getFasadePositionMinMax(segment)
+            Object.entries(fasadeMinMax).forEach(([key, value]) => {
+              segment[key] = value;
+            })
+
             segment.width += deltaWidth;
 
             if(secIndex !== 0) {
@@ -675,7 +752,7 @@ const updateFasades = () => {
               segment.position.x += deltaWidth;
             }
 
-            if (segment.width < 150 || segment.width < 150)
+            if (segment.width < segment.minX || segment.height < segment.minY)
               segment.error = true
             else
               delete segment.error;
@@ -685,12 +762,21 @@ const updateFasades = () => {
 
       if (deltaHeight !== 0) {
         section.fasades.forEach((door, doorIndex) => {
-          door[door.length - 1].height += deltaHeight;
 
-          if (door[door.length - 1].height < 150 || door[door.length - 1].width < 150)
-            door[door.length - 1].error = true
+          door.forEach((segment, segmentIndex) => {
+            let fasadeMinMax = getFasadePositionMinMax(segment)
+            Object.entries(fasadeMinMax).forEach(([key, value]) => {
+              segment[key] = value;
+            })
+          })
+
+          let lastSegment = door[0]
+          lastSegment.height += deltaHeight;
+
+          if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+            lastSegment.error = true
           else
-            delete door[door.length - 1].error;
+            delete lastSegment.error;
         })
       }
     }
@@ -1307,12 +1393,14 @@ const reset = (reset = false) => {
 
 const saveGrid = () => {
   const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset"];
+  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset"];
   const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings"];
 
   //Рекурсивная очистка сетки от "технических" полей 2D конструктора
   const removeGarbage = (object) => {
     if(typeof object === "object" && !Array.isArray(object)) {
 
+      let objectType = object.type || false
       object = Object.entries(object).map(([key, value]) => {
 
         if(nesting.includes(key)) {
@@ -1324,7 +1412,11 @@ const saveGrid = () => {
         return[key, value]
       })
 
-      object = object.filter(([key, value]) => !garbage.includes(key))
+      if(objectType === "fasade")
+        object = object.filter(([key, value]) => !garbageFasades.includes(key))
+      else
+        object = object.filter(([key, value]) => !garbage.includes(key))
+
       object = Object.fromEntries(object)
     }
 

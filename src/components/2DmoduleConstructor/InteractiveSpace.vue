@@ -77,12 +77,11 @@ const fasades: Graphics[] = [];
 const {
   MAX_AREA_WIDTH,
   MAX_AREA_HEIGHT,
-  TOTAL_LENGTH,
-  // TOTAL_HEIGHT,
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
-  MAX_SECTION_WIDTH,
+  MIN_FASADE_HEIGHT,
+  MIN_FASADE_WIDTH
 } = UI_PARAMS;
 
 const dragState = reactive({
@@ -375,19 +374,10 @@ const renderGrid = () => {
           });
 
           //Добавляем отступ по вертикали
-          yOffset += pxHeight + 4;
+          yOffset += pxHeight + getPixelHeight(4);
         });
         //Добавляем отступ по горизонтали
-        xOffset += pxWidth + 4;
-
-        // Создаём ограничения для секторов по ширине
-        const colBond = shapeAdjuster.createColumnBounds(sections, colIndex);
-
-        column.forEach((row) => {
-          row.shapesBond = colBond;
-          row.maxX = shapeAdjuster.convertToTen(getMmWidth(colBond.maxX));
-          row.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
-        });
+        xOffset += pxWidth + getPixelWidth(4);
       });
     })
   }
@@ -521,11 +511,13 @@ const createSector = ({
   });
 
   // Создаём ограничения для секторов по высоте
-  const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
-  sector.bound = sectorBounds;
+  if(gridType !== "fasades") {
+    const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
+    sector.bound = sectorBounds;
 
-  cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-  cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+    cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+    cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+  }
 
   cellData.sector = sector;
 
@@ -1274,23 +1266,28 @@ const adjustFasadeSize = (
 
       const totalWidth = currentSegment.width + nextRow.width;
 
-      const minCurrent = MIN_SECTION_WIDTH /*Math.max(
+      const minCurrent = MIN_FASADE_WIDTH
+      const maxCurrent = currentSegment.maxX
+
+      /*Math.max(
           MIN_SECTION_WIDTH,
           shapeAdjuster.getLeftSectionWidth(currentRow.sector, currentRow.maxX)
       );*/
 
-      const minNext = MIN_SECTION_WIDTH /*Math.max(
+      const minNext = MIN_FASADE_WIDTH
+      const maxNext = nextRow.maxX
+
+      /*Math.max(
           MIN_SECTION_WIDTH,
           shapeAdjuster.getRightSectionWidth(nextRow.sector, nextRow.minX)
       );*/
-      calcValue = updateSizes(
+      calcValue = updateSizesFasades(
           newValue,
-          dimension,
-          currentSegment,
-          nextRow,
           totalWidth,
           minCurrent,
-          minNext
+          maxCurrent,
+          minNext,
+          maxNext
       );
     }
     else if (sectionIndex > 0) {
@@ -1298,24 +1295,27 @@ const adjustFasadeSize = (
 
       const totalWidth = currentSegment.width + prevRow.width;
 
-      const minCurrent = MIN_SECTION_WIDTH /* Math.max(
+      const minCurrent = MIN_FASADE_WIDTH
+      const maxCurrent = currentSegment.maxX
+      /* Math.max(
           MIN_SECTION_WIDTH,
           shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
       );*/
 
-      const minPrev = MIN_SECTION_WIDTH /*Math.max(
+      const minPrev = MIN_FASADE_WIDTH
+      const maxPrev = prevRow.maxX
+      /*Math.max(
           MIN_SECTION_WIDTH,
           shapeAdjuster.getLeftSectionWidth(prevRow.sector, prevRow.maxX)
       );
 */
-      calcValue = updateSizes(
+      calcValue = updateSizesFasades(
           newValue,
-          dimension,
-          currentSegment,
-          prevRow,
           totalWidth,
           minCurrent,
-          minPrev
+          maxCurrent,
+          minPrev,
+          maxPrev
       );
     } else {
       calcValue = newValue
@@ -1330,43 +1330,36 @@ const adjustFasadeSize = (
       const nextRow = door[segmentIndex + 1]
 
       const totalHeight = currentSegment.height + nextRow.height;
-      const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
-          MIN_SECTION_HEIGHT,
-          shapeAdjuster.getSectionTop(currentRow.sector, currentRow.maxY)
-      );*/
-      const minNext = MIN_SECTION_HEIGHT /*Math.max(
-          MIN_SECTION_HEIGHT,
-          shapeAdjuster.getSectionBottom(nextRow.sector, nextRow.minY)
-      );*/
-      calcValue = updateSizes(
+      const minCurrent = MIN_FASADE_HEIGHT  //Math.max(MIN_FASADE_HEIGHT, currentSegment.maxY);
+      const minNext = MIN_FASADE_HEIGHT     //Math.max(MIN_FASADE_HEIGHT, nextRow.minY);
+      const maxCurrent = currentSegment.maxY
+      const maxNext = nextRow.maxY
+
+      calcValue = updateSizesFasades(
           newValue,
-          dimension,
-          currentSegment,
-          nextRow,
           totalHeight,
           minCurrent,
-          minNext
+          maxCurrent,
+          minNext,
+          maxNext
       );
     }
-    else if (doorIndex > 0) {
+    else if (segmentIndex > 0) {
       const prevRow = door[segmentIndex - 1]
       const totalHeight = currentSegment.height + prevRow.height;
-      const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
-          MIN_SECTION_HEIGHT,
-          shapeAdjuster.getSectionBottom(currentRow.sector, currentRow.minY)
-      );*/
-      const minPrev = MIN_SECTION_HEIGHT /*Math.max(
-          MIN_SECTION_HEIGHT,
-          shapeAdjuster.getSectionTop(prevRow.sector, prevRow.maxY)
-      );*/
-      calcValue = updateSizes(
+
+      const minCurrent = MIN_FASADE_HEIGHT // Math.max(MIN_FASADE_HEIGHT, currentSegment.minY);
+      const minPrev = MIN_FASADE_HEIGHT // Math.max(MIN_FASADE_HEIGHT, prevRow.maxY);
+      const maxCurrent = currentSegment.maxY
+      const maxPrev = prevRow.maxY
+
+      calcValue = updateSizesFasades(
           newValue,
-          dimension,
-          currentSegment,
-          prevRow,
           totalHeight,
           minCurrent,
-          minPrev
+          maxCurrent,
+          minPrev,
+          maxPrev
       );
     }
     else {
@@ -1402,6 +1395,30 @@ const updateSizes = (
     current[dimension] = newValue;
     adjacent[dimension] = total - newValue;
   }*/
+
+  return newValue;
+};
+
+const updateSizesFasades = (
+    newValue,
+    total,
+    minCurrent,
+    maxCurrent,
+    minAdjacent,
+    maxAdjacent
+) => {
+
+  if (newValue < minCurrent)
+    newValue = minCurrent;
+  else if (newValue > maxCurrent)
+    newValue = maxCurrent;
+
+  const newAdjacentSize = total - newValue;
+
+  if (newAdjacentSize < minAdjacent)
+    newValue = total - minAdjacent;
+  else if (newAdjacentSize > maxAdjacent)
+    newValue = total - maxAdjacent;
 
   return newValue;
 };
