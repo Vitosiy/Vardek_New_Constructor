@@ -96,16 +96,69 @@ export interface HoverPointObject {
 export interface FillingObject {
   product: number;
   id: number;
+  name: string;
+  image: string;
   type: "shelf" | "drawer" | "any";
-  position: THREE.Vector3;
+  position:  THREE.Vector2;
   size: THREE.Vector3;
+  width: number,
+  height: number,
   color: number;
+  fasade?: FasadeObject;
+  sec: number;
+  cell?: number;
+  row?: number;
+}
+
+export interface FasadeObject {
+  id: number;
+  type: "fasade";
+  position: THREE.Vector2;
+  width: number;
+  height: number;
+  material: FasadeMaterial;
+  minY: number;
+  maxY: number;
+  minX?: number;
+  maxX?: number;
+  error?: boolean;
+}
+export interface FasadeMaterial {
+  COLOR: number;
+  POSITION: number;
+  GLASS?: number;
+  MILLING?: number;
+  PALETTE?: number;
+  PATINA?: number;
+  TYPE?: number;
+  WINDOW?: number;
+  ALUM?: number;
+}
+
+export enum MANUFACTURER {
+  innotech = 31,
+  иннотех = 31,
+  avantech = 29.25,
+  авантех = 29.25,
+  flowbox = 25,
+  флоубокс = 25,
+}
+
+export interface DrawerFasadeObject extends FasadeObject {
+  manufacturerOffset: MANUFACTURER;
+  minHeight: number;
+  maxHeight: number;
+  item: number;
+  sec: number | null;
+  cell?: number | null;
+  row?: number | null;
 }
 
 export interface GridCellsRow {
   number: number;
   width: number;
   height: number;
+  position: THREE.Vector2;
   type: "rowCell";
   fillings?: FillingObject[];
 }
@@ -114,6 +167,7 @@ export interface GridCell {
   number: number;
   width: number;
   height: number;
+  position: THREE.Vector2;
   type: "cell";
   cellsRows?: GridCellsRow[];
   fillings?: FillingObject[];
@@ -123,16 +177,19 @@ export interface GridSection {
   number: number;
   width: number;
   height: number;
+  position: THREE.Vector2;
   type: "section";
   cells: GridCell[];
+  fasades?: FasadeObject[];
 }
 
 export interface GridModule {
   width: number;
   height: number;
+  depth?: number;
   moduleThickness: number;
   sections: GridSection[];
   type: "module";
   horizont?: number;
-  fasades?: [];
+  fasades?: FasadeObject[];
 }

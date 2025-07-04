@@ -148,7 +148,7 @@ export class BuildersHelper extends GlobalsData {
     };
 
     getStartPosition(size: THREETypes.TObject) {
-        return { x: -size.width * 0.5, y: -size.height * 0.5, z: -size.depth * 0.5 };
+        return new THREE.Vector3(-size.width * 0.5, -size.height * 0.5, -size.depth * 0.5);
     };
 
     checkColor(product: THREETypes.TObject) {

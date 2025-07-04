@@ -26,12 +26,14 @@ export class FasadeBuilder {
             group,
             props,
             fasadeNdx,
-            incomingModel
+            incomingModel,
+            isUMmodule = false,
         }: {
             group: THREE.Object3D,
             props: THREETypes.TObject,
             fasadeNdx?: number,
             incomingModel?: number,
+            isUMmodule?: boolean,
         }
     ) {
 
@@ -39,11 +41,11 @@ export class FasadeBuilder {
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE } = CONFIG
         const start_position = this.parent.getStartPosition(SIZE);
 
-        this.indexedFasadeToUtiformTexturing(props)
+        this.indexedFasadeToUtiformTexturing(props, isUMmodule)
 
         FASADE_PROPS.forEach((value, key, props_array) => {
 
-            const fasade_position = this.getFasadePosition(CONFIG, key);
+            const fasade_position = this.getFasadePosition(CONFIG, key, isUMmodule);
             const fasade_id = FASADE_PROPS[key].BODY
 
             let fasade = this.createFasade(
@@ -186,8 +188,6 @@ export class FasadeBuilder {
         const product_model_type = props.CONFIG.MODEL?.type ?? "left";
         const currentFasade = props.CONFIG.FASADE_PROPS[key].COLOR
 
-
-
         let geometry_config = {
             x: this.parent.calculateFromString(fasade_position.FASADE_WIDTH),
             y: geometry_height,
@@ -209,48 +209,6 @@ export class FasadeBuilder {
             this.parent.getTexture({ material, url, texture_size })
         }
 
-        // console.log(model, 'F-model')
-        // const fasadeModel = this.parent._MODELS[fasade_position.FASADE_MODEL]
-        // console.log(model, 'F-model_2')
-
-        // console.log(geometry_config, "geometry_config")
-
-        // if (fasadeModel) {
-
-
-        //     let buildFasad = this.parent.json_builder.createMesh({ data: fasadeModel, parent_size: geometry_config })
-
-        //     // console.log(buildFasad, 'M1')
-        //     // buildFasad.traverse(children => {
-        //     //     if (children instanceof THREE.Mesh) {
-        //     //         children.material = material
-        //     //     }
-        //     // })
-
-        //     // const _rotation = buildFasad.children[0].userData.rotation
-        //     // const _position = buildFasad.children[0].userData.position
-        //     // buildFasad.children[0].position.set(0, 0, 0)
-        //     // buildFasad.children[0].rotation.set(0, 0, 0)
-
-        //     // buildFasad.children[0].matrixAutoUpdate = false;
-        //     // buildFasad.children[0].updateMatrix()
-
-        //     // console.log(buildFasad.children[0].userData)
-
-        //     // buildFasad.children[0].position.set(_position.x, _position.y, _position.z)
-        //     // buildFasad.children[0].rotateX(_rotation.x)
-        //     // buildFasad.children[0].rotateY(_rotation.y)
-        //     // buildFasad.children[0].rotateZ(_rotation.z)
-
-        //     // buildFasad.children[0].updateMatrix()
-
-        //     // buildFasad.children[0].applyMatrix4(buildFasad.matrixWorld)
-        //     console.log(buildFasad.children[0], 'M2')
-
-        //     return buildFasad
-        // }
-
-
         if (fasadeData.TYPE == "no_fasade") {
             fasade = new THREE.Mesh(geometry, material)
             fasade.geometry.computeBoundingBox()
@@ -268,7 +226,11 @@ export class FasadeBuilder {
 
     }
 
-    private getFasadePosition(props: THREETypes.TObject, key: string | number) {
+    private getFasadePosition(props: THREETypes.TObject, key: string | number, isUMmodule?: boolean = false) {
+
+        if(isUMmodule)
+            return props.FASADE_POSITIONS[key]
+
         const fasade_list = props.FASADE_PROPS[key].POSITION || props.FASADE_PROPS[0].POSITION;
         const expressions = props.EXPRESSIONS;
         // const fasadeThickness = 18;
@@ -370,13 +332,13 @@ export class FasadeBuilder {
     }
 
     // Для переходящего рисунка
-    private numberingToUniform(FASADE_PROPS, CONFIG, BODY) {
+    private numberingToUniform(FASADE_PROPS, CONFIG, BODY, isUMmodule?: boolean = false) {
 
         const numered: TFasadePartPosition[] = []
 
         FASADE_PROPS.forEach((prop, propNdx) => {
 
-            const fasade_position = this.getFasadePosition(CONFIG, propNdx);
+            const fasade_position = this.getFasadePosition(CONFIG, propNdx, isUMmodule);
 
             const { BODY_WIDTH } = BODY.userData.trueSize
             const { FASADE_WIDTH } = fasade_position
@@ -492,12 +454,12 @@ export class FasadeBuilder {
         return result.flat();
     }
 
-    private indexedFasadeToUtiformTexturing(props) {
+    private indexedFasadeToUtiformTexturing(props: any, isUMmodule?: boolean = false) {
 
         const { CONFIG, BODY } = props
         const { FASADE_PROPS } = CONFIG
 
-        const numeredFasade = this.numberingToUniform(FASADE_PROPS, CONFIG, BODY)
+        const numeredFasade = this.numberingToUniform(FASADE_PROPS, CONFIG, BODY, isUMmodule)
 
         // console.log(this.rearrangeFasadeNumbers(this.originalArray), 'numeredFasade')
 
