@@ -1540,7 +1540,7 @@ defineExpose({
   }
 
   position: relative;
-  right: 17vh;
+  right: 7vh;
   height: 500px;
   width: 1100px;
 }
