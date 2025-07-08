@@ -542,7 +542,7 @@ class Shape extends Helpers {
 
         const pointerdown = (event, graphic) => {
             graphic.cursor = "grabbing";
-            this.select(this.sector.secIndex, this.sector.cellIndex, this.sector.rowIndex)
+            this.select('fillings', this.sector.secIndex, this.sector.cellIndex, true, this.sector.rowIndex)
             dragging = true;
             originalPosition = {
                 x: graphic.position.x,

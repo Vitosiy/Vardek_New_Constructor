@@ -77,7 +77,6 @@ const module = computed(() => {
 
       let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
       let FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
-      totalDepth.value = PROPS.CONFIG.SIZE.depth
 
       let fasadeColor = APP.FASADE[FASADE_PROPS.COLOR]
       let fasadePosition = APP.FASADE_POSITION[FASADE_PROPS.POSITION];
@@ -272,9 +271,14 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
   const {sec, cell, row} = selectedCell.value
 
-  const currentSection = module.value.sections[selectedCell.value.sec];
-  const currentCell = sec.cells?.[selectedCell.value.cell];
-  const currentRow = cell?.cellsRows?.[selectedCell.value.row];
+  if (row === null && cell === null && sec === null) {
+    alert("Пожалуйста, выберите секцию для добавления наполнения");
+    return;
+  }
+
+  const currentSection = module.value.sections[sec];
+  const currentCell = currentSection.cells?.[cell];
+  const currentRow = currentCell?.cellsRows?.[row];
 
   let currentFillingsArray = currentRow || currentCell || currentSection
 
@@ -284,12 +288,6 @@ const addFilling = (type, product, oldFillingObject = false) => {
     alert("Позиция не найдена");
     return;
   }
-
-  if (row === null && cell === null && sec === null) {
-    alert("Пожалуйста, выберите секцию для добавления наполнения");
-    return;
-  }
-
 
   if (!currentFillingsArray.fillings)
     currentFillingsArray.fillings = []
@@ -306,9 +304,9 @@ const addFilling = (type, product, oldFillingObject = false) => {
     width: startFillingData.width,
     height: startFillingData.height,
     color: productData.value.PROPS.CONFIG.MODULE_COLOR,
-    sec: selectedCell.value.sec,
-    cell: selectedCell.value.cell,
-    row: selectedCell.value.row,
+    sec,
+    cell,
+    row,
   };
 
   currentFillingsArray.push(fillingObject);
@@ -332,9 +330,9 @@ const addFilling = (type, product, oldFillingObject = false) => {
       type: "fasade",
       manufacturerOffset,
       item: currentFillingsArray.length - 1,
-      sec: selectedCell.value.sec || null,
-      cell: selectedCell.value.cell || null,
-      row: selectedCell.value.row || null,
+      sec,
+      cell,
+      row,
     }
 
     updateFasades()
@@ -1438,13 +1436,11 @@ onBeforeMount(() => {
   console.log('onBeforeMount')
   productData.value = menuStore.catalogFilterProductsId[0]
 
-  totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || props.canvasHeight;
-  totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || props.canvasWidth;
+  totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
+  totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
+  totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
 
   console.log(totalHeight.value, totalWidth.value)
-
-  totalDepth.value = 0
-  // Делаем клон для реактивности
 });
 
 onMounted(() => {
@@ -1573,7 +1569,7 @@ watch(visualizationRef, () => {
                   <MainInput
                       @update:modelValue="updateTotalDepth"
                       :inputClass="'actions-input'"
-                      :modelValue="productData.PROPS.CONFIG.SIZE.depth"
+                      :modelValue="totalDepth"
                       :min="getMinDepth"
                       :max="getMaxDepth"
                       :type="'number'"

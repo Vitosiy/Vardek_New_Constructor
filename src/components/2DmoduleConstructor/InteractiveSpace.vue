@@ -437,6 +437,8 @@ const createModule = ({
 
   moduleData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
   moduleData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+  moduleData.maxX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxX));
+  moduleData.minX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minX));
 
   moduleData.sector = sector;
 
@@ -515,8 +517,8 @@ const createSector = ({
     const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
     sector.bound = sectorBounds;
 
-    cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-    cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+    cellData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+    cellData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
   }
 
   cellData.sector = sector;
