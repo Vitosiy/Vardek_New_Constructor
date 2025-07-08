@@ -34,7 +34,6 @@ const {
   MAX_FASADE_WIDTH,
 } = UI_PARAMS;
 
-const eventBus = useEventBus();
 type constructorMode = 'module' | 'fasades' | 'fillings';
 
 const emit = defineEmits(["save-table-data"]);
@@ -1420,17 +1419,15 @@ const saveGrid = () => {
   let tmpClone = Object.assign({}, module.value)
   tmpClone = removeGarbage(tmpClone)
 
-  const data = {
+  return tmpClone;
+
+  /*const data = {
     canvasHeight: totalHeight.value,
     canvasWidth: totalWidth.value,
     data: tmpClone,
-  };
+  };*/
 
-  productData.value.PROPS.CONFIG.MODULEGRID = tmpClone
-
-  eventBus.emit("A:UM-update", tmpClone);
-  //menuStore.closeMenu('2dModuleConstructor')
-  return data;
+  //return data;
 };
 
 defineExpose({
@@ -1479,136 +1476,140 @@ watch(visualizationRef, () => {
 
 <template>
   <div class="constructor2d-wrapper">
+
     <div
         class="constructor2d-container constructor2d-container--left"
+    >
+      <div
+          class="constructor2d-container--left-module-sizes"
+      >
+        <div
+            class="constructor2d-container--left-module-sizes--module-size"
+        >
+          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+            <p class="actions-title">Высота модуля</p>
+            <div class="actions-input--container">
+              <MainInput
+                  @update:modelValue="updateTotalHeight"
+                  :inputClass="'actions-input'"
+                  :modelValue="totalHeight"
+                  :min="getMinHeight"
+                  :max="getMaxHeight"
+                  :type="'number'"
+              />
+            </div>
+          </div>
+          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+            <p class="actions-title">Ширина модуля</p>
+            <div class="actions-input--container">
+              <MainInput
+                  @update:modelValue="updateTotalWidth"
+                  :inputClass="'actions-input'"
+                  :modelValue="totalWidth"
+                  :min="getMinWidth"
+                  :max="getMaxWidth"
+                  :type="'number'"
+              />
+            </div>
+          </div>
+
+          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+            <p class="actions-title">Глубина модуля</p>
+            <div class="actions-input--container">
+              <MainInput
+                  @update:modelValue="updateTotalDepth"
+                  :inputClass="'actions-input'"
+                  :modelValue="totalDepth"
+                  :min="getMinDepth"
+                  :max="getMaxDepth"
+                  :type="'number'"
+              />
+            </div>
+          </div>
+          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+            <p class="actions-title">Глубина модуля</p>
+            <div class="actions-input--container">
+              <MainInput
+                  @update:modelValue="updateTotalDepth"
+                  :inputClass="'actions-input'"
+                  :modelValue="productData.PROPS.CONFIG.SIZE.depth"
+                  :min="getMinDepth"
+                  :max="getMaxDepth"
+                  :type="'number'"
+              />
+            </div>
+          </div>
+
+          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+            <p class="actions-title">Цоколь</p>
+            <div class="actions-input--container">
+              <MainInput
+                  @update:modelValue="updateHorizont"
+                  :inputClass="'actions-input'"
+                  :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
+                  min="0"
+                  max="150"
+                  :type="'number'"
+                  placeholder="0"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div
+        class="constructor2d-container constructor2d-container--mid"
         ref="constructor2dContainer"
     >
       <div class="constructor2d-header">
         <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
+      </div>
 
-        <div
-            class="constructor2d-container constructor2d-header--mode-selector"
-        >
-          <article class="actions-items actions-items--right">
-            <div class="actions-items--right-items">
-              <button
-                  :class="[
+      <div
+          class="constructor2d-container constructor2d-header--mode-selector"
+      >
+        <article class="actions-items actions-items--right">
+          <div class="actions-items--right-items">
+            <button
+                :class="[
                       'actions-btn actions-btn--default', {
                       active:
                         mode === 'module'
                       }
                     ]"
-                  @click="changeConstructorMode('module')"
-              >
-                Модуль
-              </button>
-              <button
-                  :class="[
+                @click="changeConstructorMode('module')"
+            >
+              Модуль
+            </button>
+            <button
+                :class="[
                       'actions-btn actions-btn--default', {
                       active:
                         mode === 'fillings'
                       }
                     ]"
-                  @click="changeConstructorMode('fillings')"
-              >
-                Наполнение
-              </button>
-              <button
-                  :class="[
+                @click="changeConstructorMode('fillings')"
+            >
+              Наполнение
+            </button>
+            <button
+                :class="[
                       'actions-btn actions-btn--default', {
                       active:
                         mode === 'fasades'
                       }
                     ]"
-                  @click="changeConstructorMode('fasades')"
-              >
-                Фасады
-              </button>
-            </div>
-          </article>
-        </div>
-
+                @click="changeConstructorMode('fasades')"
+            >
+              Фасады
+            </button>
+          </div>
+        </article>
       </div>
 
       <div class="constructor2d-content">
-
-        <div
-            class="constructor2d-container--left-module-sizes"
-        >
-          <div
-              class="constructor2d-container constructor2d-container--left-module-sizes--module-size"
-          >
-            <div class="actions-inputs">
-              <p class="actions-title">Высота модуля</p>
-              <div class="actions-input--container">
-                <MainInput
-                    @update:modelValue="updateTotalHeight"
-                    :inputClass="'actions-input'"
-                    :modelValue="totalHeight"
-                    :min="getMinHeight"
-                    :max="getMaxHeight"
-                    :type="'number'"
-                />
-              </div>
-            </div>
-            <div class="actions-inputs">
-              <p class="actions-title">Ширина модуля</p>
-              <div class="actions-input--container">
-                <MainInput
-                    @update:modelValue="updateTotalWidth"
-                    :inputClass="'actions-input'"
-                    :modelValue="totalWidth"
-                    :min="getMinWidth"
-                    :max="getMaxWidth"
-                    :type="'number'"
-                />
-              </div>
-            </div>
-
-              <div class="actions-inputs">
-                <p class="actions-title">Глубина модуля</p>
-                <div class="actions-input--container">
-                  <MainInput
-                      @update:modelValue="updateTotalDepth"
-                      :inputClass="'actions-input'"
-                      :modelValue="totalDepth"
-                      :min="getMinDepth"
-                      :max="getMaxDepth"
-                      :type="'number'"
-                  />
-                </div>
-              </div>
-            <div class="actions-inputs">
-              <p class="actions-title">Глубина модуля</p>
-              <div class="actions-input--container">
-                <MainInput
-                    @update:modelValue="updateTotalDepth"
-                    :inputClass="'actions-input'"
-                    :modelValue="productData.PROPS.CONFIG.SIZE.depth"
-                    :min="getMinDepth"
-                    :max="getMaxDepth"
-                    :type="'number'"
-                />
-              </div>
-            </div>
-
-            <div class="actions-inputs">
-              <p class="actions-title">Цоколь</p>
-              <div class="actions-input--container">
-                <MainInput
-                    @update:modelValue="updateHorizont"
-                    :inputClass="'actions-input'"
-                    :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                    min="0"
-                    max="150"
-                    :type="'number'"
-                    placeholder="0"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
         <InteractiveSpace
             ref="visualizationRef"
             :mode="mode"
@@ -2428,9 +2429,9 @@ watch(visualizationRef, () => {
       </section>
 
     </div>
+
     <div
         class="constructor2d-container constructor2d-container--right"
-        v-if="mode === 'fillings'"
     >
       <div
           v-if="mode === 'fillings'"
@@ -2461,8 +2462,8 @@ watch(visualizationRef, () => {
     gap: 1rem;
     justify-content: center;
     width: 100%;
-    height: 85vh;
-    max-width: 85vw;
+    max-width: 95vw;
+    height: 95vh;
 
     font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
     sans-serif;
@@ -2482,23 +2483,34 @@ watch(visualizationRef, () => {
 
     &--left {
       flex-direction: column;
-      max-width: 70vw;
+      max-height: 56vh;
+      max-width: 8vw;
       overflow: hidden;
 
       &-module-sizes {
         position: absolute;
-        left: 5vh;
+        overflow: scroll;
+        max-height: 55vh;
 
         &--module-size {
           display: flex;
           flex-direction: column;
+
+          &-item {
+            padding-bottom: 15px;
+          }
         }
       }
     }
 
+    &--mid {
+      flex-direction: column;
+      max-width: 75vw;
+      overflow: hidden;
+    }
+
     &--right {
-      max-width: 25vw;
-      max-height: 55vh;
+      max-width: 20vw;
       overflow: hidden;
 
       &--content {
@@ -2512,8 +2524,8 @@ watch(visualizationRef, () => {
   &-content {
     display: flex;
     justify-content: center;
-    height: 320px;
-
+    height: 55vh;
+    right: 3vw;
   }
 
   &-title {
