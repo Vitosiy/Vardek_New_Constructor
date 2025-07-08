@@ -38,7 +38,7 @@ export class BuildUniversalModule extends BuildProduct {
 
         let model_data = model_props.CONFIG.MODEL
 
-        const MODULEGRID = moduleParams || model_props.CONFIG.MODULEGRID || false
+        const MODULEGRID = moduleParams || Object.keys(model_props.CONFIG.MODULEGRID)?.length || false
 
         const size = _size ? _size : MODULEGRID ? {width: MODULEGRID.width, height: MODULEGRID.height, depth: MODULEGRID.depth} : false
 
@@ -107,23 +107,25 @@ export class BuildUniversalModule extends BuildProduct {
     };
 
     createProductObject(product_data: THREETypes.TObject, props) {
-        const PROPS = super.createProductObject(product_data, props)
+        const CONFIG = super.createProductObject(product_data, props)
 
-        let firstSectionSize = new THREE.Vector3(PROPS.SIZE.width - PROPS.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2,
-            PROPS.SIZE.height - PROPS.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.EXPRESSIONS["#HORIZONT#"],
-            PROPS.SIZE.depth - PROPS.EXPRESSIONS["#MATERIAL_THICKNESS#"])
+        let firstSectionSize = new THREE.Vector3(CONFIG.SIZE.width - CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2,
+            CONFIG.SIZE.height - CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - CONFIG.EXPRESSIONS["#HORIZONT#"],
+            CONFIG.SIZE.depth - CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"])
 
-        PROPS.SECTIONS = {
+        CONFIG.SECTIONS = {
             1: {
                 fillings: [],
                 size: firstSectionSize,
-                position: new THREE.Vector3(PROPS.EXPRESSIONS["#MATERIAL_THICKNESS#"] + firstSectionSize.x / 2,
-                    PROPS.EXPRESSIONS["#HORIZONT#"] + PROPS.EXPRESSIONS["#MATERIAL_THICKNESS#"],
-                    PROPS.EXPRESSIONS["#MATERIAL_THICKNESS#"] + firstSectionSize.z / 2),
+                position: new THREE.Vector3(CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + firstSectionSize.x / 2,
+                    CONFIG.EXPRESSIONS["#HORIZONT#"] + CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"],
+                    CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + firstSectionSize.z / 2),
             }
         }
 
-        return PROPS
+        CONFIG.MODULEGRID = {}
+
+        return CONFIG
     }
 
     parseModulegrid(product_data: THREETypes.TObject, PROPS: Object) {

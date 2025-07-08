@@ -59,6 +59,11 @@ const props = defineProps({
     type: Number,
     default: 560,
   },
+  productData: {
+    type: ref,
+    default: false,
+    required: true,
+  },
 });
 
 const isMounted = ref(false);
@@ -73,7 +78,7 @@ const module = computed(() => {
 
   if (productData.value) {
     const PROPS = productData.value.PROPS;
-    if (!PROPS.CONFIG.MODULEGRID) {
+    if (!PROPS.CONFIG.MODULEGRID || !Object.keys(PROPS.CONFIG.MODULEGRID).length) {
 
       let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
       let FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
@@ -1426,7 +1431,7 @@ const saveGrid = () => {
   productData.value.PROPS.CONFIG.MODULEGRID = tmpClone
 
   eventBus.emit("A:UM-update", tmpClone);
-  menuStore.closeMenu('2dModuleConstructor')
+  //menuStore.closeMenu('2dModuleConstructor')
   return data;
 };
 
@@ -1436,7 +1441,7 @@ defineExpose({
 
 onBeforeMount(() => {
   console.log('onBeforeMount')
-  productData.value = menuStore.catalogFilterProductsId[0]
+  productData.value = props.productData //menuStore.catalogFilterProductsId[0]
 
   totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || props.canvasHeight;
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || props.canvasWidth;
@@ -1479,230 +1484,329 @@ watch(visualizationRef, () => {
 <template>
   <div class="constructor2d-wrapper">
     <div
-        class="constructor2d-container"
+        class="constructor2d-container constructor2d-container--left"
+        ref="constructor2dContainer"
     >
-      <div
-          class="constructor2d-container constructor2d-container--left"
-          ref="constructor2dContainer"
-      >
-        <div class="constructor2d-header">
-          <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
+      <div class="constructor2d-header">
+        <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
 
-          <div
-              class="constructor2d-container constructor2d-header--mode-selector"
-          >
-            <article class="actions-items actions-items--right">
-              <div class="actions-items--right-items">
-                <button
-                    :class="[
+        <div
+            class="constructor2d-container constructor2d-header--mode-selector"
+        >
+          <article class="actions-items actions-items--right">
+            <div class="actions-items--right-items">
+              <button
+                  :class="[
                       'actions-btn actions-btn--default', {
                       active:
                         mode === 'module'
                       }
                     ]"
-                    @click="changeConstructorMode('module')"
-                >
-                  Модуль
-                </button>
-                <button
-                    :class="[
+                  @click="changeConstructorMode('module')"
+              >
+                Модуль
+              </button>
+              <button
+                  :class="[
                       'actions-btn actions-btn--default', {
                       active:
                         mode === 'fillings'
                       }
                     ]"
-                    @click="changeConstructorMode('fillings')"
-                >
-                  Наполнение
-                </button>
-                <button
-                    :class="[
+                  @click="changeConstructorMode('fillings')"
+              >
+                Наполнение
+              </button>
+              <button
+                  :class="[
                       'actions-btn actions-btn--default', {
                       active:
                         mode === 'fasades'
                       }
                     ]"
-                    @click="changeConstructorMode('fasades')"
-                >
-                  Фасады
-                </button>
-              </div>
-            </article>
-          </div>
-
+                  @click="changeConstructorMode('fasades')"
+              >
+                Фасады
+              </button>
+            </div>
+          </article>
         </div>
 
-        <div class="constructor2d-content">
+      </div>
 
+      <div class="constructor2d-content">
+
+        <div
+            class="constructor2d-container--left-module-sizes"
+        >
           <div
-              class="constructor2d-container--left-module-sizes"
+              class="constructor2d-container constructor2d-container--left-module-sizes--module-size"
           >
-            <div
-                class="constructor2d-container constructor2d-container--left-module-sizes--module-size"
-            >
-              <div class="actions-inputs">
-                <p class="actions-title">Высота модуля</p>
-                <div class="actions-input--container">
-                  <MainInput
-                      @update:modelValue="updateTotalHeight"
-                      :inputClass="'actions-input'"
-                      :modelValue="totalHeight"
-                      :min="getMinHeight"
-                      :max="getMaxHeight"
-                      :type="'number'"
-                  />
-                </div>
+            <div class="actions-inputs">
+              <p class="actions-title">Высота модуля</p>
+              <div class="actions-input--container">
+                <MainInput
+                    @update:modelValue="updateTotalHeight"
+                    :inputClass="'actions-input'"
+                    :modelValue="totalHeight"
+                    :min="getMinHeight"
+                    :max="getMaxHeight"
+                    :type="'number'"
+                />
               </div>
-              <div class="actions-inputs">
-                <p class="actions-title">Ширина модуля</p>
-                <div class="actions-input--container">
-                  <MainInput
-                      @update:modelValue="updateTotalWidth"
-                      :inputClass="'actions-input'"
-                      :modelValue="totalWidth"
-                      :min="getMinWidth"
-                      :max="getMaxWidth"
-                      :type="'number'"
-                  />
-                </div>
+            </div>
+            <div class="actions-inputs">
+              <p class="actions-title">Ширина модуля</p>
+              <div class="actions-input--container">
+                <MainInput
+                    @update:modelValue="updateTotalWidth"
+                    :inputClass="'actions-input'"
+                    :modelValue="totalWidth"
+                    :min="getMinWidth"
+                    :max="getMaxWidth"
+                    :type="'number'"
+                />
               </div>
+            </div>
 
-              <div class="actions-inputs">
-                <p class="actions-title">Глубина модуля</p>
-                <div class="actions-input--container">
-                  <MainInput
-                      @update:modelValue="updateTotalDepth"
-                      :inputClass="'actions-input'"
-                      :modelValue="productData.PROPS.CONFIG.SIZE.depth"
-                      :min="getMinDepth"
-                      :max="getMaxDepth"
-                      :type="'number'"
-                  />
-                </div>
+            <div class="actions-inputs">
+              <p class="actions-title">Глубина модуля</p>
+              <div class="actions-input--container">
+                <MainInput
+                    @update:modelValue="updateTotalDepth"
+                    :inputClass="'actions-input'"
+                    :modelValue="productData.PROPS.CONFIG.SIZE.depth"
+                    :min="getMinDepth"
+                    :max="getMaxDepth"
+                    :type="'number'"
+                />
               </div>
+            </div>
 
-              <div class="actions-inputs">
-                <p class="actions-title">Цоколь</p>
-                <div class="actions-input--container">
-                  <MainInput
-                      @update:modelValue="updateHorizont"
-                      :inputClass="'actions-input'"
-                      :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                      min="0"
-                      max="150"
-                      :type="'number'"
-                      placeholder="0"
-                  />
-                </div>
+            <div class="actions-inputs">
+              <p class="actions-title">Цоколь</p>
+              <div class="actions-input--container">
+                <MainInput
+                    @update:modelValue="updateHorizont"
+                    :inputClass="'actions-input'"
+                    :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
+                    min="0"
+                    max="150"
+                    :type="'number'"
+                    placeholder="0"
+                />
               </div>
             </div>
           </div>
-
-            <InteractiveSpace
-                ref="visualizationRef"
-                :mode="mode"
-                :step="step"
-                :module="module"
-                :correct="correct"
-                :container="constructor2dContainer"
-                :max-area-height="totalHeight"
-                :max-area-width="totalWidth"
-                @cell-selected="handleCellSelect"
-            />
-
         </div>
 
-        <section class="actions-wrapper" v-if="mode === 'module'">
-          <div class="actions-header">
-            <div
-                :class="[
+        <InteractiveSpace
+            ref="visualizationRef"
+            :mode="mode"
+            :step="step"
+            :module="module"
+            :correct="correct"
+            :container="constructor2dContainer"
+            :max-area-height="totalHeight"
+            :max-area-width="totalWidth"
+            @cell-selected="handleCellSelect"
+        />
+
+      </div>
+
+      <section class="actions-wrapper" v-if="mode === 'module'">
+        <div class="actions-header">
+          <div
+              :class="[
               'actions-header--container',
               { active: secIndex === selectedCell.sec },
             ]"
-                v-for="(section, secIndex) in module.sections"
-                :key="secIndex"
-            >
-              <button
-                  v-if="module.sections.length > 1"
-                  class="actions-btn actions-icon"
-                  @click="deleteSection(secIndex)"
-              >
-                <img
-                    class="actions-icon--delete"
-                    src="/icons/delite.svg"
-                    alt=""
-                />
-              </button>
-              <p
-                  class="actions-title actions-title--part"
-                  @click="showCurrentCol(secIndex)"
-              >
-                {{ secIndex + 1 }} секция
-              </p>
-            </div>
-          </div>
-
-          <div
-              class="actions-container"
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
           >
-            <div
-                class="actions-items--wrapper"
-                v-if="selectedCell.sec === secIndex"
+            <button
+                v-if="module.sections.length > 1"
+                class="actions-btn actions-icon"
+                @click="deleteSection(secIndex)"
             >
-              <div class="actions-items--width">
-                <div class="actions-inputs">
-                  <p class="actions-title">Ширина</p>
-                  <div
-                      :class="['actions-input--container']"
-                  >
-                    <input
-                        type="number"
-                        :step="step"
-                        :min="MIN_SECTION_WIDTH"
-                        class="actions-input"
-                        :value="section.width"
-                        @input="
+              <img
+                  class="actions-icon--delete"
+                  src="/icons/delite.svg"
+                  alt=""
+              />
+            </button>
+            <p
+                class="actions-title actions-title--part"
+                @click="showCurrentCol(secIndex)"
+            >
+              {{ secIndex + 1 }} секция
+            </p>
+          </div>
+        </div>
+
+        <div
+            class="actions-container"
+            v-for="(section, secIndex) in module.sections"
+            :key="secIndex"
+        >
+          <div
+              class="actions-items--wrapper"
+              v-if="selectedCell.sec === secIndex"
+          >
+            <div class="actions-items--width">
+              <div class="actions-inputs">
+                <p class="actions-title">Ширина</p>
+                <div
+                    :class="['actions-input--container']"
+                >
+                  <input
+                      type="number"
+                      :step="step"
+                      :min="MIN_SECTION_WIDTH"
+                      class="actions-input"
+                      :value="section.width"
+                      @input="
                             debounce(() => updateSectionWidth(
                               $event.target.value,
                               secIndex
                             ), 1000)
                           "
-                    />
-                  </div>
+                  />
                 </div>
               </div>
+            </div>
 
-              <div class="actions-items--height">
-                <div class="actions-inputs">
-                  <p class="actions-title">
-                    Высота
-                  </p>
-                  <div
-                      :class="['actions-input--container']"
-                  >
-                    <input
-                        type="number"
-                        :step="step"
-                        :min="MIN_SECTION_HEIGHT"
-                        class="actions-input"
-                        :value="section.height"
-                        disabled
-                    />
-                  </div>
+            <div class="actions-items--height">
+              <div class="actions-inputs">
+                <p class="actions-title">
+                  Высота
+                </p>
+                <div
+                    :class="['actions-input--container']"
+                >
+                  <input
+                      type="number"
+                      :step="step"
+                      :min="MIN_SECTION_HEIGHT"
+                      class="actions-input"
+                      :value="section.height"
+                      disabled
+                  />
                 </div>
               </div>
+            </div>
 
-              <div
-                  v-for="(cell, cellIndex) in section.cells"
-                  :key="cellIndex"
-                  :class="[
+            <div
+                v-for="(cell, cellIndex) in section.cells"
+                :key="cellIndex"
+                :class="[
                 'actions-items--container',
                 {
                   active:
                     cellIndex === selectedCell.cell &&
                     secIndex === selectedCell.sec,
+                },
+              ]"
+            >
+              <article class="actions-items actions-items--left">
+                <div class="actions-items--left-wrapper">
+
+                  <div class="actions-items--title">
+                    <button
+                        v-if="section.cells.length > 1"
+                        class="actions-btn actions-icon"
+                        @click="deleteCell(cellIndex, secIndex)"
+                    >
+                      <img
+                          class="actions-icon--delete"
+                          src="/icons/delite.svg"
+                          alt=""
+                      />
+                    </button>
+                    <p class="actions-title actions-title--part">
+                      {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
+                    </p>
+                  </div>
+
+                  <div class="actions-items--width">
+                    <div class="actions-inputs">
+                      <p class="actions-title">Ширина</p>
+                      <div
+                          :class="['actions-input--container']"
+                      >
+                        <input
+                            type="number"
+                            :step="step"
+                            :min="MIN_SECTION_WIDTH"
+                            class="actions-input"
+                            :value="section.width"
+                            disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="actions-items--height">
+                    <div class="actions-inputs">
+                      <p class="actions-title">
+                        Высота
+                      </p>
+                      <div
+                          :class="['actions-input--container']"
+                      >
+                        <input
+                            type="number"
+                            :step="step"
+                            :min="MIN_SECTION_HEIGHT"
+                            class="actions-input"
+                            :value="cell.height"
+                            @input="
+                            debounce(() => updateCellHeight(
+                              $event.target.value,
+                              secIndex,
+                              cellIndex
+                            ), 1000)
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </article>
+
+              <article class="actions-items actions-items--right">
+                <div class="actions-items--right-items">
+                  <button
+                      :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                      @click="addCell(secIndex, cellIndex)"
+                  >
+                    Добавить ячейку
+                  </button>
+
+                  <button
+                      v-if="!cell.cellsRows?.length"
+                      :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                      @click="addRowCell(secIndex, cellIndex, 0)"
+                  >
+                    Верт. разделитель
+                  </button>
+                </div>
+              </article>
+
+              <div
+                  v-for="(row, rowIndex) in cell.cellsRows"
+                  :key="rowIndex"
+                  :class="[
+                'actions-items--container',
+                {
+                  active:
+                    cellIndex === selectedCell.cell &&
+                    secIndex === selectedCell.sec && rowIndex === selectedCell.row,
                 },
               ]"
               >
@@ -1711,9 +1815,9 @@ watch(visualizationRef, () => {
 
                     <div class="actions-items--title">
                       <button
-                          v-if="section.cells.length > 1"
+                          v-if="cell.cellsRows.length > 1"
                           class="actions-btn actions-icon"
-                          @click="deleteCell(cellIndex, secIndex)"
+                          @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
                       >
                         <img
                             class="actions-icon--delete"
@@ -1722,7 +1826,7 @@ watch(visualizationRef, () => {
                         />
                       </button>
                       <p class="actions-title actions-title--part">
-                        {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
+                        {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
                       </p>
                     </div>
 
@@ -1737,7 +1841,169 @@ watch(visualizationRef, () => {
                               :step="step"
                               :min="MIN_SECTION_WIDTH"
                               class="actions-input"
-                              :value="section.width"
+                              :value="row.width"
+                              @input="
+                            debounce(() => updateCellRowWidth(
+                              $event.target.value,
+                              secIndex,
+                              cellIndex,
+                              rowIndex
+                            ), 1000)
+                          "
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </article>
+
+                <article class="actions-items actions-items--right">
+                  <div class="actions-items--right-items">
+                    <button
+                        :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                        @click="addRowCell(secIndex, cellIndex, rowIndex)"
+                    >
+                      Верт. разделитель
+                    </button>
+                  </div>
+                </article>
+
+              </div>
+
+            </div>
+          </div>
+
+          <article class="actions-items actions-items--right">
+            <div
+                class="actions-items--right-items"
+                v-if="secIndex == selectedCell.sec"
+            >
+              <button
+                  :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                  @click="addSection(secIndex)"
+              >
+                Добавить секцию
+              </button>
+
+              <button
+                  v-if="!section.cells.length"
+                  :class="[
+                      'actions-btn actions-btn--default'
+                    ]"
+                  @click="addCell(secIndex, null)"
+              >
+                Добавить ячейку
+              </button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <section class="actions-wrapper" v-if="mode === 'fasades'">
+
+        <div class="actions-header">
+          <div
+              :class="[
+              'actions-header--container',
+              { active: secIndex === selectedFasade.sec },
+            ]"
+              v-for="(section, secIndex) in module.sections"
+              :key="secIndex"
+          >
+            <p
+                class="actions-title actions-title--part"
+                @click="showCurrentFasade(secIndex)"
+            >
+              {{ secIndex + 1 }} секция
+            </p>
+          </div>
+        </div>
+
+        <div
+            class="actions-container"
+            v-for="(section, secIndex) in module.sections"
+            :key="secIndex"
+        >
+          <div
+              class="actions-items--wrapper"
+              v-if="selectedFasade.sec === secIndex"
+          >
+            <div
+                v-for="(door, doorIndex) in section.fasades"
+                :key="doorIndex"
+                :class="[
+                    'actions-container'
+                  ]"
+            >
+
+              <article class="actions-items actions-items--left">
+                <div class="actions-items--left-wrapper">
+                  <div class="actions-items--title">
+                    <button
+                        v-if="section.fasades.length > 0"
+                        class="actions-btn actions-icon"
+                        @click="deleteDoor(secIndex, doorIndex)"
+                    >
+                      <img
+                          class="actions-icon--delete"
+                          src="/icons/delite.svg"
+                          alt=""
+                      />
+                    </button>
+                    <p class="actions-title actions-title--part">
+                      Дверь №{{ doorIndex + 1 }}
+                    </p>
+                  </div>
+                </div>
+              </article>
+
+              <div
+                  v-for="(segment, segmentIndex) in door"
+                  :key="segmentIndex"
+                  :class="[
+                      'actions-items--container'
+                    ]"
+              >
+                <article class="actions-items actions-items--left">
+                  <div class="actions-items--left-wrapper">
+
+                    <div class="actions-items--title">
+                      <button
+                          v-if="door.length > 1"
+                          class="actions-btn actions-icon"
+                          @click="removeFasadeSegment(secIndex, doorIndex, segmentIndex)"
+                      >
+                        <img
+                            class="actions-icon--delete"
+                            src="/icons/delite.svg"
+                            alt=""
+                        />
+                      </button>
+                      <p class="actions-title actions-title--part">
+                        Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{ segmentIndex + 1 }}
+                      </p>
+                    </div>
+
+                    <div class="actions-items--width">
+                      <div class="actions-inputs">
+                        <p class="actions-title">
+                          Ширина
+                        </p>
+                        <div
+                            :class="['actions-input--container']"
+                        >
+                          <input
+                              type="number"
+                              :step="step"
+                              min="150"
+                              class="actions-input"
+                              :value="segment.width"
                               disabled
                           />
                         </div>
@@ -1755,274 +2021,10 @@ watch(visualizationRef, () => {
                           <input
                               type="number"
                               :step="step"
-                              :min="MIN_SECTION_HEIGHT"
+                              min="150"
                               class="actions-input"
-                              :value="cell.height"
+                              :value="segment.height"
                               @input="
-                            debounce(() => updateCellHeight(
-                              $event.target.value,
-                              secIndex,
-                              cellIndex
-                            ), 1000)
-                          "
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                </article>
-
-                <article class="actions-items actions-items--right">
-                  <div class="actions-items--right-items">
-                    <button
-                        :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                        @click="addCell(secIndex, cellIndex)"
-                    >
-                      Добавить ячейку
-                    </button>
-
-                    <button
-                        v-if="!cell.cellsRows?.length"
-                        :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                        @click="addRowCell(secIndex, cellIndex, 0)"
-                    >
-                      Верт. разделитель
-                    </button>
-                  </div>
-                </article>
-
-                <div
-                    v-for="(row, rowIndex) in cell.cellsRows"
-                    :key="rowIndex"
-                    :class="[
-                'actions-items--container',
-                {
-                  active:
-                    cellIndex === selectedCell.cell &&
-                    secIndex === selectedCell.sec && rowIndex === selectedCell.row,
-                },
-              ]"
-                >
-                  <article class="actions-items actions-items--left">
-                    <div class="actions-items--left-wrapper">
-
-                      <div class="actions-items--title">
-                        <button
-                            v-if="cell.cellsRows.length > 1"
-                            class="actions-btn actions-icon"
-                            @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
-                        >
-                          <img
-                              class="actions-icon--delete"
-                              src="/icons/delite.svg"
-                              alt=""
-                          />
-                        </button>
-                        <p class="actions-title actions-title--part">
-                          {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
-                        </p>
-                      </div>
-
-                      <div class="actions-items--width">
-                        <div class="actions-inputs">
-                          <p class="actions-title">Ширина</p>
-                          <div
-                              :class="['actions-input--container']"
-                          >
-                            <input
-                                type="number"
-                                :step="step"
-                                :min="MIN_SECTION_WIDTH"
-                                class="actions-input"
-                                :value="row.width"
-                                @input="
-                            debounce(() => updateCellRowWidth(
-                              $event.target.value,
-                              secIndex,
-                              cellIndex,
-                              rowIndex
-                            ), 1000)
-                          "
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </article>
-
-                  <article class="actions-items actions-items--right">
-                    <div class="actions-items--right-items">
-                      <button
-                          :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                          @click="addRowCell(secIndex, cellIndex, rowIndex)"
-                      >
-                        Верт. разделитель
-                      </button>
-                    </div>
-                  </article>
-
-                </div>
-
-              </div>
-            </div>
-
-            <article class="actions-items actions-items--right">
-              <div
-                  class="actions-items--right-items"
-                  v-if="secIndex == selectedCell.sec"
-              >
-                <button
-                    :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                    @click="addSection(secIndex)"
-                >
-                  Добавить секцию
-                </button>
-
-                <button
-                    v-if="!section.cells.length"
-                    :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                    @click="addCell(secIndex, null)"
-                >
-                  Добавить ячейку
-                </button>
-              </div>
-            </article>
-
-          </div>
-        </section>
-
-        <section class="actions-wrapper" v-if="mode === 'fasades'">
-
-          <div class="actions-header">
-            <div
-                :class="[
-              'actions-header--container',
-              { active: secIndex === selectedFasade.sec },
-            ]"
-                v-for="(section, secIndex) in module.sections"
-                :key="secIndex"
-            >
-              <p
-                  class="actions-title actions-title--part"
-                  @click="showCurrentFasade(secIndex)"
-              >
-                {{ secIndex + 1 }} секция
-              </p>
-            </div>
-          </div>
-
-          <div
-              class="actions-container"
-              v-for="(section, secIndex) in module.sections"
-              :key="secIndex"
-          >
-            <div
-                class="actions-items--wrapper"
-                v-if="selectedFasade.sec === secIndex"
-            >
-              <div
-                  v-for="(door, doorIndex) in section.fasades"
-                  :key="doorIndex"
-                  :class="[
-                    'actions-container'
-                  ]"
-              >
-
-                <article class="actions-items actions-items--left">
-                  <div class="actions-items--left-wrapper">
-                    <div class="actions-items--title">
-                      <button
-                          v-if="section.fasades.length > 0"
-                          class="actions-btn actions-icon"
-                          @click="deleteDoor(secIndex, doorIndex)"
-                      >
-                        <img
-                            class="actions-icon--delete"
-                            src="/icons/delite.svg"
-                            alt=""
-                        />
-                      </button>
-                      <p class="actions-title actions-title--part">
-                        Дверь №{{ doorIndex + 1 }}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-
-                <div
-                    v-for="(segment, segmentIndex) in door"
-                    :key="segmentIndex"
-                    :class="[
-                      'actions-items--container'
-                    ]"
-                >
-                  <article class="actions-items actions-items--left">
-                    <div class="actions-items--left-wrapper">
-
-                      <div class="actions-items--title">
-                        <button
-                            v-if="door.length > 1"
-                            class="actions-btn actions-icon"
-                            @click="removeFasadeSegment(secIndex, doorIndex, segmentIndex)"
-                        >
-                          <img
-                              class="actions-icon--delete"
-                              src="/icons/delite.svg"
-                              alt=""
-                          />
-                        </button>
-                        <p class="actions-title actions-title--part">
-                          Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{ segmentIndex + 1 }}
-                        </p>
-                      </div>
-
-                      <div class="actions-items--width">
-                        <div class="actions-inputs">
-                          <p class="actions-title">
-                            Ширина
-                          </p>
-                          <div
-                              :class="['actions-input--container']"
-                          >
-                            <input
-                                type="number"
-                                :step="step"
-                                min="150"
-                                class="actions-input"
-                                :value="segment.width"
-                                disabled
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="actions-items--height">
-                        <div class="actions-inputs">
-                          <p class="actions-title">
-                            Высота
-                          </p>
-                          <div
-                              :class="['actions-input--container']"
-                          >
-                            <input
-                                type="number"
-                                :step="step"
-                                min="150"
-                                class="actions-input"
-                                :value="segment.height"
-                                @input="
                             debounce(() => updateFasadeHeight(
                               $event.target.value,
                               secIndex,
@@ -2030,92 +2032,194 @@ watch(visualizationRef, () => {
                               segmentIndex
                             ), 1000)
                           "
-                            />
-                          </div>
+                          />
                         </div>
                       </div>
-
                     </div>
 
-                  </article>
+                  </div>
 
-                  <article class="actions-items actions-items--right">
-                    <div class="actions-items--right-items">
-                      <button
-                          :class="[
+                </article>
+
+                <article class="actions-items actions-items--right">
+                  <div class="actions-items--right-items">
+                    <button
+                        :class="[
                             'actions-btn actions-btn--default'
                           ]"
-                          @click="splitFasade(secIndex, doorIndex, segmentIndex)"
-                      >
-                        Разделить фасад
-                      </button>
-                    </div>
-                  </article>
-
-                </div>
+                        @click="splitFasade(secIndex, doorIndex, segmentIndex)"
+                    >
+                      Разделить фасад
+                    </button>
+                  </div>
+                </article>
 
               </div>
 
             </div>
 
-            <article class="actions-items actions-items--right">
-              <div
-                  class="actions-items--right-items"
-                  v-if="secIndex == selectedFasade.sec"
-              >
-                <button
-                    v-if="section.fasades.length < 2"
-                    :class="[
+          </div>
+
+          <article class="actions-items actions-items--right">
+            <div
+                class="actions-items--right-items"
+                v-if="secIndex == selectedFasade.sec"
+            >
+              <button
+                  v-if="section.fasades.length < 2"
+                  :class="[
                       'actions-btn actions-btn--default'
                     ]"
-                    @click="addDoor(secIndex)"
-                >
-                  Добавить дверь
-                </button>
+                  @click="addDoor(secIndex)"
+              >
+                Добавить дверь
+              </button>
 
-              </div>
-            </article>
+            </div>
+          </article>
 
-          </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="actions-wrapper" v-if="mode === 'fillings'">
-          <div class="actions-header">
-            <div
-                :class="[
+      <section class="actions-wrapper" v-if="mode === 'fillings'">
+        <div class="actions-header">
+          <div
+              :class="[
               'actions-header--container',
               { active: secIndex === selectedCell.sec },
             ]"
-                v-for="(section, secIndex) in module.sections"
-                :key="secIndex"
-            >
-              <p
-                  class="actions-title actions-title--part"
-                  @click="showCurrentCol(secIndex)"
-              >
-                {{ secIndex + 1 }} секция
-              </p>
-            </div>
-          </div>
-
-          <div
-              class="actions-container"
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
           >
-            <div
-                class="actions-items--wrapper"
-                v-if="selectedCell.sec === secIndex"
+            <p
+                class="actions-title actions-title--part"
+                @click="showCurrentCol(secIndex)"
             >
+              {{ secIndex + 1 }} секция
+            </p>
+          </div>
+        </div>
+
+        <div
+            class="actions-container"
+            v-for="(section, secIndex) in module.sections"
+            :key="secIndex"
+        >
+          <div
+              class="actions-items--wrapper"
+              v-if="selectedCell.sec === secIndex"
+          >
+
+            <div
+                v-for="(filling, fillingIndex) in section.fillings"
+                :key="fillingIndex"
+                :class="[
+                'actions-items--container',
+                {
+                  active:
+                    secIndex === selectedFilling.sec &&
+                    fillingIndex === selectedFilling.item
+                },
+              ]"
+            >
+              <article class="actions-items actions-items--left">
+                <div class="actions-items--left-wrapper">
+
+                  <div class="actions-items--title">
+                    <button
+                        class="actions-btn actions-icon"
+                        @click="deleteFilling(secIndex, fillingIndex)"
+                    >
+                      <img
+                          class="actions-icon--delete"
+                          src="/icons/delite.svg"
+                          alt=""
+                      />
+                    </button>
+                    <p class="actions-title actions-title--part">
+                      {{ filling.name }} №{{ filling.id }}
+                    </p>
+                  </div>
+
+                  <div class="actions-items--width">
+                    <div class="actions-inputs">
+                      <p class="actions-title">Позиция</p>
+                      <div
+                          :class="['actions-input--container']"
+                      >
+                        <input
+                            type="number"
+                            :step="1"
+                            :max="section.height - filling.height"
+                            min="0"
+                            class="actions-input"
+                            :value="filling.distances.bottom"
+                            @input="debounce((event) => {
+                                changeFillingPositionY(
+                                    $event,
+                                    $event.target.value,
+                                    fillingIndex,
+                                    secIndex,
+                                    )
+                                }, 1000)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                      v-if="filling.fasade"
+                      class="actions-items--height">
+                    <div class="actions-inputs">
+                      <p class="actions-title">
+                        Высота фасада
+                      </p>
+                      <div
+                          :class="['actions-input--container']"
+                      >
+                        <input
+                            type="number"
+                            :step="step"
+                            min="150"
+                            class="actions-input"
+                            :value="filling.fasade.height"
+                            disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </article>
+            </div>
+
+            <div
+                v-for="(cell, cellIndex) in section.cells"
+                :key="cellIndex"
+                :class="[
+                'actions-items--container',
+                {
+                  active:
+                    cellIndex === selectedCell.cell &&
+                    secIndex === selectedCell.sec,
+                },
+              ]"
+            >
+              <div class="actions-items--title">
+                <p class="actions-title actions-title--part">
+                  {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
+                </p>
+              </div>
 
               <div
-                  v-for="(filling, fillingIndex) in section.fillings"
+                  v-for="(filling, fillingIndex) in cell.fillings"
                   :key="fillingIndex"
                   :class="[
                 'actions-items--container',
                 {
                   active:
                     secIndex === selectedFilling.sec &&
+                    cellIndex === selectedFilling.cell &&
                     fillingIndex === selectedFilling.item
                 },
               ]"
@@ -2126,7 +2230,7 @@ watch(visualizationRef, () => {
                     <div class="actions-items--title">
                       <button
                           class="actions-btn actions-icon"
-                          @click="deleteFilling(secIndex, fillingIndex)"
+                          @click="deleteFilling(secIndex, fillingIndex, cellIndex)"
                       >
                         <img
                             class="actions-icon--delete"
@@ -2158,6 +2262,7 @@ watch(visualizationRef, () => {
                                     $event.target.value,
                                     fillingIndex,
                                     secIndex,
+                                    cellIndex
                                     )
                                 }, 1000)"
                           />
@@ -2189,46 +2294,49 @@ watch(visualizationRef, () => {
 
                   </div>
                 </article>
+
               </div>
 
               <div
-                  v-for="(cell, cellIndex) in section.cells"
-                  :key="cellIndex"
+                  v-for="(row, rowIndex) in cell.cellsRows"
+                  :key="rowIndex"
                   :class="[
                 'actions-items--container',
                 {
                   active:
                     cellIndex === selectedCell.cell &&
-                    secIndex === selectedCell.sec,
+                    secIndex === selectedCell.sec && rowIndex === selectedCell.row,
                 },
               ]"
               >
                 <div class="actions-items--title">
                   <p class="actions-title actions-title--part">
-                    {{ secIndex + 1 }}.{{ cellIndex + 1 }} часть
+                    {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
                   </p>
                 </div>
 
                 <div
-                    v-for="(filling, fillingIndex) in cell.fillings"
+                    v-for="(filling, fillingIndex) in row.fillings"
                     :key="fillingIndex"
                     :class="[
-                'actions-items--container',
-                {
-                  active:
-                    secIndex === selectedFilling.sec &&
-                    cellIndex === selectedFilling.cell &&
-                    fillingIndex === selectedFilling.item
-                },
-              ]"
+                      'actions-items--container',
+                      {
+                        active:
+                          secIndex === selectedFilling.sec &&
+                          cellIndex === selectedFilling.cell &&
+                          rowIndex === selectedFilling.row &&
+                          fillingIndex === selectedFilling.item
+                      },
+                    ]"
                 >
+
                   <article class="actions-items actions-items--left">
                     <div class="actions-items--left-wrapper">
 
                       <div class="actions-items--title">
                         <button
                             class="actions-btn actions-icon"
-                            @click="deleteFilling(secIndex, fillingIndex, cellIndex)"
+                            @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
                         >
                           <img
                               class="actions-icon--delete"
@@ -2260,7 +2368,8 @@ watch(visualizationRef, () => {
                                     $event.target.value,
                                     fillingIndex,
                                     secIndex,
-                                    cellIndex
+                                    cellIndex,
+                                    rowIndex
                                     )
                                 }, 1000)"
                             />
@@ -2294,161 +2403,45 @@ watch(visualizationRef, () => {
                   </article>
 
                 </div>
-
-                <div
-                    v-for="(row, rowIndex) in cell.cellsRows"
-                    :key="rowIndex"
-                    :class="[
-                'actions-items--container',
-                {
-                  active:
-                    cellIndex === selectedCell.cell &&
-                    secIndex === selectedCell.sec && rowIndex === selectedCell.row,
-                },
-              ]"
-                >
-                  <div class="actions-items--title">
-                    <p class="actions-title actions-title--part">
-                      {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }} часть
-                    </p>
-                  </div>
-
-                  <div
-                      v-for="(filling, fillingIndex) in row.fillings"
-                      :key="fillingIndex"
-                      :class="[
-                      'actions-items--container',
-                      {
-                        active:
-                          secIndex === selectedFilling.sec &&
-                          cellIndex === selectedFilling.cell &&
-                          rowIndex === selectedFilling.row &&
-                          fillingIndex === selectedFilling.item
-                      },
-                    ]"
-                  >
-
-                    <article class="actions-items actions-items--left">
-                      <div class="actions-items--left-wrapper">
-
-                        <div class="actions-items--title">
-                          <button
-                              class="actions-btn actions-icon"
-                              @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
-                          >
-                            <img
-                                class="actions-icon--delete"
-                                src="/icons/delite.svg"
-                                alt=""
-                            />
-                          </button>
-                          <p class="actions-title actions-title--part">
-                            {{ filling.name }} №{{ filling.id }}
-                          </p>
-                        </div>
-
-                        <div class="actions-items--width">
-                          <div class="actions-inputs">
-                            <p class="actions-title">Позиция</p>
-                            <div
-                                :class="['actions-input--container']"
-                            >
-                              <input
-                                  type="number"
-                                  :step="1"
-                                  :max="section.height - filling.height"
-                                  min="0"
-                                  class="actions-input"
-                                  :value="filling.distances.bottom"
-                                  @input="debounce((event) => {
-                                changeFillingPositionY(
-                                    $event,
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
-                                    cellIndex,
-                                    rowIndex
-                                    )
-                                }, 1000)"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                            v-if="filling.fasade"
-                            class="actions-items--height">
-                          <div class="actions-inputs">
-                            <p class="actions-title">
-                              Высота фасада
-                            </p>
-                            <div
-                                :class="['actions-input--container']"
-                            >
-                              <input
-                                  type="number"
-                                  :step="step"
-                                  min="150"
-                                  class="actions-input"
-                                  :value="filling.fasade.height"
-                                  disabled
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                      </div>
-                    </article>
-
-                  </div>
-                </div>
-
               </div>
 
             </div>
+
           </div>
-        </section>
-
-      </div>
-
-      <div
-          class="constructor2d-container constructor2d-container--right"
-      >
-        <div
-            v-if="mode === 'fillings'"
-        >
-          <h1>Наполнение</h1>
-
-          <ProductOptions
-              class="constructor2d-container--right--content"
-              :fillings="getFilling"
-              :step="step"
-              @product-addFilling="addFilling"
-              @product-deleteFilling="deleteFilling"
-              @product-updateFilling="updateFilling"
-              @product-toggleFillingOptions="toggleFillingOptions"
-              @product-changePositionY="changeFillingPositionY"
-          />
-          <!--          v-if="fillingsOptions.show"-->
         </div>
+      </section>
 
-      </div>
+      <section class="actions-footer">
+        <div class="actions-footer--save">
+          <slot name="save"></slot>
+          <slot name="close"></slot>
+        </div>
+      </section>
+
     </div>
-
-    <button
-        class="actions-btn add-divider-btn save-btn"
-        @click="saveGrid"
+    <div
+        class="constructor2d-container constructor2d-container--right"
+        v-if="mode === 'fillings'"
     >
-      Сохранить
-    </button>
+      <div
+          v-if="mode === 'fillings'"
+      >
+        <h1>Наполнение</h1>
 
-    <button
-        class="actions-btn add-divider-btn clos-btn"
-        @click="menuStore.closeMenu('2dModuleConstructor')"
-    >
-      Отмена
-    </button>
+        <ProductOptions
+            class="constructor2d-container--right--content"
+            :fillings="getFilling"
+            :step="step"
+            @product-addFilling="addFilling"
+            @product-deleteFilling="deleteFilling"
+            @product-updateFilling="updateFilling"
+            @product-toggleFillingOptions="toggleFillingOptions"
+            @product-changePositionY="changeFillingPositionY"
+        />
+        <!--          v-if="fillingsOptions.show"-->
+      </div>
 
+    </div>
   </div>
 </template>
 
@@ -2459,19 +2452,16 @@ watch(visualizationRef, () => {
     gap: 1rem;
     justify-content: center;
     width: 100%;
-    height: 90vh;
-    max-width: 84vw;
+    height: 85vh;
+    max-width: 85vw;
 
     font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
     sans-serif;
-    position: absolute;
-    top: 95px;
-    left: 320px;
   }
 
   &-container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 1rem;
 
     width: 100%;
@@ -2486,7 +2476,6 @@ watch(visualizationRef, () => {
       max-width: 70vw;
       overflow: hidden;
 
-
       &-module-sizes {
         position: absolute;
         left: 5vh;
@@ -2499,9 +2488,8 @@ watch(visualizationRef, () => {
     }
 
     &--right {
-      flex-direction: column;
-      max-width: 15vw;
-      max-height: 80vh;
+      max-width: 25vw;
+      max-height: 55vh;
       overflow: hidden;
 
       &--content {
@@ -2515,6 +2503,8 @@ watch(visualizationRef, () => {
   &-content {
     display: flex;
     justify-content: center;
+    height: 320px;
+
   }
 
   &-title {
@@ -2526,12 +2516,10 @@ watch(visualizationRef, () => {
     display: flex;
     justify-content: center;
     gap: 2rem;
-    flex-direction: row;
 
     &--title {
       display: flex;
       align-items: end;
-      justify-content: center;
     }
 
     &--mode-selector {

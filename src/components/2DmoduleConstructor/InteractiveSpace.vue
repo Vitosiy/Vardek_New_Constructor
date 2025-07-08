@@ -1535,14 +1535,10 @@ defineExpose({
 
 <style>
 .visualization {
+  width: 800px;
   canvas {
     border: 1px solid #bbbbbb;
   }
-
-  position: relative;
-  right: 7vh;
-  height: 500px;
-  width: 1100px;
 }
 
 /*  height: 320px;

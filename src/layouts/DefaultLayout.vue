@@ -128,7 +128,7 @@ onMounted(() => {
     <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
     <CustomiserMenu />
     <RouterView />
-    <Module2DConstructor2 v-if="menuStore.openMenus == '2dModuleConstructor'"/>
+<!--    <Module2DConstructor2 v-if="menuStore.openMenus == '2dModuleConstructor'"/>-->
   </div>
 </template>
 

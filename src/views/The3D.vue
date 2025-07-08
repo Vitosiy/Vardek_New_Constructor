@@ -33,6 +33,7 @@ import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/Open
 import Toggle from "@vueform/toggle";
 import Slider from "@vueform/slider";
 import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
+import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 
 type TSize = {
   width: {
@@ -164,10 +165,6 @@ const selectMilling = ref<any>(null);
 
 //Универсальный модуль
 const universalModule2DConstructor = ref();
-const universalModuleData = ref({});
-const isUMModalOpen = ref(false);
-const gridUMSaved = ref(false);
-const universalModuleCash = ref({});
 
 //Распил
 const tableTopManager = ref();
@@ -267,13 +264,13 @@ const selected = (item: any) => {
 
     useModelState().setCurrentModel(item.object);
   }
-  else if(CONFIG.MODULEGRID) {
-    universalModuleData.value = {
-      data: CONFIG.MODULEGRID,
-      object: object,
+  else if (CONFIG.MODULEGRID) {
+    universalModule2DConstructor.value.selectUMData({
+      MODULEGRID: CONFIG.MODULEGRID || false,
+      PROPS: object,
       canvasHeight: CONFIG.MODULEGRID.canvasHeight,
       canvasHeight: CONFIG.MODULEGRID.canvasWidth,
-    };
+    })
 
     useModelState().setCurrentModel(item.object);
   }
@@ -531,7 +528,7 @@ const closeTableRedactor = () => {
 
 /** Редактор УМ */
 
-const saveUMData = ({ data, canvasHeight }) => {
+/*const saveUMData = ({ data, canvasHeight }) => {
   if (!product.value)
     return;
   universalModuleCash.value= product.value.PROPS.CONFIG.MODULEGRID = universalModule2DConstructor.value.saveGrid();
@@ -550,7 +547,7 @@ const closeUMRedactor = () => {
   universalModuleData.value = product.value.PROPS.CONFIG.MODULEGRID;
   isUMModalOpen.value = false;
   gridUMSaved.value = false;
-};
+};*/
 //
 
 </script>
@@ -812,55 +809,17 @@ const closeUMRedactor = () => {
         </template>
       </Modal>
 
-      <button
+      <ModalUM2Dconstructor
+          ref="universalModule2DConstructor"
+          :product="product"
+      />
+
+<!--      <button
           v-if="universalModuleData.data"
           class="cut-btn" @click="openUMRedactor">
         <img class="cut-icon" src="/icons/cut.svg" alt="" />
-      </button>
+      </button>-->
 
-<!--      <Modal
-          v-if="universalModuleData.data"
-          :container="`modal&#45;&#45;tableTop`"
-          @open-modal="openUMRedactor"
-          @close-modal="closeUMRedactor"
-      >
-        <template #modalBody="{ onModalClose }" class="modal&#45;&#45;tableTop">
-          <Module2DConstructor2
-              ref="universalModule2DConstructor"
-              :grid="universalModuleData.data"
-              :canvasHeight="universalModuleData.canvasHeight"
-              v-if="isUMModalOpen"
-          >
-            <template #save>
-              <button
-                  class="actions-btn actions-btn&#45;&#45;footer"
-                  @click="saveUMData"
-              >
-                Сохранить
-              </button>
-            </template>
-
-            <template #close>
-              <button
-                  @click="
-                  () => {
-                    onModalClose();
-                  }
-                "
-                  class="actions-btn actions-btn&#45;&#45;footer"
-              >
-                Закрыть
-              </button>
-            </template>
-
-          </Module2DConstructor2>
-        </template>
-        <template #modalOpen="{ onModalOpen }">
-          <button class="cut-btn" @click="onModalOpen">
-            <img class="cut-icon" src="/icons/cut.svg" alt="" />
-          </button>
-        </template>
-      </Modal>-->
     </div>
   </div>
 </template>
