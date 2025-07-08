@@ -1,7 +1,6 @@
 // @ts-nocheck 
 
 import * as THREE from 'three'
-import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
 import {
@@ -12,7 +11,7 @@ import { useSceneState } from "@/store/appliction/useSceneState"
 import { useModelState } from '@/store/appliction/useModelState';
 
 import { BuildProduct } from "../BuildProduct"
-import {objectDirection} from "three/src/nodes/accessors/Object3DNode";
+import {_URL} from "@/types/constants";
 
 export class BuildUniversalModule extends BuildProduct {
 
@@ -165,7 +164,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                 if(cellIndex > 0)
                     curSection.fillings.push({  //Добавляем полку, как товар наполнения
-                        position: new THREE.Vector3(curSection.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.position.z),
+                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.position.z),
                         size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.z),
                         product: 4263392,
                         id: curSection.fillings.length + 1,
@@ -176,7 +175,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                     if(rowIndex > 0)
                         curSection.fillings.push({  //Добавляем верт. полку, как товар наполнения
-                            position: new THREE.Vector3(curSection.position.x, row.position.y, curSection.position.z),
+                            position: new THREE.Vector3(row.position.x, row.position.y, curSection.position.z),
                             size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, curSection.size.z),
                             product: 5820266,
                             id: curSection.fillings.length + 1,
@@ -186,7 +185,7 @@ export class BuildUniversalModule extends BuildProduct {
                     row.fillings?.forEach((filling) => {
                         curSection.fillings.push({
                             ...filling,
-                            position: new THREE.Vector3(curSection.position.x, curSection.position.y + filling.position.y, curSection.position.z),
+                            position: new THREE.Vector3(row.position.x, row.position.y + filling.distances.bottom, curSection.position.z),
                             id: curSection.fillings.length + 1,
                         })
                     })
@@ -195,7 +194,7 @@ export class BuildUniversalModule extends BuildProduct {
                 cell.fillings?.forEach((filling) => {
                     curSection.fillings.push({
                         ...filling,
-                        position: new THREE.Vector3(curSection.position.x, curSection.position.y + filling.position.y, curSection.position.z),
+                        position: new THREE.Vector3(cell.position.x, cell.position.y + filling.distances.bottom, curSection.position.z),
                         id: curSection.fillings.length + 1,
                     })
                 })
@@ -204,7 +203,7 @@ export class BuildUniversalModule extends BuildProduct {
             section.fillings?.forEach((filling) => {
                 curSection.fillings.push({
                     ...filling,
-                    position: new THREE.Vector3(curSection.position.x, curSection.position.y + filling.position.y, curSection.position.z),
+                    position: new THREE.Vector3(curSection.position.x, curSection.position.y + filling.distances.bottom, curSection.position.z),
                     id: curSection.fillings.length + 1,
                 })
             })
@@ -236,18 +235,44 @@ export class BuildUniversalModule extends BuildProduct {
                 if(!productInfo)
                     return
 
-                const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, {width: filling.size.x, height: filling.size.y, depth: filling.size.z});
+                const onLoad = (productFilling, isModel = true) => {
+                    let size = PROPS.CONFIG.SIZE
+                    let start_position = this.getStartPosition(size)
 
-                let productFilling = this.createSubProductObject(data, PROPS)
-                let size = PROPS.CONFIG.SIZE
+                    if(isModel){
+                        const box = new THREE.Box3().setFromObject(productFilling);
+                        const size = box.getSize(new THREE.Vector3());
 
-                let start_position = this.getStartPosition(size)
-                start_position.add(filling.position)
-                start_position.y += filling.size.y / 2
+                        productFilling.userData.trueSizes = {
+                            WIDTH: size.x,
+                            HEIGHT: size.y,
+                            DEPTH: size.z,
+                        }
 
-                productFilling.position.copy(start_position)
+                        productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
+                        productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
+                        productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
+                    }
 
-                group.add(productFilling)
+                    start_position.add(filling.position)
+                    start_position.y += filling.size.y / 2
+
+                    productFilling.position.copy(start_position)
+
+                    group.add(productFilling)
+                }
+
+                const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
+                const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
+
+                let productFilling
+                if (data.DAE) {
+                    this.models_builder.create(data.file, onLoad, {CONFIG: {MODEL: data}}, false)
+                }
+                else{
+                    productFilling = this.createSubProductObject(data, PROPS)
+                    onLoad(productFilling, false)
+                }
             })
         })
 
@@ -266,7 +291,7 @@ export class BuildUniversalModule extends BuildProduct {
         const box = new THREE.Box3().setFromObject(body);
         const size = box.getSize(new THREE.Vector3());
 
-        body.userData.trueSize = {
+        body.userData.trueSizes = {
             BODY_WIDTH: size.x,
             BODY_HEIGHT: size.y,
             BODY_DEPTH: size.z,
