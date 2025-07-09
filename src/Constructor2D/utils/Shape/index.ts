@@ -510,7 +510,8 @@ const drawLine = (
   color: number | string = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   clearGraphics: boolean = false, // Флаг: очищать графику или нет
-  stepNormal: number = 0 // смещение линии по нормали
+  stepNormal: number = 0, // смещение линии по нормали
+  __endPoint: Vector2 | null = null // Конечная точка линии (опционально)
 ): Vector2[] => {
 
   if (clearGraphics) {
@@ -521,7 +522,7 @@ const drawLine = (
   const angleRadians = (angleDegrees * Math.PI) / 180;
 
   // Вычисляем конечную точку линии на основе длины и угла
-  const endPoint = {
+  const endPoint = __endPoint || {
     x: startPoint.x + Math.cos(angleRadians) * width,
     y: startPoint.y + Math.sin(angleRadians) * width,
   };
@@ -545,11 +546,43 @@ const drawLine = (
     width: lineWidth,
   });
 
+  graphics.closePath();
+
   return [
     startPointShifted,
     endPointShifted
   ];
 
+}
+
+const drawArc = (
+  graphics: PIXI.Graphics,
+  center: Vector2,
+  radius: number, // Радиус дуги
+  startAngleDegrees: number = 0, // Начальный угол в градусах
+  endAngleDegrees: number = 360, // Конечный угол в градусах
+  color: number | string = 0x000000, // Цвет дуги
+  lineWidth: number = 1, // Толщина линии
+  clearGraphics: boolean = false // Флаг: очищать графику или нет
+): void => {
+
+  if (clearGraphics) {
+    graphics.clear(); // Очистка графики
+  }
+
+  // Преобразуем углы из градусов в радианы
+  const startAngleRadians = (startAngleDegrees * Math.PI) / 180;
+  const endAngleRadians = (endAngleDegrees * Math.PI) / 180;
+
+  // Рисуем дугу
+  graphics.arc(center.x, center.y, radius, startAngleRadians, endAngleRadians);
+  
+  // Устанавливаем цвет и толщину линии
+  graphics.stroke({
+    color: color,
+    width: lineWidth,
+  });
+  
 }
 
 export {
@@ -562,5 +595,6 @@ export {
   drawArrowHead,
   drawCircle,
   drawShape,
-  drawLine
-}
+  drawLine,
+  drawArc
+};

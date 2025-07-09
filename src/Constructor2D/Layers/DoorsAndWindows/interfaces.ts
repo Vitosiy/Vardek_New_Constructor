@@ -34,7 +34,8 @@ export interface IConfig {
 };
 
 export interface IState {
-
+  activeObject: string | number | null; // активный объект (id объекта)
+  activePointObject: number | null; // активная точка объекта
 }
 
 export interface IObjectDrawContainers {
@@ -43,6 +44,11 @@ export interface IObjectDrawContainers {
   body: PIXI.Graphics | null;
   line: PIXI.Graphics | null;
 };
+
+export interface IDrawObjectsBelongsToWall {
+  id: string | number | null;
+  distanceFromWallStart: number | 0;
+}
 
 export interface IDrawObjects {
   id: string | number;
@@ -53,7 +59,7 @@ export interface IDrawObjects {
   heightDirection: -1 | 1;
   angleDegrees: number;
   updateTime: number;
-  belongsToWall: string | number | null; // объект может принадлежать стене
+  belongsToWall: IDrawObjectsBelongsToWall; // объект может принадлежать стене
   containers?: IObjectDrawContainers
 };
 
@@ -61,3 +67,8 @@ export interface IArgumentDataAddObject{
   position: Vector2;
   type: "window" | "door"; // тип объекта
 };
+
+export interface IDetachParams {
+  type: "object" | "wall";
+  id: string | number;
+}

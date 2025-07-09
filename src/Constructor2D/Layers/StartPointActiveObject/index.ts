@@ -212,7 +212,7 @@ export default class StartPointActiveObject {
 
       if (!value[0] || !value[1]) return;
 
-      const indexPoint = this.parent.layers.planner.state.activePointWall;
+      const indexPoint = this.parent.layers.planner.state.activePointWall ?? this.parent.layers.doorsAndWindows.state.activePointObject;
 
       { // start point
         const p: Vector2 = {
@@ -271,62 +271,149 @@ export default class StartPointActiveObject {
   public updatePositionIndicatorPoint(__position: Vector2): Vector2 {
 
     // интедкст активной точки стены
-    const indexPoint = this.parent.layers.planner.state.activePointWall;
-
-    // если не зажата клавиша Ctrl, то нужно найти позицию точки изменяя длину стены
-
-    const idWall = this.parent.layers.planner.state.activeWall;
-    const listWalls = this.parent.layers.planner.objectWalls;
-    const dataWall = listWalls.find((wall: any) => wall.id === idWall);
+    const indexWallPoint = this.parent.layers.planner.state.activePointWall;
+    const indexObjectPoint = this.parent.layers.doorsAndWindows.state.activePointObject;
 
     // координаты мыши
     const position: Vector2 = { x: 0, y: 0 };
 
-    if (this.parent.state.keys.ctrl) { // зажата клавиша Ctrl
+    if(indexWallPoint !== null) { // активная точка стены
 
-      position.x = __position.x < 0 ? 0 : __position.x;
-      position.y = __position.y < 0 ? 0 : __position.y;
+      const idWall = this.parent.layers.planner.state.activeWall;
+      const listWalls = this.parent.layers.planner.objectWalls;
+      const dataWall = listWalls.find((wall: any) => wall.id === idWall);
 
-      if(dataWall.name === 'dividing_wall'){ // Определяет, находится ли точка v0 близко к отрезку [p0, p1] | isPointNearLine
-        let minDist = Infinity; // Инициализируем минимальное расстояние бесконечностью
-        let closestPoint: Vector2 | null = null; // Переменная для хранения ближайшей точки к линии
+      if (this.parent.state.keys.ctrl) { // свободное перемещение | зажата клавиша Ctrl
 
-        const walls = this.parent.layers.planner.objectWalls;
+        position.x = __position.x < 0 ? 0 : __position.x;
+        position.y = __position.y < 0 ? 0 : __position.y;
 
-        for (let i = 0, len = walls.length; i < len; i++) { // Перебираем все стены
-          const wall = walls[i];
+        if(dataWall.name === 'dividing_wall'){ // Определяет, находится ли точка v0 близко к отрезку [p0, p1] | isPointNearLine
+          let minDist = Infinity; // Инициализируем минимальное расстояние бесконечностью
+          let closestPoint: Vector2 | null = null; // Переменная для хранения ближайшей точки к линии
 
-          if (wall.id === this.parent.layers.planner.state.activeWall) continue; // Пропускаем активную стену
+          const walls = this.parent.layers.planner.objectWalls;
 
-          const segments: [Vector2, Vector2][] = [
-            [wall.points[0], wall.points[1]], // Первый сегмент стены
-            [wall.points[2], wall.points[3]]  // Второй сегмент стены
-          ];
+          for (let i = 0, len = walls.length; i < len; i++) { // Перебираем все стены
+            const wall = walls[i];
 
-          for (const seg of segments) { // Перебираем оба сегмента стены
-            const nearLine: Vector2 = isPointNearLine(seg, position, 10); // Проверяем, находится ли точка рядом с сегментом (в пределах 10px)
-            if (nearLine) { // Если точка рядом найдена
-              const dist = Math.hypot(position.x - nearLine.x, position.y - nearLine.y); // Вычисляем расстояние до найденной точки
-              if (dist < minDist) { // Если это расстояние меньше минимального
-                minDist = dist; // Обновляем минимальное расстояние
-                closestPoint = nearLine; // Сохраняем ближайшую точку
+            if (wall.id === this.parent.layers.planner.state.activeWall) continue; // Пропускаем активную стену
+
+            const segments: [Vector2, Vector2][] = [
+              [wall.points[0], wall.points[1]], // Первый сегмент стены
+              [wall.points[2], wall.points[3]]  // Второй сегмент стены
+            ];
+
+            for (const seg of segments) { // Перебираем оба сегмента стены
+              const nearLine: Vector2 = isPointNearLine(seg, position, 10); // Проверяем, находится ли точка рядом с сегментом (в пределах 10px)
+              if (nearLine) { // Если точка рядом найдена
+                const dist = Math.hypot(position.x - nearLine.x, position.y - nearLine.y); // Вычисляем расстояние до найденной точки
+                if (dist < minDist) { // Если это расстояние меньше минимального
+                  minDist = dist; // Обновляем минимальное расстояние
+                  closestPoint = nearLine; // Сохраняем ближайшую точку
+                }
               }
+            }
+          }
+
+          if (closestPoint) { // Если ближайшая точка найдена
+            position.x = closestPoint.x; // Обновляем позицию по x
+            position.y = closestPoint.y; // Обновляем позицию по y
+          }
+        }
+
+      } else { // смещение вдоль линии отрезка
+
+        // Изменяет длину отрезка, перемещая точку A или B вдоль линии
+        const p = adjustSegmentLength(
+          [dataWall.points[0], dataWall.points[1]], // линия отрезка
+          indexWallPoint, // индекс точки, которую нужно переместить
+          __position, // позиция мыши
+        );
+
+        // Ограничиваем позицию точки, чтобы она не уходила за границы холста
+        position.x = p.x < 0 ? 0 : p.x;
+        position.y = p.y < 0 ? 0 : p.y;
+
+        {
+          const walls = this.parent.layers.planner.objectWalls;
+          const line_p0 = p;
+          const line_p1 = indexWallPoint == 0 ? dataWall.points[1] : dataWall.points[0];
+
+          // Создаем временный отрезок для проверки
+          const tempSegment = [line_p0, line_p1] as [Vector2, Vector2];
+
+          for (let i = 0, len = walls.length; i < len; i++) {
+            const wall = walls[i];
+
+            // Пропускаем текущую стену и связанные стены
+            if (
+              wall.id === this.parent.layers.planner.state.activeWall ||
+              wall.id === dataWall.mergeWalls.wallPoint0 ||
+              wall.id === dataWall.mergeWalls.wallPoint1
+            ) {
+              continue;
+            }
+
+            // Проверяем оба отрезка стены
+            const wallSegments = [
+              [wall.points[0], wall.points[1]] as [Vector2, Vector2],
+              [wall.points[2], wall.points[3]] as [Vector2, Vector2]
+            ];
+
+            for (const wallSegment of wallSegments) {
+              // Исключаем случай, когда проверяемый отрезок совпадает с tempSegment
+              if (this.segmentsEqual(tempSegment, wallSegment)) {
+                continue;
+              }
+
+              const intersection = findSegmentIntersection(tempSegment, wallSegment);
+
+              if (intersection) {
+                // Проверяем, что точка пересечения не совпадает с line_p1
+                if (!this.pointsEqual(intersection, line_p1)) {
+
+                  const dis = getDistanceBetweenVectors(__position, intersection);
+                  //
+                  if(dis < 15){
+                    position.x = intersection.x;
+                    position.y = intersection.y;
+                  }
+                  break; // Нашли пересечение - выходим
+                }
+              }
+            }
+
+            if (position.x !== p.x || position.y !== p.y) {
+              break; // Если позиция изменилась - прерываем внешний цикл
             }
           }
         }
 
-        if (closestPoint) { // Если ближайшая точка найдена
-          position.x = closestPoint.x; // Обновляем позицию по x
-          position.y = closestPoint.y; // Обновляем позицию по y
-        }
       }
 
-    } else {
+      if (indexWallPoint == 0) {
+        this.circleStartPoint.x = position.x;
+        this.circleStartPoint.y = position.y;
+        this.startPointRect.x = position.x
+        this.startPointRect.y = position.y;
+      } else if (indexWallPoint == 1) {
+        this.circleEndPoint.x = position.x;
+        this.circleEndPoint.y = position.y;
+        this.endPointRect.x = position.x;
+        this.endPointRect.y = position.y;
+      }
+
+    }else if (indexObjectPoint !== null) { // активная точка объекта
+
+      const idObject = this.parent.layers.doorsAndWindows.state.activeObject;
+      const dataObject = this.parent.layers.doorsAndWindows.drawObjects.find((obj: any) => obj.id === idObject);
 
       // Изменяет длину отрезка, перемещая точку A или B вдоль линии
+      // и возвращает новую позицию точки, которую нужно переместить
       const p = adjustSegmentLength(
-        [dataWall.points[0], dataWall.points[1]], // линия отрезка
-        indexPoint, // индекс точки, которую нужно переместить
+        [dataObject.points[0], dataObject.points[1]], // линия отрезка
+        indexObjectPoint, // индекс точки, которую нужно переместить
         __position, // позиция мыши
       );
 
@@ -334,73 +421,18 @@ export default class StartPointActiveObject {
       position.x = p.x < 0 ? 0 : p.x;
       position.y = p.y < 0 ? 0 : p.y;
 
-      {
-        const walls = this.parent.layers.planner.objectWalls;
-        const line_p0 = p;
-        const line_p1 = indexPoint == 0 ? dataWall.points[1] : dataWall.points[0];
-
-        // Создаем временный отрезок для проверки
-        const tempSegment = [line_p0, line_p1] as [Vector2, Vector2];
-
-        for (let i = 0, len = walls.length; i < len; i++) {
-          const wall = walls[i];
-
-          // Пропускаем текущую стену и связанные стены
-          if (
-            wall.id === this.parent.layers.planner.state.activeWall ||
-            wall.id === dataWall.mergeWalls.wallPoint0 ||
-            wall.id === dataWall.mergeWalls.wallPoint1
-          ) {
-            continue;
-          }
-
-          // Проверяем оба отрезка стены
-          const wallSegments = [
-            [wall.points[0], wall.points[1]] as [Vector2, Vector2],
-            [wall.points[2], wall.points[3]] as [Vector2, Vector2]
-          ];
-
-          for (const wallSegment of wallSegments) {
-            // Исключаем случай, когда проверяемый отрезок совпадает с tempSegment
-            if (this.segmentsEqual(tempSegment, wallSegment)) {
-              continue;
-            }
-
-            const intersection = findSegmentIntersection(tempSegment, wallSegment);
-
-            if (intersection) {
-              // Проверяем, что точка пересечения не совпадает с line_p1
-              if (!this.pointsEqual(intersection, line_p1)) {
-
-                const dis = getDistanceBetweenVectors(__position, intersection);
-                //
-                if(dis < 15){
-                  position.x = intersection.x;
-                  position.y = intersection.y;
-                }
-                break; // Нашли пересечение - выходим
-              }
-            }
-          }
-
-          if (position.x !== p.x || position.y !== p.y) {
-            break; // Если позиция изменилась - прерываем внешний цикл
-          }
-        }
+      if (indexObjectPoint == 0) {
+        this.circleStartPoint.x = position.x;
+        this.circleStartPoint.y = position.y;
+        this.startPointRect.x = position.x
+        this.startPointRect.y = position.y;
+      } else if (indexObjectPoint == 1) {
+        this.circleEndPoint.x = position.x;
+        this.circleEndPoint.y = position.y;
+        this.endPointRect.x = position.x;
+        this.endPointRect.y = position.y;
       }
 
-    }
-
-    if (indexPoint == 0) {
-      this.circleStartPoint.x = position.x;
-      this.circleStartPoint.y = position.y;
-      this.startPointRect.x = position.x
-      this.startPointRect.y = position.y;
-    } else if (indexPoint == 1) {
-      this.circleEndPoint.x = position.x;
-      this.circleEndPoint.y = position.y;
-      this.endPointRect.x = position.x;
-      this.endPointRect.y = position.y;
     }
 
     return position;

@@ -126,8 +126,10 @@ export default class Constructor2D {
       canvas: this.canvas,
       resizeTo: this.container,
       backgroundColor: 0xffffff,
-      antialias: true,
-      resolution: window.devicePixelRatio || 1
+      antialias: true,  // Аппаратное сглаживание не поддерживается
+      resolution: 2,      // Суперсэмплинг 2x
+      autoDensity: true,  // Автомасштабирование для HiDPI
+      powerPreference: 'high-performance'
     });
     this.app2d.stage.hitArea = this.app2d.screen;
     this.app2d.stage.eventMode = 'static'; // чтобы работали события на root-контейнере

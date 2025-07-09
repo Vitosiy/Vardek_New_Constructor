@@ -77,6 +77,8 @@ onMounted(async () => {
     canvas2d.value.addEventListener('drop', dropHandler);
 
     console.log("!!! App2d:", App2d);
+    // @ts-ignore
+    window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
     
   }
 

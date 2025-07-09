@@ -28,13 +28,21 @@ export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): 
   // эта переменная для того, чтобы потом корректно перемещать активную точку по холсту
   this.state.downActivePointerPosition = this.getPointerPosition(e.global.x, e.global.y);
 
-  this.parent.layers.planner.state.activePointWall = indexPoint;
+  if(this.parent.layers.planner.state.activeWall){
+    this.parent.layers.planner.state.activePointWall = indexPoint;
+    this.parent.layers.doorsAndWindows.state.activePointObject = null;
+  }else if(this.parent.layers.doorsAndWindows.state.activeObject){
+    this.parent.layers.planner.state.activePointWall = null;
+    this.parent.layers.doorsAndWindows.state.activePointObject = indexPoint;
+  }
   this.parent.state.mouse.left = true;
 
-  const dataWall: { id: string, points: Vector2[] } | undefined = 
-    this.parent.layers.planner.objectWalls.find((el: { id: string }) => el.id === this.parent.layers.planner.state.activeWall);
-  if(dataWall) this.parent.layers.arrowRulerActiveObject.draw(dataWall.points[indexPoint]);
+  if(this.parent.layers.planner.state.activeWall){
+    const dataWall: { id: string, points: Vector2[] } | undefined = 
+      this.parent.layers.planner.objectWalls.find((el: { id: string }) => el.id === this.parent.layers.planner.state.activeWall);
+    if(dataWall) this.parent.layers.arrowRulerActiveObject.draw(dataWall.points[indexPoint]);
 
-  this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+    this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+  }
 
 };

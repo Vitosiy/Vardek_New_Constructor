@@ -642,6 +642,9 @@ export default class Planner {
     const points = JSON.parse(JSON.stringify(obj.points));
     const mergeWalls = obj.mergeWalls;
 
+    // обновляем окно и двери в стене, если они есть
+    this.parent.layers.doorsAndWindows.updateObject(obj.id);
+
     { // рассчитываем новые координаты точек 2 и 3, если есть присоединенная стена
 
       if (obj.name === 'dividing_wall') {
@@ -650,30 +653,30 @@ export default class Planner {
 
           let pnl: Vector2 | null = null;
           let line: [Vector2, Vector2] | null = null;
-          
+
           for (let i = 0, len = this.objectWalls.length; i < len; i++) {
 
             const wall: ObjectWall = this.objectWalls[i];
-            
-            if( wall.id === obj.id ) continue; // пропускаем текущую стену
+
+            if (wall.id === obj.id) continue; // пропускаем текущую стену
 
             pnl = isPointNearLine([wall.points[0], wall.points[1]], points[0], 1);
 
-            if(wall.name === 'dividing_wall' && !pnl){
+            if (wall.name === 'dividing_wall' && !pnl) {
               pnl = isPointNearLine([wall.points[2], wall.points[3]], points[0], 1);
-              if(pnl) line = [wall.points[2], wall.points[3]];
-            }else if(pnl) {
+              if (pnl) line = [wall.points[2], wall.points[3]];
+            } else if (pnl) {
               line = [wall.points[0], wall.points[1]];
             }
 
-            if(pnl) break;
+            if (pnl) break;
 
           }
 
-          if(line) {
+          if (line) {
             // если _p0 находится на линии другой стены, то находим точку _p3
             const pointIntLine: Vector2 | null = findRayLineIntersection(line[0], line[1], points[2], points[3]);
-            if(pointIntLine) points[3] = pointIntLine;
+            if (pointIntLine) points[3] = pointIntLine;
           }
 
         }
@@ -682,30 +685,30 @@ export default class Planner {
 
           let pnl: Vector2 | null = null;
           let line: [Vector2, Vector2] | null = null;
-          
+
           for (let i = 0, len = this.objectWalls.length; i < len; i++) {
 
             const wall: ObjectWall = this.objectWalls[i];
-            
-            if( wall.id === obj.id ) continue; // пропускаем текущую стену
+
+            if (wall.id === obj.id) continue; // пропускаем текущую стену
 
             pnl = isPointNearLine([wall.points[0], wall.points[1]], points[1], 1);
 
-            if(wall.name === 'dividing_wall' && !pnl){
+            if (wall.name === 'dividing_wall' && !pnl) {
               pnl = isPointNearLine([wall.points[2], wall.points[3]], points[1], 1);
-              if(pnl) line = [wall.points[2], wall.points[3]];
-            }else if(pnl) {
+              if (pnl) line = [wall.points[2], wall.points[3]];
+            } else if (pnl) {
               line = [wall.points[0], wall.points[1]];
             }
 
-            if(pnl) break;
+            if (pnl) break;
 
           }
 
-          if(line){
+          if (line) {
             // если _p1 находится на линии другой стены, то находим точку _p2
             const pointIntLine: Vector2 | null = findRayLineIntersection(line[0], line[1], points[3], points[2]);
-            if(pointIntLine) points[2] = pointIntLine;
+            if (pointIntLine) points[2] = pointIntLine;
           }
 
         }
@@ -1654,6 +1657,10 @@ export default class Planner {
         });
 
         this.state.activePointWall = null;
+        this.parent.layers.doorsAndWindows.detachFromWall({
+          type: "wall",
+          id: this.state.activeWall
+        });
         this.state.activeWall = null
 
         this.redrawAllObjects();
@@ -1666,6 +1673,14 @@ export default class Planner {
 
     }
 
+  }
+
+  public getWallProperty<T extends keyof ObjectWall>(
+    id: string | number,
+    propName: T
+  ): ObjectWall[T] | null {
+    const wall = this.objectWalls?.find(wall => wall.id === id);
+    return wall ? JSON.parse(JSON.stringify(wall[propName])) : null;
   }
 
   public set scale(v: number) {
@@ -1683,8 +1698,16 @@ export default class Planner {
 
       // Уничтожаем каждый элемент контейнеров
       if (containers) {
+
         for (const key in containers) {
-          const graphic = containers[key as keyof ObjectWallContainers];
+
+          if (
+            key === "root" ||
+            key === "containerTextRulerWall" ||
+            key === "textRulerWall"
+          ) continue; // пропускаем корневой контейнер
+
+          const graphic = containers[key];
 
           if (graphic && typeof graphic.destroy === "function") {
 
@@ -1698,14 +1721,15 @@ export default class Planner {
               }
 
               // Уничтожаем графику, только если она существует
-              if (!graphic.destroyed) {
-                graphic.destroy(true); // Уничтожаем графику рекурсивно
+              if (graphic && typeof graphic.destroy === "function") {
+                graphic.destroy({
+                  texture: false,     // Удалить текстуру (если она есть)
+                  baseTexture: false, // Удалить базовую текстуру (если есть)
+                }); // Уничтожаем графику рекурсивно
               }
 
               // Убираем из контейнера, если графика существует
-              if (this.container && this.container.children.includes(graphic)) {
-                this.container.removeChild(graphic);
-              }
+              if (containers.root && containers.root.children.includes(graphic)) containers.root.removeChild(graphic);
 
               // Обнуляем ссылку
               containers[key as keyof ObjectWallContainers] = null!;
@@ -1713,10 +1737,64 @@ export default class Planner {
             } catch (error) {
               console.warn(`Failed to destroy graphic: ${key}`, error);
             }
+
           } else {
             console.warn(`Skipping destroy for graphic: ${key}, as it is null or undefined`);
           }
         }
+
+        // удаляем контейнер textRulerWall
+        try {
+          if (containers.textRulerWall && typeof containers.textRulerWall.destroy === "function") {
+            containers.textRulerWall.destroy(true);
+          }
+          if (
+            containers.containerTextRulerWall &&
+            containers.containerTextRulerWall.children.includes(containers.textRulerWall)
+          ) {
+            containers.containerTextRulerWall.removeChild(containers.textRulerWall);
+          }
+          containers.textRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy graphic: textRulerWall`, error);
+        }
+
+        // удаляем контейнер containerTextRulerWall
+        try {
+          if (containers.containerTextRulerWall && typeof containers.containerTextRulerWall.destroy === "function") {
+            containers.containerTextRulerWall.destroy(true);
+          }
+          if (
+            containers.root &&
+            containers.root.children.includes(containers.containerTextRulerWall)
+          ) {
+            containers.root.removeChild(containers.containerTextRulerWall);
+          }
+          containers.containerTextRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy graphic: containerTextRulerWall`, error);
+        }
+
+        // удаляем контейнер root
+        try {
+          if (containers.root && typeof containers.root.destroy === "function") {
+            containers.root.destroy({
+              children: true,     // Удалить дочерние элементы (если это Container)
+              texture: false,     // Удалить текстуру (если она есть)
+              baseTexture: false, // Удалить базовую текстуру (если есть)
+            });
+          }
+          if (
+            this.container &&
+            this.container.children.includes(containers.root)
+          ) {
+            this.container.removeChild(containers.root);
+          }
+          containers.root = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy graphic: root`, error);
+        }
+
       }
 
     });

@@ -10,7 +10,8 @@ import {
   IConfig,
   IState,
   IDrawObjects,
-  IArgumentDataAddObject
+  IArgumentDataAddObject,
+  IDetachParams,
 } from "./interfaces";
 
 import {
@@ -21,11 +22,17 @@ import {
   rect,
   rectV2,
   drawLine,
+  // drawCircle,
+  drawArc
 } from "./../../utils/Shape";
 
 import {
   getDistanceBetweenVectors,
   rotatePointsAroundCenter,
+  getMidpoint,
+  offsetVectorBySegment,
+  adjustSegmentLength,
+  offsetVectorBySegmentNormal,
 } from "./../../utils/Math";
 
 // import { handlerMouseLeftDown } from "./methods/events/handlerMouseLeftDown/index";
@@ -48,6 +55,7 @@ export default class DoorsAndWindows {
       colors: {
         background: 0xFFFFFF,
         colorEdge: 0x131313,
+        colorLine: 0x34A853,
       }
     },
 
@@ -58,6 +66,7 @@ export default class DoorsAndWindows {
       colors: {
         background: 0xFFFFFF,
         colorEdge: 0x131313,
+        colorLine: 0x34A853,
       }
     }
 
@@ -65,6 +74,8 @@ export default class DoorsAndWindows {
 
   // состояние слоя
   public state: IState = {
+    activeObject: null, // активный объект | id object
+    activePointObject: null, // активная точка объекта | index точки объекта
   };
 
   constructor(pixiApp: PIXI.Application, parent: any) {
@@ -108,8 +119,6 @@ export default class DoorsAndWindows {
     * data.type = door | window - тип объекта
     */
 
-    console.log("Adding Door or Window", data);
-
     if (!data.type || !data.position) return;
 
     // генерация id объекта
@@ -141,8 +150,9 @@ export default class DoorsAndWindows {
         : null;
 
     // !!! 2 получить ширину и высоту объекта относительно стены, если она есть. иначе из конфигурации
-    const wallWidth: number = getDistanceBetweenVectors(dataWall?.points[0], dataWall?.points[1]);
-    const objWidth: number = wallWidth > this.config[data.type]?.width ? this.config[data.type]?.width : wallWidth - 20;
+    const wallWidth: number = dataWall ? getDistanceBetweenVectors(dataWall?.points[0], dataWall?.points[1]) : this.config[data.type]?.width;
+    const distanceFromWallStart: number = getBelongsToWall ? getDistanceBetweenVectors(dataWall?.points[0], getBelongsToWall.point) : 0;
+    const objWidth: number = wallWidth > this.config[data.type]?.width ? this.config[data.type]?.width : wallWidth;
     const objHeight: number = dataWall?.height ?? this.config[data.type]?.height;
     const objHeightDirection: -1 | 1 = dataWall?.heightDirection ?? -1;
 
@@ -175,7 +185,10 @@ export default class DoorsAndWindows {
       heightDirection: objHeightDirection,
       angleDegrees: objAngleDegrees,
       updateTime: Date.now(),
-      belongsToWall: null, // объект не принадлежит стене
+      belongsToWall: {
+        id: getBelongsToWall?.id ?? null, // объект не принадлежит стене
+        distanceFromWallStart: distanceFromWallStart, // расстояние от начала стены до объекта
+      },
       containers: null, // инициализируем позже
       points: objectPoints
     };
@@ -192,10 +205,30 @@ export default class DoorsAndWindows {
     const result = this.createDrawContainers(addedObject.id);
 
     if (result) {
-      // рисуем объект на холсте
-      this.draw(addedObject.id);
+      
+      this.parent.layers.planner?.deactiveWalls(); // деактивируем стены, если они были активны
+      this.parent.layers.arrowRulerActiveObject?.clearGraphic();
+      
+      this.setActiveObject(addedObject.id); // устанавливаем активный объект и рисуем на холсте
+      
+      this.parent.layers.startPointActiveObject.activate([addedObject.points[0], addedObject.points[1]]);
+      
     }
 
+  }
+
+  public setActiveObject(id: string | number | null): void {
+
+    const oldActiveObject = this.state.activeObject;
+
+    if (oldActiveObject === id) return; // Если объект уже активен, ничего не делаем
+    
+    this.state.activeObject = id; // Устанавливаем новый активный объект
+
+    if(oldActiveObject) this.draw(oldActiveObject); // убраем автиность объекта, если он был активен
+
+    if(this.state.activeObject) this.draw(this.state.activeObject); // Рисуем новый активный объект
+    
   }
 
   // создаем контейнеры для визуализации cтены
@@ -253,81 +286,372 @@ export default class DoorsAndWindows {
     // Получить контейнеры из объекта
     const containers = obj.containers;
     const points = JSON.parse(JSON.stringify(obj.points));
-    const belongsToWall = obj.belongsToWall;
+    const idWall = obj.belongsToWall.id;
 
     const widthObj = getDistanceBetweenVectors(points[0], points[1]);
     const heightObj = getDistanceBetweenVectors(points[0], points[3]);
 
     if (containers?.mainShape) {
+      containers.mainShape.clear();
       rect(
         containers.mainShape,
         {
           points: points,
           heightDirection: obj.heightDirection,
           color: this.config[obj.name].colors.background,
-          colorEdge: this.config[obj.name].colors.colorEdge,
-          widthEdge: this.config[obj.name].lineWidth
+          // colorEdge: this.config[obj.name].colors.colorEdge,
+          // widthEdge: this.config[obj.name].lineWidth
         }
       );
     }
 
+    // рисуем линии на объекте
     if (containers?.line) {
-      drawLine(
-        // graphics: PIXI.Graphics,
-        containers?.line,
-        // startPoint: Vector2,
-        points[0],
-        // width: number, // Длина стрелки
-        widthObj,
-        // angleDegrees: number, // Угол направления стрелки в градусах
-        obj.angleDegrees,
-        // color: number | string = 0x000000, // Цвет стрелки
-        0x008800,
-        // lineWidth: number = 1, // Толщина линии
-        1,
-        // clearGraphics: boolean = false, // Флаг: очищать графику или нет
-        false, // не очищаем графику
-        // stepNormal: number = 0 // смещение линии по нормали
-        obj.heightDirection * (heightObj / 2) + 5 // смещение линии по нормали
-      );
-      drawLine(
-        // graphics: PIXI.Graphics,
-        containers?.line,
-        // startPoint: Vector2,
-        points[0],
-        // width: number, // Длина стрелки
-        widthObj,
-        // angleDegrees: number, // Угол направления стрелки в градусах
-        obj.angleDegrees,
-        // color: number | string = 0x000000, // Цвет стрелки
-        0x008800,
-        // lineWidth: number = 1, // Толщина линии
-        1,
-        // clearGraphics: boolean = false, // Флаг: очищать графику или нет
-        false, // не очищаем графику
-        // stepNormal: number = 0 // смещение линии по нормали
-        obj.heightDirection * (heightObj / 2) - 5 // смещение линии по нормали
-      );
-      drawLine(
-        // graphics: PIXI.Graphics,
-        containers?.line,
-        // startPoint: Vector2,
-        points[0],
-        // width: number, // Длина стрелки
-        widthObj,
-        // angleDegrees: number, // Угол направления стрелки в градусах
-        obj.angleDegrees + 45,
-        // color: number | string = 0x000000, // Цвет стрелки
-        0x008800,
-        // lineWidth: number = 1, // Толщина линии
-        3,
-        // clearGraphics: boolean = false, // Флаг: очищать графику или нет
-        false, // не очищаем графику
-        // stepNormal: number = 0 // смещение линии по нормали
-        0 // смещение линии по нормали
-      );
+      containers.line.clear();
+
+      { // рисуем зеленые линии
+        const line_0: Vector2[] = drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[0],
+          // width: number, // Длина стрелки
+          widthObj,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          obj.angleDegrees,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorLine,
+          // lineWidth: number = 1, // Толщина линии
+          1,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          true, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          obj.heightDirection * (heightObj / 2) + 5 // смещение линии по нормали
+        );
+        const line_1: Vector2[] = drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[0],
+          // width: number, // Длина стрелки
+          widthObj,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          obj.angleDegrees,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorLine,
+          // lineWidth: number = 1, // Толщина линии
+          1,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          obj.heightDirection * (heightObj / 2) - 5 // смещение линии по нормали
+        );
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          getMidpoint(line_0[0], line_0[1]),
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorLine,
+          // lineWidth: number = 1, // Толщина линии
+          1,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          getMidpoint(line_1[0], line_1[1]),
+        );
+
+        if (obj.name === 'door') {
+          drawLine(
+            // graphics: PIXI.Graphics,
+            containers.line,
+            // startPoint: Vector2,
+            points[0],
+            // width: number, // Длина стрелки
+            widthObj,
+            // angleDegrees: number, // Угол направления стрелки в градусах
+            obj.angleDegrees + 45,
+            // color: number | string = 0x000000, // Цвет стрелки
+            this.config[obj.name].colors.colorLine,
+            // lineWidth: number = 1, // Толщина линии
+            3,
+            // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+            false, // не очищаем графику
+            // stepNormal: number = 0 // смещение линии по нормали
+            0 // смещение линии по нормали
+          );
+        }
+      }
+
+      { // рисуем зеленую арку
+        if (obj.name === 'door') {
+          drawArc(
+            // graphics: PIXI.Graphics,
+            containers.line,
+            // center: Vector2,
+            points[0],
+            // radius: number, // Радиус дуги
+            widthObj - 10, // радиус дуги
+            // startAngleDegrees: number = 0, // Начальный угол в градусах
+            obj.angleDegrees, // Начальный угол в градусах          
+            // endAngleDegrees: number = 360, // Конечный угол в градусах
+            obj.angleDegrees + 45, // Конечный угол в градусах
+            // color: number | string = 0x000000, // Цвет дуги
+            this.config[obj.name].colors.colorLine, // Цвет дуги
+            // lineWidth: number = 1, // Толщина линии
+            1, // Толщина линии
+            // clearGraphics: boolean = false // Флаг: очищать графику или нет
+            false, // не очищаем графику
+          );
+        }
+      }
+
+      if(this.state.activeObject && idWall){ // рисуем зеленые линейки справа и слева от объекта до краёв стены, если объект принадлежит стене
+        
+        const pointsWall: Vector2[] = this.parent.layers.planner.getWallProperty(idWall, 'points');
+        
+        // левая линия
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          pointsWall[0],
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorLine,
+          // lineWidth: number = 1, // Толщина линии
+          2,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          points[0],
+        );
+
+        // правая линия
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[1],
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorLine,
+          // lineWidth: number = 1, // Толщина линии
+          2,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          pointsWall[1],
+        );
+
+      }
+
+      { // рисуем черную рамку отдельными линиями вокруг объекта
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[0],
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorEdge,
+          // lineWidth: number = 1, // Толщина линии
+          2,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          points[1],
+        );
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[1],
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorEdge,
+          // lineWidth: number = 1, // Толщина линии
+          1,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          points[2],
+        );
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[2],
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorEdge,
+          // lineWidth: number = 1, // Толщина линии
+          1,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          points[3],
+        );
+        drawLine(
+          // graphics: PIXI.Graphics,
+          containers.line,
+          // startPoint: Vector2,
+          points[3],
+          // width: number, // Длина стрелки
+          0,
+          // angleDegrees: number, // Угол направления стрелки в градусах
+          0,
+          // color: number | string = 0x000000, // Цвет стрелки
+          this.config[obj.name].colors.colorEdge,
+          // lineWidth: number = 1, // Толщина линии
+          1,
+          // clearGraphics: boolean = false, // Флаг: очищать графику или нет
+          false, // не очищаем графику
+          // stepNormal: number = 0 // смещение линии по нормали
+          0, // смещение линии по нормали
+          // endPoint: Vector2,
+          points[0],
+        );
+      }
+
     }
 
+  }
+
+  public updateObject(idWall: number | string): void {
+
+    this.drawObjects.forEach((obj: IDrawObjects) => {
+      if (obj.belongsToWall.id === idWall) {
+
+        // Получаем данные стены
+        const dataWall: Pick<ObjectWall, 'id' | 'name' | 'width' | 'height' | 'points' | 'heightDirection' | 'angleDegrees' | 'updateTime'> | null =
+          JSON.parse(JSON.stringify((() => {
+            const wall = this.parent.layers.planner.objectWalls.find((el: ObjectWall) => el.id === idWall);
+            if (!wall) return null;
+            const { id, name, width, height, points, heightDirection, angleDegrees, updateTime } = wall;
+            return { id, name, width, height, points, heightDirection, angleDegrees, updateTime };
+          })()));
+
+        if (!dataWall) {
+          console.error("Wall not found for id:", idWall);
+          return;
+        }
+
+        const points: Vector2[] = dataWall.points;
+        const objPoints: Vector2[] = JSON.parse(JSON.stringify(obj.points));
+        // obj.width;
+        obj.height = dataWall.height;
+        obj.angleDegrees = dataWall.angleDegrees;
+        obj.updateTime = Date.now();
+
+        const point_0: Vector2 = offsetVectorBySegment(
+          [points[0], points[1]],
+          points[0],
+          obj.belongsToWall.distanceFromWallStart
+        );
+        let point_1: Vector2 | undefined = {
+          x: point_0.x + obj.width,
+          y: point_0.y
+        };
+        let point_2: Vector2 | undefined = JSON.parse(JSON.stringify(point_1));
+        point_2.y -= obj.height;
+        let point_3: Vector2 | undefined = JSON.parse(JSON.stringify(point_0));
+        point_3.y -= obj.height;
+
+        const objectPoints: Vector2[] = rotatePointsAroundCenter([
+          point_0,
+          point_1,
+          point_2,
+          point_3
+        ], point_0, obj.angleDegrees);
+
+        obj.points[0] = objectPoints[0];
+        obj.points[1] = objectPoints[1];
+        obj.points[2] = objectPoints[2];
+        obj.points[3] = objectPoints[3];
+
+        this.draw(obj.id);
+
+      }
+    });
+
+  }
+
+  public updateObjectPoint(position: Vector2, __indexPoint: 0 | 1 | null = null): void {
+
+    const indexPoint: number = __indexPoint !== null ? __indexPoint : this.state.activePointObject;
+    const dataObject: IDrawObjects | undefined = this.drawObjects.find(el => el.id === this.state.activeObject);
+
+    if (!dataObject) {
+      console.error("Object not found for id:", this.state.activeObject);
+      return; // Если объект не найден, выходим из функции
+    }
+    
+    if (!dataObject.points[indexPoint]) {
+      console.error("Invalid point index:", indexPoint);
+      return; // Если индекс точки некорректен, выходим из функции
+    }
+
+    // получаем height объекта
+    const heightObj: number = dataObject.height;
+
+    const points: Vector2[] = JSON.parse(JSON.stringify(dataObject.points));
+    
+    // Изменяет длину отрезка, перемещая точку A или B вдоль линии
+    // и возвращает новую позицию точки, которую нужно переместить
+    const p = adjustSegmentLength(
+      [dataObject.points[0], dataObject.points[1]], // линия отрезка
+      indexPoint, // индекс точки, которую нужно переместить
+      position, // позиция мыши
+    );
+
+    const point_0: Vector2 = indexPoint === 0 ? p : points[0];
+    const point_1: Vector2 = indexPoint === 1 ? p : points[1];
+    const point_2: Vector2 = offsetVectorBySegmentNormal([point_0, point_1], point_1, heightObj * dataObject.heightDirection);
+    const point_3: Vector2 = offsetVectorBySegmentNormal([point_0, point_1], point_0, heightObj * dataObject.heightDirection);
+
+    dataObject.width = getDistanceBetweenVectors(point_0, point_1);
+    
+    dataObject.points = [
+      point_0,
+      point_1,
+      point_2,
+      point_3
+    ];
+
+    this.draw(dataObject.id);
+    
   }
 
   public setupInteractions(): void {
@@ -346,25 +670,123 @@ export default class DoorsAndWindows {
 
   public destroy(): void {
 
-    [ // Очистка и уничтожение графики
-
-      // this.circleStartPoint,
-
-    ].forEach(graphic => {
-      if (graphic) {
-        graphic.destroy(true);
-        this.container.removeChild(graphic);
-      }
-    });
+    this.drawObjects.forEach((obj: IDrawObjects) => this.removeObject(obj.id) );
 
     // Удаление контейнера
     if (this.container) {
+      this.container.destroy({
+        children: true,     // Удалить дочерние элементы (если это Container)
+        texture: false,     // Удалить текстуру (если она есть)
+        baseTexture: false, // Удалить базовую текстуру (если есть)
+      });
       this.app.stage.removeChild(this.container);
-      this.container.destroy({ children: true, texture: true });
     }
 
     this.container = null!;
     this.app = null!;
+
+  }
+
+  // Открепить объект от стены
+  public detachFromWall(dataSearch: IDetachParams): void {
+
+    const objs = (dataSearch.type === "wall" && dataSearch.id)
+      ? this.drawObjects.filter(el => el.belongsToWall?.id === dataSearch.id) || []
+      : ( (dataSearch.type === "object" && dataSearch.id) 
+          ? this.drawObjects.find(el => el.id === dataSearch.id) || []
+          : []
+        );
+
+    if (!objs || objs.length === 0) {
+      console.error("Object not found for id:", dataSearch);
+      return;
+    }
+
+    for (const obj of objs) {
+      obj.belongsToWall = {
+        id: null,
+        distanceFromWallStart: 0,
+      };
+      
+      // obj.angleDegrees = 0;
+      this.draw(obj.id);
+    }
+
+  }
+
+  public removeObject(id: string | number): void {
+
+    const indexObject = this.drawObjects.findIndex(el => el.id === id);
+
+    if (indexObject === -1) {
+      console.error("Object not found for id:", id);
+      return; // Если объект не найден, выходим из функции
+    }
+
+    const dataObject = this.drawObjects[indexObject];
+    if (!dataObject) {
+      console.error("Object data not found for id:", id);
+      return; // Если данные объекта не найдены, выходим из функции
+    }
+
+    if (dataObject.containers) {
+
+      // Удаляем все графики из контейнеров
+      for (const key in dataObject.containers) {
+
+        if (key === 'root') continue; // Пропускаем корневой контейнер
+
+        const graphic = dataObject.containers[key];
+
+        // отвязываем события от графики
+        if (key === "eventGraphic" && graphic instanceof PIXI.Graphics) {
+          // graphic
+          //   .off("mouseover", this.handlerOverEventGraphic)
+          //   .off("mouseout", this.handlerOutEventGraphic)
+          //   .off("pointerdown", this.handlerDownEventGraphic);
+        }
+
+        if (graphic && typeof graphic.destroy === "function") {
+          graphic.destroy({
+            texture: false,     // Удалить текстуру (если она есть)
+            baseTexture: false, // Удалить базовую текстуру (если есть)
+          });
+        }
+
+        // Убираем из контейнера, если графика существует
+        if (dataObject.containers.root && dataObject.containers.root.children.includes(graphic)) dataObject.containers.root.removeChild(graphic);
+
+        dataObject.containers[key] = null!; // Обнуляем ссылку на графику
+
+      }
+
+      // удаляем контейнер root
+      try {
+        if (dataObject.containers.root && typeof dataObject.containers.root.destroy === "function") {
+          dataObject.containers.root.destroy({
+            children: true,     // Удалить дочерние элементы (если это Container)
+            texture: false,     // Удалить текстуру (если она есть)
+            baseTexture: false, // Удалить базовую текстуру (если есть)
+          });
+        }
+        if (
+          this.container &&
+          this.container.children.includes(dataObject.containers.root)
+        ) {
+          this.container.removeChild(dataObject.containers.root);
+        }
+        dataObject.containers.root = null!;
+      } catch (error) {
+        console.warn(`Failed to destroy graphic: root`, error);
+      }
+
+      // Обнуляем ссылки на контейнеры
+      dataObject.containers = null;
+
+    }
+
+    // Удаляем объект из массива
+    this.drawObjects.splice(indexObject, 1);
 
   }
 
