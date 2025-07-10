@@ -1538,6 +1538,8 @@ defineExpose({
 <style>
 .visualization {
   width: 800px;
+  height: 500px;
+
   canvas {
     border: 1px solid #bbbbbb;
   }

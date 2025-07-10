@@ -188,6 +188,7 @@ export interface GridModule {
   height: number;
   depth?: number;
   moduleThickness: number;
+  moduleColor: number;
   sections: GridSection[];
   type: "module";
   horizont?: number;
