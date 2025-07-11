@@ -776,6 +776,7 @@ watch(visualizationRef, () => {
             class="constructor2d-container--right--content"
             :visualizationRef="visualizationRef"
             :module="module"
+            :moduleProps="productData.PROPS"
             :step="step"
             @product-updateFasades="updateFasades"
             @product-getFasadePositionMinMax="getFasadePositionMinMax"

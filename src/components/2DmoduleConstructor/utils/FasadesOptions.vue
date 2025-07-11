@@ -16,10 +16,14 @@ const props = defineProps({
   },
   visualizationRef: {
     type: ref,
+  },
+  moduleProps: {
+    type: ref,
+    required: true,
   }
 });
 
-const {module, visualizationRef} = toRefs(props);
+const {module, visualizationRef, moduleProps} = toRefs(props);
 const selectedFasade = ref({sec: 0, cell: null, row: null});
 
 const emit = defineEmits([
@@ -61,9 +65,6 @@ const getFasadePositionMinMax = (fasade) => {
 }
 
 const addDoor = (secIndex) => {
-  const PROPS = productData.value.PROPS;
-  const FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
-  const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
 
   const section = module.value.sections[secIndex];
   const width = section.fasades[0]?.[0] ? Math.floor((section.fasades[0][0].width) / 2 - 2) :
@@ -79,6 +80,9 @@ const addDoor = (secIndex) => {
     firstFasade = section.fasades[0][0];
     newDoorPosition = new THREE.Vector2(firstFasade.position.x + width + 4, firstFasade.position.y)
   } else {
+    const PROPS = moduleProps.value;
+    const FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
+    const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
     let startX = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
     newDoorPosition = new THREE.Vector2(startX, FASADE.POSITION_Y)
     firstFasade = <FasadeObject>{
@@ -278,16 +282,6 @@ defineExpose({
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
           >
-            <button
-                v-if="module.sections.length > 1"
-                class="actions-btn actions-icon"
-            >
-              <img
-                  class="actions-icon--delete"
-                  src="/icons/delite.svg"
-                  alt=""
-              />
-            </button>
             <p
                 class="actions-title actions-title--part"
                 @click="showCurrentCol(secIndex)"
