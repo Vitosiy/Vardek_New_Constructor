@@ -146,8 +146,6 @@ export enum MANUFACTURER {
 
 export interface DrawerFasadeObject extends FasadeObject {
   manufacturerOffset: MANUFACTURER;
-  minHeight: number;
-  maxHeight: number;
   item: number;
   sec: number | null;
   cell?: number | null;
@@ -181,6 +179,8 @@ export interface GridSection {
   type: "section";
   cells: GridCell[];
   fasades?: FasadeObject[];
+  fasadesDrawers?: FasadeObject[];
+  profiles?: FillingObject[];
 }
 
 export interface GridModule {

@@ -30,6 +30,7 @@ const emit = defineEmits([
   "product-selectCell",
   "product-updateFasades",
   "product-getFasadePositionMinMax",
+    "product-calcDrawersFasades",
 ]);
 
 const timer = ref(false);
@@ -54,6 +55,10 @@ const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
 
 const updateFasades = () => {
   emit("product-updateFasades");
+}
+
+const calcDrawersFasades = () => {
+  emit("calcDrawersFasades");
 }
 
 const showCurrentCol = (secIndex) => {

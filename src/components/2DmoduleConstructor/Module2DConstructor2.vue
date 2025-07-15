@@ -248,10 +248,12 @@ const updateFilling = (value, key, type, fillingType) => {
 //#endregion
 
 //#region Фасады
-const getFasadePositionMinMax = (fasade) => {
+const getFasadePosition = (_position) => {
   const PROPS = productData.value.PROPS;
-  let fasadeColor = APP.FASADE[fasade.material.COLOR]
-  let fasadePosition = APP.FASADE_POSITION[fasade.material.POSITION];
+  let fasadePosition = APP.FASADE_POSITION[_position];
+
+  if(!fasadePosition)
+    return {}
 
   const getExec = function (obj) {
     Object.entries(obj).forEach(([key, value]) => {
@@ -273,6 +275,13 @@ const getFasadePositionMinMax = (fasade) => {
                 "#Z#": totalDepth.value,
               }))
   )
+
+  return fasadePosition
+}
+
+const getFasadePositionMinMax = (fasade) => {
+  const fasadeColor = APP.FASADE[fasade.material.COLOR]
+  const fasadePosition = getFasadePosition(fasade.material.POSITION)
 
   return {
     minY: MIN_FASADE_HEIGHT,
@@ -343,17 +352,131 @@ const updateFasades = () => {
           })
 
           let lastSegment = door[0]
-          lastSegment.height += deltaHeight;
+          if(!lastSegment.manufacturerOffset) {
+            lastSegment.height += deltaHeight;
 
-          if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
-            lastSegment.error = true
-          else
-            delete lastSegment.error;
+            if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+              lastSegment.error = true
+            else
+              delete lastSegment.error;
+          }
         })
       }
     }
   })
 };
+
+const calcDrawersFasades = (secIndex) => {
+  const config = {}
+  const fasadeSizes = []
+  const fasadePositions = []
+  const CONFIG = productData.value.PROPS.CONFIG
+
+  let moduleThickness = module.value.moduleThickness || 18
+  moduleThickness = !module.value.horizont ? -2 : moduleThickness - 2
+
+  //Ящики с фасадами
+  const BOX_FASADE = module.value.sections[secIndex].fasadesDrawers || []
+  const HI_TECH_PROFILES = module.value.sections[secIndex].profiles || []
+
+  const boxesArray = []
+  BOX_FASADE.forEach((box, box_key) => {
+    if (!box.position) {
+      box.position = new THREE.Vector3()
+    }
+    boxesArray.push(box)
+  })
+
+  HI_TECH_PROFILES.forEach((profile, box_key) => {
+    if (!profile.position) {
+      profile.position = new THREE.Vector3()
+    }
+    boxesArray.push(profile)
+  })
+
+  if (!boxesArray.length)
+    return
+
+  const sortedBoxesByIncrease = boxesArray.sort((a, b) => a.position.y - b.position.y)
+
+  let fasadePosition = getFasadePosition(APP.CATALOG.PRODUCTS[productData.value.globalData].FASADE_POSITION[0])
+
+  if(!fasadePosition)
+    return
+
+  const otstup = 4
+
+  let fullFasadelSize = fasadePosition.FASADE_HEIGHT
+
+  const firstBox = sortedBoxesByIncrease[0] //нижний ящик
+  let bottomFasadePosition = module.value.horizont + 2 //-(CONFIG.SIZE.height / 2 - Math.abs(fasadePosition.FASADE_HEIGHT - CONFIG.SIZE.height + 2))
+  const firstFasadePosition = bottomFasadePosition
+
+  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
+    let firstFasadeSize = Math.abs((bottomFasadePosition + (firstBox.position.y - (firstBox.isProfile ? 0 : otstup))) - bottomFasadePosition)
+
+    fasadeSizes.push(firstFasadeSize) //Добавление верхнего сегмента перед вверхней стенкой или внешним ящиком
+    fasadePositions.push(firstFasadePosition)
+
+    fullFasadelSize = fullFasadelSize - firstFasadeSize - (firstBox.isProfile ? 0 : otstup)
+    bottomFasadePosition = bottomFasadePosition + firstFasadeSize + (firstBox.isProfile ? 0 : otstup)
+  }
+
+  for (let index = 0; index < sortedBoxesByIncrease.length; index++) {
+    let box = sortedBoxesByIncrease[index]
+
+    if (!box.position?.y) {
+      box.position = new THREE.Vector3()
+    }
+
+    const boxFasadeHeight = box.isProfile && box.otstup ? box.otstup : box.height
+
+    fasadeSizes.push(boxFasadeHeight)
+    fasadePositions.push(bottomFasadePosition)
+
+    const topBox = sortedBoxesByIncrease[index + 1]
+    let upperFasadeSize = false
+
+    fullFasadelSize = fullFasadelSize - boxFasadeHeight - (box.isProfile || topBox?.isProfile ? 0 : otstup)
+    bottomFasadePosition = bottomFasadePosition + boxFasadeHeight + (box.isProfile || topBox?.isProfile ? 0 : otstup)
+
+    //Условие для нижней планки
+    if (topBox) {
+      upperFasadeSize = Math.abs((firstFasadePosition + topBox.position.y) - bottomFasadePosition)
+
+      if ((!box.isProfile && topBox.isProfile) && upperFasadeSize > 4) {
+        bottomFasadePosition += otstup
+        upperFasadeSize -= 4
+      } else if ((!box.isProfile && !topBox.isProfile) && upperFasadeSize > 0) {
+        upperFasadeSize -= 4
+      }
+    } else {
+      upperFasadeSize = Math.abs(CONFIG.SIZE.height - 2 - bottomFasadePosition)
+    }
+
+    fasadeSizes.push(upperFasadeSize)
+    fasadePositions.push(bottomFasadePosition)
+
+    //Если между ящиками расстояние <= 4мм, то туда фасад не нужен, НО если информациб об этом "фасаде" не положить - сломется
+    //логика приложения. Поэтому, если у нас такой промежуток есть, то мы кладём его размер и позицию, но не смещаем её и не уменьшаем\
+    //общий фасад, тогда фасады отобразятся корректно.
+    if (upperFasadeSize > 0) {
+      fullFasadelSize = fullFasadelSize - upperFasadeSize - (box.isProfile || topBox?.isProfile ? 0 : otstup)
+      bottomFasadePosition = bottomFasadePosition + upperFasadeSize + (box.isProfile || topBox?.isProfile ? 0 : otstup)
+    }
+  }
+
+  //Разворачиваем массивы, чтоб фасады шли сверху вниз
+  //fasadePositions.reverse()
+  //fasadeSizes.reverse()
+
+  //Привязка значений
+  config.positions = fasadePositions
+  config.sizes = fasadeSizes
+
+  return config
+};
+
 //#endregion
 
 //#region Модуль
@@ -779,6 +902,7 @@ watch(visualizationRef, () => {
             :moduleProps="productData.PROPS"
             :step="step"
             @product-updateFasades="updateFasades"
+            @product-calcDrawersFasades="calcDrawersFasades"
             @product-getFasadePositionMinMax="getFasadePositionMinMax"
          />
       </div>
@@ -797,6 +921,7 @@ watch(visualizationRef, () => {
             :step="step"
             @product-updateFilling="updateFilling"
             @product-updateFasades="updateFasades"
+            @product-calcDrawersFasades="calcDrawersFasades"
         />
       </div>
 

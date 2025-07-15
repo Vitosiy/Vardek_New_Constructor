@@ -2,7 +2,13 @@
 // @ts-nocheck
 import {defineExpose, ref, toRefs} from "vue";
 import {_URL} from "@/types/constants";
-import {DrawerFasadeObject, FasadeMaterial, FillingObject, MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
+import {
+  DrawerFasadeObject,
+  FasadeMaterial,
+  FasadeObject,
+  FillingObject,
+  MANUFACTURER
+} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 
 const props = defineProps({
@@ -28,6 +34,8 @@ const props = defineProps({
 const emit = defineEmits([
   "product-updateFasades",
   "product-updateFilling",
+  "product-calcDrawersFasades",
+
 ]);
 
 const {module, fillings, visualizationRef} = toRefs(props);
@@ -133,18 +141,21 @@ const addFilling = (type, product, oldFillingObject = false) => {
   currentFillingsArray.push(fillingObject);
 
   if (product.MIN_FASADE_SIZE) {
-    let baseFasade = sec.fasades[0][0] || module.value.sections[0].fasades[0][0]
+    if(!currentSection.fasadesDrawers)
+      currentSection.fasadesDrawers = []
+
+    let baseFasade = module.value.sections[sec].fasades[0][0] || module.value.sections[0].fasades[0][0]
     let manufacturer_name = product.EN_NAME?.toLowerCase().split(/\s|,/).shift() || product.NAME?.toLowerCase().split(/\s|,/).shift();
     let manufacturerOffset = MANUFACTURER[manufacturer_name]
 
     fillingObject.type = "drawer"
     fillingObject.fasade = <DrawerFasadeObject>{
-      id: 1,
+      id: currentSection.fasadesDrawers.length + 1,
       width: baseFasade.width,
       height: product.MIN_FASADE_SIZE,
-      minHeight: product.MIN_FASADE_SIZE,
-      maxHeight: product.MAX_FASADE_SIZE,
-      position: new THREE.Vector2(baseFasade.position.x, startFillingData.y - manufacturerOffset),
+      minY: product.MIN_FASADE_SIZE,
+      maxY: product.MAX_FASADE_SIZE,
+      position: new THREE.Vector2(baseFasade.position.x, startFillingData.y + startFillingData.height + manufacturerOffset - module.value.moduleThickness),
       material: <FasadeMaterial>{
         ...baseFasade.material,
       },
@@ -156,7 +167,8 @@ const addFilling = (type, product, oldFillingObject = false) => {
       row,
     }
 
-    updateFasades()
+    currentSection.fasadesDrawers.push(fillingObject.fasade);
+    calcDrawersFasades(sec)
   }
 
   selectCell(sec, cell, row, currentFillingsArray.length - 1);
@@ -189,7 +201,9 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
 const updateFasades = () => {
   emit("product-updateFasades");
 }
-
+const calcDrawersFasades = (sec) => {
+  emit("product-calcDrawersFasades", sec);
+}
 const updateFilling = (value, key, type, fillingType) => {
   emit("product-updateFilling", value, key, type, fillingType);
 };
