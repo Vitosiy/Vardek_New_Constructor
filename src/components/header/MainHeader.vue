@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
-import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
-import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
-import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderButton.vue";
-import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
+  import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
+  import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
+  import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
+  import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderButton.vue";
+  import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
+  import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
 
-import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
+  import FullscreenHelperButton from "@/components/ui/buttons/header/helpers/FullscreenHelperButton.vue";
+  import ReportHelperButton from "@/components/ui/buttons/header/helpers/ReportHelperButton.vue";
+  import StudyHelperButton from "@/components/ui/buttons/header/helpers/StudyHelperButton.vue";
+  import AddPhotoHelperButton from "@/components/ui/buttons/header/helpers/AddPhotoHelperButton.vue";
+  import GetAppHelperButton from "@/components/ui/buttons/header/helpers/GetAppHelperButton.vue";
+  import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/InsertFileHelperButton.vue";
+  import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
+  import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
 
-import FullscreenHelperButton from "@/components/ui/buttons/header/helpers/FullscreenHelperButton.vue";
-import ReportHelperButton from "@/components/ui/buttons/header/helpers/ReportHelperButton.vue";
-import StudyHelperButton from "@/components/ui/buttons/header/helpers/StudyHelperButton.vue";
-import AddPhotoHelperButton from "@/components/ui/buttons/header/helpers/AddPhotoHelperButton.vue";
-import GetAppHelperButton from "@/components/ui/buttons/header/helpers/GetAppHelperButton.vue";
-import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/InsertFileHelperButton.vue";
-import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
-import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
-
+  import Avatar from "@/components/header/Avatar.vue";
 
 </script>
 
@@ -56,6 +56,7 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
           <InsertFileHelperButton />
           <PrintHelperButton />
           <VisibilityHelperButton />
+          <Avatar />
         </div>
       </div>
     </div>
