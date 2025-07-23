@@ -155,7 +155,8 @@ const addFilling = (type, product, oldFillingObject = false) => {
       height: product.MIN_FASADE_SIZE,
       minY: product.MIN_FASADE_SIZE,
       maxY: product.MAX_FASADE_SIZE,
-      position: new THREE.Vector2(baseFasade.position.x, startFillingData.y + startFillingData.height + manufacturerOffset - module.value.moduleThickness),
+      loopsSide: false,
+      position: new THREE.Vector2(baseFasade.position.x, module.value.height - (startFillingData.y + startFillingData.height + manufacturerOffset)),
       material: <FasadeMaterial>{
         ...baseFasade.material,
       },
@@ -167,8 +168,9 @@ const addFilling = (type, product, oldFillingObject = false) => {
       row,
     }
 
+
     currentSection.fasadesDrawers.push(fillingObject.fasade);
-    calcDrawersFasades(sec)
+    calcDrawersFasades(sec )
   }
 
   selectCell(sec, cell, row, currentFillingsArray.length - 1);
@@ -184,6 +186,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
 
   const curRow = row || cell || sec;
   let needFasadesUpdate = false
+  let curItem = curRow.fillings[itemIndex];
 
   curRow.fillings = curRow.fillings.filter((el, index) => {
     if (index === itemIndex && el.fasades)
@@ -192,8 +195,18 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
     return index !== itemIndex;
   });
 
-  if (needFasadesUpdate)
-    updateFasades()
+  if (needFasadesUpdate) {
+    if(sec.fasadesDrawers?.length) {
+
+      sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
+        return el.id !== curItem.fasade.id;
+      });
+
+      calcDrawersFasades(secIndex)
+    }
+    else
+      updateFasades()
+  }
 
   visualizationRef.value.renderGrid();
 };
@@ -201,11 +214,11 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
 const updateFasades = () => {
   emit("product-updateFasades");
 }
-const calcDrawersFasades = (sec) => {
-  emit("product-calcDrawersFasades", sec);
+const calcDrawersFasades = (sec, fillingData = false) => {
+  emit("product-calcDrawersFasades", sec, fillingData);
 }
-const updateFilling = (value, key, type, fillingType) => {
-  emit("product-updateFilling", value, key, type, fillingType);
+const updateFilling = (value, filling, type, render = false) => {
+  emit("product-updateFilling", value, filling, type, render);
 };
 
 const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
@@ -223,8 +236,13 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   let delta = +value - currentfilling.distances.bottom
   const newValue = prevValue - delta
 
+
+  let tmpSector = currentfilling.sector
+  delete currentfilling.sector
+
   const fillingData = JSON.parse(JSON.stringify(currentfilling));
   fillingData.position.y = newValue;
+  fillingData.sector = tmpSector;
 
   const pixiSector = currentRow.sector;
 
@@ -237,7 +255,11 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
     currentfilling.position.y = prevValue;
   }
 
+  currentfilling.sector = tmpSector;
   module.value = gridCopy;
+
+  if (currentfilling.fasade)
+    calcDrawersFasades(secIndex)
 
   visualizationRef.value.renderGrid();
 };

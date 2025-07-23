@@ -121,6 +121,17 @@ export class BuildersHelper extends GlobalsData {
         return productArr
     }
 
+    getExec(obj) {
+        Object.entries(obj).forEach(([key, value]) => {
+            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
+                obj[key] = value;
+            } else {
+                obj[key] = eval(value);
+            }
+        });
+        return obj;
+    };
+
     expressionsReplace(obj: any, expressions: THREETypes.TObject) {
 
         if (!expressions || !Object.keys(expressions).length) return obj;

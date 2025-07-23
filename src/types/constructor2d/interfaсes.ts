@@ -108,11 +108,20 @@ export interface FillingObject {
   sec: number;
   cell?: number;
   row?: number;
+  error?: boolean;
+}
+
+export enum LOOPSIDE {
+  left = 4693746,
+  left_on_partition= 7080918,
+  right = 4693757,
+  right_on_partition= 7080949
 }
 
 export interface FasadeObject {
   id: number;
   type: "fasade";
+  loopsSide: number | boolean;
   position: THREE.Vector2;
   width: number;
   height: number;
@@ -180,6 +189,7 @@ export interface GridSection {
   cells: GridCell[];
   fasades?: FasadeObject[];
   fasadesDrawers?: FasadeObject[];
+  loops?: [];
   profiles?: FillingObject[];
 }
 
@@ -187,6 +197,7 @@ export interface GridModule {
   width: number;
   height: number;
   depth?: number;
+  productID: number;
   moduleThickness: number;
   moduleColor: number;
   sections: GridSection[];

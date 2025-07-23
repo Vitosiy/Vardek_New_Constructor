@@ -11,7 +11,7 @@ import {
   defineExpose,
   render,
   onBeforeMount,
-  toRef,
+  toRef, toRefs,
 } from "vue";
 import {Application, Container, Graphics, Text} from "pixi.js";
 import {Shape, ShapeAdjuster, Section} from "./utils/Methods";
@@ -48,12 +48,17 @@ const props = defineProps({
   container: {},
 });
 
-const emit = defineEmits(["cell-selected", "position-non"]);
+const emit = defineEmits([
+    "cell-selected",
+    "position-non",
+    "calcDrawersFasades"
+]);
 const canvasContainer = ref();
 
 const selectedCell = ref({sec: 0, cell: 0, row: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
 const selectedFilling = ref({sec: 0, cell: 0, row: null, item: 0});
+const {module} = toRefs(props)
 
 let app: Application,
     sectionsContainer: Container,
@@ -61,6 +66,7 @@ let app: Application,
     dementionContainer: Container,
     fillingsContainer: Container,
     fasadesContainer: Container,
+    loopsContainer: Container,
     shapeAdjuster: ShapeAdjuster;
 
 let cursorCheck = false;
@@ -73,6 +79,7 @@ const deviders: Graphics[] = [];
 const dementions: Graphics[] = [];
 const fillings: Graphics[] = [];
 const fasades: Graphics[] = [];
+const loops: Container[] = [];
 
 const {
   MAX_AREA_WIDTH,
@@ -114,6 +121,10 @@ const TOTAL_WIDTH = ref(0);
 const areaHeight = ref(MAX_AREA_HEIGHT);
 const areaWidth = ref(MAX_AREA_WIDTH);
 const mode = ref('module');
+
+const calcDrawersFasades = (secIndex, fillingData = false) => {
+  emit("calcDrawersFasades", secIndex, fillingData);
+}
 
 const pixelRatio = computed(() => TOTAL_WIDTH.value / MAX_AREA_WIDTH);
 
@@ -187,6 +198,7 @@ const init = async () => {
     premultipliedAlpha: false,
   });
 
+  loopsContainer = new Container();
   sectionsContainer = new Container();
   lablesContainer = new Container();
   dementionContainer = new Container();
@@ -195,6 +207,7 @@ const init = async () => {
 
   // sectionsContainer.interactive = true;
   fillingsContainer.interactive = true;
+  //loopsContainer.interactiveChildren = true;
   fasadesContainer.interactive = true;
   lablesContainer.interactiveChildren = false;
   dementionContainer.interactiveChildren = false;
@@ -202,6 +215,7 @@ const init = async () => {
   app.stage.addChild(dementionContainer);
   app.stage.addChild(fillingsContainer);
   app.stage.addChild(sectionsContainer);
+  app.stage.addChild(loopsContainer);
   app.stage.addChild(fasadesContainer);
   app.stage.addChild(lablesContainer);
 
@@ -284,8 +298,7 @@ const renderGrid = () => {
             cellRow.maxX = shapeAdjuster.convertToTen(getMmWidth(colBond.maxX));
             cellRow.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
           });
-        }
-        else
+        } else
           createSector({
             x: xOffset,
             y: yOffset,
@@ -339,48 +352,92 @@ const renderGrid = () => {
       section.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
     }
 
-
     //Добавляем отступ по горизонтали
     xOffset += pxWidth;
-  })
 
+    if (section.loops?.length) {
+      section.loops.forEach((loop, loopIndex, ) => {
+        let loopXOffset = getPixelWidth(loop.positionX);
+        let loopYOffset = getPixelHeight(module.value.height);
 
-  if (mode.value === "fasades") {
-    xOffset = getPixelWidth(2);
-    props.module?.sections.forEach((section, sectionIndex) => {
+        const pxWidth = getPixelWidth(loop.width);
+        const pxHeight = getPixelHeight(loop.height);
+        loop.xOffset = loopXOffset;
+
+        loop.coords.forEach((pos, posIndex, ) => {
+          loop.yOffset = loopYOffset - getPixelHeight(pos + loop.height);
+          // Отрисовываем секцию
+
+          createLoop({
+            x: loop.xOffset,
+            y: loop.yOffset,
+            width: pxWidth,
+            height: pxHeight,
+            loopData: loop
+          });
+        })
+      })
+    }
+
+    if (mode.value === "fasades") {
       section.fasades.forEach((column, colIndex) => {
         const pxWidth = getPixelWidth(column[0].width);
-        yOffset = getPixelHeight(2);
+        let fasadeXOffset = getPixelWidth(column[0].position.x);
 
         column.forEach((row, rowIndex, col) => {
+          let fasadeYOffset = getPixelHeight(module.value.height - row.position.y - row.height);
+
           const pxHeight = getPixelHeight(row.height);
-          row.xOffset = xOffset;
-          row.yOffset = yOffset;
+          row.xOffset = fasadeXOffset;
+          row.yOffset = fasadeYOffset;
 
           // Отрисовываем секцию
 
           createSector({
-            x: xOffset,
-            y: yOffset,
+            x: fasadeXOffset,
+            y: fasadeYOffset,
             width: pxWidth,
             height: pxHeight,
             sectionIndex,
             cellIndex: colIndex,
-            rowIndex: rowIndex,
+            rowIndex: row.id - 1,
             cellData: row,
             section: col,
             _sector: moduleSector,
             gridType: 'fasades',
           });
-
-          //Добавляем отступ по вертикали
-          yOffset += pxHeight + getPixelHeight(4);
         });
         //Добавляем отступ по горизонтали
-        xOffset += pxWidth + getPixelWidth(4);
+        fasadeXOffset += pxWidth + getPixelWidth(4);
       });
-    })
-  }
+
+      let fasadeXOffset = getPixelWidth(section.fasadesDrawers?.[0]?.position.x);
+      section.fasadesDrawers?.forEach((row, rowIndex, col) => {
+        const pxWidth = getPixelWidth(row.width);
+        let fasadeYOffset = getPixelHeight(module.value.height - row.position.y - row.height);
+
+        const pxHeight = getPixelHeight(row.height);
+        row.xOffset = fasadeXOffset;
+        row.yOffset = fasadeYOffset;
+
+        // Отрисовываем секцию
+
+        createSector({
+          x: fasadeXOffset,
+          y: fasadeYOffset,
+          width: pxWidth,
+          height: pxHeight,
+          sectionIndex,
+          cellIndex: 0,
+          rowIndex: row.id - 1,
+          cellData: row,
+          section: col,
+          _sector: moduleSector,
+          gridType: 'fasades',
+        });
+      });
+    }
+  })
 
   sections.forEach((elem) => {
     app.stage.addChildAt(elem, 0);
@@ -388,6 +445,10 @@ const renderGrid = () => {
 
   deviders.forEach((elem) => {
     sectionsContainer.addChild(elem);
+  });
+
+  loops.forEach((elem) => {
+    loopsContainer.addChild(elem);
   });
 
   fillings.forEach((elem) => {
@@ -496,10 +557,9 @@ const createSector = ({
   sector.addChild(cell.cellGraphics);
   sector.addChild(cell.highlightGraphics);
 
-  if(gridType === "fasades") {
+  if (gridType === "fasades") {
     fasades.push(sector);
-  }
-  else if (!_sector)
+  } else if (!_sector)
     sections.push(sector);
   else
     _sector.addChild(sector);
@@ -513,7 +573,7 @@ const createSector = ({
   });
 
   // Создаём ограничения для секторов по высоте
-  if(gridType !== "fasades") {
+  if (gridType !== "fasades") {
     const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
     sector.bound = sectorBounds;
 
@@ -539,6 +599,43 @@ const createSector = ({
   }
 };
 
+const createLoop = ({
+                        x,
+                        y,
+                        width,
+                        height,
+                        loopData,
+                      }) => {
+  const sector = new Container();
+
+  sector.position.set(x, y);
+
+  sector.shapes = [];
+  sector.sectorData = loopData;
+  sector.sections = sections;
+
+  const cell = new Section(loopData, width, height, sector, false);
+  cell.highlightGraphics.visible = false;
+  cell.cellGraphics.eventMode = "static";
+
+  sector.addChild(cell.cellGraphics);
+
+  loops.push(sector);
+
+  // Создаём ограничения для секторов по высоте
+  const sectorBounds = shapeAdjuster.getTotalBounds(sector, loopData);
+  sector.bound = sectorBounds;
+
+  loopData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+  loopData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+  loopData.maxX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxX));
+  loopData.minX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minX));
+
+  loopData.sector = sector;
+
+  return sector;
+};
+
 const createFilling = (data, sector) => {
   const filling = new Shape({
     type: data.type,
@@ -551,6 +648,7 @@ const createFilling = (data, sector) => {
     getMmHeight,
     getPixelHeight,
     getPixelWidth,
+    calcDrawersFasades,
     dementions,
     dementionContainer,
     dragActive: mode.value === "fillings",
@@ -558,7 +656,7 @@ const createFilling = (data, sector) => {
 
   data.sector = filling.sector;
 
-  if(mode.value === "fillings") {
+  if (mode.value === "fillings") {
     createSectioNum({
       x: getPixelWidth(filling.data.position.x),
       y: getPixelHeight(filling.data.position.y),
@@ -601,13 +699,13 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
   const yOffset = cell.yOffset || y;
 
   let text = rowIndex !== null ? `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}` : `${sectionIndex + 1}.${cellIndex + 1}`;
-  if(itemIndex)
+  if (itemIndex)
     text += ` ${itemIndex}`
 
   const cellNumber = new Text({
-        text: text,
-        style: {fontSize: 14, fill: "#131313", align: "center"},
-      })
+    text: text,
+    style: {fontSize: 14, fill: "#131313", align: "center"},
+  })
 
   cellNumber.anchor.set(0.5);
   cellNumber.x = xOffset + pxWidth / 2;
@@ -1094,8 +1192,7 @@ const adjustSectionSize = (
     module[dimension] = newValue
 
     calcValue = newValue
-  }
-  else {
+  } else {
     if (dimension === "width") {
       const column = module.sections[sectionIndex];
       const cell = column.cells?.[cellIndex];
@@ -1127,8 +1224,7 @@ const adjustSectionSize = (
             minCurrent,
             minNext
         );
-      }
-      else if (sectionIndex > 0) {
+      } else if (sectionIndex > 0) {
         const prevRow = rowIndex !== null ? cell.cellsRows[rowIndex - 1] :
             cellIndex !== null ? column.cells[cellIndex - 1] :
                 module.sections[sectionIndex - 1];
@@ -1177,14 +1273,12 @@ const adjustSectionSize = (
               minCurrent,
               minPrev
           );
-        }
-        else {
+        } else {
           column.cells.forEach((cell) => (cell.width = newValue));
           column.width = newValue
         }
       }
-    }
-    else {
+    } else {
       const column = module.sections[sectionIndex];
       const cell = column.cells?.[cellIndex];
       const row = cell?.cellsRows?.[rowIndex];
@@ -1291,8 +1385,7 @@ const adjustFasadeSize = (
           minNext,
           maxNext
       );
-    }
-    else if (sectionIndex > 0) {
+    } else if (sectionIndex > 0) {
       const prevRow = door[segmentIndex - 1]
 
       const totalWidth = currentSegment.width + prevRow.width;
@@ -1322,8 +1415,7 @@ const adjustFasadeSize = (
     } else {
       calcValue = newValue
     }
-  }
-  else {
+  } else {
     const section = module.sections[sectionIndex];
     const door = section.fasades?.[doorIndex];
     const currentSegment = door?.[segmentIndex];
@@ -1345,8 +1437,7 @@ const adjustFasadeSize = (
           minNext,
           maxNext
       );
-    }
-    else if (segmentIndex > 0) {
+    } else if (segmentIndex > 0) {
       const prevRow = door[segmentIndex - 1]
       const totalHeight = currentSegment.height + prevRow.height;
 
@@ -1363,8 +1454,7 @@ const adjustFasadeSize = (
           minPrev,
           maxPrev
       );
-    }
-    else {
+    } else {
       calcValue = newValue
     }
   }
@@ -1465,8 +1555,9 @@ const clearRender = () => {
   dementions.length = 0;
   fillings.length = 0;
   fasades.length = 0;
+  loops.length = 0;
 
-  sectionsContainer.removeChildren();
+  loopsContainer.removeChildren();
   lablesContainer.removeChildren();
   fillingsContainer.removeChildren();
   dementionContainer.removeChildren();

@@ -431,6 +431,7 @@ class Helpers {
 class Shape extends Helpers {
     select: () => void
     render: () => void
+    calcDrawersFasades: () => void
     type: string
     sectorBounds: TBounds
     graphic: Graphics
@@ -449,7 +450,7 @@ class Shape extends Helpers {
     private readonly padding: number = this.getPixelWidth(UI_PARAMS.SECTOR_PADDING); // Отступ от краев сектора в пикселях
 
 
-    constructor({type, sector, position, data, select, render, dementionContainer, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth, dragActive }:
+    constructor({type, sector, position, data, select, render, dementionContainer, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth, dragActive, calcDrawersFasades }:
                 {
                     type: string,
                     sector: Container,
@@ -461,6 +462,7 @@ class Shape extends Helpers {
                     getMmWidth?: () => void,
                     getPixelHeight?: () => void,
                     getPixelWidth?: () => void,
+                    calcDrawersFasades?: () => void,
                     dementionContainer?: Container,
                     dragActive: boolean,
                 }) {
@@ -485,6 +487,8 @@ class Shape extends Helpers {
             this.getPixelWidth = getPixelWidth
         if(getPixelHeight)
             this.getPixelHeight = getPixelHeight
+        if(calcDrawersFasades)
+            this.calcDrawersFasades = calcDrawersFasades
 
         this.dementionContainer = dementionContainer
 
@@ -611,6 +615,10 @@ class Shape extends Helpers {
                 else {
                     this.data.x = Math.round(this.getMmWidth(self.graphic.position.x));
                     this.data.y = Math.round(this.getMmHeight(self.graphic.position.y));
+                }
+
+                if(this.data.fasade) {
+                    this.calcDrawersFasades(this.data.sec, this.data)
                 }
 
                 this.render();
@@ -891,9 +899,27 @@ class Section extends Helpers {
         let bottomRight = data.bottomRight ?? {type: 'none'};
         let topLeft = data.topLeft ?? {type: 'none'};
         let topRight = data.topRight ?? {type: 'none'};
-        let defCellColor = data.type === "module" ? '#875003' : data.type === "fasade" ? '#1E90FF' : '#d2d0d7';
-        let deffHighlightColor = data.type === "module" ? '#b86c02' : data.type === "fasade" ? '#80bfff' : '#ECEBF1';
         let opacity = data.type === "fasade" ? 0.8 : 1;
+
+        let defCellColor, deffHighlightColor;
+        switch (data.type) {
+            case "fasade":
+                defCellColor = '#1E90FF'
+                deffHighlightColor = '#80bfff'
+                break;
+            case "module":
+                defCellColor = '#875003'
+                deffHighlightColor = '#b86c02'
+                break;
+            case "loop":
+                defCellColor = '#64646e';
+                deffHighlightColor =  '#64646e';
+                break;
+            default:
+                defCellColor = '#d2d0d7';
+                deffHighlightColor = '#ECEBF1';
+                break;
+        }
 
         if (data.error) {
             defCellColor = '#ad0202'

@@ -61,9 +61,9 @@ const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
 const updateFasades = () => {
   emit("product-updateFasades");
 }
-const updateFilling = (value, key, type, fillingType) => {
-  emit("product-updateFilling", value, key, type, fillingType);
-}
+const updateFilling = (value, filling, type, render = false) => {
+  emit("product-updateFilling", value, filling, type, render);
+};
 
 const showCurrentCol = (secIndex) => {
   selectCell(secIndex)

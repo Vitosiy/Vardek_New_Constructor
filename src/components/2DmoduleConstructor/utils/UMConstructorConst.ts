@@ -11,91 +11,9 @@ export const UI_PARAMS = {
     MAX_FASADE_WIDTH: 600,
     MIN_HOLE_SIZE_MM: 100, // Минимальный размер отверстия в мм
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
+    NO_FASADE_ID: 7397,
+    ERROR_MATERIAL_ID: 6004285,
     BACKGROUND_COLOR: "#FFFFFF",
     HOLE_OFFSET: 10,// Отступ от краёв
-    CUT_SERVISES: [
-        { ID: 182294, NAME: "Кромкование торцов", pos: 'KROMKA_FULL_TOREC_ZEB', value: false },
-
-
-        { ID: 201638_2, NAME: "Верхний левый скос",type:'rect',  pos: 'LEFT_TOP', corner: 150, value: false },
-        { ID: 201639_2, NAME: "Верхний правый скос", pos: 'RIGHT_TOP', corner: 150, value: false },
-
-        { ID: 201638, NAME: "Нижний левый скос", pos: 'LEFT_BOTTOM', corner: 150, value: false },
-        { ID: 201639, NAME: "Нижний правый скос", pos: 'RIGHT_BOTTOM', corner: 150, value: false },
-
-        { ID: 201640_2, NAME: "Верхнее левое закругление", pos: 'LEFT_TOP', radius: 150, value: false },
-        { ID: 201641_2, NAME: "Верхнее правое закругление", pos: 'RIGHT_TOP', radius: 150, value: false },
-        { ID: 201640, NAME: "Нижнее левое закругление", pos: 'LEFT_BOTTOM', radius: 150, value: false },
-        { ID: 201641, NAME: "Нижнее правое закругление", pos: 'RIGHT_BOTTOM', radius: 150, value: false },
-
-        { ID: 247669_2, NAME: "Еврозапил - папа сверху справа", pos: 'RIGHT_TOP', radius: 30, value: false },
-        { ID: 247670_2, NAME: "Еврозапил - папа сверху слева", pos: 'LEFT_TOP', radius: 30, value: false },
-        { ID: 247669, NAME: "Еврозапил - папа снизу справа", pos: 'RIGHT_BOTTOM', radius: 30, value: false },
-        { ID: 247670, NAME: "Еврозапил - папа снизу слева", pos: 'LEFT_BOTTOM', radius: 30, value: false },
-
-        { ID: 247671_2, NAME: "Еврозапил - мама сверху справа", pos: 'RIGHT_TOP', radius: 30, width: 300, value: false },
-        { ID: 247672_2, NAME: "Еврозапил - мама сверху слева", pos: 'LEFT_TOP', radius: 30, width: 300, value: false },
-        { ID: 247671, NAME: "Еврозапил - мама снизу справа", pos: 'RIGHT_BOTTOM', radius: 30, width: 300, value: false },
-        { ID: 247672, NAME: "Еврозапил - мама снизу слева", pos: 'LEFT_BOTTOM', radius: 30, width: 300, value: false },
-
-        { ID: 616287_2, NAME: "Закругление под барную стойку слева", pos: 'LEFT', value: false },
-        { ID: 616287, NAME: "Закругление под барную стойку справа", pos: 'RIGHT', value: false },
-
-        { ID: 3966035, NAME: "Кромка правый бок", pos: 'CENTER', value: false },
-        { ID: 3966036, NAME: "Кромка левый бок", pos: 'CENTER', value: false },
-    ],
     SECTOR_PADDING: 0,
-    DEFAULT: [
-        [
-            {
-                width: 3000,
-                height: 600,
-                roundCut: {},
-                holes: [
-
-                ],
-                serviseData: [
-                    { ID: 182294, value: false, NAME: "Кромкование торцов", pos: 'CENTER' },
-
-
-                    { ID: 201638_2, value: false, NAME: "Верхний левый скос", pos: 'LEFT_TOP', corner: 150 },
-                    { ID: 201639_2, value: false, NAME: "Верхний правый скос", pos: 'RIGHT_TOP', corner: 150 },
-
-                    { ID: 201638, value: false, NAME: "Нижний левый скос", pos: 'LEFT_BOTTOM', corner: 150 },
-                    { ID: 201639, value: false, NAME: "Нижний правый скос", pos: 'RIGHT_BOTTOM', corner: 150 },
-
-                    { ID: 201640_2, value: false, NAME: "Верхнее левое закругление", pos: 'LEFT_TOP', radius: 150 },
-                    { ID: 201641_2, value: false, NAME: "Верхнее правое закругление", pos: 'RIGHT_TOP', radius: 150 },
-                    { ID: 201640, value: false, NAME: "Нижнее левое закругление", pos: 'LEFT_BOTTOM', radius: 150 },
-                    { ID: 201641, value: false, NAME: "Нижнее правое закругление", pos: 'RIGHT_BOTTOM', radius: 150 },
-
-                    { ID: 247669_2, value: false, NAME: "Еврозапил - папа сверху справа", pos: 'RIGHT_TOP', radius: 30 },
-                    { ID: 247670_2, value: false, NAME: "Еврозапил - папа сверху слева", pos: 'LEFT_TOP', radius: 30 },
-                    { ID: 247669, value: false, NAME: "Еврозапил - папа снизу справа", pos: 'RIGHT_BOTTOM', radius: 30 },
-                    { ID: 247670, value: false, NAME: "Еврозапил - папа снизу слева", pos: 'LEFT_BOTTOM', radius: 30 },
-
-                    { ID: 247671_2, value: false, NAME: "Еврозапил - мама сверху справа", pos: 'RIGHT_TOP', radius: 30, width: 300 },
-                    { ID: 247672_2, value: false, NAME: "Еврозапил - мама сверху слева", pos: 'LEFT_TOP', radius: 30, width: 300 },
-                    { ID: 247671, value: false, NAME: "Еврозапил - мама снизу справа", pos: 'RIGHT_BOTTOM', radius: 30, width: 300 },
-                    { ID: 247672, value: false, NAME: "Еврозапил - мама снизу слева", pos: 'LEFT_BOTTOM', radius: 30, width: 300 },
-
-                    { ID: 616287_2, value: false, NAME: "Закругление под барную стойку слева", pos: 'LEFT' },
-                    { ID: 616287, value: false, NAME: "Закругление под барную стойку справа", pos: 'RIGHT' },
-
-                    { ID: 3966035, value: false, NAME: "Кромка правый бок", pos: 'CENTER' },
-                    { ID: 3966036, value: false, NAME: "Кромка левый бок", pos: 'CENTER' },
-                ],
-            },
-        ],
-    ]
-}
-
-export const SERVISE_ERRORS: Record<string, string> = {
-    '101': 'Пересечение распилов',
-}
-
-export const EN_RU_NAME = {
-    height: "Высота",
-    width: "Ширина",
-    depth: "Глубина",
 }

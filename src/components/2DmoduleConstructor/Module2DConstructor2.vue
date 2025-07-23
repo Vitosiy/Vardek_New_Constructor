@@ -13,7 +13,7 @@ import {
   FasadeMaterial,
   FasadeObject,
   GridModule,
-  GridSection,
+  GridSection, LOOPSIDE,
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
@@ -24,6 +24,9 @@ const {
   MIN_FASADE_HEIGHT,
   MIN_FASADE_WIDTH,
   MAX_FASADE_WIDTH,
+  MAX_SECTION_WIDTH,
+  MIN_SECTION_WIDTH,
+  NO_FASADE_ID,
 } = UI_PARAMS;
 
 type constructorMode = 'module' | 'fasades' | 'fillings';
@@ -104,6 +107,7 @@ const module = computed(() => {
               material: <FasadeMaterial>{
                 ...FASADE_PROPS
               },
+              loopsSide: LOOPSIDE["left"],
               type: "fasade",
               minY: MIN_FASADE_HEIGHT,
               maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
@@ -123,7 +127,10 @@ const module = computed(() => {
         horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
         sections: [section],
         type: "module",
+        productID: productData.value.globalData,
       }
+
+      calcLoops(0, _module)
 
       PROPS.CONFIG.MODULEGRID = _module
     }
@@ -204,9 +211,8 @@ const getFillings = computed(() => {
   return objectsMatrix;
 });
 
-const updateFilling = (value, key, type, fillingType) => {
-  console.log("ww");
-  const {sec, cell, row} = selectedFilling.value
+const updateFilling = (value, currentfilling, type, render = false) => {
+  const {sec, cell, row} = currentfilling
 
   const gridCopy = Object.assign({}, module.value);
 
@@ -214,36 +220,38 @@ const updateFilling = (value, key, type, fillingType) => {
   const currentColl = section.cells?.[cell];
   const currentRow = currentColl?.cellsRows?.[row] || currentColl || section;
 
-  const currentfilling = currentRow.fillings[key];
-
-  const prevValue = currentRow.fillings[key][type]; //Предыдущее значение
+  const prevValue = currentfilling[type]; //Предыдущее значение
 
   let newValue = parseInt(value);
-  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  let tmpSector = currentfilling.sector
+  delete currentfilling.sector
 
   const fillingData = JSON.parse(JSON.stringify(currentfilling));
   fillingData[type] = newValue;
-
-  console.log(fillingData, "0");
+  fillingData.sector = tmpSector;
 
   const pixiSector = currentRow.sector;
 
-  currentfilling[`M${type}`] = 600;
-
-  const check = shapeAdjuster.checkToCollision(pixiSector, fillingType, fillingData);
+  const check = shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData);
+  currentfilling[type] = newValue;
 
   if (check) {
-    currentfilling[type] = newValue;
-    console.log("1");
+    delete currentfilling.error
   } else {
-    console.log("2");
-    currentfilling[type] = prevValue;
-    currentfilling[`M${type}`] = prevValue;
+    currentfilling.error = true
   }
 
+  if (newValue > MAX_SECTION_WIDTH || newValue < MIN_SECTION_WIDTH)
+    currentfilling.error = true
+  else
+    delete currentfilling.error
+
+  currentfilling.sector = tmpSector;
   module.value = gridCopy;
 
-  visualizationRef.value.renderGrid();
+  if (render)
+    visualizationRef.value.renderGrid();
 };
 //#endregion
 
@@ -252,21 +260,10 @@ const getFasadePosition = (_position) => {
   const PROPS = productData.value.PROPS;
   let fasadePosition = APP.FASADE_POSITION[_position];
 
-  if(!fasadePosition)
+  if (!fasadePosition)
     return {}
 
-  const getExec = function (obj) {
-    Object.entries(obj).forEach(([key, value]) => {
-      if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
-        obj[key] = value;
-      } else {
-        obj[key] = eval(value);
-      }
-    });
-    return obj;
-  };
-
-  fasadePosition = getExec(
+  fasadePosition = builder.getExec(
       builder.expressionsReplace(fasadePosition,
           Object.assign(PROPS.CONFIG.EXPRESSIONS,
               {
@@ -294,8 +291,9 @@ const getFasadePositionMinMax = (fasade) => {
 const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
   module.value.sections.forEach((section, secIndex) => {
-    const drawersFasades = []
-    if (section.fasades?.[0]) {
+    if (section.fasadesDrawers?.length) {
+      calcDrawersFasades(secIndex)
+    } else if (section.fasades?.[0]) {
       const countDoors = section.fasades.length;
 
       const correctSectionFasadeWidth =
@@ -352,7 +350,7 @@ const updateFasades = () => {
           })
 
           let lastSegment = door[0]
-          if(!lastSegment.manufacturerOffset) {
+          if (!lastSegment.manufacturerOffset) {
             lastSegment.height += deltaHeight;
 
             if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
@@ -362,14 +360,67 @@ const updateFasades = () => {
           }
         })
       }
+
+      calcLoops(secIndex)
     }
+
   })
 };
 
-const calcDrawersFasades = (secIndex) => {
-  const config = {}
-  const fasadeSizes = []
-  const fasadePositions = []
+const calcDrawersFasades = (secIndex, fillingData = false) => {
+
+  if (fillingData) {
+    fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+  }
+
+  let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
+  let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
+
+  let baseDrawerFasade = module.value.sections[secIndex].fasadesDrawers[0]
+  let fasadesList = calcDrawersFasadesPositons(secIndex)
+
+  module.value.sections[secIndex].fasades[0] = []
+  if (module.value.sections[secIndex].fasades[1])
+    module.value.sections[secIndex].fasades[1] = []
+
+  let drawerIndex = 0
+  fasadesList.forEach((item, index) => {
+
+    switch (item.type) {
+      case "drawer":
+        module.value.sections[secIndex].fasadesDrawers[drawerIndex].id = index + 1
+        drawerIndex += 1
+        break;
+      case "fasade":
+        let fasadeClone = Object.assign(<FasadeObject>{}, baseFasade)
+        fasadeClone.id = index + 1
+        fasadeClone.height = item.height
+        fasadeClone.position = new THREE.Vector2(baseFasade.position.x, item.y)
+
+        if (fasadeClone.height < fasadeClone.minY || fasadeClone.width < fasadeClone.minX)
+          fasadeClone.error = true
+        else
+          delete fasadeClone.error;
+
+        module.value.sections[secIndex].fasades[0].push(fasadeClone)
+
+        if (baseFasade2) {
+          let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
+          fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
+
+          module.value.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))
+        }
+        break
+      default:
+        break;
+    }
+  })
+
+  calcLoops(secIndex)
+};
+
+const calcDrawersFasadesPositons = (secIndex) => {
+  const fasadeList = []
   const CONFIG = productData.value.PROPS.CONFIG
 
   let moduleThickness = module.value.moduleThickness || 18
@@ -401,7 +452,7 @@ const calcDrawersFasades = (secIndex) => {
 
   let fasadePosition = getFasadePosition(APP.CATALOG.PRODUCTS[productData.value.globalData].FASADE_POSITION[0])
 
-  if(!fasadePosition)
+  if (!fasadePosition)
     return
 
   const otstup = 4
@@ -413,10 +464,13 @@ const calcDrawersFasades = (secIndex) => {
   const firstFasadePosition = bottomFasadePosition
 
   if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
-    let firstFasadeSize = Math.abs((bottomFasadePosition + (firstBox.position.y - (firstBox.isProfile ? 0 : otstup))) - bottomFasadePosition)
+    let firstFasadeSize = Math.abs(firstBox.position.y - (firstBox.isProfile ? 0 : otstup) - bottomFasadePosition)
 
-    fasadeSizes.push(firstFasadeSize) //Добавление верхнего сегмента перед вверхней стенкой или внешним ящиком
-    fasadePositions.push(firstFasadePosition)
+    fasadeList.push({
+      y: firstFasadePosition,
+      height: firstFasadeSize,
+      type: "fasade",
+    })
 
     fullFasadelSize = fullFasadelSize - firstFasadeSize - (firstBox.isProfile ? 0 : otstup)
     bottomFasadePosition = bottomFasadePosition + firstFasadeSize + (firstBox.isProfile ? 0 : otstup)
@@ -431,8 +485,11 @@ const calcDrawersFasades = (secIndex) => {
 
     const boxFasadeHeight = box.isProfile && box.otstup ? box.otstup : box.height
 
-    fasadeSizes.push(boxFasadeHeight)
-    fasadePositions.push(bottomFasadePosition)
+    fasadeList.push({
+      y: bottomFasadePosition,
+      height: boxFasadeHeight,
+      type: box.isProfile ? "profile" : "drawer",
+    })
 
     const topBox = sortedBoxesByIncrease[index + 1]
     let upperFasadeSize = false
@@ -454,8 +511,11 @@ const calcDrawersFasades = (secIndex) => {
       upperFasadeSize = Math.abs(CONFIG.SIZE.height - 2 - bottomFasadePosition)
     }
 
-    fasadeSizes.push(upperFasadeSize)
-    fasadePositions.push(bottomFasadePosition)
+    fasadeList.push({
+      y: bottomFasadePosition,
+      height: upperFasadeSize,
+      type: "fasade",
+    })
 
     //Если между ящиками расстояние <= 4мм, то туда фасад не нужен, НО если информациб об этом "фасаде" не положить - сломется
     //логика приложения. Поэтому, если у нас такой промежуток есть, то мы кладём его размер и позицию, но не смещаем её и не уменьшаем\
@@ -466,16 +526,102 @@ const calcDrawersFasades = (secIndex) => {
     }
   }
 
-  //Разворачиваем массивы, чтоб фасады шли сверху вниз
-  //fasadePositions.reverse()
-  //fasadeSizes.reverse()
+  return fasadeList
+}
+//#endregion
 
-  //Привязка значений
-  config.positions = fasadePositions
-  config.sizes = fasadeSizes
+//#region Петли
+const calcLoops = (secIndex, grid = false) => {
 
-  return config
-};
+  const curSection = grid ? grid.sections[secIndex] : module.value.sections[secIndex]
+  const FASADES = curSection.fasades || []
+  const CONFIG = productData.value.PROPS.CONFIG
+
+  FASADES.forEach((door, doorKey) => {
+    const additional_fasades = []
+    curSection.loops = []
+
+    door.forEach((fasade, key) => {
+      additional_fasades.push(fasade)
+    })
+
+    curSection.loops = calcLoopPositions(additional_fasades, curSection)
+
+    if (!curSection.loops.length)
+      delete curSection.loops
+  })
+}
+
+const calcLoopPositions = (fasades, section) => {
+
+  let allLoops = []
+
+  const defaultPos = 102
+  const lowSizePos1 = 74
+  const lowSizePos2 = 93
+
+  fasades.forEach((fasade, key) => {
+
+    const fasadeLoops = {
+      side: fasade.loopsSide,
+      coords: [],
+      height: 82,
+      width: 38,
+      type: 'loop',
+      positionX: LOOPSIDE[fasade.loopsSide].includes("left") ? section.position.x - section.width / 2 : section.position.x + section.width / 2,
+    }
+
+    const fasadeSize = fasade.height;
+    const quarterPos = fasadeSize / 4
+    const oneThirdPos = fasadeSize / 3
+    const secondPos = fasadeSize / 2
+
+    const position = fasade.position.y
+
+    //исключения по размерам
+    if (fasadeSize === 2036) {
+      //Отступ 658 от краев фасада
+      fasadeLoops.coords = []
+      fasadeLoops.coords.push((position + defaultPos).toFixed(1))
+      fasadeLoops.coords.push((position + 658).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - 658).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - defaultPos).toFixed(1))
+    } else if (fasadeSize === 536) {
+      //Отступ 93 от краев фасада
+      fasadeLoops.coords = []
+      fasadeLoops.coords.push((position + lowSizePos2).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - lowSizePos2).toFixed(1))
+    }//
+    else if (fasadeSize >= 2064) {
+      fasadeLoops.coords.push((position + defaultPos).toFixed(1))
+      fasadeLoops.coords.push((position + quarterPos).toFixed(1))
+      fasadeLoops.coords.push((position + quarterPos * 2).toFixed(1))
+      fasadeLoops.coords.push((position + quarterPos * 3).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - defaultPos).toFixed(1))
+    } else if (fasadeSize < 2064 && fasadeSize > 1500) {
+      fasadeLoops.coords.push((position + defaultPos).toFixed(1))
+      fasadeLoops.coords.push((position + oneThirdPos).toFixed(1))
+      fasadeLoops.coords.push((position + oneThirdPos * 2).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - defaultPos).toFixed(1))
+    } else if (fasadeSize <= 1500 && fasadeSize > 1000) {
+      fasadeLoops.coords.push((position + defaultPos).toFixed(1))
+      fasadeLoops.coords.push((position + secondPos).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - defaultPos).toFixed(1))
+    } else if (fasadeSize <= 1000 && fasadeSize > 400) {
+      fasadeLoops.coords.push((position + defaultPos).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - defaultPos).toFixed(1))
+    } else if (400 >= fasadeSize && fasadeSize >= 360) {
+      fasadeLoops.coords.push((position + lowSizePos1).toFixed(1))
+      fasadeLoops.coords.push((position + fasadeSize - lowSizePos1).toFixed(1))
+    }
+
+    fasadeLoops.coords = fasadeLoops.coords.map((item) => parseInt(item))
+    allLoops.push(fasadeLoops)
+  })
+
+  return allLoops
+}
+
 
 //#endregion
 
@@ -567,7 +713,7 @@ const reset = (reset = false) => {
         lastRow.width += deltaWidth;
         if (lastRow.fillings?.length)
           lastRow.fillings.forEach((filling, index) => {
-            updateFilling(filling, index, 'width')
+            updateFilling(lastRow.width, filling, 'width')
           })
       }
       cell.width = lastSection.width;
@@ -575,15 +721,14 @@ const reset = (reset = false) => {
 
       if (cell.fillings?.length)
         cell.fillings.forEach((filling, index) => {
-          updateFilling(filling, index, 'width')
+          updateFilling(cell.width, filling, 'width')
         })
     })
 
     if (lastSection.fillings?.length)
       lastSection.fillings.forEach((filling, index) => {
-        updateFilling(filling, index, 'width')
+        updateFilling(lastSection.width, filling, 'width')
       })
-
   }
 
 
@@ -858,6 +1003,7 @@ watch(visualizationRef, () => {
             :max-area-height="totalHeight"
             :max-area-width="totalWidth"
             @cell-selected="handleCellSelect"
+            @calcDrawersFasades="calcDrawersFasades"
         />
       </div>
 
@@ -902,9 +1048,10 @@ watch(visualizationRef, () => {
             :moduleProps="productData.PROPS"
             :step="step"
             @product-updateFasades="updateFasades"
+            @product-calcLoops="calcLoops"
             @product-calcDrawersFasades="calcDrawersFasades"
             @product-getFasadePositionMinMax="getFasadePositionMinMax"
-         />
+        />
       </div>
 
       <div

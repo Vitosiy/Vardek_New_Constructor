@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // @ts-nocheck
 import {defineExpose, ref, toRefs} from "vue";
-import {FasadeMaterial, FasadeObject} from "@/types/constructor2d/interfaсes.ts";
+import {FasadeMaterial, FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
+import {_URL} from "@/types/constants.ts";
+import {useAppData} from "@/store/appliction/useAppData.ts";
 
 const props = defineProps({
   module: {
@@ -25,12 +27,14 @@ const props = defineProps({
 
 const {module, visualizationRef, moduleProps} = toRefs(props);
 const selectedFasade = ref({sec: 0, cell: null, row: null});
+const APP = useAppData().getAppData;
 
 const emit = defineEmits([
   "product-selectCell",
   "product-updateFasades",
   "product-getFasadePositionMinMax",
     "product-calcDrawersFasades",
+  "product-calcLoops",
 ]);
 
 const timer = ref(false);
@@ -55,6 +59,10 @@ const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
 
 const updateFasades = () => {
   emit("product-updateFasades");
+}
+
+const calcLoops = (secIndex) => {
+  emit("product-calcLoops", secIndex);
 }
 
 const calcDrawersFasades = () => {
@@ -91,14 +99,14 @@ const addDoor = (secIndex) => {
     let startX = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
     newDoorPosition = new THREE.Vector2(startX, FASADE.POSITION_Y)
     firstFasade = <FasadeObject>{
-      id: 0,
+      number: 0,
       width,
       height: module.value.height - module.value.horizont - 4,
       position: newDoorPosition,
       type: "fasade",
       material: <FasadeMaterial>{
         ...FASADE_PROPS
-      }
+      },
     }
     let fasadeMinMax = getFasadePositionMinMax(firstFasade)
     firstFasade = Object.assign(firstFasade, fasadeMinMax)
@@ -117,7 +125,11 @@ const addDoor = (secIndex) => {
   }
   newDoor.height = module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
 
+  let loopsidesList = getLoopsideList(secIndex, section.fasades.length)
+  newDoor.loopsSide = loopsidesList.pop().ID
+
   section.fasades.push([newDoor]);
+  calcLoops(secIndex)
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -147,6 +159,7 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
     position: new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height),
   });
 
+  calcLoops(secIndex)
   // Обновляем рендер
   visualizationRef.value.renderGrid();
 };
@@ -171,10 +184,12 @@ const deleteDoor = (secIndex, doorIndex) => {
   }
 
   module.value.sections[secIndex].fasades.splice(doorIndex, 1);
+  module.value.sections[secIndex].loops.splice(doorIndex, 1);
 
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = 0;
 
+  calcLoops(secIndex)
   visualizationRef.value.renderGrid();
 };
 
@@ -210,6 +225,7 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = secIndex;
 
+  calcLoops(secIndex)
   visualizationRef.value.renderGrid();
 };
 
@@ -262,9 +278,66 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
   }
   module.value = clone;
 
+  calcLoops(secIndex)
   visualizationRef.value.renderGrid();
 
 };
+
+const changeLoopside = (secIndex, fasade, newSide) => {
+  fasade.loopsSide = parseInt(newSide);
+  calcLoops(secIndex)
+}
+
+const getLoopsideList = (secIndex, doorIndex) => {
+  const productInfo = APP.CATALOG.PRODUCTS[module.value.productID]
+
+  let list = []
+  let tmp = {}
+  productInfo.LOOPSIDE.forEach((type) => {
+    if (APP.LOOPSIDE[type] != undefined) {
+      tmp[type] = APP.LOOPSIDE[type];
+    }
+  });
+
+  switch (doorIndex) {
+    case 0:
+      if (module.value.sections[secIndex].fasades[1]) {
+        tmp = {}
+      }
+      else {
+        const sectionLeft = module.value.sections[secIndex - 1] || false
+        const sectionRight = module.value.sections[secIndex + 1] || false
+
+        if (sectionLeft) {
+          const sectionLeftLoops = sectionLeft.loops || {}
+          if (sectionLeftLoops[1] || [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(sectionLeftLoops[1])) {
+            delete tmp[LOOPSIDE["left_on_partition"]]
+          } else {
+            tmp[LOOPSIDE["left_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["left_on_partition"]]
+          }
+
+          delete tmp[LOOPSIDE["left"]]
+        }
+        if (sectionRight) {
+          const sectionRightLoops = sectionRight.loops || {}
+          if ([LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[1])) {
+            delete tmp[LOOPSIDE["right_on_partition"]]
+          } else {
+            tmp[LOOPSIDE["right_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["right_on_partition"]]
+          }
+
+          delete tmp[LOOPSIDE["right"]]
+        }
+      }
+      break;
+    case 1:
+      tmp = {}
+      break;
+  }
+
+  list = Object.values(tmp)
+  return list
+}
 
 defineExpose({
   handleCellSelect,
@@ -360,6 +433,7 @@ defineExpose({
                     >
                       <article class="actions-items actions-items--left">
                         <div class="actions-items--left-wrapper">
+
                           <div class="actions-items--width">
                             <div class="actions-inputs">
                               <p class="actions-title">
@@ -406,6 +480,38 @@ defineExpose({
                               </div>
                             </div>
                           </div>
+
+                          <div class="actions-items--selector">
+                            <div class="actions-inputs">
+                              <p class="actions-title">
+                                Сторона открывания
+                              </p>
+                              <div
+                              >
+                                <select
+                                    style
+                                    id="loopsSide"
+                                    :value="segment.loopsSide"
+                                    name="loopsSide"
+                                    class="actions-input"
+                                    @change="changeLoopside(secIndex, segment, $event.target.value)"
+                                >
+                                  <option
+                                      v-for="(side, key) in getLoopsideList(secIndex, doorIndex)"
+                                      :key="key"
+                                      :value="side.ID"
+                                  >
+                                    <div class="item-group-name">
+                                      <p class="name__text">
+                                        {{ side.NAME }}
+                                      </p>
+                                    </div>
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
                       </article>
 
@@ -701,8 +807,8 @@ defineExpose({
       }
     }
 
+    &--selector,
     &--height,
-    &--diametr,
     &--width {
       display: flex;
       width: fit-content;
