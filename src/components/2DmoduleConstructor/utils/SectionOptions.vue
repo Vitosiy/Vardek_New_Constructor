@@ -8,6 +8,7 @@ import {_URL} from "@/types/constants";
 import {GridCell, GridCellsRow, GridSection} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
+import CounterInput from "@/components/ui/inputs/CounterInput.vue";
 
 const {
   MIN_SECTION_WIDTH,
@@ -61,6 +62,7 @@ const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
 const updateFasades = () => {
   emit("product-updateFasades");
 }
+
 const updateFilling = (value, filling, type, render = false) => {
   emit("product-updateFilling", value, filling, type, render);
 };
@@ -69,44 +71,54 @@ const showCurrentCol = (secIndex) => {
   selectCell(secIndex)
 };
 
-const addSection = (secIndex) => {
+const addSection = (secIndex, count = 1) => {
   const section = module.value.sections[secIndex];
-  const halfWidth = Math.floor((section.width - module.value.moduleThickness) / 2);
+  const halfWidth = Math.floor((section.width - module.value.moduleThickness * count) / (count + 1));
 
-  if (halfWidth < MIN_SECTION_WIDTH)
+  if (halfWidth < MIN_SECTION_WIDTH) {
+    alert("Размер секций будет слишком мал! Пожалуйста, выберите меньшее количество секций!");
     return;
+  }
+
+  const deltaLastSection = section.width - halfWidth * (count + 1) - module.value.moduleThickness * count;
 
   // Обновляем ширину текущей колонки
-  section.cells.forEach((cell) => {
-    cell.width = halfWidth;
-    cell.cellsRows = []
-    cell.fillings = []
-  });
-
   section.position.x = section.position.x - (section.width / 2 - halfWidth / 2)
   section.width = halfWidth;
   section.fillings = []
 
-  // Создаем новую колонку с такими же параметрами
+  section.cells.forEach((cell) => {
+    cell.width = halfWidth;
+    cell.position.x = section.position.x
+    cell.cellsRows = []
+    cell.fillings = []
+  });
 
-  const newColumn: GridSection = {
-    ...section,
-    number: section.number + 1,
-    width: halfWidth,
-    cells: [],
-    fasades: [],
-    fillings: [],
-    position: new THREE.Vector2(section.position.x + section.width / 2 + module.value.moduleThickness + halfWidth / 2, section.position.y),
+  // Создаем новую колонку с такими же параметрами
+  for (let i = 0; i < count; i++) {
+    const newColumn: GridSection = {
+      ...section,
+      number: section.number + 1 + i,
+      width: halfWidth,
+      cells: [],
+      fasades: [],
+      fillings: [],
+      position: new THREE.Vector2(section.position.x + (section.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), section.position.y),
+    }
+
+    if(i === count - 1) {
+      newColumn.width += deltaLastSection;
+    }
+
+    module.value.sections.splice(secIndex + 1 + i, 0, newColumn);
   }
-  module.value.sections.splice(secIndex + 1, 0, newColumn);
   updateFasades();
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
-  console.log(module.value.sections, "55555");
 };
 
-const addCell = (secIndex, cellIndex = null) => {
+const addCell = (secIndex, cellIndex = null, count = 1) => {
   selectCell(secIndex, cellIndex);
 
   let section = module.value.sections[secIndex];
@@ -134,15 +146,19 @@ const addCell = (secIndex, cellIndex = null) => {
   if (cell.cellsRows)
     delete cell.cellsRows
 
-  const halfHeight = Math.floor((cell.height - module.value.moduleThickness) / 2);
+  const halfHeight = Math.floor((cell.height - module.value.moduleThickness * count) / (count + 1));
 
-  if (halfHeight < MIN_SECTION_HEIGHT)
+  if (halfHeight < MIN_SECTION_HEIGHT) {
+    alert("Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!");
     return;
+  }
+
+  const deltaLastCell = section.height - halfHeight * (count + 1) - module.value.moduleThickness * count;
 
   // Обновляем высоту последней строки
   cell.height = halfHeight;
 
-  let newFillings = []
+  /*let newFillings = []
   cell.fillings?.filter((filling, index) => {
     if (filling.position.y >= cell.position.y + cell.height + module.value.moduleThickness) {
       newFillings.push(filling);
@@ -150,21 +166,33 @@ const addCell = (secIndex, cellIndex = null) => {
       filling.cell += 1
     }
     return filling.position.y + filling.height <= cell.position.y + cell.height;
-  })
+  })*/
+
+  if (cell.fillings)
+    cell.fillings.length = 0
 
   // Добавляем новую строку в эту колонку
-  section.cells.splice(cellIndex || 0, 0, {
-    ...cell,
-    number: cell.number + 1,
-    position: new THREE.Vector2(cell.position.x, cell.position.y + halfHeight + module.value.moduleThickness),
-    fillings: newFillings,
-  });
+  for (let i = 0; i < count; i++) {
+
+    let newCell = <GridCell>{
+      ...cell,
+      number: cell.number + 1 + i,
+      position: new THREE.Vector2(cell.position.x, cell.position.y + (halfHeight + module.value.moduleThickness) * (i + 1)),
+      //fillings: newFillings,
+    }
+
+    if(i === count - 1) {
+      newCell.height += deltaLastCell;
+    }
+
+    section.cells.splice(cellIndex || 0, 0, newCell);
+  }
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
 };
 
-const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
+const addRowCell = (secIndex, cellIndex, rowIndex = 0, count = 1) => {
   selectCell(secIndex, cellIndex, rowIndex);
 
   const cell = module.value.sections[secIndex].cells[cellIndex]
@@ -185,10 +213,14 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
     cell.cellsRows.push(row);
   }
 
-  const halfWidth = Math.floor((row.width - module.value.moduleThickness) / 2);
+  const halfWidth = Math.floor((row.width - module.value.moduleThickness * count) / (count + 1));
 
-  if (halfWidth < MIN_SECTION_WIDTH)
+  if (halfWidth < MIN_SECTION_WIDTH) {
+    alert("Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!");
     return;
+  }
+
+  const deltaLastRow = row.width - halfWidth * (count + 1) - module.value.moduleThickness * count;
 
   if (row.fillings?.length)
     delete row.fillings
@@ -198,11 +230,19 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0) => {
   row.width = halfWidth;
 
   // Добавляем новую строку в эту колонку
-  cell.cellsRows.splice(rowIndex + 1, 0, {
-    ...row,
-    number: row.number + 1,
-    position: new THREE.Vector2(row.position.x + row.width / 2 + module.value.moduleThickness + halfWidth / 2, row.position.y),
-  });
+  for (let i = 0; i < count; i++) {
+    let newRow = <GridCellsRow>{
+      ...row,
+      number: row.number + 1 + i,
+      position: new THREE.Vector2(row.position.x + (row.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), row.position.y),
+    }
+
+    if(i === count - 1) {
+      newRow.width += deltaLastRow;
+    }
+
+    cell.cellsRows.splice(rowIndex + 1 + i, 0, newRow);
+  }
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -619,24 +659,42 @@ defineExpose({
                     class="actions-items--right-items"
                     v-if="secIndex == selectedCell.sec"
                 >
-                  <button
-                      :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                      @click="addSection(secIndex)"
-                  >
-                    Добавить секцию
-                  </button>
 
-                  <button
-                      v-if="!section.cells.length"
-                      :class="[
-                      'actions-btn actions-btn--default'
-                    ]"
-                      @click="addCell(secIndex, null)"
+                  <div
+                      class="actions-items--right-items-input-block"
                   >
-                    Добавить ячейку
-                  </button>
+                      <CounterInput
+                          button-text="Добавить секцию"
+                          model-value="1"
+                          max="10"
+                          min="1"
+                          input-class="actions-input actions-items--right-items-input-block-counter"
+                          button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                          type="number"
+                          @update:model-value="(count) => {
+                            addSection(secIndex, count)
+                          }"
+                      />
+                  </div>
+
+                  <div
+                      v-if="!section.cells.length"
+                      class="actions-items--right-items-input-block"
+                  >
+                    <CounterInput
+                        button-text="Добавить полку"
+                        model-value="1"
+                        max="10"
+                        min="1"
+                        input-class="actions-input actions-items--right-items-input-block-counter"
+                        button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                        type="number"
+                        @update:model-value="(count) => {
+                            addCell(secIndex, null, count)
+                          }"
+                    />
+                  </div>
+
                 </div>
               </article>
             </div>
@@ -714,24 +772,41 @@ defineExpose({
 
                     <article class="actions-items actions-items--right">
                       <div class="actions-items--right-items">
-                        <button
-                            :class="[
-                              'actions-btn actions-btn--default'
-                            ]"
-                            @click="addCell(secIndex, cellIndex)"
-                        >
-                          Добавить ячейку
-                        </button>
 
-                        <button
-                            v-if="!cell.cellsRows?.length"
-                            :class="[
-                              'actions-btn actions-btn--default'
-                            ]"
-                            @click="addRowCell(secIndex, cellIndex, 0)"
+                        <div
+                            class="actions-items--right-items-input-block"
                         >
-                          Верт. разделитель
-                        </button>
+                          <CounterInput
+                              button-text="Добавить полку"
+                              model-value="1"
+                              max="10"
+                              min="1"
+                              input-class="actions-input actions-items--right-items-input-block-counter"
+                              button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                              type="number"
+                              @update:model-value="(count) => {
+                            addCell(secIndex, cellIndex, count)
+                          }"
+                          />
+                        </div>
+
+                        <div
+                            v-if="!cell.cellsRows?.length"
+                            class="actions-items--right-items-input-block"
+                        >
+                          <CounterInput
+                              button-text="Верт. разделитель"
+                              model-value="1"
+                              max="10"
+                              min="1"
+                              input-class="actions-input actions-items--right-items-input-block-counter"
+                              button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                              type="number"
+                              @update:model-value="(count) => {
+                                addRowCell(secIndex, cellIndex, 0, count)
+                          }"
+                          />
+                        </div>
 
                         <button
                             v-if="section.cells.length > 1"
@@ -799,14 +874,22 @@ defineExpose({
                           <article class="actions-items actions-items--right">
                             <div class="actions-items--right-items">
 
-                              <button
-                                  :class="[
-                                    'actions-btn actions-btn--default'
-                                  ]"
-                                  @click="addRowCell(secIndex, cellIndex, rowIndex)"
+                              <div
+                                  class="actions-items--right-items-input-block"
                               >
-                                Верт. разделитель
-                              </button>
+                                <CounterInput
+                                    button-text="Верт. разделитель"
+                                    model-value="1"
+                                    max="10"
+                                    min="1"
+                                    input-class="actions-input actions-items--right-items-input-block-counter"
+                                    button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                                    type="number"
+                                    @update:model-value="(count) => {
+                                          addRowCell(secIndex, cellIndex, rowIndex, count)
+                                    }"
+                                />
+                              </div>
 
                               <button
                                   v-if="cell.cellsRows.length > 1"
@@ -1079,13 +1162,31 @@ defineExpose({
     }
 
     &--right {
-      max-width: calc(50% - 1rem);
+      max-width: calc(55% - 1rem);
       margin-left: 1rem;
 
       &-items {
         display: flex;
         gap: 1rem;
         flex-wrap: wrap;
+
+        &-input-block {
+          display: flex;
+          flex-direction: row;
+          gap: 5px;
+
+          &-counter,
+          &-button {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+          }
+
+          &-button {
+            padding-left: 0px;
+          }
+        }
+
       }
     }
 

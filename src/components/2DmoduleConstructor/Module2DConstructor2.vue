@@ -568,7 +568,7 @@ const calcLoopPositions = (fasades, section) => {
       height: 82,
       width: 38,
       type: 'loop',
-      positionX: LOOPSIDE[fasade.loopsSide].includes("left") ? section.position.x - section.width / 2 : section.position.x + section.width / 2,
+      positionX: LOOPSIDE[fasade.loopsSide]?.includes("left") ? section.position.x - section.width / 2 : section.position.x + section.width / 2,
     }
 
     const fasadeSize = fasade.height;
