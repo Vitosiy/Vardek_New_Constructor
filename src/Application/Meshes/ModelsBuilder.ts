@@ -19,7 +19,7 @@ export class ModelsBuilder {
 
     }
 
-    create(url: any, onLoad: (object: THREE.Object3D) => void, props: THREETypes.TObject) {
+    create(url: any, onLoad: (object: THREE.Object3D) => void, props: THREETypes.TObject, sizeRulers: boolean = true) {
 
         const arrows = new THREE.Object3D()
         const model = props.CONFIG.MODEL
@@ -79,12 +79,14 @@ export class ModelsBuilder {
 
             /** Добавляем стрелки размеров */
 
-            let ruler = this.ruler.drawRullerObjects(file)
-            ruler.forEach(item => {
-                for (let i in item) {
-                    arrows.add(item[i])
-                }
-            })
+            if(sizeRulers) {
+                let ruler = this.ruler.drawRullerObjects(file)
+                ruler.forEach(item => {
+                    for (let i in item) {
+                        arrows.add(item[i])
+                    }
+                })
+            }
 
             // file.add(file)
             file.userData.PROPS = props

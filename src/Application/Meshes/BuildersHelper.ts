@@ -20,6 +20,7 @@ export class BuildersHelper extends GlobalsData {
 
     createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
         let model_data = { ...data }
+        let color = this._FASADE[props.CONFIG.MODULE_COLOR]
 
         model_data = this.expressionsReplace(
             model_data,
@@ -27,6 +28,10 @@ export class BuildersHelper extends GlobalsData {
                 "#X#": size.width,
                 "#Y#": size.height,
                 "#Z#": size.depth,
+                "#MATERIAL_THICKNESS#": color?.DEPTH,
+                "#HORIZONT#": props.CONFIG.NOBOTTOM ? 0 :
+                    props.CONFIG.HORIZONT || props.CONFIG.HORIZONT === 0 ? props.CONFIG.HORIZONT :
+                        props.EXPRESSIONS["#HORIZONT#"] || 78,  //78 - стандартная высота цоколя на случай отсутствия данных
             },
         )
 
@@ -39,6 +44,10 @@ export class BuildersHelper extends GlobalsData {
     };
 
     getProductSize(PARAMS: any, product_data: THREETypes.TObject) {
+
+        const MATERIAL_THICKNESS = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH || 18
+        const HORIZONT = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT || PARAMS.HORIZONT === 0 ? PARAMS.HORIZONT : 78
+        const FILLING = this._FILLING[product_data["FILLING"][0]] || {}
 
         PARAMS.EXPRESSIONS = {
             "#MWIDTH#": product_data.width,
@@ -54,6 +63,10 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_DEPTH#": product_data.depth,
             "#Z#": product_data.depth,
             "#SIZEEDITJOINDEPTH#": product_data.SIZE_EDIT_JOINDEPTH_MIN,
+            "#MATERIAL_THICKNESS#": MATERIAL_THICKNESS,
+            "#HORIZONT#": HORIZONT,
+            "#VSECTION_MAX#": FILLING?.VSECTION_MAX,
+            "#VSECTION_MIN#": FILLING?.VSECTION_MIN,
         };
 
         Object.entries(PARAMS.FASADE_SIZE).forEach(([key, item]) => {
@@ -108,6 +121,17 @@ export class BuildersHelper extends GlobalsData {
         return productArr
     }
 
+    getExec(obj) {
+        Object.entries(obj).forEach(([key, value]) => {
+            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
+                obj[key] = value;
+            } else {
+                obj[key] = eval(value);
+            }
+        });
+        return obj;
+    };
+
     expressionsReplace(obj: any, expressions: THREETypes.TObject) {
 
         if (!expressions || !Object.keys(expressions).length) return obj;
@@ -135,7 +159,7 @@ export class BuildersHelper extends GlobalsData {
     };
 
     getStartPosition(size: THREETypes.TObject) {
-        return { x: -size.width * 0.5, y: -size.height * 0.5, z: -size.depth * 0.5 };
+        return new THREE.Vector3(-size.width * 0.5, -size.height * 0.5, -size.depth * 0.5);
     };
 
     checkColor(product: THREETypes.TObject) {

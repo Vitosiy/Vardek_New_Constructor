@@ -21,6 +21,7 @@ import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
 import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
+import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
@@ -31,6 +32,8 @@ import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/Open
 
 import Toggle from "@vueform/toggle";
 import Slider from "@vueform/slider";
+import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
+import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 
 type TSize = {
   width: {
@@ -160,6 +163,9 @@ const selectMilling = ref<any>(null);
 
 /** ----------------- 19.05.25 ----------------------------- */
 
+//Универсальный модуль
+const universalModule2DConstructor = ref();
+
 //Распил
 const tableTopManager = ref();
 const CutData = ref({});
@@ -271,7 +277,7 @@ const selected = (item: any) => {
 
   productData.value = { ...PROPS };
 
-  if (RASPIL.data) {
+  if (RASPIL?.data) {
     CutData.value = {
       data: RASPIL.data,
       canvasHeight: RASPIL.canvasHeight,
@@ -283,6 +289,14 @@ const selected = (item: any) => {
       canvasHeight: RASPIL.canvasHeight,
       modelHeight: RASPIL.modelHeight,
     };
+  }
+  else if (CONFIG.MODULEGRID) {
+    universalModule2DConstructor.value.selectUMData({
+      MODULEGRID: CONFIG.MODULEGRID || false,
+      PROPS: object,
+      canvasHeight: CONFIG.MODULEGRID.canvasHeight,
+      canvasHeight: CONFIG.MODULEGRID.canvasWidth,
+    })
   }
 
   useModelState().setCurrentModel(userData);
@@ -584,6 +598,32 @@ const deliteTable = () => {
     removeModel();
   }
 };
+//
+
+/** Редактор УМ */
+
+/*const saveUMData = ({ data, canvasHeight }) => {
+  if (!product.value)
+    return;
+  universalModuleCash.value= product.value.PROPS.CONFIG.MODULEGRID = universalModule2DConstructor.value.saveGrid();
+  gridUMSaved.value = true;
+};
+
+const openUMRedactor = () => {
+  //isUMModalOpen.value = true;
+  const menuStore = useMenuStore();
+  menuStore.openMenu('2dModuleConstructor', universalModuleData.value.object.globalData, [universalModuleData.value.object])
+};
+
+const closeUMRedactor = () => {
+  if (!gridUMSaved.value) product.value.PROPS.CONFIG.MODULEGRID = universalModuleCash.value;
+
+  universalModuleData.value = product.value.PROPS.CONFIG.MODULEGRID;
+  isUMModalOpen.value = false;
+  gridUMSaved.value = false;
+};*/
+//
+
 </script>
 
 <template>
@@ -857,6 +897,18 @@ const deliteTable = () => {
           </button>
         </template>
       </Modal>
+
+      <ModalUM2Dconstructor
+          ref="universalModule2DConstructor"
+          :product="product"
+      />
+
+<!--      <button
+          v-if="universalModuleData.data"
+          class="cut-btn" @click="openUMRedactor">
+        <img class="cut-icon" src="/icons/cut.svg" alt="" />
+      </button>-->
+
     </div>
   </div>
 </template>

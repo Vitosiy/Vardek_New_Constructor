@@ -26,6 +26,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 
 import { Resources } from "../Utils/Resources";
 import { ENVIROMENT_MAP } from "../F-mockapi";
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 export class Application {
 
@@ -37,7 +38,7 @@ export class Application {
     canvas: HTMLElement | null;
     sizes: Sizes | null = null;
     time: Time | null = null;
-    scene: THREE.Scene | null = null;;
+    scene: THREE.Scene | null = null;
     camera: Camera | null = null;
     renderer: Renderer | null = null;
     resources: Resources | null = null
@@ -45,6 +46,7 @@ export class Application {
 
     world: World | null = null;
     geometryBuilder: GeometryBuilder | null
+    universalGeometryBuilder: UniversalGeometryBuilder | null
     tableTopCreator: TableTopCreator | null
     room: RoomManager | null
     trafficManager
@@ -79,6 +81,7 @@ export class Application {
         this.customBoxHelper = new CustomBoxHelper(this);
         this.ruler = new Ruler();
         this.geometryBuilder = new GeometryBuilder(this);
+        this.universalGeometryBuilder = new UniversalGeometryBuilder(this);
         this.meshEvents = new MeshEvents(this);
 
         this.setObject = new SetObject(this);
@@ -140,8 +143,7 @@ export class Application {
     }
 
     get _trafficManager() {
-        // return this.world!.trafficManager
-        return this.trafficManager
+        return this.trafficManager || this.world!.trafficManager
     }
 
     get _geometryBuilder() {
