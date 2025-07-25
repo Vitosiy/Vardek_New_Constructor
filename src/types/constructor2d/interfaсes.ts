@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import * as THREE from "three";
 
 type GraphicsOrNull = PIXI.Graphics | null;
 
@@ -92,4 +93,117 @@ export interface MergeWalls {
 export interface HoverPointObject { 
   id: number | string; 
   indexPoint: number 
+}
+
+export interface FillingObject {
+  product: number;
+  id: number;
+  name: string;
+  image: string;
+  type: "shelf" | "drawer" | "any";
+  position:  THREE.Vector2;
+  size: THREE.Vector3;
+  width: number,
+  height: number,
+  color: number;
+  fasade?: FasadeObject;
+  sec: number;
+  cell?: number;
+  row?: number;
+  error?: boolean;
+}
+
+export enum LOOPSIDE {
+  left = 4693746,
+  left_on_partition= 7080918,
+  right = 4693757,
+  right_on_partition= 7080949
+}
+
+export interface FasadeObject {
+  id: number;
+  type: "fasade";
+  loopsSide: number | boolean;
+  position: THREE.Vector2;
+  width: number;
+  height: number;
+  material: FasadeMaterial;
+  minY: number;
+  maxY: number;
+  minX?: number;
+  maxX?: number;
+  error?: boolean;
+}
+export interface FasadeMaterial {
+  COLOR: number;
+  POSITION: number;
+  GLASS?: number;
+  MILLING?: number;
+  PALETTE?: number;
+  PATINA?: number;
+  TYPE?: number;
+  WINDOW?: number;
+  ALUM?: number;
+}
+
+export enum MANUFACTURER {
+  innotech = 31,
+  иннотех = 31,
+  avantech = 29.25,
+  авантех = 29.25,
+  flowbox = 25,
+  флоубокс = 25,
+}
+
+export interface DrawerFasadeObject extends FasadeObject {
+  manufacturerOffset: MANUFACTURER;
+  item: number;
+  sec: number | null;
+  cell?: number | null;
+  row?: number | null;
+}
+
+export interface GridCellsRow {
+  number: number;
+  width: number;
+  height: number;
+  position: THREE.Vector2;
+  type: "rowCell";
+  fillings?: FillingObject[];
+}
+
+export interface GridCell {
+  number: number;
+  width: number;
+  height: number;
+  position: THREE.Vector2;
+  type: "cell";
+  cellsRows?: GridCellsRow[];
+  fillings?: FillingObject[];
+}
+
+export interface GridSection {
+  number: number;
+  width: number;
+  height: number;
+  position: THREE.Vector2;
+  type: "section";
+  cells: GridCell[];
+  fasades?: FasadeObject[];
+  fasadesDrawers?: FasadeObject[];
+  loops?: [];
+  profiles?: FillingObject[];
+}
+
+export interface GridModule {
+  width: number;
+  height: number;
+  depth?: number;
+  productID: number;
+  moduleThickness: number;
+  moduleColor: number;
+  sections: GridSection[];
+  type: "module";
+  horizont?: number;
+  fasades?: FasadeObject[];
 }

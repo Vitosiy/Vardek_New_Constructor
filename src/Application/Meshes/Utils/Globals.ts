@@ -10,6 +10,7 @@ export class GlobalsData {
     _APP: THREETypes.TObject = useAppData().getAppData
     _COLOR: THREETypes.TObject = this._APP.COLOR
     _FASADE: THREETypes.TObject = this._APP.FASADE;
+    _FILLING: THREETypes.TObject = this._APP.FILLING;
     _FASADESIZE: THREETypes.TObject = this._APP.FASADESIZE;
     _FASADENUMBERSIZE: THREETypes.TObject = this._APP.FASADENUMBERSIZE;
     _FASADE_SECTION: THREETypes.TObject = this._APP.FASADE_SECTION;
@@ -21,7 +22,8 @@ export class GlobalsData {
     _SHELF_POSITION: THREETypes.TObject = this._APP.PRODUCT_SHELF_POSITION
     _GLASS: THREETypes.TObject = this._APP.GLASS
     _USLUGI: THREETypes.TObject = this._APP.USLUGI
-
+    _LOOP_POSITION: THREETypes.TObject = this._APP.LOOP_POSITION
+    _LOOPSIDE: THREETypes.TObject = this._APP.LOOPSIDE
     constructor() {
 
     }
