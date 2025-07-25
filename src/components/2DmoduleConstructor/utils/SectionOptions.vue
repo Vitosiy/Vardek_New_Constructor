@@ -71,7 +71,9 @@ const showCurrentCol = (secIndex) => {
   selectCell(secIndex)
 };
 
-const addSection = (secIndex, count = 1) => {
+const addSection = (secIndex, _count = 1) => {
+  const count = parseInt(_count)
+
   const section = module.value.sections[secIndex];
   const halfWidth = Math.floor((section.width - module.value.moduleThickness * count) / (count + 1));
 
@@ -102,6 +104,7 @@ const addSection = (secIndex, count = 1) => {
       width: halfWidth,
       cells: [],
       fasades: [],
+      loops: [],
       fillings: [],
       position: new THREE.Vector2(section.position.x + (section.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), section.position.y),
     }
@@ -118,7 +121,8 @@ const addSection = (secIndex, count = 1) => {
   visualizationRef.value.renderGrid();
 };
 
-const addCell = (secIndex, cellIndex = null, count = 1) => {
+const addCell = (secIndex, cellIndex = null, _count = 1) => {
+  const count = parseInt(_count)
   selectCell(secIndex, cellIndex);
 
   let section = module.value.sections[secIndex];
@@ -192,7 +196,9 @@ const addCell = (secIndex, cellIndex = null, count = 1) => {
   visualizationRef.value.renderGrid();
 };
 
-const addRowCell = (secIndex, cellIndex, rowIndex = 0, count = 1) => {
+const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
+  const count = parseInt(_count)
+
   selectCell(secIndex, cellIndex, rowIndex);
 
   const cell = module.value.sections[secIndex].cells[cellIndex]
@@ -559,14 +565,14 @@ defineExpose({
 </script>
 
 <template>
-  <div class="splitter-container--product">
-    <div class="splitter-container--product-data" v-if="module">
-      <section class="actions-wrapper">
+  <div class="splitter-sections-container--product">
+    <div class="splitter-sections-container--product-data" v-if="module">
+      <section class="actions-sections-wrapper">
 
-        <div class="actions-header">
+        <div class="actions-sections-header">
           <div
               :class="[
-              'actions-header--container',
+              'actions-sections-header--container',
               { active: secIndex === selectedCell.sec },
             ]"
               v-for="(section, secIndex) in module.sections"
@@ -574,17 +580,17 @@ defineExpose({
           >
             <button
                 v-if="module.sections.length > 1"
-                class="actions-btn actions-icon"
+                class="actions-sections-btn actions-sections-icon"
                 @click="deleteSection(secIndex)"
             >
               <img
-                  class="actions-icon--delete"
+                  class="actions-sections-icon--delete"
                   src="/icons/delite.svg"
                   alt=""
               />
             </button>
             <p
-                class="actions-title actions-title--part"
+                class="actions-sections-title actions-sections-title--part"
                 @click="showCurrentCol(secIndex)"
             >
               {{ secIndex + 1 }}
@@ -593,32 +599,32 @@ defineExpose({
         </div>
 
         <div
-            class="actions-container"
+            class="actions-sections-container"
             v-for="(section, secIndex) in module.sections"
             :key="secIndex"
         >
           <div
-              class="actions-items--wrapper"
+              class="actions-sections-items--wrapper"
               v-if="selectedCell.sec === secIndex"
           >
 
             <div
-                :class="'actions-items--container'"
+                :class="'actions-sections-items--container'"
             >
-              <article class="actions-items actions-items--left">
-                <div class="actions-items--left-wrapper">
+              <article class="actions-sections-items actions-sections-items--left">
+                <div class="actions-sections-items--left-wrapper">
 
-                  <div class="actions-items--width">
-                    <div class="actions-inputs">
-                      <p class="actions-title">Ширина</p>
+                  <div class="actions-sections-items--width">
+                    <div class="actions-sections-inputs">
+                      <p class="actions-sections-title">Ширина</p>
                       <div
-                          :class="['actions-input--container', module.sections.length <= 1 ? 'disable' : '']"
+                          :class="['actions-sections-input--container', module.sections.length <= 1 ? 'disable' : '']"
                       >
                         <input
                             type="number"
                             :step="step"
                             :min="MIN_SECTION_WIDTH"
-                            class="actions-input"
+                            class="actions-sections-input"
                             :value="section.width"
                             @input="
                             debounce(() => updateSectionWidth(
@@ -631,19 +637,19 @@ defineExpose({
                     </div>
                   </div>
 
-                  <div class="actions-items--height">
-                    <div class="actions-inputs">
-                      <p class="actions-title">
+                  <div class="actions-sections-items--height">
+                    <div class="actions-sections-inputs">
+                      <p class="actions-sections-title">
                         Высота
                       </p>
                       <div
-                          :class="['actions-input--container']"
+                          :class="['actions-sections-input--container']"
                       >
                         <input
                             type="number"
                             :step="step"
                             :min="MIN_SECTION_HEIGHT"
-                            class="actions-input"
+                            class="actions-sections-input"
                             :value="section.height"
                             disabled
                         />
@@ -654,22 +660,22 @@ defineExpose({
                 </div>
               </article>
 
-              <article class="actions-items actions-items--right">
+              <article class="actions-sections-items actions-sections-items--right">
                 <div
-                    class="actions-items--right-items"
+                    class="actions-sections-items--right-items"
                     v-if="secIndex == selectedCell.sec"
                 >
 
                   <div
-                      class="actions-items--right-items-input-block"
+                      class="actions-sections-items--right-items-input-block"
                   >
                       <CounterInput
                           button-text="Добавить секцию"
                           model-value="1"
                           max="10"
                           min="1"
-                          input-class="actions-input actions-items--right-items-input-block-counter"
-                          button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                          input-class="actions-sections-items--right-items-input-block-counter"
+                          button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                           type="number"
                           @update:model-value="(count) => {
                             addSection(secIndex, count)
@@ -679,15 +685,15 @@ defineExpose({
 
                   <div
                       v-if="!section.cells.length"
-                      class="actions-items--right-items-input-block"
+                      class="actions-sections-items--right-items-input-block"
                   >
                     <CounterInput
                         button-text="Добавить полку"
                         model-value="1"
                         max="10"
                         min="1"
-                        input-class="actions-input actions-items--right-items-input-block-counter"
-                        button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                        input-class="actions-sections-items--right-items-input-block-counter"
+                        button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                         type="number"
                         @update:model-value="(count) => {
                             addCell(secIndex, null, count)
@@ -699,16 +705,16 @@ defineExpose({
               </article>
             </div>
 
-            <div class="accordion" v-if="section.cells.length">
+            <div class="accordion-sections" v-if="section.cells.length">
 
-              <div class="actions-header">
+              <div class="actions-sections-header">
                 <p>Ячейки</p>
               </div>
 
               <div
                   v-for="(cell, cellIndex) in section.cells"
                   :key="cellIndex"
-                  :class="'actions-items--container'"
+                  :class="'actions-sections-items--container'"
               >
                 <details class="item-group">
 
@@ -719,21 +725,21 @@ defineExpose({
                   </summary>
 
                   <div
-                      :class="'actions-items--container'"
+                      :class="'actions-sections-items--container'"
                   >
-                    <article class="actions-items actions-items--left">
-                      <div class="actions-items--left-wrapper">
-                        <div class="actions-items--width">
-                          <div class="actions-inputs">
-                            <p class="actions-title">Ширина</p>
+                    <article class="actions-sections-items actions-sections-items--left">
+                      <div class="actions-sections-items--left-wrapper">
+                        <div class="actions-sections-items--width">
+                          <div class="actions-sections-inputs">
+                            <p class="actions-sections-title">Ширина</p>
                             <div
-                                :class="['actions-input--container']"
+                                :class="['actions-sections-input--container']"
                             >
                               <input
                                   type="number"
                                   :step="step"
                                   :min="MIN_SECTION_WIDTH"
-                                  class="actions-input"
+                                  class="actions-sections-input"
                                   :value="section.width"
                                   disabled
                               />
@@ -741,19 +747,19 @@ defineExpose({
                           </div>
                         </div>
 
-                        <div class="actions-items--height">
-                          <div class="actions-inputs">
-                            <p class="actions-title">
+                        <div class="actions-sections-items--height">
+                          <div class="actions-sections-inputs">
+                            <p class="actions-sections-title">
                               Высота
                             </p>
                             <div
-                                :class="['actions-input--container']"
+                                :class="['actions-sections-input--container']"
                             >
                               <input
                                   type="number"
                                   :step="step"
                                   :min="MIN_SECTION_HEIGHT"
-                                  class="actions-input"
+                                  class="actions-sections-input"
                                   :value="cell.height"
                                   @input="
                             debounce(() => updateCellHeight(
@@ -770,19 +776,19 @@ defineExpose({
                       </div>
                     </article>
 
-                    <article class="actions-items actions-items--right">
-                      <div class="actions-items--right-items">
+                    <article class="actions-sections-items actions-sections-items--right">
+                      <div class="actions-sections-items--right-items">
 
                         <div
-                            class="actions-items--right-items-input-block"
+                            class="actions-sections-items--right-items-input-block"
                         >
                           <CounterInput
                               button-text="Добавить полку"
                               model-value="1"
                               max="10"
                               min="1"
-                              input-class="actions-input actions-items--right-items-input-block-counter"
-                              button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                              input-class="actions-sections-items--right-items-input-block-counter"
+                              button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                               type="number"
                               @update:model-value="(count) => {
                             addCell(secIndex, cellIndex, count)
@@ -792,15 +798,15 @@ defineExpose({
 
                         <div
                             v-if="!cell.cellsRows?.length"
-                            class="actions-items--right-items-input-block"
+                            class="actions-sections-items--right-items-input-block"
                         >
                           <CounterInput
                               button-text="Верт. разделитель"
                               model-value="1"
                               max="10"
                               min="1"
-                              input-class="actions-input actions-items--right-items-input-block-counter"
-                              button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                              input-class="actions-sections-items--right-items-input-block-counter"
+                              button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                               type="number"
                               @update:model-value="(count) => {
                                 addRowCell(secIndex, cellIndex, 0, count)
@@ -810,7 +816,7 @@ defineExpose({
 
                         <button
                             v-if="section.cells.length > 1"
-                            class="actions-btn actions-btn--default"
+                            class="actions-sections-btn actions-sections-btn--default"
                             @click="deleteCell(cellIndex, secIndex)"
                         >
                           Удалить
@@ -820,15 +826,15 @@ defineExpose({
                     </article>
                   </div>
 
-                  <div class="accordion" v-if="cell.cellsRows?.length">
-                    <div class="actions-header">
+                  <div class="accordion-sections" v-if="cell.cellsRows?.length">
+                    <div class="actions-sections-header">
                       <p>Вертикальные ячейки</p>
                     </div>
 
                     <div
                         v-for="(row, rowIndex) in cell.cellsRows"
                         :key="rowIndex"
-                        :class="'actions-items--container'"
+                        :class="'actions-sections-items--container'"
                     >
                       <details class="item-group">
                         <summary>
@@ -838,22 +844,22 @@ defineExpose({
                         </summary>
 
                         <div
-                            :class="'actions-items--container'"
+                            :class="'actions-sections-items--container'"
                         >
-                          <article class="actions-items actions-items--left">
-                            <div class="actions-items--left-wrapper">
+                          <article class="actions-sections-items actions-sections-items--left">
+                            <div class="actions-sections-items--left-wrapper">
 
-                              <div class="actions-items--width">
-                                <div class="actions-inputs">
-                                  <p class="actions-title">Ширина</p>
+                              <div class="actions-sections-items--width">
+                                <div class="actions-sections-inputs">
+                                  <p class="actions-sections-title">Ширина</p>
                                   <div
-                                      :class="['actions-input--container']"
+                                      :class="['actions-sections-input--container']"
                                   >
                                     <input
                                         type="number"
                                         :step="step"
                                         :min="MIN_SECTION_WIDTH"
-                                        class="actions-input"
+                                        class="actions-sections-input"
                                         :value="row.width"
                                         @input="
                               debounce(() => updateCellRowWidth(
@@ -871,19 +877,19 @@ defineExpose({
                             </div>
                           </article>
 
-                          <article class="actions-items actions-items--right">
-                            <div class="actions-items--right-items">
+                          <article class="actions-sections-items actions-sections-items--right">
+                            <div class="actions-sections-items--right-items">
 
                               <div
-                                  class="actions-items--right-items-input-block"
+                                  class="actions-sections-items--right-items-input-block"
                               >
                                 <CounterInput
                                     button-text="Верт. разделитель"
                                     model-value="1"
                                     max="10"
                                     min="1"
-                                    input-class="actions-input actions-items--right-items-input-block-counter"
-                                    button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                                    input-class="actions-sections-items--right-items-input-block-counter"
+                                    button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                     type="number"
                                     @update:model-value="(count) => {
                                           addRowCell(secIndex, cellIndex, rowIndex, count)
@@ -893,7 +899,7 @@ defineExpose({
 
                               <button
                                   v-if="cell.cellsRows.length > 1"
-                                  class="actions-btn actions-btn--default"
+                                  class="actions-sections-btn actions-sections-btn--default"
                                   @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
                               >
                                 Удалить
@@ -920,7 +926,7 @@ defineExpose({
 </template>
 
 <style lang="scss">
-.splitter {
+.splitter-sections {
   &-container {
     &--product {
       display: flex;
@@ -1044,7 +1050,7 @@ defineExpose({
   }
 }
 
-.actions {
+.actions-sections {
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -1156,13 +1162,13 @@ defineExpose({
         display: flex;
         gap: 1rem;
         flex-wrap: wrap;
-        margin-left: 1rem;
+        margin-left: 0rem;
         // max-width: calc(50% - 1rem);
       }
     }
 
     &--right {
-      max-width: calc(55% - 1rem);
+      max-width: calc(62% - 1rem);
       margin-left: 1rem;
 
       &-items {
@@ -1183,8 +1189,14 @@ defineExpose({
           }
 
           &-button {
-            padding-left: 0px;
+            margin-left: 5px;
           }
+
+          &-counter{
+            width: 45px;
+            padding-left: 10px;
+          }
+
         }
 
       }
@@ -1345,12 +1357,11 @@ defineExpose({
   }
 }
 
-.accordion {
-
+.accordion-sections {
   details {
     position: relative;
     margin: 16px 0;
-    padding: 15px 50px 15px 15px;
+    padding: 15px 10px 15px 15px;
     border: 1px solid #a3a9b5;
     border-radius: 15px;
     @media (hover: hover) {
@@ -1365,7 +1376,7 @@ defineExpose({
     font-weight: bold;
     list-style: none;
     cursor: pointer;
-
+    width: 60px;
   }
 
   details[open] {
