@@ -293,7 +293,7 @@ const selected = (item: any) => {
   else if (CONFIG.MODULEGRID) {
     universalModule2DConstructor.value.selectUMData({
       MODULEGRID: CONFIG.MODULEGRID || false,
-      PROPS: object,
+      PROPS: userData,
       canvasHeight: CONFIG.MODULEGRID.canvasHeight,
       canvasHeight: CONFIG.MODULEGRID.canvasWidth,
     })
@@ -900,7 +900,7 @@ const closeUMRedactor = () => {
 
       <ModalUM2Dconstructor
           ref="universalModule2DConstructor"
-          :product="product"
+          :product="product.userData"
       />
 
 <!--      <button
