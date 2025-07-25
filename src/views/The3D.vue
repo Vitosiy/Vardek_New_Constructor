@@ -900,7 +900,7 @@ const closeUMRedactor = () => {
 
       <ModalUM2Dconstructor
           ref="universalModule2DConstructor"
-          :product="product.userData"
+          :product="product?.userData || product"
       />
 
 <!--      <button
