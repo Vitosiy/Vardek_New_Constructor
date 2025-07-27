@@ -46,8 +46,8 @@ export class JsonBuilder {
         // }
 
         // console.log(json, Array.isArray(json.items), 'JSON')
-
-        json.items.forEach((item: THREETypes.TObject, key: number) => {
+        const JSONitems = Array.isArray(json.items) ? json.items : Object.values(json.items)
+        JSONitems.forEach((item: THREETypes.TObject, key: number) => {
             let material, geometry, textureUrl: string
 
             // console.log(item)

@@ -15,6 +15,7 @@ import { MoveManager } from "./MoveManager";
 
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 export class TrafficManager {
 
@@ -31,10 +32,12 @@ export class TrafficManager {
     controls: OrbitControls | null = null
     room: THREETypes.TRoomManager
     geometryBuilder: THREETypes.TGeometryBuilder
+    universalGeometryBuilder: THREETypes.UniversalGeometryBuilder;
 
     despose: DeepDispose
     dragAndDropManager: DragAndDropManager
     moveManager: MoveManager | null = null
+    //boxHelper: CustomBoxHelper
     boxHelper: THREETypes.TCustomBoxHelper
     currentObject: THREE.Object3D | null = null
     ruler: THREETypes.Ruler
@@ -68,6 +71,9 @@ export class TrafficManager {
         this.despose = new DeepDispose()
         this.boxHelper = root._customBoxHelper
         this.geometryBuilder = root.geometryBuilder
+        this.universalGeometryBuilder = root.universalGeometryBuilder
+        //this.dragAndDropManager = new DragAndDropManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.mouse, this.raycaster, this.boxHelper, this)
+
 
         this.dragAndDropManager = new DragAndDropManager(root, this.mouse, this.raycaster, this)
         this.moveManager = new MoveManager({ root, mouse: this.mouse, raycaster: this.raycaster, trafficManager: this })
