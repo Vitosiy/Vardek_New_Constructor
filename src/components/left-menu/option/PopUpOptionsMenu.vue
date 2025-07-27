@@ -5,14 +5,21 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from '@/store/appStore/useMenuStore';
-import { usePopupStore } from '@/store/appStore/popUpsStore';
-import { computed } from "vue";
+import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
+import { computed, ref } from "vue";
 
 import { _URL } from "@/types/constants";
 
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
+ const { getAppData } = useAppData();
 
+const currentProductInfo = ref({
+  title: '',
+  description: '',
+  image: ''
+});
+const isShowInfoPopup = ref(false);
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
     
@@ -42,19 +49,29 @@ const onDrag = (event: any, model: { [key: string]: any } | string) => {
 };
 
 const closeMenu = (menuType: MenuType) => {
-
   menuStore.closeMenu(menuType);
 };
 
-const popupStore = usePopupStore();
-
-const openPopup = (popupName: keyof typeof popupStore.popups) => {
-  popupStore.openPopup(popupName);
+const openPopup = (item) => {
+  console.log(getAppData, 'getAppData')
+  isShowInfoPopup.value = true;
+  currentProductInfo.value = {
+    title: item.NAME,
+    description: item.DESCRIPTION,
+    image: getImageUrl(item.PREVIEW_PICTURE) 
+  };
+  console.log(item)
 };
 
-const toggleInfoPopup = () => {
-  popupStore.toggleInfoPopup();
+const closeInfoPopup = () => {
+  isShowInfoPopup.value = false;
+  currentProductInfo.value = {
+    title: '',
+    description: '',
+    image: ''
+  };
 };
+
 </script>
 
 <template>
@@ -65,7 +82,7 @@ const toggleInfoPopup = () => {
       <div v-for="item in filteredData" class="popup-items" draggable="true" :key="item.name"
         @dragstart="onDrag($event, item)">
         <div class="popup-items-picture">
-          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
+          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="openPopup(item)">
           <img :src="getImageUrl(item.PREVIEW_PICTURE)" class="popup-items__image" />
         </div>
         <p class="popup-items__title">{{ item.NAME }}</p>
@@ -74,8 +91,8 @@ const toggleInfoPopup = () => {
     <div v-else class="options-popup-isempty">
       Товары в каталоге отсутсвуют, обратитесь в поддержку
     </div>
+    <InfoPopUp v-if="isShowInfoPopup" @close="closeInfoPopup" v-bind="currentProductInfo" />  
   </div>
-
 </template>
 
 

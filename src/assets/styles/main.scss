@@ -21,7 +21,6 @@ div {
     border-radius: 15px;
   }
 
-  &::-webkit-scrollbar-track {}
 
   &::-webkit-scrollbar-thumb {
     background-color: $dark-grey;
@@ -51,7 +50,7 @@ h1 {
   font-size: 18px;
   font-weight: 600;
 }
-
+ 
 input {
   margin: 0;
   bottom: 0;
