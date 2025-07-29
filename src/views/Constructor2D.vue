@@ -15,7 +15,7 @@ let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
 let canvas2d: Ref<HTMLCanvasElement | undefined> = ref();
 
-document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
+// document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
 
 let App2d: Constructor2D | null = null;
 

@@ -12,12 +12,16 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from '@/store/appStore/useMenuStore';
 
 import { useModelStore } from '@/store/appStore/useModelStore';
+import { usePopupStore } from '@/store/appStore/popUpsStore';
 
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
+import CatalogSVG from "../ui/svg/CatalogSVG.vue";
 
 
 const store = useModelStore();
+
 const menuStore = useMenuStore();
+const popupStore = usePopupStore();
 
 const catalogSectionsType = useAppData().getAppData.CATALOG.SECTIONS_TYPE;
 const catalogSections = useAppData().getAppData.CATALOG.SECTIONS;
@@ -50,6 +54,10 @@ const showRoomParMenu = () => {
   menuStore.openMenu('roomPar',);
 };
 
+const openPopup = (popupName: keyof typeof popupStore.popups) => {
+  popupStore.openPopup(popupName);
+};
+
 </script>
 
 <template>
@@ -78,6 +86,11 @@ const showRoomParMenu = () => {
 
       <div class="options-design">
         <h1 class="options__title">Товары</h1>
+        <div class="goods-items" @click="openPopup('catalog')">
+          <CatalogSVG class="goods-items__image" />
+          <p class="goods-items__title">Общий каталог</p>
+          <div class="radial-sphere"></div>
+        </div>
         <MainSelect v-model="selectedSectionType" :options="catalogSectionsType" @change="closeAllMenus" />
         <div class="goods">
           <div v-for="(item, index) in filteredCatalogSections" :key="index" class="goods-item"
@@ -387,6 +400,52 @@ const showRoomParMenu = () => {
       &.active {
         left: 330px;
       }
+    }
+  }
+}
+
+.goods-items {
+  min-height: 50px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 0 15px;
+  cursor: pointer;
+  transition: 0.15s ease-in-out;
+  margin-bottom: 1rem;
+
+  &__title {
+    z-index: 5;
+    transition: 0.15s;
+  }
+
+  &__image {
+    z-index: 5;
+  }
+
+  .radial-sphere {
+    width: 100%;
+    min-width: 50px;
+    max-width: 50px;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 360px;
+    background: $stroke;
+    z-index: 1;
+    transition: 0.3s ease;
+  }
+
+  &.active {
+    .goods-item__title {
+      color: $white;
+    }
+
+    .radial-sphere {
+      max-width: 300px;
+      background: $red;
     }
   }
 }
