@@ -1,5 +1,6 @@
-@use 'fonts-main.scss';
-@use 'colors.scss' as *;
+@use "fonts-main.scss";
+@use "iconsfont.scss";
+@use "colors.scss" as *;
 
 html,
 body,
@@ -21,7 +22,8 @@ div {
     border-radius: 15px;
   }
 
-  &::-webkit-scrollbar-track {}
+  &::-webkit-scrollbar-track {
+  }
 
   &::-webkit-scrollbar-thumb {
     background-color: $dark-grey;
@@ -157,6 +159,36 @@ p {
     width: 42px;
     height: 42px;
   }
+  svg {
+    path {
+      fill: $strong-grey;
+    }
+
+    g {
+      path {
+        transition-property: fill;
+        transition-duration: 0.3s;
+        transition-timing-function: ease;
+        fill: $strong-grey;
+      }
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      svg {
+        path {
+          fill: $black;
+        }
+
+        g {
+          path {
+            fill: $black;
+          }
+        }
+      }
+    }
+  }
 }
 
 .right-menu__svg {
@@ -201,9 +233,7 @@ p {
 
   &:focus {
     outline: none;
-
   }
-
   svg {
     path {
       fill: $strong-grey;
@@ -211,6 +241,9 @@ p {
 
     g {
       path {
+        transition-property: fill;
+        transition-duration: 0.3s;
+        transition-timing-function: ease;
         fill: $strong-grey;
       }
     }
@@ -233,6 +266,21 @@ p {
 
     &:active {
       background-color: $clicked-red;
+    }
+  }
+  @media (hover: hover) {
+    &:hover {
+      svg {
+        path {
+          fill: $white;
+        }
+
+        g {
+          path {
+            fill: $white;
+          }
+        }
+      }
     }
   }
 }

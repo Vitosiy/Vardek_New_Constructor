@@ -16,6 +16,7 @@ import SurfaceRedactor from "./SurfaceRedactor.vue";
 import MillingRedactor from "./MillingRedactor.vue";
 import ColorRedactor from "./ColorRedactor.vue";
 import PatinaRedactor from "./PatinaRedactor.vue";
+import GlassRedactor from "./GlassRedactor.vue";
 
 const props = defineProps({
   tabIndex: Number /** Индекс выбранного фасада в defaultTab.vue */,
@@ -52,19 +53,35 @@ const isPalleteExist = ref<boolean>(false);
 const patinaList = ref<Array>([]);
 const isPatinaExist = ref<boolean>(false);
 
+const glassList = ref<Array>([]);
+const isGlassExist = ref<boolean>(false);
+
 const onSelectMaterial = (data) => {
+  const product = _APP.CATALOG.PRODUCTS[productId];
+  const { COLOR } = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+  const dataOfFasadeType = _FASADE[COLOR];
+
   isSurfaceSelected.value = true;
+
   millingList.value = modelState.getCurrentMillingData;
-  isMillingExist.value = millingList.value.length > 0;
+  isMillingExist.value = millingList.value.length > 0 && !product.GLASS[0];
+
+  // console.log(millingList.value, "MILLING_0");
 
   paletteList.value = modelState.getCurrentPaletteData;
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
 
+  glassList.value = modelState.getCurrentGlassData;
+  isGlassExist.value = glassList.value.length > 0;
+
   /** Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value = patinaList.value.length > 0;
+  isPatinaExist.value = patinaList.value.length > 0 && !product.GLASS[0];
 
   currentSurfaceData.value = data;
+  currentMillingData.value = {};
+  currentPatinaData.value = {};
+
   if (isPalleteExist.value) {
     let { NAME, HTML, ID } =
       paletteList.value[Object.keys(paletteList.value)[0]];
@@ -83,21 +100,30 @@ const onSelectMilling = (data) => {
 
 const onSelectPalette = (data) => {
   currentPaletteData.value = data;
+  // currentPatinaData.value = {};
 };
 
 const onSelectPatina = (data) => {
   currentPatinaData.value = data;
 };
 
+const onSelectGlass = (data) => {
+  currentGlassData.value = data;
+};
+
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
-  
-  if(type == 'surface') {
-    eventBus.emit('A:Delite-Fasad', props.tabIndex - 1);
-    let { NAME, DETAIL_PICTURE } = _FASADE[7397]
-    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE }
-    isMillingExist.value = false
-    isPalleteExist.value = false
+  if (type == "surface") {
+    eventBus.emit("A:Delite-Fasad", props.tabIndex - 1);
+    let { NAME, DETAIL_PICTURE } = _FASADE[7397];
+    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
+    isMillingExist.value = false;
+    isPalleteExist.value = false;
+    isPatinaExist.value = false;
+    isGlassExist.value = false;
+
+    setCurrentEditableOption("surface");
+    return;
   }
   if (type === "milling") {
     eventBus.emit("A:DeliteMilling", props.tabIndex - 1);
@@ -119,30 +145,36 @@ const deleteSelectedOptions = (type: String) => {
     eventBus.emit("A:DelitePatina", props.tabIndex - 1);
     currentPatinaData.value = { name: "", imgSrc: null };
   }
+
+  // if(type="glass"){
+
+  // }
 };
 
 const millingStatus = computed(() => {
-  if (!currentMillingData.value.imgSrc) { 
+  if (!currentMillingData.value.imgSrc) {
     return "disabled";
   }
 });
 
 /** Выбор панели редактирования фрезеровки или цвета, если такая опция существует */
 const setCurrentEditableOption = (name: String) => {
+  // console.log(name, "NAME");
   currentEditableOption.value = name;
 };
 
 onMounted(() => {
-  const product = productData.PROPS.PRODUCT;
+  console.log("Mount");
+  const product = _APP.CATALOG.PRODUCTS[productId];
 
   const currentFasadeData =
-  productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
-  
+    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+
   const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
-  productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
-  
+    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
-  let dataOfFasadeType = _FASADE[COLOR];
+  const dataOfFasadeType = _FASADE[COLOR];
 
   modelState.createCurrentPaletteData(COLOR);
   modelState.createCurrentMillingData({ fasadeId: COLOR, productId });
@@ -150,7 +182,9 @@ onMounted(() => {
   modelState.createCurrentGlassData({ fasadeId: COLOR, productId });
   modelState.createCurrentWindowsData({ fasadeId: COLOR, productId });
 
-  if (dataOfFasadeType.ATTACH_MILLINGS[0]) {
+  console.log(product.GLASS[0]);
+
+  if (dataOfFasadeType.ATTACH_MILLINGS[0] && !product.GLASS[0]) {
     millingList.value = modelState.getCurrentMillingData;
     if (millingList.value.length > 0) isMillingExist.value = true;
   }
@@ -160,25 +194,30 @@ onMounted(() => {
     isPalleteExist.value = true;
   }
 
-  if (dataOfFasadeType.PATINA[0]) {
+  if (dataOfFasadeType.PATINA[0] && dataOfFasadeType.ATTACH_MILLINGS[0]) {
     patinaList.value = modelState.getCurrentPatinaData;
     if (patinaList.value.length > 0) isPatinaExist.value = true;
+  }
+  // console.log(dataOfFasadeType.ATTACH_GLASS , 'ATTACH_GLASS', product.GLASS[0])
+
+  if (dataOfFasadeType.ATTACH_GLASS[0] && product.GLASS[0]) {
+    glassList.value = modelState.getCurrentGlassData;
+    if (patinaList.value.length > 0) isGlassExist.value = true;
   }
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
   if (COLOR) {
-    const { NAME, DETAIL_PICTURE } = _FASADE[COLOR];
-    currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
+    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = _FASADE[COLOR];
+    currentSurfaceData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     isSurfaceSelected.value = true;
   }
 
-
   if (MILLING) {
     console.log("MILLING");
-    const { NAME, DETAIL_PICTURE } = modelState.getCurrentMillingData.find(
+    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = modelState.getCurrentMillingData.find(
       (milling) => milling.ID === MILLING
     );
-    currentMillingData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
+    currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     isMillingExist.value = true;
   }
 
@@ -189,12 +228,24 @@ onMounted(() => {
   }
 
   if (PATINA) {
-    const { NAME, DETAIL_PICTURE } = modelState.getCurrentPatinaData.find(
-      (patina) => patina.ID === PATINA
+    if (modelState.getCurrentPatinaData) {
+      console.log(modelState.getCurrentPatinaData,'PATT', PATINA)
+      const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = modelState.getCurrentPatinaData.find(
+        (patina) => patina.ID === PATINA
+      );
+      currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+      isPatinaExist.value = true;
+    }
+  }
+
+  if (GLASS) {
+    console.log("GLASS");
+    const { NAME, DETAIL_PICTURE } = modelState.getCurrentGlassData.find(
+      (glass) => glass.ID === GLASS
     );
-    currentPatinaData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
-    isPatinaExist.value = true;
-  }  
+    currentGlassData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
+    isGlassExist.value = true;
+  }
 });
 </script>
 
@@ -233,6 +284,14 @@ onMounted(() => {
         @choose-option="setCurrentEditableOption"
         @delete-choise="deleteSelectedOptions"
       />
+
+      <ConfigurationOption
+        v-if="isGlassExist"
+        :type="'glass'"
+        :data="currentGlassData"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
+      />
     </div>
 
     <div class="container__list">
@@ -263,6 +322,14 @@ onMounted(() => {
         :tabIndex="props.tabIndex - 1"
         @select_patina="onSelectPatina"
       />
+
+      <GlassRedactor
+        v-if="currentEditableOption === 'glass'"
+        :glassList="glassList"
+        :tabIndex="props.tabIndex - 1"
+        @select_glass="onSelectGlass"
+      />
+      <!-- {{ glassList }} -->
     </div>
   </div>
 </template>
@@ -290,9 +357,9 @@ onMounted(() => {
     justify-content: space-between;
     flex-direction: column;
     gap: 8px;
-    border: 1px solid rgb(131, 131, 131);
-    border-radius: 10px;
-    padding: 10px 10px 0px 10px;
+    border: 1px solid #c6c6c6;
+    border-radius: 15px;
+    padding: 10px 0px 0px 10px;
     height: 100%;
     overflow-y: scroll;
     box-sizing: border-box;
@@ -315,9 +382,11 @@ onMounted(() => {
     border: 1px solid grey;
     border-radius: 5px;
   }
-  
-  @media (min-height: 1000px) { 
+
+  @media (min-height: 1000px) {
     gap: 17px;
   }
 }
+
+
 </style>

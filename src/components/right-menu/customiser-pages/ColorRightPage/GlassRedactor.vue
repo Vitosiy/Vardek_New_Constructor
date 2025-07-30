@@ -5,24 +5,24 @@ import { _URL } from "@/types/constants";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 const props = defineProps({
-  patinaList: Array,
+  glassList: Array,
   tabIndex: Number,
 });
 
-const emit = defineEmits(["select_patina"]);
+const emit = defineEmits(["select_glass"]);
 
 const eventBus = useEventBus();
 const selectPatina = ref<any>(null);
 
 
-const changePatina = (patina) => {
-  eventBus.emit("A:DrawPatina", {
-    data: patina.ID,
+const changeGlass = (glass) => {
+  eventBus.emit("A:ChangeGlassColor", {
+    data: glass.ID,
     fasadeNdx: props.tabIndex,
   });
-  emit("select_patina", {
-    name: patina.NAME,
-    imgSrc: patina.DETAIL_PICTURE,
+  emit("select_glass", {
+    name: glass.NAME,
+    imgSrc: glass.PREVIEW_PICTURE,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
@@ -33,11 +33,11 @@ const changePatina = (patina) => {
     <!-- Все виды патины -->
     <div
       class="item"
-      v-for="patina in props.patinaList"
-      @click="changePatina(patina)"
+      v-for="glass in props.glassList"
+      @click="changeGlass(glass)"
     >
-      <img class="item__img" :src="_URL + patina.PREVIEW_PICTURE" alt="" />
-      <div class="item__name">{{ patina.NAME }}</div>
+      <img class="item__img" :src="_URL + glass.PREVIEW_PICTURE" alt="" />
+      <div class="item__name">{{ glass.NAME }}</div>
     </div>
 
   </div>

@@ -1,17 +1,17 @@
 
+
 //@ts-nocheck
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
-import { RoomManager } from "../Room/RoomManager"
-import { MeshEvents } from "../Meshes/Utils/Events"
+// import { RoomManager } from "../Room/RoomManager"
+// import { MeshEvents } from "../Meshes/Utils/Events"
 
 import { TrafficManager } from "../Movement/TrafficManager"
-import { AppLights } from "../World/Lights"
+
 import { Environment } from "../World/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
-
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from '@/store/appliction/useEventBus';
@@ -22,7 +22,7 @@ export class World {
     root: THREETypes.TApplication
     scene: THREE.Scene
 
-    deepDispose: DeepDispose
+    deepDispose: THREETypes.TDeepDispose
     resources: any
 
     sceneState: ReturnType<typeof useSceneState> = useSceneState()
@@ -30,30 +30,26 @@ export class World {
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
-    trafficManager: TrafficManager | null
+    trafficManager: THREETypes.TTrafficManager | null
     room: THREETypes.TRoomManager | null = null
-    lights: AppLights | any
+    lights: THREETypes.TAppLights
     enviroment: any
     // meshEvents: MeshEvents | null = null
 
     private onCreateRoom: () => void;
     private onSaveRoom: () => void;
     private onLoadRoom: (data: number) => void;
-    private onFirstCreate: () => void;
+
 
     constructor(root: THREETypes.TApplication) {
 
         this.deepDispose = new DeepDispose()
 
-        // this.trafficManager = null
-
         this.root = root
-        this.scene = root.scene
+        this.scene = root.scene!
         this.resources = root.resources;
 
         this.lights = root._lights
-
-        // this.room = null;
 
         this.onCreateRoom = this.createRoom.bind(this)
         this.onSaveRoom = this.saveRoom.bind(this)
@@ -62,9 +58,9 @@ export class World {
 
         // this.scene.add(new THREE.AxesHelper(2000))
         this.room = root._roomManager
-        this.room.update()
+        this.room!.update()
 
-        this.lights.setLight(this.room._wallsGroupSize, 2)
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
         this.trafficManager = root._trafficManager
         this.vueEvents()
 
@@ -76,24 +72,24 @@ export class World {
 
     }
 
-    setRoom() {
+    async setRoom() {
 
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room.loadRoom(this.lights)
-        this.room.update()
-        this.room.updateWallMaterial(this.room.wallTexture)
+        // this.scene.add(new THREE.AxesHelper(2000))
+        this.room!.loadRoom(this.lights)
+        await this.room!.update()
+        this.room!.updateWallMaterial(this.room!.wallTexture)
     }
 
-    createRoom() {
+    async createRoom() {
 
         this.roomsStore.clearTempRoomSize();
         this.roomsStore.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
-        this.setRoom();
-        this.lights.setLight(this.room._wallsGroupSize, 2)
+        await this.setRoom();
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
 
         if (this.trafficManager) {
-            this.trafficManager.update(this.room)
+            this.trafficManager.update(this.room!)
         }
 
     }
@@ -110,7 +106,7 @@ export class World {
                 id: this.roomsStore.rooms.length, // Присваиваем id 
                 label: Date.now().toString(), // Присваиваем Название
                 size: this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes,
-                content: this.room.save()
+                content: this.room!.save() as string[]
             })
             this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
             // console.log(this.sceneState.getCurrentProjectParams)
@@ -119,31 +115,27 @@ export class World {
 
         // console.log('Комната уже существует')
 
-        this.roomsStore.updateRoom(this.roomsStore.getRoomId as number, this.room.save(), this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes)
+        this.roomsStore.updateRoom(this.roomsStore.getRoomId as number, this.room!.save(), this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes)
         this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
 
         // console.log(this.sceneState.getCurrentProjectParams)
 
     }
 
-    loadRoom(roomId: number) {
+    async loadRoom(roomId: number) {
         this.uniformState.clearUniformGroupMembership();
         this.uniformState.clearUniformGroupsStors()
-
-        console.log(this.uniformState.getUniformGroupMembership)
 
         /** Добавляем ID комнаты в хранилище */
         this.roomsStore.setCurrentRoomId(roomId);
 
         this.deepDispose.clearScene(this.scene);
 
-        this.setRoom();
-        this.lights.setLight(this.room._wallsGroupSize, 2)
+        await this.setRoom();
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
+        await this.trafficManager!.update(this.room!)
 
-        if (this.trafficManager) {
-            this.trafficManager.update(this.room)
-
-        }
+        this.root.userHistory.clearHistory(this.room?._roomContant as string[])
     }
 
     vueEvents() {

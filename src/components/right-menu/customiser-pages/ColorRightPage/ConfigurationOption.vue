@@ -19,6 +19,7 @@ let title = computed(() => {
   if (props.type === "milling") return "Тип фрезеровки";
   if (props.type === "palette") return "Цвет покрытия";
   if (props.type === "patina") return "Цвет патины";
+  if (props.type === "glass") return "Цвет стекла";
 });
 
 let name = computed(() => {
@@ -38,15 +39,20 @@ let chooseOption = () => {
 };
 
 const deleteChoise = (event) => {
-  event.stopPropagation()
-  emit("delete-choise", props.type)
+  event.stopPropagation();
+  emit("delete-choise", props.type);
 };
 </script>
 
 <template>
   <div :class="`config ${props.additionalClass}`" @click="chooseOption">
     <div class="config__top">
-      <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
+      <img
+        v-if="props.type !== 'palette'"
+        class="config__img"
+        :src="imgSrc"
+        alt=""
+      />
       <div v-else @click="chooseOption">
         <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="" />
         <div
@@ -66,8 +72,8 @@ const deleteChoise = (event) => {
       <div>
         <p class="config__title">{{ title }}</p>
       </div>
-        <p class="config__name">{{ name }}</p>
-        <!--
+      <p class="config__name">{{ name }}</p>
+      <!--
         
         -->
     </div>
@@ -78,10 +84,14 @@ const deleteChoise = (event) => {
 .config {
   display: flex;
   flex-direction: column;
-  height: 15vh;
-  width: 15vh;
-  padding: 0.8vh;
-  border-radius: 1vh;
+  // height: 100%;
+  width: 100%;
+
+  max-width: 155px;
+  // max-height: 200px;
+  padding: 10px;
+  gap: 10px;
+  border-radius: 15px;
   box-shadow: 4px 4px 4px 4px rgba(34, 60, 80, 0.11);
   overflow: hidden;
   cursor: pointer;
@@ -90,7 +100,7 @@ const deleteChoise = (event) => {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    height: 50%;
+    // max-height: 50%;
     width: 100%;
   }
 
@@ -98,35 +108,27 @@ const deleteChoise = (event) => {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    height: 50%;
+    // max-height: 50%;
     overflow: hidden;
   }
 
   &__img {
     height: 50px;
     cursor: pointer;
-
-    @media (min-height: 1000px) { 
-      height: 60px;
-    }
   }
 
   &__color {
-    height: 50px;
-    width: 50px;
+    height: 40px;
+    width: 40px;
     border-radius: 12px;
     cursor: pointer;
-
-    @media (min-height: 1000px) { 
-      height: 60px;
-    }
   }
 
   &__delete {
     height: 20px;
     cursor: pointer;
 
-    @media (min-height: 1000px) { 
+    @media (min-height: 1000px) {
       height: 25px;
     }
   }
@@ -136,27 +138,36 @@ const deleteChoise = (event) => {
     font-size: small;
     // flex: 2;
 
-    @media (min-height: 1000px) { 
+    @media (min-height: 1000px) {
       font-size: medium;
     }
   }
 
   &__name {
     font-size: small;
-    line-height: 14px;
+    // line-height: 14px;
     text-overflow: ellipsis;
     overflow: hidden;
 
-    @media (min-height: 1000px) { 
+    @media (min-height: 1000px) {
       font-size: medium;
-      line-height: 10px;
+      // line-height: 10px;
     }
   }
-
 }
 
-.disabled{
+.disabled {
   pointer-events: none;
   background-color: rgba(228, 140, 140, 0.133);
+}
+
+@media screen and (min-width: 1000px) {
+  .config {
+    &__img,
+    &__color {
+      height: 60px;
+      width: 60px;
+    }
+  }
 }
 </style>

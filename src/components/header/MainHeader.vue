@@ -1,4 +1,8 @@
 <script setup lang="ts">
+// @ts-nocheck
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { onMounted, watch, nextTick, ref, computed } from "vue";
+
 import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
 import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
 import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
@@ -16,7 +20,73 @@ import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/Inser
 import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
 import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
 
+const props = defineProps(["pageComponent"]);
+const historyActions = ref<boolean>(false);
+const verdekConstructor = ref(null);
+const restorLength = ref<number>(0);
+const curActionCount = ref<number>(0);
 
+const eventBus = useEventBus();
+
+eventBus.onEmitCalled(async (event, payload) => {
+  if (!historyActions.value) return;
+  if (!verdekConstructor.value) return;
+  await nextTick();
+  if (verdekConstructor.value.userHistory.checkEvent(event)) {
+    const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+
+    restorLength.value = total;
+    curActionCount.value = total;
+  }
+});
+
+const saveProject = () => {
+  if (historyActions.value) eventBus.emit("A:Save");
+};
+
+const moreThenActions = computed(() => {
+  return (
+    curActionCount.value + 1 > restorLength.value || restorLength.value == 0
+  );
+});
+
+const lessThenActions = computed(() => {
+  return curActionCount.value - 1 < 0;
+});
+
+watch(
+  () => props.pageComponent,
+  async () => {
+    await nextTick();
+    const constructor = props.pageComponent.VerdekConstructor;
+
+    if (constructor) {
+      verdekConstructor.value = constructor;
+      historyActions.value = true;
+      return;
+    }
+    historyActions.value = false;
+    restorLength.value = 0;
+    curActionCount.value = 0;
+  },
+  { flush: "post", immediate: true }
+);
+
+const prevAction = () => {
+  if (historyActions.value) {
+    eventBus.emit("A:PrevAction");
+    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+    props.pageComponent.selected();
+  }
+};
+
+const nextAction = () => {
+  if (historyActions.value) {
+    eventBus.emit("A:NextAction");
+    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+    props.pageComponent.selected();
+  }
+};
 </script>
 
 <template>
@@ -27,9 +97,16 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
           <img class="header-link__logo" src="@/assets/img/logo.png" />
         </router-link>
         <div class="header-main-ui">
-          <div class="header-ui-group">
-            <LeftLightHeaderButton />
-            <RightLightHeaderButton />
+          <div class="header-ui-group" v-if="historyActions">
+            {{ restorLength }}{{ curActionCount }}
+            <LeftLightHeaderButton
+              @click="prevAction"
+              :class="{ disabled: lessThenActions }"
+            />
+            <RightLightHeaderButton
+              @click="nextAction"
+              :class="{ disabled: moreThenActions }"
+            />
           </div>
           <div class="header-ui-group">
             <S2DLightHeaderButton />
@@ -41,7 +118,7 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
         </div>
       </div>
       <div class="header-utilitys">
-        <div class="header-utilitys-basket">
+        <div class="header-basket">
           <div class="header-utilitys-basket">
             <p class="header-utilitys-basket-cost">14 548 ₽</p>
           </div>
@@ -52,7 +129,7 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
           <ReportHelperButton />
           <StudyHelperButton />
           <AddPhotoHelperButton />
-          <GetAppHelperButton />
+          <GetAppHelperButton @click="saveProject" />
           <InsertFileHelperButton />
           <PrintHelperButton />
           <VisibilityHelperButton />
@@ -69,64 +146,79 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
   display: flex;
   align-items: center;
   border-bottom: 1px solid $light-stroke;
+
   &__container {
     width: 100%;
     padding: 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    .header-main {
-      width: 100%;
-      max-width: 665px;
+  }
+
+  &-basket{
+    position: relative;
+  }
+}
+
+.header-utilitys {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+
+  &-basket {
+    position: relative;
+  }
+
+  &-helpers {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.header-utilitys-basket {
+  width: 201px;
+  height: 50px;
+  display: flex;
+  border: 1.2px solid $black;
+  border-radius: 50px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.header-utilitys-basket-cost {
+  width: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.header-main {
+  width: 100%;
+  max-width: 665px;
+  display: flex;
+  align-items: center;
+
+  &-ui {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+
+    .header-ui-group {
       display: flex;
-      align-items: center;
-      .header-link {
-        width: 100%;
-        max-width: 315px;
-        &__logo {
-          width: 154px;
-          height: 61px;
-        }
-      }
-      &-ui {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 30px;
-        .header-ui-group {
-          display: flex;
-          gap: 10px;
-        }
-      }
+      gap: 10px;
     }
-    .header-utilitys {
-      display: flex;
-      align-items: center;
-      gap: 60px;
-      &-basket {
-        position: relative;
-        .header-utilitys-basket {
-          width: 201px;
-          height: 50px;
-          display: flex;
-          border: 1.2px solid $black;
-          border-radius: 50px;
-          box-sizing: border-box;
-          overflow: hidden;
-          .header-utilitys-basket-cost {
-            width: 170px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-          }
-        }
-      }
-      &-helpers {
-        display: flex;
-        gap: 10px;
-      }
-    }
+  }
+}
+
+.header-link {
+  width: 100%;
+  max-width: 315px;
+
+  &__logo {
+    width: 154px;
+    height: 61px;
   }
 }
 </style>

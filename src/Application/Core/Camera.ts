@@ -11,6 +11,11 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 
 import { Sizes } from "../Utils/Sizes"
 
+type TCameraExtremum = {
+    min: number,
+    max: number
+}
+
 export class Camera {
 
     eventBuss: ReturnType<typeof useEventBus> = useEventBus()
@@ -26,6 +31,10 @@ export class Camera {
     ortoCamera: boolean = false
     screenSpacePanning: boolean = false
     keybordListeners: TKeybordListeners
+    cameraExtremum: TCameraExtremum = {
+        min: -10000,
+        max: 10000
+    }
 
     private onKeyDown: (event) => void;
     private onKeyUp: (event) => void
@@ -61,7 +70,7 @@ export class Camera {
     keyDown(event) {
 
         if (event.ctrlKey || event.metaKey) {
-           
+
             this.controls.screenSpacePanning = true
             // console.log('screenSpacePanning TRUE')
         }
@@ -125,8 +134,14 @@ export class Camera {
         this.instance?.updateProjectionMatrix()
     }
 
+
     update() {
         if (this.instance instanceof THREE.OrthographicCamera) return
+        this.instance.position.x = THREE.MathUtils.clamp(this.instance.position.x, this.cameraExtremum.min, this.cameraExtremum.max)
+        this.instance.position.z = THREE.MathUtils.clamp(this.instance.position.z, this.cameraExtremum.min, this.cameraExtremum.max)
+        this.instance.position.y = THREE.MathUtils.clamp(this.instance.position.y, this.cameraExtremum.min, this.cameraExtremum.max)
+
+
         this.controls!.update()
     }
 

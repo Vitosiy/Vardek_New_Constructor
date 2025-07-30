@@ -1,10 +1,23 @@
 <script setup lang="ts">
-//@ts-nocheck
+/**//@ts-nocheck */
+
+import * as THREETypes from "@/types/types";
 import * as THREEInterfases from "@/types/interfases";
 import * as THREE from "three";
 import { _URL } from "@/types/constants";
 
-import { ref, watch, computed, onMounted, onBeforeUnmount, toRaw } from "vue";
+import {
+  ref,
+  watch,
+  computed,
+  onMounted,
+  onBeforeMount,
+  onBeforeUnmount,
+  onUnmounted,
+  toRaw,
+  defineExpose,
+  nextTick,
+} from "vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -28,9 +41,9 @@ import ContentControllerButton from "@/components/ui/buttons/right-menu/controll
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
 import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
+import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 
 import Toggle from "@vueform/toggle";
-import Slider from "@vueform/slider";
 
 type TSize = {
   width: {
@@ -66,30 +79,35 @@ interface IProductSizeEdit {
   size: TSize | null;
 }
 
-// TODO прокинуть сюда данные из indexedDB при перезагрузке. Проблема: DefaultLayout грузится позже этого компонента
-let appData = useAppData().getAppData;
-let startData = useSceneState();
-let roomStore = useRoomState();
-let eventBus = useEventBus();
-let uniformState = useUniformState();
-
-let modelState = useModelState();
-let models = useAppData().getAppData.CATALOG.PRODUCTS;
-let wallMaterials = useAppData().getAppData.WALL;
-let floorMaterials = useAppData().getAppData.FLOOR;
-let customiserStore = useCustomiserStore();
-let objectData = useObjectData(); /** Текущий объект */
-let roomContantData = useRoomContantData();
+const appData = ref<{ [key: string]: any } | null>(null);
+const startData = ref<THREETypes.TUseSceneState | null>(null);
+const roomStore = ref<THREETypes.TUseRoomState | null>(null);
+const eventBus = ref<THREETypes.TUseEventBus | null>(null);
+const uniformState = ref<THREETypes.TUseUniformState | null>(null);
+const modelState = ref<THREETypes.TUseModelState | null>(null);
+const models = ref<any>(null);
+const wallMaterials = ref<number | null>(null);
+const floorMaterials = ref<number | null>(null);
+const customiserStore = ref<THREETypes.TUseCustomiserStore | null>(null);
+const objectData = ref<THREETypes.TUseObjectData | null>(
+  null
+); /** Текущий объект */
+const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
 
 const _FASADE = ref({});
 const _MILLING = ref({});
 
-const sceneContainer: Ref<HTMLElement | null> = ref(null);
-const VerdekConstructor: Ref<Application | null> = ref(null);
+const preloader = ref<HTMLElement | null>(null);
+const activePreloader = ref<boolean>(false);
+
+const sceneContainer = ref<HTMLElement | null>(null);
+const VerdekConstructor = ref<Application | null>(null);
 
 const selectedRoom = computed(() => {
+  if (!roomStore) return;
   return (
-    roomStore.getRooms.find((room) => room.id === selectValue.value) || null
+    roomStore.value!.getRooms.find((room) => room.id === selectValue.value) ||
+    null
   );
 });
 
@@ -126,7 +144,7 @@ const refraction = ref<boolean>(false);
 
 const pointLightValue = ref<number>(2);
 
-const clampHeight = ref<number>(startData.getStartHeightClamp);
+const clampHeight = ref<number>(3000);
 
 const productColor = ref<{ [key: string]: any }>({});
 
@@ -168,24 +186,42 @@ const gridSaved = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
+onBeforeMount(() => {
+  //   appData.value = useAppData().getAppData;
+
+  startData.value = useSceneState();
+
+  eventBus.value = useEventBus();
+  uniformState.value = useUniformState();
+  modelState.value = useModelState();
+  customiserStore.value = useCustomiserStore();
+  roomStore.value = useRoomState();
+});
+
 onMounted(() => {
+  appData.value = useAppData().getAppData;
+
+  models.value = useAppData().getAppData.CATALOG.PRODUCTS;
+  wallMaterials.value = useAppData().getAppData.WALL;
+  floorMaterials.value = useAppData().getAppData.FLOOR;
+
+  objectData.value = useObjectData(); /** Текущий объект */
+  roomContantData.value = useRoomContantData();
+
   if (sceneContainer.value) {
     _FASADE.value = appData.FASADE;
     _MILLING.value = appData.MILLING;
 
-    VerdekConstructor.value = new Application(sceneContainer.value);
+    eventBus.value!.on("A:Move", getMove);
+    eventBus.value!.on("A:Selected", selected);
+    eventBus.value!.on("A:ContantLoaded", checkContantLoad);
 
-    eventBus.on("A:Move", getMove);
-    eventBus.on("A:Selected", selected);
+    VerdekConstructor.value = new Application(sceneContainer.value);
   }
 });
 
 onBeforeUnmount(() => {
-  console.log("onBeforeUnmount");
-  eventBus.off("A:Move", getMove);
-  eventBus.off("A:Selected", selected);
-  // eventBus.clearEvents();
-  uniformState.resetUniformState();
+  uniformState.value!.resetUniformState();
 
   productColor.value = {};
   productFasades.value = [];
@@ -197,22 +233,26 @@ onBeforeUnmount(() => {
   _FASADE.value = {};
   _MILLING.value = {};
 
-  appData = null;
-  startData = null;
-  roomStore = null;
-  eventBus = null;
-  uniformState = null;
+  appData.value = null;
+  startData.value = null;
+  roomStore.value = null;
+  uniformState.value = null;
 
-  modelState = null;
-  models = null;
-  wallMaterials = null;
-  floorMaterials = null;
-  customiserStore = null;
-  objectData = null;
-  roomContantData = null;
+  modelState.value = null;
+  models.value = null;
+  wallMaterials.value = null;
+  floorMaterials.value = null;
+  customiserStore.value = null;
+  objectData.value = null;
+  roomContantData.value = null;
 
   VerdekConstructor.value?.destroy();
   VerdekConstructor.value = null;
+});
+
+onUnmounted(() => {
+  eventBus.value!.clearEvents();
+  eventBus.value = null;
 });
 
 watch(shadows, () => {
@@ -227,6 +267,10 @@ watch(pointLightValue, () => {
   changePointLightPower(pointLightValue.value);
 });
 
+const checkContantLoad = (state: boolean) => {
+  activePreloader.value = state;
+};
+
 const getMove = (move: boolean) => {
   if (!product.value) return;
 
@@ -234,31 +278,34 @@ const getMove = (move: boolean) => {
   controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
 };
 
-const selected = (item: any) => {
-  let object = item.object;
+const selected = async (item: any) => {
+  // let object = item.object;
+  // let roomContant = item.roomContant;
+  // totalContent.value = roomContant;
 
-  let roomContant = item.roomContant;
-  totalContent.value = roomContant;
-
-  if (!object) {
+  if (!item || !item.object) {
     controller.value = false;
     CutData.value = {};
     CutCash.value = {};
     return;
   }
 
+  let object = item.object;
+  let roomContant = item.roomContant;
+  totalContent.value = roomContant;
+
   const { userData } = object;
   const { PROPS } = userData;
   const { CONFIG, RASPIL } = PROPS;
 
-  console.log(userData, "SELECT");
+  // console.log(item, "SELECT");
 
-  objectData.setObjectData(userData);
-  roomContantData.setRoomContantData(totalContent.value);
+  objectData.value!.setObjectData(userData);
+  roomContantData.value!.setRoomContantData(totalContent.value);
 
-  if (CONFIG.SIZE) {
-    getProductSizeProps(CONFIG.SIZE, CONFIG.SIZE_EDIT);
-  }
+  // if (CONFIG.SIZE) {
+  //   getProductSizeProps(CONFIG.SIZE, CONFIG.SIZE_EDIT);
+  // }
 
   controller.value = true;
 
@@ -267,7 +314,10 @@ const selected = (item: any) => {
   controller.value = true;
 
   /**  Координаты мыши */
-  controllerPositionData.value = userData.MOUSE_POSITION;
+  // if (userData.MOUSE_POSITION)
+  // controllerPositionData.value = userData.MOUSE_POSITION;
+
+  console.log(userData.MOUSE_POSITION, "UM");
 
   productData.value = { ...PROPS };
 
@@ -286,47 +336,46 @@ const selected = (item: any) => {
   }
 
   useModelState().setCurrentModel(userData);
-};
 
-const resizeRoom = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Room-resize", inputValue.value);
-  }
+  /**  Координаты мыши */
+  await nextTick(() => {
+    controllerPositionData.value = userData.MOUSE_POSITION;
+  });
 };
 
 const toggleShadow = (value: boolean) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:ToggleShadow", value);
+    eventBus.value!.emit("A:ToggleShadow", value);
   }
 };
 
 const toggleRefraction = (value: boolean) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:ToggleRefraction", value);
+    eventBus.value!.emit("A:ToggleRefraction", value);
   }
 };
 
 const changePointLightPower = (value: number) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:ChangePointLightPower", value);
+    eventBus.value!.emit("A:ChangePointLightPower", value);
   }
 };
 
 const setQuality = (value: string) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Quality", value);
+    eventBus.value!.emit("A:Quality", value);
   }
 };
 
 const create = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Create");
+    eventBus.value!.emit("A:Create");
   }
 };
 
 const save = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Save");
+    eventBus.value!.emit("A:Save");
   }
 };
 
@@ -334,68 +383,41 @@ const load = () => {
   if (VerdekConstructor) {
     shadows.value = false;
     refraction.value = false;
-    eventBus.emit("A:ToggleShadow", shadows.value);
-    eventBus.emit("A:ToggleRefraction", refraction.value);
-    eventBus.emit("A:Load", selectedRoom.value?.id);
+    eventBus.value!.emit("A:ToggleShadow", shadows.value);
+    eventBus.value!.emit("A:ToggleRefraction", refraction.value);
+    eventBus.value!.emit("A:Load", selectedRoom.value?.id);
   }
 };
 
 const toggleiew = () => {
   cameraView.value = !cameraView.value;
-  eventBus.emit("A:CameraToggle", cameraView.value);
+  eventBus.value!.emit("A:CameraToggle", cameraView.value);
 };
 
 const changeWallTexture = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:ChangeWallTexture", wallTexture.value);
+    eventBus.value!.emit("A:ChangeWallTexture", wallTexture.value);
   }
 };
 
 const changeFloorTexture = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:ChangeFloorTexture", floorTexture.value);
+    eventBus.value!.emit("A:ChangeFloorTexture", floorTexture.value);
   }
 };
 
 const changeModuleTexture = (value: { [key: string]: any }) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:ChangeModuleTexture", value);
+    eventBus.value!.emit("A:ChangeModuleTexture", value);
   }
 };
-
-// const changeFasadeTexture = (value: { [key: string]: any }) => {
-//   if (VerdekConstructor) {
-//     currentFasadeId.value = value.ID;
-
-//     if (
-//       appData.FASADE[currentFasadeId.value].PALETTE.length &&
-//       appData.FASADE[currentFasadeId.value].PALETTE[0] != null
-//     ) {
-//       paletteColorsData.value = Object.keys(appData.PALETTE)
-//         .filter(
-//           (key) =>
-//             appData.PALETTE[key].TYPE ===
-//             appData.FASADE[currentFasadeId.value].PALETTE[0]
-//         )
-//         .reduce((obj, key) => {
-//           obj[key] = appData.PALETTE[key];
-//           return obj;
-//         }, {});
-
-//       return;
-//     }
-
-//     paletteColorsData.value = {};
-//     eventBus.emit("A:ChangeFasadeTexture", value);
-//   }
-// };
 
 const changePaletteColor = () => {
   // const selectedPalette = paletteColorsData.find(
   //   (palette) => palette.UNAME === selectPalette.value
   // );
 
-  eventBus.emit("A:ChangePaletteColor", selectPalette.value);
+  eventBus.value!.emit("A:ChangePaletteColor", selectPalette.value);
 };
 
 const onDrag = (event: any, model: { [key: string]: any } | string) => {
@@ -404,14 +426,14 @@ const onDrag = (event: any, model: { [key: string]: any } | string) => {
 
 const removeModel = (model) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:RemoveModel", model);
+    eventBus.value!.emit("A:RemoveModel", model);
     controller.value = false;
   }
 };
 
 const changeHeightClamp = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Height-clamp", clampHeight.value);
+    eventBus.value!.emit("A:Height-clamp", clampHeight.value);
   }
 };
 
@@ -423,7 +445,7 @@ const getCurrentProduct = (item: any) => {
 
 const toggleFasad = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Toggle-Fasad", clampHeight.value);
+    eventBus.value!.emit("A:Toggle-Fasad", clampHeight.value);
   }
 };
 
@@ -457,54 +479,54 @@ const getProductSizeProps = (
 };
 
 const togglePopup = () => {
-  customiserStore.toggleCustomiserPopup();
+  customiserStore.value!.toggleCustomiserPopup();
 };
 
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Pre-Create-Uniform-Group");
+    eventBus.value!.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Create-Uniform-Group");
+    eventBus.value!.emit("A:Create-Uniform-Group");
   }
 };
 
 const deliteUniformGroup = (id) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Delite-Uniform-Group", id);
+    eventBus.value!.emit("A:Delite-Uniform-Group", id);
   }
 };
 
 const addToUniformGroup = (id) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Add-To-Uniform-Group", id);
+    eventBus.value!.emit("A:Add-To-Uniform-Group", id);
   }
 };
 
 const removeFromUniformGroup = (id) => {
   if (VerdekConstructor) {
-    eventBus.emit("A:Remove-From-Uniform-Group", id);
+    eventBus.value!.emit("A:Remove-From-Uniform-Group", id);
   }
 };
 
 const activeController = computed(() => {
-  if (uniformState.getUniformModeData.uniformMode) {
+  if (uniformState.value!.getUniformModeData.uniformMode) {
     controller.value = false;
   }
 
   return {
     "model-controller--active":
-      controller.value && !uniformState.getUniformModeData.uniformMode,
+      controller.value && !uniformState.value!.getUniformModeData.uniformMode,
   };
 });
 
 const pregropping = computed(() => {
-  const pregroupMode = uniformState.getPreGrouping;
+  const pregroupMode = uniformState.value!.getPreGrouping;
   return {
     btn_green: !pregroupMode,
     btn_red: pregroupMode,
@@ -519,7 +541,7 @@ const controllerPosition = computed(() => {
 
 /** Работа о сталешницами */
 
-const saveTableData = ({ data, canvasHeight }) => {
+const saveTableData = () => {
   if (!product.value) return;
   const APP = VerdekConstructor.value;
   const { userData, id } = product.value;
@@ -528,7 +550,8 @@ const saveTableData = ({ data, canvasHeight }) => {
 
   CutCash.value = userData.PROPS.RASPIL = tableTopManager.value.saveGrid();
   CutSave.value = true;
-  APP.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
+
+  APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
 };
 
 const openTableRedactor = () => {
@@ -539,11 +562,11 @@ const openTableRedactor = () => {
   console.log(CutData.value, "CD");
   isModalOpen.value = true;
 
-  const parent = APP._scene.getObjectByProperty("id", userData.groupId);
+  const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
 
   if (parent) {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
-    APP.tableTopCreator?.applyMovements(parent);
+    APP!.tableTopCreator?.applyMovements(parent);
   }
   controller.value = false;
 };
@@ -561,7 +584,7 @@ const closeTableRedactor = () => {
 
   /** Сохраняем данные в родителе */
 
-  const parent = APP._scene.getObjectByProperty("id", userData.groupId);
+  const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
   if (parent) {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
   }
@@ -572,7 +595,9 @@ const deliteTable = () => {
   const APP = VerdekConstructor.value;
   const { userData } = product.value;
 
-  const parent = toRaw(APP._scene.getObjectByProperty("id", userData.groupId));
+  const parent = toRaw(
+    APP!._scene!.getObjectByProperty("id", userData.groupId)
+  );
 
   isModalOpen.value = false;
   CutSave.value = false;
@@ -584,10 +609,18 @@ const deliteTable = () => {
     removeModel();
   }
 };
+
+defineExpose({
+  VerdekConstructor,
+  closeTableRedactor,
+  openTableRedactor,
+  selected,
+});
 </script>
 
 <template>
   <div ref="sceneContainer" class="scene-container"></div>
+  <div ref="preloader" class="preloader" v-if="!activePreloader"></div>
 
   <!-- <div class="inputs">
     <customInput v-model="clampHeight" :min="758" :max="2000" :step="10" />
@@ -597,13 +630,13 @@ const deliteTable = () => {
   <div
     class="uniform__container"
     v-if="
-      uniformState.getUniformGroups.length > 0 &&
-      uniformState.getUniformModeData.uniformMode
+      uniformState!.getUniformGroups.length > 0 &&
+      uniformState!.getUniformModeData.uniformMode
     "
   >
     <div
       class="uniform__item"
-      v-for="(item, key) in uniformState.getUniformGroups"
+      v-for="(item, key) in uniformState!.getUniformGroups"
       :key="key + item.id"
     >
       <p class="uniform__name" :style="[`background-color: ${item.color}`]">
@@ -628,7 +661,7 @@ const deliteTable = () => {
     <button class="btn" @click="create">Создать новую</button> -->
     <button
       style="margin-top: 2rem"
-      v-show="uniformState.getUniformModeData.uniformMode"
+      v-show="uniformState!.getUniformModeData.uniformMode"
       :class="['btn', pregropping]"
       @click="preCreateUniformGroup"
     >
@@ -637,53 +670,16 @@ const deliteTable = () => {
 
     <button
       class="btn btn_green"
-      @click="сreateUniformGroup"
+      @click="сreateUniformGroup()"
       v-show="
-        uniformState.getPreGroup > 0 &&
-        uniformState.getUniformModeData.uniformMode
+        uniformState!.getPreGroup > 0 &&
+        uniformState!.getUniformModeData.uniformMode
       "
     >
       Создать
     </button>
   </div>
 
-  <div class="quality">
-    <div>
-      <p>Тени</p>
-      <Toggle v-model="shadows" />
-    </div>
-
-    <div>
-      <p>Отражение</p>
-      <Toggle v-model="refraction" />
-    </div>
-
-    <!-- <div>
-      <p>Направленный свет</p>
-      <Slider v-model="pointLightValue" />
-    </div> -->
-
-    <!-- <button class="btn" v-for="(item, key) in quality" :key="key + item" @click="setQuality(item)">
-      {{ item }}
-    </button> -->
-  </div>
-
-  <select
-    class="example"
-    id="rooms"
-    v-model="selectValue"
-    name="rooms"
-    @change="load"
-    style="top: 15rem; left: 25rem"
-  >
-    <option
-      v-for="(room, key) in roomStore.getRooms"
-      :key="key"
-      :value="room.id"
-    >
-      {{ room.label }}
-    </option>
-  </select>
 
   <!-- <div class="ui-panel--right">
     <button class="btn" @click="save">Сохранить</button>
@@ -790,73 +786,75 @@ const deliteTable = () => {
     :class="['model-controller', activeController]"
     :style="controllerPosition"
   >
-    <div class="controller-left">
-      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-      <ControllerButton v-show="!CutData.data" />
-      <ContentControllerButton v-show="!CutData.data" />
-      <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
-    </div>
-    <div class="controller-right">
-      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-      <UpControllerButton />
-      <OpenFacadeButton />
+    <div class="controller-container">
+      <div class="controller-left">
+        <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
+        <ControllerButton v-show="!CutData.data" />
+        <ContentControllerButton v-show="!CutData.data" />
+        <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
+      </div>
+      <div class="controller-right">
+        <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
+        <UpControllerButton />
+        <OpenFacadeButton />
 
-      <Modal
-        v-if="CutData.data"
-        :container="`modal--tableTop`"
-        @open-modal="openTableRedactor"
-        @close-modal="closeTableRedactor"
-      >
-        <template #modalBody="{ onModalClose }" class="modal--tableTop">
-          <TableTopManager
-            ref="tableTopManager"
-            :grid="CutData.data"
-            :canvasHeight="CutData.canvasHeight"
-            :canvas-height="CutData.canvasHeight"
-            :model-height="CutData.modelHeight"
-            v-if="isModalOpen"
-          >
-            <template #delite>
-              <button
-                class="actions-btn actions-btn--footer"
-                @click="
-                  () => {
-                    deliteTable();
-                    onModalClose();
-                  }
-                "
-              >
-                Удалить
-              </button>
-            </template>
-            <template #save>
-              <button
-                class="actions-btn actions-btn--footer"
-                @click="saveTableData"
-              >
-                Сохранить
-              </button>
-            </template>
-            <template #close>
-              <button
-                @click="
-                  () => {
-                    onModalClose();
-                  }
-                "
-                class="actions-btn actions-btn--footer"
-              >
-                Закрыть
-              </button>
-            </template>
-          </TableTopManager>
-        </template>
-        <template #modalOpen="{ onModalOpen }">
-          <button class="cut-btn" @click="onModalOpen">
-            <img class="cut-icon" src="/icons/cut.svg" alt="" />
-          </button>
-        </template>
-      </Modal>
+        <Modal
+          v-if="CutData.data"
+          :container="`modal--tableTop`"
+          @open-modal="openTableRedactor"
+          @close-modal="closeTableRedactor"
+        >
+          <template #modalBody="{ onModalClose }" class="modal--tableTop">
+            <TableTopManager
+              ref="tableTopManager"
+              :grid="CutData.data"
+              :canvas-height="CutData.canvasHeight"
+              :model-height="CutData.modelHeight"
+              v-if="isModalOpen"
+            >
+              <template #delite>
+                <button
+                  class="actions-btn actions-btn--footer"
+                  @click="
+                    () => {
+                      deliteTable();
+                      onModalClose();
+                    }
+                  "
+                >
+                  Удалить
+                </button>
+              </template>
+              <template #save>
+                <button
+                  class="actions-btn actions-btn--footer"
+                  @click="saveTableData"
+                >
+                  Сохранить
+                </button>
+              </template>
+              <template #close>
+                <button
+                  @click="
+                    () => {
+                      onModalClose();
+                    }
+                  "
+                  class="actions-btn actions-btn--footer"
+                >
+                  Закрыть
+                </button>
+              </template>
+            </TableTopManager>
+          </template>
+          <template #modalOpen="{ onModalOpen }">
+            <CutButton @click="onModalOpen" />
+            <!-- <button class="cut-btn" @click="onModalOpen">
+              <img class="cut-icon" src="/icons/cut.svg" alt="" />
+            </button> -->
+          </template>
+        </Modal>
+      </div>
     </div>
   </div>
 </template>
@@ -887,6 +885,14 @@ const deliteTable = () => {
   overflow: hidden;
   background-color: white;
   z-index: 0;
+}
+
+.preloader {
+  position: absolute;
+  width: 100dvw;
+  height: 100dvh;
+  background: rgba(2, 2, 2, 0.834);
+  backdrop-filter: blur(10px);
 }
 
 .inputs {
@@ -993,35 +999,30 @@ const deliteTable = () => {
   padding: 1rem;
   filter: blur(10px);
   opacity: 0;
-  transform: translate(-50%, -50%);
+  transform: scale(0) translate(50%, 50%);
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  max-height: 0;
   z-index: -1;
+  transition: all 0.1s ease-in-out;
 
   &--active {
+    height: fit-content;
+    transform: scale(1);
     filter: blur(0);
     opacity: 1;
-    height: fit-content;
-    max-height: 50vh;
     z-index: 0;
   }
 
   .controller-left {
-    position: absolute;
-    left: 30px;
-    top: -30px;
+    transform: translate(46px, -46px);
 
     .left-line {
     }
   }
 
   .controller-right {
-    position: absolute;
-    left: 80px;
-    top: 30px;
-
+    transform: translate(92px, -184px);
     .right-line {
     }
   }
@@ -1072,6 +1073,34 @@ const deliteTable = () => {
 
   &_text {
     font-size: 12px;
+  }
+}
+
+.controller {
+  &-container {
+    position: relative;
+  }
+}
+
+.right-menu__button {
+  border-color: #ecebf1;
+  transition-property: background-color, border-color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+
+  &.active {
+    background-color: #131313;
+
+    &:active {
+      background-color: #131313;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: #131313;
+      border-color: #131313;
+    }
   }
 }
 
@@ -1190,6 +1219,13 @@ const deliteTable = () => {
   &-icon {
     width: 25px;
     height: 25px;
+    svg {
+      g {
+        path {
+          fill: black;
+        }
+      }
+    }
   }
 }
 </style>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as THREE from 'three';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 
@@ -60,7 +61,7 @@ export class OBBHelper {
 
     helper: THREE.Object3D | null = null
 
-    add(obb: OBB, color:string = '#6385ff') {
+    add(obb: OBB, color: string = '#6385ff') {
 
         const geometry = new THREE.BoxGeometry(obb.halfSize.x * 2, obb.halfSize.y * 2, obb.halfSize.z * 2);
         const material = new THREE.MeshBasicMaterial({ color, wireframe: true });
@@ -85,6 +86,43 @@ export class OBBHelper {
 
     update() {
         this.helper!.position.copy(this.helper!.userData.obb.center);
+    }
+
+    updateOBB(object) {
+        // Инициализация min и max для OBB
+        let min = new THREE.Vector3(Infinity, Infinity, Infinity);
+        let max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+
+        // Обход всех дочерних мешей
+        object.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                // Убедитесь, что мировая матрица обновлена
+                child.updateMatrixWorld(true);
+
+                // Получение геометрии и преобразование вершин в мировые координаты
+                const geometry = child.geometry;
+                geometry.computeBoundingBox(); // Убедитесь, что локальный bounding box обновлен
+                const vertices = geometry.attributes.position.array;
+
+                for (let i = 0; i < vertices.length; i += 3) {
+                    const vertex = new THREE.Vector3(
+                        vertices[i],
+                        vertices[i + 1],
+                        vertices[i + 2]
+                    );
+                    // Преобразование вершины в мировые координаты
+                    vertex.applyMatrix4(child.matrixWorld);
+
+                    // Обновление min и max для OBB
+                    min.min(vertex);
+                    max.max(vertex);
+                }
+            }
+        });
+
+        // Создание OBB
+        const obb = new THREE.Box3(min, max);
+        return obb;
     }
 
 }

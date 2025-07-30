@@ -2,11 +2,13 @@
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 export class DragAndDropManager {
 
     canvas: HTMLElement;
     scene: THREE.Scene;
+    eventBus: ReturnType<typeof useEventBus> = useEventBus();
 
     geometryBuilder: THREE.TGeometryBuilder;
     raycaster: THREE.Raycaster
@@ -68,6 +70,8 @@ export class DragAndDropManager {
 
         if (!this.roomManager._roomFloor) return;
 
+
+
         const data = event.dataTransfer?.getData('text');
 
         if (data && data.trim() !== '') {
@@ -84,22 +88,30 @@ export class DragAndDropManager {
                 if (intersects.length > 0) {
                     const point = intersects[0].point;
                     const surface = intersects[0].object;
+                    // this.eventBus.emit('U:Drop')
 
-                    this.geometryBuilder.craeteModel(productData, (object) => {
+                    this.geometryBuilder.craeteModel(productData, async (object) => {
 
-                        object.userData.MOUSE_POSITION = {
-                            x: point.clone().project(this.camera).x * this.root._sizes.width * 0.5,
-                            y: point.clone().project(this.camera).y * this.root._sizes.height * -0.5,
-                        };
 
-                        this.setObject.create({
+                        await this.setObject.create({
                             object,
                             point,
                             trafficManager: this.trafficManager,
                             boxHelper: this.boxHelper,
                             wall: surface
                         });
+
+
+                        this.trafficManager._currentObject = object
+                        this.trafficManager.ruler.drawRulerToObjects(object)
+
+                        object.userData.MOUSE_POSITION = {
+                            x: object.position.clone().project(this.camera).x * this.root._sizes.width * 0.5,
+                            y: object.position.clone().project(this.camera).y * this.root._sizes.height * -0.5,
+                        };
                     });
+
+                    this.eventBus.emit('U:Drop')
                 }
             } catch (error) {
                 console.error('Error parsing JSON data:', error);

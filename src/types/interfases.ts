@@ -219,13 +219,13 @@ export interface IMouseData {
 }
 
 export interface ISetProduct {
-    scene: THREE.Scene,
-    config: THREETypes.TObject,
+    scene?: THREE.Scene,
+    config?: THREETypes.TObject,
     object: THREE.Object3D,
     point: THREE.Vector3,
     rotate: THREE.Vector3 | THREE.Euler | null,
 
-    roomManager: THREETypes.TRoomManager,
+    roomManager?: THREETypes.TRoomManager,
     trafficManager?: THREETypes.TTrafficManager,
     boxHelper?: THREETypes.TCustomBoxHelper,
     wall?:THREE.Object3D | THREE.Mesh,

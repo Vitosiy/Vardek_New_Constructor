@@ -16,6 +16,18 @@ import { AlumBulider } from "@/Application/Meshes/AlumBuilder";
 import { UniformTextureBuilder } from "@/Application/Meshes/UniformTextureBuilder";
 import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
+import { DeepDispose } from "@/Application/Utils/DeepDispose";
+import { AppLights } from "@/Application/World/Lights";
+
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useRoomState } from "@/store/appliction/useRoomState";
+import { useAppData } from "@/store/appliction/useAppData";
+import { useSceneState } from "@/store/appliction/useSceneState";
+import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { useObjectData } from "@/store/appliction/useObjectData";
+import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+import { useUniformState } from "@/store/appliction/useUniformState";
+import { useModelState } from "@/store/appliction/useModelState";
 
 
 
@@ -37,6 +49,8 @@ export type TAlumBulider = AlumBulider
 export type TUniformTextureBuilder = UniformTextureBuilder
 export type TKeybordListeners = KeybordListeners
 export type TUniformTextureEvents = UniformTextureEvents
+export type TDeepDispose = DeepDispose
+export type TAppLights= AppLights
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 
@@ -53,6 +67,29 @@ export type TMaterialType =
     | THREE.MeshLambertMaterial
 
 export type TGeometryType = 'BoxGeometry' | 'ExtrudeGeometry' | 'PlaneGeometry'
+
+export type TAdjustPosition = {
+    position: THREE.Vector3,
+    rotation: THREE.Euler,
+    quaternion: THREE.Quaternion
+}
+
+export type TUseUniformState = ReturnType<typeof useUniformState>;
+export type TUseEventBus = ReturnType<typeof useEventBus>;
+export type TUseAppData = ReturnType<typeof useAppData>;
+export type TUseRoomState = ReturnType<typeof useRoomState>;
+export type TUseSceneState = ReturnType<typeof useSceneState>;
+export type TUseCustomiserStore = ReturnType<typeof useCustomiserStore>;
+export type TUseObjectData = ReturnType<typeof useObjectData>;
+export type TUseRoomContantData = ReturnType<typeof useRoomContantData>;
+export type TUseModelState = ReturnType<typeof useModelState>;
+
+
+type TQualityValue = 'low' | 'medium' | 'hight'
+export type TQuality = {
+    lable: string,
+    value: TQualityValue,
+}
 
 /** Заглушка */
 export type TObject = { [key: string]: any }

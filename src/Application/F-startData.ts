@@ -194,7 +194,20 @@ export const START_PROJECT_PARAMS = {
         near: 10,
         far: 25000
     },
-    
+    quality: [{
+        lable: "Низкое",
+        value: "low",
+    },
+    {
+        lable: "Среднее",
+        value: "medium",
+    },
+    {
+        lable: "Высокое",
+        value: "hight",
+    }
+
+    ],
     orto_camera: {
         position: [0, 10, 0],
         target: { x: 0, y: 0, z: 0 },
@@ -290,7 +303,7 @@ export const START_PROJECT_PARAMS = {
             }
         ]
     },
-    table_params:{
+    table_params: {
         "width": 3000,
         "depth": 600,
         "height": 38,

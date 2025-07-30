@@ -82,7 +82,11 @@ export const CUTTER_PARAMS = {
                 ],
             },
         ],
-    ]
+    ],
+    EXTREMUMS:{
+        HOLES:300,
+        CUT:600
+    }
 }
 
 export const SERVISE_ERRORS: Record<string, string> = {

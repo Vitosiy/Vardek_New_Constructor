@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // @ts-nocheck 31
 
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch, useTemplateRef, nextTick } from "vue";
 import { useAppData } from "@/store/appliction/useAppData";
 
 import MainHeader from "@/components/header/MainHeader.vue";
@@ -14,8 +14,8 @@ import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
-
 const ready = ref<boolean>(false);
+const pageComponentRef = ref(null);
 
 let indexedDataBase: IDBDatabase;
 
@@ -31,7 +31,7 @@ const loadEvents = async () => {
     // url.searchParams.append('style_id', '43830');
 
     const response = await fetch(url, {
-      method: "GET"
+      method: "GET",
     });
 
     if (!response.ok) {
@@ -47,8 +47,12 @@ const loadEvents = async () => {
       useAppData().setAppData(data.DATA);
       ready.value = true;
 
+
+
+      console.log(data.DATA)
+
       console.log("Полученные JSON данные:", useAppData().getAppData);
-      return data.DATA
+      return data.DATA;
     } else {
       data = await response.text(); // Если текст или HTML
       console.log("Полученные текстовые данные:", data);
@@ -75,12 +79,14 @@ onMounted(() => {
     /* создание тестовой транзакции для проверки загружены ли данные в локальную базу */
     let transaction = indexedDataBase.transaction("data", "readwrite");
     let data = transaction.objectStore("data");
-    let req = data.getAll() /* запрос на содержимое базы */
-    
+    let req = data.getAll(); /* запрос на содержимое базы */
+
     req.onsuccess = async (): void => {
-      if(req.result.length) { /* если локальная база не пуста, все содержимое загружается в стор */
+      if (req.result.length) {
+        console.log(req.result[0], '---DATA1')
+        /* если локальная база не пуста, все содержимое загружается в стор */
         useAppData().setAppData(req.result[0]);
-        return
+        return;
       }
 
       /* если база пуста, происходит загрузка данных с удаленной базы */
@@ -89,55 +95,36 @@ onMounted(() => {
       /* создание новой транзакции и добавление данных в локальную базу*/
       let new_transaction = indexedDataBase.transaction("data", "readwrite");
       let new_data = new_transaction.objectStore("data");
-      let request =  new_data.add({...{name: 'db'}, ...fetchResponse}) 
+      let request = new_data.add({ ...{ name: "db" }, ...fetchResponse });
       request.onerror = function (): void {
         console.log("Ошибка", request.error);
       };
-    }
+    };
     ready.value = true;
   };
 
   /* слушатель обработки ошибок подключения к indexedDB */
   openRequest.onerror = (): void => {
-    console.log('error to db');
-  }
+    console.log("error to db");
+  };
 });
+
 </script>
 
-<!-- <template>
-    <MainHeader/>
-    <MainPopUp/>
-    <InfoPopUp />
-    <div class="main__container" v-if="ready">
-        <OptionsMenu v-if="route.name === 'Constructor3d'"/>
-        <OptionsMenu2D v-else-if="route.name === 'Constructor2d'"/>
-        <CustomiserMenu/>
-        <RouterView/>
-    </div>
-</template> -->
-
 <template>
-  <MainHeader />
+  <MainHeader :page-component="pageComponentRef" />
   <MainPopUp />
   <InfoPopUp />
   <div class="main__container">
     <OptionsMenu v-if="route.name === 'Constructor3d' && ready" />
     <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
     <CustomiserMenu />
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <component :is="Component" ref="pageComponentRef" />
+    </RouterView>
   </div>
 </template>
 
-<!--
-  
-// import MainHeader from '@/components/header/MainHeader.vue' // import
-OptionsMenu from '@/components/left-menu/OptionsMenu.vue' // import
-OptionsMenu2D from '@/components/left-menu/constructor2d/OptionsMenu.vue' //
-import CustomiserMenu from '@/components/right-menu/CustomiserMenu.vue' //
-import MainPopUp from '@/components/popUp/MainPopUp.vue' // import { useRoute }
-from "vue-router"; // const route = useRoute();
-
--->
 
 <style lang="scss" scoped>
 .main__container {

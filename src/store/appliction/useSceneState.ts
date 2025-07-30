@@ -22,33 +22,8 @@ export const useSceneState = defineStore('SceneState', () => {
 
     const currentProjectParams = ref(START_PROJECT_PARAMS as THREEInterfases.IProjectParams)
 
-    const getStartProgectParams = computed(() => {
-        return startProjectParams.value
-    })
-
-    const getStartRoomData = computed(() => {
-        return startRoomData.value
-    })
-
-    const getStartCameraData = computed(() => {
-        return startCameraData.value
-    })
-
-    const getStartOrtoCameraData = computed(() => {
-        return startOrtoCameraData.value
-    })
-
-    const getStartLightsData = computed(() => {
-        return startLightsDat.value
-    })
-
-    const getStartHeightClamp = computed(() => {
-        return startHeightClamp.value
-    })
-
-    const getCurrentProjectParams = computed(() => {
-        return currentProjectParams.value
-    })
+    const shadowValue = ref<boolean>(false)
+    const refractionValue = ref<boolean>(false)
 
     const updateProjectParams = ({
         rooms,
@@ -78,6 +53,50 @@ export const useSceneState = defineStore('SceneState', () => {
         };
     };
 
+    const setShadowValue = (value: boolean) => {
+        shadowValue.value = value
+    }
+
+    const setRefractionValue = (value: boolean) => {
+        refractionValue.value = value
+    }
+
+    const getStartProgectParams = computed(() => {
+        return startProjectParams.value
+    })
+
+    const getStartRoomData = computed(() => {
+        return startRoomData.value
+    })
+
+    const getStartCameraData = computed(() => {
+        return startCameraData.value
+    })
+
+    const getStartOrtoCameraData = computed(() => {
+        return startOrtoCameraData.value
+    })
+
+    const getStartLightsData = computed(() => {
+        return startLightsDat.value
+    })
+
+    const getStartHeightClamp = computed(() => {
+        return startHeightClamp.value
+    })
+
+    const getCurrentProjectParams = computed(() => {
+        return currentProjectParams.value
+    })
+
+    const getShadowValue = computed(() => {
+        return shadowValue.value
+    })
+
+    const getRefractionValue = computed(() => {
+        return refractionValue.value
+    })
+
     return {
         getStartProgectParams,
         getStartRoomData,
@@ -86,8 +105,12 @@ export const useSceneState = defineStore('SceneState', () => {
         getStartLightsData,
         getStartHeightClamp,
         getCurrentProjectParams,
+        getRefractionValue,
+        getShadowValue,
 
-        updateProjectParams
+        updateProjectParams,
+        setRefractionValue,
+        setShadowValue
     };
 
 });

@@ -14,6 +14,7 @@ import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState"
+import { useEventBus } from '@/store/appliction/useEventBus';
 
 import { WallBuilder } from "../Meshes/WallBilder";
 import { OBBHelper } from "../Utils/CalculateBoundingBox";
@@ -27,7 +28,8 @@ export class Room extends BuildersHelper {
     boundHeightClampValue: ((item: number) => void) | null = null
 
 
-    private root: THREETypes.TApplication
+
+    root: THREETypes.TApplication
     private params: { [key: string]: any }
     private wallBuilder: WallBuilder
     // private resources: Resources = new Resources()
@@ -37,6 +39,7 @@ export class Room extends BuildersHelper {
     scene: THREE.Scene
     private roomsStore: ReturnType<typeof useRoomState> = useRoomState()
     private startData: ReturnType<typeof useSceneState> = useSceneState()
+    eventBus: ReturnType<typeof useEventBus> = useEventBus()
     roomLight: any
 
     walls: THREE.Object3D[] = [];
@@ -127,6 +130,8 @@ export class Room extends BuildersHelper {
     getStartSize() {
 
         if (!this.roomsStore.getCurrentRoomId) {
+
+           this.eventBus.emit('A:ContantLoaded', true)
 
             this.params = this.startData.getStartRoomData
             this.wallTexture = this.startData.getStartRoomData.wall as number | string

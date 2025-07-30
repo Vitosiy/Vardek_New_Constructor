@@ -1,5 +1,5 @@
 
-//@ts-nocheck
+// @ts-nocheck
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import { useAppData } from "@/store/appliction/useAppData"
@@ -409,5 +409,38 @@ export class BuildersHelper extends GlobalsData {
         traverse(data);
 
         return result;
+    }
+
+    findKeyInObject(obj, keys) {
+        for (const key of keys) {
+            if (obj.hasOwnProperty(key)) {
+                return key;
+            }
+        }
+        return null;
+    }
+
+    computeAABB(object: THREE.Object3D): THREE.Box3 {
+        const box = new THREE.Box3();
+        const size = new THREE.Vector3()
+
+
+        object.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.userData.name !== 'TABLETOP' && child.name !== "ARROWS") {
+                const geometry = child.geometry;
+                if (!geometry.boundingBox) {
+                    geometry.computeBoundingBox();
+                }
+
+                const childBox = geometry.boundingBox!.clone();
+                childBox.applyMatrix4(child.matrixWorld);
+
+                box.union(childBox);
+            }
+        });
+
+        box.getSize(size)
+
+        return box;
     }
 }

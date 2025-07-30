@@ -17,7 +17,11 @@ export const useRoomState = defineStore('RoomState', () => {
   const roomsStore = useSchemeTransition();
   let roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
- 
+
+
+
+  console.log(rooms.value, 'rooms.value')
+
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
@@ -88,12 +92,12 @@ export const useRoomState = defineStore('RoomState', () => {
 
   const getCurrentRoomId = computed(() => {
 
-    
+
     let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
 
     const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
 
-    if(centerized){
+    if (centerized) {
       currentRoom.size = centerized?.size ?? currentRoom?.size;
     }
 
@@ -104,8 +108,12 @@ export const useRoomState = defineStore('RoomState', () => {
     return currentRoomId.value
   });
 
-  const getUpdatedRoomContent = computed(() => {
-    return updatedRoomContent.value
+  const getRoomContent = computed(() => {
+    const room = rooms.value.find(room => room.id === currentRoomId.value);
+    if (room) {
+      return room.content
+    }
+    return []
   })
 
   const getRooms = computed(() => {
@@ -131,7 +139,7 @@ export const useRoomState = defineStore('RoomState', () => {
     clearTempRoomSize,
 
     updatedRoomContent,
-    getUpdatedRoomContent,
+    getRoomContent,
 
     setWallTexture,
     setFloorTexture
