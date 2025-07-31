@@ -6,8 +6,9 @@ import { Pagination, Navigation } from 'swiper/modules'
 
 interface IProps {
   title?: string
-  description?: string
+  detailText?: string
   image?: string
+  previewText?: string
   videoUrl?: string
   videoPoster?: string
   images?: string[]
@@ -15,7 +16,7 @@ interface IProps {
 
 const props = withDefaults(defineProps<IProps>(), {
   title: '',
-  description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+  detailText: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
   image: 'https://picsum.photos/200/300',
   videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
   videoPoster: 'https://picsum.photos/200/300',
@@ -47,12 +48,9 @@ const closeInfoPopup = () => {
         <div :class="$style.imageTextBlock">
           <img :src="props.image" :class="$style.imageTextBlockImage" />
           <p :class="$style.descriptionText">
-            {{ props.description }}
+            {{ props.detailText }}
           </p>
         </div>
-        <p :class="$style.descriptionText">
-          {{ props.description }}
-        </p>
         <div v-if="props.videoUrl" :class="$style.videoBlock">
           <video
             controls
@@ -63,13 +61,7 @@ const closeInfoPopup = () => {
         </div>
         
         <div :class="$style.infoBlock">
-          <h3 :class="$style.infoTitle">Заголовок</h3>
-          <ul :class="$style.infoList">
-            <li>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</li>
-            <li>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</li>
-            <li>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</li>
-            <li>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</li>
-          </ul>
+          <div v-html="props.previewText" :class="$style.descriptionText"></div>
         </div>
         
         <swiper 
@@ -101,15 +93,16 @@ const closeInfoPopup = () => {
   }
 
   .imageTextBlock {
-    display: flex;
-    gap: 20px;
+    overflow: hidden;
 
     &Image {
       width: 260px;
       height: 205px;
       border-radius: 10px;
-      flex-shrink: 0;
       object-fit: contain;
+      float: left;
+      margin-right: 20px;
+      margin-bottom: 10px;
     }
   }
 

@@ -9,6 +9,7 @@ import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 import { computed, ref } from "vue";
 
 import { _URL } from "@/types/constants";
+import axios from "axios";
 
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
@@ -52,15 +53,31 @@ const closeMenu = (menuType: MenuType) => {
   menuStore.closeMenu(menuType);
 };
 
-const openPopup = (item) => {
+const openPopup = async (item) => {
   console.log(getAppData, 'getAppData')
-  isShowInfoPopup.value = true;
-  currentProductInfo.value = {
-    title: item.NAME,
-    description: item.DESCRIPTION,
-    image: getImageUrl(item.PREVIEW_PICTURE) 
+  try {
+    const {data} = await axios.post(`/api/modeller/product/getbyid/`, {
+      ID: item.ID
+    })
+
+    const { NAME, DETAIL_TEXT, DETAIL_PICTURE, PREVIEW_PICTURE, PREVIEW_TEXT, PROPERTY_IMAGES_VALUE, PROPERTY_VIDEO_VALUE, PROPERTY_VIDEO_IMAGE_VALUE } = data.DATA.response;
+    
+    currentProductInfo.value = {
+    title: NAME,
+    detailText: DETAIL_TEXT,
+    previewText: PREVIEW_TEXT,
+    image: getImageUrl(DETAIL_PICTURE),
+    images: PROPERTY_IMAGES_VALUE,
+    videoUrl: PROPERTY_VIDEO_VALUE,
+    videoPoster: getImageUrl(PROPERTY_VIDEO_IMAGE_VALUE)
   };
-  console.log(item)
+    isShowInfoPopup.value = true;
+  } catch (error) { 
+    console.error('API Error:', error); 
+  }
+  
+  
+  
 };
 
 const closeInfoPopup = () => {

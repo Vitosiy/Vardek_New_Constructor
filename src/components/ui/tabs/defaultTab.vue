@@ -51,6 +51,16 @@ const selectTab = (name: string, index: number) => {
   selectedTab.value = name;
   emit("tab-change", {index: index, name: name});
 };
+
+// Метод для сброса активного таба
+const resetActiveTab = () => {
+  selectedTab.value = null;
+};
+
+// Экспортируем методы
+defineExpose({
+  resetActiveTab
+});
 </script>
 
 <style scoped lang="scss">

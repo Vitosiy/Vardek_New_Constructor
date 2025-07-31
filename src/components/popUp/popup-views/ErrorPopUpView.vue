@@ -1,24 +1,43 @@
 <template>
   <div class="error">
-    <div class="error__title">Сообщить об ошибке</div>
-    <ClosePopUpButton class="popup__close" @close="closePopup" />
-    <div class="error-input">
+    <div v-if="!isSuccess" class="error__title">Сообщить об ошибке</div>
+    <div v-else class="error__title">Сообщение отправлено</div>
+    <ClosePopUpButton v-if="!isSuccess" class="popup__close" @close="closePopup" />
+    
+    <div v-if="!isSuccess" class="error-input">
       <p class="error__text">Опишите проблему/ошибку</p>
-      <textarea class="error__textarea"></textarea>
+      <textarea v-model="errorMessage" class="error__textarea"></textarea>
     </div>
-    <button class="error__button">Отправить</button>
+  
+    
+    <button v-if="!isSuccess" @click="sendError" class="error__button">Отправить</button>
+    <button v-else @click="closePopup" class="error__button success__button">Закрыть</button>
   </div>
 </template>
 <script lang="ts" setup>
 //@ts-nocheck
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
-
+import axios from 'axios';
+import { ref } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 
 const popupStore = usePopupStore();
+const errorMessage = ref('');
+const isSuccess = ref(false);
 
 const closePopup = () => {
   popupStore.closePopup('error');
+};
+
+const sendError = async () => {
+  try {
+    await axios.post('/api/modeller/message/senderror/', {
+      MESSAGE: errorMessage.value,
+    });
+    isSuccess.value = true;
+  } catch (e) {
+    console.error('Ошибка при отправке сообщения:', e);
+  }
 };
 </script>
 <style lang="scss" scoped>
@@ -32,7 +51,7 @@ const closePopup = () => {
   position: relative;
 
   &__title {
-    margin-bottom: 5px;
+    margin-bottom: 30px;
     font-size: 32px;
     font-weight: 600;
   }
@@ -46,6 +65,7 @@ const closePopup = () => {
     width: 100%;
 
     .error__textarea {
+      padding: 1rem;
       width: 100%;
       height: 249px;
       resize: none;
@@ -65,6 +85,21 @@ const closePopup = () => {
     border-radius: 15px;
     background: $red;
     color: $white;
+    cursor: pointer;
+    &.success__button {
+      background: $light-grey;
+      color: $strong-grey;
+    }
+  }
+  
+  .success-message {
+    text-align: center;
+    margin: 20px 0;
+     
+    .success__text {
+      font-size: 18px;
+      font-weight: 500;
+    }
   }
 }
 </style>
