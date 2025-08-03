@@ -38,7 +38,7 @@ const createTabList = (fasadsCount: Array<object>) => {
     });
   });
   
-  return data;
+  return data; 
 };
 
 onMounted(() => {
