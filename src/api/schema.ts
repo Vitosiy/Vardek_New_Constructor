@@ -121,6 +121,256 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/modeller/auth/login/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** User login or get user data */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["LoginData"] | components["schemas"]["TokenData"];
+                };
+            };
+            responses: {
+                /** @description Auth response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/modeller/mainobject/GetData/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get main app data */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Main data */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            DATA?: Record<string, never>;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/local/templates/constructor/API/data.get.php": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get catalog list */
+        get: {
+            parameters: {
+                query?: {
+                    config?: string;
+                    style?: string;
+                    cityid?: string;
+                    cityidprice?: string;
+                    section?: string;
+                    type?: string;
+                    page?: string;
+                    filter?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Catalog response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CatalogResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/local/templates/constructor/API/catalog.element.get.php": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Get product details */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": components["schemas"]["ProductRequestData"];
+                };
+            };
+            responses: {
+                /** @description Product details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProductDetailsResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/local/templates/constructor/API/catalog.element.getprice.php": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Get product price */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": components["schemas"]["ProductRequestData"];
+                };
+            };
+            responses: {
+                /** @description Product price */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ProductPriceResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/API/data.basket.getprice.php": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Get basket price or make order */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            responses: {
+                /** @description Basket price/order response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": Record<string, never>;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -147,6 +397,51 @@ export interface components {
         ErrorReport: {
             text: string;
         };
+        LoginData: {
+            login: string;
+            password: string;
+        };
+        TokenData: {
+            token: string;
+        };
+        ApiResponse: {
+            DATA?: {
+                /** @enum {string} */
+                type?: "success" | "error";
+                data?: {
+                    id?: string;
+                    MESSAGE?: string;
+                };
+            };
+        };
+        CatalogResponse: {
+            items?: components["schemas"]["ProductItem"][];
+            pager?: Record<string, never>;
+            sections?: components["schemas"]["CatalogSectionItem"][];
+        };
+        ProductItem: {
+            ID?: string;
+            IMG?: string;
+            NAME?: string;
+            PRICE?: string;
+            SORT?: string;
+        };
+        CatalogSectionItem: {
+            ID?: string;
+            NAME?: string;
+            SECTION_PAGE_URL?: string;
+        };
+        ProductRequestData: {
+            [key: string]: unknown;
+        };
+        ProductDetailsResponse: {
+            data?: Record<string, never>;
+            success?: boolean;
+        };
+        ProductPriceResponse: {
+            data?: Record<string, never>;
+            success?: boolean;
+        };
         Error: {
             status: number;
             message: string;
@@ -163,7 +458,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Tab not found */
+        /** @description Resource not found */
         NotFound: {
             headers: {
                 [name: string]: unknown;

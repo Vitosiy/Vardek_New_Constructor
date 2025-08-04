@@ -7,7 +7,7 @@
     "dev": "vite --host",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "api:generate-types": "npx openapi-typescript ./src/api/openapi.json -o ./src/api/schema.ts",
+    "api:generate-types": "npx openapi-typescript ./public/openapi_combined.json -o ./src/api/schema.ts",
     "test:ts": "tsc --noEmit"
   },
   "dependencies": {
@@ -22,15 +22,13 @@
     "openapi-fetch": "^0.14.0",
     "pinia": "^2.2.1",
     "pixi.js": "^8.10.2",
+    "swagger-ui-dist": "^5.27.1",
     "swiper": "^11.1.14",
     "three": "^0.173.0",
     "three-bvh-csg": "^0.0.16",
     "three-csg-ts": "^3.2.0",
-<<<<<<< HEAD
-=======
     "toastr": "^2.1.4",
     "typescript": "^5.6.3",
->>>>>>> origin/feature/general_сatalog
     "vue": "^3.3.4",
     "vue-router": "^4.4.3"
   },

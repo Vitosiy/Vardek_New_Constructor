@@ -1,0 +1,490 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vardek Constructor API",
+    "version": "1.0.0",
+    "description": "Combined API for Vardek Constructor with multiple servers"
+  },
+  "servers": [
+    {
+      "url": "https://dev.vardek.online",
+      "description": "Development server - new API endpoints"
+    },
+    {
+      "url": "https://vardek.ru",
+      "description": "Production server - legacy API endpoints"
+    }
+  ],
+  "paths": {
+    "/api/tabs/tree": {
+      "get": {
+        "summary": "Get tab tree",
+        "tags": ["Tabs"],
+        "responses": {
+          "200": {
+            "description": "List of tab nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TabNode"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/tabs/{id}/content": {
+      "get": {
+        "summary": "Get tab content by ID",
+        "tags": ["Tabs"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tab content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabContent"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/tabs/report": {
+      "post": {
+        "summary": "Report an issue",
+        "tags": ["Tabs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorReport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Reported successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/modeller/auth/login/": {
+      "post": {
+        "summary": "User login or get user data",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/LoginData" },
+                  { "$ref": "#/components/schemas/TokenData" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Auth response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/modeller/mainobject/GetData/": {
+      "get": {
+        "summary": "Get main app data",
+        "tags": ["App"],
+        "responses": {
+          "200": {
+            "description": "Main data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "DATA": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/templates/constructor/API/data.get.php": {
+      "get": {
+        "summary": "Get catalog list",
+        "tags": ["Catalog"],
+        "parameters": [
+          { "name": "config", "in": "query", "schema": { "type": "string" } },
+          { "name": "style", "in": "query", "schema": { "type": "string" } },
+          { "name": "cityid", "in": "query", "schema": { "type": "string" } },
+          { "name": "cityidprice", "in": "query", "schema": { "type": "string" } },
+          { "name": "section", "in": "query", "schema": { "type": "string" } },
+          { "name": "type", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "string" } },
+          { "name": "filter", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/templates/constructor/API/catalog.element.get.php": {
+      "post": {
+        "summary": "Get product details",
+        "tags": ["Catalog"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/ProductRequestData" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProductDetailsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/templates/constructor/API/catalog.element.getprice.php": {
+      "post": {
+        "summary": "Get product price",
+        "tags": ["Catalog"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/ProductRequestData" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product price",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProductPriceResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/data.basket.getprice.php": {
+      "post": {
+        "summary": "Get basket price or make order",
+        "tags": ["Basket"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Basket price/order response",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TabNode": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "children"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TabNode"
+            }
+          }
+        }
+      },
+      "TabContent": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "content"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "object",
+            "required": [
+              "text",
+              "images",
+              "videos",
+              "links"
+            ],
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "videos": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "links": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "label",
+                    "url"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ErrorReport": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginData": {
+        "type": "object",
+        "properties": {
+          "login": { "type": "string" },
+          "password": { "type": "string" }
+        },
+        "required": ["login", "password"]
+      },
+      "TokenData": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" }
+        },
+        "required": ["token"]
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "DATA": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["success", "error"]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "MESSAGE": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CatalogResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProductItem" }
+          },
+          "pager": { "type": "object" },
+          "sections": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogSectionItem" }
+          }
+        }
+      },
+      "ProductItem": {
+        "type": "object",
+        "properties": {
+          "ID": { "type": "string" },
+          "IMG": { "type": "string" },
+          "NAME": { "type": "string" },
+          "PRICE": { "type": "string" },
+          "SORT": { "type": "string" }
+        }
+      },
+      "CatalogSectionItem": {
+        "type": "object",
+        "properties": {
+          "ID": { "type": "string" },
+          "NAME": { "type": "string" },
+          "SECTION_PAGE_URL": { "type": "string" }
+        }
+      },
+      "ProductRequestData": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "ProductDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "object" },
+          "success": { "type": "boolean" }
+        }
+      },
+      "ProductPriceResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "object" },
+          "success": { "type": "boolean" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+} 
