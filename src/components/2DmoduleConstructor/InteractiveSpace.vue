@@ -379,7 +379,7 @@ const renderGrid = () => {
       })
     }
 
-    if (mode.value === "fasades") {
+    if (mode.value === "fasades" && !module.value?.isSlidingDoors) {
       section.fasades.forEach((column, colIndex) => {
         const pxWidth = getPixelWidth(column[0].width);
         let fasadeXOffset = getPixelWidth(column[0].position.x);
@@ -438,6 +438,39 @@ const renderGrid = () => {
       });
     }
   })
+
+  if (mode.value === "fasades" && module.value?.isSlidingDoors) {
+    module.value?.fasades?.forEach((column, colIndex) => {
+      const pxWidth = getPixelWidth(column[0].width);
+      let fasadeXOffset = getPixelWidth(column[0].position.x);
+
+      column.forEach((row, rowIndex, col) => {
+        let fasadeYOffset = getPixelHeight(module.value.height - row.position.y - row.height);
+
+        const pxHeight = getPixelHeight(row.height);
+        row.xOffset = fasadeXOffset;
+        row.yOffset = fasadeYOffset;
+
+        // Отрисовываем секцию
+
+        createSector({
+          x: fasadeXOffset,
+          y: fasadeYOffset,
+          width: pxWidth,
+          height: pxHeight,
+          sectionIndex: null,
+          cellIndex: colIndex,
+          rowIndex: column.length > 1 ? row.id - 1 : null,
+          cellData: row,
+          section: col,
+          _sector: moduleSector,
+          gridType: 'fasades',
+        });
+      });
+      //Добавляем отступ по горизонтали
+      fasadeXOffset += pxWidth + getPixelWidth(4);
+    });
+  }
 
   sections.forEach((elem) => {
     app.stage.addChildAt(elem, 0);
@@ -698,7 +731,15 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
   const xOffset = cell.xOffset || x;
   const yOffset = cell.yOffset || y;
 
-  let text = rowIndex !== null ? `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}` : `${sectionIndex + 1}.${cellIndex + 1}`;
+  let text
+
+  if(sectionIndex === null) {
+    text = rowIndex !== null ? `${cellIndex + 1}.${rowIndex + 1}` : `${cellIndex + 1}`;
+  }
+  else {
+    text = rowIndex !== null ? `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}` : `${sectionIndex + 1}.${cellIndex + 1}`;
+  }
+
   if (itemIndex)
     text += ` ${itemIndex}`
 
@@ -905,7 +946,7 @@ const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
 };
 
 const toggleFasadeColor = (sectionIndex, doorIndex, segmentIndex = 0) => {
-  const _fasades = props.module.sections[sectionIndex].fasades
+  const _fasades = sectionIndex === null ? module?.value?.fasades : props.module.sections[sectionIndex].fasades
   const door = _fasades[doorIndex]
   const segment = door?.[segmentIndex]
 

@@ -35,6 +35,7 @@ const emit = defineEmits([
   "product-getFasadePositionMinMax",
     "product-calcDrawersFasades",
   "product-calcLoops",
+  "product-calcSlideDoor",
 ]);
 
 const timer = ref(false);
@@ -61,6 +62,10 @@ const updateFasades = () => {
   emit("product-updateFasades");
 }
 
+const calcSlideDoor = (positionId, doorIndex, callback) => {
+  emit("product-calcSlideDoor", positionId, doorIndex, callback);
+}
+
 const calcLoops = (secIndex) => {
   emit("product-calcLoops", secIndex);
 }
@@ -69,13 +74,105 @@ const calcDrawersFasades = () => {
   emit("calcDrawersFasades");
 }
 
-const showCurrentCol = (secIndex) => {
-  selectCell(secIndex)
+const showCurrentCol = (secIndex, cellIndex = null) => {
+  selectCell(secIndex, cellIndex)
 };
 
 const getFasadePositionMinMax = (fasade) => {
   return emit("product-getFasadePositionMinMax", fasade);
 }
+
+const addSlideDoor = (doorIndex) => {
+
+  const fasades = module.value.fasades
+
+  let newDoor;
+  switch (doorIndex) {
+    case 4:
+      fasades[doorIndex - 2].forEach(item => item.material.POSITION = fasades[1][0].material.POSITION)
+      newDoor = fasades[0][0]
+      break;
+    default:
+      if (doorIndex % 2 === 0)
+        newDoor = fasades[1][0]
+      else
+        newDoor = fasades[0][0]
+      break;
+  }
+
+  let newFasade = <FasadeObject>{
+    ...newDoor,
+    id: doorIndex,
+    material: <FasadeMaterial>{...newDoor.material},
+  }
+
+  fasades.push([newFasade])
+
+  const callback = (fasadePosition) => {
+
+    newFasade.width = fasadePosition.FASADE_WIDTH
+    newFasade.height = fasadePosition.FASADE_HEIGHT
+    newFasade.position = new THREE.Vector3(fasadePosition.POSITION_X, fasadePosition.POSITION_Y, fasadePosition.POSITION_Z)
+
+    if (newFasade.width < newFasade.minX || newFasade.height < newFasade.minY)
+      newFasade.error = true
+    else
+      delete newFasade.error;
+
+    //Пересчитываем параметры старых дверей
+    fasades.forEach((door, index) => {
+      if(index + 1 !== doorIndex) {
+        calcSlideDoor(door[0].material.POSITION, index + 1, (tmp_fasadePosition) => {
+          door.forEach((segment, segmentIndex) => {
+            segment.width = tmp_fasadePosition.FASADE_WIDTH
+            segment.position.x = tmp_fasadePosition.POSITION_X
+            segment.position.z = tmp_fasadePosition.POSITION_Z
+
+            if (segment.width < segment.minX || segment.height < segment.minY)
+              segment.error = true
+            else
+              delete segment.error;
+          })
+        });
+      }
+    })
+
+    // Обновляем рендер
+    visualizationRef.value.renderGrid();
+  }
+
+  calcSlideDoor(newDoor.material.POSITION, doorIndex, callback)
+};
+
+const deleteSlideDoor = (doorIndex) => {
+  const fasades = module.value.fasades
+
+  if(doorIndex === 4)
+    fasades[doorIndex - 2].forEach(item => item.material.POSITION = fasades[0][0].material.POSITION)
+
+  fasades.pop();
+
+  //Пересчитываем параметры старых дверей
+  fasades.forEach((door, index) => {
+    calcSlideDoor(door[0].material.POSITION, index + 1, (tmp_fasadePosition) => {
+      door.forEach((segment, segmentIndex) => {
+        segment.width = tmp_fasadePosition.FASADE_WIDTH
+        segment.position.x = tmp_fasadePosition.POSITION_X
+        segment.position.z = tmp_fasadePosition.POSITION_Z
+
+        if (segment.width < segment.minX || segment.height < segment.minY)
+          segment.error = true
+        else
+          delete segment.error;
+      })
+    });
+  })
+
+  selectedFasade.value.cell = 0;
+  selectedFasade.value.sec = null;
+
+  visualizationRef.value.renderGrid();
+};
 
 const addDoor = (secIndex) => {
 
@@ -129,7 +226,9 @@ const addDoor = (secIndex) => {
   newDoor.loopsSide = loopsidesList.pop().ID
 
   section.fasades.push([newDoor]);
-  calcLoops(secIndex)
+
+  if(!module.value.isSlidingDoors)
+    calcLoops(secIndex)
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -159,7 +258,9 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
     position: new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height),
   });
 
-  calcLoops(secIndex)
+  if(!module.value.isSlidingDoors)
+    calcLoops(secIndex)
+
   // Обновляем рендер
   visualizationRef.value.renderGrid();
 };
@@ -189,7 +290,9 @@ const deleteDoor = (secIndex, doorIndex) => {
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = 0;
 
-  calcLoops(secIndex)
+  if(!module.value.isSlidingDoors)
+    calcLoops(secIndex)
+
   visualizationRef.value.renderGrid();
 };
 
@@ -225,7 +328,9 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = secIndex;
 
-  calcLoops(secIndex)
+  if(!module.value.isSlidingDoors)
+    calcLoops(secIndex)
+
   visualizationRef.value.renderGrid();
 };
 
@@ -278,7 +383,9 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
   }
   module.value = clone;
 
-  calcLoops(secIndex)
+  if(!module.value.isSlidingDoors)
+    calcLoops(secIndex)
+
   visualizationRef.value.renderGrid();
 
 };
@@ -351,124 +458,277 @@ defineExpose({
 
       <section class="actions-wrapper">
 
-        <div class="actions-header">
+        <div v-if="module.fasades">
           <div
-              :class="[
-              'actions-header--container',
-              { active: secIndex === selectedFasade.sec },
-            ]"
-              v-for="(section, secIndex) in module.sections"
-              :key="secIndex"
+              :class="'actions-items--container'"
           >
-            <p
-                class="actions-title actions-title--part"
-                @click="showCurrentCol(secIndex)"
+            <article class="actions-items actions-items--right">
+              <div class="actions-items--right-items">
+                <button
+                    v-if="module.fasades.length < 4"
+                    :class="[
+                        'actions-btn actions-btn--default'
+                      ]"
+                    @click="addSlideDoor(module.fasades.length + 1)"
+                >
+                  Добавить дверь
+                </button>
+
+                <button
+                    v-if="module.fasades.length > 2"
+                    :class="[
+                        'actions-btn actions-btn--default'
+                      ]"
+                    @click="deleteSlideDoor(module.fasades.length)"
+                >
+                  Удалить дверь
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <div class="actions-header">
+            <div
+                :class="[
+              'actions-header--container',
+              { active: doorIndex === selectedFasade.cell},
+            ]"
+                v-for="(door, doorIndex) in module.fasades"
+                :key="doorIndex"
             >
-              {{ secIndex + 1 }}
-            </p>
+              <p
+                  class="actions-title actions-title--part"
+                  @click="showCurrentCol(null, doorIndex)"
+              >
+                Дверь №{{ doorIndex + 1 }}
+              </p>
+            </div>
+          </div>
+
+          <div
+              v-for="(door, doorIndex) in module.fasades"
+              :key="doorIndex"
+              :class="'actions-container'"
+          >
+            <div
+                class="actions-items--wrapper"
+                v-if="selectedFasade.cell === doorIndex"
+            >
+                <div class="accordion">
+                  <div
+                      v-for="(segment, segmentIndex) in door"
+                      :key="segmentIndex"
+                      :class="'actions-items--container'"
+                  >
+                    <details class="item-group">
+                      <summary>
+                        <h3 class="item-group__title">
+                          Сегмент №{{ doorIndex + 1 }}{{ door.length > 1 ? `.${segmentIndex + 1}` : '' }}
+                        </h3>
+                      </summary>
+
+                      <div
+                          :class="'actions-items--container'"
+                      >
+                        <article class="actions-items actions-items--left">
+                          <div class="actions-items--left-wrapper">
+
+                            <div class="actions-items--width">
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Ширина
+                                </p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="step"
+                                      min="150"
+                                      class="actions-input"
+                                      :value="segment.width"
+                                      disabled
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="actions-items--height">
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Высота
+                                </p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="step"
+                                      min="150"
+                                      class="actions-input"
+                                      :value="segment.height"
+                                      disabled
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </article>
+
+                        <article class="actions-items actions-items--right">
+                          <div class="actions-items--right-items">
+
+                            <button
+                                :class="[
+                            'actions-btn actions-btn--default'
+                          ]"
+                                @click="splitFasade(null, doorIndex, segmentIndex)"
+                            >
+                              Разделить фасад
+                            </button>
+
+                            <button
+                                v-if="door.length > 1"
+                                class="actions-btn actions-btn--default"
+                                @click="removeFasadeSegment(null, doorIndex, segmentIndex)"
+                            >
+                              Удалить
+                            </button>
+
+                          </div>
+                        </article>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+
+
+            </div>
+
+
           </div>
         </div>
 
-        <div
-            v-for="(section, secIndex) in module.sections"
-            :key="secIndex"
-        >
-          <div
-              class="actions-items--wrapper"
-              v-if="selectedFasade.sec === secIndex"
-          >
-
+        <div v-else>
+          <div class="actions-header">
             <div
-                v-if="section.fasades.length < 2"
-                :class="'actions-items--container'"
+                :class="[
+              'actions-header--container',
+              { active: secIndex === selectedFasade.sec },
+            ]"
+                v-for="(section, secIndex) in module.sections"
+                :key="secIndex"
             >
-              <article class="actions-items actions-items--right">
-                <div class="actions-items--right-items">
-                  <button
-                      :class="[
+              <p
+                  class="actions-title actions-title--part"
+                  @click="showCurrentCol(secIndex)"
+              >
+                {{ secIndex + 1 }}
+              </p>
+            </div>
+          </div>
+
+          <div
+              v-for="(section, secIndex) in module.sections"
+              :key="secIndex"
+          >
+            <div
+                class="actions-items--wrapper"
+                v-if="selectedFasade.sec === secIndex"
+            >
+
+              <div
+                  v-if="section.fasades.length < 2"
+                  :class="'actions-items--container'"
+              >
+                <article class="actions-items actions-items--right">
+                  <div class="actions-items--right-items">
+                    <button
+                        :class="[
                         'actions-btn actions-btn--default'
                       ]"
-                      @click="addDoor(secIndex)"
-                  >
-                    Добавить дверь
-                  </button>
-                </div>
-              </article>
-            </div>
-
-            <div
-              v-for="(door, doorIndex) in section.fasades"
-              :key="doorIndex"
-              :class="'actions-container'"
-            >
-              <div class="actions-header">
-                <button
-                    class="actions-btn actions-icon"
-                    @click="deleteDoor(secIndex, doorIndex)"
-                >
-                  <img
-                      class="actions-icon--delete"
-                      src="/icons/delite.svg"
-                      alt=""
-                  />
-                </button>
-                <p>Дверь №{{doorIndex + 1}}</p>
+                        @click="addDoor(secIndex)"
+                    >
+                      Добавить дверь
+                    </button>
+                  </div>
+                </article>
               </div>
 
-              <div class="accordion">
-                <div
-                    v-for="(segment, segmentIndex) in door"
-                    :key="segmentIndex"
-                    :class="'actions-items--container'"
-                >
-                  <details class="item-group">
-                    <summary>
-                      <h3 class="item-group__title">
-                        Сегмент №{{segmentIndex + 1}}.{{doorIndex + 1}}.{{ segmentIndex + 1 }}
-                      </h3>
-                    </summary>
+              <div
+                  v-for="(door, doorIndex) in section.fasades"
+                  :key="doorIndex"
+                  :class="'actions-container'"
+              >
+                <div class="actions-header">
+                  <button
+                      class="actions-btn actions-icon"
+                      @click="deleteDoor(secIndex, doorIndex)"
+                  >
+                    <img
+                        class="actions-icon--delete"
+                        src="/icons/delite.svg"
+                        alt=""
+                    />
+                  </button>
+                  <p>Дверь №{{doorIndex + 1}}</p>
+                </div>
 
-                    <div
-                        :class="'actions-items--container'"
-                    >
-                      <article class="actions-items actions-items--left">
-                        <div class="actions-items--left-wrapper">
+                <div class="accordion">
+                  <div
+                      v-for="(segment, segmentIndex) in door"
+                      :key="segmentIndex"
+                      :class="'actions-items--container'"
+                  >
+                    <details class="item-group">
+                      <summary>
+                        <h3 class="item-group__title">
+                          Сегмент №{{secIndex + 1}}.{{doorIndex + 1}}.{{ segmentIndex + 1 }}
+                        </h3>
+                      </summary>
 
-                          <div class="actions-items--width">
-                            <div class="actions-inputs">
-                              <p class="actions-title">
-                                Ширина
-                              </p>
-                              <div
-                                  :class="['actions-input--container']"
-                              >
-                                <input
-                                    type="number"
-                                    :step="step"
-                                    min="150"
-                                    class="actions-input"
-                                    :value="segment.width"
-                                    disabled
-                                />
+                      <div
+                          :class="'actions-items--container'"
+                      >
+                        <article class="actions-items actions-items--left">
+                          <div class="actions-items--left-wrapper">
+
+                            <div class="actions-items--width">
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Ширина
+                                </p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="step"
+                                      min="150"
+                                      class="actions-input"
+                                      :value="segment.width"
+                                      disabled
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div class="actions-items--height">
-                            <div class="actions-inputs">
-                              <p class="actions-title">
-                                Высота
-                              </p>
-                              <div
-                                  :class="['actions-input--container']"
-                              >
-                                <input
-                                    type="number"
-                                    :step="step"
-                                    min="150"
-                                    class="actions-input"
-                                    :value="segment.height"
-                                    @input="
+                            <div class="actions-items--height">
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Высота
+                                </p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="step"
+                                      min="150"
+                                      class="actions-input"
+                                      :value="segment.height"
+                                      @input="
                             debounce(() => updateFasadeHeight(
                               $event.target.value,
                               secIndex,
@@ -476,78 +736,80 @@ defineExpose({
                               segmentIndex
                             ), 1000)
                           "
-                                />
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div class="actions-items--selector">
-                            <div class="actions-inputs">
-                              <p class="actions-title">
-                                Сторона открывания
-                              </p>
-                              <div
-                              >
-                                <select
-                                    style
-                                    id="loopsSide"
-                                    :value="segment.loopsSide"
-                                    name="loopsSide"
-                                    class="actions-input"
-                                    @change="changeLoopside(secIndex, segment, $event.target.value)"
+                            <div class="actions-items--selector">
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Сторона открывания
+                                </p>
+                                <div
                                 >
-                                  <option
-                                      v-for="(side, key) in getLoopsideList(secIndex, doorIndex)"
-                                      :key="key"
-                                      :value="side.ID"
+                                  <select
+                                      style
+                                      id="loopsSide"
+                                      :value="segment.loopsSide"
+                                      name="loopsSide"
+                                      class="actions-input"
+                                      @change="changeLoopside(secIndex, segment, $event.target.value)"
                                   >
-                                    <div class="item-group-name">
-                                      <p class="name__text">
-                                        {{ side.NAME }}
-                                      </p>
-                                    </div>
-                                  </option>
-                                </select>
+                                    <option
+                                        v-for="(side, key) in getLoopsideList(secIndex, doorIndex)"
+                                        :key="key"
+                                        :value="side.ID"
+                                    >
+                                      <div class="item-group-name">
+                                        <p class="name__text">
+                                          {{ side.NAME }}
+                                        </p>
+                                      </div>
+                                    </option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
+
                           </div>
+                        </article>
 
-                        </div>
-                      </article>
+                        <article class="actions-items actions-items--right">
+                          <div class="actions-items--right-items">
 
-                      <article class="actions-items actions-items--right">
-                        <div class="actions-items--right-items">
-
-                          <button
-                              :class="[
+                            <button
+                                :class="[
                             'actions-btn actions-btn--default'
                           ]"
-                              @click="splitFasade(secIndex, doorIndex, segmentIndex)"
-                          >
-                            Разделить фасад
-                          </button>
+                                @click="splitFasade(secIndex, doorIndex, segmentIndex)"
+                            >
+                              Разделить фасад
+                            </button>
 
-                          <button
-                              v-if="door.length > 1"
-                              class="actions-btn actions-btn--default"
-                              @click="removeFasadeSegment(secIndex, doorIndex, segmentIndex)"
-                          >
-                            Удалить
-                          </button>
+                            <button
+                                v-if="door.length > 1"
+                                class="actions-btn actions-btn--default"
+                                @click="removeFasadeSegment(secIndex, doorIndex, segmentIndex)"
+                            >
+                              Удалить
+                            </button>
 
-                        </div>
-                      </article>
-                    </div>
-                  </details>
+                          </div>
+                        </article>
+                      </div>
+                    </details>
+                  </div>
                 </div>
+
               </div>
 
+            </div>
+
+
           </div>
-
-          </div>
-
-
         </div>
+
       </section>
     </div>
   </div>

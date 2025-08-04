@@ -77,7 +77,6 @@ const module = computed(() => {
 
       let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
       let FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0]
-
       let fasadeColor = APP.FASADE[FASADE_PROPS.COLOR]
       let fasadePosition = APP.FASADE_POSITION[FASADE_PROPS.POSITION];
       fasadePosition = builder.expressionsReplace(fasadePosition,
@@ -89,6 +88,10 @@ const module = computed(() => {
               }))
 
 
+
+      const isSlidingDoors = !PROPS.CONFIG.LOOPS;
+      let fasades;
+
       let section: GridSection = {
         number: 1,
         width: totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2,
@@ -97,7 +100,67 @@ const module = computed(() => {
         type: "section",
         position: new THREE.Vector2(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + (totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2) / 2,
             PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]),
-        fasades: [
+      }
+
+      let _module: GridModule = {
+        width: totalWidth,
+        height: totalHeight,
+        depth: totalDepth,
+        moduleColor: PROPS.CONFIG.MODULE_COLOR,
+        moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
+        horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
+        sections: [section],
+        type: "module",
+        productID: productData.value.globalData,
+        isSlidingDoors,
+      }
+
+      PROPS.CONFIG.MODULEGRID = _module
+
+      if (isSlidingDoors) {
+        let FASADE_PROPS_2 = PROPS.CONFIG.FASADE_PROPS[1]
+
+        fasadePosition = calcSlideDoor(FASADE_PROPS.POSITION, 1)
+        let fasadePosition2 = calcSlideDoor(FASADE_PROPS_2.POSITION, 2)
+
+        fasades = [
+          [
+            <FasadeObject>{
+              id: 1,
+              width: fasadePosition.FASADE_WIDTH,
+              height: fasadePosition.FASADE_HEIGHT,
+              position: new THREE.Vector3(fasadePosition.POSITION_X, fasadePosition.POSITION_Y, fasadePosition.POSITION_Z),
+              material: <FasadeMaterial>{
+                ...FASADE_PROPS
+              },
+              type: "fasade",
+              minY: MIN_FASADE_HEIGHT,
+              maxY: fasadeColor.MAX_HEIGHT || fasadePosition.FASADE_HEIGHT,
+              maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+              minX: MIN_FASADE_WIDTH
+            }
+          ],
+          [
+            <FasadeObject>{
+              id: 2,
+              width: fasadePosition2.FASADE_WIDTH,
+              height: fasadePosition2.FASADE_HEIGHT,
+              position: new THREE.Vector3(fasadePosition2.POSITION_X, fasadePosition2.POSITION_Y, fasadePosition2.POSITION_Z),
+              material: <FasadeMaterial>{
+                ...FASADE_PROPS_2
+              },
+              type: "fasade",
+              minY: MIN_FASADE_HEIGHT,
+              maxY: fasadeColor.MAX_HEIGHT || fasadePosition2.FASADE_HEIGHT,
+              maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+              minX: MIN_FASADE_WIDTH
+            }
+          ]
+        ]
+        _module.fasades = fasades
+      }
+      else {
+        fasades = [
           [
             <FasadeObject>{
               id: 1,
@@ -115,24 +178,11 @@ const module = computed(() => {
               minX: MIN_FASADE_WIDTH
             }
           ]
-        ]
+        ];
+        section.fasades = fasades
+        calcLoops(0, _module)
       }
 
-      let _module: GridModule = {
-        width: totalWidth,
-        height: totalHeight,
-        depth: totalDepth,
-        moduleColor: PROPS.CONFIG.MODULE_COLOR,
-        moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
-        horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
-        sections: [section],
-        type: "module",
-        productID: productData.value.globalData,
-      }
-
-      calcLoops(0, _module)
-
-      PROPS.CONFIG.MODULEGRID = _module
     }
 
     return PROPS.CONFIG.MODULEGRID
@@ -290,7 +340,8 @@ const getFasadePositionMinMax = (fasade) => {
 
 const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
-  module.value.sections.forEach((section, secIndex) => {
+  if(!module.value.isSlidingDoors)
+    module.value.sections.forEach((section, secIndex) => {
     if (section.fasadesDrawers?.length) {
       calcDrawersFasades(secIndex)
     } else if (section.fasades?.[0]) {
@@ -315,8 +366,8 @@ const updateFasades = () => {
       const deltaHeight = correctFasadeHeight - sumDoorsHeight;
 
       if (deltaWidth !== 0) {
-        section.fasades.forEach((door, doorIndex) => {
-          door.forEach((segment, segmentIndex) => {
+          section.fasades.forEach((door, doorIndex) => {
+          door.forEach((segment) => {
 
             let fasadeMinMax = getFasadePositionMinMax(segment)
             Object.entries(fasadeMinMax).forEach(([key, value]) => {
@@ -340,9 +391,8 @@ const updateFasades = () => {
       }
 
       if (deltaHeight !== 0) {
-        section.fasades.forEach((door, doorIndex) => {
-
-          door.forEach((segment, segmentIndex) => {
+          section.fasades.forEach((door) => {
+          door.forEach((segment) => {
             let fasadeMinMax = getFasadePositionMinMax(segment)
             Object.entries(fasadeMinMax).forEach(([key, value]) => {
               segment[key] = value;
@@ -361,10 +411,43 @@ const updateFasades = () => {
         })
       }
 
-      calcLoops(secIndex)
+        calcLoops(secIndex)
     }
 
   })
+  else {
+    module.value.fasades.forEach((door, doorIndex) => {
+      let tmp_fasadePosition = calcSlideDoor(door[0].material.POSITION, doorIndex + 1)
+
+      const sumDoorsHeight = door.reduce(
+          (accumulator, item) => accumulator + item.height,
+          0);
+      const deltaHeight = tmp_fasadePosition.FASADE_HEIGHT - sumDoorsHeight;
+
+      door[door.length - 1].height += deltaHeight;
+      if(door[door.length - 1].height < door[door.length - 1].minY) {
+        door[0].height = tmp_fasadePosition.FASADE_HEIGHT
+        door = [door[0]]
+        return;
+      }
+      else
+        door.forEach((segment) => {
+        let fasadeMinMax = getFasadePositionMinMax(segment)
+        Object.entries(fasadeMinMax).forEach(([key, value]) => {
+          segment[key] = value;
+        })
+
+        segment.width = tmp_fasadePosition.FASADE_WIDTH
+        segment.position.x = tmp_fasadePosition.POSITION_X
+        segment.position.z = tmp_fasadePosition.POSITION_Z
+
+        if (segment.width < segment.minX || segment.height < segment.minY)
+          segment.error = true
+        else
+          delete segment.error;
+      })
+    })
+  }
 };
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
@@ -392,6 +475,11 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
         drawerIndex += 1
         break;
       case "fasade":
+
+        if (item.height < 100) {
+          break;
+        }
+
         let fasadeClone = Object.assign(<FasadeObject>{}, baseFasade)
         fasadeClone.id = index + 1
         fasadeClone.height = item.height
@@ -528,14 +616,93 @@ const calcDrawersFasadesPositons = (secIndex) => {
 
   return fasadeList
 }
+
+const calcSlideDoor = (fasadePositionID, doorNumber, callback) => {
+  const PROPS = productData.value.PROPS;
+
+  const fasadeThickness = module.value?.moduleThickness || 18
+
+  const doorsCount = module.value?.fasades?.length || 2
+  const doorsPortalWidth = totalWidth.value - fasadeThickness * 2
+  const horizont = module.value?.horizont || 78
+
+  let fasadePosition = Object.assign({}, APP.FASADE_POSITION[fasadePositionID]);
+
+  let fasade_width
+  switch (doorsCount) {
+    case 4:
+      fasade_width = (doorsPortalWidth + 25 * 2) / 4
+      break;
+    default:
+      fasade_width = (doorsPortalWidth + 25 * (doorsCount - 1)) / doorsCount
+      break;
+  }
+  fasade_width = Math.ceil(fasade_width)
+
+  fasadePosition = builder.getExec(
+      builder.expressionsReplace(
+          fasadePosition,
+          Object.assign(PROPS.CONFIG.EXPRESSIONS,
+              {
+                "#X#": fasade_width,
+                "#Y#": totalHeight.value - horizont,
+                "#Z#": totalDepth.value,
+                "#FASADE_THICKNESS#": fasadeThickness || 0,
+              })
+      )
+  );
+
+  //Вычитаем размеры направляющих в дверях-купе
+  fasadePosition.FASADE_HEIGHT -= fasadeThickness * 2
+  fasadePosition.DOORS_OVERFLOW = Math.abs(doorsPortalWidth - fasadePosition.FASADE_WIDTH * doorsCount) / (doorsCount - 1)
+
+  fasadePosition.POSITION_Y = 11
+
+  fasadePosition.POSITION_Y += horizont + fasadeThickness
+  fasadePosition.POSITION_X += fasadeThickness
+
+  if (doorNumber > 1) {
+    switch (doorsCount) {
+      case 4:
+        switch (doorNumber) {
+          case 4:
+            fasadePosition.POSITION_X -= 50
+            break;
+          default:
+            fasadePosition.POSITION_X -= 25
+            break;
+        }
+        break;
+      default:
+        fasadePosition.POSITION_X -= 25 * (doorNumber - 1)
+        break;
+    }
+  }
+
+  if (doorNumber && fasadePosition.FASADE_NUMBER != doorNumber) {
+    fasadePosition.FASADE_NUMBER = doorNumber
+  }
+
+  if (doorNumber > 1) {
+    fasadePosition.POSITION_X += fasadePosition.FASADE_WIDTH * (doorNumber - 1)
+  }
+
+  if(callback)
+    callback(fasadePosition)
+  else
+    return fasadePosition
+}
 //#endregion
 
 //#region Петли
 const calcLoops = (secIndex, grid = false) => {
+  const CONFIG = productData.value.PROPS.CONFIG
+
+  if (!CONFIG.LOOPS)
+    return
 
   const curSection = grid ? grid.sections[secIndex] : module.value.sections[secIndex]
   const FASADES = curSection.fasades || []
-  const CONFIG = productData.value.PROPS.CONFIG
 
   FASADES.forEach((door, doorKey) => {
     const additional_fasades = []
@@ -1051,6 +1218,7 @@ watch(visualizationRef, () => {
             @product-calcLoops="calcLoops"
             @product-calcDrawersFasades="calcDrawersFasades"
             @product-getFasadePositionMinMax="getFasadePositionMinMax"
+            @product-calcSlideDoor="calcSlideDoor"
         />
       </div>
 
