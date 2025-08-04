@@ -21,7 +21,7 @@
     </div>
   </div>
 </template>
-<script setup>
+<script setup >
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import ReaderComponent from "@/components/popUp/reader/ReaderComponent.vue";
