@@ -12,7 +12,7 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   const products = ref<any[]>([]) // Список продуктов 
   const productDetails = ref<any>(null) // Характеристики продукта
-  const productPrice = ref<any>('') // Характеристики продукта
+  const productPrice = ref<any>('') // Стоимость продукта
 
   const currentPage = ref<string | number | boolean>('1'); // Текущая страница
 	const currentLevel =  ref<any>(null); // текущий левел 
@@ -52,7 +52,6 @@ export const useCatalogStore = defineStore('catalog', () => {
     try {
       isLoading.value = true;
       error.value = null;
-      pagination.value = {};
 
       const response = await CatalogService.getCatalogList({ idSection, page, query });
       
@@ -69,7 +68,9 @@ export const useCatalogStore = defineStore('catalog', () => {
       currentPage.value = page ?? '1'
       if (response.pager) {
         handlePaginationResponse(response.pager);
-      } 
+      } else {
+        pagination.value = {};
+      }
 
     } catch (err) {
       error.value = err;
@@ -108,7 +109,6 @@ export const useCatalogStore = defineStore('catalog', () => {
       isLoading.value = true
       error.value = null
 
-      
       const price = await CatalogService.getProductPrice(formData)
       
       if (!price) {
@@ -126,9 +126,6 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   };
   
-
-  
-
 
 
   // Helpers
@@ -172,6 +169,9 @@ export const useCatalogStore = defineStore('catalog', () => {
     pagination.value = {};
     searchQuery.value = "";
     currentPage.value ="1";
+    productDetails.value = null;
+    productPrice.value ="";
+
   };
 
   const updateProductPrice = (data:any) => {
@@ -213,7 +213,9 @@ export const useCatalogStore = defineStore('catalog', () => {
     } catch (error) {
         console.error('Ошибка при обновлении цены:', error);
     }
-}
+  };
+
+
 
   return {
     // State

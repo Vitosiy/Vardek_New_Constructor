@@ -14,6 +14,8 @@
     "@vueform/slider": "^2.1.10",
     "@vueform/toggle": "^2.1.4",
     "axios": "^1.7.7",
+    "jquery": "^3.7.1",
+    "jquery-ui": "^1.14.1",
     "lil-gui": "^0.19.2",
     "pinia": "^2.2.1",
     "pixi.js": "^8.10.2",
@@ -21,6 +23,7 @@
     "three": "^0.173.0",
     "three-bvh-csg": "^0.0.16",
     "three-csg-ts": "^3.2.0",
+    "toastr": "^2.1.4",
     "typescript": "^5.6.3",
     "vue": "^3.3.4",
     "vue-router": "^4.4.3"

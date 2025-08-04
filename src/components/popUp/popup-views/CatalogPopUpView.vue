@@ -1,6 +1,6 @@
 <template>
   <div class="catalog-popup">
-    <div>currentMainID:{{ currentMainID }}, currentSubID:{{ currentSubID }}, Уровень:{{ currentLevel }}, Текущая страница: {{ currentPage }}, Поиск:{{ searchQuery }} </div>
+    <!-- <div>currentMainID:{{ currentMainID }}, currentSubID:{{ currentSubID }}, Уровень:{{ currentLevel }}, Текущая страница: {{ currentPage }}, Поиск:{{ searchQuery }}, Прайс: {{ productPrice }} </div> -->
     <header class="catalog-popup__header">
       <h2 class="catalog-popup__title">Общий каталог</h2>
       <ClosePopUpButton 
@@ -22,7 +22,8 @@
       <div class="catalog-popup__search-icon">
         <SearchSVG />
       </div>
-      <button 
+      <button
+        v-if="currentSubID"
         @click="resetCatalog"
         class="catalog-popup__search-reset"
       >
@@ -93,38 +94,43 @@
             <div class="product-item__wrapper">
               <h4 class="product-item__title">{{ product.NAME }}</h4>
               <div class="product-item__price">{{ product.PRICE }}</div>
-              <!-- Дополнительная информация о товаре -->
-              <button class="product-item__basket" @click="handleProductClick(Number(product.ID))">В корзину</button>
+              <button class="product-item__basket"     @click="callChildMethod(Number(product.ID))" >В корзину</button>
+              <!-- <button class="product-item__basket" @click="handleProductClick(Number(product.ID))">В корзину</button> -->
             </div>
           </div>
         </div>
         <div v-else class="product-none">
           В данном разделе товаров не найдено
         </div>
-        <div style="margin-top: auto;" v-if="pagination"> 
+        <div style="margin-top: auto;" > 
           <Pagination
             :nav-data="pagination"
             @page-changed="handlePageChange"
+            v-show="pagination"
           />
         </div>
       </div>
     </div>  
-    <!-- Каталог Конец -->
 
-    <div v-if="catalogStore.productDetails">
-      <button @click="backPage" >← Назад</button>
-      <div 
-        class="product-details-content" 
-        v-html="catalogStore.productDetails"
-      ></div>
-    </div>
+    <!-- <ProductDetails 
+      :productDetails="catalogStore.productDetails" 
+      @back="handleBackPage" 
+      ref="productDetailsRef" 
+    /> -->
+
+      <ProductDetails 
+        ref="productDetailsRef" 
+        :productDetails="catalogStore.productDetails" 
+        @back="handleBackPage"
+      />
+
 
     <div v-if="isLoading" class="catalog-popup__loader"></div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch, nextTick } from "vue";
 import { storeToRefs } from "pinia";
 
 // Components
@@ -139,12 +145,24 @@ import { useCatalogStore } from '@/store/appStore/catalogStore';
 
 // Icons
 import SearchSVG from "@/components/ui/svg/SearchSVG.vue";
+import ProductDetails from "@/components/product-details/ProductDetails.vue";
 
 const API_URL = 'https://dev.vardek.online'
 
 const popupStore = usePopupStore();
 const catalogStore = useCatalogStore();
 
+// Создаем ref для дочернего компонента
+const productDetailsRef = ref(null);
+
+
+const callChildMethod = (id) => {
+  if (productDetailsRef.value) {
+    productDetailsRef.value.getProductHTML(id); // Вызываем метод
+  } else {
+    console.error("Дочерний компонент не найден!");
+  }
+};
 
 // State from store
 const { 
@@ -154,6 +172,7 @@ const {
     subCategoriesList,
     products,
     productDetails,
+    productPrice,
     currentPage,
     currentLevel,
     pagination,
@@ -177,11 +196,20 @@ const searchTimeout = ref(null);
 // Использование в шаблоне
 const filteredCategories = computed(() => filterHiddenCategories(сategoriesList.value));
 const filteredSubCategories = computed(() => filterHiddenCategories(subCategoriesList.value));
-const productPrice = computed(() => catalogStore.updateProductPrice(productPrice.value));
+const priceProduct = computed(() => catalogStore.updateProductPrice(productPrice.value));
 
 onMounted(async () => {
   await catalogStore.fetchInitialCatalog();
 });
+
+watch(
+  () => productPrice.value,
+  (newValue, oldValue) => {
+    console.log('Цена изменилась:', oldValue, '→', newValue);
+    catalogStore.updateProductPrice(productPrice.value)
+    // Дополнительные действия при изменении
+  },
+);
 
 // Methods
 const handleCategoriesListClick = async (data) => {
@@ -199,6 +227,7 @@ const handleSubCategoriesListClick = async (data) => {
 const handleBreadcrumbClick = async (data) => {
   trimArrayByLevel(data.level)
   await catalogStore.fetchSubCatalogData({ idSection: data.id });
+  catalogStore.searchQuery = "";
 };
 
 const handlePageChange = async (page) => {
@@ -222,20 +251,14 @@ const handleSearch = () => {
 };
 
 const handleProductClick = async (id) => {
+  selectedProductId.value = id;
   const formData = new FormData();
   formData.append('ID', id.toString());
   formData.append('custom_price_type', false);
-
-  await catalogStore.fetchProductDetails(formData).then(async (res) => {
-    
-    await catalogStore.fetchProductPrice(formData);
-  });
+  
+  await catalogStore.fetchProductDetails(formData);
 };
 
-
-//helper
-
-// Фильтрация списка категорий
 const filterHiddenCategories = (categories) => {
   return categories?.filter(category => !category.hidden) || [];
 };
@@ -254,7 +277,7 @@ const resetCatalog = () => {
   catalogStore.resetCatalogData();
 };
 
-const backPage = () => {
+const handleBackPage = () => {
   catalogStore.productDetails = null;
 };
 
@@ -263,7 +286,7 @@ const backPage = () => {
 <style lang="scss" scoped>
 .catalog-popup {
   position: relative;
-  width: 1500px;
+  width: 760px;
   // padding: 20px;
   border-radius: 8px;
   box-sizing: border-box;
@@ -422,7 +445,6 @@ const backPage = () => {
     }
   }
 
-
   &__loader {
     width: 48px;
     height: 48px;
@@ -432,6 +454,7 @@ const backPage = () => {
     left: 0;
     animation: rotate 1s linear infinite
   }
+
   &__loader::before , &__loader::after {
     content: "";
     box-sizing: border-box;
@@ -441,6 +464,7 @@ const backPage = () => {
     border: 5px solid #da444c73;
     animation: prixClipFix 2s linear infinite ;
   }
+
   &__loader::after{
     border-color: #DA444C;
     animation: prixClipFix 2s linear infinite , rotate 0.5s linear infinite reverse;
@@ -485,10 +509,13 @@ const backPage = () => {
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 15px;
   overflow-y: auto; // Добавляем скролл при необходимости
   padding-right: .5rem;
+  @media (min-width: 1440px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .product-item {
@@ -611,20 +638,17 @@ const backPage = () => {
   }
 }
 
-.product-details-content {
-  overflow-y: auto;
+
+@keyframes rotate {
+  0%   {transform: rotate(0deg)}
+  100%   {transform: rotate(360deg)}
 }
 
-  @keyframes rotate {
-    0%   {transform: rotate(0deg)}
-    100%   {transform: rotate(360deg)}
-  }
-
-  @keyframes prixClipFix {
-      0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
-      25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
-      50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
-      75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
-      100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
-  }
+@keyframes prixClipFix {
+    0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+    25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+    50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+    75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+    100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+}
 </style>

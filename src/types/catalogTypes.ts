@@ -1,5 +1,3 @@
-// Типы Каталога
-
 interface NavigationData {
     NavFirstRecordShow?: number;
     NavLastRecordShow?: number;
@@ -41,7 +39,7 @@ interface CatalogSectionItem {
     UF_ADD_LINK?: null;
     UF_BIG_PREV?: string;
     UF_BTN_BYTXT?: string;
-    UF_CITY?: any[]; // Could be more specific if city structure is known
+    UF_CITY?: any[]; 
     UF_CUSTOM_LINK?: boolean;
     UF_DE_DESCRIPTION?: string;
     UF_DE_NAME?: string;
@@ -55,7 +53,7 @@ interface CatalogSectionItem {
     UF_FILTER11?: null;
     UF_HIDEMAINPAGE?: null;
     UF_HIDE_IN_3D?: string;
-    UF_HIDE_IN_CONSTRUCT?: any[]; // Could be more specific
+    UF_HIDE_IN_CONSTRUCT?: any[];
     UF_HIDE_SITE?: boolean;
     UF_KP_NAME?: string;
     UF_LINK_SECTION?: null;
@@ -91,17 +89,13 @@ interface CatalogResponse {
 } 
 
 interface ProductDetailsResponse {
-  // Укажите здесь структуру ответа с деталями продукта
   data: any
   success: boolean
-  // ... другие поля
 }
 
 interface ProductPriceResponse {
-  // Укажите здесь структуру ответа с ценой продукта
   data: any
   success: boolean
-  // ... другие поля
 }
 
 type CatalogListParams = {
