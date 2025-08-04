@@ -241,8 +241,9 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
 
   visualizationRef.value.selectCell("fasades", secIndex, doorIndex, true, segmentIndex);
 
-  let segment = module.value.sections[secIndex].fasades[doorIndex][segmentIndex];
-  const halfHeight = Math.floor((segment.height - 4) / 2);
+  let fasades = secIndex === null ? module.value.fasades : module.value.sections[secIndex].fasades
+  let segment = fasades[doorIndex][segmentIndex];
+  const halfHeight = Math.floor((segment.height - (module.value.isSlidingDoors ? 0 : 4)) / 2);
   // Обновляем высоту последней строки
 
   if (halfHeight < segment.minY || segment.width < segment.minX)
@@ -253,9 +254,10 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  module.value.sections[secIndex].fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
+  fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
     ...segment,
-    position: new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height),
+    position: module.value.isSlidingDoors ? new THREE.Vector3(segment.position.x, segment.position.y + segment.height, segment.position.z) :
+        new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height),
   });
 
   if(!module.value.isSlidingDoors)
@@ -298,15 +300,16 @@ const deleteDoor = (secIndex, doorIndex) => {
 
 const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   const clone = Object.assign({}, module.value);
-  const currentSection = clone.sections[secIndex].fasades[doorIndex];
+  const fasades = secIndex === null ? clone.fasades : clone.sections[secIndex].fasades
+  const currentSection = fasades[doorIndex];
   const currentSegment = currentSection[segmentIndex];
 
   const next = currentSection[segmentIndex + 1];
   const prev = currentSection[segmentIndex - 1];
 
   const combinedHeight = next
-      ? currentSegment.height + next.height + 4
-      : currentSegment.height + prev.height + 4;
+      ? currentSegment.height + next.height + (module.value.isSlidingDoors ? 0 : 4)
+      : currentSegment.height + prev.height + (module.value.isSlidingDoors ? 0 : 4);
 
   next ? (next.height = combinedHeight) : (prev.height = combinedHeight);
 
@@ -316,6 +319,8 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   else
     delete tmpSegment.error;
 
+  if(prev)
+    prev.position.y = currentSegment.position.y;
 
   if (currentSection.length > 1) {
     currentSection.splice(segmentIndex, 1);
