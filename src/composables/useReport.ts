@@ -16,11 +16,11 @@ export const useReport = (): UseReport => {
         loading.value = true;
         hasError.value = false;
 
-        const { error } = await client.POST("/api/tabs/report", {
+        const { data } = await client.POST("/api/tabs/report", {
             body: { text }
         });
 
-        if (error) 
+        if (data) 
             hasError.value = true;
 
         loading.value = false;
