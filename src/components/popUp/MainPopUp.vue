@@ -2,6 +2,7 @@
 // @ts-nocheck 31
 import { POPUP_CONFIG } from '@/components/popUp';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
+import CatalogPopUpView from "./popup-views/CatalogPopUpView.vue";
 
 const popupStore = usePopupStore();
 </script>
