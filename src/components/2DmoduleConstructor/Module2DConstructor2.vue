@@ -458,28 +458,26 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
 
   let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
+  let fasadesDrawers = module.value.sections[secIndex].fasadesDrawers || []
 
-  let baseDrawerFasade = module.value.sections[secIndex].fasadesDrawers[0]
+  let baseDrawerFasade = fasadesDrawers[0]
   let fasadesList = calcDrawersFasadesPositons(secIndex)
 
   module.value.sections[secIndex].fasades[0] = []
   if (module.value.sections[secIndex].fasades[1])
     module.value.sections[secIndex].fasades[1] = []
 
+  module.value.sections[secIndex].fasadesDrawers = fasadesDrawers.sort((a, b) => a.position.y - b.position.y)
+
   let drawerIndex = 0
   fasadesList.forEach((item, index) => {
 
     switch (item.type) {
       case "drawer":
-        module.value.sections[secIndex].fasadesDrawers[drawerIndex].id = index + 1
+        fasadesDrawers[drawerIndex].id = index + 1
         drawerIndex += 1
         break;
       case "fasade":
-
-        if (item.height < 100) {
-          break;
-        }
-
         let fasadeClone = Object.assign(<FasadeObject>{}, baseFasade)
         fasadeClone.id = index + 1
         fasadeClone.height = item.height
@@ -548,7 +546,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
   let fullFasadelSize = fasadePosition.FASADE_HEIGHT
 
   const firstBox = sortedBoxesByIncrease[0] //нижний ящик
-  let bottomFasadePosition = module.value.horizont + 2 //-(CONFIG.SIZE.height / 2 - Math.abs(fasadePosition.FASADE_HEIGHT - CONFIG.SIZE.height + 2))
+  let bottomFasadePosition = module.value.horizont + 2 //-(totalHeight.value / 2 - Math.abs(fasadePosition.FASADE_HEIGHT - totalHeight.value + 2))
   const firstFasadePosition = bottomFasadePosition
 
   if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
@@ -587,7 +585,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
 
     //Условие для нижней планки
     if (topBox) {
-      upperFasadeSize = Math.abs((firstFasadePosition + topBox.position.y) - bottomFasadePosition)
+      upperFasadeSize = Math.abs(topBox.position.y - bottomFasadePosition)
 
       if ((!box.isProfile && topBox.isProfile) && upperFasadeSize > 4) {
         bottomFasadePosition += otstup
@@ -596,14 +594,15 @@ const calcDrawersFasadesPositons = (secIndex) => {
         upperFasadeSize -= 4
       }
     } else {
-      upperFasadeSize = Math.abs(CONFIG.SIZE.height - 2 - bottomFasadePosition)
+      upperFasadeSize = Math.abs(totalHeight.value - 2 - bottomFasadePosition)
     }
 
-    fasadeList.push({
-      y: bottomFasadePosition,
-      height: upperFasadeSize,
-      type: "fasade",
-    })
+    if(upperFasadeSize >= MIN_FASADE_HEIGHT)
+      fasadeList.push({
+        y: bottomFasadePosition,
+        height: upperFasadeSize,
+        type: "fasade",
+      })
 
     //Если между ящиками расстояние <= 4мм, то туда фасад не нужен, НО если информациб об этом "фасаде" не положить - сломется
     //логика приложения. Поэтому, если у нас такой промежуток есть, то мы кладём его размер и позицию, но не смещаем её и не уменьшаем\
@@ -613,6 +612,13 @@ const calcDrawersFasadesPositons = (secIndex) => {
       bottomFasadePosition = bottomFasadePosition + upperFasadeSize + (box.isProfile || topBox?.isProfile ? 0 : otstup)
     }
   }
+
+  if(fullFasadelSize >= MIN_FASADE_HEIGHT)
+    fasadeList.push({
+      y: bottomFasadePosition,
+      height: fullFasadelSize,
+      type: "fasade",
+    })
 
   return fasadeList
 }
@@ -735,7 +741,7 @@ const calcLoopPositions = (fasades, section) => {
       height: 82,
       width: 38,
       type: 'loop',
-      positionX: LOOPSIDE[fasade.loopsSide]?.includes("left") ? section.position.x - section.width / 2 : section.position.x + section.width / 2,
+      positionX: LOOPSIDE[fasade.loopsSide]?.includes("left") ? section.position.x - section.width / 2 : section.position.x + section.width / 2 - 38,
     }
 
     const fasadeSize = fasade.height;

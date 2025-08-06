@@ -398,6 +398,7 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 const changeLoopside = (secIndex, fasade, newSide) => {
   fasade.loopsSide = parseInt(newSide);
   calcLoops(secIndex)
+  visualizationRef.value.renderGrid();
 }
 
 const getLoopsideList = (secIndex, doorIndex) => {

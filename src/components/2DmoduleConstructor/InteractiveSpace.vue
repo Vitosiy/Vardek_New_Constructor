@@ -381,6 +381,10 @@ const renderGrid = () => {
 
     if (mode.value === "fasades" && !module.value?.isSlidingDoors) {
       section.fasades.forEach((column, colIndex) => {
+
+        if(!column.length)
+          return;
+
         const pxWidth = getPixelWidth(column[0].width);
         let fasadeXOffset = getPixelWidth(column[0].position.x);
 

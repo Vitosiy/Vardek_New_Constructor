@@ -189,7 +189,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
   let curItem = curRow.fillings[itemIndex];
 
   curRow.fillings = curRow.fillings.filter((el, index) => {
-    if (index === itemIndex && el.fasades)
+    if (index === itemIndex && el.fasade)
       needFasadesUpdate = true
 
     return index !== itemIndex;
@@ -201,6 +201,9 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
       sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
         return el.id !== curItem.fasade.id;
       });
+
+      if(!sec.fasadesDrawers.length)
+        delete sec.fasadesDrawers
 
       calcDrawersFasades(secIndex)
     }
