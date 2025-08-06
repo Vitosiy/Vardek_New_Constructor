@@ -32,12 +32,26 @@ export class Camera {
     screenSpacePanning: boolean = false
     keybordListeners: TKeybordListeners
     cameraExtremum: TCameraExtremum = {
-        min: -10000,
-        max: 10000
+        min: -16000,
+        max: 16000
     }
 
     private onKeyDown: (event) => void;
     private onKeyUp: (event) => void
+
+    private cameraPositions = [
+        { pos:new THREE.Vector3(5000, 8000, -8000) , target: new THREE.Vector3(0,0,0)},
+        { pos:new THREE.Vector3(8000, 1500, 0) , target: new THREE.Vector3(0,1500,0)},
+        { pos:new THREE.Vector3(-5000, 8000, -8000) , target: new THREE.Vector3(0,0,0)},
+
+        { pos:new THREE.Vector3(0, 5000, -10000) , target: new THREE.Vector3(0,0,0)},
+        { pos:new THREE.Vector3(0, 12000, 0) , target: new THREE.Vector3(0,0,0)},
+        { pos:new THREE.Vector3(0, 5000, 10000) , target: new THREE.Vector3(0,0,0)},
+
+        { pos:new THREE.Vector3(5000, 8000, 8000) , target: new THREE.Vector3(0,0,0)},
+        { pos:new THREE.Vector3(-8000, 1500, 0) , target: new THREE.Vector3(0,1500,0)},
+        { pos:new THREE.Vector3(-5000, 8000, 8000) , target: new THREE.Vector3(0,0,0)},
+    ]
 
 
     constructor(parent: THREETypes.TApplication) {
@@ -56,6 +70,7 @@ export class Camera {
         this.setInstance();
         this.setOrbitControls();
         this.setupKeys()
+        this.vueEvents()
     }
 
     get _controls() {
@@ -112,6 +127,15 @@ export class Camera {
         this.controls.screenSpacePanning = false
     }
 
+    setPosition(value): void {
+        console.log(value)
+
+
+        this.instance.position.copy(this.cameraPositions[value].pos)
+        this.controls.target.set(...this.cameraPositions[value].target)
+        this.controls?.update()
+    }
+
     resetOrbitControls(): void {
         if (this.controls instanceof OrbitControls) {
             this.controls.dispose();
@@ -134,7 +158,6 @@ export class Camera {
         this.instance?.updateProjectionMatrix()
     }
 
-
     update() {
         if (this.instance instanceof THREE.OrthographicCamera) return
         this.instance.position.x = THREE.MathUtils.clamp(this.instance.position.x, this.cameraExtremum.min, this.cameraExtremum.max)
@@ -146,6 +169,16 @@ export class Camera {
     }
 
     removeCamera() {
+    }
+
+    vueEvents() {
+
+        this.onSetPosition = (value) => {
+            this.setPosition(value)
+        }
+
+        this.eventBuss.on('A:ChangeCameraPos', this.onSetPosition)
+
     }
 
 }

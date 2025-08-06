@@ -39,6 +39,7 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+
 button {
   border: none;
   border-radius: 15px;

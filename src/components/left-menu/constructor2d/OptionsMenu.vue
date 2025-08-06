@@ -161,7 +161,7 @@ onUnmounted(() => {
     gap: 30px;
     padding: 20px;
     position: relative;
-    transform-style: preserve-3d;
+    // transform-style: preserve-3d;
 
     .options-design {
       z-index: 10;
@@ -221,7 +221,7 @@ onUnmounted(() => {
       }
 
       .goods {
-        max-height: 70vh;
+        max-height: 30vh;
         display: flex;
         flex-direction: column;
         gap: 10px;

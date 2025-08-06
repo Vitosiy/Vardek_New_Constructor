@@ -29,7 +29,7 @@ export class AppLights {
     addPointLight(params: THREEInterfases.IlightData) {
         const pointLight = new THREE.PointLight(
             params.color,
-            params.intensity,
+           this.sceneState.getLightRange.pointLight,
             params.distance,
             params.decay,
         )
@@ -54,7 +54,7 @@ export class AppLights {
 
         this.ambientLight = new THREE.AmbientLight(
             params.color,
-            params.intensity,
+            this.sceneState.getLightRange.ambientLight,
         )
 
         this.scene.add(this.ambientLight)
@@ -93,7 +93,6 @@ export class AppLights {
             this.lights[i].position.set(x, y, z);
         }
     }
-
 
     setQuality(params: string) {
         switch (params) {

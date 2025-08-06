@@ -118,7 +118,7 @@ onMounted(() => {
   <div class="main__container">
     <OptionsMenu v-if="route.name === 'Constructor3d' && ready" />
     <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
-    <CustomiserMenu />
+    <CustomiserMenu v-if="route.name === 'Constructor3d' && ready" />
     <RouterView v-slot="{ Component }">
       <component :is="Component" ref="pageComponentRef" />
     </RouterView>

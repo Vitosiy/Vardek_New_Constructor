@@ -30,6 +30,8 @@ const resizeModel = (value: object) => {
   eventBus.emit("A:Model-resize", {... resizeData, ... value});
 }
 
+console.log(modelState, 'ONRULL')
+
 </script>
 
 <template>

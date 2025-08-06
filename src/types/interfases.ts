@@ -31,8 +31,10 @@ export interface IProjectParams {
     table_params?: { [key: string]: any },
     table_color?: number | null,
     table_top_type_auto?: boolean
-    default_fasade_up?: number,
-    default_fasade_down?: number,
+    default_fasade_up?: number | string,
+    default_fasade_down?: number | string,
+    default_floor?: number | string,
+    default_wall?: number | string,
 }
 
 
@@ -228,7 +230,7 @@ export interface ISetProduct {
     roomManager?: THREETypes.TRoomManager,
     trafficManager?: THREETypes.TTrafficManager,
     boxHelper?: THREETypes.TCustomBoxHelper,
-    wall?:THREE.Object3D | THREE.Mesh,
+    wall?: THREE.Object3D | THREE.Mesh,
 }
 
 export interface IClampPosition {

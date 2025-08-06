@@ -48,18 +48,19 @@ class UserHistory<T> {
 
     undo(): T | null {
         // Возвращаем предыдущее действие, если оно существует
-        console.log(this.currentIndex, 'UNDO')
+
         if (this.currentIndex > 0) {
             this.currentIndex--;
             const action = this.currentIndex >= 0 ? this.history[this.currentIndex] : null;
             return action
         }
+
+
         return null;
     }
 
     redo(): T | null {
-
-        console.log(this.currentIndex, 'REDO', this.history.length - 1)
+        console.log(this.history, 'HISTOR')
         // Возвращаем следующее действие, если оно существует
         if (this.currentIndex < this.history.length - 1) {
             this.currentIndex++;
@@ -83,7 +84,8 @@ class UserHistory<T> {
 
         console.log(data, 'DATA')
         // Очищаем историю
-        this.history = [[]] as T[];
+        // this.history = [[]] as T[];
+           this.history = [data] as T[];
         // this.currentIndex = -1;
         this.currentIndex = 0;
     }

@@ -1,9 +1,17 @@
 <script setup lang="ts">
 /**/ / @ts-nocheck 31 */;
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
-
+import {
+  ref,
+  computed,
+  watch,
+  onBeforeMount,
+  onMounted,
+  defineExpose,
+} from "vue";
+import { _URL } from "@/types/constants";
 import { TQuality } from "@/types/types";
-
+import { TOptionsMap, TLightRange } from "@/types/types";
+import { IWallSizes } from "@/types/interfases";
 import { START_PROJECT_PARAMS } from "@/Application/F-startData";
 
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -17,30 +25,67 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import RangeSlider from "@/components/ui/rangeSlider/RangeSlider.vue";
 import Toggle from "@vueform/toggle";
+import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
-const rooms = useRoomState();
+const roomState = useRoomState();
 const menuStore = useMenuStore();
 
-const isPopUpOpen = ref(false);
 const clampHeight = ref<number>(sceneState.getStartHeightClamp);
 const quality = START_PROJECT_PARAMS.quality as TQuality[];
 const currentQuality = ref<TQuality>(quality[1]);
-const pointLight = ref<number>(1);
-const ambientLight = ref<number>(1);
+
+const pointLight = ref<number | string>(1);
+const ambientLight = ref<number | string>(1);
+
 const shadows = ref<boolean>(false);
 const refraction = ref<boolean>(false);
+
+const currentOption = ref<string | null>(null);
+const currentOptionLable = ref<string | null>(null);
+
+const optionsData = ref<Object | null>(null);
+const roomRef = ref<HTMLElement | null>(null);
+
+const optionsType = ref<Object>({
+  wall: "A:ChangeWallTexture",
+  floor: "A:ChangeFloorTexture",
+  bodyTop: "A:ChangeBodyTopTexture",
+  bodyBottom: "A:ChangeBodyBottomTexture",
+  fasadsTop: "A:ChangeFasadsTopTexture",
+  fasadsBottom: "A:ChangeFasadsBottomTexture",
+});
+
+const globalOptions = ref<TOptionsMap | null>(null);
 
 onMounted(() => {
   shadows.value = sceneState.getShadowValue;
   refraction.value = sceneState.getRefractionValue;
+  pointLight.value = sceneState.getLightRange.pointLight;
+  ambientLight.value = sceneState.getLightRange.ambientLight;
+});
+
+onBeforeMount(() => {
+  globalOptions.value = menuStore.getGlobalOptions;
+  prepareOptions();
+});
+
+defineExpose({
+  roomRef,
 });
 
 // onBeforeUnmount(() => {
 //   sceneState.setRefractionValue(refraction.value);
 //   sceneState.setShadowValue(refraction.value);
 // });
+
+const prepareOptions = () => {
+  const { wall, floor } = roomState.getCurrentRoomParams as IWallSizes;
+
+  menuStore.updateOption("wall", wall as number);
+  menuStore.updateOption("floor", floor as number);
+};
 
 const closeMenu = (menuType) => {
   menuStore.closeMenu(menuType);
@@ -51,10 +96,13 @@ const changeHeightClamp = () => {
 };
 
 const loadRoom = (id: number) => {
-  console.log(id);
   eventBus.emit("A:Load", id);
   eventBus.emit("A:ContantLoaded", false);
   closeMenu("roomPar");
+};
+
+const deliteRoom = (value: number) => {
+  roomState.removeRoom(value);
 };
 
 const changeQualit = (data: TQuality) => {
@@ -63,20 +111,11 @@ const changeQualit = (data: TQuality) => {
   eventBus.emit("A:Quality", data.value);
 };
 
-const getCurrentRoom = computed(() => {
-  return (id: number) => {
-    if (!rooms.getCurrentRoomId) return;
-    return {
-      "btn-active": id === rooms.getCurrentRoomId.id,
-    };
-  };
-});
-
-const changePointLightPower = (value: number) => {
+const changePointLightPower = (value: number | string) => {
   eventBus.emit("A:ChangePointLightPower", value);
 };
 
-const changeAmbientLightPower = (value: number) => {
+const changeAmbientLightPower = (value: number | string) => {
   eventBus.emit("A:ChangeAmbientLightPower", value);
 };
 
@@ -88,11 +127,64 @@ const toggleRefraction = (value: boolean) => {
   eventBus.emit("A:ToggleRefraction", value);
 };
 
+const getOption = (value: string, title: string) => {
+  if (value == currentOption.value) {
+    optionsData.value = null;
+    currentOption.value = null;
+    return;
+  }
+
+  currentOption.value = value;
+  switch (value) {
+    case "wall":
+      optionsData.value = Object.values(roomState.getWallsTextures());
+      break;
+    case "floor":
+      optionsData.value = Object.values(roomState.getFloorTextures());
+  }
+
+  currentOptionLable.value = title;
+};
+
+const selectOption = (value: Object) => {
+  eventBus.emit(optionsType.value[currentOption.value], value.ID);
+  globalOptions.value[currentOption.value].id = value.ID;
+};
+
+const getOptionImg = computed(() => {
+  return (id: number, type: string) => {
+    let result;
+    switch (type) {
+      case "wall":
+        result = roomState.getWallsTextures()[id].PREVIEW_PICTURE;
+        break;
+      case "floor":
+        result = roomState.getFloorTextures()[id].PREVIEW_PICTURE;
+        break;
+    }
+    return result;
+  };
+});
+
+const roomsList = computed(() => {
+  return roomState.getRooms;
+});
+
+const getCurrentRoom = computed(() => {
+  return (id: number) => {
+    if (!roomState.getCurrentRoomId) return;
+    return {
+      // "btn-active": id === roomState.getCurrentRoomId.id,
+      active: id === roomState.getCurrentRoomId.id,
+    };
+  };
+});
+
 watch(
   () => pointLight.value,
   () => {
     changePointLightPower(pointLight.value);
-    console.log(pointLight.value);
+    sceneState.setLightRange("pointLight", pointLight.value);
   }
 );
 
@@ -114,124 +206,67 @@ watch(shadows, () => {
   toggleShadow(shadows.value);
 });
 
-let text = "garage"; // TODO Временная заглушка. Валятся ошибки. Позже разобраться что требуется
+// TODO Временная заглушка. Валятся ошибки. Позже разобраться что требуется
 </script>
 
 <template>
-  <div class="room" :class="{ active: menuStore.openMenus == 'roomPar' }">
+  <div class="room" ref="roomRef">
     <div class="room-popup">
       <h1 class="popup__title">Параметры помещения</h1>
       <ClosePopUpButton class="menu__close" @close="closeMenu('roomPar')" />
 
       <div class="room-popup__container">
         <div class="room-select">
-          <MainButton
-            v-for="(room, key) in rooms.getRooms"
-            :key="key"
-            :value="room.id"
-            @click="loadRoom(room.id)"
-            :class="[getCurrentRoom(room.id)]"
-          >
-            {{ room.label }}</MainButton
-          >
+          <div v-for="(room, key) in roomsList" :key="key">
+            <div class="room-select__item">
+              <button
+                :class="[
+                  'button__filled button__filled--text',
+                  getCurrentRoom(room.id),
+                ]"
+                @click="loadRoom(room.id)"
+              >
+                <span> {{ room.label }}</span>
+              </button>
+              <button class="button__filled" @click="deliteRoom(room.id)">
+                <span class="icon icon-garbage"></span>
+              </button>
+            </div>
+          </div>
         </div>
         <div class="room-options">
-          <div v-for="(item, index) in 6" :key="index" class="option-small">
-            <div class="option-label">
-              <div class="label__image">
-                <svg
-                  width="60"
-                  height="60"
-                  viewBox="0 0 60 60"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect width="60" height="60" rx="15" fill="white" />
-                  <g clip-path="url(#clip0_455_30589)">
-                    <path
-                      d="M35.8334 30.0003C35.8334 30.4606 35.4603 30.8337 35.0001 30.8337H30.8334V35.0003C30.8334 35.4606 30.4603 35.8337 30.0001 35.8337C29.5398 35.8337 29.1667 35.4606 29.1667 35.0003V30.8337H25.0001C24.5398 30.8337 24.1667 30.4606 24.1667 30.0003C24.1667 29.5401 24.5398 29.167 25.0001 29.167H29.1667V25.0003C29.1667 24.5401 29.5398 24.167 30.0001 24.167C30.4603 24.167 30.8334 24.5401 30.8334 25.0003V29.167H35.0001C35.4603 29.167 35.8334 29.5401 35.8334 30.0003Z"
-                      fill="#A3A9B5"
-                    />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_455_30589">
-                      <rect
-                        width="20"
-                        height="20"
-                        fill="white"
-                        transform="translate(20 20)"
-                      />
-                    </clipPath>
-                  </defs>
-                </svg>
-              </div>
-              <p class="label__text">Оформление стен</p>
+          <div
+            v-for="(item, key) in globalOptions"
+            :key="key"
+            class="option-small"
+          >
+            <div class="option-label" @click="getOption(key, item.title)">
+              <img
+                class="label__img"
+                :src="_URL + getOptionImg(item.id, key)"
+                alt=""
+              />
+
+              <p class="label__text">{{ item.title }}</p>
             </div>
             <div class="option__checkbox">
-              <input type="checkbox" name="" id="1" />
-              <label for="1">Для всех комнат</label>
+              <label class="control control-checkbox">
+                <input type="checkbox" :checked="item.global" @change="" />
+                <span class="control_indicator"></span>
+                <span class="text-lg text-gray-800 font-medium">{{
+                  item.label
+                }}</span>
+              </label>
             </div>
           </div>
-          <div v-for="(item, index) in 2" :key="index" class="option-standart">
+          <!-- <div v-for="(item, index) in 2" :key="index" class="option-standart">
             <div class="select-group">
               <div class="option-label">
-                <div class="label__image">
-                  <svg
-                    width="60"
-                    height="60"
-                    viewBox="0 0 60 60"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect width="60" height="60" rx="15" fill="white" />
-                    <g clip-path="url(#clip0_455_30589)">
-                      <path
-                        d="M35.8334 30.0003C35.8334 30.4606 35.4603 30.8337 35.0001 30.8337H30.8334V35.0003C30.8334 35.4606 30.4603 35.8337 30.0001 35.8337C29.5398 35.8337 29.1667 35.4606 29.1667 35.0003V30.8337H25.0001C24.5398 30.8337 24.1667 30.4606 24.1667 30.0003C24.1667 29.5401 24.5398 29.167 25.0001 29.167H29.1667V25.0003C29.1667 24.5401 29.5398 24.167 30.0001 24.167C30.4603 24.167 30.8334 24.5401 30.8334 25.0003V29.167H35.0001C35.4603 29.167 35.8334 29.5401 35.8334 30.0003Z"
-                        fill="#A3A9B5"
-                      />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_455_30589">
-                        <rect
-                          width="20"
-                          height="20"
-                          fill="white"
-                          transform="translate(20 20)"
-                        />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </div>
+                <div class="label__image"></div>
                 <p class="label__text">Оформление стен</p>
               </div>
               <div class="option-label">
-                <div class="label__image">
-                  <svg
-                    width="60"
-                    height="60"
-                    viewBox="0 0 60 60"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect width="60" height="60" rx="15" fill="white" />
-                    <g clip-path="url(#clip0_455_30589)">
-                      <path
-                        d="M35.8334 30.0003C35.8334 30.4606 35.4603 30.8337 35.0001 30.8337H30.8334V35.0003C30.8334 35.4606 30.4603 35.8337 30.0001 35.8337C29.5398 35.8337 29.1667 35.4606 29.1667 35.0003V30.8337H25.0001C24.5398 30.8337 24.1667 30.4606 24.1667 30.0003C24.1667 29.5401 24.5398 29.167 25.0001 29.167H29.1667V25.0003C29.1667 24.5401 29.5398 24.167 30.0001 24.167C30.4603 24.167 30.8334 24.5401 30.8334 25.0003V29.167H35.0001C35.4603 29.167 35.8334 29.5401 35.8334 30.0003Z"
-                        fill="#A3A9B5"
-                      />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_455_30589">
-                        <rect
-                          width="20"
-                          height="20"
-                          fill="white"
-                          transform="translate(20 20)"
-                        />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </div>
+                <div class="label__image"></div>
                 <p class="label__text">Оформление стен</p>
               </div>
             </div>
@@ -239,7 +274,7 @@ let text = "garage"; // TODO Временная заглушка. Валятся
               <input type="checkbox" name="" id="1" />
               <label for="1">Для всех комнат</label>
             </div>
-          </div>
+          </div> -->
         </div>
         <h3 class="popup__title">Высота навесных модулей</h3>
         <div class="room-modheight">
@@ -332,46 +367,70 @@ let text = "garage"; // TODO Временная заглушка. Валятся
         </div>
       </div>
     </div>
-    <!-- <div class="color-select" :class="{ active: isPopUpOpen == true }">
-      <h1 class="color__title">Цвет стен</h1>
-      <MainInput
-        class="input__search"
-        v-model="text"
-        type="text"
-        placeholder="Поиск..."
-      />
 
-      <div class="color-select__container">
-        <div v-for="(item, index) in 7" :key="index" class="color-item">
-          <img src="@/assets/img/right-menu/bg.png" />
-          <p class="color-item__title">Светло-серый</p>
-        </div>
+    <transition name="slide--left">
+      <div class="color-select" v-if="optionsData">
+        <h1 class="color__title">{{ currentOptionLable }}</h1>
+        <MaterialSelector :materials="optionsData" @select="selectOption" />
       </div>
-    </div> -->
+    </transition>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .room {
   display: flex;
-  gap: 15px;
+  gap: 5px;
   position: absolute;
   top: 15px;
-  left: -840px;
-  transform: translateZ(-10px);
-  transition: 0.5s ease-in-out;
+  left: 320px;
+  max-height: calc(100vh - 120px);
+  z-index: -1;
+  user-select: none;
 
-  .room-popup {
+  &-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  &-modheight {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  &-select {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 0;
+    border-top: 1px solid $stroke;
+    border-bottom: 1px solid $stroke;
+
+    &__item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px;
+      border: 1px solid $dark-grey;
+      border-radius: 50px;
+    }
+  }
+
+  &-popup {
     width: 570px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     position: relative;
     padding: 15px;
-    background: $white;
+    background: rgba($white, 1);
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: 1;
     border-radius: 15px;
+    // backdrop-filter: blur(5px);
 
     &__container {
       max-height: 80vh;
@@ -380,138 +439,88 @@ let text = "garage"; // TODO Временная заглушка. Валятся
       gap: 15px;
       padding-right: 10px;
       overflow: auto;
-
-      .room-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-
-        .option-small {
-          flex: 46%;
-          padding: 10px;
-          border-radius: 15px;
-          background-color: $bg;
-
-          .option-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-          }
-
-          .option__checkbox {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-          }
-        }
-
-        .option-standart {
-          width: 100%;
-          padding: 10px;
-          border-radius: 15px;
-          background-color: $bg;
-
-          .select-group {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            .option-label {
-              width: 100%;
-              max-width: 262.5px;
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              margin-bottom: 10px;
-
-              .label__image {
-                display: flex;
-              }
-
-              .label__text {
-                font-size: 15px;
-                font-weight: 600;
-                color: $strong-grey;
-              }
-            }
-          }
-
-          .option__checkbox {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-          }
-        }
-      }
-
-      .room-modheight {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-    }
-
-    &.active {
-      left: 330px;
     }
   }
+}
 
-  .color-select {
-    width: 373px;
+.option {
+  &-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    border-radius: 15px;
+    transition-property: background-color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover {
+        .label__text {
+          color: $black;
+        }
+        // background-color: $stroke;
+      }
+    }
+  }
+  &-small {
+    flex: 46%;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: $bg;
+  }
+  &-standart {
+    width: 100%;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: $bg;
+  }
+  &-standart {
+    width: 100%;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: $bg;
+  }
+}
+
+.color {
+  &-select {
+    position: absolute;
+    left: 575px;
+    width: 100%;
+    max-width: 373px;
     display: flex;
     flex-direction: column;
     gap: 15px;
     padding: 15px;
-    background: $white;
+    background: rgba($white, 1);
     box-shadow: 0px 0px 10px 0px #3030301a;
-    z-index: 1;
+    z-index: -1;
     border-radius: 15px;
-    transition: 0.5s ease-in-out;
-
-    .menu__close {
-      position: absolute;
-      right: 15px;
-      top: 15px;
-      cursor: pointer;
-    }
+    //  backdrop-filter: blur(5px);
 
     &__container {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
       overflow: auto;
+    }
+    &-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: $bg;
+      border-radius: 15px;
+      gap: 10px;
 
-      .color-item {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        background-color: $bg;
-        border-radius: 15px;
-        gap: 10px;
-
-        &__title {
-          font-size: 15px;
-          font-weight: 500;
-        }
+      &__title {
+        font-size: 15px;
+        font-weight: 500;
       }
     }
   }
-
-  &.active {
-    left: 330px;
-  }
-}
-
-.room-select {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  padding: 10px 0;
-  border-top: 1px solid $stroke;
-  border-bottom: 1px solid $stroke;
 }
 
 .visual {
@@ -562,20 +571,17 @@ let text = "garage"; // TODO Временная заглушка. Валятся
   }
 }
 
-.switch {
-  &__container {
-  }
-}
-
 .label {
   &__container {
     display: flex;
     flex-direction: column;
     pointer-events: none;
   }
-  &__image {
-    display: flex;
+  &__img {
+    height: 60px;
+    border-radius: 15px;
   }
+
   &__text {
     font-size: 15px;
     font-weight: 600;
@@ -585,17 +591,39 @@ let text = "garage"; // TODO Временная заглушка. Валятся
     transition-duration: 0.25s;
     transition-timing-function: ease;
 
-    @media (hover: hover) {
-      &:hover {
-        color: $black;
-      }
-    }
+    // @media (hover: hover) {
+    //   &:hover {
+    //     color: $black;
+    //   }
+    // }
 
     &--xs {
       color: $dark-grey;
       font-size: clamp(9px, 0.78125vw + 1px, 14px) !important;
     }
   }
+}
+
+.button {
+  &__filled {
+    &.active {
+      color: $white;
+      background-color: $red;
+    }
+    @media (hover: hover) {
+      &:hover {
+        color: $white;
+        background-color: $red;
+      }
+    }
+  }
+}
+
+.menu__close {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  cursor: pointer;
 }
 
 @media screen and (width <= 1023px) {

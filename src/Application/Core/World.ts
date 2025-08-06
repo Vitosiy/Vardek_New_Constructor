@@ -56,7 +56,7 @@ export class World {
         this.onLoadRoom = this.loadRoom.bind(this)
 
 
-        // this.scene.add(new THREE.AxesHelper(2000))
+        this.scene.add(new THREE.AxesHelper(2000))
         this.room = root._roomManager
         this.room!.update()
 
@@ -64,23 +64,21 @@ export class World {
         this.trafficManager = root._trafficManager
         this.vueEvents()
 
-        // this.meshEvents = new MeshEvents(root)
-
         this.resources.on('cubeTextureLoaded', () => {
             this.enviroment = new Environment(root)
         })
 
     }
 
-    async setRoom() {
+    async setRoom(roomId) {
 
-        // this.scene.add(new THREE.AxesHelper(2000))
-        this.room!.loadRoom(this.lights)
+        this.scene.add(new THREE.AxesHelper(2000))
+        this.room!.loadRoom(this.lights, roomId)
         await this.room!.update()
-        this.room!.updateWallMaterial(this.room!.wallTexture)
+        // this.room!.updateWallMaterial(this.room!.wallTexture)
     }
 
-    async createRoom() {
+    async createRoom(name: string) {
 
         this.roomsStore.clearTempRoomSize();
         this.roomsStore.clearCurrentRoomId();
@@ -92,60 +90,75 @@ export class World {
             this.trafficManager.update(this.room!)
         }
 
+        this.saveRoom(name)
+        const toAction: string[] = this.room?.save()
+        this.root.userHistory.clearHistory(toAction as string[])
+
     }
 
-    saveRoom() {
+    saveRoom(name: string) {
 
-        if (!this.roomsStore.getCurrentRoomId) {
+        if (!this.roomsStore.getRoomId) {
+            const roomId = Date.now().toString()
+            console.log('Комнаты ещё нет')
 
-            // console.log('Комнаты ещё нет')
-
-            this.roomsStore.setCurrentRoomId(this.roomsStore.rooms.length)
+            const contant = this.room!.save() as string[]
 
             this.roomsStore.addRoom({
-                id: this.roomsStore.rooms.length, // Присваиваем id 
-                label: Date.now().toString(), // Присваиваем Название
-                size: this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes,
-                content: this.room!.save() as string[]
+                id: roomId, // Присваиваем id 
+                label: name ?? `Комната N:${this.roomsStore.rooms.length + 1}`,
+                size: this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes,
+                content: contant
             })
-            this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
-            // console.log(this.sceneState.getCurrentProjectParams)
+
+            const rooms = this.roomsStore.getRooms
+
+            this.sceneState.updateProjectParams({ rooms })
+            this.roomsStore.setCurrentRoomId(roomId)
             return
         }
 
-        // console.log('Комната уже существует')
+        console.log('Комната уже существует')
 
-        this.roomsStore.updateRoom(this.roomsStore.getRoomId as number, this.room!.save(), this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes)
-        this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
+        const contant = this.room!.save() as string[]
+        const roomId = this.roomsStore.getRoomId as number
+        // const roomParams = this.roomsStore.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
+        const roomParams = this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes
 
-        // console.log(this.sceneState.getCurrentProjectParams)
+        this.roomsStore.updateRoom(roomId, contant, roomParams)
+        const rooms = this.roomsStore.getRooms
+
+        this.sceneState.updateProjectParams({ rooms })
 
     }
 
     async loadRoom(roomId: number) {
         this.uniformState.clearUniformGroupMembership();
         this.uniformState.clearUniformGroupsStors()
+        this.roomsStore.clearCurrentRoomId()
+        this.roomsStore.clearTempRoomSize()
 
         /** Добавляем ID комнаты в хранилище */
         this.roomsStore.setCurrentRoomId(roomId);
 
         this.deepDispose.clearScene(this.scene);
 
-        await this.setRoom();
+        await this.setRoom(roomId);
         this.lights.setLight(this.room!._wallsGroupSize, 2)
         await this.trafficManager!.update(this.room!)
 
-        this.root.userHistory.clearHistory(this.room?._roomContant as string[])
+        const toAction: string[] = this.room?.save()
+        this.root.userHistory.clearHistory(toAction as string[])
     }
 
     vueEvents() {
 
-        this.onCreateRoom = () => {
-            this.createRoom()
+        this.onCreateRoom = (name?: string) => {
+            this.createRoom(name)
         }
 
-        this.onSaveRoom = () => {
-            this.saveRoom()
+        this.onSaveRoom = (name?: string) => {
+            this.saveRoom(name)
         }
 
         this.onLoadRoom = (value) => {
@@ -155,6 +168,13 @@ export class World {
         this.eventsStore.on('A:Create', this.onCreateRoom);
         this.eventsStore.on('A:Save', this.onSaveRoom)
         this.eventsStore.on('A:Load', this.onLoadRoom)
+
+        // this.eventsStore.on("A:ContantLoaded", () => {
+        //     console.log()
+        //     const toAction: string[] = this.room?.save()!
+        //     this.root.userHistory.clearHistory(toAction)
+
+        // });
 
     }
 

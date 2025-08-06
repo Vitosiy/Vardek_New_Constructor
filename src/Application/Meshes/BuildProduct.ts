@@ -47,7 +47,6 @@ export class BuildProduct extends BuildersHelper {
     palette_bulider: PaletteBulider
     alum_builder: AlumBulider
     uniform_texture_builder: UniformTextureBuilder
-
     heightCorrect: number = 0
 
     constructor(root: THREETypes.TApplication) {
@@ -86,7 +85,7 @@ export class BuildProduct extends BuildersHelper {
 
         const type = this._MODELS[product_data.models[0]]
 
-        // console.log(type, 'TYPE')
+        console.log(type, 'TYPE')
 
         let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
 

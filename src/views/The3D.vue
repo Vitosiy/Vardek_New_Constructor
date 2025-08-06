@@ -43,7 +43,6 @@ import UpControllerButton from "@/components/ui/buttons/right-menu/controller/Up
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 
-import Toggle from "@vueform/toggle";
 
 type TSize = {
   width: {
@@ -102,79 +101,18 @@ const activePreloader = ref<boolean>(false);
 
 const sceneContainer = ref<HTMLElement | null>(null);
 const VerdekConstructor = ref<Application | null>(null);
-
-const selectedRoom = computed(() => {
-  if (!roomStore) return;
-  return (
-    roomStore.value!.getRooms.find((room) => room.id === selectValue.value) ||
-    null
-  );
-});
-
-const wallTexture = ref<number | string | null>(null);
-
-const floorTexture = ref<number | string | null>(null);
-
-const selectValue = ref<number | null>(null);
-
-const cameraView = ref<boolean>(false);
-
-const inputValue = ref({
-  width: 4,
-  height: 3,
-  depth: 7,
-  thickness: 0.1,
-});
-
-const productSize = ref<TSize>({
-  width: { title: "Ширина", value: 0, min: 0, max: 0 },
-  height: { title: "Высота", value: 0, min: 0, max: 0 },
-  depth: { title: "Глубина", value: 0, min: 0, max: 0 },
-});
-
-const dropItems: { [key: string]: {} }[] = models;
-
-const quality = ref(["low", "medium", "hight"]);
-
 const controller = ref(false);
-
-const shadows = ref<boolean>(false);
-
-const refraction = ref<boolean>(false);
-
-const pointLightValue = ref<number>(2);
-
-const clampHeight = ref<number>(3000);
-
 const productColor = ref<{ [key: string]: any }>({});
-
-const fasadeColor = ref<{ [key: string]: any }>({});
-
 const currentFasadeId = ref<{ [key: string]: any }>({});
-
 const productData = ref<{ [key: string]: any }>({});
-
 const product = ref<{ [key: string]: any } | null>(null);
-
 const controllerPositionData = ref<THREEInterfases.IMouseData>({ x: 0, y: 0 });
-
 const totalContent = ref<any>();
-
-const paletteColorsData = ref<{ [key: string]: any }>({});
-
-const showPalette = ref<boolean>(false);
-
-const selectPalette = ref<any>(null);
 
 /**----------------- 01.12.24-------------------- */
 
 const fasades = ref<{ [key: string]: any }>({});
 const productFasades = ref<any[]>([]);
-const glassColorsData = ref<{ [key: string]: any }>({});
-const showGlass = ref<boolean>(false);
-
-const selectGlass = ref<any>(null);
-const selectMilling = ref<any>(null);
 
 /** ----------------- 19.05.25 ----------------------------- */
 
@@ -182,7 +120,6 @@ const selectMilling = ref<any>(null);
 const tableTopManager = ref();
 const CutData = ref({});
 const isModalOpen = ref(false);
-const gridSaved = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
@@ -255,17 +192,7 @@ onUnmounted(() => {
   eventBus.value = null;
 });
 
-watch(shadows, () => {
-  toggleShadow(shadows.value);
-});
 
-watch(refraction, () => {
-  toggleRefraction(refraction.value);
-});
-
-watch(pointLightValue, () => {
-  changePointLightPower(pointLightValue.value);
-});
 
 const checkContantLoad = (state: boolean) => {
   activePreloader.value = state;
@@ -279,9 +206,6 @@ const getMove = (move: boolean) => {
 };
 
 const selected = async (item: any) => {
-  // let object = item.object;
-  // let roomContant = item.roomContant;
-  // totalContent.value = roomContant;
 
   if (!item || !item.object) {
     controller.value = false;
@@ -303,9 +227,6 @@ const selected = async (item: any) => {
   objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
 
-  // if (CONFIG.SIZE) {
-  //   getProductSizeProps(CONFIG.SIZE, CONFIG.SIZE_EDIT);
-  // }
 
   controller.value = true;
 
@@ -314,10 +235,6 @@ const selected = async (item: any) => {
   controller.value = true;
 
   /**  Координаты мыши */
-  // if (userData.MOUSE_POSITION)
-  // controllerPositionData.value = userData.MOUSE_POSITION;
-
-  console.log(userData.MOUSE_POSITION, "UM");
 
   productData.value = { ...PROPS };
 
@@ -343,87 +260,6 @@ const selected = async (item: any) => {
   });
 };
 
-const toggleShadow = (value: boolean) => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:ToggleShadow", value);
-  }
-};
-
-const toggleRefraction = (value: boolean) => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:ToggleRefraction", value);
-  }
-};
-
-const changePointLightPower = (value: number) => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:ChangePointLightPower", value);
-  }
-};
-
-const setQuality = (value: string) => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:Quality", value);
-  }
-};
-
-const create = () => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:Create");
-  }
-};
-
-const save = () => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:Save");
-  }
-};
-
-const load = () => {
-  if (VerdekConstructor) {
-    shadows.value = false;
-    refraction.value = false;
-    eventBus.value!.emit("A:ToggleShadow", shadows.value);
-    eventBus.value!.emit("A:ToggleRefraction", refraction.value);
-    eventBus.value!.emit("A:Load", selectedRoom.value?.id);
-  }
-};
-
-const toggleiew = () => {
-  cameraView.value = !cameraView.value;
-  eventBus.value!.emit("A:CameraToggle", cameraView.value);
-};
-
-const changeWallTexture = () => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:ChangeWallTexture", wallTexture.value);
-  }
-};
-
-const changeFloorTexture = () => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:ChangeFloorTexture", floorTexture.value);
-  }
-};
-
-const changeModuleTexture = (value: { [key: string]: any }) => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:ChangeModuleTexture", value);
-  }
-};
-
-const changePaletteColor = () => {
-  // const selectedPalette = paletteColorsData.find(
-  //   (palette) => palette.UNAME === selectPalette.value
-  // );
-
-  eventBus.value!.emit("A:ChangePaletteColor", selectPalette.value);
-};
-
-const onDrag = (event: any, model: { [key: string]: any } | string) => {
-  event.dataTransfer?.setData("text", JSON.stringify(model));
-};
-
 const removeModel = (model) => {
   if (VerdekConstructor) {
     eventBus.value!.emit("A:RemoveModel", model);
@@ -431,56 +267,6 @@ const removeModel = (model) => {
   }
 };
 
-const changeHeightClamp = () => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:Height-clamp", clampHeight.value);
-  }
-};
-
-const getCurrentProduct = (item: any) => {
-  if (VerdekConstructor) {
-    product.value.userData = item;
-  }
-};
-
-const toggleFasad = () => {
-  if (VerdekConstructor) {
-    eventBus.value!.emit("A:Toggle-Fasad", clampHeight.value);
-  }
-};
-
-const getProductSizeProps = (
-  size?: { width: number; height: number; depth: number },
-  edit?: TEditSize
-) => {
-  productSize.value.width.value = 0;
-  productSize.value.height.value = 0;
-  productSize.value.depth.value = 0;
-
-  productSize.value.width.min = null;
-  productSize.value.width.max = null;
-  productSize.value.height.min = null;
-  productSize.value.height.max = null;
-  productSize.value.depth.min = null;
-  productSize.value.depth.max = null;
-
-  if (productSize.value) {
-    productSize.value.width.value = size.width;
-    productSize.value.height.value = size.height;
-    productSize.value.depth.value = size.depth;
-
-    productSize.value.width.min = edit.SIZE_EDIT_WIDTH_MIN;
-    productSize.value.width.max = edit.SIZE_EDIT_WIDTH_MAX;
-    productSize.value.height.min = edit.SIZE_EDIT_HEIGHT_MIN;
-    productSize.value.height.max = edit.SIZE_EDIT_HEIGHT_MAX;
-    productSize.value.depth.min = edit.SIZE_EDIT_DEPTH_MIN;
-    productSize.value.depth.max = edit.SIZE_EDIT_DEPTH_MAX;
-  }
-};
-
-const togglePopup = () => {
-  customiserStore.value!.toggleCustomiserPopup();
-};
 
 /** Работа с переходящий рисунок */
 
@@ -539,7 +325,7 @@ const controllerPosition = computed(() => {
   };
 });
 
-/** Работа о сталешницами */
+/** Работа о столешницами */
 
 const saveTableData = () => {
   if (!product.value) return;
@@ -615,6 +401,7 @@ defineExpose({
   closeTableRedactor,
   openTableRedactor,
   selected,
+  activePreloader
 });
 </script>
 
@@ -680,107 +467,6 @@ defineExpose({
     </button>
   </div>
 
-
-  <!-- <div class="ui-panel--right">
-    <button class="btn" @click="save">Сохранить</button>
-    <button class="btn" @click="create">Создать новую</button>
-    <button class="btn" @click="toggleiew">Поменять вид</button>  -->
-  <!-- </div> -->
-
-  <!-- <div class="room-textures">
-    <select class="room-textures--item" id="wall" v-model="wallTexture" name="wall" @change="changeWallTexture">
-      <option v-for="(texture, key) in wallMaterials" :key="key" :value="texture.ID">
-        {{ texture.NAME }}
-      </option>
-    </select>
-
-    <select class="room-textures--item" id="floor" v-model="floorTexture" name="floor" @change="changeFloorTexture">
-      <option v-for="(texture, key) in floorMaterials" :key="key" :value="texture.ID">
-        {{ texture.NAME }}
-      </option>
-    </select>
-  </div> -->
-
-  <!-- <div
-    :class="['model-controller', activeController]"
-    :style="controllerPosition"
-    v-if="product"
-  >
-    <div>
-      <h2>{{ productData.PRODUCT?.NAME }}</h2>
-      <div class="model-controller_controls">
-        <div class="model-controller_items">
-          <h3>Корпус</h3>
-          <div class="model-controller_elements">
-            <div
-              v-for="(fasade_data, key) in productColor"
-              :key="fasade_data!.NAME + key"
-              class="model-controller_item"
-              @click="changeModuleTexture(fasade_data)"
-            >
-              <img
-                class="model-controller_image"
-                :src="_URL + fasade_data.DETAIL_PICTURE"
-                alt=""
-              />
-              <p class="model-controller_text">{{ fasade_data.NAME }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-size" v-if="product">
-          <div v-for="size in productSize">
-            <p>{{ size.title }}</p>
-            <b></b>
-            <customInput
-              v-model="size.value"
-              :min="size.min !== null ? size.min : null"
-              :max="size.max !== null ? size.max : null"
-              :step="1"
-            />
-          </div>
-          <button class="btn" @click="resizeModel">Resize</button>
-        </div>
-        <div class="model-controller_items">
-          <h3>Фасад</h3>
-          <div class="model-controller_elements">
-            <div
-              v-for="(fasade_data, key) in fasadeColor"
-              :key="fasade_data!.NAME + key"
-              class="model-controller_item"
-              @click="changeFasadeTexture(fasade_data)"
-            >
-              <img
-                class="model-controller_image"
-                :src="_URL + fasade_data.DETAIL_PICTURE"
-                alt=""
-              />
-              <p class="model-controller_text">{{ fasade_data.NAME }}</p>
-            </div>
-          </div>
-          <select
-            v-if="showPalette"
-            class="palette-textures--items"
-            id="palette"
-            v-model="selectPalette"
-            name="palette"
-            @change="changePaletteColor"
-          >
-            <option
-              v-for="(palette, key) in paletteColorsData"
-              :key="key"
-              :value="palette.ID"
-            >
-              {{ palette.NAME }} {{ palette.UNAME }}
-            </option>
-          </select>
-
-          <button class="btn" @click="toggleFasad">Скрыть/Показать</button>
-        </div>
-      </div>
-    </div>
-    <button class="btn" @click="removeModel">Удалить</button>
-  </div> -->
 
   <div
     :class="['model-controller', activeController]"
@@ -879,8 +565,8 @@ defineExpose({
 }
 
 .scene-container {
-  width: 100dvw;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
   position: relative;
   overflow: hidden;
   background-color: white;
@@ -1015,14 +701,14 @@ defineExpose({
   }
 
   .controller-left {
-    transform: translate(46px, -46px);
+    transform: translate(23px, -69px);
 
     .left-line {
     }
   }
 
   .controller-right {
-    transform: translate(92px, -184px);
+    transform: translate(69px, -46*5px);
     .right-line {
     }
   }

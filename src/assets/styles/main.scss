@@ -1,5 +1,7 @@
 @use "fonts-main.scss";
 @use "iconsfont.scss";
+@use "animations.scss";
+@use "checkbox.scss";
 @use "colors.scss" as *;
 
 html,
@@ -191,6 +193,68 @@ p {
   }
 }
 
+.button {
+  &__rounded {
+    padding: 25px;
+    background-color: transparent;
+    border: 1px solid $dark-grey;
+    border-radius: 100px;
+    color: $strong-grey;
+    text-align: center;
+    transition-property: color, border-color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+
+    @media (hover: hover) {
+      &:hover {
+        color: $black;
+        background-color: transparent;
+        border-color: $black;
+      }
+    }
+  }
+  &__filled {
+    padding: 25px;
+    color: $strong-grey;
+    border: none;
+    border-radius: 100px;
+    background-color: $bg;
+    transition-property: color, border-color, background-color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+
+    &--text {
+      max-height: 50px;
+      height: 100%;
+      padding: 25px;
+      line-height: 0;
+    }
+
+    &.active {
+      color: $white;
+      background-color: black;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        color: $white;
+        background-color: black;
+      }
+    }
+  }
+}
+
+.icon {
+  position: relative;
+  font-size: 15px;
+  &::before {
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    position: absolute;
+  }
+}
+
 .right-menu__svg {
   display: flex;
   align-items: center;
@@ -284,3 +348,6 @@ p {
     }
   }
 }
+
+
+

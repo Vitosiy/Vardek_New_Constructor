@@ -3,39 +3,41 @@
 
 import { computed, ref, onMounted, toRaw } from "vue";
 
-import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue";
-import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
-
-import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
-
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
-
+import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelStore } from "@/store/appStore/useModelStore";
+import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 
+import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue";
+import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
+import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import MainButton from "../ui/buttons/MainButton.vue";
 
 const controlBtn = [
-  { icon: "icon-t-45-l", size: "20", fontSize: 10, action: 45 },
-  { icon: "icon-t-90", size: "25", fontSize: 10, action: 45 },
-  { icon: "icon-t-45-r", size: "20", fontSize: 10, action: 45 },
-  { icon: "icon-l-90", size: "25", fontSize: 15, action: 45 },
-  { icon: "icon-centered", size: "25", fontSize: 25, action: 45 },
-  { icon: "icon-r-90", size: "25", fontSize: 15, action: 45 },
-  { icon: "icon-b-45-l", size: "20", fontSize: 10, action: 45 },
-  { icon: "icon-b-90", size: "25", fontSize: 10, action: 45 },
-  { icon: "icon-b-45-r", size: "20", fontSize: 10, action: 45 },
+  { icon: "icon-t-45-l", size: "20", fontSize: 10, action: 0 },
+  { icon: "icon-t-90", size: "25", fontSize: 10, action: 1 },
+  { icon: "icon-t-45-r", size: "20", fontSize: 10, action: 2 },
+  { icon: "icon-l-90", size: "25", fontSize: 15, action: 3 },
+  { icon: "icon-centered", size: "25", fontSize: 25, action: 4 },
+  { icon: "icon-r-90", size: "25", fontSize: 15, action: 5 },
+  { icon: "icon-b-45-l", size: "20", fontSize: 10, action: 6 },
+  { icon: "icon-b-90", size: "25", fontSize: 10, action: 7 },
+  { icon: "icon-b-45-r", size: "20", fontSize: 10, action: 8 },
 ];
 
+const eventBus = useEventBus();
 const store = useModelStore();
 const menuStore = useMenuStore();
+const customiserStore = useCustomiserStore();
 
 const catalogSectionsType = useAppData().getAppData.CATALOG.SECTIONS_TYPE;
 const catalogSections = useAppData().getAppData.CATALOG.SECTIONS;
 
 const selectedSectionType = ref<string>("standart");
 const cameraBtn = ref<InstanceType<typeof MainButton>[]>([]);
+const roomOptionsRef = ref<HTMLElement | null>(null);
 
 const filteredCatalogSections = computed(() => {
   return Object.values(catalogSections).filter(
@@ -53,6 +55,9 @@ const closeAllMenus = () => {
 
 const showTechMenu = (id: string, products: []) => {
   menuStore.openMenu("tech", id, products);
+  customiserStore.hideCustomiserPopup();
+  // customiserStore.toggleCustomiserPopup();
+  //  eventBus.emit("A:Selected", null)
 };
 
 // Новое меню
@@ -60,11 +65,14 @@ const showRoomParMenu = () => {
   menuStore.openMenu("roomPar");
 };
 
+const changeCameraPos = (value: number) => {
+  eventBus.emit("A:ChangeCameraPos", value);
+};
+
 onMounted(() => {
   cameraBtn.value.forEach((el, key) => {
-    console.log(el.buttonRef);
-    el.buttonRef.style.setProperty("--value", `${controlBtn[key].size}px`);
-    el.buttonRef.style.setProperty("--font", `${controlBtn[key].fontSize}px`);
+    el.style.setProperty("--value", `${controlBtn[key].size}px`);
+    el.style.setProperty("--font", `${controlBtn[key].fontSize}px`);
   });
 });
 </script>
@@ -118,17 +126,28 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <PopUpOptionsMenu />
-      <RoomOptionsMenu />
     </div>
+    <transition name="slide--left">
+      <PopUpOptionsMenu v-if="menuStore.openMenus == 'tech'" />
+    </transition>
+    <transition name="slide--left">
+      <RoomOptionsMenu
+        v-if="menuStore.openMenus == 'roomPar'"
+        ref="roomOptionsRef"
+      />
+    </transition>
     <div class="options__camera">
-      <h1 class="options__title">Настройки комнаты</h1>
+      <h1 class="options__title">Позиция камеры</h1>
       <div class="options__camera--container">
         <div class="options__camera--items">
           <div v-for="(btn, key) in controlBtn" :key="key">
-            <MainButton :className="'camera__button'" ref="cameraBtn">
+            <button
+              :className="'button__rounded'"
+              ref="cameraBtn"
+              @click="changeCameraPos(btn.action)"
+            >
               <div :class="['icon', btn.icon]"></div>
-            </MainButton>
+            </button>
           </div>
         </div>
       </div>
@@ -138,20 +157,28 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .options {
-  width: 315px;
-  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 315px;
   height: 100%;
   border-right: 1px solid $light-stroke;
-  background: #f6f5fa;
-  transform-style: preserve-3d;
+  background-color: $bg;
+  // transform-style: preserve-3d;
   z-index: 1;
   &__container {
     display: flex;
     flex-direction: column;
     gap: 30px;
-    padding: 20px;
+    padding: 10px;
     position: relative;
+    background: $bg;
     transform-style: preserve-3d;
+
+    @media screen and (min-width: 1329px) {
+      padding: 20px;
+    }
 
     .options-design {
       z-index: 10;
@@ -211,11 +238,15 @@ onMounted(() => {
       }
 
       .goods {
-        max-height: 40vh;
+        max-height: 20vh;
         display: flex;
         flex-direction: column;
         gap: 10px;
         overflow-y: auto;
+
+        @media screen and (min-width: 1329px) {
+          max-height: 30vh;
+        }
 
         .goods-item {
           min-height: 50px;
@@ -269,9 +300,9 @@ onMounted(() => {
       gap: 15px;
       position: absolute;
       top: 15px;
-      left: -840px;
-      transform: translateZ(-10px);
-      transition: 0.5s ease-in-out;
+      left: 320px;
+      // transform: translateZ(-10px);
+      // transition: 0.5s ease-in-out;
 
       .room-popup {
         width: 570px;
@@ -429,7 +460,13 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    padding: 20px;
+    padding: 10px;
+    margin-bottom: auto;
+    background: $bg;
+
+    transition-property: opacity, filter;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
 
     &--container {
       display: flex;
@@ -444,30 +481,25 @@ onMounted(() => {
       align-items: center;
       max-width: 170px;
     }
-  }
-}
-.icon {
-  position: relative;
-  font-size: var(--font);
-  &::before {
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
-    position: absolute;
-  }
-}
-.camera {
-  &__button {
-    border: 1px solid $strong-grey;
-    border-radius: 50px;
-    padding: var(--value);
-    color: $strong-grey;
-    text-align: center;
-
-    &:hover {
-      color: $black;
-      background-color: transparent;
+    &.active {
+      pointer-events: all;
+      opacity: 1;
+      filter: blur(0);
     }
+
+    @media screen and (min-width: 1329px) {
+      padding: 20px;
+    }
+  }
+}
+
+.icon {
+  font-size: var(--font);
+}
+
+.button {
+  &__rounded {
+    padding: var(--value);
   }
 }
 </style>

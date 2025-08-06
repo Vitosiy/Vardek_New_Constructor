@@ -61,8 +61,6 @@ export class Application {
     keybordListeners: KeybordListeners | null = null
     customBoxHelper: CustomBoxHelper | null = null
 
-    draft: boolean = false
-
     constructor(canvas: HTMLElement) {
 
 
@@ -134,10 +132,6 @@ export class Application {
 
     get _sizes() {
         return this.sizes
-    }
-
-    get _draft() {
-        return this.draft
     }
 
     get _resources() {
@@ -243,7 +237,7 @@ export class Application {
             if (this.userHistory.checkEvent(event)) {
                 const toAction: string[] = this.room?.save()!
                 this.userHistory!.addAction(toAction)
-                // console.log(this.userHistory.getHistory().length)
+                console.log(this.userHistory.getHistory(), 'HISTOR')
 
             }
         });

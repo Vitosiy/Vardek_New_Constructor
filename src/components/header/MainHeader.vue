@@ -1,13 +1,31 @@
 <script setup lang="ts">
-// @ts-nocheck
+/**/ / @ts-nocheck */;
+import {
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  nextTick,
+  ref,
+  computed,
+} from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { onMounted, watch, nextTick, ref, computed } from "vue";
+import { useSceneState } from "@/store/appliction/useSceneState";
+import {
+  postRequest,
+  _POST_URL,
+  _GET_URL,
+  _GET_PROJECT,
+  _UPDATE_PROJECT,
+} from "@/types/constants";
+
+import Modal from "../ui/modals/Modal.vue";
+import InputDialog from "../ui/inputs/InputDialog.vue";
+import MainButton from "../ui/buttons/MainButton.vue";
 
 import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
 import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
 import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
 import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderButton.vue";
-import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
 
 import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
 
@@ -23,10 +41,30 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
 const props = defineProps(["pageComponent"]);
 const historyActions = ref<boolean>(false);
 const verdekConstructor = ref(null);
+const inputDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 const restorLength = ref<number>(0);
 const curActionCount = ref<number>(0);
 
 const eventBus = useEventBus();
+const sceneState = useSceneState();
+
+eventBus.on("A:Load", () => {
+  props.pageComponent.selected();
+
+  restorLength.value = 0;
+  curActionCount.value = 0;
+
+  console.log("LOAD");
+
+  // if (!verdekConstructor.value) return;
+  // const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+  // restorLength.value = total;
+  // curActionCount.value = total;
+});
+
+eventBus.on("A:ChangeCameraPos", () => {
+  props.pageComponent.selected();
+});
 
 eventBus.onEmitCalled(async (event, payload) => {
   if (!historyActions.value) return;
@@ -34,14 +72,80 @@ eventBus.onEmitCalled(async (event, payload) => {
   await nextTick();
   if (verdekConstructor.value.userHistory.checkEvent(event)) {
     const total = verdekConstructor.value.userHistory.getHistory().length - 1;
-
     restorLength.value = total;
     curActionCount.value = total;
   }
 });
 
-const saveProject = () => {
-  if (historyActions.value) eventBus.emit("A:Save");
+const _saveProject = async () => {
+  eventBus.emit("A:Save");
+  const project = sceneState.getCurrentProjectParams;
+  const data = {
+    user_hash: "08a57654db94bdcfe44a9ee10b2f0778",
+    city: 17281,
+    designer: "14240",
+    page: 1,
+    config: 43830,
+    type: "user",
+  };
+  console.log(data);
+
+  await postRequest(`${_GET_URL}`, data);
+
+  // if (historyActions.value) eventBus.emit("A:Save");
+};
+
+const saveProject = async () => {
+  eventBus.emit("A:Save");
+  return;
+  const project = sceneState.getCurrentProjectParams;
+  const data = {
+    data: {
+      file: "data:image/jpeg;base64,",
+      provider: "vardek",
+      name: "test_new_constructor",
+      user_hash: "08a57654db94bdcfe44a9ee10b2f0778",
+      city: 17281,
+      project: project,
+      style: "689680",
+      projectId: Date.now().toString(),
+      user_id: "14240",
+    },
+  };
+  console.log(data);
+
+  await postRequest(`${_POST_URL}`, data);
+
+  // if (historyActions.value) eventBus.emit("A:Save");
+};
+
+const loadProject = async () => {
+  // return;
+  const data = {
+    id: "11323197",
+  };
+  await postRequest(`${_GET_PROJECT}`, data);
+};
+
+const updateProject = async () => {
+  const project = sceneState.getCurrentProjectParams;
+  const data = {
+    id: "11323197",
+    project: project,
+  };
+
+  const resp =  await postRequest(`${_UPDATE_PROJECT}`, data);
+  
+  console.log(JSON.parse(resp.DATA.DETAIL_TEXT)
+, 'RESP')
+};
+
+const createNewRoom = (value: string) => {
+  if (!verdekConstructor.value) return;
+  props.pageComponent.selected();
+  eventBus.emit("A:Create", value);
+  restorLength.value = 0;
+  curActionCount.value = 0;
 };
 
 const moreThenActions = computed(() => {
@@ -53,6 +157,26 @@ const moreThenActions = computed(() => {
 const lessThenActions = computed(() => {
   return curActionCount.value - 1 < 0;
 });
+
+const prevAction = () => {
+  if (historyActions.value) {
+    /** Активируем preloader */
+    props.pageComponent.activePreloader = false;
+    eventBus.emit("A:PrevAction");
+    curActionCount.value = verdekConstructor.value!.userHistory._currentIndex;
+    props.pageComponent.selected();
+  }
+};
+
+const nextAction = () => {
+  if (historyActions.value) {
+    /** Активируем preloader */
+    props.pageComponent.activePreloader = false;
+    eventBus.emit("A:NextAction");
+    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+    props.pageComponent.selected();
+  }
+};
 
 watch(
   () => props.pageComponent,
@@ -72,21 +196,10 @@ watch(
   { flush: "post", immediate: true }
 );
 
-const prevAction = () => {
-  if (historyActions.value) {
-    eventBus.emit("A:PrevAction");
-    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
-    props.pageComponent.selected();
-  }
-};
-
-const nextAction = () => {
-  if (historyActions.value) {
-    eventBus.emit("A:NextAction");
-    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
-    props.pageComponent.selected();
-  }
-};
+onBeforeUnmount(() => {
+  restorLength.value = 0;
+  curActionCount.value = 0;
+});
 </script>
 
 <template>
@@ -113,7 +226,39 @@ const nextAction = () => {
             <S3DLightHeaderButton />
           </div>
           <div class="header-ui-group">
-            <AddLightHeaderButton />
+            <Modal ref="inputDialogRef">
+              <template #modalBody="{ onModalClose }">
+                <InputDialog
+                  label="Назовите комнату"
+                  placeholder="Введите название"
+                  initialValue="Комната"
+                  confirmText="Создать"
+                  @confirm="createNewRoom"
+                >
+                  <template #confirmButton="{ onConfirm }">
+                    <MainButton
+                      @click="
+                        () => {
+                          onConfirm();
+                          onModalClose();
+                        }
+                      "
+                    >
+                      Создать
+                    </MainButton>
+                  </template>
+                  <template #cancelButton>
+                    <MainButton @click="onModalClose">Отменить</MainButton>
+                  </template>
+                </InputDialog>
+              </template>
+              <template #modalOpen="{ onModalOpen }">
+                <button class="button__rounded" @click="onModalOpen">
+                  <span class="icon icon-add"></span>
+                </button>
+              </template>
+            </Modal>
+            <!-- <AddLightHeaderButton /> -->
           </div>
         </div>
       </div>
@@ -131,8 +276,8 @@ const nextAction = () => {
           <AddPhotoHelperButton />
           <GetAppHelperButton @click="saveProject" />
           <InsertFileHelperButton />
-          <PrintHelperButton />
-          <VisibilityHelperButton />
+          <PrintHelperButton @click="updateProject" />
+          <VisibilityHelperButton @click="loadProject" />
         </div>
       </div>
     </div>
@@ -155,7 +300,7 @@ const nextAction = () => {
     justify-content: space-between;
   }
 
-  &-basket{
+  &-basket {
     position: relative;
   }
 }

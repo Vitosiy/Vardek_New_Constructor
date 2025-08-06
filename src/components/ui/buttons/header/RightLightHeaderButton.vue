@@ -23,6 +23,7 @@
     }
 
     &.disabled {
+          pointer-events: none;
       border-color: #a3a9b5 !important;
       path {
         fill: #a3a9b5;

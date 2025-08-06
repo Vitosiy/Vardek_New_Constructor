@@ -587,8 +587,8 @@ export class MeshEvents extends BuildersHelper {
             currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
             currentMesh?.updateMatrixWorld(true);
 
-            const aabb = new THREE.Box3().setFromObject(currentMesh);
-            // const aabb = this.buildProduct.computeAABB(currentMesh)
+            // const aabb = new THREE.Box3().setFromObject(currentMesh);
+            const aabb = this.buildProduct.computeAABB(currentMesh)
             const size = new THREE.Vector3()
             aabb.getSize(size);
 
@@ -626,6 +626,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         await rebuild()
+        console.log(currentMesh, 'await')
 
         const adjustedPosition = this.root._roomManager.adjustPositionWithRaycasting({
             object: currentMesh,
@@ -643,7 +644,11 @@ export class MeshEvents extends BuildersHelper {
         // console.log(currentMesh)
 
         currentMesh.userData.obb.halfSize.x = data.width * 0.5;
-        if (PROPS.FASADE.length === 0) currentMesh.userData.obb.halfSize.y = data.height * 0.5;
+
+        if (PROPS.FASADE.length === 0) {
+            console.log('hhh')
+            currentMesh.userData.obb.halfSize.y = data.height * 0.5;
+        }
 
         this.root._customBoxHelper.updateBoxHelper();
 

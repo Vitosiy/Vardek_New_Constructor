@@ -53,11 +53,12 @@ class TableTopCreator extends BuildersHelper {
         if (object.userData.groupId) {
 
             const parent: THREE.Object3D = this.root._scene?.getObjectByProperty('id', object.userData.groupId)!;
-            console.log(parent, 'parent')
-            
-            const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
+            console.log(parent.userData, 'parent')
 
+            const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
+          
             await this.events.changeModelSize({ width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, parent, 'raspil')
+      
             const textureData = this._PRODUCTS[parent.userData.globalData].texture
             let { RASPIL_LIST } = parent.userData.PROPS
 
@@ -100,7 +101,7 @@ class TableTopCreator extends BuildersHelper {
 
         const textureData = this._PRODUCTS[object.userData.globalData].texture
 
-        console.log(meshes, 'meshes')
+        console.log(object.userData, 'oO-bject')
 
         this.addToScene({ meshes, group, object, textureData })
     }
@@ -421,6 +422,7 @@ class TableTopCreator extends BuildersHelper {
 
 
     }
+
     private centeredGroup(group: THREE.Group) {
         const box = new THREE.Box3();
         const center = new THREE.Vector3(); // Создаем вектор для центра

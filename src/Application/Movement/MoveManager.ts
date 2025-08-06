@@ -237,6 +237,7 @@ export class MoveManager {
 
             // Если это GLTF-модель, выбираем её как цель
             const check = this.getRootObject(firstObject);
+            console.log(check,'check')
             if (check.userData.elementType === "element_room") return
             this.selectedObject = check
 
@@ -337,8 +338,8 @@ export class MoveManager {
             this.selectedObject.rotation.copy(adjustedPosition.rotation);
             this.selectedObject.userData.targetPosition = point
 
-            const center = new THREE.Vector3()
-            this.selectedObject.userData.aabb.getCenter(center)
+            // const center = new THREE.Vector3()
+            // this.selectedObject.userData.aabb.getCenter(center)
             this.selectedObject.userData.obb.center.copy(this.selectedObject.position)
 
             this.selectedObject.userData.obb.rotation.setFromMatrix4(this.selectedObject.matrixWorld);

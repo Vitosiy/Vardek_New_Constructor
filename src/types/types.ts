@@ -50,28 +50,28 @@ export type TUniformTextureBuilder = UniformTextureBuilder
 export type TKeybordListeners = KeybordListeners
 export type TUniformTextureEvents = UniformTextureEvents
 export type TDeepDispose = DeepDispose
-export type TAppLights= AppLights
+export type TAppLights = AppLights
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 
 export type TMaterialType =
-    'MeshBasicMaterial'
-    | 'MeshStandardMaterial'
-    | 'MeshPhongMaterial'
-    | 'MeshPhysicalMaterial'
-    | 'MeshLambertMaterial'
-    | THREE.MeshBasicMaterial
-    | THREE.MeshStandardMaterial
-    | THREE.MeshPhongMaterial
-    | THREE.MeshPhysicalMaterial
-    | THREE.MeshLambertMaterial
+  'MeshBasicMaterial'
+  | 'MeshStandardMaterial'
+  | 'MeshPhongMaterial'
+  | 'MeshPhysicalMaterial'
+  | 'MeshLambertMaterial'
+  | THREE.MeshBasicMaterial
+  | THREE.MeshStandardMaterial
+  | THREE.MeshPhongMaterial
+  | THREE.MeshPhysicalMaterial
+  | THREE.MeshLambertMaterial
 
 export type TGeometryType = 'BoxGeometry' | 'ExtrudeGeometry' | 'PlaneGeometry'
 
 export type TAdjustPosition = {
-    position: THREE.Vector3,
-    rotation: THREE.Euler,
-    quaternion: THREE.Quaternion
+  position: THREE.Vector3,
+  rotation: THREE.Euler,
+  quaternion: THREE.Quaternion
 }
 
 export type TUseUniformState = ReturnType<typeof useUniformState>;
@@ -86,10 +86,33 @@ export type TUseModelState = ReturnType<typeof useModelState>;
 
 
 type TQualityValue = 'low' | 'medium' | 'hight'
+export type MenuType = 'tech' | 'roomPar' | 'customiser';
 export type TQuality = {
-    lable: string,
-    value: TQualityValue,
+  lable: string,
+  value: TQualityValue,
 }
+
+type TOptionItem = {
+  id: number;
+  global: boolean;
+  title: string;
+  label: string;
+};
+
+export type TLightRange = {
+  pointLight: number | string,
+  ambientLight: number | string
+}
+
+export type TOptionsMap = {
+  wall: TOptionItem;
+  floor: TOptionItem;
+  bodyTop: TOptionItem;
+  bodyBottom: TOptionItem;
+  fasadsTop: TOptionItem;
+  fasadsBottom: TOptionItem;
+};
+
 
 /** Заглушка */
 export type TObject = { [key: string]: any }
