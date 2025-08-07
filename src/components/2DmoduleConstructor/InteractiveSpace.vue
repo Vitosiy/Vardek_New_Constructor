@@ -261,6 +261,8 @@ const renderGrid = () => {
     yOffset = getPixelHeight(props.module.moduleThickness);
     xOffset += getPixelWidth(props.module.moduleThickness)
 
+    let tmp_array_sectors = []
+
     if (section.cells.length > 0) {
       section.cells.forEach((cell, cellIndex, section) => {
         const pxHeight = getPixelHeight(cell.height);
@@ -274,7 +276,7 @@ const renderGrid = () => {
             cellRow.xOffset = rowxOffset;
             cellRow.yOffset = yOffset;
 
-            createSector({
+            let sector = createSector({
               x: rowxOffset,
               y: yOffset,
               width: RowpxWidth,
@@ -289,6 +291,9 @@ const renderGrid = () => {
               gridType: "module",
             });
 
+            if(cellRowIndex === 0)
+              tmp_array_sectors.push(sector)
+
             //Добавляем отступ по вертикали
             rowxOffset += RowpxWidth + getPixelWidth(props.module.moduleThickness);
             const colBond = shapeAdjuster.createColumnBounds(sections, sectionIndex);
@@ -298,8 +303,9 @@ const renderGrid = () => {
             cellRow.maxX = shapeAdjuster.convertToTen(getMmWidth(colBond.maxX));
             cellRow.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
           });
-        } else
-          createSector({
+        }
+        else {
+          let sector = createSector({
             x: xOffset,
             y: yOffset,
             width: pxWidth,
@@ -311,6 +317,9 @@ const renderGrid = () => {
             _sector: moduleSector,
             gridType: "module",
           });
+
+          tmp_array_sectors.push(sector)
+        }
 
         //Добавляем отступ по вертикали
         yOffset += pxHeight + getPixelHeight(props.module.moduleThickness);
@@ -329,7 +338,7 @@ const renderGrid = () => {
 
       // Отрисовываем секцию
 
-      createSector({
+      let sector = createSector({
         x: xOffset,
         y: yOffset,
         width: pxWidth,
@@ -341,6 +350,7 @@ const renderGrid = () => {
         _sector: moduleSector,
         gridType: "module",
       });
+      tmp_array_sectors.push(sector)
 
       //Добавляем отступ по вертикали
       yOffset += pxHeight;
@@ -356,6 +366,7 @@ const renderGrid = () => {
     xOffset += pxWidth;
 
     if (section.loops?.length) {
+
       section.loops.forEach((loop, loopIndex, ) => {
         let loopXOffset = getPixelWidth(loop.positionX);
         let loopYOffset = getPixelHeight(module.value.height);
@@ -368,13 +379,35 @@ const renderGrid = () => {
           loop.yOffset = loopYOffset - getPixelHeight(pos + loop.height);
           // Отрисовываем секцию
 
-          createLoop({
+          let loopSector = createLoop({
             x: loop.xOffset,
             y: loop.yOffset,
             width: pxWidth,
             height: pxHeight,
             loopData: loop
           });
+
+          let tempShape = new Shape({
+            type: "loop",
+            sector: loopSector,
+            data: loop,
+            position: {x: loop.positionX, y: pos + loop.height},
+            getMmWidth,
+            getMmHeight,
+            getPixelHeight,
+            getPixelWidth,
+            calcDrawersFasades,
+          });
+
+          for(let i = 0; i < tmp_array_sectors.length; i++) {
+            let sector = tmp_array_sectors[i];
+
+            if(checkSectorsCollision(loopSector, sector)) {
+              sector.shapes.push(tempShape);
+              break;
+            }
+
+          }
         })
       })
     }
@@ -634,6 +667,8 @@ const createSector = ({
     // /**Создание горизонтального драга */
     //createHorozontalCut({width, height, cell: cellData, section, sectionIndex, sector, cellIndex, rowIndex});
   }
+
+  return sector;
 };
 
 const createLoop = ({
@@ -888,8 +923,11 @@ const checkPositionFillingToCreate = (data) => {
     sector,
     position: {x: 0, y: 0},
     data,
-    getMmWidth: getMmWidth,
-    getMmHeight: getMmHeight,
+    getMmWidth,
+    getMmHeight,
+    getPixelHeight,
+    getPixelWidth,
+    calcDrawersFasades,
   });
 
   /** Проверяем на возможность размещения отверстия */
@@ -948,6 +986,10 @@ const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
     sector.children[1].visible = true;
   // sector.children[0].alpha = 0.5;
 };
+
+const checkSectorsCollision = (currShape, targetSector) => {
+  return shapeAdjuster.checkToCollision(targetSector, false, currShape);
+}
 
 const toggleFasadeColor = (sectionIndex, doorIndex, segmentIndex = 0) => {
   const _fasades = sectionIndex === null ? module?.value?.fasades : props.module.sections[sectionIndex].fasades

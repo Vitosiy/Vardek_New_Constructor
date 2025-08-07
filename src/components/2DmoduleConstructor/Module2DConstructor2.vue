@@ -461,7 +461,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
   let fasadesDrawers = module.value.sections[secIndex].fasadesDrawers || []
 
   let baseDrawerFasade = fasadesDrawers[0]
-  let fasadesList = calcDrawersFasadesPositons(secIndex)
+  let fasadesList = calcDrawersFasadesPositons(secIndex) || []
 
   module.value.sections[secIndex].fasades[0] = []
   if (module.value.sections[secIndex].fasades[1])
@@ -531,24 +531,29 @@ const calcDrawersFasadesPositons = (secIndex) => {
     boxesArray.push(profile)
   })
 
-  if (!boxesArray.length)
-    return
-
   const sortedBoxesByIncrease = boxesArray.sort((a, b) => a.position.y - b.position.y)
 
   let fasadePosition = getFasadePosition(APP.CATALOG.PRODUCTS[productData.value.globalData].FASADE_POSITION[0])
-
   if (!fasadePosition)
     return
 
   const otstup = 4
 
   let fullFasadelSize = fasadePosition.FASADE_HEIGHT
-
-  const firstBox = sortedBoxesByIncrease[0] //нижний ящик
-  let bottomFasadePosition = module.value.horizont + 2 //-(totalHeight.value / 2 - Math.abs(fasadePosition.FASADE_HEIGHT - totalHeight.value + 2))
+  let bottomFasadePosition = module.value.horizont + 2
   const firstFasadePosition = bottomFasadePosition
 
+  if (!sortedBoxesByIncrease.length) {
+    fasadeList.push({
+      y: firstFasadePosition,
+      height: fullFasadelSize,
+      type: "fasade",
+    })
+
+    return fasadeList
+  }
+
+  const firstBox = sortedBoxesByIncrease[0] //нижний ящик
   if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
     let firstFasadeSize = Math.abs(firstBox.position.y - (firstBox.isProfile ? 0 : otstup) - bottomFasadePosition)
 
@@ -738,6 +743,7 @@ const calcLoopPositions = (fasades, section) => {
     const fasadeLoops = {
       side: fasade.loopsSide,
       coords: [],
+      errors: [],
       height: 82,
       width: 38,
       type: 'loop',
@@ -795,6 +801,9 @@ const calcLoopPositions = (fasades, section) => {
   return allLoops
 }
 
+const checkLoopsErrorPosition = (secIndex) => {
+
+}
 
 //#endregion
 

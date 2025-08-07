@@ -719,6 +719,7 @@ defineExpose({
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
+        overflow: scroll;
 
         &::-webkit-scrollbar {
           width: 5px;
