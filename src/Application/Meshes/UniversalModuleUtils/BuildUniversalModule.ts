@@ -84,7 +84,7 @@ export class BuildUniversalModule extends BuildProduct {
             this.buildModulegrid(model_props, total)
         }
 
-        if(Object.keys(model_props.CONFIG.LOOPS)?.length) {
+        if(model_props.CONFIG.LOOPS && Object.keys(model_props.CONFIG.LOOPS)?.length) {
             let loopsMesh = this.createLoop(productInfo, model_props, model_props.CONFIG.LOOPS)
             total.add(loopsMesh)
         }
@@ -242,9 +242,31 @@ export class BuildUniversalModule extends BuildProduct {
                 }
             })
 
-            PROPS.CONFIG.LOOPS[secIndex + 1] = section.loops
+            if (section.loops)
+                PROPS.CONFIG.LOOPS[secIndex + 1] = section.loops
         })
 
+        if(product_data.fasades) {
+            let allFasades = []
+            product_data.fasades?.forEach((door, doorID) => {
+                allFasades.push(...door)
+            })
+
+            allFasades.forEach((fasade, fasadeID) => {
+                if(!fasade.error) {
+                    PROPS.CONFIG.FASADE_POSITIONS.push({
+                        ...OLD_FASADES[0],
+                        FASADE_WIDTH: fasade.width,
+                        FASADE_HEIGHT: fasade.height,
+                        POSITION_X: fasade.position.x,
+                        POSITION_Y: fasade.position.y,  //(PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]) + 2,
+                        POSITION_Z: fasade.position.z,
+                        FASADE_NUMBER: PROPS.CONFIG.FASADE_POSITIONS.length,
+                    })
+                    PROPS.CONFIG.FASADE_PROPS.push(fasade.material)
+                }
+            })
+        }
     }
 
     buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D) {
