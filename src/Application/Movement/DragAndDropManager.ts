@@ -91,23 +91,19 @@ export class DragAndDropManager {
 
                     if (productData.moduleType || productData.ID == 3954672) {
                         this.universalGeometryBuilder.craeteModel(productData, (object) => {
-                            const menuStore = useMenuStore();
 
                             object.userData.MOUSE_POSITION = {
                                 x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
                                 y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
                             };
                             this.setObject.create({
-                                scene: this.scene,
                                 object,
                                 point,
-                                roomManager: this.roomManager,
                                 trafficManager: this.trafficManager,
                                 boxHelper: this.boxHelper,
                                 wall: surface
                             });
 
-                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object.userData])
                             //useModelState().setCurrentModel(object);
                         });
                     } else {
