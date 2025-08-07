@@ -24,6 +24,49 @@ contentLenght.value = Object.keys(roomContantData).length
 const errorMessage = ref('');
 const basketCostData = ref(null);
 
+interface IBasketFacadeHeandles {
+  ID: number | string | null,
+  POSITION: string | null
+};
+interface IBasketFacade {
+  COLOR: number | string | null,
+  MILLING: number | null,
+  PALETTE: number | null,
+  SHOWCASE: number | null,
+  ALUM: number | null,
+  GLASS: number | null,
+  PATINA: number | null,
+  TYPE: number | null,
+  SIZE: {
+    WIDTH: number | null,
+    HEIGHT: number | null,
+    DEPTH: number | null
+  } | null,
+  HEANDLES: IBasketFacadeHeandles[]
+};
+interface IBasket {
+  PRODUCT: number,
+  PROPS: {
+    FASADE: IBasketFacade[],
+    BODY: {
+      COLOR: number | string | null,
+      SIZE: {
+        WIDTH: number | null,
+        HEIGHT: number | null,
+        DEPTH: number | null
+      }
+    },
+    OPTIONS: Number[],
+    UNIFORM_TEXTURE: {
+      GROUP: number | null,
+      LEVEL: number | null,
+      INDEX: number | null,
+      column_INDEX: number | null
+    }
+  },
+  QUANTITY: number;
+};
+
 // Будущие запросы на сервер ================================================
 
 async function getBasketPrice() {
@@ -32,10 +75,91 @@ async function getBasketPrice() {
 
   try {
     // Выполнение POST-запроса
-    const response = await axios.post('path' + '/API/data.basket.getprice.php', params)
+    // const response = await axios.post('path' + '/API/data.basket.getprice.php', params)
 
     // Сохраняем ответ от сервера
-    basketCostData.value = response.data;
+    // basketCostData.value = response.data;
+
+
+    console.log("Корзина открыта — можно загрузить данные");
+
+    const roomContantData = JSON.parse(JSON.stringify(useRoomContantData().getRoomContantData));
+    console.log('>>> useRoomContantData().getRoomContantData:', roomContantData);
+
+    const dataForGetPrices: IBasket[] = [];
+
+    for (const key in roomContantData) {
+      if (Object.prototype.hasOwnProperty.call(roomContantData, key)) {
+
+        const obj = roomContantData[key];
+        const objProps: any = obj.object.userData.PROPS;  //[25].object.userData.PROPS
+
+        const facadeForReq: IBasketFacade[] = [];
+
+        objProps.CONFIG.FASADE_PROPS.forEach((fp: any, index: number) => {
+          facadeForReq.push({
+            COLOR: fp.COLOR ?? null,
+            MILLING: fp.MILLING ?? null,
+            PALETTE:  fp.PALETTE ?? null,
+            SHOWCASE:  fp.SHOWCASE ?? null,
+            ALUM:  fp.ALUM ?? null,
+            GLASS:  fp.GLASS ?? null,
+            PATINA:  fp.PATINA ?? null,
+            TYPE:  fp.TYPE ?? null,
+            SIZE: {
+              WIDTH: objProps.FASADE[index].object.userData.trueSize.WIDTH ?? null,
+              HEIGHT: objProps.FASADE[index].object.userData.trueSize.HEIGHT ?? null,
+              DEPTH: objProps.FASADE[index].object.userData.trueSize.DEPTH ?? null
+            },
+            HEANDLES: []
+          });
+        });
+
+        const objForRequest: IBasket = {
+          PRODUCT: objProps.CONFIG.ID,
+          PROPS: {
+            FASADE: facadeForReq,
+            BODY: {
+              COLOR: objProps.CONFIG.MODULE_COLOR ?? null, // [25].object.userData.PROPS.CONFIG.MODULE_COLOR
+              SIZE: {
+                // objProps.BODY.object.userData.trueSize
+                WIDTH: objProps.BODY.object.userData.trueSize.BODY_WIDTH.toFixed(0),
+                HEIGHT: objProps.BODY.object.userData.trueSize.BODY_HEIGHT.toFixed(0),
+                DEPTH: objProps.BODY.object.userData.trueSize.BODY_DEPTH.toFixed(0)
+              }
+            },
+            OPTIONS: [
+              // 7391
+            ],
+            UNIFORM_TEXTURE: {
+              GROUP: objProps.CONFIG.UNIFORM_TEXTURE.group ?? null,
+              LEVEL: objProps.CONFIG.UNIFORM_TEXTURE.level ?? null,
+              INDEX: objProps.CONFIG.UNIFORM_TEXTURE.index ?? null,
+              column_INDEX: objProps.CONFIG.UNIFORM_TEXTURE.column_index ?? null
+            }
+          },
+          QUANTITY: 1 // Количество товара в корзине, по умолчанию 1
+        };
+
+        dataForGetPrices.push(objForRequest);
+
+      }
+    } // end | roomContantData forIn
+
+    const dataBasket = {
+      BASKET: dataForGetPrices,
+      TYPE_PRICE: 25
+    };
+
+    console.log('dataBasket', dataBasket);
+
+    console.log('>>> dataForGetPrices:', dataBasket);
+
+    const response = await axios.post('https://dev.vardek.online/api/modeller/basket/GetBasket/', dataBasket);
+
+    console.log('<<< response:', response);
+    basketCostData.value = response.data.DATA;
+    
   } catch (error) {
     // Обработка ошибок
     if (axios.isAxiosError(error)) {
@@ -49,8 +173,7 @@ async function getBasketPrice() {
 async function setBasketOrder() {
   // Параметры, которые передаются на сервер
   const params = {};
-  console.log(roomContantData);
-  
+
   try {
     // Выполнение POST-запроса
     const response = await axios.post('path' + '/API/data.basket.getprice.php', params)
@@ -66,6 +189,23 @@ async function setBasketOrder() {
     }
   }
 }
+
+
+
+// Следим за изменением состояния попапа корзины
+watch(
+  () => popupStore.popups.basket,
+  async (isBasketOpen) => {
+    if (isBasketOpen) {
+
+      await getBasketPrice();
+
+    } else {
+      console.log("Корзина закрыта");
+    }
+  },
+  { immediate: true } // Если нужно сработать при первом рендере
+);
 
 // ==========================================================================
 
@@ -102,16 +242,16 @@ const closePopup = () => {
             <div class="names__title"></div>
           </div>
           <div v-if="contentLenght != 0" class="basket-inlist-table">
-            <div v-for="(product, key) in _roomContantData.getRoomContantData" :key="product.userData.PROPS.PRODUCT.NAME + key"
-              class="basket-item">
+            <div v-for="(product, key) in _roomContantData.getRoomContantData"
+              :key="product.userData.PROPS.PRODUCT.NAME + key" class="basket-item">
               <div class="basket-item-image">
                 <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
 
                 <img class="" :src="_URL + product.userData.PROPS.PRODUCT.PREVIEW_PICTURE" />
               </div>
 
-              <div class="basket- item-text" style="width: 500px">
-                <span class="text__title">{{ product.userData.PROPS.PRODUCT.NAME }}</span>
+              <div class="basket-item-text" style="width: 500px">
+                <span class="text__title">{{ product.userData.PROPS.PRODUCT.NAME }} - {{ key }}</span>
                 <div class="text-item-list">
                   <p>Услуга:</p>
                   <ul>
@@ -132,7 +272,7 @@ const closePopup = () => {
               <p class="basket-item-cost__text">12 348 руб.</p>
               <p class="basket-item-edit">
                 <CopyBasketButton />
-                <DeleteBasketButton @click="deleteProductInBusket(product)"/>
+                <DeleteBasketButton @click="deleteProductInBusket(product)" />
               </p>
             </div>
           </div>
