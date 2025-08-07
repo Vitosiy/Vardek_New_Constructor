@@ -176,8 +176,11 @@ const onSearchChange = (e) => {
 
   &__img {
     height: 45px;
-    border-radius: 5px;
+    width: 45px;
+    border-radius: 10px;
     margin-left: 10px;
+    padding: 5px;
+    background-color: $white;
   }
 
   &__name {

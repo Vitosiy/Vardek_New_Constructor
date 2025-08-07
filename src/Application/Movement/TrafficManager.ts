@@ -85,6 +85,12 @@ export class TrafficManager {
         // if(!object) return
 
         this.currentObject = object
+        console.log(object,'object')
+
+        this.events.emit("A:Selected", {
+            object: object,
+            roomContant: this.room._roomContant
+        })
 
         if (object) {
 
@@ -93,21 +99,19 @@ export class TrafficManager {
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
             }
 
-            this.modelState.setCurrentModel(object)
-
-            console.log(object, 'OBJ')
+            // this.modelState.setCurrentModel(object)
 
         }
         else {
             this.modelState.clearCurrentModelFasadesData()
-            this.modelState.setCurrentModel(null)
+            // this.modelState.setCurrentModel(null)
         }
 
 
-        this.events.emit("A:Selected", {
-            object: object,
-            roomContant: this.room._roomContant
-        })
+        // this.events.emit("A:Selected", {
+        //     object: object,
+        //     roomContant: this.room._roomContant
+        // })
 
     }
 

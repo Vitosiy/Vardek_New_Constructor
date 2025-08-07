@@ -130,7 +130,9 @@ const handleSelect = (material: any) => {
 
   &__img {
     height: 60px;
+    padding: 5px;
     border-radius: 15px;
+    background-color: $white;
     // margin-left: 10px;
   }
 

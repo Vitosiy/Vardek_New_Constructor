@@ -10,6 +10,7 @@ import {
 } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useSceneState } from "@/store/appliction/useSceneState";
+import { useRoute } from "vue-router";
 import {
   postRequest,
   _POST_URL,
@@ -39,43 +40,17 @@ import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelpe
 import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
 
 const props = defineProps(["pageComponent"]);
+const route = useRoute();
+
 const historyActions = ref<boolean>(false);
 const verdekConstructor = ref(null);
 const inputDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 const restorLength = ref<number>(0);
 const curActionCount = ref<number>(0);
+const contentLoaded = ref<boolean>(false);
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
-
-eventBus.on("A:Load", () => {
-  props.pageComponent.selected();
-
-  restorLength.value = 0;
-  curActionCount.value = 0;
-
-  console.log("LOAD");
-
-  // if (!verdekConstructor.value) return;
-  // const total = verdekConstructor.value.userHistory.getHistory().length - 1;
-  // restorLength.value = total;
-  // curActionCount.value = total;
-});
-
-eventBus.on("A:ChangeCameraPos", () => {
-  props.pageComponent.selected();
-});
-
-eventBus.onEmitCalled(async (event, payload) => {
-  if (!historyActions.value) return;
-  if (!verdekConstructor.value) return;
-  await nextTick();
-  if (verdekConstructor.value.userHistory.checkEvent(event)) {
-    const total = verdekConstructor.value.userHistory.getHistory().length - 1;
-    restorLength.value = total;
-    curActionCount.value = total;
-  }
-});
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -134,10 +109,9 @@ const updateProject = async () => {
     project: project,
   };
 
-  const resp =  await postRequest(`${_UPDATE_PROJECT}`, data);
-  
-  console.log(JSON.parse(resp.DATA.DETAIL_TEXT)
-, 'RESP')
+  const resp = await postRequest(`${_UPDATE_PROJECT}`, data);
+
+  console.log(JSON.parse(resp.DATA.DETAIL_TEXT), "RESP");
 };
 
 const createNewRoom = (value: string) => {
@@ -146,6 +120,10 @@ const createNewRoom = (value: string) => {
   eventBus.emit("A:Create", value);
   restorLength.value = 0;
   curActionCount.value = 0;
+};
+
+const checkContantLoad = (state: boolean) => {
+  contentLoaded.value = state;
 };
 
 const moreThenActions = computed(() => {
@@ -178,15 +156,42 @@ const nextAction = () => {
   }
 };
 
+const addEvents3D = () => {
+  eventBus.on("A:Load", () => {
+    props.pageComponent.selected();
+
+    restorLength.value = 0;
+    curActionCount.value = 0;
+  });
+
+  eventBus.on("A:ChangeCameraPos", () => {
+    props.pageComponent.selected();
+  });
+
+  eventBus.onEmitCalled(async (event, payload) => {
+    if (!historyActions.value) return;
+    if (!verdekConstructor.value) return;
+    await nextTick();
+    if (verdekConstructor.value.userHistory.checkEvent(event)) {
+      const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+      restorLength.value = total;
+      curActionCount.value = total;
+    }
+  });
+  eventBus.on("A:ContantLoaded", checkContantLoad);
+};
+
 watch(
-  () => props.pageComponent,
-  async () => {
+  () => route.path,
+  async (newPath, oldPath) => {
+    
     await nextTick();
     const constructor = props.pageComponent.VerdekConstructor;
 
     if (constructor) {
       verdekConstructor.value = constructor;
       historyActions.value = true;
+      addEvents3D();
       return;
     }
     historyActions.value = false;
@@ -195,6 +200,7 @@ watch(
   },
   { flush: "post", immediate: true }
 );
+
 
 onBeforeUnmount(() => {
   restorLength.value = 0;

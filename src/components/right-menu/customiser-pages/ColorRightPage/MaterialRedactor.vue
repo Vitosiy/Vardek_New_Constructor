@@ -6,7 +6,15 @@ interface Tab {
   label: string;
 }
 
-import { defineProps, watch, ref, onMounted, computed, reactive } from "vue";
+import {
+  defineProps,
+  watch,
+  ref,
+  onMounted,
+  computed,
+  reactive,
+  onBeforeMount,
+} from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -29,9 +37,14 @@ const _FASADE = _APP.FASADE;
 const eventBus = useEventBus();
 
 const modelState = useModelState();
-const materialList = modelState.getCurrentModelFasadesData;
-const productData = modelState.getCurrentModel;
-const productId = productData.PROPS.PRODUCT;
+
+const materialList = ref(null);
+const productData = ref(null);
+const productId = ref(null);
+
+// const materialList = modelState.getCurrentModelFasadesData;
+// const productData = modelState.getCurrentModel;
+// const productId = productData.PROPS.PRODUCT;
 
 let currentEditableOption = ref<String>("surface");
 
@@ -57,8 +70,9 @@ const glassList = ref<Array>([]);
 const isGlassExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
-  const product = _APP.CATALOG.PRODUCTS[productId];
-  const { COLOR } = productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+  const product = _APP.CATALOG.PRODUCTS[productId.value];
+  const { COLOR } =
+    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
   const dataOfFasadeType = _FASADE[COLOR];
 
   isSurfaceSelected.value = true;
@@ -163,26 +177,58 @@ const setCurrentEditableOption = (name: String) => {
   currentEditableOption.value = name;
 };
 
-onMounted(() => {
-  console.log("Mount");
-  const product = _APP.CATALOG.PRODUCTS[productId];
+const update = () => {
+  currentSurfaceData.value = {};
+  currentMillingData.value = {};
+  currentPaletteData.value = {};
+  currentPatinaData.value = {};
+  currentWindowsData.value = {};
+  currentGlassData.value = {};
+
+  isSurfaceSelected.value = false;
+
+  millingList.value = [];
+  isMillingExist.value = false;
+
+  paletteList.value = {};
+  isPalleteExist.value = false;
+
+  patinaList.value = [];
+  isPatinaExist.value = false;
+
+  glassList.value = [];
+  isGlassExist.value = false;
+};
+
+const prepareData = () => {
+  const product = _APP.CATALOG.PRODUCTS[productId.value];
 
   const currentFasadeData =
-    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
 
   const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
-    productData.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
 
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
   const dataOfFasadeType = _FASADE[COLOR];
 
   modelState.createCurrentPaletteData(COLOR);
-  modelState.createCurrentMillingData({ fasadeId: COLOR, productId });
-  modelState.createCurrentPatinaData({ fasadeId: COLOR, productId });
-  modelState.createCurrentGlassData({ fasadeId: COLOR, productId });
-  modelState.createCurrentWindowsData({ fasadeId: COLOR, productId });
-
-  console.log(product.GLASS[0]);
+  modelState.createCurrentMillingData({
+    fasadeId: COLOR,
+    productId: productId.value,
+  });
+  modelState.createCurrentPatinaData({
+    fasadeId: COLOR,
+    productId: productId.value,
+  });
+  modelState.createCurrentGlassData({
+    fasadeId: COLOR,
+    productId: productId.value,
+  });
+  modelState.createCurrentWindowsData({
+    fasadeId: COLOR,
+    productId: productId.value,
+  });
 
   if (dataOfFasadeType.ATTACH_MILLINGS[0] && !product.GLASS[0]) {
     millingList.value = modelState.getCurrentMillingData;
@@ -214,9 +260,10 @@ onMounted(() => {
 
   if (MILLING) {
     console.log("MILLING");
-    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = modelState.getCurrentMillingData.find(
-      (milling) => milling.ID === MILLING
-    );
+    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
+      modelState.getCurrentMillingData.find(
+        (milling) => milling.ID === MILLING
+      );
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     isMillingExist.value = true;
   }
@@ -229,10 +276,9 @@ onMounted(() => {
 
   if (PATINA) {
     if (modelState.getCurrentPatinaData) {
-      console.log(modelState.getCurrentPatinaData,'PATT', PATINA)
-      const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = modelState.getCurrentPatinaData.find(
-        (patina) => patina.ID === PATINA
-      );
+      console.log(modelState.getCurrentPatinaData, "PATT", PATINA);
+      const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
+        modelState.getCurrentPatinaData.find((patina) => patina.ID === PATINA);
       currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
       isPatinaExist.value = true;
     }
@@ -246,7 +292,29 @@ onMounted(() => {
     currentGlassData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
     isGlassExist.value = true;
   }
+};
+
+onBeforeMount(() => {
+  materialList.value = modelState.getCurrentModelFasadesData;
+  productData.value = modelState.getCurrentModel;
+  productId.value = productData.value.PROPS.PRODUCT;
 });
+
+onMounted(() => {
+  prepareData();
+});
+
+watch(
+  () => modelState.getCurrentModel,
+  () => {
+    materialList.value = modelState.getCurrentModelFasadesData;
+    productData.value = modelState.getCurrentModel;
+    productId.value = productData.value.PROPS.PRODUCT;
+    update();
+    prepareData();
+  },
+  { flush: "post", immediate: true }
+);
 </script>
 
 <template>
@@ -387,6 +455,4 @@ onMounted(() => {
     gap: 17px;
   }
 }
-
-
 </style>

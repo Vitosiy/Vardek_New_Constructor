@@ -1,37 +1,83 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
-import { reactive } from "vue";
+import { reactive, defineProps, onMounted, ref, watch } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 const eventBus = useEventBus();
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useObjectData } from "@/store/appliction/useObjectData";
 import { useModelState } from "@/store/appliction/useModelState";
 
-const modelState = useModelState().getCurrentModel;
+// const props = defineProps(["currentModel"]);
+const modelState = useModelState();
+
+const sizeEditData = ref({
+  widthMin: 0,
+  widthMax: 0,
+  heightMin: 0,
+  heightMax: 0,
+  depthMin: 0,
+  depthMax: 0,
+});
+
+const resizeData = ref({
+  width: 0,
+  height: 0,
+  depth: 0,
+});
+
+const currentModel = ref(null);
+
+// const modelState = useModelState().getCurrentModel;
 
 /* данные размера модели */
-let resizeData: { width: number; height: number; depth: number } = {
-  width: modelState.PROPS.CONFIG.SIZE.width,
-  height: modelState.PROPS.CONFIG.SIZE.height,
-  depth: modelState.PROPS.CONFIG.SIZE.depth,
-};
+// let resizeData: { width: number; height: number; depth: number } = {
+//   width: modelState.PROPS.CONFIG.SIZE.width,
+//   height: modelState.PROPS.CONFIG.SIZE.height,
+//   depth: modelState.PROPS.CONFIG.SIZE.depth,
+// };
 
 /* данные ограничения размера модели */
-let sizeEditData = {
-  widthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
-  widthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
-  heightMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
-  heightMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
-  depthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
-  depthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
-}
+// let sizeEditData = {
+//   widthMin: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
+//   widthMax: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
+//   heightMin: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
+//   heightMax: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
+//   depthMin: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
+//   depthMax: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX,
+// };
+const prepareData = () => {
+  currentModel.value = modelState.getCurrentModel;
+  sizeEditData.value = {
+    widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
+    widthMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
+    heightMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
+    heightMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
+    depthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
+    depthMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX,
+  };
+  resizeData.value = {
+    width: currentModel.value.PROPS.CONFIG.SIZE.width,
+    height: currentModel.value.PROPS.CONFIG.SIZE.height,
+    depth: currentModel.value.PROPS.CONFIG.SIZE.depth,
+  };
+};
 
 const resizeModel = (value: object) => {
-  eventBus.emit("A:Model-resize", {... resizeData, ... value});
-}
+  eventBus.emit("A:Model-resize", { ...resizeData.value, ...value });
+};
 
-console.log(modelState, 'ONRULL')
+onMounted(() => {
+  prepareData();
+});
 
+watch(
+  () => modelState.getCurrentModel,
+  () => {
+    console.log('ASHHHH')
+    prepareData();
+  },
+  { flush: "post", immediate: true }
+);
 </script>
 
 <template>
@@ -42,32 +88,35 @@ console.log(modelState, 'ONRULL')
       <div class="settings-size">
         <div class="size-item">
           <p class="item__label text-grey">Ширина</p>
-          <MainInput class="input__search right-menu"
-                     v-model="resizeData.width" 
-                     @update:modelValue="resizeModel" 
-                     type="number"   
-                     :min="sizeEditData.widthMin"
-                     :max="sizeEditData.widthMax"
+          <MainInput
+            class="input__search right-menu"
+            v-model="resizeData.width"
+            @update:modelValue="resizeModel"
+            type="number"
+            :min="sizeEditData.widthMin"
+            :max="sizeEditData.widthMax"
           />
         </div>
         <div class="size-item">
-          <p class="item__label text-grey ">Высота</p>
-          <MainInput class="input__search right-menu" 
-                    v-model="resizeData.height"
-                    @update:modelValue="resizeModel" 
-                    type="number"
-                    :min="sizeEditData.heightMin"
-                    :max="sizeEditData.heightMax"  
-           />
+          <p class="item__label text-grey">Высота</p>
+          <MainInput
+            class="input__search right-menu"
+            v-model="resizeData.height"
+            @update:modelValue="resizeModel"
+            type="number"
+            :min="sizeEditData.heightMin"
+            :max="sizeEditData.heightMax"
+          />
         </div>
         <div class="size-item">
-          <p class="item__label text-grey ">Глубина</p>
-          <MainInput class="input__search right-menu" 
-                      v-model="resizeData.depth" 
-                      @update:modelValue="resizeModel" 
-                      type="number"
-                      :min="sizeEditData.depthMin"
-                      :max="sizeEditData.depthMax" 
+          <p class="item__label text-grey">Глубина</p>
+          <MainInput
+            class="input__search right-menu"
+            v-model="resizeData.depth"
+            @update:modelValue="resizeModel"
+            type="number"
+            :min="sizeEditData.depthMin"
+            :max="sizeEditData.depthMax"
           />
         </div>
       </div>

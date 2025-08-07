@@ -577,7 +577,7 @@ defineExpose({
   position: absolute;
   width: 100dvw;
   height: 100dvh;
-  background: rgba(2, 2, 2, 0.834);
+  background: rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(10px);
 }
 

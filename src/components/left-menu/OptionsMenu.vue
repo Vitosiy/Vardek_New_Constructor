@@ -56,13 +56,12 @@ const closeAllMenus = () => {
 const showTechMenu = (id: string, products: []) => {
   menuStore.openMenu("tech", id, products);
   customiserStore.hideCustomiserPopup();
-  // customiserStore.toggleCustomiserPopup();
-  //  eventBus.emit("A:Selected", null)
 };
 
 // Новое меню
 const showRoomParMenu = () => {
   menuStore.openMenu("roomPar");
+  customiserStore.hideCustomiserPopup();
 };
 
 const changeCameraPos = (value: number) => {

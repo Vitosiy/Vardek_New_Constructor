@@ -114,7 +114,10 @@ const deleteChoise = (event) => {
 
   &__img {
     height: 50px;
+    padding: 5px;
     cursor: pointer;
+    box-shadow: 0px 0px 6px 0px rgba(48, 48, 48, 0.1019607843);
+    border-radius: 15px;
   }
 
   &__color {

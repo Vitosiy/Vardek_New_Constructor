@@ -1,7 +1,11 @@
 <script setup lang="ts">
 // @ts-nocheck 31
-
+import { onMounted, onBeforeUnmount, ref } from "vue";
 import type { Mesh, Object3D, Vector3, PerspectiveCamera } from "three";
+
+import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
@@ -15,16 +19,11 @@ import MovingButton from "@/components/ui/buttons/right-menu/MovingRightButton.v
 import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.vue";
 import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
 
-import { onMounted, onBeforeUnmount, ref } from "vue";
-import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
-import { useModelState } from "@/store/appliction/useModelState";
-import { useEventBus } from "@/store/appliction/useEventBus";
-
 const customiserStore = useCustomiserStore();
 const eventBus = useEventBus();
 const modelState = useModelState();
 
-const currentModel = ref<Object3D | null>(null);
+const currentModel = ref(null);
 
 const closeCustomiser = () => {
   customiserStore.hideCustomiserPopup();
@@ -34,10 +33,13 @@ const checkSelect = (el) => {
   if (!el.object) {
     closeCustomiser();
     currentModel.value = null;
+    modelState.setCurrentModel(null)
     return;
   }
-  currentModel.value = el;
-  console.log(el);
+  currentModel.value = el.object.userData;
+  modelState.setCurrentModel(el)
+  // customiserStore.switchCustomiser('ruler')
+  // console.log(currentModel.value, "o");
 };
 
 onMounted(() => {
@@ -70,8 +72,14 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <RulerPage v-if="customiserStore.customisers == 'ruler'" />
-        <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
+        <RulerPage
+
+          v-if="customiserStore.customisers == 'ruler'"
+        />
+        <ModelsItemSelector
+
+          v-if="customiserStore.customisers == 'color'"
+        />
         <!--
         <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
         -->

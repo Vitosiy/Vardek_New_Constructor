@@ -1,22 +1,33 @@
 <script lang="ts" setup>
-import MaterialSelector from './MaterialSelector.vue';
-import ConfigurationOption from './ConfigurationOption.vue';
-import { ref, onMounted } from 'vue';
+import MaterialSelector from "./MaterialSelector.vue";
+import ConfigurationOption from "./ConfigurationOption.vue";
+import { ref, onMounted, onBeforeMount, watch } from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 const modelState = useModelState();
 const eventBus = useEventBus();
 
-const materialList = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
-const selectedSurfaceID = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
+// const materialList = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
+// const selectedSurfaceID = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
+
+const materialList = ref(null);
+const selectedSurfaceID = ref(null);
 
 const currentSurfaceData = ref<any>({});
 const isMillingExist = ref(false);
 const currentMillingData = ref(null);
 
+onBeforeMount(() => {
+  materialList.value =
+    modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
+  selectedSurfaceID.value =
+    modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
+});
+
 onMounted(() => {
-  const current = materialList.find((m) => m.ID === selectedSurfaceID);
+  const current = materialList.value!.find((m) => m.ID === selectedSurfaceID.value);
+
   if (current) {
     currentSurfaceData.value = {
       name: current.NAME,
@@ -34,13 +45,33 @@ const changeModuleTexture = (data: any) => {
 };
 
 const deleteSelectedOptions = (type: string) => {
-  const fallback = materialList[0];
+  const fallback = materialList.value![0];
   currentSurfaceData.value = {
     name: fallback.NAME,
     imgSrc: fallback.PREVIEW_PICTURE,
   };
   eventBus.emit("A:ChangeModuleTexture", fallback);
 };
+
+watch(
+  () => modelState.getCurrentModel,
+  () => {
+    materialList.value =
+      modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
+    selectedSurfaceID.value =
+      modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
+    const current = materialList.value!.find((m) => m.ID === selectedSurfaceID.value);
+    if (current) {
+      console.log(current, "current");
+
+      currentSurfaceData.value = {
+        name: current.NAME,
+        imgSrc: current.DETAIL_PICTURE,
+      };
+    }
+  },
+  { flush: "post", immediate: true }
+);
 </script>
 
 <template>
@@ -60,14 +91,11 @@ const deleteSelectedOptions = (type: string) => {
       />
     </div>
 
-    <MaterialSelector
-      :materials="materialList"
-      @select="changeModuleTexture"
-    />
+    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
   </div>
 </template>
 
-<style  lang="scss">
+<style lang="scss">
 .container {
   display: flex;
   flex-direction: column;
@@ -84,7 +112,6 @@ const deleteSelectedOptions = (type: string) => {
     font-weight: 600;
   }
 }
-
 
 .configuration {
   display: flex;
@@ -103,5 +130,4 @@ const deleteSelectedOptions = (type: string) => {
     gap: 17px;
   }
 }
-
 </style>
