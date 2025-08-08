@@ -166,10 +166,11 @@ export class MeshEvents extends BuildersHelper {
         const product = this._currentMesh
 
 
-        const { CONFIG, SHELF, BODY } = product.userData.PROPS
+        const { CONFIG, SHELF, BODY, JSON_FILLINGS } = product.userData.PROPS
 
         let body = BODY
         let shelf = SHELF
+        let fillings = JSON_FILLINGS
 
         body?.traverse((children: THREE.Object3D) => {
             if (children instanceof THREE.Mesh) {
@@ -181,6 +182,18 @@ export class MeshEvents extends BuildersHelper {
             }
         })
         shelf?.forEach((item: THREE.Object3D) => {
+            item.traverse((children: THREE.Object3D) => {
+                if (children instanceof THREE.Mesh) {
+                    this.changeColor(
+                        {
+                            object: children,
+                            url: data.TEXTURE
+                        })
+                }
+            })
+        })
+
+        fillings?.forEach((item: THREE.Object3D) => {
             item.traverse((children: THREE.Object3D) => {
                 if (children instanceof THREE.Mesh) {
                     this.changeColor(

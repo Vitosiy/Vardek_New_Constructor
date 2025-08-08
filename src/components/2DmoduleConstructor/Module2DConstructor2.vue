@@ -714,20 +714,23 @@ const calcLoops = (secIndex, grid = false) => {
 
   const curSection = grid ? grid.sections[secIndex] : module.value.sections[secIndex]
   const FASADES = curSection.fasades || []
+  curSection.loops = []
 
   FASADES.forEach((door, doorKey) => {
     const additional_fasades = []
-    curSection.loops = []
 
     door.forEach((fasade, key) => {
       additional_fasades.push(fasade)
     })
 
-    curSection.loops = calcLoopPositions(additional_fasades, curSection)
+    let loopsPos = calcLoopPositions(additional_fasades, curSection)
 
-    if (!curSection.loops.length)
-      delete curSection.loops
+    if (loopsPos.length)
+      curSection.loops.push(loopsPos)
   })
+
+  if (!curSection.loops.length)
+    delete curSection.loops
 }
 
 const calcLoopPositions = (fasades, section) => {

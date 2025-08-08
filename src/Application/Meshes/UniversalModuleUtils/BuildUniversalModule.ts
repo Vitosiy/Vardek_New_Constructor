@@ -271,52 +271,58 @@ export class BuildUniversalModule extends BuildProduct {
 
     buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D) {
 
+        PROPS.JSON_FILLINGS = []
+
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
-            section.fillings?.map((filling) => {
-                const productInfo = this._PRODUCTS[filling.product]
+            if(section.fillings?.length) {
+                section.fillings.map((filling) => {
+                    const productInfo = this._PRODUCTS[filling.product]
 
-                if(!productInfo)
-                    return
+                    if (!productInfo)
+                        return
 
-                const onLoad = (productFilling, isModel = true) => {
-                    let size = PROPS.CONFIG.SIZE
-                    let start_position = this.getStartPosition(size)
+                    const onLoad = (productFilling, isModel = true) => {
+                        let size = PROPS.CONFIG.SIZE
+                        let start_position = this.getStartPosition(size)
 
-                    if(isModel){
-                        const box = new THREE.Box3().setFromObject(productFilling);
-                        const size = box.getSize(new THREE.Vector3());
+                        if (isModel) {
+                            const box = new THREE.Box3().setFromObject(productFilling);
+                            const size = box.getSize(new THREE.Vector3());
 
-                        productFilling.userData.trueSizes = {
-                            WIDTH: size.x,
-                            HEIGHT: size.y,
-                            DEPTH: size.z,
+                            productFilling.userData.trueSizes = {
+                                WIDTH: size.x,
+                                HEIGHT: size.y,
+                                DEPTH: size.z,
+                            }
+
+                            productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
+                            productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
+                            productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
                         }
 
-                        productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
-                        productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
-                        productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
+                        start_position.add(filling.position)
+                        start_position.y += filling.size.y / 2
+
+                        productFilling.position.copy(start_position)
+
+                        if (!isModel)
+                            PROPS.JSON_FILLINGS.push(productFilling)
+
+                        group.add(productFilling)
                     }
 
-                    start_position.add(filling.position)
-                    start_position.y += filling.size.y / 2
+                    const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
+                    const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
 
-                    productFilling.position.copy(start_position)
-
-                    group.add(productFilling)
-                }
-
-                const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
-                const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
-
-                let productFilling
-                if (data.DAE) {
-                    this.models_builder.create(data.file, onLoad, {CONFIG: {MODEL: data}}, false)
-                }
-                else{
-                    productFilling = this.createSubProductObject(data, PROPS)
-                    onLoad(productFilling, false)
-                }
-            })
+                    let productFilling
+                    if (data.DAE) {
+                        this.models_builder.create(data.file, onLoad, {CONFIG: {MODEL: data}}, false)
+                    } else {
+                        productFilling = this.createSubProductObject(data, PROPS)
+                        onLoad(productFilling, false)
+                    }
+                })
+            }
         })
 
         return
@@ -448,7 +454,9 @@ export class BuildUniversalModule extends BuildProduct {
             Object.entries(PROPS.CONFIG.LOOPS).forEach(([secIndex, section]) => {
                 // Добавляет петли
                 section.forEach((door, doorKey) => {
-                    allLoopsMesh.add(create(loopModel.clone(), secIndex, doorKey, door))
+                    door.forEach((fasadeLoop, fasadeLoopKey) => {
+                        allLoopsMesh.add(create(loopModel.clone(), secIndex, fasadeLoopKey, fasadeLoop))
+                    });
                 });
             })
         }
