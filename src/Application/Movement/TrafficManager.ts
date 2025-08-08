@@ -134,7 +134,7 @@ export class TrafficManager {
 
     removeFromRoom(product: Event | THREE.Object3D) {
 
-        // console.log(this._currentObject, 'CurrentObject')
+        console.log(this._currentObject, 'CurrentObject')
 
         if (!this._currentObject) return
 
@@ -177,7 +177,8 @@ export class TrafficManager {
         }
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom)
-
+        this.events.on('A:RemoveModelFromBasket', this.onRemoveFromRoom)
+        
         // this.eventsStore.on('A:CameraToggle', (value: boolean) => {
         //     if (value) {
         //         this.moveManager.dispose()
