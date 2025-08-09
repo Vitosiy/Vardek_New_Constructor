@@ -6,6 +6,8 @@ import { ref, computed } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { useAppData } from "@/store/appliction/useAppData";
+import { useModelState } from '../appliction/useModelState';
+
 
 import * as THREEInterfases from "../../types/interfases"
 import { TFasadeItem } from "@/types/types";
@@ -20,9 +22,8 @@ export const useRoomState = defineStore('RoomState', () => {
   const roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
 
-  const _APP = useAppData();
-  // const _PRODUCTS = _APP.CATALOG.PRODUCTS
-  // const _FASADE = _APP.FASADE;
+  const APP = useAppData();
+  const modelState = useModelState()
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
@@ -147,8 +148,8 @@ export const useRoomState = defineStore('RoomState', () => {
 
   const getDefaultModuleData = () => {
     const colorMap: Record<number, TFasadeItem> = {};
-    const PRODUCTS = _APP.getAppData.CATALOG.PRODUCTS
-    const FASADE = _APP.getAppData.FASADE;
+    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
+    const FASADE = APP.getAppData.FASADE;
 
     for (const el in PRODUCTS) {
       const product = PRODUCTS[el];
@@ -165,7 +166,15 @@ export const useRoomState = defineStore('RoomState', () => {
     }
 
     return colorMap
+  }
 
+  const getDefaultFasadeData = () => {
+    const FASADE = APP.getAppData.FASADE;
+
+    const [key, value] = Object.entries(FASADE)[0];
+    console.log(value, '')
+    const defaultFasadData = modelState.createCurrentModelFasadesData(value)
+    console.log(defaultFasadData, 'defaultFasadData')
   }
 
 
@@ -200,7 +209,8 @@ export const useRoomState = defineStore('RoomState', () => {
     apllyProjectWall,
     apllyProjectFloor,
 
-    getDefaultModuleData
+    getDefaultModuleData,
+    getDefaultFasadeData
 
   };
 });

@@ -1,67 +1,117 @@
 // @ts-nocheck
-import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
-
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 export const useAppData = defineStore('AppData', () => {
+  const appData = ref<{ [key: string]: any }>({})
+  const indexedDataBase = ref<IDBDatabase | null>(null)
 
-    const appData = ref<{ [key: string]: any }>({})
-    const indexedDataBase = ref<IDBDatabase | null>(null)
+  /** Получить данные из API */
+  const fetchRemoteData = async () => {
+    console.log('Start fetch from API')
 
-    const setAppData = async (value: any) => {
-        if (value) {
+    const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
+    // url.searchParams.append('config', '689680')
+    // url.searchParams.append('style_id', '43830')
 
-            appData.value = value
-            return
-        }
+    const response = await fetch(url, { method: 'GET' })
+    if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
 
-        appData.value = await createData()
-
-        // console.log(result, 'result')
-
-
-
-        console.log('Данные с бэка в сторе')
+    const contentType = response.headers.get('content-type')
+    if (contentType?.includes('application/json')) {
+      const data = await response.json()
+      console.log('Полученные JSON данные:', data.DATA)
+      return data.DATA
+    } else {
+      const text = await response.text()
+      console.log('Полученные текстовые данные:', text)
+      return null
     }
+  }
 
-    const createData = async (): Promise<any> => {
-        return new Promise((resolve, reject) => {
-            const openRequest = indexedDB.open("storage", 1);
+  /** Инициализация IndexedDB */
+  const initIndexedDB = (): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const openRequest = indexedDB.open('storage', 1)
 
-            openRequest.onsuccess = () => {
-                indexedDataBase.value = openRequest.result;
+      openRequest.onupgradeneeded = () => {
+        const db = openRequest.result
+        db.createObjectStore('data', { keyPath: 'name' })
+      }
 
-                const transaction = indexedDataBase.value.transaction("data", "readwrite");
-                const data = transaction.objectStore("data");
-                const req = data.getAll();
+      openRequest.onsuccess = () => {
+        resolve(openRequest.result)
+      }
 
-                req.onsuccess = () => {
-                    if (req.result.length) {
-                        resolve(req.result[0]);
-                    } else {
-                        resolve(null);
-                    }
-                };
-
-                req.onerror = (event) => {
-                    reject(req.error);
-                };
-            };
-
-            openRequest.onerror = () => {
-                reject(openRequest.error);
-            };
-        });
-    };
-
-    const getAppData = computed(() => {
-        return appData.value
+      openRequest.onerror = () => {
+        reject(openRequest.error)
+      }
     })
+  }
 
+  /** Получить данные из IndexedDB */
+  const getFromIndexedDB = (db: IDBDatabase): Promise<any | null> => {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('data', 'readonly')
+      const store = transaction.objectStore('data')
+      const req = store.getAll()
 
-    return {
-        getAppData,
-        setAppData
-    };
+      req.onsuccess = () => {
+        if (req.result.length) {
+          resolve(req.result[0])
+        } else {
+          resolve(null)
+        }
+      }
 
+      req.onerror = () => reject(req.error)
+    })
+  }
+
+  /** Сохранить данные в IndexedDB */
+  const saveToIndexedDB = (db: IDBDatabase, value: any) => {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('data', 'readwrite')
+      const store = transaction.objectStore('data')
+      const request = store.add({ ...{ name: 'db' }, ...value })
+
+      request.onsuccess = () => resolve(true)
+      request.onerror = () => reject(request.error)
+    })
+  }
+
+  /** Установить данные в стор */
+  const setAppData = (value: any) => {
+    appData.value = value
+  }
+
+  /** Инициализация данных (IndexedDB -> API -> IndexedDB) */
+  const initAppData = async () => {
+    try {
+      indexedDataBase.value = await initIndexedDB()
+      let localData = await getFromIndexedDB(indexedDataBase.value)
+
+      if (localData) {
+        console.log('Загружено из IndexedDB', localData)
+        setAppData(localData)
+        return
+      }
+
+      const remoteData = await fetchRemoteData()
+      if (remoteData) {
+        setAppData(remoteData)
+        await saveToIndexedDB(indexedDataBase.value, remoteData)
+      }
+    } catch (err) {
+      console.error('Ошибка инициализации данных:', err)
+    }
+  }
+
+  const getAppData = computed(() => appData.value)
+
+  return {
+    getAppData,
+    setAppData,
+    initAppData,
+  }
 })

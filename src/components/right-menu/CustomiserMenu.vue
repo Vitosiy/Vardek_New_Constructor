@@ -37,7 +37,8 @@ const checkSelect = (el) => {
     return;
   }
   currentModel.value = el.object.userData;
-  modelState.setCurrentModel(el)
+  console.log(el, 'ON SELECT')
+  modelState.setCurrentModel(el.object.userData)
   // customiserStore.switchCustomiser('ruler')
   // console.log(currentModel.value, "o");
 };

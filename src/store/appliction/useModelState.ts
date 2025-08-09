@@ -121,6 +121,8 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createCurrentModelFasadesData = (value: number[]) => {
 
+        console.log()
+
         const groupedFasades: { [key: string]: number[] } = {};
 
         value.forEach(facadeId => {

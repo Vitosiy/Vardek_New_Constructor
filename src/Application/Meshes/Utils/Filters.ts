@@ -84,7 +84,7 @@ export class Filters extends GlobalsData {
 
             const fasad = typeof FASADE_PROPS[fasadeNumber] === 'object' && FASADE_PROPS[fasadeNumber].TYPE ?
                 FASADE_PROPS[fasadeNumber].TYPE :
-                this.project.default_fasade_up
+                this.project.default_fasade_color
 
             // console.log(params.FASADE_PROPS.length < fasadePositionList.length ? this.project.default_fasade_up : null, 'hhhhhh')
 
@@ -104,7 +104,7 @@ export class Filters extends GlobalsData {
             } = {
                 /** --- FASADE_PROPS ---*/
                 // COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
-                COLOR: this.project.default_fasade_up,
+                COLOR: this.project.default_fasade_color,
                 SHOW: false,
                 POSITION: fasadePosition.ID,
                 BODY: fasad,

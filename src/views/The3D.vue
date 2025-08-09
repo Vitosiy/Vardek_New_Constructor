@@ -83,7 +83,7 @@ const isModalOpen = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
   appData.value = useAppData().getAppData;
 
   models.value = useAppData().getAppData.CATALOG.PRODUCTS;
@@ -102,6 +102,9 @@ onMounted(() => {
     eventBus.on("A:ContantLoaded", checkContantLoad);
 
     VerdekConstructor.value = new Application(sceneContainer.value);
+
+    await nextTick();
+    VerdekConstructor.value.refreshViewer();
   }
 });
 
@@ -196,7 +199,7 @@ const selected = async (item: any) => {
 
   console.log(CutData.value, "CutData.value");
 
-  modelState.setCurrentModel(userData);
+  // modelState.setCurrentModel(userData);
 
   /**  Координаты мыши */
   await nextTick(() => {
@@ -351,11 +354,6 @@ defineExpose({
 <template>
   <div ref="sceneContainer" class="scene-container"></div>
   <div ref="preloader" class="preloader" v-if="!activePreloader"></div>
-
-  <!-- <div class="inputs">
-    <customInput v-model="clampHeight" :min="758" :max="2000" :step="10" />
-    <button class="btn" @click="changeHeightClamp">Поменять</button>
-  </div> -->
 
   <div
     class="uniform__container"

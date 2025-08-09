@@ -15,6 +15,7 @@ import {
   TTextureActionMap,
   TTextureItem,
   TFasadeItem,
+  MenuType,
 } from "@/types/types";
 import { IWallSizes } from "@/types/interfases";
 
@@ -86,7 +87,7 @@ const prepareOptions = () => {
   menuStore.updateOption("floor", floor as number);
 };
 
-const closeMenu = (menuType) => {
+const closeMenu = (menuType: MenuType) => {
   menuStore.closeMenu(menuType);
 };
 
@@ -99,8 +100,6 @@ const loadRoom = (id: number) => {
   eventBus.emit("A:Load", id);
   eventBus.emit("A:ContantLoaded", false);
   closeMenu("roomPar");
-
-  console.log(globalOptions.value);
 };
 
 const deliteRoom = (value: number) => {
@@ -148,6 +147,9 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
       break;
     case "moduleBottom":
       optionsData.value = Object.values(roomState.getDefaultModuleData());
+      break;
+    case "fasadsTop":
+      optionsData.value = Object.values(roomState.getDefaultFasadeData());
       break;
   }
 

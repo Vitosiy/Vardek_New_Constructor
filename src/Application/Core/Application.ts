@@ -179,6 +179,11 @@ export class Application {
         this.renderer!.resize()
     }
 
+    refreshViewer() {
+        this.resize()
+        this.sizes?.getNewSize()
+    }
+
     update() {
         this.camera!.update()
         this.renderer!.update()

@@ -47,6 +47,8 @@ const currentModel = ref(null);
 // };
 const prepareData = () => {
   currentModel.value = modelState.getCurrentModel;
+  console.log(currentModel.value, 'currentModel.value')
+
   sizeEditData.value = {
     widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
     widthMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
@@ -76,7 +78,7 @@ watch(
     console.log('ASHHHH')
     prepareData();
   },
-  { flush: "post", immediate: true }
+  // { flush: "post", immediate: true }
 );
 </script>
 

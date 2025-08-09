@@ -29,7 +29,9 @@ export const useMenuStore = defineStore('menu', () => {
     default_wall: defaultWall,
     default_floor: defaultFloor,
     default_module_color: defaultModuleTop,
-    default_module_color: defaultModuleBottom
+    default_module_color: defaultModuleBottom,
+    default_fasade_color: defaultFasadeTop,
+    default_fasade_color: defaultFasadeBottom
   } = sceneState.getStartProgectParams;
 
   const globalOptions = ref<TOptionsMap>({
@@ -37,8 +39,8 @@ export const useMenuStore = defineStore('menu', () => {
     floor: { id: defaultFloor, global: false, title: "Оформление пола", label: 'Для всех комнат' },
     moduleTop: { id: defaultModuleTop, global: false, title: "Цвет корпуса (верхний)", label: 'Для всех комнат' },
     moduleBottom: { id: defaultModuleBottom, global: false, title: "Цвет корпуса (нижний)", label: 'Для всех комнат' },
-    // fasadsTop: { id: 7397, global: false, title: "Тип фасада (верхний)", label: 'Для всех комнат' },
-    // fasadsBottom: { id: 7397, global: false, title: "Тип фасада (нижний)", label: 'Для всех комнат' },
+    fasadsTop: { id: defaultFasadeTop, global: false, title: "Тип фасада (верхний)", label: 'Для всех комнат' },
+    fasadsBottom: { id: defaultFasadeBottom, global: false, title: "Тип фасада (нижний)", label: 'Для всех комнат' },
   });
 
   function openMenu(type: MenuType, content: string, products: []) {
@@ -84,7 +86,7 @@ export const useMenuStore = defineStore('menu', () => {
         break
 
       case "moduleTop": if (globalOptions.value[type].global) {
-        console.log(value, 'in MENUSTORE')
+        // console.log(value, 'in MENUSTORE')
         // roomState.apllyProjectFloor(value)
       }
         break
