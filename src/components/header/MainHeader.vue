@@ -8,9 +8,12 @@ import {
   ref,
   computed,
 } from "vue";
+import { useRoute } from "vue-router";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useSceneState } from "@/store/appliction/useSceneState";
-import { useRoute } from "vue-router";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { TApplication } from "@/types/types";
+
 import {
   postRequest,
   _POST_URL,
@@ -43,14 +46,15 @@ const props = defineProps(["pageComponent"]);
 const route = useRoute();
 
 const historyActions = ref<boolean>(false);
-const verdekConstructor = ref(null);
+const verdekConstructor = ref<TApplication | null>(null);
 const inputDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 const restorLength = ref<number>(0);
 const curActionCount = ref<number>(0);
-const contentLoaded = ref<boolean>(false);
+const contentLoaded = ref<boolean>(true);
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
+const menuStore = useMenuStore();
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -117,9 +121,11 @@ const updateProject = async () => {
 const createNewRoom = (value: string) => {
   if (!verdekConstructor.value) return;
   props.pageComponent.selected();
+  menuStore.resetGlobalOptions();
   eventBus.emit("A:Create", value);
   restorLength.value = 0;
   curActionCount.value = 0;
+  menuStore.closeAllMenus();
 };
 
 const checkContantLoad = (state: boolean) => {
@@ -139,6 +145,7 @@ const lessThenActions = computed(() => {
 const prevAction = () => {
   if (historyActions.value) {
     /** Активируем preloader */
+    contentLoaded.value = false;
     props.pageComponent.activePreloader = false;
     eventBus.emit("A:PrevAction");
     curActionCount.value = verdekConstructor.value!.userHistory._currentIndex;
@@ -149,6 +156,7 @@ const prevAction = () => {
 const nextAction = () => {
   if (historyActions.value) {
     /** Активируем preloader */
+    contentLoaded.value = false;
     props.pageComponent.activePreloader = false;
     eventBus.emit("A:NextAction");
     curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
@@ -181,15 +189,41 @@ const addEvents3D = () => {
   eventBus.on("A:ContantLoaded", checkContantLoad);
 };
 
+const getHistoruBtnsState = computed(() => {
+  return {
+    disabled: !contentLoaded.value,
+  };
+});
+
+/** @Проверка загрузки Application доп функция */
+// const waitForConstructor = async (timeout = 2000, interval = 50) => {
+//   const start = Date.now();
+
+//   return new Promise<TApplication | null>((resolve) => {
+//     const check = () => {
+//       if (props.pageComponent?.VerdekConstructor) {
+//         resolve(props.pageComponent.VerdekConstructor);
+//         return;
+//       }
+//       if (Date.now() - start >= timeout) {
+//         resolve(null); // не дождались
+//         return;
+//       }
+//       setTimeout(check, interval);
+//     };
+//     check();
+//   });
+// };
+
 watch(
   () => route.path,
   async (newPath, oldPath) => {
-    
     await nextTick();
+    // const constructor = await waitForConstructor();
     const constructor = props.pageComponent.VerdekConstructor;
 
     if (constructor) {
-      verdekConstructor.value = constructor;
+      verdekConstructor.value = constructor as TApplication;
       historyActions.value = true;
       addEvents3D();
       return;
@@ -198,9 +232,9 @@ watch(
     restorLength.value = 0;
     curActionCount.value = 0;
   },
+  // { immediate: true }
   { flush: "post", immediate: true }
 );
-
 
 onBeforeUnmount(() => {
   restorLength.value = 0;
@@ -216,8 +250,11 @@ onBeforeUnmount(() => {
           <img class="header-link__logo" src="@/assets/img/logo.png" />
         </router-link>
         <div class="header-main-ui">
-          <div class="header-ui-group" v-if="historyActions">
-            {{ restorLength }}{{ curActionCount }}
+          <div
+            :class="['history', 'history__btns', getHistoruBtnsState]"
+            v-if="historyActions"
+          >
+            <!-- {{ restorLength }}{{ curActionCount }} -->
             <LeftLightHeaderButton
               @click="prevAction"
               :class="{ disabled: lessThenActions }"
@@ -370,6 +407,20 @@ onBeforeUnmount(() => {
   &__logo {
     width: 154px;
     height: 61px;
+  }
+}
+.history {
+  position: relative;
+  &__btns {
+    display: flex;
+    gap: 10px;
+
+    &.disabled {
+      pointer-events: none;
+
+      .light-radial__button {
+      }
+    }
   }
 }
 </style>

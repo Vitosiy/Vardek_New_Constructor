@@ -19,7 +19,7 @@ import { ref, watch, onMounted, nextTick } from "vue";
 // === Props ===
 const props = withDefaults(
   defineProps<{
-    modelValue: number; // Значение слайдера
+    modelValue: number | string; // Значение слайдера
     min?: number; // Минимальное значение
     max?: number; // Максимальное значение
     step?: number; // Шаг

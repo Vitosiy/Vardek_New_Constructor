@@ -3,26 +3,49 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import * as THREEInterfases from "../../types/interfases"
-import { TLightRange } from '@/types/types';
+import { TLightRange, TQuality, TOptionsMap } from '@/types/types';
+import { IWallSizes, ICameraData, ILightsObjects, IProjectParams } from '@/types/interfases';
 
 import { START_PROJECT_PARAMS } from '@/Application/F-startData';
 
 export const useSceneState = defineStore('SceneState', () => {
 
-    const startProjectParams = ref(START_PROJECT_PARAMS)
+    const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
 
-    const startRoomData = ref<THREEInterfases.IWallSizes>(START_PROJECT_PARAMS.rooms[0] as THREEInterfases.IWallSizes);
+    const startProjectParams = ref(JSON.parse(JSON.stringify(START_PROJECT_PARAMS)))
 
-    const startCameraData = ref<THREEInterfases.ICameraData>(START_PROJECT_PARAMS.camera as THREEInterfases.ICameraData);
+    const startRoomData = ref<IWallSizes>(startParamsClone.rooms[0].params);
 
-    const startLightsDat = ref<THREEInterfases.ILightsObjects>(START_PROJECT_PARAMS.lights);
+    const startCameraData = ref<ICameraData>(startParamsClone.camera);
 
-    const startHeightClamp = ref<number>(START_PROJECT_PARAMS.height_clamp)
+    const startLightsDat = ref<ILightsObjects>(startParamsClone.lights);
 
-    const currentProjectParams = ref(START_PROJECT_PARAMS) as THREEInterfases.IProjectParams
+    const startHeightClamp = ref<number>(startParamsClone.height_clamp)
+
+    const currentProjectParams = ref<IProjectParams>(startParamsClone)
+
+    const keys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
+        moduleTop: 'default_module_color_up',
+        moduleBottom: 'default_module_color_down'
+    };
 
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
+
+    const quality = ref<TQuality[]>([{
+        lable: "Низкое",
+        value: "low",
+    },
+    {
+        lable: "Среднее",
+        value: "medium",
+    },
+    {
+        lable: "Высокое",
+        value: "hight",
+    }
+
+    ],)
 
     const lightRange = ref<TLightRange>({
         pointLight: 1,
@@ -43,7 +66,7 @@ export const useSceneState = defineStore('SceneState', () => {
         default_floor,
         default_wall
 
-    }: THREEInterfases.IProjectParams) => {
+    }: IProjectParams) => {
         currentProjectParams.value = {
             rooms: rooms ?? currentProjectParams.value.rooms,
             camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
@@ -57,7 +80,7 @@ export const useSceneState = defineStore('SceneState', () => {
             default_fasade_down: default_fasade_down ?? startProjectParams.value.default_fasade_down,
             default_floor: default_floor ?? startProjectParams.value.default_floor,
             default_wall: default_wall ?? startProjectParams.value.default_wall
-        };
+        } as IProjectParams;
 
         console.log(currentProjectParams.value, 'VALU')
     };
@@ -70,10 +93,22 @@ export const useSceneState = defineStore('SceneState', () => {
         refractionValue.value = value
     }
 
-    const setLightRange = (type: keyof TLightRange, value:number | string) => {
+    const setLightRange = (type: keyof TLightRange, value: number | string) => {
         lightRange.value[type] = value
-
     }
+
+    const updateStartRoomData = (type: keyof IWallSizes & ("floor" | "wall"), value: string | number) => {
+        startRoomData.value[type] = value
+    }
+
+    const updateDefaultData = <T extends keyof typeof keys>(type: T, value: string | number | null
+    ) => {
+        const curOption = keys[type];
+        if (curOption) {
+            startProjectParams.value[curOption] = value;
+            currentProjectParams.value[curOption] = value;
+        }
+    };
 
     const getStartProgectParams = computed(() => {
         return startProjectParams.value
@@ -107,9 +142,15 @@ export const useSceneState = defineStore('SceneState', () => {
         return refractionValue.value
     })
 
-    const getLightRange=computed(()=>{
+    const getLightRange = computed(() => {
         return lightRange.value
     })
+
+    const getQuality = computed(() => {
+        return quality.value
+    })
+
+
 
     return {
         getStartProgectParams,
@@ -121,8 +162,11 @@ export const useSceneState = defineStore('SceneState', () => {
         getRefractionValue,
         getShadowValue,
         getLightRange,
+        getQuality,
 
         updateProjectParams,
+        updateStartRoomData,
+        updateDefaultData,
         setRefractionValue,
         setShadowValue,
         setLightRange

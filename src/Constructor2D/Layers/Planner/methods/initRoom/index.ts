@@ -29,7 +29,7 @@ export function initRoom(this: any): (0 | 1) {
 
   const room = JSON.parse(JSON.stringify(roomsStore.getRoomById(activeRoomID)));
 
-  const dataRoomWalls = room.size.walls;
+  const dataRoomWalls = room.params.walls;
   const dataDividingWall = room.content.filter((item: any) => item.id === 166755);
 
   /* HELPER for Walls
@@ -85,8 +85,8 @@ export function initRoom(this: any): (0 | 1) {
     const wallData: ObjectWall = {
       id: roomWallData.uuid,
       name: "dividing_wall",
-      width: roomWallData.size.width / 10,
-      height: roomWallData.size.depth / 10,
+      width: roomWallData.params.width / 10,
+      height: roomWallData.params.depth / 10,
       heightDirection: this.config.wall.heightDirection,
       angleDegrees: MathUtils.radToDeg(roomWallData.rotation._y),
       updateTime: Date.now(),

@@ -237,7 +237,7 @@ export class MoveManager {
 
             // Если это GLTF-модель, выбираем её как цель
             const check = this.getRootObject(firstObject);
-            console.log(check,'check')
+
             if (check.userData.elementType === "element_room") return
             this.selectedObject = check
 

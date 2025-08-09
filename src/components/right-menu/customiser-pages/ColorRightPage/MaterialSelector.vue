@@ -3,12 +3,12 @@ import { ref, computed, onBeforeMount } from "vue";
 import { _URL } from "@/types/constants";
 
 const props = defineProps<{
-  materials: Array<any> | Object;
+  materials: Array<any> ;
   modelValue?: any;
 }>();
 
 onBeforeMount(() => {
-  console.log(props.materials);
+
 });
 
 const emit = defineEmits<{

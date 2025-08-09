@@ -23,36 +23,54 @@ declare global {
 
 export interface IProjectParams {
     rooms?: IRoom[],
-    camera?: ICameraData,
-    orto_camera?: IOrtoCameraData,
-    lights?: ILightsObjects,
-    height_clamp?: number,
-    table?: { [key: string]: any },
-    table_params?: { [key: string]: any },
-    table_color?: number | null,
-    table_top_type_auto?: boolean
-    default_fasade_up?: number | string,
-    default_fasade_down?: number | string,
-    default_floor?: number | string,
-    default_wall?: number | string,
+    camera: ICameraData,
+    lights: ILightsObjects,
+    height_clamp: number,
+    table: { [key: string]: any },
+    table_params: { [key: string]: any },
+    table_color: number | null,
+    table_top_type_auto: boolean,
+    module_color: number | string,
+    default_fasade_up: number | string,
+    default_fasade_down: number | string,
+    default_floor: number | string,
+    default_wall: number | string,
+    default_module_color_down: number | string | null,
+    default_module_color_up: number | string | null,
 }
 
-
 export interface IContentItem {
-    type?: THREETypes.TContentType;
-    position?: [number, number, number];
-    rotation?: number[];
-    sizes?: { [key: string]: number }
+    id?: number;
+    uuid?: string;
+    position?: IVector3;
+    rotation?: IRotationEuler;
+    size?: {
+        width: number;
+        height: number;
+        depth: number;
+    };
 }
 
 export interface IRoom {
-    id: number;
+    id?: number;
     label?: string;
     description?: string;
-    size: IWallSizes;
-    content?: IContentItem[];
+    params?: IWallSizes;
+    content?: IContentItem[] | any[];
 }
 
+export interface IWallSizes {
+
+    walls: IWallData[]
+    floor: string | number
+    wall: string | number
+}
+
+interface IVector3 {
+    x: number;
+    y: number;
+    z: number;
+}
 
 interface IGeometryOpt {
     x: number | string,
@@ -78,7 +96,7 @@ export interface IRotationEuler {
     _x: number,
     _y: number,
     _z: number,
-    _order: 'XYZ'
+    _order: 'XYZ' | string
 }
 
 export interface IRotation {
@@ -94,26 +112,21 @@ export interface IPosition {
 }
 
 export interface IWallData {
-    width: number,
-    height: number,
-    position: IPosition,
+    width: number;
+    height: number;
+    depth?: number;
+    position: IVector3,
     rotation: IRotationEuler,
     side: number
 }
 
-export interface IWallSizes {
-    // width?: number,
-    // height?: number,
-    // depth?: number,
-    // thickness?: number,
-    // numberOfWalls?: number,
-    walls: IWallData[]
-    floor?: THREE.Texture | number | string
-    wall?: THREE.Texture | number | string
-}
+
+
+
+/**---------------------------------------------- */
 
 export interface ICameraData {
-    position: [number, number, number],
+    position: number[],
     target: { x: number, y: number, z: number },
     fov: number,
     near: number,
@@ -238,6 +251,7 @@ export interface IClampPosition {
     rotation: THREE.Vector3 | THREE.Euler | null,
     quaternion: THREE.Quaternion
 }
+
 
 
 /** ----------------------------------------------------------------------------------------- */

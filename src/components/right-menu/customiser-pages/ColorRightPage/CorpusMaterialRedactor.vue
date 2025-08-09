@@ -20,7 +20,7 @@ const currentMillingData = ref(null);
 
 onBeforeMount(() => {
   materialList.value =
-    modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
+    modelState.getCurrentModuleData
   selectedSurfaceID.value =
     modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 });
@@ -57,7 +57,7 @@ watch(
   () => modelState.getCurrentModel,
   () => {
     materialList.value =
-      modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
+      modelState.getCurrentModuleData;
     selectedSurfaceID.value =
       modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
     const current = materialList.value!.find((m) => m.ID === selectedSurfaceID.value);

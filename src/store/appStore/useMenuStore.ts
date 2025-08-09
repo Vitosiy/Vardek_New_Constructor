@@ -1,10 +1,11 @@
 // src/stores/useMenuStore.ts
+/**//@ts-nocheck */
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { MenuType, TOptionsMap } from '@/types/types';
-
-
-
+import { useRoomState } from "@/store/appliction/useRoomState";
+import { useSceneState } from '@/store/appliction/useSceneState';
 
 
 export const useMenuStore = defineStore('menu', () => {
@@ -12,12 +13,30 @@ export const useMenuStore = defineStore('menu', () => {
   const catalogFilterProductsId = ref([])
   const openMenus = ref<MenuType[]>([]);
   const menuContentsByID = ref<string>('');
+  const roomState = useRoomState();
+  const sceneState = useSceneState();
+
+  const defaultIds: Record<keyof TOptionsMap, string> = {
+    moduleTop: 'default_module_color',
+    moduleBottom: 'default_module_color',
+    fasadsTop: 'default_fasade_color',
+    fasadsBottom: 'default_fasade_color',
+    wall: 'default_wall',
+    floor: 'default_floor'
+  }
+
+  const {
+    default_wall: defaultWall,
+    default_floor: defaultFloor,
+    default_module_color: defaultModuleTop,
+    default_module_color: defaultModuleBottom
+  } = sceneState.getStartProgectParams;
 
   const globalOptions = ref<TOptionsMap>({
-    wall: { id: 44128, global: false, title: "Оформление стен", label: 'Для всех комнат' },
-    floor: { id: 44013, global: false, title: "Оформление пола", label: 'Для всех комнат' },
-    // bodyTop: { id: 7397, global: false, title: "Цвет корпуса (верхний)", label: 'Для всех комнат' },
-    // bodyBottom: { id: 7397, global: false, title: "Цвет корпуса (нижний)", label: 'Для всех комнат' },
+    wall: { id: defaultWall, global: false, title: "Оформление стен", label: 'Для всех комнат' },
+    floor: { id: defaultFloor, global: false, title: "Оформление пола", label: 'Для всех комнат' },
+    moduleTop: { id: defaultModuleTop, global: false, title: "Цвет корпуса (верхний)", label: 'Для всех комнат' },
+    moduleBottom: { id: defaultModuleBottom, global: false, title: "Цвет корпуса (нижний)", label: 'Для всех комнат' },
     // fasadsTop: { id: 7397, global: false, title: "Тип фасада (верхний)", label: 'Для всех комнат' },
     // fasadsBottom: { id: 7397, global: false, title: "Тип фасада (нижний)", label: 'Для всех комнат' },
   });
@@ -47,12 +66,47 @@ export const useMenuStore = defineStore('menu', () => {
     menuContentsByID.value = '';
   }
 
-  const updateOption = (type: string, value: string | number) => {
-    console.log(type, 'TT')
+  const updateOption = (type: keyof TOptionsMap, value: string | number | { data: string | number, type: string }) => {
 
-    globalOptions.value[type].id = value
+    globalOptions.value[type].id = typeof value === 'object' && 'data' in value ? value.data : value;
 
+    switch (type) {
+      case "wall":
+        if (globalOptions.value[type].global) {
+          roomState.apllyProjectWall(value)
+        }
+        break
 
+      case "floor":
+        if (globalOptions.value[type].global) {
+          roomState.apllyProjectFloor(value)
+        }
+        break
+
+      case "moduleTop": if (globalOptions.value[type].global) {
+        console.log(value, 'in MENUSTORE')
+        // roomState.apllyProjectFloor(value)
+      }
+        break
+    }
+
+  }
+
+  const resetGlobalOptions = () => {
+    const startParams = sceneState.getStartProgectParams
+    for (const key in globalOptions.value) {
+      const optionKey = key as keyof TOptionsMap
+      if (globalOptions.value[optionKey].global === false) {
+        globalOptions.value[optionKey].id = startParams[defaultIds[optionKey]]
+      }
+    }
+
+    console.log(globalOptions.value, ' globalOptions.value')
+  }
+
+  const updateOptionGlobal = (type: keyof TOptionsMap, value: boolean) => {
+
+    globalOptions.value[type].global = value
 
   }
 
@@ -71,5 +125,7 @@ export const useMenuStore = defineStore('menu', () => {
 
     getGlobalOptions,
     updateOption,
+    updateOptionGlobal,
+    resetGlobalOptions
   };
 });

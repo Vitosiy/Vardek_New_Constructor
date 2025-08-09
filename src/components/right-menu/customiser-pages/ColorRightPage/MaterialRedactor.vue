@@ -213,6 +213,7 @@ const prepareData = () => {
   const dataOfFasadeType = _FASADE[COLOR];
 
   modelState.createCurrentPaletteData(COLOR);
+  
   modelState.createCurrentMillingData({
     fasadeId: COLOR,
     productId: productId.value,

@@ -260,13 +260,7 @@ export class Application {
             }
         })
 
-        // this.eventsBus.on('A:CameraToggle', (value: boolean) => {
-        //     this.draft = value
-        //     this.udateCamera(value)
-        //     this.world!.room.createShape.hideDraft()
-        // })
 
-        // this.meshEvents = new MeshEvents(this)
     }
 
 }

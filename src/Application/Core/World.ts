@@ -74,8 +74,13 @@ export class World {
 
         this.scene.add(new THREE.AxesHelper(2000))
         this.room!.loadRoom(this.lights, roomId)
-        await this.room!.update()
-        // this.room!.updateWallMaterial(this.room!.wallTexture)
+        await this.room!.update();
+        if (this.roomsStore.getCurrentRoomData(roomId)?.params.wall) {
+            const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.params.wall
+            this.room!.updateWallMaterial(wallTextureId)
+        }
+        // const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.size.wall
+        // this.room!.updateWallMaterial(wallTextureId)
     }
 
     async createRoom(name: string) {
@@ -107,7 +112,7 @@ export class World {
             this.roomsStore.addRoom({
                 id: roomId, // Присваиваем id 
                 label: name ?? `Комната N:${this.roomsStore.rooms.length + 1}`,
-                size: this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes,
+                params: this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes,
                 content: contant
             })
 
@@ -149,6 +154,7 @@ export class World {
 
         const toAction: string[] = this.room?.save()
         this.root.userHistory.clearHistory(toAction as string[])
+
     }
 
     vueEvents() {

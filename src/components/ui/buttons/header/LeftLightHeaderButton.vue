@@ -22,6 +22,12 @@
       fill: #131313;
     }
 
+    @media (hover: hover) {
+      &:hover {
+        border-color: $strong-grey;
+      }
+    }
+
     &.disabled {
       pointer-events: none;
       border-color: #a3a9b5 !important;

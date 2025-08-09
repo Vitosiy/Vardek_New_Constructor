@@ -15,7 +15,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			id: "room_001", //MathUtils.generateUUID(), /** ID комнаты */
 			label: "Новая комната", /** Лейбл */
 			description: "Новая комната", /** Описание */
-			size: reactive({
+			params: reactive({
 				/** Данные для форпмирования стен комнат */
 				// walls: [
 				//     {
@@ -268,7 +268,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		} else {
 
-			const indexWall = room.size.walls.findIndex((item: any) => item.id === data.wall.id);
+			const indexWall = room.params.walls.findIndex((item: any) => item.id === data.wall.id);
 
 			// // центр стены
 			// const centerWall = data.wall.points.reduce((acc: any, point: any) => {
@@ -305,20 +305,20 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			}
 			if (indexWall == -1) {
 				if (data.wall.mergeWalls.wallPoint0) {
-					const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint0);
+					const indexMergeWall = room.params.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint0);
 					if (indexMergeWall != -1) {
-						room.size.walls.splice(indexMergeWall, 0, wData);
+						room.params.walls.splice(indexMergeWall, 0, wData);
 					}
 				} else if (data.wall.mergeWalls.wallPoint1) {
-					const indexMergeWall = room.size.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint1);
+					const indexMergeWall = room.params.walls.findIndex((el: any) => el.id === data.wall.mergeWalls.wallPoint1);
 					if (indexMergeWall != -1) {
-						room.size.walls.splice(indexMergeWall + 1, 0, wData);
+						room.params.walls.splice(indexMergeWall + 1, 0, wData);
 					}
 				} else {
-					room.size.walls.push(wData);
+					room.params.walls.push(wData);
 				}
 			} else {
-				room.size.walls[indexWall] = wData;
+				room.params.walls[indexWall] = wData;
 			}
 
 		}
@@ -335,10 +335,10 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		if (!room) return;
 
-		const indexWall = room.size.walls.findIndex((item: any) => item.id === data.idWall);
+		const indexWall = room.params.walls.findIndex((item: any) => item.id === data.idWall);
 
 		if (indexWall >= 0) {
-			room.size.walls.splice(indexWall, 1);
+			room.params.walls.splice(indexWall, 1);
 		}else if(indexWall == -1){
 			const indexWall = room.content.findIndex((item: any) => item.uuid === data.idWall);
 			if (indexWall >= 0) {
@@ -355,10 +355,10 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		const roomData = JSON.parse(JSON.stringify(data));
 
-		if (!roomData.size || !roomData.size.walls) return roomData;
+		if (!roomData.params || !roomData.params.walls) return roomData;
 
 		// Работаем с копией стен
-		const walls = roomData.size.walls;
+		const walls = roomData.params.walls;
 
 		// определить центр масс всех стен
 		const center = walls.reduce((acc: any, wall: any) => {
@@ -379,7 +379,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			wall.position.z -= center.z;
 		});
 
-		roomData.size.walls = walls;
+		roomData.params.walls = walls;
 
 		console.log(roomData.content);
 
@@ -391,7 +391,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	})
 
 	const getWalls = computed(() => {
-		return SchemeTransitionData.value[0].size.walls
+		return SchemeTransitionData.value[0].params.walls
 	});
 
 	const getRoomById = computed(() => {

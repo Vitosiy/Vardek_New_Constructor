@@ -97,6 +97,7 @@ export class TrafficManager {
             if (object.userData.elementType !== 'raspil') {
                 let product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
+                this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
 
             // this.modelState.setCurrentModel(object)

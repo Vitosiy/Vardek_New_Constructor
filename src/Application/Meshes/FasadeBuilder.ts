@@ -221,50 +221,16 @@ export class FasadeBuilder {
         }
 
 
-
-        // console.log(geometry_config, "geometry_config")
-
         if (fasadeModel) {
 
             console.log(fasadeModel, 'fasadeModel')
 
-
             let buildFasad = this.parent.json_builder.createMesh({ data: fasadeModel, parent_size: geometry_config })
-
-            // console.log(buildFasad, 'M1')
-            // buildFasad.traverse(children => {
-            //     if (children instanceof THREE.Mesh) {
-            //         children.material = material
-            //     }
-            // })
-
-            // const _rotation = buildFasad.children[0].userData.rotation
-            // const _position = buildFasad.children[0].userData.position
-            // buildFasad.children[0].position.set(0, 0, 0)
-            // buildFasad.children[0].rotation.set(0, 0, 0)
-
-            // buildFasad.children[0].matrixAutoUpdate = false;
-            // buildFasad.children[0].updateMatrix()
-
-            // console.log(buildFasad.children[0].userData)
-
-            // buildFasad.children[0].position.set(_position.x, _position.y, _position.z)
-            // buildFasad.children[0].rotateX(_rotation.x)
-            // buildFasad.children[0].rotateY(_rotation.y)
-            // buildFasad.children[0].rotateZ(_rotation.z)
-
-            // buildFasad.children[0].updateMatrix()
-
-            // buildFasad.children[0].applyMatrix4(buildFasad.matrixWorld)
-            // console.log(buildFasad.children[0], 'M2')
 
             return buildFasad
         }
 
-
         if (fasadeData.TYPE == "no_fasade") {
-            console.log('FF')
-
 
             fasade = new THREE.Mesh(geometry, material)
             fasade.geometry.computeBoundingBox()

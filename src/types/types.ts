@@ -93,7 +93,7 @@ export type TQuality = {
 }
 
 type TOptionItem = {
-  id: number;
+  id: number | string;
   global: boolean;
   title: string;
   label: string;
@@ -107,11 +107,101 @@ export type TLightRange = {
 export type TOptionsMap = {
   wall: TOptionItem;
   floor: TOptionItem;
-  bodyTop: TOptionItem;
-  bodyBottom: TOptionItem;
+  moduleTop: TOptionItem;
+  moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
 };
+
+export type TTextureActionMap = {
+  wall: 'A:ChangeWallTexture';
+  floor: 'A:ChangeFloorTexture';
+  moduleTop: 'A:ChangeModuleTotalTexture';
+  moduleBottom: 'A:ChangeModuleTotalTexture';
+  fasadsTop: 'A:ChangeFasadsTopTexture';
+  fasadsBottom: 'A:ChangeFasadsBottomTexture';
+};
+
+export type TTextureItem = {
+  ID: number;
+  NAME: string;
+  PREVIEW_PICTURE: string;
+  DETAIL_PICTURE: string;
+  texture: string;
+  scale: number;
+  sort: number;
+};
+
+export type TFasadeItem = {
+  ID: number;
+  NAME: string;
+  IBLOCK_SECTION_ID: string;
+  DETAIL_PICTURE: string;
+  SORT: number;
+  TEST: number;
+  EN_NAME: string | null;
+  ADMIN_COMMENT: string | null;
+  ARTICLE: string | null;
+  date_shipment: string | null;
+  delay_date: number;
+  date_build: number;
+  DEPTH: number;
+  CNAME: string | null;
+  TEXTURE_DIRECTION: string | null;
+  NOT_IN_KONSTRUKTOR: string;
+  TEXTURE: string;
+  SHININESS: number;
+  SCALE: number;
+  COLOR: boolean;
+  TYPE: string;
+  EDGE_COLOR: boolean;
+  MODEL: string | null;
+  EDGE_TEXTURE: string | null;
+  SIBLINGS_COLOR: string | null;
+  ATTACH_MILLINGS: (number | null)[];
+  ALT_MILLINGS: (number | null)[];
+  ATTACH_GLASS: number[];
+  no_fasade: string;
+  FACADEALIGNSELECT: number;
+  HANDLECOLOR: (number | null)[];
+  PATINA: (number | null)[];
+  PALETTE: (number | null)[];
+  type_showcase: (number | null)[];
+  ELEMENT_TYPE: string | null;
+  fasade_type: (number | null)[];
+  REACH: string | null;
+  GLASS_ONLY: number;
+  options: number[];
+  back_color: string | null;
+  MATERIAL: string;
+  BUMP: number;
+  INCITY: (number | null)[];
+  CITY: (number | null)[];
+  MIN_WIDTH: (number | null)[];
+  MIN_HEIGHT: (number | null)[];
+  DENSITY: string;
+  DISCOUNT_25: string | null;
+  MAX_WIDTH: number;
+  MAX_HEIGHT: number;
+  PREVIEW_PICTURE: string;
+  TEXTURE_HEIGHT: number;
+  TEXTURE_WIDTH: number;
+  UNSETINPRODUCT: Record<string, number[]>;
+};
+
+export type TUniformGroups = {
+  id: number;
+  parts: THREE.Object3D[][];
+  fasadeId: number;
+  groupSize: {
+    maxWidth: number;
+    maxHeight: number;
+    currentWidth: number;
+    currentHeight: number;
+  };
+  color: string; // можно уточнить как CSSColor если хочешь
+};
+
 
 
 /** Заглушка */

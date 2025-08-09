@@ -22,8 +22,12 @@
       fill: #131313;
     }
 
+    &:hover {
+      border-color: $strong-grey;
+    }
+
     &.disabled {
-          pointer-events: none;
+      pointer-events: none;
       border-color: #a3a9b5 !important;
       path {
         fill: #a3a9b5;

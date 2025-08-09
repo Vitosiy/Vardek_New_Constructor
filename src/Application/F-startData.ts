@@ -114,81 +114,90 @@ import * as THREEInterfases from "../types/interfases"
 export const START_PROJECT_PARAMS = {
 
     rooms: [{
-        walls: [
-            {
-                "width": 6990.257505978436,
-                "height": 3000,
-                "position": {
-                    "x": -1992.213638056436,
-                    "y": 1500,
-                    "z": 6.677933000282188
+        id: 1000001,
+        label: 'Комната 1',
+        description: "",
+        params: {
+            walls: [
+                {
+                    "width": 6990.257505978436,
+                    "height": 3000,
+                    "position": {
+                        "x": -1992.213638056436,
+                        "y": 1500,
+                        "z": 6.677933000282188
+                    },
+                    "rotation": {
+                        "isEuler": true,
+                        "_x": 0,
+                        "_y": 1.5707963267948966,
+                        "_z": 0,
+                        "_order": "XYZ"
+                    },
+                    "side": 0
                 },
-                "rotation": {
-                    "isEuler": true,
-                    "_x": 0,
-                    "_y": 1.5707963267948966,
-                    "_z": 0,
-                    "_order": "XYZ"
+                {
+                    "width": 3976.6504012986466,
+                    "height": 3000,
+                    "position": {
+                        "x": -3.8884374071124217,
+                        "y": 1500,
+                        "z": -3488.4508199889357
+                    },
+                    "rotation": {
+                        "isEuler": true,
+                        "_x": 0,
+                        "_y": 0,
+                        "_z": 0,
+                        "_order": "XYZ"
+                    },
+                    "side": 0
                 },
-                "side": 0
-            },
-            {
-                "width": 3976.6504012986466,
-                "height": 3000,
-                "position": {
-                    "x": -3.8884374071124217,
-                    "y": 1500,
-                    "z": -3488.4508199889357
+                {
+                    "width": 6986.963634188191,
+                    "height": 3000,
+                    "position": {
+                        "x": 1984.436763242211,
+                        "y": 1500,
+                        "z": 5.030997105159862
+                    },
+                    "rotation": {
+                        "isEuler": true,
+                        "_x": 0,
+                        "_y": -1.5707963267948966,
+                        "_z": 0,
+                        "_order": "XYZ"
+                    },
+                    "side": 0
                 },
-                "rotation": {
-                    "isEuler": true,
-                    "_x": 0,
-                    "_y": 0,
-                    "_z": 0,
-                    "_order": "XYZ"
-                },
-                "side": 0
-            },
-            {
-                "width": 6986.963634188191,
-                "height": 3000,
-                "position": {
-                    "x": 1984.436763242211,
-                    "y": 1500,
-                    "z": 5.030997105159862
-                },
-                "rotation": {
-                    "isEuler": true,
-                    "_x": 0,
-                    "_y": -1.5707963267948966,
-                    "_z": 0,
-                    "_order": "XYZ"
-                },
-                "side": 0
-            },
-            {
-                "width": 3976.651765460494,
-                "height": 3000,
-                "position": {
-                    "x": -3.8884374071124217,
-                    "y": 1500,
-                    "z": 3500.1597500943777
-                },
-                "rotation": {
-                    "isEuler": true,
-                    "_x": 0,
-                    "_y": -3.140764350695509,
-                    "_z": 0,
-                    "_order": "XYZ"
-                },
-                "side": 0
-            }
-        ],
-        floor: 44013,
-        wall: 44128,
+                {
+                    "width": 3976.651765460494,
+                    "height": 3000,
+                    "position": {
+                        "x": -3.8884374071124217,
+                        "y": 1500,
+                        "z": 3500.1597500943777
+                    },
+                    "rotation": {
+                        "isEuler": true,
+                        "_x": 0,
+                        "_y": -3.140764350695509,
+                        "_z": 0,
+                        "_order": "XYZ"
+                    },
+                    "side": 0
+                }
+            ],
+            floor: 44013,
+            wall: 44128,
+            default_room_module_color_down: null,
+            default_room_module_color_up: null,
+            default_room_fasade_up: 7397,
+            default_room_fasade_down: 7397,
+        },
+        content: [],
     },
     ],
-
 
     camera: {
         position: [8 * 1000, 1.5 * 1000, 0],
@@ -197,21 +206,6 @@ export const START_PROJECT_PARAMS = {
         near: 10,
         far: 25000
     },
-
-    quality: [{
-        lable: "Низкое",
-        value: "low",
-    },
-    {
-        lable: "Среднее",
-        value: "medium",
-    },
-    {
-        lable: "Высокое",
-        value: "hight",
-    }
-
-    ],
 
     lights: {
 
@@ -225,14 +219,13 @@ export const START_PROJECT_PARAMS = {
             normalBias: -0.02,
             bias: 0.0001,
             castShadow: false,
-            mapSize: 2048,
+            mapSize: 512,
             intensity: 1.5,
             distance: 30000,
             decay: 0
         }
     },
-
-    height_clamp: 3000,
+    height_clamp: 1800,
 
     table: {
         "material": {
@@ -317,11 +310,17 @@ export const START_PROJECT_PARAMS = {
         }
     },
 
-    table_color: null,
+
     table_top_type_auto: true,
-    module_color: null,
+    default_table_color: null,
+    default_fasade_color: 7397,
+    default_module_color: 199675,
     default_fasade_up: 7397,
     default_fasade_down: 7397,
     default_floor: 44013,
     default_wall: 44128,
+    default_module_color_down: null,
+    default_module_color_up: null,
+    // default_module_color_down: 199675,
+    // default_module_color_up: 199675,
 }

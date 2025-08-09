@@ -1,17 +1,14 @@
 <script setup lang="ts">
-/**//@ts-nocheck */
+/**/ /@ts-nocheck */;
 
 import * as THREETypes from "@/types/types";
 import * as THREEInterfases from "@/types/interfases";
-import * as THREE from "three";
 import { _URL } from "@/types/constants";
 
 import {
   ref,
-  watch,
   computed,
   onMounted,
-  onBeforeMount,
   onBeforeUnmount,
   onUnmounted,
   toRaw,
@@ -20,13 +17,10 @@ import {
 } from "vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";
-import { useSceneState } from "@/store/appliction/useSceneState";
-import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useObjectData } from "@/store/appliction/useObjectData";
-import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
+import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -43,51 +37,17 @@ import UpControllerButton from "@/components/ui/buttons/right-menu/controller/Up
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 
-
-type TSize = {
-  width: {
-    title: "Ширина";
-    value: number;
-    min: number | null;
-    max: number | null;
-  };
-  height: {
-    title: "Высота";
-    value: number;
-    min: number | null;
-    max: number | null;
-  };
-  depth: {
-    title: "Глубина";
-    value: number;
-    min: number | null;
-    max: number | null;
-  };
-};
-
-type TEditSize = {
-  SIZE_EDIT_WIDTH_MIN: number | null;
-  SIZE_EDIT_WIDTH_MAX: number | null;
-  SIZE_EDIT_HEIGHT_MIN: number | null;
-  SIZE_EDIT_HEIGHT_MAX: number | null;
-  SIZE_EDIT_DEPTH_MIN: number | null;
-  SIZE_EDIT_DEPTH_MAX: number | null;
-};
-
-interface IProductSizeEdit {
-  size: TSize | null;
-}
-
 const appData = ref<{ [key: string]: any } | null>(null);
-const startData = ref<THREETypes.TUseSceneState | null>(null);
-const roomStore = ref<THREETypes.TUseRoomState | null>(null);
-const eventBus = ref<THREETypes.TUseEventBus | null>(null);
-const uniformState = ref<THREETypes.TUseUniformState | null>(null);
-const modelState = ref<THREETypes.TUseModelState | null>(null);
+
+const eventBus = useEventBus();
+// uniformStat= useUniformState();
+const modelState = useModelState();
+const uniformState = useUniformState();
+// const modelState = ref<THREETypes.TUseModelState | null>(null);
 const models = ref<any>(null);
 const wallMaterials = ref<number | null>(null);
 const floorMaterials = ref<number | null>(null);
-const customiserStore = ref<THREETypes.TUseCustomiserStore | null>(null);
+// const customiserStore = ref<THREETypes.TUseCustomiserStore | null>(null);
 const objectData = ref<THREETypes.TUseObjectData | null>(
   null
 ); /** Текущий объект */
@@ -123,18 +83,6 @@ const isModalOpen = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
-onBeforeMount(() => {
-  //   appData.value = useAppData().getAppData;
-
-  startData.value = useSceneState();
-
-  eventBus.value = useEventBus();
-  uniformState.value = useUniformState();
-  modelState.value = useModelState();
-  customiserStore.value = useCustomiserStore();
-  roomStore.value = useRoomState();
-});
-
 onMounted(() => {
   appData.value = useAppData().getAppData;
 
@@ -149,16 +97,16 @@ onMounted(() => {
     _FASADE.value = appData.FASADE;
     _MILLING.value = appData.MILLING;
 
-    eventBus.value!.on("A:Move", getMove);
-    eventBus.value!.on("A:Selected", selected);
-    eventBus.value!.on("A:ContantLoaded", checkContantLoad);
+    eventBus.on("A:Move", getMove);
+    eventBus.on("A:Selected", selected);
+    eventBus.on("A:ContantLoaded", checkContantLoad);
 
     VerdekConstructor.value = new Application(sceneContainer.value);
   }
 });
 
 onBeforeUnmount(() => {
-  uniformState.value!.resetUniformState();
+  uniformState.resetUniformState();
 
   productColor.value = {};
   productFasades.value = [];
@@ -171,15 +119,11 @@ onBeforeUnmount(() => {
   _MILLING.value = {};
 
   appData.value = null;
-  startData.value = null;
-  roomStore.value = null;
-  uniformState.value = null;
 
-  modelState.value = null;
   models.value = null;
   wallMaterials.value = null;
   floorMaterials.value = null;
-  customiserStore.value = null;
+
   objectData.value = null;
   roomContantData.value = null;
 
@@ -188,11 +132,8 @@ onBeforeUnmount(() => {
 });
 
 onUnmounted(() => {
-  eventBus.value!.clearEvents();
-  eventBus.value = null;
+  eventBus.clearEvents();
 });
-
-
 
 const checkContantLoad = (state: boolean) => {
   activePreloader.value = state;
@@ -206,13 +147,15 @@ const getMove = (move: boolean) => {
 };
 
 const selected = async (item: any) => {
-
   if (!item || !item.object) {
     controller.value = false;
     CutData.value = {};
     CutCash.value = {};
     return;
   }
+
+  CutData.value = {};
+  CutCash.value = {};
 
   let object = item.object;
   let roomContant = item.roomContant;
@@ -226,7 +169,6 @@ const selected = async (item: any) => {
 
   objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
-
 
   controller.value = true;
 
@@ -252,7 +194,9 @@ const selected = async (item: any) => {
     };
   }
 
-  useModelState().setCurrentModel(userData);
+  console.log(CutData.value, "CutData.value");
+
+  modelState.setCurrentModel(userData);
 
   /**  Координаты мыши */
   await nextTick(() => {
@@ -262,57 +206,56 @@ const selected = async (item: any) => {
 
 const removeModel = (model) => {
   if (VerdekConstructor) {
-    eventBus.value!.emit("A:RemoveModel", model);
+    eventBus.emit("A:RemoveModel", model);
     controller.value = false;
   }
 };
-
 
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
   if (VerdekConstructor) {
-    eventBus.value!.emit("A:Pre-Create-Uniform-Group");
+    eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
   if (VerdekConstructor) {
-    eventBus.value!.emit("A:Create-Uniform-Group");
+    eventBus.emit("A:Create-Uniform-Group");
   }
 };
 
 const deliteUniformGroup = (id) => {
   if (VerdekConstructor) {
-    eventBus.value!.emit("A:Delite-Uniform-Group", id);
+    eventBus.emit("A:Delite-Uniform-Group", id);
   }
 };
 
 const addToUniformGroup = (id) => {
   if (VerdekConstructor) {
-    eventBus.value!.emit("A:Add-To-Uniform-Group", id);
+    eventBus.emit("A:Add-To-Uniform-Group", id);
   }
 };
 
 const removeFromUniformGroup = (id) => {
   if (VerdekConstructor) {
-    eventBus.value!.emit("A:Remove-From-Uniform-Group", id);
+    eventBus.emit("A:Remove-From-Uniform-Group", id);
   }
 };
 
 const activeController = computed(() => {
-  if (uniformState.value!.getUniformModeData.uniformMode) {
+  if (uniformState.getUniformModeData.uniformMode) {
     controller.value = false;
   }
 
   return {
     "model-controller--active":
-      controller.value && !uniformState.value!.getUniformModeData.uniformMode,
+      controller.value && !uniformState.getUniformModeData.uniformMode,
   };
 });
 
 const pregropping = computed(() => {
-  const pregroupMode = uniformState.value!.getPreGrouping;
+  const pregroupMode = uniformState.getPreGrouping;
   return {
     btn_green: !pregroupMode,
     btn_red: pregroupMode,
@@ -401,7 +344,7 @@ defineExpose({
   closeTableRedactor,
   openTableRedactor,
   selected,
-  activePreloader
+  activePreloader,
 });
 </script>
 
@@ -423,7 +366,7 @@ defineExpose({
   >
     <div
       class="uniform__item"
-      v-for="(item, key) in uniformState!.getUniformGroups"
+      v-for="(item, key) in uniformState!.getUniformGroups as THREETypes.TUniformGroups[]"
       :key="key + item.id"
     >
       <p class="uniform__name" :style="[`background-color: ${item.color}`]">
@@ -467,82 +410,88 @@ defineExpose({
     </button>
   </div>
 
-
-  <div
+  <transition name=" controller-toggle">
+    <div class="model-controller" :style="controllerPosition" v-if="controller">
+      <!-- <div
     :class="['model-controller', activeController]"
     :style="controllerPosition"
-  >
-    <div class="controller-container">
-      <div class="controller-left">
-        <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-        <ControllerButton v-show="!CutData.data" />
-        <ContentControllerButton v-show="!CutData.data" />
-        <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
-      </div>
-      <div class="controller-right">
-        <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-        <UpControllerButton />
-        <OpenFacadeButton />
+    v-if="controller"
+  > -->
+      <div class="controller-container">
+        <div class="controller-left">
+          <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
+          <ControllerButton v-show="!CutData.data" />
+          <ContentControllerButton v-show="!CutData.data" />
+          <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
+        </div>
+        <div class="controller-right">
+          <img
+            class="right-line"
+            src="@/assets/svg/right-menu/right-line.svg"
+          />
+          <UpControllerButton />
+          <OpenFacadeButton />
 
-        <Modal
-          v-if="CutData.data"
-          :container="`modal--tableTop`"
-          @open-modal="openTableRedactor"
-          @close-modal="closeTableRedactor"
-        >
-          <template #modalBody="{ onModalClose }" class="modal--tableTop">
-            <TableTopManager
-              ref="tableTopManager"
-              :grid="CutData.data"
-              :canvas-height="CutData.canvasHeight"
-              :model-height="CutData.modelHeight"
-              v-if="isModalOpen"
-            >
-              <template #delite>
-                <button
-                  class="actions-btn actions-btn--footer"
-                  @click="
-                    () => {
-                      deliteTable();
-                      onModalClose();
-                    }
-                  "
-                >
-                  Удалить
-                </button>
-              </template>
-              <template #save>
-                <button
-                  class="actions-btn actions-btn--footer"
-                  @click="saveTableData"
-                >
-                  Сохранить
-                </button>
-              </template>
-              <template #close>
-                <button
-                  @click="
-                    () => {
-                      onModalClose();
-                    }
-                  "
-                  class="actions-btn actions-btn--footer"
-                >
-                  Закрыть
-                </button>
-              </template>
-            </TableTopManager>
-          </template>
-          <template #modalOpen="{ onModalOpen }">
-            <CutButton @click="onModalOpen" />
-            <!-- <button class="cut-btn" @click="onModalOpen">
+          <Modal
+            v-if="CutData.data"
+            :container="`modal--tableTop`"
+            @open-modal="openTableRedactor"
+            @close-modal="closeTableRedactor"
+          >
+            <template #modalBody="{ onModalClose }" class="modal--tableTop">
+              <TableTopManager
+                ref="tableTopManager"
+                :grid="CutData.data"
+                :canvas-height="CutData.canvasHeight"
+                :model-height="CutData.modelHeight"
+                v-if="isModalOpen"
+              >
+                <template #delite>
+                  <button
+                    class="actions-btn actions-btn--footer"
+                    @click="
+                      () => {
+                        deliteTable();
+                        onModalClose();
+                      }
+                    "
+                  >
+                    Удалить
+                  </button>
+                </template>
+                <template #save>
+                  <button
+                    class="actions-btn actions-btn--footer"
+                    @click="saveTableData"
+                  >
+                    Сохранить
+                  </button>
+                </template>
+                <template #close>
+                  <button
+                    @click="
+                      () => {
+                        onModalClose();
+                      }
+                    "
+                    class="actions-btn actions-btn--footer"
+                  >
+                    Закрыть
+                  </button>
+                </template>
+              </TableTopManager>
+            </template>
+            <template #modalOpen="{ onModalOpen }">
+              <CutButton @click="onModalOpen" />
+              <!-- <button class="cut-btn" @click="onModalOpen">
               <img class="cut-icon" src="/icons/cut.svg" alt="" />
             </button> -->
-          </template>
-        </Modal>
+            </template>
+          </Modal>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <style lang="scss" scoped>
@@ -683,22 +632,12 @@ defineExpose({
   left: 50%;
   top: 50%;
   padding: 1rem;
-  filter: blur(10px);
-  opacity: 0;
-  transform: scale(0) translate(50%, 50%);
+
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  z-index: -1;
-  transition: all 0.1s ease-in-out;
 
-  &--active {
-    height: fit-content;
-    transform: scale(1);
-    filter: blur(0);
-    opacity: 1;
-    z-index: 0;
-  }
+  transition: all 0.2s ease-in-out;
 
   .controller-left {
     transform: translate(23px, -69px);
@@ -708,7 +647,7 @@ defineExpose({
   }
 
   .controller-right {
-    transform: translate(69px, -46*5px);
+    transform: translate(69px, -46 * 5px);
     .right-line {
     }
   }

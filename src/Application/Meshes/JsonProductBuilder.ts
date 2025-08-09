@@ -33,7 +33,6 @@ export class JsonBuilder {
                 this.parseDate({ data: item, group, obj, array })
             })
 
-
         } else if (typeof json.items === 'object' && json.items !== null && !(json.items instanceof Date)) {
 
             let clone = JSON.parse(JSON.stringify(json.items))

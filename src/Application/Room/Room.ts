@@ -125,12 +125,18 @@ export class Room extends BuildersHelper {
         if (!roomId) {
             this.eventBus.emit('A:ContantLoaded', true)
 
+            console.log('Not exist')
+
             params = JSON.parse(JSON.stringify(this.sceneState.getStartRoomData))
+            console.log(params)
+
             this.roomState.setCurrentRoomParams(params)
             return params
         }
 
-        params = JSON.parse(JSON.stringify(this.roomState.getCurrentRoomData(roomId)!.size))
+        console.log('Exist', this.roomState.getRooms, this.roomState.getCurrentRoomData(roomId)    )
+
+        params = JSON.parse(JSON.stringify(this.roomState.getCurrentRoomData(roomId)!.params))
         this.roomState.setCurrentRoomParams(params)
 
         return params

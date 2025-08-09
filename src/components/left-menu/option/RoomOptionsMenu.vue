@@ -10,9 +10,13 @@ import {
 } from "vue";
 import { _URL } from "@/types/constants";
 import { TQuality } from "@/types/types";
-import { TOptionsMap, TLightRange } from "@/types/types";
+import {
+  TOptionsMap,
+  TTextureActionMap,
+  TTextureItem,
+  TFasadeItem,
+} from "@/types/types";
 import { IWallSizes } from "@/types/interfases";
-import { START_PROJECT_PARAMS } from "@/Application/F-startData";
 
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState";
@@ -33,8 +37,8 @@ const roomState = useRoomState();
 const menuStore = useMenuStore();
 
 const clampHeight = ref<number>(sceneState.getStartHeightClamp);
-const quality = START_PROJECT_PARAMS.quality as TQuality[];
-const currentQuality = ref<TQuality>(quality[1]);
+const quality = ref<TQuality[]>(sceneState.getQuality);
+const currentQuality = ref<TQuality>(quality.value[0]);
 
 const pointLight = ref<number | string>(1);
 const ambientLight = ref<number | string>(1);
@@ -42,17 +46,17 @@ const ambientLight = ref<number | string>(1);
 const shadows = ref<boolean>(false);
 const refraction = ref<boolean>(false);
 
-const currentOption = ref<string | null>(null);
+const currentOption = ref<keyof TTextureActionMap | null>(null);
 const currentOptionLable = ref<string | null>(null);
 
 const optionsData = ref<Object | null>(null);
 const roomRef = ref<HTMLElement | null>(null);
 
-const optionsType = ref<Object>({
+const optionsType = ref<TTextureActionMap>({
   wall: "A:ChangeWallTexture",
   floor: "A:ChangeFloorTexture",
-  bodyTop: "A:ChangeBodyTopTexture",
-  bodyBottom: "A:ChangeBodyBottomTexture",
+  moduleTop: "A:ChangeModuleTotalTexture",
+  moduleBottom: "A:ChangeModuleTotalTexture",
   fasadsTop: "A:ChangeFasadsTopTexture",
   fasadsBottom: "A:ChangeFasadsBottomTexture",
 });
@@ -75,11 +79,6 @@ defineExpose({
   roomRef,
 });
 
-// onBeforeUnmount(() => {
-//   sceneState.setRefractionValue(refraction.value);
-//   sceneState.setShadowValue(refraction.value);
-// });
-
 const prepareOptions = () => {
   const { wall, floor } = roomState.getCurrentRoomParams as IWallSizes;
 
@@ -96,9 +95,12 @@ const changeHeightClamp = () => {
 };
 
 const loadRoom = (id: number) => {
+  menuStore.resetGlobalOptions();
   eventBus.emit("A:Load", id);
   eventBus.emit("A:ContantLoaded", false);
   closeMenu("roomPar");
+
+  console.log(globalOptions.value);
 };
 
 const deliteRoom = (value: number) => {
@@ -107,7 +109,6 @@ const deliteRoom = (value: number) => {
 
 const changeQualit = (data: TQuality) => {
   currentQuality.value = data;
-  console.log(data.value);
   eventBus.emit("A:Quality", data.value);
 };
 
@@ -127,7 +128,7 @@ const toggleRefraction = (value: boolean) => {
   eventBus.emit("A:ToggleRefraction", value);
 };
 
-const getOption = (value: string, title: string) => {
+const getOption = (value: keyof TTextureActionMap, title: string) => {
   if (value == currentOption.value) {
     optionsData.value = null;
     currentOption.value = null;
@@ -141,18 +142,85 @@ const getOption = (value: string, title: string) => {
       break;
     case "floor":
       optionsData.value = Object.values(roomState.getFloorTextures());
+      break;
+    case "moduleTop":
+      optionsData.value = Object.values(roomState.getDefaultModuleData());
+      break;
+    case "moduleBottom":
+      optionsData.value = Object.values(roomState.getDefaultModuleData());
+      break;
   }
 
   currentOptionLable.value = title;
 };
 
-const selectOption = (value: Object) => {
-  eventBus.emit(optionsType.value[currentOption.value], value.ID);
-  globalOptions.value[currentOption.value].id = value.ID;
+const totalSelect = (event: Event, value: keyof TOptionsMap) => {
+  menuStore.updateOptionGlobal(value, event.target!.checked);
+  const selectOption = menuStore.getGlobalOptions[value];
+
+  switch (value) {
+    case "wall":
+      if (selectOption.global) {
+        roomState.apllyProjectWall(selectOption.id);
+        sceneState.updateStartRoomData(value, selectOption.id);
+        return;
+      }
+      sceneState.updateStartRoomData(value, 44128);
+
+      break;
+    case "floor":
+      if (selectOption.global) {
+        roomState.apllyProjectFloor(selectOption.id);
+        sceneState.updateStartRoomData(value, selectOption.id);
+        return;
+      }
+      sceneState.updateStartRoomData(value, 44013);
+      break;
+
+    case "moduleTop":
+      if (selectOption.global) {
+        sceneState.updateDefaultData(value, selectOption.id);
+        return;
+      }
+      sceneState.updateDefaultData(value, null);
+      break;
+
+    case "moduleBottom":
+      if (selectOption.global) {
+        sceneState.updateDefaultData(value, selectOption.id);
+        return;
+      }
+      sceneState.updateDefaultData(value, null);
+      break;
+  }
+};
+
+const selectOption = (value: TTextureItem) => {
+  console.log(currentOption.value, "currentOption.value");
+  let data;
+  switch (currentOption.value) {
+    case "moduleTop":
+    case "moduleBottom":
+      data = { data: value, type: currentOption.value };
+      break;
+    default:
+      data = value.ID;
+      break;
+  }
+
+  if (currentOption.value) {
+    eventBus.emit(
+      optionsType.value[currentOption.value as keyof TTextureActionMap],
+      data
+    );
+    globalOptions.value![currentOption.value as keyof TTextureActionMap].id =
+      value.ID;
+    menuStore.updateOption(currentOption.value, value.ID);
+  }
 };
 
 const getOptionImg = computed(() => {
-  return (id: number, type: string) => {
+  return (id: number | string, type: string) => {
     let result;
     switch (type) {
       case "wall":
@@ -160,6 +228,12 @@ const getOptionImg = computed(() => {
         break;
       case "floor":
         result = roomState.getFloorTextures()[id].PREVIEW_PICTURE;
+        break;
+      case "moduleTop":
+        result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
+        break;
+      case "moduleBottom":
+        result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
         break;
     }
     return result;
@@ -205,8 +279,6 @@ watch(shadows, () => {
   sceneState.setShadowValue(shadows.value);
   toggleShadow(shadows.value);
 });
-
-// TODO Временная заглушка. Валятся ошибки. Позже разобраться что требуется
 </script>
 
 <template>
@@ -251,7 +323,11 @@ watch(shadows, () => {
             </div>
             <div class="option__checkbox">
               <label class="control control-checkbox">
-                <input type="checkbox" :checked="item.global" @change="" />
+                <input
+                  type="checkbox"
+                  :checked="item.global"
+                  @change="totalSelect($event, key)"
+                />
                 <span class="control_indicator"></span>
                 <span class="text-lg text-gray-800 font-medium">{{
                   item.label
@@ -460,22 +536,26 @@ watch(shadows, () => {
         .label__text {
           color: $black;
         }
+
         // background-color: $stroke;
       }
     }
   }
+
   &-small {
     flex: 46%;
     padding: 10px;
     border-radius: 15px;
     background-color: $bg;
   }
+
   &-standart {
     width: 100%;
     padding: 10px;
     border-radius: 15px;
     background-color: $bg;
   }
+
   &-standart {
     width: 100%;
     padding: 10px;
@@ -506,6 +586,7 @@ watch(shadows, () => {
       gap: 5px;
       overflow: auto;
     }
+
     &-item {
       width: 100%;
       display: flex;
@@ -542,6 +623,7 @@ watch(shadows, () => {
 
   &__top {
     width: 100%;
+
     &--left,
     &--right {
       display: flex;
@@ -577,6 +659,7 @@ watch(shadows, () => {
     flex-direction: column;
     pointer-events: none;
   }
+
   &__img {
     height: 60px;
     border-radius: 15px;
@@ -610,6 +693,7 @@ watch(shadows, () => {
       color: $white;
       background-color: $red;
     }
+
     @media (hover: hover) {
       &:hover {
         color: $white;
@@ -626,16 +710,18 @@ watch(shadows, () => {
   cursor: pointer;
 }
 
-@media screen and (width <= 1023px) {
+@media screen and (width <=1023px) {
   .visual {
     &__top {
       max-width: 100%;
       flex-wrap: wrap;
+
       &--left,
       &--right {
         max-width: 100%;
         flex-wrap: wrap;
       }
+
       &--switch {
         justify-content: flex-start;
         gap: 1rem;

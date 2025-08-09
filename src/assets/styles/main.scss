@@ -117,9 +117,24 @@ p {
   transition: 0.2s;
   cursor: pointer;
 
+  transition-property: border-color;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+
   svg {
     path {
       transition: 0.2s;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      border-color: $strong-grey;
+      svg {
+        path {
+          fill: $strong-grey;
+        }
+      }
     }
   }
 
@@ -348,6 +363,3 @@ p {
     }
   }
 }
-
-
-

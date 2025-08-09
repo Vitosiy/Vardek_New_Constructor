@@ -8,6 +8,7 @@ import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { useAppData } from "@/store/appliction/useAppData";
 
 import * as THREEInterfases from "../../types/interfases"
+import { TFasadeItem } from "@/types/types";
 
 
 
@@ -16,34 +17,30 @@ export const useRoomState = defineStore('RoomState', () => {
   //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
   const roomsStore = useSchemeTransition();
-  let roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
+  const roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
+
+  const _APP = useAppData();
+  // const _PRODUCTS = _APP.CATALOG.PRODUCTS
+  // const _FASADE = _APP.FASADE;
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
-
   const addRoom = (room: THREEInterfases.IRoom) => {
     rooms.value.push(room);
   };
 
-  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], size: THREEInterfases.IWallSizes) => {
+  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes) => {
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {
       room.content = content;
-      room.size = size;
+      room.params = params;
     }
 
   };
-
-  // const updateRoomSize = (id: number, size: THREEInterfases.IWallSizes) => {
-  //   const room = rooms.value.find(room => room.id === id);
-  //   if (room) {
-  //     room.size = size;
-  //   }
-  // }
 
   const removeRoom = (id: number) => {
     rooms.value = rooms.value.filter(room => room.id !== id);
@@ -69,31 +66,15 @@ export const useRoomState = defineStore('RoomState', () => {
   }
 
   const setWallTexture = (value: number | string) => {
-
-    // const room = rooms.value.find(room => room.id === currentRoomId.value);
-
     if (tempRoomSize.value) {
       tempRoomSize.value.wall = value
-
-      // console.log(tempRoomSize.value, rooms.value, 'setWallTexture')
     }
-
-    // if (room) {
-    //   room.size.wall = value
-    // }
   }
 
   const setFloorTexture = (value: number | string) => {
-    // const room = rooms.value.find(room => room.id === currentRoomId.value);
     if (tempRoomSize.value) {
       tempRoomSize.value.floor = value
-
-      // console.log(tempRoomSize.value, rooms.value, 'setFloorTexture')
     }
-
-    // if (room) {
-    //   room.size.floor = value
-    // }
   }
 
   //------------------------------------------------------------------------------------------
@@ -105,23 +86,22 @@ export const useRoomState = defineStore('RoomState', () => {
   const getCurrentRoomData = (roomId) => {
     let centerized = roomsStore.getRoomDataFor3DScene(roomId);
     const currentRoom = rooms.value.find(value => value.id === roomId)
+
     if (centerized) {
-      currentRoom.size = centerized?.size ?? currentRoom?.size;
+      currentRoom.params = centerized?.params ?? currentRoom?.params;
     }
 
     return rooms.value.find(value => value.id === roomId)
   }
 
-
   const getCurrentRoomId = computed(() => {
-
 
     let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
 
     const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
 
     if (centerized) {
-      currentRoom.size = centerized?.size ?? currentRoom?.size;
+      currentRoom.params = centerized?.params ?? currentRoom?.params;
     }
 
     return rooms.value.find(value => value.id === currentRoomId.value)
@@ -143,12 +123,49 @@ export const useRoomState = defineStore('RoomState', () => {
     return rooms.value
   })
 
+  const apllyProjectWall = (value) => {
+    rooms.value.forEach((room) => {
+      room.params.wall = value;
+    });
+  }
+
+  const apllyProjectFloor = (value) => {
+    rooms.value.forEach((room) => {
+      room.params.floor = value;
+    });
+  }
+
+
   const getWallsTextures = () => {
     return useAppData().getAppData.WALL
+
   }
 
   const getFloorTextures = () => {
-    return useAppData().getAppData.FLOOR;
+    return useAppData().getAppData.FLOOR
+  }
+
+  const getDefaultModuleData = () => {
+    const colorMap: Record<number, TFasadeItem> = {};
+    const PRODUCTS = _APP.getAppData.CATALOG.PRODUCTS
+    const FASADE = _APP.getAppData.FASADE;
+
+    for (const el in PRODUCTS) {
+      const product = PRODUCTS[el];
+
+
+      if (Array.isArray(product.MODULECOLOR) && product.MODULECOLOR[0] != null) {
+        product.MODULECOLOR.forEach(color => {
+          if (FASADE[color] !== undefined && colorMap[color] === undefined) {
+            colorMap[color] = FASADE[color] as TFasadeItem;
+          }
+        });
+      }
+
+    }
+
+    return colorMap
+
   }
 
 
@@ -178,7 +195,12 @@ export const useRoomState = defineStore('RoomState', () => {
     setWallTexture,
     setFloorTexture,
 
-    getCurrentRoomData
+    getCurrentRoomData,
+
+    apllyProjectWall,
+    apllyProjectFloor,
+
+    getDefaultModuleData
 
   };
 });

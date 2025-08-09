@@ -19,10 +19,10 @@ export const ENVIROMENT_MAP = {
 
 export const rooms_mok = [
     // {
-    //     id: 0,
+    //     id: 558899,
     //     label: "Гостинная",
     //     description: "Гостевая комната",
-    //     size: {
+    //     params: {
     //         walls: [
     //             {
     //                 "width": 2747.411223548689,
@@ -362,7 +362,7 @@ export const rooms_mok = [
     //     id: 1,
     //     label: "Кухня",
     //     description: "Современная кухня",
-    //     size: {
+    //     params: {
     //         walls: [
     //             {
     //                 "width": 4663.648412392543,
@@ -478,7 +478,7 @@ export const rooms_mok = [
     //     label: "Спальня",
     //     description: "Лучшая спальня с гигантской кроватью",
     //     table_color: '',
-    //     size: {
+    //     params: {
     //         walls: [
     //             {
     //                 "width": 1044.8444795442065,

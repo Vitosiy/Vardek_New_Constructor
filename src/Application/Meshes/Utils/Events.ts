@@ -46,6 +46,9 @@ export class MeshEvents extends BuildersHelper {
     // millHelper = new GUI()
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
+    private onChangeTotalModuleTexture: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
+
+
     private onChangeFasade: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
     private onChangePaletteColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
     private onChangeGlassColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
@@ -58,13 +61,19 @@ export class MeshEvents extends BuildersHelper {
     private onDrawPatina: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
     private onDelitePatina: (fasadeNdx: number) => void;
 
-
-
     private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
     private onToggleFasade: (fasad_ndx: number) => void;
     private onDeliteFasade: (fasad_ndx: number) => void;
     private onCreateUniformGroup: () => void
     private onDeliteUniformGroup: (id: number) => void
+
+    private searchElementsByType = {
+        moduleTop: "element_up",
+        fasadsTop: "element_up",
+        moduleBottom: "element_down",
+        fasadsBottom: "element_down"
+
+    }
 
     constructor(root: THREETypes.TApplication) {
 
@@ -81,6 +90,8 @@ export class MeshEvents extends BuildersHelper {
 
 
         this.onChangeModuleTexture = this.changeModuleTexture.bind(root)
+        this.onChangeTotalModuleTexture = this.changeTotalModuleTexture.bind(root)
+
         this.onChangeFasade = this.changeFasade.bind(root)
         this.onChangePaletteColor = this.changePaletteColor.bind(root)
         this.onChangeGlassColor = this.changeGlassColor.bind(root)
@@ -159,47 +170,53 @@ export class MeshEvents extends BuildersHelper {
     }
 
     /** Цвкет корпуса */
-    async catchChangeModuleTexture(data: { [key: string]: any }) {
+    async catchChangeModuleTexture(data: { [key: string]: any }, currentMesh?: THREE.Object3D) {
 
-        const product = this._currentMesh
+        console.log('catchChangeModuleTexture')
 
+        const product = currentMesh ?? this._currentMesh;
+        const { CONFIG, SHELF, BODY } = product.userData.PROPS;
 
-        const { CONFIG, SHELF, BODY } = product.userData.PROPS
-
-        let body = BODY
-        let shelf = SHELF
-
-        body?.traverse((children: THREE.Object3D) => {
-            if (children instanceof THREE.Mesh) {
-                this.changeColor(
-                    {
-                        object: children,
-                        url: data.TEXTURE
-                    })
-            }
-        })
-        shelf?.forEach((item: THREE.Object3D) => {
-            item.traverse((children: THREE.Object3D) => {
-                if (children instanceof THREE.Mesh) {
-                    this.changeColor(
-                        {
-                            object: children,
-                            url: data.TEXTURE
-                        })
+        [BODY, ...(SHELF ?? [])].forEach(obj =>
+            obj?.traverse((child: THREE.Object3D) => {
+                if (child instanceof THREE.Mesh) {
+                    this.changeColor({ object: child, url: data.TEXTURE });
                 }
             })
-        })
+        );
+        console.log(data.ID)
 
-        CONFIG.MODULE_COLOR = data.ID
+        CONFIG.MODULE_COLOR = data.ID;
+        console.log(product, CONFIG, 
+        CONFIG.MODULE_COLOR, data.ID)
     }
 
     async changeModuleTexture(data: { [key: string]: any }) {
 
         if (!this._currentMesh) return;
+        console.log(data, 'this._currentMesh')
+
         await this.catchChangeModuleTexture(data)
         this.events.emit('U:ChangeModule')
 
     }
+
+    changeTotalModuleTexture({ data, type }) {
+
+        const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
+        const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
+        console.log(data)
+
+        if (Array.isArray(elementsList) && elementsList[0]) {
+            elementsList.forEach(async (el) => {
+                await this.catchChangeModuleTexture(data, el)
+            })
+        }
+
+
+
+    }
+
 
     /** Цвет Фасада */
     async catchFasadeChange({ data, fasadeNdx }: TObjectData) {
@@ -663,6 +680,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeModuleTexture(data);
         }
 
+        this.onChangeTotalModuleTexture = ({ data, type }) => {
+            this.changeTotalModuleTexture({ data, type })
+        }
+
         this.onChangeFasade = ({ data, fasadeNdx }) => {
             this.changeFasade({ data, fasadeNdx });
         }
@@ -717,6 +738,8 @@ export class MeshEvents extends BuildersHelper {
 
 
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
+        this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
+
         this.events.on('A:ChangeFasade', this.onChangeFasade);
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
@@ -741,6 +764,8 @@ export class MeshEvents extends BuildersHelper {
 
     removeVueEvents() {
         this.events.off('A:ChangeModuleTexture', this.onChangeModuleTexture);
+        this.events.off('A:ChangeModuleTotalTexture', this.onChangeModuleTexture);
+
         this.events.off('A:ChangeFasade', this.onChangeFasade);
         this.events.off('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.off('A:ChangeGlassColor', this.onChangeGlassColor);
