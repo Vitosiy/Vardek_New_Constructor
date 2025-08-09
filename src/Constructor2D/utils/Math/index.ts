@@ -517,102 +517,122 @@ function isPointOnSegment(p1: Vector2, p2: Vector2, point: Vector2): boolean {
   );
 }
 
-function isPointInPolygon(polygon: Vector2[], point: Vector2): boolean {
+/**
+ * Проверяет, находится ли точка внутри многоугольника или на его границе.
+ * Использует алгоритм "луч пересекает границу" (ray casting algorithm).
+ * 
+ * @param polygon Массив вершин многоугольника в порядке обхода (по или против часовой стрелки)
+ * @param point Точка, которую проверяем на принадлежность многоугольнику
+ * @returns true, если точка внутри или на границе многоугольника, false иначе
+ */
+function isPointInPolygon(polygon: Vector2[], point: Vector2, minPoints: number = 3): boolean {
   const n = polygon.length;
-  let inside = false;
+  let inside = false; // Флаг нахождения точки внутри
 
-  // Проверка, если полигон имеет менее 3 вершин
-  if (n < 3) {
+  // Проверка, если полигон имеет менее 3 вершин (не является многоугольником)
+  if (n < minPoints) {
     return false;
   }
 
-  // Проходим по всем рёбрам полигона
+  // Проходим по всем рёбрам многоугольника (текущая вершина i, предыдущая j)
   for (let i = 0, j = n - 1; i < n; j = i++) {
-    const vertex1 = polygon[i];
-    const vertex2 = polygon[j];
+    const vertex1 = polygon[i]; // Текущая вершина
+    const vertex2 = polygon[j]; // Предыдущая вершина
 
-    // Проверяем, лежит ли точка точно на вершине
+    // Проверяем, лежит ли точка точно на вершине многоугольника
     if (vertex1.x === point.x && vertex1.y === point.y) {
-      return true; // Точка на вершине считается внутри
+      return true; // Точка на вершине считается принадлежащей многоугольнику
     }
 
-    // Проверяем пересечение луча (горизонтального от точки вправо) с ребром
+    // Проверяем пересечение горизонтального луча (вправо от точки) с ребром многоугольника
     if (
-      // Точка находится между y-координатами вершин ребра
+      // Точка находится между y-координатами вершин ребра (пересечение возможно)
       ((vertex1.y > point.y) !== (vertex2.y > point.y)) &&
-      // Проверка пересечения по x-координате
+      // Проверяем, что x-координата точки меньше x-координаты точки пересечения луча с ребром
       point.x <
       vertex1.x +
       ((point.y - vertex1.y) * (vertex2.x - vertex1.x)) /
       (vertex2.y - vertex1.y)
     ) {
-      inside = !inside; // Переключаем флаг при каждом пересечении
+      inside = !inside; // Инвертируем флаг при каждом пересечении
     }
 
-    // Проверка, лежит ли точка на ребре
+    // Проверяем, лежит ли точка на текущем ребре многоугольника
     if (
-      // Проверка, что точка находится между y-координатами вершин
+      // Проверяем, что точка находится между вершин по y-координате
       Math.min(vertex1.y, vertex2.y) <= point.y &&
       point.y <= Math.max(vertex1.y, vertex2.y) &&
-      // Проверка, что точка находится между x-координатами вершин
+      // И между вершин по x-координате
       Math.min(vertex1.x, vertex2.x) <= point.x &&
       point.x <= Math.max(vertex1.x, vertex2.x)
     ) {
-      // Проверка коллинеарности точки с ребром
+      // Вычисляем векторное произведение для проверки коллинеарности
       const crossProduct =
         (point.y - vertex1.y) * (vertex2.x - vertex1.x) -
         (point.x - vertex1.x) * (vertex2.y - vertex1.y);
 
+      // Если векторное произведение близко к нулю, точка лежит на ребре
       if (Math.abs(crossProduct) < Number.EPSILON) {
-        return true; // Точка лежит на ребре
+        return true;
       }
     }
   }
 
-  return inside;
+  return inside; // Возвращаем итоговый статус
 }
 
+/**
+ * Находит точку пересечения между линией (заданной двумя точками) и перпендикуляром,
+ * опущенным из заданной точки на эту линию. По сути вычисляет проекцию точки на линию.
+ * 
+ * Алгоритм:
+ * 1. Строит направляющий вектор исходной линии
+ * 2. Строит перпендикулярный вектор
+ * 3. Решает систему параметрических уравнений для нахождения точки пересечения
+ * 
+ * @param [pointStart, pointEnd] - Две точки, определяющие исходную линию
+ * @param vector2d - Точка, из которой опускается перпендикуляр
+ * @returns Точка пересечения (проекция) или null, если линия вырождена (точки совпадают)
+ */
 function getIntersectVectorLine([pointStart, pointEnd]: [Vector2, Vector2], vector2d: Vector2): Vector2 | null {
-  // Направление линии
+  // Вычисляем направляющий вектор исходной линии
   const lineDir: Vector2 = {
-    x: pointEnd.x - pointStart.x,
-    y: pointEnd.y - pointStart.y,
+    x: pointEnd.x - pointStart.x, // Разность x-координат
+    y: pointEnd.y - pointStart.y  // Разность y-координат
   };
 
-  // Проверяем, что линия не вырождена
+  // Проверяем, что линия не вырождена (длина > 0)
   const lineLength = Math.sqrt(lineDir.x ** 2 + lineDir.y ** 2);
   if (lineLength === 0) {
-    return null; // Линия вырождена
+    return null; // Точки совпадают - линия не существует
   }
 
-  // Вектор, перпендикулярный линии (поворот lineDir на 90 градусов)
+  // Строим вектор, перпендикулярный направлению линии (поворот на 90°)
   const perpDir: Vector2 = {
-    x: -lineDir.y, // Поворот: (x, y) -> (-y, x) или (y, -x)
-    y: lineDir.x,
+    x: -lineDir.y, // Перпендикулярная x-компонента
+    y: lineDir.x   // Перпендикулярная y-компонента
   };
 
-  // Параметрическое уравнение первой линии: P(t) = pointStart + t * lineDir
-  // Параметрическое уравнение второй линии: Q(s) = vector2d + s * perpDir
+  // Параметрические уравнения:
+  // Исходная линия: P(t) = pointStart + t*lineDir
+  // Перпендикуляр: Q(s) = vector2d + s*perpDir
 
-  // Решаем систему уравнений для нахождения точки пересечения:
-  // pointStart + t * lineDir = vector2d + s * perpDir
-  // Или:
-  // pointStart.x + t * lineDir.x = vector2d.x + s * perpDir.x
-  // pointStart.y + t * lineDir.y = vector2d.y + s * perpDir.y
-
+  // Вычисляем определитель системы уравнений
   const denom = lineDir.x * perpDir.y - lineDir.y * perpDir.x;
+  
+  // Теоретически для перпендикуляра denom != 0, но проверка на всякий случай
   if (Math.abs(denom) < 1e-10) {
-    return null; // Линии параллельны, пересечения нет
+    return null; // Линии параллельны (в данном контексте маловероятно)
   }
 
-  // Находим параметр t
+  // Находим параметр t для исходной линии
   const t =
     ((vector2d.x - pointStart.x) * perpDir.y - (vector2d.y - pointStart.y) * perpDir.x) / denom;
 
-  // Находим точку пересечения
+  // Вычисляем координаты точки пересечения
   const intersection: Vector2 = {
-    x: pointStart.x + t * lineDir.x,
-    y: pointStart.y + t * lineDir.y,
+    x: pointStart.x + t * lineDir.x, // x-координата проекции
+    y: pointStart.y + t * lineDir.y  // y-координата проекции
   };
 
   return intersection;

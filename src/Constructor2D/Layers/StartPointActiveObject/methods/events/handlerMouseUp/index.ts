@@ -11,7 +11,7 @@ export function handlerMouseUp(this: any, e: PIXI.FederatedPointerEvent): void {
   
   this.parent.state.mouse.left = false;
 
-  this.parent.layers.planner.updateRoomStore(null, true);
+  // this.parent.layers.planner.updateRoomStore(null, true);
 
   { // отображаем форму редактирования стены
     const activeWallID = this.parent.layers.planner.state.activeWall;

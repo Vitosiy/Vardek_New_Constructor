@@ -37,14 +37,21 @@ export interface IProjectParams {
 
 
 export interface IContentItem {
+    id: number | string;
     type?: THREETypes.TContentType;
-    position?: [number, number, number];
-    rotation?: number[];
-    sizes?: { [key: string]: number }
+    position?: IPosition;
+    rotation?: IRotationEuler;
+    size?: IContentItemSize;
+}
+
+export interface IContentItemSize {
+    width?: number,
+    height?: number,
+    depth?: number,
 }
 
 export interface IRoom {
-    id: number;
+    id: number | string;
     label?: string;
     description?: string;
     size: IWallSizes;
@@ -92,8 +99,10 @@ export interface IPosition {
 }
 
 export interface IWallData {
+    id: string | number;
     width: number,
     height: number,
+    depth: number;
     position: IPosition,
     rotation: IRotationEuler,
     side: number
@@ -228,7 +237,7 @@ export interface ISetProduct {
     roomManager: THREETypes.TRoomManager,
     trafficManager?: THREETypes.TTrafficManager,
     boxHelper?: THREETypes.TCustomBoxHelper,
-    wall?:THREE.Object3D | THREE.Mesh,
+    wall?: THREE.Object3D | THREE.Mesh,
 }
 
 export interface IClampPosition {

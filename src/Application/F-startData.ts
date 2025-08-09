@@ -1,6 +1,7 @@
 import * as THREEInterfases from "../types/interfases"
 
-export const START_ROOM_DATA: THREEInterfases.IWallSizes = {
+// export const START_ROOM_DATA: THREEInterfases.IWallSizes = {
+export const START_ROOM_DATA: any = {
     walls: [
         {
             "width": 6990.257505978436,

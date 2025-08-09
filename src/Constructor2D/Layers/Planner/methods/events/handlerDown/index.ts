@@ -34,6 +34,9 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
         this.drawWall(prevActiveObject);
         this.drawWall(id);
       }
+
+      // снимает активность с окна или двери
+      this.parent.layers.doorsAndWindows.setActiveObject(null);
       
       // рендеринг стрелок
       this.parent.layers.arrowRulerActiveObject.draw(addedwall?.points[this.state.activePointWall]);
