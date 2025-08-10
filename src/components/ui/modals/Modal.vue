@@ -17,6 +17,8 @@ const openModal = () => {
 };
 
 const closeModal = () => {
+  console.log('CLOSEMODAL')
+
   dialogBody.value?.close();
   emit("close-modal", false);
 };

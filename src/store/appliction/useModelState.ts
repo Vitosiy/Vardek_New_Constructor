@@ -106,7 +106,7 @@ export const useModelState = defineStore('ModelState', () => {
         const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
 
         colorsList.forEach(color => {
-            if (_FASADE[color] !== undefined ) {
+            if (_FASADE[color] !== undefined) {
                 colorMap.add(_FASADE[color]);
             }
         });
@@ -119,9 +119,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** ------- Работа с фасадами -------- */
 
-    const createCurrentModelFasadesData = (value: number[]) => {
-
-        console.log()
+    const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
 
         const groupedFasades: { [key: string]: number[] } = {};
 
@@ -146,6 +144,10 @@ export const useModelState = defineStore('ModelState', () => {
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
         })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
+
+        if (def) {
+            return result
+        }
 
         currentModelFasadesData.value = result
     }

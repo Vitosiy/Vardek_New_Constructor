@@ -31,6 +31,7 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import RangeSlider from "@/components/ui/rangeSlider/RangeSlider.vue";
 import Toggle from "@vueform/toggle";
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
+import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
@@ -50,7 +51,7 @@ const refraction = ref<boolean>(false);
 const currentOption = ref<keyof TTextureActionMap | null>(null);
 const currentOptionLable = ref<string | null>(null);
 
-const optionsData = ref<Object | null>(null);
+const optionsData = ref<{ [key: string]: any } | null | any[]>(null);
 const roomRef = ref<HTMLElement | null>(null);
 
 const optionsType = ref<TTextureActionMap>({
@@ -133,7 +134,6 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
     currentOption.value = null;
     return;
   }
-
   currentOption.value = value;
   switch (value) {
     case "wall":
@@ -149,7 +149,10 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
       optionsData.value = Object.values(roomState.getDefaultModuleData());
       break;
     case "fasadsTop":
-      optionsData.value = Object.values(roomState.getDefaultFasadeData());
+      optionsData.value = roomState.getDefaultFasadeData() as [];
+      break;
+    case "fasadsBottom":
+      optionsData.value = roomState.getDefaultFasadeData() as [];
       break;
   }
 
@@ -254,6 +257,10 @@ const getCurrentRoom = computed(() => {
       active: id === roomState.getCurrentRoomId.id,
     };
   };
+});
+
+const getCurrentRedactor = computed(() => {
+  return currentOption.value?.includes("fasads");
 });
 
 watch(
@@ -446,10 +453,21 @@ watch(shadows, () => {
       </div>
     </div>
 
-    <transition name="slide--left">
-      <div class="color-select" v-if="optionsData">
+    <transition name="slide--left" mode="out-in">
+      <div class="color-select" v-if="optionsData" key="color-select">
         <h1 class="color__title">{{ currentOptionLable }}</h1>
-        <MaterialSelector :materials="optionsData" @select="selectOption" />
+
+        <SurfaceRedactor
+          :materialList="optionsData"
+          :tempWork="true"
+          v-if="getCurrentRedactor"
+        />
+
+        <MaterialSelector
+          :materials="optionsData"
+          @select="selectOption"
+          v-else
+        />
       </div>
     </transition>
   </div>
@@ -504,6 +522,7 @@ watch(shadows, () => {
     gap: 15px;
     position: relative;
     padding: 15px;
+    // background: rgba($white, 0.6);
     background: rgba($white, 1);
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: 1;
@@ -577,10 +596,11 @@ watch(shadows, () => {
     gap: 15px;
     padding: 15px;
     background: rgba($white, 1);
+    // background: rgba($white, 0.6);
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: -1;
     border-radius: 15px;
-    //  backdrop-filter: blur(5px);
+    // backdrop-filter: blur(5px);
 
     &__container {
       display: flex;

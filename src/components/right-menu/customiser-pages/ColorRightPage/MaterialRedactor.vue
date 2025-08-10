@@ -213,7 +213,7 @@ const prepareData = () => {
   const dataOfFasadeType = _FASADE[COLOR];
 
   modelState.createCurrentPaletteData(COLOR);
-  
+
   modelState.createCurrentMillingData({
     fasadeId: COLOR,
     productId: productId.value,
@@ -363,7 +363,42 @@ watch(
       />
     </div>
 
-    <div class="container__list">
+    <SurfaceRedactor
+      v-if="currentEditableOption === 'surface'"
+      :materialList="materialList"
+      :tabIndex="props.tabIndex - 1"
+      @select_material="onSelectMaterial"
+    />
+
+    <MillingRedactor
+      v-if="currentEditableOption === 'milling'"
+      :millingList="millingList"
+      :tabIndex="props.tabIndex - 1"
+      @select_milling="onSelectMilling"
+    />
+
+    <ColorRedactor
+      v-if="currentEditableOption === 'palette'"
+      :paletteList="paletteList"
+      :tabIndex="props.tabIndex - 1"
+      @select_color="onSelectPalette"
+    />
+
+    <PatinaRedactor
+      v-if="currentEditableOption === 'patina'"
+      :patinaList="patinaList"
+      :tabIndex="props.tabIndex - 1"
+      @select_patina="onSelectPatina"
+    />
+
+    <GlassRedactor
+      v-if="currentEditableOption === 'glass'"
+      :glassList="glassList"
+      :tabIndex="props.tabIndex - 1"
+      @select_glass="onSelectGlass"
+    />
+
+    <!-- <div class="container__list">
       <SurfaceRedactor
         v-if="currentEditableOption === 'surface'"
         :materialList="materialList"
@@ -398,8 +433,7 @@ watch(
         :tabIndex="props.tabIndex - 1"
         @select_glass="onSelectGlass"
       />
-      <!-- {{ glassList }} -->
-    </div>
+    </div> -->
   </div>
 </template>
 

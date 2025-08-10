@@ -3,13 +3,11 @@ import { ref, computed, onBeforeMount } from "vue";
 import { _URL } from "@/types/constants";
 
 const props = defineProps<{
-  materials: Array<any> ;
+  materials: Array<any>;
   modelValue?: any;
 }>();
 
-onBeforeMount(() => {
-
-});
+onBeforeMount(() => {});
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: any): void;
@@ -70,10 +68,6 @@ const handleSelect = (material: any) => {
 
 <style scoped lang="scss">
 .redactor {
-  // overflow-y: scroll;
-  // // padding: 10px;
-  // box-sizing: border-box;
-
   &__title {
     margin-bottom: 20px;
     font-size: large;
@@ -85,15 +79,8 @@ const handleSelect = (material: any) => {
     height: 100%;
     max-height: calc(85vh - 110px);
     box-sizing: border-box;
-
     overflow-y: scroll;
-    // padding: 10px;
     box-sizing: border-box;
-
-    // &::-webkit-scrollbar {
-    //   width: 15px;
-    //   visibility: hidden;
-    // }
   }
 
   &__list::-webkit-scrollbar {
@@ -107,11 +94,6 @@ const handleSelect = (material: any) => {
     background-clip: content-box;
   }
 }
-
-// .redactor::-webkit-scrollbar {
-//   width: 8px;
-//   visibility: hidden;
-// }
 
 .item {
   display: flex;
@@ -139,17 +121,15 @@ const handleSelect = (material: any) => {
   &__name {
     margin-left: 30px;
   }
-  @media(hover:hover){
-    &:hover{
+  @media (hover: hover) {
+    &:hover {
       background-color: $stroke;
     }
   }
 }
 
 .search {
-  // position: absolute;
-  top: 10px;
-  height: 40px;
+  padding: 10px 15px;
   width: 95%;
   border-radius: 15px;
   padding-left: 15px;

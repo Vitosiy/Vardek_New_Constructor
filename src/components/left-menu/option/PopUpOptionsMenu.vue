@@ -94,7 +94,7 @@ const toggleInfoPopup = () => {
 <style lang="scss" scoped>
 .options-popup {
   width: max-content;
-  max-width: 731px;
+  max-width: 575px;
   min-width: 210px;
   position: absolute;
   top: 15px;

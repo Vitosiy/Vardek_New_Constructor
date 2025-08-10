@@ -287,6 +287,7 @@ const saveTableData = () => {
 };
 
 const openTableRedactor = () => {
+  console.log("OPEN");
   if (!product.value) return;
   const APP = VerdekConstructor.value;
   const { userData, id } = product.value;
@@ -408,88 +409,81 @@ defineExpose({
     </button>
   </div>
 
-  <transition name=" controller-toggle">
-    <div class="model-controller" :style="controllerPosition" v-if="controller">
-      <!-- <div
+  <div
     :class="['model-controller', activeController]"
     :style="controllerPosition"
-    v-if="controller"
-  > -->
-      <div class="controller-container">
-        <div class="controller-left">
-          <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-          <ControllerButton v-show="!CutData.data" />
-          <ContentControllerButton v-show="!CutData.data" />
-          <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
-        </div>
-        <div class="controller-right">
-          <img
-            class="right-line"
-            src="@/assets/svg/right-menu/right-line.svg"
-          />
-          <UpControllerButton />
-          <OpenFacadeButton />
+  >
+    <div class="controller-container">
+      <div class="controller-left">
+        <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
+        <ControllerButton v-show="!CutData.data" />
+        <ContentControllerButton v-show="!CutData.data" />
+        <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
+      </div>
+      <div class="controller-right">
+        <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
+        <UpControllerButton />
+        <OpenFacadeButton />
 
-          <Modal
-            v-if="CutData.data"
-            :container="`modal--tableTop`"
-            @open-modal="openTableRedactor"
-            @close-modal="closeTableRedactor"
-          >
-            <template #modalBody="{ onModalClose }" class="modal--tableTop">
-              <TableTopManager
-                ref="tableTopManager"
-                :grid="CutData.data"
-                :canvas-height="CutData.canvasHeight"
-                :model-height="CutData.modelHeight"
-                v-if="isModalOpen"
-              >
-                <template #delite>
-                  <button
-                    class="actions-btn actions-btn--footer"
-                    @click="
-                      () => {
-                        deliteTable();
-                        onModalClose();
-                      }
-                    "
-                  >
-                    Удалить
-                  </button>
-                </template>
-                <template #save>
-                  <button
-                    class="actions-btn actions-btn--footer"
-                    @click="saveTableData"
-                  >
-                    Сохранить
-                  </button>
-                </template>
-                <template #close>
-                  <button
-                    @click="
-                      () => {
-                        onModalClose();
-                      }
-                    "
-                    class="actions-btn actions-btn--footer"
-                  >
-                    Закрыть
-                  </button>
-                </template>
-              </TableTopManager>
-            </template>
-            <template #modalOpen="{ onModalOpen }">
-              <CutButton @click="onModalOpen" />
-              <!-- <button class="cut-btn" @click="onModalOpen">
+        <Modal
+          v-if="CutData.data"
+          :container="`modal--tableTop`"
+          @open-modal="openTableRedactor"
+          @close-modal="closeTableRedactor"
+        >
+          <template #modalBody="{ onModalClose }" class="modal--tableTop">
+            <TableTopManager
+              ref="tableTopManager"
+              :grid="CutData.data"
+              :canvas-height="CutData.canvasHeight"
+              :model-height="CutData.modelHeight"
+              v-if="isModalOpen"
+            >
+              <template #delite>
+                <button
+                  class="actions-btn actions-btn--footer"
+                  @click="
+                    () => {
+                      deliteTable();
+                      onModalClose();
+                    }
+                  "
+                >
+                  Удалить
+                </button>
+              </template>
+              <template #save>
+                <button
+                  class="actions-btn actions-btn--footer"
+                  @click="saveTableData"
+                >
+                  Сохранить
+                </button>
+              </template>
+              <template #close>
+                <button
+                  @click="
+                    () => {
+                      onModalClose();
+                    }
+                  "
+                  class="actions-btn actions-btn--footer"
+                >
+                  Закрыть
+                </button>
+              </template>
+            </TableTopManager>
+          </template>
+          <template #modalOpen="{ onModalOpen }">
+            <CutButton @click="onModalOpen" />
+            <!-- <button class="cut-btn" @click="onModalOpen">
               <img class="cut-icon" src="/icons/cut.svg" alt="" />
             </button> -->
-            </template>
-          </Modal>
-        </div>
+          </template>
+        </Modal>
       </div>
     </div>
-  </transition>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -631,11 +625,19 @@ defineExpose({
   top: 50%;
   padding: 1rem;
 
+  opacity: 0;
+  filter: blur(10px);
+
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 
   transition: all 0.2s ease-in-out;
+
+  &--active {
+    opacity: 1;
+    filter: blur(0);
+  }
 
   .controller-left {
     transform: translate(23px, -69px);

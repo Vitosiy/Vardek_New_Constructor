@@ -85,7 +85,6 @@ export class TrafficManager {
         // if(!object) return
 
         this.currentObject = object
-        console.log(object,'object')
 
         this.events.emit("A:Selected", {
             object: object,
@@ -95,7 +94,7 @@ export class TrafficManager {
         if (object) {
 
             if (object.userData.elementType !== 'raspil') {
-                let product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+                const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
@@ -107,12 +106,6 @@ export class TrafficManager {
             this.modelState.clearCurrentModelFasadesData()
             // this.modelState.setCurrentModel(null)
         }
-
-
-        // this.events.emit("A:Selected", {
-        //     object: object,
-        //     roomContant: this.room._roomContant
-        // })
 
     }
 
