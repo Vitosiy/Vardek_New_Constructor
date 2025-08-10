@@ -52,7 +52,7 @@ export interface IContentItem {
 }
 
 export interface IRoom {
-    id?: number;
+    id: number | string;
     label?: string;
     description?: string;
     params?: IWallSizes;

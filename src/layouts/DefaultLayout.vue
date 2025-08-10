@@ -12,6 +12,8 @@ import MainPopUp from "@/components/popUp/MainPopUp.vue";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 
 import { useRoute } from "vue-router";
+import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
+import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
 
 const route = useRoute();
 const ready = ref<boolean>(false);

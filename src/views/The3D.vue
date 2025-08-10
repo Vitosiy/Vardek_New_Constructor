@@ -28,6 +28,7 @@ import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
 import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
+import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
@@ -75,6 +76,9 @@ const fasades = ref<{ [key: string]: any }>({});
 const productFasades = ref<any[]>([]);
 
 /** ----------------- 19.05.25 ----------------------------- */
+
+//Универсальный модуль
+const universalModule2DConstructor = ref();
 
 //Распил
 const tableTopManager = ref();
@@ -183,7 +187,7 @@ const selected = async (item: any) => {
 
   productData.value = { ...PROPS };
 
-  if (RASPIL.data) {
+  if (RASPIL?.data) {
     CutData.value = {
       data: RASPIL.data,
       canvasHeight: RASPIL.canvasHeight,
@@ -197,14 +201,121 @@ const selected = async (item: any) => {
     };
   }
 
-  console.log(CutData.value, "CutData.value");
+  useModelState().setCurrentModel(userData);
+};
 
-  // modelState.setCurrentModel(userData);
+const resizeRoom = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Room-resize", inputValue.value);
+  }
+};
 
-  /**  Координаты мыши */
-  await nextTick(() => {
-    controllerPositionData.value = userData.MOUSE_POSITION;
-  });
+const toggleShadow = (value: boolean) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:ToggleShadow", value);
+  }
+};
+
+const toggleRefraction = (value: boolean) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:ToggleRefraction", value);
+  }
+};
+
+const changePointLightPower = (value: number) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:ChangePointLightPower", value);
+  }
+};
+
+const setQuality = (value: string) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Quality", value);
+  }
+};
+
+const create = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Create");
+  }
+};
+
+const save = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:Save");
+  }
+};
+
+const load = () => {
+  if (VerdekConstructor) {
+    shadows.value = false;
+    refraction.value = false;
+    eventBus.emit("A:ToggleShadow", shadows.value);
+    eventBus.emit("A:ToggleRefraction", refraction.value);
+    eventBus.emit("A:Load", selectedRoom.value?.id);
+  }
+};
+
+const toggleiew = () => {
+  cameraView.value = !cameraView.value;
+  eventBus.emit("A:CameraToggle", cameraView.value);
+};
+
+const changeWallTexture = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:ChangeWallTexture", wallTexture.value);
+  }
+};
+
+const changeFloorTexture = () => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:ChangeFloorTexture", floorTexture.value);
+  }
+};
+
+const changeModuleTexture = (value: { [key: string]: any }) => {
+  if (VerdekConstructor) {
+    eventBus.emit("A:ChangeModuleTexture", value);
+  }
+};
+
+// const changeFasadeTexture = (value: { [key: string]: any }) => {
+//   if (VerdekConstructor) {
+//     currentFasadeId.value = value.ID;
+
+//     if (
+//       appData.FASADE[currentFasadeId.value].PALETTE.length &&
+//       appData.FASADE[currentFasadeId.value].PALETTE[0] != null
+//     ) {
+//       paletteColorsData.value = Object.keys(appData.PALETTE)
+//         .filter(
+//           (key) =>
+//             appData.PALETTE[key].TYPE ===
+//             appData.FASADE[currentFasadeId.value].PALETTE[0]
+//         )
+//         .reduce((obj, key) => {
+//           obj[key] = appData.PALETTE[key];
+//           return obj;
+//         }, {});
+
+//       return;
+//     }
+
+//     paletteColorsData.value = {};
+//     eventBus.emit("A:ChangeFasadeTexture", value);
+//   }
+// };
+
+const changePaletteColor = () => {
+  // const selectedPalette = paletteColorsData.find(
+  //   (palette) => palette.UNAME === selectPalette.value
+  // );
+
+  eventBus.emit("A:ChangePaletteColor", selectPalette.value);
+};
+
+const onDrag = (event: any, model: { [key: string]: any } | string) => {
+  event.dataTransfer?.setData("text", JSON.stringify(model));
 };
 
 const removeModel = (model) => {
@@ -413,17 +524,16 @@ defineExpose({
     :class="['model-controller', activeController]"
     :style="controllerPosition"
   >
-    <div class="controller-container">
-      <div class="controller-left">
-        <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-        <ControllerButton v-show="!CutData.data" />
-        <ContentControllerButton v-show="!CutData.data" />
-        <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
-      </div>
-      <div class="controller-right">
-        <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-        <UpControllerButton />
-        <OpenFacadeButton />
+    <div class="controller-left">
+      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
+      <ControllerButton v-show="!CutData.data" />
+      <ContentControllerButton v-show="!CutData.data" />
+      <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
+    </div>
+    <div class="controller-right">
+      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
+      <UpControllerButton />
+      <OpenFacadeButton />
 
         <Modal
           v-if="CutData.data"

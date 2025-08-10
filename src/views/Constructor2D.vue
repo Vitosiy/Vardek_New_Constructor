@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 
 import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
+import FormLabelRoom from "@/components/popUp/constructor2d/FormLabelRoom.vue";
 
 import {
   Vector2,
@@ -77,6 +78,8 @@ onMounted(async () => {
     canvas2d.value.addEventListener('drop', dropHandler);
 
     console.log("!!! App2d:", App2d);
+    // @ts-ignore
+    window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
     
   }
 
@@ -117,5 +120,6 @@ onUnmounted(() => {
     <canvas ref="canvas2d" id="constructor2D"
       @dragover.prevent></canvas>
     <ModifyWall />
+    <FormLabelRoom />
   </div>
 </template>

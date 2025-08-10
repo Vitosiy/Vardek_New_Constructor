@@ -16,7 +16,10 @@ import {
   ArgumentDataAddWall,
   MergeWalls,
   HoverPointObject,
+  IC2DRoom,
 } from "./interfaces";
+
+import { IDrawObjects } from "./../DoorsAndWindows/interfaces";
 
 import {
   offsetVectorBySegmentNormal,
@@ -34,6 +37,8 @@ import {
   adjustSegmentLength,
   findRayLineIntersection,
   isPointNearLine,
+  isPointInPolygon,
+  getCenterOfPoints,
 } from "@/Constructor2D/utils/Math";
 
 import {
@@ -67,7 +72,9 @@ export default class Planner {
 
   private objectWalls: ObjectWall[] = [];
 
-  private roomStore = useSchemeTransition();
+  public roomsMap = new Map<string | number, IC2DRoom>();
+
+  // private roomStore = useSchemeTransition();
 
   public config: Config = {
 
@@ -174,6 +181,63 @@ export default class Planner {
       .on("pointerup", this.handlerStageMouseUp)
       .on("mousemove", this.handlerStageMouseMove);
 
+    console.log('Planner initialized with', this.objectWalls.length, 'walls');
+
+  }
+
+  // добавление новой комнаты
+  public addRoom(
+    id: string | number | null = null, 
+    label: string | null = null, 
+    description: string = ''
+  ): string {
+
+    const rId: string | number = id ? id : MathUtils.generateUUID();
+
+    if (this.roomsMap.has(rId)) {
+      throw new Error(`Room with ID ${rId} already exists`);
+    }
+
+    const countRooms: number = this.roomsMap.size;
+
+    this.roomsMap.set(rId, {
+      id: rId,
+      label: label ?? `Комната ${countRooms + 1}`,
+      description: description,
+    });
+
+    return rId;
+
+  }
+
+  // Получение комнаты по ID
+  public getRoom(id: string | number) {
+
+    if (!id) return undefined;
+
+    return this.roomsMap.get(id);
+
+  }
+
+  // удаление комнаты по ID
+  public removeRoom(id: string | number): boolean {
+
+    if (!this.roomsMap.has(id)) {
+      console.error(`Room with ID ${id} does not exist`);
+      return false;
+    }
+
+    this.roomsMap.delete(id);
+
+    return true;
+
+  }
+
+  // получение всех комнат
+  get allRooms(): IC2DRoom[] {
+
+    return Array.from(this.roomsMap.values());
+
   }
 
   private calculatePositionPointsWall(point0: Vector2, point1: Vector2, height: number, heightDirection: -1 | 1): [Vector2, Vector2, Vector2, Vector2] {
@@ -239,7 +303,6 @@ export default class Planner {
 
     // ищем точку стены под курсором
     let hoverPointObject: HoverPointObject | null;
-
     if (data.type === 'dividing_wall') { // внутренняя стена
       /*
       * определяем точку к которой конектится внутренняя стена
@@ -249,21 +312,6 @@ export default class Planner {
         y: positionObjectY
       }); // id, point
 
-      if (hoverPointObject) {
-        const normalWall: ObjectWall = this.objectWalls.find(el => el.id === hoverPointObject.id);
-        if (normalWall) {
-          linePoint_0 = hoverPointObject.point;
-          linePoint_1 = offsetVectorBySegmentNormal(
-            [
-              normalWall.points[0],
-              normalWall.points[1]
-            ],
-            hoverPointObject.point,
-            -this.config.wall.width * normalWall.heightDirection
-          );
-        }
-      }
-
     } else {
       hoverPointObject = this.getPointByPosition({
         x: positionObjectX,
@@ -271,6 +319,23 @@ export default class Planner {
       });
     }
 
+    // стена под курсором
+    let wallUnderCursor: ObjectWall | undefined = hoverPointObject ? this.objectWalls.find(el => el.id === hoverPointObject.id) : undefined;
+
+    if (data.type === 'dividing_wall' && hoverPointObject) {
+      wallUnderCursor = this.objectWalls.find(el => el.id === hoverPointObject.id);
+      if (wallUnderCursor) {
+        linePoint_0 = hoverPointObject.point;
+        linePoint_1 = offsetVectorBySegmentNormal(
+          [
+            wallUnderCursor.points[0],
+            wallUnderCursor.points[1]
+          ],
+          hoverPointObject.point,
+          -this.config.wall.width * wallUnderCursor.heightDirection
+        );
+      }
+    }
 
     let angleDegreesConnectWall: number = 0;
     let directionX: number = 1;
@@ -318,7 +383,7 @@ export default class Planner {
               (this.parent.state.keys.shift ? this.config.wall.width : -this.config.wall.width) * this.config.wall.heightDirection
             );
 
-          } else if (data.type === 'wall') { // направдение стены относительно к присоединяемой под углом 0 градусов, то есть ее продолжает
+          } else if (data.type === 'wall') { // направление стены относительно к присоединяемой под углом 0 градусов, то есть ее продолжает
 
             linePoint_0 = hoverPoints[1];
             linePoint_1 = offsetVectorBySegment(
@@ -402,8 +467,60 @@ export default class Planner {
       angleDegrees: angleDegrees,
       updateTime: Date.now(),
       mergeWalls: mergeWalls,
-      points: pointsWall
+      points: pointsWall,
+      roomId: null,
     };
+
+    if (wallUnderCursor) { // определение комнаты для стены
+
+      wallData.roomId = wallUnderCursor.roomId;
+
+    } else { // создаем комнату
+
+      if (data.type !== 'dividing_wall') {
+
+        // вызываем метод создания комнаты
+        const rId: number | string = this.addRoom();
+
+        if (!rId) {
+          throw new Error("Failed to create a new room"); // throw error
+        }
+
+        wallData.roomId = rId;
+
+      } else { // определяем, находится ли перегородка внутри какой-то комнаты или нет
+
+        const rooms = this.allRooms; // спиосок всех комнат
+
+        if(!rooms || rooms.length === 0){
+          console.log('No rooms available for processing');
+        }
+        
+        const originObject: Vector2 = getCenterOfPoints(wallData.points); // находим центр нового объекта
+
+        if (!originObject) {
+          console.error("Origin object is not defined.");
+        } else {
+
+          for (let i = 0, len = rooms.length; i < len; i++) {
+
+            const pointInRoom: boolean = this.isPointInRoom(rooms[i].id, originObject);
+
+            if (pointInRoom) {
+              console.log('>>> Объект находится внутри комнаты');
+              wallData.roomId = rooms[i].id;
+              break;
+            }
+
+          }
+          
+        }
+
+      }
+
+    }
+
+    console.log('all rooms:', this.allRooms);
 
     // 2. добавляем данные стены в this.objectWalls
     if (wallData.mergeWalls.wallPoint0) {
@@ -423,7 +540,7 @@ export default class Planner {
     } else {
       this.objectWalls.push(wallData);
     }
-    this.updateRoomStore(wallData.id, (wallData.mergeWalls.wallPoint0 || wallData.mergeWalls.wallPoint1 ? true : false));
+    // this.updateRoomStore(wallData.id, (wallData.mergeWalls.wallPoint0 || wallData.mergeWalls.wallPoint1 ? true : false));
 
     // 3. получаем из this.objectWalls добавленный объект и берем id
     const addedwall = this.objectWalls.find(el => el.id === uuid);
@@ -488,6 +605,45 @@ export default class Planner {
 
   }
 
+  public isPointInRoom(roomId: number | string, targetPoint: Vector2): boolean {
+
+    // Проверка входных параметров
+    if (!roomId || !targetPoint) {
+      throw new Error(`Invalid parameters: roomId(${roomId}) and targetPoint(${JSON.stringify(targetPoint)}) are required`);
+    }
+
+    const polygonPoints: Vector2[] = this.getRoomContour(roomId);
+
+    // 5. Проверка принадлежности точки
+    return isPointInPolygon(polygonPoints, targetPoint);
+
+  }
+
+  public getRoomContour(roomId: number | string): Vector2[] {
+
+    // 2. Настройки точности
+    const precision = 2; // Кол-во знаков после запятой
+    const uniquePoints = new Map<string, Vector2>();
+
+    // 3. Сбор уникальных точек (индексы 0 и 1)
+    for (const wall of this.objectWalls) {
+      if (wall.roomId === roomId && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
+        // Точка 0
+        const key0 = `${wall.points[0].x.toFixed(precision)},${wall.points[0].y.toFixed(precision)}`;
+        uniquePoints.set(key0, wall.points[0]);
+
+        // Точка 1
+        const key1 = `${wall.points[1].x.toFixed(precision)},${wall.points[1].y.toFixed(precision)}`;
+        uniquePoints.set(key1, wall.points[1]);
+      }
+    }
+
+    // 4. Проверка минимального количества точек
+    return Array.from(uniquePoints.values());
+
+  }
+
+  /*
   public updateRoomStore(id: number | string | null = null, mergeWall: boolean = false): void {
 
     if (!id) id = this.state.activeWall;
@@ -522,6 +678,7 @@ export default class Planner {
     }
 
   }
+  */
 
   // функция получения списка присоединенных стен для их обновления
   private getMergeWallsIDForUpdate(id: string | number): (string | number)[] {
@@ -642,6 +799,9 @@ export default class Planner {
     const points = JSON.parse(JSON.stringify(obj.points));
     const mergeWalls = obj.mergeWalls;
 
+    // обновляем окно и двери в стене, если они есть
+    if (this.parent.layers.doorsAndWindows) this.parent.layers.doorsAndWindows.updateObject(obj.id);
+
     { // рассчитываем новые координаты точек 2 и 3, если есть присоединенная стена
 
       if (obj.name === 'dividing_wall') {
@@ -650,30 +810,30 @@ export default class Planner {
 
           let pnl: Vector2 | null = null;
           let line: [Vector2, Vector2] | null = null;
-          
+
           for (let i = 0, len = this.objectWalls.length; i < len; i++) {
 
             const wall: ObjectWall = this.objectWalls[i];
-            
-            if( wall.id === obj.id ) continue; // пропускаем текущую стену
+
+            if (wall.id === obj.id) continue; // пропускаем текущую стену
 
             pnl = isPointNearLine([wall.points[0], wall.points[1]], points[0], 1);
 
-            if(wall.name === 'dividing_wall' && !pnl){
+            if (wall.name === 'dividing_wall' && !pnl) {
               pnl = isPointNearLine([wall.points[2], wall.points[3]], points[0], 1);
-              if(pnl) line = [wall.points[2], wall.points[3]];
-            }else if(pnl) {
+              if (pnl) line = [wall.points[2], wall.points[3]];
+            } else if (pnl) {
               line = [wall.points[0], wall.points[1]];
             }
 
-            if(pnl) break;
+            if (pnl) break;
 
           }
 
-          if(line) {
+          if (line) {
             // если _p0 находится на линии другой стены, то находим точку _p3
             const pointIntLine: Vector2 | null = findRayLineIntersection(line[0], line[1], points[2], points[3]);
-            if(pointIntLine) points[3] = pointIntLine;
+            if (pointIntLine) points[3] = pointIntLine;
           }
 
         }
@@ -682,30 +842,30 @@ export default class Planner {
 
           let pnl: Vector2 | null = null;
           let line: [Vector2, Vector2] | null = null;
-          
+
           for (let i = 0, len = this.objectWalls.length; i < len; i++) {
 
             const wall: ObjectWall = this.objectWalls[i];
-            
-            if( wall.id === obj.id ) continue; // пропускаем текущую стену
+
+            if (wall.id === obj.id) continue; // пропускаем текущую стену
 
             pnl = isPointNearLine([wall.points[0], wall.points[1]], points[1], 1);
 
-            if(wall.name === 'dividing_wall' && !pnl){
+            if (wall.name === 'dividing_wall' && !pnl) {
               pnl = isPointNearLine([wall.points[2], wall.points[3]], points[1], 1);
-              if(pnl) line = [wall.points[2], wall.points[3]];
-            }else if(pnl) {
+              if (pnl) line = [wall.points[2], wall.points[3]];
+            } else if (pnl) {
               line = [wall.points[0], wall.points[1]];
             }
 
-            if(pnl) break;
+            if (pnl) break;
 
           }
 
-          if(line){
+          if (line) {
             // если _p1 находится на линии другой стены, то находим точку _p2
             const pointIntLine: Vector2 | null = findRayLineIntersection(line[0], line[1], points[3], points[2]);
-            if(pointIntLine) points[2] = pointIntLine;
+            if (pointIntLine) points[2] = pointIntLine;
           }
 
         }
@@ -1164,45 +1324,26 @@ export default class Planner {
 
   public redrawHalfRoom(): void {
 
-    const roomPoints: Vector2[] = [];
+    const roomsHalf = [];
 
-    const dataWalls: ({
-      id: string | number,
-      mergeWalls: {
-        wallPoint0: string | number,
-        wallPoint1: string | number,
-      },
-      points: Vector2[]
-    })[] = [];
+    const rooms = this.allRooms;
 
-    for (let i = 0, len = this.objectWalls.length; i < len; i++) {
-      if (this.objectWalls[i].name !== "dividing_wall") {
-        dataWalls.push({
-          id: this.objectWalls[i].id,
-          mergeWalls: this.objectWalls[i].mergeWalls,
-          points: JSON.parse(JSON.stringify(this.objectWalls[i].points))
-        });
+    rooms.forEach((room, index) => {
+
+      const polygonPoints: Vector2[] = this.getRoomContour(room.id);
+
+      const roomData = JSON.parse(JSON.stringify(room));
+      roomData.points = polygonPoints;
+
+      if(polygonPoints.length > 2){
+        roomsHalf.push(roomData);
       }
-    }
+      
+    });
 
-    for (let i = 0, len = dataWalls.length; i < len; i++) {
+    if (roomsHalf.length != 0) {
 
-      const wall = dataWalls[i];
-
-      if (i == 0) roomPoints.push(wall.points[0]);
-
-      if (wall.mergeWalls.wallPoint0 || i == (len - 1)) roomPoints.push(wall.points[1]);
-
-    }
-
-    if (roomPoints.length > 2) {
-
-      this.parent.layers.halfRoom.drawHalfRoom([
-        {
-          id: 1,
-          points: roomPoints,
-        }
-      ]);
+      this.parent.layers.halfRoom.drawHalfRoom(roomsHalf);
 
     } else {
       this.parent.layers.halfRoom.removeHalfRoom();
@@ -1358,14 +1499,19 @@ export default class Planner {
         HoverPointObject | null =
         this.getPointByPosition(position, dataWall.id);
 
-      if (hoverPointObject) {
+      if (hoverPointObject) { // если есть точка другой стены под курсором
 
+        // получаем данные стены на которую навели (точка стены 0 или 1)
         const connectWall = this.objectWalls.find((el: ObjectWall) => el.id === hoverPointObject.id);
 
-        if (connectWall) {
+        if (connectWall) { // если стена найдена и данные получены
 
-          if (indexPoint == 0) {
+          if (indexPoint == 0) { // если точка 0 под курсором
 
+            /*
+            Если стена под курсором не имеет присоединённой стены к точке 0,
+            и индекс точки под курсором этой стены равен 1
+            */
             if (connectWall.mergeWalls.wallPoint0 === null && hoverPointObject.indexPoint == 1) {
 
               connectWall.mergeWalls.wallPoint0 = dataWall.id;
@@ -1373,8 +1519,12 @@ export default class Planner {
 
             }
 
-          } else if (indexPoint == 1) {
+          } else if (indexPoint == 1) { // если точка 1 под курсором
 
+            /*
+            Если стена под курсором не имеет присоединённой стены к точке 1,
+            и индекс точки под курсором этой стены равен 0
+            */
             if (connectWall.mergeWalls.wallPoint1 === null && hoverPointObject.indexPoint == 0) {
 
               connectWall.mergeWalls.wallPoint1 = dataWall.id;
@@ -1383,6 +1533,36 @@ export default class Planner {
             }
 
           }
+
+          /*
+          * 1. При перемещении точки стены (возможно соединенной с другими стенами) на свободную точку другой стены:
+          *    - Удаляем исходную комнату (к которой принадлежала перемещаемая стена)
+          *    - Переносим все связанные стены в комнату, содержащую целевую точку под курсором
+          *
+          * 2. Проверка принадлежности стен к одной цепочке:
+          *    2.1 Если перемещаемая стена и целевая точка принадлежат одной цепочке стен:
+          *        - Оставляем без изменений (не допускаем соединения стены с самой собой)
+          *    2.2 Если принадлежат разным цепочкам:
+          *        - Выполняем удаление исходной комнаты и обновление roomId для всех стен цепочки
+          */
+          if (dataWall.roomId !== connectWall.roomId) {
+
+            this.objectWalls.forEach(wall => {
+              if (wall.roomId === dataWall.roomId) {
+                wall.roomId = connectWall.roomId;
+              }
+            });
+
+            this.removeRoom(dataWall.roomId);
+            dataWall.roomId = connectWall.roomId;
+
+            // !!! обновляем пол комнаты
+
+          }
+
+        } else {
+
+          console.error('Connected wall not found for hoverPointObject:', hoverPointObject);
 
         }
 
@@ -1559,6 +1739,8 @@ export default class Planner {
     this.state.activeWall = null;
     this.state.activePointWall = null;
 
+    this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+
     this.redrawAllObjects();
 
   }
@@ -1647,13 +1829,47 @@ export default class Planner {
 
         }
 
+        const count = this.objectWalls.reduce((acc, wall) => {
+          return acc + (
+            (
+              wall.id !== this.objectWalls[indexWall].id && 
+              wall.roomId === this.objectWalls[indexWall].roomId &&
+              wall.name !== "dividing_wall"
+            ) ? 1 : 0
+          );
+        }, 0);
+        if (count == 0 && this.objectWalls[indexWall].roomId){
+
+          // отвязываем все внутренние стены от удаленной комнаты
+          this.objectWalls.forEach((wall: ObjectWall) => {
+            if(wall.name === "dividing_wall" && wall.roomId === this.objectWalls[indexWall].roomId){
+              wall.roomId = null;
+            }
+          });
+
+          // отвязываем все внутренние объекты от удаленной комнаты
+          this.parent.layers.doorsAndWindows.drawObjects.forEach((obj: IDrawObjects) => {
+            if(obj.roomId === this.objectWalls[indexWall].roomId){
+              obj.roomId = null;
+            }
+          });
+          
+          this.removeRoom(this.objectWalls[indexWall].roomId);
+          
+        }
+        console.log('remove | all rooms:', this.allRooms);
+
         this.objectWalls.splice(indexWall, 1);
-        this.roomStore.removeWall({
-          idRoom: this.roomStore.getSchemeTransitionData[0].id,
-          idWall: this.state.activeWall
-        });
+        // this.roomStore.removeWall({
+        //   idRoom: this.roomStore.getSchemeTransitionData[0].id,
+        //   idWall: this.state.activeWall
+        // });
 
         this.state.activePointWall = null;
+        this.parent.layers.doorsAndWindows.detachFromWall({
+          type: "wall",
+          id: this.state.activeWall
+        });
         this.state.activeWall = null
 
         this.redrawAllObjects();
@@ -1666,6 +1882,14 @@ export default class Planner {
 
     }
 
+  }
+
+  public getWallProperty<T extends keyof ObjectWall>(
+    id: string | number,
+    propName: T
+  ): ObjectWall[T] | null {
+    const wall = this.objectWalls?.find(wall => wall.id === id);
+    return wall ? JSON.parse(JSON.stringify(wall[propName])) : null;
   }
 
   public set scale(v: number) {
@@ -1683,8 +1907,16 @@ export default class Planner {
 
       // Уничтожаем каждый элемент контейнеров
       if (containers) {
+
         for (const key in containers) {
-          const graphic = containers[key as keyof ObjectWallContainers];
+
+          if (
+            key === "root" ||
+            key === "containerTextRulerWall" ||
+            key === "textRulerWall"
+          ) continue; // пропускаем корневой контейнер
+
+          const graphic = containers[key];
 
           if (graphic && typeof graphic.destroy === "function") {
 
@@ -1698,14 +1930,15 @@ export default class Planner {
               }
 
               // Уничтожаем графику, только если она существует
-              if (!graphic.destroyed) {
-                graphic.destroy(true); // Уничтожаем графику рекурсивно
+              if (graphic && typeof graphic.destroy === "function") {
+                graphic.destroy({
+                  texture: false,     // Удалить текстуру (если она есть)
+                  baseTexture: false, // Удалить базовую текстуру (если есть)
+                }); // Уничтожаем графику рекурсивно
               }
 
               // Убираем из контейнера, если графика существует
-              if (this.container && this.container.children.includes(graphic)) {
-                this.container.removeChild(graphic);
-              }
+              if (containers.root && containers.root.children.includes(graphic)) containers.root.removeChild(graphic);
 
               // Обнуляем ссылку
               containers[key as keyof ObjectWallContainers] = null!;
@@ -1713,10 +1946,64 @@ export default class Planner {
             } catch (error) {
               console.warn(`Failed to destroy graphic: ${key}`, error);
             }
+
           } else {
             console.warn(`Skipping destroy for graphic: ${key}, as it is null or undefined`);
           }
         }
+
+        // удаляем контейнер textRulerWall
+        try {
+          if (containers.textRulerWall && typeof containers.textRulerWall.destroy === "function") {
+            containers.textRulerWall.destroy(true);
+          }
+          if (
+            containers.containerTextRulerWall &&
+            containers.containerTextRulerWall.children.includes(containers.textRulerWall)
+          ) {
+            containers.containerTextRulerWall.removeChild(containers.textRulerWall);
+          }
+          containers.textRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy graphic: textRulerWall`, error);
+        }
+
+        // удаляем контейнер containerTextRulerWall
+        try {
+          if (containers.containerTextRulerWall && typeof containers.containerTextRulerWall.destroy === "function") {
+            containers.containerTextRulerWall.destroy(true);
+          }
+          if (
+            containers.root &&
+            containers.root.children.includes(containers.containerTextRulerWall)
+          ) {
+            containers.root.removeChild(containers.containerTextRulerWall);
+          }
+          containers.containerTextRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy graphic: containerTextRulerWall`, error);
+        }
+
+        // удаляем контейнер root
+        try {
+          if (containers.root && typeof containers.root.destroy === "function") {
+            containers.root.destroy({
+              children: true,     // Удалить дочерние элементы (если это Container)
+              texture: false,     // Удалить текстуру (если она есть)
+              baseTexture: false, // Удалить базовую текстуру (если есть)
+            });
+          }
+          if (
+            this.container &&
+            this.container.children.includes(containers.root)
+          ) {
+            this.container.removeChild(containers.root);
+          }
+          containers.root = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy graphic: root`, error);
+        }
+
       }
 
     });

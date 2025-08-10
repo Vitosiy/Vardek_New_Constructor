@@ -11,6 +11,7 @@ export class DragAndDropManager {
     eventBus: ReturnType<typeof useEventBus> = useEventBus();
 
     geometryBuilder: THREE.TGeometryBuilder;
+    universalGeometryBuilder: THREE.TUniversalGeometryBuilder;
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     camera: THREE.Camera
@@ -37,6 +38,7 @@ export class DragAndDropManager {
         this.setObject = root._setObject
         this.roomParams = root._roomManager?._roomParams
         this.geometryBuilder = root._geometryBuilder
+        this.universalGeometryBuilder = trafficManager.universalGeometryBuilder
         this.boxHelper = root._customBoxHelper
 
         this.raycaster = raycaster;
@@ -90,17 +92,39 @@ export class DragAndDropManager {
                     const surface = intersects[0].object;
                     // this.eventBus.emit('U:Drop')
 
-                    this.geometryBuilder.craeteModel(productData, async (object) => {
+                    if (productData.moduleType || productData.ID == 3954672) {
+                        this.universalGeometryBuilder.craeteModel(productData, (object) => {
 
+                            object.userData.MOUSE_POSITION = {
+                                x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
+                                y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
+                            };
+                            this.setObject.create({
+                                object,
+                                point,
+                                trafficManager: this.trafficManager,
+                                boxHelper: this.boxHelper,
+                                wall: surface
+                            });
 
-                        await this.setObject.create({
-                            object,
-                            point,
-                            trafficManager: this.trafficManager,
-                            boxHelper: this.boxHelper,
-                            wall: surface
+                            //useModelState().setCurrentModel(object);
                         });
+                    } else {
+                        this.geometryBuilder.craeteModel(productData, async (object) => {
 
+                            object.userData.MOUSE_POSITION = {
+                                x: point.clone().project(this.camera).x * this.root._sizes.width * 0.5,
+                                y: point.clone().project(this.camera).y * this.root._sizes.height * -0.5,
+                            };
+
+                            await this.setObject.create({
+                                object,
+                                point,
+                                trafficManager: this.trafficManager,
+                                boxHelper: this.boxHelper,
+                                wall: surface
+                            });
+    
 
                         this.trafficManager._currentObject = object
                         this.trafficManager.ruler.drawRulerToObjects(object)
@@ -112,6 +136,7 @@ export class DragAndDropManager {
                     });
 
                     this.eventBus.emit('U:Drop')
+                    }
                 }
             } catch (error) {
                 console.error('Error parsing JSON data:', error);

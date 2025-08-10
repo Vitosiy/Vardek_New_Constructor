@@ -41,9 +41,6 @@ export function eventModifyWall(this: any, data: {width: number, height: number}
   const listRelatedWalls: (string | number)[] = this.getMergeWallsIDForUpdate(dataWall.id);
   this.drawListWalls(listRelatedWalls);
 
-  this.roomStore.setWall({
-    idRoom: this.roomStore.getSchemeTransitionData[0].id,
-    wall: dataWall
-  });
+  this.parent.updateRoomStore();
   
 }

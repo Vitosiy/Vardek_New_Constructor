@@ -9,7 +9,11 @@ export type EventName =
   | 'C2D:hide-form-modify-wall' 
   | 'C2D:update-form-modify-wall' 
   | 'C2D:add-room' 
-  | 'C2D:remove-room';
+  | 'C2D:remove-room'
+  | 'C2D:set-room-label'
+  | 'C2D:update-input-room-label'
+  | 'C2D:show-form-room-label'
+  | 'C2D:hide-form-room-label';
 
 // Определяем тип обработчиков событий
 type EventCallback<T = any> = (payload: T) => void;

@@ -16,8 +16,16 @@ export function handleKeyDown(this: any, e: KeyboardEvent): void {
   
   if (e.key === 'Backspace' || e.key === 'Delete') {
     if (this.layers.planner) {
-      this.layers.planner.deleteSelectedObject();
-      this.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+
+      if(this.layers.planner.state.activeWall){
+        this.layers.planner.deleteSelectedObject();
+        this.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+      }
+      
+      if(this.layers.doorsAndWindows.state.activeObject){
+        this.layers.doorsAndWindows.removeObject();
+      }
+      
     }
   }else if(e.key === "Shift") {
     if(this.layers.planner){
