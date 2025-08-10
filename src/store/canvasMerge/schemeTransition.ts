@@ -223,7 +223,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 			"id": "0aeedb70-c409-49e0-9bf6-64de303e9026",
 			"label": "Комната 1",
 			"description": "",
-			"size": {
+			"params": {
 				"walls": [
 					{
 						"id": "wall__b105fc22-2b4f-45c2-8f77-c9076eb3a172",
@@ -425,6 +425,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	};
 
 	const setAppData = (value: any) => {
+		
 		SchemeTransitionData.value = value
 		// console.log(SchemeTransitionData.value);
 	};
@@ -554,6 +555,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	// 	}
 
 	// };
+	/** @CENTRALIZED */
 
 	const getRoomDataFor3DScene = (idRoom: string | number): any => {
 		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);

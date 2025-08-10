@@ -35,7 +35,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <component :is="teleportComponent">
+  <!-- <component :is="teleportComponent"> -->
     <dialog :class="['modal', props.container]" ref="dialogBody">
       <slot name="modalClose" :onModalClose="closeModal" />
       <slot
@@ -44,7 +44,7 @@ onMounted(() => {
         :modalCloseSlot="$slots.modalClose"
       />
     </dialog>
-  </component>
+  <!-- </component> -->
 
   <slot :onModalOpen="openModal" name="modalOpen"></slot>
 </template>

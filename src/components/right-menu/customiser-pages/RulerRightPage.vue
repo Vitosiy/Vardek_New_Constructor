@@ -1,14 +1,12 @@
 <script lang="ts" setup>
-// @ts-nocheck 31
-import { reactive, defineProps, onMounted, ref, watch } from "vue";
+// @ts-nocheck
+import { ref, onMounted, onBeforeMount, watch } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
-const eventBus = useEventBus();
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { useObjectData } from "@/store/appliction/useObjectData";
 import { useModelState } from "@/store/appliction/useModelState";
 
-// const props = defineProps(["currentModel"]);
 const modelState = useModelState();
+const eventBus = useEventBus();
 
 const sizeEditData = ref({
   widthMin: 0,
@@ -26,28 +24,10 @@ const resizeData = ref({
 });
 
 const currentModel = ref(null);
+const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
 
-// const modelState = useModelState().getCurrentModel;
-
-/* данные размера модели */
-// let resizeData: { width: number; height: number; depth: number } = {
-//   width: modelState.PROPS.CONFIG.SIZE.width,
-//   height: modelState.PROPS.CONFIG.SIZE.height,
-//   depth: modelState.PROPS.CONFIG.SIZE.depth,
-// };
-
-/* данные ограничения размера модели */
-// let sizeEditData = {
-//   widthMin: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
-//   widthMax: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
-//   heightMin: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
-//   heightMax: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
-//   depthMin: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
-//   depthMax: props.currentModel.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX,
-// };
 const prepareData = () => {
   currentModel.value = modelState.getCurrentModel;
-  console.log(currentModel.value, 'currentModel.value')
 
   sizeEditData.value = {
     widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
@@ -57,6 +37,7 @@ const prepareData = () => {
     depthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
     depthMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX,
   };
+
   resizeData.value = {
     width: currentModel.value.PROPS.CONFIG.SIZE.width,
     height: currentModel.value.PROPS.CONFIG.SIZE.height,
@@ -65,26 +46,33 @@ const prepareData = () => {
 };
 
 const resizeModel = (value: object) => {
+  if (!isMounted.value) return; // игнорируем вызов до готовности
   eventBus.emit("A:Model-resize", { ...resizeData.value, ...value });
 };
 
-onMounted(() => {
+onBeforeMount(() => {
   prepareData();
+});
+
+onMounted(() => {
+  isMounted.value = true;
 });
 
 watch(
   () => modelState.getCurrentModel,
   () => {
-    console.log('ASHHHH')
+    isMounted.value = false; // сбрасываем, чтобы при смене модели не было вызова
     prepareData();
-  },
-  // { flush: "post", immediate: true }
+    // включаем реакцию после обновления данных
+    requestAnimationFrame(() => {
+      isMounted.value = true;
+    });
+  }
 );
 </script>
 
 <template>
   <div class="ruler">
-    <!-- component -->
     <div class="customiser-section">
       <p class="customiser-section__title">Размер товара</p>
       <div class="settings-size">

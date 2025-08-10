@@ -653,6 +653,8 @@ export class MeshEvents extends BuildersHelper {
     }
 
     async changeModelSize(data: { width: number, height: number, depth: number }, mesh, type) {
+        console.log('!!!!!changeModelSize')
+        
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return

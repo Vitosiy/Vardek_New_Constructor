@@ -33,7 +33,7 @@ function updateRoomStore(this: any): boolean {
       id: roomData.id, /** ID комнаты */
       label: roomData.label, /** Лейбл */
       description: roomData.description, /** Описание */
-      size: {
+      params: {
         walls: [],
         wall: '44144',
         floor: '44020'
@@ -99,7 +99,7 @@ function updateRoomStore(this: any): boolean {
             side: 0
           };
 
-          room.size.walls.push(wData);
+          room.params!.walls.push(wData);
 
         }
 

@@ -1,7 +1,5 @@
 <template>
-  <button
-    class="right-menu__button cut"
-  >
+  <button class="right-menu__button cut">
     <svg
       width="21"
       height="21"
@@ -27,12 +25,31 @@
 import { useCustomiserStore } from '@/store/appStore/useCustomiserStore';
 
 const customiserStore = useCustomiserStore();
-
-
 </script>
 <style lang="scss" scoped>
 .cut {
-    transform: translate(65px, -30px);
+  transform: translate(65px, -30px);
   pointer-events: auto;
+}
+.right-menu__button {
+  border-color: #ecebf1;
+  transition-property: background-color, border-color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+
+  &.active {
+    background-color: #131313;
+
+    &:active {
+      background-color: #131313;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: #131313;
+      border-color: #131313;
+    }
+  }
 }
 </style>

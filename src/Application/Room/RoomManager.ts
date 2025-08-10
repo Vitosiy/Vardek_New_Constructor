@@ -306,13 +306,11 @@ export class RoomManager extends Room {
         let data = loadData ?? this.roomState.getCurrentRoomId?.content
         if (!data) return
         let count;
-        console.log(data.length, 'Load')
 
         count = await this.loadData(data as string[])
         if (count === data.length) {
             this.eventBus.emit('A:ContantLoaded', true)
         }
-        // console.log(count, 'count', data.length)
 
         const uniformGroups: UniformTypes.TUniformGroupMembership[] = toRaw(this.uniformState.getUniformGroupMembership) // Получаем доступ непосредственно к объектам, убирая proxy от VUE
         this.uniformTextureBuilder.clearUniformGroups()
@@ -331,7 +329,6 @@ export class RoomManager extends Room {
             const loadData = model.data ?? '';
             const size = model.size ?? '';
 
-            // Обернём в промис, чтобы ждать завершения createModel
             await new Promise<void>((resolve) => {
                 this.geometryBuilder!.craeteModel(
                     this.modelState.getModels[model.id] as THREEInterfases.IModelsData,

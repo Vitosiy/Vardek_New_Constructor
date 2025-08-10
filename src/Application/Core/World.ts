@@ -43,30 +43,31 @@ export class World {
 
     constructor(root: THREETypes.TApplication) {
 
-        this.deepDispose = new DeepDispose()
 
         this.root = root
         this.scene = root.scene!
         this.resources = root.resources;
-
         this.lights = root._lights
+        this.room = root._roomManager
+        this.deepDispose = root._deepDispose
+        this.trafficManager = root._trafficManager
 
         this.onCreateRoom = this.createRoom.bind(this)
         this.onSaveRoom = this.saveRoom.bind(this)
         this.onLoadRoom = this.loadRoom.bind(this)
 
-
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room = root._roomManager
-        this.room!.update()
-
-        this.lights.setLight(this.room!._wallsGroupSize, 2)
-        this.trafficManager = root._trafficManager
-        this.vueEvents()
-
         this.resources.on('cubeTextureLoaded', () => {
             this.enviroment = new Environment(root)
         })
+        this.vueEvents()
+
+        this.scene.add(new THREE.AxesHelper(2000))
+        this.room!.update()
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
+
+
+        const startRoomId = this.roomsStore.getRooms[0].id
+        // this.loadRoom(startRoomId)
 
     }
 

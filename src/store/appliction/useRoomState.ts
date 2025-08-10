@@ -84,6 +84,7 @@ export const useRoomState = defineStore('RoomState', () => {
     return tempRoomSize.value
   });
 
+  /** Возвращаем с использованием ID комнаты */
   const getCurrentRoomData = (roomId) => {
     let centerized = roomsStore.getRoomDataFor3DScene(roomId);
     const currentRoom = rooms.value.find(value => value.id === roomId)

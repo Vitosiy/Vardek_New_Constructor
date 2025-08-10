@@ -112,6 +112,7 @@ export interface IPosition {
 }
 
 export interface IWallData {
+    id: number | string
     width: number;
     height: number;
     depth?: number;
@@ -119,9 +120,6 @@ export interface IWallData {
     rotation: IRotationEuler,
     side: number
 }
-
-
-
 
 /**---------------------------------------------- */
 
@@ -234,13 +232,13 @@ export interface IMouseData {
 }
 
 export interface ISetProduct {
-    scene?: THREE.Scene,
-    config?: THREETypes.TObject,
-    object: THREE.Object3D,
-    point: THREE.Vector3,
-    rotate: THREE.Vector3 | THREE.Euler | null,
 
-    roomManager?: THREETypes.TRoomManager,
+
+    object?: THREE.Object3D,
+    point?: THREE.Vector3,
+    rotate?: THREE.Vector3 | THREE.Euler | null,
+
+
     trafficManager?: THREETypes.TTrafficManager,
     boxHelper?: THREETypes.TCustomBoxHelper,
     wall?: THREE.Object3D | THREE.Mesh,

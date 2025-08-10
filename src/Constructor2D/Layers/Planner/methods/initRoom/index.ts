@@ -25,11 +25,15 @@ const roomsStore = useSchemeTransition();
 
 export function initRoom(this: any): (0 | 1) {
 
-  const activeRoomID = "room_001";
+  const rooms = roomsStore.getAllData();
 
-  const room = JSON.parse(JSON.stringify(roomsStore.getRoomById(activeRoomID)));
+  for (let i = 0, len = rooms.length; i < len; i++) {
 
-    const dataRoomWalls = room.size.walls;
+    const room = rooms[i];
+
+    this.addRoom(room.id, room.label, room.description);
+
+    const dataRoomWalls = room.params.walls;
     const dataDividingWall = room.content.filter((item: any) => item.id === 166755); // перегородки
 
     for(let i=0, len=dataDividingWall.length; i<len; i++) { // если перегородка
@@ -38,8 +42,8 @@ export function initRoom(this: any): (0 | 1) {
       const wallData: ObjectWall = {
         id: roomWallData.uuid,
         name: "dividing_wall",
-        width: roomWallData.params.width / 10,
-        height: roomWallData.params.depth / 10,
+        width: roomWallData.size.width / 10,
+        height: roomWallData.size.depth / 10,
         heightDirection: this.config.wall.heightDirection,
         angleDegrees: MathUtils.radToDeg(roomWallData.rotation._y),
         updateTime: Date.now(),

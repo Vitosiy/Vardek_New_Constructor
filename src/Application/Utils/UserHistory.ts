@@ -82,10 +82,9 @@ class UserHistory<T> {
 
     clearHistory(data?: T): void {
 
-        console.log(data, 'DATA')
         // Очищаем историю
         // this.history = [[]] as T[];
-           this.history = [data] as T[];
+        this.history = [data] as T[];
         // this.currentIndex = -1;
         this.currentIndex = 0;
     }

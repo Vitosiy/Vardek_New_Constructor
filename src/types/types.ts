@@ -16,9 +16,10 @@ import { AlumBulider } from "@/Application/Meshes/AlumBuilder";
 import { UniformTextureBuilder } from "@/Application/Meshes/UniformTextureBuilder";
 import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
-import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import { DeepDispose } from "@/Application/Utils/DeepDispose";
 import { AppLights } from "@/Application/World/Lights";
+import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -53,6 +54,7 @@ export type TUniformTextureEvents = UniformTextureEvents
 export type TDeepDispose = DeepDispose
 export type TAppLights = AppLights
 export type TUniversalGeometryBuilder = UniversalGeometryBuilder
+export type TGeometryBuilder = GeometryBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 
@@ -202,6 +204,20 @@ export type TUniformGroups = {
     currentHeight: number;
   };
   color: string; // можно уточнить как CSSColor если хочешь
+};
+
+
+type TModuleGrid = {
+  canvasHeight: number;
+  canvasWidth: number;
+  // добавь сюда остальные поля CONFIG.MODULEGRID, если они есть
+};
+
+export type TMyObject = {
+  MODULEGRID: TModuleGrid | false;
+  PROPS: any; // либо явный интерфейс, если известна структура
+  canvasHeight: number;
+  canvasWidth: number;
 };
 
 

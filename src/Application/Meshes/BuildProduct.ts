@@ -6,7 +6,6 @@ import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
 import { OBB } from 'three/examples/jsm/math/OBB.js';
-import { Capsule } from 'three/addons/math/Capsule.js';
 
 import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"
@@ -145,6 +144,8 @@ export class BuildProduct extends BuildersHelper {
 
         parent_group.userData.aabb = aabb
         parent_group.userData.obb = obb
+
+        console.log(parent_group, 'PROBG')
 
         return parent_group
     }

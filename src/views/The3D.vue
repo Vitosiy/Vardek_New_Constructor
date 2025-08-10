@@ -3,6 +3,7 @@
 
 import * as THREETypes from "@/types/types";
 import * as THREEInterfases from "@/types/interfases";
+import { TMyObject } from "@/types/types";
 import { _URL } from "@/types/constants";
 
 import {
@@ -28,7 +29,6 @@ import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
 import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
-import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
@@ -37,6 +37,7 @@ import DeleteControllerButton from "@/components/ui/buttons/right-menu/controlle
 import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
+import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 
 const appData = ref<{ [key: string]: any } | null>(null);
 
@@ -57,7 +58,7 @@ const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
 const _FASADE = ref({});
 const _MILLING = ref({});
 
-const preloader = ref<HTMLElement | null>(null);
+const preloaderRef = ref<HTMLElement | null>(null);
 const activePreloader = ref<boolean>(false);
 
 const sceneContainer = ref<HTMLElement | null>(null);
@@ -78,7 +79,10 @@ const productFasades = ref<any[]>([]);
 /** ----------------- 19.05.25 ----------------------------- */
 
 //Универсальный модуль
-const universalModule2DConstructor = ref();
+const universalModule2DConstructor = ref<typeof ModalUM2Dconstructor | null>(
+  null
+);
+const universalModuleData = ref<TMyObject | null>(null);
 
 //Распил
 const tableTopManager = ref();
@@ -110,6 +114,8 @@ onMounted(async () => {
     await nextTick();
     VerdekConstructor.value.refreshViewer();
   }
+
+  console.log(preloaderRef.value);
 });
 
 onBeforeUnmount(() => {
@@ -143,6 +149,7 @@ onUnmounted(() => {
 });
 
 const checkContantLoad = (state: boolean) => {
+  console.log("checkContantLoad", state);
   activePreloader.value = state;
 };
 
@@ -158,11 +165,13 @@ const selected = async (item: any) => {
     controller.value = false;
     CutData.value = {};
     CutCash.value = {};
+    universalModuleData.value = null;
     return;
   }
 
   CutData.value = {};
   CutCash.value = {};
+  universalModuleData.value = null;
 
   let object = item.object;
   let roomContant = item.roomContant;
@@ -176,18 +185,13 @@ const selected = async (item: any) => {
 
   objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
-
   controller.value = true;
-
   product.value = object;
-
   controller.value = true;
-
-  /**  Координаты мыши */
 
   productData.value = { ...PROPS };
 
-  if (RASPIL?.data) {
+  if (RASPIL.data) {
     CutData.value = {
       data: RASPIL.data,
       canvasHeight: RASPIL.canvasHeight,
@@ -201,125 +205,29 @@ const selected = async (item: any) => {
     };
   }
 
-  useModelState().setCurrentModel(userData);
-};
-
-const resizeRoom = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Room-resize", inputValue.value);
+  if (CONFIG.MODULEGRID) {
+    universalModuleData.value = {
+      MODULEGRID: CONFIG.MODULEGRID || false,
+      PROPS: userData,
+      canvasHeight: CONFIG.MODULEGRID.canvasHeight,
+      canvasWidth: CONFIG.MODULEGRID.canvasWidth,
+    };
   }
-};
 
-const toggleShadow = (value: boolean) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ToggleShadow", value);
+  console.log(universalModuleData.value, "universalModuleData");
+
+  if (CONFIG.MODULEGRID && universalModule2DConstructor.value) {
+    universalModule2DConstructor.value.selectUMData(universalModuleData.value);
   }
-};
 
-const toggleRefraction = (value: boolean) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ToggleRefraction", value);
-  }
-};
-
-const changePointLightPower = (value: number) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangePointLightPower", value);
-  }
-};
-
-const setQuality = (value: string) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Quality", value);
-  }
-};
-
-const create = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Create");
-  }
-};
-
-const save = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Save");
-  }
-};
-
-const load = () => {
-  if (VerdekConstructor) {
-    shadows.value = false;
-    refraction.value = false;
-    eventBus.emit("A:ToggleShadow", shadows.value);
-    eventBus.emit("A:ToggleRefraction", refraction.value);
-    eventBus.emit("A:Load", selectedRoom.value?.id);
-  }
-};
-
-const toggleiew = () => {
-  cameraView.value = !cameraView.value;
-  eventBus.emit("A:CameraToggle", cameraView.value);
-};
-
-const changeWallTexture = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangeWallTexture", wallTexture.value);
-  }
-};
-
-const changeFloorTexture = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangeFloorTexture", floorTexture.value);
-  }
-};
-
-const changeModuleTexture = (value: { [key: string]: any }) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangeModuleTexture", value);
-  }
-};
-
-// const changeFasadeTexture = (value: { [key: string]: any }) => {
-//   if (VerdekConstructor) {
-//     currentFasadeId.value = value.ID;
-
-//     if (
-//       appData.FASADE[currentFasadeId.value].PALETTE.length &&
-//       appData.FASADE[currentFasadeId.value].PALETTE[0] != null
-//     ) {
-//       paletteColorsData.value = Object.keys(appData.PALETTE)
-//         .filter(
-//           (key) =>
-//             appData.PALETTE[key].TYPE ===
-//             appData.FASADE[currentFasadeId.value].PALETTE[0]
-//         )
-//         .reduce((obj, key) => {
-//           obj[key] = appData.PALETTE[key];
-//           return obj;
-//         }, {});
-
-//       return;
-//     }
-
-//     paletteColorsData.value = {};
-//     eventBus.emit("A:ChangeFasadeTexture", value);
-//   }
-// };
-
-const changePaletteColor = () => {
-  // const selectedPalette = paletteColorsData.find(
-  //   (palette) => palette.UNAME === selectPalette.value
-  // );
-
-  eventBus.emit("A:ChangePaletteColor", selectPalette.value);
-};
-
-const onDrag = (event: any, model: { [key: string]: any } | string) => {
-  event.dataTransfer?.setData("text", JSON.stringify(model));
+  /**  Координаты мыши */
+  await nextTick(() => {
+    controllerPositionData.value = userData.MOUSE_POSITION;
+  });
 };
 
 const removeModel = (model) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:RemoveModel", model);
     controller.value = false;
   }
@@ -328,31 +236,31 @@ const removeModel = (model) => {
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
 
 const deliteUniformGroup = (id) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Delite-Uniform-Group", id);
   }
 };
 
 const addToUniformGroup = (id) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Add-To-Uniform-Group", id);
   }
 };
 
 const removeFromUniformGroup = (id) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Remove-From-Uniform-Group", id);
   }
 };
@@ -465,7 +373,7 @@ defineExpose({
 
 <template>
   <div ref="sceneContainer" class="scene-container"></div>
-  <div ref="preloader" class="preloader" v-if="!activePreloader"></div>
+  <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
   <div
     class="uniform__container"
@@ -524,19 +432,27 @@ defineExpose({
     :class="['model-controller', activeController]"
     :style="controllerPosition"
   >
-    <div class="controller-left">
-      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-      <ControllerButton v-show="!CutData.data" />
-      <ContentControllerButton v-show="!CutData.data" />
-      <DeleteControllerButton v-show="!CutData.data" @click="removeModel" />
-    </div>
-    <div class="controller-right">
-      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-      <UpControllerButton />
-      <OpenFacadeButton />
+    <div class="controller-container">
+      <div class="controller-left">
+        <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
+        <ControllerButton
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+        />
+        <ContentControllerButton
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+        />
+        <DeleteControllerButton
+          v-if="Object.keys(CutData).length == 0"
+          @click="removeModel"
+        />
+      </div>
+      <div class="controller-right">
+        <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
+        <!-- <UpControllerButton /> -->
+        <OpenFacadeButton />
 
         <Modal
-          v-if="CutData.data"
+          v-if="Object.keys(CutData).length > 0"
           :container="`modal--tableTop`"
           @open-modal="openTableRedactor"
           @close-modal="closeTableRedactor"
@@ -591,6 +507,12 @@ defineExpose({
             </button> -->
           </template>
         </Modal>
+        <div v-show="universalModuleData && product">
+          <ModalUM2Dconstructor
+            ref="universalModule2DConstructor"
+            :product="product"
+          />
+        </div>
       </div>
     </div>
   </div>

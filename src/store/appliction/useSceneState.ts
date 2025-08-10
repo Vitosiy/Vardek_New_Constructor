@@ -1,6 +1,7 @@
 /**// @ts-nocheck */
 
 import { defineStore } from 'pinia';
+import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { computed, ref } from 'vue';
 import * as THREEInterfases from "../../types/interfases"
 import { TLightRange, TQuality, TOptionsMap } from '@/types/types';
@@ -9,6 +10,8 @@ import { IWallSizes, ICameraData, ILightsObjects, IProjectParams } from '@/types
 import { START_PROJECT_PARAMS } from '@/Application/F-startData';
 
 export const useSceneState = defineStore('SceneState', () => {
+
+    const schemeTransition = useSchemeTransition()
 
     const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
 
@@ -81,6 +84,8 @@ export const useSceneState = defineStore('SceneState', () => {
             default_floor: default_floor ?? startProjectParams.value.default_floor,
             default_wall: default_wall ?? startProjectParams.value.default_wall
         } as IProjectParams;
+
+        schemeTransition.setAppData(currentProjectParams.value.rooms)
 
         console.log(currentProjectParams.value, 'VALU')
     };
