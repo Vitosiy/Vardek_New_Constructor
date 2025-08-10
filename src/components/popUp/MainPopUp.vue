@@ -7,8 +7,10 @@ import ErrorPopUpView from "@/components/popUp/popup-views/ErrorPopUpView.vue";
 import ProjectPopUpView from "@/components/popUp/popup-views/ProjectPopUpView.vue";
 
 import { usePopupStore } from '@/store/appStore/popUpsStore';
+import CatalogPopUpView from "./popup-views/CatalogPopUpView.vue";
 
 const popupStore = usePopupStore();
+
 
 const isAnyPopupOpen = popupStore.isAnyPopupOpen;
 </script>
@@ -20,6 +22,7 @@ const isAnyPopupOpen = popupStore.isAnyPopupOpen;
       <StudyPopUpView v-if="popupStore.popups.study"/>
       <ErrorPopUpView v-if="popupStore.popups.error"/>
       <ProjectPopUpView v-if="popupStore.popups.project"/>
+      <CatalogPopUpView v-if="popupStore.popups.catalog"/>
     </div>
   </div>
 </template>

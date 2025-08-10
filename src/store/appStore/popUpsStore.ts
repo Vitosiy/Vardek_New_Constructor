@@ -7,6 +7,7 @@ export const usePopupStore = defineStore('popup', () => {
     error: false,
     project: false,
     study: false,
+    catalog: false,
   });
 
   const isInfoPopupOpen = ref<boolean> (false)
