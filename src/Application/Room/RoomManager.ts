@@ -250,6 +250,8 @@ export class RoomManager extends Room {
                 obb: item.userData.obb,
                 data: this.convertProps(item),
                 type: item.userData.elementType,
+                size: item.userData.PROPS.CONFIG.SIZE
+
             }));
     }
 

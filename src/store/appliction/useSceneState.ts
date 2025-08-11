@@ -93,7 +93,24 @@ export const useSceneState = defineStore('SceneState', () => {
             default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
         } as IProjectParams;
 
-        schemeTransition.setAppData(currentProjectParams.value.rooms)
+        const clone = JSON.parse(JSON.stringify(currentProjectParams.value.rooms))
+        console.log(clone)
+        const parseData = clone.map(elem => {
+            return {
+                ...elem,
+                content: elem.content.map((el) => {
+                    if (typeof el == 'string') {
+                        return JSON.parse(el)
+                    }
+                    return el
+                })
+            }
+        })
+
+        console.log(parseData, 'parseData')
+
+
+        schemeTransition.setAppData(parseData)
 
         console.log(currentProjectParams.value, 'VALU')
     };

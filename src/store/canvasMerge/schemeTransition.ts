@@ -424,8 +424,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		SchemeTransitionData.value = [];
 	};
 
-	const setAppData = (value: any) => {
-		
+	const setAppData = (value: any) => {	
 		SchemeTransitionData.value = value
 		// console.log(SchemeTransitionData.value);
 	};

@@ -198,31 +198,32 @@ const getHistoruBtnsState = computed(() => {
 });
 
 /** @Проверка загрузки Application доп функция */
-// const waitForConstructor = async (timeout = 2000, interval = 50) => {
-//   const start = Date.now();
+const waitForConstructor = async (timeout = 2000, interval = 50) => {
+  const start = Date.now();
 
-//   return new Promise<TApplication | null>((resolve) => {
-//     const check = () => {
-//       if (props.pageComponent?.VerdekConstructor) {
-//         resolve(props.pageComponent.VerdekConstructor);
-//         return;
-//       }
-//       if (Date.now() - start >= timeout) {
-//         resolve(null); // не дождались
-//         return;
-//       }
-//       setTimeout(check, interval);
-//     };
-//     check();
-//   });
-// };
+  return new Promise<TApplication | null>((resolve) => {
+    const check = () => {
+      if (props.pageComponent?.VerdekConstructor) {
+        resolve(props.pageComponent.VerdekConstructor);
+        return;
+      }
+      if (Date.now() - start >= timeout) {
+        resolve(null); // не дождались
+        return;
+      }
+      setTimeout(check, interval);
+    };
+    check();
+  });
+};
 
 watch(
   () => route.path,
   async (newPath, oldPath) => {
     await nextTick();
-    // const constructor = await waitForConstructor();
-    const constructor = props.pageComponent.VerdekConstructor;
+    const constructor = await waitForConstructor();
+    console.log(oldPath)
+    // const constructor = props.pageComponent.VerdekConstructor;
 
     if (constructor) {
       verdekConstructor.value = constructor as TApplication;
