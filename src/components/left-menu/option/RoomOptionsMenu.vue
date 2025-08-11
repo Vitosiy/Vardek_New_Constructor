@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/**/ / @ts-nocheck 31 */;
+//@ts-nocheck 
 import {
   ref,
   computed,

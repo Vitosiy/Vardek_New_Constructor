@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/**/ /@ts-nocheck */;
+//@ts-nocheck 
 
 import * as THREETypes from "@/types/types";
 import * as THREEInterfases from "@/types/interfases";

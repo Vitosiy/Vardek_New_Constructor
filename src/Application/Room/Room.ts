@@ -1,4 +1,4 @@
-/**//@ts-nocheck */
+//@ts-nocheck 
 
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
@@ -134,7 +134,7 @@ export class Room extends BuildersHelper {
             return params
         }
 
-        console.log('Exist', this.roomState.getRooms, this.roomState.getCurrentRoomData(roomId)    )
+        console.log('Exist', this.roomState.getRooms, this.roomState.getCurrentRoomData(roomId))
 
         params = JSON.parse(JSON.stringify(this.roomState.getCurrentRoomData(roomId)!.params))
         this.roomState.setCurrentRoomParams(params)

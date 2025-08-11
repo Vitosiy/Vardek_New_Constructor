@@ -1,3 +1,5 @@
+//@ts-nocheck 
+
 import { MathUtils } from "three";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 

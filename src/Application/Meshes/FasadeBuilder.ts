@@ -49,6 +49,7 @@ export class FasadeBuilder {
 
 
         this.indexedFasadeToUtiformTexturing(props, isUMmodule)
+        console.log(props,group, 'FASADE_PROPS')
 
         FASADE_PROPS.forEach((value, key, props_array) => {
 
@@ -189,6 +190,8 @@ export class FasadeBuilder {
         }
     ) {
 
+        console.log(fasade_id)
+
         const fasadeData = this.parent._FASADE[fasade_id];
 
         let fasade;
@@ -229,6 +232,8 @@ export class FasadeBuilder {
 
             return buildFasad
         }
+
+        console.log(fasadeData, 'fasadeData')
 
         if (fasadeData.TYPE == "no_fasade") {
 

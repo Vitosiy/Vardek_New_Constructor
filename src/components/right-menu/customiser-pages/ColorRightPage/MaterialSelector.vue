@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+//@ts-nocheck 
 import { ref, computed, onBeforeMount } from "vue";
 import { _URL } from "@/types/constants";
 

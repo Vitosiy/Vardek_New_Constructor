@@ -197,6 +197,7 @@ export interface ILoaders {
 }
 
 export interface IModelsData {
+    ID?:string | number;
     id: string;
     name: string;
     json: any | null;
@@ -218,6 +219,7 @@ export interface IModelsData {
     loop_position: number | null;
     loop_model: string | null;
     wall_thickness: number | null;
+    moduleType: any
 }
 
 export interface IShelfData {

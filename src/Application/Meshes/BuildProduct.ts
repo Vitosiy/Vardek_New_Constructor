@@ -63,12 +63,12 @@ export class BuildProduct extends BuildersHelper {
         this.filters = new Filters(root)
         this.json_builder = new JsonBuilder(this);
         this.models_builder = new ModelsBuilder(this)
-        this.fasade_builder = new FasadeBuilder(this)
         this.milling_builder = new MillingBuilder(root)
         this.window_builder = new WindowBuilder(root)
         this.palette_bulider = new PaletteBulider(this)
         this.alum_builder = new AlumBulider(this)
         this.uniform_texture_builder = new UniformTextureBuilder(root, this)
+        this.fasade_builder = new FasadeBuilder(this)
     }
 
     get _heightCorrect() {
@@ -338,7 +338,7 @@ export class BuildProduct extends BuildersHelper {
             {
                 group: total,
                 props: PROPS,
-                model_data: data,
+                // model_data: data,
             }) : "";
 
         /** Добавляем стреки размеров */

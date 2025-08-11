@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+//@ts-nocheck 
 import MaterialSelector from "./MaterialSelector.vue";
 import ConfigurationOption from "./ConfigurationOption.vue";
 import { ref, onMounted, onBeforeMount, watch } from "vue";

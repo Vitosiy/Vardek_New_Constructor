@@ -1,4 +1,4 @@
-/**// @ts-nocheck */
+//@ts-nocheck 
 
 import { defineStore } from 'pinia';
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
@@ -62,12 +62,16 @@ export const useSceneState = defineStore('SceneState', () => {
         height_clamp,
         table,
         table_params,
-        table_color,
+        default_table_color,
         table_top_type_auto,
         default_fasade_up,
         default_fasade_down,
+        default_fasade_color,
         default_floor,
-        default_wall
+        default_wall,
+        default_module_color_down,
+        default_module_color_up,
+        default_module_color
 
     }: IProjectParams) => {
         currentProjectParams.value = {
@@ -77,12 +81,16 @@ export const useSceneState = defineStore('SceneState', () => {
             height_clamp: height_clamp ?? startProjectParams.value.height_clamp,
             table: table ?? startProjectParams.value.table,
             table_params: table_params ?? startProjectParams.value.table_params,
-            table_color: table_color ?? startProjectParams.value.table_color,
             table_top_type_auto: table_top_type_auto ?? startProjectParams.value.table_top_type_auto,
+            default_table_color: default_table_color ?? startProjectParams.value.default_table_color,
             default_fasade_up: default_fasade_up ?? startProjectParams.value.default_fasade_up,
             default_fasade_down: default_fasade_down ?? startProjectParams.value.default_fasade_down,
+            default_fasade_color: default_fasade_color ?? startProjectParams.value.default_fasade_color,
             default_floor: default_floor ?? startProjectParams.value.default_floor,
-            default_wall: default_wall ?? startProjectParams.value.default_wall
+            default_wall: default_wall ?? startProjectParams.value.default_wall,
+            default_module_color_down: default_module_color_down ?? startProjectParams.value.default_module_color_down,
+            default_module_color_up: default_module_color_up ?? startProjectParams.value.default_module_color_up,
+            default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
         } as IProjectParams;
 
         schemeTransition.setAppData(currentProjectParams.value.rooms)

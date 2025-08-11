@@ -1,4 +1,4 @@
-import * as THREEInterfases from "../types/interfases"
+// import * as THREEInterfases from "../types/interfases"
 
 export const START_PROJECT_PARAMS = {
 
