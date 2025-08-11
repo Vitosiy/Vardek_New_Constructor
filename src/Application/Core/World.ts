@@ -66,7 +66,7 @@ export class World {
         this.lights.setLight(this.room!._wallsGroupSize, 2)
 
 
-        const startRoomId = this.roomsStore.getRooms[0].id
+        // const startRoomId = this.roomsStore.getRooms[0].id
         // this.loadRoom(startRoomId)
 
     }

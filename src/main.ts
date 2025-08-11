@@ -7,40 +7,39 @@ import router from './router'
 import { createPinia } from 'pinia'
 import { useAppData } from './store/appliction/useAppData' 
 
-async  function bootStore() {
+async function bootApp() {
   const app = createApp(App)
   const pinia = createPinia()
 
   app.use(pinia)
   app.use(router)
 
-  // Ждём загрузки данных до монтирования
+  await router.isReady()
+
+  const token = localStorage.getItem('token')
   const appDataStore = useAppData()
+
+  if (!token) {
+    // Нет токена — показываем /auth
+    if (router.currentRoute.value.path !== '/auth') {
+      await router.push('/auth')
+    }
+    app.mount('#app')
+    return
+  }
+
+  // Есть токен — начинаем загрузку данных
+  // Пока данные не загрузились — остаёмся на /auth
+  if (router.currentRoute.value.path !== '/auth') {
+    await router.push('/auth')
+  }
+
   await appDataStore.initAppData()
+
+  // Данные загрузились — редиректим в /2d
+  await router.push('/2d')
 
   app.mount('#app')
 }
-bootStore()
 
-const pinia = createPinia()
-const app = createApp(App)
-
-app.use(pinia).use(router)
-
-// Проверяем токен при загрузке приложения
-router.isReady().then(() => {
-    
-  const token = localStorage.getItem('token')
-  
-  // Если токена нет, перенаправляем на страницу авторизации
-  if (!token && router.currentRoute.value.path !== '/auth') {
-    router.push('/auth')
-  }
-  
-  // Если токен есть и пользователь на странице авторизации, перенаправляем на 2D
-  if (token && router.currentRoute.value.path === '/auth') {
-    router.push('/2d')
-  }
-  
-  app.mount('#app')
-})
+bootApp()

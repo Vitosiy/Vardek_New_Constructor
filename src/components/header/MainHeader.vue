@@ -30,10 +30,7 @@ import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeade
 import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
 import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
 import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderButton.vue";
-  import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
-  import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
-  import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
-  import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderButton.vue";
+
   import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
   import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
 
@@ -326,8 +323,6 @@ onBeforeUnmount(() => {
           <InsertFileHelperButton />
           <PrintHelperButton @click="updateProject" />
           <VisibilityHelperButton @click="loadProject" />
-          <PrintHelperButton />
-          <VisibilityHelperButton />
           <Avatar />
         </div>
       </div>

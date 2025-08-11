@@ -5,24 +5,19 @@ import { computed, ref, onMounted, toRaw } from "vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
-import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelStore } from "@/store/appStore/useModelStore";
+import { usePopupStore } from "@/store/appStore/popUpsStore";
+import { useEventBus } from "@/store/appliction/useEventBus";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 
 import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue";
 import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
-import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import MainButton from "../ui/buttons/MainButton.vue";
-
-import { useAppData } from "@/store/appliction/useAppData";
-import { useMenuStore } from '@/store/appStore/useMenuStore';
-
-import { useModelStore } from '@/store/appStore/useModelStore';
-import { usePopupStore } from '@/store/appStore/popUpsStore';
 
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import CatalogSVG from "../ui/svg/CatalogSVG.vue";
+import Accordion from "../ui/accordion/Accordion.vue";
 
 const controlBtn = [
   { icon: "icon-t-45-l", size: "20", fontSize: 10, action: 0 },
@@ -56,6 +51,10 @@ const filteredCatalogSections = computed(() => {
   );
 });
 
+const selectCatalog = (value: string) => {
+  selectedSectionType.value = value;
+};
+
 const onDragStart = (modelId: string) => {
   store.selectModel(modelId);
 };
@@ -88,7 +87,6 @@ onMounted(() => {
 const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
-
 </script>
 
 <template>
@@ -117,17 +115,42 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
 
       <div class="options-design">
         <h1 class="options__title">Товары</h1>
-        <MainSelect
-          v-model="selectedSectionType"
-          :options="catalogSectionsType"
-          @change="closeAllMenus"
-        />
+
         <div class="goods-items" @click="openPopup('catalog')">
           <CatalogSVG class="goods-items__image" />
           <p class="goods-items__title">Общий каталог</p>
           <div class="radial-sphere"></div>
         </div>
-        <MainSelect v-model="selectedSectionType" :options="catalogSectionsType" @change="closeAllMenus" />
+        <!-- <MainSelect
+          v-model="selectedSectionType"
+          :options="catalogSectionsType"
+          @change="closeAllMenus"
+        /> -->
+        <Accordion>
+          <template #title>
+            <p class="list__title">
+              {{ catalogSectionsType[selectedSectionType] }}
+            </p>
+          </template>
+          <template #params="{ onToggle }">
+            <ul class="list__details_contant">
+              <li v-for="(section, key) in catalogSectionsType" :key="key">
+                <div
+                  class="list__item"
+                  @click="
+                    () => {
+                      selectCatalog(key);
+                      onToggle();
+                    }
+                  "
+                >
+                  <p class="list__name">{{ catalogSectionsType[key] }}</p>
+                </div>
+              </li>
+            </ul>
+          </template>
+        </Accordion>
+
         <div class="goods">
           <div
             v-for="(item, index) in filteredCatalogSections"
@@ -187,132 +210,59 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   background-color: $bg;
   // transform-style: preserve-3d;
   z-index: 1;
+  &-design {
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  &__title {
+    margin-bottom: 10px;
+  }
+  &-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  &-item {
+    height: 50px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    cursor: pointer;
+    padding: 0 15px;
+    &__title {
+      z-index: 5;
+      transition: 0.15s;
+    }
+
+    &__image {
+      z-index: 5;
+    }
+
+    &.active {
+      .options-item__title {
+        color: $white;
+      }
+
+      .radial-sphere {
+        max-width: 300px;
+        background: $red;
+      }
+    }
+  }
   &__container {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 10px;
     padding: 10px;
     position: relative;
     background: $bg;
     transform-style: preserve-3d;
 
     @media screen and (min-width: 1329px) {
-      padding: 20px;
-    }
-
-    .options-design {
-      z-index: 10;
-
-      .options__title {
-        margin-bottom: 10px;
-      }
-
-      .options-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-
-        .options-item {
-          height: 50px;
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 25px;
-          cursor: pointer;
-          padding: 0 15px;
-
-          &__title {
-            z-index: 5;
-            transition: 0.15s;
-          }
-
-          &__image {
-            z-index: 5;
-          }
-
-          .radial-sphere {
-            width: 100%;
-            min-width: 50px;
-            max-width: 50px;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 360px;
-            background: $stroke;
-            z-index: 1;
-            transition: 0.15s;
-          }
-
-          &.active {
-            .options-item__title {
-              color: $white;
-            }
-
-            .radial-sphere {
-              max-width: 300px;
-              background: $red;
-            }
-          }
-        }
-      }
-
-      .goods {
-        max-height: 20vh;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        overflow-y: auto;
-
-        @media screen and (min-width: 1329px) {
-          max-height: 30vh;
-        }
-
-        .goods-item {
-          min-height: 50px;
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 25px;
-          padding: 0 15px;
-          cursor: pointer;
-          transition: 0.15s ease-in-out;
-
-          &__title {
-            z-index: 5;
-            transition: 0.15s;
-          }
-
-          &__image {
-            z-index: 5;
-          }
-
-          .radial-sphere {
-            width: 100%;
-            min-width: 50px;
-            max-width: 50px;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 360px;
-            background: $stroke;
-            z-index: 1;
-            transition: 0.3s ease;
-          }
-
-          &.active {
-            .goods-item__title {
-              color: $white;
-            }
-
-            .radial-sphere {
-              max-width: 300px;
-              background: $red;
-            }
-          }
-        }
-      }
+      padding: 10px 20px;
     }
 
     .room {
@@ -480,7 +430,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    padding: 10px;
+    padding:0px 10px;
     margin-bottom: auto;
     background: $bg;
 
@@ -508,7 +458,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
     }
 
     @media screen and (min-width: 1329px) {
-      padding: 20px;
+      padding:0 20px;
     }
   }
 }
@@ -523,49 +473,126 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   }
 }
 
-.goods-items {
-  min-height: 50px;
-  position: relative;
+.goods {
+  max-height: 20vh;
   display: flex;
-  align-items: center;
-  gap: 25px;
-  padding: 0 15px;
-  cursor: pointer;
-  transition: 0.15s ease-in-out;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
 
-  &__title {
-    z-index: 5;
-    transition: 0.15s;
+  @media screen and (min-width: 1329px) {
+    max-height: 30vh;
   }
 
-  &__image {
-    z-index: 5;
-  }
+  &-items {
+    min-height: 48px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    padding: 0 15px;
+    cursor: pointer;
+    transition: 0.15s ease-in-out;
 
-  .radial-sphere {
-    width: 100%;
-    min-width: 50px;
-    max-width: 50px;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    border-radius: 360px;
-    background: $stroke;
-    z-index: 1;
-    transition: 0.3s ease;
-  }
-
-  &.active {
-    .goods-item__title {
-      color: $white;
+    &__title {
+      z-index: 5;
+      transition: 0.15s;
     }
 
-    .radial-sphere {
-      max-width: 300px;
-      background: $red;
+    &__image {
+      z-index: 5;
+    }
+
+
+    &.active {
+      .goods-item__title {
+        color: $white;
+      }
+
+      .radial-sphere {
+        max-width: 300px;
+        background: $red;
+      }
     }
   }
+
+  &-item {
+    min-height: 50px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    padding: 0 15px;
+    cursor: pointer;
+    transition: 0.15s ease-in-out;
+
+    &__title {
+      z-index: 5;
+      transition: 0.15s;
+    }
+
+    &__image {
+      z-index: 5;
+    }
+  }
+
+  .goods-item {
+    min-height: 50px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    padding: 0 15px;
+    cursor: pointer;
+    transition: 0.15s ease-in-out;
+
+    &.active {
+      .goods-item__title {
+        color: $white;
+      }
+
+      .radial-sphere {
+        max-width: 300px;
+        background: $red;
+      }
+    }
+  }
+}
+
+.list {
+  &__details_contant {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  &__item {
+    color: $black;
+    cursor: pointer;
+
+    transition-property: color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+
+    @media (hover: hover) {
+      &:hover {
+        color: $dark-grey;
+      }
+    }
+  }
+}
+
+.radial-sphere {
+  width: 100%;
+  min-width: 50px;
+  max-width: 50px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 360px;
+  background: $stroke;
+  z-index: 1;
+  transition: 0.15s;
 }
 </style>
