@@ -24,3 +24,8 @@ export interface IGraphics {
 export interface IState {
   graphics: IGraphics[];
 };
+
+export interface IDateRoomLabel {
+  id: number | string;
+  label: string;
+};

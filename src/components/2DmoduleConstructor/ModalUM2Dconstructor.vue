@@ -1,15 +1,15 @@
 <script setup lang="ts">
 // @ts-nocheck
 import Modal from "@/components/ui/modals/Modal.vue";
-import {defineExpose, ref} from "vue";
+import { defineExpose, ref } from "vue";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
-import {useEventBus} from "@/store/appliction/useEventBus.ts";
+import { useEventBus } from "@/store/appliction/useEventBus.ts";
 
 const props = defineProps({
   product: {
-    type: Object,
-    required: true,
-  }
+    type: Object || null,
+    // required: true,
+  },
 });
 
 const eventBus = useEventBus();
@@ -22,13 +22,16 @@ const universalModuleCash = ref({});
 
 const selectUMData = (data) => {
   universalModuleData.value = data;
-}
+};
 
 const saveUMData = ({ data, canvasHeight }) => {
-  if (!props.product)
-    return;
+  if (!props.product) return;
+  if (!props.product.userData) return;
 
-  universalModuleCash.value= props.product.PROPS.CONFIG.MODULEGRID = universalModule2DConstructor.value.saveGrid();
+  console.log(props.product);
+
+  universalModuleCash.value = props.product.userData.PROPS.CONFIG.MODULEGRID =
+    universalModule2DConstructor.value.saveGrid();
 
   gridUMSaved.value = true;
   eventBus.emit("A:UM-update", universalModuleCash.value);
@@ -42,7 +45,7 @@ const openUMRedactor = () => {
 
 const closeUMRedactor = () => {
   if (!gridUMSaved.value)
-    props.product.PROPS.CONFIG.MODULEGRID = universalModuleCash.value;
+    props.product.userData.PROPS.CONFIG.MODULEGRID = universalModuleCash.value;
 
   universalModuleData.value = false;
   isUMModalOpen.value = false;
@@ -52,46 +55,41 @@ const closeUMRedactor = () => {
 defineExpose({
   selectUMData,
 });
-
 </script>
 
 <template>
   <Modal
-      v-if="universalModuleData"
-      :container="`modal--tableTop`"
-      @open-modal="openUMRedactor"
-      @close-modal="closeUMRedactor"
+    v-if="universalModuleData && props.product"
+    :container="`modal--tableTop`"
+    @open-modal="openUMRedactor"
+    @close-modal="closeUMRedactor"
   >
     <template #modalBody="{ onModalClose }" class="modal--tableTop">
       <Module2DConstructor2
-          v-if="isUMModalOpen"
-          ref="universalModule2DConstructor"
-          :productData="universalModuleData.PROPS"
-          :canvasHeight="universalModuleData.canvasHeight"
-          :canvasWidth="universalModuleData.canvasWidth"
+        v-if="isUMModalOpen"
+        ref="universalModule2DConstructor"
+        :productData="universalModuleData.PROPS"
+        :canvasHeight="universalModuleData.canvasHeight"
+        :canvasWidth="universalModuleData.canvasWidth"
       >
         <template #save>
-          <button
-              class="actions-btn actions-btn--footer"
-              @click="saveUMData"
-          >
+          <button class="actions-btn actions-btn--footer" @click="saveUMData">
             Сохранить
           </button>
         </template>
 
         <template #close>
           <button
-              @click="
-                  () => {
-                    onModalClose();
-                  }
-                "
-              class="actions-btn actions-btn--footer"
+            @click="
+              () => {
+                onModalClose();
+              }
+            "
+            class="actions-btn actions-btn--footer"
           >
             Закрыть
           </button>
         </template>
-
       </Module2DConstructor2>
     </template>
     <template #modalOpen="{ onModalOpen }">
@@ -103,7 +101,6 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
-
 .modal {
   &--tableTop {
     border: none;
@@ -136,6 +133,13 @@ defineExpose({
   &-icon {
     width: 25px;
     height: 25px;
+    svg {
+      g {
+        path {
+          fill: black;
+        }
+      }
+    }
   }
 }
 </style>

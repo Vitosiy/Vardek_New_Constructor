@@ -1,4 +1,3 @@
-// @ts-nocheck
 <template>
   <main class="auth-page">
     <div class="auth-page__left">
@@ -120,14 +119,15 @@
 </template>
 
 <script setup lang="ts">
+  // @ts-nocheck
   import { ref, watch } from 'vue'
   import { useAuthStore } from '@/store/appStore/authStore'
   import ImageSwiper from '@/components/ImageSwiper/ImageSwiper.vue'
   import image1 from '@/assets/img/auth-slide-img.jpg'
 
   // Иконки
-  import EyeCloseSVG from '@/components/ui/svg/auth/EyeCloseSVG.vue'
   import EyeOpenSVG from '@/components/ui/svg/auth/EyeOpenSVG.vue'
+  import EyeCloseSVG from '@/components/ui/svg/auth/EyeCloseSVG.vue'
   import UserSVG from '@/components/ui/svg/auth/UserSVG.vue'
 
   const authStore = useAuthStore()

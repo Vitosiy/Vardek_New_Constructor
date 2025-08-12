@@ -64,30 +64,11 @@ export class PatinaBuilder {
                         colors[i * 3 + 2] = lerpColor.b;
                     }
 
-                    // else if (gradientFactor > 0.2 && gradientFactor < 1.2) {
-
-                    //     let lerpColor = new THREE.Color().lerpColors(defaultColor, patinaColor, gradientFactor)
-                    //     colors[i * 3] = lerpColor.r;
-                    //     colors[i * 3 + 1] = lerpColor.g;
-                    //     colors[i * 3 + 2] = lerpColor.b;
-                    // }
-
-                    // else {
-                    //     colors[i * 3] = defaultColor.r;
-                    //     colors[i * 3 + 1] = defaultColor.g;
-                    //     colors[i * 3 + 2] = defaultColor.b;
-                    // }
                 }
             }
         });
 
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        // const material = [
-        //   debugTexture,
-        //   debugTexture,
-        //   debugTexture
-        // ];
 
         const material = [
             startMaterial,

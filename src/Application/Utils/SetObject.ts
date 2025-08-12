@@ -12,7 +12,7 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 
 export class SetObject {
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    eventBus: ReturnType<typeof useEventBus> = useEventBus()
     modelState: ReturnType<typeof useModelState> = useModelState();
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
@@ -33,6 +33,8 @@ export class SetObject {
     }
 
     async create({ object, point, rotate, boxHelper, wall, trafficManager }: THREEInterfases.ISetProduct) {
+
+        console.log(object)
 
         this.roomManager = this.root._roomManager
 
@@ -58,15 +60,12 @@ export class SetObject {
 
         object.position.copy(point);
 
-        const aabb = new THREE.Box3().setFromObject(object);
-        let obb = new OBB();
-        obb = obb.fromBox3(aabb);
-        obb.applyMatrix4(object.matrixWorld)
-        object.userData.obb = obb
 
         const adjustedPosition = positionEmpty && rotationEmpty
             ? this.roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
             : { position, rotation };
+
+        console.log(adjustedPosition, 'adjustedPosition')
 
 
         object.position.copy(adjustedPosition.position);
@@ -86,20 +85,28 @@ export class SetObject {
 
         /** Добавляем объект в RoomContant для последующего использования */
         this.roomManager._roomContant = object
+        // if (object.userData.elementType !==
+        //     "element_room") {
+        //     this.roomManager._roomContant = object
+        // }
+
         object.userData.currentWall = wall
+        object.userData.targetPosition = point
+
+
 
         /** Режим объединения в группы для переходящей текстуры */
         if (this.uniformState.getUniformModeData.uniformMode) return
 
         // Передаём данные созданного объекта
 
-        if (trafficManager) {
+        // if (trafficManager) {
 
-            // object.userData.aabb = new THREE.Box3().setFromObject(this.object);
-            trafficManager._currentObject = object
+        //     // object.userData.aabb = new THREE.Box3().setFromObject(this.object);
+        //     // trafficManager._currentObject = object
 
-            trafficManager.ruler.drawRulerToObjects(object)
-        }
+        //     trafficManager.ruler.drawRulerToObjects(object)
+        // }
 
 
 
@@ -112,7 +119,6 @@ export class SetObject {
 
         boxHelper.removeBoxHelper();
         boxHelper.addBoxHelper(object);
-
 
     }
 

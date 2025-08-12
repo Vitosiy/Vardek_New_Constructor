@@ -1,6 +1,6 @@
 import { client } from '@/api/api'
 import { ApiResponse, LoginData } from '@/types/authTypes'
-import axios, { type AxiosError } from 'axios'
+import axios from 'axios'
 
 const API_URL = 'https://dev.vardek.online'
 const REQUEST_TIMEOUT = 10000

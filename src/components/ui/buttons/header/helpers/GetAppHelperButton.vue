@@ -1,14 +1,20 @@
 <template>
   <button class="grey-radial__button">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_53_220)">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g clip-path="url(#clip0_2770_40483)">
         <path
-          d="M15.6878 7.20093H12.3544V2.20093H7.35442V7.20093H4.02109L9.85442 13.0343L15.6878 7.20093ZM4.02109 14.7009V16.3676H15.6878V14.7009H4.02109Z"
+          d="M14.1667 2.5H4.16667C3.24167 2.5 2.5 3.25 2.5 4.16667V15.8333C2.5 16.75 3.24167 17.5 4.16667 17.5H15.8333C16.75 17.5 17.5 16.75 17.5 15.8333V5.83333L14.1667 2.5ZM10 15.8333C8.61667 15.8333 7.5 14.7167 7.5 13.3333C7.5 11.95 8.61667 10.8333 10 10.8333C11.3833 10.8333 12.5 11.95 12.5 13.3333C12.5 14.7167 11.3833 15.8333 10 15.8333ZM12.5 7.5H4.16667V4.16667H12.5V7.5Z"
           fill="#5D6069"
         />
       </g>
       <defs>
-        <clipPath id="clip0_53_220">
+        <clipPath id="clip0_2770_40483">
           <rect width="20" height="20" fill="white" />
         </clipPath>
       </defs>

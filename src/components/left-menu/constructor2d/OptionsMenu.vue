@@ -175,7 +175,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
     gap: 30px;
     padding: 20px;
     position: relative;
-    transform-style: preserve-3d;
+    // transform-style: preserve-3d;
 
     .options-design {
       z-index: 10;
@@ -235,7 +235,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       }
 
       .goods {
-        max-height: 70vh;
+        max-height: 30vh;
         display: flex;
         flex-direction: column;
         gap: 10px;

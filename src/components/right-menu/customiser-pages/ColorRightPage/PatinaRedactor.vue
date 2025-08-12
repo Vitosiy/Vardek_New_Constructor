@@ -36,7 +36,7 @@ const changePatina = (patina) => {
       v-for="patina in props.patinaList"
       @click="changePatina(patina)"
     >
-      <img class="item__img" :src="_URL + patina.DETAIL_PICTURE" alt="" />
+      <img class="item__img" :src="_URL + patina.PREVIEW_PICTURE" alt="" />
       <div class="item__name">{{ patina.NAME }}</div>
     </div>
 

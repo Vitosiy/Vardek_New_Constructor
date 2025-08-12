@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 
 import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
+import FormLabelRoom from "@/components/popUp/constructor2d/FormLabelRoom.vue";
 
 import {
   Vector2,
@@ -119,5 +120,6 @@ onUnmounted(() => {
     <canvas ref="canvas2d" id="constructor2D"
       @dragover.prevent></canvas>
     <ModifyWall />
+    <FormLabelRoom />
   </div>
 </template>

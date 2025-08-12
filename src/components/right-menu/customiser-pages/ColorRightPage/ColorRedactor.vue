@@ -70,11 +70,16 @@ const onSearchChange = (e) => {
   overflow: scroll;
   height: 100%;
   margin-top: 40px;
+
+    &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #888; /* Color of the thumb */
+    border-radius: 5px; /* Rounded corners */
+  }
 }
 
-.list::-webkit-scrollbar {
-  width: 8px;
-}
 
 .item {
   display: flex;

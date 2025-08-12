@@ -91,7 +91,7 @@
     setupFacadeSwitcher();
     setupFacadeSizeSwitcher();
     initFacadeSizeSliders();
-    initCustomSizeSystem();
+    initSizeSliders();
 
   }
 
@@ -238,124 +238,49 @@
     }
   }
 
-function initFacadeSizeSliders() {
-  // Ищем все контейнеры для слайдеров
-  const sliderContainers = document.querySelectorAll('[id^="size_edit_fasadesizewidth"]');
-  console.log('sliderContainers', sliderContainers);
-  if (sliderContainers.length === 0) {
-    console.log('Слайдеры не найдены - проверьте селектор');
-    return;
-  }
-
-  sliderContainers.forEach(sliderContainer => {
-    console.log('Обрабатываем контейнер:', sliderContainer.id);
-    
-    // Получаем параметры из data-атрибутов
-    const min = parseInt(sliderContainer.dataset.min) || 0;
-    const max = parseInt(sliderContainer.dataset.max) || 1000;
-    const step = parseInt(sliderContainer.dataset.step) || 1;
-    
-    // Находим связанный input
-    const inputId = sliderContainer.id.replace('_slider', '_input');
-    console.log('inputId', inputId)
-    const inputWrapper = document.querySelector(`.${inputId}`);
-    
-    if (!inputWrapper) {
-      console.log('Не найден input для контейнера', sliderContainer.id);
-      return;
-    }
-    
-    const input = inputWrapper.querySelector('input');
-    if (!input) {
-      console.log('Не найден input внутри wrapper', inputId);
+  function initFacadeSizeSliders() {
+    // Ищем все контейнеры для слайдеров
+    const sliderContainers = document.querySelectorAll('[id^="size_edit_fasadesizewidth"]');
+    console.log('sliderContainers', sliderContainers);
+    if (sliderContainers.length === 0) {
+      console.log('Слайдеры не найдены - проверьте селектор');
       return;
     }
 
-    console.log(`Создаем слайдер для ${inputId} (min: ${min}, max: ${max}, step: ${step})`);
-
-    // Создаем элемент слайдера
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = min;
-    slider.max = max;
-    slider.step = step;
-    slider.value = input.value || min;
-    slider.className = 'custom-slider';
-    
-    // Очищаем контейнер и добавляем слайдер
-    sliderContainer.innerHTML = '';
-    sliderContainer.appendChild(slider);
-    
-    // Связываем слайдер с input
-    slider.addEventListener('input', function() {
-      input.value = this.value;
-      console.log('Значение слайдера изменено:', this.value);
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    
-    // Обрабатываем изменения в input
-    input.addEventListener('change', function() {
-      let value = parseInt(this.value);
-      if (isNaN(value)) value = min;
-      value = Math.max(min, Math.min(max, value));
-      slider.value = value;
-      this.value = value; // Корректируем значение
-      console.log('Значение input изменено:', value);
-    });
-    
-    // Разблокируем input
-    input.readOnly = false;
-    input.disabled = false;
-    
-    console.log('Слайдер успешно создан');
-  });
-}
-
-
-function initCustomSizeSystem() {
-  // 1. Инициализация чекбокса
-  const sizeCheckbox = document.querySelector('#sizeeditopt');
-  const sizeWrapper = document.querySelector('.prop-wrap-sizeoptional');
-  
-  if (sizeCheckbox && sizeWrapper) {
-    // Скрываем блок при загрузке, если чекбокс не отмечен
-    sizeWrapper.style.display = sizeCheckbox.checked ? 'block' : 'none';
-    
-    // Обработчик изменения чекбокса
-    sizeCheckbox.addEventListener('change', function() {
-      sizeWrapper.style.display = this.checked ? 'block' : 'none';
-      if (this.checked) {
-        initSizeSliders(); // Инициализируем слайдеры при показе
-      }
-    });
-  }
-
-  // 2. Инициализация всех слайдеров размеров
-  function initSizeSliders() {
-    document.querySelectorAll('.prop-resize[data-type]').forEach(resizeBlock => {
-      const type = resizeBlock.dataset.type;
-      const sliderWrap = resizeBlock.querySelector(`#size_edit_${type}_slider_wrap`);
-      const sliderContainer = resizeBlock.querySelector(`#size_edit_${type}_slider`);
-      const input = resizeBlock.querySelector(`#size_edit_${type}_input`);
+    sliderContainers.forEach(sliderContainer => {
+      console.log('Обрабатываем контейнер:', sliderContainer.id);
       
-      if (!sliderContainer || !input) return;
-      
-      // Проверяем, не инициализирован ли уже слайдер
-      if (sliderContainer.querySelector('.custom-slider')) return;
-      
-      const min = parseInt(input.dataset.min) || parseInt(sliderContainer.dataset.min) || 0;
-      const max = parseInt(input.dataset.max) || parseInt(sliderContainer.dataset.max) || 1000;
+      // Получаем параметры из data-атрибутов
+      const min = parseInt(sliderContainer.dataset.min) || 0;
+      const max = parseInt(sliderContainer.dataset.max) || 1000;
       const step = parseInt(sliderContainer.dataset.step) || 1;
-      const value = parseInt(input.value) || min;
+      
+      // Находим связанный input
+      const inputId = sliderContainer.id.replace('_slider', '_input');
+      console.log('inputId', inputId)
+      const inputWrapper = document.querySelector(`.${inputId}`);
+      
+      if (!inputWrapper) {
+        console.log('Не найден input для контейнера', sliderContainer.id);
+        return;
+      }
+      
+      const input = inputWrapper.querySelector('input');
+      if (!input) {
+        console.log('Не найден input внутри wrapper', inputId);
+        return;
+      }
 
-      // Создаем кастомный слайдер
+      console.log(`Создаем слайдер для ${inputId} (min: ${min}, max: ${max}, step: ${step})`);
+
+      // Создаем элемент слайдера
       const slider = document.createElement('input');
       slider.type = 'range';
-      slider.className = 'custom-slider';
       slider.min = min;
       slider.max = max;
       slider.step = step;
-      slider.value = value;
+      slider.value = input.value || min;
+      slider.className = 'custom-slider';
       
       // Очищаем контейнер и добавляем слайдер
       sliderContainer.innerHTML = '';
@@ -364,21 +289,153 @@ function initCustomSizeSystem() {
       // Связываем слайдер с input
       slider.addEventListener('input', function() {
         input.value = this.value;
+        console.log('Значение слайдера изменено:', this.value);
         input.dispatchEvent(new Event('change', { bubbles: true }));
       });
       
       // Обрабатываем изменения в input
       input.addEventListener('change', function() {
-        let val = parseInt(this.value) || min;
-        val = Math.max(min, Math.min(max, val));
-        slider.value = this.value = val;
+        let value = parseInt(this.value);
+        if (isNaN(value)) value = min;
+        value = Math.max(min, Math.min(max, value));
+        slider.value = value;
+        this.value = value; // Корректируем значение
+        console.log('Значение input изменено:', value);
       });
       
-      // Разблокируем input при активации нестандартных размеров
-      input.readOnly = !sizeCheckbox.checked;
+      // Разблокируем input
+      input.readOnly = false;
+      input.disabled = false;
+      
+      console.log('Слайдер успешно создан');
     });
   }
+
+  // function initCustomSizeSystem() {
+  //   // 1. Инициализация чекбокса
+  //   const sizeCheckbox = document.querySelector('#sizeeditopt');
+  //   const sizeWrapper = document.querySelector('.prop-wrap-sizeoptional');
+    
+  //   if (sizeCheckbox && sizeWrapper) {
+  //     // Скрываем блок при загрузке, если чекбокс не отмечен
+  //     sizeWrapper.style.display = sizeCheckbox.checked ? 'block' : 'none';
+      
+  //     // Обработчик изменения чекбокса
+  //     sizeCheckbox.addEventListener('change', function() {
+  //       sizeWrapper.style.display = this.checked ? 'block' : 'none';
+  //       if (this.checked) {
+  //         initSizeSliders(); // Инициализируем слайдеры при показе
+  //       }
+  //     });
+  //   }
+
+  //   // 2. Инициализация всех слайдеров размеров
+  //   function initSizeSliders() {
+  //     document.querySelectorAll('.prop-resize[data-type]').forEach(resizeBlock => {
+  //       const type = resizeBlock.dataset.type;
+  //       const sliderWrap = resizeBlock.querySelector(`#size_edit_${type}_slider_wrap`);
+  //       const sliderContainer = resizeBlock.querySelector(`#size_edit_${type}_slider`);
+  //       const input = resizeBlock.querySelector(`#size_edit_${type}_input`);
+        
+  //       if (!sliderContainer || !input) return;
+        
+  //       // Проверяем, не инициализирован ли уже слайдер
+  //       if (sliderContainer.querySelector('.custom-slider')) return;
+        
+  //       const min = parseInt(input.dataset.min) || parseInt(sliderContainer.dataset.min) || 0;
+  //       const max = parseInt(input.dataset.max) || parseInt(sliderContainer.dataset.max) || 1000;
+  //       const step = parseInt(sliderContainer.dataset.step) || 1;
+  //       const value = parseInt(input.value) || min;
+
+  //       // Создаем кастомный слайдер
+  //       const slider = document.createElement('input');
+  //       slider.type = 'range';
+  //       slider.className = 'custom-slider';
+  //       slider.min = min;
+  //       slider.max = max;
+  //       slider.step = step;
+  //       slider.value = value;
+        
+  //       // Очищаем контейнер и добавляем слайдер
+  //       sliderContainer.innerHTML = '';
+  //       sliderContainer.appendChild(slider);
+        
+  //       // Связываем слайдер с input
+  //       slider.addEventListener('input', function() {
+  //         input.value = this.value;
+  //         input.dispatchEvent(new Event('change', { bubbles: true }));
+  //       });
+        
+  //       // Обрабатываем изменения в input
+  //       input.addEventListener('change', function() {
+  //         let val = parseInt(this.value) || min;
+  //         val = Math.max(min, Math.min(max, val));
+  //         slider.value = this.value = val;
+  //       });
+        
+  //       // Разблокируем input при активации нестандартных размеров
+  //       input.readOnly = !sizeCheckbox.checked;
+  //     });
+  //   }
+  // }
+
+
+
+function initSizeSliders() {
+  const sliders = [
+    { type: 'height', inputId: 'size_edit_height_input', sliderId: 'size_edit_height_slider' },
+    { type: 'width', inputId: 'size_edit_width_input', sliderId: 'size_edit_width_slider' }
+  ];
+
+  sliders.forEach(sliderConfig => {
+    const input = document.getElementById(sliderConfig.inputId);
+    const sliderContainer = document.getElementById(sliderConfig.sliderId);
+    
+    if (!input || !sliderContainer) return;
+    
+    // Проверяем, не инициализирован ли уже слайдер
+    if (sliderContainer.querySelector('.custom-slider')) return;
+    
+    const min = parseInt(input.dataset.min) || parseInt(sliderContainer.dataset.min) || 0;
+    const max = parseInt(input.dataset.max) || parseInt(sliderContainer.dataset.max) || 1000;
+    const step = parseInt(sliderContainer.dataset.step) || 1;
+    const value = parseInt(input.value) || min;
+
+    // Создаем кастомный слайдер
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.className = 'custom-slider';
+    slider.min = min;
+    slider.max = max;
+    slider.step = step;
+    slider.value = value;
+    
+    // Очищаем контейнер и добавляем слайдер
+    sliderContainer.innerHTML = '';
+    sliderContainer.appendChild(slider);
+    
+    // Связываем слайдер с input
+    const updateInput = () => {
+      input.value = slider.value;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    
+    slider.addEventListener('input', updateInput);
+    slider.addEventListener('change', updateInput);
+    
+    // Обрабатываем изменения в input
+    input.addEventListener('change', function() {
+      let val = parseInt(this.value) || min;
+      val = Math.max(min, Math.min(max, val));
+      slider.value = this.value = val;
+    });
+    
+    // Разблокируем input
+    input.readOnly = false;
+  });
 }
+
+
 
 </script>
 

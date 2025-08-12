@@ -1,4 +1,4 @@
-import axios, { type AxiosError } from 'axios'
+import axios from 'axios'
 
 // Константы
 const API_URL = 'https://vardek.ru'

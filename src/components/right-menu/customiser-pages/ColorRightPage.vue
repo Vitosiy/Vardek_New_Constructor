@@ -60,7 +60,7 @@ const selectWindow = ref<any>(null);
 /**------------------------------ */
 
 onMounted(() => {
-  productColor.value = objectData.PROPS.CONFIG.MODULE_COLOR_LIST; // корпус
+  productColor.value = modelState.getCurrentModuleData; // корпус
 
   productFasades.value = objectData?.PROPS.CONFIG.FASADE_PROPS; // количество фасадов модели
 

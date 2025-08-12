@@ -206,4 +206,5 @@ export interface GridModule {
   type: "module";
   horizont?: number;
   fasades?: FasadeObject[];
+  isSlidingDoors?: boolean;
 }

@@ -1,20 +1,22 @@
-//@ts-nocheck
+// @ts-nocheck
 import { toRaw } from 'vue';
 import * as THREE from 'three';
-import * as THREETypes from "@/types/types"
-import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
-import { CSG } from 'three-csg-ts';
+import { TApplication, TDeepDispose } from "@/types/types"
+// import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
+// import { CSG } from 'three-csg-ts';
 
 import { MillingBuilder } from './MillingBuilder';
 import { useModelState } from "@/store/appliction/useModelState";
 
 export class WindowBuilder extends MillingBuilder {
-
+    scene: THREE.Scene
+    clear: TDeepDispose
     private modelState = useModelState()
-    private svgLoader: SVGLoader = new SVGLoader();
 
-    constructor(root: THREETypes.TApplication) {
+    constructor(root: TApplication) {
         super(root)
+        this.scene = root._scene!
+        this.clear = root._deepDispose!
     }
 
     createWindow({
@@ -94,6 +96,7 @@ export class WindowBuilder extends MillingBuilder {
 
         const glassData = this._GLASS[glassId]
         const glassColor = `#${glassData.COLOR}`
+
         const roughness = glassData.NAME.toLowerCase().includes('матовое') ? 0.2 : 0.05
 
         // console.log(roughness, glassData, 'AFCHANGE')
@@ -111,7 +114,18 @@ export class WindowBuilder extends MillingBuilder {
 
         const type = this.modelState.getCurrentFasadeTypesData
         const { FASADE_WIDTH, FASADE_HEIGHT, FASADE_DEPTH } = fasade.userData.trueSize
-        if (!type.length > 0) return
+
+        if (type.length == 0) {
+            fasade.traverse((child: THREE.Object3D) => {
+                if (child instanceof THREE.Mesh) {
+                    if (child.userData.type === 'hendless') {
+                        this.clear.clearObjectFromParrent(child)
+
+                    }
+                }
+            })
+            return
+        }
 
         const hendlePath = `
         <svg>

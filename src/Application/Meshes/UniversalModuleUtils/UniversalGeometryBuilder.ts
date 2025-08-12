@@ -4,7 +4,7 @@ import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 
 import { BuildUniversalModule } from "./BuildUniversalModule";
-import {GeometryBuilder} from "@/Application/Meshes/GeometryBuilder.ts";
+import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder.ts";
 
 export class UniversalGeometryBuilder extends GeometryBuilder {
 
@@ -17,7 +17,7 @@ export class UniversalGeometryBuilder extends GeometryBuilder {
         this.buildProduct = new BuildUniversalModule(root)
     }
 
-    createModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any, loaded_size?:any): void {
+    createModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any, loaded_size?: any): void {
 
         this.buildProduct.getModel(data, onLoad, loadedProps, loaded_size)
 

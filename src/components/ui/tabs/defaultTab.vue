@@ -1,22 +1,6 @@
-<template>
-  <div>
-    <!-- Навигация -->
-    <div class="tabs-navigation">
-      <button
-        v-for="(tab, i) in tabs"
-        :key="tab.name"
-        :class="{ active: selectedTab === tab.name }"
-        @click="selectTab(tab.name, i)"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
-  </div>
-</template>
-
 <script lang="ts" setup>
 //@ts-nocheck
-import { ref, defineProps, defineEmits, computed } from "vue";
+import { ref, defineProps, defineEmits, computed, defineExpose } from "vue";
 
 // Интерфейс для табов
 interface Tab {
@@ -47,11 +31,31 @@ selectedTab.value =
   props.initialTab || (props.tabs.length > 0 ? props.tabs[0].name : null);
 
 // Метод для смены таба
-const selectTab = (name: string, index: number) => {
+const selectTab = (name: string, index: number, local?: boolean = false) => {
   selectedTab.value = name;
-  emit("tab-change", {index: index, name: name});
+  if (!local) emit("tab-change", { name: name, index: index });
 };
+
+defineExpose({
+  selectTab,
+});
 </script>
+
+<template>
+  <div>
+    <!-- Навигация -->
+    <div class="tabs-navigation">
+      <button
+        v-for="(tab, i) in tabs"
+        :key="tab.name"
+        :class="{ active: selectedTab === tab.name }"
+        @click="selectTab(tab.name, i)"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+  </div>
+</template>
 
 <style scoped lang="scss">
 .tabs-navigation {
@@ -75,7 +79,7 @@ button {
   color: $strong-grey;
   transition: background-color 0.2s, transform 0.1s;
 
-  @media (min-height: 1000px) { 
+  @media (min-height: 1000px) {
     font-size: medium;
     padding: 15px 25px;
   }
@@ -92,5 +96,4 @@ button.active {
 .tabs-content {
   margin-top: 16px;
 }
-
 </style>

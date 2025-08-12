@@ -26,11 +26,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
 import LogoutSVG from '@/components/ui/svg/auth/LogoutSVG.vue'
 import { useAuthStore } from '@/store/appStore/authStore'
 
-const router = useRouter()
 const authStore = useAuthStore()
 
 // Состояние компонента
