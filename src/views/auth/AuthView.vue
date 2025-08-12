@@ -110,9 +110,9 @@
     <div class="auth-page__right">
       <div class="auth-page__swiper">
         <ImageSwiper 
-        :images="images"
-        :autoplay="{ delay: 3000, disableOnInteraction: false }"
-      />
+          :images="images"
+          :autoplay="{ delay: 3000, disableOnInteraction: false }"
+        />
       </div>
     </div>
   </main>
@@ -120,8 +120,10 @@
 
 <script setup lang="ts">
   // @ts-nocheck
-  import { ref, watch } from 'vue'
+  import { onMounted, ref, watch } from 'vue'
   import { useAuthStore } from '@/store/appStore/authStore'
+  import { useNewsStore } from '@/store/appStore/useNewsStore'
+
   import ImageSwiper from '@/components/ImageSwiper/ImageSwiper.vue'
   import image1 from '@/assets/img/auth-slide-img.jpg'
 
@@ -131,12 +133,15 @@
   import UserSVG from '@/components/ui/svg/auth/UserSVG.vue'
 
   const authStore = useAuthStore()
+  const newsStore = useNewsStore()
 
-  const images = ref([
-    { src: image1, alt: 'Иллюстрация 1' },
-    { src: image1, alt: 'Иллюстрация 2' },
-    { src: image1, alt: 'Иллюстрация 3' }
-  ])
+  const images = ref([])
+
+  // const images = ref([
+  //   { src: image1, alt: 'Иллюстрация 1' },
+  //   { src: image1, alt: 'Иллюстрация 2' },
+  //   { src: image1, alt: 'Иллюстрация 3' }
+  // ])
 
   const form = ref({
     login: '',
@@ -172,6 +177,18 @@
       throw new Error('Неизвестный тип ответа от сервера')
     }
   }
+  
+  const fetchNews = async () => {
+    await newsStore.fetchNews().then(() => {
+     images.value = newsStore.newsList.map(item => {
+        return {
+          name: item.NAME,
+          src: item.PREVIEW_PICTURE,
+          alt: item.PREVIEW_TEXT,
+        }
+      })
+    })
+  }
 
   // Watchers
   watch(() => form.value.login, (newVal) => {
@@ -181,6 +198,12 @@
   watch(() => form.value.password, (newVal) => {
     passwordLabelTop.value = !!newVal
   })
+
+  onMounted(() => {
+    fetchNews();
+  })
+
+
 </script>
 <style lang="scss" scoped>
   .auth-page {

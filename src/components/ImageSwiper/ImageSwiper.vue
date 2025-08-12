@@ -7,11 +7,13 @@
           v-for="(image, index) in images" 
           :key="index"
         >
+          <div>{{ image.name }}</div>
           <img 
-            :src="image.src" 
+            :src="`${API_URL}/${image.src}`" 
             :alt="image.alt || 'Slide image'" 
             class="swiper-image" 
           />
+          <div>{{ image.alt }}</div>
         </div>
       </div>
 
@@ -60,6 +62,9 @@
       default: false
     }
   })
+
+  const API_URL = 'https://dev.vardek.online'
+
 
   const swiperEl = ref(null)
   const swiperInstance = ref(null)
@@ -128,6 +133,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
   }
 
   .swiper-image {
