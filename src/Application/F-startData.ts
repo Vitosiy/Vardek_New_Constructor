@@ -114,7 +114,7 @@ export const START_PROJECT_PARAMS = {
             decay: 0
         }
     },
-    height_clamp: 1800,
+    height_clamp: 3000,
 
     table: {
         "material": {

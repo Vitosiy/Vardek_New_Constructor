@@ -7,6 +7,7 @@ import { rooms_mok } from "@/Application/F-mockapi"
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from '../appliction/useModelState';
+import { useSceneState } from './useSceneState';
 
 
 import * as THREEInterfases from "../../types/interfases"
@@ -19,7 +20,8 @@ export const useRoomState = defineStore('RoomState', () => {
   //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
   const roomsStore = useSchemeTransition();
-  const roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
+  const sceneState = useSceneState();
+  const roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
 
   const APP = useAppData();
@@ -28,6 +30,10 @@ export const useRoomState = defineStore('RoomState', () => {
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
+
+  const mergeRoomsData = () => {
+    rooms.value = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData))
+  }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
     rooms.value.push(room);
@@ -48,6 +54,10 @@ export const useRoomState = defineStore('RoomState', () => {
     if (rooms.value.length == 0) {
       clearCurrentRoomId()
     }
+
+    /** Обновляем общий стор */
+    sceneState.updateProjectParams({ rooms: rooms.value })
+
   };
 
   const setCurrentRoomId = (id: number) => {
@@ -186,6 +196,7 @@ export const useRoomState = defineStore('RoomState', () => {
     updateRoom,
     removeRoom,
     getRoomId,
+    mergeRoomsData,
     // updateRoomSize,
 
     setCurrentRoomId,

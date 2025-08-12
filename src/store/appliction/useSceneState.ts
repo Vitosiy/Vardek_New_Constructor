@@ -8,10 +8,12 @@ import { TLightRange, TQuality, TOptionsMap } from '@/types/types';
 import { IWallSizes, ICameraData, ILightsObjects, IProjectParams } from '@/types/interfases';
 
 import { START_PROJECT_PARAMS } from '@/Application/F-startData';
+import { useRoomState } from './useRoomState';
 
 export const useSceneState = defineStore('SceneState', () => {
 
     const schemeTransition = useSchemeTransition()
+    const roomState = useRoomState()
 
     const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
 
@@ -107,12 +109,9 @@ export const useSceneState = defineStore('SceneState', () => {
             }
         })
 
-        console.log(parseData, 'parseData')
-
-
         schemeTransition.setAppData(parseData)
+        roomState.mergeRoomsData();
 
-        console.log(currentProjectParams.value, 'VALU')
     };
 
     const setShadowValue = (value: boolean) => {

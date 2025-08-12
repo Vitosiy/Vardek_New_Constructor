@@ -149,7 +149,7 @@ onUnmounted(() => {
 });
 
 const checkContantLoad = (state: boolean) => {
-  console.log("checkContantLoad", state);
+  // console.log("checkContantLoad", state);
   activePreloader.value = state;
 };
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-//@ts-nocheck 
+//@ts-nocheck
 import {
   onMounted,
   onBeforeUnmount,
@@ -12,6 +12,7 @@ import { useRoute } from "vue-router";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useRoomState } from "@/store/appliction/useRoomState";
 import { TApplication } from "@/types/types";
 
 import {
@@ -31,21 +32,21 @@ import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHea
 import S2DLightHeaderButton from "@/components/ui/buttons/header/S2DLightHeaderButton.vue";
 import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderButton.vue";
 
-  import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
-  import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
+import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
+import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
 
-  import FullscreenHelperButton from "@/components/ui/buttons/header/helpers/FullscreenHelperButton.vue";
-  import ReportHelperButton from "@/components/ui/buttons/header/helpers/ReportHelperButton.vue";
-  import StudyHelperButton from "@/components/ui/buttons/header/helpers/StudyHelperButton.vue";
-  import AddPhotoHelperButton from "@/components/ui/buttons/header/helpers/AddPhotoHelperButton.vue";
-  import GetAppHelperButton from "@/components/ui/buttons/header/helpers/GetAppHelperButton.vue";
-  import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/InsertFileHelperButton.vue";
-  import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
-  import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
+import FullscreenHelperButton from "@/components/ui/buttons/header/helpers/FullscreenHelperButton.vue";
+import ReportHelperButton from "@/components/ui/buttons/header/helpers/ReportHelperButton.vue";
+import StudyHelperButton from "@/components/ui/buttons/header/helpers/StudyHelperButton.vue";
+import AddPhotoHelperButton from "@/components/ui/buttons/header/helpers/AddPhotoHelperButton.vue";
+import GetAppHelperButton from "@/components/ui/buttons/header/helpers/GetAppHelperButton.vue";
+import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/InsertFileHelperButton.vue";
+import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
+import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
 
 const props = defineProps(["pageComponent"]);
 const route = useRoute();
-  import Avatar from "@/components/header/Avatar.vue";
+import Avatar from "@/components/header/Avatar.vue";
 
 const historyActions = ref<boolean>(false);
 const verdekConstructor = ref<TApplication | null>(null);
@@ -57,6 +58,7 @@ const contentLoaded = ref<boolean>(true);
 const eventBus = useEventBus();
 const sceneState = useSceneState();
 const menuStore = useMenuStore();
+const roomState = useRoomState();
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -188,7 +190,7 @@ const addEvents3D = () => {
       curActionCount.value = total;
     }
   });
-  eventBus.on("A:ContantLoaded", checkContantLoad);
+  // eventBus.on("A:ContantLoaded", checkContantLoad);
 };
 
 const getHistoruBtnsState = computed(() => {
@@ -220,10 +222,10 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
+
+    roomState.mergeRoomsData();
+    let constructor = await waitForConstructor();
     await nextTick();
-    const constructor = await waitForConstructor();
-    console.log(oldPath)
-    // const constructor = props.pageComponent.VerdekConstructor;
 
     if (constructor) {
       verdekConstructor.value = constructor as TApplication;
