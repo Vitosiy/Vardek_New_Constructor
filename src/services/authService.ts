@@ -52,5 +52,25 @@ export const AuthService = {
       }
       throw error
     }
+  },
+
+  async initHeader(): Promise<any> {
+    try {
+      const { data } = await axios.get(
+        `${API_URL}/api/modeller/mainobject/InitHeader/`,
+        {
+          headers: {
+            'Accept': 'application/json'
+          },
+          timeout: REQUEST_TIMEOUT
+        }
+      )
+      return data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Ошибка при получении данных заголовка')
+      }
+      throw error
+    }
   }
 }

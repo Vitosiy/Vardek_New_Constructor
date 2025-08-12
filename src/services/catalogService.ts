@@ -1,8 +1,10 @@
 import axios from 'axios'
 
 // Константы
-const API_URL = 'https://vardek.ru'
-const BASE_API_URL = `${API_URL}/local/templates/constructor/API`
+// const API_URL = 'https://vardek.ru'
+const API_URL = 'https://dev.vardek.online/'
+// const BASE_API_URL = `${API_URL}/local/templates/constructor/API`
+const BASE_API_URL = `${API_URL}api/modeller/catalog/getlist/`
 const REQUEST_TIMEOUT = 10000
 
 
@@ -16,9 +18,10 @@ export const CatalogService = {
     try {
       let filter = ''
       if (query) filter = `&filter=${query}`
-      
       const { data } = await axios.get(
-        `${BASE_API_URL}/data.get.php?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}`,
+        `${BASE_API_URL}?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}`,
+        // `${BASE_API_URL}/data.get.php?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}`,
+        // https://dev.vardek.online/api/modeller/catalog/getlist/?config=43830&style=689680&cityid=17281&cityidprice=17281&section=2483&type=catalog&page=1
         {
           headers: {
             'Content-Type': 'application/json',
@@ -27,7 +30,7 @@ export const CatalogService = {
           timeout: REQUEST_TIMEOUT
         }
       )
-      return data
+      return data.DATA
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || 'Ошибка при подключении к серверу')
