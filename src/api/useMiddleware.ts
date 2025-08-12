@@ -1,4 +1,5 @@
 import { Middleware } from "openapi-fetch";
+import { makeErrorResponse } from "./errorResponse";
 
 // Константы таймаута
 export const REQUEST_TIMEOUT = 10000; // 10 секунд
@@ -59,18 +60,6 @@ export const useMiddleware = () => {
                 
                 return res;
             },
-
-            async onError(err: unknown, req: Request) {
-                const requestKey = createRequestKey(req);
-                const timeoutData = timeoutMap.get(requestKey);
-                
-                if (timeoutData) {
-                    clearTimeout(timeoutData.timeoutId);
-                    timeoutMap.delete(requestKey);
-                }
-                
-                throw err;
-            },
         };
     };
 
@@ -115,7 +104,14 @@ export const useMiddleware = () => {
             },
 
             async onError({ error, request }) {
-                return await timeout.onError(error, request);
+                // Централизованная обработка ошибок
+                const requestKey = createRequestKey(request);
+                const timeoutData = timeoutMap.get(requestKey);
+                if (timeoutData) {
+                    clearTimeout(timeoutData.timeoutId);
+                    timeoutMap.delete(requestKey);
+                }
+                return makeErrorResponse(error, 599);
             },
         };
     };
