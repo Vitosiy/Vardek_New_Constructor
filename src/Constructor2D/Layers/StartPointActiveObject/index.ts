@@ -244,7 +244,16 @@ export default class StartPointActiveObject {
 
       }
 
-      this.drawAngleBetweenWalls();
+      if(this.parent.layers.planner.state.activeWall){
+        this.angleBetweenWalls.visible = true;
+        this.circleAngleMask.visible = true;
+        this.angleTextConatainer.visible = true;
+        this.drawAngleBetweenWalls();
+      }else{
+        this.angleBetweenWalls.visible = false;
+        this.circleAngleMask.visible = false;
+        this.angleTextConatainer.visible = false;
+      }
 
       this.container.visible = true;
 

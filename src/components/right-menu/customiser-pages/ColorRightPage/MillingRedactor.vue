@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
-import { defineProps, ref, computed, defineEmits } from 'vue';
+import { defineProps, ref, computed, defineEmits, onMounted } from 'vue';
 import { _URL } from "@/types/constants";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
@@ -25,7 +25,7 @@ const changeMilling = (milling) => {
     data: milling.ID,
     fasadeNdx: props.tabIndex,
   });
-  emit('select_milling', { name: milling.NAME, imgSrc: milling.DETAIL_PICTURE }) // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+  emit('select_milling', { name: milling.NAME, imgSrc: milling.PREVIEW_PICTURE }) // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {
@@ -34,6 +34,7 @@ const onSearchChange = (e) => {
   filteredMillingList.value = filtered
   if(e.target.value === '') filteredMillingList.value = []
 }
+
 </script>
 
 
@@ -45,12 +46,12 @@ const onSearchChange = (e) => {
   <ul class="list">
     <!-- Все виды фрезировок -->
     <li v-if="!isSearch" class="item" v-for="milling in props.millingList" @click="changeMilling( milling )">
-      <img class="item__img" :src="_URL + milling.DETAIL_PICTURE" alt="">
+      <img class="item__img" :src="_URL + milling.PREVIEW_PICTURE" alt="">
       <div class="item__name">{{ milling.NAME }}</div>
     </li>
     <!-- Отфильтрованные в поиске -->
     <li v-else class="item" v-for="milling in filteredMillingList" @click="changeMilling( milling )">
-      <img class="item__img" :src="_URL + milling.DETAIL_PICTURE" alt="">
+      <img class="item__img" :src="_URL + milling.PREVIEW_PICTURE" alt="">
       <div class="item__name">{{ milling.NAME }}</div>
     </li>
   </ul>

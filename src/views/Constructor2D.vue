@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 
 import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
+import FormLabelRoom from "@/components/popUp/constructor2d/FormLabelRoom.vue";
 
 import {
   Vector2,
@@ -15,7 +16,7 @@ let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
 let canvas2d: Ref<HTMLCanvasElement | undefined> = ref();
 
-document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
+// document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
 
 let App2d: Constructor2D | null = null;
 
@@ -119,5 +120,6 @@ onUnmounted(() => {
     <canvas ref="canvas2d" id="constructor2D"
       @dragover.prevent></canvas>
     <ModifyWall />
+    <FormLabelRoom />
   </div>
 </template>

@@ -1,11 +1,11 @@
-<script setup>
-import { ref, computed, onMounted } from "vue";
+<script setup lang="ts">
+// @ts-nocheck
+import { ref, computed, onMounted, defineExpose } from "vue";
 
-const props = defineProps({
-  container: {
-    type: String,
-  },
-});
+const props = defineProps<{
+  container?: string;
+  to?: string;
+}>();
 
 const emit = defineEmits(["open-modal", "close-modal"]);
 
@@ -17,9 +17,17 @@ const openModal = () => {
 };
 
 const closeModal = () => {
+  console.log('CLOSEMODAL')
+
   dialogBody.value?.close();
   emit("close-modal", false);
 };
+
+const teleportComponent = computed(() => {
+  return props.to ? { name: "Teleport", props: { to: props.to } } : "div";
+});
+
+defineExpose({ openModal, closeModal }); 
 
 onMounted(() => {
   console.log(dialogBody.value);
@@ -27,29 +35,33 @@ onMounted(() => {
 </script>
 
 <template>
-  <dialog :class="['modal', props.container]" ref="dialogBody">
-    <!-- <slot name="modalBody" :onModalClose="closeModal"/> -->
-    <!-- <slot name="modalClose" :onModalClose="closeModal" /> -->
-    <slot name="modalClose" :onModalClose="closeModal" />
-    <slot
-      name="modalBody"
-      :onModalClose="closeModal"
-      :modalCloseSlot="$slots.modalClose"
-    />
-  </dialog>
+  <!-- <component :is="teleportComponent"> -->
+    <dialog :class="['modal', props.container]" ref="dialogBody">
+      <slot name="modalClose" :onModalClose="closeModal" />
+      <slot
+        name="modalBody"
+        :onModalClose="closeModal"
+        :modalCloseSlot="$slots.modalClose"
+      />
+    </dialog>
+  <!-- </component> -->
+
   <slot :onModalOpen="openModal" name="modalOpen"></slot>
 </template>
-<style scoped>
+<style scoped lang="scss">
 .modal {
   /* display: none;  */
+  display: flex;
+  justify-content: center;
   width: 100%;
   max-width: 85vw;
   padding: 0;
   border: none;
   background-color: transparent;
   transform: scale(0);
+  opacity: 0;
   filter: blur(10px);
-  transition: all ease-in 0.45s;
+  transition: all ease-in 0.25s;
 }
 
 .modal:focus {
@@ -59,6 +71,7 @@ onMounted(() => {
 .modal[open] {
   /* display: block; */
   transform: scale(1);
+  opacity: 1;
   filter: blur(0px);
   pointer-events: auto;
 }

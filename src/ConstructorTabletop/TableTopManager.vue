@@ -5,7 +5,6 @@ import {
   onMounted,
   onBeforeMount,
   onBeforeUnmount,
-  reactive,
   computed,
   ref,
   toRaw,
@@ -23,6 +22,7 @@ import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
 const eventBus = useEventBus();
 
 const emit = defineEmits(["save-table-data"]);
+
 
 const {
   MAX_AREA_WIDTH,
@@ -199,7 +199,7 @@ const addHorizontalCut = (colIndex, rowIndex) => {
     height: curRow.height, // Оставшаяся высота
     roundCut: {},
     holes: [],
-    serviseData: createServiseData()
+    serviseData: createServiseData(),
   });
 
   // Обновляем рендер
@@ -215,6 +215,8 @@ const addRoundСut = (colIndex) => {
     row.width < row.height
       ? row.width - SECTOR_PADDING * 2
       : row.height - SECTOR_PADDING * 2;
+
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.CUT) extremum = CUTTER_PARAMS.EXTREMUMS.CUT;
 
   if (
     row.width < 300 + SECTOR_PADDING * 2 ||
@@ -249,7 +251,7 @@ const createHoleDataToCheck = (type, row, col) => {
     return;
   }
 
-  if (extremum > 600) extremum = 600;
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.HOLES) extremum = CUTTER_PARAMS.EXTREMUMS.HOLES;
 
   width = extremum;
   height = extremum;

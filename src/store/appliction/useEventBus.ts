@@ -6,8 +6,10 @@ import { ref, computed } from 'vue';
 export const useEventBus = defineStore('EventBus', () => {
 
   const events = ref<{ [key: string]: Function[] }>({});
+  const emitHooks = ref<((event: string, payload: any) => void | Promise<void>)[]>([]);
 
   const emit = (event: string, payload?: any) => {
+    emitHooks.value.forEach(listener => listener(event, payload));
     if (!events.value[event]) {
       console.warn(`Event "${event}" not found`);
       return;
@@ -31,11 +33,16 @@ export const useEventBus = defineStore('EventBus', () => {
 
   const clearEvents = () => {
     events.value = {}
+    emitHooks.value = []
   }
 
   const getEvents = computed(() => {
     return events.value
   })
 
-  return { emit, on, off, getEvents, clearEvents };
+  const onEmitCalled = (listener: (event: string, payload: any) => void | Promise<void>) => {
+    emitHooks.value.push(listener);
+  };
+
+  return { emit, on, off, getEvents, clearEvents, onEmitCalled };
 });

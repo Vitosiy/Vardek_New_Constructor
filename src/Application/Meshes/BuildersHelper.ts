@@ -1,5 +1,5 @@
 
-//@ts-nocheck
+// @ts-nocheck
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import { useAppData } from "@/store/appliction/useAppData"
@@ -45,9 +45,12 @@ export class BuildersHelper extends GlobalsData {
 
     getProductSize(PARAMS: any, product_data: THREETypes.TObject) {
 
+        const PRODUCT = this._PRODUCTS[PARAMS.ID]
         const MATERIAL_THICKNESS = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH || 18
         const HORIZONT = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT || PARAMS.HORIZONT === 0 ? PARAMS.HORIZONT : 78
-        const FILLING = this._FILLING[product_data["FILLING"][0]] || {}
+   
+
+        const FILLING = this._FILLING[PRODUCT["FILLING"][0]] || {}
 
         PARAMS.EXPRESSIONS = {
             "#MWIDTH#": product_data.width,
@@ -433,5 +436,38 @@ export class BuildersHelper extends GlobalsData {
         traverse(data);
 
         return result;
+    }
+
+    findKeyInObject(obj, keys) {
+        for (const key of keys) {
+            if (obj.hasOwnProperty(key)) {
+                return key;
+            }
+        }
+        return null;
+    }
+
+    computeAABB(object: THREE.Object3D): THREE.Box3 {
+        const box = new THREE.Box3();
+        const size = new THREE.Vector3()
+
+
+        object.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.userData.name !== 'TABLETOP' && child.name !== "ARROWS") {
+                const geometry = child.geometry;
+                if (!geometry.boundingBox) {
+                    geometry.computeBoundingBox();
+                }
+
+                const childBox = geometry.boundingBox!.clone();
+                childBox.applyMatrix4(child.matrixWorld);
+
+                box.union(childBox);
+            }
+        });
+
+        box.getSize(size)
+
+        return box;
     }
 }

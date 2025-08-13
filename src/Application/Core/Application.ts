@@ -22,6 +22,8 @@ import { KeybordListeners } from "../Utils/KeybordListeners";
 
 import { useEventBus } from '../../store/appliction/useEventBus';
 import { useAppData } from "@/store/appliction/useAppData";
+import { UserHistory } from "../Utils/UserHistory";
+import { DeepDispose } from "../Utils/DeepDispose"
 // import { MeshEvents } from '../Meshes/Utils/Events';
 
 import { Resources } from "../Utils/Resources";
@@ -31,8 +33,9 @@ import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtil
 export class Application {
 
     /** Хранилища */
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus();
+    eventBus: ReturnType<typeof useEventBus> = useEventBus();
     appData: ReturnType<typeof useAppData> = useAppData();
+    userHistory: UserHistory<string[]> = new UserHistory();
     // meshEvents: MeshEvents | null = null
 
     canvas: HTMLElement | null;
@@ -42,6 +45,7 @@ export class Application {
     camera: Camera | null = null;
     renderer: Renderer | null = null;
     resources: Resources | null = null
+    deepDispose: DeepDispose | null = null
     enviromentData: { [key: string]: any } | null = ENVIROMENT_MAP[0]
 
     world: World | null = null;
@@ -59,8 +63,6 @@ export class Application {
     keybordListeners: KeybordListeners | null = null
     customBoxHelper: CustomBoxHelper | null = null
 
-    draft: boolean = false
-
     constructor(canvas: HTMLElement) {
 
 
@@ -70,6 +72,7 @@ export class Application {
         this.systemInfo = new SystemInfo()
         this.keybordListeners = new KeybordListeners(this)
         this.resources = new Resources();
+        this.deepDispose = new DeepDispose()
         this.canvas = canvas
 
         this.sizes = new Sizes(canvas)
@@ -134,16 +137,16 @@ export class Application {
         return this.sizes
     }
 
-    get _draft() {
-        return this.draft
-    }
-
     get _resources() {
         return this.resources
     }
 
+    get _deepDispose() {
+        return this.deepDispose
+    }
+
     get _trafficManager() {
-        return this.trafficManager || this.world!.trafficManager
+        return this.trafficManager
     }
 
     get _geometryBuilder() {
@@ -179,6 +182,11 @@ export class Application {
         this.renderer!.resize()
     }
 
+    refreshViewer() {
+        this.resize()
+        this.sizes?.getNewSize()
+    }
+
     update() {
         this.camera!.update()
         this.renderer!.update()
@@ -194,7 +202,8 @@ export class Application {
         this.world!.removeVueEvents();
         this.renderer!.removeVueEvents();
         this.meshEvents!.removeVueEvents();
-        this.world!.deepDispose.clearTotal(this.scene!);
+        this.deepDispose!.clearTotal(this.scene!);
+        this.userHistory!.clearHistory()
 
         this.keybordListeners = null
         this.meshEvents = null
@@ -209,6 +218,7 @@ export class Application {
         this.geometryBuilder = null
         this.world = null
         this.canvas = null
+        this.deepDispose = null
         // this.clearScene(this.scene, this.renderer.instance)
 
     }
@@ -229,13 +239,36 @@ export class Application {
 
     vueEvents() {
 
-        // this.eventsStore.on('A:CameraToggle', (value: boolean) => {
-        //     this.draft = value
-        //     this.udateCamera(value)
-        //     this.world!.room.createShape.hideDraft()
-        // })
+        this.eventBus.onEmitCalled(async (event) => {
+            // console.log(`🔥 emit вызван: "${event}"`);
 
-        // this.meshEvents = new MeshEvents(this)
+            if (this.userHistory.checkEvent(event)) {
+                const toAction: string[] = this.room?.save()!
+                this.userHistory!.addAction(toAction)
+                console.log(this.userHistory.getHistory(), 'HISTOR')
+
+            }
+        });
+        this.eventBus.on('A:PrevAction', () => {
+            const prev = this.userHistory!.undo()
+            // console.log('PREV')
+            if (prev) {
+                this.deepDispose!.clearExceptEssential(this.scene!)
+                this.room?.update(prev)
+            }
+
+        })
+        this.eventBus.on('A:NextAction', () => {
+            const next = this.userHistory!.redo()
+
+            // console.log('NEXT')
+            if (next) {
+                this.deepDispose!.clearExceptEssential(this.scene!)
+                this.room?.update(next)
+            }
+        })
+
+
     }
 
 }

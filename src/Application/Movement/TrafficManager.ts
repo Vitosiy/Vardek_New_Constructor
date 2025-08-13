@@ -92,27 +92,26 @@ export class TrafficManager {
 
         this.currentObject = object
 
-        if (object) {
-
-            if (object.userData.elementType !== 'raspil') {
-                let product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
-                this.modelState.createCurrentModelFasadesData(product.FACADE);
-            }
-
-            this.modelState.setCurrentModel(object)
-
-            console.log(object.userData)
-
-        }
-        else {
-            this.modelState.clearCurrentModelFasadesData()
-            this.modelState.setCurrentModel(null)
-        }
-
         this.events.emit("A:Selected", {
             object: object,
             roomContant: this.room._roomContant
         })
+
+        if (object) {
+
+            if (object.userData.elementType !== 'raspil') {
+                const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+                this.modelState.createCurrentModelFasadesData(product.FACADE);
+                this.modelState.createCurrentModuleData(product.MODULECOLOR)
+            }
+
+            // this.modelState.setCurrentModel(object)
+
+        }
+        else {
+            this.modelState.clearCurrentModelFasadesData()
+            // this.modelState.setCurrentModel(null)
+        }
 
     }
 
@@ -124,7 +123,7 @@ export class TrafficManager {
         return this.root._camera
     }
 
-    update(room: THREETypes.TRoomManager) {
+    async update(room: THREETypes.TRoomManager) {
 
         this.room = room
         this.rulerLines = []
@@ -145,13 +144,16 @@ export class TrafficManager {
         if (!this._currentObject) return
 
         if (product instanceof THREE.Object3D) {
+            console.log(product, 'product')
+
             const prod = toRaw(product)
             const { RASPIL_LIST } = product.userData.PROPS
 
             if (RASPIL_LIST.length > 0) {
                 RASPIL_LIST.forEach(elem => {
                     this.room.remove(elem.id)
-                    this.despose.clearObject(elem, this.scene)
+                    const meshInScene = this.scene.getObjectByProperty('id', elem.id) as THREE.Object3D
+                    this.despose.clearObject(meshInScene, this.scene)
                     this.boxHelper.removeBoxHelper()
                     this.ruler.clearRuler();
                     this.currentObject = null

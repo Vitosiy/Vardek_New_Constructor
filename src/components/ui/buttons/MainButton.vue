@@ -1,11 +1,5 @@
-<template>
-  <button :class="className + ` ` + size" @click="handleClick">
-    <slot></slot>
-  </button>
-</template>
-
-<script setup>
-import { defineProps, defineEmits } from "vue";
+<script setup lang="ts">
+import { defineProps, defineEmits, defineExpose, ref } from "vue";
 
 // Определение пропсов
 const props = defineProps({
@@ -25,15 +19,27 @@ const props = defineProps({
 
 // Определение событий
 const emit = defineEmits(["click"]);
+const buttonRef = ref<HTMLButtonElement | null>(null);
 
 const handleClick = () => {
   if (!props.disabled) {
     emit("click");
   }
 };
+
+defineExpose({
+  buttonRef,
+});
 </script>
 
+<template>
+  <button :class="className + ` ` + size" @click="handleClick" ref="buttonRef">
+    <slot></slot>
+  </button>
+</template>
+
 <style lang="scss" scoped>
+
 button {
   border: none;
   border-radius: 15px;
@@ -43,17 +49,29 @@ button {
   outline: none;
   background: $bg;
   color: $strong-grey;
+  transition-property: background-color, color;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
   &.right-menu {
     padding: 10px 15px;
   }
+
+  &:hover {
+    background-color: $red;
+    color: $white;
+  }
+}
+.btn-active {
+  background-color: $red;
+  color: $white;
 }
 .red__button {
-  background: $red;
+  background-color: $red;
   color: $white;
 }
 
 .blue__button {
-  background: $blue;
+  background-color: $blue;
   color: $white;
 }
 </style>

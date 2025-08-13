@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
@@ -9,146 +9,121 @@ import { BuildProduct } from './BuildProduct'
 export class JsonBuilder {
 
     parent: BuildProduct
-    resources: THREETypes.TResources
+    material: THREE.Material | null = null
+    keys: string[] = ['fasade', 'center', 'front']
     convert: Function
 
     constructor(parent: BuildProduct) {
         this.parent = parent
         this.convert = parent.calculateFromString
-        // this.resources = parent._resources
     }
 
     createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
-
-        // console.log(data, 'PARENT_data')
 
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
 
-        // if (!Array.isArray(json.items)) {
+        this.material = this.createMaterial(json.material, fasade) as THREE.Material
 
-        //     console.log(parent_size,'PSZ')
+        if (Array.isArray(json.items)) {
 
-        //     let expdata = null
-        //     let modelData = null
+            json.items.forEach((item: THREETypes.TObject, _: number, array: []) => {
 
-        //     let clone = JSON.parse(JSON.stringify(json.items))
+                this.parseDate({ data: item, group, obj, array })
+            })
 
-        //     expdata = this.parent.expressionsReplace(clone, {
-        //         "#FWIDTH#": parent_size.x,
-        //         "#FHEIGHT#": parent_size.y,
-        //         "#FDEPTH#": parent_size.z,
-        //     })
+        } else if (typeof json.items === 'object' && json.items !== null && !(json.items instanceof Date)) {
 
-        //     // console.log(expdata, 'Expdata')
-        //     json.items = Object.values(expdata)
-        // }
-
-        // console.log(json, Array.isArray(json.items), 'JSON')
-        const JSONitems = Array.isArray(json.items) ? json.items : Object.values(json.items)
-        JSONitems.forEach((item: THREETypes.TObject, key: number) => {
-            let material, geometry, textureUrl: string
-
-            // console.log(item)
-
-            if (json.material instanceof THREE.Material) {
-                material = json.material;
-            }
-
-            if (data.material instanceof THREE.Material) {
-                material = data.material;
-            }
-
-            fasade ? textureUrl = fasade.TEXTURE : textureUrl = ''
-
-            if (item.id === 'forwardbox') {
-
-                if (eval(item.geometry.opt.x) <= 0) {
-                    return true;
-                }
-            }
-
-            if (json.material.type) {
-
-                switch (json.material.type) {
-                    case 'MeshBasicMaterial':
-                        material = new THREE.MeshBasicMaterial(material);
-                        if (fasade) {
-                            this.parent.getTexture({ material, url: textureUrl })
-                        }
-                        break;
-                    case 'MeshStandardMaterial':
-                        material = new THREE.MeshStandardMaterial(material);
-                        if (fasade) {
-                            this.parent.getTexture({ material, url: textureUrl })
-                        }
-                        break
-                    case 'MeshPhongMaterial':
-                        material = new THREE.MeshPhongMaterial(material);
-                        if (fasade) {
-                            this.parent.getTexture({ material, url: textureUrl })
-                        }
-                        break
-                    case 'MeshPhysicalMaterial':
-                        material = new THREE.MeshPhysicalMaterial(material);
-                        if (fasade) {
-                            this.parent.getTexture({ material, url: textureUrl })
-                        }
-                        break
-                    case 'MeshLambertMaterial':
-                        material = new THREE.MeshLambertMaterial(material);
-                        if (fasade) {
-                            this.parent.getTexture({ material, url: textureUrl })
-                        }
-                        break
-                }
+            let clone = JSON.parse(JSON.stringify(json.items))
+            if (parent_size) {
+                clone = this.parent.expressionsReplace(clone, {
+                    "#FWIDTH#": parent_size!.x,
+                    "#FHEIGHT#": parent_size!.y,
+                    "#FDEPTH#": parent_size!.z,
+                })
             }
 
 
-            if (item.type == "object") {
-                switch (item.geometry.type) {
-                    case 'BoxGeometry':
-                        geometry = this.createGeometry(item.geometry, parent_size)
-                        break;
-                    case 'ExtrudeGeometry':
-                        geometry = this.createShapeGeometry(item.geometry, parent_size)
-                        break;
-                    case "PlaneGeometry":
-                        geometry = this.createPlaneGeometry(item.geometry, parent_size)
-
-                }
-                obj[item.id] = new THREE.Mesh(geometry, material);
-                obj[item.id].receiveShadow = true;
-                obj[item.id].castShadow = true;
-            }
-
-            if (item.type == "link") {
-                obj[item.id] = obj[item.link].clone();
-                obj[item.id].name = item.id
-            }
-
-            if (item.position) {
-                      obj[item.id].position.set(this.convert(item.position.x), this.convert(item.position.y), this.convert(item.position.z));
-                // obj[item.id].userData.position = obj[item.id].position
-            }
-            if (item.rotation) {
-                 obj[item.id].rotation.set(this.convert(item.rotation.x), this.convert(item.rotation.y), this.convert(item.rotation.z));
-                // obj[item.id].userData.rotation = item.rotation
-            }
-
-            if (item.id === 'back') {
-                obj[item.id].position.y = 0
-            }
+            const type = this.parent.findKeyInObject(clone, this.keys)
 
 
-
-            group.add(obj[item.id])
-            group.applyMatrix4(group.matrixWorld)
-
-        })
+            this.parseDate({ data: clone[type], group, obj, parent_size })
+        }
+        else {
+            console.log('other')
+        }
 
         return group
+    }
+
+    parseDate({ data, group, obj, parent_size, array }: { data: THREETypes.TObject, group: THREE.Object3D, obj, parent_size?, array?: [] }) {
+
+
+        let geometry
+
+        if (data.id === 'forwardbox') {
+
+            if (this.convert(data.geometry.opt.x) <= 0) {
+                return true;
+            }
+        }
+
+        if (data.type == "object") {
+            switch (data.geometry.type) {
+                case 'BoxGeometry':
+                    geometry = this.createGeometry(data.geometry, parent_size)
+                    break;
+                case 'ExtrudeGeometry':
+                    geometry = this.createShapeGeometry(data.geometry, parent_size)
+                    break;
+                case "PlaneGeometry":
+                    geometry = this.createPlaneGeometry(data.geometry, parent_size)
+
+            }
+            obj[data.id] = new THREE.Mesh(geometry, this.material);
+            obj[data.id].receiveShadow = true;
+            obj[data.id].castShadow = true;
+        }
+
+
+
+        if (data.type == "link") {
+            obj[data.id] = obj[data.link].clone();
+            obj[data.id].name = data.id
+        }
+
+        if (data.position) {
+            obj[data.id].position.set(this.convert(data.position.x), this.convert(data.position.y), this.convert(data.position.z));
+            // obj[item.id].userData.position = obj[item.id].position
+        }
+        if (data.rotation) {
+            obj[data.id].rotation.set(this.convert(data.rotation.x), this.convert(data.rotation.y), this.convert(data.rotation.z));
+            // obj[item.id].userData.rotation = item.rotation
+        }
+        if (data.id === 'back') {
+            obj[data.id].position.y = 0
+        }
+
+        // const type =
+
+        if (!data.geometry) {
+            const fill = array?.filter(item => {
+                if (data.link && item.id === data.link) {
+                    return item
+                }
+            })
+
+            group.userData.geometryType = fill[0].geometry.type
+        }
+        else {
+            group.userData.geometryType = data.geometry.type
+        }
+
+
+
+        group.add(obj[data.id])
+        group.applyMatrix4(group.matrixWorld)
     }
 
     createGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
@@ -219,6 +194,48 @@ export class JsonBuilder {
 
     update(parent: BuildProduct) {
         this.parent = parent
+    }
+
+    createMaterial(data, fasade) {
+
+        if (!data) return
+
+        let material, textureUrl
+
+        if (data instanceof THREE.Material) {
+            material = data
+            return material
+        }
+
+        fasade ? textureUrl = fasade.TEXTURE : textureUrl = ''
+
+        if (data.type) {
+
+            switch ((data.type as THREETypes.TMaterialType)) {
+                case 'MeshBasicMaterial':
+                    material = new THREE.MeshBasicMaterial(data);
+                    break;
+                case 'MeshStandardMaterial':
+                    material = new THREE.MeshStandardMaterial(data);
+                    break
+                case 'MeshPhongMaterial':
+                    material = new THREE.MeshPhongMaterial(data);
+                    break
+                case 'MeshPhysicalMaterial':
+                    material = new THREE.MeshPhysicalMaterial(data);
+                    break
+                case 'MeshLambertMaterial':
+                    material = new THREE.MeshLambertMaterial(data);
+                    break
+            }
+        }
+
+        if (fasade) {
+            this.parent.getTexture({ material, url: textureUrl })
+        }
+
+        return material
+
     }
 
 }

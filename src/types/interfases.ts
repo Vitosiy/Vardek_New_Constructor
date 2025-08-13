@@ -23,34 +23,54 @@ declare global {
 
 export interface IProjectParams {
     rooms?: IRoom[],
-    camera?: ICameraData,
-    orto_camera?: IOrtoCameraData,
-    lights?: ILightsObjects,
-    height_clamp?: number,
-    table?: { [key: string]: any },
-    table_params?: { [key: string]: any },
-    table_color?: number | null,
-    table_top_type_auto?: boolean
-    default_fasade_up?: number,
-    default_fasade_down?: number,
+    camera: ICameraData,
+    lights: ILightsObjects,
+    height_clamp: number,
+    table: { [key: string]: any },
+    table_params: { [key: string]: any },
+    table_color: number | null,
+    table_top_type_auto: boolean,
+    module_color: number | string,
+    default_fasade_up: number | string,
+    default_fasade_down: number | string,
+    default_floor: number | string,
+    default_wall: number | string,
+    default_module_color_down: number | string | null,
+    default_module_color_up: number | string | null,
 }
 
-
 export interface IContentItem {
-    type?: THREETypes.TContentType;
-    position?: [number, number, number];
-    rotation?: number[];
-    sizes?: { [key: string]: number }
+    id?: number;
+    uuid?: string;
+    position?: IVector3;
+    rotation?: IRotationEuler;
+    size?: {
+        width: number;
+        height: number;
+        depth: number;
+    };
 }
 
 export interface IRoom {
-    id: number;
+    id: number | string;
     label?: string;
     description?: string;
-    size: IWallSizes;
-    content?: IContentItem[];
+    params?: IWallSizes;
+    content?: IContentItem[] | any[];
 }
 
+export interface IWallSizes {
+
+    walls: IWallData[]
+    floor: string | number
+    wall: string | number
+}
+
+interface IVector3 {
+    x: number;
+    y: number;
+    z: number;
+}
 
 interface IGeometryOpt {
     x: number | string,
@@ -76,7 +96,7 @@ export interface IRotationEuler {
     _x: number,
     _y: number,
     _z: number,
-    _order: 'XYZ'
+    _order: 'XYZ' | string
 }
 
 export interface IRotation {
@@ -92,26 +112,19 @@ export interface IPosition {
 }
 
 export interface IWallData {
-    width: number,
-    height: number,
-    position: IPosition,
+    id: number | string
+    width: number;
+    height: number;
+    depth?: number;
+    position: IVector3,
     rotation: IRotationEuler,
     side: number
 }
 
-export interface IWallSizes {
-    // width?: number,
-    // height?: number,
-    // depth?: number,
-    // thickness?: number,
-    // numberOfWalls?: number,
-    walls: IWallData[]
-    floor?: THREE.Texture | number | string
-    wall?: THREE.Texture | number | string
-}
+/**---------------------------------------------- */
 
 export interface ICameraData {
-    position: [number, number, number],
+    position: number[],
     target: { x: number, y: number, z: number },
     fov: number,
     near: number,
@@ -184,6 +197,7 @@ export interface ILoaders {
 }
 
 export interface IModelsData {
+    ID?:string | number;
     id: string;
     name: string;
     json: any | null;
@@ -205,6 +219,7 @@ export interface IModelsData {
     loop_position: number | null;
     loop_model: string | null;
     wall_thickness: number | null;
+    moduleType: any
 }
 
 export interface IShelfData {
@@ -219,16 +234,16 @@ export interface IMouseData {
 }
 
 export interface ISetProduct {
-    scene: THREE.Scene,
-    config: THREETypes.TObject,
-    object: THREE.Object3D,
-    point: THREE.Vector3,
-    rotate: THREE.Vector3 | THREE.Euler | null,
 
-    roomManager: THREETypes.TRoomManager,
+
+    object?: THREE.Object3D,
+    point?: THREE.Vector3,
+    rotate?: THREE.Vector3 | THREE.Euler | null,
+
+
     trafficManager?: THREETypes.TTrafficManager,
     boxHelper?: THREETypes.TCustomBoxHelper,
-    wall?:THREE.Object3D | THREE.Mesh,
+    wall?: THREE.Object3D | THREE.Mesh,
 }
 
 export interface IClampPosition {
@@ -236,6 +251,7 @@ export interface IClampPosition {
     rotation: THREE.Vector3 | THREE.Euler | null,
     quaternion: THREE.Quaternion
 }
+
 
 
 /** ----------------------------------------------------------------------------------------- */

@@ -1,9 +1,11 @@
 //@ts-nocheck
+import * as THREE from "three"
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
+import { TFasadeItem } from "@/types/types";
 
-import * as THREE from "three"
+
 
 interface IProductFasades {
     NAME: string,
@@ -68,6 +70,8 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentModel = ref<THREE.Object3D | null>(null)
 
+    const currentModulData = ref<any>(null)
+
     const currentModelFasadesData = ref<IProductFasades[]>([])
 
     const currentPaletteData = ref<{ [key: string]: IPalette }>({})
@@ -94,10 +98,28 @@ export const useModelState = defineStore('ModelState', () => {
         return models.value
     })
 
+    /** ------- Работа с Модулем -------- */
+
+    const createCurrentModuleData = (value: number[]) => {
+
+        const colorMap = new Set();
+        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+
+        colorsList.forEach(color => {
+            if (_FASADE[color] !== undefined) {
+                colorMap.add(_FASADE[color]);
+            }
+        });
+        currentModulData.value = Array.from(colorMap)
+    }
+
+    const getCurrentModuleData = computed(() => {
+        return currentModulData.value
+    })
+
     /** ------- Работа с фасадами -------- */
 
-
-    const createCurrentModelFasadesData = (value: number[]) => {
+    const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
 
         const groupedFasades: { [key: string]: number[] } = {};
 
@@ -122,6 +144,10 @@ export const useModelState = defineStore('ModelState', () => {
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
         })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
+
+        if (def) {
+            return result
+        }
 
         currentModelFasadesData.value = result
     }
@@ -287,6 +313,9 @@ export const useModelState = defineStore('ModelState', () => {
 
         createCurrentPatinaData,
         getCurrentPatinaData,
+
+        createCurrentModuleData,
+        getCurrentModuleData
     }
 
 });
