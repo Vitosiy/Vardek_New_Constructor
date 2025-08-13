@@ -38,6 +38,7 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
     }
 
     this.state.oldPosition = JSON.parse(JSON.stringify(dataObject.points));
+    this.state.oldAngleDegrees = dataObject.angleDegrees;
 
     this.state.positionDown.x = e.global.x;
     this.state.positionDown.y = e.global.y;
