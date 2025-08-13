@@ -1,7 +1,7 @@
 import BasketPopUpView from '@/components/popUp/popup-views/BasketPopUpView.vue';
-import StudyPopUpView from '@/components/popUp/popup-views/StudyPopUpView.vue';
-import ErrorPopUpView from '@/components/popUp/popup-views/ErrorPopUpView.vue';
-import ProjectPopUpView from '@/components/popUp/popup-views/ProjectPopUpView.vue';
+import StudyPopUpView from '@/features/quickActions/learning/components/StudyPopUpView.vue';
+import ErrorPopUpView from '@/features/quickActions/report/ErrorPopUpView.vue';
+import ProjectPopUpView from '@/features/quickActions/project/ProjectPopUpView.vue';
 import { Component } from 'vue';
 
 

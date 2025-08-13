@@ -16,88 +16,71 @@
     }
   ],
   "paths": {
-    "/api/tabs/tree": {
+    "/api/modeller/Education/gettree/": {
       "get": {
-        "summary": "Get tab tree",
-        "tags": ["Tabs"],
+        "summary": "Получение дерева обучения",
+        "tags": ["Education"],
         "responses": {
           "200": {
-            "description": "List of tab nodes",
+            "description": "Карта узлов обучения в конверте",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TabNode"
-                  }
-                }
+                "schema": { "$ref": "#/components/schemas/EducationTreeResponse" }
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
+          "500": { "$ref": "#/components/responses/InternalError" }
         }
       }
     },
-    "/api/tabs/{id}/content": {
+    "/api/modeller/Education/getbyid/ID/{id}/": {
       "get": {
-        "summary": "Get tab content by ID",
-        "tags": ["Tabs"],
+        "summary": "Получение элемента по ID",
+        "tags": ["Education"],
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "integer"
-            }
+            "schema": { "type": "integer" }
           }
         ],
         "responses": {
           "200": {
-            "description": "Tab content",
+            "description": "Контент элемента",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TabContent"
-                }
+                "schema": { "$ref": "#/components/schemas/EducationContentResponse" }
               }
             }
           },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "500": { "$ref": "#/components/responses/InternalError" }
         }
       }
     },
-    "/api/tabs/report": {
+    "/api/modeller/message/senderror/": {
       "post": {
-        "summary": "Report an issue",
-        "tags": ["Tabs"],
+        "summary": "Отправить сообщение об ошибке",
+        "tags": ["Messages"],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ErrorReport"
+                "type": "object",
+                "properties": {
+                  "MESSAGE": { "type": "string", "description": "Текст ошибки" }
+                },
+                "required": ["MESSAGE"]
               }
             }
           }
         },
         "responses": {
-          "204": {
-            "description": "Reported successfully"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
+          "200": { "description": "Отправлено" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "500": { "$ref": "#/components/responses/InternalError" }
         }
       }
     },
@@ -261,17 +244,11 @@
           "children"
         ],
         "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "title": {
-            "type": "string"
-          },
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
           "children": {
             "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TabNode"
-            }
+            "items": { "$ref": "#/components/schemas/TabNode" }
           }
         }
       },
@@ -283,54 +260,23 @@
           "content"
         ],
         "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "title": {
-            "type": "string"
-          },
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
           "content": {
             "type": "object",
-            "required": [
-              "text",
-              "images",
-              "videos",
-              "links"
-            ],
+            "required": ["text", "images", "videos", "links"],
             "properties": {
-              "text": {
-                "type": "string"
-              },
-              "images": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uri"
-                }
-              },
-              "videos": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uri"
-                }
-              },
+              "text": { "type": "string" },
+              "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
+              "videos": { "type": "array", "items": { "type": "string", "format": "uri" } },
               "links": {
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": [
-                    "label",
-                    "url"
-                  ],
+                  "required": ["label", "url"],
                   "properties": {
-                    "label": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string",
-                      "format": "uri"
-                    }
+                    "label": { "type": "string" },
+                    "url": { "type": "string", "format": "uri" }
                   }
                 }
               }
@@ -340,28 +286,17 @@
       },
       "ErrorReport": {
         "type": "object",
-        "required": [
-          "text"
-        ],
-        "properties": {
-          "text": {
-            "type": "string"
-          }
-        }
+        "required": ["text"],
+        "properties": { "text": { "type": "string" } }
       },
       "LoginData": {
         "type": "object",
-        "properties": {
-          "login": { "type": "string" },
-          "password": { "type": "string" }
-        },
+        "properties": { "login": { "type": "string" }, "password": { "type": "string" } },
         "required": ["login", "password"]
       },
       "TokenData": {
         "type": "object",
-        "properties": {
-          "token": { "type": "string" }
-        },
+        "properties": { "token": { "type": "string" } },
         "required": ["token"]
       },
       "ApiResponse": {
@@ -370,17 +305,8 @@
           "DATA": {
             "type": "object",
             "properties": {
-              "type": {
-                "type": "string",
-                "enum": ["success", "error"]
-              },
-              "data": {
-                "type": "object",
-                "properties": {
-                  "id": { "type": "string" },
-                  "MESSAGE": { "type": "string" }
-                }
-              }
+              "type": { "type": "string", "enum": ["success", "error"] },
+              "data": { "type": "object", "properties": { "id": { "type": "string" }, "MESSAGE": { "type": "string" } } }
             }
           }
         }
@@ -388,103 +314,65 @@
       "CatalogResponse": {
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/ProductItem" }
-          },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ProductItem" } },
           "pager": { "type": "object" },
-          "sections": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/CatalogSectionItem" }
-          }
+          "sections": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSectionItem" } }
         }
       },
       "ProductItem": {
         "type": "object",
-        "properties": {
-          "ID": { "type": "string" },
-          "IMG": { "type": "string" },
-          "NAME": { "type": "string" },
-          "PRICE": { "type": "string" },
-          "SORT": { "type": "string" }
-        }
+        "properties": { "ID": { "type": "string" }, "IMG": { "type": "string" }, "NAME": { "type": "string" }, "PRICE": { "type": "string" }, "SORT": { "type": "string" } }
       },
       "CatalogSectionItem": {
         "type": "object",
+        "properties": { "ID": { "type": "string" }, "NAME": { "type": "string" }, "SECTION_PAGE_URL": { "type": "string" } }
+      },
+      "ProductRequestData": { "type": "object", "additionalProperties": true },
+      "ProductDetailsResponse": { "type": "object", "properties": { "data": { "type": "object" }, "success": { "type": "boolean" } } },
+      "ProductPriceResponse": { "type": "object", "properties": { "data": { "type": "object" }, "success": { "type": "boolean" } } },
+      "Error": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": { "status": { "type": "integer" }, "message": { "type": "string" }, "code": { "type": "string" } }
+      },
+      "EducationNode": {
+        "type": "object",
+        "required": ["ID", "NAME", "LEFT_MARGIN", "CHILDREN"],
         "properties": {
           "ID": { "type": "string" },
           "NAME": { "type": "string" },
-          "SECTION_PAGE_URL": { "type": "string" }
-        }
-      },
-      "ProductRequestData": {
-        "type": "object",
-        "additionalProperties": true
-      },
-      "ProductDetailsResponse": {
-        "type": "object",
-        "properties": {
-          "data": { "type": "object" },
-          "success": { "type": "boolean" }
-        }
-      },
-      "ProductPriceResponse": {
-        "type": "object",
-        "properties": {
-          "data": { "type": "object" },
-          "success": { "type": "boolean" }
-        }
-      },
-      "Error": {
-        "type": "object",
-        "required": [
-          "status",
-          "message"
-        ],
-        "properties": {
-          "status": {
-            "type": "integer"
+          "IBLOCK_SECTION_ID": { "type": ["string", "null"] },
+          "LEFT_MARGIN": { "type": "string" },
+          "CHILDREN": {
+            "oneOf": [
+              { "type": "object", "additionalProperties": { "$ref": "#/components/schemas/EducationNode" } },
+              { "type": "array", "items": {} }
+            ]
           },
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          }
+          "ELEMENTS": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "EducationTreeResponse": {
+        "type": "object",
+        "required": ["CODE", "DATA"],
+        "properties": {
+          "CODE": { "type": "integer" },
+          "DATA": { "type": "object", "additionalProperties": { "$ref": "#/components/schemas/EducationNode" } }
+        }
+      },
+      "EducationContentResponse": {
+        "type": "object",
+        "required": ["CODE", "DATA"],
+        "properties": {
+          "CODE": { "type": "integer" },
+          "DATA": { "$ref": "#/components/schemas/TabContent", "nullable": true }
         }
       }
     },
     "responses": {
-      "BadRequest": {
-        "description": "Invalid request",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "NotFound": {
-        "description": "Resource not found",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "InternalError": {
-        "description": "Server error",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      }
+      "BadRequest": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "NotFound": { "description": "Resource not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "InternalError": { "description": "Server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
     }
   }
 } 

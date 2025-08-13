@@ -4,14 +4,14 @@
  */
 
 export interface paths {
-    "/api/tabs/tree": {
+    "/api/modeller/Education/gettree/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get tab tree */
+        /** Получение дерева обучения */
         get: {
             parameters: {
                 query?: never;
@@ -21,13 +21,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description List of tab nodes */
+                /** @description Карта узлов обучения в конверте */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["TabNode"][];
+                        "application/json": components["schemas"]["EducationTreeResponse"];
                     };
                 };
                 500: components["responses"]["InternalError"];
@@ -41,14 +41,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tabs/{id}/content": {
+    "/api/modeller/Education/getbyid/ID/{id}/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get tab content by ID */
+        /** Получение элемента по ID */
         get: {
             parameters: {
                 query?: never;
@@ -60,13 +60,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Tab content */
+                /** @description Контент элемента */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["TabContent"];
+                        "application/json": components["schemas"]["EducationContentResponse"];
                     };
                 };
                 404: components["responses"]["NotFound"];
@@ -81,7 +81,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tabs/report": {
+    "/api/modeller/message/senderror/": {
         parameters: {
             query?: never;
             header?: never;
@@ -90,7 +90,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Report an issue */
+        /** Отправить сообщение об ошибке */
         post: {
             parameters: {
                 query?: never;
@@ -100,12 +100,15 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["ErrorReport"];
+                    "application/json": {
+                        /** @description Текст ошибки */
+                        MESSAGE: string;
+                    };
                 };
             };
             responses: {
-                /** @description Reported successfully */
-                204: {
+                /** @description Отправлено */
+                200: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -446,6 +449,26 @@ export interface components {
             status: number;
             message: string;
             code?: string;
+        };
+        EducationNode: {
+            ID: string;
+            NAME: string;
+            IBLOCK_SECTION_ID?: string | null;
+            LEFT_MARGIN: string;
+            CHILDREN: {
+                [key: string]: components["schemas"]["EducationNode"];
+            } | unknown[];
+            ELEMENTS?: string[];
+        };
+        EducationTreeResponse: {
+            CODE: number;
+            DATA: {
+                [key: string]: components["schemas"]["EducationNode"];
+            };
+        };
+        EducationContentResponse: {
+            CODE: number;
+            DATA: components["schemas"]["TabContent"];
         };
     };
     responses: {

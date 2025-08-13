@@ -1,15 +1,17 @@
-import { components } from "./schema";
+import { components, paths } from "./schema";
 
 // ===== TABS API TYPES =====
 
 // Узел дерева табов для обучения
 export type TabNode = components["schemas"]["TabNode"];
 
+export type NodeId = TabContent['id'];
+
 // Контент таба с текстом, изображениями, видео и ссылками
 export type TabContent = components["schemas"]["TabContent"];
 
-//TODO Отчет об ошибке для отправки
-export type ErrorReport = components["schemas"]["ErrorReport"];
+//TODO!!! Отчет об ошибке для отправки
+export type ErrorReport = paths["/api/modeller/message/senderror/"]["post"]["requestBody"]["content"]["application/json"];
 
 // ===== AUTH API TYPES =====
 

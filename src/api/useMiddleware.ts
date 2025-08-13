@@ -42,6 +42,10 @@ export const useMiddleware = () => {
                 // Клонируем request с новым signal
                 const newRequest = new Request(req, { signal: controller.signal });
 
+                //TODO
+                // const token = localStorage.getItem('token')
+                // newRequest.headers.set({})
+                
                 // Сохраняем timeout ID и controller в Map
                 const requestKey = createRequestKey(req);
                 timeoutMap.set(requestKey, { timeoutId, controller });

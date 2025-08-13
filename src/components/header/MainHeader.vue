@@ -35,13 +35,9 @@ import S3DLightHeaderButton from "@/components/ui/buttons/header/S3DLightHeaderB
 import AddLightHeaderButton from "@/components/ui/buttons/header/AddLightHeaderButton.vue";
 import BuyBasketButton from "@/components/ui/buttons/header/BuyBasketButton.vue";
 
-import FullscreenHelperButton from "@/components/ui/buttons/header/helpers/FullscreenHelperButton.vue";
-import ReportHelperButton from "@/components/ui/buttons/header/helpers/ReportHelperButton.vue";
-import StudyHelperButton from "@/components/ui/buttons/header/helpers/StudyHelperButton.vue";
+import { QuickActionsToolbar } from "@/features/quickActions";
 import AddPhotoHelperButton from "@/components/ui/buttons/header/helpers/AddPhotoHelperButton.vue";
 import GetAppHelperButton from "@/components/ui/buttons/header/helpers/GetAppHelperButton.vue";
-import InsertFileHelperButton from "@/components/ui/buttons/header/helpers/InsertFileHelperButton.vue";
-import PrintHelperButton from "@/components/ui/buttons/header/helpers/PrintHelperButton.vue";
 import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/VisibilityHelperButton.vue";
 
 const props = defineProps(["pageComponent"]);
@@ -318,14 +314,10 @@ onBeforeUnmount(() => {
           <BuyBasketButton />
         </div>
         <div class="header-utilitys-helpers">
-          <FullscreenHelperButton />
-          <ReportHelperButton />
-          <StudyHelperButton />
-          <AddPhotoHelperButton />
+          <QuickActionsToolbar />
+          <!-- <AddPhotoHelperButton />
           <GetAppHelperButton @click="saveProject" />
-          <InsertFileHelperButton />
-          <PrintHelperButton @click="updateProject" />
-          <VisibilityHelperButton @click="loadProject" />
+          <VisibilityHelperButton @click="loadProject" /> -->
           <Avatar />
         </div>
       </div>
