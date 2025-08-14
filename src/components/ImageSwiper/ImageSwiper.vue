@@ -7,11 +7,13 @@
           v-for="(image, index) in images" 
           :key="index"
         >
+          <div>{{ image.name }}</div>
           <img 
-            :src="image.src" 
+            :src="`${API_URL}/${image.src}`" 
             :alt="image.alt || 'Slide image'" 
             class="swiper-image" 
           />
+          <div>{{ image.alt }}</div>
         </div>
       </div>
 
@@ -61,6 +63,9 @@
     }
   })
 
+  const API_URL = 'https://dev.vardek.online'
+
+
   const swiperEl = ref(null)
   const swiperInstance = ref(null)
 
@@ -76,8 +81,10 @@
         el: '.swiper-pagination-numbers',
         type: 'custom',
         renderCustom: function (swiper, current, total) {
-            const realIndex = swiper.realIndex + 1; 
-            return `<span class="current">${realIndex}</span>
+            // const realIndex = swiper.realIndex + 1; 
+            const displayIndex = (current - 1) % total + 1;
+            console.log(displayIndex)
+            return `<span class="current">${displayIndex}</span>
                     <span class="separator">/</span>
                     <span class="total">${total}</span>`;
               },
@@ -128,6 +135,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
   }
 
   .swiper-image {
