@@ -81,8 +81,10 @@
         el: '.swiper-pagination-numbers',
         type: 'custom',
         renderCustom: function (swiper, current, total) {
-            const realIndex = swiper.realIndex + 1; 
-            return `<span class="current">${realIndex}</span>
+            // const realIndex = swiper.realIndex + 1; 
+            const displayIndex = (current - 1) % total + 1;
+            console.log(displayIndex)
+            return `<span class="current">${displayIndex}</span>
                     <span class="separator">/</span>
                     <span class="total">${total}</span>`;
               },
