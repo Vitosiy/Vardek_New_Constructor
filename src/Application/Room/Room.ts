@@ -68,8 +68,9 @@ export class Room extends BuildersHelper {
         this.params = {}
         this.resizeParams = {}
 
+       /** @Для_dev */
+       
         this.createRoom(this.getStartSize())
-
         this.setRoom();
         this.roomBounds = this.getRoomBounds();
 

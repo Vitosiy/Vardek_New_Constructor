@@ -1,5 +1,5 @@
 <script setup lang="ts">
-//@ts-nocheck 
+//@ts-nocheck
 
 import * as THREETypes from "@/types/types";
 import * as THREEInterfases from "@/types/interfases";
@@ -108,6 +108,7 @@ onMounted(async () => {
     eventBus.on("A:Move", getMove);
     eventBus.on("A:Selected", selected);
     eventBus.on("A:ContantLoaded", checkContantLoad);
+    eventBus.on("A:ClearSelected", clearSelected);
 
     VerdekConstructor.value = new Application(sceneContainer.value);
 
@@ -224,6 +225,13 @@ const selected = async (item: any) => {
   await nextTick(() => {
     controllerPositionData.value = userData.MOUSE_POSITION;
   });
+};
+
+const clearSelected = () => {
+  controller.value = false;
+  CutData.value = {};
+  CutCash.value = {};
+  universalModuleData.value = null;
 };
 
 const removeModel = (model) => {

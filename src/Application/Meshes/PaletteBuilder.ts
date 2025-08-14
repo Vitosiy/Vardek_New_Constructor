@@ -1,90 +1,77 @@
 //@ts-nocheck
-import * as THREE from "three"
-import * as THREETypes from "@/types/types"
+import * as THREE from "three";
+import * as THREETypes from "@/types/types";
 
-export class PaletteBulider {
-
-    parent: THREETypes.TBuildProduct
+export class PaletteBuilder {
+    parent: THREETypes.TBuildProduct;
 
     constructor(parent: THREETypes.TBuildProduct) {
-
-        this.parent = parent
+        this.parent = parent;
     }
 
-    createPaletteColor({ fasade, data, fasadeNdx, props }: { fasade: THREE.Object3D, data: number | string, fasadeNdx: number, props: { [key: string]: any } }) {
+    createPaletteColor({
+        fasade,
+        data,
+        fasadeNdx,
+        props
+    }: {
+        fasade: THREE.Object3D;
+        data: number | string;
+        fasadeNdx: number;
+        props: { [key: string]: any };
+    }) {
+        const palette = this.parent._APP.PALETTE[data];
+        const fasadeProps = props.CONFIG.FASADE_PROPS[fasadeNdx];
+        const fasadeId = fasadeProps.COLOR ?? 567323;
+        const fasadeName = this.parent._FASADE[fasadeId].NAME.toLowerCase();
 
-        const palette = this.parent._APP.PALETTE[data]
-        const fasadeId = props.CONFIG.FASADE_PROPS[fasadeNdx].COLOR ?? 567323
-        const fasadeDataName = this.parent._FASADE[fasadeId].NAME.toLowerCase()
+        fasade.visible = true;
 
-        const roughnessValue = fasadeDataName.includes('матовый') ? 0.5 : 0.02
+        const useTexture = Boolean(palette.DETAIL_PICTURE);
+        let fasadeSize: THREE.Vector3 | undefined;
 
-
-        if (palette.DETAIL_PICTURE != null) {
-
-            const box = new THREE.Box3().setFromObject(fasade);
-            const vec = new THREE.Vector3()
-            const fasadeSize = box.getSize(vec)
-
-            fasade.traverse((children: THREE.Object3D) => {
-                fasade.visible = true
-
-                if (children instanceof THREE.Mesh) {
-
-                    !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
-
-                    this.parent.changeColor(
-                        {
-                            object: children,
-                            url: palette.DETAIL_PICTURE,
-                            type: "Palette",
-                            textureSize: fasadeSize
-                        })
-                }
-            })
-
-            props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-            props.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = palette.ID
-
-            return
+        // Если текстура — размер фасада нужен один раз
+        if (useTexture) {
+            fasadeSize = new THREE.Box3()
+                .setFromObject(fasade)
+                .getSize(new THREE.Vector3());
+        } else {
+            var roughnessValue = fasadeName.includes("матовый") ? 0.5 : 0.02;
         }
 
+        fasade.traverse((child) => {
+            if (!(child instanceof THREE.Mesh)) return;
+            if (!useTexture && child.userData.type === "glass") return;
 
-        fasade.traverse((children: THREE.Object3D) => {
-
-            fasade.visible = true
-
-            if (children instanceof THREE.Mesh) {
-
-                if (children.userData.type === 'glass') return
-
-                !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
-
-                children.material = new THREE.MeshStandardMaterial();
-                children.material.color.set(`#${palette.HTML}`)
-                children.material.metalness = 0.7
-
-                children.material.roughness = roughnessValue
-
-                children.material.receiveShadow = true;
-                children.material.castShadow = true;
-                children.material.encoding = THREE.SRGBColorSpace;
-
-                children.material.needsUpdate = true;
-
-                fasade.userData.millingMaterial = children.material
-
-
-
+            if (!child.userData.ORIGINAL_COLOR) {
+                child.userData.ORIGINAL_COLOR = child.material;
             }
-        })
 
+            if (useTexture) {
+                this.parent.changeColor({
+                    object: child,
+                    url: palette.DETAIL_PICTURE,
+                    type: "Palette",
+                    textureSize: fasadeSize!
+                });
+            } else {
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(`#${palette.HTML}`),
+                    metalness: 0.7,
+                    roughness: roughnessValue
+                });
 
+                material.receiveShadow = true;
+                material.castShadow = true;
+                material.encoding = THREE.SRGBColorSpace;
+                material.needsUpdate = true;
 
-        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
-        props.CONFIG.FASADE_PROPS[fasadeNdx].PALETTE = palette.ID
+                child.material = material;
+                fasade.userData.millingMaterial = material;
+            }
+        });
 
+        fasadeProps.SHOW = true;
+        fasadeProps.PALETTE = palette.ID;
     }
-
 }
-

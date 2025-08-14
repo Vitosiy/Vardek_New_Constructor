@@ -1,7 +1,7 @@
 <script setup lang="ts">
-//@ts-nocheck 
+//@ts-nocheck
 
-import { computed, ref, onMounted, toRaw } from "vue";
+import { computed, ref, onMounted, onUnmounted, toRaw } from "vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -72,10 +72,15 @@ const showTechMenu = (id: string, products: []) => {
 const showRoomParMenu = () => {
   menuStore.openMenu("roomPar");
   customiserStore.hideCustomiserPopup();
+  eventBus.emit("A:ClearSelected", { object: null });
 };
 
 const changeCameraPos = (value: number) => {
   eventBus.emit("A:ChangeCameraPos", value);
+};
+
+const openPopup = (popupName: keyof typeof popupStore.popups) => {
+  popupStore.openPopup(popupName);
 };
 
 onMounted(() => {
@@ -83,10 +88,15 @@ onMounted(() => {
     el.style.setProperty("--value", `${controlBtn[key].size}px`);
     el.style.setProperty("--font", `${controlBtn[key].fontSize}px`);
   });
+
+  eventBus.on("A:Selected", () => {
+    menuStore.closeMenu("roomPar");
+  });
 });
-const openPopup = (popupName: keyof typeof popupStore.popups) => {
-  popupStore.openPopup(popupName);
-};
+
+onUnmounted(() => {
+  closeAllMenus();
+});
 </script>
 
 <template>
@@ -430,7 +440,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    padding:0px 10px;
+    padding: 0px 10px;
     margin-bottom: auto;
     background: $bg;
 
@@ -458,7 +468,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
     }
 
     @media screen and (min-width: 1329px) {
-      padding:0 20px;
+      padding: 0 20px;
     }
   }
 }
@@ -502,7 +512,6 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
     &__image {
       z-index: 5;
     }
-
 
     &.active {
       .goods-item__title {

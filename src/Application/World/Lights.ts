@@ -40,7 +40,7 @@ export class AppLights {
         // pointLight.shadow.normalBias = 0.02
         // pointLight.shadow.bias = 0.0001
         pointLight.shadow.camera.near = 0.5;
-        pointLight.shadow.camera.far = 6000;
+        pointLight.shadow.camera.far = 2000;
 
         pointLight.shadow.normalBias = 0
         pointLight.shadow.bias = -0.001

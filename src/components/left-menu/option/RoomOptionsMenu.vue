@@ -1,5 +1,5 @@
 <script setup lang="ts">
-//@ts-nocheck 
+/**/ /@ts-nocheck */;
 import {
   ref,
   computed,
@@ -23,6 +23,7 @@ import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useAppData } from "@/store/appliction/useAppData";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
@@ -32,11 +33,13 @@ import RangeSlider from "@/components/ui/rangeSlider/RangeSlider.vue";
 import Toggle from "@vueform/toggle";
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
+import { AppLights } from "@/Application/World/Lights";
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
 const roomState = useRoomState();
 const menuStore = useMenuStore();
+const appData = useAppData();
 
 const clampHeight = ref<number>(sceneState.getStartHeightClamp);
 const quality = ref<TQuality[]>(sceneState.getQuality);
@@ -70,6 +73,8 @@ onMounted(() => {
   refraction.value = sceneState.getRefractionValue;
   pointLight.value = sceneState.getLightRange.pointLight;
   ambientLight.value = sceneState.getLightRange.ambientLight;
+
+  console.log(ambientLight.value, 'ambientLight.value')
 });
 
 onBeforeMount(() => {
@@ -206,6 +211,7 @@ const selectOption = (value: TTextureItem) => {
   switch (currentOption.value) {
     case "moduleTop":
     case "moduleBottom":
+    case "fasadsTop":
       data = { data: value, type: currentOption.value };
       break;
     default:
@@ -224,9 +230,11 @@ const selectOption = (value: TTextureItem) => {
   }
 };
 
+/** Иконка выбранной опции */
 const getOptionImg = computed(() => {
   return (id: number | string, type: string) => {
     let result;
+    const FASADE = appData.getAppData.FASADE;
     switch (type) {
       case "wall":
         result = roomState.getWallsTextures()[id].PREVIEW_PICTURE;
@@ -239,6 +247,12 @@ const getOptionImg = computed(() => {
         break;
       case "moduleBottom":
         result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
+        break;
+      case "fasadsTop":
+        result = FASADE[id].PREVIEW_PICTURE;
+        break;
+      case "fasadsBottom":
+        result = FASADE[id].PREVIEW_PICTURE;
         break;
     }
     return result;
@@ -344,22 +358,6 @@ watch(shadows, () => {
               </label>
             </div>
           </div>
-          <!-- <div v-for="(item, index) in 2" :key="index" class="option-standart">
-            <div class="select-group">
-              <div class="option-label">
-                <div class="label__image"></div>
-                <p class="label__text">Оформление стен</p>
-              </div>
-              <div class="option-label">
-                <div class="label__image"></div>
-                <p class="label__text">Оформление стен</p>
-              </div>
-            </div>
-            <div class="option__checkbox">
-              <input type="checkbox" name="" id="1" />
-              <label for="1">Для всех комнат</label>
-            </div>
-          </div> -->
         </div>
         <h3 class="popup__title">Высота навесных модулей</h3>
         <div class="room-modheight">
@@ -459,6 +457,7 @@ watch(shadows, () => {
 
         <SurfaceRedactor
           :materialList="optionsData"
+          @select_material="selectOption"
           :tempWork="true"
           v-if="getCurrentRedactor"
         />

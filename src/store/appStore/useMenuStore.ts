@@ -43,7 +43,7 @@ export const useMenuStore = defineStore('menu', () => {
     fasadsBottom: { id: defaultFasadeBottom, global: false, title: "Тип фасада (нижний)", label: 'Для всех комнат' },
   });
 
-  function openMenu(type: MenuType, content: string, products: []) {
+  async function openMenu(type: MenuType, content: string, products: []) {
 
     openMenus.value = [];
     catalogFilterProductsId.value = [];
@@ -68,6 +68,8 @@ export const useMenuStore = defineStore('menu', () => {
     menuContentsByID.value = '';
   }
 
+  /** @Работа_с_опциями */
+
   const updateOption = (type: keyof TOptionsMap, value: string | number | { data: string | number, type: string }) => {
 
     globalOptions.value[type].id = typeof value === 'object' && 'data' in value ? value.data : value;
@@ -85,11 +87,6 @@ export const useMenuStore = defineStore('menu', () => {
         }
         break
 
-      case "moduleTop": if (globalOptions.value[type].global) {
-        // console.log(value, 'in MENUSTORE')
-        // roomState.apllyProjectFloor(value)
-      }
-        break
     }
 
   }
@@ -102,14 +99,10 @@ export const useMenuStore = defineStore('menu', () => {
         globalOptions.value[optionKey].id = startParams[defaultIds[optionKey]]
       }
     }
-
-    console.log(globalOptions.value, ' globalOptions.value')
   }
 
   const updateOptionGlobal = (type: keyof TOptionsMap, value: boolean) => {
-
     globalOptions.value[type].global = value
-
   }
 
   const getGlobalOptions = computed(() => {

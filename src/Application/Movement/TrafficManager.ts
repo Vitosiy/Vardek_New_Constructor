@@ -15,7 +15,7 @@ import { MoveManager } from "./MoveManager";
 
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
-import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 export class TrafficManager {
 
@@ -45,6 +45,7 @@ export class TrafficManager {
     rullerSizeLines: THREE.Object3D[] = [];
 
     private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
+    private onClearSelectObject: () => void
 
     // constructor(canvas: HTMLElement, scene: THREE.Scene, room: RoomManager, camera: THREE.Camera, controls: OrbitControls) {
 
@@ -67,13 +68,11 @@ export class TrafficManager {
                 rullerSizeLines: this.rullerSizeLines
             })
 
-
         this.despose = new DeepDispose()
         this.boxHelper = root._customBoxHelper
         this.geometryBuilder = root.geometryBuilder
         this.universalGeometryBuilder = root.universalGeometryBuilder
         //this.dragAndDropManager = new DragAndDropManager(this.canvas, this.scene, this.room, this.camera as THREE.Camera, this.mouse, this.raycaster, this.boxHelper, this)
-
 
         this.dragAndDropManager = new DragAndDropManager(root, this.mouse, this.raycaster, this)
         this.moveManager = new MoveManager({ root, mouse: this.mouse, raycaster: this.raycaster, trafficManager: this })
@@ -88,29 +87,28 @@ export class TrafficManager {
     set _currentObject(object) {
 
         /** Получаем выбранный объект */
-        // if(!object) return
 
         this.currentObject = object
 
-        this.events.emit("A:Selected", {
-            object: object,
-            roomContant: this.room._roomContant
-        })
 
         if (object) {
+
+            this.events.emit("A:Selected", {
+                object: object,
+                roomContant: this.room._roomContant
+            })
+
+            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
 
             if (object.userData.elementType !== 'raspil') {
                 const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
-
-            // this.modelState.setCurrentModel(object)
-
         }
         else {
+            this.events.emit("A:ClearSelected", { object: null, roomContant: this.room._roomContant });
             this.modelState.clearCurrentModelFasadesData()
-            // this.modelState.setCurrentModel(null)
         }
 
     }
@@ -137,9 +135,7 @@ export class TrafficManager {
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
-    removeFromRoom(product: Event | THREE.Object3D) {
-
-        // console.log(this._currentObject, 'CurrentObject')
+    removeFromRoom(product: Event | THREE.Object3D | string | numer) {
 
         if (!this._currentObject) return
 
@@ -184,23 +180,14 @@ export class TrafficManager {
             this.removeFromRoom(model)
         }
 
-        this.events.on('A:RemoveModel', this.onRemoveFromRoom)
 
-        // this.eventsStore.on('A:CameraToggle', (value: boolean) => {
-        //     if (value) {
-        //         this.moveManager.dispose()
-        //         this.dragAndDropManager.dispose()
-        //         return
-        //     }
-        //     console.log('Perspective');
-        //     this.moveManager.updateControl(this.root._orbitControls as OrbitControls)
-        //     this.moveManager.setupModelMove();
-        //     this.dragAndDropManager.setupDragAndDrop()
-        // })
+        this.events.on('A:RemoveModel', this.onRemoveFromRoom);
+
     }
 
     removeVueEvents() {
-        this.events.off('A:RemoveModel', this.onRemoveFromRoom)
+        this.events.off('A:RemoveModel', this.onRemoveFromRoom);
+
     }
 
 }

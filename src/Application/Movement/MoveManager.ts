@@ -354,7 +354,7 @@ export class MoveManager {
         this.ruler.drawRulerToObjects(this.selectedObject)
     }
 
-    clearSelectObject() {
+    public clearSelectObject() {
         if (!this.trafficManager._currentObject) return
 
         this.boxHelper.removeBoxHelper()
@@ -481,6 +481,10 @@ export class MoveManager {
             this.uniformEvents.desablePreGrouping()
 
         })
+
+        this.eventBuss.on('A:ClearSelected', () => {
+            this.clearSelectObject()
+        });
     }
 
 }

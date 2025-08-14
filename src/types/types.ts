@@ -8,11 +8,11 @@ import { Ruler } from "@/Application/Utils/Ruler";
 import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { BuildProduct } from "@/Application/Meshes/BuildProduct";
 import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
-import { PaletteBulider } from "@/Application/Meshes/PaletteBuilder";
+import { PaletteBuilder } from "@/Application/Meshes/PaletteBuilder";
 import { WindowBuilder } from "@/Application/Meshes/WindowBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
 import { SetObject } from "@/Application/Utils/SetObject";
-import { AlumBulider } from "@/Application/Meshes/AlumBuilder";
+import { AlumBuilder } from "@/Application/Meshes/AlumBuilder";
 import { UniformTextureBuilder } from "@/Application/Meshes/UniformTextureBuilder";
 import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
@@ -20,6 +20,7 @@ import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUt
 import { DeepDispose } from "@/Application/Utils/DeepDispose";
 import { AppLights } from "@/Application/World/Lights";
 import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
+import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -45,9 +46,9 @@ export type TCustomBoxHelper = CustomBoxHelper
 export type TBuildProduct = BuildProduct
 export type TMillingBuilder = MillingBuilder
 export type TWindowBuilder = WindowBuilder
-export type TPaletteBulider = PaletteBulider
+export type TPaletteBulider = PaletteBuilder
 export type TSetObject = SetObject
-export type TAlumBulider = AlumBulider
+export type TAlumBuilder = AlumBuilder
 export type TUniformTextureBuilder = UniformTextureBuilder
 export type TKeybordListeners = KeybordListeners
 export type TUniformTextureEvents = UniformTextureEvents
@@ -55,6 +56,7 @@ export type TDeepDispose = DeepDispose
 export type TAppLights = AppLights
 export type TUniversalGeometryBuilder = UniversalGeometryBuilder
 export type TGeometryBuilder = GeometryBuilder
+export type TJSONBuilder = JsonBuilder 
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 
@@ -203,22 +205,32 @@ export type TUniformGroups = {
     currentWidth: number;
     currentHeight: number;
   };
-  color: string; // можно уточнить как CSSColor если хочешь
+  color: string;
 };
 
 
 type TModuleGrid = {
   canvasHeight: number;
   canvasWidth: number;
-  // добавь сюда остальные поля CONFIG.MODULEGRID, если они есть
 };
 
 export type TMyObject = {
   MODULEGRID: TModuleGrid | false;
-  PROPS: any; // либо явный интерфейс, если известна структура
+  PROPS: any;
   canvasHeight: number;
   canvasWidth: number;
 };
+
+export type TDefaultModuleAndFasadeConfig = {
+  defModuleUp: number | string,
+  defModuleDown: number | string,
+  defFasadeUp: number | string,
+  defFasadeDown: number | string,
+  moduleTop: TOptionItem;
+  moduleBottom: TOptionItem;
+  fasadsTop: TOptionItem;
+  fasadsBottom: TOptionItem;
+}
 
 
 

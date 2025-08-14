@@ -105,13 +105,15 @@ export class DragAndDropManager {
                                 wall: surface
                             });
 
+
+                            this.trafficManager._currentObject = object
+                            this.trafficManager.ruler.drawRulerToObjects(object)
+
                             object.userData.MOUSE_POSITION = {
                                 x: point.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
                                 y: point.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
                             };
 
-                            this.trafficManager._currentObject = object
-                            this.trafficManager.ruler.drawRulerToObjects(object)
 
                             //useModelState().setCurrentModel(object);
                         });

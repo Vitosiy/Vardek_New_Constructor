@@ -122,6 +122,8 @@ export const useModelState = defineStore('ModelState', () => {
     const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
 
         const groupedFasades: { [key: string]: number[] } = {};
+        let exception = !def ? 'Без фасада' : ''
+
 
         value.forEach(facadeId => {
             const facade = _FASADE[facadeId];
@@ -143,7 +145,7 @@ export const useModelState = defineStore('ModelState', () => {
         const result = Object.entries(_FASADE_GROUPS).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
+        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception);
 
         if (def) {
             return result
@@ -245,6 +247,8 @@ export const useModelState = defineStore('ModelState', () => {
             []);
 
         currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
+
+        console.log(currentFasadeTypesData.value, '---C-currentFasadeTypesData')
 
     }
 

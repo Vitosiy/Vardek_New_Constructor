@@ -30,25 +30,29 @@ const closeCustomiser = () => {
 };
 
 const checkSelect = (el) => {
+  console.log(el)
   if (!el.object) {
     closeCustomiser();
     currentModel.value = null;
-    modelState.setCurrentModel(null)
+    modelState.setCurrentModel(null);
     return;
   }
   currentModel.value = el.object.userData;
-  console.log(el, 'ON SELECT')
-  modelState.setCurrentModel(el.object.userData)
+  console.log(el, "ON SELECT");
+  modelState.setCurrentModel(el.object.userData);
   // customiserStore.switchCustomiser('ruler')
   // console.log(currentModel.value, "o");
 };
 
 onMounted(() => {
   eventBus.on("A:Selected", checkSelect);
+  eventBus.on("A:ClearSelected", checkSelect);
+  eventBus.on("A:RemoveModel", closeCustomiser)
 });
 
 onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
+  eventBus.off("A:ClearSelected", checkSelect);
 });
 </script>
 
@@ -73,14 +77,8 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <RulerPage
-
-          v-if="customiserStore.customisers == 'ruler'"
-        />
-        <ModelsItemSelector
-
-          v-if="customiserStore.customisers == 'color'"
-        />
+        <RulerPage v-if="customiserStore.customisers == 'ruler'" />
+        <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
         <!--
         <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
         -->

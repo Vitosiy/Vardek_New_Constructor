@@ -184,7 +184,10 @@ export const useRoomState = defineStore('RoomState', () => {
     const [key, value] = Object.entries(PRODUCTS)[0]
     const fasade = value.FACADE
     const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
+      
     return defaultFasadData
+
+    
 
   }
 

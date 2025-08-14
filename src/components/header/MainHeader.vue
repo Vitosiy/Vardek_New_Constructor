@@ -190,7 +190,7 @@ const addEvents3D = () => {
       curActionCount.value = total;
     }
   });
-  // eventBus.on("A:ContantLoaded", checkContantLoad);
+  eventBus.on("A:ContantLoaded", checkContantLoad);
 };
 
 const getHistoruBtnsState = computed(() => {

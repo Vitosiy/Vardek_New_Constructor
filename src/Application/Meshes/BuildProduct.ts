@@ -1,4 +1,4 @@
-// @ts-nocheck
+/**// @ts-nocheck */
 
 import * as THREE from 'three'
 import type { Material } from 'three';
@@ -23,8 +23,8 @@ import { MillingBuilder } from './MillingBuilder';
 import { WindowBuilder } from './WindowBuilder';
 
 import { FasadeBuilder } from './FasadeBuilder';
-import { PaletteBulider } from './PaletteBuilder';
-import { AlumBulider } from './AlumBuilder.ts';
+import { PaletteBuilder } from './PaletteBuilder';
+import { AlumBuilder } from './AlumBuilder.ts';
 import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -46,8 +46,8 @@ export class BuildProduct extends BuildersHelper {
     milling_builder: MillingBuilder;
     window_builder: WindowBuilder;
     fasade_builder: FasadeBuilder;
-    palette_bulider: PaletteBulider
-    alum_builder: AlumBulider
+    palette_bulider: PaletteBuilder
+    alum_builder: AlumBuilder
     uniform_texture_builder: UniformTextureBuilder
     heightCorrect: number = 0
 
@@ -65,8 +65,8 @@ export class BuildProduct extends BuildersHelper {
         this.models_builder = new ModelsBuilder(this)
         this.milling_builder = new MillingBuilder(root)
         this.window_builder = new WindowBuilder(root)
-        this.palette_bulider = new PaletteBulider(this)
-        this.alum_builder = new AlumBulider(this)
+        this.palette_bulider = new PaletteBuilder(this)
+        this.alum_builder = new AlumBuilder(this)
         this.uniform_texture_builder = new UniformTextureBuilder(root, this)
         this.fasade_builder = new FasadeBuilder(this)
     }
@@ -184,33 +184,40 @@ export class BuildProduct extends BuildersHelper {
         return props
     }
 
-    createProductObject(product_data: THREETypes.TObject, props) {
+    private createProductObject(product_data: THREETypes.TObject, props: THREETypes.TObject) {
+        const {
+            element_type,
+            ID,
+            models,
+            width,
+            height,
+            depth,
+            tabletop,
+            FASADE_SIZES,
+            FACADE,
+            MODULECOLOR,
+            type_showcase,
+            USLUGI
+        } = product_data;
 
-        console.log(product_data, 'PROD DATA')
-
-        let PARAMS: THREETypes.TObject = {
+        const PARAMS: THREETypes.TObject = {
             DISABLE_MOVE: false,
-            ELEMENT_TYPE: product_data.element_type,
-            ID: product_data.ID,
-
+            ELEMENT_TYPE: element_type,
+            ID,
             FASADE_PROPS: [],
             FASADE_SIZE: [],
             FASADE_POSITIONS: [],
             FASADE_TYPE: [],
             HANDLES: {},
             HANDLES_POSITION: {},
-            HAVETABLETOP: true,
+            HAVETABLETOP: tabletop != null && this.project.table_top_type_auto,
             HIDE_FASADE: false,
             HIDDEN: false,
             HEIGHTCORRECT: 0,
-            MODELID: product_data.models[0],
-            MODEL: this._MODELS[product_data.models[0]],
+            MODELID: models[0],
+            MODEL: this._MODELS[models[0]],
             MODULE_COLOR: null,
-            SIZE: {
-                width: product_data.width,
-                height: product_data.height,
-                depth: product_data.depth,
-            },
+            SIZE: { width, height, depth },
             SIZE_EDIT: {
                 SIZE_EDIT_WIDTH_MIN: null,
                 SIZE_EDIT_WIDTH_MAX: null,
@@ -219,10 +226,9 @@ export class BuildProduct extends BuildersHelper {
                 SIZE_EDIT_DEPTH_MIN: null,
                 SIZE_EDIT_DEPTH_MAX: null
             },
-            SHOWCASE: null,
+            SHOWCASE: [],
             POSITION: null,
             ROTATION: null,
-
             UNIFORM_TEXTURE: {
                 group: null,
                 level: null,
@@ -231,237 +237,190 @@ export class BuildProduct extends BuildersHelper {
                 backupFasadId: null,
                 color: null
             },
-            USLUGI: [],
-        }
-
-        PARAMS.HAVETABLETOP = (product_data.tabletop != null && this.project.table_top_type_auto) as boolean
-
-
-        if (product_data.FASADE_SIZES.length) {
-
-            PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(product_data.FASADE_SIZES, false) as any[]
-
-            // let fasade_list = this.filters.filterFasadeSizer(product_data.FASADE_SIZES, false) as any[] /** Дополнить тип / интерфейс */
-
-            // if ((Object.values(fasade_list).length > 0)) {
-
-            //     Object.values(fasade_list).forEach((fasade, key) => {
-            //         PARAMS.FASADE_SIZE.push(fasade)
-            //     })
-            // }
-
+            USLUGI: []
         };
 
-        if (product_data.FACADE.length && product_data.FACADE[0]) {
-
-            this.filters.filterFasadePosition(PARAMS, product_data)
+        if (FASADE_SIZES?.length) {
+            PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, false) as any[];
         }
 
-        if (product_data.MODULECOLOR.length && product_data.MODULECOLOR[0] != null) {
-
-            const modulecolor_list = this.filters.filterModuleColor(product_data.MODULECOLOR)
-            PARAMS.MODULE_COLOR = modulecolor_list[0];
-
+        if (FACADE?.[0]) {
+            this.filters.filterFasadePosition(PARAMS, product_data);
         }
 
-        if (product_data.type_showcase.length && product_data.type_showcase[0] != null) {
-            PARAMS.SHOWCASE = [...product_data.type_showcase]
+        if (MODULECOLOR?.[0] != null) {
+            PARAMS.MODULE_COLOR = this.filters.filterModuleColor(MODULECOLOR)[0];
         }
 
-        if (product_data.USLUGI.length && product_data.USLUGI[0] != null) {
-            PARAMS.USLUGI = this.filters.filterUslugi(product_data.USLUGI)
-            props.RASPIL = this.createStartTopTableCutData(PARAMS.USLUGI, product_data)
+        if (type_showcase?.[0] != null) {
+            PARAMS.SHOWCASE = [...type_showcase];
+        }
+
+        if (USLUGI?.[0] != null) {
+            PARAMS.USLUGI = this.filters.filterUslugi(USLUGI);
+            props.RASPIL = this.createStartTopTableCutData(PARAMS.USLUGI, product_data);
         }
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
-        PARAMS.SIZE_EDIT = this.getSizeEdit(product_data, PARAMS)
+        PARAMS.SIZE_EDIT = this.getSizeEdit(product_data, PARAMS);
 
-        return PARAMS
+        return PARAMS;
     }
 
     /** Создание модели */
 
-    createProductBody(perent_group: THREE.Object3D, size?: { width: number, height: number, depth: number }, self: BuildProduct = this) {
-
+    private createProductBody(
+        parentGroup: THREE.Object3D,
+        size?: { width: number; height: number; depth: number }
+    ) {
         const total = new THREE.Object3D();
-        const { PROPS } = perent_group.userData
-        const { CONFIG } = PROPS
+        const { PROPS } = parentGroup.userData;
+        const { CONFIG } = PROPS;
 
-        PROPS.FASADE = []
-        PROPS.FASADE_DEFAULT = []
+        const defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig = this.getDefaultModuleAndFasadeConfig();
 
-        const product_id = CONFIG.ID
+        PROPS.FASADE = [];
+        PROPS.FASADE_DEFAULT = [];
 
-        let model_data = CONFIG.MODEL
-
-        let model_size = size ?? CONFIG.SIZE
+        const productId = CONFIG.ID;
+        const modelData = CONFIG.MODEL;
+        const modelSize = size ?? CONFIG.SIZE;
 
         if (size) {
-            PROPS.CONFIG.SIZE = size
-            this.getProductSize(CONFIG, size)
+            PROPS.CONFIG.SIZE = size;
+            this.getProductSize(CONFIG, size);
         }
 
-        let height_correct = 0
+        if (!modelData) return;
 
-        /** Корректировка положения по высоте */
-        const getHeightCorrect = (value: number, type: string) => {
-            switch (type) {
-                case 'top':
-                    height_correct -= value;
-                    break
-                case 'bottom':
-                    height_correct += value;
-            }
+        let heightCorrect = 0;
+        const adjustHeight = (value: number, type: string) => {
+            heightCorrect += type === "top" ? -value : value;
+            return heightCorrect;
+        };
 
-            return height_correct;
-        }
+        const data = this.createModelData(modelData, PROPS, modelSize);
 
-        if (!model_data) return
+        // Сборка частей
+        const { body, tempMaterial } = !this.isEmpty(modelData)
+            ? this.createBody(data, PROPS, defaultConfig)
+            : { body: null, tempMaterial: null };
 
-        const data = this.createModelData(model_data, PROPS, model_size);
+        const shelf = this._SHELF_POSITION[productId]
+            ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
+            : null;
 
-        /**Добавляем каркас  */
-        const { body, tempMaterial } = !this.isEmpty(model_data) ? this.createBody(total, data, PROPS) : ""
-        console.log(tempMaterial)
+        const legs = this._PRODUCTS[productId]?.leg_length
+            ? this.buildLegs(PROPS, data, total, adjustHeight)
+            : null;
 
-        /** Добавляем полки если есть */
-        const shelf = this._SHELF_POSITION[product_id] ? this.createShelf(total, PROPS, this._SHELF_POSITION[product_id], tempMaterial) : "";
+        const tableTop = CONFIG.HAVETABLETOP
+            ? this.createTableTop(total, PROPS, data, adjustHeight)
+            : null;
 
-        /** Добавляем ножки если есть */
-        const legs = this._PRODUCTS[product_id].leg_length ? this.buildLegs(PROPS, data, total, getHeightCorrect) : "";
-
-        /** Добавляем столешницу если есть */
-        const tableTop = CONFIG.HAVETABLETOP ? this.createTableTop(total, PROPS, data, getHeightCorrect) : "";
-
-        /** Добавляем фасад */
-        const fasade = Object.keys(CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(
-            {
+        const fasade = Object.keys(CONFIG.FASADE_PROPS).length
+            ? this.fasade_builder.getFasade({
                 group: total,
                 props: PROPS,
-                // model_data: data,
-            }) : "";
+                defaultConfig
+            })
+            : null;
 
-        /** Добавляем стреки размеров */
-        const arrows = this.addArrowSize({ object: body, props: PROPS })
+        const arrows = this.addArrowSize({ object: body, props: PROPS });
 
+        // Вычисление высот
+        const legsHeight = legs ? this.calculateHeight(legs) : 0;
+        const bodyHeight = body ? this.calculateHeight(body) : 0;
+        const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
-        let legsHeight = legs ? this.calculateHeight(legs) : 0
-        let bodyHeight = body ? this.calculateHeight(body) : 0
-        let tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0
+        // Позиционирование
+        const baseY = legsHeight * 0.5;
+        if (legs) legs.position.y = baseY;
+        if (body) body.position.y = baseY;
+        if (shelf) shelf.position.y = baseY;
+        if (fasade) fasade.position.y = baseY;
+        if (tableTop) {
+            tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
+        }
+        arrows.position.y = baseY;
 
-        if (legs) legs.position.y = legsHeight * 0.5
-        if (body) body.position.y = legsHeight * 0.5
-        if (shelf) shelf.position.y = legsHeight * 0.5
+        // Добавление в итоговую группу
+        [tableTop, legs, body, shelf, fasade, arrows]
+            .filter(Boolean)
+            .forEach((part) => total.add(part as THREE.Object3D));
 
-        if (tableTop) tableTop.position.y = legsHeight * 0.5 + bodyHeight * 0.5 + tableTopHeight * 0.5
-
-        if (fasade) fasade.position.y = legsHeight * 0.5
-        arrows.position.y = legsHeight * 0.5
-
-        if (tableTop) total.add(tableTop)
-        if (legs) total.add(legs)
-        if (body) total.add(body)
-        if (shelf) total.add(shelf)
-        if (fasade) total.add(fasade)
-
-        total.add(arrows)
-        return total
-    };
+        return total;
+    }
 
     /** Создание тела модели */
 
-    createBody(group: THREE.Object3D, data: THREETypes.TObject, props: THREETypes.TObject) {
+    createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig) {
+        const { CONFIG } = props;
+        const { ELEMENT_TYPE, MODULE_COLOR, ID } = CONFIG;
 
-        console.log(props.CONFIG.MODULE_COLOR, '--MODULE_COLOR')
-        let moluleColorId: number, tempMaterial
-        const elementType = props.CONFIG.ELEMENT_TYPE
-        /** Получаем дефолтнвый ID поверхности модуля*/
-        const defaultUp = this.menuStore.getGlobalOptions.moduleTop.id ?? this.project.default_module_color_up
-        const defaultDown = this.menuStore.getGlobalOptions.moduleBottom.id ?? this.project.default_module_color_down
+        const { defModuleUp, defModuleDown, moduleTop, moduleBottom } = defaultConfig
 
+        const resolveColorId = () => {
+            const isDefault = MODULE_COLOR === this.project.default_module_color;
+            switch (ELEMENT_TYPE) {
+                case "element_down":
+                    return (defModuleDown && isDefault) || moduleBottom.global ? defModuleDown : MODULE_COLOR;
+                case "element_up":
+                    return (defModuleUp && isDefault) || moduleTop.global ? defModuleUp : MODULE_COLOR;
+                default:
+                    return MODULE_COLOR;
+            }
+        };
 
-        /** Получаем дефолтнвый ID поверхности модуля*/
+        const moduleColorId = resolveColorId();
+        CONFIG.MODULE_COLOR = moduleColorId;
 
-        switch (elementType) {
-            case 'element_down':
-                console.log('down', defaultUp && defaultUp === props.CONFIG.MODULE_COLOR)
-                moluleColorId = defaultDown
-                    && props.CONFIG.MODULE_COLOR === this.project.default_module_color
-                    || this.menuStore.getGlobalOptions.moduleBottom.global ? defaultDown
-                    : props.CONFIG.MODULE_COLOR
-                break
-            case 'element_up':
-                console.log('up', defaultUp && defaultUp === props.CONFIG.MODULE_COLOR)
-                moluleColorId = defaultUp
-                    && props.CONFIG.MODULE_COLOR === this.project.default_module_color
-                    || this.menuStore.getGlobalOptions.moduleTop.global ? defaultUp
-                    : props.CONFIG.MODULE_COLOR
+        const moduleColor = this._FASADE[moduleColorId];
+        const body = this.json_builder.createMesh({ data, fasade: moduleColor });
+        const { geometryType } = body.userData;
 
-
-                break
-            default: moluleColorId = props.CONFIG.MODULE_COLOR
-        }
-
-        /** Перезаписываем стартовый ID поверхности модуля */
-        props.CONFIG.MODULE_COLOR = moluleColorId
-
-        const moluleColor = this._FASADE[moluleColorId]
-        const body = this.json_builder.createMesh({ data, fasade: moluleColor })
-        const geometryType = body.userData.geometryType
-
-
-        const texture = this._PRODUCTS[props.CONFIG.ID].texture
-        //Если есть текстура
-        if ('src' in texture && !moluleColor) {
-
+        const texture = this._PRODUCTS[ID].texture;
+        if ("src" in texture && !moduleColor) {
             const textureSize = {
-                width: geometryType === 'ExtrudeGeometry' ? texture.width : 1,
-                height: geometryType === 'ExtrudeGeometry' ? texture.height : 1,
-            }
+                width: geometryType === "ExtrudeGeometry" ? texture.width : 1,
+                height: geometryType === "ExtrudeGeometry" ? texture.height : 1,
+            };
 
-            body.children.forEach(child => {
-                if (child instanceof THREE.Mesh) {
-                    const params = { material: child.material, url: texture.src, texture_size: textureSize }
-                    if (geometryType === 'ExtrudeGeometry') {
-                        params.rotation = Math.PI * 0.5
-                    }
+            body.children.forEach((child) => {
+                if (!(child instanceof THREE.Mesh)) return;
 
-                    this.getTexture(params)
-                }
-                body.userData.MATERIAL = child.material
+                const params: any = { material: child.material, url: texture.src, texture_size: textureSize };
+                if (geometryType === "ExtrudeGeometry") params.rotation = Math.PI * 0.5;
 
-            })
-
+                this.getTexture(params);
+                body.userData.MATERIAL = child.material;
+            });
         }
 
-        body.matrixWorldNeedsUpdate = true
-        body.name = "BODY"
-        body.userData.MATERIAL_TYPE = data.json.material.type
-        tempMaterial = body.children[0].material
+        body.matrixWorldNeedsUpdate = true;
+        body.name = "BODY";
+        body.userData.MATERIAL_TYPE = data.json.material.type;
 
-        const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z))
-        body.traverse(child => {
+        const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z));
+        body.traverse((child) => {
             if (child instanceof THREE.Mesh) {
-                child.geometry.translate(move)
+                child.geometry.translate(move);
             }
-        })
+        });
 
-        props.BODY = body
+        props.BODY = body;
 
-        const box = new THREE.Box3().setFromObject(body);
-        const size = box.getSize(new THREE.Vector3());
-
+        const size = new THREE.Box3().setFromObject(body).getSize(new THREE.Vector3());
         body.userData.trueSize = {
             BODY_WIDTH: size.x,
             BODY_HEIGHT: size.y,
             BODY_DEPTH: size.z,
-        }
+        };
 
-        /** Добавляем стреки размеров */
-        props.BODY_DEFAULT = body.clone()
+        props.BODY_DEFAULT = body.clone();
 
-        return { body, tempMaterial }
-    };
+        return { body, tempMaterial: body.children[0]?.material };
+    }
 
     /** Создание столешницы */
 
@@ -793,5 +752,21 @@ export class BuildProduct extends BuildersHelper {
 
         group.add(arrows)
     };
+
+    /** @Дефолдтные глобальные значения цвета фасада/модуля */
+    getDefaultModuleAndFasadeConfig(): THREETypes.TDefaultModuleAndFasadeConfig {
+        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom } = this.menuStore.getGlobalOptions;
+
+        return {
+            defModuleUp: moduleTop.id ?? this.project.default_module_color_up,
+            defModuleDown: moduleBottom.id ?? this.project.default_module_color_down,
+            defFasadeUp: fasadsTop.id ?? this.project.default_fasade_up,
+            defFasadeDown: fasadsBottom.id ?? this.project.default_fasade_down,
+            moduleTop,
+            moduleBottom,
+            fasadsTop,
+            fasadsBottom
+        }
+    }
 
 }

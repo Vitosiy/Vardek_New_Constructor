@@ -61,13 +61,16 @@ export class World {
         })
         this.vueEvents()
 
-        // this.scene.add(new THREE.AxesHelper(2000))
-        // this.room!.update()
-        // this.lights.setLight(this.room!._wallsGroupSize, 2)
+        // const startRoomId = this.roomsStore.getRooms[0].id
+        // this.loadRoom(startRoomId)
+
+        /** @Для_dev */
+        this.scene.add(new THREE.AxesHelper(2000))
+        this.room!.update()
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
 
 
-        const startRoomId = this.roomsStore.getRooms[0].id
-        this.loadRoom(startRoomId)
+
 
     }
 
