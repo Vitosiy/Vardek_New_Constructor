@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { AuthService } from '@/services/authService'

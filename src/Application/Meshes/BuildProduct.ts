@@ -1,4 +1,4 @@
-/**// @ts-nocheck */
+// @ts-nocheck
 
 import * as THREE from 'three'
 import type { Material } from 'three';

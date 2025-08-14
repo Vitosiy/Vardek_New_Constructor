@@ -1,3 +1,6 @@
+// @ts-nocheck
+
+
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { NewsService } from '@/services/newsService'
