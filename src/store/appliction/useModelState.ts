@@ -58,7 +58,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_SECTION = _APP.FASADE_SECTION;
     const _FASADE_POSITION = _APP.FASADE_POSITION;
     const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
-    const _PRODUCTS = _APP.CATALOG.PRODUCTS
+    const _PRODUCTS = _APP.CATALOG?.PRODUCTS
     const _PALETTE = _APP.PALETTE
     const _MILLING = _APP.MILLING
     const _SHOWCASE = _APP.SHOWCASE
