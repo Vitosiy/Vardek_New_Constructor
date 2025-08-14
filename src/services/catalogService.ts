@@ -10,11 +10,20 @@ const REQUEST_TIMEOUT = 10000
 
 // Сервис
 export const CatalogService = {
+  async ensureHeaderInitialized() {
+    try {
+      await this.initHeader();
+    } catch (error) {
+      console.warn('Header initialization failed, continuing anyway:', error);
+    }
+  },
   async getCatalogList({
     idSection = false,
     page = '1',
     query = false
   }: CatalogListParams = {}): Promise<CatalogResponse> {
+    await this.ensureHeaderInitialized();
+
     try {
       let filter = ''
       if (query) filter = `&filter=${query}`
@@ -70,6 +79,25 @@ export const CatalogService = {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || 'Ошибка при получении цены продукта')
+      }
+      throw error
+    }
+  },
+  async initHeader(): Promise<any> {
+    try {
+      const { data } = await axios.get(
+        `${API_URL}api/modeller/mainobject/InitHeader/`,
+        {
+          headers: {
+            'Accept': 'application/json'
+          },
+          timeout: REQUEST_TIMEOUT
+        }
+      )
+      return data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Ошибка при получении данных заголовка')
       }
       throw error
     }
