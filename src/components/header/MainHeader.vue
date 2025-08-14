@@ -186,7 +186,7 @@ const addEvents3D = () => {
       curActionCount.value = total;
     }
   });
-  // eventBus.on("A:ContantLoaded", checkContantLoad);
+  eventBus.on("A:ContantLoaded", checkContantLoad);
 };
 
 const getHistoruBtnsState = computed(() => {
@@ -269,7 +269,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <div class="header-ui-group">
+          <!-- <div class="header-ui-group">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -302,8 +302,7 @@ onBeforeUnmount(() => {
                 </button>
               </template>
             </Modal>
-            <!-- <AddLightHeaderButton /> -->
-          </div>
+          </div> -->
         </div>
       </div>
       <div class="header-utilitys">

@@ -80,7 +80,11 @@ onMounted(async () => {
     console.log("!!! App2d:", App2d);
     // @ts-ignore
     window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
-    
+  }
+    // Безопасное скрытие loader
+  const loader = document.querySelector('#main-loader');
+  if (loader) {
+    (loader as HTMLElement).style.display = 'none';
   }
 
 });

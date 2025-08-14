@@ -100,7 +100,7 @@ export const START_PROJECT_PARAMS = {
 
         ambientLight: {
             color: '#ffffff',
-            intensity: 1,
+            intensity: 1.5,
         },
 
         pointLight: {
@@ -109,8 +109,8 @@ export const START_PROJECT_PARAMS = {
             bias: 0.0001,
             castShadow: false,
             mapSize: 512,
-            intensity: 1.5,
-            distance: 30000,
+            intensity: 1.6,
+            distance: 6500,
             decay: 0
         }
     },
@@ -199,7 +199,7 @@ export const START_PROJECT_PARAMS = {
         }
     },
 
-
+    project_name: 'New Pod',
     table_top_type_auto: true,
     default_table_color: null,
     default_fasade_color: 7397,
@@ -210,8 +210,11 @@ export const START_PROJECT_PARAMS = {
     default_wall: 44128,
     default_module_color_down: null,
     default_module_color_up: null,
-    // default_module_color_down: 199675,
-    // default_module_color_up: 199675,
+    default_milling_down: null,
+    default_milling_up: null,
+    default_palit_down: null,
+    default_palit_up: null,
+
 }
 
 export const START_SCHEME_CONTANT = {

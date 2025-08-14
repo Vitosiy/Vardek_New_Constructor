@@ -28,7 +28,7 @@ import { DeepDispose } from "../Utils/DeepDispose"
 
 import { Resources } from "../Utils/Resources";
 import { ENVIROMENT_MAP } from "../F-mockapi";
-import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 export class Application {
 
@@ -53,7 +53,7 @@ export class Application {
     universalGeometryBuilder: UniversalGeometryBuilder | null
     tableTopCreator: TableTopCreator | null
     room: RoomManager | null
-    trafficManager
+    trafficManager: TrafficManager | null
     lights: AppLights | null
 
     meshEvents: MeshEvents | null = null
@@ -64,8 +64,6 @@ export class Application {
     customBoxHelper: CustomBoxHelper | null = null
 
     constructor(canvas: HTMLElement) {
-
-
         // (window as any).aplication = this // Для разработки
 
         /** Инициализация */
@@ -85,7 +83,7 @@ export class Application {
         this.ruler = new Ruler();
         this.geometryBuilder = new GeometryBuilder(this);
         this.universalGeometryBuilder = new UniversalGeometryBuilder(this);
-        this.meshEvents = new MeshEvents(this);
+        // this.meshEvents = new MeshEvents(this);
 
         this.setObject = new SetObject(this);
 
@@ -93,6 +91,7 @@ export class Application {
         this.room = new RoomManager(this)
 
         this.trafficManager = new TrafficManager(this, this.room)
+        this.meshEvents = new MeshEvents(this);
 
 
         this.world = new World(this)

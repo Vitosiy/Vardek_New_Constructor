@@ -1,80 +1,107 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
-import { defineProps, ref, computed, defineEmits, onMounted } from 'vue';
+import { defineProps, ref, computed, defineEmits, onMounted } from "vue";
 import { _URL } from "@/types/constants";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 const props = defineProps({
   millingList: Array,
-  tabIndex: Number
-})
+  tabIndex: Number,
+});
 
-const emit = defineEmits(['select_milling'])
+const emit = defineEmits(["select_milling"]);
 
 const eventBus = useEventBus();
 const selectMilling = ref<any>(null);
 
-let filteredMillingList = ref<Array>([])
+let filteredMillingList = ref<Array>([]);
 const isSearch = computed(() => {
-  return filteredMillingList.value.length > 0 ? true : false
-})
-
+  return filteredMillingList.value.length > 0 ? true : false;
+});
 
 const changeMilling = (milling) => {
   eventBus.emit("A:ChangeMilling", {
     data: milling.ID,
     fasadeNdx: props.tabIndex,
   });
-  emit('select_milling', { name: milling.NAME, imgSrc: milling.PREVIEW_PICTURE }) // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+  emit("select_milling", {
+    name: milling.NAME,
+    imgSrc: milling.PREVIEW_PICTURE,
+  }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {
   let reg = new RegExp(`${e.target.value.toLowerCase()}`, "gm");
-  let filtered = props.millingList.filter(milling => reg.test(milling.NAME.toLowerCase()))
-  filteredMillingList.value = filtered
-  if(e.target.value === '') filteredMillingList.value = []
-}
-
+  let filtered = props.millingList.filter((milling) =>
+    reg.test(milling.NAME.toLowerCase())
+  );
+  filteredMillingList.value = filtered;
+  if (e.target.value === "") filteredMillingList.value = [];
+};
 </script>
 
-
-
 <template>
-  <div>
-    <input class="search" type="text" placeholder="Поиск" @input="onSearchChange">
+  <div class="relative__wrapper">
+ 
+      <input
+        class="search"
+        type="text"
+        placeholder="Поиск"
+        @input="onSearchChange"
+      />
+   
+    <ul class="list">
+      <!-- Все виды фрезировок -->
+      <li
+        v-if="!isSearch"
+        class="item"
+        v-for="milling in props.millingList"
+        @click="changeMilling(milling)"
+      >
+        <img class="item__img" :src="_URL + milling.PREVIEW_PICTURE" alt="" />
+        <div class="item__name">{{ milling.NAME }}</div>
+      </li>
+      <!-- Отфильтрованные в поиске -->
+      <li
+        v-else
+        class="item"
+        v-for="milling in filteredMillingList"
+        @click="changeMilling(milling)"
+      >
+        <img class="item__img" :src="_URL + milling.PREVIEW_PICTURE" alt="" />
+        <div class="item__name">{{ milling.NAME }}</div>
+      </li>
+    </ul>
+ 
   </div>
-  <ul class="list">
-    <!-- Все виды фрезировок -->
-    <li v-if="!isSearch" class="item" v-for="milling in props.millingList" @click="changeMilling( milling )">
-      <img class="item__img" :src="_URL + milling.PREVIEW_PICTURE" alt="">
-      <div class="item__name">{{ milling.NAME }}</div>
-    </li>
-    <!-- Отфильтрованные в поиске -->
-    <li v-else class="item" v-for="milling in filteredMillingList" @click="changeMilling( milling )">
-      <img class="item__img" :src="_URL + milling.PREVIEW_PICTURE" alt="">
-      <div class="item__name">{{ milling.NAME }}</div>
-    </li>
-  </ul>
 </template>
 
 <style scoped lang="scss">
+.relative__wrapper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-height: 100vh;
+  overflow: hidden;
+  margin-right: 0px;
+  border: 1px solid $dark-grey;
+  border-radius: 15px;
+  padding: 10px 10px 0px 10px;
+}
 .search {
-  position: absolute;
-  top: 10px;
-  height: 40px;
   width: 95%;
-  border-radius: 5px;
-  padding-left: 15px;
+  border-radius: 15px;
+  padding: 10px 15px;
 }
 
 .list {
-  overflow: scroll;
   height: 100%;
-  margin-top: 40px;
-}
-
-.list::-webkit-scrollbar {
-  width: 8px;
+  max-height: calc(85vh - 110px);
+  margin-top: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  box-sizing: border-box;
 }
 
 .item {
@@ -82,21 +109,32 @@ const onSearchChange = (e) => {
   flex-direction: row;
   align-items: center;
   cursor: pointer;
-  height: 60px;
-  // border: 1px solid red;
-  border-radius: 5px;
-  background-color: #e7e7e7;
-  margin-bottom: 4px;
+  padding: 10px;
+  // height: 60px;
+  border-radius: 15px;
+  background-color: $bg;
+  margin-bottom: 8px;
   margin-right: 8px;
+  transition-property: background-color;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
 
   &__img {
-    height: 45px;
-    border-radius: 5px;
-    margin-left: 10px;
+    height: 60px;
+    width: 60px;
+    padding: 5px;
+    border-radius: 15px;
+    background-color: $white;
+    // margin-left: 10px;
   }
-  
+
   &__name {
     margin-left: 30px;
+  }
+  @media (hover: hover) {
+    &:hover {
+      background-color: $stroke;
+    }
   }
 }
 </style>

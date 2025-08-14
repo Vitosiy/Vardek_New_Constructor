@@ -1,13 +1,16 @@
+// @ts-nocheck
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { AuthService } from '@/services/authService'
 import { useRouter } from 'vue-router'
 import { LoginData, UserData } from '@/types/authTypes'
+import { useAppData } from '@/store/appliction/useAppData'
 
 const TOKEN_EXPIRATION_HOURS = 24
 
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
+  const appDataStore = useAppData()
   
   const isAuthenticated = ref(!!localStorage.getItem('token'))
   const isSubmitting = ref(false)
@@ -69,12 +72,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const handleSuccessfulLogin = async (token: string) => {
+    // await appDataStore.initAppData()
+
     const expiresIn = TOKEN_EXPIRATION_HOURS * 60 * 60 * 1000
     
     localStorage.setItem('token', token)
     localStorage.setItem('tokenExpiration', (Date.now() + expiresIn).toString())
     isAuthenticated.value = true
     
+
+    // await appDataStore.initAppData();
     await router.push('/2d')
   }
   

@@ -68,14 +68,13 @@ export class Room extends BuildersHelper {
         this.params = {}
         this.resizeParams = {}
 
-        this.createRoom(this.getStartSize())
+        /** @Для_dev */
 
-        this.setRoom();
-        this.roomBounds = this.getRoomBounds();
-
+        // this.createRoom(this.getStartSize())
+        // this.setRoom();
+        // this.roomBounds = this.getRoomBounds();
 
     }
-
 
     get _wallsGroupSize() {
         return this.wallsGroupSize
@@ -107,6 +106,12 @@ export class Room extends BuildersHelper {
 
     get _roomBounds() {
         return this.roomBounds
+    }
+
+    defaultCreate() {
+        this.createRoom(this.getStartSize())
+        this.setRoom();
+        this.roomBounds = this.getRoomBounds();
     }
 
     loadRoom(light, roomId?: string | number) {

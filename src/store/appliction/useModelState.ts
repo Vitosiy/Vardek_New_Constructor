@@ -58,7 +58,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_SECTION = _APP.FASADE_SECTION;
     const _FASADE_POSITION = _APP.FASADE_POSITION;
     const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
-    const _PRODUCTS = _APP.CATALOG.PRODUCTS
+    const _PRODUCTS = _APP.CATALOG?.PRODUCTS
     const _PALETTE = _APP.PALETTE
     const _MILLING = _APP.MILLING
     const _SHOWCASE = _APP.SHOWCASE
@@ -122,6 +122,8 @@ export const useModelState = defineStore('ModelState', () => {
     const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
 
         const groupedFasades: { [key: string]: number[] } = {};
+        let exception = !def ? 'Без фасада' : ''
+
 
         value.forEach(facadeId => {
             const facade = _FASADE[facadeId];
@@ -143,7 +145,7 @@ export const useModelState = defineStore('ModelState', () => {
         const result = Object.entries(_FASADE_GROUPS).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
+        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception);
 
         if (def) {
             return result
@@ -162,9 +164,9 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** Палитра */
     const createCurrentPaletteData = (value: number) => {
-
+        let result = {}
         if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
-            currentPaletteData.value = Object.keys(_PALETTE)
+            result = Object.keys(_PALETTE)
                 .filter(
                     (key) =>
                         _PALETTE[key].TYPE ===
@@ -174,10 +176,14 @@ export const useModelState = defineStore('ModelState', () => {
                     obj[key] = _PALETTE[key];
                     return obj;
                 }, {});
-            return
+
+            currentPaletteData.value = result
+
+            return result
         }
 
-        currentPaletteData.value = {}
+        currentPaletteData.value = result
+        return result
     }
 
     const getCurrentPaletteData = computed(() => {
@@ -246,6 +252,8 @@ export const useModelState = defineStore('ModelState', () => {
 
         currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
 
+        console.log(currentFasadeTypesData.value, '---C-currentFasadeTypesData')
+
     }
 
     const getCurrentFasadeTypesData = computed(() => {
@@ -260,7 +268,9 @@ export const useModelState = defineStore('ModelState', () => {
         const currentClass = glassArray.reduce((acc, index) =>
             acc.concat(_GLASS[index] || []),
             []);
+
         currentGlassData.value = currentClass;
+        return currentClass
     }
 
     const getCurrentGlassData = computed(() => {

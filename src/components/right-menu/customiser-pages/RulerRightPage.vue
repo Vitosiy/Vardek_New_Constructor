@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // @ts-nocheck
-import { ref, onMounted, onBeforeMount, watch } from "vue";
+import {ref, onMounted, onBeforeMount, watch, computed} from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
@@ -25,6 +25,10 @@ const resizeData = ref({
 
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
+
+const getIsUMproduct = computed(() => {
+  return !currentModel.value?.PROPS.CONFIG.MODULEGRID
+})
 
 const prepareData = () => {
   currentModel.value = modelState.getCurrentModel;
@@ -85,6 +89,7 @@ watch(
             type="number"
             :min="sizeEditData.widthMin"
             :max="sizeEditData.widthMax"
+            :disabled="!getIsUMproduct"
           />
         </div>
         <div class="size-item">
@@ -96,6 +101,7 @@ watch(
             type="number"
             :min="sizeEditData.heightMin"
             :max="sizeEditData.heightMax"
+            :disabled="!getIsUMproduct"
           />
         </div>
         <div class="size-item">
@@ -107,6 +113,7 @@ watch(
             type="number"
             :min="sizeEditData.depthMin"
             :max="sizeEditData.depthMax"
+            :disabled="!getIsUMproduct"
           />
         </div>
       </div>

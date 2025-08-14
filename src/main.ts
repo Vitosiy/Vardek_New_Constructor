@@ -18,6 +18,7 @@ async function bootApp() {
 
   const token = localStorage.getItem('token')
   const appDataStore = useAppData()
+  await appDataStore.initAppData()
 
   if (!token) {
     // Нет токена — показываем /auth
@@ -34,7 +35,6 @@ async function bootApp() {
     await router.push('/auth')
   }
 
-  await appDataStore.initAppData()
 
   // Данные загрузились — редиректим в /2d
   await router.push('/2d')

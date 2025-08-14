@@ -101,7 +101,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 15px;
-  border: 1px solid rgb(195, 195, 195);
+  border: 1px solid $stroke;
   border-radius: 10px;
   padding: 15px;
   max-height: 100vh;

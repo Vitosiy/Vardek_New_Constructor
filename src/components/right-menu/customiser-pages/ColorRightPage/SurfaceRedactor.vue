@@ -25,7 +25,7 @@ onMounted(() => {
   console.log(props.materialList, "");
 });
 
-const emit = defineEmits(["select_material"]);
+const emit = defineEmits(["select_material", "select"]);
 const modelState = useModelState();
 const eventBus = useEventBus();
 
@@ -49,9 +49,19 @@ const isSearch = computed(() => {
 });
 
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
-  if (props.tempWork) return;
-  const productId = productData.PROPS.PRODUCT;
+  console.log(data, 'data')
 
+  if (props.tempWork) {
+    // eventBus.emit(`${props.typeChanger.event}`, {
+    //   data: id,
+    //   type: props.typeChanger.type,
+    // });
+    emit("select_material", data)
+
+    return;
+  }
+
+  const productId = productData.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = data;
 
   modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });

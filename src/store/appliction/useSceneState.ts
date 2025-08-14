@@ -1,4 +1,4 @@
-//@ts-nocheck 
+// @ts-nocheck
 
 import { defineStore } from 'pinia';
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
@@ -11,6 +11,7 @@ import { START_PROJECT_PARAMS } from '@/Application/F-startData';
 import { useRoomState } from './useRoomState';
 
 export const useSceneState = defineStore('SceneState', () => {
+
 
     const schemeTransition = useSchemeTransition()
     const roomState = useRoomState()
@@ -53,8 +54,8 @@ export const useSceneState = defineStore('SceneState', () => {
     ],)
 
     const lightRange = ref<TLightRange>({
-        pointLight: 1,
-        ambientLight: 1
+        pointLight: startParamsClone.lights.pointLight.intensity,
+        ambientLight: startParamsClone.lights.ambientLight.intensity
     })
 
     const updateProjectParams = ({
@@ -73,7 +74,12 @@ export const useSceneState = defineStore('SceneState', () => {
         default_wall,
         default_module_color_down,
         default_module_color_up,
-        default_module_color
+        default_module_color,
+        default_milling_down,
+        default_milling_up,
+        default_palit_down,
+        default_palit_up,
+        project_name
 
     }: IProjectParams) => {
         currentProjectParams.value = {
@@ -93,10 +99,16 @@ export const useSceneState = defineStore('SceneState', () => {
             default_module_color_down: default_module_color_down ?? startProjectParams.value.default_module_color_down,
             default_module_color_up: default_module_color_up ?? startProjectParams.value.default_module_color_up,
             default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
+            default_milling_down: default_milling_down ?? startProjectParams.value.default_milling_down,
+            default_milling_up: default_milling_up ?? startProjectParams.value.default_milling_up,
+            default_palit_down: default_palit_down ?? startProjectParams.value.default_palit_down,
+            default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
+            project_name: project_name ?? startProjectParams.value.project_name
+
         } as IProjectParams;
 
         const clone = JSON.parse(JSON.stringify(currentProjectParams.value.rooms))
-        console.log(clone)
+        // console.log(clone)
         const parseData = clone.map(elem => {
             return {
                 ...elem,
@@ -139,6 +151,25 @@ export const useSceneState = defineStore('SceneState', () => {
         }
     };
 
+    const createNewProject = () => {
+        const clone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
+
+        startProjectParams.value = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
+
+        startParamsClone.value = clone
+
+        startRoomData.value = clone.rooms[0].params
+
+        startCameraData.value = clone.camera
+
+        startLightsDat.value = clone.lights
+
+        startHeightClamp.value = clone.height_clamp
+
+        currentProjectParams.value = clone
+
+    }
+
     const getStartProgectParams = computed(() => {
         return startProjectParams.value
     })
@@ -179,8 +210,6 @@ export const useSceneState = defineStore('SceneState', () => {
         return quality.value
     })
 
-
-
     return {
         getStartProgectParams,
         getStartRoomData,
@@ -198,7 +227,8 @@ export const useSceneState = defineStore('SceneState', () => {
         updateDefaultData,
         setRefractionValue,
         setShadowValue,
-        setLightRange
+        setLightRange,
+        createNewProject
     };
 
 });

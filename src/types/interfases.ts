@@ -23,20 +23,27 @@ declare global {
 
 export interface IProjectParams {
     rooms?: IRoom[],
-    camera: ICameraData,
-    lights: ILightsObjects,
-    height_clamp: number,
-    table: { [key: string]: any },
-    table_params: { [key: string]: any },
-    table_color: number | null,
-    table_top_type_auto: boolean,
-    module_color: number | string,
-    default_fasade_up: number | string,
-    default_fasade_down: number | string,
-    default_floor: number | string,
-    default_wall: number | string,
-    default_module_color_down: number | string | null,
-    default_module_color_up: number | string | null,
+    camera?: ICameraData,
+    lights?: ILightsObjects,
+    height_clamp?: number,
+    table?: { [key: string]: any },
+    table_params?: { [key: string]: any },
+    table_color?: number | null,
+    table_top_type_auto?: number | null,
+    default_table_color?: number | null,
+    default_fasade_up?: number | null,
+    default_fasade_down?: number | null,
+    default_fasade_color?: number | null,
+    default_floor?: number | null,
+    default_wall?: number | null,
+    default_module_color_down?: number | null,
+    default_module_color_up?: number | null,
+    default_module_color?: number | null,
+    default_milling_down?: number | null,
+    default_milling_up?: number | null,
+    default_palit_down?: number | null,
+    default_palit_up?: number | null,
+    project_name?: number | null
 }
 
 export interface IContentItem {
@@ -197,7 +204,7 @@ export interface ILoaders {
 }
 
 export interface IModelsData {
-    ID?:string | number;
+    ID?: string | number;
     id: string;
     name: string;
     json: any | null;

@@ -29,100 +29,105 @@ export class BuildUniversalModule extends BuildProduct {
 
         const total = new THREE.Object3D();
 
-        const model_props = perent_group.userData.PROPS
-        const product_id = model_props.CONFIG.ID
-        const productInfo = this._PRODUCTS[product_id];
+        const defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig = this.getDefaultModuleAndFasadeConfig();
 
-        model_props.FASADE = []
-        model_props.FASADE_DEFAULT = []
+        const { PROPS } = perent_group.userData
+        const { CONFIG } = PROPS;
 
-        let model_data = model_props.CONFIG.MODEL
+        const productId = CONFIG.ID
+        const productInfo = this._PRODUCTS[productId];
 
-        const MODULEGRID = moduleParams || Object.keys(model_props.CONFIG.MODULEGRID)?.length || false
+        PROPS.FASADE = []
+        PROPS.FASADE_DEFAULT = []
 
-        const size = _size ? _size : MODULEGRID ? { width: MODULEGRID.width, height: MODULEGRID.height, depth: MODULEGRID.depth } : false
+        const modelData = CONFIG.MODEL
 
-        let model_size = size || model_props.CONFIG.SIZE
+        console.log(CONFIG, '--CONFIG')
+
+        const MODULEGRID = moduleParams || Object.keys(PROPS.CONFIG.MODULEGRID)?.length || false
+
+        const size = _size ? _size : MODULEGRID ? { width: MODULEGRID.width, height: MODULEGRID.height, depth: MODULEGRID.depth } : null
+
+        const modelSize = size ?? PROPS.CONFIG.SIZE;
 
         if (size) {
-            model_props.CONFIG.SIZE = size
-            this.getProductSize(model_props.CONFIG, Object.assign({}, productInfo, size))
+            CONFIG.SIZE = size
+            this.getProductSize(CONFIG, Object.assign({}, productInfo, size))
         }
 
-        let height_correct = 0
+        let heightCorrect = 0;
+        const adjustHeight = (value: number, type: string) => {
+            heightCorrect += type === "top" ? -value : value;
+            return heightCorrect;
+        };
 
-        /** Корректировка положения по высоте */
-        const getHeightCorrect = (value: number, type: string) => {
-            switch (type) {
-                case 'top':
-                    height_correct -= value;
-                    break
-                case 'bottom':
-                    height_correct += value;
-            }
+        if (!modelData) return
 
-            return height_correct;
-        }
+        const data = this.createModelData(modelData, PROPS, modelSize);
+        // Сборка частей
+        const { body, tempMaterial } = !this.isEmpty(modelData)
+            ? this.createBody(data, PROPS, defaultConfig)
+            : { body: null, tempMaterial: null };
 
-        if (!model_data) return
+        const shelf = this._SHELF_POSITION[productId]
+            ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
+            : null;
 
-        const data = this.createModelData(model_data, model_props, model_size);
+        const legs = this._PRODUCTS[productId]?.leg_length
+            ? this.buildLegs(PROPS, data, total, adjustHeight)
+            : null;
 
-        /**Добавляем каркас  */
-        const { body, tempMaterial } = !this.isEmpty(model_data) ? this.createBody(total, data, model_props) : ""
-
-        /** Добавляем полки если есть */
-        const shelf = this._SHELF_POSITION[product_id] ? this.createShelf(total, model_props, this._SHELF_POSITION[product_id], tempMaterial) : "";
-
-        /** Добавляем столешницу если есть */
-        const tableTop = model_props.CONFIG.HAVETABLETOP ? this.createTableTop(total, model_props, data, getHeightCorrect) : "";
-
-        /** Добавляем ножки если есть */
-        const legs = productInfo.leg_length ? this.buildLegs(model_props, data, total, getHeightCorrect) : "";
+        const tableTop = CONFIG.HAVETABLETOP
+            ? this.createTableTop(total, PROPS, data, adjustHeight)
+            : null;
 
         if (MODULEGRID) {
-            this.parseModulegrid(MODULEGRID, model_props)
-            this.buildModulegrid(model_props, total)
+
+            this.parseModulegrid(MODULEGRID, PROPS)
+            this.buildModulegrid(PROPS, total)
         }
 
-        if (model_props.CONFIG.LOOPS && Object.keys(model_props.CONFIG.LOOPS)?.length) {
-            let loopsMesh = this.createLoop(productInfo, model_props, model_props.CONFIG.LOOPS)
+        if (CONFIG.LOOPS && Object.keys(CONFIG.LOOPS)?.length) {
+            let loopsMesh = this.createLoop(productInfo, PROPS, CONFIG.LOOPS)
             total.add(loopsMesh)
         }
 
         /** Добавляем фасад */
-        const fasade = Object.keys(model_props.CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(
-            {
+        const fasade = Object.keys(CONFIG.FASADE_PROPS).length
+            ? this.fasade_builder.getFasade({
                 group: total,
-                props: model_props,
+                props: PROPS,
                 model_data: data,
-                isUMmodule: !!MODULEGRID
-            }) : "";
+                isUMmodule: !!MODULEGRID,
+                defaultConfig
+            })
+            : null;
 
         /** Добавляем стреки размеров */
-        const arrows = this.addArrowSize({ object: body, props: model_props })
+        const arrows = this.addArrowSize({ object: body, props: PROPS })
 
-        let legsHeight = legs ? this.calculateHeight(legs) : 0
-        let bodyHeight = body ? this.calculateHeight(body) : 0
-        let tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0
+        // Вычисление высот
+        const legsHeight = legs ? this.calculateHeight(legs) : 0;
+        const bodyHeight = body ? this.calculateHeight(body) : 0;
+        const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
-        if (legs) legs.position.y = legsHeight * 0.5
-        if (body) body.position.y = legsHeight * 0.5
-        if (shelf) shelf.position.y = legsHeight * 0.5
+        // Позиционирование
+        const baseY = legsHeight * 0.5;
+        if (legs) legs.position.y = baseY;
+        if (body) body.position.y = baseY;
+        if (shelf) shelf.position.y = baseY;
+        if (fasade) fasade.position.y = baseY;
+        if (tableTop) {
+            tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
+        }
+        arrows.position.y = baseY;
 
-        if (tableTop) tableTop.position.y = legsHeight * 0.5 + bodyHeight * 0.5 + tableTopHeight * 0.5
+        // Добавление в итоговую группу
+        [tableTop, legs, body, shelf, fasade, arrows]
+            .filter(Boolean)
+            .forEach((part) => total.add(part as THREE.Object3D));
 
-        if (fasade) fasade.position.y = legsHeight * 0.5
-        arrows.position.y = legsHeight * 0.5
-
-        if (tableTop) total.add(tableTop)
-        if (legs) total.add(legs)
-        if (body) total.add(body)
-        if (shelf) total.add(shelf)
-        if (fasade) total.add(fasade)
-
-        total.add(arrows)
-        return total
+        return total;
     };
 
     createProductObject(product_data: THREETypes.TObject, props) {
@@ -286,52 +291,58 @@ export class BuildUniversalModule extends BuildProduct {
 
     buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D) {
 
+        PROPS.JSON_FILLINGS = []
+
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
-            section.fillings?.map((filling) => {
-                const productInfo = this._PRODUCTS[filling.product]
+            if (section.fillings?.length) {
+                section.fillings.map((filling) => {
+                    const productInfo = this._PRODUCTS[filling.product]
 
-                if (!productInfo)
-                    return
+                    if (!productInfo)
+                        return
 
-                const onLoad = (productFilling, isModel = true) => {
-                    let size = PROPS.CONFIG.SIZE
-                    let start_position = this.getStartPosition(size)
+                    const onLoad = (productFilling, isModel = true) => {
+                        let size = PROPS.CONFIG.SIZE
+                        let start_position = this.getStartPosition(size)
 
-                    if (isModel) {
-                        const box = new THREE.Box3().setFromObject(productFilling);
-                        const size = box.getSize(new THREE.Vector3());
+                        if (isModel) {
+                            const box = new THREE.Box3().setFromObject(productFilling);
+                            const size = box.getSize(new THREE.Vector3());
 
-                        productFilling.userData.trueSizes = {
-                            WIDTH: size.x,
-                            HEIGHT: size.y,
-                            DEPTH: size.z,
+                            productFilling.userData.trueSizes = {
+                                WIDTH: size.x,
+                                HEIGHT: size.y,
+                                DEPTH: size.z,
+                            }
+
+                            productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
+                            productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
+                            productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
                         }
 
-                        productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
-                        productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
-                        productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
+                        start_position.add(filling.position)
+                        start_position.y += filling.size.y / 2
+
+                        productFilling.position.copy(start_position)
+
+                        if (!isModel)
+                            PROPS.JSON_FILLINGS.push(productFilling)
+
+                        group.add(productFilling)
                     }
 
-                    start_position.add(filling.position)
-                    start_position.y += filling.size.y / 2
+                    const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
+                    const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
 
-                    productFilling.position.copy(start_position)
-
-                    group.add(productFilling)
-                }
-
-                const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
-                const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
-
-                let productFilling
-                if (data.DAE) {
-                    this.models_builder.create(data.file, onLoad, { CONFIG: { MODEL: data } }, false)
-                }
-                else {
-                    productFilling = this.createSubProductObject(data, PROPS)
-                    onLoad(productFilling, false)
-                }
-            })
+                    let productFilling
+                    if (data.DAE) {
+                        this.models_builder.create(data.file, onLoad, { CONFIG: { MODEL: data } }, false)
+                    } else {
+                        productFilling = this.createSubProductObject(data, PROPS)
+                        onLoad(productFilling, false)
+                    }
+                })
+            }
         })
 
         return
@@ -463,7 +474,9 @@ export class BuildUniversalModule extends BuildProduct {
             Object.entries(PROPS.CONFIG.LOOPS).forEach(([secIndex, section]) => {
                 // Добавляет петли
                 section.forEach((door, doorKey) => {
-                    allLoopsMesh.add(create(loopModel.clone(), secIndex, doorKey, door))
+                    door.forEach((fasadeLoop, fasadeLoopKey) => {
+                        allLoopsMesh.add(create(loopModel.clone(), secIndex, fasadeLoopKey, fasadeLoop))
+                    });
                 });
             })
         }
