@@ -314,9 +314,9 @@ onBeforeUnmount(() => {
         </div>
         <div class="header-utilitys-helpers">
           <QuickActionsToolbar />
-          <!-- <AddPhotoHelperButton />
+          <!-- <AddPhotoHelperButton />-->
           <GetAppHelperButton @click="saveProject" />
-          <VisibilityHelperButton @click="loadProject" /> -->
+          <VisibilityHelperButton @click="loadProject" /> 
           <Avatar />
         </div>
       </div>
