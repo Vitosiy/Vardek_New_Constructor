@@ -23,12 +23,14 @@ export const CatalogService = {
     query = false
   }: CatalogListParams = {}): Promise<CatalogResponse> {
     await this.ensureHeaderInitialized();
+    // setTimeout(() => {
 
+    // })
     try {
       let filter = ''
       if (query) filter = `&filter=${query}`
       const { data } = await axios.get(
-        `${BASE_API_URL}?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}`,
+        `${BASE_API_URL}?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}&userid=22541`,
         // `${BASE_API_URL}/data.get.php?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}`,
         // https://dev.vardek.online/api/modeller/catalog/getlist/?config=43830&style=689680&cityid=17281&cityidprice=17281&section=2483&type=catalog&page=1
         {
@@ -50,7 +52,7 @@ export const CatalogService = {
 
   async getProductDetails( data: ProductRequestData): Promise<ProductDetailsResponse> {
     try {
-      const url = `${BASE_API_URL}/catalog.element.get.php`
+      const url = `${BASE_API_URL}catalog.element.get.php`
       const response = await axios.post(url, data, {
         headers: {
           'Content-Type': 'multipart/form-data'
