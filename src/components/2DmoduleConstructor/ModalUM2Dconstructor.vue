@@ -4,8 +4,6 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import { defineExpose, ref } from "vue";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import { useEventBus } from "@/store/appliction/useEventBus.ts";
-import { useModelState } from "@/store/appliction/useModelState";
-
 
 const props = defineProps({
   product: {
@@ -15,7 +13,6 @@ const props = defineProps({
 });
 
 const eventBus = useEventBus();
-const modelState=useModelState()
 
 const universalModule2DConstructor = ref();
 const universalModuleData = ref({});
@@ -31,13 +28,12 @@ const saveUMData = ({ data, canvasHeight }) => {
   if (!props.product) return;
   if (!props.product.userData) return;
 
-  console.log(   universalModule2DConstructor.value.saveGrid())
+  console.log(props.product);
 
   universalModuleCash.value = props.product.userData.PROPS.CONFIG.MODULEGRID =
- 
+    universalModule2DConstructor.value.saveGrid();
 
   gridUMSaved.value = true;
-
   eventBus.emit("A:UM-update", universalModuleCash.value);
 };
 

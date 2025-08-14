@@ -71,23 +71,29 @@ export class FasadeBuilder {
                 }
             };
             //------------------------------------------------
-                        /** @Временная заглушка */
+            /** @Временная заглушка */
             //------------------------------------------------
-            fasadeData.COLOR = resolveColorId();
-            fasadeData.SHOW = fasadeData.COLOR != 7397;
-            fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null
+            if (!isUMmodule) {
 
-            const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0];
-            const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0]
+                console.log('WW')
+
+                fasadeData.COLOR = resolveColorId();
+                fasadeData.SHOW = fasadeData.COLOR != 7397;
+                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null
+
+                const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0];
+                const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0]
 
 
-            if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
-                fasadeData.PALETTE = firstValuePall.ID
+                if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
+                    fasadeData.PALETTE = firstValuePall.ID
+                }
+                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLAAS === null) {
+                    fasadeData.GLAAS = firstValueGlass.ID
+                }
+
+
             }
-            if (fasadeData.SHOW && firstValueGlass && fasadeData.GLAAS === null) {
-                fasadeData.GLAAS = firstValueGlass.ID
-            }
-            
 
             // Создание объекта фасада
             const fasade = this.createFasade({
