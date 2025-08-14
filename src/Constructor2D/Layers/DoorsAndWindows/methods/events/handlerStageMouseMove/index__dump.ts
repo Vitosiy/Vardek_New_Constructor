@@ -17,8 +17,6 @@ import {
   getDistanceBetweenVectors,
   rotatePointsAroundCenter,
   // offsetVectorBySegment,
-  getAngleBetweenVectors,
-  offsetVectorBySegmentNormal,
 } from "./../../../../../utils/Math";
 
 /**
@@ -101,103 +99,86 @@ export function handlerStageMouseMove(this: any, e: PIXI.FederatedPointerEvent):
       // Если перемещение допустимо
       if (status) {
 
-        if (cursorIsInside && dataWall) {
+        if (cursorIsInside && dataWall) { // если есть стена под курсором
 
-          this.drawObjects[dataObjectIndex].belongsToWall.id = dataWall.id;
-          this.drawObjects[dataObjectIndex].angleDegrees = dataWall.angleDegrees;
-          this.drawObjects[dataObjectIndex].height = dataWall.height;
+          dataObject.belongsToWall.id = dataWall.id;
 
-          const degRotation: number = getAngleBetweenVectors(
-            this.state.oldPosition[0],
-            {
-              x: this.state.oldPosition[0].x + 300,
-              y: this.state.oldPosition[0].y
-            },
-            this.state.oldPosition[1]
-          );
-          const __objectPoints: Vector2[] = rotatePointsAroundCenter(
-            this.state.oldPosition, 
-            {
-              x: (this.state.positionDown.x - this.parent.config.originOfCoordinates.x - 30) * this.parent.config.inverseScale,
-              y: (this.state.positionDown.y - this.parent.config.originOfCoordinates.y - 30) * this.parent.config.inverseScale,
-            }, 
-            ((360 + degRotation * -1) + this.drawObjects[dataObjectIndex].angleDegrees)
-          );
-
-          __objectPoints.forEach((p: Vector2, index: number) => {
-            __objectPoints[index].x = p.x + distance.x;
-            __objectPoints[index].y = p.y + distance.y;
-          });
-
-          const objectPoints: Vector2[] | [] = [];
-
-          objectPoints[0] = getIntersectVectorLine(
+          const point_0: Vector2 | null = getIntersectVectorLine(
             [dataWall.points[0], dataWall.points[1]],
-            __objectPoints[0]
-          ) || {x: 0, y: 0};
-
-          objectPoints[1] = getIntersectVectorLine(
-            [dataWall.points[0], dataWall.points[1]],
-            __objectPoints[1]
-          ) || {x: 0, y: 0};
-
-          objectPoints[2] = offsetVectorBySegmentNormal(
-            [objectPoints[0], objectPoints[1]],
-            objectPoints[1],
-            this.drawObjects[dataObjectIndex].height * this.drawObjects[dataObjectIndex].heightDirection
-          ) || {x: 0, y: 0};
-
-          objectPoints[3] = offsetVectorBySegmentNormal(
-            [objectPoints[0], objectPoints[1]],
-            objectPoints[0],
-            this.drawObjects[dataObjectIndex].height * this.drawObjects[dataObjectIndex].heightDirection
-          ) || {x: 0, y: 0};
-
-          // Обновляем координаты всех точек объекта
-          objectPoints.forEach((p: Vector2, index: number) => {
-            this.drawObjects[dataObjectIndex].points[index].x = p.x;
-            this.drawObjects[dataObjectIndex].points[index].y = p.y;
-          });
-
-          this.drawObjects[dataObjectIndex].belongsToWall.distanceFromWallStart = getDistanceBetweenVectors(
-            dataWall.points[0], 
-            this.drawObjects[dataObjectIndex].points[0]
+            cursorPositionOnScene
           );
 
-        } else {
+          if (point_0) {
+
+            this.drawObjects[dataObjectIndex].belongsToWall.distanceFromWallStart = getDistanceBetweenVectors(dataWall.points[0], point_0);
+            this.drawObjects[dataObjectIndex].height = dataWall.height;
+            this.drawObjects[dataObjectIndex].angleDegrees = dataWall.angleDegrees;
+
+            // 2. Генерируем точки объекта, взяв точку лежащую на линии стены
+            const point_1: Vector2 = {
+              x: point_0.x + this.drawObjects[dataObjectIndex].width,
+              y: point_0.y
+            };
+            const point_2: Vector2 = JSON.parse(JSON.stringify(point_1));
+            point_2.y -= this.drawObjects[dataObjectIndex].height;
+            const point_3: Vector2 = JSON.parse(JSON.stringify(point_0));
+            point_3.y -= this.drawObjects[dataObjectIndex].height;
+
+
+            // 3. Устанавливаем угол повторота объекта
+            const objectPoints: Vector2[] = rotatePointsAroundCenter([
+              point_0,
+              point_1,
+              point_2,
+              point_3
+            ], point_0, this.drawObjects[dataObjectIndex].angleDegrees);
+
+            // Обновляем координаты всех точек объекта
+            objectPoints.forEach((p: Vector2, index: number) => {
+              this.drawObjects[dataObjectIndex].points[index].x = p.x;
+              this.drawObjects[dataObjectIndex].points[index].y = p.y;
+            });
+
+          } else {
+
+            console.error("!!! Error! Failed to determine the intersection point of the cursor with the wall line.");
+
+          }
+
+        } else { // если нет стены под курсором
 
           this.drawObjects[dataObjectIndex].belongsToWall.id = null;
           this.drawObjects[dataObjectIndex].belongsToWall.distanceFromWallStart = 0;
+          this.drawObjects[dataObjectIndex].angleDegrees = 0;
           this.drawObjects[dataObjectIndex].height = this.config[this.drawObjects[dataObjectIndex].name]?.height;
 
-          const degRotation: number = getAngleBetweenVectors(
-            this.state.oldPosition[0],
-            {
-              x: this.state.oldPosition[0].x + 300,
-              y: this.state.oldPosition[0].y
-            },
-            this.state.oldPosition[1]
-          );
+          const point_0: Vector2 = cursorPositionOnScene;
+          const point_1: Vector2 = {
+            x: point_0.x + this.drawObjects[dataObjectIndex].width,
+            y: point_0.y
+          };
+          const point_2: Vector2 = JSON.parse(JSON.stringify(point_1));
+          point_2.y -= this.drawObjects[dataObjectIndex].height;
+          const point_3: Vector2 = JSON.parse(JSON.stringify(point_0));
+          point_3.y -= this.drawObjects[dataObjectIndex].height;
 
-          const objectPoints: Vector2[] = rotatePointsAroundCenter(
-            this.state.oldPosition, 
-            {
-              x: (this.state.positionDown.x - this.parent.config.originOfCoordinates.x - 30) * this.parent.config.inverseScale,
-              y: (this.state.positionDown.y - this.parent.config.originOfCoordinates.y - 30) * this.parent.config.inverseScale,
-            }, 
-            ((360 + degRotation * -1) + this.drawObjects[dataObjectIndex].angleDegrees)
-          );
-          
+          const startPointPosition = [
+            point_0,
+            point_1,
+            point_2,
+            point_3
+          ];
+
           // Обновляем координаты всех точек объекта
           this.drawObjects[dataObjectIndex].points.forEach((p: Vector2, index: number) => {
-            p.x = objectPoints[index].x + distance.x; // Новая X-координата
-            p.y = objectPoints[index].y + distance.y; // Новая Y-координата
+            p.x = startPointPosition[index].x; // Новая X-координата
+            p.y = startPointPosition[index].y; // Новая Y-координата
           });
 
         }
-        
-        this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(this.drawObjects[dataObjectIndex].angleDegrees);
-        this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(this.drawObjects[dataObjectIndex].angleDegrees);
+
+        this.parent.layers.startPointActiveObject.startPointRect.rotation = MathUtils.degToRad(dataObject.angleDegrees);
+        this.parent.layers.startPointActiveObject.endPointRect.rotation = MathUtils.degToRad(dataObject.angleDegrees);
 
         // Перерисовываем объект с новыми координатами
         this.draw(id);

@@ -147,9 +147,11 @@ const drawVerticalLines = (
   heightDirection: 1 | -1 = -1, // Направление линий по оси Y
   color: number | string = 0x000000, // Цвет линий
   lineWidth: number = 1, // Толщина линий
-  rotationDegrees: number = 0 // Угол поворота линий вокруг startPoint
+  rotationDegrees: number = 0, // Угол поворота линий вокруг startPoint,
+  clear: boolean = true
 ): void => {
-  graphics.clear(); // Очистка предыдущего содержимого
+
+  if(clear) graphics.clear(); // Очистка предыдущего содержимого
 
   const baseAngleDegrees = 76; // Базовый угол линий
   const baseAngleRadians = (baseAngleDegrees * Math.PI) / 180; // Преобразуем базовый угол в радианы

@@ -1089,6 +1089,17 @@ export default class Planner {
       // рисуем тело стены
       if (containers.bodyWall) {
 
+        rect(
+          containers.bodyWall,
+          {
+            points: points,
+            heightDirection: obj.heightDirection,
+            color: 0xFFFFFF,
+            // colorEdge: this.config[obj.name].colors.colorEdge,
+            // widthEdge: this.config[obj.name].lineWidth
+          }
+        );
+
         drawVerticalLines(
           containers.bodyWall, // graphics
           points[0], // startPoint
@@ -1098,7 +1109,8 @@ export default class Planner {
           obj.heightDirection, // heightDirection
           this.config.wall.color.line76deg, // Цвет линий
           1, // Толщина линий
-          obj.angleDegrees
+          obj.angleDegrees,
+          false
         );
 
         if (containers.maskWall) containers.bodyWall.mask = containers.maskWall;
