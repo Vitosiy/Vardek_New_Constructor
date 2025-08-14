@@ -17,10 +17,10 @@ const props = defineProps({
     default: 1,
   },
   visualizationRef: {
-    type: ref,
+    type: [ref, Object],
   },
   moduleProps: {
-    type: ref,
+    type: [ref, Object],
     required: true,
   }
 });
@@ -196,7 +196,7 @@ const addDoor = (secIndex) => {
     let startX = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
     newDoorPosition = new THREE.Vector2(startX, FASADE.POSITION_Y)
     firstFasade = <FasadeObject>{
-      number: 0,
+      id: 1,
       width,
       height: module.value.height - module.value.horizont - 4,
       position: newDoorPosition,
@@ -217,12 +217,17 @@ const addDoor = (secIndex) => {
   // Создаем новую колонку с такими же параметрами
   const newDoor: FasadeObject = {
     ...firstFasade,
-    number: firstFasade.number + 1,
     position: newDoorPosition,
   }
   newDoor.height = module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length)
+
+  if(!loopsidesList.length){
+    alert("Нельзя добавить дверь")
+    return
+  }
+
   newDoor.loopsSide = loopsidesList.pop().ID
 
   section.fasades.push([newDoor]);
@@ -411,40 +416,52 @@ const getLoopsideList = (secIndex, doorIndex) => {
       tmp[type] = APP.LOOPSIDE[type];
     }
   });
+  const sectionLeft = module.value.sections[secIndex - 1] || false
+  const sectionRight = module.value.sections[secIndex + 1] || false
 
   switch (doorIndex) {
     case 0:
+
       if (module.value.sections[secIndex].fasades[1]) {
-        tmp = {}
+        delete tmp[LOOPSIDE["right"]]
       }
-      else {
-        const sectionLeft = module.value.sections[secIndex - 1] || false
-        const sectionRight = module.value.sections[secIndex + 1] || false
 
-        if (sectionLeft) {
-          const sectionLeftLoops = sectionLeft.loops || {}
-          if (sectionLeftLoops[1] || [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(sectionLeftLoops[1])) {
-            delete tmp[LOOPSIDE["left_on_partition"]]
-          } else {
-            tmp[LOOPSIDE["left_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["left_on_partition"]]
-          }
-
-          delete tmp[LOOPSIDE["left"]]
+      if (sectionLeft) {
+        const sectionLeftLoops = sectionLeft.loops || {}
+        if (sectionLeftLoops[1] || [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(sectionLeftLoops[1])) {
+          delete tmp[LOOPSIDE["left_on_partition"]]
+        } else {
+          tmp[LOOPSIDE["left_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["left_on_partition"]]
         }
-        if (sectionRight) {
-          const sectionRightLoops = sectionRight.loops || {}
-          if ([LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[1])) {
-            delete tmp[LOOPSIDE["right_on_partition"]]
-          } else {
-            tmp[LOOPSIDE["right_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["right_on_partition"]]
-          }
 
-          delete tmp[LOOPSIDE["right"]]
-        }
+        delete tmp[LOOPSIDE["left"]]
       }
+
+      if (sectionRight) {
+        const sectionRightLoops = sectionRight.loops || {}
+        if ([LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[1])) {
+          delete tmp[LOOPSIDE["right_on_partition"]]
+        } else {
+          tmp[LOOPSIDE["right_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["right_on_partition"]]
+        }
+
+        delete tmp[LOOPSIDE["right"]]
+      }
+
       break;
     case 1:
-      tmp = {}
+      if (sectionRight) {
+        const sectionRightLoops = sectionRight.loops || {}
+        if ([LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[1])) {
+          delete tmp[LOOPSIDE["right_on_partition"]]
+        } else {
+          tmp[LOOPSIDE["right_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["right_on_partition"]]
+        }
+
+        delete tmp[LOOPSIDE["right"]]
+      }
+      delete tmp[LOOPSIDE["left"]]
+
       break;
   }
 
@@ -645,7 +662,7 @@ defineExpose({
             >
 
               <div
-                  v-if="section.fasades.length < 2"
+                  v-if="section.fasades.length < 2 && getLoopsideList(secIndex, section.fasades.length).length > 1"
                   :class="'actions-items--container'"
               >
                 <article class="actions-items actions-items--right">
@@ -845,6 +862,7 @@ defineExpose({
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
+        overflow-y: scroll;
 
         &::-webkit-scrollbar {
           width: 5px;
@@ -951,8 +969,8 @@ defineExpose({
   &-wrapper {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     padding-right: 0.5rem;
+    overflow-y: scroll;
   }
 
   &-footer {

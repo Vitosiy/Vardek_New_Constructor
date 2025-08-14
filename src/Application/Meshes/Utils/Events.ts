@@ -180,9 +180,9 @@ export class MeshEvents extends BuildersHelper {
         console.log('catchChangeModuleTexture')
 
         const product = currentMesh ?? this._currentMesh;
-        const { CONFIG, SHELF, BODY } = product.userData.PROPS;
+        const { CONFIG, SHELF, BODY, JSON_FILLINGS } = product.userData.PROPS;
 
-        [BODY, ...(SHELF ?? [])].forEach(obj =>
+        [BODY, ...(SHELF ?? []), ...(JSON_FILLINGS ?? [])].forEach(obj =>
             obj?.traverse((child: THREE.Object3D) => {
                 if (child instanceof THREE.Mesh) {
                     this.changeColor({ object: child, url: data.TEXTURE });
@@ -192,7 +192,7 @@ export class MeshEvents extends BuildersHelper {
         console.log(data.ID)
 
         CONFIG.MODULE_COLOR = data.ID;
-        console.log(product, CONFIG, 
+        console.log(product, CONFIG,
         CONFIG.MODULE_COLOR, data.ID)
     }
 
@@ -217,9 +217,6 @@ export class MeshEvents extends BuildersHelper {
                 await this.catchChangeModuleTexture(data, el)
             })
         }
-
-
-
     }
 
 
@@ -235,7 +232,7 @@ export class MeshEvents extends BuildersHelper {
 
         this.resetFasade(fasadeNdx, incomingModel)
 
-        const { CONFIG, FASADE, FASADE_DEFAULT } = ptoductProps
+        const { CONFIG, FASADE, FASADE_DEFAULT, JSON_FILLINGS } = ptoductProps
         const { FASADE_PROPS } = CONFIG
         const window = CONFIG.SHOWCASE
 
@@ -654,7 +651,7 @@ export class MeshEvents extends BuildersHelper {
 
     async changeModelSize(data: { width: number, height: number, depth: number }, mesh, type) {
         console.log('!!!!!changeModelSize')
-        
+
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return
@@ -806,6 +803,9 @@ export class MeshEvents extends BuildersHelper {
             this.deliteFasade(fasad_ndx)
         }
 
+        this.onUpdateUMModel = (data) => {
+            this.updateUMModel(data)
+        }
 
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
