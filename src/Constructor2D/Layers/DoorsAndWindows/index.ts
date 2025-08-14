@@ -105,6 +105,8 @@ export default class DoorsAndWindows {
       y: 0,
     },
 
+    oldAngleDegrees: 0,
+
     oldPosition: [],
 
   };
