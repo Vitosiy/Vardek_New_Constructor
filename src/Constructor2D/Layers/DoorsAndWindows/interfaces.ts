@@ -46,6 +46,7 @@ export interface IState {
   activePointObject: number | null; // активная точка объекта
   mouseLeft: boolean; // состояние левой кнопки мыши
   positionDown: Vector2; // позиция клика на канвасе
+  aldAngleDegrees: number;
   oldPosition: Vector2[]; // точки объекта при клике
 }
 
