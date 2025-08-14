@@ -17,10 +17,10 @@ const props = defineProps({
     default: 1,
   },
   visualizationRef: {
-    type: ref,
+    type: [ref, Object],
   },
   moduleProps: {
-    type: ref,
+    type: [ref, Object],
     required: true,
   }
 });

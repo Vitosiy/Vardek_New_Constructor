@@ -19,7 +19,7 @@ import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
 
 const props = defineProps({
   module: {
-    type: Array,
+    type: Object,
     required: true,
   },
 

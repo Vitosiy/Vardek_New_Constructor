@@ -803,6 +803,9 @@ export class MeshEvents extends BuildersHelper {
             this.deliteFasade(fasad_ndx)
         }
 
+        this.onUpdateUMModel = (data) => {
+            this.updateUMModel(data)
+        }
 
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);

@@ -53,7 +53,7 @@ const props = defineProps({
     default: 560,
   },
   productData: {
-    type: ref,
+    type: [ref, Object],
     default: false,
     required: true,
   },
@@ -190,27 +190,27 @@ const module = computed(() => {
 });
 
 const getMinHeight = computed(() => {
-  return productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
 })
 
 const getMaxHeight = computed(() => {
-  return productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX
 })
 
 const getMinWidth = computed((dimension, minmax) => {
-  return productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN
 })
 
 const getMaxWidth = computed((dimension, minmax) => {
-  return productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX
 })
 
 const getMinDepth = computed((dimension, minmax) => {
-  return productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN
 })
 
 const getMaxDepth = computed((dimension, minmax) => {
-  return productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
 })
 
 const selectedCell = ref({sec: 0, cell: 0, row: null});
@@ -955,7 +955,7 @@ const reset = (reset = false) => {
 const saveGrid = () => {
   const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset"];
   const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings"];
+  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops"];
 
   //Рекурсивная очистка сетки от "технических" полей 2D конструктора
   const removeGarbage = (object) => {
@@ -966,7 +966,12 @@ const saveGrid = () => {
 
         if (nesting.includes(key)) {
           value = value.map(item => {
-            return removeGarbage(item)
+            if(Array.isArray(item))
+              return item = item.map(_item => {
+                return removeGarbage(_item)
+              })
+            else
+              return removeGarbage(item)
           })
         }
 
