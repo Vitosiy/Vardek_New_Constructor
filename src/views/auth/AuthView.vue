@@ -117,7 +117,7 @@
     </div>
 
   </main>
-  <MainLoader v-if="appDataStore.isLoading" />
+  <!-- <MainLoader v-if="appDataStore.isLoading" /> -->
 </template>
 
 <script setup lang="ts">
@@ -137,7 +137,7 @@
   import { useAppData } from '@/store/appliction/useAppData'
 
   const authStore = useAuthStore();
-  const appDataStore = useAppData();
+  // const appDataStore = useAppData();
   const newsStore = useNewsStore()
 
   const images = ref([])
@@ -206,6 +206,8 @@
 
   onMounted(() => {
     fetchNews();
+    document.querySelector('#main-loader').style.display = 'none';
+
   })
 
 

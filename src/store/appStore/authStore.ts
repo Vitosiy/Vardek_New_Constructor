@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const handleSuccessfulLogin = async (token: string) => {
-    await appDataStore.initAppData()
+    // await appDataStore.initAppData()
 
     const expiresIn = TOKEN_EXPIRATION_HOURS * 60 * 60 * 1000
     
@@ -80,7 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated.value = true
     
 
-    await appDataStore.initAppData();
+    // await appDataStore.initAppData();
     await router.push('/2d')
   }
   
