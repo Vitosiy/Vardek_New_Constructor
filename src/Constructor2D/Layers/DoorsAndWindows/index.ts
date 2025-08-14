@@ -982,7 +982,7 @@ export default class DoorsAndWindows {
 
   }
 
-  public removeObject(__id: string | number): void {
+  public removeObject(__id: string | number | null = null, updateStore: boolean = false): void {
 
     const id: string | number | null = __id ?? this.state.activeObject;
 
@@ -1074,6 +1074,8 @@ export default class DoorsAndWindows {
     this.drawObjects.splice(indexObject, 1);
 
     this.parent.layers.startPointActiveObject?.activate(false);
+
+    if(updateStore) this.parent.updateRoomStore();
 
   }
 
