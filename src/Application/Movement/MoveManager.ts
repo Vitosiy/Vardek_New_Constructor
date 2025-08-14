@@ -422,6 +422,8 @@ export class MoveManager {
 
     keyDown(event) {
 
+        return
+
         if (event.repeat) return
 
         if (event.shiftKey) {

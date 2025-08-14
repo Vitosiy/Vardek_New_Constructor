@@ -164,9 +164,9 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** Палитра */
     const createCurrentPaletteData = (value: number) => {
-
+        let result = {}
         if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
-            currentPaletteData.value = Object.keys(_PALETTE)
+            result = Object.keys(_PALETTE)
                 .filter(
                     (key) =>
                         _PALETTE[key].TYPE ===
@@ -176,10 +176,14 @@ export const useModelState = defineStore('ModelState', () => {
                     obj[key] = _PALETTE[key];
                     return obj;
                 }, {});
-            return
+
+            currentPaletteData.value = result
+
+            return result
         }
 
-        currentPaletteData.value = {}
+        currentPaletteData.value = result
+        return result
     }
 
     const getCurrentPaletteData = computed(() => {
@@ -264,7 +268,9 @@ export const useModelState = defineStore('ModelState', () => {
         const currentClass = glassArray.reduce((acc, index) =>
             acc.concat(_GLASS[index] || []),
             []);
+
         currentGlassData.value = currentClass;
+        return currentClass
     }
 
     const getCurrentGlassData = computed(() => {

@@ -14,31 +14,31 @@ const emit = defineEmits(["select_glass"]);
 const eventBus = useEventBus();
 const selectPatina = ref<any>(null);
 
-
 const changeGlass = (glass) => {
   eventBus.emit("A:ChangeGlassColor", {
     data: glass.ID,
     fasadeNdx: props.tabIndex,
   });
+
   emit("select_glass", {
     name: glass.NAME,
     imgSrc: glass.PREVIEW_PICTURE,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
-
 </script>
 
 <template>
   <div class="relative__wrapper">
     <div class="list">
-      class="item"
-      v-for="glass in props.glassList"
-      @click="changeGlass(glass)"
-    >
-      <img class="item__img" :src="_URL + glass.PREVIEW_PICTURE" alt="" />
-      <div class="item__name">{{ glass.NAME }}</div>
+      <div
+        class="item"
+        v-for="glass in props.glassList"
+        @click="changeGlass(glass)"
+      >
+        <img class="item__img" :src="_URL + glass.PREVIEW_PICTURE" alt="" />
+        <div class="item__name">{{ glass.NAME }}</div>
+      </div>
     </div>
-
   </div>
 </template>
 

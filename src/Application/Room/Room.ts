@@ -74,9 +74,7 @@ export class Room extends BuildersHelper {
         // this.setRoom();
         // this.roomBounds = this.getRoomBounds();
 
-
     }
-
 
     get _wallsGroupSize() {
         return this.wallsGroupSize

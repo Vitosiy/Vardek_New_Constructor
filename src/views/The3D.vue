@@ -186,7 +186,6 @@ const selected = async (item: any) => {
 
   objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
-  controller.value = true;
   product.value = object;
   controller.value = true;
 
@@ -293,8 +292,15 @@ const pregropping = computed(() => {
 });
 
 const controllerPosition = computed(() => {
+  const curX = controllerPositionData.value.x;
+  const curY = controllerPositionData.value.y;
+  if (controller.value) {
+    return {
+      transform: `translate(${curX}px, ${curY}px) scale(1)`,
+    };
+  }
   return {
-    transform: `translate(${controllerPositionData.value.x}px, ${controllerPositionData.value.y}px )`,
+    transform: `translate(${curX}px, ${curY}px) scale(0)`,
   };
 });
 
@@ -584,68 +590,6 @@ defineExpose({
   background-color: rgba(255, 255, 255, 0.615);
 }
 
-.quality {
-  position: absolute;
-  right: 2rem;
-  top: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.example {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  // width: clamp(100px, 10vw - 1rem, 250px );
-  aspect-ratio: 1;
-  height: 2rem;
-  width: fit-content;
-  border-radius: 5px;
-  border: none;
-  outline: none;
-}
-
-.drag_example {
-  width: fit-content;
-  position: absolute;
-
-  bottom: 5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-
-  &--items {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  &--item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    color: black;
-    max-width: 50px;
-
-    p {
-      font-size: 0.75rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  }
-
-  &--image {
-    width: 50px;
-    object-fit: cover;
-  }
-}
-
 .ui-panel--right {
   position: absolute;
   right: 2rem;
@@ -667,13 +611,12 @@ defineExpose({
 
   opacity: 0;
   filter: blur(10px);
-
+  transform-origin: top center;
   pointer-events: none;
   user-select: none;
+  
   -webkit-user-drag: none;
-
   transition: all 0.2s ease-in-out;
-
   &--active {
     opacity: 1;
     filter: blur(0);

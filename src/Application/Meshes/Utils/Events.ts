@@ -326,7 +326,10 @@ export class MeshEvents extends BuildersHelper {
     changeTotalFasadsTexture({ data, type }) {
 
         const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
+        
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
+
+        console.log(elementsList)
 
         if (Array.isArray(elementsList) && elementsList[0]) {
             elementsList.forEach((el) => {

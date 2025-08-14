@@ -74,7 +74,7 @@ onMounted(() => {
   pointLight.value = sceneState.getLightRange.pointLight;
   ambientLight.value = sceneState.getLightRange.ambientLight;
 
-  console.log(ambientLight.value, 'ambientLight.value')
+  console.log(ambientLight.value, "ambientLight.value");
 });
 
 onBeforeMount(() => {
@@ -202,6 +202,22 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
       }
       sceneState.updateDefaultData(value, null);
       break;
+
+    case "fasadsTop":
+      if (selectOption.global) {
+        sceneState.updateDefaultData(value, selectOption.id);
+        return;
+      }
+      sceneState.updateDefaultData(value, null);
+      break;
+
+    case "fasadsBottom":
+      if (selectOption.global) {
+        sceneState.updateDefaultData(value, selectOption.id);
+        return;
+      }
+      sceneState.updateDefaultData(value, null);
+      break;
   }
 };
 
@@ -212,6 +228,7 @@ const selectOption = (value: TTextureItem) => {
     case "moduleTop":
     case "moduleBottom":
     case "fasadsTop":
+    case "fasadsBottom":
       data = { data: value, type: currentOption.value };
       break;
     default:

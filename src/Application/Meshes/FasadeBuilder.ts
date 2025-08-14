@@ -39,7 +39,7 @@ export class FasadeBuilder {
         isUMmodule?: boolean,
         defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig
     }) {
-        const { FASADE_DEFAULT, FASADE, CONFIG } = props;
+        const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
 
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
@@ -70,12 +70,24 @@ export class FasadeBuilder {
                         return fasadeColor;
                 }
             };
-
+            //------------------------------------------------
+                        /** @Временная заглушка */
+            //------------------------------------------------
             fasadeData.COLOR = resolveColorId();
             fasadeData.SHOW = fasadeData.COLOR != 7397;
             fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null
-            console.log(this.parent.modelState)
-            // fasadeData.PALETTE = fasadeData.SHOW && fasadeData.PALETTE ? fasadeData.PALETTE : fasadeData.SHOW && !fasadeData.PALETTE ? 567103 : null
+
+            const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0];
+            const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0]
+
+
+            if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
+                fasadeData.PALETTE = firstValuePall.ID
+            }
+            if (fasadeData.SHOW && firstValueGlass && fasadeData.GLAAS === null) {
+                fasadeData.GLAAS = firstValueGlass.ID
+            }
+            
 
             // Создание объекта фасада
             const fasade = this.createFasade({
