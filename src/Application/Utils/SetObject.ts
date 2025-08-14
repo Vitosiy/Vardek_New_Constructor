@@ -65,7 +65,7 @@ export class SetObject {
             ? this.roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
             : { position, rotation };
 
-        console.log(adjustedPosition, 'adjustedPosition')
+        console.log(adjustedPosition, 'adjustedPosition',rotate ,'rotate')
 
 
         object.position.copy(adjustedPosition.position);

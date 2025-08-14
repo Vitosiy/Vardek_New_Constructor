@@ -86,12 +86,7 @@ export class World {
         this.scene.add(new THREE.AxesHelper(2000))
         this.room!.loadRoom(this.lights, roomId)
         await this.room!.update();
-        if (this.roomsStore.getCurrentRoomData(roomId)?.params.wall) {
-            const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.params.wall
-            this.room!.updateWallMaterial(wallTextureId)
-        }
-        // const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.size.wall
-        // this.room!.updateWallMaterial(wallTextureId)
+
     }
 
     async createRoom(name: string) {
@@ -162,6 +157,11 @@ export class World {
         await this.setRoom(roomId);
         this.lights.setLight(this.room!._wallsGroupSize, 2)
         await this.trafficManager!.update(this.room!)
+        
+        if (this.roomsStore.getCurrentRoomData(roomId)?.params.wall) {
+            const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.params.wall
+            this.room!.updateWallMaterial(wallTextureId)
+        }
 
         const toAction: string[] = this.room?.save()
         this.root.userHistory.clearHistory(toAction as string[])

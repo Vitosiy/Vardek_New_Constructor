@@ -282,10 +282,10 @@ const roomsList = computed(() => {
 
 const getCurrentRoom = computed(() => {
   return (id: number) => {
-    if (!roomState.getCurrentRoomId) return;
+    if (!roomState.getRoomId) return;
     return {
       // "btn-active": id === roomState.getCurrentRoomId.id,
-      active: id === roomState.getCurrentRoomId.id,
+      active: id === roomState.getRoomId,
     };
   };
 });
