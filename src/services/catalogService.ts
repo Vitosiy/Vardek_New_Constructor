@@ -52,7 +52,7 @@ export const CatalogService = {
 
   async getProductDetails( data: ProductRequestData): Promise<ProductDetailsResponse> {
     try {
-      const url = `${BASE_API_URL}catalog.element.get.php`
+      const url = `https://vardek.ru/local/templates/constructor/API/catalog.element.get.php`
       const response = await axios.post(url, data, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -70,7 +70,7 @@ export const CatalogService = {
 
   async getProductPrice(formData: ProductRequestData): Promise<ProductPriceResponse> {
     try {
-      const url = `${BASE_API_URL}/catalog.element.getprice.php`
+      const url = `https://vardek.ru/local/templates/constructor/API/catalog.element.getprice.php`
       const response = await axios.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
