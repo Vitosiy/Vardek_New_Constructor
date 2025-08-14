@@ -214,9 +214,8 @@ const selected = async (item: any) => {
     };
   }
 
-  console.log(universalModuleData.value, "universalModuleData");
-
   if (CONFIG.MODULEGRID && universalModule2DConstructor.value) {
+    console.log(universalModuleData.value, "universalModuleData");
     universalModule2DConstructor.value.selectUMData(universalModuleData.value);
   }
 
@@ -450,7 +449,7 @@ defineExpose({
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
         <ControllerButton
-          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+          v-if="Object.keys(CutData).length == 0"
         />
         <ContentControllerButton
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"

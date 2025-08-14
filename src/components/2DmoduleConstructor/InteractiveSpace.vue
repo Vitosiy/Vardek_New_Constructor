@@ -19,7 +19,7 @@ import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
 
 const props = defineProps({
   module: {
-    type: Array,
+    type: Object,
     required: true,
   },
 
@@ -367,47 +367,49 @@ const renderGrid = () => {
 
     if (section.loops?.length) {
 
-      section.loops.forEach((loop, loopIndex, ) => {
-        let loopXOffset = getPixelWidth(loop.positionX);
-        let loopYOffset = getPixelHeight(module.value.height);
+      section.loops.forEach((door, doorIndex, ) => {
+        door.forEach((loop, loopIndex) => {
+          let loopXOffset = getPixelWidth(loop.positionX);
+          let loopYOffset = getPixelHeight(module.value.height);
 
-        const pxWidth = getPixelWidth(loop.width);
-        const pxHeight = getPixelHeight(loop.height);
-        loop.xOffset = loopXOffset;
+          const pxWidth = getPixelWidth(loop.width);
+          const pxHeight = getPixelHeight(loop.height);
+          loop.xOffset = loopXOffset;
 
-        loop.coords.forEach((pos, posIndex, ) => {
-          loop.yOffset = loopYOffset - getPixelHeight(pos + loop.height);
-          // Отрисовываем секцию
+          loop.coords.forEach((pos, posIndex, ) => {
+            loop.yOffset = loopYOffset - getPixelHeight(pos + loop.height);
+            // Отрисовываем секцию
 
-          let loopSector = createLoop({
-            x: loop.xOffset,
-            y: loop.yOffset,
-            width: pxWidth,
-            height: pxHeight,
-            loopData: loop
-          });
+            let loopSector = createLoop({
+              x: loop.xOffset,
+              y: loop.yOffset,
+              width: pxWidth,
+              height: pxHeight,
+              loopData: loop
+            });
 
-          let tempShape = new Shape({
-            type: "loop",
-            sector: loopSector,
-            data: loop,
-            position: {x: loop.positionX, y: pos + loop.height},
-            getMmWidth,
-            getMmHeight,
-            getPixelHeight,
-            getPixelWidth,
-            calcDrawersFasades,
-          });
+            let tempShape = new Shape({
+              type: "loop",
+              sector: loopSector,
+              data: loop,
+              position: {x: loop.positionX, y: pos + loop.height},
+              getMmWidth,
+              getMmHeight,
+              getPixelHeight,
+              getPixelWidth,
+              calcDrawersFasades,
+            });
 
-          for(let i = 0; i < tmp_array_sectors.length; i++) {
-            let sector = tmp_array_sectors[i];
+            for(let i = 0; i < tmp_array_sectors.length; i++) {
+              let sector = tmp_array_sectors[i];
 
-            if(checkSectorsCollision(loopSector, sector)) {
-              sector.shapes.push(tempShape);
-              break;
+              if(checkSectorsCollision(loopSector, sector)) {
+                sector.shapes.push(tempShape);
+                break;
+              }
+
             }
-
-          }
+          })
         })
       })
     }

@@ -194,9 +194,9 @@ export class MeshEvents extends BuildersHelper {
     async catchChangeModuleTexture(data: { [key: string]: any }, currentMesh?: THREE.Object3D) {
 
         const product = currentMesh ?? this._currentMesh;
-        const { CONFIG, SHELF, BODY } = product.userData.PROPS;
+        const { CONFIG, SHELF, BODY, JSON_FILLINGS } = product.userData.PROPS;
 
-        [BODY, ...(SHELF ?? [])].forEach(obj =>
+        [BODY, ...(SHELF ?? []), ...(JSON_FILLINGS ?? [])].forEach(obj =>
             obj?.traverse((child: THREE.Object3D) => {
                 if (child instanceof THREE.Mesh) {
                     this.changeColor({ object: child, url: data.TEXTURE });
@@ -228,9 +228,6 @@ export class MeshEvents extends BuildersHelper {
                 await this.catchChangeModuleTexture(data, el)
             })
         }
-
-
-
     }
     /** Цвет Фасада */
     async catchFasadeChange({ data, fasadeNdx }: TObjectData) {
@@ -864,7 +861,6 @@ export class MeshEvents extends BuildersHelper {
         this.onUpdateUMModel = (data) => {
             this.updateUMModel(data)
         }
-
 
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);

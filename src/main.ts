@@ -5,7 +5,7 @@ import '@/style.scss'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
-import { useAppData } from './store/appliction/useAppData'
+// import { useAppData } from './store/appliction/useAppData'
 
 async function bootApp() {
   const app = createApp(App)
@@ -17,8 +17,7 @@ async function bootApp() {
   await router.isReady()
 
   const token = localStorage.getItem('token')
-  const appDataStore = useAppData()
-  await appDataStore.initAppData()
+  // const appDataStore = useAppData()
 
   if (!token) {
     // Нет токена — показываем /auth
@@ -35,7 +34,7 @@ async function bootApp() {
     await router.push('/auth')
   }
 
-
+  // await appDataStore.initAppData()
 
   // Данные загрузились — редиректим в /2d
   await router.push('/2d')
