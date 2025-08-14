@@ -9,6 +9,7 @@ export const useAppData = defineStore('AppData', () => {
   const isLoaded = ref(false)
 
   const fetchRemoteData = async () => {
+    isLoading.value = true;
     console.log('Start fetch from API')
     const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
     const response = await fetch(url, { method: 'GET' })

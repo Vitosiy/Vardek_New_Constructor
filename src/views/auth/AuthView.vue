@@ -115,7 +115,9 @@
       />
       </div>
     </div>
+
   </main>
+  <MainLoader v-if="appDataStore.isLoading" />
 </template>
 
 <script setup lang="ts">
@@ -129,8 +131,11 @@
   import EyeOpenSVG from '@/components/ui/svg/auth/EyeOpenSVG.vue'
   import EyeCloseSVG from '@/components/ui/svg/auth/EyeCloseSVG.vue'
   import UserSVG from '@/components/ui/svg/auth/UserSVG.vue'
+  import MainLoader from '@/components/ui/loader/MainLoader.vue'
+  import { useAppData } from '@/store/appliction/useAppData'
 
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
+  const appDataStore = useAppData();
 
   const images = ref([
     { src: image1, alt: 'Иллюстрация 1' },
