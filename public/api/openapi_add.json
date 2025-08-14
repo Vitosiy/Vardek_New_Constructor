@@ -8,6 +8,54 @@
     { "url": "https://dev.vardek.online" }
   ],
   "paths": {
+    "/api/modeller/projectq/getprojectlist/": {
+      "post": {
+        "summary": "Get projects list",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Projects list", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/projectq/getprojectbyid/": {
+      "post": {
+        "summary": "Get project by id",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Project data", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/projectq/SaveProject/": {
+      "post": {
+        "summary": "Save project",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Saved", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/projectq/updateprojectbyid/": {
+      "post": {
+        "summary": "Update project",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
     "/api/modeller/auth/login/": {
       "post": {
         "summary": "User login or get user data",
