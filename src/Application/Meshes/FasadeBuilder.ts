@@ -74,6 +74,7 @@ export class FasadeBuilder {
             fasadeData.COLOR = resolveColorId();
             fasadeData.SHOW = fasadeData.COLOR != 7397;
             fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null
+            console.log(this.parent.modelState)
             // fasadeData.PALETTE = fasadeData.SHOW && fasadeData.PALETTE ? fasadeData.PALETTE : fasadeData.SHOW && !fasadeData.PALETTE ? 567103 : null
 
             // Создание объекта фасада

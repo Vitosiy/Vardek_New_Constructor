@@ -424,7 +424,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		SchemeTransitionData.value = [];
 	};
 
-	const setAppData = (value: any) => {	
+	const setAppData = (value: any) => {
 		SchemeTransitionData.value = value
 		// console.log(SchemeTransitionData.value);
 	};
@@ -563,24 +563,26 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		const roomData = JSON.parse(JSON.stringify(data));
 
 		/*
+	  
+		*/
 		// Если нет стен - возвращаем как есть
-		if (!roomData.size?.walls?.length) return roomData;
+		if (!roomData.params?.walls?.length) return roomData;
 
 		// 1. Находим средний центр всех стен
-		const wallsCenter = roomData.size.walls.reduce((acc:any, wall:any) => {
-				acc.x += wall.position.x;
-				acc.z += wall.position.z;
-				return acc;
+		const wallsCenter = roomData.params.walls.reduce((acc: any, wall: any) => {
+			acc.x += wall.position.x;
+			acc.z += wall.position.z;
+			return acc;
 		}, { x: 0, z: 0 });
 
-		wallsCenter.x /= roomData.size.walls.length;
-		wallsCenter.z /= roomData.size.walls.length;
+		wallsCenter.x /= roomData.params.walls.length;
+		wallsCenter.z /= roomData.params.walls.length;
 
 		// 2. Смещаем стены к центру сцены
-		roomData.size.walls.forEach((wall:any) => {
-				wall.position.x -= wallsCenter.x;
-				wall.position.y = 1500; // Фиксированная высота
-				wall.position.z -= wallsCenter.z;
+		roomData.params.walls.forEach((wall: any) => {
+			wall.position.x -= wallsCenter.x;
+			wall.position.y = 1500; // Фиксированная высота
+			wall.position.z -= wallsCenter.z;
 		});
 
 		console.log("");
@@ -589,18 +591,17 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		// 3. Смещаем объекты на ТО ЖЕ расстояние
 		if (roomData.content?.length) {
-				roomData.content.forEach((item:any)=> {
-					console.log(item.position.x, item.position.y, item.position.z);
-					item.position.x = 0; //-= wallsCenter.x;
-					item.position.y = 0; //= 1500; // Фиксированная высота
-					item.position.z = 0; //-= wallsCenter.z;
-					console.log(item.position.x, item.position.y, item.position.z);
-					console.log("");
-					console.log("");
-					console.log("");
-				});
+			roomData.content.forEach((item: any) => {
+				console.log(item.position.x, item.position.y, item.position.z);
+				item.position.x -= wallsCenter.x;
+				item.position.y = 1500; // Фиксированная высота
+				item.position.z -= wallsCenter.z;
+				console.log(item.position.x, item.position.y, item.position.z);
+				console.log("");
+				console.log("");
+				console.log("");
+			});
 		}
-		*/
 
 		return roomData;
 	};

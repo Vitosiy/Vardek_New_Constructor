@@ -68,11 +68,11 @@ export class Room extends BuildersHelper {
         this.params = {}
         this.resizeParams = {}
 
-       /** @Для_dev */
-       
-        this.createRoom(this.getStartSize())
-        this.setRoom();
-        this.roomBounds = this.getRoomBounds();
+        /** @Для_dev */
+
+        // this.createRoom(this.getStartSize())
+        // this.setRoom();
+        // this.roomBounds = this.getRoomBounds();
 
 
     }
@@ -108,6 +108,12 @@ export class Room extends BuildersHelper {
 
     get _roomBounds() {
         return this.roomBounds
+    }
+
+    defaultCreate() {
+        this.createRoom(this.getStartSize())
+        this.setRoom();
+        this.roomBounds = this.getRoomBounds();
     }
 
     loadRoom(light, roomId?: string | number) {

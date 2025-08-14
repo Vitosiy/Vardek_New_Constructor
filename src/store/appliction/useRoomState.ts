@@ -101,7 +101,11 @@ export const useRoomState = defineStore('RoomState', () => {
 
     if (centerized) {
       currentRoom.params = centerized?.params ?? currentRoom?.params;
+      currentRoom.content = centerized?.content ?? currentRoom?.content;
+      console.log(currentRoom.content)
     }
+
+
 
     return rooms.value.find(value => value.id === roomId)
   }
@@ -184,10 +188,10 @@ export const useRoomState = defineStore('RoomState', () => {
     const [key, value] = Object.entries(PRODUCTS)[0]
     const fasade = value.FACADE
     const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
-      
+
     return defaultFasadData
 
-    
+
 
   }
 

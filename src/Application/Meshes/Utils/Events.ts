@@ -29,6 +29,7 @@ export class MeshEvents extends BuildersHelper {
     scene: THREETypes.TScene
     events: ReturnType<typeof useEventBus> = useEventBus()
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
+    modelState: ReturnType<typeof useModelState> = useModelState()
     trafficManager: THREETypes.TTrafficManager
 
     resources: THREETypes.TResources
@@ -47,7 +48,7 @@ export class MeshEvents extends BuildersHelper {
     private _overrideMesh?: THREE.Object3D | null;
 
     _APP: THREETypes.TObject = useAppData().getAppData
-    modelState = useModelState()
+
     // millHelper = new GUI()
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
@@ -356,7 +357,7 @@ export class MeshEvents extends BuildersHelper {
         const fasade = FASADE[fasadeNdx]
 
 
-                console.log('PAL2', data)
+        console.log('PAL2', data)
 
         // console.log({ data, fasadeNdx }, 'PALLIT')
 

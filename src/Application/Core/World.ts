@@ -61,13 +61,20 @@ export class World {
         })
         this.vueEvents()
 
-        // const startRoomId = this.roomsStore.getRooms[0].id
-        // this.loadRoom(startRoomId)
+
+        if (this.roomsStore.getRooms.length > 0) {
+            const startRoomId = this.roomsStore.getRooms[0].id
+            this.loadRoom(startRoomId)
+        }
+        else {
+            this.room?.defaultCreate()
+            this.lights.setLight(this.room!._wallsGroupSize, 2)
+        }
 
         /** @Для_dev */
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room!.update()
-        this.lights.setLight(this.room!._wallsGroupSize, 2)
+        // this.scene.add(new THREE.AxesHelper(2000))
+        // this.room!.update()
+        // this.lights.setLight(this.room!._wallsGroupSize, 2)
 
 
 
