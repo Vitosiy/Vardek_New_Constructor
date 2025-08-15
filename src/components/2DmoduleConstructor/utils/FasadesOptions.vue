@@ -232,6 +232,9 @@ const addDoor = (secIndex) => {
 
   section.fasades.push([newDoor]);
 
+
+  section.loopsSides[section.fasades.length - 1] = newDoor.loopsSide
+
   if(!module.value.isSlidingDoors)
     calcLoops(secIndex)
 
@@ -275,12 +278,23 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
 const deleteDoor = (secIndex, doorIndex) => {
   const current = module.value.sections[secIndex].fasades[doorIndex];
   const prev = module.value.sections[secIndex].fasades[doorIndex - 1];
+  const next = module.value.sections[secIndex].fasades[doorIndex + 1];
 
-  const combinedWidth = prev
-      ? current[0].width + prev[0].width + 4
-      : current.width;
+  const combinedWidth = next
+      ? current[0].width + next[0].width + 4
+      : current[0].width + prev[0].width + 4;
 
-  if (prev) {
+  if (next) {
+    current.forEach((segment, index) => {
+      segment.width = combinedWidth;
+
+      if (segment.width < segment.minX || segment.height < segment.minY)
+        segment.error = true
+      else
+        delete segment.error;
+    })
+  }
+  else {
     prev.forEach((segment, index) => {
       segment.width = combinedWidth;
 
@@ -291,8 +305,17 @@ const deleteDoor = (secIndex, doorIndex) => {
     })
   }
 
-  module.value.sections[secIndex].fasades.splice(doorIndex, 1);
-  module.value.sections[secIndex].loops.splice(doorIndex, 1);
+  if (next) {
+    module.value.sections[secIndex].fasades.splice(doorIndex + 1, 1);
+    module.value.sections[secIndex].loops.splice(doorIndex + 1, 1);
+    delete module.value.sections[secIndex].loopsSides[doorIndex + 1];
+  }
+  else {
+    module.value.sections[secIndex].fasades.splice(doorIndex, 1);
+    module.value.sections[secIndex].loops.splice(doorIndex, 1);
+    delete module.value.sections[secIndex].loopsSides[doorIndex];
+  }
+
 
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = 0;
@@ -400,8 +423,11 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 
 };
 
-const changeLoopside = (secIndex, fasade, newSide) => {
+const changeLoopside = (secIndex, fasade, newSide, doorIndex) => {
   fasade.loopsSide = parseInt(newSide);
+  module.value.sections[secIndex].loopsSides[doorIndex] = fasade.loopsSide
+  module.value.sections[secIndex].fasades[doorIndex].forEach((item) => item.loopsSide = fasade.loopsSide)
+
   calcLoops(secIndex)
   visualizationRef.value.renderGrid();
 }
@@ -416,8 +442,12 @@ const getLoopsideList = (secIndex, doorIndex) => {
       tmp[type] = APP.LOOPSIDE[type];
     }
   });
+
+  const currSection = module.value.sections[secIndex]
   const sectionLeft = module.value.sections[secIndex - 1] || false
   const sectionRight = module.value.sections[secIndex + 1] || false
+
+  const currSectionLoops = currSection.loopsSides || {}
 
   switch (doorIndex) {
     case 0:
@@ -427,8 +457,8 @@ const getLoopsideList = (secIndex, doorIndex) => {
       }
 
       if (sectionLeft) {
-        const sectionLeftLoops = sectionLeft.loops || {}
-        if (sectionLeftLoops[1] || [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(sectionLeftLoops[1])) {
+        const sectionLeftLoops = sectionLeft.loopsSides || {}
+        if (sectionLeftLoops[1] || [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(sectionLeftLoops[0])) {
           delete tmp[LOOPSIDE["left_on_partition"]]
         } else {
           tmp[LOOPSIDE["left_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["left_on_partition"]]
@@ -438,8 +468,8 @@ const getLoopsideList = (secIndex, doorIndex) => {
       }
 
       if (sectionRight) {
-        const sectionRightLoops = sectionRight.loops || {}
-        if ([LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[1])) {
+        const sectionRightLoops = sectionRight.loopsSides || {}
+        if (sectionRightLoops[1] || [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[0])) {
           delete tmp[LOOPSIDE["right_on_partition"]]
         } else {
           tmp[LOOPSIDE["right_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["right_on_partition"]]
@@ -450,9 +480,21 @@ const getLoopsideList = (secIndex, doorIndex) => {
 
       break;
     case 1:
+
+      if (sectionLeft) {
+        const sectionLeftLoops = sectionLeft.loopsSides || {}
+        if (sectionLeftLoops[1] || [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(sectionLeftLoops[0])) {
+          delete tmp[LOOPSIDE["left_on_partition"]]
+        } else {
+          tmp[LOOPSIDE["left_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["left_on_partition"]]
+        }
+
+        delete tmp[LOOPSIDE["left"]]
+      }
+
       if (sectionRight) {
-        const sectionRightLoops = sectionRight.loops || {}
-        if ([LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[1])) {
+        const sectionRightLoops = sectionRight.loopsSides || {}
+        if (sectionRightLoops[1] || [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(sectionRightLoops[0])) {
           delete tmp[LOOPSIDE["right_on_partition"]]
         } else {
           tmp[LOOPSIDE["right_on_partition"]] = APP.LOOPSIDE[LOOPSIDE["right_on_partition"]]
@@ -460,13 +502,25 @@ const getLoopsideList = (secIndex, doorIndex) => {
 
         delete tmp[LOOPSIDE["right"]]
       }
-      delete tmp[LOOPSIDE["left"]]
+
+      //delete tmp[LOOPSIDE["left"]]
+      delete tmp[currSectionLoops[0]]
 
       break;
   }
 
   list = Object.values(tmp)
   return list
+}
+
+const checkAddDoor = (secIndex, doorIndex) => {
+  let loopsSidesList = getLoopsideList(secIndex, doorIndex)
+  const currSection = module.value.sections[secIndex]
+
+  if(currSection.loopsSides?.[doorIndex])
+    loopsSidesList = loopsSidesList.filter(item => item.ID !== currSection.loopsSides[doorIndex])
+
+  return loopsSidesList.length > 0
 }
 
 defineExpose({
@@ -662,7 +716,7 @@ defineExpose({
             >
 
               <div
-                  v-if="section.fasades.length < 2 && getLoopsideList(secIndex, section.fasades.length).length > 1"
+                  v-if="section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
                   :class="'actions-items--container'"
               >
                 <article class="actions-items actions-items--right">
@@ -777,7 +831,7 @@ defineExpose({
                                       :value="segment.loopsSide"
                                       name="loopsSide"
                                       class="actions-input"
-                                      @change="changeLoopside(secIndex, segment, $event.target.value)"
+                                      @change="changeLoopside(secIndex, segment, $event.target.value, doorIndex)"
                                   >
                                     <option
                                         v-for="(side, key) in getLoopsideList(secIndex, doorIndex)"
