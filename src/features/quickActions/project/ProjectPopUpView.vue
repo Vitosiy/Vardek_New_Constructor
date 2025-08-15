@@ -210,18 +210,24 @@ const loadProject = async (id: string | number) => {
 
     projectState.setInitialState(projectData)
 
+    console.log(projectData, "----PROD")
+
     try {
       // 1. Обновляем данные проекта в sceneState
-      sceneState.updateProjectParams(projectData)
+      // sceneState.updateProjectParams(projectData)
+
+      sceneState.loadProjectFromData(projectData);
+      sceneState.updateProjectParams({})
+
       
       // 2. Устанавливаем ID проекта в store
       projectState.setProjectId(id.toString())
       
-      // 3. Эмитим событие загрузки комнаты (если есть комнаты)
-      if (projectData.rooms && projectData.rooms.length > 0) {
-        // Загружаем первую комнату
-        eventBus.emit('A:Load', projectData.rooms[0].id)
-      }
+      // // 3. Эмитим событие загрузки комнаты (если есть комнаты)
+      // if (projectData.rooms && projectData.rooms.length > 0) {
+      //   // Загружаем первую комнату
+      //   eventBus.emit('A:Load', projectData.rooms[0].id)
+      // }
       
       // 4. Уведомляем о загрузке контента
       eventBus.emit('A:ContantLoaded', true)
@@ -230,6 +236,7 @@ const loadProject = async (id: string | number) => {
       
       // 5. Переходим на 2D конструктор
       await router.push('/2d')
+
       closePopup()
     } catch (error) {
       console.error('Ошибка применения данных проекта:', error)
