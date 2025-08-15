@@ -33,38 +33,7 @@ export const useQuickActionsToolbar = () => {
 
   // Функция сохранения проекта
   const saveProject = async () => {
-    try {
-      // Сначала сохраняем сцену в браузер
-      eventBus.emit('A:Save')
-      
-      const projectData = sceneState.getCurrentProjectParams
-      
-      // Создаем новый проект (так как это быстрая кнопка сохранения)
-      const response = await fetch('https://dev.vardek.online/api/modeller/projectq/SaveProject/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: {
-            file: 'data:image/jpeg;base64,',
-            provider: 'vardek',
-            name: 'Новый проект',
-            user_hash: '08a57654db94bdcfe44a9ee10b2f0778',
-            city: 17281,
-            project: projectData,
-            style: '689680',
-            projectId: Date.now().toString(),
-            user_id: '14240'
-          }
-        })
-      })
-      
-      const data = await response.json()
-      if (data.CODE === 200) {
-        console.log('Проект сохранен:', data.DATA.data)
-      }
-    } catch (error) {
-      console.error('Ошибка сохранения проекта:', error)
-    }
+ 
   }
 
   const actions: QuickActionItem[] = [
@@ -98,12 +67,12 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-zoom',
       action: () => makeScreen(),
     },
-    {
-      key: 'saveProject',
-      tooltip: 'Сохранить проект',
-      iconClass: 'icon-save',
-      action: () => saveProject(),
-    },
+    // {
+    //   key: 'saveProject',
+    //   tooltip: 'Сохранить проект',
+    //   iconClass: 'icon-save',
+    //   action: () => saveProject(),
+    // },
     {
       key: 'newProject',
       tooltip: 'Новый проект',

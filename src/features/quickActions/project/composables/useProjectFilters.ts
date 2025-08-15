@@ -1,39 +1,44 @@
-import { ref, computed } from 'vue'
-import { useDebounce } from './useDebounce'
+import { ref, watch } from 'vue'
+import { ProjectFilters } from '../types'
 
 export function useProjectFilters(onFiltersChange: () => void) {
-  const filters = ref({ name: '', id: '' })
+  const filters = ref<ProjectFilters>({ name: '', id: '' })
+  const isInitialized = ref(false)
   
-  // Дебаунс для фильтра по названию
-  const { debouncedValue: debouncedName } = useDebounce(
-    computed(() => filters.value.name),
-    () => onFiltersChange(),
-    500
-  )
-  
-  // Дебаунс для фильтра по ID
-  const { debouncedValue: debouncedId } = useDebounce(
-    computed(() => filters.value.id),
-    () => onFiltersChange(),
-    500
-  )
-  
-  // Получаем дебаунсированные значения для отправки на сервер
-  const getServerFilters = () => {
-    const serverFilters: any = {}
-    
-    if (debouncedName.value.trim()) {
-      serverFilters.name = debouncedName.value.trim()
+  // Отслеживаем изменения фильтров
+  watch(filters, (newFilters) => {
+    if (isInitialized.value) {
+      console.log('🔍 Фильтры изменились:', newFilters)
+      onFiltersChange()
     }
-    if (debouncedId.value.trim()) {
-      serverFilters.id = parseInt(debouncedId.value.trim()) || 0
+  }, { deep: true })
+  
+  // Получаем значения фильтров для отправки на сервер
+  const getServerFilters = (): ProjectFilters => {
+    const serverFilters: ProjectFilters = {}
+    
+    if (filters.value.name?.trim()) {
+      serverFilters.name = filters.value.name.trim()
+    }
+    if (filters.value.id?.toString().trim()) {
+      const idValue = parseInt(filters.value.id.toString().trim())
+      if (!isNaN(idValue) && idValue > 0) {
+        serverFilters.id = idValue
+      }
     }
     
     return serverFilters
   }
+
+  // Инициализация фильтров
+  const initialize = () => {
+    console.log('🔧 Фильтры инициализированы')
+    isInitialized.value = true
+  }
   
   return {
     filters,
-    getServerFilters
+    getServerFilters,
+    initialize
   }
 }

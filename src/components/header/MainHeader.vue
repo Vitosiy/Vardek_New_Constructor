@@ -101,7 +101,7 @@ const saveProject = async () => {
 const loadProject = async () => {
   // return;
   const data = {
-    id: "11323197",
+    id: "11487677",
   };
   await postRequest(`${_GET_PROJECT}`, data);
 };
@@ -315,8 +315,8 @@ onBeforeUnmount(() => {
         <div class="header-utilitys-helpers">
           <QuickActionsToolbar />
           <!-- <AddPhotoHelperButton />-->
-          <GetAppHelperButton @click="saveProject" />
-          <VisibilityHelperButton @click="loadProject" /> 
+          <!-- <GetAppHelperButton @click="saveProject" />
+          <VisibilityHelperButton @click="loadProject" />  -->
           <Avatar />
         </div>
       </div>

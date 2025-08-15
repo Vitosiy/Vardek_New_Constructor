@@ -3,9 +3,10 @@ import StudyPopUpView from '@/features/quickActions/learning/components/StudyPop
 import ErrorPopUpView from '@/features/quickActions/report/ErrorPopUpView.vue';
 import ProjectPopUpView from '@/features/quickActions/project/ProjectPopUpView.vue';
 import { Component } from 'vue';
+import CatalogPopUpView from './popup-views/CatalogPopUpView.vue';
 
 
-export type PopupKey = 'basket' | 'study' | 'error' | 'project'
+export type PopupKey = 'basket' | 'study' | 'error' | 'project' | 'catalog'
 
 export type Popup = {
   title?: string,
@@ -30,5 +31,9 @@ export const POPUP_CONFIG: PopupsConfig = {
   project: {
     title: 'Проект',
     component: ProjectPopUpView
+  },
+  catalog: {
+    title: 'Каталог',
+    component: CatalogPopUpView
   }
 } as const;

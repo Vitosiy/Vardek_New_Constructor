@@ -16,6 +16,7 @@
     "@vueform/slider": "^2.1.10",
     "@vueform/toggle": "^2.1.4",
     "axios": "^1.7.7",
+    "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jquery": "^3.7.1",
     "jquery-ui": "^1.14.1",

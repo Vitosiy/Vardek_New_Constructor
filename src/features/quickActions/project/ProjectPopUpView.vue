@@ -8,7 +8,7 @@
       <div class="project-header">
         <div class="project-search">
           <MainInput 
-            v-model="projectFilters.filters.name" 
+            v-model="filters.name" 
             type="text" 
             placeholder="Название" 
             :min="0"
@@ -16,7 +16,7 @@
             class="search-input"
           />
           <MainInput 
-            v-model="projectFilters.filters.id" 
+            v-model="filters.id" 
             type="text" 
             placeholder="ID" 
             :min="0"
@@ -28,14 +28,14 @@
           <MainButton 
             :className="tab === 'ready' ? 'red__button' : 'grey__button'" 
             @click="switchTab('ready')"
-            :disabled="projectAPI.isLoading"
+            :disabled="isLoading"
           >
             Готовые проекты
           </MainButton>
           <MainButton 
             :className="tab === 'my' ? 'red__button' : 'grey__button'" 
             @click="switchTab('my')"
-            :disabled="projectAPI.isLoading"
+            :disabled="isLoading"
           >
             Мои проекты
           </MainButton>
@@ -43,15 +43,15 @@
       </div>
 
       <!-- Предупреждение -->
-      <div v-if="projectState.hasUnsavedChanges || projectState.isNewProject" class="project-warning">
-        <div v-if="projectState.hasUnsavedChanges" class="warning-text">
-          <p class="warning-text__title">Внимание</p>
-          <p class="warning-text__text">Ваш проект не сохранен. При переходе на новый проект, данные текущего проекта не сохранятся</p>
-        </div>
-        <div v-else-if="projectState.isNewProject" class="warning-text">
+      <div class="project-warning">
+        <div v-if="!projectState.currentProjectId" class="warning-text">
           <p class="warning-text__title">Новый проект</p>
           <p class="warning-text__text">Сохраните проект, чтобы он появился в списке</p>
         </div>
+        <!-- <div v-if="projectState.currentProjectId && projectState.hasUnsavedChanges" class="warning-text">
+          <p class="warning-text__title">Есть изменения</p>
+          <p class="warning-text__text">Сохраните проект</p>
+        </div> -->
         <MainButton 
           :className="'blue__button'" 
           @click="saveProject"
@@ -64,20 +64,36 @@
       <!-- Список проектов -->
       <div class="project-list">
         <!-- Лоадер -->
-        <div v-if="projectAPI.isLoading" class="project-loader">
+        <div v-if="isLoading" class="project-loader">
           <div class="loader-spinner"></div>
           <p>Загрузка проектов...</p>
         </div>
 
+        <!-- Ошибка загрузки -->
+        <div v-else-if="loadError" class="project-error">
+          <p class="error-text">{{ loadError }}</p>
+          <MainButton 
+            :className="'blue__button'" 
+            @click="retryLoad"
+          >
+            Попробовать снова
+          </MainButton>
+        </div>
+
+        <!-- Пустой список -->
+        <div v-else-if="!isLoading && projects.length === 0" class="project-empty">
+          <p>Проекты не найдены</p>
+        </div>
+
         <!-- Создать новый проект -->
-        <div v-else class="project-new" @click="createNewProject">
+        <div v-if="!isLoading && !loadError" class="project-new" @click="createNewProject">
           <img src="@/assets/svg/popup/add.svg" alt="" />
           <p class="new__title">Создать новый проект</p>
         </div>
 
         <!-- Карточки проектов -->
         <div 
-          v-for="project in filteredProjects" 
+          v-for="project in projects" 
           :key="project.id" 
           class="project-item" 
           @click="loadProject(project.id)"
@@ -86,6 +102,7 @@
             :src="project.img ? `https://dev.vardek.online${project.img}` : '/src/assets/img/proj.png'" 
             class="item__image" 
             @error="handleImageError"
+            :alt="project.name || 'Проект'"
           />
           <div class="item-info">
             <div class="info-id">
@@ -100,32 +117,41 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MainButton from "@/components/ui/buttons/MainButton.vue"
 import MainInput from "@/components/ui/inputs/MainInput.vue"
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue"
 import { usePopupStore } from '@/store/appStore/popUpsStore'
 import { useSceneState } from '@/store/appliction/useSceneState'
-import { useProjectFilters } from './composables/useProjectFilters'
-import { useProjectState } from './composables/useProjectState'
+import { useEventBus } from '@/store/appliction/useEventBus'
+import { useProjectStore } from './store/useProjectStore'
 import { useProjectAPI } from './composables/useProjectAPI'
+import { Project, ProjectTab } from './types'
+import { useToast } from '@/features/toaster/useToast'
 
 const router = useRouter()
+const toaster = useToast()
 const popupStore = usePopupStore()
 const sceneState = useSceneState()
+const eventBus = useEventBus()
 
-// Состояние
-const projects = ref([])
-const tab = ref('my')
+// Простое состояние
+const projects = ref<Project[]>([])
+const tab = ref<ProjectTab>('my')
+const loadError = ref<string | null>(null)
+const isLoading = ref(false)
+const filters = ref<{ name: string; id: string }>({ name: '', id: '' })
 
 // Инициализируем хуки
-const projectFilters = useProjectFilters(() => {
-  loadProjects()
-})
-const projectState = useProjectState()
+const projectState = useProjectStore()
 const projectAPI = useProjectAPI()
+
+// Отслеживаем изменения фильтров
+watch(filters, () => {
+  loadProjects()
+}, { deep: true })
 
 // Закрыть попап
 const closePopup = () => {
@@ -133,99 +159,155 @@ const closePopup = () => {
 }
 
 // Переключение табов
-const switchTab = async (newTab) => {
+const switchTab = async (newTab: ProjectTab) => {
   tab.value = newTab
+  loadError.value = null
   await loadProjects()
 }
 
 // Загрузка списка проектов
 const loadProjects = async () => {
-  const serverFilters = projectFilters.getServerFilters()
-  const items = await projectAPI.loadProjects(tab.value, serverFilters)
-  projects.value = items
+  isLoading.value = true
+  loadError.value = null
+  
+  try {
+    const serverFilters: { name?: string; id?: number } = {}
+    if (filters.value.name?.trim()) {
+      serverFilters.name = filters.value.name.trim()
+    }
+    if (filters.value.id?.toString().trim()) {
+      const idValue = parseInt(filters.value.id.toString().trim())
+      if (!isNaN(idValue) && idValue > 0) {
+        serverFilters.id = idValue
+      }
+    }
+    
+    const items = await projectAPI.loadProjects(tab.value, serverFilters)
+    projects.value = items
+    
+    if (items.length === 0 && Object.keys(serverFilters).length === 0) {
+      loadError.value = 'Не удалось загрузить проекты'
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки проектов:', error)
+    loadError.value = 'Ошибка загрузки проектов'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Повторная попытка загрузки
+const retryLoad = async () => {
+  await loadProjects()
 }
 
 // Загрузка проекта по ID
-const loadProject = async (id) => {
-  const projectData = await projectAPI.loadProject(id)
+const loadProject = async (id: string | number) => {
+  if (!id) return
+
+  const projectData = await projectAPI.loadProject(id.toString())
   if (projectData) {
-    // Применяем данные проекта к сцене
-    sceneState.updateProjectParams(projectData)
-    projectState.setProjectId(id)
+
     projectState.setInitialState(projectData)
-    
-    console.log('Проект загружен:', projectData)
-    
-    // Переходим на 2D конструктор
-    await router.push('/2d')
-    closePopup()
+
+    try {
+      // 1. Обновляем данные проекта в sceneState
+      sceneState.updateProjectParams(projectData)
+      
+      // 2. Устанавливаем ID проекта в store
+      projectState.setProjectId(id.toString())
+      
+      // 3. Эмитим событие загрузки комнаты (если есть комнаты)
+      if (projectData.rooms && projectData.rooms.length > 0) {
+        // Загружаем первую комнату
+        eventBus.emit('A:Load', projectData.rooms[0].id)
+      }
+      
+      // 4. Уведомляем о загрузке контента
+      eventBus.emit('A:ContantLoaded', true)
+      
+      console.log('✅ Проект загружен в сцену:', projectData)
+      toaster.success('Проект загружен')
+      
+      // 5. Переходим на 2D конструктор
+      await router.push('/2d')
+      closePopup()
+    } catch (error) {
+      console.error('Ошибка применения данных проекта:', error)
+    }
   }
 }
 
 // Сохранение проекта
 const saveProject = async () => {
-  projectState.isSaving.value = true
+  console.log('💾 Начинаем сохранение проекта...')
+  projectState.isSaving = true
+  
   try {
-    const result = await projectAPI.saveProject(projectState.currentProjectId.value)
+    const result = await projectAPI.saveProject(projectState.currentProjectId)
+    console.log('📡 Результат сохранения:', result)
     
     if (result.success) {
-      if (projectState.currentProjectId.value) {
-        console.log('Проект обновлен:', result.data)
-        // Обновляем начальное состояние после сохранения
-        projectState.setInitialState(sceneState.getCurrentProjectParams)
+      if (projectState.currentProjectId) {
+        // Обновляем существующий проект
+        projectState.updateAfterSave()
+        console.log('✅ Проект обновлен')
       } else {
-        console.log('Проект сохранен:', result.data)
+        // Создаем новый проект
         projectState.setProjectId(result.data.ID)
-        projectState.setInitialState(sceneState.getCurrentProjectParams)
-        await loadProjects() // Обновляем список
+        projectState.updateAfterSave()
+        await loadProjects() // Обновляем список проектов
+        console.log('✅ Новый проект сохранен')
       }
+    } else {
+      console.error('❌ Ошибка сохранения:', result.error)
+      alert('Ошибка сохранения проекта: ' + result.error)
     }
   } catch (error) {
-    console.error('Ошибка сохранения проекта:', error)
+    console.error('❌ Исключение при сохранении:', error)
+    alert('Ошибка сохранения проекта')
   } finally {
-    projectState.isSaving.value = false
+    projectState.isSaving = false
+    toaster.success('Сохранено')
+    console.log('🏁 Сохранение завершено')
+
   }
 }
 
 // Создание нового проекта
 const createNewProject = async () => {
-  // Всегда сохраняем текущий проект перед созданием нового
-  if (projectState.hasUnsavedChanges.value || projectState.isNewProject.value) {
-    await saveProject()
+  try {
+    sceneState.createNewProject()
+    projectState.resetState()
+    projectState.setInitialState(sceneState.getCurrentProjectParams)
+    
+    await router.push('/2d')
+    closePopup()
+    toaster.success('Создано')
+  } catch (error) {
+    console.error('Ошибка создания нового проекта:', error)
   }
-  
-  // Сбрасываем к начальным параметрам
-  sceneState.createNewProject()
-  projectState.resetState()
-  projectState.setInitialState(sceneState.getCurrentProjectParams)
-  
-  console.log('Создан новый проект')
-  
-  // Переходим на 2D конструктор
-  await router.push('/2d')
-  closePopup()
 }
 
 // Обработка ошибки загрузки изображения
-const handleImageError = (event) => {
-  event.target.src = '/src/assets/img/proj.png'
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement
+  target.src = '/src/assets/img/proj.png'
 }
-
-// Фильтрация проектов
-const filteredProjects = computed(() => {
-  // Фильтрация теперь происходит на сервере
-  return projects.value
-})
 
 // Инициализация состояния при монтировании
 const initializeState = () => {
   const currentState = sceneState.getCurrentProjectParams
   projectState.setInitialState(currentState)
+  console.log('🔧 Состояние инициализировано:', {
+    isNewProject: projectState.isNewProject,
+    currentProjectId: projectState.currentProjectId
+  })
 }
 
 // Загружаем проекты при монтировании
-onMounted(() => {
-  loadProjects()
+onMounted(async () => {
+  await loadProjects()
   initializeState()
 })
 </script>
@@ -266,6 +348,7 @@ onMounted(() => {
         .search-input {
           min-width: 150px;
           width: 200px;
+          padding: 12px;
         }
       }
 
@@ -315,6 +398,35 @@ onMounted(() => {
           animation: spin 1s linear infinite;
           margin-bottom: 20px;
         }
+        
+        p {
+          color: #666;
+          font-size: 16px;
+        }
+      }
+
+      .project-error {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        gap: 20px;
+        
+        .error-text {
+          color: #e74c3c;
+          font-size: 16px;
+          text-align: center;
+        }
+      }
+
+      .project-empty {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
         
         p {
           color: #666;
