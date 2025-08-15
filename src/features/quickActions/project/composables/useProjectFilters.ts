@@ -8,7 +8,6 @@ export function useProjectFilters(onFiltersChange: () => void) {
   // Отслеживаем изменения фильтров
   watch(filters, (newFilters) => {
     if (isInitialized.value) {
-      console.log('🔍 Фильтры изменились:', newFilters)
       onFiltersChange()
     }
   }, { deep: true })
@@ -32,7 +31,6 @@ export function useProjectFilters(onFiltersChange: () => void) {
 
   // Инициализация фильтров
   const initialize = () => {
-    console.log('🔧 Фильтры инициализированы')
     isInitialized.value = true
   }
   

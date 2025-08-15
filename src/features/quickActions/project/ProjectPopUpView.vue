@@ -226,7 +226,6 @@ const loadProject = async (id: string | number) => {
       // 4. Уведомляем о загрузке контента
       eventBus.emit('A:ContantLoaded', true)
       
-      console.log('✅ Проект загружен в сцену:', projectData)
       toaster.success('Проект загружен')
       
       // 5. Переходим на 2D конструктор
@@ -240,28 +239,23 @@ const loadProject = async (id: string | number) => {
 
 // Сохранение проекта
 const saveProject = async () => {
-  console.log('💾 Начинаем сохранение проекта...')
   projectState.isSaving = true
   
   try {
     const result = await projectAPI.saveProject(projectState.currentProjectId)
-    console.log('📡 Результат сохранения:', result)
     
     if (result.success) {
       if (projectState.currentProjectId) {
         // Обновляем существующий проект
         projectState.updateAfterSave()
-        console.log('✅ Проект обновлен')
       } else {
         // Создаем новый проект
         projectState.setProjectId(result.data.ID)
         projectState.updateAfterSave()
         await loadProjects() // Обновляем список проектов
-        console.log('✅ Новый проект сохранен')
       }
     } else {
       console.error('❌ Ошибка сохранения:', result.error)
-      alert('Ошибка сохранения проекта: ' + result.error)
     }
   } catch (error) {
     console.error('❌ Исключение при сохранении:', error)
@@ -269,8 +263,6 @@ const saveProject = async () => {
   } finally {
     projectState.isSaving = false
     toaster.success('Сохранено')
-    console.log('🏁 Сохранение завершено')
-
   }
 }
 
@@ -299,10 +291,6 @@ const handleImageError = (event: Event) => {
 const initializeState = () => {
   const currentState = sceneState.getCurrentProjectParams
   projectState.setInitialState(currentState)
-  console.log('🔧 Состояние инициализировано:', {
-    isNewProject: projectState.isNewProject,
-    currentProjectId: projectState.currentProjectId
-  })
 }
 
 // Загружаем проекты при монтировании

@@ -30,7 +30,6 @@ export function useProjectAPI() {
 
     return new Promise((resolve) => {
       loadTimeout = setTimeout(async () => {
-        console.log('🚀 API: Запрос проектов', { tab, filters })
         isLoading.value = true
         
         try {
@@ -61,7 +60,6 @@ export function useProjectAPI() {
           }
           
           const data = await response.json()
-          console.log('📡 API: Ответ получен', { code: data.CODE, itemsCount: data.DATA?.data?.items?.length || 0 })
           
           if (data.CODE === 200 && data.DATA?.data?.items) {
             resolve(data.DATA.data.items)
@@ -73,7 +71,6 @@ export function useProjectAPI() {
           resolve([])
         } finally {
           isLoading.value = false
-          console.log('🏁 API: Запрос завершен')
         }
       }, delay)
     })
