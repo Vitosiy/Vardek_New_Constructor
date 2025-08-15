@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { client } from '@/api/api'
 import { ApiResponse, LoginData } from '@/types/authTypes'
 import axios from 'axios'

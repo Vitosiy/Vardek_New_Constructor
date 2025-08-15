@@ -3,12 +3,12 @@ import { useEventBus } from '@/store/appliction/useEventBus'
 import { useSceneState } from '@/store/appliction/useSceneState'
 import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types'
 import { API_ENDPOINTS, REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
-import { useProjectStore } from '../store/useProjectStore'
+// import { useProjectStore } from '../store/useProjectStore'
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
-  const projectStore = useProjectStore()
+  // const projectStore = useProjectStore()
   const isLoading = ref(false)
   
   // Дебаунс для запросов

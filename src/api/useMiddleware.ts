@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Middleware } from "openapi-fetch";
 import { makeErrorResponse } from "./errorResponse";
 

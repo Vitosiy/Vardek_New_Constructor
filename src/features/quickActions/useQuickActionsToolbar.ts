@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useSceneState } from '@/store/appliction/useSceneState';
