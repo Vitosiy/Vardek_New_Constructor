@@ -26,7 +26,7 @@ export const catalogSections: CatalogSectionInt[] = [
     goods: [
       { id: MathUtils.generateUUID(), name: 'Стена', nameMode: 'wall', icon: 'icon-wall-c2d.png' },
       { id: MathUtils.generateUUID(), name: 'Верт. Стена', nameMode: 'wall_vertical', icon: 'icon-v-wall-c2d.png' },
-      { id: MathUtils.generateUUID(), name: 'Внутр. ст.', nameMode: 'dividing_wall', icon: 'icon-v-wall-c2d.png' },
+      // { id: MathUtils.generateUUID(), name: 'Внутр. ст.', nameMode: 'dividing_wall', icon: 'icon-v-wall-c2d.png' },
       { id: MathUtils.generateUUID(), name: 'Угл. стена', nameMode: 'corner', icon: '' },
       { id: MathUtils.generateUUID(), name: 'Верт. ниша', nameMode: 'vert', icon: '' },
       { id: MathUtils.generateUUID(), name: 'Гор. ниша', nameMode: 'hor', icon: '' },

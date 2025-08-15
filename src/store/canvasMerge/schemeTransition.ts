@@ -564,7 +564,6 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		/*
 	  
-		*/
 		// Если нет стен - возвращаем как есть
 		if (!roomData.params?.walls?.length) return roomData;
 
@@ -602,6 +601,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				console.log("");
 			});
 		}
+		*/
 
 		return roomData;
 	};
