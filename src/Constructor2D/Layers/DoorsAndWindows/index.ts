@@ -148,11 +148,6 @@ export default class DoorsAndWindows {
 
     const rooms = roomsStore.getAllData(); // получаем комнаты из стора
 
-    if (!rooms || rooms.length === 0) {
-      console.warn("No rooms to initialize");
-      return;
-    }
-
     rooms.forEach((room: any) => {
 
       // получаем объекты комнат, в том числе двери и окна, исключая перегородки (166755)
