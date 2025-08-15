@@ -527,7 +527,7 @@ const deleteCell = (cellIndex, secIndex) => {
     currentSection.cells.length = 0
 
   module.value = clone;
-  calcLoops(next ? secIndex + 1 : secIndex - 1);
+  calcLoops(secIndex);
 
   // Обновляем текущий сектор
   selectedCell.value.cell = 0;
