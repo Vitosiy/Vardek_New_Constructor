@@ -403,10 +403,10 @@ p {
   &__icon {
     display: inline-block;
     
-    svg {
-      animation: rotate 1.5s linear infinite;
-      display: block;
-    }
+  }
+  svg {
+    animation: rotate 1.5s linear infinite;
+    display: block;
   }
 
   &__progresbar {
