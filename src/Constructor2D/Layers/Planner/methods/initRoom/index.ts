@@ -26,7 +26,7 @@ const roomsStore = useSchemeTransition();
 export function initRoom(this: any): (0 | 1) {
 
   const rooms = roomsStore.getAllData();
-
+    // console.log(rooms,"--RR")
   for (let i = 0, len = rooms.length; i < len; i++) {
 
     const room = rooms[i];

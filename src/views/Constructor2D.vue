@@ -20,6 +20,8 @@ let canvas2d: Ref<HTMLCanvasElement | undefined> = ref();
 
 let App2d: Constructor2D | null = null;
 
+const preventContextMenu = (e: Event) => e.preventDefault();
+
 // Сохраняем ссылку на обработчик события
 let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
   try {
@@ -69,11 +71,16 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
 };
 
 onMounted(async () => {
+  
   if (root2d.value && canvas2d.value) {
 
     App2d = new Constructor2D(root2d.value, canvas2d.value);
     await App2d.init();
 
+    if (canvas2d.value) {
+      canvas2d.value.addEventListener('contextmenu', preventContextMenu);
+    }
+    
     // Добавляем обработчик события
     canvas2d.value.addEventListener('drop', dropHandler);
 
@@ -86,6 +93,7 @@ onMounted(async () => {
   if (loader) {
     (loader as HTMLElement).style.display = 'none';
   }
+
 });
 
 onUnmounted(() => {
@@ -98,6 +106,7 @@ onUnmounted(() => {
   // Удаляем обработчик события, если он был добавлен
   if (canvas2d.value && dropHandler) {
     canvas2d.value.removeEventListener('drop', dropHandler);
+    canvas2d.value.removeEventListener('contextmenu', preventContextMenu);
   }
 
 });
@@ -121,7 +130,7 @@ onUnmounted(() => {
 <template>
   <div ref="root2d" id="app2D">
     <canvas ref="canvas2d" id="constructor2D"
-      @dragover.prevent></canvas>
+      @dragover.prevent @contextmenu.prevent></canvas>
     <ModifyWall />
     <FormLabelRoom />
   </div>

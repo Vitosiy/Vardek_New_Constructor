@@ -219,6 +219,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		// },
 		// },
 
+		/*
 		{
 			"id": "0aeedb70-c409-49e0-9bf6-64de303e9026",
 			"label": "Комната 1",
@@ -409,6 +410,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				}
 			]
 		}
+		*/
 
 	]);
 
@@ -564,7 +566,6 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 		/*
 	  
-		*/
 		// Если нет стен - возвращаем как есть
 		if (!roomData.params?.walls?.length) return roomData;
 
@@ -602,6 +603,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 				console.log("");
 			});
 		}
+		*/
 
 		return roomData;
 	};

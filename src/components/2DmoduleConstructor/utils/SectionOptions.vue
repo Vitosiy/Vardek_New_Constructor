@@ -1,10 +1,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 import {defineExpose, ref, toRefs} from "vue";
-import MainInput from "@/components/ui/inputs/MainInput.vue";
-import MainSelect from "@/components/ui/selects/MainSelect.vue";
-import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
-import {_URL} from "@/types/constants";
+
 import {GridCell, GridCellsRow, GridSection} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
@@ -36,6 +33,7 @@ const selectedCell = ref({sec: 0, cell: null, row: null});
 const emit = defineEmits([
   "product-updateFasades",
   "product-updateFilling",
+  "product-calcLoops",
 ]);
 
 const timer = ref(false);
@@ -61,6 +59,10 @@ const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
 
 const updateFasades = () => {
   emit("product-updateFasades");
+}
+
+const calcLoops = (secIndex) => {
+  emit("product-calcLoops", secIndex);
 }
 
 const updateFilling = (value, filling, type, render = false) => {
@@ -105,6 +107,7 @@ const addSection = (secIndex, _count = 1) => {
       cells: [],
       fasades: [],
       loops: [],
+      loopsSides: {},
       fillings: [],
       position: new THREE.Vector2(section.position.x + (section.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), section.position.y),
     }
@@ -116,6 +119,7 @@ const addSection = (secIndex, _count = 1) => {
     module.value.sections.splice(secIndex + 1 + i, 0, newColumn);
   }
   updateFasades();
+  calcLoops(secIndex);
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -270,8 +274,9 @@ const updateSectionWidth = (value, secIndex) => {
   }
   // Обновляем значение в module для синхронизации
   const clone = Object.assign({}, module.value);
+  let curSection = clone.sections[secIndex]
+
   if (adjustedValue) {
-    let curSection = clone.sections[secIndex]
     let nextSection = clone.sections[secIndex + 1] || clone.sections[secIndex - 1]
     let delta = curSection.width - adjustedValue
 
@@ -308,6 +313,8 @@ const updateSectionWidth = (value, secIndex) => {
   }
   module.value = clone;
   updateFasades();
+  calcLoops(secIndex);
+
   visualizationRef.value.renderGrid();
 
 };
@@ -328,8 +335,10 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
   }
   // Обновляем значение в module для синхронизации
   const clone = Object.assign({}, module.value);
+  let curSection = clone.sections[secIndex]
+
   if (adjustedValue) {
-    let curCell = clone.sections[secIndex].cells[cellIndex]
+    let curCell = curSection.cells[cellIndex]
     let nextIndex = clone.sections[secIndex].cells[cellIndex + 1] ? cellIndex + 1 : cellIndex - 1;
     let nextCell = clone.sections[secIndex].cells[nextIndex]
     let delta = curCell.height - adjustedValue
@@ -397,8 +406,10 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
     })
   }
   module.value = clone;
-  visualizationRef.value.renderGrid();
 
+  calcLoops(secIndex);
+
+  visualizationRef.value.renderGrid();
 };
 
 const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
@@ -444,11 +455,11 @@ const deleteSection = (secIndex) => {
   const prev = module.value.sections[secIndex - 1];
 
   const combinedWidth = next
-      ? current.width + next.width
-      : current.width + prev.width;
+      ? current.width + next.width + module.value.moduleThickness
+      : current.width + prev.width + module.value.moduleThickness;
 
   if (next) {
-    next.position.x = next.position.x - next.width / 2 + combinedWidth / 2
+    next.position.x = current.position.x - current.width / 2 + combinedWidth / 2
     next.width = combinedWidth;
     next.cells?.forEach((elem) => {
       elem.position.x = next.position.x
@@ -467,6 +478,7 @@ const deleteSection = (secIndex) => {
     });
   }
 
+  calcLoops(next ? secIndex + 1 : secIndex - 1);
   if (module.value.sections.length > 1) {
     module.value.sections.splice(secIndex, 1);
   }
@@ -515,6 +527,7 @@ const deleteCell = (cellIndex, secIndex) => {
     currentSection.cells.length = 0
 
   module.value = clone;
+  calcLoops(secIndex);
 
   // Обновляем текущий сектор
   selectedCell.value.cell = 0;

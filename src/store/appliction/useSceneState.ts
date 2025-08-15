@@ -170,6 +170,28 @@ export const useSceneState = defineStore('SceneState', () => {
 
     }
 
+    const loadProjectFromData = (newProject: IProjectParams) => {
+
+        const clone = JSON.parse(JSON.stringify(newProject))
+
+        startProjectParams.value = JSON.parse(JSON.stringify(newProject))
+
+        startParamsClone.value = clone
+
+        startRoomData.value = clone.rooms[0].params
+
+        startCameraData.value = clone.camera
+
+        startLightsDat.value = clone.lights
+
+        startHeightClamp.value = clone.height_clamp
+
+        currentProjectParams.value = clone
+    }
+
+
+
+
     const getStartProgectParams = computed(() => {
         return startProjectParams.value
     })
@@ -228,7 +250,8 @@ export const useSceneState = defineStore('SceneState', () => {
         setRefractionValue,
         setShadowValue,
         setLightRange,
-        createNewProject
+        createNewProject,
+        loadProjectFromData
     };
 
 });
