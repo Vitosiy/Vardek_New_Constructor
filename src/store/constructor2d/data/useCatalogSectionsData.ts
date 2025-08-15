@@ -60,6 +60,7 @@ export const catalogSections: CatalogSectionInt[] = [
       { id: MathUtils.generateUUID(), name: 'Окно', nameMode: 'window', icon: 'icon-window-c2d.png' },
     ]
   },
+  /*
   {
     id: MathUtils.generateUUID(),
     name: "Полы",
@@ -108,4 +109,5 @@ export const catalogSections: CatalogSectionInt[] = [
     },
     goods: []
   }
+    */
 ];
