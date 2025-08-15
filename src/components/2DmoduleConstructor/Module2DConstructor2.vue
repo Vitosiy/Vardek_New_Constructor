@@ -181,6 +181,7 @@ const module = computed(() => {
         ];
         section.fasades = fasades
         calcLoops(0, _module)
+        section.loopsSides = {0: LOOPSIDE["left"]}
       }
 
     }
@@ -1221,6 +1222,7 @@ watch(visualizationRef, () => {
             :module="module"
             :step="step"
             @product-updateFasades="updateFasades"
+            @product-calcLoops="calcLoops"
             @product-updateFilling="updateFilling"
         />
       </div>

@@ -192,6 +192,7 @@ export interface GridSection {
   fasades?: FasadeObject[];
   fasadesDrawers?: FasadeObject[];
   loops?: [];
+  loopsSides?: {};
   profiles?: FillingObject[];
 }
 
