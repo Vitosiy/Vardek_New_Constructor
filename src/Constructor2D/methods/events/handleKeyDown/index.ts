@@ -23,7 +23,7 @@ export function handleKeyDown(this: any, e: KeyboardEvent): void {
       }
       
       if(this.layers.doorsAndWindows.state.activeObject){
-        this.layers.doorsAndWindows.removeObject();
+        this.layers.doorsAndWindows.removeObject(null, true);
       }
       
     }

@@ -119,8 +119,6 @@ export class UniformTextureCreateTexture {
                     return
                 }
 
-                console.log('HERE_2', levelNdx)
-
                 this.elementTexured({
                     element,
                     levelNdx,

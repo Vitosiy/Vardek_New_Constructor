@@ -140,8 +140,6 @@ export class TrafficManager {
         if (!this._currentObject) return
 
         if (product instanceof THREE.Object3D) {
-            console.log(product, 'product')
-
             const prod = toRaw(product)
             const { RASPIL_LIST } = product.userData.PROPS
 

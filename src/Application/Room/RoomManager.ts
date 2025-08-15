@@ -303,7 +303,6 @@ export class RoomManager extends Room {
 
     async update(loadData?: string[]) {
 
-
         this.contant = {}
         let data = loadData ?? this.roomState.getCurrentRoomId?.content
         if (!data) return
@@ -330,8 +329,6 @@ export class RoomManager extends Room {
             const rotation = model.rotation as THREE.Euler;
             const loadData = model.data ?? '';
             const size = model.size ?? '';
-
-            console.log(point, 'LOADED OBJ POS')
 
             await new Promise<void>((resolve) => {
                 this.geometryBuilder!.craeteModel(

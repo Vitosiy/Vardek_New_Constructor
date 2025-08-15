@@ -414,8 +414,6 @@ export class BuildersHelper extends GlobalsData {
             ]
         }
 
-        console.log(startCutData, 'startCutData')
-
         return startCutData
     }
 

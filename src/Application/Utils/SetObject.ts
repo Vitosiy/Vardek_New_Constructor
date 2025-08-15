@@ -34,7 +34,6 @@ export class SetObject {
 
     async create({ object, point, rotate, boxHelper, wall, trafficManager }: THREEInterfases.ISetProduct) {
 
-        console.log(object)
 
         this.roomManager = this.root._roomManager
 
@@ -64,8 +63,6 @@ export class SetObject {
         const adjustedPosition = positionEmpty && rotationEmpty
             ? this.roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
             : { position, rotation };
-
-        console.log(adjustedPosition, 'adjustedPosition')
 
 
         object.position.copy(adjustedPosition.position);

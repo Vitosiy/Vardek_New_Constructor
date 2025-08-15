@@ -118,8 +118,6 @@ export class Renderer {
 
     setQuality(params: string) {
 
-        console.log(params, 'params')
-
         switch (params) {
             case 'low':
                 // this.toggleAntialias('low')

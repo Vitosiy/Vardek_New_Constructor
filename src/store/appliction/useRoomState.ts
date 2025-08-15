@@ -102,10 +102,7 @@ export const useRoomState = defineStore('RoomState', () => {
     if (centerized) {
       currentRoom.params = centerized?.params ?? currentRoom?.params;
       currentRoom.content = centerized?.content ?? currentRoom?.content;
-      console.log(currentRoom.content)
     }
-
-
 
     return rooms.value.find(value => value.id === roomId)
   }
@@ -118,6 +115,7 @@ export const useRoomState = defineStore('RoomState', () => {
 
     if (centerized) {
       currentRoom.params = centerized?.params ?? currentRoom?.params;
+      currentRoom.content = centerized?.content ?? currentRoom?.content;
     }
 
     return rooms.value.find(value => value.id === currentRoomId.value)

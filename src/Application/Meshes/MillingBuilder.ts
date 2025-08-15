@@ -122,7 +122,6 @@ export class MillingBuilder extends MillingsUtils {
     // object.geometry = newGeometry;
 
     if (patina != null) {
-      console.log(patina, 'iside')
       const startMaterial = object.userData.millingMaterial
       const { geometry, material } = this.patinaBuilder.createPatinaColor({ geometry: newGeometry, patinaId: patina, startMaterial })
       object.geometry = geometry;

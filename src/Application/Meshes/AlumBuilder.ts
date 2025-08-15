@@ -20,7 +20,6 @@ export class AlumBuilder {
 
     private loadTextures() {
         if (!this.parent || !this.resources) return
-        console.log(this.resources, 'THR')
 
         this.resources.startLoading(roughnessUrl, 'localTexture', (file) => {
             this.setupTexture(file);

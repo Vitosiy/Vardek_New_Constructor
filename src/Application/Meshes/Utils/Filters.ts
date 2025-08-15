@@ -80,14 +80,7 @@ export class Filters extends GlobalsData {
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
-            console.log(FASADE_PROPS[fasadeNumber], 'FILTER', this.project.default_fasade_up)
-
             const fasad = FASADE_PROPS[fasadeNumber]?.TYPE ?? this.project.default_fasade_color ?? 7397;
-
-            console.log(fasad, 'GGG',  this.project.default_fasade_color,  this.project)
-
-            // console.log(params.FASADE_PROPS.length < fasadePositionList.length ? this.project.default_fasade_up : null, 'hhhhhh')
-
 
             const fasadeProps: {
                 SHOW: boolean | null,

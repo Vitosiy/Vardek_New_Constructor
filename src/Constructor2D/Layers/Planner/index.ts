@@ -1890,6 +1890,8 @@ export default class Planner {
 
         this.redrawHalfRoom();
 
+        this.parent.updateRoomStore();
+
       }
 
     }

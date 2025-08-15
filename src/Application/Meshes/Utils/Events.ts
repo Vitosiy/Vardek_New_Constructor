@@ -181,7 +181,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-            console.log('MILLING')
+            // console.log('MILLING')
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
             FASADE_PROPS[fasadeNdx].MILLING = null
@@ -203,11 +203,8 @@ export class MeshEvents extends BuildersHelper {
                 }
             })
         );
-        console.log(data.ID)
 
         CONFIG.MODULE_COLOR = data.ID;
-        console.log(product, CONFIG,
-            CONFIG.MODULE_COLOR, data.ID)
     }
 
     async changeModuleTexture(data: { [key: string]: any }) {
@@ -270,8 +267,6 @@ export class MeshEvents extends BuildersHelper {
 
     private tryApplyPalette(data: any, fasadeNdx: number, fasadeProp: any): boolean {
         if (!data.PALETTE?.[0]) return false;
-        console.log('PAL1', data)
-
         fasadeProp.COLOR = data.ID;
         this.modelState.createCurrentPaletteData(data.ID);
         const palette = Object.keys(this.modelState.getCurrentPaletteData)[0];
@@ -312,8 +307,6 @@ export class MeshEvents extends BuildersHelper {
             return
         }
 
-        console.log(fasadeNdx, 'FNDX')
-
         await this.catchFasadeChange({ data, fasadeNdx })
         this.events.emit('U:ChangeFasade')
 
@@ -325,8 +318,6 @@ export class MeshEvents extends BuildersHelper {
         const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
         
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
-
-        console.log(elementsList)
 
         if (Array.isArray(elementsList) && elementsList[0]) {
             elementsList.forEach((el) => {
@@ -355,9 +346,6 @@ export class MeshEvents extends BuildersHelper {
         const { FASADE, CONFIG } = props
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE[fasadeNdx]
-
-
-        console.log('PAL2', data)
 
         // console.log({ data, fasadeNdx }, 'PALLIT')
 
@@ -760,7 +748,6 @@ export class MeshEvents extends BuildersHelper {
         }
 
         await rebuild()
-        console.log(currentMesh, 'await')
 
         const adjustedPosition = this.root._roomManager.adjustPositionWithRaycasting({
             object: currentMesh,
@@ -780,7 +767,6 @@ export class MeshEvents extends BuildersHelper {
         currentMesh.userData.obb.halfSize.x = data.width * 0.5;
 
         if (PROPS.FASADE.length === 0) {
-            console.log('hhh')
             currentMesh.userData.obb.halfSize.y = data.height * 0.5;
         }
 

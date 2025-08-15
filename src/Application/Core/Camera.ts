@@ -128,9 +128,6 @@ export class Camera {
     }
 
     setPosition(value): void {
-        console.log(value)
-
-
         this.instance.position.copy(this.cameraPositions[value].pos)
         this.controls.target.set(...this.cameraPositions[value].target)
         this.controls?.update()

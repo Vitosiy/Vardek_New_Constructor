@@ -252,8 +252,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
 
-        console.log(currentFasadeTypesData.value, '---C-currentFasadeTypesData')
-
     }
 
     const getCurrentFasadeTypesData = computed(() => {
@@ -280,9 +278,7 @@ export const useModelState = defineStore('ModelState', () => {
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
-        console.log('PATINA')
         if (_PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] !== null) {
-            console.log('W')
             return
         }
 

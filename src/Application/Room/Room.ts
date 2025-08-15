@@ -130,16 +130,11 @@ export class Room extends BuildersHelper {
         if (!roomId) {
             this.eventBus.emit('A:ContantLoaded', true)
 
-            console.log('Not exist')
-
             params = JSON.parse(JSON.stringify(this.sceneState.getStartRoomData))
-            console.log(params)
 
             this.roomState.setCurrentRoomParams(params)
             return params
         }
-
-        console.log('Exist', this.roomState.getRooms, this.roomState.getCurrentRoomData(roomId))
 
         params = JSON.parse(JSON.stringify(this.roomState.getCurrentRoomData(roomId)!.params))
         this.roomState.setCurrentRoomParams(params)
@@ -154,8 +149,6 @@ export class Room extends BuildersHelper {
         this.floor = null;
 
         /** OLD */
-
-        console.log(params, 'params')
 
         params.walls.forEach((wall: THREEInterfases.IWallData, key: number) => {
             const part = this.wallBuilder.createPlaneWall(wall.width, wall.height, wall.position, wall.rotation, wall.side, params.wall,)
@@ -259,7 +252,6 @@ export class Room extends BuildersHelper {
 
         // Отправляем материал в хранилище
         this.roomState.setWallTexture(materialId)
-        console.log(this.roomState.getCurrentRoomParams, 'WALL')
     }
 
     updateFloorMaterial(materialId: number | string) {
@@ -268,7 +260,6 @@ export class Room extends BuildersHelper {
 
         // Отправляем материал в хранилище
         this.roomState.setFloorTexture(materialId)
-        console.log(this.roomState.getCurrentRoomParams, 'FLOOR')
     }
 
 

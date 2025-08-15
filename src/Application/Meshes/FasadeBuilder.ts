@@ -75,8 +75,6 @@ export class FasadeBuilder {
             //------------------------------------------------
             if (!isUMmodule) {
 
-                console.log('WW')
-
                 fasadeData.COLOR = resolveColorId();
                 fasadeData.SHOW = fasadeData.COLOR != 7397;
                 fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null

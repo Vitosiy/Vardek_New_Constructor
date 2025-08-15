@@ -53,7 +53,6 @@ class TableTopCreator extends BuildersHelper {
         if (object.userData.groupId) {
 
             const parent: THREE.Object3D = this.root._scene?.getObjectByProperty('id', object.userData.groupId)!;
-            console.log(parent.userData, 'parent')
 
             const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
           
@@ -100,8 +99,6 @@ class TableTopCreator extends BuildersHelper {
         await this.createGroup(raspil, group, meshes, object, id)
 
         const textureData = this._PRODUCTS[object.userData.globalData].texture
-
-        console.log(object.userData, 'oO-bject')
 
         this.addToScene({ meshes, group, object, textureData })
     }
@@ -153,8 +150,6 @@ class TableTopCreator extends BuildersHelper {
         //     side: THREE.DoubleSide,
         //     wireframe: false
         // });
-
-        console.log(object, 'OBJECT')
 
         const material = object.userData.PROPS.BODY.userData.MATERIAL
 
@@ -253,8 +248,6 @@ class TableTopCreator extends BuildersHelper {
         group.position.copy(object.position);
 
         group.updateMatrixWorld();
-
-        console.log(object, 'OBJECT')
 
     }
 
@@ -359,11 +352,11 @@ class TableTopCreator extends BuildersHelper {
             // console.log(mesh.userData.position, mesh.userData.rotation, 'ROW')
 
             if (mesh.userData.position && mesh.userData.rotation && RASPIL_COUNT === meshes.length) {
-                console.log('1')
+
                 mesh.position.copy(mesh.userData.position);
                 mesh.rotation.copy(mesh.userData.rotation);
             } else {
-                console.log('2')
+ 
                 mesh.position.copy(worldGeometryCenter);
                 mesh.quaternion.copy(worldQuaternion);
             }
@@ -388,7 +381,6 @@ class TableTopCreator extends BuildersHelper {
                 mesh.material.needsUpdate = true;
             })
 
-            console.log(mesh.material, 'MATERIAL')
             // mesh.material.map.center.set(0.5, 0.5); // Центр вращения
             // mesh.material.map.rotation = Math.PI;
             // mesh.material.needsUpdate = true;
@@ -408,12 +400,10 @@ class TableTopCreator extends BuildersHelper {
         group.children = []
         this.root._scene?.remove(group)
 
-        console.log(object, 'OBJ')
+
         if (object.children.length > 0) {
             this.dispose.clearParent(object)
         }
-
-        console.log(meshes, resultData, 'DATA')
 
 
         object.userData.PROPS.RASPIL_LIST = resultData
@@ -489,7 +479,6 @@ class TableTopCreator extends BuildersHelper {
             const result = this.findElementsBySectorId(data, elem.sectorId)
             result.position = elem.position.clone()
             result.rotation = elem.rotation.clone()
-            console.log(result, 'OPEN result')
 
         })
     }

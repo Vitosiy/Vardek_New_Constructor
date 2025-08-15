@@ -145,8 +145,6 @@ export class BuildProduct extends BuildersHelper {
         parent_group.userData.aabb = aabb
         parent_group.userData.obb = obb
 
-        console.log(parent_group, 'PROBG')
-
         return parent_group
     }
 

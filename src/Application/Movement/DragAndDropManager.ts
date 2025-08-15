@@ -92,11 +92,8 @@ export class DragAndDropManager {
                     // this.eventBus.emit('U:Drop')
 
                     if (productData.moduleType || productData.ID == 3954672) {
-                        console.log('1')
 
                         this.universalGeometryBuilder.craeteModel(productData, async (object) => {
-                            console.log(productData, 'DND')
-
                             await this.setObject.create({
                                 object,
                                 point,
@@ -118,7 +115,6 @@ export class DragAndDropManager {
                             //useModelState().setCurrentModel(object);
                         });
                     } else {
-                        console.log('2')
                         this.geometryBuilder.craeteModel(productData, async (object) => {
 
 

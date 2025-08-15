@@ -60,7 +60,6 @@ class UserHistory<T> {
     }
 
     redo(): T | null {
-        console.log(this.history, 'HISTOR')
         // Возвращаем следующее действие, если оно существует
         if (this.currentIndex < this.history.length - 1) {
             this.currentIndex++;
