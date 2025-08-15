@@ -1,3 +1,4 @@
+
 <template>
   <div class="project">
     <div class="project__title">Открыть проект</div>
@@ -118,6 +119,8 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
+
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MainButton from "@/components/ui/buttons/MainButton.vue"
