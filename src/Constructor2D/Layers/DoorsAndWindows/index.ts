@@ -144,7 +144,7 @@ export default class DoorsAndWindows {
 
   // инициализация слоя
   // вызывается в конструкторе при запуске приложения
-  private init(): void {
+  public init(publicUpdate: boolean = false): void {
 
     const rooms = roomsStore.getAllData(); // получаем комнаты из стора
 
@@ -266,9 +266,11 @@ export default class DoorsAndWindows {
 
     });
 
-    this.app.stage
-      .on("pointerup", this.handlerStageMouseUp)
-      .on("mousemove", this.handlerStageMouseMove);
+    if(!publicUpdate){
+      this.app.stage
+        .on("pointerup", this.handlerStageMouseUp)
+        .on("mousemove", this.handlerStageMouseMove);
+    }
 
     console.log('DoorsAndWindows layer initialized with', this.drawObjects.length, 'objects');
 
