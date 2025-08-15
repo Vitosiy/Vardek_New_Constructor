@@ -102,7 +102,6 @@
           <img 
             :src="project.img ? `https://dev.vardek.online${project.img}` : '/src/assets/img/proj.png'" 
             class="item__image" 
-            @error="handleImageError"
             :alt="project.name || 'Проект'"
           />
           <div class="item-info">
