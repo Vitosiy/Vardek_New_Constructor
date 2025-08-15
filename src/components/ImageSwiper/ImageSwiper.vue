@@ -7,13 +7,15 @@
           v-for="(image, index) in images" 
           :key="index"
         >
-          <div>{{ image.name }}</div>
           <img 
             :src="`${API_URL}/${image.src}`" 
             :alt="image.alt || 'Slide image'" 
             class="swiper-image" 
           />
-          <div>{{ image.alt }}</div>
+          <div class="image-swiper__description">
+            <div class="image-swiper__description-title">{{ image.name }}</div>
+            <div class="image-swiper__description-text">{{ image.alt }}</div>
+          </div>
         </div>
       </div>
 
@@ -77,17 +79,17 @@
       centeredSlides: true, // Центрирование слайдов
       spaceBetween: 20, // Отступ между слайдами
       pagination: {
-        // el: '.swiper-pagination',
-        el: '.swiper-pagination-numbers',
-        type: 'custom',
-        renderCustom: function (swiper, current, total) {
-            // const realIndex = swiper.realIndex + 1; 
-            const displayIndex = (current - 1) % total + 1;
-            console.log(displayIndex)
-            return `<span class="current">${displayIndex}</span>
-                    <span class="separator">/</span>
-                    <span class="total">${total}</span>`;
-              },
+        el: '.swiper-pagination',
+        // el: '.swiper-pagination-numbers',
+        // type: 'custom',
+        // renderCustom: function (swiper, current, total) {
+        //     // const realIndex = swiper.realIndex + 1; 
+        //     const displayIndex = (current - 1) % total + 1;
+        //     console.log(displayIndex)
+        //     return `<span class="current">${displayIndex}</span>
+        //             <span class="separator">/</span>
+        //             <span class="total">${total}</span>`;
+        //       },
         clickable: true
       },
       navigation: {
@@ -116,6 +118,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    &__description {
+      color: #fFffff;
+      text-align: center;
+      font-weight: 600;
+      line-height: 100%;
+      letter-spacing: 0%;
+      vertical-align: middle;
+      &-title {
+        font-size: 32px;
+        margin-top: 1rem;
+        margin-bottom: 20px;
+      }
+      &-name {
+        font-size: 16px;
+
+      }
+    }
   }
 
   .swiper {
@@ -201,7 +220,7 @@
 
   .swiper-pagination-numbers {
     position: absolute;
-    bottom: 24px;
+    bottom: 41px;
     left: 0;
     right: 0;
     display: flex;

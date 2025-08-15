@@ -154,7 +154,7 @@ export default class Planner {
   }
 
   // инициализация объектов для визуализации при запуске приложения
-  private init(): void {
+  public init(publicUpdate: boolean = false): void {
 
     const result = this.initRoom();
 
@@ -177,9 +177,11 @@ export default class Planner {
 
     this.redrawHalfRoom();
 
-    this.app.stage
-      .on("pointerup", this.handlerStageMouseUp)
-      .on("mousemove", this.handlerStageMouseMove);
+    if(!publicUpdate){
+      this.app.stage
+        .on("pointerup", this.handlerStageMouseUp)
+        .on("mousemove", this.handlerStageMouseMove);
+    }
 
     console.log('Planner initialized with', this.objectWalls.length, 'walls');
 
