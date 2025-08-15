@@ -237,6 +237,7 @@ const loadProject = async (id: string | number) => {
       // 5. Переходим на 2D конструктор
       await router.push('/2d')
       window.C2D.layers.planner.init(true)
+      window.C2D.layers.doorsAndWindows.init(true)
       closePopup()
     } catch (error) {
       console.error('Ошибка применения данных проекта:', error)
