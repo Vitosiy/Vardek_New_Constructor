@@ -106,11 +106,11 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
             <div class="radial-sphere"></div>
           </div>
           
-          <div class="goods-item">
+          <!-- <div class="goods-item">
             <RoomPlaneSVG class="goods-item__image" />
             <p class="goods-item__title">Шаблоны комнат</p>
             <div class="radial-sphere"></div>
-          </div>
+          </div> -->
 
         </div>
       </div>
