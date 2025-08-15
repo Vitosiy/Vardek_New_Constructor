@@ -11,7 +11,7 @@ export const useEventBus = defineStore('EventBus', () => {
   const emit = (event: string, payload?: any) => {
     emitHooks.value.forEach(listener => listener(event, payload));
     if (!events.value[event]) {
-      console.warn(`Event "${event}" not found`);
+      // console.warn(`Event "${event}" not found`);
       return;
     }
     events.value[event].forEach(callback => callback(payload));

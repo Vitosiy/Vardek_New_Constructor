@@ -62,7 +62,6 @@ export class AppLights {
 
     setLight(position: { [key: string]: number } | any, lightCount: number) {
         const shadowValue = this.sceneState.getShadowValue
-        console.log(shadowValue,'shadowValue')
         this.lights = []
         const margin = 250
         const step = (position.depth - 2 * margin) / (lightCount - 1);

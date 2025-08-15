@@ -260,7 +260,6 @@ const prepareData = () => {
   }
 
   if (MILLING) {
-    console.log("MILLING");
     const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
       modelState.getCurrentMillingData.find(
         (milling) => milling.ID === MILLING
@@ -277,7 +276,6 @@ const prepareData = () => {
 
   if (PATINA) {
     if (modelState.getCurrentPatinaData) {
-      console.log(modelState.getCurrentPatinaData, "PATT", PATINA);
       const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
         modelState.getCurrentPatinaData.find((patina) => patina.ID === PATINA);
       currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };

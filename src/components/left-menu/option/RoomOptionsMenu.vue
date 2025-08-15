@@ -74,7 +74,6 @@ onMounted(() => {
   pointLight.value = sceneState.getLightRange.pointLight;
   ambientLight.value = sceneState.getLightRange.ambientLight;
 
-  console.log(ambientLight.value, "ambientLight.value");
 });
 
 onBeforeMount(() => {
@@ -222,7 +221,6 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
 };
 
 const selectOption = (value: TTextureItem) => {
-  console.log(currentOption.value, "currentOption.value");
   let data;
   switch (currentOption.value) {
     case "moduleTop":
@@ -306,7 +304,6 @@ watch(
   () => ambientLight.value,
   () => {
     changeAmbientLightPower(ambientLight.value);
-    console.log(ambientLight.value);
   }
 );
 

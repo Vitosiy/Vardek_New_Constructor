@@ -464,8 +464,6 @@ const createRoundCut = (row, sector) => {
     );
 
   if (!("x" in row.roundCut)) {
-    console.log(x, y);
-
     row.roundCut.x = x;
     row.roundCut.y = y;
 

@@ -244,8 +244,6 @@ export class Application {
             if (this.userHistory.checkEvent(event)) {
                 const toAction: string[] = this.room?.save()!
                 this.userHistory!.addAction(toAction)
-                console.log(this.userHistory.getHistory(), 'HISTOR')
-
             }
         });
         this.eventBus.on('A:PrevAction', () => {

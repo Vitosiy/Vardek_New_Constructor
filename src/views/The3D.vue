@@ -116,7 +116,6 @@ onMounted(async () => {
     VerdekConstructor.value.refreshViewer();
   }
 
-  console.log(preloaderRef.value);
 });
 
 onBeforeUnmount(() => {
@@ -215,7 +214,6 @@ const selected = async (item: any) => {
   }
 
   if (CONFIG.MODULEGRID && universalModule2DConstructor.value) {
-    console.log(universalModuleData.value, "universalModuleData");
     universalModule2DConstructor.value.selectUMData(universalModuleData.value);
   }
 
@@ -319,12 +317,10 @@ const saveTableData = () => {
 };
 
 const openTableRedactor = () => {
-  console.log("OPEN");
   if (!product.value) return;
   const APP = VerdekConstructor.value;
   const { userData, id } = product.value;
 
-  console.log(CutData.value, "CD");
   isModalOpen.value = true;
 
   const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);

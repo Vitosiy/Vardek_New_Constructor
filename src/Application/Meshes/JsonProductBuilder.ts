@@ -51,7 +51,7 @@ export class JsonBuilder {
             this.parseDate({ data: clone[type], group, obj, parent_size })
         }
         else {
-            console.log('other')
+            // console.log('other')
         }
 
         return group

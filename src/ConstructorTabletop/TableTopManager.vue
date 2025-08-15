@@ -166,7 +166,7 @@ const addVerticalCut = (colIndex) => {
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
-  console.log(grid.value, "55555");
+
 };
 
 const addHorizontalCut = (colIndex, rowIndex) => {
@@ -476,7 +476,7 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
 };
 
 const updateHole = (event, key, type, holeType) => {
-  console.log("ww");
+
 
   const rowNdx = selectedCell.value.row;
   const colNdx = selectedCell.value.col;
@@ -497,8 +497,6 @@ const updateHole = (event, key, type, holeType) => {
   const holeData = JSON.parse(JSON.stringify(currenthole));
   holeData[type] = newValue;
 
-  console.log(holeData, "0");
-
   const pixiSector = currentRow.sector;
 
   currenthole[`M${type}`] = 600;
@@ -507,9 +505,8 @@ const updateHole = (event, key, type, holeType) => {
 
   if (check) {
     currenthole[type] = newValue;
-    console.log("1");
+
   } else {
-    console.log("2");
     currenthole[type] = prevValue;
     currenthole[`M${type}`] = prevValue;
   }
@@ -696,7 +693,6 @@ const createServiseData = () => {
     return acc;
   }, []);
 
-  console.log(convertParams);
 
   return convertParams;
 };
@@ -754,7 +750,6 @@ const saveGrid = () => {
     return acc;
   }, []);
 
-  console.log(clone, "clone");
 
   const data = {
     modelHeight: props.modelHeight,
@@ -785,7 +780,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  console.log("close");
   shapeAdjuster = null;
   grid.value = null;
 });

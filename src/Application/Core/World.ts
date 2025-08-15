@@ -83,7 +83,7 @@ export class World {
 
     async setRoom(roomId) {
 
-        this.scene.add(new THREE.AxesHelper(2000))
+        // this.scene.add(new THREE.AxesHelper(2000))
         this.room!.loadRoom(this.lights, roomId)
         await this.room!.update();
 
@@ -111,7 +111,7 @@ export class World {
 
         if (!this.roomsStore.getRoomId) {
             const roomId = Date.now().toString()
-            console.log('Комнаты ещё нет')
+            // console.log('Комнаты ещё нет')
 
             const contant = this.room!.save() as string[]
 
@@ -129,7 +129,7 @@ export class World {
             return
         }
 
-        console.log('Комната уже существует')
+        // console.log('Комната уже существует')
 
         const contant = this.room!.save() as string[]
         const roomId = this.roomsStore.getRoomId as number

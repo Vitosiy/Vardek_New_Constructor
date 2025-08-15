@@ -72,7 +72,7 @@ onMounted(() => {
 
 // Обработка события изменения таба
 const handleTabChange = (newTab: string) => {
-  console.log("Selected Tab:", newTab);
+  // console.log("Selected Tab:", newTab);
 };
 /* ------------------------------- */
 

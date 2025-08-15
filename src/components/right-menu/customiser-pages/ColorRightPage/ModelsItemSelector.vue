@@ -48,12 +48,12 @@ const createTabList = (fasadsCount: Array<object>) => {
 };
 
 onMounted(() => {
-  console.log(redactorsRef.value);
+
   prepareData();
 });
 
 const handleTabChange = ({ index, name }) => {
-  console.log("55", index, name);
+
   if (index) {
     tabIndex.value = index;
     isCorpusSelected.value = false;

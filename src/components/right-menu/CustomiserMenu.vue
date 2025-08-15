@@ -30,7 +30,7 @@ const closeCustomiser = () => {
 };
 
 const checkSelect = (el) => {
-  console.log(el)
+
   if (!el.object) {
     closeCustomiser();
     currentModel.value = null;
@@ -38,7 +38,6 @@ const checkSelect = (el) => {
     return;
   }
   currentModel.value = el.object.userData;
-  console.log(el, "ON SELECT");
   modelState.setCurrentModel(el.object.userData);
   // customiserStore.switchCustomiser('ruler')
   // console.log(currentModel.value, "o");

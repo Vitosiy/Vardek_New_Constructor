@@ -330,10 +330,6 @@ export class RoomManager extends Room {
             const loadData = model.data ?? '';
             const size = model.size ?? '';
 
-            console.log(rotation, 'rotation')
-
-            console.log(point, 'LOADED OBJ POS')
-
             await new Promise<void>((resolve) => {
                 this.geometryBuilder!.craeteModel(
                     this.modelState.getModels[model.id] as THREEInterfases.IModelsData,

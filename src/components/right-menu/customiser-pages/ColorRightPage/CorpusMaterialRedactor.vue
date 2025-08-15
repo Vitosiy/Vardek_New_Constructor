@@ -63,8 +63,6 @@ watch(
       modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
     const current = materialList.value!.find((m) => m.ID === selectedSurfaceID.value);
     if (current) {
-      console.log(current, "current");
-
       currentSurfaceData.value = {
         name: current.NAME,
         imgSrc: current.DETAIL_PICTURE,

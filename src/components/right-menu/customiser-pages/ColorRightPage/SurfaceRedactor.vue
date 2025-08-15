@@ -22,7 +22,6 @@ const props = defineProps({
 });
 
 onMounted(() => {
-  console.log(props.materialList, "");
 });
 
 const emit = defineEmits(["select_material", "select"]);
@@ -49,7 +48,6 @@ const isSearch = computed(() => {
 });
 
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
-  console.log(data, 'data')
 
   if (props.tempWork) {
     // eventBus.emit(`${props.typeChanger.event}`, {
