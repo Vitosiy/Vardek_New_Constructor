@@ -211,4 +211,8 @@ export default class Constructor2D {
 
   }
 
+  makeScreen() {
+    return this?.app2d?.renderer.extract.base64(this.app2d.stage)
+  }
+
 }

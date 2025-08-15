@@ -45,6 +45,16 @@ const routes: Array<RouteRecordRaw> = [
   },
 ];
 
+//только в дев моде
+if (import.meta.env.DEV) {
+  routes.push({
+    path: '/swagger',
+    name: 'Swagger',
+    component: () => import('@/views/dev/SwaggerUI.vue'),
+    meta: { requiresAuth: false }
+  });
+}
+
 const router = createRouter({
   history: createWebHistory(baseUrl),
   routes,

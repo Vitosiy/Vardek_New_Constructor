@@ -8,6 +8,7 @@ import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { _URL } from "@/types/constants";
+import { POPUP_CONFIG } from '@/components/popUp';
 
 import CopyBasketButton from "@/components/ui/buttons/basket/CopyBasketButton.vue";
 import DeleteBasketButton from "@/components/ui/buttons/basket/DeleteBasketButton.vue";
@@ -16,6 +17,9 @@ const eventBus = useEventBus();
 const popupStore = usePopupStore();
 const roomContantData = useRoomContantData().getRoomContantData
 const _roomContantData = useRoomContantData()
+
+// Получаем конфигурацию для этого компонента
+const config = POPUP_CONFIG.basket;
 
 const contentLenght = ref<number>(0)
 const produtcCount = ref<number>(1)
@@ -89,7 +93,7 @@ const closePopup = () => {
 <template>
   <div>
     <div class="basket">
-      <div class="basket__title">Корзина</div>
+      <div class="basket__title">{{ config.title }}</div>
       <div class="basket__container">
         <div class="basket-inlist">
           <div class="basket-inlist-names">

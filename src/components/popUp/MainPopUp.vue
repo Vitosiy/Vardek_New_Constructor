@@ -1,28 +1,20 @@
 <script setup lang="ts">
 // @ts-nocheck 31
-
-import BasketPopUpView from "@/components/popUp/popup-views/BasketPopUpView.vue";
-import StudyPopUpView from "@/components/popUp/popup-views/StudyPopUpView.vue";
-import ErrorPopUpView from "@/components/popUp/popup-views/ErrorPopUpView.vue";
-import ProjectPopUpView from "@/components/popUp/popup-views/ProjectPopUpView.vue";
-
+import { POPUP_CONFIG } from '@/components/popUp';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import CatalogPopUpView from "./popup-views/CatalogPopUpView.vue";
 
 const popupStore = usePopupStore();
-
-
-const isAnyPopupOpen = popupStore.isAnyPopupOpen;
 </script>
 
 <template>
   <div v-if="popupStore.isAnyPopupOpen" class="popUp">
     <div class="popUp__container">
-      <BasketPopUpView v-if="popupStore.popups.basket" />
-      <StudyPopUpView v-if="popupStore.popups.study"/>
-      <ErrorPopUpView v-if="popupStore.popups.error"/>
-      <ProjectPopUpView v-if="popupStore.popups.project"/>
-      <CatalogPopUpView v-if="popupStore.popups.catalog"/>
+      <component 
+        v-for="(_, key) in popupStore.getOpenedPopups" 
+        :key="key"
+        :is="POPUP_CONFIG[key].component"
+      />
     </div>
   </div>
 </template>
@@ -46,4 +38,3 @@ const isAnyPopupOpen = popupStore.isAnyPopupOpen;
   }
 }
 </style>
-../../stores/popUpsStore

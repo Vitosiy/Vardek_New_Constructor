@@ -86,7 +86,6 @@ onMounted(async () => {
   if (loader) {
     (loader as HTMLElement).style.display = 'none';
   }
-
 });
 
 onUnmounted(() => {
