@@ -6,6 +6,8 @@ import { ref, defineProps, defineEmits, computed, defineExpose } from "vue";
 interface Tab {
   name: string;
   label: string;
+  title?: string;
+  type?: string;
 }
 
 // Пропсы
@@ -21,7 +23,9 @@ const props = defineProps({
 });
 
 // События
-const emit = defineEmits(["tab-change"]);
+const emit = defineEmits<{
+  'tab-change': [{ name: string; index: number }]
+}>();
 
 // Состояние
 const selectedTab = ref<string | null>(null);
@@ -36,6 +40,11 @@ const selectTab = (name: string, index: number, local?: boolean = false) => {
   if (!local) emit("tab-change", { name: name, index: index });
 };
 
+// Вычисляемое свойство для проверки активного таба
+const isTabActive = (tabName: string) => {
+  return selectedTab.value === tabName;
+};
+
 defineExpose({
   selectTab,
 });
@@ -48,8 +57,12 @@ defineExpose({
       <button
         v-for="(tab, i) in tabs"
         :key="tab.name"
-        :class="{ active: selectedTab === tab.name }"
+        :class="{ active: isTabActive(tab.name) }"
         @click="selectTab(tab.name, i)"
+        :aria-label="`Переключить на ${tab.label}`"
+        :tabindex="0"
+        @keydown.enter="selectTab(tab.name, i)"
+        @keydown.space.prevent="selectTab(tab.name, i)"
       >
         {{ tab.label }}
       </button>
