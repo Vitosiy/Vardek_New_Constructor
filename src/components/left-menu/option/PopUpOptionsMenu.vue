@@ -23,10 +23,11 @@ const currentProductInfo = ref({
 const isShowInfoPopup = ref(false);
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
-    
-    return Object.values(catalogProducts).filter(item => menuStore.catalogFilterProductsId.includes(item.ID));
+    return Object.values(catalogProducts).filter((item) =>
+      menuStore.catalogFilterProductsId.includes(item.ID)
+    );
   } else {
-    console.log('empty');
+    console.log("empty");
   }
 });
 
@@ -44,7 +45,6 @@ const getImageUrl = (imageName: string) => {
 
 const dropItems: { [key: string]: {} } = catalogProducts;
 
-
 const onDrag = (event: any, model: { [key: string]: any } | string) => {
   event.dataTransfer?.setData("text", JSON.stringify(model));
 };
@@ -61,7 +61,7 @@ const openPopup = async (item) => {
     })
 
     const { NAME, DETAIL_TEXT, DETAIL_PICTURE, PREVIEW_PICTURE, PREVIEW_TEXT, PROPERTY_IMAGES_VALUE, PROPERTY_VIDEO_VALUE, PROPERTY_VIDEO_IMAGE_VALUE } = data.DATA.response;
-    
+
     currentProductInfo.value = {
     title: NAME,
     detailText: DETAIL_TEXT,
@@ -72,12 +72,12 @@ const openPopup = async (item) => {
     videoPoster: getImageUrl(PROPERTY_VIDEO_IMAGE_VALUE)
   };
     isShowInfoPopup.value = true;
-  } catch (error) { 
-    console.error('API Error:', error); 
+  } catch (error) {
+    console.error('API Error:', error);
   }
-  
-  
-  
+
+
+
 };
 
 const closeInfoPopup = () => {
@@ -108,26 +108,26 @@ const closeInfoPopup = () => {
     <div v-else class="options-popup-isempty">
       Товары в каталоге отсутсвуют, обратитесь в поддержку
     </div>
-    <InfoPopUp v-if="isShowInfoPopup" @close="closeInfoPopup" v-bind="currentProductInfo" />  
+    <InfoPopUp v-if="isShowInfoPopup" @close="closeInfoPopup" v-bind="currentProductInfo" />
   </div>
 </template>
-
 
 <style lang="scss" scoped>
 .options-popup {
   width: max-content;
-  max-width: 731px;
+  max-width: 575px;
   min-width: 210px;
   position: absolute;
   top: 15px;
-  left: -840px;
+  // left: -840px;
+  left: 320px;
   padding: 15px;
   background: $white;
   box-shadow: 0px 0px 10px 0px #3030301a;
-  z-index: 1;
+  z-index: -1;
   border-radius: 15px;
-  transition: 0.5s ease-in-out;
-  transform: translateZ(-10px);
+  // transition: 0.5s ease-in-out;
+  // transform: translateZ(-10px);
 
   &__container {
     max-height: 80vh;
@@ -160,7 +160,7 @@ const closeInfoPopup = () => {
         }
         .popup-items__image {
           height: 150px;
-          max-width: 150px; 
+          max-width: 150px;
           padding: 10px;
           background: #ffffff;
           border-radius: 15px;

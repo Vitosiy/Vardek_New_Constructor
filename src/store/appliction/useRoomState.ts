@@ -5,8 +5,13 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
+import { useAppData } from "@/store/appliction/useAppData";
+import { useModelState } from '../appliction/useModelState';
+import { useSceneState } from './useSceneState';
+
 
 import * as THREEInterfases from "../../types/interfases"
+import { TFasadeItem } from "@/types/types";
 
 
 
@@ -15,40 +20,44 @@ export const useRoomState = defineStore('RoomState', () => {
   //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
   const roomsStore = useSchemeTransition();
-  let roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
+  const sceneState = useSceneState();
+  const roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
- 
+
+  const APP = useAppData();
+  const modelState = useModelState()
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
+  const mergeRoomsData = () => {
+    rooms.value = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData))
+  }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
     rooms.value.push(room);
   };
 
-  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], size: THREEInterfases.IWallSizes) => {
+  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes) => {
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {
-
-
       room.content = content;
-      room.size = size;
+      room.params = params;
     }
 
   };
 
-  const updateRoomSize = (id: number, size: THREEInterfases.IWallSizes) => {
-    const room = rooms.value.find(room => room.id === id);
-    if (room) {
-      room.size = size;
-    }
-  }
-
   const removeRoom = (id: number) => {
     rooms.value = rooms.value.filter(room => room.id !== id);
+    if (rooms.value.length == 0) {
+      clearCurrentRoomId()
+    }
+
+    /** Обновляем общий стор */
+    sceneState.updateProjectParams({ rooms: rooms.value })
+
   };
 
   const setCurrentRoomId = (id: number) => {
@@ -59,7 +68,7 @@ export const useRoomState = defineStore('RoomState', () => {
     currentRoomId.value = null;
   };
 
-  const setCurrentRoomSize = (value: THREEInterfases.IWallSizes) => {
+  const setCurrentRoomParams = (value: THREEInterfases.IWallSizes) => {
     tempRoomSize.value = value
   }
 
@@ -81,20 +90,32 @@ export const useRoomState = defineStore('RoomState', () => {
 
   //------------------------------------------------------------------------------------------
 
-  const getCurrentRoomSize = computed(() => {
+  const getCurrentRoomParams = computed(() => {
     return tempRoomSize.value
   });
 
+  /** Возвращаем с использованием ID комнаты */
+  const getCurrentRoomData = (roomId) => {
+    let centerized = roomsStore.getRoomDataFor3DScene(roomId);
+    const currentRoom = rooms.value.find(value => value.id === roomId)
+
+    if (centerized) {
+      currentRoom.params = centerized?.params ?? currentRoom?.params;
+      currentRoom.content = centerized?.content ?? currentRoom?.content;
+    }
+
+    return rooms.value.find(value => value.id === roomId)
+  }
 
   const getCurrentRoomId = computed(() => {
 
-    
     let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
 
     const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
 
-    if(centerized){
-      currentRoom.size = centerized?.size ?? currentRoom?.size;
+    if (centerized) {
+      currentRoom.params = centerized?.params ?? currentRoom?.params;
+      currentRoom.content = centerized?.content ?? currentRoom?.content;
     }
 
     return rooms.value.find(value => value.id === currentRoomId.value)
@@ -104,13 +125,73 @@ export const useRoomState = defineStore('RoomState', () => {
     return currentRoomId.value
   });
 
-  const getUpdatedRoomContent = computed(() => {
-    return updatedRoomContent.value
+  const getRoomContent = computed(() => {
+    const room = rooms.value.find(room => room.id === currentRoomId.value);
+    if (room) {
+      return room.content
+    }
+    return []
   })
 
   const getRooms = computed(() => {
     return rooms.value
   })
+
+  const apllyProjectWall = (value) => {
+    rooms.value.forEach((room) => {
+      room.params.wall = value;
+    });
+  }
+
+  const apllyProjectFloor = (value) => {
+    rooms.value.forEach((room) => {
+      room.params.floor = value;
+    });
+  }
+
+
+  const getWallsTextures = () => {
+    return useAppData().getAppData.WALL
+
+  }
+
+  const getFloorTextures = () => {
+    return useAppData().getAppData.FLOOR
+  }
+
+  const getDefaultModuleData = () => {
+    const colorMap: Record<number, TFasadeItem> = {};
+    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
+    const FASADE = APP.getAppData.FASADE;
+
+    for (const el in PRODUCTS) {
+      const product = PRODUCTS[el];
+
+
+      if (Array.isArray(product.MODULECOLOR) && product.MODULECOLOR[0] != null) {
+        product.MODULECOLOR.forEach(color => {
+          if (FASADE[color] !== undefined && colorMap[color] === undefined) {
+            colorMap[color] = FASADE[color] as TFasadeItem;
+          }
+        });
+      }
+
+    }
+
+    return colorMap
+  }
+
+  const getDefaultFasadeData = () => {
+    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
+    const [key, value] = Object.entries(PRODUCTS)[0]
+    const fasade = value.FACADE
+    const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
+
+    return defaultFasadData
+
+
+
+  }
 
 
   return {
@@ -120,21 +201,33 @@ export const useRoomState = defineStore('RoomState', () => {
     updateRoom,
     removeRoom,
     getRoomId,
-    updateRoomSize,
+    mergeRoomsData,
+    // updateRoomSize,
 
     setCurrentRoomId,
     getCurrentRoomId,
     clearCurrentRoomId,
 
-    setCurrentRoomSize,
-    getCurrentRoomSize,
+    setCurrentRoomParams,
+    getCurrentRoomParams,
     clearTempRoomSize,
 
     updatedRoomContent,
-    getUpdatedRoomContent,
+    getRoomContent,
 
+
+    getWallsTextures,
+    getFloorTextures,
     setWallTexture,
-    setFloorTexture
+    setFloorTexture,
+
+    getCurrentRoomData,
+
+    apllyProjectWall,
+    apllyProjectFloor,
+
+    getDefaultModuleData,
+    getDefaultFasadeData
 
   };
 });

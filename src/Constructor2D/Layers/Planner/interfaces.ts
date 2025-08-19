@@ -30,10 +30,11 @@ export interface ObjectWall {
   angleDegrees: number;
   updateTime: number;
   mergeWalls: {
-    wallPoint0: string | number | null, 
-    wallPoint1: string | number | null
+    wallPoint0: string | number | null;
+    wallPoint1: string | number | null;
   };
-  containers?: ObjectWallContainers
+  containers?: ObjectWallContainers;
+  roomId: number | string | null;
 };
 
 export interface ConfigWall {
@@ -80,4 +81,10 @@ export interface MergeWalls {
 export interface HoverPointObject { 
   id: number | string; 
   indexPoint: number 
+};
+
+export interface IC2DRoom {
+  id: string | number;
+  label: string;
+  description: string;
 };

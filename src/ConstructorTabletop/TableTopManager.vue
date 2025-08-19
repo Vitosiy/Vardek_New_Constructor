@@ -5,7 +5,6 @@ import {
   onMounted,
   onBeforeMount,
   onBeforeUnmount,
-  reactive,
   computed,
   ref,
   toRaw,
@@ -23,6 +22,7 @@ import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
 const eventBus = useEventBus();
 
 const emit = defineEmits(["save-table-data"]);
+
 
 const {
   MAX_AREA_WIDTH,
@@ -166,7 +166,7 @@ const addVerticalCut = (colIndex) => {
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
-  console.log(grid.value, "55555");
+
 };
 
 const addHorizontalCut = (colIndex, rowIndex) => {
@@ -199,7 +199,7 @@ const addHorizontalCut = (colIndex, rowIndex) => {
     height: curRow.height, // Оставшаяся высота
     roundCut: {},
     holes: [],
-    serviseData: createServiseData()
+    serviseData: createServiseData(),
   });
 
   // Обновляем рендер
@@ -215,6 +215,8 @@ const addRoundСut = (colIndex) => {
     row.width < row.height
       ? row.width - SECTOR_PADDING * 2
       : row.height - SECTOR_PADDING * 2;
+
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.CUT) extremum = CUTTER_PARAMS.EXTREMUMS.CUT;
 
   if (
     row.width < 300 + SECTOR_PADDING * 2 ||
@@ -249,7 +251,7 @@ const createHoleDataToCheck = (type, row, col) => {
     return;
   }
 
-  if (extremum > 600) extremum = 600;
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.HOLES) extremum = CUTTER_PARAMS.EXTREMUMS.HOLES;
 
   width = extremum;
   height = extremum;
@@ -474,7 +476,7 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
 };
 
 const updateHole = (event, key, type, holeType) => {
-  console.log("ww");
+
 
   const rowNdx = selectedCell.value.row;
   const colNdx = selectedCell.value.col;
@@ -495,8 +497,6 @@ const updateHole = (event, key, type, holeType) => {
   const holeData = JSON.parse(JSON.stringify(currenthole));
   holeData[type] = newValue;
 
-  console.log(holeData, "0");
-
   const pixiSector = currentRow.sector;
 
   currenthole[`M${type}`] = 600;
@@ -505,9 +505,8 @@ const updateHole = (event, key, type, holeType) => {
 
   if (check) {
     currenthole[type] = newValue;
-    console.log("1");
+
   } else {
-    console.log("2");
     currenthole[type] = prevValue;
     currenthole[`M${type}`] = prevValue;
   }
@@ -694,7 +693,6 @@ const createServiseData = () => {
     return acc;
   }, []);
 
-  console.log(convertParams);
 
   return convertParams;
 };
@@ -752,7 +750,6 @@ const saveGrid = () => {
     return acc;
   }, []);
 
-  console.log(clone, "clone");
 
   const data = {
     modelHeight: props.modelHeight,
@@ -783,7 +780,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  console.log("close");
   shapeAdjuster = null;
   grid.value = null;
 });

@@ -41,6 +41,7 @@ export class MoveManager {
 
     selectedObject: THREE.Object3D | null = null;
     obbHelper: OBBHelper = new OBBHelper()
+    startPos: THREE.Vector3 = new THREE.Vector3()
 
     // rulerLines: THREE.Object3D[] = []
 
@@ -199,6 +200,10 @@ export class MoveManager {
             }
 
             this.eventBuss.emit('A:Move', true);
+            if (!this.selectedObject.position.equals(this.startPos)) {
+                this.eventBuss.emit('U:PositionChanged');
+            }
+            this.startPos = new THREE.Vector3();
         }
         this.controls.enabled = true;
         this.selectedObject = null;
@@ -232,10 +237,16 @@ export class MoveManager {
 
             // Если это GLTF-модель, выбираем её как цель
             const check = this.getRootObject(firstObject);
+
+            if (check.userData.elementType === "element_room") return
             this.selectedObject = check
 
 
+
             this.selectedObject.userData.current = true
+            this.startPos = this.selectedObject.position.clone() /** @Для_тригера_изменения_позиции */
+
+            this.roomManager.createTotalObbBounds() /** @Формируем_данные_для_коллизии */
 
             this.selectedObject.userData.MOUSE_POSITION = {
                 x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
@@ -317,15 +328,21 @@ export class MoveManager {
             const point = intersects[0].point; // Точка пересечения с полом или стеной
             const surface = intersects[0].object // стена
 
-            this.selectedObject.userData.aabb = new THREE.Box3().setFromObject(this.selectedObject);
+            this.selectedObject.userData.aabb = this.trafficManager.geometryBuilder.buildProduct.computeAABB(this.selectedObject)
 
             const adjustedPosition = this.roomManager.adjustPositionWithRaycasting({
                 object: this.selectedObject, targetPosition: point, wall: surface
             });
 
             this.selectedObject.position.copy(adjustedPosition.position);
-            this.selectedObject.rotation.copy(adjustedPosition.rotation)
+            this.selectedObject.rotation.copy(adjustedPosition.rotation);
+            this.selectedObject.userData.targetPosition = point
 
+            // const center = new THREE.Vector3()
+            // this.selectedObject.userData.aabb.getCenter(center)
+            this.selectedObject.userData.obb.center.copy(this.selectedObject.position)
+
+            this.selectedObject.userData.obb.rotation.setFromMatrix4(this.selectedObject.matrixWorld);
 
             this.selectedObject.userData.PROPS.CONFIG.ROTATION = this.selectedObject.rotation;
 
@@ -337,7 +354,9 @@ export class MoveManager {
         this.ruler.drawRulerToObjects(this.selectedObject)
     }
 
-    clearSelectObject() {
+    public clearSelectObject() {
+        if (!this.trafficManager._currentObject) return
+
         this.boxHelper.removeBoxHelper()
         /** Убираем линейку */
         this.ruler.clearRuler()
@@ -353,6 +372,7 @@ export class MoveManager {
         }
 
     }
+
     clearSelectVisual() {
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler()
@@ -401,6 +421,8 @@ export class MoveManager {
     }
 
     keyDown(event) {
+
+        return
 
         if (event.repeat) return
 
@@ -461,6 +483,10 @@ export class MoveManager {
             this.uniformEvents.desablePreGrouping()
 
         })
+
+        this.eventBuss.on('A:ClearSelected', () => {
+            this.clearSelectObject()
+        });
     }
 
 }

@@ -242,4 +242,78 @@ export class DeepDispose {
 
         console.log('Сцена и ресурсы полностью очищены.');
     }
+
+    clearExceptEssential(scene: THREE.Scene) {
+        function disposeObject(object: THREE.Object3D) {
+            // Освобождаем геометрию
+            if ((object as any).geometry) {
+                (object as any).geometry.dispose();
+            }
+
+            // Освобождаем материалы и текстуры
+            if ((object as any).material) {
+                const materials = Array.isArray((object as any).material)
+                    ? (object as any).material
+                    : [(object as any).material];
+
+                materials.forEach(material => {
+                    ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap'].forEach(mapType => {
+                        if (material[mapType]) {
+                            material[mapType].dispose();
+                        }
+                    });
+                    material.dispose();
+                });
+            }
+
+            // Удаляем DOM-элементы у CSS2DObject
+            object.traverse(child => {
+                if (child instanceof CSS2DObject) {
+                    if (child.element?.parentNode) {
+                        child.element.parentNode.removeChild(child.element);
+                    }
+                }
+            });
+
+            // Освобождаем текстуру
+            if ((object as any).texture) {
+                (object as any).texture.dispose();
+            }
+
+            // Рекурсивная очистка дочерних объектов
+            if (object.children?.length > 0) {
+                object.children.slice().forEach(child => disposeObject(child));
+            }
+
+            // Вызов dispose, если доступен
+            if ((object as any).dispose) {
+                (object as any).dispose();
+            }
+        }
+
+        // Проверка, нужно ли сохранять объект
+        function shouldKeep(object: THREE.Object3D): boolean {
+
+            const cam = object instanceof THREE.Camera
+            const light = object instanceof THREE.Light
+            const room = object.children.find(el => el.userData.elementType === 'element_room')
+
+            const shood = cam || light || room
+
+
+            return shood
+        }
+
+        // Удаляем объекты, которые не должны сохраняться
+        scene.children.slice().forEach(object => {
+            if (!shouldKeep(object)) {
+                // console.log(object, 'OOOOO')
+                disposeObject(object);
+                scene.remove(object);
+            }
+        });
+
+
+        console.log('Сцена очищена, ключевые объекты сохранены.');
+    }
 }

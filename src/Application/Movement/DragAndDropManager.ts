@@ -1,17 +1,18 @@
-//@ts-nocheck
+/**//@ts-nocheck */
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
-import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
-import {useModelState} from "@/store/appliction/useModelState.ts";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 export class DragAndDropManager {
 
     canvas: HTMLElement;
     scene: THREE.Scene;
+    eventBus: ReturnType<typeof useEventBus> = useEventBus();
 
-    geometryBuilder: THREE.TGeometryBuilder;
-    universalGeometryBuilder: THREE.TUniversalGeometryBuilder;
+    root: THREETypes.TApplication
+    geometryBuilder: THREETypes.TGeometryBuilder;
+    universalGeometryBuilder: THREETypes.TUniversalGeometryBuilder;
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     camera: THREE.Camera
@@ -20,26 +21,26 @@ export class DragAndDropManager {
     trafficManager: THREETypes.TTrafficManager
     boxHelper: THREETypes.TCustomBoxHelper
 
-    setObject: THREETypes.SetObject
+    setObject: THREETypes.TSetObject
 
-    roomParams: { [key: string]: number | 0 } | THREEInterfases.IWallSizes
+    // roomParams: { [key: string]: number | 0 } | THREEInterfases.IWallSizes
 
     handleDragOverBound: (event: DragEvent) => void;
     handleDropBound: (event: DragEvent) => void
 
     constructor(root: THREETypes.TApplication, mouse: THREE.Vector2, raycaster: THREE.Raycaster, trafficManager: THREETypes.TTrafficManager) {
 
-        this.root = root
-        this.canvas = root._canvas;
-        this.scene = root._scene;
+        this.root = root as THREETypes.TApplication
+        this.canvas = root._canvas as HTMLElement
+        this.scene = root._scene as THREE.Scene
         this.camera = root._camera
-        this.roomManager = root._roomManager
+        this.roomManager = root._roomManager as THREETypes.TRoomManager
         this.trafficManager = trafficManager
-        this.setObject = root._setObject
-        this.roomParams = root._roomManager?._roomParams
-        this.geometryBuilder = root._geometryBuilder
+        this.setObject = root._setObject as THREETypes.TSetObject
+        // this.roomParams = root._roomManager?._roomParams
+        this.geometryBuilder = root._geometryBuilder as THREETypes.TGeometryBuilder;
         this.universalGeometryBuilder = trafficManager.universalGeometryBuilder
-        this.boxHelper = root._customBoxHelper
+        this.boxHelper = root._customBoxHelper as THREETypes.TCustomBoxHelper
 
         this.raycaster = raycaster;
         this.mouse = mouse;
@@ -88,44 +89,54 @@ export class DragAndDropManager {
                 if (intersects.length > 0) {
                     const point = intersects[0].point;
                     const surface = intersects[0].object;
+                    // this.eventBus.emit('U:Drop')
 
                     if (productData.moduleType || productData.ID == 3954672) {
-                        this.universalGeometryBuilder.craeteModel(productData, (object) => {
-                            const menuStore = useMenuStore();
 
-                            object.userData.MOUSE_POSITION = {
-                                x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
-                                y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
-                            };
-                            this.setObject.create({
-                                scene: this.scene,
+                        this.universalGeometryBuilder.craeteModel(productData, async (object) => {
+                            await this.setObject.create({
                                 object,
                                 point,
-                                roomManager: this.roomManager,
                                 trafficManager: this.trafficManager,
                                 boxHelper: this.boxHelper,
                                 wall: surface
                             });
 
-                            menuStore.openMenu('2dModuleConstructor', productData.ID, [object.userData])
+
+                            this.trafficManager._currentObject = object
+                            this.trafficManager.ruler.drawRulerToObjects(object)
+
+                            object.userData.MOUSE_POSITION = {
+                                x: point.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
+                                y: point.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
+                            };
+
+
                             //useModelState().setCurrentModel(object);
                         });
                     } else {
-                        this.geometryBuilder.craeteModel(productData, (object) => {
+                        this.geometryBuilder.craeteModel(productData, async (object) => {
 
-                            object.userData.MOUSE_POSITION = {
-                                x: point.clone().project(this.camera).x * this.root._sizes.width * 0.5,
-                                y: point.clone().project(this.camera).y * this.root._sizes.height * -0.5,
-                            };
 
-                            this.setObject.create({
+                            await this.setObject.create({
                                 object,
                                 point,
                                 trafficManager: this.trafficManager,
                                 boxHelper: this.boxHelper,
                                 wall: surface
                             });
+
+
+                            this.trafficManager._currentObject = object
+                            this.trafficManager.ruler.drawRulerToObjects(object)
+
+                            object.userData.MOUSE_POSITION = {
+                                x: object.position.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
+                                y: object.position.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
+                            };
                         });
+
+                        this.eventBus.emit('U:Drop')
                     }
                 }
             } catch (error) {
@@ -135,7 +146,7 @@ export class DragAndDropManager {
         }
     }
 
-    updateRoomData(roomManager: RoomManager) {
+    updateRoomData(roomManager: THREETypes.TRoomManager) {
         this.roomManager = roomManager
     }
 }

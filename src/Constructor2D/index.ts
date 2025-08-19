@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+// import { MathUtils } from "three";
 
 import Grid from "./Layers/Grid";
 import HalfRoom from "./Layers/HalfRoom";
@@ -17,14 +18,17 @@ import { handlerMouseRightDown } from "./methods/events/handlerMouseRightDown";
 import { handlerMouseRightUp } from "./methods/events/handlerMouseRightUp";
 import { handlerPointerMove } from "./methods/events/handlerPointerMove";
 import { handlerMouseLeftDown } from "./methods/events/handlerMouseLeftDown";
+import { handlerMouseLeftUp } from "./methods/events/handlerMouseLeftUp";
 import { handlerWheel } from "./methods/events/handlerWheel";
 import { handleWindowResize } from "./methods/events/handleWindowResize";
 import { handleKeyDown } from "./methods/events/handleKeyDown";
 import { handleKeyUp } from "./methods/events/handleKeyUp";
 
+import { updateRoomStore } from "./methods/udpateRoomStore";
+
 import { useEventBus } from '@/store/constructor2d/useEventBus';
 
-interface Layers {
+interface ILayers {
   grid: Grid | null;
   halfRoom: HalfRoom | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
@@ -32,14 +36,14 @@ interface Layers {
   doorsAndWindows: DoorsAndWindows | null;
   startPointActiveObject: StartPointActiveObject | null;
   rulers: Rulers | null;
-}
+};
 
 export default class Constructor2D {
 
   private container: HTMLElement;
   private canvas: HTMLCanvasElement;
   private app2d: PIXI.Application | null = null;
-  public layers: Layers = {
+  public layers: ILayers = {
     grid: null,
     halfRoom: null, // пол комнаты
     arrowRulerActiveObject: null,
@@ -61,7 +65,7 @@ export default class Constructor2D {
       x: 0,
       y: 0
     },
-    
+
   }
 
   // параметры состояния
@@ -85,22 +89,36 @@ export default class Constructor2D {
       x: 0,
       y: 0
     },
-    
+
   }
 
-  private handlerMouseRightDown: (e:PIXI.FederatedPointerEvent) => void;
-  private handlerMouseRightUp: (e:PIXI.FederatedPointerEvent) => void;
-  private handlerPointerMove: (e:PIXI.FederatedPointerEvent) => void;
-  private handlerMouseLeftDown: (e:PIXI.FederatedPointerEvent) => void;
+  private handlerMouseRightDown: (e: PIXI.FederatedPointerEvent) => void;
+  private handlerMouseRightUp: (e: PIXI.FederatedPointerEvent) => void;
+  private handlerPointerMove: (e: PIXI.FederatedPointerEvent) => void;
+  private handlerMouseLeftDown: (e: PIXI.FederatedPointerEvent) => void;
+  private handlerMouseLeftUp: (e: PIXI.FederatedPointerEvent) => void;
   private handlerWheel: (e: WheelEvent) => void;
   private handleWindowResize: () => void;
   private handleKeyDown: (e: KeyboardEvent) => void;
-  private handleKeyUp: (e:KeyboardEvent) => void;
+  private handleKeyUp: (e: KeyboardEvent) => void;
+
+  public updateRoomStore: () => boolean;
 
   public eventBus: ReturnType<typeof useEventBus> = useEventBus();
 
+  public IDObjects: {id: string | number, name: string}[] = [
+    {
+      id: 3689569,
+      name: "window" 
+    },
+    { 
+      id: 3689611,
+      name: "door"
+    }
+  ];
+
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
-    
+
     if (!container || !canvas) {
       throw new Error('Container and canvas elements are required.');
     }
@@ -111,16 +129,19 @@ export default class Constructor2D {
     this.handlerMouseRightUp = handlerMouseRightUp.bind(this);
     this.handlerPointerMove = handlerPointerMove.bind(this);
     this.handlerMouseLeftDown = handlerMouseLeftDown.bind(this);
+    this.handlerMouseLeftUp = handlerMouseLeftUp.bind(this);
     this.handlerWheel = handlerWheel.bind(this);
     this.handleWindowResize = handleWindowResize.bind(this);
     this.handleKeyDown = handleKeyDown.bind(this);
     this.handleKeyUp = handleKeyUp.bind(this);
 
+    this.updateRoomStore = updateRoomStore.bind(this); // фнкция для обновления стора
+
   }
 
   async init(): Promise<void> {
     if (this.app2d) return;
-        
+
     this.app2d = new PIXI.Application();
     await this.app2d.init({
       canvas: this.canvas,
@@ -148,14 +169,15 @@ export default class Constructor2D {
       .on('pointermove', this.handlerPointerMove)
       .on('pointerout', this.handlerMouseRightUp)
       .on('pointerdown', this.handlerMouseLeftDown)
+      .on('pointerup', this.handlerMouseLeftUp)
       .on('wheel', this.handlerWheel);
 
     window.addEventListener('resize', this.handleWindowResize);
     window.addEventListener('keydown', this.handleKeyDown); // нажатие на кнопку backspace или другие
     window.addEventListener('keyup', this.handleKeyUp);
-    
+
   }
-  
+
   public destroy(): void {
     if (this.app2d) {
 
@@ -169,23 +191,28 @@ export default class Constructor2D {
         .off('pointermove', this.handlerPointerMove)
         .off('pointerout', this.handlerMouseRightUp)
         .off('pointerdown', this.handlerMouseLeftDown)
+        .off('pointerup', this.handlerMouseLeftUp)
         .off('wheel', this.handlerWheel);
 
       // Удаляем все компоненты
       for (const key in this.layers) {
-        const component = this.layers[key as keyof Layers];
+        const component = this.layers[key as keyof ILayers];
         if (component && typeof component.destroy === 'function') {
           component.destroy();
         }
-        this.layers[key as keyof Layers] = null;
+        this.layers[key as keyof ILayers] = null;
       }
 
       // Уничтожаем приложение PIXI
       this.app2d.destroy(true, { children: true });
       this.app2d = null;
-      
+
     }
-    
+
+  }
+
+  makeScreen() {
+    return this?.app2d?.renderer.extract.base64(this.app2d.stage)
   }
 
 }

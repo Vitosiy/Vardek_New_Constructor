@@ -36,7 +36,7 @@ const updateHole = (
   valueType: string,
   holeType: string
 ) => {
-  console.log(event);
+
   emit("cut-updateHole", event, key, valueType, holeType);
 };
 
@@ -99,8 +99,6 @@ const changeHolePositionY = ({
         (parseInt(event.target.value) - hole.distances[direction]) * -1;
       break;
   }
-
-  console.log(dirrectionValue, "dirrectionValue");
 
   emit("cut-changePositionY", event, key, valueType, holeType, dirrectionValue);
 };

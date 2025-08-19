@@ -22,17 +22,33 @@ export const useCustomiserStore = defineStore('customiser', () => {
     isCustomiserOpen.value = !isCustomiserOpen.value;
   }
 
+  const showCustomiserPopup = () => {
+    isCustomiserOpen.value = true
+  }
+  const hideCustomiserPopup = () => {
+    isCustomiserOpen.value = false
+  }
+
   function switchCustomiser(type: CustomiserType) {
     customisers.value = [];
     if (!customisers.value.includes(type)) {
       customisers.value.push(type);
     }
   }
-  
+
+  const customiserState = computed(()=>{
+    return isCustomiserOpen.value
+  })
+
+
   return {
     isCustomiserOpen,
     customisers,
     toggleCustomiserPopup,
     switchCustomiser,
+
+    showCustomiserPopup,
+    hideCustomiserPopup,
+    customiserState
   };
 })

@@ -2,6 +2,7 @@
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
+import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 import {
     GridModule, LOOPSIDE
@@ -11,7 +12,7 @@ import { useSceneState } from "@/store/appliction/useSceneState"
 import { useModelState } from '@/store/appliction/useModelState';
 
 import { BuildProduct } from "../BuildProduct"
-import {_URL} from "@/types/constants";
+import { _URL } from "@/types/constants";
 
 export class BuildUniversalModule extends BuildProduct {
 
@@ -28,86 +29,103 @@ export class BuildUniversalModule extends BuildProduct {
 
         const total = new THREE.Object3D();
 
-        const model_props = perent_group.userData.PROPS
-        const product_id = model_props.CONFIG.ID
-        const productInfo = this._PRODUCTS[product_id];
+        const defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig = this.getDefaultModuleAndFasadeConfig();
 
-        model_props.FASADE = []
-        model_props.FASADE_DEFAULT = []
+        const { PROPS } = perent_group.userData
+        const { CONFIG } = PROPS;
 
-        let model_data = model_props.CONFIG.MODEL
+        const productId = CONFIG.ID
+        const productInfo = this._PRODUCTS[productId];
 
-        const MODULEGRID = moduleParams || Object.keys(model_props.CONFIG.MODULEGRID)?.length || false
+        PROPS.FASADE = []
+        PROPS.FASADE_DEFAULT = []
 
-        const size = _size ? _size : MODULEGRID ? {width: MODULEGRID.width, height: MODULEGRID.height, depth: MODULEGRID.depth} : false
+        const modelData = CONFIG.MODEL
 
-        let model_size = size || model_props.CONFIG.SIZE
+        const MODULEGRID = moduleParams || Object.keys(PROPS.CONFIG.MODULEGRID)?.length || false
+
+        const size = _size ? _size : MODULEGRID ? { width: MODULEGRID.width, height: MODULEGRID.height, depth: MODULEGRID.depth } : null
+
+        const modelSize = size ?? PROPS.CONFIG.SIZE;
 
         if (size) {
-            model_props.CONFIG.SIZE = size
-            this.getProductSize(model_props.CONFIG, Object.assign({}, productInfo, size))
+            CONFIG.SIZE = size
+            this.getProductSize(CONFIG, Object.assign({}, productInfo, size))
         }
 
-        let height_correct = 0
+        let heightCorrect = 0;
+        const adjustHeight = (value: number, type: string) => {
+            heightCorrect += type === "top" ? -value : value;
+            return heightCorrect;
+        };
 
-        /** Корректировка положения по высоте */
-        const getHeightCorrect = (value: number, type: string) => {
-            switch (type) {
-                case 'top':
-                    height_correct -= value;
-                    break
-                case 'bottom':
-                    height_correct += value;
-            }
+        if (!modelData) return
 
-            return height_correct;
+        const data = this.createModelData(modelData, PROPS, modelSize);
+        // Сборка частей
+        const { body, tempMaterial } = !this.isEmpty(modelData)
+            ? this.createBody(data, PROPS, defaultConfig)
+            : { body: null, tempMaterial: null };
+
+        const shelf = this._SHELF_POSITION[productId]
+            ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
+            : null;
+
+        const legs = this._PRODUCTS[productId]?.leg_length
+            ? this.buildLegs(PROPS, data, total, adjustHeight)
+            : null;
+
+        const tableTop = CONFIG.HAVETABLETOP
+            ? this.createTableTop(total, PROPS, data, adjustHeight)
+            : null;
+
+        if (MODULEGRID) {
+
+            this.parseModulegrid(MODULEGRID, PROPS)
+            this.buildModulegrid(PROPS, total)
         }
 
-        if (!model_data) return
-
-        const data = this.createModelData(model_data, model_props, model_size);
-
-        /**Добавляем каркас  */
-        !this.isEmpty(model_data) ? this.createBody(total, data, model_props) : ""
-
-        /** Добавляем столешницу если есть */
-        model_props.CONFIG.HAVETABLETOP ? this.createTableTop(total, model_props, data, getHeightCorrect) : "";
-
-        /** Добавляем полки если есть */
-        this._SHELF_POSITION[product_id] ? this.createShelf(total, model_props, this._SHELF_POSITION[product_id]) : "";
-
-        /** Добавляем ножки если есть */
-        productInfo.leg_length ? this.buildLegs(model_props, data, total, getHeightCorrect) : "";
-
-        if(MODULEGRID) {
-            this.parseModulegrid(MODULEGRID, model_props)
-            this.buildModulegrid(model_props, total)
-        }
-
-        if(Object.keys(model_props.CONFIG.LOOPS)?.length) {
-            let loopsMesh = this.createLoop(productInfo, model_props, model_props.CONFIG.LOOPS)
+        if (CONFIG.LOOPS && Object.keys(CONFIG.LOOPS)?.length) {
+            let loopsMesh = this.createLoop(productInfo, PROPS, CONFIG.LOOPS)
             total.add(loopsMesh)
         }
 
-        Object.keys(model_props.CONFIG.FASADE_PROPS).length > 0 ? this.fasade_builder.getFasade(
-            {
+        /** Добавляем фасад */
+        const fasade = Object.keys(CONFIG.FASADE_PROPS).length
+            ? this.fasade_builder.getFasade({
                 group: total,
-                props: model_props,
+                props: PROPS,
                 model_data: data,
-                isUMmodule: !!MODULEGRID
-            }) : "";
+                isUMmodule: !!MODULEGRID,
+                defaultConfig
+            })
+            : null;
 
-        /** Корректировка положения общего Box3 по высоте  */
-        total.position.y += height_correct / 2
+        /** Добавляем стреки размеров */
+        const arrows = this.addArrowSize({ object: body, props: PROPS })
 
-        // /** Корректировка по глубине */
-        // if (!size) {
-        //     // total.position.z -= 5
-        // }
+        // Вычисление высот
+        const legsHeight = legs ? this.calculateHeight(legs) : 0;
+        const bodyHeight = body ? this.calculateHeight(body) : 0;
+        const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
-        model_props.CONFIG.HEIGHTCORRECT = height_correct
+        // Позиционирование
+        const baseY = legsHeight * 0.5;
+        if (legs) legs.position.y = baseY;
+        if (body) body.position.y = baseY;
+        if (shelf) shelf.position.y = baseY;
+        if (fasade) fasade.position.y = baseY;
+        if (tableTop) {
+            tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
+        }
+        arrows.position.y = baseY;
 
-        return total
+        // Добавление в итоговую группу
+        [tableTop, legs, body, shelf, fasade, arrows]
+            .filter(Boolean)
+            .forEach((part) => total.add(part as THREE.Object3D));
+
+        return total;
     };
 
     createProductObject(product_data: THREETypes.TObject, props) {
@@ -129,7 +147,7 @@ export class BuildUniversalModule extends BuildProduct {
 
         CONFIG.MODULEGRID = {}
 
-        if(product_data.moduleType.CODE !== "wardrobe")
+        if (product_data.moduleType.CODE !== "wardrobe")
             CONFIG.LOOPS = {}
 
         return CONFIG
@@ -158,7 +176,7 @@ export class BuildUniversalModule extends BuildProduct {
             }
             let curSection = PROPS.CONFIG.SECTIONS[secIndex + 1]
 
-            if(secIndex + 1 > 1)
+            if (secIndex + 1 > 1)
                 curSection.fillings.push({  //Добавляем разделитель секций, как товар наполнения
                     position: new THREE.Vector3(curSection.position.x - curSection.size.x / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
                         curSection.position.y, curSection.position.z),
@@ -171,7 +189,7 @@ export class BuildUniversalModule extends BuildProduct {
             let cells = [...section.cells].reverse()
             cells?.forEach((cell, cellIndex) => {
 
-                if(cellIndex > 0)
+                if (cellIndex > 0)
                     curSection.fillings.push({  //Добавляем полку, как товар наполнения
                         position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.position.z),
                         size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.z),
@@ -182,7 +200,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                 cell.cellsRows?.forEach((row, rowIndex) => {
 
-                    if(rowIndex > 0)
+                    if (rowIndex > 0)
                         curSection.fillings.push({  //Добавляем верт. полку, как товар наполнения
                             position: new THREE.Vector3(row.position.x, row.position.y, curSection.position.z),
                             size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, curSection.size.z),
@@ -222,13 +240,13 @@ export class BuildUniversalModule extends BuildProduct {
                 allFasades.push(...door)
             })
 
-            if(section.fasadesDrawers)
+            if (section.fasadesDrawers)
                 allFasades.push(...section.fasadesDrawers)
 
             allFasades.sort((a, b) => a.id - b.id)
 
             allFasades.forEach((fasade, fasadeID) => {
-                if(!fasade.error) {
+                if (!fasade.error) {
                     PROPS.CONFIG.FASADE_POSITIONS.push({
                         ...OLD_FASADES[0],
                         FASADE_WIDTH: fasade.width,
@@ -242,59 +260,87 @@ export class BuildUniversalModule extends BuildProduct {
                 }
             })
 
-            PROPS.CONFIG.LOOPS[secIndex + 1] = section.loops
+            if (section.loops)
+                PROPS.CONFIG.LOOPS[secIndex + 1] = section.loops
         })
 
+        if (product_data.fasades) {
+            let allFasades = []
+            product_data.fasades?.forEach((door, doorID) => {
+                allFasades.push(...door)
+            })
+
+            allFasades.forEach((fasade, fasadeID) => {
+                if (!fasade.error) {
+                    PROPS.CONFIG.FASADE_POSITIONS.push({
+                        ...OLD_FASADES[0],
+                        FASADE_WIDTH: fasade.width,
+                        FASADE_HEIGHT: fasade.height,
+                        POSITION_X: fasade.position.x,
+                        POSITION_Y: fasade.position.y,  //(PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]) + 2,
+                        POSITION_Z: fasade.position.z,
+                        FASADE_NUMBER: PROPS.CONFIG.FASADE_POSITIONS.length,
+                    })
+                    PROPS.CONFIG.FASADE_PROPS.push(fasade.material)
+                }
+            })
+        }
     }
 
     buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D) {
 
+        PROPS.JSON_FILLINGS = []
+
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
-            section.fillings?.map((filling) => {
-                const productInfo = this._PRODUCTS[filling.product]
+            if (section.fillings?.length) {
+                section.fillings.map((filling) => {
+                    const productInfo = this._PRODUCTS[filling.product]
 
-                if(!productInfo)
-                    return
+                    if (!productInfo)
+                        return
 
-                const onLoad = (productFilling, isModel = true) => {
-                    let size = PROPS.CONFIG.SIZE
-                    let start_position = this.getStartPosition(size)
+                    const onLoad = (productFilling, isModel = true) => {
+                        let size = PROPS.CONFIG.SIZE
+                        let start_position = this.getStartPosition(size)
 
-                    if(isModel){
-                        const box = new THREE.Box3().setFromObject(productFilling);
-                        const size = box.getSize(new THREE.Vector3());
+                        if (isModel) {
+                            const box = new THREE.Box3().setFromObject(productFilling);
+                            const size = box.getSize(new THREE.Vector3());
 
-                        productFilling.userData.trueSizes = {
-                            WIDTH: size.x,
-                            HEIGHT: size.y,
-                            DEPTH: size.z,
+                            productFilling.userData.trueSizes = {
+                                WIDTH: size.x,
+                                HEIGHT: size.y,
+                                DEPTH: size.z,
+                            }
+
+                            productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
+                            productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
+                            productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
                         }
 
-                        productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
-                        productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
-                        productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
+                        start_position.add(filling.position)
+                        start_position.y += filling.size.y / 2
+
+                        productFilling.position.copy(start_position)
+
+                        if (!isModel)
+                            PROPS.JSON_FILLINGS.push(productFilling)
+
+                        group.add(productFilling)
                     }
 
-                    start_position.add(filling.position)
-                    start_position.y += filling.size.y / 2
+                    const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
+                    const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
 
-                    productFilling.position.copy(start_position)
-
-                    group.add(productFilling)
-                }
-
-                const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
-                const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
-
-                let productFilling
-                if (data.DAE) {
-                    this.models_builder.create(data.file, onLoad, {CONFIG: {MODEL: data}}, false)
-                }
-                else{
-                    productFilling = this.createSubProductObject(data, PROPS)
-                    onLoad(productFilling, false)
-                }
-            })
+                    let productFilling
+                    if (data.DAE) {
+                        this.models_builder.create(data.file, onLoad, { CONFIG: { MODEL: data } }, false)
+                    } else {
+                        productFilling = this.createSubProductObject(data, PROPS)
+                        onLoad(productFilling, false)
+                    }
+                })
+            }
         })
 
         return
@@ -386,7 +432,7 @@ export class BuildUniversalModule extends BuildProduct {
             loop.depth = loop_size.z;
 
             const loopside = loopCoord.side
-            const rightSide = LOOPSIDE[loopside] === 'right' ||  LOOPSIDE[loopside] === 'right_on_partition'
+            const rightSide = LOOPSIDE[loopside] === 'right' || LOOPSIDE[loopside] === 'right_on_partition'
 
             let section = PROPS.CONFIG.SECTIONS[secIndex];
 
@@ -406,8 +452,8 @@ export class BuildUniversalModule extends BuildProduct {
                     rightSide ? rightPosition : leftPosition,
                     coord,
                     rightSide ?
-                    PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z + loop.depth/2:
-                    PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z + loop.depth/2,
+                        PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z + loop.depth / 2 :
+                        PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z + loop.depth / 2,
                 );
 
                 loopMesh.rotation.set(rotation.x, rotation.y, rotation.z);
@@ -421,17 +467,19 @@ export class BuildUniversalModule extends BuildProduct {
 
             return loopGroup
         }
-        
+
         const onLoad = (loopModel) => {
             Object.entries(PROPS.CONFIG.LOOPS).forEach(([secIndex, section]) => {
                 // Добавляет петли
                 section.forEach((door, doorKey) => {
-                    allLoopsMesh.add(create(loopModel.clone(), secIndex, doorKey, door))
+                    door.forEach((fasadeLoop, fasadeLoopKey) => {
+                        allLoopsMesh.add(create(loopModel.clone(), secIndex, fasadeLoopKey, fasadeLoop))
+                    });
                 });
             })
         }
 
-        this.models_builder.create(model.DAE, onLoad, {CONFIG: {MODEL: model}}, false)
+        this.models_builder.create(model.DAE, onLoad, { CONFIG: { MODEL: model } }, false)
 
         return allLoopsMesh
     };

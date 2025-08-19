@@ -32,6 +32,7 @@ const position = ref({
 
 const handlerModifyWall = (): void => {
 
+  // отправляем событие с новыми размерами стены
   eventBus.emit(Events.C2D_MODIFY_WALL, {
     width: wallWidth.value,
     height: wallHeight.value,
@@ -40,11 +41,13 @@ const handlerModifyWall = (): void => {
 };
 
 const handlerRemoveWall = (): void => {
-  
+
+  // отправляем событие на удаление стены
   eventBus.emit(Events.C2D_REMOVE_WALL);
 
 };
 
+// Функция для обновления значений в форме
 const update = (data: IDataForm): void => {
   
   wallWidth.value = data.width;
@@ -53,8 +56,10 @@ const update = (data: IDataForm): void => {
   // Устанавливаем позицию, если она передана в data
   if (data.position) {
     position.value = {
-      top: `${data.position.y+70}px`,
-      left: `${data.position.x+70}px`,
+      // top: `${data.position.y+70}px`,
+      // left: `${data.position.x+70}px`,
+      bottom: '10px',
+      left: '40px'
     };
   }
 
@@ -85,7 +90,7 @@ onUnmounted(() => {
 
 </script>
 
-<template>
+<!-- <template>
   <div id="c2dModifyWall" 
     :class="{ 'd-none': !isVisible }"
     :style="{ top: position.top, left: position.left }"
@@ -99,7 +104,24 @@ onUnmounted(() => {
       <button @click="handlerModifyWall">ok</button>
     </div>
   </div>
+</template> -->
+
+<template>
+  <div id="c2dModifyWall" 
+    :class="{ 'd-none': !isVisible }"
+    :style="{ bottom: position.bottom, left: position.left }"
+    >
+    <div class="c2dModifyWall-buttons">
+      <div class="remove" @click="handlerRemoveWall">Удалить</div>
+    </div>
+    <div>
+      <input type="number" v-model="wallWidth" min="200" max="100000" id="wall_width">
+      <input type="number" v-model="wallHeight" min="200" max="900" id="wall_height">
+      <button @click="handlerModifyWall">ok</button>
+    </div>
+  </div>
 </template>
+
 
 <style lang="scss" scoped>
 
@@ -111,8 +133,6 @@ onUnmounted(() => {
   background-color: #FFFFFF;
   color: #212121;
   position: absolute;
-  top: 10px;
-  left: 10px;
   padding: 10px;
   border: 1px solid #444444;
 

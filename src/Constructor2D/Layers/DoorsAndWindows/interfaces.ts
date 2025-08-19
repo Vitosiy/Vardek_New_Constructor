@@ -30,12 +30,24 @@ export interface IConfig {
   window: IConfigWindow;
 
   door: IConfigDoor;
+
+  text: {
+    text: string | number;
+    style: {
+      fontSize: number;
+      fill: number | string;
+    };
+  }
   
 };
 
 export interface IState {
   activeObject: string | number | null; // активный объект (id объекта)
   activePointObject: number | null; // активная точка объекта
+  mouseLeft: boolean; // состояние левой кнопки мыши
+  positionDown: Vector2; // позиция клика на канвасе
+  aldAngleDegrees: number;
+  oldPosition: Vector2[]; // точки объекта при клике
 }
 
 export interface IObjectDrawContainers {
@@ -47,7 +59,7 @@ export interface IObjectDrawContainers {
 
 export interface IDrawObjectsBelongsToWall {
   id: string | number | null;
-  distanceFromWallStart: number | 0;
+  distanceFromWallStart: number;
 }
 
 export interface IDrawObjects {
@@ -60,7 +72,8 @@ export interface IDrawObjects {
   angleDegrees: number;
   updateTime: number;
   belongsToWall: IDrawObjectsBelongsToWall; // объект может принадлежать стене
-  containers?: IObjectDrawContainers
+  containers?: IObjectDrawContainers;
+  roomId: string | number | null;
 };
 
 export interface IArgumentDataAddObject{

@@ -1,17 +1,17 @@
 
+
 //@ts-nocheck
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
-import { RoomManager } from "../Room/RoomManager"
-import { MeshEvents } from "../Meshes/Utils/Events"
+// import { RoomManager } from "../Room/RoomManager"
+// import { MeshEvents } from "../Meshes/Utils/Events"
 
 import { TrafficManager } from "../Movement/TrafficManager"
-import { AppLights } from "../World/Lights"
+
 import { Environment } from "../World/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
-
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from '@/store/appliction/useEventBus';
@@ -22,7 +22,7 @@ export class World {
     root: THREETypes.TApplication
     scene: THREE.Scene
 
-    deepDispose: DeepDispose
+    deepDispose: THREETypes.TDeepDispose
     resources: any
 
     sceneState: ReturnType<typeof useSceneState> = useSceneState()
@@ -30,130 +30,152 @@ export class World {
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
-    trafficManager: TrafficManager | null
+    trafficManager: THREETypes.TTrafficManager | null
     room: THREETypes.TRoomManager | null = null
-    lights: AppLights | any
+    lights: THREETypes.TAppLights
     enviroment: any
     // meshEvents: MeshEvents | null = null
 
     private onCreateRoom: () => void;
     private onSaveRoom: () => void;
     private onLoadRoom: (data: number) => void;
-    private onFirstCreate: () => void;
+
 
     constructor(root: THREETypes.TApplication) {
 
-        this.deepDispose = new DeepDispose()
-
-        // this.trafficManager = null
 
         this.root = root
-        this.scene = root.scene
+        this.scene = root.scene!
         this.resources = root.resources;
-
         this.lights = root._lights
-
-        // this.room = null;
+        this.room = root._roomManager
+        this.deepDispose = root._deepDispose
+        this.trafficManager = root._trafficManager
 
         this.onCreateRoom = this.createRoom.bind(this)
         this.onSaveRoom = this.saveRoom.bind(this)
         this.onLoadRoom = this.loadRoom.bind(this)
 
-
-        // this.scene.add(new THREE.AxesHelper(2000))
-        this.room = root._roomManager
-        this.room.update()
-
-        this.lights.setLight(this.room._wallsGroupSize, 2)
-        this.trafficManager = root._trafficManager
-        this.vueEvents()
-
-        // this.meshEvents = new MeshEvents(root)
-
         this.resources.on('cubeTextureLoaded', () => {
             this.enviroment = new Environment(root)
         })
+        this.vueEvents()
+
+
+        if (this.roomsStore.getRooms.length > 0) {
+            const startRoomId = this.roomsStore.getRooms[0].id
+            this.loadRoom(startRoomId)
+        }
+        else {
+            this.room?.defaultCreate()
+            this.lights.setLight(this.room!._wallsGroupSize, 2)
+        }
+
+        /** @Для_dev */
+        // this.scene.add(new THREE.AxesHelper(2000))
+        // this.room!.update()
+        // this.lights.setLight(this.room!._wallsGroupSize, 2)
+
+
+
 
     }
 
-    setRoom() {
+    async setRoom(roomId) {
 
-        this.scene.add(new THREE.AxesHelper(2000))
-        this.room.loadRoom(this.lights)
-        this.room.update()
-        this.room.updateWallMaterial(this.room.wallTexture)
+        // this.scene.add(new THREE.AxesHelper(2000))
+        this.room!.loadRoom(this.lights, roomId)
+        await this.room!.update();
+
     }
 
-    createRoom() {
+    async createRoom(name: string) {
 
         this.roomsStore.clearTempRoomSize();
         this.roomsStore.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
-        this.setRoom();
-        this.lights.setLight(this.room._wallsGroupSize, 2)
+        await this.setRoom();
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
 
         if (this.trafficManager) {
-            this.trafficManager.update(this.room)
+            this.trafficManager.update(this.room!)
         }
+
+        this.saveRoom(name)
+        const toAction: string[] = this.room?.save()
+        this.root.userHistory.clearHistory(toAction as string[])
 
     }
 
-    saveRoom() {
+    saveRoom(name: string) {
 
-        if (!this.roomsStore.getCurrentRoomId) {
-
+        if (!this.roomsStore.getRoomId) {
+            const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
 
-            this.roomsStore.setCurrentRoomId(this.roomsStore.rooms.length)
+            const contant = this.room!.save() as string[]
 
             this.roomsStore.addRoom({
-                id: this.roomsStore.rooms.length, // Присваиваем id 
-                label: Date.now().toString(), // Присваиваем Название
-                size: this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes,
-                content: this.room.save()
+                id: roomId, // Присваиваем id 
+                label: name ?? `Комната N:${this.roomsStore.rooms.length + 1}`,
+                params: this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes,
+                content: contant
             })
-            this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
-            // console.log(this.sceneState.getCurrentProjectParams)
+
+            const rooms = this.roomsStore.getRooms
+
+            this.sceneState.updateProjectParams({ rooms })
+            this.roomsStore.setCurrentRoomId(roomId)
             return
         }
 
         // console.log('Комната уже существует')
 
-        this.roomsStore.updateRoom(this.roomsStore.getRoomId as number, this.room.save(), this.roomsStore.getCurrentRoomSize as THREEInterfases.IWallSizes)
-        this.sceneState.updateProjectParams({ rooms: this.roomsStore.getRooms })
+        const contant = this.room!.save() as string[]
+        const roomId = this.roomsStore.getRoomId as number
+        // const roomParams = this.roomsStore.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
+        const roomParams = this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes
 
-        // console.log(this.sceneState.getCurrentProjectParams)
+        this.roomsStore.updateRoom(roomId, contant, roomParams)
+        const rooms = this.roomsStore.getRooms
+
+        this.sceneState.updateProjectParams({ rooms })
 
     }
 
-    loadRoom(roomId: number) {
+    async loadRoom(roomId: number) {
         this.uniformState.clearUniformGroupMembership();
         this.uniformState.clearUniformGroupsStors()
-
-        console.log(this.uniformState.getUniformGroupMembership)
+        this.roomsStore.clearCurrentRoomId()
+        this.roomsStore.clearTempRoomSize()
 
         /** Добавляем ID комнаты в хранилище */
         this.roomsStore.setCurrentRoomId(roomId);
 
         this.deepDispose.clearScene(this.scene);
 
-        this.setRoom();
-        this.lights.setLight(this.room._wallsGroupSize, 2)
-
-        if (this.trafficManager) {
-            this.trafficManager.update(this.room)
-
+        await this.setRoom(roomId);
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
+        await this.trafficManager!.update(this.room!)
+        
+        if (this.roomsStore.getCurrentRoomData(roomId)?.params.wall) {
+            const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.params.wall
+            this.room!.updateWallMaterial(wallTextureId)
         }
+
+        const toAction: string[] = this.room?.save()
+        this.root.userHistory.clearHistory(toAction as string[])
+
     }
 
     vueEvents() {
 
-        this.onCreateRoom = () => {
-            this.createRoom()
+        this.onCreateRoom = (name?: string) => {
+            this.createRoom(name)
         }
 
-        this.onSaveRoom = () => {
-            this.saveRoom()
+        this.onSaveRoom = (name?: string) => {
+            this.saveRoom(name)
         }
 
         this.onLoadRoom = (value) => {
@@ -163,6 +185,13 @@ export class World {
         this.eventsStore.on('A:Create', this.onCreateRoom);
         this.eventsStore.on('A:Save', this.onSaveRoom)
         this.eventsStore.on('A:Load', this.onLoadRoom)
+
+        // this.eventsStore.on("A:ContantLoaded", () => {
+        //     console.log()
+        //     const toAction: string[] = this.room?.save()!
+        //     this.root.userHistory.clearHistory(toAction)
+
+        // });
 
     }
 

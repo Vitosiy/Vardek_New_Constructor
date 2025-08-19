@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 
 import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
+import FormLabelRoom from "@/components/popUp/constructor2d/FormLabelRoom.vue";
 
 import {
   Vector2,
@@ -15,9 +16,11 @@ let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
 let canvas2d: Ref<HTMLCanvasElement | undefined> = ref();
 
-document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
+// document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
 
 let App2d: Constructor2D | null = null;
+
+const preventContextMenu = (e: Event) => e.preventDefault();
 
 // Сохраняем ссылку на обработчик события
 let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
@@ -68,18 +71,27 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
 };
 
 onMounted(async () => {
+  
   if (root2d.value && canvas2d.value) {
 
     App2d = new Constructor2D(root2d.value, canvas2d.value);
     await App2d.init();
 
+    if (canvas2d.value) {
+      canvas2d.value.addEventListener('contextmenu', preventContextMenu);
+    }
+    
     // Добавляем обработчик события
     canvas2d.value.addEventListener('drop', dropHandler);
 
     console.log("!!! App2d:", App2d);
     // @ts-ignore
     window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
-    
+  }
+    // Безопасное скрытие loader
+  const loader = document.querySelector('#main-loader');
+  if (loader) {
+    (loader as HTMLElement).style.display = 'none';
   }
 
 });
@@ -94,6 +106,7 @@ onUnmounted(() => {
   // Удаляем обработчик события, если он был добавлен
   if (canvas2d.value && dropHandler) {
     canvas2d.value.removeEventListener('drop', dropHandler);
+    canvas2d.value.removeEventListener('contextmenu', preventContextMenu);
   }
 
 });
@@ -117,7 +130,8 @@ onUnmounted(() => {
 <template>
   <div ref="root2d" id="app2D">
     <canvas ref="canvas2d" id="constructor2D"
-      @dragover.prevent></canvas>
+      @dragover.prevent @contextmenu.prevent></canvas>
     <ModifyWall />
+    <FormLabelRoom />
   </div>
 </template>

@@ -1,71 +1,66 @@
 //@ts-nocheck
-import * as THREE from "three"
-import * as THREETypes from "@/types/types"
-import roughness from '@/assets/metall/metal_roughness.jpg';
-import metallic from '@/assets/metall/metal_metallic.jpg';
+import * as THREE from "three";
+import * as THREETypes from "@/types/types";
+import roughnessUrl from '@/assets/metall/metal_roughness.jpg';
+import metallicUrl from '@/assets/metall/metal_metallic.jpg';
 
-export class AlumBulider {
-
-    parent: THREETypes.TBuildProduct
-    resources: THREETypes.TResources
-    roughness:ReturnType<typeof roughness> = roughness
-    metallic:ReturnType<typeof metallic> = metallic
+export class AlumBuilder {
+    parent: THREETypes.TBuildProduct;
+    resources: THREETypes.TResources;
+    roughnessMap?: THREE.Texture;
+    metalnessMap?: THREE.Texture;
 
     constructor(parent: THREETypes.TBuildProduct) {
+        this.parent = parent;
+        this.resources = parent.resources;
 
-        this.parent = parent
-        this.resources = parent.resources
+        // Предзагрузка текстур
+        this.loadTextures();
     }
 
-    createAlum({ fasade, data}: { fasade: THREE.Object3D, data: number | string}) {
+    private loadTextures() {
+        if (!this.parent || !this.resources) return
 
-        fasade.traverse((children: THREE.Object3D) => {
+        this.resources.startLoading(roughnessUrl, 'localTexture', (file) => {
+            this.setupTexture(file);
+            this.roughnessMap = file;
+        });
 
-            fasade.visible = true
+        this.resources.startLoading(metallicUrl, 'localTexture', (file) => {
+            this.setupTexture(file);
+            this.metalnessMap = file;
+        });
+    }
 
-            if (children instanceof THREE.Mesh && children.userData.type != 'glass') {
+    private setupTexture(texture: THREE.Texture) {
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1 / 512, 1 / 512);
+        texture.offset.set(0.5, 0.5);
+    }
 
-                !children.userData.ORIGINAL_COLOR ? children.userData.ORIGINAL_COLOR = children.material : ''
+    createAlum({ fasade, data }: { fasade: THREE.Object3D; data: { COLOR: string } }) {
+        fasade.visible = true;
 
-                children.material = new THREE.MeshStandardMaterial();
+        fasade.traverse((child: THREE.Object3D) => {
+            if (child instanceof THREE.Mesh && child.userData.type !== 'glass') {
+                if (!child.userData.ORIGINAL_COLOR) {
+                    child.userData.ORIGINAL_COLOR = child.material;
+                }
 
-                this.resources.startLoading(this.roughness, 'localTexture', (file) => {
-                    children.material.roughnessMap = file
-                    children.material.roughnessMap.wrapS = children.material.roughnessMap.wrapT = THREE.RepeatWrapping;
-                    children.material.roughnessMap.repeat.set(
-                        1 / 512,
-                        1 / 512
-                    );
-                    children.material.roughnessMap.offset.set(0.5, 0.5);
-                    children.material.needsUpdate = true;
-                })
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(data.COLOR),
+                    metalness: 0.5,
+                    roughness: 0.5,
+                    roughnessMap: this.roughnessMap,
+                    metalnessMap: this.metalnessMap
+                });
 
-                this.resources.startLoading(this.metallic, 'localTexture', (file) => {
-                    children.material.metallicMap = file
-                    children.material.metallicMap.wrapS = THREE.RepeatWrapping;
-                    children.material.metallicMap.wrapT = THREE.RepeatWrapping;
-                    children.material.metallicMap.repeat.set(
-                        1 / 512,
-                        1 / 512
-                    );
-                    children.material.metallicMap.offset.set(0.5, 0.5);
-                    children.material.needsUpdate = true;
-                })
+                material.needsUpdate = true;
+                material.receiveShadow = true;
+                material.castShadow = true;
 
-                children.material.color.set(`${data.COLOR}`)
-                children.material.metalness = 0.5
-                children.material.roughness = 0.5
-
-                // children.material.clearcoat = 1
-                // children.material.clearcoatRoughness = 0
-
-                children.material.receiveShadow = true;
-                children.material.castShadow = true;
-                children.material.encoding = THREE.SRGBColorSpace;
-
-                children.material.needsUpdate = true;
+                child.material = material;
             }
-        })
+        });
     }
-
 }

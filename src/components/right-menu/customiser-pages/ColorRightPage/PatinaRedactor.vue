@@ -14,7 +14,6 @@ const emit = defineEmits(["select_patina"]);
 const eventBus = useEventBus();
 const selectPatina = ref<any>(null);
 
-
 const changePatina = (patina) => {
   eventBus.emit("A:DrawPatina", {
     data: patina.ID,
@@ -25,42 +24,50 @@ const changePatina = (patina) => {
     imgSrc: patina.DETAIL_PICTURE,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
-
 </script>
 
 <template>
-  <div class="list">
-    <!-- Все виды патины -->
-    <div
-      class="item"
-      v-for="patina in props.patinaList"
-      @click="changePatina(patina)"
-    >
-      <img class="item__img" :src="_URL + patina.DETAIL_PICTURE" alt="" />
-      <div class="item__name">{{ patina.NAME }}</div>
+  <div class="relative__wrapper">
+    <div class="list">
+      <!-- Все виды патины -->
+      <div
+        class="item"
+        v-for="patina in props.patinaList"
+        @click="changePatina(patina)"
+      >
+        <img class="item__img" :src="_URL + patina.PREVIEW_PICTURE" alt="" />
+        <div class="item__name">{{ patina.NAME }}</div>
+      </div>
     </div>
-
   </div>
 </template>
 
 <style scoped lang="scss">
+.relative__wrapper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-height: 100vh;
+  overflow: hidden;
+  margin-right: 0px;
+  border: 1px solid grey;
+  border-radius: 15px;
+  padding: 10px 10px 0px 10px;
+}
 .search {
-  position: absolute;
-  top: 10px;
-  height: 40px;
   width: 95%;
-  border-radius: 5px;
-  padding-left: 15px;
+  border-radius: 15px;
+  padding: 10px 15px;
 }
 
 .list {
-  overflow: scroll;
   height: 100%;
-  margin-top: 40px;
-}
-
-.list::-webkit-scrollbar {
-  width: 8px;
+  max-height: calc(85vh - 110px);
+  margin-top: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  box-sizing: border-box;
 }
 
 .item {
@@ -68,21 +75,32 @@ const changePatina = (patina) => {
   flex-direction: row;
   align-items: center;
   cursor: pointer;
-  height: 60px;
-  // border: 1px solid red;
-  border-radius: 5px;
-  background-color: #e7e7e7;
-  margin-bottom: 4px;
+  padding: 10px;
+  // height: 60px;
+  border-radius: 15px;
+  background-color: $bg;
+  margin-bottom: 8px;
   margin-right: 8px;
+  transition-property: background-color;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
 
   &__img {
-    height: 45px;
-    border-radius: 5px;
-    margin-left: 10px;
+    height: 60px;
+    width: 60px;
+    padding: 5px;
+    border-radius: 15px;
+    background-color: $white;
+    // margin-left: 10px;
   }
 
   &__name {
     margin-left: 30px;
+  }
+  @media (hover: hover) {
+    &:hover {
+      background-color: $stroke;
+    }
   }
 }
 </style>

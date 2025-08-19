@@ -9,7 +9,11 @@ interface RulerConfig {
     MAX_DISTANCE: number; // Максимальное расстояние для проверки
     LINE_COLOR: string;
     LABEL_HEIGHT_OFFSET: number;
-    DIRECTIONS: THREE.Vector3[]
+    DIRECTIONS: THREE.Vector3[],
+    ARROW_WIDTH: number,
+    ARROW_HEIGHT: number,
+    OBJECT_ARROW_WIDTH: number,
+    OBJECT_ARROW_HEIGHT: number
 }
 
 export class Ruler {
@@ -24,9 +28,15 @@ export class Ruler {
     private config: RulerConfig = {
         POINT_COUNT: 4, // Количество точек для проверки на осях X и Z
         MIN_DISTANCE: 0.01, // Минимальное расстояние для отрисовки (в метрах)
-        MAX_DISTANCE: 3000, // Максимальное расстояние для проверки (в единицах сцены)
+        MAX_DISTANCE: 1500, // Максимальное расстояние для проверки (в единицах сцены)
         LINE_COLOR: '#444444', // Цвет линий и стрелок
         LABEL_HEIGHT_OFFSET: 100, // Смещение меток по высоте (в единицах сцены)
+        ARROW_WIDTH: 75,
+        ARROW_HEIGHT: 38,
+
+        OBJECT_ARROW_WIDTH:25,
+        OBJECT_ARROW_HEIGHT: 50,
+
 
         DIRECTIONS: [
             new THREE.Vector3(1, 0, 0),   // X-положительное направление
@@ -234,8 +244,8 @@ export class Ruler {
         const box = new THREE.Box3().setFromObject(object);
         const size = box.getSize(new THREE.Vector3());
 
-        const headWidth = 25;
-        const headLength = 50
+        const headWidth = this.config.OBJECT_ARROW_WIDTH;
+        const headLength = this.config.OBJECT_ARROW_HEIGHT
 
         const percentage = 0.85;
         const arrowLengthX = size.x * percentage;
@@ -333,16 +343,16 @@ export class Ruler {
             originPoint,
             distance,
             color,
-            100 * 0.75,
-            50 * 0.75
+            this.config.ARROW_WIDTH,
+            this.config.ARROW_HEIGHT
         );
         const arrow2 = new THREE.ArrowHelper(
             direction.clone().negate().normalize(),
             originPoint,  // Используем центр грани для обратной стрелки
             0,
             color,
-            100 * 0.75,
-            50 * 0.75
+            this.config.ARROW_WIDTH,
+            this.config.ARROW_HEIGHT
         );
 
         function configureArrow(arrow: any) {

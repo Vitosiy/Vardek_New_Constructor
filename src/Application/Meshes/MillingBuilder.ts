@@ -17,7 +17,7 @@ import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 import { isConstructorDeclaration } from 'typescript';
 
 export class MillingBuilder extends MillingsUtils {
-  private svgLoader: SVGLoader = new SVGLoader();
+  svgLoader: SVGLoader = new SVGLoader();
   private millingsStore = MILLINGS
   private additionaMillinglKeys = additionaMillinglKeys
   private result = null
@@ -113,11 +113,6 @@ export class MillingBuilder extends MillingsUtils {
 
 
     /** Создаём UV развёртку для новой геометрии */
-
-
-    // const { geometry, material } = this.createPatinaColor(newGeometry, startMaterial)
-
-    // const { geometry, material } = this.createPatinaColor({ geometry: newGeometry, startMaterial })
 
     this.planarUV(newGeometry)
 

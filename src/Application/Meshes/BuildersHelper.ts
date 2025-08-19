@@ -1,5 +1,5 @@
 
-//@ts-nocheck
+// @ts-nocheck
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import { useAppData } from "@/store/appliction/useAppData"
@@ -43,76 +43,76 @@ export class BuildersHelper extends GlobalsData {
         return model_data
     };
 
-    getProductSize(PARAMS: any, product_data: THREETypes.TObject) {
+    getProductSize(PARAMS: any, productData: THREETypes.TObject) {
+        const product = this._PRODUCTS[PARAMS.ID];
+        const materialThickness = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH ?? 18;
+        const horizont =
+            PARAMS.NOBOTTOM ? 0 :
+                PARAMS.HORIZONT ?? 78;
 
-        const MATERIAL_THICKNESS = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH || 18
-        const HORIZONT = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT || PARAMS.HORIZONT === 0 ? PARAMS.HORIZONT : 78
-        const FILLING = this._FILLING[product_data["FILLING"][0]] || {}
+        const filling = this._FILLING[product.FILLING[0]] || {};
 
-        PARAMS.EXPRESSIONS = {
-            "#MWIDTH#": product_data.width,
-            "#MODUL_MWIDTH#": product_data.width,
-            "#MODUL_WIDTH#": product_data.width,
-            "#X#": product_data.width,
-            "#MHEIGHT#": product_data.height,
-            "#MODUL_MHEIGHT#": product_data.height,
-            "#MODUL_HEIGHT#": product_data.height,
-            "#Y#": product_data.height,
-            "#MDEPTH#": product_data.depth,
-            "#MODUL_MDEPTH#": product_data.depth,
-            "#MODUL_DEPTH#": product_data.depth,
-            "#Z#": product_data.depth,
-            "#SIZEEDITJOINDEPTH#": product_data.SIZE_EDIT_JOINDEPTH_MIN,
-            "#MATERIAL_THICKNESS#": MATERIAL_THICKNESS,
-            "#HORIZONT#": HORIZONT,
-            "#VSECTION_MAX#": FILLING?.VSECTION_MAX,
-            "#VSECTION_MIN#": FILLING?.VSECTION_MIN,
+        // Базовые подстановки
+        const expressions: Record<string, any> = {
+            "#MWIDTH#": productData.width,
+            "#MODUL_MWIDTH#": productData.width,
+            "#MODUL_WIDTH#": productData.width,
+            "#X#": productData.width,
+            "#MHEIGHT#": productData.height,
+            "#MODUL_MHEIGHT#": productData.height,
+            "#MODUL_HEIGHT#": productData.height,
+            "#Y#": productData.height,
+            "#MDEPTH#": productData.depth,
+            "#MODUL_MDEPTH#": productData.depth,
+            "#MODUL_DEPTH#": productData.depth,
+            "#Z#": productData.depth,
+            "#SIZEEDITJOINDEPTH#": productData.SIZE_EDIT_JOINDEPTH_MIN,
+            "#MATERIAL_THICKNESS#": materialThickness,
+            "#HORIZONT#": horizont,
+            "#VSECTION_MAX#": filling.VSECTION_MAX,
+            "#VSECTION_MIN#": filling.VSECTION_MIN,
         };
 
-        Object.entries(PARAMS.FASADE_SIZE).forEach(([key, item]) => {
-
-            PARAMS.EXPRESSIONS["#" + key + "#"] = item
-            switch (key) {
-                case "FASADESIZE1":
-                    PARAMS.EXPRESSIONS["#FASADESIZEWIDTH1#"] = this._FASADESIZE[item as number].WIDTH;
-                    PARAMS.EXPRESSIONS["#FASADESIZEDEPTH1#"] = this._FASADESIZE[item as number].DEPTH;
-                    PARAMS.EXPRESSIONS["#FASADESIZEDIFFWIDTH1#"] = this._FASADESIZE[item as number].DIFFWIDTH;
-                    PARAMS.EXPRESSIONS["#FASADESIZEDIFFDEPTH1#"] = this._FASADESIZE[item as number].DIFFDEPTH;
-                    break;
-                case "FASADESIZE2":
-                    PARAMS.EXPRESSIONS["#FASADESIZEWIDTH2#"] = this._FASADESIZE[item as number].WIDTH;
-                    PARAMS.EXPRESSIONS["#FASADESIZEDEPTH2#"] = this._FASADESIZE[item as number].DEPTH;
-                    PARAMS.EXPRESSIONS["#FASADESIZEDIFFWIDTH2#"] = this._FASADESIZE[item as number].DIFFWIDTH;
-                    PARAMS.EXPRESSIONS["#FASADESIZEDIFFDEPTH2#"] = this._FASADESIZE[item as number].DIFFDEPTH;
-                    break;
+        // Обработка фасадных размеров
+        Object.entries(PARAMS.FASADE_SIZE).forEach(([key, value]) => {
+            expressions[`#${key}#`] = value;
+            if (key === "FASADESIZE1" || key === "FASADESIZE2") {
+                const idx = value as number;
+                const size = this._FASADESIZE[idx];
+                const suffix = key.endsWith("1") ? "1" : "2";
+                expressions[`#FASADESIZEWIDTH${suffix}#`] = size.WIDTH;
+                expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
+                expressions[`#FASADESIZEDIFFWIDTH${suffix}#`] = size.DIFFWIDTH;
+                expressions[`#FASADESIZEDIFFDEPTH${suffix}#`] = size.DIFFDEPTH;
             }
-        })
+        });
 
-        let depthCalc = product_data.SIZE_EDIT_DEPTH_MAX ? PARAMS.SIZE.depth : product_data.depth;
+        PARAMS.EXPRESSIONS = expressions;
 
-        let size = {
+        const depthCalc = productData.SIZE_EDIT_DEPTH_MAX
+            ? PARAMS.SIZE.depth
+            : productData.depth;
+
+        const size = {
             width: parseInt(PARAMS.SIZE.width),
             height: parseInt(PARAMS.SIZE.height),
             depth: parseInt(depthCalc),
         };
 
         if (PARAMS.MODEL) {
-            let selectmodel = this.expressionsReplace(
-                PARAMS.MODEL,
-                PARAMS.EXPRESSIONS
-            );
-
-            if (selectmodel.width) size.width = parseInt(eval(selectmodel.width));
-            if (selectmodel.height) size.height = parseInt(eval(selectmodel.height));
-            if (selectmodel.depth) size.depth = parseInt(eval(selectmodel.depth));
+            const model = this.expressionsReplace(PARAMS.MODEL, expressions);
+            if (model.width) size.width = parseInt(eval(model.width));
+            if (model.height) size.height = parseInt(eval(model.height));
+            if (model.depth) size.depth = parseInt(eval(model.depth));
         }
 
-        if (!size.width) size.width = parseInt(product_data.width);
-        if (!size.height) size.height = parseInt(product_data.height);
-        if (!size.depth) size.depth = parseInt(product_data.depth);
+        // Запасные значения
+        size.width ||= parseInt(productData.width);
+        size.height ||= parseInt(productData.height);
+        size.depth ||= parseInt(productData.depth);
 
         return size;
-    };
+    }
 
     getSizeEdit(product_data: THREETypes.TObject, props: THREETypes.TObject) {
 
@@ -163,35 +163,33 @@ export class BuildersHelper extends GlobalsData {
     };
 
     checkColor(product: THREETypes.TObject) {
-        let self = this
-        let curProduct = this._PRODUCTS[product.PRODUCT]
+        const { PRODUCT, CONFIG, texture } = product;
+        const { BASKET } = CONFIG;
+        const curProduct = this._PRODUCTS[PRODUCT];
 
-        let color = product.CONFIG.BASKET.COLOR
-            ? this._COLOR[product.CONFIG.BASKET.COLOR]
-            : product.CONFIG.BASKET.MODULECOLOR
-                ? checkModuleColor() :
-                product.texture
-                    ? {
-                        TEXTURE: product.texture.src,
-                        TEXTURE_HEIGHT: product.texture.height,
-                        TEXTURE_WIDTH: product.texture.width,
-                    }
-                    : false;
-
-        function checkModuleColor() {
-            if (!self._FASADE[product.CONFIG.BASKET.MODULECOLOR]) {
-                product.CONFIG.BASKET.MODULECOLOR = curProduct.MODULECOLOR[0];
-
-                // показать сообщение
-                //   self.scope.alerts[product.MODULECOLOR[0]] = "Цвет корпуса изменен.";
-
-                return self._FASADE[curProduct.MODULECOLOR[0]];
+        const checkModuleColor = () => {
+            const moduleColor = BASKET.MODULECOLOR;
+            if (!this._FASADE[moduleColor]) {
+                BASKET.MODULECOLOR = curProduct.MODULECOLOR[0];
+                return this._FASADE[curProduct.MODULECOLOR[0]];
             }
+            return this._FASADE[moduleColor];
+        };
 
-            return self._FASADE[product.CONFIG.BASKET.MODULECOLOR];
+        if (BASKET.COLOR) {
+            return this._COLOR[BASKET.COLOR];
         }
-
-        return color;
+        if (BASKET.MODULECOLOR) {
+            return checkModuleColor();
+        }
+        if (texture) {
+            return {
+                TEXTURE: texture.src,
+                TEXTURE_HEIGHT: texture.height,
+                TEXTURE_WIDTH: texture.width,
+            };
+        }
+        return false;
     }
 
     calculateHeight(object: THREE.Object3D) {
@@ -233,49 +231,56 @@ export class BuildersHelper extends GlobalsData {
         });
     }
 
-    changeColor({ object, url, textureSize, type }: { object: THREE.Object3D, url: string, textureSize?: THREETypes.TObject, type?: string }) {
+    changeColor({
+        object,
+        url,
+        textureSize,
+        type
+    }: {
+        object: THREE.Object3D;
+        url: string;
+        textureSize?: THREETypes.TObject;
+        type?: string;
+    }) {
+        object.traverse((child) => {
+            if (!(child instanceof THREE.Mesh) || child.userData.type === "glass") return;
 
-        // console.log(object, 'OBJECT IN COLOR')
-
-        object.traverse(children => {
-            if (children instanceof THREE.Mesh) {
-
-                if (children.userData.type === 'glass') return
-
-                children.userData.ORIGINAL_COLOR != null ? children.material = children.userData.ORIGINAL_COLOR : ''
-
-                this.resources.startLoading(url, 'texture', (file) => {
-
-                    if (type === "Palette" || type === "Glass") {
-                        children.material = new THREE.MeshStandardMaterial()
-                    }
-
-                    if (file instanceof THREE.Texture) {
-
-                        file.colorSpace = THREE.SRGBColorSpace
-                        children.material.map = file
-
-                        if (textureSize) {
-                            children.material.map.wrapS = children.material.map.wrapT = THREE.RepeatWrapping;
-                            children.material.map.repeat.set(
-                                1 / textureSize.x,
-                                1 / textureSize.y
-                            );
-                            children.material.map.offset.set(0.5, 0.5);
-                        }
-                        if (type === "Palette") {
-                            children.material.metalness = 0.7
-                            children.material.roughness = 0.05
-                            children.material.clearcoat = 1
-                            children.material.clearcoatRoughness = 0
-                            children.material.needsUpdate = true;
-                        }
-
-                        children.material.needsUpdate = true;
-                    }
-                });
+            // Восстановление оригинального материала
+            if (child.userData.ORIGINAL_COLOR) {
+                child.material = child.userData.ORIGINAL_COLOR;
             }
-        })
+
+            this.resources.startLoading(url, "texture", (file) => {
+                if (!(file instanceof THREE.Texture)) return;
+
+                // Создаём новый материал при смене на палитру или стекло
+                if (["Palette", "Glass"].includes(type || "")) {
+                    child.material = new THREE.MeshStandardMaterial();
+                }
+
+                file.colorSpace = THREE.SRGBColorSpace;
+                child.material.map = file;
+
+                // Настройка повторения и смещения
+                if (textureSize) {
+                    file.wrapS = file.wrapT = THREE.RepeatWrapping;
+                    file.repeat.set(1 / textureSize.x, 1 / textureSize.y);
+                    file.offset.set(0.5, 0.5);
+                }
+
+                // Спец. настройки для палитры
+                if (type === "Palette") {
+                    Object.assign(child.material, {
+                        metalness: 0.7,
+                        roughness: 0.05,
+                        clearcoat: 1,
+                        clearcoatRoughness: 0
+                    });
+                }
+
+                child.material.needsUpdate = true;
+            });
+        });
     }
 
     createExtrudeBoxGeometry(options: THREETypes.TObject) {
@@ -409,8 +414,6 @@ export class BuildersHelper extends GlobalsData {
             ]
         }
 
-        console.log(startCutData, 'startCutData')
-
         return startCutData
     }
 
@@ -434,4 +437,38 @@ export class BuildersHelper extends GlobalsData {
 
         return result;
     }
+
+    findKeyInObject(obj, keys) {
+        for (const key of keys) {
+            if (obj.hasOwnProperty(key)) {
+                return key;
+            }
+        }
+        return null;
+    }
+
+    computeAABB(object: THREE.Object3D): THREE.Box3 {
+        const box = new THREE.Box3();
+        const size = new THREE.Vector3()
+
+
+        object.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.userData.name !== 'TABLETOP' && child.name !== "ARROWS") {
+                const geometry = child.geometry;
+                if (!geometry.boundingBox) {
+                    geometry.computeBoundingBox();
+                }
+
+                const childBox = geometry.boundingBox!.clone();
+                childBox.applyMatrix4(child.matrixWorld);
+
+                box.union(childBox);
+            }
+        });
+
+        box.getSize(size)
+
+        return box;
+    }
+
 }

@@ -1,5 +1,8 @@
-@use 'fonts-main.scss';
-@use 'colors.scss' as *;
+@use "fonts-main.scss";
+@use "iconsfont.scss";
+@use "animations.scss";
+@use "checkbox.scss";
+@use "colors.scss" as *;
 
 html,
 body,
@@ -15,20 +18,22 @@ body {
   background: #f6f5fa;
 }
 
-div {
-  &::-webkit-scrollbar {
-    width: 3px;
-    border-radius: 15px;
-  }
+// div {
+//   &::-webkit-scrollbar {
+//     width: 3px;
+//     border-radius: 15px;
+//   }
 
+//   &::-webkit-scrollbar-track {
+//   }
 
-  &::-webkit-scrollbar-thumb {
-    background-color: $dark-grey;
-    transform: translateX(-5px);
-    box-shadow: inset 0 0 1px $dark-grey;
-    border-radius: 15px;
-  }
-}
+//   &::-webkit-scrollbar-thumb {
+//     background-color: $dark-grey;
+//     transform: translateX(-5px);
+//     box-shadow: inset 0 0 1px $dark-grey;
+//     border-radius: 15px;
+//   }
+// }
 
 p,
 h1,
@@ -50,7 +55,7 @@ h1 {
   font-size: 18px;
   font-weight: 600;
 }
- 
+
 input {
   margin: 0;
   bottom: 0;
@@ -112,9 +117,24 @@ p {
   transition: 0.2s;
   cursor: pointer;
 
+  transition-property: border-color;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+
   svg {
     path {
       transition: 0.2s;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      border-color: $strong-grey;
+      svg {
+        path {
+          fill: $strong-grey;
+        }
+      }
     }
   }
 
@@ -155,6 +175,98 @@ p {
   &.bask {
     width: 42px;
     height: 42px;
+  }
+  svg {
+    path {
+      fill: $strong-grey;
+    }
+
+    g {
+      path {
+        transition-property: fill;
+        transition-duration: 0.3s;
+        transition-timing-function: ease;
+        fill: $strong-grey;
+      }
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      svg {
+        path {
+          fill: $black;
+        }
+
+        g {
+          path {
+            fill: $black;
+          }
+        }
+      }
+    }
+  }
+}
+
+.button {
+  &__rounded {
+    padding: 25px;
+    background-color: transparent;
+    border: 1px solid $dark-grey;
+    border-radius: 100px;
+    color: $strong-grey;
+    text-align: center;
+    transition-property: color, border-color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+
+    @media (hover: hover) {
+      &:hover {
+        color: $black;
+        background-color: transparent;
+        border-color: $black;
+      }
+    }
+  }
+  &__filled {
+    padding: 25px;
+    color: $strong-grey;
+    border: none;
+    border-radius: 100px;
+    background-color: $bg;
+    transition-property: color, border-color, background-color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+
+    &--text {
+      max-height: 50px;
+      height: 100%;
+      padding: 25px;
+      line-height: 0;
+    }
+
+    &.active {
+      color: $white;
+      background-color: black;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        color: $white;
+        background-color: black;
+      }
+    }
+  }
+}
+
+.icon {
+  position: relative;
+  font-size: 15px;
+  &::before {
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    position: absolute;
   }
 }
 
@@ -200,9 +312,7 @@ p {
 
   &:focus {
     outline: none;
-
   }
-
   svg {
     path {
       fill: $strong-grey;
@@ -210,6 +320,9 @@ p {
 
     g {
       path {
+        transition-property: fill;
+        transition-duration: 0.3s;
+        transition-timing-function: ease;
         fill: $strong-grey;
       }
     }
@@ -233,5 +346,113 @@ p {
     &:active {
       background-color: $clicked-red;
     }
+  }
+  @media (hover: hover) {
+    &:hover {
+      svg {
+        path {
+          fill: $white;
+        }
+
+        g {
+          path {
+            fill: $white;
+          }
+        }
+      }
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.6);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+
+.main-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  background-image: url('@/assets/img/background.png');
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+
+
+  &__logo {
+    width: 100%;
+    text-align: center;
+    margin: 5rem 0;
+    margin-bottom: 225px;
+  }
+
+  &__container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  &__icon {
+    display: inline-block;
+
+  }
+  svg {
+    animation: rotate 1.5s linear infinite;
+    display: block;
+  }
+
+  &__progresbar {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 5px;
+    background-color: #ECEBF1;
+    border-radius: 2px;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0;
+      background-color: #131313;
+      animation: progress 2.5s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progress {
+  0% {
+    width: 0;
+    left: 0;
+  }
+  50% {
+    width: 100%;
+    left: 0;
+  }
+  100% {
+    width: 0;
+    left: 100%;
   }
 }

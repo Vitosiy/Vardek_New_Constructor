@@ -43,11 +43,11 @@ const props = defineProps({
     required: true,
   },
   min: {
-    type: Number,
+    type: [String, Number],
     default: 1,
   },
   max: {
-    type: Number,
+    type: [String, Number],
     default: null,
   },
   type: {

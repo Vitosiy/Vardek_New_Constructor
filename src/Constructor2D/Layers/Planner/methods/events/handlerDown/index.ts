@@ -10,6 +10,9 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
 
   if (e.button == 0){
 
+    // снимает активность с окна или двери
+    this.parent.layers.doorsAndWindows.setActiveObject(null);
+
     this.state.mouseLeft = true;
 
     const prevActiveObject = this.state.activeWall;
@@ -27,7 +30,7 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
     this.state.positionDown.y = e.global.y;
     
     if(id !== prevActiveObject){
-
+      
       if(!prevActiveObject){
         this.redrawAllObjects();
       }else{

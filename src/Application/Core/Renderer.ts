@@ -131,7 +131,7 @@ export class Renderer {
                 this.instance.receiveShadow = true;
 
                 this.instance.shadowMap.needsUpdate = true
-                this.instance.setPixelRatio(0.5);
+                this.instance.setPixelRatio(1);
                 break;
             case 'medium':
                 // this.toggleAntialias('medium')
@@ -144,7 +144,7 @@ export class Renderer {
                 this.instance.receiveShadow = true;
                 // this.instance.shadowMap.autoUpdate = true;
                 this.instance.shadowMap.needsUpdate = true
-                this.instance.setPixelRatio(1);
+                this.instance.setPixelRatio(this.sizes.pixelRatio);
                 break;
             case 'hight':
                 // this.toggleAntialias('hight')

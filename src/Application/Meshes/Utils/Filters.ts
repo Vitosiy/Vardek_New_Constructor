@@ -80,12 +80,7 @@ export class Filters extends GlobalsData {
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
-            const fasad = typeof FASADE_PROPS[fasadeNumber] === 'object' && FASADE_PROPS[fasadeNumber].TYPE ?
-                FASADE_PROPS[fasadeNumber].TYPE :
-                this.project.default_fasade_up
-
-            // console.log(params.FASADE_PROPS.length < fasadePositionList.length ? this.project.default_fasade_up : null, 'hhhhhh')
-
+            const fasad = FASADE_PROPS[fasadeNumber]?.TYPE ?? this.project.default_fasade_color ?? 7397;
 
             const fasadeProps: {
                 SHOW: boolean | null,
@@ -102,7 +97,7 @@ export class Filters extends GlobalsData {
             } = {
                 /** --- FASADE_PROPS ---*/
                 // COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
-                COLOR: this.project.default_fasade_up,
+                COLOR: this.project.default_fasade_color,
                 SHOW: false,
                 POSITION: fasadePosition.ID,
                 BODY: fasad,
@@ -169,17 +164,6 @@ export class Filters extends GlobalsData {
         return result;
     }
 
-    // filterColor(items: THREETypes.TObject, criteria: THREETypes.TObject) {
-
-    //     this.trafficManager = this.root._trafficManager
-
-    //     const selected = this.trafficManager!._currentObject
-
-    //     const product = criteria ?? selected
-
-    //     return product.COLOR.map((item: number) => items[item]).filter(Boolean);
-    // }
-
     filterModuleColor(items: THREETypes.TObject) {
         return items.filter((colorId: number) => this._FASADE[colorId]);
     }
@@ -198,35 +182,6 @@ export class Filters extends GlobalsData {
 
     }
 
-    // filterModuleColorID(items: THREETypes.TObject, criteria: THREETypes.TObject) {
-    //     const tmp = {};
-    //     const ids = criteria?.IDS || false;
-    //     const s = criteria?.filter?.toLowerCase() || false;
 
-    //     items.forEach((itemId: any) => {
-    //         const item = this._FASADE[itemId] || itemId;
-
-    //         if (!item?.ID && (!s || item.NAME?.toLowerCase().includes(s)) && item.ELEMENT_TYPE !== "plinth") return
-
-
-    //         const section = this._FASADE_SECTION[item.IBLOCK_SECTION_ID];
-    //         const groupId = section?.UF_GROUP_CONSTRUCTOR;
-
-    //         if (!groupId && (ids || !ids.includes(item.ID))) return
-
-
-    //         if (!tmp[groupId]) tmp[groupId] = [];
-
-    //         if (
-    //             self.scope.app.optionsTabName !== "defaultModuleColor" ||
-    //             (item.ID !== 1042113 && item.ID !== 2307265 && item.ID !== 2307267)
-    //         ) {
-    //             tmp[groupId].push(item.ID);
-    //         }
-
-
-    //     });
-
-    // }
 
 } 

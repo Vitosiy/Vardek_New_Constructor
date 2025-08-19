@@ -1,6 +1,6 @@
 <template>
   <input
-    v-if="isChangeEnable()"
+    v-if="isChangeEnable() && !disabled"
     ref="input"
     :class="inputClass"
     :type="type"
@@ -32,11 +32,11 @@ const props = defineProps({
     required: true,
   },
   min: {
-    type: Number,
+    type: [String, Number],
     default: null,
   },
   max: {
-    type: Number,
+    type: [String, Number],
     default: null,
   },
   type: {
@@ -58,6 +58,10 @@ const props = defineProps({
   step: {
     type: [String, Number],
     default: 1,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
   },
 });
 

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "api:generate-types": "npx openapi-typescript ./public/api/openapi_combined.json -o ./src/api/schema.ts",
+    "test:ts": "tsc --noEmit"
   },
   "dependencies": {
     "@pixi/utils": "^7.4.2",
@@ -14,22 +16,33 @@
     "@vueform/slider": "^2.1.10",
     "@vueform/toggle": "^2.1.4",
     "axios": "^1.7.7",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jquery": "^3.7.1",
+    "jquery-ui": "^1.14.1",
     "lil-gui": "^0.19.2",
+    "openapi-fetch": "^0.14.0",
     "pinia": "^2.2.1",
     "pixi.js": "^8.10.2",
+    "swagger-ui-dist": "^5.27.1",
     "swiper": "^11.1.14",
     "three": "^0.173.0",
     "three-bvh-csg": "^0.0.16",
     "three-csg-ts": "^3.2.0",
+    "toastr": "^2.1.4",
     "typescript": "^5.6.3",
+    "vee-validate": "^4.15.1",
     "vue": "^3.3.4",
-    "vue-router": "^4.4.3"
+    "vue-router": "^4.4.3",
+    "yup": "^1.7.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/node": "^22.3.0",
     "@vitejs/plugin-vue": "^4.2.3",
+    "openapi-typescript": "^7.8.0",
     "sass": "^1.77.8",
+    "typescript": "^5.9.2",
     "vite": "^4.4.5",
     "vite-tsconfig-paths": "^5.0.1",
     "vue-tsc": "^2.1.10"

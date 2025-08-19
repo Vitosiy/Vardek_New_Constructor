@@ -1,10 +1,19 @@
 //@ts-nocheck
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
+import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { CSG } from 'three-csg-ts';
 import { DeepDispose } from '@/Application/Utils/DeepDispose';
 import { BuildersHelper } from "../BuildersHelper";
 
+type TTextureData = {
+
+    src: string,
+    width: number,
+    height: number,
+    size: number
+
+}
 
 class TableTopCreator extends BuildersHelper {
     root: THREETypes.TApplication
@@ -14,26 +23,24 @@ class TableTopCreator extends BuildersHelper {
     quality: number = 32
     boolHeight: number = 100
     ruler: THREETypes.TRuler
-    trafficManager: THREETypes.TTrafficManager
+    events: THREETypes.TMeshEvents
 
     constructor(root: THREETypes.TApplication) {
         super(root)
         this.root = root
         this.roomManager = root._roomManager as THREETypes.TRoomManager
         this.moveManager = root._trafficManager?.moveManager!
-        this.trafficManager = root._trafficManager
         this.ruler = root._ruler!
+        this.events = root.meshEvents!
     }
 
     public async create(raspil: THREETypes.TObject, object: THREE.Object3D, groupId: number) {
 
-        console.log(groupId)
 
-        const meshes: THREE.Mesh[] = []
+        const meshes: THREE.Object3D[] = []
         // Создаём временную группу
         const group = new THREE.Group();
 
-        // this.moveManager.clearSelectObject()
         this.moveManager.clearSelectVisual()
 
         let id = null
@@ -47,39 +54,55 @@ class TableTopCreator extends BuildersHelper {
 
             const parent: THREE.Object3D = this.root._scene?.getObjectByProperty('id', object.userData.groupId)!;
 
-            console.log(parent, 'parent')
-
+            const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
+          
+            await this.events.changeModelSize({ width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, parent, 'raspil')
+      
+            const textureData = this._PRODUCTS[parent.userData.globalData].texture
             let { RASPIL_LIST } = parent.userData.PROPS
 
-            RASPIL_LIST.forEach((mesh: THREE.Mesh) => {
-                this.roomManager.remove(mesh.id)
-                this.dispose.clearObject(mesh, this.root._scene!)
+            RASPIL_LIST.forEach(mesh => {
+
+                const meshInScene = this.root._scene?.getObjectByProperty('id', mesh.id) as THREE.Object3D
+                this.roomManager.remove(meshInScene.id)
+                this.dispose.clearObject(meshInScene, this.root._scene!)
             })
+
+
             const raspilCount = parent.userData.PROPS.RASPIL_COUNT = RASPIL_LIST.length
-
-
             RASPIL_LIST.length = 0
 
-            // await this.createGroup(raspil, group, meshes, parent, parent.userData.PROPS.CONFIG.GROUP_ID)
             await this.createGroup(raspil, group, meshes, parent, parent.id)
-            this.addToScene(meshes, group, parent, raspilCount)
+            this.addToScene({ meshes, group, object: parent, raspilCount, textureData })
 
             parent.userData.PROPS.RASPIL = meshes[0].userData.PROPS.RASPIL
 
             return
         }
 
+
         let { RASPIL_LIST } = object.userData.PROPS
+
         RASPIL_LIST.forEach((mesh: THREE.Mesh) => {
-            this.roomManager.remove(mesh.id)
-            this.dispose.clearObject(mesh, this.root._scene!)
+            const meshInScene = this.root._scene?.getObjectByProperty('id', mesh.id) as THREE.Object3D
+            if (meshInScene) {
+                this.roomManager.remove(meshInScene.id)
+                this.dispose.clearObject(meshInScene, this.root._scene!)
+            }
+
         })
+
+        const { BODY_WIDTH, BODY_HEIGHT } = object.userData.PROPS.BODY.userData.trueSize
+
+        await this.events.changeModelSize({ width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, object, 'raspil')
 
         await this.createGroup(raspil, group, meshes, object, id)
 
-        this.addToScene(meshes, group, object)
+        const textureData = this._PRODUCTS[object.userData.globalData].texture
 
+        this.addToScene({ meshes, group, object, textureData })
     }
+
 
     private createSections(path, xOffset = 0, yOffset = 0) {
         const shape = new THREE.Shape();
@@ -127,8 +150,6 @@ class TableTopCreator extends BuildersHelper {
         //     side: THREE.DoubleSide,
         //     wireframe: false
         // });
-
-        console.log(object, 'OBJECT')
 
         const material = object.userData.PROPS.BODY.userData.MATERIAL
 
@@ -228,8 +249,6 @@ class TableTopCreator extends BuildersHelper {
 
         group.updateMatrixWorld();
 
-        console.log(object, 'OBJECT')
-
     }
 
     private createShape(row, parent) {
@@ -295,8 +314,23 @@ class TableTopCreator extends BuildersHelper {
         // this.root._scene?.add(mesh)
     }
 
-    private addToScene(meshes: THREE.Mesh[], group: THREE.Group, object: THREE.Object3D, raspilCount?: number) {
+    addToScene({
+        meshes,
+        group,
+        object,
+        raspilCount,
+        textureData
+    }: {
+        meshes: THREE.Mesh[] | [],
+        group: THREE.Group,
+        object: THREE.Object3D,
+        raspilCount?: number,
+        textureData?: TTextureData
+    }) {
         const RASPIL_COUNT = raspilCount ?? object.userData.PROPS.RASPIL_COUNT
+        const resultData = []
+        // console.log(object, 'PAR')
+        // console.log(`PARENT-${RASPIL_COUNT}`, `CURRENT-${meshes.length}`)
 
         meshes.forEach(mesh => {
             const worldPosition = new THREE.Vector3();
@@ -315,23 +349,64 @@ class TableTopCreator extends BuildersHelper {
             this.root._scene?.add(mesh); // Добавляем меш напрямую на сцену
             this.roomManager._roomContant = mesh
 
+            // console.log(mesh.userData.position, mesh.userData.rotation, 'ROW')
+
             if (mesh.userData.position && mesh.userData.rotation && RASPIL_COUNT === meshes.length) {
+
                 mesh.position.copy(mesh.userData.position);
                 mesh.rotation.copy(mesh.userData.rotation);
             } else {
+ 
                 mesh.position.copy(worldGeometryCenter);
                 mesh.quaternion.copy(worldQuaternion);
             }
 
+            mesh.castShadow = true
+            mesh.receiveShadow = true
+
+            // const params = { material: mesh.material, url: textureData?.src, texture_size: { width: textureData?.width, height: textureData?.height }, rotation: Math.PI * 0.5 }
+            // // this.getTexture(params)
+
+            this.root._resources?.startLoading(textureData?.src!, 'texture', (texture) => {
+                texture.colorSpace = THREE.SRGBColorSpace
+                mesh.material.map = texture
+                mesh.material.map.wrapS = mesh.material.map.wrapT = THREE.RepeatWrapping;
+                mesh.material.map.repeat.set(
+                    1 / textureData!.width,
+                    1 / textureData!.height
+                );
+
+                mesh.material.map.center.set(0.5, 0.5); // Центр вращения
+                mesh.material.map.rotation = Math.PI;
+                mesh.material.needsUpdate = true;
+            })
+
+            // mesh.material.map.center.set(0.5, 0.5); // Центр вращения
+            // mesh.material.map.rotation = Math.PI;
+            // mesh.material.needsUpdate = true;
+
             mesh.userData.aabb = new THREE.Box3().setFromObject(mesh)
+
+            resultData.push({
+                id: mesh.id,
+                sectorId: mesh.sectorId,
+                position: mesh.position,
+                rotation: mesh.rotation
+            })
+
         })
 
         // Удаляем временную группу
         group.children = []
         this.root._scene?.remove(group)
-        this.dispose.clearParent(object)
 
-        object.userData.PROPS.RASPIL_LIST = meshes
+
+        if (object.children.length > 0) {
+            this.dispose.clearParent(object)
+        }
+
+
+        object.userData.PROPS.RASPIL_LIST = resultData
         object.userData.PROPS.RASPIL_COUNT = meshes.length
 
 
@@ -371,8 +446,8 @@ class TableTopCreator extends BuildersHelper {
             WIDTH: roundCut.radius ? roundCut.radius * 0.5 : width * 0.5
         }
 
-        console.log(data, "DATA")
-
+        const aabb = new THREE.Box3().setFromObject(mesh);
+        const obb = new OBB().fromBox3(aabb);
 
         mesh.userData.trueSizes = data
         if (groupId != null) {
@@ -388,7 +463,10 @@ class TableTopCreator extends BuildersHelper {
                 }
             },
             RASPIL: raspil
+
         }
+
+        mesh.userData.obb = obb
     }
 
     public applyMovements(paraent: THREE.Object3D) {
@@ -401,26 +479,9 @@ class TableTopCreator extends BuildersHelper {
             const result = this.findElementsBySectorId(data, elem.sectorId)
             result.position = elem.position.clone()
             result.rotation = elem.rotation.clone()
-            console.log(result, 'OPEN result')
 
         })
     }
-
-    // private findObjectByGroupId(propertyPath, value) {
-    //     let found = null;
-
-    //     this.root._scene!.traverse(obj => {
-    //         const props = propertyPath.split('.').reduce((current, key) => {
-    //             return current ? current[key] : undefined;
-    //         }, obj);
-
-    //         if (props === value && !found) {
-    //             found = obj;
-    //         }
-    //     });
-
-    //     return found;
-    // }
 
     /** Создание стрелок размеров модели */
 

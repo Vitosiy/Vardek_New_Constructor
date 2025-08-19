@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
@@ -15,304 +15,317 @@ export class FasadeBuilder {
 
     parent: THREETypes.TBuildProduct
     uniformeTextureStartData: TFasadePartPosition[] = []
+    _APP: THREETypes.TObject
+    jsonBuilder: THREETypes.TJSONBuilder
 
     constructor(parent: THREETypes.TBuildProduct) {
         this.parent = parent
-
+        this._APP = parent._APP
+        this.jsonBuilder = parent.json_builder
     }
 
-    getFasade(
-        {
-            group,
-            props,
-            fasadeNdx,
-            incomingModel,
-            isUMmodule = false,
-        }: {
-            group: THREE.Object3D,
-            props: THREETypes.TObject,
-            fasadeNdx?: number,
-            incomingModel?: number,
-            isUMmodule?: boolean,
-        }
-    ) {
+    getFasade({
+        group,
+        props,
+        fasadeNdx,
+        incomingModel,
+        isUMmodule = false,
+        defaultConfig
+    }: {
+        group: THREE.Object3D,
+        props: THREETypes.TObject,
+        fasadeNdx?: number,
+        incomingModel?: number,
+        isUMmodule?: boolean,
+        defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig
+    }) {
+        const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
+        const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
 
-        const { FASADE_DEFAULT, FASADE, CONFIG } = props
-        const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE } = CONFIG
-        const start_position = this.parent.getStartPosition(SIZE);
+        const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
+        const startPosition = this.parent.getStartPosition(SIZE);
+        const parent = new THREE.Object3D();
 
-        this.indexedFasadeToUtiformTexturing(props, isUMmodule)
+        // Подготовка индексации для текстурирования
+        this.indexedFasadeToUtiformTexturing(props, isUMmodule);
 
-        FASADE_PROPS.forEach((value, key, props_array) => {
+        // Перебор данных о фасадах
+        FASADE_PROPS.forEach((fasadeData, key) => {
 
-            const fasade_position = this.getFasadePosition(CONFIG, key, isUMmodule);
-            const fasade_id = FASADE_PROPS[key].BODY
+            // Получение позиции фасада
+            const fasadePositionData = this.getFasadePosition(CONFIG, key, isUMmodule);
+            const fasadeId = fasadeData.BODY;
+            const fasadeColor = fasadeData.COLOR;
 
-            let fasade = this.createFasade(
-                {
-                    fasade_position,
-                    start_position,
-                    fasade_id,
-                    props,
-                    key,
-                    incomingModel,
-                    props_array
-                }) as THREE.Object3D;
+            // Определение цвета фасада с учетом типа элемента
+            const resolveColorId = () => {
+                const isDefault = fasadeColor === this.parent.project.default_fasade_color;
 
-            let box = new THREE.Box3().setFromObject(fasade)
-            let vec = new THREE.Vector3();
-            let size = box.getSize(vec)
-
-
-            const fasadePosition = {
-                FASADE_WIDTH: FASADE_POSITIONS[key].FASADE_WIDTH = size.x,
-                FASADE_HEIGHT: FASADE_POSITIONS[key].FASADE_HEIGHT = size.y,
-                FASADE_DEPTH: FASADE_POSITIONS[key].FASADE_DEPTH = size.z
+                switch (ELEMENT_TYPE) {
+                    case "element_down":
+                        return (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor;
+                    case "element_up":
+                        return (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor;
+                    default:
+                        return fasadeColor;
+                }
             };
+            //------------------------------------------------
+            /** @Временная заглушка */
+            //------------------------------------------------
+            if (!isUMmodule) {
 
-            fasade.userData.trueSize = fasadePosition
-            fasade.userData.type = FASADE_TYPE
+                fasadeData.COLOR = resolveColorId();
+                fasadeData.SHOW = fasadeData.COLOR != 7397;
+                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null
 
-
-            let product_model_type = props.CONFIG.MODEL?.type ?? "left";
-            const position = this.setFasadePosition(fasade, fasade_position, product_model_type, props, start_position);
-
-            /** Сохраняем меш фасада */
-            if (FASADE_DEFAULT.length < FASADE_PROPS.length) {
-
-                FASADE.push(fasade);
-
-                const copy = fasade?.clone()
-                copy.userData.rootFasadeParent = group
-                FASADE_DEFAULT.push(copy);
-                fasade.visible = props.CONFIG.FASADE_PROPS[key].SHOW
-
-                group.add(fasade as THREE.Object3D)
-
-            }
-
-            /** Пересоздаём меш фасада если тот был удалён */
-            if (FASADE[fasadeNdx!] === null && fasadeNdx === key) {
-
-                // console.log('Delited')
-                FASADE[key] = fasade
-                // fasade.visible = props.CONFIG.FASADE_PROPS[key].SHOW
-                fasade.visible = true
-                group.add(fasade as THREE.Object3D)
-            }
-
-            /** Отрисовываем политру */
-            if (value.PALETTE != null) {
-
-                this.parent.palette_bulider.createPaletteColor(
-                    {
-                        fasade,
-                        data: value.PALETTE,
-                        fasadeNdx: key,
-                        props
-                    }
-                )
-            }
-
-            /** Отрисовываем Фрезу */
-            if (value.MILLING != null) {
-
-                const patina = value.PATINA
-
-                this.parent.milling_builder.createMillingFasade(fasade, fasadePosition, value.MILLING, props.FASADE_DEFAULT[key], patina)
-            }
+                const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0];
+                const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0]
 
 
-            /** Отрисовываем окна */
-            if (value.WINDOW != null) {
-
-                const params =
-                {
-                    fasade,
-                    fasadePosition,
-                    data: value.WINDOW,
-                    defaultGeometry: FASADE_DEFAULT[key],
-                    alum: FASADE_PROPS[key].ALUM
+                if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
+                    fasadeData.PALETTE = firstValuePall.ID
+                }
+                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLAAS === null) {
+                    fasadeData.GLAAS = firstValueGlass.ID
                 }
 
-                this.parent.window_builder.createWindow(params)
+
             }
 
-            /** Отрисовываем Алюминий */
-            if (value.ALUM != null && FASADE_PROPS[key].COLOR != null) {
+            // Создание объекта фасада
+            const fasade = this.createFasade({
+                fasade_position: fasadePositionData,
+                start_position: startPosition,
+                fasade_id: fasadeId,
+                props,
+                key,
+                incomingModel,
+                props_array: FASADE_PROPS,
+            }) as THREE.Object3D;
 
-                const incomeFasadeData = this.parent._FASADE[FASADE_PROPS[key].COLOR]
+            // Определение реальных размеров фасада
+            const box = new THREE.Box3().setFromObject(fasade);
+            const sizeVec = new THREE.Vector3();
+            const size = box.getSize(sizeVec);
 
-                this.parent.alum_builder.createAlum({ fasade, data: incomeFasadeData })
+            const fasadeSize = {
+                FASADE_WIDTH: FASADE_POSITIONS[key].FASADE_WIDTH = size.x,
+                FASADE_HEIGHT: FASADE_POSITIONS[key].FASADE_HEIGHT = size.y,
+                FASADE_DEPTH: FASADE_POSITIONS[key].FASADE_DEPTH = size.z,
+            };
+
+            fasade.userData.trueSize = fasadeSize;
+            fasade.userData.type = FASADE_TYPE;
+
+            // Позиционирование фасада в модели
+            const modelType = CONFIG.MODEL?.type ?? "left";
+            this.setFasadePosition(fasade, fasadePositionData, modelType, props, startPosition);
+
+            // Добавление нового фасада, если он отсутствует
+            const isNewFasade = FASADE_DEFAULT.length < FASADE_PROPS.length;
+            if (isNewFasade) {
+                FASADE.push(fasade);
+                const copy = fasade.clone();
+                copy.userData.rootFasadeParent = group;
+                FASADE_DEFAULT.push(copy);
+                fasade.visible = FASADE_PROPS[key].SHOW;
+                parent.add(fasade);
             }
 
-            /** Отрисовываем Стекло */
-            if (value.GLASS != null) {
-                this.parent.window_builder.changeGlassColor({ fasade, glassId: FASADE_PROPS[key].GLASS })
+            // Восстановление фасада, если он был удален
+            if (fasadeNdx === key && FASADE[fasadeNdx!] === null) {
+                FASADE[key] = fasade;
+                fasade.visible = true;
+                parent.add(fasade);
             }
 
-            // console.log(fasade)
+            // Добавление палитры, если она есть
+            if (fasadeData.PALETTE != null) {
+                this.parent.palette_bulider.createPaletteColor({ fasade, data: fasadeData.PALETTE, fasadeNdx: key, props });
+            }
 
-        })
+            // Добавление фрезеровки, если она есть
+            if (fasadeData.MILLING != null) {
+                this.parent.milling_builder.createMillingFasade(fasade, fasadeSize, fasadeData.MILLING, FASADE_DEFAULT[key], fasadeData.PATINA);
+            }
 
-        this.uniformeTextureStartData = []
+            // Добавление окна, если оно есть
+            if (fasadeData.WINDOW != null) {
+                this.parent.window_builder.createWindow({
+                    fasade,
+                    fasadePosition: fasadeSize,
+                    data: fasadeData.WINDOW,
+                    defaultGeometry: FASADE_DEFAULT[key],
+                    alum: FASADE_PROPS[key].ALUM,
+                });
+            }
+
+            // Добавление алюминиевого профиля, если он есть
+            if (fasadeData.ALUM != null && FASADE_PROPS[key].COLOR != null) {
+                const alumData = this.parent._FASADE[FASADE_PROPS[key].COLOR];
+                this.parent.alum_builder.createAlum({ fasade, data: alumData });
+            }
+
+            // Изменение цвета стекла, если оно есть
+            if (fasadeData.GLASS != null) {
+                this.parent.window_builder.changeGlassColor({ fasade, glassId: FASADE_PROPS[key].GLASS });
+            }
+        });
+
+        // Очистка данных о текстурах
+        this.uniformeTextureStartData = [];
+
+        return parent;
     }
 
-    createFasade(
-        {
-            fasade_position,
-            start_position,
-            fasade_id,
-            props,
-            key,
-            incomingModel,
-            props_array
-        }: {
-            fasade_position: THREETypes.TObject,
-            start_position: THREETypes.TObject,
-            fasade_id: number,
-            props: THREETypes.TObject,
-            key: number,
-            incomingModel?: number,
-            props_array: THREETypes.TObject[]
-        }
-    ) {
-
+    createFasade({
+        fasade_position,
+        start_position,
+        fasade_id,
+        props,
+        key,
+        incomingModel,
+        props_array
+    }: {
+        fasade_position: THREETypes.TObject,
+        start_position: THREETypes.TObject,
+        fasade_id: number,
+        props: THREETypes.TObject,
+        key: number,
+        incomingModel?: number,
+        props_array: THREETypes.TObject[]
+    }) {
         const fasadeData = this.parent._FASADE[fasade_id];
 
-        let fasade;
+        const { FASADE_PROPS, MODEL } = props.CONFIG;
+        const currentFasadeColor = FASADE_PROPS[key]?.COLOR;
 
-        const model = fasade_position.FASADE_MODEL ? fasade_position.FASADE_MODEL : false;
-        const fasadeModel = fasadeData.MODEL
-        const geometry_height = eval(fasade_position.FASADE_HEIGHT);
-        const product_model_type = props.CONFIG.MODEL?.type ?? "left";
-        const currentFasade = props.CONFIG.FASADE_PROPS[key].COLOR
+        // const productModelType = MODEL?.type ?? "left";
+        const modelName = fasade_position.FASADE_MODEL;
 
-        let geometry_config = {
+        if (modelName) {
+            const fasadeModel = this._APP.MODELS[modelName];
+            if (fasadeModel) {
+                // Создание фасада из модели
+                return this.parent.json_builder.createMesh({
+                    data: fasadeModel,
+                    parent_size: {
+                        x: this.parent.calculateFromString(fasade_position.FASADE_WIDTH),
+                        y: eval(fasade_position.FASADE_HEIGHT),
+                        z: this.parent.calculateFromString(fasade_position.FASADE_DEPTH),
+                    }
+                });
+            }
+        }
+
+        // Если нет готовой модели — создаём стандартный фасад
+        const geometryConfig = {
             x: this.parent.calculateFromString(fasade_position.FASADE_WIDTH),
-            y: geometry_height,
+            y: eval(fasade_position.FASADE_HEIGHT),
             z: this.parent.calculateFromString(fasade_position.FASADE_DEPTH),
-        }
+        };
+        const geometry = this.parent.createExtrudeBoxGeometry(geometryConfig);
+        const material = new THREE.MeshPhongMaterial();
 
-        let geometry = this.parent.createExtrudeBoxGeometry(geometry_config);
+        // Применяем текстуру, если задан цвет фасада
+        if (currentFasadeColor) {
+            const fasadeInfo = this.parent._FASADE[currentFasadeColor];
+            if (fasadeInfo?.TEXTURE) {
 
-        let material = new THREE.MeshPhongMaterial();
-
-        if (props.CONFIG.FASADE_PROPS.length > 0 && currentFasade) {
-
-            let url = this.parent._FASADE[props.CONFIG.FASADE_PROPS[key].COLOR].TEXTURE
-            let texture_size = {
-                width: this.parent._FASADE[props.CONFIG.FASADE_PROPS[key].COLOR].TEXTURE_WIDTH,
-                height: this.parent._FASADE[props.CONFIG.FASADE_PROPS[key].COLOR].TEXTURE_HEIGHT,
+                this.parent.getTexture({
+                    material,
+                    url: fasadeInfo.TEXTURE,
+                    texture_size: {
+                        width: fasadeInfo.TEXTURE_WIDTH,
+                        height: fasadeInfo.TEXTURE_HEIGHT,
+                    }
+                });
             }
-
-            this.parent.getTexture({ material, url, texture_size })
         }
 
-        if (fasadeData.TYPE == "no_fasade") {
-            fasade = new THREE.Mesh(geometry, material)
-            fasade.geometry.computeBoundingBox()
-        }
+        let fasade = new THREE.Mesh(geometry, material);
+        fasade.geometry.computeBoundingBox();
+        fasade.userData.partPosition = this.uniformeTextureStartData[key];
 
-        fasade!.userData.partPosition = this.uniformeTextureStartData[key]
-
-        // let product_model_type = props.CONFIG.MODEL?.type ?? "left";
-        // const position = this.setFasadePosition(fasade, fasade_position, product_model_type, props, start_position);
-
-        // fasade!.userData.partPosition = this.numberingToUniform(fasade_position, props, props_array,key)
-
-        return fasade
-
-
+        return fasade;
     }
 
-    private getFasadePosition(props: THREETypes.TObject, key: string | number, isUMmodule?: boolean = false) {
+    private getFasadePosition(
+        props: THREETypes.TObject,
+        key: string | number,
+        isUMmodule: boolean = false
+    ) {
+        if (isUMmodule) return props.FASADE_POSITIONS[key];
 
-        if(isUMmodule)
-            return props.FASADE_POSITIONS[key]
+        const { SIZE, EXPRESSIONS, FASADE_PROPS, FASADE_POSITIONS } = props;
+        const fasadeList = FASADE_PROPS[key]?.POSITION ?? FASADE_PROPS[0]?.POSITION;
+        let fasadePosition = this.parent._FASADE_POSITION[fasadeList];
 
-        const fasade_list = props.FASADE_PROPS[key].POSITION || props.FASADE_PROPS[0].POSITION;
-        const expressions = props.EXPRESSIONS;
-        // const fasadeThickness = 18;
+        const replacedExpressions = this.parent.expressionsReplace(fasadePosition, {
+            ...EXPRESSIONS,
+            "#X#": SIZE.width,
+            "#Y#": SIZE.height || 2100,
+            "#Z#": SIZE.depth,
+        });
 
-        // console.log(fasade_list)
+        const fasadePositionsData = {
+            FASADE_WIDTH: this.parent.calculateFromString(replacedExpressions.FASADE_WIDTH),
+            FASADE_HEIGHT: this.parent.calculateFromString(replacedExpressions.FASADE_HEIGHT),
+            FASADE_DEPTH: this.parent.calculateFromString(replacedExpressions.FASADE_DEPTH),
+            POSITION_X: this.parent.calculateFromString(replacedExpressions.POSITION_X),
+            POSITION_Y: this.parent.calculateFromString(replacedExpressions.POSITION_Y),
+            POSITION_Z: this.parent.calculateFromString(replacedExpressions.POSITION_Z),
+            ROTATE_X: replacedExpressions.ROTATE_X,
+            ROTATE_Y: replacedExpressions.ROTATE_Y,
+            ROTATE_Z: replacedExpressions.ROTATE_Z,
+            ROTATE_2_X: replacedExpressions.ROTATE_2_X,
+            ROTATE_2_Y: replacedExpressions.ROTATE_2_Y,
+            ROTATE_2_Z: replacedExpressions.ROTATE_2_Z,
+            FASADE_NUMBER: replacedExpressions.FASADE_NUMBER - 1, // массив начинается с 0
+            FASADE_MODEL: replacedExpressions.FASADE_MODEL,
+        };
 
-        let fasade_position = this.parent._FASADE_POSITION[fasade_list];
-
-        // const product_id = fasade_position?.PRODUCT || props.PRODUCT.ID
-
-        let fasade_width = props.SIZE.width
-
-        fasade_position = this.parent.expressionsReplace(fasade_position,
-            Object.assign(expressions,
-                {
-                    "#X#": fasade_width,
-                    "#Y#": props.SIZE.height || 2100,
-                    "#Z#": props.SIZE.depth,
-                }))
-        let fasadePositionsData = {
-            FASADE_WIDTH: this.parent.calculateFromString(fasade_position.FASADE_WIDTH),
-            FASADE_HEIGHT: this.parent.calculateFromString(fasade_position.FASADE_HEIGHT),
-            FASADE_DEPTH: this.parent.calculateFromString(fasade_position.FASADE_DEPTH),
-            POSITION_X: this.parent.calculateFromString(fasade_position.POSITION_X),
-            POSITION_Y: this.parent.calculateFromString(fasade_position.POSITION_Y),
-            POSITION_Z: this.parent.calculateFromString(fasade_position.POSITION_Z),
-            ROTATE_X: fasade_position.ROTATE_X,
-            ROTATE_Y: fasade_position.ROTATE_Y,
-            ROTATE_Z: fasade_position.ROTATE_Z,
-            ROTATE_2_X: fasade_position.ROTATE_2_X,
-            ROTATE_2_Y: fasade_position.ROTATE_2_Y,
-            ROTATE_2_Z: fasade_position.ROTATE_2_Z,
-            /** ВАЖНО!! */
-            FASADE_NUMBER: fasade_position.FASADE_NUMBER - 1, /** Т.к просчитывется массив с фасадами, а не объект */
-            FASADE_MODEL: fasade_position.FASADE_MODEL
-        }
-
-        /** Добавляем размеры и положене фасада в CONFIG */
-        if (this.parent.addIfNotExists(props.FASADE_POSITIONS, fasadePositionsData)) {
-            if (props.FASADE_POSITIONS.length < 1) {
-                props.FASADE_POSITIONS.push(
-                    fasadePositionsData
-                )
-            }
-            else {
-                props.FASADE_POSITIONS[key] = fasadePositionsData
+        // Добавляем фасадную позицию в CONFIG, если ещё не существует
+        if (this.parent.addIfNotExists(FASADE_POSITIONS, fasadePositionsData)) {
+            if (!FASADE_POSITIONS.length) {
+                FASADE_POSITIONS.push(fasadePositionsData);
+            } else {
+                FASADE_POSITIONS[key] = fasadePositionsData;
             }
         }
 
-        return fasade_position
+        return replacedExpressions;
     }
 
-    private setFasadePosition(fasade: THREE.Mesh, fasade_position: THREETypes.TObject, product_model_type: string, props: THREETypes.TObject, start_position: THREETypes.TObject) {
-        // fasade.rotation.set(0, 0, 0);
-        // fasade.rotateY(Math.PI)
+    private setFasadePosition(
+        fasade: THREE.Mesh,
+        fasade_position: THREETypes.TObject,
+        product_model_type: string,
+        props: THREETypes.TObject,
+        start_position: THREETypes.TObject
+    ) {
+        // Выбор углов поворота в зависимости от типа модели
+        const isRightModel = product_model_type === "right";
+        const rotX = THREE.MathUtils.degToRad(isRightModel ? fasade_position.ROTATE_2_X : fasade_position.ROTATE_X);
+        const rotY = THREE.MathUtils.degToRad(-(isRightModel ? fasade_position.ROTATE_2_Y : fasade_position.ROTATE_Y));
+        const rotZ = THREE.MathUtils.degToRad(isRightModel ? fasade_position.ROTATE_2_Z : fasade_position.ROTATE_Z);
 
-        switch (product_model_type) {
-            case "right":
-                fasade.rotateX(THREE.MathUtils.degToRad(fasade_position.ROTATE_2_X))
-                fasade.rotateY(THREE.MathUtils.degToRad(-fasade_position.ROTATE_2_Y))
-                fasade.rotateZ(THREE.MathUtils.degToRad(fasade_position.ROTATE_2_Z))
-                break;
-            default:
-                fasade.rotateX(THREE.MathUtils.degToRad(fasade_position.ROTATE_X))
-                fasade.rotateY(THREE.MathUtils.degToRad(-fasade_position.ROTATE_Y))
-                fasade.rotateZ(THREE.MathUtils.degToRad(fasade_position.ROTATE_Z))
-                break;
-        }
+        fasade.rotation.set(rotX, rotY, rotZ);
 
+        // Вычисляем позицию фасада
+        const posX = this.parent.calculateFromString(fasade_position.POSITION_X)
+            + start_position.x
+            + this.parent.calculateFromString(fasade_position.FASADE_WIDTH) * 0.5;
 
+        const posY = this.parent.calculateFromString(fasade_position.POSITION_Y)
+            + start_position.y
+            + this.parent.calculateFromString(fasade_position.FASADE_HEIGHT) * 0.5;
 
-        let posx = this.parent.calculateFromString(fasade_position.POSITION_X);
-        let posy = this.parent.calculateFromString(fasade_position.POSITION_Y);
-        let posz = this.parent.calculateFromString(fasade_position.POSITION_Z);
+        const posZ = this.parent.calculateFromString(fasade_position.POSITION_Z)
+            + start_position.z;
 
-        posx += start_position.x + this.parent.calculateFromString(fasade_position.FASADE_WIDTH) * 0.5;
-        posy += start_position.y + this.parent.calculateFromString(fasade_position.FASADE_HEIGHT) * 0.5;
-        posz += start_position.z
-
-        let position = new THREE.Vector3(posx, posy, posz);
-        fasade.position.set(position.x, position.y, position.z)
-
+        fasade.position.set(posX, posY, posZ);
     }
 
     private calcFasadePosition(props: THREETypes.TObject, fasade_position: THREETypes.TObject) {
@@ -344,6 +357,9 @@ export class FasadeBuilder {
             const { FASADE_WIDTH } = fasade_position
             const fasadeWidth = this.parent.calculateFromString(FASADE_WIDTH)
 
+            // console.log(fasade_position, 'fasade_position')
+
+
             const partPosition: TFasadePartPosition = {
                 TYPE_POSITION: null,
                 WIDTH: null,
@@ -356,6 +372,8 @@ export class FasadeBuilder {
 
             numered.push(partPosition)
 
+            // console.log(numered)
+
         })
 
         const hasColType = numered.some(obj => obj.TYPE_POSITION === 'col');
@@ -366,6 +384,8 @@ export class FasadeBuilder {
             numeredArray: numered,
             hasMixedTypes
         }
+
+        // console.log(result)
 
         return result
 
@@ -386,9 +406,9 @@ export class FasadeBuilder {
                     outputArray.push(...tempArray.reverse()); // Добавляем элементы в обратном порядке
                     tempArray = []; // Очищаем временный массив
                 }
-                outputArray.push(inputArray[i]); // Добавляем элемент с col
+                outputArray.push(inputArray[i]); // Добавляем элемент с DEFAULT
             } else if (inputArray[i].TYPE_POSITION === "row") {
-                tempArray.push(inputArray[i]); // Добавляем элемент с row во временный массив
+                tempArray.push(inputArray[i]); // Добавляем элемент с STRING во временный массив
             }
         }
 
@@ -411,9 +431,9 @@ export class FasadeBuilder {
             }
         }
 
-        // Шаг 3: Группируем значения row с лева на право
+        // Шаг 3: Группируем значения STRING с лева на право
         outputArray.forEach((item, ndx, array) => {
-            
+
             if (item.TYPE_POSITION === "col") def.push({ id: ndx + 1, type: item })
 
             if (ndx > 0 && array[ndx - 1].TYPE_POSITION === "col") {
@@ -473,4 +493,5 @@ export class FasadeBuilder {
         this.uniformeTextureStartData = numeredFasade.numeredArray
 
     }
+
 }

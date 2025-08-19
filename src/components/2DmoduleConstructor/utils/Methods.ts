@@ -626,9 +626,9 @@ class Shape extends Helpers {
         };
 
         this.graphic.on("pointerup", endDrag);
-        this.graphic.on("pointerupoutside", endDrag);
+        //this.graphic.on("pointerupoutside", endDrag);
         this.highlightGraphics.on("pointerup", endDrag);
-        this.highlightGraphics.on("pointerupoutside", endDrag);
+        //this.highlightGraphics.on("pointerupoutside", endDrag);
     }
 
     // Проверка перекрытия с другой фигурой

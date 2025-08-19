@@ -1,0 +1,293 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vardek Constructor API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://dev.vardek.online" }
+  ],
+  "paths": {
+    "/api/modeller/projectq/getprojectlist/": {
+      "post": {
+        "summary": "Get projects list",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Projects list", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/projectq/getprojectbyid/": {
+      "post": {
+        "summary": "Get project by id",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Project data", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/projectq/SaveProject/": {
+      "post": {
+        "summary": "Save project",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Saved", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/projectq/updateprojectbyid/": {
+      "post": {
+        "summary": "Update project",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/api/modeller/auth/login/": {
+      "post": {
+        "summary": "User login or get user data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/LoginData" },
+                  { "$ref": "#/components/schemas/TokenData" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Auth response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/modeller/mainobject/GetData/": {
+      "get": {
+        "summary": "Get main app data",
+        "responses": {
+          "200": {
+            "description": "Main data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "DATA": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/templates/constructor/API/data.get.php": {
+      "get": {
+        "summary": "Get catalog list",
+        "parameters": [
+          { "name": "config", "in": "query", "schema": { "type": "string" } },
+          { "name": "style", "in": "query", "schema": { "type": "string" } },
+          { "name": "cityid", "in": "query", "schema": { "type": "string" } },
+          { "name": "cityidprice", "in": "query", "schema": { "type": "string" } },
+          { "name": "section", "in": "query", "schema": { "type": "string" } },
+          { "name": "type", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "string" } },
+          { "name": "filter", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CatalogResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/templates/constructor/API/catalog.element.get.php": {
+      "post": {
+        "summary": "Get product details",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/ProductRequestData" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProductDetailsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/templates/constructor/API/catalog.element.getprice.php": {
+      "post": {
+        "summary": "Get product price",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/ProductRequestData" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product price",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProductPriceResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/API/data.basket.getprice.php": {
+      "post": {
+        "summary": "Get basket price or make order",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Basket price/order response",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginData": {
+        "type": "object",
+        "properties": {
+          "login": { "type": "string" },
+          "password": { "type": "string" }
+        },
+        "required": ["login", "password"]
+      },
+      "TokenData": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" }
+        },
+        "required": ["token"]
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "DATA": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["success", "error"]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "MESSAGE": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CatalogResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProductItem" }
+          },
+          "pager": { "type": "object" },
+          "sections": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogSectionItem" }
+          }
+        }
+      },
+      "ProductItem": {
+        "type": "object",
+        "properties": {
+          "ID": { "type": "string" },
+          "IMG": { "type": "string" },
+          "NAME": { "type": "string" },
+          "PRICE": { "type": "string" },
+          "SORT": { "type": "string" }
+        }
+      },
+      "CatalogSectionItem": {
+        "type": "object",
+        "properties": {
+          "ID": { "type": "string" },
+          "NAME": { "type": "string" },
+          "SECTION_PAGE_URL": { "type": "string" }
+        }
+      },
+      "ProductRequestData": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "ProductDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "object" },
+          "success": { "type": "boolean" }
+        }
+      },
+      "ProductPriceResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "object" },
+          "success": { "type": "boolean" }
+        }
+      }
+    }
+  }
+} 

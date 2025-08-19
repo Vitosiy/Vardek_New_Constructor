@@ -192,6 +192,7 @@ export interface GridSection {
   fasades?: FasadeObject[];
   fasadesDrawers?: FasadeObject[];
   loops?: [];
+  loopsSides?: {};
   profiles?: FillingObject[];
 }
 
@@ -206,4 +207,5 @@ export interface GridModule {
   type: "module";
   horizont?: number;
   fasades?: FasadeObject[];
+  isSlidingDoors?: boolean;
 }
