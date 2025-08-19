@@ -47,9 +47,7 @@ const closeInfoPopup = () => {
       <div :class="$style.content">
         <div :class="$style.imageTextBlock">
           <img :src="props.image" :class="$style.imageTextBlockImage" />
-          <p :class="$style.descriptionText">
-            {{ props.detailText }}
-          </p>
+          <p v-html="props.detailText" :class="$style.descriptionText"/>
         </div>
         <div v-if="props.videoUrl" :class="$style.videoBlock">
           <video

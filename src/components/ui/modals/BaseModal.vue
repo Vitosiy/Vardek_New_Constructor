@@ -9,7 +9,7 @@ interface IProps {
   maxHeight?: string;
 }
 
-const props = withDefaults(defineProps<IProps>(), {
+withDefaults(defineProps<IProps>(), {
   title: '',
   subtitle: '',
   showCloseButton: true,
