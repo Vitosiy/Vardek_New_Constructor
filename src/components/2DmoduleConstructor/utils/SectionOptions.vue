@@ -34,6 +34,7 @@ const emit = defineEmits([
   "product-updateFasades",
   "product-updateFilling",
   "product-calcLoops",
+  "product-checkLoopsCollision",
 ]);
 
 const timer = ref(false);
@@ -63,6 +64,10 @@ const updateFasades = () => {
 
 const calcLoops = (secIndex) => {
   emit("product-calcLoops", secIndex);
+}
+
+const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null) => {
+  emit("product-checkLoopsCollision", secIndex, cellIndex, rowIndex);
 }
 
 const updateFilling = (value, filling, type, render = false) => {
@@ -161,20 +166,10 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
     return;
   }
 
-  const deltaLastCell = section.height - halfHeight * (count + 1) - module.value.moduleThickness * count;
+  const deltaLastCell = cell.height - halfHeight * (count + 1) - module.value.moduleThickness * count;
 
   // Обновляем высоту последней строки
   cell.height = halfHeight;
-
-  /*let newFillings = []
-  cell.fillings?.filter((filling, index) => {
-    if (filling.position.y >= cell.position.y + cell.height + module.value.moduleThickness) {
-      newFillings.push(filling);
-    } else {
-      filling.cell += 1
-    }
-    return filling.position.y + filling.height <= cell.position.y + cell.height;
-  })*/
 
   if (cell.fillings)
     cell.fillings.length = 0
@@ -189,12 +184,14 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
       //fillings: newFillings,
     }
 
-    if(i === count - 1) {
+    if(deltaLastCell && i === count - 1) {
       newCell.height += deltaLastCell;
     }
 
     section.cells.splice(cellIndex || 0, 0, newCell);
   }
+
+  calcLoops(secIndex);
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();

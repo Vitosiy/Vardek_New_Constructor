@@ -88,7 +88,6 @@ const module = computed(() => {
               }))
 
 
-
       const isSlidingDoors = !PROPS.CONFIG.LOOPS;
       let fasades;
 
@@ -158,8 +157,7 @@ const module = computed(() => {
           ]
         ]
         _module.fasades = fasades
-      }
-      else {
+      } else {
         fasades = [
           [
             <FasadeObject>{
@@ -341,81 +339,81 @@ const getFasadePositionMinMax = (fasade) => {
 
 const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
-  if(!module.value.isSlidingDoors)
+  if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-    if (section.fasadesDrawers?.length) {
-      calcDrawersFasades(secIndex)
-    } else if (section.fasades?.[0]) {
-      const countDoors = section.fasades.length;
+      if (section.fasadesDrawers?.length) {
+        calcDrawersFasades(secIndex)
+      } else if (section.fasades?.[0]) {
+        const countDoors = section.fasades.length;
 
-      const correctSectionFasadeWidth =
-          module.value.sections.length > 1 ?
-              secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
-                  section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
-              module.value.width - 4;
+        const correctSectionFasadeWidth =
+            module.value.sections.length > 1 ?
+                secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
+                    section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
+                module.value.width - 4;
 
-      const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
+        const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
 
-      const sumDoorsWidth = section.fasades.reduce(
-          (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
-          0) / countDoors - ((countDoors - 1) * 2);
-      const sumDoorsHeight = section.fasades[0].reduce(
-          (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
-          0);
+        const sumDoorsWidth = section.fasades.reduce(
+            (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
+            0) / countDoors - ((countDoors - 1) * 2);
+        const sumDoorsHeight = section.fasades[0].reduce(
+            (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
+            0);
 
-      const deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
-      const deltaHeight = correctFasadeHeight - sumDoorsHeight;
+        const deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
+        const deltaHeight = correctFasadeHeight - sumDoorsHeight;
 
-      if (deltaWidth !== 0) {
+        if (deltaWidth !== 0) {
           section.fasades.forEach((door, doorIndex) => {
-          door.forEach((segment) => {
+            door.forEach((segment) => {
 
-            let fasadeMinMax = getFasadePositionMinMax(segment)
-            Object.entries(fasadeMinMax).forEach(([key, value]) => {
-              segment[key] = value;
+              let fasadeMinMax = getFasadePositionMinMax(segment)
+              Object.entries(fasadeMinMax).forEach(([key, value]) => {
+                segment[key] = value;
+              })
+
+              segment.width += deltaWidth;
+
+              if (secIndex !== 0) {
+                segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((section.width + 4) * doorIndex);
+              } else if (doorIndex > 0) {
+                segment.position.x += deltaWidth;
+              }
+
+              if (segment.width < segment.minX || segment.height < segment.minY)
+                segment.error = true
+              else
+                delete segment.error;
             })
-
-            segment.width += deltaWidth;
-
-            if (secIndex !== 0) {
-              segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((section.width + 4) * doorIndex);
-            } else if (doorIndex > 0) {
-              segment.position.x += deltaWidth;
-            }
-
-            if (segment.width < segment.minX || segment.height < segment.minY)
-              segment.error = true
-            else
-              delete segment.error;
           })
-        })
-      }
+        }
 
-      if (deltaHeight !== 0) {
+        if (deltaHeight !== 0) {
           section.fasades.forEach((door) => {
-          door.forEach((segment) => {
-            let fasadeMinMax = getFasadePositionMinMax(segment)
-            Object.entries(fasadeMinMax).forEach(([key, value]) => {
-              segment[key] = value;
+            door.forEach((segment) => {
+              let fasadeMinMax = getFasadePositionMinMax(segment)
+              Object.entries(fasadeMinMax).forEach(([key, value]) => {
+                segment[key] = value;
+              })
             })
+
+            let lastSegment = door[0]
+            if (!lastSegment.manufacturerOffset) {
+              lastSegment.height += deltaHeight;
+
+              if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+                lastSegment.error = true
+              else
+                delete lastSegment.error;
+            }
           })
-
-          let lastSegment = door[0]
-          if (!lastSegment.manufacturerOffset) {
-            lastSegment.height += deltaHeight;
-
-            if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
-              lastSegment.error = true
-            else
-              delete lastSegment.error;
-          }
-        })
-      }
+        }
 
         calcLoops(secIndex)
-    }
+      }
 
-  })
+    })
   else {
     module.value.fasades.forEach((door, doorIndex) => {
       let tmp_fasadePosition = calcSlideDoor(door[0].material.POSITION, doorIndex + 1)
@@ -426,27 +424,26 @@ const updateFasades = () => {
       const deltaHeight = tmp_fasadePosition.FASADE_HEIGHT - sumDoorsHeight;
 
       door[door.length - 1].height += deltaHeight;
-      if(door[door.length - 1].height < door[door.length - 1].minY) {
+      if (door[door.length - 1].height < door[door.length - 1].minY) {
         door[0].height = tmp_fasadePosition.FASADE_HEIGHT
         door = [door[0]]
         return;
-      }
-      else
+      } else
         door.forEach((segment) => {
-        let fasadeMinMax = getFasadePositionMinMax(segment)
-        Object.entries(fasadeMinMax).forEach(([key, value]) => {
-          segment[key] = value;
+          let fasadeMinMax = getFasadePositionMinMax(segment)
+          Object.entries(fasadeMinMax).forEach(([key, value]) => {
+            segment[key] = value;
+          })
+
+          segment.width = tmp_fasadePosition.FASADE_WIDTH
+          segment.position.x = tmp_fasadePosition.POSITION_X
+          segment.position.z = tmp_fasadePosition.POSITION_Z
+
+          if (segment.width < segment.minX || segment.height < segment.minY)
+            segment.error = true
+          else
+            delete segment.error;
         })
-
-        segment.width = tmp_fasadePosition.FASADE_WIDTH
-        segment.position.x = tmp_fasadePosition.POSITION_X
-        segment.position.z = tmp_fasadePosition.POSITION_Z
-
-        if (segment.width < segment.minX || segment.height < segment.minY)
-          segment.error = true
-        else
-          delete segment.error;
-      })
     })
   }
 };
@@ -603,7 +600,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
       upperFasadeSize = Math.abs(totalHeight.value - 2 - bottomFasadePosition)
     }
 
-    if(upperFasadeSize >= MIN_FASADE_HEIGHT)
+    if (upperFasadeSize >= MIN_FASADE_HEIGHT)
       fasadeList.push({
         y: bottomFasadePosition,
         height: upperFasadeSize,
@@ -619,7 +616,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
     }
   }
 
-  if(fullFasadelSize >= MIN_FASADE_HEIGHT)
+  if (fullFasadelSize >= MIN_FASADE_HEIGHT)
     fasadeList.push({
       y: bottomFasadePosition,
       height: fullFasadelSize,
@@ -699,7 +696,7 @@ const calcSlideDoor = (fasadePositionID, doorNumber, callback) => {
     fasadePosition.POSITION_X += fasadePosition.FASADE_WIDTH * (doorNumber - 1)
   }
 
-  if(callback)
+  if (callback)
     callback(fasadePosition)
   else
     return fasadePosition
@@ -732,6 +729,8 @@ const calcLoops = (secIndex, grid = false) => {
 
   if (!curSection.loops.length)
     delete curSection.loops
+  else if (!grid)
+    checkLoopsCollision(secIndex)
 }
 
 const calcLoopPositions = (fasades, section) => {
@@ -805,7 +804,75 @@ const calcLoopPositions = (fasades, section) => {
   return allLoops
 }
 
-const checkLoopsErrorPosition = (secIndex) => {
+const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasadeSegmentIndex = null) => {
+  const currentSection = module.value.sections[secIndex];
+  const currentCol = currentSection.cells?.[cellIndex];
+  const currentRow = currentCol?.cellsRows?.[rowIndex];
+  const currentFasade = currentSection.fasades?.[cellIndex]?.[fasadeSegmentIndex];
+  const moduleThickness = module.value.moduleThickness
+
+  const currentSector = currentFasade || currentRow || currentCol || currentSection
+  const loops = currentSection.loops
+
+  if (!loops)
+    return
+
+  let loopsSectors = {}
+  Object.entries(loops).forEach(([doorKey, doorLoops]) => {
+    loopsSectors[doorKey] = {}
+    doorLoops.forEach((fasade, fasadeKey) => {
+      loopsSectors[doorKey][fasadeKey] = []
+      fasade.coords.forEach((coord, key) => {
+        loopsSectors[doorKey][fasadeKey].push({
+          id: key,
+          minY: coord,
+          maxY: coord + fasade.height,
+          minX: fasade.positionX,
+          maxX: fasade.positionX + fasade.width,
+        })
+      })
+    })
+    /*
+        loopsSectors[doorKey] = loopsSectors[doorKey].sort((a, b) => {
+          return a.minY - b.minY
+        })*/
+  })
+
+  if (currentSector.cells?.length) {
+    Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
+      Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
+        loops[doorKey][fasadeKey].errors = []
+        currentSector.cells.forEach((cell, cellKey) => {
+          _loops.forEach(loop => {
+            if (
+                (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
+                (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
+            ) {
+              if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
+                loops[doorKey][fasadeKey].errors.push(loop.id)
+            }
+          })
+        })
+      })
+    })
+  } else {
+    Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
+      Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
+        loops[doorKey][fasadeKey].errors = []
+        _loops.forEach(loop => {
+          if (
+              (loop.minY <= (currentSector.position.y - moduleThickness) && loop.maxY >= (currentSector.position.y - moduleThickness)) ||
+              (loop.minY <= currentSector.position.y && loop.maxY >= currentSector.position.y)
+          ) {
+            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
+              loops[doorKey][fasadeKey].errors.push(loop.id)
+          }
+        })
+      })
+    })
+  }
+
+  return loops;
 
 }
 
@@ -967,7 +1034,7 @@ const saveGrid = () => {
 
         if (nesting.includes(key)) {
           value = value.map(item => {
-            if(Array.isArray(item))
+            if (Array.isArray(item))
               return item = item.map(_item => {
                 return removeGarbage(_item)
               })
@@ -1223,6 +1290,7 @@ watch(visualizationRef, () => {
             :step="step"
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
+            @product-checkLoopsCollision="checkLoopsCollision"
             @product-updateFilling="updateFilling"
         />
       </div>
@@ -1241,6 +1309,7 @@ watch(visualizationRef, () => {
             :step="step"
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
+            @product-checkLoopsCollision="checkLoopsCollision"
             @product-calcDrawersFasades="calcDrawersFasades"
             @product-getFasadePositionMinMax="getFasadePositionMinMax"
             @product-calcSlideDoor="calcSlideDoor"

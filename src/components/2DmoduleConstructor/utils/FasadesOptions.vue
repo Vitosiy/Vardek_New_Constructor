@@ -36,6 +36,7 @@ const emit = defineEmits([
     "product-calcDrawersFasades",
   "product-calcLoops",
   "product-calcSlideDoor",
+  "product-checkLoopsCollision",
 ]);
 
 const timer = ref(false);
@@ -68,6 +69,10 @@ const calcSlideDoor = (positionId, doorIndex, callback) => {
 
 const calcLoops = (secIndex) => {
   emit("product-calcLoops", secIndex);
+}
+
+const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, segmentIndex = null) => {
+  emit("product-checkLoopsCollision", secIndex, cellIndex, rowIndex, segmentIndex);
 }
 
 const calcDrawersFasades = () => {

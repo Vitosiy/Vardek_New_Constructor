@@ -369,30 +369,37 @@ const renderGrid = () => {
 
       section.loops.forEach((door, doorIndex, ) => {
         door.forEach((loop, loopIndex) => {
-          let loopXOffset = getPixelWidth(loop.positionX);
-          let loopYOffset = getPixelHeight(module.value.height);
+          let tmpLoopData = Object.assign({}, loop)
+          delete tmpLoopData.coords;
+          delete tmpLoopData.errors;
 
-          const pxWidth = getPixelWidth(loop.width);
-          const pxHeight = getPixelHeight(loop.height);
-          loop.xOffset = loopXOffset;
+          let loopXOffset = getPixelWidth(tmpLoopData.positionX);
+          let loopYOffset = getPixelHeight(module.value.height);
+          const pxWidth = getPixelWidth(tmpLoopData.width);
+          const pxHeight = getPixelHeight(tmpLoopData.height);
+
+          tmpLoopData.xOffset = loopXOffset;
 
           loop.coords.forEach((pos, posIndex, ) => {
-            loop.yOffset = loopYOffset - getPixelHeight(pos + loop.height);
+            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height);
             // Отрисовываем секцию
 
             let loopSector = createLoop({
-              x: loop.xOffset,
-              y: loop.yOffset,
+              x: tmpLoopData.xOffset,
+              y: tmpLoopData.yOffset,
               width: pxWidth,
               height: pxHeight,
-              loopData: loop
+              loopData: {
+                ...tmpLoopData,
+                error: loop.errors?.includes(posIndex),
+              },
             });
 
             let tempShape = new Shape({
               type: "loop",
               sector: loopSector,
-              data: loop,
-              position: {x: loop.positionX, y: pos + loop.height},
+              data: tmpLoopData,
+              position: {x: tmpLoopData.positionX, y: pos + tmpLoopData.height},
               getMmWidth,
               getMmHeight,
               getPixelHeight,
