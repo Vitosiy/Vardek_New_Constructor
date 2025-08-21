@@ -14,6 +14,7 @@ export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): 
     if( this.layers.planner && this.layers.planner.state.activeWall ){
       this.layers.planner?.deactiveWalls();
       this.layers.arrowRulerActiveObject?.clearGraphic();
+      this.layers.dimensionDisplay.hide();
       this.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
     }
 

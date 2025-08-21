@@ -35,6 +35,7 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
     if( this.parent.layers.planner && this.parent.layers.planner.state.activeWall ){
       this.parent.layers.planner?.deactiveWalls();
       this.parent.layers.arrowRulerActiveObject?.clearGraphic();
+      this.parent.layers.dimensionDisplay.hide();
     }
 
     this.state.oldPosition = JSON.parse(JSON.stringify(dataObject.points));

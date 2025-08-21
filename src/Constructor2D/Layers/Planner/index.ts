@@ -145,6 +145,11 @@ export default class Planner {
     this.eventModifyWall = eventModifyWall.bind(this);
     this.eventRemoveWall = eventRemoveWall.bind(this);
 
+    // managers
+    // this.dimensionDisplay = new DimensionDisplay( // отображения размеров стены с размерам приналежащих к стене объектов
+    //   this.parent
+    // );
+
     this.parent.eventBus.on(Events.C2D_MODIFY_WALL, this.eventModifyWall);
     this.parent.eventBus.on(Events.C2D_REMOVE_WALL, this.eventRemoveWall);
 
@@ -735,23 +740,24 @@ export default class Planner {
           endPoint: new PIXI.Graphics(),
           normalIndicator: new PIXI.Graphics(),
           textWallWidth: new PIXI.Text(),
-          rulerWall: new PIXI.Graphics(),
-          containerTextRulerWall: new PIXI.Container(),
-          textRulerWall: new PIXI.Text({
-            text: "",
-            style: {
-              fontSize: 16,
-              fill: 0x5D6069,
-            },
-          }),
+          // dimensionDisplay: new PIXI.Container(), // контейнер для отображения размеров стены и ее объектов
+          // rulerWall: new PIXI.Graphics(),
+          // containerTextRulerWall: new PIXI.Container(),
+          // textRulerWall: new PIXI.Text({
+          //   text: "",
+          //   style: {
+          //     fontSize: 16,
+          //     fill: 0x5D6069,
+          //   },
+          // }),
           eventGraphic: new PIXI.Graphics(),
         };
 
         if (dataWall.containers.root) this.container.addChild(dataWall.containers.root);
 
-        if (dataWall.containers.containerTextRulerWall && dataWall.containers.textRulerWall) {
-          dataWall.containers.containerTextRulerWall.addChild(dataWall.containers.textRulerWall);
-        }
+        // if (dataWall.containers.containerTextRulerWall && dataWall.containers.textRulerWall) {
+          // dataWall.containers.containerTextRulerWall.addChild(dataWall.containers.textRulerWall);
+        // }
 
         if (dataWall.containers.eventGraphic) {
           dataWall.containers.eventGraphic.eventMode = 'static';
@@ -773,8 +779,8 @@ export default class Planner {
           if (dataWall.containers.endPoint) dataWall.containers.root.addChild(dataWall.containers.endPoint);
           if (dataWall.containers.normalIndicator) dataWall.containers.root.addChild(dataWall.containers.normalIndicator);
           if (dataWall.containers.textWallWidth) dataWall.containers.root.addChild(dataWall.containers.textWallWidth);
-          if (dataWall.containers.rulerWall) dataWall.containers.root.addChild(dataWall.containers.rulerWall);
-          if (dataWall.containers.containerTextRulerWall) dataWall.containers.root.addChild(dataWall.containers.containerTextRulerWall);
+          if (dataWall.containers.dimensionDisplay) dataWall.containers.root.addChild(dataWall.containers.dimensionDisplay);
+          // if (dataWall.containers.containerTextRulerWall) dataWall.containers.root.addChild(dataWall.containers.containerTextRulerWall);
           if (dataWall.containers.eventGraphic) dataWall.containers.root.addChild(dataWall.containers.eventGraphic);
         }
 
@@ -1231,83 +1237,7 @@ export default class Planner {
 
       }
 
-      if (containers.rulerWall && containers.containerTextRulerWall) {
-
-        if (this.state.activeWall) {
-
-          containers.rulerWall.visible = true;
-
-          const linePoints = drawLine(
-            containers.rulerWall,
-            points[0],
-            obj.width,
-            obj.angleDegrees, // Угол направления стрелки в градусах
-            this.config.wall.color.arrowHead,
-            0.6, // Толщина линии
-            true,
-            (obj.height + 20) * obj.heightDirection
-          );
-
-          for (let i = 0, len = linePoints.length; i < len; i++) { // граница линии начальной точки
-
-            // Вычисляем точки p0 и p1 со смещением 8
-            const p0: Vector2 = { x: linePoints[i].x - 5, y: linePoints[i].y };
-            const p1: Vector2 = { x: linePoints[i].x + 5, y: linePoints[i].y };
-
-            const rotatedP0 = rotatePoint(p0, linePoints[i], obj.angleDegrees + 100);
-            const rotatedP1 = rotatePoint(p1, linePoints[i], obj.angleDegrees + 100);
-
-            drawShape(
-              containers.rulerWall,
-              [
-                rotatedP0,
-                rotatedP1
-              ], // Массив точек для контура
-              {
-                stroke: this.config.wall.color.arrowHead
-              },
-              0.6 // Толщина линии
-            )
-
-          }
-
-          if (containers.textRulerWall) {
-
-            containers.containerTextRulerWall.visible = true;
-            containers.textRulerWall.text = "";
-
-            const distance = getDistanceBetweenVectors(linePoints[0], linePoints[1]);
-
-            containers.textRulerWall.text = (Number(distance.toFixed(1)) * 10).toString() + " мм";
-
-            const pointText = offsetVectorBySegmentNormal(
-              [linePoints[0], linePoints[1]],
-              offsetVectorBySegment(
-                [linePoints[0], linePoints[1]],
-                getMidpoint(linePoints[0], linePoints[1]),
-                -containers.textRulerWall.width / 2
-              ),
-              18 * obj.heightDirection
-            );
-            containers.containerTextRulerWall.x = pointText.x;
-            containers.containerTextRulerWall.y = pointText.y;
-
-            containers.containerTextRulerWall.pivot.x = 0.5;
-            containers.containerTextRulerWall.pivot.y = 0.5;
-
-            containers.containerTextRulerWall.rotation = MathUtils.degToRad(obj.angleDegrees);
-
-          }
-
-        } else {
-
-          containers.rulerWall.clear();
-          containers.rulerWall.visible = false;
-          containers.containerTextRulerWall.visible = false;
-
-        }
-
-      }
+      if(activeWallID) this.parent.layers.dimensionDisplay.show(this.state.activeWall);
 
       if (containers.eventGraphic) {
         rect(
@@ -1319,7 +1249,7 @@ export default class Planner {
           }
         );
 
-        // // объекь для показа центра стены
+        // // объект для показа центра стены для теста
         // const centerObject = getCenterOfPoints(data.points);
         // drawCircle(
         //   containers.eventGraphic,

@@ -65,7 +65,7 @@ export default class ArrowRulerActiveObject {
 
   // Метод для отрисовки стрелок с размером
   public draw(position: Vector2): void {
-    if (!position) return; // Если точек нет, выходим
+    if (!position) return; // Если точки нет, выходим
 
     this.container!.visible = true; // Делаем контейнер видимым
 
