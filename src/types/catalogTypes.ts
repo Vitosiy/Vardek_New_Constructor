@@ -77,7 +77,6 @@ interface ProductItem {
     SORT?: string;
 }
 
-
 interface ProductRequestData {
   [key: string]: string | number | boolean
 }

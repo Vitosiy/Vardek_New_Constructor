@@ -3,7 +3,7 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { MenuType, TOptionsMap } from '@/types/types';
+import { MenuType, TOptionsMap, TLightRange, TQuality, TQualityValue } from '@/types/types';
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from '@/store/appliction/useSceneState';
 
@@ -15,6 +15,34 @@ export const useMenuStore = defineStore('menu', () => {
   const menuContentsByID = ref<string>('');
   const roomState = useRoomState();
   const sceneState = useSceneState();
+  const startParams = sceneState.getStartProgectParams
+
+  const lightRange = ref<TLightRange>({
+    pointLight: startParams.lights.pointLight.intensity,
+    ambientLight: startParams.lights.ambientLight.intensity
+  })
+
+  const quality = ref<TQuality[]>([{
+    lable: "Низкое",
+    value: "low",
+    active: true,
+  },
+  {
+    lable: "Среднее",
+    value: "medium",
+    active: false,
+  },
+  {
+    lable: "Высокое",
+    value: "hight",
+    active: false,
+  }
+
+  ],)
+
+  const shadowValue = ref<boolean>(false)
+  const refractionValue = ref<boolean>(false)
+  const startHeightClamp = ref<number | string>(startParams.height_clamp)
 
   const defaultIds: Record<keyof TOptionsMap, string> = {
     moduleTop: 'default_module_color',
@@ -22,7 +50,8 @@ export const useMenuStore = defineStore('menu', () => {
     fasadsTop: 'default_fasade_color',
     fasadsBottom: 'default_fasade_color',
     wall: 'default_wall',
-    floor: 'default_floor'
+    floor: 'default_floor',
+    tableTop: 'default_table_model'
   }
 
   const {
@@ -31,8 +60,9 @@ export const useMenuStore = defineStore('menu', () => {
     default_module_color: defaultModuleTop,
     default_module_color: defaultModuleBottom,
     default_fasade_color: defaultFasadeTop,
-    default_fasade_color: defaultFasadeBottom
-  } = sceneState.getStartProgectParams;
+    default_fasade_color: defaultFasadeBottom,
+    default_table_model: defaulttableTop
+  } = startParams;
 
   const globalOptions = ref<TOptionsMap>({
     wall: { id: defaultWall, global: false, title: "Оформление стен", label: 'Для всех комнат' },
@@ -41,9 +71,12 @@ export const useMenuStore = defineStore('menu', () => {
     moduleBottom: { id: defaultModuleBottom, global: false, title: "Цвет корпуса (нижний)", label: 'Для всех комнат' },
     fasadsTop: { id: defaultFasadeTop, global: false, title: "Тип фасада (верхний)", label: 'Для всех комнат' },
     fasadsBottom: { id: defaultFasadeBottom, global: false, title: "Тип фасада (нижний)", label: 'Для всех комнат' },
+    tableTop: { id: defaulttableTop, global: false, title: "Тип столешницы", label: 'Для всех комнат' },
   });
 
   async function openMenu(type: MenuType, content: string, products: []) {
+
+    console.log(type, content, products, '--MenuType')
 
     openMenus.value = [];
     catalogFilterProductsId.value = [];
@@ -67,6 +100,55 @@ export const useMenuStore = defineStore('menu', () => {
     openMenus.value = [];
     menuContentsByID.value = '';
   }
+
+  /** @Работа_с_настройками_освещения */
+
+  const setShadowValue = (value: boolean) => {
+    shadowValue.value = value
+  }
+
+  const setRefractionValue = (value: boolean) => {
+    refractionValue.value = value
+  }
+
+  const setLightRange = (type: keyof TLightRange, value: number | string) => {
+    lightRange.value[type] = value
+  }
+
+  const setHeightClamp = (value: number | string) => {
+    startHeightClamp.value = value
+  }
+
+  const setQuality = (type: TQualityValue, value: boolean) => {
+    quality.value.forEach((el: TQuality) => {
+      el.active = el.value === type;
+    })
+
+  }
+
+  const getShadowValue = computed(() => {
+    return shadowValue.value
+  })
+
+  const getRefractionValue = computed(() => {
+    return refractionValue.value
+  })
+
+  const getAmbientLightRange = computed(() => {
+    return lightRange.value.ambientLight
+  })
+
+  const getPointLightRange = computed(() => {
+    return lightRange.value.pointLight
+  })
+
+  const getHeightClamp = computed(() => {
+    return startHeightClamp.value
+  })
+
+  const getQuality = computed(() => {
+    return quality.value
+  })
 
   /** @Работа_с_опциями */
 
@@ -121,6 +203,19 @@ export const useMenuStore = defineStore('menu', () => {
     getGlobalOptions,
     updateOption,
     updateOptionGlobal,
-    resetGlobalOptions
+    resetGlobalOptions,
+
+    setShadowValue,
+    setRefractionValue,
+    setLightRange,
+    setHeightClamp,
+    setQuality,
+
+    getShadowValue,
+    getRefractionValue,
+    getAmbientLightRange,
+    getPointLightRange,
+    getHeightClamp,
+    getQuality
   };
 });

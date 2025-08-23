@@ -22,6 +22,7 @@ const pageComponentRef = ref(null);
 </script>
 
 <template>
+  
   <MainHeader :page-component="pageComponentRef" />
   <MainPopUp />
   <InfoPopUp />

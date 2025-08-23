@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck 31
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { onMounted, onBeforeUnmount, ref, onUnmounted } from "vue";
 import type { Mesh, Object3D, Vector3, PerspectiveCamera } from "three";
 
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
@@ -30,7 +30,6 @@ const closeCustomiser = () => {
 };
 
 const checkSelect = (el) => {
-
   if (!el.object) {
     closeCustomiser();
     currentModel.value = null;
@@ -39,8 +38,6 @@ const checkSelect = (el) => {
   }
   currentModel.value = el.object.userData;
   modelState.setCurrentModel(el.object.userData);
-  // customiserStore.switchCustomiser('ruler')
-  // console.log(currentModel.value, "o");
 };
 
 onMounted(() => {
@@ -53,6 +50,9 @@ onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
   eventBus.off("A:ClearSelected", checkSelect);
 });
+onUnmounted(()=>{
+  closeCustomiser()
+})
 </script>
 
 <template>

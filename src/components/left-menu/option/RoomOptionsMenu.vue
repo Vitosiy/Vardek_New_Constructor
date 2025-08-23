@@ -6,6 +6,7 @@ import {
   watch,
   onBeforeMount,
   onMounted,
+  onUnmounted,
   defineExpose,
 } from "vue";
 import { _URL } from "@/types/constants";
@@ -41,9 +42,9 @@ const roomState = useRoomState();
 const menuStore = useMenuStore();
 const appData = useAppData();
 
-const clampHeight = ref<number>(sceneState.getStartHeightClamp);
-const quality = ref<TQuality[]>(sceneState.getQuality);
-const currentQuality = ref<TQuality>(quality.value[0]);
+const clampHeight = ref<number | null>(null);
+const quality = ref<TQuality[] | null>(null);
+const currentQuality = ref<TQuality | null>(null);
 
 const pointLight = ref<number | string>(1);
 const ambientLight = ref<number | string>(1);
@@ -57,6 +58,12 @@ const currentOptionLable = ref<string | null>(null);
 const optionsData = ref<{ [key: string]: any } | null | any[]>(null);
 const roomRef = ref<HTMLElement | null>(null);
 
+const modulesColorData = ref(null);
+const defaultFasadeData = ref(null);
+const defaultTableTopData = ref(null);
+const wallsTextures = ref(null);
+const floorTextures = ref(null);
+
 const optionsType = ref<TTextureActionMap>({
   wall: "A:ChangeWallTexture",
   floor: "A:ChangeFloorTexture",
@@ -64,21 +71,28 @@ const optionsType = ref<TTextureActionMap>({
   moduleBottom: "A:ChangeModuleTotalTexture",
   fasadsTop: "A:ChangeFasadsTopTexture",
   fasadsBottom: "A:ChangeFasadsBottomTexture",
+  tableTop: "A:ChangeTableTop",
 });
 
 const globalOptions = ref<TOptionsMap | null>(null);
 
-onMounted(() => {
-  shadows.value = sceneState.getShadowValue;
-  refraction.value = sceneState.getRefractionValue;
-  pointLight.value = sceneState.getLightRange.pointLight;
-  ambientLight.value = sceneState.getLightRange.ambientLight;
-
-});
+// onMounted(() => {
+//   shadows.value = menuStore.getShadowValue;
+//   refraction.value = menuStore.getRefractionValue;
+//   pointLight.value = menuStore.getPointLightRange;
+//   ambientLight.value = menuStore.getAmbientLightRange;
+// });
 
 onBeforeMount(() => {
-  globalOptions.value = menuStore.getGlobalOptions;
   prepareOptions();
+});
+
+onUnmounted(() => {
+  menuStore.setHeightClamp(clampHeight.value);
+  menuStore.setLightRange("pointLight", pointLight.value);
+  menuStore.setLightRange("ambientLight", ambientLight.value);
+  menuStore.setRefractionValue(refraction.value);
+  menuStore.setShadowValue(shadows.value);
 });
 
 defineExpose({
@@ -90,6 +104,21 @@ const prepareOptions = () => {
 
   menuStore.updateOption("wall", wall as number);
   menuStore.updateOption("floor", floor as number);
+  globalOptions.value = menuStore.getGlobalOptions;
+  modulesColorData.value = roomState.getDefaultModuleData();
+  wallsTextures.value = roomState.getWallsTextures();
+  floorTextures.value = roomState.getFloorTextures();
+  defaultFasadeData.value = roomState.getDefaultFasadeData();
+  defaultTableTopData.value = roomState.getDefaultTableTopData();
+
+  clampHeight.value = menuStore.getHeightClamp;
+  quality.value = menuStore.getQuality;
+  currentQuality.value = quality.value.find((el) => el.active);
+
+  shadows.value = menuStore.getShadowValue;
+  refraction.value = menuStore.getRefractionValue;
+  pointLight.value = menuStore.getPointLightRange;
+  ambientLight.value = menuStore.getAmbientLightRange;
 };
 
 const closeMenu = (menuType: MenuType) => {
@@ -111,8 +140,9 @@ const deliteRoom = (value: number) => {
   roomState.removeRoom(value);
 };
 
-const changeQualit = (data: TQuality) => {
+const changeQuality = (data: TQuality) => {
   currentQuality.value = data;
+  menuStore.setQuality(data.value, true)
   eventBus.emit("A:Quality", data.value);
 };
 
@@ -141,22 +171,25 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
   currentOption.value = value;
   switch (value) {
     case "wall":
-      optionsData.value = Object.values(roomState.getWallsTextures());
+      optionsData.value = Object.values(wallsTextures.value);
       break;
     case "floor":
-      optionsData.value = Object.values(roomState.getFloorTextures());
+      optionsData.value = Object.values(floorTextures.value);
       break;
     case "moduleTop":
-      optionsData.value = Object.values(roomState.getDefaultModuleData());
+      optionsData.value = Object.values(modulesColorData.value);
       break;
     case "moduleBottom":
-      optionsData.value = Object.values(roomState.getDefaultModuleData());
+      optionsData.value = Object.values(modulesColorData.value);
       break;
     case "fasadsTop":
-      optionsData.value = roomState.getDefaultFasadeData() as [];
+      optionsData.value = defaultFasadeData.value as [];
       break;
     case "fasadsBottom":
-      optionsData.value = roomState.getDefaultFasadeData() as [];
+      optionsData.value = defaultFasadeData.value as [];
+      break;
+    case "tableTop":
+      optionsData.value = Object.values(defaultTableTopData.value);
       break;
   }
 
@@ -227,6 +260,7 @@ const selectOption = (value: TTextureItem) => {
     case "moduleBottom":
     case "fasadsTop":
     case "fasadsBottom":
+    case "tableTop":
       data = { data: value, type: currentOption.value };
       break;
     default:
@@ -235,6 +269,7 @@ const selectOption = (value: TTextureItem) => {
   }
 
   if (currentOption.value) {
+    console.log(data);
     eventBus.emit(
       optionsType.value[currentOption.value as keyof TTextureActionMap],
       data
@@ -252,22 +287,25 @@ const getOptionImg = computed(() => {
     const FASADE = appData.getAppData.FASADE;
     switch (type) {
       case "wall":
-        result = roomState.getWallsTextures()[id].PREVIEW_PICTURE;
+        result = wallsTextures.value[id].PREVIEW_PICTURE;
         break;
       case "floor":
-        result = roomState.getFloorTextures()[id].PREVIEW_PICTURE;
+        result = floorTextures.value[id].PREVIEW_PICTURE;
         break;
       case "moduleTop":
-        result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
+        result = modulesColorData.value[id].PREVIEW_PICTURE;
         break;
       case "moduleBottom":
-        result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
+        result = modulesColorData.value[id].PREVIEW_PICTURE;
         break;
       case "fasadsTop":
         result = FASADE[id].PREVIEW_PICTURE;
         break;
       case "fasadsBottom":
         result = FASADE[id].PREVIEW_PICTURE;
+        break;
+      case "tableTop":
+        result = defaultTableTopData.value[id].PREVIEW_PICTURE;
         break;
     }
     return result;
@@ -296,7 +334,6 @@ watch(
   () => pointLight.value,
   () => {
     changePointLightPower(pointLight.value);
-    sceneState.setLightRange("pointLight", pointLight.value);
   }
 );
 
@@ -307,15 +344,15 @@ watch(
   }
 );
 
-watch(refraction, () => {
-  sceneState.setRefractionValue(refraction.value);
-  toggleRefraction(refraction.value);
-});
+watch(
+  () => refraction.value,
+  () => toggleRefraction(refraction.value)
+);
 
-watch(shadows, () => {
-  sceneState.setShadowValue(shadows.value);
-  toggleShadow(shadows.value);
-});
+watch(
+  () => shadows.value,
+  () => toggleShadow(shadows.value)
+);
 </script>
 
 <template>
@@ -410,7 +447,7 @@ watch(shadows, () => {
                         :key="key"
                         @click="
                           () => {
-                            changeQualit(param);
+                            changeQuality(param);
                             onToggle();
                           }
                         "

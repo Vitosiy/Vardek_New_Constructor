@@ -31,6 +31,7 @@ const getIsUMproduct = computed(() => {
 })
 
 const prepareData = () => {
+  console.log(modelState.getCurrentModel, 'modelState.getCurrentModel')
   currentModel.value = modelState.getCurrentModel;
 
   sizeEditData.value = {

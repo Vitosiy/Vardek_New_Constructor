@@ -149,10 +149,8 @@ export const useRoomState = defineStore('RoomState', () => {
     });
   }
 
-
   const getWallsTextures = () => {
     return useAppData().getAppData.WALL
-
   }
 
   const getFloorTextures = () => {
@@ -186,11 +184,27 @@ export const useRoomState = defineStore('RoomState', () => {
     const [key, value] = Object.entries(PRODUCTS)[0]
     const fasade = value.FACADE
     const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
-
     return defaultFasadData
 
+  }
 
+  const getDefaultTableTopData = () => {
+    const tableTopIds = ['7292933', '7358837', '7358946', '7360269', '4066731'];
+    const { CATALOG: { SECTIONS, PRODUCTS } } = APP.getAppData;
 
+    const relevantSections = Object.entries(SECTIONS).filter(([key]) => tableTopIds.includes(key));
+
+    const allProducts = relevantSections.flatMap(([, { PRODUCTS: prods }]) =>
+      Array.isArray(prods) ? prods : []
+    );
+
+    const uniqueProductIds = [...new Set([...allProducts, '69919'])];
+
+    const defaultTableTopData = Object.fromEntries(
+      uniqueProductIds.map(id => [id, PRODUCTS[id]])
+    );
+
+    return defaultTableTopData
   }
 
 
@@ -227,7 +241,8 @@ export const useRoomState = defineStore('RoomState', () => {
     apllyProjectFloor,
 
     getDefaultModuleData,
-    getDefaultFasadeData
+    getDefaultFasadeData,
+    getDefaultTableTopData
 
   };
 });

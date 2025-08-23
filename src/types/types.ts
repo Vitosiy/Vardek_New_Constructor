@@ -31,6 +31,7 @@ import { useObjectData } from "@/store/appliction/useObjectData";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 
 
@@ -89,13 +90,15 @@ export type TUseCustomiserStore = ReturnType<typeof useCustomiserStore>;
 export type TUseObjectData = ReturnType<typeof useObjectData>;
 export type TUseRoomContantData = ReturnType<typeof useRoomContantData>;
 export type TUseModelState = ReturnType<typeof useModelState>;
+export type TMenuStore = ReturnType<typeof useMenuStore>;
 
 
-type TQualityValue = 'low' | 'medium' | 'hight'
+export type TQualityValue = 'low' | 'medium' | 'hight'
 export type MenuType = 'tech' | 'roomPar' | 'customiser';
 export type TQuality = {
   lable: string,
   value: TQualityValue,
+  active:boolean
 }
 
 type TOptionItem = {
@@ -117,6 +120,7 @@ export type TOptionsMap = {
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
+  tableTop:TOptionItem
 };
 
 export type TTextureActionMap = {
@@ -208,6 +212,11 @@ export type TUniformGroups = {
   color: string;
 };
 
+export type TSize = {
+    width: number;
+    height: number;
+    depth: number;
+}
 
 type TModuleGrid = {
   canvasHeight: number;
@@ -221,7 +230,7 @@ export type TMyObject = {
   canvasWidth: number;
 };
 
-export type TDefaultModuleAndFasadeConfig = {
+export type TDefaultOptionsConfig = {
   defModuleUp: number | string,
   defModuleDown: number | string,
   defFasadeUp: number | string,
@@ -230,8 +239,53 @@ export type TDefaultModuleAndFasadeConfig = {
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
+  tableTop: TOptionItem
 }
 
+//------------------
+/** @MODEL_JSON */
+//------------------
+
+// Утилиты
+type NumStr = number | string; 
+
+// Материал
+interface TMaterial {
+  type: "MeshLambertMaterial" | "MeshPhongMaterial" | "MeshStandardMaterial" | "MeshPhysicalMaterial" | string;
+  opt: {
+    color: number;
+    [key: string]: NumStr | boolean | undefined;
+  };
+}
+
+// Геометрия
+interface TGeometry {
+  type: string; // "BoxGeometry" | "ExtrudeBoxGeometry" и т.п.
+  opt: Record<string, NumStr | boolean>;
+}
+
+// Вектор
+interface TVector3 {
+  x: NumStr;
+  y: NumStr;
+  z: NumStr;
+}
+
+// Элемент сцены
+interface TItem {
+  id: string;
+  type: "object" | string;
+  geometry: TGeometry;
+  rotation: TVector3;
+  position: TVector3;
+}
+
+// Итоговый тип
+export type TModelJSON = {
+  material: TMaterial;
+  items: TItem[] | Record<string, TItem>;
+  position?: TVector3;
+};
 
 
 /** Заглушка */

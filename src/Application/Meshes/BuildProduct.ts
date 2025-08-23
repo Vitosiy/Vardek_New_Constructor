@@ -23,6 +23,7 @@ import { MillingBuilder } from './MillingBuilder';
 import { WindowBuilder } from './WindowBuilder';
 
 import { FasadeBuilder } from './FasadeBuilder';
+import { TableTopBuilder } from './TableTopBuilder/TableTopBuilder.ts';
 import { PaletteBuilder } from './PaletteBuilder';
 import { AlumBuilder } from './AlumBuilder.ts';
 import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
@@ -47,6 +48,7 @@ export class BuildProduct extends BuildersHelper {
     window_builder: WindowBuilder;
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBuilder
+    tabletop_builder: TableTopBuilder
     alum_builder: AlumBuilder
     uniform_texture_builder: UniformTextureBuilder
     heightCorrect: number = 0
@@ -69,6 +71,7 @@ export class BuildProduct extends BuildersHelper {
         this.alum_builder = new AlumBuilder(this)
         this.uniform_texture_builder = new UniformTextureBuilder(root, this)
         this.fasade_builder = new FasadeBuilder(this)
+        this.tabletop_builder = new TableTopBuilder(this)
     }
 
     get _heightCorrect() {
@@ -110,7 +113,7 @@ export class BuildProduct extends BuildersHelper {
         /** Если модель */
 
         if (type.DAE) {
-            this.models_builder.create(type.file, onLoad, props)
+            this.models_builder.create({ onLoad, props })
             return
         }
 
@@ -123,27 +126,25 @@ export class BuildProduct extends BuildersHelper {
 
         product!.name = product_data.NAME
 
-        // const aabb = new THREE.Box3().setFromObject(parent_group);
+        const aabb = new THREE.Box3().setFromObject(parent_group);
 
-        const aabb = this.computeAABB(parent_group)
+        // const aabb = this.computeAABB(parent_group)
         const obb = new OBB().fromBox3(aabb);
-
         const productSize = new THREE.Vector3();
         /** Для корректного примагничивания к стенам */
         aabb.getSize(productSize);
-
         /** Присваиваем тип объекта */
         parent_group.userData.elementType = product_data.element_type
         parent_group.elementType = product_data.element_type
 
-        parent_group.userData.trueSizes = {
+        parent_group.userData.trueSizes = product.userData.trueSizes ?? {
             DEPTH: productSize.z * 0.5,
             HEIGHT: productSize.y * 0.5,
             WIDTH: productSize.x * 0.5
         }
 
-        parent_group.userData.aabb = aabb
-        parent_group.userData.obb = obb
+        parent_group.userData.aabb = product.userData.aabb ?? aabb
+        parent_group.userData.obb = product.userData.obb ?? obb
 
         return parent_group
     }
@@ -162,6 +163,7 @@ export class BuildProduct extends BuildersHelper {
             HANDLES: {},
             HIDDENCHILDREN: {},
             HIDDEN: false,
+            JSON_FILLINGS: [],
             LEG: {},
             MILLINGS: [],
             PRODUCT: product_data.ID,
@@ -172,8 +174,7 @@ export class BuildProduct extends BuildersHelper {
             SEPARATED: [],
             SECTIONSOBJ: [],
             SECTIONCONTROL: [],
-            TABLETOP: {},
-            WINDOW_DEFAULT: []
+            TABLETOP: null,
         }
 
         let params = this.createProductObject(product_data, props)
@@ -209,9 +210,9 @@ export class BuildProduct extends BuildersHelper {
             HANDLES: {},
             HANDLES_POSITION: {},
             HAVETABLETOP: tabletop != null && this.project.table_top_type_auto,
+            TABLETOP_ID: null,
             HIDE_FASADE: false,
             HIDDEN: false,
-            HEIGHTCORRECT: 0,
             MODELID: models[0],
             MODEL: this._MODELS[models[0]],
             MODULE_COLOR: null,
@@ -275,7 +276,7 @@ export class BuildProduct extends BuildersHelper {
         const { PROPS } = parentGroup.userData;
         const { CONFIG } = PROPS;
 
-        const defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig = this.getDefaultModuleAndFasadeConfig();
+        const defaultConfig: THREETypes.TDefaultOptionsConfig = this.getDefaultOptionsConfig();
 
         PROPS.FASADE = [];
         PROPS.FASADE_DEFAULT = [];
@@ -283,6 +284,8 @@ export class BuildProduct extends BuildersHelper {
         const productId = CONFIG.ID;
         const modelData = CONFIG.MODEL;
         const modelSize = size ?? CONFIG.SIZE;
+        const bodyExceptions = this.project.default_overlay_id
+
 
         if (size) {
             PROPS.CONFIG.SIZE = size;
@@ -291,13 +294,8 @@ export class BuildProduct extends BuildersHelper {
 
         if (!modelData) return;
 
-        let heightCorrect = 0;
-        const adjustHeight = (value: number, type: string) => {
-            heightCorrect += type === "top" ? -value : value;
-            return heightCorrect;
-        };
-
         const data = this.createModelData(modelData, PROPS, modelSize);
+        const curBodyExceptions = bodyExceptions?.includes(modelData.id)
 
         // Сборка частей
         const { body, tempMaterial } = !this.isEmpty(modelData)
@@ -309,22 +307,24 @@ export class BuildProduct extends BuildersHelper {
             : null;
 
         const legs = this._PRODUCTS[productId]?.leg_length
-            ? this.buildLegs(PROPS, data, total, adjustHeight)
+            ? this.buildLegs(PROPS, data, total)
             : null;
 
         const tableTop = CONFIG.HAVETABLETOP
-            ? this.createTableTop(total, PROPS, data, adjustHeight)
+            ? this.tabletop_builder.createTableTop({ props: PROPS })
             : null;
 
         const fasade = Object.keys(CONFIG.FASADE_PROPS).length
             ? this.fasade_builder.getFasade({
-                group: total,
                 props: PROPS,
-                defaultConfig
+                defaultConfig,
+                curBodyExceptions
             })
             : null;
 
         const arrows = this.addArrowSize({ object: body, props: PROPS });
+
+        console.log(body, fasade, 'curBodyExceptions')
 
         // Вычисление высот
         const legsHeight = legs ? this.calculateHeight(legs) : 0;
@@ -334,11 +334,15 @@ export class BuildProduct extends BuildersHelper {
         // Позиционирование
         const baseY = legsHeight * 0.5;
         if (legs) legs.position.y = baseY;
-        if (body) body.position.y = baseY;
+        if (body) {
+            body.position.y = baseY;
+            body.visible = !curBodyExceptions;
+        }
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
         if (tableTop) {
             tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
+            tableTop.userData.positionWithoutTableTopHeight = baseY + bodyHeight * 0.5
         }
         arrows.position.y = baseY;
 
@@ -347,12 +351,25 @@ export class BuildProduct extends BuildersHelper {
             .filter(Boolean)
             .forEach((part) => total.add(part as THREE.Object3D));
 
+        //---------------------------
+        /** @Для корректной коллизии */
+        //---------------------------
+        const tempTotal = new THREE.Object3D();
+        [legs?.clone(), body?.clone(), shelf?.clone(), fasade?.clone()]
+            .filter(Boolean)
+            .forEach(part => tempTotal.add(part));
+
+        const sourceForBounds = curBodyExceptions ? body : tempTotal;
+        if (sourceForBounds) {
+            this.setBounds(total, sourceForBounds);
+        }
+
         return total;
     }
 
     /** Создание тела модели */
 
-    createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig) {
+    createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultOptionsConfig) {
         const { CONFIG } = props;
         const { ELEMENT_TYPE, MODULE_COLOR, ID } = CONFIG;
 
@@ -417,173 +434,10 @@ export class BuildProduct extends BuildersHelper {
 
         props.BODY_DEFAULT = body.clone();
 
+        console.log(body, 'BODY')
+
         return { body, tempMaterial: body.children[0]?.material };
     }
-
-    /** Создание столешницы */
-
-    createTableTop(group: THREE.Object3D, props: THREETypes.TObject, model_data: THREETypes.TObject, height_correct?: (value: number, type: string) => number) {
-
-        let defaultTop = props.CONFIG.HAVETABLETOP ? this.project.table : false;
-
-        if (!defaultTop) return
-
-        let local_expression = { ...props.CONFIG.EXPRESSIONS }
-
-        const sizes = props.CONFIG.SIZE
-        let start_position = this.getStartPosition(sizes)
-
-        let model = this.project.table
-        let params = this.project.table_params
-
-
-        let topJson = model_data.json.tables
-        let material = new THREE.MeshPhongMaterial()
-
-        // console.log(topJson, 'topJson')
-
-        /** Если установлен материалстолешницы */
-        if (this.project.table_color) {
-            let texture = this._COLOR[this.project.table_color].TEXTURE
-            this.resources.startLoading(texture, 'texture', (file) => {
-                if (!file) return
-                material.map = file as THREE.Texture
-                material.map.wrapS = material.map.wrapT = THREE.MirroredRepeatWrapping;
-            })
-        }
-        else {
-            material.color.set("#ffffff")
-            material.transparent = true;
-            material.opacity = 0.5;
-            material.depthWrite = true
-            // material.depthTest = false
-        }
-
-        if (topJson) {
-            let tableTop: THREE.Object3D = new THREE.Object3D();
-
-            Object.values(topJson).forEach((table: any) => {
-
-                let width = parseInt(eval(table.width));
-                let depth = parseInt(eval(table.depth));
-                if (width || depth) {
-
-                    // console.log(props.CONFIG.EXPRESSIONS, 'table_1')
-
-                    let expr = Object.assign(local_expression, {
-                        "#MHEIGHT#": params!.height,
-                        "#MODUL_HEIGHT#": params!.height,
-                        "#MODUL_MHEIGHT#": params!.height,
-                        "#MDEPTH#": params!.depth,
-                        "#MODUL_DEPTH#": depth || props.CONFIG.SIZE.depth,
-                        "#MODUL_MDEPTH#": params!.depth,
-                        "#MODUL_MWIDTH#": props.CONFIG.SIZE.width,
-                        "#MODUL_WIDTH#": width || props.CONFIG.SIZE.width,
-                        "#MWIDTH#": props.CONFIG.SIZE.width,
-                        "#X#": width || props.CONFIG.SIZE.width,
-                        "#Y#": params!.height,
-                        "#Z#": depth || props.CONFIG.SIZE.depth,
-                    });
-
-                    // console.log(props.CONFIG.EXPRESSIONS, 'table_2')
-
-                    let opt = Object.assign(this.expressionsReplace(model, expr), {
-                        material: material,
-                    });
-
-                    let tablet = this.json_builder.createMesh({ data: opt });
-
-                    if (table.position) {
-                        tablet.position.setX(eval(table.position.x));
-                        tablet.position.setZ(eval(table.position.z));
-                    }
-                    if (table.rotation) {
-                        tablet.rotation.set(0, eval(table.rotation.y), 0);
-                    }
-
-                    // tablet.renderOrder = 2
-
-                    tableTop.add(tablet);
-
-                }
-
-            })
-
-            let tableHeight = this.calculateHeight(tableTop)
-
-            // tableTop.position.setY(start_position.y + sizes.height + 38 / 2);
-            tableTop.position.setZ(start_position.z + 300);
-            tableTop.name = 'TABLETOP'
-
-            tableBody.traverse(child => {
-                if (child instanceof THREE.Mesh) {
-                    child.userData.name = 'TABLETOP'
-                    // child.updateMatrixWorld()
-                }
-            })
-
-
-            // group.add(tableTop)
-
-            // height_correct ? height_correct(tableHeight, 'top') : ""
-
-            props.TABLETOP = tableTop
-
-            // console.log(props, 'table top')
-
-            return tableTop
-        }
-
-        let expr = Object.assign(props.CONFIG.EXPRESSIONS, {
-            "#MHEIGHT#": params!.height,
-            "#MODUL_HEIGHT#": params!.height,
-            "#MODUL_MHEIGHT#": params!.height,
-            "#MDEPTH#": params!.depth,
-            "#MODUL_DEPTH#": params!.depth,
-            "#MODUL_MDEPTH#": params!.depth,
-            "#MODUL_MWIDTH#": props.CONFIG.SIZE.width,
-            "#MODUL_WIDTH#": props.CONFIG.SIZE.width,
-            "#MWIDTH#": props.CONFIG.SIZE.width,
-            "#Y#": params!.height,
-        });
-
-        let opt = Object.assign(this.expressionsReplace(model!, expr), {
-            material: material,
-        });
-
-        let tableBody = this.json_builder.createMesh({ data: opt, parent_size: sizes });
-        let tableHeight = this.calculateHeight(tableBody)
-        tableBody.position.setY(-tableHeight);
-
-        // tableBody.position.setY(start_position.y + sizes.height + 38 / 2);
-
-        tableBody.traverse(child => {
-            if (child instanceof THREE.Mesh) {
-                child.userData.name = 'TABLETOP'
-                const pos = new THREE.Vector3(30, 0, 0)
-                child.geometry.translate(pos)
-                // child.geometry.applyMatrix4(tableBody.matrixWorld)
-            }
-        })
-
-        // tableBody.position.setZ(start_position.z + 300);
-
-        /** Для корректного примагничивания к стенам */
-        // const box = new THREE.Box3().setFromObject(tableBody);
-        // const size = box.getSize(new THREE.Vector3());
-
-        // tableBody.userData.trueSize = {
-        //     TABLETOP_WIDTH: size.x,
-        //     TABLETOP_HEIGHT: size.y,
-        //     TABLETOP_DEPTH: size.z,
-        // }
-
-
-        tableBody.name = 'TABLETOP'
-        props.TABLETOP = tableBody
-
-        return tableBody
-    };
 
     /** Создание полок */
 
@@ -639,10 +493,9 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание ножек модели */
 
-    buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D, height_correct?: (value: number, type: string) => number) {
+    buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D) {
 
         let size = props.CONFIG.SIZE
-        // let leg_length = props.PRODUCT.leg_length
         let leg_length = this.modelState.getModels[props.PRODUCT].leg_length
         let legs = new THREE.Object3D()
         let model = model_data
@@ -660,20 +513,11 @@ export class BuildProduct extends BuildersHelper {
             let leg = this.createLeg(leg_length)
             leg.position.set(position.x, position.y, position.z)
             legs.add(leg)
-            // leg.updateMatrixWorld()
-
-
         })
 
         legs.name = 'LEGS'
-
-        // group.add(legs)
         props.LEG = legs
 
-        // console.log(leg_length, 'LEG')
-
-        /** Добавляем высоту для корректировки положения модели */
-        // height_correct ? height_correct(leg_length, 'bottom') : ""
         return legs
     };
 
@@ -751,9 +595,24 @@ export class BuildProduct extends BuildersHelper {
         group.add(arrows)
     };
 
+    private setBounds(target: THREE.Object3D, source: THREE.Object3D) {
+        const aabb = new THREE.Box3().setFromObject(source);
+        const obb = new OBB().fromBox3(aabb);
+        const size = new THREE.Vector3();
+        aabb.getSize(size);
+
+        target.userData.trueSizes = {
+            DEPTH: size.z * 0.5,
+            HEIGHT: size.y * 0.5,
+            WIDTH: size.x * 0.5
+        };
+        target.userData.aabb = aabb;
+        target.userData.obb = obb;
+    }
+
     /** @Дефолдтные глобальные значения цвета фасада/модуля */
-    getDefaultModuleAndFasadeConfig(): THREETypes.TDefaultModuleAndFasadeConfig {
-        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom } = this.menuStore.getGlobalOptions;
+    getDefaultOptionsConfig(): THREETypes.TDefaultOptionsConfig {
+        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop } = this.menuStore.getGlobalOptions;
 
         return {
             defModuleUp: moduleTop.id ?? this.project.default_module_color_up,
@@ -763,7 +622,8 @@ export class BuildProduct extends BuildersHelper {
             moduleTop,
             moduleBottom,
             fasadsTop,
-            fasadsBottom
+            fasadsBottom,
+            tableTop
         }
     }
 

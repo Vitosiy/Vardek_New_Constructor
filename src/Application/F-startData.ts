@@ -79,10 +79,6 @@ export const START_PROJECT_PARAMS = {
             ],
             floor: 44013,
             wall: 44128,
-            default_room_module_color_down: null,
-            default_room_module_color_up: null,
-            default_room_fasade_up: 7397,
-            default_room_fasade_down: 7397,
         },
         content: [],
     },
@@ -187,6 +183,7 @@ export const START_PROJECT_PARAMS = {
         ]
     },
 
+
     table_params: {
         "width": 3000,
         "depth": 600,
@@ -201,6 +198,7 @@ export const START_PROJECT_PARAMS = {
 
     project_name: 'New Pod',
     table_top_type_auto: true,
+    default_table_model: 69919,
     default_table_color: null,
     default_fasade_color: 7397,
     default_module_color: 199675,
@@ -214,6 +212,7 @@ export const START_PROJECT_PARAMS = {
     default_milling_up: null,
     default_palit_down: null,
     default_palit_up: null,
+    default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338]
 
 }
 
@@ -293,3 +292,5 @@ export const START_SCHEME_CONTANT = {
         "{\"id\":3689569,\"position\":{\"x\":5590,\"y\":976.789954642004,\"z\":1550},\"rotation\":{\"isEuler\":true,\"_x\":0,\"_y\":0,\"_z\":0,\"_order\":\"XYZ\"},\"obb\":{\"center\":{\"x\":-0.00048827496357262135,\"y\":780.8368077920704,\"z\":34.06570826246025},\"halfSize\":{\"x\":599.9938621316687,\"y\":823.210045357996,\"z\":99.99913978026598},\"rotation\":{\"elements\":[1,0,0,0,1,0,0,0,1]}},\"data\":{\"ARROWS\":null,\"BODY\":null,\"CONFIG\":{\"DISABLE_MOVE\":false,\"ELEMENT_TYPE\":\"element_up\",\"ID\":3689569,\"FASADE_PROPS\":[],\"FASADE_SIZE\":{},\"FASADE_POSITIONS\":[],\"FASADE_TYPE\":[],\"HANDLES\":{},\"HANDLES_POSITION\":{},\"HAVETABLETOP\":false,\"HIDE_FASADE\":false,\"HIDDEN\":false,\"HEIGHTCORRECT\":0,\"MODELID\":3689568,\"MODEL\":{\"id\":3689568,\"name\":\"Окно\",\"json\":null,\"type_label\":\"Левое\",\"type\":\"left\",\"shininess\":10,\"material\":null,\"color\":null,\"DAE\":\"/upload/iblock/65b/65b0e7f52d54e5c16d8fe574516d2f91.gltf\",\"file\":\"/upload/iblock/65b/65b0e7f52d54e5c16d8fe574516d2f91.gltf\",\"model_type\":\"GLTF\",\"scale\":1,\"width\":null,\"height\":null,\"depth\":null,\"corr_x\":null,\"corr_y\":\"0\",\"corr_z\":\"0\",\"loop_position\":null,\"loop_model\":null,\"wall_thickness\":null},\"MODULE_COLOR\":null,\"SIZE\":{\"width\":1200,\"height\":1650,\"depth\":64},\"SIZE_EDIT\":{\"SIZE_EDIT_WIDTH_MIN\":500,\"SIZE_EDIT_WIDTH_MAX\":2400,\"SIZE_EDIT_HEIGHT_MIN\":100,\"SIZE_EDIT_HEIGHT_MAX\":2400,\"SIZE_EDIT_DEPTH_MIN\":null,\"SIZE_EDIT_DEPTH_MAX\":null},\"SHOWCASE\":null,\"POSITION\":{\"x\":5590,\"y\":976.789954642004,\"z\":1550},\"ROTATION\":{\"isEuler\":true,\"_x\":0,\"_y\":0,\"_z\":0,\"_order\":\"XYZ\"},\"UNIFORM_TEXTURE\":{\"group\":null,\"level\":null,\"index\":null,\"column_index\":null,\"backupFasadId\":null,\"color\":null},\"USLUGI\":[],\"EXPRESSIONS\":{\"#MWIDTH#\":1200,\"#MODUL_MWIDTH#\":1200,\"#MODUL_WIDTH#\":1200,\"#X#\":1200,\"#MHEIGHT#\":1650,\"#MODUL_MHEIGHT#\":1650,\"#MODUL_HEIGHT#\":1650,\"#Y#\":1650,\"#MDEPTH#\":64,\"#MODUL_MDEPTH#\":64,\"#MODUL_DEPTH#\":64,\"#Z#\":64,\"#SIZEEDITJOINDEPTH#\":null}},\"DRAWERS\":{},\"EXPRESSIONS\":{},\"FASADE\":[],\"FASADE_DEFAULT\":[],\"GLASS\":{},\"HANDLES\":{},\"HIDDENCHILDREN\":{},\"HIDDEN\":false,\"LEG\":[],\"MILLINGS\":[],\"PRODUCT\":3689569,\"RASPIL\":[],\"RASPIL_LIST\":[],\"RASPIL_COUNT\":0,\"SHELF\":[],\"SEPARATED\":[],\"SECTIONSOBJ\":[],\"SECTIONCONTROL\":[],\"TABLETOP\":{},\"WINDOW_DEFAULT\":[],\"BODY_DEFAULT\":null}}"
     ]
 }
+
+//69919 - defTabelTopProd / 53981 - defTabelTopModel

@@ -176,7 +176,7 @@ export class RoomManager extends Room {
     /** Функция примагничивания объекта к стене */
 
     drawSnapHeightLines(snapHeight: number): void {
-        this.disposeSnapHeightLines()
+        this.disposeSnapHeightLines();
 
         const lineMaterial = new THREE.LineDashedMaterial({
             color: 0x444444,
@@ -191,34 +191,68 @@ export class RoomManager extends Room {
         });
 
         for (const wall of this._roomWalls) {
-            const wallBox = new THREE.Box3().setFromObject(wall);
-            const normal = new THREE.Vector3();  // Вектор нормали
-            wall.getWorldDirection(normal);  // Получаем нормаль стены в мировых координатах
+            // Предполагаем, что wall — это THREE.Mesh с геометрией
+            const geometry = wall.geometry;
+            const vertices = [];
 
-            const offset = normal.multiplyScalar(0);  // Скаляр для смещения вдоль нормали
+            // Получаем вершины геометрии в локальных координатах
+            const positionAttribute = geometry.getAttribute('position');
+            const vertex = new THREE.Vector3();
 
-            // Получаем размеры и границы стены
-            const minX = wallBox.min.x;
-            const maxX = wallBox.max.x;
-            const minZ = wallBox.min.z;
-            const maxZ = wallBox.max.z;
+            // Список уникальных точек в плоскости XZ (игнорируем Y)
+            const uniquePoints = new Map();
 
-            // Смещаем линию по направлению нормали
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(minX, snapHeight, minZ).add(offset),  // Нижний левый угол со смещением по нормали
-                new THREE.Vector3(maxX, snapHeight, minZ).add(offset),  // Нижний правый угол со смещением
-                new THREE.Vector3(maxX, snapHeight, maxZ).add(offset),  // Верхний правый угол со смещением
-                new THREE.Vector3(minX, snapHeight, maxZ).add(offset),  // Верхний левый угол со смещением
-                new THREE.Vector3(minX, snapHeight, minZ).add(offset)   // Замыкаем линию
-            ]);
+            for (let i = 0; i < positionAttribute.count; i++) {
+                vertex.fromBufferAttribute(positionAttribute, i);
+                // Преобразуем локальные координаты в мировые
+                vertex.applyMatrix4(wall.matrixWorld);
 
+                // Создаем ключ для уникальности точки в плоскости XZ
+                const key = `${vertex.x.toFixed(6)},${vertex.z.toFixed(6)}`;
+                if (!uniquePoints.has(key)) {
+                    uniquePoints.set(key, new THREE.Vector3(vertex.x, snapHeight, vertex.z));
+                }
+            }
+
+            // Получаем массив уникальных точек
+            let points = Array.from(uniquePoints.values());
+
+            // Сортируем точки для создания замкнутого контура (если стена замкнутая)
+            if (points.length > 2) {
+                points = this.sortPointsClockwise(points);
+            }
+
+            // Добавляем первую точку в конец, чтобы замкнуть линию
+            if (points.length > 0) {
+                points.push(points[0]);
+            }
+
+            // Создаем геометрию линии
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
             const line = new THREE.Line(lineGeometry, lineMaterial);
-            line.computeLineDistances();  // Необходимо для корректного отображения пунктира
-            line.renderOrder = 1
+            line.computeLineDistances(); // Для пунктирной линии
+            line.renderOrder = 1;
 
             this.scene.add(line);
             this.heightLine.push(line);
         }
+    }
+
+    // Вспомогательный метод для сортировки точек по часовой стрелке
+    sortPointsClockwise(points: THREE.Vector3[]): THREE.Vector3[] {
+        // Находим центр масс
+        const centroid = new THREE.Vector3();
+        for (const point of points) {
+            centroid.add(point);
+        }
+        centroid.divideScalar(points.length);
+
+        // Сортируем точки по углу относительно центра
+        return points.sort((a, b) => {
+            const angleA = Math.atan2(a.z - centroid.z, a.x - centroid.x);
+            const angleB = Math.atan2(b.z - centroid.z, b.x - centroid.x);
+            return angleA - angleB;
+        });
     }
 
     disposeSnapHeightLines() {

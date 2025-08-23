@@ -54,10 +54,10 @@ export class MeshEvents extends BuildersHelper {
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
     private onChangeTotalModuleTexture: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
 
-
     private onChangeFasade: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
     private onChangeTotalFasadsTexture: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
 
+    private onChangeGlobalTopTable: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
 
     private onChangePaletteColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
     private onChangeGlassColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
@@ -106,6 +106,7 @@ export class MeshEvents extends BuildersHelper {
         this.onChangeFasade = this.changeFasade.bind(root)
         this.onChangeTotalFasadsTexture = this.changeTotalFasadsTexture.bind(root)
 
+        this.onChangeGlobalTopTable = this.changeGlobalTopTable.bind(root)
 
         this.onChangePaletteColor = this.changePaletteColor.bind(root)
         this.onChangeGlassColor = this.changeGlassColor.bind(root)
@@ -136,72 +137,88 @@ export class MeshEvents extends BuildersHelper {
     }
 
     get _currentMesh() {
-        return this._overrideMesh ?? this.root._trafficManager?._currentObject;
+        return this._overrideMesh ?? this.trafficManager._currentObject;
     }
 
     set _currentMesh(mesh: THREE.Object3D | undefined) {
         this._overrideMesh = mesh;
+        console.log(this._currentMesh, 'IN GET')
     }
 
-    resetFasade({ fasadeNdx, incomingModel }: { fasadeNdx: number, incomingModel?: any }) {
+    resetFasade({ fasadeNdx, incomingModel, totalFasat, remove = false }: { fasadeNdx: number, incomingModel?: any, totalFasat?: THREE.Object3D, remove: boolean }) {
 
-        const product = this._currentMesh
+        const product = totalFasat ?? this._currentMesh
 
         if (!product) return;
 
         const { PROPS } = product.userData
         const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS } = CONFIG
-        const defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig = this.buildProduct.getDefaultModuleAndFasadeConfig();
+        const defaultConfig: THREETypes.TDefaultOptionsConfig = this.buildProduct.getDefaultOptionsConfig();
 
-        const rootFasadeParent = FASADE_DEFAULT[fasadeNdx].userData.rootFasadeParent
-        const fasadeExist = FASADE[fasadeNdx] === null
+        const rootFasadeParent = this.getRootObject(FASADE[fasadeNdx]).children[0]
+
+        // console.log(this.getRootObject(FASADE[fasadeNdx]).children[0], 'ROOT_1',
+
+        //     rootFasadeParent, 'ROOT_2'
+        // )
+        const fasadeExist = FASADE[fasadeNdx]
 
         const rebuild = (fasadeNdx) => {
             this.buildProduct.fasade_builder.getFasade(
                 {
-                    group: rootFasadeParent,
                     props: PROPS,
                     model_data: CONFIG.MODEL,
                     fasadeNdx,
                     incomingModel,
-                    defaultConfig
+                    defaultConfig,
+                    remove
                 })
         }
 
         if (fasadeExist) {
+            console.log('fasadeExist', remove)
             rebuild(fasadeNdx)
         }
 
         if (incomingModel) {
+            console.log('incomingModel')
             FASADE_PROPS[fasadeNdx].ALUM = incomingModel
             this.deliteFasade(fasadeNdx)
             rebuild(fasadeNdx, incomingModel)
+
             return
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-            // console.log('MILLING')
+            console.log('MILLING')
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
             FASADE_PROPS[fasadeNdx].MILLING = null
             FASADE_PROPS[fasadeNdx].PATINA = null
+
             return
         }
     }
 
-    /** Цвкет корпуса */
+    //------------------
+    /** @Цвет_корпуса  */
+    //------------------
+
     async catchChangeModuleTexture(data: { [key: string]: any }, currentMesh?: THREE.Object3D) {
 
         const product = currentMesh ?? this._currentMesh;
         const { CONFIG, SHELF, BODY, JSON_FILLINGS } = product.userData.PROPS;
 
-        [BODY, ...(SHELF ?? []), ...(JSON_FILLINGS ?? [])].forEach(obj =>
-            obj?.traverse((child: THREE.Object3D) => {
-                if (child instanceof THREE.Mesh) {
-                    this.changeColor({ object: child, url: data.TEXTURE });
-                }
-            })
+        [BODY, ...(SHELF ?? []), ...(JSON_FILLINGS ?? [])].forEach((obj) => {
+            if (obj instanceof THREE.Object3D) {
+                obj?.traverse((child: THREE.Object3D) => {
+                    if (child instanceof THREE.Mesh) {
+                        this.changeColor({ object: child, url: data.TEXTURE });
+                    }
+                })
+            }
+        }
         );
 
         CONFIG.MODULE_COLOR = data.ID;
@@ -226,7 +243,11 @@ export class MeshEvents extends BuildersHelper {
             })
         }
     }
-    /** Цвет Фасада */
+
+    //------------------
+    /** @Изменение_поверхности_фасада  */
+    //------------------
+
     async catchFasadeChange({ data, fasadeNdx }: TObjectData) {
         const product = this._currentMesh;
 
@@ -236,6 +257,7 @@ export class MeshEvents extends BuildersHelper {
         const incomingModel = data.MODEL;
         const fasade = FASADE[fasadeNdx] ?? FASADE_DEFAULT[fasadeNdx];
         const fasadeProp = FASADE_PROPS[fasadeNdx];
+        fasadeProp.COLOR = data.ID
 
         if (UNIFORM_TEXTURE.group) {
             this.removeFromUniformGroup(product);
@@ -316,7 +338,7 @@ export class MeshEvents extends BuildersHelper {
     changeTotalFasadsTexture({ data, type }) {
 
         const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
-        
+
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
 
         if (Array.isArray(elementsList) && elementsList[0]) {
@@ -326,8 +348,9 @@ export class MeshEvents extends BuildersHelper {
                     fasadeList.forEach(async (fasade, fasadeNdx) => {
                         const prevMesh = this._currentMesh
                         this._currentMesh = el;
+
                         if (data.ID == 7397) {
-                            await this.catchDeliteFasade(fasadeNdx)
+                            await this.catchDeliteFasade(fasadeNdx, el)
                         }
                         else {
                             await this.catchFasadeChange({ data, fasadeNdx })
@@ -335,10 +358,13 @@ export class MeshEvents extends BuildersHelper {
                         this._currentMesh = null; // вернуть старое значение
                     })
                 }
-
             })
         }
     }
+
+    //------------------
+    /** @Цвет_палитры  */
+    //------------------
 
     async catchChangePaletteColor({ data, fasadeNdx }: TObjectData) {
 
@@ -388,6 +414,10 @@ export class MeshEvents extends BuildersHelper {
         }
     }
 
+    //------------------
+    /** @Алюминевая_поверхнорсть  */
+    //------------------
+
     createAlumColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
         if (!this._currentMesh) return;
 
@@ -398,6 +428,10 @@ export class MeshEvents extends BuildersHelper {
 
         this.buildAlum.createAlum({ fasade, data })
     }
+
+    //------------------
+    /** @Стекло_витринн  */
+    //------------------
 
     changeGlassColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
 
@@ -413,6 +447,10 @@ export class MeshEvents extends BuildersHelper {
         FASADE_PROPS[fasadeNdx].GLASS = data
 
     }
+
+    //------------------
+    /** @Фрезеровка  */
+    //------------------
 
     async catchChangeMilling({ data, fasadeNdx }: TNumeredData) {
         const props = this._currentMesh.userData.PROPS
@@ -459,6 +497,10 @@ export class MeshEvents extends BuildersHelper {
         fasade.MILLING = null
     }
 
+    //------------------
+    /** @Патина  */
+    //------------------
+
     async catchDrawPatina({ data, fasadeNdx }: TNumeredData) {
         const props = this._currentMesh.userData.PROPS
         const { FASADE, CONFIG } = props
@@ -504,6 +546,10 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
+    //------------------
+    /** @Витрина  */
+    //------------------
+
     changeWindow({ data, fasadeNdx }: TNumeredData) {
         if (!this._currentMesh) return;
 
@@ -537,7 +583,9 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    /** Работа с группами */
+    //------------------
+    /** @Переходящий_рисунок  */
+    //------------------
 
     сreateUniformGroup() {
 
@@ -551,6 +599,26 @@ export class MeshEvents extends BuildersHelper {
 
         this.buildUniformTexture.deliteUniformGroup(id)
     }
+
+    //------------------
+    /** @Стандартная_столешница  */
+    //------------------
+
+    changeGlobalTopTable({ data, type }: TNumeredData) {
+        const elementsList = this.scene.getObjectsByProperty('name', type) /** @Находим все элементы выбранного типа */
+
+        if (Array.isArray(elementsList) && elementsList[0]) {
+            elementsList.forEach(el => {
+                const parent = this.getRootObject(el)
+                this.buildProduct.tabletop_builder.updateTableTop(parent, data)
+            })
+        }
+    }
+
+
+    //------------------
+    /** @Методы_работы_с_фасадом  */
+    //------------------
 
     // Скрыть фасад
     toggleFasade(fasadeNdx: number) {
@@ -570,60 +638,32 @@ export class MeshEvents extends BuildersHelper {
 
     // Удалить фасад
 
-    async catchDeliteFasade(fasadeNdx: number) {
-        const product = this._currentMesh
-        const { PROPS } = product.userData
+    async catchDeliteFasade(fasadeNdx: number, el: THREE.Object3D) {
 
+        const product = el ?? this._currentMesh
+
+        const { PROPS } = product.userData
         const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS, UNIFORM_TEXTURE } = CONFIG
-        const fasadeMeshId = FASADE[fasadeNdx]?.uuid
+
 
         if (UNIFORM_TEXTURE.group !== null) {
             this.buildUniformTexture.removeFromUniformGroup(product)
         }
 
-        this.resetFasade({ fasadeNdx })
+        this.resetFasade({ fasadeNdx, remove: true })
 
-        try {
-            if (product instanceof THREE.Object3D && typeof product.traverse === 'function') {
-                // product.traverse(children => {
-                //     if (children.uuid === fasadeMeshId) {
-                //         this.dispose.clearObjectFromParrent(children)
-                //     }
-                // })
-                // props.FASADE = props.FASADE.filter((item, key) => item.uuid != fasadeMeshId)
-
-                FASADE_PROPS[fasadeNdx].COLOR = 7397
-                FASADE_PROPS[fasadeNdx].MILLING = null
-                FASADE_PROPS[fasadeNdx].PALETTE = null
-                FASADE_PROPS[fasadeNdx].SHOW = false
-                FASADE_PROPS[fasadeNdx].GLASS = null
-                FASADE_PROPS[fasadeNdx].PATINA = null
-                FASADE_PROPS[fasadeNdx].WINDOW = null
-                CONFIG.UNIFORM_TEXTURE = {
-                    group: null,
-                    level: null,
-                    index: null,
-                    column_index: null,
-                    backupFasadId: null,
-                    color: null
-                }
-            }
-        }
-        catch (e) {
-        }
-
-        FASADE[fasadeNdx].visible = false
     }
 
     async deliteFasade(fasadeNdx: number) {
-
         if (!this._currentMesh) return;
         await this.catchDeliteFasade(fasadeNdx)
         this.events.emit("U:DeliteFasad")
-
-
     }
+
+    //------------------
+    /** @Универсальный_модуль  */
+    //------------------
 
     updateUMModel(data: object) {
 
@@ -687,6 +727,11 @@ export class MeshEvents extends BuildersHelper {
         this.root._customBoxHelper.updateBoxHelper()
 
     }
+
+    //------------------
+    /** @УИзменение_размеров_модели  */
+    //------------------
+
 
     async changeModelSize(data: { width: number, height: number, depth: number }, mesh, type) {
 
@@ -796,6 +841,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeTotalFasadsTexture({ data, type })
         }
 
+        this.onChangeGlobalTopTable = ({ data, type }) => {
+            this.changeGlobalTopTable({ data, type })
+        }
+
         this.onChangePaletteColor = ({ data, fasadeNdx }) => {
             this.changePaletteColor({ data, fasadeNdx });
         }
@@ -856,6 +905,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:ChangeFasadsTopTexture', this.onChangeTotalFasadsTexture)
         this.events.on('A:ChangeFasadsBottomTexture', this.onChangeTotalFasadsTexture)
 
+        this.events.on("A:ChangeTableTop", this.onChangeGlobalTopTable)
 
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);

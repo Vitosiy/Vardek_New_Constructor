@@ -5,11 +5,13 @@ import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useSceneState } from "@/store/appliction/useSceneState"
+import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 export class AppLights {
     parent: THREETypes.TApplication
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
     sceneState: ReturnType<typeof useSceneState> = useSceneState()
+    menuState: ReturnType<typeof useMenuStore> = useMenuStore()
     scene: THREE.Scene
     params: any
     private lights: THREE.Light[] = []
@@ -29,7 +31,8 @@ export class AppLights {
     addPointLight(params: THREEInterfases.IlightData) {
         const pointLight = new THREE.PointLight(
             params.color,
-           this.sceneState.getLightRange.pointLight,
+            // this.sceneState.getLightRange.pointLight,
+            this.menuState.getPointLightRange,
             params.distance,
             params.decay,
         )
@@ -54,14 +57,14 @@ export class AppLights {
 
         this.ambientLight = new THREE.AmbientLight(
             params.color,
-            this.sceneState.getLightRange.ambientLight,
+            this.menuState.getAmbientLightRange,
         )
 
         this.scene.add(this.ambientLight)
     }
 
     setLight(position: { [key: string]: number } | any, lightCount: number) {
-        const shadowValue = this.sceneState.getShadowValue
+        const shadowValue = this.menuState.getShadowValue
         this.lights = []
         const margin = 250
         const step = (position.depth - 2 * margin) / (lightCount - 1);

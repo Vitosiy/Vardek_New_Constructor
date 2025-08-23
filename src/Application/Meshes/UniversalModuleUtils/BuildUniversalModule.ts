@@ -29,7 +29,7 @@ export class BuildUniversalModule extends BuildProduct {
 
         const total = new THREE.Object3D();
 
-        const defaultConfig: THREETypes.TDefaultModuleAndFasadeConfig = this.getDefaultModuleAndFasadeConfig();
+        const defaultConfig: THREETypes.TDefaultOptionsConfig = this.getDefaultOptionsConfig();
 
         const { PROPS } = perent_group.userData
         const { CONFIG } = PROPS;
@@ -76,7 +76,7 @@ export class BuildUniversalModule extends BuildProduct {
             : null;
 
         const tableTop = CONFIG.HAVETABLETOP
-            ? this.createTableTop(total, PROPS, data, adjustHeight)
+            ? this.tabletop_builder.createTableTop({ props: PROPS })
             : null;
 
         if (MODULEGRID) {
@@ -124,6 +124,17 @@ export class BuildUniversalModule extends BuildProduct {
         [tableTop, legs, body, shelf, fasade, arrows]
             .filter(Boolean)
             .forEach((part) => total.add(part as THREE.Object3D));
+        //---------------------------
+        /** @Для корректной коллизии */
+        //---------------------------
+        const tempTotal = new THREE.Object3D();
+        [legs?.clone(), body?.clone(), shelf?.clone()]
+            .filter(Boolean)
+            .forEach(part => tempTotal.add(part));
+
+        this.setBounds(total, tempTotal);
+
+        console.log(total)
 
         return total;
     };
@@ -334,7 +345,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                     let productFilling
                     if (data.DAE) {
-                        this.models_builder.create(data.file, onLoad, { CONFIG: { MODEL: data } }, false)
+                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID } }, sizeRulers: false })
                     } else {
                         productFilling = this.createSubProductObject(data, PROPS)
                         onLoad(productFilling, false)
@@ -369,7 +380,11 @@ export class BuildUniversalModule extends BuildProduct {
 
     createLoop(product, PROPS, loops, meshRet = true) {
         const parentModel = this._MODELS[product.models[0]];
-        const model = this._MODELS[parentModel.loop_model];
+        // const model = this._MODELS[parentModel.loop_model];
+        const model = this._MODELS[parentModel.loop_model].id;
+
+
+
         const loopPosition = this._LOOP_POSITION[parentModel.loop_position];
         let allLoopsMesh = new THREE.Object3D();
 
@@ -479,7 +494,7 @@ export class BuildUniversalModule extends BuildProduct {
             })
         }
 
-        this.models_builder.create(model.DAE, onLoad, { CONFIG: { MODEL: model } }, false)
+        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: model } }, sizeRulers: false })
 
         return allLoopsMesh
     };

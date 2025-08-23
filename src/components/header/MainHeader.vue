@@ -13,6 +13,7 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useModelState } from "@/store/appliction/useModelState";
 import { TApplication } from "@/types/types";
 
 import {
@@ -55,6 +56,7 @@ const eventBus = useEventBus();
 const sceneState = useSceneState();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
+const modelState = useModelState()
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -218,8 +220,10 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
-
+    
+    modelState.setCurrentModel(null);
     roomState.mergeRoomsData();
+
     let constructor = await waitForConstructor();
     await nextTick();
 
@@ -269,7 +273,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <!-- <div class="header-ui-group">
+          <div class="header-ui-group">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -302,7 +306,7 @@ onBeforeUnmount(() => {
                 </button>
               </template>
             </Modal>
-          </div> -->
+          </div>
         </div>
       </div>
       <div class="header-utilitys">

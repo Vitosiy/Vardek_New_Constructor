@@ -37,7 +37,7 @@ export class MillingBuilder extends MillingsUtils {
     const millingKey = this.additionaMillinglKeys[millingParams] ?? millingParams
 
     const millingData = this.millingsStore[millingKey] ? this.millingsStore[millingKey] : this.millingsStore[2462671]
-    // console.log(millingData, 'millingData')
+    console.log(millingData, 'millingData')
 
 
     /** Для дебагинга */

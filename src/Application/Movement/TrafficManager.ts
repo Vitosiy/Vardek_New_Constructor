@@ -99,6 +99,8 @@ export class TrafficManager {
             })
 
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            console.log(object, 'object')
+            console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155])
 
             if (object.userData.elementType !== 'raspil') {
                 const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];

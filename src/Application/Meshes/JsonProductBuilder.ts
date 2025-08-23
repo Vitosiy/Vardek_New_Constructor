@@ -10,7 +10,7 @@ export class JsonBuilder {
 
     parent: BuildProduct
     material: THREE.Material | null = null
-    keys: string[] = ['fasade', 'center', 'front']
+    keys: string[] = ['fasade', 'center', 'front', 'front1', 'front2']
     convert: Function
 
     constructor(parent: BuildProduct) {
@@ -20,6 +20,7 @@ export class JsonBuilder {
 
     createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
 
+        console.log(data, 'JSONDATA')
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
@@ -35,20 +36,33 @@ export class JsonBuilder {
 
         } else if (typeof json.items === 'object' && json.items !== null && !(json.items instanceof Date)) {
 
+
             let clone = JSON.parse(JSON.stringify(json.items))
+
             if (parent_size) {
                 clone = this.parent.expressionsReplace(clone, {
                     "#FWIDTH#": parent_size!.x,
                     "#FHEIGHT#": parent_size!.y,
                     "#FDEPTH#": parent_size!.z,
+                    "#X#": parent_size!.mX,
+                    "#Y#": parent_size!.mY,
+                    "#Z#": parent_size!.mZ,
                 })
             }
 
+            if (Object.values(clone).length > 1) {
+                Object.values(clone).forEach(el => {
+                    this.parseDate({ data: el, group, obj, parent_size })
+                })
+            } else {
+                const type = this.parent.findKeyInObject(clone, this.keys)
+                this.parseDate({ data: clone[type], group, obj, parent_size })
+            }
 
-            const type = this.parent.findKeyInObject(clone, this.keys)
 
 
-            this.parseDate({ data: clone[type], group, obj, parent_size })
+
+
         }
         else {
             // console.log('other')
@@ -58,7 +72,6 @@ export class JsonBuilder {
     }
 
     parseDate({ data, group, obj, parent_size, array }: { data: THREETypes.TObject, group: THREE.Object3D, obj, parent_size?, array?: [] }) {
-
 
         let geometry
 
@@ -72,6 +85,7 @@ export class JsonBuilder {
         if (data.type == "object") {
             switch (data.geometry.type) {
                 case 'BoxGeometry':
+                case 'ExtrudeBoxGeometry':
                     geometry = this.createGeometry(data.geometry, parent_size)
                     break;
                 case 'ExtrudeGeometry':
@@ -87,7 +101,6 @@ export class JsonBuilder {
         }
 
 
-
         if (data.type == "link") {
             obj[data.id] = obj[data.link].clone();
             obj[data.id].name = data.id
@@ -95,7 +108,7 @@ export class JsonBuilder {
 
         if (data.position) {
             obj[data.id].position.set(this.convert(data.position.x), this.convert(data.position.y), this.convert(data.position.z));
-            // obj[item.id].userData.position = obj[item.id].position
+            // obj[data.id].geometry.translate(this.convert(data.position.x), this.convert(data.position.y), this.convert(data.position.z));
         }
         if (data.rotation) {
             obj[data.id].rotation.set(this.convert(data.rotation.x), this.convert(data.rotation.y), this.convert(data.rotation.z));
@@ -121,9 +134,9 @@ export class JsonBuilder {
         }
 
 
-
         group.add(obj[data.id])
         group.applyMatrix4(group.matrixWorld)
+
     }
 
     createGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
@@ -133,7 +146,8 @@ export class JsonBuilder {
             this.convert(geometry_data.opt.y),
             this.convert(geometry_data.opt.z)
         )
-        // geometry.computeBoundingBox();
+
+        geometry.computeBoundingBox()
         return geometry
     }
 
@@ -145,10 +159,6 @@ export class JsonBuilder {
     }
 
     createShapeGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
-
-        // const height = parent_size?.height ?? 0
-        // const depth = parent_size?.depth ?? 0
-        // const width = parent_size?.width ?? 0
 
         for (let i in geometry_data.opt) {
 
@@ -197,6 +207,8 @@ export class JsonBuilder {
     }
 
     createMaterial(data, fasade) {
+
+        console.log(data, fasade, '--in JSONB')
 
         if (!data) return
 

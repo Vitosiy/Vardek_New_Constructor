@@ -1,18 +1,21 @@
 <script lang="ts" setup>
-//@ts-nocheck 
+//@ts-nocheck
 import MaterialSelector from "./MaterialSelector.vue";
 import ConfigurationOption from "./ConfigurationOption.vue";
-import { ref, onMounted, onBeforeMount, watch } from "vue";
+import { ref, onMounted, onBeforeMount, watch, defineExpose } from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 const modelState = useModelState();
 const eventBus = useEventBus();
+const props = defineProps<{
+  materialList: Object;
+}>();
 
 // const materialList = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
 // const selectedSurfaceID = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 
-const materialList = ref(null);
+// const materialList = ref(null);
 const selectedSurfaceID = ref(null);
 
 const currentSurfaceData = ref<any>({});
@@ -20,15 +23,15 @@ const isMillingExist = ref(false);
 const currentMillingData = ref(null);
 
 onBeforeMount(() => {
-  materialList.value =
-    modelState.getCurrentModuleData
-  selectedSurfaceID.value =
-    modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
+  // materialList.value = modelState.getCurrentModuleData;
+  selectedSurfaceID.value = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
-  const current = materialList.value!.find((m) => m.ID === selectedSurfaceID.value);
 
+  const current = props.materialList!.find(
+    (m) => m.ID === selectedSurfaceID.value
+  );
   if (current) {
     currentSurfaceData.value = {
       name: current.NAME,
@@ -55,21 +58,24 @@ const deleteSelectedOptions = (type: string) => {
 };
 
 watch(
-  () => modelState.getCurrentModel,
+  () => props.materialList,
+  // modelState.getCurrentModel
+
   () => {
-    materialList.value =
-      modelState.getCurrentModuleData;
+    // materialList.value = modelState.getCurrentModuleData;
     selectedSurfaceID.value =
       modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
-    const current = materialList.value!.find((m) => m.ID === selectedSurfaceID.value);
+    const current = props.materialList!.find(
+      (m) => m.ID === selectedSurfaceID.value
+    );
     if (current) {
       currentSurfaceData.value = {
         name: current.NAME,
         imgSrc: current.DETAIL_PICTURE,
       };
     }
-  },
-  { flush: "post", immediate: true }
+  }
+  // { flush: "post", immediate: true }
 );
 </script>
 
@@ -90,7 +96,10 @@ watch(
       />
     </div>
 
-    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
+    <MaterialSelector
+      :materials="props.materialList"
+      @select="changeModuleTexture"
+    />
   </div>
 </template>
 

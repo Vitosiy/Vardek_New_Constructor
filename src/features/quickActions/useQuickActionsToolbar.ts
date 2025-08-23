@@ -34,7 +34,8 @@ export const useQuickActionsToolbar = () => {
 
   // Функция сохранения проекта
   const saveProject = async () => {
- 
+      eventBus.emit("A:Save");
+      console.log('555')
   }
 
   const actions: QuickActionItem[] = [
@@ -68,12 +69,12 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-zoom',
       action: () => makeScreen(),
     },
-    // {
-    //   key: 'saveProject',
-    //   tooltip: 'Сохранить проект',
-    //   iconClass: 'icon-save',
-    //   action: () => saveProject(),
-    // },
+    {
+      key: 'saveProject',
+      tooltip: 'Сохранить проект',
+      iconClass: 'icon-save',
+      action: () => saveProject(),
+    },
     {
       key: 'newProject',
       tooltip: 'Новый проект',
