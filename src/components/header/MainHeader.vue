@@ -245,6 +245,10 @@ watch(
     modelState.setCurrentModel(null);
     roomState.mergeRoomsData();
 
+    historyActions.value = false;
+    restorLength.value = 0;
+    curActionCount.value = 0;
+
     let constructor = await waitForConstructor();
     await nextTick();
 
@@ -255,9 +259,6 @@ watch(
 
       return;
     }
-    historyActions.value = false;
-    restorLength.value = 0;
-    curActionCount.value = 0;
   },
   // { immediate: true }
   { flush: "post", immediate: true }
