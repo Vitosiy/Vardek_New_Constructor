@@ -108,7 +108,7 @@ export const useQuickActionsToolbar = () => {
     },
     {
       key: 'saveProject',
-      tooltip: 'Сохранить проект',
+      tooltip: 'Сохранить',
       iconClass: 'icon-save',
       path: 'default',
       action: () => saveProject(),
