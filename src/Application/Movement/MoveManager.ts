@@ -422,7 +422,7 @@ export class MoveManager {
 
     keyDown(event) {
 
-        // return
+        return
 
         if (event.repeat) return
 
