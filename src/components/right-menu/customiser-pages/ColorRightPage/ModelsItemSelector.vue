@@ -99,7 +99,7 @@ const returnToTabs = () => {
 defineExpose({
   returnToTabs,
   handleTabChange,
-  isGroupsManagerActive: readonly(isGroupsManagerActive)
+  // isGroupsManagerActive: readonly(isGroupsManagerActive)
 });
 
 watch(
@@ -121,9 +121,9 @@ const handleTransitionDrawingClick = () => {
 }
 
 // Вычисляемое свойство для определения активного состояния кнопки
-const isGroupsManagerButtonActive = computed(() => {
-  return isGroupsManagerActive.value || tabIndex.value === 'groupsManager';
-});
+// const isGroupsManagerButtonActive = computed(() => {
+//   return isGroupsManagerActive.value || tabIndex.value === 'groupsManager';
+// });
 </script>
 
 <template>
