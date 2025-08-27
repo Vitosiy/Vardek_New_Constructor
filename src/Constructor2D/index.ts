@@ -4,6 +4,7 @@ import * as PIXI from 'pixi.js';
 import Grid from "./Layers/Grid";
 import HalfRoom from "./Layers/HalfRoom";
 import Rulers from "./Layers/Rulers";
+import DimensionDisplay from "./Layers/DimensionDisplay";
 import Planner from "./Layers/Planner";
 import ArrowRulerActiveObject from "./Layers/ArrowRulerActiveObject";
 import StartPointActiveObject from "./Layers/StartPointActiveObject";
@@ -31,6 +32,7 @@ import { useEventBus } from '@/store/constructor2d/useEventBus';
 interface ILayers {
   grid: Grid | null;
   halfRoom: HalfRoom | null;
+  dimensionDisplay: DimensionDisplay | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
   doorsAndWindows: DoorsAndWindows | null;
@@ -46,6 +48,7 @@ export default class Constructor2D {
   public layers: ILayers = {
     grid: null,
     halfRoom: null, // пол комнаты
+    dimensionDisplay: null, // менеджер отображения размеров
     arrowRulerActiveObject: null,
     planner: null,
     doorsAndWindows: null, // двери и окна
@@ -157,9 +160,10 @@ export default class Constructor2D {
 
     this.layers.grid = new Grid(this.app2d, this);
     this.layers.halfRoom = new HalfRoom(this.app2d, this);
-    this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
+    this.layers.dimensionDisplay = new DimensionDisplay(this.app2d, this);
     this.layers.planner = new Planner(this.app2d!, this);
     this.layers.doorsAndWindows = new DoorsAndWindows(this.app2d!, this);
+    this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
     this.layers.startPointActiveObject = new StartPointActiveObject(this.app2d!, this);
     this.layers.rulers = new Rulers(this.app2d!, this);
 

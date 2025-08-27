@@ -385,24 +385,24 @@ p {
   height: 100vh;
   z-index: 999;
 
-  
+
   &__logo {
     width: 100%;
     text-align: center;
     margin: 5rem 0;
     margin-bottom: 225px;
   }
-  
+
   &__container {
     position: relative;
     width: 100%;
     display: flex;
     justify-content: center;
   }
-  
+
   &__icon {
     display: inline-block;
-    
+
   }
   svg {
     animation: rotate 1.5s linear infinite;
@@ -419,7 +419,7 @@ p {
     background-color: #ECEBF1;
     border-radius: 2px;
     overflow: hidden;
-    
+
     &::before {
       content: '';
       position: absolute;
