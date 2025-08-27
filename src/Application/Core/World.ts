@@ -40,9 +40,7 @@ export class World {
     private onSaveRoom: () => void;
     private onLoadRoom: (data: number) => void;
 
-
     constructor(root: THREETypes.TApplication) {
-
 
         this.root = root
         this.scene = root.scene!
@@ -75,9 +73,6 @@ export class World {
         // this.scene.add(new THREE.AxesHelper(2000))
         // this.room!.update()
         // this.lights.setLight(this.room!._wallsGroupSize, 2)
-
-
-
 
     }
 

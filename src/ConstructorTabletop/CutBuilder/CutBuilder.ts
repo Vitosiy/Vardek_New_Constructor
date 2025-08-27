@@ -4,7 +4,8 @@ import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { CSG } from 'three-csg-ts';
 import { DeepDispose } from '@/Application/Utils/DeepDispose';
-import { BuildersHelper } from "../BuildersHelper";
+import { BuildersHelper } from "../../Application/Meshes/BuildersHelper";
+import { useMenuStore } from '@/store/appStore/useMenuStore.ts';
 
 type TTextureData = {
 
@@ -16,6 +17,8 @@ type TTextureData = {
 }
 
 class TableTopCreator extends BuildersHelper {
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
+
     root: THREETypes.TApplication
     roomManager: THREETypes.TRoomManager
     moveManager: THREETypes.TMoveManager
@@ -55,9 +58,9 @@ class TableTopCreator extends BuildersHelper {
             const parent: THREE.Object3D = this.root._scene?.getObjectByProperty('id', object.userData.groupId)!;
 
             const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
-          
+
             await this.events.changeModelSize({ width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, parent, 'raspil')
-      
+
             const textureData = this._PRODUCTS[parent.userData.globalData].texture
             let { RASPIL_LIST } = parent.userData.PROPS
 
@@ -356,7 +359,7 @@ class TableTopCreator extends BuildersHelper {
                 mesh.position.copy(mesh.userData.position);
                 mesh.rotation.copy(mesh.userData.rotation);
             } else {
- 
+
                 mesh.position.copy(worldGeometryCenter);
                 mesh.quaternion.copy(worldQuaternion);
             }
@@ -494,6 +497,12 @@ class TableTopCreator extends BuildersHelper {
 
         ruler.forEach(item => {
             for (let i in item) {
+                if (!this.menuStore.getRulerVisibility) {
+                    item[i].visible = false
+                    item[i].traverse(child => {
+                        child.visible = false;
+                    });
+                }
                 arrows.add(item[i])
             }
         })

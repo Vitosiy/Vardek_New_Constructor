@@ -111,6 +111,7 @@ onMounted(async () => {
     eventBus.on("A:ClearSelected", clearSelected);
 
     VerdekConstructor.value = new Application(sceneContainer.value);
+    //    VerdekConstructor.value = Application.getInstance(sceneContainer.value);
 
     await nextTick();
     VerdekConstructor.value.refreshViewer();
@@ -142,6 +143,7 @@ onBeforeUnmount(() => {
 
   VerdekConstructor.value?.destroy();
   VerdekConstructor.value = null;
+  
 });
 
 onUnmounted(() => {

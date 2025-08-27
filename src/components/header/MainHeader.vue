@@ -14,6 +14,7 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useModelState } from "@/store/appliction/useModelState";
+import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { TApplication } from "@/types/types";
 
 import {
@@ -51,12 +52,15 @@ const inputDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 const restorLength = ref<number>(0);
 const curActionCount = ref<number>(0);
 const contentLoaded = ref<boolean>(true);
+const drowModeValue = ref<boolean>(false);
+const rulerVisibility = ref<boolean>(true);
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
-const modelState = useModelState()
+const modelState = useModelState();
+const customiserStore = useCustomiserStore();
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -100,6 +104,18 @@ const saveProject = async () => {
   // if (historyActions.value) eventBus.emit("A:Save");
 };
 
+// const drowMode = async () => {
+//   drowModeValue.value = !drowModeValue.value;
+//   menuStore.setDrowModeValue(drowModeValue.value);
+//   eventBus.emit("A:DrawingMode", drowModeValue.value);
+// };
+
+// const toggleRulerVisibility = async () => {
+//   rulerVisibility.value = !rulerVisibility.value;
+//   menuStore.setRulerVisibility(rulerVisibility.value);
+//   eventBus.emit("A:ToggleRulerVisibility", rulerVisibility.value);
+// };
+
 const loadProject = async () => {
   // return;
   const data = {
@@ -128,6 +144,8 @@ const createNewRoom = (value: string) => {
   restorLength.value = 0;
   curActionCount.value = 0;
   menuStore.closeAllMenus();
+  eventBus.emit("A:DrawingMode", false);
+  eventBus.emit("A:ToggleRulerVisibility", true);
 };
 
 const checkContantLoad = (state: boolean) => {
@@ -152,6 +170,7 @@ const prevAction = () => {
     eventBus.emit("A:PrevAction");
     curActionCount.value = verdekConstructor.value!.userHistory._currentIndex;
     props.pageComponent.selected();
+    customiserStore.hideCustomiserPopup();
   }
 };
 
@@ -163,6 +182,7 @@ const nextAction = () => {
     eventBus.emit("A:NextAction");
     curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
     props.pageComponent.selected();
+    customiserStore.hideCustomiserPopup();
   }
 };
 
@@ -220,7 +240,8 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
-    
+    menuStore.setRulerVisibility(true);
+    menuStore.setDrowModeValue(false);
     modelState.setCurrentModel(null);
     roomState.mergeRoomsData();
 
@@ -231,6 +252,7 @@ watch(
       verdekConstructor.value = constructor as TApplication;
       historyActions.value = true;
       addEvents3D();
+
       return;
     }
     historyActions.value = false;
@@ -257,7 +279,7 @@ onBeforeUnmount(() => {
         <div class="header-main-ui">
           <div
             :class="['history', 'history__btns', getHistoruBtnsState]"
-            v-if="historyActions"
+            v-if="historyActions && route.path == '/3d'"
           >
             <!-- {{ restorLength }}{{ curActionCount }} -->
             <LeftLightHeaderButton
@@ -273,7 +295,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <div class="header-ui-group">
+          <div class="header-ui-group" v-if="route.path == '/3d'">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -307,6 +329,16 @@ onBeforeUnmount(() => {
               </template>
             </Modal>
           </div>
+          <!-- <div class="header-ui-group" v-if="route.path=='/3d'">
+            <button class="button__rounded" @click="drowMode">
+              <span class="icon icon-show"></span>
+            </button>
+          </div>
+          <div class="header-ui-group" v-if="route.path=='/3d'">
+            <button class="button__rounded" @click="toggleRulerVisibility">
+              <span class="icon icon-ruler"></span>
+            </button>
+          </div> -->
         </div>
       </div>
       <div class="header-utilitys">

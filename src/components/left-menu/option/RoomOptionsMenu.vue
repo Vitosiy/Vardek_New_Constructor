@@ -133,6 +133,8 @@ const loadRoom = (id: number) => {
   menuStore.resetGlobalOptions();
   eventBus.emit("A:Load", id);
   eventBus.emit("A:ContantLoaded", false);
+  eventBus.emit("A:DrawingMode", false);
+  eventBus.emit("A:ToggleRulerVisibility", true);
   closeMenu("roomPar");
 };
 
@@ -142,7 +144,7 @@ const deliteRoom = (value: number) => {
 
 const changeQuality = (data: TQuality) => {
   currentQuality.value = data;
-  menuStore.setQuality(data.value, true)
+  menuStore.setQuality(data.value, true);
   eventBus.emit("A:Quality", data.value);
 };
 

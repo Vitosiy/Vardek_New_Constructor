@@ -28,6 +28,7 @@ import { PaletteBuilder } from './PaletteBuilder';
 import { AlumBuilder } from './AlumBuilder.ts';
 import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
+import { EdgeBuilder } from './EdgeBuilder/EdgeBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -51,27 +52,30 @@ export class BuildProduct extends BuildersHelper {
     tabletop_builder: TableTopBuilder
     alum_builder: AlumBuilder
     uniform_texture_builder: UniformTextureBuilder
+    edge_builder: EdgeBuilder
     heightCorrect: number = 0
+    useEdgeBuilder: THREETypes.TUseEdgeBuilder
 
     constructor(root: THREETypes.TApplication) {
         super(root)
-
         // console.trace('BuildProduct')
-
         this.root = root
         this.ruler = root.ruler!
-
         this.resources = root._resources!
-        this.filters = new Filters(root)
+        this.useEdgeBuilder = root.useEdgeBuilder
+
+        this.filters = new Filters(root);
         this.json_builder = new JsonBuilder(this);
-        this.models_builder = new ModelsBuilder(this)
-        this.milling_builder = new MillingBuilder(root)
-        this.window_builder = new WindowBuilder(root)
-        this.palette_bulider = new PaletteBuilder(this)
-        this.alum_builder = new AlumBuilder(this)
-        this.uniform_texture_builder = new UniformTextureBuilder(root, this)
-        this.fasade_builder = new FasadeBuilder(this)
-        this.tabletop_builder = new TableTopBuilder(this)
+        this.edge_builder = new EdgeBuilder(this);
+        this.models_builder = new ModelsBuilder(this);
+        this.milling_builder = new MillingBuilder(root);
+        this.window_builder = new WindowBuilder(root);
+        this.palette_bulider = new PaletteBuilder(this);
+        this.alum_builder = new AlumBuilder(this);
+        this.uniform_texture_builder = new UniformTextureBuilder(root, this);
+        this.fasade_builder = new FasadeBuilder(this);
+        this.tabletop_builder = new TableTopBuilder(this);
+
     }
 
     get _heightCorrect() {
@@ -272,7 +276,12 @@ export class BuildProduct extends BuildersHelper {
         parentGroup: THREE.Object3D,
         size?: { width: number; height: number; depth: number }
     ) {
+        // Режим чертежа
+        const drowMode = this.menuStore.getDrowModeValue
+        //---------------
+
         const total = new THREE.Object3D();
+        const edgeBody = new THREE.Object3D()
         const { PROPS } = parentGroup.userData;
         const { CONFIG } = PROPS;
 
@@ -346,10 +355,14 @@ export class BuildProduct extends BuildersHelper {
         }
         arrows.position.y = baseY;
 
+
+
         // Добавление в итоговую группу
         [tableTop, legs, body, shelf, fasade, arrows]
             .filter(Boolean)
-            .forEach((part) => total.add(part as THREE.Object3D));
+            .forEach((part) => {
+                total.add(part as THREE.Object3D)
+            });
 
         //---------------------------
         /** @Для корректной коллизии */
@@ -363,6 +376,11 @@ export class BuildProduct extends BuildersHelper {
         if (sourceForBounds) {
             this.setBounds(total, sourceForBounds);
         }
+
+        if (drowMode) {
+            this.useEdgeBuilder.drawingMode(drowMode, total)
+        }
+
 
         return total;
     }
@@ -392,6 +410,10 @@ export class BuildProduct extends BuildersHelper {
 
         const moduleColor = this._FASADE[moduleColorId];
         const body = this.json_builder.createMesh({ data, fasade: moduleColor });
+
+        const edge = this.edge_builder.createEdge(body);
+        body.add(edge)
+
         const { geometryType } = body.userData;
 
         const texture = this._PRODUCTS[ID].texture;
@@ -433,8 +455,6 @@ export class BuildProduct extends BuildersHelper {
         };
 
         props.BODY_DEFAULT = body.clone();
-
-        console.log(body, 'BODY')
 
         return { body, tempMaterial: body.children[0]?.material };
     }
@@ -481,7 +501,9 @@ export class BuildProduct extends BuildersHelper {
                 mesh.name = `${prefix}_${key}`;
 
                 props.SHELF.push(mesh);
-                parent.add(mesh);
+
+                const edge = this.edge_builder.createEdge(mesh);
+                parent.add(mesh, edge);
             });
         };
 
@@ -512,6 +534,11 @@ export class BuildProduct extends BuildersHelper {
         Object.values(leg_position as THREETypes.TObject[]).forEach((position, ndx) => {
             let leg = this.createLeg(leg_length)
             leg.position.set(position.x, position.y, position.z)
+
+            // leg.updateMatrix();
+            // leg.geometry.applyMatrix4(leg.matrix);
+            // leg.position.set(0, 0, 0);
+
             legs.add(leg)
         })
 
@@ -571,7 +598,19 @@ export class BuildProduct extends BuildersHelper {
         top.position.setY(-(leg_length / 2));
         bottom.position.setY(-leg_length + 10);
 
-        group.add(top, bottom);
+        // применяем матрицу трансформации к геометрии
+        top.updateMatrix();
+        top.geometry.applyMatrix4(top.matrix);
+        top.position.set(0, 0, 0); // сброс позиции
+
+        bottom.updateMatrix();
+        bottom.geometry.applyMatrix4(bottom.matrix);
+        bottom.position.set(0, 0, 0);
+
+        const edgeTop = this.edge_builder.createEdge(top);
+        const edgeBottom = this.edge_builder.createEdge(bottom);
+
+        group.add(top, bottom, edgeTop, edgeBottom);
 
         return group;
     };
@@ -584,15 +623,25 @@ export class BuildProduct extends BuildersHelper {
 
         ruler.forEach(item => {
             for (let i in item) {
+                if (!this.menuStore.getRulerVisibility) {
+                    item[i].visible = false
+                    item[i].traverse(child => {
+                        child.visible = false;
+                    });
+                }
+
                 arrows.add(item[i])
             }
         })
         arrows.name = "ARROWS"
         props.ARROWS = arrows
 
+
+
+        console.log(arrows, 'INBUILD')
+
         return arrows
 
-        group.add(arrows)
     };
 
     private setBounds(target: THREE.Object3D, source: THREE.Object3D) {

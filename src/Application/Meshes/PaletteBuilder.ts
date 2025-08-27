@@ -1,4 +1,4 @@
-/**//@ts-nocheck */
+// @ts-nocheck 
 import * as THREE from "three";
 import * as THREETypes from "@/types/types";
 
@@ -42,17 +42,15 @@ export class PaletteBuilder {
     createPaletteColor({
         fasade,
         data,
-        fasadeNdx,
-        props
+        fasadeProps,
+
     }: {
         fasade: THREE.Object3D;
         data: number | string;
-        fasadeNdx: number;
-        props: { [key: string]: any };
+        fasadeProps: { [key: string]: any };
     }) {
         const { _APP, _FASADE } = this.parent;
         const palette = _APP.PALETTE[data];
-        const fasadeProps = props.CONFIG.FASADE_PROPS[fasadeNdx];
         const fasadeId = fasadeProps.COLOR ?? 567323;
         const fasadeName = _FASADE[fasadeId].NAME.toLowerCase();
 
@@ -66,6 +64,10 @@ export class PaletteBuilder {
         const roughnessValue = !useTexture && fasadeName.includes("матовый") ? 0.5 : 0.02;
 
         fasade.traverse((child) => {
+
+              // Пропускаем меш чертежа
+            if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) return
+
             if (!(child instanceof THREE.Mesh)) return;
             if (!useTexture && child.userData.type === "glass") return;
 

@@ -1,7 +1,8 @@
-/**// @ts-nocheck */
+// @ts-nocheck 
 
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
+import { useAppData } from "@/store/appliction/useAppData"
 // import * as THREEInterfases from "@/types/interfases"
 
 type TFasadePartPosition = {
@@ -17,11 +18,17 @@ export class FasadeBuilder {
     uniformeTextureStartData: TFasadePartPosition[] = []
     _APP: THREETypes.TObject
     jsonBuilder: THREETypes.TJSONBuilder
+    edgeBuilder: THREETypes.TEdgeBuilder
+    useEdgeBuilder: THREETypes.TUseEdgeBuilder
+    menuStore: THREETypes.TMenuStore
 
     constructor(parent: THREETypes.TBuildProduct) {
         this.parent = parent
         this._APP = parent._APP
         this.jsonBuilder = parent.json_builder
+        this.edgeBuilder = parent.edge_builder
+        this.useEdgeBuilder = parent.root.useEdgeBuilder
+        this.menuStore = parent.root.menuStore
     }
 
     getFasade({
@@ -41,12 +48,16 @@ export class FasadeBuilder {
         curBodyExceptions?: boolean,
         remove?: boolean
     }) {
+        // Режим чертежа (как в исходнике, не используем, но не убираем)
+        const drowMode = this.menuStore.getDrowModeValue;
+
         const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
-
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
+
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
+        const modelType = CONFIG.MODEL?.type ?? "left";
 
 
         if (remove) {
@@ -57,79 +68,188 @@ export class FasadeBuilder {
                 column_index: null,
                 backupFasadId: null,
                 color: null
-            }
+            };
         }
 
-        // Подготовка индексации для текстурирования
+        // Индексация под униформное текстурирование
         this.indexedFasadeToUtiformTexturing(props, isUMmodule);
 
-        // Перебор данных о фасадах
-        FASADE_PROPS.forEach((fasadeData, key) => {
-
-            // Получение позиции фасада
-            const fasadePositionData = this.getFasadePosition(CONFIG, key, isUMmodule);
-            const fasadeId = fasadeData.BODY;
-            const fasadeColor = fasadeData.COLOR;
-
-            // Определение цвета фасада с учетом типа элемента
-            const resolveColorId = () => {
-                const isDefault = fasadeColor === this.parent.project.default_fasade_color;
-
-                switch (ELEMENT_TYPE) {
-                    case "element_down":
-                        return (defFasadeDown && isDefault) || fasadsBottom.global && (defFasadeDown && isDefault) ? defFasadeDown : fasadeColor;
-                    case "element_up":
-                        return (defFasadeUp && isDefault) || fasadsTop.global && (defFasadeDown && isDefault) ? defFasadeUp : fasadeColor;
-                    default:
-                        return fasadeColor;
-                }
-            };
-
-
-            if (remove && fasadeNdx == key) {
-                console.log('DELITE', key)
-
-                fasadeData.COLOR = 7397
-                fasadeData.PALETTE = null
-                fasadeData.SHOW = false
-                fasadeData.GLASS = null
-                fasadeData.PATINA = null
-                fasadeData.WINDOW = null
+        // Хелпер: выбор дефолтного цвета по типу элемента (точно как в исходнике)
+        const resolveColorId = (fasadeColor: number) => {
+            const isDefault = fasadeColor === this.parent.project.default_fasade_color;
+            switch (ELEMENT_TYPE) {
+                case "element_down":
+                    return ((defFasadeDown && isDefault) || (fasadsBottom.global && (defFasadeDown && isDefault))) ? defFasadeDown : fasadeColor;
+                case "element_up":
+                    return ((defFasadeUp && isDefault) || (fasadsTop.global && (defFasadeDown && isDefault))) ? defFasadeUp : fasadeColor; // сохранена исходная формула
+                default:
+                    return fasadeColor;
             }
+        };
 
-            //------------------------------------------------
-            /** @Временная заглушка */
-            //------------------------------------------------
+        if (Number.isInteger(fasadeNdx)) {
+            console.log('Not ITTER')
+            const fasadeData = FASADE_PROPS[fasadeNdx];
+            const curFasade = FASADE[fasadeNdx]
 
-            if (!remove && !fasadeNdx) {
-                fasadeData.COLOR = resolveColorId();
+            if (remove) {
+                fasadeData.COLOR = 7397;
+                fasadeData.PALETTE = null;
+                fasadeData.SHOW = false;
+                fasadeData.GLASS = null;
+                fasadeData.PATINA = null;
+                fasadeData.WINDOW = null;
+            }
+            else {
+                fasadeData.COLOR = resolveColorId(fasadeData.COLOR);
+                fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
+                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
 
-                fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR != 7397;
-                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null
-                
-
-                const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0];
-                const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0];
+                const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
+                const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
                 if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
-                    fasadeData.PALETTE = firstValuePall.ID
+                    fasadeData.PALETTE = firstValuePall.ID;
                 }
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
-                    fasadeData.PALETTE = null
+                    fasadeData.PALETTE = null;
                 }
-
-                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLAAS === null) {
-                    fasadeData.GLAAS = firstValueGlass.ID
+                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
+                    fasadeData.GLASS = firstValueGlass.ID;
                 }
-
-                console.log(fasadeData.COLOR, '--COLOR')
             }
 
-            // Создание объекта фасада
+            // Позиция фасада вычисляется один раз
+            const fasadePositionData = this.getFasadePosition(CONFIG, fasadeNdx, isUMmodule);
+            curFasade.userData.SHOW = fasadeData.SHOW;
+
+
+            // Палитра
+            if (fasadeData.PALETTE != null) {
+                this.parent.palette_bulider.createPaletteColor({
+                    fasade: curFasade,
+                    data: fasadeData.PALETTE,
+                    fasadeProps: fasadeData,
+                });
+            }
+
+            // Фрезеровка
+            if (fasadeData.MILLING != null) {
+                const millingParams = remove ? 2462671 : fasadeData.MILLING;
+                if (remove) {
+                    this.parent.milling_builder.createMillingFasade(
+                        curFasade,
+                        curFasade.userData.trueSize,
+                        millingParams,
+                        FASADE_DEFAULT[fasadeNdx],
+                        fasadeData.PATINA
+                    );
+                    fasadeData.MILLING = null;
+                } else {
+                    this.parent.milling_builder.createMillingFasade(
+                        curFasade,
+                        curFasade.userData.trueSize,
+                        millingParams,
+                        FASADE_DEFAULT[fasadeNdx],
+                        fasadeData.PATINA
+                    );
+                }
+            }
+
+            // Окно
+            if (fasadeData.WINDOW != null) {
+                this.parent.window_builder.createWindow({
+                    curFasade,
+                    fasadePosition: fasade.userData.trueSize,
+                    data: fasadeData.WINDOW,
+                    defaultGeometry: FASADE_DEFAULT[fasadeNdx],
+                    alum: FASADE_PROPS[fasadeNdx].ALUM
+                });
+            }
+
+            // Алюм. профиль
+            if (fasadeData.ALUM != null && FASADE_PROPS[fasadeNdx].COLOR != null) {
+                const alumData = this.parent._FASADE[FASADE_PROPS[fasadeNdx].COLOR];
+                this.parent.alum_builder.createAlum({ fasade, data: alumData });
+            }
+
+            // Цвет стекла
+            if (fasadeData.GLASS != null) {
+                this.parent.window_builder.changeGlassColor({
+                    curFasade,
+                    glassId: FASADE_PROPS[fasadeNdx].GLASS
+                });
+            }
+
+            // Видимость фасада с учётом исключений
+            if (!fasadeData.SHOW) {
+
+                const canKeepException =
+                    (curFasade.userData.curBodyExceptions && curFasade instanceof THREE.Mesh)
+
+                if (canKeepException) {
+                    curFasade.material = curFasade.userData.curBodyExceptionsMaterial.clone();
+                    curFasade.material.needsUpdate = true;
+                    curFasade.visible = true;
+                } else {
+                    curFasade.visible = false;
+                }
+            }
+
+
+            this.uniformeTextureStartData = [];
+            return;
+        }
+
+        // Перебор фасадов. Сохраняем исходную семантику фильтра по fasadeNdx.
+        for (let key = 0; key < FASADE_PROPS.length; key++) {
+            const fasadeData = FASADE_PROPS[key];
+
+            console.log(fasadeNdx == key, fasadeNdx, key, 'IN ITERRATOR')
+
+            // if (fasadeNdx !== null && fasadeNdx !== key) continue; // важно: 0 считается как "все", как в исходнике
+
+            // Обнуление при remove + точечный индекс
+            // if (remove && fasadeNdx === key) {
+            //     fasadeData.COLOR = 7397;
+            //     fasadeData.PALETTE = null;
+            //     fasadeData.SHOW = false;
+            //     fasadeData.GLASS = null;
+            //     fasadeData.PATINA = null;
+            //     fasadeData.WINDOW = null;
+            // }
+
+            // Массовая инициализация, когда remove=false и индекс не задан
+            if (!remove && !fasadeNdx) {
+
+                fasadeData.COLOR = resolveColorId(fasadeData.COLOR);
+                fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
+                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
+
+                const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
+                const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
+
+                if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
+                    fasadeData.PALETTE = firstValuePall.ID;
+                }
+                if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
+                    fasadeData.PALETTE = null;
+                }
+                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
+                    fasadeData.GLASS = firstValueGlass.ID;
+                }
+
+                console.log(fasadeData.SHOW, '---SHOW')
+            }
+
+            // Позиция фасада вычисляется один раз
+            const fasadePositionData = this.getFasadePosition(CONFIG, key, isUMmodule);
+
+            // Создание фасада
             const fasade = this.createFasade({
                 fasade_position: fasadePositionData,
                 start_position: startPosition,
-                fasade_id: fasadeId,
+                fasade_id: fasadeData.BODY,
                 props_array: FASADE_PROPS,
                 props,
                 key,
@@ -137,105 +257,143 @@ export class FasadeBuilder {
                 curBodyExceptions
             }) as THREE.Object3D;
 
-            // Определение реальных размеров фасада
+            // Истинные размеры фасада и запись в CONFIG.FASADE_POSITIONS[key]
+
             const box = new THREE.Box3().setFromObject(fasade);
-            const sizeVec = new THREE.Vector3();
-            const size = box.getSize(sizeVec);
-
-            const fasadeSize = {
-                FASADE_WIDTH: FASADE_POSITIONS[key].FASADE_WIDTH = size.x,
-                FASADE_HEIGHT: FASADE_POSITIONS[key].FASADE_HEIGHT = size.y,
-                FASADE_DEPTH: FASADE_POSITIONS[key].FASADE_DEPTH = size.z,
+            const size = box.getSize(new THREE.Vector3());
+            const sizeRec = {
+                FASADE_WIDTH: size.x,
+                FASADE_HEIGHT: size.y,
+                FASADE_DEPTH: size.z
             };
+            FASADE_POSITIONS[key].FASADE_WIDTH = size.x;
+            FASADE_POSITIONS[key].FASADE_HEIGHT = size.y;
+            FASADE_POSITIONS[key].FASADE_DEPTH = size.z;
 
-            fasade.userData.trueSize = fasadeSize;
+            fasade.userData.trueSize = sizeRec;
             fasade.userData.type = FASADE_TYPE;
 
-            // Позиционирование фасада в модели
-            const modelType = CONFIG.MODEL?.type ?? "left";
+            // Позиционирование в сцене
             this.setFasadePosition(fasade, fasadePositionData, modelType, startPosition);
 
-            // Добавление нового фасада, если он отсутствует
+            // Создание ребра и добавление/восстановление фасада в массивы (точно как в исходнике)
             const isNewFasade = FASADE_DEFAULT.length < FASADE_PROPS.length;
+            const fasadeEdge = this.edgeBuilder.createEdge(fasade);
+            fasade.userData.edgeID = fasadeEdge.id;
 
             if (isNewFasade) {
                 FASADE.push(fasade);
                 const copy = fasade.clone();
                 FASADE_DEFAULT.push(copy);
-                fasade.visible = FASADE_PROPS[key].SHOW;
-                parent.add(fasade);
+                fasade.visible = fasade.userData.SHOW = FASADE_PROPS[key].SHOW;
+                parent.add(fasade, fasadeEdge);
             }
 
-            // Восстановление фасада, если он был удален
-            if (fasadeNdx === key && FASADE[fasadeNdx] === null) {
-                FASADE[key] = fasade;
-                fasade.visible = true;
-                parent.add(fasade);
-            }
+            // if (fasadeNdx === key && FASADE[fasadeNdx] === null) {
+            //     FASADE[key] = fasade;
+            //     fasade.visible = true;
+            //     FASADE[key].userData.SHOW = fasadeData.SHOW;
+            //     parent.add(fasade);
+            // }
 
-            // Добавление палитры, если она есть
+            // if (fasadeNdx === key) {
+            //     FASADE[key].userData.SHOW = fasadeData.SHOW;
+            // }
+
+            // if (!fasadeNdx) {
+            //     FASADE[key].userData.SHOW = fasadeData.SHOW;
+            // }
+
+            // Палитра
             if (fasadeData.PALETTE != null) {
-                console.log(fasadeData.PALETTE, '---PALETTE')
-                this.parent.palette_bulider.createPaletteColor({ fasade, data: fasadeData.PALETTE, fasadeNdx: key, props });
-            }
-
-            // Добавление фрезеровки, если она есть
-
-            if (fasadeData.MILLING != null) {
-                let millingParams = remove ? 2462671 : fasadeData.MILLING
-                if (remove && fasadeNdx === key) {
-                    this.parent.milling_builder.createMillingFasade(FASADE[key], fasadeSize, millingParams, FASADE_DEFAULT[key], fasadeData.PATINA);
-                    fasadeData.MILLING = null
-                }
-                else {
-                    this.parent.milling_builder.createMillingFasade(fasade, fasadeSize, millingParams, FASADE_DEFAULT[key], fasadeData.PATINA);
-                }
-
-            }
-
-            // Добавление окна, если оно есть
-            if (fasadeData.WINDOW != null) {
-                this.parent.window_builder.createWindow({
+                this.parent.palette_bulider.createPaletteColor({
                     fasade,
-                    fasadePosition: fasadeSize,
-                    data: fasadeData.WINDOW,
-                    defaultGeometry: FASADE_DEFAULT[key],
-                    alum: FASADE_PROPS[key].ALUM,
+                    data: fasadeData.PALETTE,
+                    fasadeProps: fasadeData
                 });
             }
 
-            // Добавление алюминиевого профиля, если он есть
+            // Фрезеровка
+            if (fasadeData.MILLING != null) {
+                this.parent.milling_builder.createMillingFasade(
+                    fasade,
+                    fasade.userData.trueSize,
+                    fasadeData.MILLING,
+                    FASADE_DEFAULT[key],
+                    fasadeData.PATINA
+                );
+                // const millingParams = remove ? 2462671 : fasadeData.MILLING;
+                // if (remove && fasadeNdx === key) {
+                //     this.parent.milling_builder.createMillingFasade(
+                //         FASADE[key],
+                //         fasade.userData.trueSize,
+                //         millingParams,
+                //         FASADE_DEFAULT[key],
+                //         fasadeData.PATINA
+                //     );
+                //     fasadeData.MILLING = null;
+                // } else {
+                //     this.parent.milling_builder.createMillingFasade(
+                //         fasade,
+                //         fasade.userData.trueSize,
+                //         millingParams,
+                //         FASADE_DEFAULT[key],
+                //         fasadeData.PATINA
+                //     );
+                // }
+            }
+
+            // Окно
+            if (fasadeData.WINDOW != null) {
+                this.parent.window_builder.createWindow({
+                    fasade,
+                    fasadePosition: fasade.userData.trueSize,
+                    data: fasadeData.WINDOW,
+                    defaultGeometry: FASADE_DEFAULT[key],
+                    alum: FASADE_PROPS[key].ALUM
+                });
+            }
+
+            // Алюм. профиль
             if (fasadeData.ALUM != null && FASADE_PROPS[key].COLOR != null) {
                 const alumData = this.parent._FASADE[FASADE_PROPS[key].COLOR];
                 this.parent.alum_builder.createAlum({ fasade, data: alumData });
             }
 
-            // Изменение цвета стекла, если оно есть
+            // Цвет стекла
             if (fasadeData.GLASS != null) {
-                this.parent.window_builder.changeGlassColor({ fasade, glassId: FASADE_PROPS[key].GLASS });
+                this.parent.window_builder.changeGlassColor({
+                    fasade,
+                    glassId: FASADE_PROPS[key].GLASS
+                });
             }
 
+            // Видимость фасада с учётом исключений
             if (!fasadeData.SHOW) {
-                if (FASADE[key].userData.curBodyExceptions && FASADE[key] instanceof THREE.Mesh || fasade.userData.curBodyExceptions && fasade instanceof THREE.Mesh) {
+                // const ref = FASADE[key];
+                const canKeepException =
+                    // (ref?.userData.curBodyExceptions && ref instanceof THREE.Mesh) ||
+                    (fasade.userData.curBodyExceptions && fasade instanceof THREE.Mesh);
 
-                    FASADE[key].material = FASADE[key].userData.curBodyExceptionsMaterial.clone()
-                    FASADE[key].material.needsUpdate = true;
-                    FASADE[key].visible = true
+                // if (canKeepException && ref) {
+                //     ref.material = ref.userData.curBodyExceptionsMaterial.clone();
+                //     ref.material.needsUpdate = true;
+                //     ref.visible = true;
+                // } else {
+                //     if (ref) ref.visible = false;
+                //     fasade.visible = false;
+                // }
 
-                    // fasade.material = fasade.userData.curBodyExceptionsMaterial.clone()
-                    // fasade.material.needsUpdate = true;
-                    // fasade.visible = true
-                }
-                else {
-                    FASADE[key].visible = false;
+                if (canKeepException) {
+                    fasade.visible = true;
+                } else {
+
                     fasade.visible = false;
                 }
             }
-        });
+        }
 
-        console.log(FASADE_PROPS, 'FASADE_PROPS')
-
-        // Очистка данных о текстурах
+        // Очистка стартовых данных текстур как в исходнике
         this.uniformeTextureStartData = [];
         return parent;
     }
@@ -323,11 +481,13 @@ export class FasadeBuilder {
         }
 
         let mesh = new THREE.Mesh(geometry, material);
+
         mesh.geometry.computeBoundingBox();
         mesh.userData.partPosition = this.uniformeTextureStartData[key];
         mesh.updateMatrixWorld();
         if (curBodyExceptions) mesh.userData.curBodyExceptionsMaterial = curExceptionsMaterial.clone()
         mesh.userData.curBodyExceptions = curBodyExceptions
+        mesh.name = 'fasade'
         return mesh;
     }
 

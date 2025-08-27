@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
-import { TJSONBuilder, TBuildProduct, TSize, TApplication, TDeepDispose } from '@/types/types'
+import { TJSONBuilder, TBuildProduct, TSize, TDeepDispose, TEdgeBuilder, TApplication } from '@/types/types'
 import { IProduct } from '@/types/interfases'
 
 
@@ -11,6 +11,7 @@ import { IProduct } from '@/types/interfases'
 export class TableTopBuilder {
     private buildProduct: TBuildProduct
     private jsonBuilder: TJSONBuilder
+    private edgeBuilder: TEdgeBuilder
     private root: TApplication
     private deepDispose: TDeepDispose
     private scene: THREE.Scene
@@ -21,6 +22,7 @@ export class TableTopBuilder {
         this.deepDispose = parent.root.deepDispose!
         this.buildProduct = parent
         this.jsonBuilder = parent.json_builder
+        this.edgeBuilder = parent.edge_builder
 
     }
 
@@ -80,7 +82,7 @@ export class TableTopBuilder {
         };
     }
 
-    createTableTop({ props, model_data, incomeModel = null }
+    createTableTop({ props, incomeModel = null }
         : {
             props: THREETypes.TObject,
             model_data?: THREETypes.TObject,
@@ -153,15 +155,21 @@ export class TableTopBuilder {
         };
 
         const tableBody = this.jsonBuilder.createMesh({ data: tableOptions, parent_size: sizes })
-        tableBody.traverse(child => {
+
+
+        tableBody.traverse((child) => {
             if (child instanceof THREE.Mesh) {
                 child.userData.name = 'TABLETOP'
                 const pos = new THREE.Vector3(30, 0, 0)
                 child.geometry.translate(pos)
                 child.geometry.computeBoundingBox()
+
+                // this.root.scene?.add(edge)
             }
         });
 
+        const edgeBody = this.edgeBuilder.createEdge(tableBody)
+        tableBody.add(edgeBody)
         tableBody.name = 'tableTop';
         props.TABLETOP = tableBody;
 

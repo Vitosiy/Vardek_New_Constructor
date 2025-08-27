@@ -21,6 +21,8 @@ import { DeepDispose } from "@/Application/Utils/DeepDispose";
 import { AppLights } from "@/Application/World/Lights";
 import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
+import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
+import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -58,6 +60,8 @@ export type TAppLights = AppLights
 export type TUniversalGeometryBuilder = UniversalGeometryBuilder
 export type TGeometryBuilder = GeometryBuilder
 export type TJSONBuilder = JsonBuilder 
+export type TEdgeBuilder = EdgeBuilder
+export type TUseEdgeBuilder = UseEdgeBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 

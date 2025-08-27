@@ -43,6 +43,8 @@ export const useMenuStore = defineStore('menu', () => {
   const shadowValue = ref<boolean>(false)
   const refractionValue = ref<boolean>(false)
   const startHeightClamp = ref<number | string>(startParams.height_clamp)
+  const drowMode = ref<boolean>(false)
+  const rulerVisibility = ref<boolean>(true);
 
   const defaultIds: Record<keyof TOptionsMap, string> = {
     moduleTop: 'default_module_color',
@@ -101,7 +103,9 @@ export const useMenuStore = defineStore('menu', () => {
     menuContentsByID.value = '';
   }
 
+  //-------------------------
   /** @Работа_с_настройками_освещения */
+  //-------------------------
 
   const setShadowValue = (value: boolean) => {
     shadowValue.value = value
@@ -119,7 +123,7 @@ export const useMenuStore = defineStore('menu', () => {
     startHeightClamp.value = value
   }
 
-  const setQuality = (type: TQualityValue, value: boolean) => {
+  const setQuality = (type: TQualityValue) => {
     quality.value.forEach((el: TQuality) => {
       el.active = el.value === type;
     })
@@ -150,7 +154,9 @@ export const useMenuStore = defineStore('menu', () => {
     return quality.value
   })
 
+  //-------------------------
   /** @Работа_с_опциями */
+  //-------------------------
 
   const updateOption = (type: keyof TOptionsMap, value: string | number | { data: string | number, type: string }) => {
 
@@ -191,6 +197,40 @@ export const useMenuStore = defineStore('menu', () => {
     return globalOptions.value
   })
 
+  //-------------------------
+  /** @Режим_чертежа */
+  //-------------------------
+
+  const setDrowModeValue = (value: boolean) => {
+    drowMode.value = value
+  }
+
+  const toggleDrowModeValue = async () => {
+    drowMode.value = !drowMode.value
+    // console.log(drowMode.value, 'drowMode.value')
+  }
+
+  const getDrowModeValue = computed(() => {
+    return drowMode.value
+  })
+
+  //-------------------------
+  /** @Видимость_размеров */
+  //-------------------------
+
+  const setRulerVisibility = (value: boolean) => {
+    rulerVisibility.value = value
+  }
+
+  const toggleRulerVisibility = () => {
+    rulerVisibility.value = !rulerVisibility.value
+  }
+
+  const getRulerVisibility = computed(() => {
+    return rulerVisibility.value
+  })
+
+
   return {
     openMenus,
     menuContentsByID,
@@ -216,6 +256,15 @@ export const useMenuStore = defineStore('menu', () => {
     getAmbientLightRange,
     getPointLightRange,
     getHeightClamp,
-    getQuality
+    getQuality,
+
+    toggleDrowModeValue,
+    setDrowModeValue,
+    getDrowModeValue,
+
+    toggleRulerVisibility,
+    setRulerVisibility,
+    getRulerVisibility,
+
   };
 });

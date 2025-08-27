@@ -13,16 +13,14 @@ import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 
 import { useRoute } from "vue-router";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
-import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
+import { useMenuStore } from "@/store/appStore/useMenuStore.ts";
 
 const route = useRoute();
 const ready = ref<boolean>(false);
 const pageComponentRef = ref(null);
-
 </script>
 
 <template>
-  
   <MainHeader :page-component="pageComponentRef" />
   <MainPopUp />
   <InfoPopUp />
@@ -35,7 +33,6 @@ const pageComponentRef = ref(null);
     </RouterView>
   </div>
 </template>
-
 
 <style lang="scss" scoped>
 .main__container {

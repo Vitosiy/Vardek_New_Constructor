@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { RoomManager } from '../Room/RoomManager';
+import { useMenuStore } from '@/store/appStore/useMenuStore';
 
 // Интерфейс для конфигурации линейки
 interface RulerConfig {
@@ -24,6 +25,8 @@ interface DrawLabelParams {
 }
 
 export class Ruler {
+  private menuStore = useMenuStore();
+
   private rulerLines: THREE.Object3D[] = [];
   private rullerSizeLines: THREE.Object3D[] = [];
   private room: RoomManager | null = null;
@@ -65,6 +68,21 @@ export class Ruler {
     this.room = room ?? null;
   }
 
+  // Переключение видимости линеек расстояния и размеров
+  public toggleRulerVisibility(visible: boolean): void {
+    const toggleObjects = (objects: THREE.Object3D[]) => {
+      objects.forEach(obj => {
+        obj.visible = visible;
+        obj.traverse(child => {
+          child.visible = visible;
+        });
+      });
+    };
+
+    toggleObjects(this.rulerLines);
+    toggleObjects(this.rullerSizeLines);
+  }
+
   // Отрисовка сплошных линий до стен
   public drawRulerWalls(objectBox: THREE.Box3): void {
     const faceCenters = [
@@ -98,14 +116,16 @@ export class Ruler {
   }
 
   // Отрисовка сплошных линий до объектов
-  public drawRulerToObjects(object: THREE.Object3D): void {
+  public drawRulerToObjects(object: THREE.Object3D | null): void {
     if (!this.isValidState()) {
       console.warn('Отсутствуют необходимые свойства: комната, границы комнаты или сцена');
       return;
     }
 
     this.clearRuler();
-    const objectBox = object.userData.aabb as THREE.Box3;
+    if (!this.menuStore.getRulerVisibility) return
+
+    const objectBox = object!.userData.aabb as THREE.Box3;
     this.drawRulerWalls(objectBox);
     this.calculateAndRenderRulers(objectBox);
   }
@@ -211,7 +231,7 @@ export class Ruler {
       if (objectBox.intersectsBox(box)) {
         continue; // Пропускаем отрисовку линейки, если есть пересечение
       }
-      
+
       for (const direction of this.config.DIRECTIONS) {
         let intersectionFound = false;
 

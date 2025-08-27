@@ -252,7 +252,6 @@ export class BuildersHelper extends GlobalsData {
 
             // Восстановление оригинального материала при наличии
             if (child.userData.ORIGINAL_COLOR) {
-                console.log(child.userData.ORIGINAL_COLOR, 'ORIGINAL_COLOR')
                 child.material = child.userData.ORIGINAL_COLOR;
             }
             if (child.material.opacity < 1) {
