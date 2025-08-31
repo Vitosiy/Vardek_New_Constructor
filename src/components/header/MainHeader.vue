@@ -140,12 +140,14 @@ const createNewRoom = (value: string) => {
   if (!verdekConstructor.value) return;
   props.pageComponent.selected();
   menuStore.resetGlobalOptions();
+  
+  menuStore.setRulerVisibility(true);
+  menuStore.setDrowModeValue(false);
+
   eventBus.emit("A:Create", value);
   restorLength.value = 0;
   curActionCount.value = 0;
   menuStore.closeAllMenus();
-  eventBus.emit("A:DrawingMode", false);
-  eventBus.emit("A:ToggleRulerVisibility", true);
 };
 
 const checkContantLoad = (state: boolean) => {

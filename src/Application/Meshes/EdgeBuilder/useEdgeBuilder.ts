@@ -9,8 +9,8 @@ export class UseEdgeBuilder {
     private lights: TAppLights
     private scene: Scene;
     constructor(root: TApplication) {
-        this.scene = root.scene!
-        this.lights = root.lights!
+        this.scene = root._scene!
+        this.lights = root._lights!
     }
 
     async drawingMode(value: boolean, object?: Object3D) {

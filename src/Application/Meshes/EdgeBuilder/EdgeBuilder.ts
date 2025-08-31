@@ -1,16 +1,16 @@
 import * as THREE from 'three'
-import { TBuildProduct } from '@/types/types'
+// import { TBuildProduct } from '@/types/types'
 
 export class EdgeBuilder {
-    private parent: TBuildProduct
+    // private parent: TBuildProduct
 
 
     private fasadeMaterial: THREE.MeshBasicMaterial
     private defaultMaterial: THREE.MeshBasicMaterial
     private lineMaterial: THREE.LineBasicMaterial
 
-    constructor(parent: TBuildProduct) {
-        this.parent = parent
+    constructor() {
+        // this.parent = parent
         this.defaultMaterial = new THREE.MeshBasicMaterial({
             color: 'rgba(252, 252, 139, 1)',
             // transparent: true,
