@@ -85,8 +85,7 @@
           >
             <div class="product-item__img">
               <img 
-                v-if="product?.IMG" 
-                :src="`${API_URL}${product.IMG}`" 
+                :src="product?.IMG ?`${API_URL}${product.IMG}` : `logo_vardek_mebel.png`" 
                 :alt="product?.NAME || 'Product image'"
                 loading="lazy"
               >

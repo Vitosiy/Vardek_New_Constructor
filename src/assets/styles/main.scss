@@ -81,7 +81,7 @@ select {
 }
 
 a {
-  color: $black;
+  color: #000000;
   text-decoration: none;
 }
 
@@ -139,11 +139,11 @@ p {
   }
 
   &.router-link-active {
-    border: 1px solid $black;
+    border: 1px solid #000000;
 
     svg {
       path {
-        fill: $black;
+        fill: #000000;
       }
     }
   }
@@ -157,7 +157,7 @@ p {
   align-items: center;
   border: none;
   border-radius: 360px;
-  background: $black;
+  background: #000000;
   cursor: pointer;
 }
 
@@ -195,12 +195,12 @@ p {
     &:hover {
       svg {
         path {
-          fill: $black;
+          fill: #000000;
         }
 
         g {
           path {
-            fill: $black;
+            fill: #000000;
           }
         }
       }
@@ -222,9 +222,9 @@ p {
 
     @media (hover: hover) {
       &:hover {
-        color: $black;
+        color: #000000;
         background-color: transparent;
-        border-color: $black;
+        border-color: #000000;
       }
     }
   }
