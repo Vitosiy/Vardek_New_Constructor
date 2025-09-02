@@ -1,3 +1,7 @@
+import { useCatalogStore } from '@/store/appStore/catalogStore';
+
+const catalogStore = useCatalogStore();
+
 function CatalogApp() {
 	var self = this;
 
@@ -1632,28 +1636,30 @@ if ($('input[data-opt-specific="true"]').val()) {
 	}
 
 	this.catalogElementGetPrice = function (elem) {
+    	
+		// catalogStore.fetchProductPrice($(".product__form").serialize());
 
-		clearTimeout(self.getPriceTimer);
+		// clearTimeout(self.getPriceTimer);
 
-		self.getPriceTimer = setTimeout(function () {
-			$.ajax({
-				type: "POST",
-				async: true,
-				url: apiPath + "/API/catalog.element.getprice.php",
-				data: $(".product__form").serialize()
-			}).done(function (msg) {
-				console.log(msg)
-				$(elem).find(".product__price > .product__price-text").html(msg);
-				$(elem).find(".props .add-to-basket .price").html(msg);
+		// self.getPriceTimer = setTimeout(function () {
+		// 	$.ajax({
+		// 		type: "POST",
+		// 		async: true,
+		// 		url: apiPath + "/API/catalog.element.getprice.php",
+		// 		data: $(".product__form").serialize()
+		// 	}).done(function (msg) {
+		// 		console.log(msg)
+		// 		$(elem).find(".product__price > .product__price-text").html(msg);
+		// 		$(elem).find(".props .add-to-basket .price").html(msg);
 
-				if ($('input[name="NOT_DISCOUNT"]').val() !== undefined) {
-				  var notDiscount = parseFloat($('input[name="NOT_DISCOUNT"]').val());
-				  var percent = 2 - notDiscount;
-				  var oldP = (msg.replace(' руб', '').replace(' ', '') / percent).toFixed();
-				  $(elem).find(".product__price > .product__price-notdiscount").html(Number(oldP).toLocaleString('ru-RU') + ' руб');
-				}
-			});
-		}, 300);
+		// 		if ($('input[name="NOT_DISCOUNT"]').val() !== undefined) {
+		// 		  var notDiscount = parseFloat($('input[name="NOT_DISCOUNT"]').val());
+		// 		  var percent = 2 - notDiscount;
+		// 		  var oldP = (msg.replace(' руб', '').replace(' ', '') / percent).toFixed();
+		// 		  $(elem).find(".product__price > .product__price-notdiscount").html(Number(oldP).toLocaleString('ru-RU') + ' руб');
+		// 		}
+		// 	});
+		// }, 300);
 	}
 
 	this.catalogGetElement = function () {
