@@ -1,6 +1,6 @@
-import { useCatalogStore } from '@/store/appStore/catalogStore';
+// import { useCatalogStore } from '@/store/appStore/catalogStore';
 
-const catalogStore = useCatalogStore();
+// const catalogStore = useCatalogStore();
 
 function CatalogApp() {
 	var self = this;
@@ -1635,32 +1635,58 @@ if ($('input[data-opt-specific="true"]').val()) {
 		}
 	}
 
-	this.catalogElementGetPrice = function (elem) {
-    	
-		// catalogStore.fetchProductPrice($(".product__form").serialize());
 
-		// clearTimeout(self.getPriceTimer);
+  this.catalogElementGetPrice = function (elem) {
+      clearTimeout(self.getPriceTimer);
 
-		// self.getPriceTimer = setTimeout(function () {
-		// 	$.ajax({
-		// 		type: "POST",
-		// 		async: true,
-		// 		url: apiPath + "/API/catalog.element.getprice.php",
-		// 		data: $(".product__form").serialize()
-		// 	}).done(function (msg) {
-		// 		console.log(msg)
-		// 		$(elem).find(".product__price > .product__price-text").html(msg);
-		// 		$(elem).find(".props .add-to-basket .price").html(msg);
+      self.getPriceTimer = setTimeout(function () {
+          const form = document.querySelector(".product__form");
+          if (!form) return;
 
-		// 		if ($('input[name="NOT_DISCOUNT"]').val() !== undefined) {
-		// 		  var notDiscount = parseFloat($('input[name="NOT_DISCOUNT"]').val());
-		// 		  var percent = 2 - notDiscount;
-		// 		  var oldP = (msg.replace(' руб', '').replace(' ', '') / percent).toFixed();
-		// 		  $(elem).find(".product__price > .product__price-notdiscount").html(Number(oldP).toLocaleString('ru-RU') + ' руб');
-		// 		}
-		// 	});
-		// }, 300);
-	}
+          const formData = new FormData(form);
+          const urlEncodedData = new URLSearchParams();
+          for (const [key, value] of formData) {
+              urlEncodedData.append(key, value);
+          }
+
+          fetch(apiPath + "/API/catalog.element.getprice.php", {
+              method: "POST",
+              body: urlEncodedData
+          })
+          .then(response => response.text())
+          .then(msg => {
+              console.log(msg);
+
+              // === Извлекаем DOM-элемент из jQuery-объекта или используем напрямую ===
+              const container = elem[0] || elem; // ← ключевая строка: если elem — jQuery, берём elem[0]
+
+              const priceNum = parseFloat(msg.replace(' руб', '').replace(/\s/g, ''));
+
+              const priceTextEl = container.querySelector(".product__price > .product__price-text");
+              const addToBasketPriceEl = container.querySelector(".props .add-to-basket .price");
+              if (priceTextEl) priceTextEl.innerHTML = msg;
+              if (addToBasketPriceEl) addToBasketPriceEl.innerHTML = msg;
+
+              const notDiscountInput = form.querySelector('input[name="NOT_DISCOUNT"]');
+              if (notDiscountInput) {
+                  const notDiscount = parseFloat(notDiscountInput.value);
+                  if (!isNaN(notDiscount)) {
+                      const percent = 2 - notDiscount;
+                      const oldPrice = (priceNum / percent).toFixed();
+                      const formattedOldPrice = Number(oldPrice).toLocaleString('ru-RU') + ' руб';
+
+                      const notDiscountEl = container.querySelector(".product__price > .product__price-notdiscount");
+                      if (notDiscountEl) {
+                          notDiscountEl.innerHTML = formattedOldPrice;
+                      }
+                  }
+              }
+          })
+          .catch(error => {
+              console.error("Ошибка при получении цены:", error);
+          });
+      }, 300);
+  };
 
 	this.catalogGetElement = function () {
 		var data = {ID: $(this).attr("_id")};
