@@ -63,7 +63,8 @@ export class Renderer {
         }
 
         this.instance = new THREE.WebGLRenderer({
-            antialias: this.antialiasing
+            antialias: this.antialiasing,
+            preserveDrawingBuffer: true
         });
 
         this.instance.outputColorSpace = THREE.SRGBColorSpace;
@@ -189,20 +190,20 @@ export class Renderer {
         this.instance.domElement = null; // Удаляем ссылку на DOM-элемент
         this.instance = null; // Удаляем ссылку на рендерер
 
-        
+
     }
 
     cleanupRenderer(Renderer) {
 
         const RendererElements = Renderer.domElement.querySelectorAll('*');
         RendererElements.forEach((element) => {
-          element.remove();
+            element.remove();
         });
 
         if (Renderer.domElement.parentElement) {
             Renderer.domElement.parentElement.removeChild(Renderer.domElement);
         }
-      
+
         Renderer = null;
-      }
+    }
 }

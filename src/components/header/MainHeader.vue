@@ -28,6 +28,7 @@ import {
 import Modal from "../ui/modals/Modal.vue";
 import InputDialog from "../ui/inputs/InputDialog.vue";
 import MainButton from "../ui/buttons/MainButton.vue";
+import Upload from "./Upload.vue";
 
 import LeftLightHeaderButton from "@/components/ui/buttons/header/LeftLightHeaderButton.vue";
 import RightLightHeaderButton from "@/components/ui/buttons/header/RightLightHeaderButton.vue";
@@ -140,7 +141,7 @@ const createNewRoom = (value: string) => {
   if (!verdekConstructor.value) return;
   props.pageComponent.selected();
   menuStore.resetGlobalOptions();
-  
+
   menuStore.setRulerVisibility(true);
   menuStore.setDrowModeValue(false);
 
@@ -299,6 +300,7 @@ onBeforeUnmount(() => {
             <S3DLightHeaderButton />
           </div>
           <div class="header-ui-group" v-if="route.path == '/3d'">
+            <Upload :verdekConstructor="verdekConstructor" />
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
