@@ -1127,6 +1127,7 @@ watch(visualizationRef, () => {
         <div
             class="constructor2d-container--left-module-sizes--module-size"
         >
+
           <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
             <p class="actions-title">Высота модуля</p>
             <div class="actions-input--container">
@@ -1140,6 +1141,7 @@ watch(visualizationRef, () => {
               />
             </div>
           </div>
+
           <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
             <p class="actions-title">Ширина модуля</p>
             <div class="actions-input--container">
@@ -1167,19 +1169,6 @@ watch(visualizationRef, () => {
               />
             </div>
           </div>
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
-            <p class="actions-title">Глубина модуля</p>
-            <div class="actions-input--container">
-              <MainInput
-                  @update:modelValue="updateTotalDepth"
-                  :inputClass="'actions-input'"
-                  :modelValue="productData.PROPS.CONFIG.SIZE.depth"
-                  :min="getMinDepth"
-                  :max="getMaxDepth"
-                  :type="'number'"
-              />
-            </div>
-          </div>
 
           <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
             <p class="actions-title">Цоколь</p>
@@ -1195,6 +1184,7 @@ watch(visualizationRef, () => {
               />
             </div>
           </div>
+
         </div>
       </div>
 
@@ -1326,6 +1316,7 @@ watch(visualizationRef, () => {
             class="constructor2d-container--right--content"
             :visualizationRef="visualizationRef"
             :module="module"
+            :shapeAdjuster="shapeAdjuster"
             :fillings="getFillings"
             :step="step"
             @product-updateFilling="updateFilling"
@@ -1366,14 +1357,14 @@ watch(visualizationRef, () => {
 
     &--left {
       flex-direction: column;
-      max-height: 56vh;
-      max-width: 8vw;
+      max-height: 50vh;
+      max-width: 9vw;
       overflow: hidden;
 
       &-module-sizes {
         position: absolute;
         overflow: scroll;
-        max-height: 55vh;
+        max-height: 47vh;
 
         &--module-size {
           display: flex;
@@ -1382,6 +1373,22 @@ watch(visualizationRef, () => {
           &-item {
             padding-bottom: 15px;
           }
+        }
+
+        &::-webkit-scrollbar {
+          width: 2px;
+          /* Ширина скроллбара */
+        }
+
+        &::-webkit-scrollbar-button {
+          display: none;
+          /* Убираем стрелки */
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #888;
+          /* Цвет ползунка */
+          border-radius: 4px;
         }
       }
     }

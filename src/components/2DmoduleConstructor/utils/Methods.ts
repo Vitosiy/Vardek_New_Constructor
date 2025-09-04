@@ -637,19 +637,20 @@ class Shape extends Helpers {
         if (this === otherShape)
             return false;
 
-        if(this.graphic.position.y + this.height > otherShape.graphic.position.y &&
-            this.graphic.position.y + this.height < otherShape.graphic.position.y + otherShape.height)
-            this.graphic.position.y = otherShape.graphic.position.y - 1 - this.height
-        else if(this.graphic.position.y <= otherShape.graphic.position.y + otherShape.height &&
-                    this.graphic.position.y >= otherShape.graphic.position.y)
-            this.graphic.position.y = otherShape.graphic.position.y + otherShape.height + 1
-
         // Проверка наложения прямоугольников
-        return !(
+        return (
             this.graphic.position.x + this.width < otherShape.graphic.position.x ||
-            this.graphic.position.x > otherShape.graphic.position.x + otherShape.width ||
-            this.graphic.position.y + this.height < otherShape.graphic.position.y ||
-            this.graphic.position.y > otherShape.graphic.position.y + otherShape.height
+            this.graphic.position.x > otherShape.graphic.position.x + otherShape.width
+        ) ||
+        (
+            (
+                this.graphic.position.y + this.height <= otherShape.graphic.position.y + otherShape.height &&
+                this.graphic.position.y + this.height >= otherShape.graphic.position.y
+            ) ||
+            (
+                this.graphic.position.y <= otherShape.graphic.position.y + otherShape.height &&
+                this.graphic.position.y >= otherShape.graphic.position.y
+            )
         );
     }
 
@@ -660,18 +661,17 @@ class Shape extends Helpers {
             y: this.getPixelHeight(position.y)
         };
 
-        if (pxPos.y < this.sectorBounds.y + this.padding ) {
+     /*   if (pxPos.y < this.sectorBounds.y + this.padding) {
             pxPos.y = this.sectorBounds.y + this.padding
             position.y = Math.floor(this.getMmHeight(pxPos.y));
-        }
-        else if(pxPos.y + this.height > this.sectorBounds.y + this.sectorBounds.height - this.padding) {
+        } else if (pxPos.y + this.height > this.sectorBounds.y + this.sectorBounds.height - this.padding) {
             pxPos.y = this.sectorBounds.y + this.sectorBounds.height - this.padding - this.height
             position.y = Math.floor(this.getMmHeight(pxPos.y));
-        }
+        }*/
 
         return (
-            pxPos.x >= this.sectorBounds.x + this.padding &&
-            pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width - this.padding
+            (pxPos.x >= this.sectorBounds.x + this.padding && pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width - this.padding) ||
+            (pxPos.y < this.sectorBounds.y + this.padding && pxPos.y + this.height > this.sectorBounds.y + this.sectorBounds.height - this.padding)
         );
     }
 
@@ -1162,11 +1162,11 @@ class ShapeAdjuster extends Helpers {
 
         const origX = shape.graphic.position.x
         const origY = shape.graphic.position.y
+        const x = this.convertToTen(bounds.x);
 
-        for (let i = 0; i < this.maxPositionAttempts; i++) {
+        for (let i = 0; i < bounds.height - bounds.y - height; i++) {
 
-            const x = this.convertToTen(bounds.x + margin * (bounds.width - width));
-            const y = this.convertToTen(bounds.y + margin + Math.random() * (bounds.height - height));
+            const y = this.convertToTen(bounds.y + (bounds.height - height) - i);
 
             shape.graphic.position.x = x;
             shape.graphic.position.y = y;

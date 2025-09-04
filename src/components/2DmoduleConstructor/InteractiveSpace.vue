@@ -949,7 +949,7 @@ const checkPositionFillingToCreate = (data) => {
 
   return {
     x: Math.round(getMmWidth(position.x)),
-    y: Math.round(getMmWidth(position.y)),
+    y: Math.round(getMmHeight(position.y)),
     width: data.width,
     height: data.height,
     type: data.type,

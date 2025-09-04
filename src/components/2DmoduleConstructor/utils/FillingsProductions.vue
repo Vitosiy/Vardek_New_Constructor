@@ -28,6 +28,9 @@ const props = defineProps({
   },
   visualizationRef: {
     type: [ref, Object],
+  },
+  shapeAdjuster: {
+    type: [ref, Object],
   }
 });
 
@@ -250,7 +253,7 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   const pixiSector = currentRow.sector;
 
   // Проверяем коллизию
-  const check = shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
 
   if (check) {
     currentfilling.position.y = fillingData.position.y;
