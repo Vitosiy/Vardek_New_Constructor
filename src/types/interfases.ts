@@ -65,7 +65,7 @@ export interface IRoom {
     id: number | string;
     label?: string;
     description?: string;
-    params?: IWallSizes;
+    params: IWallSizes;
     content?: IContentItem[] | any[];
 }
 

@@ -15,6 +15,7 @@ import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { useRoomOptions } from "../left-menu/option/roomOptions/useRoomOptons";
 import { TApplication } from "@/types/types";
 
 import {
@@ -60,6 +61,7 @@ const sceneState = useSceneState();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
 const modelState = useModelState();
+const roomOptions = useRoomOptions()
 const customiserStore = useCustomiserStore();
 
 const _saveProject = async () => {
@@ -139,7 +141,7 @@ const updateProject = async () => {
 const createNewRoom = (value: string) => {
   if (!verdekConstructor.value) return;
   props.pageComponent.selected();
-  menuStore.resetGlobalOptions();
+  roomOptions.resetGlobalOptions();
   
   menuStore.setRulerVisibility(true);
   menuStore.setDrowModeValue(false);

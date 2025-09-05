@@ -99,6 +99,7 @@ export class TrafficManager {
             })
 
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
             console.log(object, 'object')
             console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155])
 

@@ -15,6 +15,10 @@ export const useSceneState = defineStore('SceneState', () => {
     const schemeTransition = useSchemeTransition()
     const roomState = useRoomState()
 
+    const defaultParams = START_PROJECT_PARAMS
+
+
+
     const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
 
     const startProjectParams = ref(JSON.parse(JSON.stringify(START_PROJECT_PARAMS)))
@@ -82,6 +86,12 @@ export const useSceneState = defineStore('SceneState', () => {
         project_name
 
     }: IProjectParams) => {
+        // console.log(START_PROJECT_PARAMS.rooms[0].params, '1')
+        // console.log(rooms, '--rooms')
+        // console.log(currentProjectParams.value.rooms, '--value.rooms')
+        // console.log(START_PROJECT_PARAMS.rooms[0].params,'2')
+        // console.log(startProjectParams.value)
+
         currentProjectParams.value = {
             rooms: rooms ?? currentProjectParams.value.rooms,
             camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
@@ -230,6 +240,7 @@ export const useSceneState = defineStore('SceneState', () => {
         return quality.value
     })
 
+
     return {
         getStartProgectParams,
         getStartRoomData,
@@ -249,7 +260,9 @@ export const useSceneState = defineStore('SceneState', () => {
         setShadowValue,
         setLightRange,
         createNewProject,
-        loadProjectFromData
+        loadProjectFromData,
+
+        defaultParams
     };
 
 });

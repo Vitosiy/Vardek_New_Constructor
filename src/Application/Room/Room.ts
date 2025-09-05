@@ -4,7 +4,7 @@ import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 import { BuildersHelper } from "../Meshes/BuildersHelper";
-
+import { START_PROJECT_PARAMS } from '@/Application/F-startData';
 // import { OBB } from 'three/examples/jsm/math/OBB.js';
 // import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 
@@ -15,6 +15,7 @@ import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useEventBus } from '@/store/appliction/useEventBus';
+import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 
 import { WallBuilder } from "../Meshes/WallBilder";
 import { OBBHelper } from "../Utils/CalculateBoundingBox";
@@ -27,17 +28,16 @@ export class Room extends BuildersHelper {
     boundFloorMaterial: ((item: number) => void) | null = null
     boundHeightClampValue: ((item: number) => void) | null = null
 
-
-
     root: THREETypes.TApplication
     private params: { [key: string]: any }
     private wallBuilder: WallBuilder
 
     resizeParams: { [key: string]: number | 0 } | THREEInterfases.IWallSizes
     scene: THREE.Scene
-    private roomState: ReturnType<typeof useRoomState> = useRoomState()
-    private sceneState: ReturnType<typeof useSceneState> = useSceneState()
-    eventBus: ReturnType<typeof useEventBus> = useEventBus()
+    private roomState: ReturnType<typeof useRoomState> = useRoomState();
+    private sceneState: ReturnType<typeof useSceneState> = useSceneState();
+    private roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
+    private eventBus: ReturnType<typeof useEventBus> = useEventBus();
     roomLight: any
 
     walls: THREE.Object3D[] = [];
@@ -49,8 +49,8 @@ export class Room extends BuildersHelper {
     wallsGroupSize: { width: number, height: number, depth: number } = { width: 0, height: 0, depth: 0 }
     roomObject: THREE.Object3D = new THREE.Object3D()
 
-    // wallTexture: number | string = 0
-    // floorTexture: number | string = 0
+    defWall: number | string = 0
+    defFloor: number | string = 0
 
     obbHelper = new OBBHelper();
     // worldOctree = new Octree();
@@ -67,6 +67,7 @@ export class Room extends BuildersHelper {
         this.roomLight = light
         this.params = {}
         this.resizeParams = {}
+
 
         /** @Для_dev */
 
@@ -127,16 +128,23 @@ export class Room extends BuildersHelper {
     getStartSize(roomId?: string | number) {
         let params
 
+        const wall = this.roomOptions.getGlobalOptions.wall;
+        const floor = this.roomOptions.getGlobalOptions.floor;
+
         if (!roomId) {
             this.eventBus.emit('A:ContantLoaded', true)
-
             params = JSON.parse(JSON.stringify(this.sceneState.getStartRoomData))
+            if (wall.global) params.wall = wall.id
+            if (floor.global) params.floor = floor.id
 
             this.roomState.setCurrentRoomParams(params)
             return params
         }
 
         params = JSON.parse(JSON.stringify(this.roomState.getCurrentRoomData(roomId)!.params))
+        if (wall.global) params.wall = wall.id
+        if (floor.global) params.floor = floor.id
+
         this.roomState.setCurrentRoomParams(params)
 
         return params
@@ -147,6 +155,10 @@ export class Room extends BuildersHelper {
         this.walls = [];
         this.сeiling = null;
         this.floor = null;
+
+        // const { global, id } = this.roomOptions.getGlobalOptions.wall
+        // const texture = global ? id : params.wall
+        // console.log(texture, 'textureId')
 
         /** OLD */
 
@@ -223,35 +235,30 @@ export class Room extends BuildersHelper {
 
     updateWallMaterial(materialId: number | string) {
 
-        // console.log(materialId, 'materialId')
-        // this.walls.forEach(wall => {
-        //     this.wallBuilder.updateTexture(wall as THREE.Mesh, 'wall', materialId, wall.userData.dimensions);
-        // })
-        this.scene.traverse(child => {
-            if (child instanceof THREE.Object3D && child.userData.elementType == 'element_room') {
-
+        const total = this.scene.getObjectsByProperty('elementType', 'element_room')
+        total.forEach(el => {
+            el.traverse(child => {
                 let demention
-                child.traverse(children => {
-                    if (children instanceof THREE.Mesh && !children.userData.isArrowHelper && children.userData.name != 'floor') {
-                        if (children.userData.dimensions) {
-                            demention = children.userData.dimensions
-                            this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention);
-                            return
-                        }
-                        const parent = this.getRootObject(children)
-                        const { DEPTH, HEIGHT } = parent.userData.trueSizes
-
-                        demention = [DEPTH * 2, HEIGHT * 2]
-                        this.wallBuilder.updateTexture(children as THREE.Mesh, 'wall', materialId, demention)
-
+                if (child instanceof THREE.Mesh && !child.userData.isArrowHelper && child.userData.name != 'floor') {
+                    if (child.userData.dimensions) {
+                        demention = child.userData.dimensions
+                        this.wallBuilder.updateTexture(child as THREE.Mesh, 'wall', materialId, demention);
+                        return
                     }
-                })
+                    const parent = this.getRootObject(child)
+                    const { DEPTH, HEIGHT } = parent.userData.trueSizes
 
-            }
+                    demention = [DEPTH * 2, HEIGHT * 2]
+                    this.wallBuilder.updateTexture(child as THREE.Mesh, 'wall', materialId, demention)
+
+                }
+            })
         })
 
+
         // Отправляем материал в хранилище
-        this.roomState.setWallTexture(materialId)
+        this.roomState.tempRoomUpdate(materialId, 'wall')
+        // this.roomState.setWallTexture(materialId)
     }
 
     updateFloorMaterial(materialId: number | string) {
@@ -259,9 +266,9 @@ export class Room extends BuildersHelper {
         this.wallBuilder.updateTexture(this.floor as THREE.Mesh, 'floor', materialId, this.floor?.userData.dimensions);
 
         // Отправляем материал в хранилище
-        this.roomState.setFloorTexture(materialId)
+        this.roomState.tempRoomUpdate(materialId, 'floor')
+        // this.roomState.setFloorTexture(materialId)
     }
-
 
     private getRoomBounds(): THREE.Box3 {
         const roomBox = new THREE.Box3();

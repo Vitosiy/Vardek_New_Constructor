@@ -11,6 +11,7 @@ import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useModelState } from '@/store/appliction/useModelState';
 import { useMenuStore } from '@/store/appStore/useMenuStore.ts';
+import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 
 import { Resources } from '../Utils/Resources'
 import { Ruler } from '../Utils/Ruler'
@@ -38,8 +39,10 @@ export class BuildProduct extends BuildersHelper {
     resources: Resources;
 
     project = useSceneState().getCurrentProjectParams;
-    menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore();
+    roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
     modelState: ReturnType<typeof useModelState> = useModelState();
+
 
     ruler: THREETypes.TRuler
     filters: Filters;
@@ -140,6 +143,10 @@ export class BuildProduct extends BuildersHelper {
         /** Присваиваем тип объекта */
         parent_group.userData.elementType = product_data.element_type
         parent_group.elementType = product_data.element_type
+        if (product_data.element_type === null && Number.isInteger(product_data.leg_length)) {
+            parent_group.userData.elementType = "element_down"
+            parent_group.elementType = "element_down"
+        }
 
         parent_group.userData.trueSizes = product.userData.trueSizes ?? {
             DEPTH: productSize.z * 0.5,
@@ -661,7 +668,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** @Дефолдтные глобальные значения цвета фасада/модуля */
     getDefaultOptionsConfig(): THREETypes.TDefaultOptionsConfig {
-        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop } = this.menuStore.getGlobalOptions;
+        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop } = this.roomOptions.getGlobalOptions;
 
         return {
             defModuleUp: moduleTop.id ?? this.project.default_module_color_up,

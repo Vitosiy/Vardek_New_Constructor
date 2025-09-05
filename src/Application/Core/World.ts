@@ -14,26 +14,28 @@ import { Environment } from "../World/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoomOptons';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useUniformState } from "@/store/appliction/useUniformState";
 
 export class World {
 
-    root: THREETypes.TApplication
-    scene: THREE.Scene
+    root: THREETypes.TApplication;
+    scene: THREE.Scene;
 
-    deepDispose: THREETypes.TDeepDispose
-    resources: any
+    deepDispose: THREETypes.TDeepDispose;
+    resources: any;
 
-    sceneState: ReturnType<typeof useSceneState> = useSceneState()
-    roomsStore: ReturnType<typeof useRoomState> = useRoomState()
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
-    uniformState: ReturnType<typeof useUniformState> = useUniformState()
+    sceneState: ReturnType<typeof useSceneState> = useSceneState();
+    roomState: ReturnType<typeof useRoomState> = useRoomState();
+    eventsStore: ReturnType<typeof useEventBus> = useEventBus();
+    uniformState: ReturnType<typeof useUniformState> = useUniformState();
+    roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
 
-    trafficManager: THREETypes.TTrafficManager | null
-    room: THREETypes.TRoomManager | null = null
-    lights: THREETypes.TAppLights
-    enviroment: any
+    trafficManager: THREETypes.TTrafficManager | null;
+    room: THREETypes.TRoomManager | null = null;
+    lights: THREETypes.TAppLights;
+    enviroment: any;
     // meshEvents: MeshEvents | null = null
 
     private onCreateRoom: () => void;
@@ -60,8 +62,8 @@ export class World {
         this.vueEvents()
 
 
-        if (this.roomsStore.getRooms.length > 0) {
-            const startRoomId = this.roomsStore.getRooms[0].id
+        if (this.roomState.getRooms.length > 0) {
+            const startRoomId = this.roomState.getRooms[0].id
             this.loadRoom(startRoomId)
         }
         else {
@@ -86,8 +88,8 @@ export class World {
 
     async createRoom(name: string) {
 
-        this.roomsStore.clearTempRoomSize();
-        this.roomsStore.clearCurrentRoomId();
+        this.roomState.clearTempRoomSize();
+        this.roomState.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
         await this.setRoom();
         this.lights.setLight(this.room!._wallsGroupSize, 2)
@@ -104,35 +106,35 @@ export class World {
 
     saveRoom(name: string) {
 
-        if (!this.roomsStore.getRoomId) {
+        if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
 
             const contant = this.room!.save() as string[]
 
-            this.roomsStore.addRoom({
+            this.roomState.addRoom({
                 id: roomId, // Присваиваем id 
-                label: name ?? `Комната N:${this.roomsStore.rooms.length + 1}`,
-                params: this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes,
+                label: name ?? `Комната N:${this.roomState.rooms.length + 1}`,
+                params: this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes,
                 content: contant
             })
 
-            const rooms = this.roomsStore.getRooms
+            const rooms = this.roomState.getRooms
 
             this.sceneState.updateProjectParams({ rooms })
-            this.roomsStore.setCurrentRoomId(roomId)
+            this.roomState.setCurrentRoomId(roomId)
             return
         }
 
         // console.log('Комната уже существует')
 
         const contant = this.room!.save() as string[]
-        const roomId = this.roomsStore.getRoomId as number
-        // const roomParams = this.roomsStore.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
-        const roomParams = this.roomsStore.getCurrentRoomParams as THREEInterfases.IWallSizes
+        const roomId = this.roomState.getRoomId as number
+        // const roomParams = this.roomState.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
+        const roomParams = this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes
 
-        this.roomsStore.updateRoom(roomId, contant, roomParams)
-        const rooms = this.roomsStore.getRooms
+        this.roomState.updateRoom(roomId, contant, roomParams)
+        const rooms = this.roomState.getRooms
 
         this.sceneState.updateProjectParams({ rooms })
 
@@ -141,25 +143,30 @@ export class World {
     async loadRoom(roomId: number) {
         this.uniformState.clearUniformGroupMembership();
         this.uniformState.clearUniformGroupsStors()
-        this.roomsStore.clearCurrentRoomId()
-        this.roomsStore.clearTempRoomSize()
+        this.roomState.clearCurrentRoomId()
+        this.roomState.clearTempRoomSize()
 
         /** Добавляем ID комнаты в хранилище */
-        this.roomsStore.setCurrentRoomId(roomId);
+        this.roomState.setCurrentRoomId(roomId);
 
         this.deepDispose.clearScene(this.scene);
 
         await this.setRoom(roomId);
         this.lights.setLight(this.room!._wallsGroupSize, 2)
         await this.trafficManager!.update(this.room!)
-        
-        if (this.roomsStore.getCurrentRoomData(roomId)?.params.wall) {
-            const wallTextureId = this.roomsStore.getCurrentRoomData(roomId)?.params.wall
-            this.room!.updateWallMaterial(wallTextureId)
-        }
+
+        // if (this.roomState.getCurrentRoomData(roomId)?.params.wall) {
+        //     const wallTextureId = this.roomState.getCurrentRoomData(roomId)?.params.wall
+        //     this.room!.updateWallMaterial(wallTextureId)
+        // }
 
         const toAction: string[] = this.room?.save()
         this.root.userHistory.clearHistory(toAction as string[])
+
+        const invValue = this.roomOptions.getRefractionValue
+        this.enviroment.toggleRefraction(invValue)
+
+        console.log(invValue, 'invValue')
 
     }
 

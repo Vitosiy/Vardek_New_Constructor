@@ -9,15 +9,14 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from '../appliction/useModelState';
 import { useSceneState } from './useSceneState';
 
-
 import * as THREEInterfases from "../../types/interfases"
 import { TFasadeItem } from "@/types/types";
 
-
+export type TempRoomParamsKey =
+  | 'wall'
+  | 'floor';
 
 export const useRoomState = defineStore('RoomState', () => {
-
-  //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
 
   const roomsStore = useSchemeTransition();
   const sceneState = useSceneState();
@@ -76,15 +75,9 @@ export const useRoomState = defineStore('RoomState', () => {
     tempRoomSize.value = null
   }
 
-  const setWallTexture = (value: number | string) => {
+  const tempRoomUpdate = (value: number | string, type:TempRoomParamsKey) => {
     if (tempRoomSize.value) {
-      tempRoomSize.value.wall = value
-    }
-  }
-
-  const setFloorTexture = (value: number | string) => {
-    if (tempRoomSize.value) {
-      tempRoomSize.value.floor = value
+      tempRoomSize.value[type] = value
     }
   }
 
@@ -107,19 +100,6 @@ export const useRoomState = defineStore('RoomState', () => {
     return rooms.value.find(value => value.id === roomId)
   }
 
-  const getCurrentRoomId = computed(() => {
-
-    let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
-
-    const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
-
-    if (centerized) {
-      currentRoom.params = centerized?.params ?? currentRoom?.params;
-      currentRoom.content = centerized?.content ?? currentRoom?.content;
-    }
-
-    return rooms.value.find(value => value.id === currentRoomId.value)
-  });
 
   const getRoomId = computed(() => {
     return currentRoomId.value
@@ -137,77 +117,6 @@ export const useRoomState = defineStore('RoomState', () => {
     return rooms.value
   })
 
-  const apllyProjectWall = (value) => {
-    rooms.value.forEach((room) => {
-      room.params.wall = value;
-    });
-  }
-
-  const apllyProjectFloor = (value) => {
-    rooms.value.forEach((room) => {
-      room.params.floor = value;
-    });
-  }
-
-  const getWallsTextures = () => {
-    return useAppData().getAppData.WALL
-  }
-
-  const getFloorTextures = () => {
-    return useAppData().getAppData.FLOOR
-  }
-
-  const getDefaultModuleData = () => {
-    const colorMap: Record<number, TFasadeItem> = {};
-    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
-    const FASADE = APP.getAppData.FASADE;
-
-    for (const el in PRODUCTS) {
-      const product = PRODUCTS[el];
-
-
-      if (Array.isArray(product.MODULECOLOR) && product.MODULECOLOR[0] != null) {
-        product.MODULECOLOR.forEach(color => {
-          if (FASADE[color] !== undefined && colorMap[color] === undefined) {
-            colorMap[color] = FASADE[color] as TFasadeItem;
-          }
-        });
-      }
-
-    }
-
-    return colorMap
-  }
-
-  const getDefaultFasadeData = () => {
-    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
-    const [key, value] = Object.entries(PRODUCTS)[0]
-    const fasade = value.FACADE
-    const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
-    return defaultFasadData
-
-  }
-
-  const getDefaultTableTopData = () => {
-    const tableTopIds = ['7292933', '7358837', '7358946', '7360269', '4066731'];
-    const { CATALOG: { SECTIONS, PRODUCTS } } = APP.getAppData;
-
-    const relevantSections = Object.entries(SECTIONS).filter(([key]) => tableTopIds.includes(key));
-
-    const allProducts = relevantSections.flatMap(([, { PRODUCTS: prods }]) =>
-      Array.isArray(prods) ? prods : []
-    );
-
-    const uniqueProductIds = [...new Set([...allProducts, '69919'])];
-
-    const defaultTableTopData = Object.fromEntries(
-      uniqueProductIds.map(id => [id, PRODUCTS[id]])
-    );
-
-    return defaultTableTopData
-  }
-
-
   return {
     rooms,
     getRooms,
@@ -216,33 +125,18 @@ export const useRoomState = defineStore('RoomState', () => {
     removeRoom,
     getRoomId,
     mergeRoomsData,
-    // updateRoomSize,
 
     setCurrentRoomId,
-    getCurrentRoomId,
     clearCurrentRoomId,
 
     setCurrentRoomParams,
     getCurrentRoomParams,
     clearTempRoomSize,
+    tempRoomUpdate,
 
     updatedRoomContent,
     getRoomContent,
 
-
-    getWallsTextures,
-    getFloorTextures,
-    setWallTexture,
-    setFloorTexture,
-
     getCurrentRoomData,
-
-    apllyProjectWall,
-    apllyProjectFloor,
-
-    getDefaultModuleData,
-    getDefaultFasadeData,
-    getDefaultTableTopData
-
   };
 });

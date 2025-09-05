@@ -90,6 +90,7 @@ export class WallBuilder {
         mesh.userData.middleVector = vector
         mesh.userData.center = center
         mesh.userData.elementType = 'element_room'
+        mesh.elementType = 'element_room'
 
         return mesh;
     }

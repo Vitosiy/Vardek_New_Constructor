@@ -336,11 +336,14 @@ export class RoomManager extends Room {
     }
 
     async update(loadData?: string[]) {
+        const curRoomId = this.roomState.getRoomId
 
         this.contant = {}
-        let data = loadData ?? this.roomState.getCurrentRoomId?.content
+        let data = loadData ?? this.roomState.getCurrentRoomData(curRoomId)?.content
         if (!data) return
         let count;
+
+        console.log(loadData, 'DATA')
 
         count = await this.loadData(data as string[])
         if (count === data.length) {

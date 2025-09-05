@@ -25,6 +25,7 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useAppData } from "@/store/appliction/useAppData";
+import { useRoomOptions } from "./roomOptions/useRoomOptons";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
@@ -41,6 +42,7 @@ const sceneState = useSceneState();
 const roomState = useRoomState();
 const menuStore = useMenuStore();
 const appData = useAppData();
+const roomOptions = useRoomOptions()
 
 const clampHeight = ref<number | null>(null);
 const quality = ref<TQuality[] | null>(null);
@@ -76,23 +78,16 @@ const optionsType = ref<TTextureActionMap>({
 
 const globalOptions = ref<TOptionsMap | null>(null);
 
-// onMounted(() => {
-//   shadows.value = menuStore.getShadowValue;
-//   refraction.value = menuStore.getRefractionValue;
-//   pointLight.value = menuStore.getPointLightRange;
-//   ambientLight.value = menuStore.getAmbientLightRange;
-// });
-
 onBeforeMount(() => {
   prepareOptions();
 });
 
 onUnmounted(() => {
-  menuStore.setHeightClamp(clampHeight.value);
-  menuStore.setLightRange("pointLight", pointLight.value);
-  menuStore.setLightRange("ambientLight", ambientLight.value);
-  menuStore.setRefractionValue(refraction.value);
-  menuStore.setShadowValue(shadows.value);
+  roomOptions.setHeightClamp(clampHeight.value);
+  roomOptions.setLightRange("pointLight", pointLight.value);
+  roomOptions.setLightRange("ambientLight", ambientLight.value);
+  roomOptions.setRefractionValue(refraction.value);
+  roomOptions.setShadowValue(shadows.value);
 });
 
 defineExpose({
@@ -102,23 +97,25 @@ defineExpose({
 const prepareOptions = () => {
   const { wall, floor } = roomState.getCurrentRoomParams as IWallSizes;
 
-  menuStore.updateOption("wall", wall as number);
-  menuStore.updateOption("floor", floor as number);
-  globalOptions.value = menuStore.getGlobalOptions;
-  modulesColorData.value = roomState.getDefaultModuleData();
-  wallsTextures.value = roomState.getWallsTextures();
-  floorTextures.value = roomState.getFloorTextures();
-  defaultFasadeData.value = roomState.getDefaultFasadeData();
-  defaultTableTopData.value = roomState.getDefaultTableTopData();
+  roomOptions.updateOption("wall", wall as number);
+  roomOptions.updateOption("floor", floor as number);
 
-  clampHeight.value = menuStore.getHeightClamp;
-  quality.value = menuStore.getQuality;
+  
+  globalOptions.value = roomOptions.getGlobalOptions;
+  modulesColorData.value = roomOptions.getDefaultModuleData();
+  wallsTextures.value = roomOptions.getWallsTextures();
+  floorTextures.value = roomOptions.getFloorTextures();
+  defaultFasadeData.value = roomOptions.getDefaultFasadeData();
+  defaultTableTopData.value = roomOptions.getDefaultTableTopData();
+
+  clampHeight.value = roomOptions.getHeightClamp;
+  quality.value = roomOptions.getQuality;
   currentQuality.value = quality.value.find((el) => el.active);
 
-  shadows.value = menuStore.getShadowValue;
-  refraction.value = menuStore.getRefractionValue;
-  pointLight.value = menuStore.getPointLightRange;
-  ambientLight.value = menuStore.getAmbientLightRange;
+  shadows.value = roomOptions.getShadowValue;
+  refraction.value = roomOptions.getRefractionValue;
+  pointLight.value = roomOptions.getPointLightRange;
+  ambientLight.value = roomOptions.getAmbientLightRange;
 };
 
 const closeMenu = (menuType: MenuType) => {
@@ -130,7 +127,7 @@ const changeHeightClamp = () => {
 };
 
 const loadRoom = (id: number) => {
-  menuStore.resetGlobalOptions();
+  roomOptions.resetGlobalOptions();
   eventBus.emit("A:Load", id);
   eventBus.emit("A:ContantLoaded", false);
   eventBus.emit("A:DrawingMode", false);
@@ -199,13 +196,13 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
 };
 
 const totalSelect = (event: Event, value: keyof TOptionsMap) => {
-  menuStore.updateOptionGlobal(value, event.target!.checked);
-  const selectOption = menuStore.getGlobalOptions[value];
+  roomOptions.updateOptionGlobal(value, event.target!.checked);
+  const selectOption = roomOptions.getGlobalOptions[value];
 
   switch (value) {
     case "wall":
       if (selectOption.global) {
-        roomState.apllyProjectWall(selectOption.id);
+        roomOptions.apllyProjectWall(selectOption.id);
         sceneState.updateStartRoomData(value, selectOption.id);
         return;
       }
@@ -214,7 +211,7 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
       break;
     case "floor":
       if (selectOption.global) {
-        roomState.apllyProjectFloor(selectOption.id);
+        roomOptions.apllyProjectFloor(selectOption.id);
         sceneState.updateStartRoomData(value, selectOption.id);
         return;
       }
@@ -278,7 +275,7 @@ const selectOption = (value: TTextureItem) => {
     );
     globalOptions.value![currentOption.value as keyof TTextureActionMap].id =
       value.ID;
-    menuStore.updateOption(currentOption.value, value.ID);
+    roomOptions.updateOption(currentOption.value, value.ID);
   }
 };
 
@@ -322,7 +319,6 @@ const getCurrentRoom = computed(() => {
   return (id: number) => {
     if (!roomState.getRoomId) return;
     return {
-      // "btn-active": id === roomState.getCurrentRoomId.id,
       active: id === roomState.getRoomId,
     };
   };
