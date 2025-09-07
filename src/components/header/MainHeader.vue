@@ -61,7 +61,7 @@ const sceneState = useSceneState();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
 const modelState = useModelState();
-const roomOptions = useRoomOptions()
+const roomOptions = useRoomOptions();
 const customiserStore = useCustomiserStore();
 
 const _saveProject = async () => {
@@ -142,7 +142,7 @@ const createNewRoom = (value: string) => {
   if (!verdekConstructor.value) return;
   props.pageComponent.selected();
   roomOptions.resetGlobalOptions();
-  
+
   menuStore.setRulerVisibility(true);
   menuStore.setDrowModeValue(false);
 
@@ -247,7 +247,8 @@ watch(
     menuStore.setRulerVisibility(true);
     menuStore.setDrowModeValue(false);
     modelState.setCurrentModel(null);
-    roomState.mergeRoomsData();
+
+    roomState.routConvertData(newPath);
 
     historyActions.value = false;
     restorLength.value = 0;

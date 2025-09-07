@@ -100,7 +100,6 @@ const prepareOptions = () => {
   roomOptions.updateOption("wall", wall as number);
   roomOptions.updateOption("floor", floor as number);
 
-  
   globalOptions.value = roomOptions.getGlobalOptions;
   modulesColorData.value = roomOptions.getDefaultModuleData();
   wallsTextures.value = roomOptions.getWallsTextures();
@@ -141,7 +140,7 @@ const deliteRoom = (value: number) => {
 
 const changeQuality = (data: TQuality) => {
   currentQuality.value = data;
-  menuStore.setQuality(data.value, true);
+  roomOptions.setQuality(data.value, true);
   eventBus.emit("A:Quality", data.value);
 };
 
@@ -268,7 +267,7 @@ const selectOption = (value: TTextureItem) => {
   }
 
   if (currentOption.value) {
-    console.log(data);
+    // console.log(data);
     eventBus.emit(
       optionsType.value[currentOption.value as keyof TTextureActionMap],
       data

@@ -79,16 +79,19 @@ export class FasadeBuilder {
             const isDefault = fasadeColor === this.parent.project.default_fasade_color;
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    return ((defFasadeDown && isDefault) || (fasadsBottom.global && (defFasadeDown && isDefault))) ? defFasadeDown : fasadeColor;
+                    // return ((defFasadeDown && isDefault) || (fasadsBottom.global && (defFasadeDown && isDefault))) ? defFasadeDown : fasadeColor;
+
+                    return (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor;
                 case "element_up":
-                    return ((defFasadeUp && isDefault) || (fasadsTop.global && (defFasadeDown && isDefault))) ? defFasadeUp : fasadeColor; // сохранена исходная формула
+                    // return ((defFasadeUp && isDefault) || (fasadsTop.global && (defFasadeDown && isDefault))) ? defFasadeUp : fasadeColor; 
+
+                    return (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor;
                 default:
                     return fasadeColor;
             }
         };
 
         if (Number.isInteger(fasadeNdx)) {
-            console.log('Not ITTER')
             const fasadeData = FASADE_PROPS[fasadeNdx];
             const curFasade = FASADE[fasadeNdx]
 
@@ -160,7 +163,7 @@ export class FasadeBuilder {
             if (fasadeData.WINDOW != null) {
                 this.parent.window_builder.createWindow({
                     curFasade,
-                    fasadePosition: fasade.userData.trueSize,
+                    fasadePosition: curFasade.userData.trueSize,
                     data: fasadeData.WINDOW,
                     defaultGeometry: FASADE_DEFAULT[fasadeNdx],
                     alum: FASADE_PROPS[fasadeNdx].ALUM
@@ -205,8 +208,6 @@ export class FasadeBuilder {
         for (let key = 0; key < FASADE_PROPS.length; key++) {
             const fasadeData = FASADE_PROPS[key];
 
-            console.log(fasadeNdx == key, fasadeNdx, key, 'IN ITERRATOR')
-
             // if (fasadeNdx !== null && fasadeNdx !== key) continue; // важно: 0 считается как "все", как в исходнике
 
             // Обнуление при remove + точечный индекс
@@ -239,7 +240,6 @@ export class FasadeBuilder {
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
 
-                console.log(fasadeData.SHOW, '---SHOW')
             }
 
             // Позиция фасада вычисляется один раз

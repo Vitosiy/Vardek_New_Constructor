@@ -36,14 +36,11 @@ export class ModelsBuilder {
 
         this.resources.startLoading(path, model.model_type, (file: any) => {
 
-            console.log(file, 'FILE')
-
             if (!file) {
                 console.error('Модель не может быть загружена', file)
             }
 
             const normolized = this.normalizeUploadedModel(file, model);
-            console.log(normolized, 'normolized')
 
             // const parentObject = new THREE.Object3D()
 

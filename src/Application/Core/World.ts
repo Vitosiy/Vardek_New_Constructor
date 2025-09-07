@@ -106,6 +106,7 @@ export class World {
 
     saveRoom(name: string) {
 
+
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
@@ -120,6 +121,7 @@ export class World {
             })
 
             const rooms = this.roomState.getRooms
+            console.log(rooms)
 
             this.sceneState.updateProjectParams({ rooms })
             this.roomState.setCurrentRoomId(roomId)
@@ -135,7 +137,7 @@ export class World {
 
         this.roomState.updateRoom(roomId, contant, roomParams)
         const rooms = this.roomState.getRooms
-
+        console.log(rooms, 'ROOMS')
         this.sceneState.updateProjectParams({ rooms })
 
     }
@@ -164,7 +166,8 @@ export class World {
         this.root.userHistory.clearHistory(toAction as string[])
 
         const invValue = this.roomOptions.getRefractionValue
-        this.enviroment.toggleRefraction(invValue)
+        if (this.enviroment) this.enviroment.toggleRefraction(invValue)
+
 
         console.log(invValue, 'invValue')
 

@@ -275,18 +275,27 @@ export class RoomManager extends Room {
     }
 
     save(): string[] {
-        return Object.values(this.contant)
-            .filter(item => item.userData.elementType !== 'raspil')
-            .map(item => JSON.stringify({
-                id: item.userData.globalData,
-                position: item.position.clone(),
-                rotation: item.rotation.clone(),
-                obb: item.userData.obb,
-                data: this.convertProps(item),
-                type: item.userData.elementType,
-                size: item.userData.PROPS.CONFIG.SIZE
 
-            }));
+
+        const convert = Object.values(this.contant)
+            .filter(item => item.userData.elementType !== 'raspil')
+            .map(item => {
+                return {
+                    id: item.userData.globalData,
+                    position: item.position.clone(),
+                    rotation: item.rotation.clone(),
+                    obb: item.userData.obb,
+                    data: this.convertProps(item),
+                    type: item.userData.elementType,
+                    size: item.userData.PROPS.CONFIG.SIZE
+
+                }
+
+            });
+        const result = JSON.stringify(convert)
+
+        console.log('SAVE')
+        return result
     }
 
     convertProps(product: THREETypes.TObject) {
@@ -303,6 +312,8 @@ export class RoomManager extends Room {
             FASADE: [],
             FASADE_DEFAULT: [],
             TABLETOP: {},
+            DRAWERS:{},
+            JSON_FILLINGS:[]
         };
 
         const raspilList = saveData.RASPIL_LIST ?? [];
@@ -341,12 +352,13 @@ export class RoomManager extends Room {
         this.contant = {}
         let data = loadData ?? this.roomState.getCurrentRoomData(curRoomId)?.content
         if (!data) return
+
         let count;
 
-        console.log(loadData, 'DATA')
-
         count = await this.loadData(data as string[])
-        if (count === data.length) {
+        const parse = typeof data === 'string' ? JSON.parse(data) : data
+
+        if (count === parse.length) {
             this.eventBus.emit('A:ContantLoaded', true)
         }
 
@@ -358,9 +370,12 @@ export class RoomManager extends Room {
     }
 
     async loadData(data: string[]) {
+        // console.log(data)
         let counts = 0;
+        const parse = typeof data === 'string' ? JSON.parse(data) : data
 
-        for (const item of data) {
+
+        for (const item of parse) {
             const model = typeof item === 'string' ? JSON.parse(item) : item;
             const point = model.position as THREE.Vector3;
             const rotation = model.rotation as THREE.Euler;

@@ -143,7 +143,6 @@ const handleTransitionDrawingClick = () => {
     :fasadeData="fasadeList[fasadeIndex]"
     :tabIndex="fasadeIndex"
   />
-  <GroupsManager v-if="isGroupsManagerActive" />
 </template>
 
 

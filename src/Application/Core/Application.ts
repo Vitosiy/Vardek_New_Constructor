@@ -293,7 +293,7 @@ export class Application {
 
         this.eventBus.on('A:DrawingMode', (value: boolean) => {
             this.useEdgeBuilder?.drawingMode(value)
-            console.log(value, 'value')
+
         })
 
         this.eventBus.on('A:ToggleRulerVisibility', (value: boolean) => {

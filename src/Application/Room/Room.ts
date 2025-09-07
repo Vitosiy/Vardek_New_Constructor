@@ -156,9 +156,6 @@ export class Room extends BuildersHelper {
         this.сeiling = null;
         this.floor = null;
 
-        // const { global, id } = this.roomOptions.getGlobalOptions.wall
-        // const texture = global ? id : params.wall
-        // console.log(texture, 'textureId')
 
         /** OLD */
 

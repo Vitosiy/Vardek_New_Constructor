@@ -181,12 +181,10 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (fasadeExist) {
-            console.log('fasadeExist', remove, fasadeNdx)
             rebuild(fasadeNdx)
         }
 
         if (incomingModel) {
-            console.log('incomingModel')
             FASADE_PROPS[fasadeNdx].ALUM = incomingModel
             this.deliteFasade(fasadeNdx)
             rebuild(fasadeNdx, incomingModel)
@@ -195,7 +193,6 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-            console.log('MILLING')
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
             FASADE_PROPS[fasadeNdx].MILLING = null
@@ -256,8 +253,6 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     async catchFasadeChange({ data, fasadeNdx }: TObjectData) {
-        console.log(data, '--INCOM')
-
         const product = this._currentMesh;
         const drowMode = this.menuStore.getDrowModeValue
 
@@ -284,8 +279,6 @@ export class MeshEvents extends BuildersHelper {
 
         }
         await apply();
-        console.log(FASADE[fasadeNdx], 'AFTER_CHDANGE')
-
         if (drowMode) {
             const edgeMeshID = FASADE[fasadeNdx].userData.edgeID
             const edgeMesh = FASADE[fasadeNdx].parent.getObjectById(edgeMeshID)
@@ -324,7 +317,6 @@ export class MeshEvents extends BuildersHelper {
         fasade.traverse((child: THREE.Object3D) => {
             // Пропускаем меш чертежа
             if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) {
-                console.log('ss')
                 return
             }
             if (child instanceof THREE.Mesh) {

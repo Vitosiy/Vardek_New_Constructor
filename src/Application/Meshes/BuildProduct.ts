@@ -144,8 +144,11 @@ export class BuildProduct extends BuildersHelper {
         parent_group.userData.elementType = product_data.element_type
         parent_group.elementType = product_data.element_type
         if (product_data.element_type === null && Number.isInteger(product_data.leg_length)) {
-            parent_group.userData.elementType = "element_down"
-            parent_group.elementType = "element_down"
+            if (product_data.leg_length > 0) {
+                parent_group.userData.elementType = "element_down"
+                parent_group.elementType = "element_down"
+            }
+
         }
 
         parent_group.userData.trueSizes = product.userData.trueSizes ?? {
@@ -207,12 +210,21 @@ export class BuildProduct extends BuildersHelper {
             FACADE,
             MODULECOLOR,
             type_showcase,
-            USLUGI
+            USLUGI,
+            leg_length
         } = product_data;
+
+        let elType
+        if (element_type === null && Number.isInteger(leg_length)) {
+            elType = "element_down"
+        }
+        else {
+            elType = element_type
+        }
 
         const PARAMS: THREETypes.TObject = {
             DISABLE_MOVE: false,
-            ELEMENT_TYPE: element_type,
+            ELEMENT_TYPE: elType,
             ID,
             FASADE_PROPS: [],
             FASADE_SIZE: [],
@@ -340,7 +352,7 @@ export class BuildProduct extends BuildersHelper {
 
         const arrows = this.addArrowSize({ object: body, props: PROPS });
 
-        console.log(body, fasade, 'curBodyExceptions')
+        // console.log(body, fasade, 'curBodyExceptions')
 
         // Вычисление высот
         const legsHeight = legs ? this.calculateHeight(legs) : 0;
@@ -643,10 +655,6 @@ export class BuildProduct extends BuildersHelper {
         arrows.name = "ARROWS"
         props.ARROWS = arrows
 
-
-
-        console.log(arrows, 'INBUILD')
-
         return arrows
 
     };
@@ -669,7 +677,6 @@ export class BuildProduct extends BuildersHelper {
     /** @Дефолдтные глобальные значения цвета фасада/модуля */
     getDefaultOptionsConfig(): THREETypes.TDefaultOptionsConfig {
         const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop } = this.roomOptions.getGlobalOptions;
-
         return {
             defModuleUp: moduleTop.id ?? this.project.default_module_color_up,
             defModuleDown: moduleBottom.id ?? this.project.default_module_color_down,

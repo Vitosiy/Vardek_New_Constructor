@@ -134,8 +134,6 @@ export class BuildUniversalModule extends BuildProduct {
 
         this.setBounds(total, tempTotal);
 
-        console.log(total)
-
         return total;
     };
 

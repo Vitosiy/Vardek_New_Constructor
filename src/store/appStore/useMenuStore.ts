@@ -3,7 +3,7 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { MenuType, TOptionsMap, TLightRange, TQuality, TQualityValue } from '@/types/types';
+import { MenuType } from '@/types/types';
 
 export const useMenuStore = defineStore('menu', () => {
 
@@ -17,8 +17,6 @@ export const useMenuStore = defineStore('menu', () => {
 
 
   async function openMenu(type: MenuType, content: string, products: []) {
-
-    console.log(type, content, products, '--MenuType')
 
     openMenus.value = [];
     catalogFilterProductsId.value = [];

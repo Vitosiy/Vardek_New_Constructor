@@ -20,7 +20,6 @@ export class JsonBuilder {
 
     createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
 
-        console.log(data, 'JSONDATA')
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
@@ -207,8 +206,6 @@ export class JsonBuilder {
     }
 
     createMaterial(data, fasade) {
-
-        console.log(data, fasade, '--in JSONB')
 
         if (!data) return
 

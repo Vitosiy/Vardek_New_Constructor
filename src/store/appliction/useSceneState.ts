@@ -15,10 +15,6 @@ export const useSceneState = defineStore('SceneState', () => {
     const schemeTransition = useSchemeTransition()
     const roomState = useRoomState()
 
-    const defaultParams = START_PROJECT_PARAMS
-
-
-
     const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
 
     const startProjectParams = ref(JSON.parse(JSON.stringify(START_PROJECT_PARAMS)))
@@ -86,12 +82,6 @@ export const useSceneState = defineStore('SceneState', () => {
         project_name
 
     }: IProjectParams) => {
-        // console.log(START_PROJECT_PARAMS.rooms[0].params, '1')
-        // console.log(rooms, '--rooms')
-        // console.log(currentProjectParams.value.rooms, '--value.rooms')
-        // console.log(START_PROJECT_PARAMS.rooms[0].params,'2')
-        // console.log(startProjectParams.value)
-
         currentProjectParams.value = {
             rooms: rooms ?? currentProjectParams.value.rooms,
             camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
@@ -118,22 +108,39 @@ export const useSceneState = defineStore('SceneState', () => {
 
         } as IProjectParams;
 
-        const clone = JSON.parse(JSON.stringify(currentProjectParams.value.rooms))
-        // console.log(clone)
-        const parseData = clone.map(elem => {
-            return {
-                ...elem,
-                content: elem.content.map((el) => {
-                    if (typeof el == 'string') {
-                        return JSON.parse(el)
-                    }
-                    return el
-                })
-            }
-        })
+        console.log(currentProjectParams.value.rooms)
 
-        schemeTransition.setAppData(parseData)
-        roomState.mergeRoomsData();
+        // const clone = currentProjectParams.value.rooms?.map(item => {
+        //     return item
+        // })
+
+        // const parseData = clone.map(elem => {
+        //     const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+        //     return {
+        //         ...elem,
+        //         content: content
+        //     }
+        // })
+
+
+        // const parseData = clone.map(elem => {
+        //     return {
+        //         ...elem,
+        //         content: elem.content.map((el) => {
+        //             if (typeof el == 'string') {
+        //                 return JSON.parse(el)
+        //             }
+        //             return el
+        //         })
+        //     }
+        // })
+
+
+
+        // console.log(parseData, 'parseData')
+
+        // schemeTransition.setAppData(parseData)
+        // roomState.mergeRoomsData();
 
     };
 
@@ -240,7 +247,6 @@ export const useSceneState = defineStore('SceneState', () => {
         return quality.value
     })
 
-
     return {
         getStartProgectParams,
         getStartRoomData,
@@ -260,9 +266,7 @@ export const useSceneState = defineStore('SceneState', () => {
         setShadowValue,
         setLightRange,
         createNewProject,
-        loadProjectFromData,
-
-        defaultParams
+        loadProjectFromData
     };
 
 });
