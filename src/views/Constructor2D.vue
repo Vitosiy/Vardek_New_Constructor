@@ -97,18 +97,29 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  try {
+    if (App2d) {
+      // Безопасно уничтожаем объект App2d
+      try {
+        App2d.destroy();
+      } catch (error) {
+        console.warn('Ошибка при уничтожении App2d:', error);
+      }
+      App2d = null;    // Сбрасываем переменную в null
+    }
 
-  if (App2d) {
-    App2d.destroy(); // Уничтожаем объект App2d
-    App2d = null;    // Сбрасываем переменную в null
+    // Удаляем обработчик события, если он был добавлен
+    if (canvas2d.value && dropHandler) {
+      try {
+        canvas2d.value.removeEventListener('drop', dropHandler);
+        canvas2d.value.removeEventListener('contextmenu', preventContextMenu);
+      } catch (error) {
+        console.warn('Ошибка при удалении обработчиков событий:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка при очистке компонента Constructor2D:', error);
   }
-
-  // Удаляем обработчик события, если он был добавлен
-  if (canvas2d.value && dropHandler) {
-    canvas2d.value.removeEventListener('drop', dropHandler);
-    canvas2d.value.removeEventListener('contextmenu', preventContextMenu);
-  }
-
 });
 
 </script>

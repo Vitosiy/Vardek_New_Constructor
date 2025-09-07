@@ -163,52 +163,85 @@ const lessThenActions = computed(() => {
 });
 
 const prevAction = () => {
-  if (historyActions.value) {
-    /** Активируем preloader */
-    contentLoaded.value = false;
-    props.pageComponent.activePreloader = false;
-    eventBus.emit("A:PrevAction");
-    curActionCount.value = verdekConstructor.value!.userHistory._currentIndex;
-    props.pageComponent.selected();
-    customiserStore.hideCustomiserPopup();
+  if (historyActions.value && verdekConstructor.value) {
+    try {
+      /** Активируем preloader */
+      contentLoaded.value = false;
+      props.pageComponent.activePreloader = false;
+      eventBus.emit("A:PrevAction");
+      curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+      props.pageComponent.selected();
+      customiserStore.hideCustomiserPopup();
+    } catch (error) {
+      console.error('Ошибка при выполнении prevAction:', error);
+    }
   }
 };
 
 const nextAction = () => {
-  if (historyActions.value) {
-    /** Активируем preloader */
-    contentLoaded.value = false;
-    props.pageComponent.activePreloader = false;
-    eventBus.emit("A:NextAction");
-    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
-    props.pageComponent.selected();
-    customiserStore.hideCustomiserPopup();
+  if (historyActions.value && verdekConstructor.value) {
+    try {
+      /** Активируем preloader */
+      contentLoaded.value = false;
+      props.pageComponent.activePreloader = false;
+      eventBus.emit("A:NextAction");
+      curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+      props.pageComponent.selected();
+      customiserStore.hideCustomiserPopup();
+    } catch (error) {
+      console.error('Ошибка при выполнении nextAction:', error);
+    }
   }
 };
 
 const addEvents3D = () => {
-  eventBus.on("A:Load", () => {
-    props.pageComponent.selected();
+  try {
+    // Отключаем предыдущие события, если они есть
+    eventBus.off("A:Load");
+    eventBus.off("A:ChangeCameraPos");
+    eventBus.off("A:ContantLoaded");
+    
+    // Подписываемся на новые события
+    eventBus.on("A:Load", () => {
+      try {
+        if (props.pageComponent?.selected) {
+          props.pageComponent.selected();
+        }
+        restorLength.value = 0;
+        curActionCount.value = 0;
+      } catch (error) {
+        console.error('Ошибка в обработчике A:Load:', error);
+      }
+    });
 
-    restorLength.value = 0;
-    curActionCount.value = 0;
-  });
+    eventBus.on("A:ChangeCameraPos", () => {
+      try {
+        if (props.pageComponent?.selected) {
+          props.pageComponent.selected();
+        }
+      } catch (error) {
+        console.error('Ошибка в обработчике A:ChangeCameraPos:', error);
+      }
+    });
 
-  eventBus.on("A:ChangeCameraPos", () => {
-    props.pageComponent.selected();
-  });
-
-  eventBus.onEmitCalled(async (event, payload) => {
-    if (!historyActions.value) return;
-    if (!verdekConstructor.value) return;
-    await nextTick();
-    if (verdekConstructor.value.userHistory.checkEvent(event)) {
-      const total = verdekConstructor.value.userHistory.getHistory().length - 1;
-      restorLength.value = total;
-      curActionCount.value = total;
-    }
-  });
-  eventBus.on("A:ContantLoaded", checkContantLoad);
+    eventBus.onEmitCalled(async (event, payload) => {
+      try {
+        if (!historyActions.value || !verdekConstructor.value) return;
+        await nextTick();
+        if (verdekConstructor.value.userHistory.checkEvent(event)) {
+          const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+          restorLength.value = total;
+          curActionCount.value = total;
+        }
+      } catch (error) {
+        console.error('Ошибка в обработчике onEmitCalled:', error);
+      }
+    });
+    
+    eventBus.on("A:ContantLoaded", checkContantLoad);
+  } catch (error) {
+    console.error('Ошибка при добавлении событий 3D:', error);
+  }
 };
 
 const getHistoruBtnsState = computed(() => {
@@ -240,33 +273,58 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
-    menuStore.setRulerVisibility(true);
-    menuStore.setDrowModeValue(false);
-    modelState.setCurrentModel(null);
-    roomState.mergeRoomsData();
+    try {
+      menuStore.setRulerVisibility(true);
+      menuStore.setDrowModeValue(false);
+      modelState.setCurrentModel(null);
+      roomState.mergeRoomsData();
 
-    historyActions.value = false;
-    restorLength.value = 0;
-    curActionCount.value = 0;
+      historyActions.value = false;
+      restorLength.value = 0;
+      curActionCount.value = 0;
 
-    let constructor = await waitForConstructor();
-    await nextTick();
+      let constructor = await waitForConstructor();
+      await nextTick();
 
-    if (constructor) {
-      verdekConstructor.value = constructor as TApplication;
-      historyActions.value = true;
-      addEvents3D();
-
-      return;
+      if (constructor) {
+        verdekConstructor.value = constructor as TApplication;
+        historyActions.value = true;
+        addEvents3D();
+      }
+    } catch (error) {
+      console.error('Ошибка при изменении маршрута в MainHeader:', error);
     }
   },
-  // { immediate: true }
   { flush: "post", immediate: true }
 );
 
 onBeforeUnmount(() => {
-  restorLength.value = 0;
-  curActionCount.value = 0;
+  try {
+    // Отключаем все события
+    eventBus.off("A:Load");
+    eventBus.off("A:ChangeCameraPos");
+    eventBus.off("A:ContantLoaded");
+    
+    // Очищаем данные
+    restorLength.value = 0;
+    curActionCount.value = 0;
+    historyActions.value = false;
+    
+    // Безопасно очищаем ссылку на конструктор
+    if (verdekConstructor.value) {
+      try {
+        // Если у конструктора есть метод destroy, вызываем его
+        if (typeof verdekConstructor.value.destroy === 'function') {
+          verdekConstructor.value.destroy();
+        }
+      } catch (error) {
+        console.warn('Ошибка при уничтожении конструктора:', error);
+      }
+      verdekConstructor.value = null;
+    }
+  } catch (error) {
+    console.error('Ошибка при очистке MainHeader:', error);
+  }
 });
 </script>
 

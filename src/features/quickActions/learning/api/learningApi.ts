@@ -4,8 +4,6 @@ import { transformEducationTreeFromMap } from './transform';
 
 export const educationApi = {
   async getTree() {
-    // const mocked = { data: mockTabs, error: false  as const }
-    // return mocked
     const res = await client.GET('/api/modeller/Education/gettree/');
 
     //TODO перенести в хук индекса - теперь будем работать с этой структурой
@@ -20,8 +18,6 @@ export const educationApi = {
   },
 
   async getById(id: TabContent["id"]) {
-    // const mocked = { data: mockTabContent, error: false as const }
-    // return mocked
     return client.GET('/api/modeller/Education/getbyid/ID/{id}/', {
       params: { path: { id } },
     });

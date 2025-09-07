@@ -1,12 +1,11 @@
-// @ts-nocheck
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useEventBus } from '@/store/appliction/useEventBus';
-import { useSceneState } from '@/store/appliction/useSceneState';
 import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useRouter } from 'vue-router';
 
 import { useFullscreen } from '@/features/quickActions/composables/useFullscreen';
 import { usePrint } from '@/features/quickActions/composables/usePrint';
-import { useScreenshot } from '@/features/quickActions/composables/useScreenshot';
+import { use2DScreenshot } from './composables/use2DScreenshot';
 
 export type ActionKey =
   | 'fullscreen'
@@ -15,7 +14,10 @@ export type ActionKey =
   | 'print'
   | 'screenshot'
   | 'newProject'
-  | 'saveProject';
+  | 'saveProject'
+  | 'drowmod'
+  | 'ruller'
+  | 'screenshot3d';
 
 export interface QuickActionItem {
   key: ActionKey;
@@ -28,12 +30,12 @@ export interface QuickActionItem {
 export const useQuickActionsToolbar = () => {
   const popupStore = usePopupStore();
   const eventBus = useEventBus();
-  const sceneState = useSceneState();
   const menuStore = useMenuStore();
+  const router = useRouter();
 
   const { toggleFullscreen } = useFullscreen();
   const { printPage } = usePrint();
-  const { makeScreen } = useScreenshot();
+  const { makeScreen } = use2DScreenshot();
 
   // Функция сохранения проекта
   const saveProject = async () => {
@@ -97,18 +99,39 @@ export const useQuickActionsToolbar = () => {
       key: 'print',
       tooltip: 'Печать',
       iconClass: 'icon-print',
-      action: () => printPage(),
+      path: 'default',
+      action: async () => {
+        if (router.currentRoute.value.path !== '/3d') {
+          await router.push('/3d');
+        }
+        
+        eventBus.emit("A:ScreenPrint")
+        
+        const handleComplete = () => {
+          eventBus.off("A:3DScreenshotCreated", handleComplete);
+          printPage();
+        }
+        
+        eventBus.on("A:3DScreenshotCreated", handleComplete);
+      },
     },
     {
       key: 'screenshot',
       tooltip: 'Скриншот',
       iconClass: 'icon-zoom',
-      path: 'default',
+      path: '/2d',
       action: () => makeScreen(),
     },
     {
+      key: 'screenshot3d',
+      tooltip: '3D Скриншот',
+      iconClass: 'icon-zoom',
+      path: '/3d',
+      action: () => eventBus.emit("A:Take3DScreenshot"),
+    },
+    {
       key: 'saveProject',
-      tooltip: 'Сохранить',
+      tooltip: 'Сохранить комнату',
       iconClass: 'icon-save',
       path: 'default',
       action: () => saveProject(),

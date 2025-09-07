@@ -108,24 +108,38 @@ export default class Grid {
   }
 
   public destroy(): void {
+    try {
+      // Очистка сетки
+      if (this.gridLines) {
+        try {
+          // Сначала удаляем из контейнера
+          if (this.container && this.container.children && this.container.children.includes(this.gridLines)) {
+            this.container.removeChild(this.gridLines);
+          }
+          // Затем уничтожаем
+          this.gridLines.destroy(true);
+        } catch (error) {
+          console.warn('Ошибка при уничтожении gridLines:', error);
+        }
+        this.gridLines = null;
+      }
 
-    // Очистка сетки
-    if (this.gridLines) {
-      this.gridLines.destroy(true);
-      this.container!.removeChild(this.gridLines);
-      this.gridLines = null;
+      if (this.container) {
+        try {
+          this.container.destroy({ children: true, texture: true });
+        } catch (error) {
+          console.warn('Ошибка при уничтожении container:', error);
+        }
+        this.container = null;
+      }
+
+      // Обнуление приложения
+      this.parent = null;
+      this.config = null;
+      this.app = null;
+    } catch (error) {
+      console.error('Ошибка при уничтожении Grid:', error);
     }
-
-    if (this.container) {
-      this.container.destroy({ children: true, texture: true });
-      this.container = null;
-    }
-
-    // Обнуление приложения
-    this.parent = null;
-    this.config = null;
-    this.app = null;
-    
   }
   
 };

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ref, watch } from 'vue'
 import { ProjectFilters } from '../types'
 
