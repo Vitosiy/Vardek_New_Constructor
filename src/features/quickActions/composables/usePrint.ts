@@ -72,7 +72,7 @@ export const usePrint = () => {
                   <div class="room-screenshots">
           `;
           
-          roomScreenshots.forEach((screenshot: IScreenshot, index: number) => {
+          roomScreenshots.forEach((screenshot: IScreenshot) => {
             const modeText = screenshot.mode === 'drawing' ? 'Режим чертежа' : 'Обычный режим';
             const blobUrl = URL.createObjectURL(screenshot.blob);
             

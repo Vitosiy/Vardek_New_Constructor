@@ -6,7 +6,7 @@ export function useProjectFilters(onFiltersChange: () => void) {
   const isInitialized = ref(false)
   
   // Отслеживаем изменения фильтров
-  watch(filters, (newFilters) => {
+  watch(filters, () => {
     if (isInitialized.value) {
       onFiltersChange()
     }

@@ -252,29 +252,30 @@ export default class Constructor2D {
           if (this.app2d.renderer) {
             try {
               // Очищаем все текстуры и ресурсы
-              if (this.app2d.renderer.texture) {
-                this.app2d.renderer.texture.destroy(true);
+              const rAny = this.app2d.renderer as any;
+              if (rAny.texture && typeof rAny.texture.destroy === 'function') {
+                try { rAny.texture.destroy(true); } catch {}
               }
               
               // Очищаем все шейдеры
-              if (this.app2d.renderer.shader) {
-                this.app2d.renderer.shader.destroy();
+              if (rAny.shader && typeof rAny.shader.destroy === 'function') {
+                try { rAny.shader.destroy(); } catch {}
               }
               
               // Очищаем все батчи
-              if (this.app2d.renderer.batch) {
+              if (rAny.batch && typeof rAny.batch.destroy === 'function') {
                 try {
-                  this.app2d.renderer.batch.destroy();
+                  rAny.batch.destroy();
                 } catch (error) {
                   console.warn('Ошибка при очистке batch:', error);
                 }
               }
               
               // Очищаем все пулы
-              if (this.app2d.renderer.gl) {
+              if (rAny.gl) {
                 try {
                   // Принудительно очищаем WebGL контекст
-                  const gl = this.app2d.renderer.gl;
+                  const gl = rAny.gl;
                   if (gl && gl.getExtension) {
                     const loseContext = gl.getExtension('WEBGL_lose_context');
                     if (loseContext) {

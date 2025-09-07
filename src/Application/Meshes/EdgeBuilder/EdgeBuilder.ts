@@ -35,6 +35,8 @@ export class EdgeBuilder {
 
     createEdge(object: THREE.Object3D) {
         const edgeBody = new THREE.Object3D()
+        // Привязываем ссылку на родителя для возможного внешнего использования
+        edgeBody.userData.parentProduct = this.parent
         object.traverse((child) => {
             if (child instanceof THREE.Mesh) {
                 // линии

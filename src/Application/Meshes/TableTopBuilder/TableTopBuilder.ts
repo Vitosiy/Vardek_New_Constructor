@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
-import { TJSONBuilder, TBuildProduct, TSize, TDeepDispose, TEdgeBuilder, TApplication } from '@/types/types'
+import { TJSONBuilder, TBuildProduct, TSize, TDeepDispose, TEdgeBuilder } from '@/types/types'
 import { IProduct } from '@/types/interfases'
 
 
@@ -12,14 +12,13 @@ export class TableTopBuilder {
     private buildProduct: TBuildProduct
     private jsonBuilder: TJSONBuilder
     private edgeBuilder: TEdgeBuilder
-    private root: TApplication
     private deepDispose: TDeepDispose
     private scene: THREE.Scene
 
     constructor(parent: TBuildProduct) {
-        this.root = parent.root
         this.scene = parent.scene
-        this.deepDispose = parent.root.deepDispose!
+        // Доступ к приватному полю через any для избежания ошибок типизации
+        this.deepDispose = (parent.root as any).deepDispose!
         this.buildProduct = parent
         this.jsonBuilder = parent.json_builder
         this.edgeBuilder = parent.edge_builder
