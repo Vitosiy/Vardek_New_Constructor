@@ -157,25 +157,65 @@ export default class HalfRoom {
   }
 
   public destroy(): void {
-    this.container.destroy();
+    try {
+      // Сначала очищаем все графические элементы
+      if (this.state.graphics && this.state.graphics.length > 0) {
+        this.state.graphics.forEach((item) => {
+          try {
+            if (item.graphic) {
+              // Отключаем события
+              item.graphic.off('pointertap', this.handlerDoubleClickNameRoom);
+              
+              // Удаляем из контейнера, если он еще существует
+              if (this.container && this.container.children && this.container.children.includes(item.graphic)) {
+                this.container.removeChild(item.graphic);
+              }
+              
+              // Уничтожаем графику
+              item.graphic.destroy();
+              item.graphic = null;
+            }
+            
+            if (item.textName) {
+              // Удаляем из контейнера, если он еще существует
+              if (this.container && this.container.children && this.container.children.includes(item.textName)) {
+                this.container.removeChild(item.textName);
+              }
+              
+              // Уничтожаем текст
+              item.textName.destroy();
+              item.textName = null;
+            }
+          } catch (error) {
+            console.warn('Ошибка при уничтожении элемента HalfRoom:', error);
+          }
+        });
+        this.state.graphics = [];
+      }
 
-    this.state.graphics.forEach((item) => {
-      this.container.removeChild(item.graphic);
-      item.graphic.off('pointertap', this.handlerDoubleClickNameRoom);
-      item.graphic.destroy();
-      item.textName.text = "";
-      this.container.removeChild(item.textName);
-      item.textName.destroy();
-      item.graphic = null;
-      item.textName = null;
-    });
-    this.state.graphics = [];
+      // Отключаем события
+      try {
+        this.parent.eventBus.off(Events.C2D_SET_ROOM_LABEL, this.eventSetRoomLabel);
+      } catch (error) {
+        console.warn('Ошибка при отключении событий HalfRoom:', error);
+      }
 
-    this.parent.eventBus.off(Events.C2D_SET_ROOM_LABEL, this.eventSetRoomLabel);
+      // Уничтожаем контейнер
+      if (this.container) {
+        try {
+          this.container.destroy();
+        } catch (error) {
+          console.warn('Ошибка при уничтожении контейнера HalfRoom:', error);
+        }
+        this.container = null;
+      }
 
-    this.container = null;
-    this.app = null;
-    this.parent = null;
+      // Очищаем ссылки
+      this.app = null;
+      this.parent = null;
+    } catch (error) {
+      console.error('Ошибка при уничтожении HalfRoom:', error);
+    }
   }
 
 };

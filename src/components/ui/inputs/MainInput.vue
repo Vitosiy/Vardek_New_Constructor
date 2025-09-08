@@ -68,10 +68,18 @@ const props = defineProps({
 const input = useTemplateRef("input");
 
 const isChangeEnable = () => {
+  // Для текстовых полей всегда разрешаем редактирование
+  if (props.type === 'text') return true;
+  // Для числовых полей проверяем min/max
   return props.min !== null && props.max !== null;
 };
 
 const customValidation = (value) => {
+  // Для текстовых полей разрешаем пустые строки
+  if (props.type === 'text') {
+    return true;
+  }
+  // Для числовых полей применяем строгую валидацию
   if (value === "" || value > props.max || value < props.min) return false;
   return true;
 };

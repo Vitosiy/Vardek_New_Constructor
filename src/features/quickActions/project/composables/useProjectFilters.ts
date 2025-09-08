@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ref, watch } from 'vue'
 import { ProjectFilters } from '../types'
 
@@ -7,7 +6,7 @@ export function useProjectFilters(onFiltersChange: () => void) {
   const isInitialized = ref(false)
   
   // Отслеживаем изменения фильтров
-  watch(filters, (newFilters) => {
+  watch(filters, () => {
     if (isInitialized.value) {
       onFiltersChange()
     }

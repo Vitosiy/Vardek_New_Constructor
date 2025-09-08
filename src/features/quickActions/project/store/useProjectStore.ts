@@ -16,12 +16,6 @@ export const useProjectStore = defineStore('project', () => {
     return !currentProjectId.value
   })
 
-  // Проверяем, есть ли несохраненные изменения
-  // const hasUnsavedChanges = computed(() => {
-  //   if (!initialProjectState.value) return false
-  //   return JSON.stringify(initialProjectState.value) !== JSON.stringify(sceneState.getCurrentProjectParams)
-  // })
-
   // Устанавливаем ID проекта
   const setProjectId = (id: string | null) => {
     currentProjectId.value = id
@@ -56,7 +50,6 @@ export const useProjectStore = defineStore('project', () => {
   return {
     currentProjectId,
     initialProjectState,
-    // hasUnsavedChanges,
     isSaving,
     isNewProject,
     setProjectId,

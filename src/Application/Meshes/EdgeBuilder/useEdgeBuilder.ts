@@ -9,8 +9,15 @@ export class UseEdgeBuilder {
     private lights: TAppLights
     private scene: Scene;
     constructor(root: TApplication) {
+<<<<<<< HEAD
         this.scene = root._scene!
         this.lights = root._lights!
+=======
+        // Доступ к приватным свойствам через any, чтобы не нарушать инкапсуляцию типов
+        const anyRoot = root as any
+        this.scene = anyRoot.scene!
+        this.lights = anyRoot.lights!
+>>>>>>> develop
     }
 
     async drawingMode(value: boolean, object?: Object3D) {

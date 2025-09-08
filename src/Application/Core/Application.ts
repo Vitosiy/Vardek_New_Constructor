@@ -218,34 +218,102 @@ export class Application {
     }
 
     public destroy() {
-        this.keybordListeners?.removeKeyListeners()
-        this.sizes!.off('resize')
-        this.sizes!.destroy();
-        this.time!.off('tick')
-        this.time?.tickStop();
-        this.camera?.removeCamera()
-        this.world!.removeVueEvents();
-        this.renderer!.removeVueEvents();
-        this.meshEvents!.removeVueEvents();
-        this.deepDispose!.clearTotal(this.scene!);
-        this.userHistory!.clearHistory()
+        try {
+            // Отключаем слушатели событий
+            if (this.keybordListeners) {
+                try {
+                    this.keybordListeners.removeKeyListeners();
+                } catch (error) {
+                    console.warn('Ошибка при удалении слушателей клавиатуры:', error);
+                }
+            }
+            
+            if (this.sizes) {
+                try {
+                    this.sizes.off('resize');
+                    this.sizes.destroy();
+                } catch (error) {
+                    console.warn('Ошибка при уничтожении sizes:', error);
+                }
+            }
+            
+            if (this.time) {
+                try {
+                    this.time.off('tick');
+                    this.time.tickStop();
+                } catch (error) {
+                    console.warn('Ошибка при остановке time:', error);
+                }
+            }
+            
+            // Удаляем события компонентов
+            if (this.camera) {
+                try {
+                    this.camera.removeCamera();
+                } catch (error) {
+                    console.warn('Ошибка при удалении камеры:', error);
+                }
+            }
+            
+            if (this.world) {
+                try {
+                    this.world.removeVueEvents();
+                } catch (error) {
+                    console.warn('Ошибка при удалении событий мира:', error);
+                }
+            }
+            
+            if (this.renderer) {
+                try {
+                    this.renderer.removeVueEvents();
+                } catch (error) {
+                    console.warn('Ошибка при удалении событий рендерера:', error);
+                }
+            }
+            
+            if (this.meshEvents) {
+                try {
+                    this.meshEvents.removeVueEvents();
+                } catch (error) {
+                    console.warn('Ошибка при удалении событий мешей:', error);
+                }
+            }
+            
+            // Очищаем сцену и историю
+            if (this.deepDispose && this.scene) {
+                try {
+                    this.deepDispose.clearTotal(this.scene);
+                } catch (error) {
+                    console.warn('Ошибка при очистке сцены:', error);
+                }
+            }
+            
+            if (this.userHistory) {
+                try {
+                    this.userHistory.clearHistory();
+                } catch (error) {
+                    console.warn('Ошибка при очистке истории:', error);
+                }
+            }
 
-        this.keybordListeners = null
-        this.meshEvents = null
-        this.enviromentData = null
-        this.setObject = null
-        this.resources = null
-        this.sizes = null
-        this.time = null
-        this.scene = null
-        this.camera = null
-        this.renderer = null
-        this.geometryBuilder = null
-        this.world = null
-        this.canvas = null
-        this.deepDispose = null
-        // this.clearScene(this.scene, this.renderer.instance)
-
+            // Очищаем ссылки
+            this.keybordListeners = null;
+            this.meshEvents = null;
+            this.enviromentData = null;
+            this.setObject = null;
+            this.resources = null;
+            this.sizes = null;
+            this.time = null;
+            this.scene = null;
+            this.camera = null;
+            this.renderer = null;
+            this.geometryBuilder = null;
+            this.world = null;
+            this.canvas = null;
+            this.deepDispose = null;
+        } catch (error) {
+            console.error('Ошибка при уничтожении приложения:', error);
+        }
     }
 
     // checkLostContext() {

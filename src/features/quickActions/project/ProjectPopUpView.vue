@@ -49,10 +49,6 @@
           <p class="warning-text__title">Новый проект</p>
           <p class="warning-text__text">Сохраните проект, чтобы он появился в списке</p>
         </div>
-        <!-- <div v-if="projectState.currentProjectId && projectState.hasUnsavedChanges" class="warning-text">
-          <p class="warning-text__title">Есть изменения</p>
-          <p class="warning-text__text">Сохраните проект</p>
-        </div> -->
         <MainButton 
           :className="'blue__button'" 
           @click="saveProject"
@@ -216,20 +212,12 @@ const loadProject = async (id: string | number) => {
 
     try {
       // 1. Обновляем данные проекта в sceneState
-      // sceneState.updateProjectParams(projectData)
-
       sceneState.loadProjectFromData(projectData);
       sceneState.updateProjectParams({})
 
       
       // 2. Устанавливаем ID проекта в store
       projectState.setProjectId(id.toString())
-      
-      // // 3. Эмитим событие загрузки комнаты (если есть комнаты)
-      // if (projectData.rooms && projectData.rooms.length > 0) {
-      //   // Загружаем первую комнату
-      //   eventBus.emit('A:Load', projectData.rooms[0].id)
-      // }
       
       // 4. Уведомляем о загрузке контента
       eventBus.emit('A:ContantLoaded', true)
