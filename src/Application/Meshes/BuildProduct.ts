@@ -409,8 +409,8 @@ export class BuildProduct extends BuildersHelper {
     createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultOptionsConfig) {
         const { CONFIG } = props;
         const { ELEMENT_TYPE, MODULE_COLOR, ID } = CONFIG;
-
         const { defModuleUp, defModuleDown, moduleTop, moduleBottom } = defaultConfig
+        const texture = this._PRODUCTS[ID].texture;
 
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color;
@@ -423,11 +423,13 @@ export class BuildProduct extends BuildersHelper {
                     return MODULE_COLOR;
             }
         };
+        console.log(texture)
+        const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
 
-        const moduleColorId = resolveColorId();
         CONFIG.MODULE_COLOR = moduleColorId;
 
         const moduleColor = this._FASADE[moduleColorId];
+
         const body = this.json_builder.createMesh({ data, fasade: moduleColor });
 
         const edge = this.edge_builder.createEdge(body);
@@ -435,7 +437,7 @@ export class BuildProduct extends BuildersHelper {
 
         const { geometryType } = body.userData;
 
-        const texture = this._PRODUCTS[ID].texture;
+
         if ("src" in texture && !moduleColor) {
             const textureSize = {
                 width: geometryType === "ExtrudeGeometry" ? texture.width : 1,

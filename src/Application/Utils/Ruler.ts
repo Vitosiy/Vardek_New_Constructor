@@ -169,6 +169,7 @@ export class Ruler {
 
     axes.forEach(({ dir, start, length }) => {
       if (!this.scene) return;
+      if(length<1) return
 
       const arrowPos = new THREE.ArrowHelper(dir, start, length, this.config.LINE_COLOR, this.config.OBJECT_ARROW_HEIGHT, this.config.OBJECT_ARROW_WIDTH);
       const arrowNeg = new THREE.ArrowHelper(dir.clone().negate(), start, 0, this.config.LINE_COLOR, this.config.OBJECT_ARROW_HEIGHT, this.config.OBJECT_ARROW_WIDTH);
