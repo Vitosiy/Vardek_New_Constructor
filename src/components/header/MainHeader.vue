@@ -277,19 +277,12 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
-<<<<<<< HEAD
+    try {
     menuStore.setRulerVisibility(true);
     menuStore.setDrowModeValue(false);
     modelState.setCurrentModel(null);
 
     roomState.routConvertData(newPath);
-=======
-    try {
-      menuStore.setRulerVisibility(true);
-      menuStore.setDrowModeValue(false);
-      modelState.setCurrentModel(null);
-      roomState.mergeRoomsData();
->>>>>>> develop
 
       historyActions.value = false;
       restorLength.value = 0;

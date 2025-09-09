@@ -12,23 +12,14 @@ export class TableTopBuilder {
     private buildProduct: TBuildProduct
     private jsonBuilder: TJSONBuilder
     private edgeBuilder: TEdgeBuilder
-<<<<<<< HEAD
     // private root: TApplication
-=======
->>>>>>> develop
     private deepDispose: TDeepDispose
     private scene: THREE.Scene
 
     constructor(parent: TBuildProduct) {
-<<<<<<< HEAD
         // this.root = parent.root
         this.scene = parent.scene
         this.deepDispose = parent.root._deepDispose!
-=======
-        this.scene = parent.scene
-        // Доступ к приватному полю через any для избежания ошибок типизации
-        this.deepDispose = (parent.root as any).deepDispose!
->>>>>>> develop
         this.buildProduct = parent
         this.jsonBuilder = parent.json_builder
         this.edgeBuilder = parent.edge_builder

@@ -35,7 +35,7 @@ export class Ruler {
   private readonly raycasterProd = new THREE.Raycaster();
 
   private readonly config: RulerConfig = {
-    POINT_COUNT: 4,
+    POINT_COUNT: 3,
     MIN_DISTANCE: 0.01,
     MAX_DISTANCE: 1500,
     LINE_COLOR: '#444444',

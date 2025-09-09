@@ -22,6 +22,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useObjectData } from "@/store/appliction/useObjectData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -45,6 +46,7 @@ import { useScreenshotsStore } from "@/features/store/screenshotsStore/screensho
 
 const schemeTransitionStore = useSchemeTransition();
 const menuStore = useMenuStore();
+const roomState = useRoomState();
 const screenshotsStore = useScreenshotsStore();
 
 const appData = ref<{ [key: string]: any } | null>(null);
@@ -129,7 +131,7 @@ onMounted(async () => {
       VerdekConstructor.value.refreshViewer();
     }
   } catch (error) {
-    console.error('Ошибка при инициализации The3D компонента:', error);
+    console.error("Ошибка при инициализации The3D компонента:", error);
   }
 });
 
@@ -172,7 +174,7 @@ onBeforeUnmount(() => {
       VerdekConstructor.value = null;
     }
   } catch (error) {
-    console.error('Ошибка при очистке компонента The3D:', error);
+    console.error("Ошибка при очистке компонента The3D:", error);
   }
 });
 
@@ -264,133 +266,162 @@ const clearSelected = () => {
 
 const screenPrint = async () => {
   if (!VerdekConstructor.value) return;
-  
+
   try {
     const renderer = VerdekConstructor.value._renderer;
     if (!renderer) {
-      console.error('Renderer не найден');
+      console.error("Renderer не найден");
       return;
     }
 
     // Очищаем предыдущие скриншоты перед созданием новых
     screenshotsStore.clearScreenshots();
-    console.log('Предыдущие скриншоты очищены');
+    console.log("Предыдущие скриншоты очищены");
 
     // Получаем все комнаты из store - используем правильный источник данных
-    const allRooms = schemeTransitionStore.getSchemeTransitionData;
+    // const allRooms = schemeTransitionStore.getSchemeTransitionData;
+    const allRooms = roomState.getRooms;
+
     console.log(`Начинаем создание скриншотов для ${allRooms.length} комнат`);
-    
+
     // Сохраняем текущую комнату, чтобы восстановить её после создания скриншотов
     const currentRoomId = roomContantData.value?.roomId || null;
-    
+
     // Сохраняем текущий режим чертежа
     const currentDrawingMode = menuStore.getDrowModeValue;
-    
+
     for (let i = 0; i < allRooms.length; i++) {
       const room = allRooms[i];
-      console.log(`Обрабатываем комнату ${i + 1}/${allRooms.length}: ${room.label || room.id}`);
-      
+      console.log(
+        `Обрабатываем комнату ${i + 1}/${allRooms.length}: ${
+          room.label || room.id
+        }`
+      );
+
       try {
         // Загружаем комнату в сцену через eventBus
         eventBus.emit("A:Load", room.id);
-        
+
         // Ждем загрузки комнаты
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
         // Принудительно рендерим сцену перед созданием скриншота
-        
+
         // 1. Создаем скриншот комнаты в обычном режиме
-        console.log(`Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`);
+        console.log(
+          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`
+        );
         await new Promise<void>((resolve) => {
           renderer.domElement.toBlob((blob: Blob | null) => {
             if (blob) {
               // Сохраняем скриншот в стор вместо скачивания
-              const cleanRoomName = (room.label || `Комната_${i + 1}`).replace(/[^a-zA-Z0-9а-яё\s-]/gi, '_').trim();
+              const cleanRoomName = (room.label || `Комната_${i + 1}`)
+                .replace(/[^a-zA-Z0-9а-яё\s-]/gi, "_")
+                .trim();
               const screenshot = {
                 id: `${room.id}-normal-${Date.now()}`,
                 roomId: room.id,
                 roomLabel: room.label || `Комната_${i + 1}`,
-                mode: 'normal' as const,
+                mode: "normal" as const,
                 blob: blob,
                 timestamp: Date.now(),
-                fileName: `3d-screenshot-${cleanRoomName}-normal.png`
+                fileName: `3d-screenshot-${cleanRoomName}-normal.png`,
               };
-              
+
               screenshotsStore.addScreenshot(screenshot);
-              console.log(`Скриншот комнаты "${room.label || room.id}" в обычном режиме сохранен в стор`);
+              console.log(
+                `Скриншот комнаты "${
+                  room.label || room.id
+                }" в обычном режиме сохранен в стор`
+              );
             }
             resolve();
-          }, 'image/png');
+          }, "image/png");
         });
-        
+
         // 2. Включаем режим чертежа
-        console.log(`Включаем режим чертежа для комнаты "${room.label || room.id}"`);
+        console.log(
+          `Включаем режим чертежа для комнаты "${room.label || room.id}"`
+        );
         await menuStore.toggleDrowModeValue();
         const drawingModeValue = menuStore.getDrowModeValue;
         eventBus.emit("A:DrawingMode", drawingModeValue);
-        
+
         // Ждем применения режима чертежа
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         // 3. Создаем скриншот комнаты в режиме чертежа
-        console.log(`Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`);
+        console.log(
+          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`
+        );
         await new Promise<void>((resolve) => {
           renderer.domElement.toBlob((blob: Blob | null) => {
             if (blob) {
               // Сохраняем скриншот в стор вместо скачивания
-              const cleanRoomName = (room.label || `Комната_${i + 1}`).replace(/[^a-zA-Z0-9а-яё\s-]/gi, '_').trim();
+              const cleanRoomName = (room.label || `Комната_${i + 1}`)
+                .replace(/[^a-zA-Z0-9а-яё\s-]/gi, "_")
+                .trim();
               const screenshot = {
                 id: `${room.id}-drawing-${Date.now()}`,
                 roomId: room.id,
                 roomLabel: room.label || `Комната_${i + 1}`,
-                mode: 'drawing' as const,
+                mode: "drawing" as const,
                 blob: blob,
                 timestamp: Date.now(),
-                fileName: `3d-screenshot-${cleanRoomName}-drawing.png`
+                fileName: `3d-screenshot-${cleanRoomName}-drawing.png`,
               };
-              
+
               screenshotsStore.addScreenshot(screenshot);
-              console.log(`Скриншот комнаты "${room.label || room.id}" в режиме чертежа сохранен в стор`);
+              console.log(
+                `Скриншот комнаты "${
+                  room.label || room.id
+                }" в режиме чертежа сохранен в стор`
+              );
             }
             resolve();
-          }, 'image/png');
+          }, "image/png");
         });
-        
+
         // 4. Возвращаем режим чертежа в исходное состояние
         if (drawingModeValue !== currentDrawingMode) {
           await menuStore.toggleDrowModeValue();
           eventBus.emit("A:DrawingMode", currentDrawingMode);
         }
-        
+
         // Пауза между скриншотами
         if (i < allRooms.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
-        
       } catch (roomError) {
-        console.warn(`Ошибка при обработке комнаты ${room.label || room.id}:`, roomError);
+        console.warn(
+          `Ошибка при обработке комнаты ${room.label || room.id}:`,
+          roomError
+        );
         // Продолжаем с следующей комнатой
         continue;
       }
     }
-    
+
     // Восстанавливаем исходную комнату, если она была
     if (currentRoomId) {
       eventBus.emit("A:Load", currentRoomId);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    
+
     // Восстанавливаем исходный режим чертежа
     if (menuStore.getDrowModeValue !== currentDrawingMode) {
       await menuStore.toggleDrowModeValue();
       eventBus.emit("A:DrawingMode", currentDrawingMode);
     }
-    
-    console.log(`Все скриншоты комнат созданы и сохранены в стор. Всего скриншотов: ${screenshotsStore.getScreenshots().length}`);
-    eventBus.emit("A:3DScreenshotCreated");
 
+    console.log(
+      `Все скриншоты комнат созданы и сохранены в стор. Всего скриншотов: ${
+        screenshotsStore.getScreenshots().length
+      }`
+    );
+    eventBus.emit("A:3DScreenshotCreated");
   } catch (error) {
-    console.error('Ошибка при создании 3D скриншотов:', error);
+    console.error("Ошибка при создании 3D скриншотов:", error);
     eventBus.emit("A:3DScreenshotCreated");
   }
 };
@@ -400,21 +431,21 @@ const take3DScreenshot = () => {
     try {
       const renderer = VerdekConstructor.value._renderer;
       if (!renderer) {
-        console.error('Renderer не найден');
+        console.error("Renderer не найден");
         return;
       }
 
       renderer.domElement.toBlob((blob: Blob | null) => {
         if (blob) {
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
-          link.download = '3d-screenshot.png';
+          link.download = "3d-screenshot.png";
           link.click();
           URL.revokeObjectURL(link.href);
         }
-      }, 'image/png');
+      }, "image/png");
     } catch (error) {
-      console.error('Ошибка при создании 3D скриншота:', error);
+      console.error("Ошибка при создании 3D скриншота:", error);
     }
   }
 };
@@ -567,7 +598,8 @@ defineExpose({
   selected,
   activePreloader,
   getScreenshots: () => screenshotsStore.getScreenshots(),
-  getScreenshotsByRoom: (roomId: string) => screenshotsStore.getScreenshotsByRoom(roomId),
+  getScreenshotsByRoom: (roomId: string) =>
+    screenshotsStore.getScreenshotsByRoom(roomId),
   clearScreenshots: () => screenshotsStore.clearScreenshots(),
 });
 </script>
@@ -636,9 +668,7 @@ defineExpose({
     <div class="controller-container">
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-        <ControllerButton
-          v-if="Object.keys(CutData).length == 0"
-        />
+        <ControllerButton v-if="Object.keys(CutData).length == 0" />
         <ContentControllerButton
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"
         />
@@ -801,7 +831,7 @@ defineExpose({
   transform-origin: top center;
   pointer-events: none;
   user-select: none;
-  
+
   -webkit-user-drag: none;
   transition: all 0.2s ease-in-out;
   &--active {
