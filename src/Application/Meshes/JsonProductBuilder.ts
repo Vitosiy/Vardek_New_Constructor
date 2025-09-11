@@ -81,7 +81,21 @@ export class JsonBuilder {
                     geometry = this.createPlaneGeometry(data.geometry, parent_size)
 
             }
-            obj[data.id] = new THREE.Mesh(geometry, this.material);
+
+            let material = this.material
+            if (data.glass) {
+                const materialConf = {
+                    color: "#" + 939393,
+                    transparent: true,
+                    opacity: 0.5,
+                    shininess: 100,
+                    specular: 0x999999,
+                };
+                material = new THREE.MeshPhongMaterial(materialConf);
+                material.color.convertSRGBToLinear();
+            }
+
+            obj[data.id] = new THREE.Mesh(geometry, material);
             obj[data.id].receiveShadow = true;
             obj[data.id].castShadow = true;
         }

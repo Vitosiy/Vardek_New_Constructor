@@ -10,6 +10,7 @@ import {
   MANUFACTURER
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
+import {useAppData} from "@/store/appliction/useAppData.ts";
 
 const props = defineProps({
   fillings: {
@@ -42,6 +43,7 @@ const emit = defineEmits([
 ]);
 
 const {module, fillings, visualizationRef} = toRefs(props);
+const APP = useAppData().getAppData;
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0});
 
@@ -125,6 +127,15 @@ const addFilling = (type, product, oldFillingObject = false) => {
     currentFillingsArray.fillings = []
   currentFillingsArray = currentFillingsArray.fillings
 
+  let depth = product.depth
+  if (product.SIZE_EDIT_DEPTH_MAX) {
+    depth = module.value.depth;
+
+    const moduleProductInfo = APP.CATALOG.PRODUCTS[module.value.productID]
+    if (moduleProductInfo?.moduleType?.CODE === "wardrobe")
+      depth -= 100;
+  }
+
   let fillingObject = <FillingObject>{
     product: product.ID,
     id: currentFillingsArray.length + 1,
@@ -132,7 +143,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     image: product.PREVIEW_PICTURE,
     type: "any",
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
-    size: new THREE.Vector3(startFillingData.width, startFillingData.height, product.depth),
+    size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
     width: startFillingData.width,
     height: startFillingData.height,
     color: module.value.moduleColor,
