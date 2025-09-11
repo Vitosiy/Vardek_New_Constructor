@@ -973,6 +973,7 @@ const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = nu
       break;
     default:
       selectedCell.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex};
+      selectedFilling.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, item: item};
       toggleSectionColor(sectionIndex, cellIndex, rowIndex);
       break;
   }

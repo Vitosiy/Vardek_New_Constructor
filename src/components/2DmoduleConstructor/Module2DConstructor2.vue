@@ -931,6 +931,7 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
       break;
     default:
       selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
+      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
       break;
   }
 

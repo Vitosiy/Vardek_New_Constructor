@@ -158,7 +158,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     if(!currentSection.fasadesDrawers)
       currentSection.fasadesDrawers = []
 
-    let baseFasade = module.value.sections[sec].fasades[0][0] || module.value.sections[0].fasades[0][0]
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0].fasades[0][0]
     let manufacturer_name = product.EN_NAME?.toLowerCase().split(/\s|,/).shift() || product.NAME?.toLowerCase().split(/\s|,/).shift();
     let manufacturerOffset = MANUFACTURER[manufacturer_name]
 
