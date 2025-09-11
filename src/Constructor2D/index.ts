@@ -1,6 +1,4 @@
 import * as PIXI from 'pixi.js';
-// import { MathUtils } from "three";
-
 import Grid from "./Layers/Grid";
 import HalfRoom from "./Layers/HalfRoom";
 import Rulers from "./Layers/Rulers";
@@ -39,6 +37,31 @@ interface ILayers {
   startPointActiveObject: StartPointActiveObject | null;
   rulers: Rulers | null;
 };
+
+// Экспорт типов и интерфейсов для фасада
+export type {
+  IConstructor2DFacade
+} from './use2DFacade';
+
+export type {
+  WallType,
+  ObjectType,
+  RoomData,
+  WallModificationData,
+  ObjectData,
+  ViewportSettings,
+  Constructor2DEvents,
+  Constructor2DConfig,
+  Constructor2DState,
+  OperationResult,
+  RoomOperationResult,
+  WallOperationResult,
+  ObjectOperationResult,
+  Constructor2DUtils
+} from './types';
+
+export { use2DFacade, Constructor2DFacade } from './use2DFacade';
+export { CONSTRUCTOR2D_CONSTANTS } from './types';
 
 export default class Constructor2D {
 

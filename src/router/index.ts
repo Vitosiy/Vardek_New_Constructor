@@ -4,7 +4,6 @@ import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } 
 const baseUrl = '/';
 
 import MainView from "@/views/MainView.vue";
-import Constructor2D from "@/views/Constructor2D.vue";
 import Constructor3DView from "@/views/The3D.vue";
 import AuthView from "@/views/auth/AuthView.vue";
 
@@ -20,7 +19,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "/2d",
         name: "Constructor2d",
-        component: () => import('@/views/Constructor2D.vue'),
+        component: () => import('@/Constructor2D/view/Constructor2D.vue'),
         meta: { requiresAuth: true }
       },
       {
