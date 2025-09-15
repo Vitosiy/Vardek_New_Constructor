@@ -264,14 +264,24 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   else
     delete segment.error;
 
+  let delta = segment.height - halfHeight * 2 - (module.value.isSlidingDoors ? 0 : 4)
+
   segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
   fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
     ...segment,
-    position: module.value.isSlidingDoors ? new THREE.Vector3(segment.position.x, segment.position.y + segment.height, segment.position.z) :
-        new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height),
+    position: module.value.isSlidingDoors ? new THREE.Vector3(segment.position.x, segment.position.y + segment.height + delta, segment.position.z) :
+        new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height + delta),
   });
+
+  segment.height += delta;
+
+  for (let i = 0; i < fasades[doorIndex].length; i++){
+    if (i > segmentIndex)
+      fasades[doorIndex][i].id += 1;
+  }
+
 
   if(!module.value.isSlidingDoors)
     calcLoops(secIndex)
@@ -352,8 +362,12 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   else
     delete tmpSegment.error;
 
-  if(prev)
-    prev.position.y = currentSegment.position.y;
+  next ? (next.position.y = next.position.y) : (prev.position.y = currentSegment.position.y);
+
+  for (let i = 0; i < fasades[doorIndex].length; i++){
+    if (i > segmentIndex)
+      fasades[doorIndex][i].id -= 1;
+  }
 
   if (currentSection.length > 1) {
     currentSection.splice(segmentIndex, 1);
