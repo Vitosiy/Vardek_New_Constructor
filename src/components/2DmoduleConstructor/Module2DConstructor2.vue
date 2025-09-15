@@ -188,29 +188,12 @@ const module = computed(() => {
   }
 });
 
-const getMinHeight = computed(() => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
-})
+const getMinMaxModuleSize = (_dimension, _minmax) => {
+  const dimension = _dimension.toUpperCase()
+  const minmax = _minmax.toUpperCase()
 
-const getMaxHeight = computed(() => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX
-})
-
-const getMinWidth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN
-})
-
-const getMaxWidth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX
-})
-
-const getMinDepth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN
-})
-
-const getMaxDepth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
-})
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT[`SIZE_EDIT_` + dimension + `_` + minmax];
+}
 
 const selectedCell = ref({sec: 0, cell: 0, row: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
@@ -1136,8 +1119,8 @@ watch(visualizationRef, () => {
                   @update:modelValue="updateTotalHeight"
                   :inputClass="'actions-input'"
                   :modelValue="totalHeight"
-                  :min="getMinHeight"
-                  :max="getMaxHeight"
+                  :min="getMinMaxModuleSize('height', 'min')"
+                  :max="getMinMaxModuleSize('height', 'max')"
                   :type="'number'"
               />
             </div>
@@ -1150,8 +1133,8 @@ watch(visualizationRef, () => {
                   @update:modelValue="updateTotalWidth"
                   :inputClass="'actions-input'"
                   :modelValue="totalWidth"
-                  :min="getMinWidth"
-                  :max="getMaxWidth"
+                  :min="getMinMaxModuleSize('width', 'min')"
+                  :max="getMinMaxModuleSize('width', 'max')"
                   :type="'number'"
               />
             </div>
@@ -1164,8 +1147,8 @@ watch(visualizationRef, () => {
                   @update:modelValue="updateTotalDepth"
                   :inputClass="'actions-input'"
                   :modelValue="totalDepth"
-                  :min="getMinDepth"
-                  :max="getMaxDepth"
+                  :min="getMinMaxModuleSize('depth', 'min')"
+                  :max="getMinMaxModuleSize('depth', 'max')"
                   :type="'number'"
               />
             </div>
@@ -1192,6 +1175,7 @@ watch(visualizationRef, () => {
     </div>
 
     <div
+        id="midAreaUM2Dconstructor"
         class="constructor2d-container constructor2d-container--mid"
         ref="constructor2dContainer"
     >
