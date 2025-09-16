@@ -388,25 +388,26 @@ const renderGrid = () => {
               loopData: {
                 ...tmpLoopData,
                 error: loop.errors?.includes(posIndex),
+                position: {x: tmpLoopData.xOffset, y: tmpLoopData.yOffset}
               },
-            });
-
-            let tempShape = new Shape({
-              type: "loop",
-              sector: loopSector,
-              data: tmpLoopData,
-              position: {x: tmpLoopData.positionX, y: pos + tmpLoopData.height},
-              getMmWidth,
-              getMmHeight,
-              getPixelHeight,
-              getPixelWidth,
-              calcDrawersFasades,
             });
 
             for(let i = 0; i < tmp_array_sectors.length; i++) {
               let sector = tmp_array_sectors[i];
 
-              if(checkSectorsCollision(loopSector, sector)) {
+              if(checkSectorsCollision(loopSector.sectorData, sector)) {
+                let tempShape = new Shape({
+                  type: "loop",
+                  sector,
+                  data: tmpLoopData,
+                  position: {x: getMmHeight(loopSector.sectorData.position.x), y: getMmHeight(loopSector.sectorData.position.y)},
+                  getMmWidth,
+                  getMmHeight,
+                  getPixelHeight,
+                  getPixelWidth,
+                  calcDrawersFasades,
+                });
+
                 sector.shapes.push(tempShape);
                 break;
               }
@@ -700,13 +701,8 @@ const createLoop = ({
   loops.push(sector);
 
   // Создаём ограничения для секторов по высоте
-  const sectorBounds = shapeAdjuster.getTotalBounds(sector, loopData);
+  const sectorBounds = shapeAdjuster.getSectorBounds(sector);
   sector.bound = sectorBounds;
-
-  loopData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-  loopData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
-  loopData.maxX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxX));
-  loopData.minX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minX));
 
   loopData.sector = sector;
 

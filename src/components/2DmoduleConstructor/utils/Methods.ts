@@ -652,10 +652,6 @@ class Shape extends Helpers {
 
         // Проверка наложения прямоугольников
         return (
-                this.graphic.position.x + this.width < otherShape.graphic.position.x ||
-                this.graphic.position.x > otherShape.graphic.position.x + otherShape.width
-            ) ||
-            (
                 (
                     this.graphic.position.y + this.height <= otherShape.graphic.position.y + otherShape.height &&
                     this.graphic.position.y + this.height >= otherShape.graphic.position.y
@@ -664,7 +660,27 @@ class Shape extends Helpers {
                     this.graphic.position.y <= otherShape.graphic.position.y + otherShape.height &&
                     this.graphic.position.y >= otherShape.graphic.position.y
                 )
+            ) ||
+            (
+                (
+                    otherShape.graphic.position.y + otherShape.height <= this.graphic.position.y + this.height &&
+                    otherShape.graphic.position.y + otherShape.height >= this.graphic.position.y
+                ) ||
+                (
+                    otherShape.graphic.position.y <= this.graphic.position.y + this.height &&
+                    otherShape.graphic.position.y >= this.graphic.position.y
+                )
             );
+        /*|| (
+                (
+                    this.graphic.position.x + this.width <= otherShape.graphic.position.x + otherShape.width &&
+                    this.graphic.position.x + this.width >= otherShape.graphic.position.x
+                ) ||
+                (
+                    this.graphic.position.x <= otherShape.graphic.position.x + otherShape.width &&
+                    this.graphic.position.x >= otherShape.graphic.position.x
+                )
+            )*/
     }
 
     // Проверка, находится ли указанная позиция внутри сектора
@@ -674,17 +690,27 @@ class Shape extends Helpers {
             y: this.getPixelHeight(position.y)
         };
 
-        /*   if (pxPos.y < this.sectorBounds.y + this.padding) {
-               pxPos.y = this.sectorBounds.y + this.padding
-               position.y = Math.floor(this.getMmHeight(pxPos.y));
-           } else if (pxPos.y + this.height > this.sectorBounds.y + this.sectorBounds.height - this.padding) {
-               pxPos.y = this.sectorBounds.y + this.sectorBounds.height - this.padding - this.height
-               position.y = Math.floor(this.getMmHeight(pxPos.y));
-           }*/
-
         return (
-            (pxPos.x >= this.sectorBounds.x + this.padding && pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width - this.padding) ||
-            (pxPos.y < this.sectorBounds.y + this.padding && pxPos.y + this.height > this.sectorBounds.y + this.sectorBounds.height - this.padding)
+            (
+                (
+                    pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width &&
+                    pxPos.x + this.width >= this.sectorBounds.x
+                ) ||
+                (
+                    pxPos.x <= this.sectorBounds.x + this.sectorBounds.width &&
+                    pxPos.x >= this.sectorBounds.x
+                )
+            ) ||
+            (
+                (
+                    pxPos.y + this.height <= this.sectorBounds.y + this.sectorBounds.height &&
+                    pxPos.y + this.height >= this.sectorBounds.y
+                ) ||
+                (
+                    pxPos.y <= this.sectorBounds.y + this.sectorBounds.height &&
+                    pxPos.y >= this.sectorBounds.y
+                )
+            )
         );
     }
 
