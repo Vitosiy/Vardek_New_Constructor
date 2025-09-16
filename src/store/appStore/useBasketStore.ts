@@ -54,6 +54,8 @@ export const useBasketStore = defineStore("basket", () => {
     console.log('start') 
     const roomContantData = useRoomContantData().getRoomContantData;
     const roomDataCopy = JSON.parse(JSON.stringify(roomContantData));
+    console.log(roomDataCopy)
+    console.log(roomContantData)
 
     const dataForGetPrices = Object.entries(roomDataCopy)
       .map(([key, obj]: [string, any]) => createBasketItem(
@@ -61,7 +63,6 @@ export const useBasketStore = defineStore("basket", () => {
         mainConstructor.value.length,
         key
       ));
-
     mainConstructor.value = dataForGetPrices;
     syncBasket();
     console.log('end')
