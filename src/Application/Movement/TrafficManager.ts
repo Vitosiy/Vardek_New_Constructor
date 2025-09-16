@@ -45,8 +45,7 @@ export class TrafficManager {
     rulerLines: THREE.Object3D[] = [];
     rullerSizeLines: THREE.Object3D[] = [];
 
-    private onRemoveFromRoom: ({ model }: { model: THREE.Object3D | undefined }) => void;
-    // private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
+    private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
     private onClearSelectObject: () => void
 
     // constructor(canvas: HTMLElement, scene: THREE.Scene, room: RoomManager, camera: THREE.Camera, controls: OrbitControls) {
@@ -91,7 +90,7 @@ export class TrafficManager {
         /** Получаем выбранный объект */
 
         this.currentObject = object
-
+        console.log('object', object);
 
         if (object) {
 
@@ -141,6 +140,8 @@ export class TrafficManager {
 
     // removeFromRoom(product: Event | THREE.Object3D | string | numer) {
     //     console.log('product', product);
+    //     console.log('this._currentObject', this._currentObject);
+    //     console.log('this._currentObject.id', this._currentObject.id);
     //     if (!this._currentObject) return
 
     //     if (product instanceof THREE.Object3D) {
@@ -148,14 +149,14 @@ export class TrafficManager {
     //         const { RASPIL_LIST } = product.userData.PROPS
 
     //         if (RASPIL_LIST.length > 0) {
-    //             RASPIL_LIST.forEach(elem => {
-    //                 this.room.remove(elem.id)
-    //                 const meshInScene = this.scene.getObjectByProperty('id', elem.id) as THREE.Object3D
-    //                 this.despose.clearObject(meshInScene, this.scene)
-    //                 this.boxHelper.removeBoxHelper()
-    //                 this.ruler.clearRuler();
-    //                 this.currentObject = null
-    //             })
+    //           RASPIL_LIST.forEach(elem => {
+    //             this.room.remove(elem.id)
+    //             const meshInScene = this.scene.getObjectByProperty('id', elem.id) as THREE.Object3D
+    //             this.despose.clearObject(meshInScene, this.scene)
+    //             this.boxHelper.removeBoxHelper()
+    //             this.ruler.clearRuler();
+    //             this.currentObject = null
+    //           })
     //         }
 
 
@@ -167,7 +168,6 @@ export class TrafficManager {
     //         return
     //     }
 
-    //     console.log('this._currentObject' ,this._currentObject)
     //     console.log('this._currentObject.id' ,this._currentObject.id)
 
     //     this.room.remove(this._currentObject.id)
@@ -224,12 +224,12 @@ export class TrafficManager {
 
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
-        // this.events.on('A:RemoveModelFromBasket', (userData) => {
-        //   console.log('userData', userData);
-        //   this.removeFromRoom(userData);
-        //   // this._currentObject = userData;
+        this.events.on('A:RemoveModelFromBasket', (userData) => {
+          console.log(userData)
+          this.removeFromRoom(userData);
+          // this._currentObject = userData;
 
-        // });
+        });
 
     }
 

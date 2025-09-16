@@ -142,14 +142,14 @@ export const useBasketStore = defineStore("basket", () => {
 
       const { setRoomContantData } = useRoomContantData();
       const roomDataCopy = JSON.parse(JSON.stringify(useRoomContantData().getRoomContantData));
+      console.log('idBasket', idBasket);
+      console.log('roomDataCopy[idBasket]', roomDataCopy[idBasket]);
+      useEventBus().emit("A:RemoveModelFromBasket", roomDataCopy[idBasket]);
       
-      // useEventBus().emit("A:RemoveMode", roomDataCopy[idBasket]);
-
-
-      if (roomDataCopy[idBasket]) {
-        delete roomDataCopy[idBasket];
-        setRoomContantData(roomDataCopy);
-      }
+      // if (roomDataCopy[idBasket]) {
+      //   delete roomDataCopy[idBasket];
+      //   setRoomContantData(roomDataCopy);
+      // }
 
     }
     

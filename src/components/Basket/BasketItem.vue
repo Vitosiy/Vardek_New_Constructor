@@ -24,20 +24,15 @@
     </div>
 
     <div class="basket-item__action">
-        <DeleteBasketButton @click="deleteProductInBusket(item.product, item?.product.TYPE)" />
+        <DeleteBasketButton @click="deleteProductInBusket(item.product.BASKETID, item?.product.TYPE)" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useBasketStore } from "@/store/appStore/useBasketStore"
-import { nextTick, ref } from 'vue';
+import { ref } from "vue"
 import DeleteBasketButton from "../ui/buttons/basket/DeleteBasketButton.vue";
-import { useRoomContantData } from "@/store/appliction/useRoomContantData";
-import { useEventBus } from "@/store/appliction/useEventBus";
-
-const roomContantData = useRoomContantData().getRoomContantData;
-const _roomContantData = useRoomContantData();
 
   const API_URL = ref('https://dev.vardek.online');
 
@@ -64,15 +59,8 @@ function updateQuantity(id: string, type: string) {
   basketStore.updateQuantityFromBaske(id, type, quantity);
 }
 
-const deleteProductInBusket = (product: string, type: string) => {
-  console.log('product', product);
-  // basketStore.removeFromBasket(id, type);
-  const eventBus = useEventBus();
-  eventBus.emit('A:RemoveModelFromBasket', {payload: { product: product }})
-  eventBus.emit('A:RemoveModel', {payload: { product: product }})
-  nextTick(() => {
-    _roomContantData.setRoomContantData( {value: {...roomContantData}} );
-  });
+const deleteProductInBusket = (id: string, type: string) => {
+  basketStore.removeFromBasket(id, type);
 }
 
 </script>
