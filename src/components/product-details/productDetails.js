@@ -1,4 +1,5 @@
 // import { useCatalogStore } from '@/store/appStore/catalogStore';
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 // const catalogStore = useCatalogStore();
 
@@ -300,22 +301,86 @@ function CatalogApp() {
 
 	}
 
+	// this.catalogAddToBasket = function (e) {
+	// 	$.ajax({
+	// 		type: "POST",
+	// 		async: true,
+	// 		url: apiPath + "/API/catalog.element.addtobasket.php",
+	// 		data: $(e.currentTarget).parentsUntil(".product__wrapper").parent().find(".product__form").serialize()
+	// 	}).done(function (msg) {
+	// 		if (msg && msg.type == 'error') {
+	// 			self.toastmessage(msg.data, 'error');
+	// 		} else {
+	// 			$(".popup-wrap").hide();
+	// 			self.catalogBasketUpdate(true);
+	// 			self.toastmessage('Товар успешно добавлен в корзину.', "success");
+	// 		}
+	// 	});
+	// }
+
 	this.catalogAddToBasket = function (e) {
-		$.ajax({
-			type: "POST",
-			async: true,
-			url: apiPath + "/API/catalog.element.addtobasket.php",
-			data: $(e.currentTarget).parentsUntil(".product__wrapper").parent().find(".product__form").serialize()
-		}).done(function (msg) {
-			if (msg && msg.type == 'error') {
-				self.toastmessage(msg.data, 'error');
+		const target = e.currentTarget;
+
+		// ищем форму (аналог jQuery: $(e.currentTarget).parentsUntil(".product__wrapper").parent().find(".product__form"))
+		const form = target.closest(".product__wrapper")?.querySelector(".product__form");
+
+		if (!form) {
+			console.error("Форма не найдена");
+			return;
+		}
+
+		// собираем данные формы
+		const formData = new FormData(form);
+		// const formDataObj = Object.fromEntries(formData.entries());
+
+		const formDataObj = {};
+
+		for (let [key, value] of formData.entries()) {
+		// Убираем [] в конце ключа, если есть
+		const cleanKey = key.replace(/\[]$/, '');
+
+		if (cleanKey in formDataObj) {
+			// Если значение уже есть, преобразуем в массив (или добавляем)
+			if (Array.isArray(formDataObj[cleanKey])) {
+			formDataObj[cleanKey].push(value);
 			} else {
-				$(".popup-wrap").hide();
-				self.catalogBasketUpdate(true);
-				self.toastmessage('Товар успешно добавлен в корзину.', "success");
+			formDataObj[cleanKey] = [formDataObj[cleanKey], value];
 			}
-		});
+		} else {
+			// Пока просто записываем значение
+			formDataObj[cleanKey] = value;
+		}
 	}
+
+					
+
+		console.log(formDataObj);
+
+
+		const basketStore = useBasketStore();
+		basketStore.addFromCatalog(formDataObj);
+
+		// fetch(apiPath + "/API/data.basket.getprice.php", {
+		// 	method: "POST",
+		// 	body: formData  
+		// })
+		// 	.then(response => response.json())
+		// 	.then(msg => {
+		// 	if (msg && msg.type === "error") {
+		// 		self.toastmessage(msg.data, "error");
+		// 	} else {
+		// 		document.querySelectorAll(".popup-wrap").forEach(el => el.style.display = "none");
+		// 		self.catalogBasketUpdate(true);
+		// 		self.toastmessage("Товар успешно добавлен в корзину.", "success");
+		// 	}
+		// 	})
+		// 	.catch(err => {
+		// 	console.error("Ошибка при добавлении в корзину:", err);
+		// 	self.toastmessage("Произошла ошибка при добавлении товара.", "error");
+		// 	});
+
+	};  
+
 
 	this.catalogPremiumInitSlider = function () {
 

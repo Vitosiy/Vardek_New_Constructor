@@ -231,8 +231,9 @@ const clearSelected = () => {
 };
 
 const removeModel = (model) => {
+  console.log('model', model)
   if (VerdekConstructor.value) {
-    eventBus.emit("A:RemoveModel", model);
+    eventBus.emit("A:RemoveModel", {payload: {product: model}});
     controller.value = false;
   }
 };
@@ -367,7 +368,7 @@ const deliteTable = () => {
   if (parent) {
     removeModel(parent);
   } else {
-    removeModel();
+    removeModel(null);
   }
 };
 

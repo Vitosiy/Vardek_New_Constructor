@@ -16,6 +16,7 @@ import { MoveManager } from "./MoveManager";
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 export class TrafficManager {
 
@@ -44,7 +45,8 @@ export class TrafficManager {
     rulerLines: THREE.Object3D[] = [];
     rullerSizeLines: THREE.Object3D[] = [];
 
-    private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
+    private onRemoveFromRoom: ({ model }: { model: THREE.Object3D | undefined }) => void;
+    // private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
     private onClearSelectObject: () => void
 
     // constructor(canvas: HTMLElement, scene: THREE.Scene, room: RoomManager, camera: THREE.Camera, controls: OrbitControls) {
@@ -97,8 +99,10 @@ export class TrafficManager {
                 object: object,
                 roomContant: this.room._roomContant
             })
-
+            console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            const basketStore = useBasketStore();
+            basketStore.addFromScene();
 
             if (object.userData.elementType !== 'raspil') {
                 const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
@@ -135,13 +139,55 @@ export class TrafficManager {
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
-    removeFromRoom(product: Event | THREE.Object3D | string | numer) {
+    // removeFromRoom(product: Event | THREE.Object3D | string | numer) {
+    //     console.log('product', product);
+    //     if (!this._currentObject) return
 
-        if (!this._currentObject) return
+    //     if (product instanceof THREE.Object3D) {
+    //         const prod = toRaw(product)
+    //         const { RASPIL_LIST } = product.userData.PROPS
 
-        if (product instanceof THREE.Object3D) {
-            const prod = toRaw(product)
-            const { RASPIL_LIST } = product.userData.PROPS
+    //         if (RASPIL_LIST.length > 0) {
+    //             RASPIL_LIST.forEach(elem => {
+    //                 this.room.remove(elem.id)
+    //                 const meshInScene = this.scene.getObjectByProperty('id', elem.id) as THREE.Object3D
+    //                 this.despose.clearObject(meshInScene, this.scene)
+    //                 this.boxHelper.removeBoxHelper()
+    //                 this.ruler.clearRuler();
+    //                 this.currentObject = null
+    //             })
+    //         }
+
+
+    //         this.room.remove(product.id)
+    //         this.despose.clearObject(product, this.scene)
+    //         this.boxHelper.removeBoxHelper()
+    //         this.ruler.clearRuler();
+    //         this.currentObject = null
+    //         return
+    //     }
+
+    //     console.log('this._currentObject' ,this._currentObject)
+    //     console.log('this._currentObject.id' ,this._currentObject.id)
+
+    //     this.room.remove(this._currentObject.id)
+    //     this.despose.clearObject(this._currentObject, this.scene)
+    //     this.boxHelper.removeBoxHelper()
+    //     this.ruler.clearRuler();
+    //     this.currentObject = null
+    // }
+
+    removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer }) {
+
+        const removeObj = product ?? this._currentObject
+
+        if (!removeObj) return
+
+        if (removeObj instanceof THREE.Object3D) {
+            const prod = toRaw(removeObj)
+            const { RASPIL_LIST } = prod.userData.PROPS
+
+            console.log(RASPIL_LIST)
 
             if (RASPIL_LIST.length > 0) {
                 RASPIL_LIST.forEach(elem => {
@@ -154,19 +200,17 @@ export class TrafficManager {
                 })
             }
 
-
-
-            this.room.remove(product.id)
-            this.despose.clearObject(product, this.scene)
+            this.room.remove(removeObj.id)
+            this.despose.clearObject(removeObj, this.scene)
             this.boxHelper.removeBoxHelper()
             this.ruler.clearRuler();
             this.currentObject = null
             return
         }
+        console.log(removeObj)
 
-
-        this.room.remove(this._currentObject.id)
-        this.despose.clearObject(this._currentObject, this.scene)
+        this.room.remove(removeObj.id)
+        this.despose.clearObject(removeObj, this.scene)
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
         this.currentObject = null
@@ -180,6 +224,12 @@ export class TrafficManager {
 
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
+        // this.events.on('A:RemoveModelFromBasket', (userData) => {
+        //   console.log('userData', userData);
+        //   this.removeFromRoom(userData);
+        //   // this._currentObject = userData;
+
+        // });
 
     }
 
