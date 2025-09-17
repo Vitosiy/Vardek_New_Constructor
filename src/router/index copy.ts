@@ -1,8 +1,14 @@
 // @ts-nocheck
 import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } from "vue-router";
-import { getCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookieUtils';
 
 const baseUrl = '/';
+
+import MainView from "@/views/MainView.vue";
+import Constructor2D from "@/views/Constructor2D.vue";
+import Constructor3DView from "@/views/The3D.vue";
+import AuthView from "@/views/auth/AuthView.vue";
+
+import DefaultLayout from "@/layouts/DefaultLayout.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -55,21 +61,18 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
-  const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
+  const token = localStorage.getItem('token');
+  const expirationTime = localStorage.getItem('tokenExpiration');
 
   if (token && expirationTime) {
-    const expirationTimestamp = parseInt(expirationTime);
-    if (Date.now() > expirationTimestamp) {
+    if (Date.now() > parseInt(expirationTime)) {
       console.log('Токен просрочен! Удаляю...');
-      // Удаляем просроченные куки
-      document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      localStorage.removeItem('token');
+      localStorage.removeItem('tokenExpiration');
       next('/auth');
       return;
     } else {
-      const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
-      console.log(`Токен действителен еще ${secondsLeft} сек.`);
+      console.log(`Токен действителен еще ${Math.round((parseInt(expirationTime) - Date.now())/1000)} сек.`);
     }
   }
   

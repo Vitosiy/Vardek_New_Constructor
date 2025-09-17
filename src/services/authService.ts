@@ -8,10 +8,11 @@ const REQUEST_TIMEOUT = 10000
 
 //можно это сделать хуком
 export const AuthService = {
+  
   async login(credentials: LoginData): Promise<ApiResponse> {
     try {
       const { data } = await axios.post<ApiResponse>(
-        `${API_URL}/api/modeller/auth/login/`,
+        `${API_URL}/api/modellerjwt/auth/login/`,
         {
           login: credentials.login.trim(),
           password: credentials.password
@@ -33,29 +34,13 @@ export const AuthService = {
     }
   },
 
-  // async login(credentials: LoginData){
-  //   const { data } = await client.POST('/api/modeller/auth/login/', {
-  //     body: {
-  //       login: credentials.login,
-  //       password: credentials.password
-  //     }
-  //   })
-
-  //   //TODO
-  //   return data as ApiResponse
-  // },
-
   async getUserData(token: string): Promise<ApiResponse> {
     try {
-      const { data } = await axios.post<ApiResponse>(
-        `${API_URL}/api/modeller/auth/login/`,
-        {
-          token: token,
-        },
+      const { data } = await axios.get<ApiResponse>(
+        `${API_URL}/api/modellerjwt/auth/GetUserByToken/`,
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+              "Authorization": `Bearer ${token}`,
           },
           timeout: REQUEST_TIMEOUT
         }

@@ -117,7 +117,7 @@
     </div>
 
   </main>
-  <!-- <MainLoader v-if="appDataStore.isLoading" /> -->
+  <!-- <MainLoader v-if="true" /> -->
 </template>
 
 <script setup lang="ts">
@@ -206,7 +206,7 @@
 
   onMounted(() => {
     fetchNews();
-    document.querySelector('#main-loader').style.display = 'none';
+    // document.querySelector('#main-loader').style.display = 'none';
 
   })
 
