@@ -1,5 +1,6 @@
 <template>
   <main class="auth-page">
+
     <div class="auth-page__left">
       <AuthForm ref="authForm" />
     </div>
@@ -17,22 +18,22 @@ import { ref, onMounted } from 'vue'
 import AuthForm from '@/components/authorization/AuthForm.vue'
 import AuthSlider from '@/components/authorization/AuthSlider.vue'
 import MainLoader from '@/components/ui/loader/MainLoader.vue'
-import { useAppData } from '@/store/appliction/useAppData'
 
 const authForm = ref()
 const authSlider = ref()
 const isLoading = ref(true)
-const appDataStore = useAppData()
 
 onMounted(async () => {
   try {
-    // Инициализация приложения
-    await appDataStore.initAppData()
+    await Promise.all([
+      authSlider.value?.fetchNews?.()
+    ])
   } catch (error) {
-    console.error('Ошибка инициализации приложения:', error)
+    console.error('Ошибка инициализации:', error)
   } finally {
-    isLoading.value = false
-    // document.querySelector('#main-loader').style.display = 'none';
+    setTimeout(() => {
+      isLoading.value = false
+    }, 500)
   }
 })
 </script>
@@ -41,21 +42,20 @@ onMounted(async () => {
 .auth-page {
   width: 100%;
   height: 100vh;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
   background: url("@/assets/img/background.png") no-repeat center/cover;
   
   &__left {
-    flex: 1;
-    max-width: 500px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px 44px;
+    width: 100%;
+    justify-self: center;
   }
   
   &__right {
-    flex: 2;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -65,7 +65,7 @@ onMounted(async () => {
 
 @media (max-width: 992px) {
   .auth-page {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     
     &__left {
       max-width: 100%;

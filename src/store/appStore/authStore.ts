@@ -139,10 +139,12 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated.value = true
     
     // Загружаем данные пользователя
-    await fetchUserData()
+    await fetchUserData().then(res => {
+      console.log(res);
+    })
     
     // await appDataStore.initAppData()
-    await router.push('/2d')
+    // await router.push('/2d')
   }
   
   const handleError = (err: unknown) => {

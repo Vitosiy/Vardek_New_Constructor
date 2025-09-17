@@ -42,7 +42,7 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
 
 const props = defineProps(["pageComponent"]);
 const route = useRoute();
-import Avatar from "@/components/ui/";
+import Avatar from "@/components/ui/avatar/Avatar.vue";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 const historyActions = ref<boolean>(false);

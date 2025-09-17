@@ -34,7 +34,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/auth",
     name: "Auth",
-    component: () => import('@/views/auth/AuthView.vue'),
+    component: () => import('@/views/AuthViewNew.vue'),
     meta: { requiresAuth: false }
   },
 ];
