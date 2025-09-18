@@ -10,7 +10,10 @@ import {
 } from "@/types/constructor2d/interfaсes";
 
 import Constructor2D from '@/Constructor2D';
+import MainLoader from "@/components/ui/loader/MainLoader.vue";
+import { useAppData } from '@/store/appliction/useAppData'
 
+const appDataStore = useAppData()
 // root container
 let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
@@ -134,4 +137,5 @@ onUnmounted(() => {
     <ModifyWall />
     <FormLabelRoom />
   </div>
+  <MainLoader v-if="appDataStore.isLoading" />
 </template>

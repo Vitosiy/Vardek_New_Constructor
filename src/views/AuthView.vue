@@ -9,19 +9,32 @@
       <AuthSlider ref="authSlider" />
     </div>
 
-    <MainLoader v-if="isLoading" />
+    <MainLoader v-if="isLoading || appDataStore.isLoading" />
+
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watchEffect } from 'vue'
 import AuthForm from '@/components/authorization/AuthForm.vue'
 import AuthSlider from '@/components/authorization/AuthSlider.vue'
 import MainLoader from '@/components/ui/loader/MainLoader.vue'
+import { useAuthStore } from '@/store/appStore/authStore'
+import { useAppData } from '@/store/appliction/useAppData'
+import { useRouter } from 'vue-router'
 
 const authForm = ref()
 const authSlider = ref()
-const isLoading = ref(true)
+const isLoading = ref(true);
+const authStore = useAuthStore();
+const appDataStore = useAppData()
+const router = useRouter()
+
+watchEffect(async () => {
+  if (authStore.isAuthenticated && !appDataStore.isLoading) {
+    await router.push('/2d')
+  }
+});
 
 onMounted(async () => {
   try {

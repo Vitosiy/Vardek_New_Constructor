@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import { getCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookieUtils';
+import { useAppData } from "@/store/appliction/useAppData";
+import { useAuthStore } from "@/store/appStore/authStore";
 
 const baseUrl = '/';
 
@@ -34,7 +36,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/auth",
     name: "Auth",
-    component: () => import('@/views/AuthViewNew.vue'),
+    component: () => import('@/views/AuthView.vue'),
     meta: { requiresAuth: false }
   },
 ];
@@ -58,6 +60,10 @@ router.beforeEach((to, from, next) => {
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
   const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
 
+  const appDataStore = useAppData()
+  const authStore = useAuthStore()
+  // authStore.isAuthenticated && !appDataStore.isLoading
+
   if (token && expirationTime) {
     const expirationTimestamp = parseInt(expirationTime);
     if (Date.now() > expirationTimestamp) {
@@ -70,17 +76,20 @@ router.beforeEach((to, from, next) => {
     } else {
       const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
       console.log(`Токен действителен еще ${secondsLeft} сек.`);
+      // next('/2d');
+
     }
   }
   
   if (to.meta.requiresAuth && !token) {
+    console.log('Перенаправляем на страницу авторизации, если требуется аутентификация');
     // Перенаправляем на страницу авторизации, если требуется аутентификация
     next('/auth');
   } else if (to.path === '/auth' && token) {
-    // Если пользователь уже авторизован, но пытается попасть на страницу авторизации
+    console.log('Если пользователь уже авторизован, но пытается попасть на страницу авторизации');
     next('/2d');
   } else {
-    // В остальных случаях разрешаем переход
+    console.log('В остальных случаях разрешаем переход');
     next();
   }
 });

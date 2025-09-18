@@ -74,6 +74,11 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Пользователь неактивен');
       }
 
+      console.log('appDataStore.isLoaded', appDataStore.isLoaded);
+      if(!appDataStore.isLoaded) {
+        await appDataStore.initAppData()
+      }
+
       // Формируем данные пользователя
       userData.value = {
         avatar: user.PERSONAL_PHOTO || null,
@@ -137,13 +142,14 @@ export const useAuthStore = defineStore('auth', () => {
     setCookie(COOKIE_NAMES.TOKEN_EXPIRATION, expirationTime.toString(), TOKEN_EXPIRATION_HOURS / 24)
     
     isAuthenticated.value = true
-    
+    await appDataStore.initAppData()
+
     // Загружаем данные пользователя
-    await fetchUserData().then(res => {
-      console.log(res);
-    })
-    
+    // await fetchUserData().then(res => {
+    //   console.log(res);
+    // })
     // await appDataStore.initAppData()
+    
     // await router.push('/2d')
   }
   
