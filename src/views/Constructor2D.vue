@@ -10,10 +10,7 @@ import {
 } from "@/types/constructor2d/interfaсes";
 
 import Constructor2D from '@/Constructor2D';
-import MainLoader from "@/components/ui/loader/MainLoader.vue";
-import { useAppData } from '@/store/appliction/useAppData'
 
-const appDataStore = useAppData()
 // root container
 let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
@@ -92,11 +89,10 @@ onMounted(async () => {
     window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
   }
     // Безопасное скрытие loader
-  // const loader = document.querySelector('#main-loader');
-  // if (loader) {
-  //   (loader as HTMLElement).style.display = 'none';
-  // }
-
+    const loader = document.querySelector('#main-loader');
+    if (loader) {
+      (loader as HTMLElement).style.display = 'none';
+    }
 });
 
 onUnmounted(() => {
@@ -137,5 +133,4 @@ onUnmounted(() => {
     <ModifyWall />
     <FormLabelRoom />
   </div>
-  <MainLoader v-if="appDataStore.isLoading" />
 </template>

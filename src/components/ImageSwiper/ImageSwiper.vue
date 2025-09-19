@@ -86,8 +86,6 @@
         type: 'custom',
         renderCustom: function (swiper, current, total) {
             const displayIndex = (current - 1) % total + 1;
-            // console.log(displayIndex)
-            // console.log(swiper, current, total)
             const currentValue = isNaN(displayIndex) ? 1 : displayIndex;
             return `<span class="current">${currentValue}</span>
                     <span class="separator">/</span>

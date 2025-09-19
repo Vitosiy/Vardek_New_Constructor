@@ -5,10 +5,92 @@
     <link rel="icon" type="image/svg+xml" href="/images/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Конструктор(DEV)</title>
+    <style>
+      .main-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #ffffff;
+        background-image: url('@/assets/img/background.png');
+        width: 100vw;
+        height: 100vh;
+        z-index: 999;
+      }
+
+      .main-loader__logo {
+        width: 100%;
+        text-align: center;
+        margin: 5rem 0;
+        margin-bottom: 225px;
+      }
+
+      .main-loader__container {
+        position: relative;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .main-loader__icon {
+        display: inline-block;
+      }
+
+      .main-loader__icon svg {
+        animation: rotate 1.5s linear infinite;
+        display: block;
+      }
+
+      .main-loader__progresbar {
+        position: absolute;
+        bottom: -22px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 5px;
+        background-color: #ECEBF1;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .main-loader__progresbar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0;
+        background-color: #131313;
+        animation: progress 2.5s ease-in-out infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes progress {
+        0% {
+          width: 0;
+          left: 0;
+        }
+        50% {
+          width: 100%;
+          left: 0;
+        }
+        100% {
+          width: 0;
+          left: 100%;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
-    <!-- <div class="main-loader" id="main-loader">
+    <div class="main-loader" id="main-loader">
       <div class="main-loader__logo">
         <img src="./public/logo_vardek_mebel.png" alt="logo">
       </div>
@@ -19,16 +101,7 @@
         </span>
         <div class="main-loader__progresbar"></div>
       </div>
-    </div> -->
-
-    <script src="/lib/jquery-3.4.1.min.js"></script>
-    <script src="/lib/jquery.fancybox.pack.js"></script>
-    <script src="/lib/jquery-migrate-3.1.0.min.js"></script>
-    <script src="/lib/jquery-ui.min.js"></script>
-    <script src="/lib/toastr.min.js"></script>
-    <script src="/lib/bootstrap.min.js"></script>
-    <script src="/lib/bootstrap-select.min.js"></script>
-    <script src="/lib/custom_slider.js"></script>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

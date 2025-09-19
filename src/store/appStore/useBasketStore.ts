@@ -4,6 +4,7 @@ import { useRoomContantData } from "../appliction/useRoomContantData";
 import { BasketService } from "@/services/basketService";
 import { createBasketItem } from "@/components/Basket/helper/basketHelpers";
 import { useEventBus } from "../appliction/useEventBus";
+import { usePopupStore } from "./popUpsStore";
 
 export const useBasketStore = defineStore("basket", () => {
   // Реактивные ссылки для данных
@@ -12,7 +13,7 @@ export const useBasketStore = defineStore("basket", () => {
   const basketData = ref<any | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
-
+  const popupStore = usePopupStore();
   // Восстановление из localStorage
   const saved = localStorage.getItem("basket-data");
   if (saved) {
@@ -141,17 +142,25 @@ export const useBasketStore = defineStore("basket", () => {
         mainConstructor.value.splice(index, 1);
       }
 
-      const { setRoomContantData } = useRoomContantData();
-      const roomDataCopy = JSON.parse(JSON.stringify(useRoomContantData().getRoomContantData));
-      console.log('idBasket', idBasket);
-      console.log('roomDataCopy[idBasket]', roomDataCopy[idBasket]);
-      useEventBus().emit("A:RemoveModelFromBasket", roomDataCopy[idBasket]);
-      
-      // if (roomDataCopy[idBasket]) {
-      //   delete roomDataCopy[idBasket];
-      //   setRoomContantData(roomDataCopy);
-      // }
 
+      const roomContantData = useRoomContantData().getRoomContantData;
+      const { setRoomContantData } = useRoomContantData();
+
+      const map: any = roomContantData as any;
+      const item: any = map?.[idBasket];
+      const object3D = item?.object;
+
+      useEventBus().emit('A:RemoveModelFromBasket', { product: object3D, basketId: idBasket });
+
+      if (item) {
+        const newMap: any = { ...(map || {}) };
+        delete newMap[idBasket];
+        setRoomContantData(newMap);
+      }
+      const modelController = document.querySelector('.model-controller');
+      if (modelController) {
+        modelController.classList.remove('model-controller--active');
+      }
     }
     
     syncBasket();

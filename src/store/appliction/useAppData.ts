@@ -85,7 +85,7 @@ export const useAppData = defineStore('AppData', () => {
       console.error('Ошибка инициализации данных:', err)
     } finally {
       isLoading.value = false
-      // document.querySelector('#main-loader').style.display = 'none';
+      document.querySelector('#main-loader').style.display = 'none';
     }
   }
 

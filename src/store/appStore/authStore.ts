@@ -74,11 +74,6 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Пользователь неактивен');
       }
 
-      console.log('appDataStore.isLoaded', appDataStore.isLoaded);
-      if(!appDataStore.isLoaded) {
-        await appDataStore.initAppData()
-      }
-
       // Формируем данные пользователя
       userData.value = {
         avatar: user.PERSONAL_PHOTO || null,
@@ -89,7 +84,6 @@ export const useAuthStore = defineStore('auth', () => {
         email: user.EMAIL,
         login: user.LOGIN
       };
-      console.log(userData.value, 'userData.value')
       return userData.value;
 
     } catch (error) {

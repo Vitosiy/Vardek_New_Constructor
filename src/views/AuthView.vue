@@ -8,9 +8,6 @@
     <div class="auth-page__right">
       <AuthSlider ref="authSlider" />
     </div>
-
-    <MainLoader v-if="isLoading || appDataStore.isLoading" />
-
   </main>
 </template>
 
@@ -18,7 +15,6 @@
 import { ref, onMounted, watchEffect } from 'vue'
 import AuthForm from '@/components/authorization/AuthForm.vue'
 import AuthSlider from '@/components/authorization/AuthSlider.vue'
-import MainLoader from '@/components/ui/loader/MainLoader.vue'
 import { useAuthStore } from '@/store/appStore/authStore'
 import { useAppData } from '@/store/appliction/useAppData'
 import { useRouter } from 'vue-router'
@@ -44,9 +40,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Ошибка инициализации:', error)
   } finally {
-    setTimeout(() => {
-      isLoading.value = false
-    }, 500)
+    isLoading.value = false
   }
 })
 </script>

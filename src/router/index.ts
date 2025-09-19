@@ -62,7 +62,6 @@ router.beforeEach((to, from, next) => {
 
   const appDataStore = useAppData()
   const authStore = useAuthStore()
-  // authStore.isAuthenticated && !appDataStore.isLoading
 
   if (token && expirationTime) {
     const expirationTimestamp = parseInt(expirationTime);
@@ -82,14 +81,13 @@ router.beforeEach((to, from, next) => {
   }
   
   if (to.meta.requiresAuth && !token) {
-    console.log('Перенаправляем на страницу авторизации, если требуется аутентификация');
     // Перенаправляем на страницу авторизации, если требуется аутентификация
     next('/auth');
   } else if (to.path === '/auth' && token) {
-    console.log('Если пользователь уже авторизован, но пытается попасть на страницу авторизации');
+    // Если пользователь уже авторизован, но пытается попасть на страницу авторизации
     next('/2d');
   } else {
-    console.log('В остальных случаях разрешаем переход');
+    // В остальных случаях разрешаем переход
     next();
   }
 });

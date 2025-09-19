@@ -180,7 +180,7 @@ export class TrafficManager {
     removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer }) {
 
         const removeObj = product ?? this._currentObject
-
+        console.log('product', product, removeObj)
         if (!removeObj) return
 
         if (removeObj instanceof THREE.Object3D) {
@@ -224,11 +224,26 @@ export class TrafficManager {
 
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
-        this.events.on('A:RemoveModelFromBasket', (userData) => {
-          console.log(userData)
-          this.removeFromRoom(userData);
-          // this._currentObject = userData;
+        this.events.on('A:RemoveModelFromBasket', (payload: any) => {
+          let target = payload?.product;
 
+          if (!(target instanceof THREE.Object3D)) {
+            const basketId = payload?.basketId || payload?.BASKETID || payload?.id || payload;
+
+            // 1) Пробуем взять напрямую из RoomManager.contant по ключу id
+            if (!target && basketId && this.room && this.room.contant) {
+              const byId = (this.room.contant as any)[`${basketId}`];
+              if (byId) target = byId;
+            }
+
+            // 2) Пробуем найти в сцене по id
+            if (!target && basketId && this.scene) {
+              const byScene = this.scene.getObjectByProperty('id', basketId as any) as THREE.Object3D | undefined;
+              if (byScene) target = byScene;
+            }
+          }
+
+          this.removeFromRoom({ product: target });
         });
 
     }
