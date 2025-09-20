@@ -7,12 +7,11 @@
           v-for="(image, index) in images" 
           :key="index"
         >
-          <div class="swiper-image">
-            <img 
-              :src="`${API_URL}/${image.src}`" 
-              :alt="image.alt || 'Slide image'" 
-            />
-          </div>
+          <img 
+            :src="`${API_URL}/${image.src}`" 
+            :alt="image.alt || 'Slide image'" 
+            class="swiper-image" 
+          />
           <div class="image-swiper__description">
             <div class="image-swiper__description-title">{{ image.name }}</div>
             <div class="image-swiper__description-text">{{ image.alt }}</div>
@@ -34,14 +33,13 @@
 
 <script setup>
   import { ref, onMounted } from 'vue'
-  import { Pagination, Navigation, Autoplay } from 'swiper/modules'
-  import ArrowSVG from '../ui/svg/auth/ArrowSVG.vue'
   import Swiper from 'swiper'
+  import { Pagination, Navigation, Autoplay } from 'swiper/modules'
   import 'swiper/css'
   import 'swiper/css/pagination'
   import 'swiper/css/navigation'
   import 'swiper/css/autoplay'
-
+  import ArrowSVG from '../ui/svg/auth/ArrowSVG.vue'
 
   const props = defineProps({
     images: {
@@ -81,16 +79,17 @@
       centeredSlides: true, // Центрирование слайдов
       spaceBetween: 20, // Отступ между слайдами
       pagination: {
-        // el: '.swiper-pagination',
-        el: '.swiper-pagination-numbers',
-        type: 'custom',
-        renderCustom: function (swiper, current, total) {
-            const displayIndex = (current - 1) % total + 1;
-            const currentValue = isNaN(displayIndex) ? 1 : displayIndex;
-            return `<span class="current">${currentValue}</span>
-                    <span class="separator">/</span>
-                    <span class="total">${total}</span>`;
-              },
+        el: '.swiper-pagination',
+        // el: '.swiper-pagination-numbers',
+        // type: 'custom',
+        // renderCustom: function (swiper, current, total) {
+        //     // const realIndex = swiper.realIndex + 1; 
+        //     const displayIndex = (current - 1) % total + 1;
+        //     console.log(displayIndex)
+        //     return `<span class="current">${displayIndex}</span>
+        //             <span class="separator">/</span>
+        //             <span class="total">${total}</span>`;
+        //       },
         clickable: true
       },
       navigation: {
@@ -104,7 +103,6 @@
     }
 
     swiperInstance.value = new Swiper(swiperEl.value, baseOptions)
-
   })
 
   defineExpose({
@@ -144,8 +142,10 @@
     max-width: 1200px;
     height: auto; 
     margin: 0 auto;
+  }
 
-    
+  .swiper-wrapper {
+    align-items: center; 
   }
 
   .swiper-slide {
@@ -159,21 +159,11 @@
 
   .swiper-image {
     width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    border-radius: 12px;
-  }
-
-  .swiper-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    max-height: 70vh;
-
+    height: auto;
+    max-height: 80vh; 
+    object-fit: contain; 
+    border-radius: 10px;
+    transition: transform 0.5s ease;
   }
 
   .swiper-pagination {
@@ -230,13 +220,13 @@
 
   .swiper-pagination-numbers {
     position: absolute;
-    bottom: 27px;
+    bottom: 41px;
     left: 0;
     right: 0;
     display: flex;
     justify-content: center;
     gap: 8px;
-    font-size: 20px;
+    font-size: 26px;
     font-weight: 500;
     color: #fFf;
   }
