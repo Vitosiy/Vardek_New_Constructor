@@ -6,7 +6,7 @@
 
     <div class="basket-item__name">
       <div>{{ item?.product.NAME }}</div>
-          
+
       <!-- Секция свойств товара -->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
@@ -14,9 +14,9 @@
             <span>{{ getPropLabel(String(propKey)) }}:</span>
             
             <!-- Обработка массивов -->
-            <ul v-if="Array.isArray(propValue)">
+            <ul v-if="Array.isArray(propValue)" class="test">
               <li v-for="(propVal, index) in propValue" :key="index">
-                <span v-if="shouldShowPropValue(propKey, propVal)" 
+                <span class="test" v-if="shouldShowPropValue(propKey, propVal)" 
                       :class="getErrorClass(propVal, item.product.props_error)">
                   {{ formatPropValue(propKey, propVal) }}
                   <span v-if="hasArticle(propKey, propVal)">
@@ -131,6 +131,7 @@
                 {{ propValue }}
               </template>
             </span>
+
           </div>
         </div>
       </div>

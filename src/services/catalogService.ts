@@ -85,6 +85,25 @@ export const CatalogService = {
       throw error
     }
   },
+
+  // async getProductDescriprtion(formData: ProductRequestData): Promise<ProductPriceResponse> {
+  //   try {
+  //     const url = `https://vardek.ru/local/templates/constructor/API/catalog.element.getprice.php`
+  //     const response = await axios.post(url, formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data'
+  //       },
+  //       timeout: REQUEST_TIMEOUT
+  //     })
+  //     return response.data
+  //   } catch (error) {
+  //     if (axios.isAxiosError(error)) {
+  //       throw new Error(error.response?.data?.message || 'Ошибка при получении цены продукта')
+  //     }
+  //     throw error
+  //   }
+  // },
+
   async initHeader(): Promise<any> {
     try {
       const { data } = await axios.get(
