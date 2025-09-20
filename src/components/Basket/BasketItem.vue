@@ -10,8 +10,8 @@
       <!-- Секция свойств товара -->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-          <div v-if="getPropDefinition(propKey)">
-            <span>{{ getPropLabel(propKey) }}:</span>
+          <div v-if="getPropDefinition(String(propKey))">
+            <span>{{ getPropLabel(String(propKey)) }}:</span>
             
             <!-- Обработка массивов -->
             <ul v-if="Array.isArray(propValue)">
@@ -94,7 +94,7 @@
               <template v-else-if="getPropDefinition(propKey).val === 'color_obj_list'">
                 <ul>
                   <div v-for="(colorItem, colorKey) in propValue" :key="colorKey">
-                    <li v-if="colorKey === 'COLOR'">
+                    <li v-if="String(colorKey) === 'COLOR'">
                       Цвет: {{ getFasadeSectionName(colorItem) }} - {{ getFasadeName(colorItem) }}
                       <span v-if="hasArticleForSegment(colorItem, propKey)"> 
                         - артикул {{ getArticleCodeForSegment(colorItem, propKey) }}
@@ -103,7 +103,7 @@
                       {{ hasError(colorItem, colorItem.props_error) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
                     
-                    <li v-if="colorKey === 'MILLING'">
+                    <li v-if="String(colorKey) === 'MILLING'">
                       Фрезеровка: {{ getMillingSectionName(colorItem) }} - {{ getMillingName(colorItem) }}
                       {{ hasError(colorItem, colorItem.props_error) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
@@ -139,7 +139,7 @@
     
     <div class="basket-item__quantity">
       <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="decrement(item.product.BASKETID, item?.product.TYPE)">-</button>
-      <input type="text" :disabled="item?.product.TYPE !== 'catalog'" class="basket-item__quantity-input" v-model="item.product.quantity" @change="updateQuantity" />
+      <input type="text" :disabled="item?.product.TYPE !== 'catalog'" class="basket-item__quantity-input" v-model="item.product.quantity" @change="() => updateQuantity(item.product.BASKETID, item?.product.TYPE)" />
       <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="increment(item.product.BASKETID, item?.product.TYPE)">+</button>
     </div>
 
@@ -162,7 +162,9 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { useBasketStore } from "@/store/appStore/useBasketStore"
+import { useAppData } from "@/store/appliction/useAppData"
 import { ref, computed } from "vue"
 import DeleteBasketButton from "../ui/buttons/basket/DeleteBasketButton.vue";
 
@@ -174,7 +176,11 @@ interface Props {
 
 const props = defineProps<Props>();
 const basketStore = useBasketStore();
+const appDataStore = useAppData();
 const quantity = ref(props.item.product.quantity);
+
+// Получаем данные из store
+const appData = computed(() => appDataStore.getAppData);
 
 // Определения свойств (перенесено из Angular кода)
 const propsLabel = {
@@ -477,29 +483,29 @@ const propsLabel = {
 };
 
 // Вспомогательные функции
-const getPropDefinition = (key) => {
-  return propsLabel[key];
+const getPropDefinition = (key: string) => {
+  return propsLabel[key as keyof typeof propsLabel];
 };
 
-const getPropLabel = (key) => {
+const getPropLabel = (key: string) => {
   const propDef = getPropDefinition(key);
   return propDef ? propDef.NAME + parsePropIndex(key) : '';
 };
 
-const parsePropIndex = (key) => {
+const parsePropIndex = (key: string) => {
   // Извлекаем числовой индекс из ключа (если есть)
   const match = key.match(/\d+$/);
   return match ? ` ${match[0]}` : '';
 };
 
-const shouldShowPropValue = (key, propVal) => {
+const shouldShowPropValue = (key: string, propVal: any) => {
   const propDef = getPropDefinition(key);
   return propDef && propDef.type && propDef.type !== 'PRODUCT';
 };
 
-const formatPropValue = (key, propVal) => {
+const formatPropValue = (key: string, propVal: any) => {
   const propDef = getPropDefinition(key);
-  if (propDef.type === 'PRODUCTS') {
+  if (propDef && propDef.type === 'PRODUCTS') {
     if (propVal.ID) {
       return propVal.VALUE === null 
         ? getProductInfo(propVal.ID).NAME 
@@ -508,10 +514,10 @@ const formatPropValue = (key, propVal) => {
       return getProductInfo(propVal).NAME;
     }
   }
-  return getTypeName(propDef.type, propVal);
+  return getTypeName(propDef?.type, propVal);
 };
 
-const getErrorClass = (propVal, propsError) => {
+const getErrorClass = (propVal: any, propsError: any) => {
   // Здесь должна быть логика определения классов ошибок
   // Это упрощенная версия, нужно адаптировать под вашу логику
   if (propsError && propsError.includes(propVal)) {
@@ -520,7 +526,7 @@ const getErrorClass = (propVal, propsError) => {
   return '';
 };
 
-const getErrorText = (propVal, propsError, item, propKey) => {
+const getErrorText = (propVal: any, propsError: any, _item?: any, _propKey?: any) => {
   // Здесь должна быть полная логика определения текста ошибки
   // Это упрощенная версия
   if (propsError && propsError.includes(propVal)) {
@@ -529,74 +535,94 @@ const getErrorText = (propVal, propsError, item, propKey) => {
   return '';
 };
 
-const hasArticle = (key, propVal) => {
+const hasArticle = (_key: string, _propVal: any) => {
   // Логика проверки наличия артикула
   return false; // Заглушка
 };
 
-const getArticleCode = (key, propVal) => {
+const getArticleCode = (_key: string, _propVal: any) => {
   // Логика получения кода артикула
   return ''; // Заглушка
 };
 
-const isObject = (value) => {
+const isObject = (value: any) => {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
-const hasArticleForSegment = (segment, key) => {
+const hasArticleForSegment = (_segment: any, _key: string) => {
   // Логика проверки наличия артикула для сегмента
   return false; // Заглушка
 };
 
-const getArticleCodeForSegment = (segment, key) => {
+const getArticleCodeForSegment = (_segment: any, _key: string) => {
   // Логика получения кода артикула для сегмента
   return ''; // Заглушка
 };
 
-const hasError = (value, propsError) => {
+const hasError = (value: any, propsError: any) => {
   // Логика проверки ошибки
   return propsError && propsError.includes(value);
 };
 
-const getTypeName = (type, value) => {
-  // Логика получения имени по типу и значению
-  // Заглушка - в реальности нужно обращаться к вашему хранилищу данных
+const getTypeName = (type: any, value: any) => {
+  // Получаем имя из store данных
+  if (appData.value && appData.value[type] && appData.value[type][value]) {
+    return appData.value[type][value].NAME || `[${type}:${value}]`;
+  }
   return `[${type}:${value}]`;
 };
 
-const getListValue = (key, value) => {
+const getListValue = (key: string, value: any) => {
   const propDef = getPropDefinition(key);
-  return propDef.VALUE ? propDef.VALUE[value] : value;
+  return (propDef as any)?.VALUE ? (propDef as any).VALUE[value] : value;
 };
 
-const getFasadeSectionName = (id) => {
-  // Логика получения названия секции фасада
-  return `Секция фасада ${id}`; // Заглушка
+const getFasadeSectionName = (id: any) => {
+  // Получаем название секции фасада из store данных
+  if (appData.value && appData.value.FASADE_SECTION && appData.value.FASADE_SECTION[id]) {
+    return appData.value.FASADE_SECTION[id].NAME || `Секция фасада ${id}`;
+  }
+  return `Секция фасада ${id}`;
 };
 
-const getFasadeName = (id) => {
-  // Логика получения названия фасада
-  return `Фасад ${id}`; // Заглушка
+const getFasadeName = (id: any) => {
+  // Получаем название фасада из store данных
+  if (appData.value && appData.value.FASADE && appData.value.FASADE[id]) {
+    return appData.value.FASADE[id].NAME || `Фасад ${id}`;
+  }
+  return `Фасад ${id}`;
 };
 
-const getPaletteName = (id) => {
-  // Логика получения названия палитры
-  return `Палитра ${id}`; // Заглушка
+const getPaletteName = (id: any) => {
+  // Получаем название палитры из store данных
+  if (appData.value && appData.value.PALETTE && appData.value.PALETTE[id]) {
+    return appData.value.PALETTE[id].NAME || `Палитра ${id}`;
+  }
+  return `Палитра ${id}`;
 };
 
-const getMillingSectionName = (id) => {
-  // Логика получения названия секции фрезеровки
-  return `Секция фрезеровки ${id}`; // Заглушка
+const getMillingSectionName = (id: any) => {
+  // Получаем название секции фрезеровки из store данных
+  if (appData.value && appData.value.MILLING && appData.value.MILLING[id]) {
+    return appData.value.MILLING[id].SECTION_NAME || `Секция фрезеровки ${id}`;
+  }
+  return `Секция фрезеровки ${id}`;
 };
 
-const getMillingName = (id) => {
-  // Логика получения названия фрезеровки
-  return `Фрезеровка ${id}`; // Заглушка
+const getMillingName = (id: any) => {
+  // Получаем название фрезеровки из store данных
+  if (appData.value && appData.value.MILLING && appData.value.MILLING[id]) {
+    return appData.value.MILLING[id].NAME || `Фрезеровка ${id}`;
+  }
+  return `Фрезеровка ${id}`;
 };
 
-const getProductInfo = (id) => {
-  // Логика получения информации о продукте
-  return { NAME: `Продукт ${id}` }; // Заглушка
+const getProductInfo = (id: any) => {
+  // Получаем информацию о продукте из store данных
+  if (appData.value && appData.value.CATALOG && appData.value.CATALOG.PRODUCTS && appData.value.CATALOG.PRODUCTS[id]) {
+    return { NAME: appData.value.CATALOG.PRODUCTS[id].NAME || `Продукт ${id}` };
+  }
+  return { NAME: `Продукт ${id}` };
 };
 
 function increment(id: string, type: string) {
