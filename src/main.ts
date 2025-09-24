@@ -21,14 +21,14 @@ function loadScript(src: string): Promise<void> {
 // Загрузки скриптов для детального описание карточки товара общего каталога
 async function loadDependencies() {
   try {
-    await loadScript('/lib/jquery-3.4.1.min.js')
-    await loadScript('/lib/jquery-migrate-3.1.0.min.js')
-    await loadScript('/lib/jquery-ui.min.js')
-    await loadScript('/lib/jquery.fancybox.pack.js')
-    await loadScript('/lib/toastr.min.js')
-    await loadScript('/lib/bootstrap.min.js')
-    await loadScript('/lib/bootstrap-select.min.js')
-    await loadScript('/lib/custom_slider.js')
+    await loadScript('./libold/jquery-3.4.1.min.js')
+    await loadScript('./libold/jquery-migrate-3.1.0.min.js')
+    await loadScript('./libold/jquery-ui.min.js')
+    await loadScript('./libold/jquery.fancybox.pack.js')
+    await loadScript('./libold/toastr.min.js')
+    await loadScript('./libold/bootstrap.min.js')
+    await loadScript('./libold/bootstrap-select.min.js')
+    await loadScript('./libold/custom_slider.js')
   } catch (error) {
     console.error('Error loading dependencies:', error)
   }

@@ -1,5 +1,5 @@
 <template>
-  <div class="basket-table" v-if="items.length || type === 'main'">
+  <div :class="`${type === 'main' ? 'basket-table--height' : ''} basket-table`" v-if="items.length || type === 'main'">
     <div v-if="title && items.length" class="basket-table__title">{{ title }}</div>
     <div class="basket-table__table" v-if="items.length || type === 'main'">
       <div class="basket-table__head">
@@ -40,8 +40,11 @@ defineProps<Props>()
     width: 100%;
     background: white;
     border-radius: 12px;
-    padding: 10px;
-    min-height: 47vh;
+    padding: 20px;
+    border: 1px solid #eee;
+    &--height {
+      min-height: 61vh;
+      }
     
     &__title {
       font-weight: 600;
@@ -49,15 +52,16 @@ defineProps<Props>()
     }
 
     &__table {
+      
     }
 
     &__head {
       display: grid;
-      grid-template-columns: 100px 1fr 120px 120px 120px 120px 42px;
+      grid-template-columns: 150px 1fr 120px 120px 120px 120px 42px;
       gap: 10px;
       font-weight: 500;
       font-size: 14px;
-      color: #666;
+      color: #A3A9B5;
       border-bottom: 1px solid #eee;
       padding-bottom: 6px;
 
@@ -72,7 +76,8 @@ defineProps<Props>()
       gap: 8px;
     }
     &__none-text {
-      height: 27vh;
+      // height: 27vh;
+      height: 50vh;
       display: flex;
       align-items: center;
       justify-content: center;

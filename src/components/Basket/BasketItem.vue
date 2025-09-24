@@ -1,22 +1,26 @@
 <template>
   <div class="basket-item">
-    <div class="basket-item__image">
-      <img :src="`${API_URL + item?.product.PREVIEW_PICTURE}`" alt="" />
+    <div class="basket-item__picture">
+      <div class="basket-item__picture-container">
+        <img :src="`${API_URL + item?.product.PREVIEW_PICTURE}`" alt="" class="basket-items__picture_img"/>
+        <img src="@/assets/svg/left-menu/question.svg" class="basket-items__picture-question" @click="openPopup(item)">
+      </div>
     </div>
 
-    <div class="basket-item__name">
-      <div>{{ item?.product.NAME }}</div>
+    <div class="basket-item__product">
+      <h3>{{ item?.product.NAME }}</h3>
 
       <!-- Секция свойств товара -->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
+          
           <div v-if="getPropDefinition(String(propKey))">
-            <span>{{ getPropLabel(String(propKey)) }}:</span>
+            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
             
             <!-- Обработка массивов -->
-            <ul v-if="Array.isArray(propValue)" class="test">
+            <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
               <li v-for="(propVal, index) in propValue" :key="index">
-                <span class="test" v-if="shouldShowPropValue(propKey, propVal)" 
+                <span v-if="shouldShowPropValue(propKey, propVal)" 
                       :class="getErrorClass(propVal, item.product.props_error)">
                   {{ formatPropValue(propKey, propVal) }}
                   <span v-if="hasArticle(propKey, propVal)">
@@ -148,17 +152,19 @@
       {{ item.product.unitPriceFormat }}
     </div>
 
-    <div class="basket-item__total">
+    <div class="basket-item__price basket-item__total">
       {{ item.product.allPriceFormat }}
     </div>
 
-    <div class="basket-item__old-total">
-      {{ item.product.allPriceOldFormat }}
+    <div class="basket-item__price basket-item__old-total">
+      <span>{{ item.product.allPriceOldFormat }}</span>
     </div>
 
-    <div class="basket-item__action">
+    <div class="basket-item__price basket-item__action">
       <DeleteBasketButton @click="deleteProductInBusket(item.product.BASKETID, item?.product.TYPE)" />
     </div>
+    <InfoPopUp v-if="isShowInfoPopup" @close="closeInfoPopup" v-bind="currentProductInfo" />
+
   </div>
 </template>
 
@@ -168,12 +174,23 @@ import { useBasketStore } from "@/store/appStore/useBasketStore"
 import { useAppData } from "@/store/appliction/useAppData"
 import { ref, computed } from "vue"
 import DeleteBasketButton from "../ui/buttons/basket/DeleteBasketButton.vue";
-
+import axios from "axios";
+import InfoPopUp from "../popUp/InfoPopUp.vue";
+import { _URL } from "@/types/constants";
 const API_URL = ref('https://dev.vardek.online');
 
 interface Props {
   item: any
 }
+
+const isShowInfoPopup = ref(false);
+
+const currentProductInfo = ref({
+  title: '',
+  description: '',
+  image: ''
+});
+
 
 const props = defineProps<Props>();
 const basketStore = useBasketStore();
@@ -483,6 +500,46 @@ const propsLabel = {
   },
 };
 
+
+const openPopup = async (item) => {
+  try {
+    const {data} = await axios.post(`/api/modeller/product/getbyid/`, {
+      ID: item.product.ID
+    })
+
+    const { NAME, DETAIL_TEXT, DETAIL_PICTURE, PREVIEW_PICTURE, PREVIEW_TEXT, PROPERTY_IMAGES_VALUE, PROPERTY_VIDEO_VALUE, PROPERTY_VIDEO_IMAGE_VALUE } = data.DATA.response;
+
+    currentProductInfo.value = {
+    title: NAME,
+    detailText: DETAIL_TEXT,
+    previewText: PREVIEW_TEXT,
+    image: getImageUrl(DETAIL_PICTURE),
+    images: PROPERTY_IMAGES_VALUE,
+    videoUrl: PROPERTY_VIDEO_VALUE,
+    videoPoster: getImageUrl(PROPERTY_VIDEO_IMAGE_VALUE)
+  };
+    isShowInfoPopup.value = true;
+  } catch (error) {
+    console.error('API Error:', error);
+  }
+
+
+
+};
+
+const closeInfoPopup = () => {
+  isShowInfoPopup.value = false;
+  currentProductInfo.value = {
+    title: '',
+    description: '',
+    image: ''
+  };
+};
+
+const getImageUrl = (imageName: string) => {
+  return ` ${_URL}${imageName}`;
+};
+
 // Вспомогательные функции
 const getPropDefinition = (key: string) => {
   return propsLabel[key as keyof typeof propsLabel];
@@ -650,11 +707,13 @@ const deleteProductInBusket = (id: string, type: string) => {
 <style scoped lang="scss">
 .basket-item {
   display: grid;
-  grid-template-columns: 100px 1fr 120px 120px 120px 120px 42px;
+  grid-template-columns: 150px 1fr 120px 120px 120px 120px 42px;
   align-items: center;
   gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  padding: 15px 0;
+  &:not(:last-child) {
+    border-bottom: 1px solid #eee;
+  }
 
   @media (max-width: 768px) {
     display: flex;
@@ -666,19 +725,82 @@ const deleteProductInBusket = (id: string, type: string) => {
     border-radius: 10px;
     background: #fafafa;
   }
-
-  &__image img {
-    max-width: 80px;
+  // &__picture-img {
+  //   max-width: 130px;
+  //   border-radius: 8px;
+  // }
+  // &__picture-question {
+  //   position: absolute;
+  //   right: 10px;
+  //   top: 10px;
+  // }
+  &__picture {
+    margin-bottom: auto;
+    text-align: center;
+    max-width: 130px;
+    max-height: 130px;
     border-radius: 8px;
+    overflow: hidden;
+    
+    &-container {
+      position: relative;
+    }
+    & img:first-child {
+      width: 100%;
+    }
+    & img:last-child {
+      position: absolute;
+      right: 7px;
+      top: 10px;
+      cursor: pointer;
+    }
+  }
+
+  &__product h3 {
+    color: #111B21;
+    font-size: 15px;
+    margin-bottom: 4px;
   }
 
   &__props {
     grid-column: 1 / -1;
-    font-size: 0.9rem;
-    
+    color: #111B21;
+    &-lable {
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 100%;
+      letter-spacing: 0%;
+      color: #A3A9B5 !important;
+      margin-right: 4px;
+    }
+    span {
+      color: #111B21;
+            font-weight: 600;
+
+    }
     ul {
       margin: 0;
       padding-left: 20px;
+    }
+
+    li {
+      position: relative;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 100%;
+      letter-spacing: 0%;
+      &::after {
+        content: "";
+        display: block;
+        width: 4px;
+        height: 4px;
+        background-color: #111B21;
+        position: absolute;
+        top: 6px;
+        left: -10px;
+        border-radius: 50%;
+      }
     }
     
     .error-background {
@@ -698,7 +820,14 @@ const deleteProductInBusket = (id: string, type: string) => {
       height: 38px;
       text-align: center;
       background-color: #F6F5FA;
-      border: 1px solid #ECEBF1
+      border: 1px solid #ECEBF1;
+      font-weight: 500;
+      font-style: Medium;
+      font-size: 15px;
+      line-height: 100%;
+      letter-spacing: 0%;
+      vertical-align: middle;
+      color: #111B21
     }
     &-btn {
       background-color: transparent;
@@ -707,5 +836,29 @@ const deleteProductInBusket = (id: string, type: string) => {
       font-size: 2rem;
     }
   }
+  &__price {
+    font-weight: 500;
+    font-style: Medium;
+    font-size: 15px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    vertical-align: middle;
+    color: #111B21
+  }
+  &__old-total span {
+    display: inline-block;
+    position: relative;
+    &::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 1px;
+      background-color: #111B21;
+      position: absolute;
+      top: 7px;
+      left: 0;
+    }
+  }
 }
+
 </style>

@@ -5,6 +5,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useAuthStore } from "@/store/appStore/authStore";
 
 const baseUrl = '/';
+// const baseUrl = '/dev_modeller/';
 
 const routes: Array<RouteRecordRaw> = [
   {

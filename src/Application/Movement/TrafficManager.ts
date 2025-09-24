@@ -205,6 +205,13 @@ export class TrafficManager {
             this.boxHelper.removeBoxHelper()
             this.ruler.clearRuler();
             this.currentObject = null
+            // Синхронизируем корзину: удаляем товар, соответствующий удалённому объекту сцены
+            try {
+                const basketStore = useBasketStore();
+                basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+            } catch (e) {
+                console.warn('Basket sync remove failed', e)
+            }
             return
         }
         console.log(removeObj)
@@ -214,6 +221,13 @@ export class TrafficManager {
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
         this.currentObject = null
+        // Синхронизируем корзину для случая, когда пришёл не Object3D
+        try {
+            const basketStore = useBasketStore();
+            basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+        } catch (e) {
+            console.warn('Basket sync remove failed', e)
+        }
     }
 
     vueEvents() {

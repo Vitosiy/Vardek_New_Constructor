@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useRoomContantData } from "../appliction/useRoomContantData";
 import { BasketService } from "@/services/basketService";
-import { createBasketItem } from "@/components/Basket/helper/basketHelpers";
+import { createBasketItem } from "@/components/basket/helper/basketHelpers";
 import { useEventBus } from "../appliction/useEventBus";
 import { usePopupStore } from "./popUpsStore";
 
@@ -59,11 +59,14 @@ export const useBasketStore = defineStore("basket", () => {
     console.log(roomContantData)
 
     const dataForGetPrices = Object.entries(roomDataCopy)
+      .filter(([key, obj]) => obj?.object?.userData?.PROPS.PRODUCT)
       .map(([key, obj]: [string, any]) => createBasketItem(
         obj?.object?.userData?.PROPS, 
         mainConstructor.value.length,
         key
       ));
+
+    console.log('dataForGetPrices', dataForGetPrices);
     mainConstructor.value = dataForGetPrices;
     syncBasket();
     console.log('end')
@@ -130,6 +133,41 @@ export const useBasketStore = defineStore("basket", () => {
     }
   }
 
+  async function syncInvoce() {
+    loading.value = true;
+    error.value = null;
+
+    try {
+
+      const merged = [...mainConstructor.value, ...mainCatalog.value];
+      
+      if (merged.length === 0) {
+        basketData.value = null;
+        return;
+      }
+
+      const newBasket = {
+        BASKET: merged,
+        TYPE_PRICE: 25,
+      };
+
+      const response = await BasketService.invoceBasket(newBasket);
+      if (response?.DATA?.type !== "error") {
+        // ОБЯЗАТЕЛЬНО: присваиваем новое значение для реактивности
+        // basketData.value = { ...response.DATA };
+        console.log('responseBasket', response);
+        return basketData.value;
+      } else {
+        clearBasket();
+      }
+    } catch (err: any) {
+      error.value = err.message || "Ошибка при синхронизации корзины";
+      console.error("Sync basket error:", err);
+    } finally {
+      loading.value = false;
+    }
+  }
+
   const removeFromBasket = (idBasket: string, type: string) => {
     if (type === 'catalog') {
       const index = mainCatalog.value.findIndex(item => item.BASKETID === idBasket);
@@ -173,7 +211,9 @@ export const useBasketStore = defineStore("basket", () => {
     syncBasket();
   }
 
-  return {
+  
+
+  return {  
     // State
     basketData,
     loading,
@@ -192,6 +232,7 @@ export const useBasketStore = defineStore("basket", () => {
     removeItem,
     clearBasket,
     syncBasket,
+    syncInvoce,
     removeFromBasket,
     updateQuantityFromBaske
   };

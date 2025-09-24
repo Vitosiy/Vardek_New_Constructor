@@ -56,7 +56,7 @@ export const BasketService = {
   },
 
   /**
-   * Пример другого метода — очистка корзины
+   * очистка корзины
    */
   async clearBasket(): Promise<BasketResponse> {
     try {
@@ -82,4 +82,32 @@ export const BasketService = {
       throw new Error('Неизвестная ошибка');
     }
   },
+
+  async invoceBasket(basket:any): Promise<BasketResponse> {
+    try {
+      const { data } = await axios.post<BasketResponse>(
+        `${BASE_API_URL}/addtobasket/`,
+        basket,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          timeout: REQUEST_TIMEOUT,
+        }
+      );
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<BasketResponse>;
+        const message =
+          axiosError.response?.data?.message || 'Ошибка при очистке корзины';
+        throw new Error(message);
+      }
+      throw new Error('Неизвестная ошибка');
+    }
+  },
+
+
+
 };

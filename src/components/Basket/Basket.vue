@@ -8,7 +8,7 @@
       />
     </div>
     <div class="basket-container">
-      {{ loading }}
+      <!-- {{ loading }} -->
       <div v-if="loading">Загрузка...</div>
       <div class="basket-container__main-table">
         <BasketTable
@@ -39,7 +39,7 @@
         </div>
         <button class="basket__close" @click="closePopup">Закрыть</button>
         <button class="basket__save">Печать</button>
-        <button class="basket__order" @click="test">Оформить заказ</button>
+        <button class="basket__order" @click="setInvoice">Оформить заказ</button>
       </div>
     </div>
   </div>
@@ -51,10 +51,12 @@ import ClosePopUpButton from '../ui/svg/ClosePopUpButton.vue';
 import BasketTable from "./BasketTable.vue"
 import { useBasketStore } from '@/store/appStore/useBasketStore';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useEventBus } from '@/store/appliction/useEventBus';
 
-const { basketData, syncBasket, loading } = useBasketStore();
+const { basketData, syncBasket, syncInvoce, loading } = useBasketStore();
 const popupStore = usePopupStore();
 const items = ref<any>(null);
+const eventBus: ReturnType<typeof useEventBus> = useEventBus()
 
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
@@ -80,9 +82,9 @@ const totalOldPrice = computed(() => {
   return items.value?.basket?.sumFormatOld ?? 0;
 });
 
-const test = () => {
+const setInvoice = () => {
   console.log('basketData', basketData);
-  updateBasketData();
+  syncInvoce();
 };
 
 // Функция для обновления данных корзины
@@ -101,6 +103,7 @@ onMounted(() => {
   // Синхронизируем корзину при открытии попапа
   updateBasketData();
 });
+
 
 // Следим за изменениями в хранилище корзины
 watch(() => useBasketStore().basketData, (newValue) => {
@@ -127,7 +130,7 @@ watch(() => useBasketStore().basketData, (newValue) => {
     box-sizing: border-box;
     max-height: 80vh; 
     height: 100%;
-    max-width: 1140px;
+    max-width: 1447px;
     width: 90vw;
     .basket-header {
       display: flex;
@@ -143,6 +146,7 @@ watch(() => useBasketStore().basketData, (newValue) => {
         text-align: center;
       }
       &__close-btn {
+        fill: #A3A9B5;
         position: absolute;
         right: 0;
         top: 10px;
@@ -155,7 +159,7 @@ watch(() => useBasketStore().basketData, (newValue) => {
       height: 100%;
       overflow-y: auto;
       &__main-table {
-
+        margin-bottom: 2rem;
         .basket-table {
           background-color: #F6F5FA;
           border-radius: 15px;

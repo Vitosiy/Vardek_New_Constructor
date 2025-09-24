@@ -76,12 +76,15 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
       BODY: createBodyProps(objProps),
       OPTIONS: [],
       UNIFORM_TEXTURE: createUniformTexture(objProps),
+      // USLUGI: [
+      //   98683, 249713, 1467341, 1467342, 4722755, 
+      //   251698, 251699, 251701, 732170, 1458340, 
+      //   1920165, 4169375
+      // ],
       USLUGI: [
-        98683, 249713, 1467341, 1467342, 4722755, 
-        251698, 251699, 251701, 732170, 1458340, 
-        1920165, 4169375
+        98683, 249713, 1467341
       ],
-      TABLETOP: createRaspilData(objProps),
+      TABLETOP:  (objProps),
     },
     QUANTITY: 1,
     TYPE: "scene",

@@ -22,6 +22,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useObjectData } from "@/store/appliction/useObjectData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+import { useBasketStore } from '@/store/appStore/useBasketStore';
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -54,6 +55,9 @@ const objectData = ref<THREETypes.TUseObjectData | null>(
   null
 ); /** Текущий объект */
 const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
+
+const basketStore = useBasketStore();
+
 
 const _FASADE = ref({});
 const _MILLING = ref({});

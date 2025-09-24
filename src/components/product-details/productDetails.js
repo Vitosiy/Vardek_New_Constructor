@@ -320,7 +320,7 @@ function CatalogApp() {
 
 	this.catalogAddToBasket = function (e) {
 		const target = e.currentTarget;
-
+		console.log('1')
 		// ищем форму (аналог jQuery: $(e.currentTarget).parentsUntil(".product__wrapper").parent().find(".product__form"))
 		const form = target.closest(".product__wrapper")?.querySelector(".product__form");
 
@@ -359,6 +359,7 @@ function CatalogApp() {
 
 		const basketStore = useBasketStore();
 		basketStore.addFromCatalog(formDataObj);
+		self.toastmessage("Товар успешно добавлен в корзину.", "success");
 
 		// fetch(apiPath + "/API/data.basket.getprice.php", {
 		// 	method: "POST",
@@ -1343,10 +1344,12 @@ if ($('input[data-opt-specific="true"]').val()) {
 			else {
 				$(elem).prop("checked", true);
 			}
-		}).on("click", ".element .add-to-basket .to-basket, .product__cart-button", function (e, w) {
-			addToBasketFunc(e);
-			return false;
-		}).on("click", ".windowinfo-btn", function (e, w) {
+        // Снимаем возможные предыдущие обработчики, чтобы избежать дублирования добавления в корзину
+        }).off('click', ".element .add-to-basket .to-basket, .product__cart-button")
+        .on("click", ".element .add-to-basket .to-basket, .product__cart-button", function (e, w) {
+            addToBasketFunc(e);
+            return false;
+        }).on("click", ".windowinfo-btn", function (e, w) {
 			return false;
 		});
 
