@@ -460,13 +460,17 @@ const removeModel = (model) => {
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
+  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
+    console.log('Pre-Create-Uniform-Group')
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
+  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
+    console.log('Create-Uniform-Group')
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
@@ -608,7 +612,8 @@ defineExpose({
   <div ref="sceneContainer" class="scene-container"></div>
   <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
-  <div
+  
+  <!-- Пока что закоментил потом удалим <div
     class="uniform__container"
     v-if="
       uniformState!.getUniformGroups.length > 0 &&
@@ -635,11 +640,9 @@ defineExpose({
         Убрать ЭЛЕМЕНТ
       </button>
     </div>
-  </div>
+  </div> -->
 
-  <div class="ui-panel--right">
-    <!-- <button class="btn" @click="save">Сохранить</button>
-    <button class="btn" @click="create">Создать новую</button> -->
+  <!-- <div class="ui-panel--right">
     <button
       style="margin-top: 2rem"
       v-show="uniformState!.getUniformModeData.uniformMode"
@@ -659,7 +662,7 @@ defineExpose({
     >
       Создать
     </button>
-  </div>
+  </div> -->
 
   <div
     :class="['model-controller', activeController]"

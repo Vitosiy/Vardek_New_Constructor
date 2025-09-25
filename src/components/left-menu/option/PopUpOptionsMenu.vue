@@ -67,7 +67,7 @@ const openPopup = async (item) => {
     detailText: DETAIL_TEXT,
     previewText: PREVIEW_TEXT,
     image: getImageUrl(DETAIL_PICTURE),
-    images: PROPERTY_IMAGES_VALUE,
+    images: PROPERTY_IMAGES_VALUE.length ? PROPERTY_IMAGES_VALUE.map((image: string) => getImageUrl(image)) : [],
     videoUrl: PROPERTY_VIDEO_VALUE,
     videoPoster: getImageUrl(PROPERTY_VIDEO_IMAGE_VALUE)
   };
