@@ -268,6 +268,8 @@ export class MoveManager {
             if (this.uniformEvents._unionMode) {
                 /** предварительный выбор объектов в новую группу */
                 if (this.uniformEvents._preGroup) {
+
+                    console.log(this.selectedObject)
                     this.uniformTextureBuilder.preGrouping(this.selectedObject)
                     this.boxHelper.createSelectGroup(this.selectedObject)
                 }
@@ -440,7 +442,7 @@ export class MoveManager {
         // if (event.shiftKey) {
         //     this.uniformModeHandler.toggleUniformMode()
         //     this.selectedObject = null
-            
+
         //     // Эмитим событие для синхронизации состояния UI
         //     this.eventBuss.emit('A:Uniform-Mode-Toggled', {
         //         uniformMode: this.uniformEvents._unionMode,
@@ -460,7 +462,7 @@ export class MoveManager {
             this.uniformEvents.enablePreGrouping()
             this.uniformEvents.desableGroupAddition()
             this.uniformEvents.desableDegrouping()
-          
+
 
         })
 
@@ -482,7 +484,7 @@ export class MoveManager {
             console.log('Toggle-Uniform-Mode - MoveManager', options)
             this.uniformModeHandler.toggleUniformMode()
             this.selectedObject = null
-            
+
             // Эмитим событие обратно для синхронизации состояния UI
             this.eventBuss.emit('A:Uniform-Mode-Toggled', {
                 uniformMode: this.uniformEvents._unionMode,
@@ -494,7 +496,7 @@ export class MoveManager {
             console.log('Disable-Uniform-Mode - MoveManager')
             this.uniformModeHandler.disableUniformMode()
             this.selectedObject = null
-            
+
             // Эмитим событие обратно для синхронизации состояния UI
             this.eventBuss.emit('A:Uniform-Mode-Toggled', {
                 uniformMode: false,

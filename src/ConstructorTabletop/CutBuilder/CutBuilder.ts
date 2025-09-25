@@ -61,7 +61,7 @@ class TableTopCreator extends BuildersHelper {
             const { USLUGI } = parent.userData.PROPS.CONFIG
             const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
 
-            console.log(USLUGI, '---Parent USLUGI')
+            console.log(parent, USLUGI, '---Parent USLUGI_1')
 
             await this.events.changeModelSize({
                 data: { width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, mesh: parent, type: 'raspil'
@@ -111,6 +111,8 @@ class TableTopCreator extends BuildersHelper {
         await this.createGroup(raspil, group, meshes, object, id, USLUGI)
 
         const textureData = this._PRODUCTS[object.userData.globalData].texture
+
+        console.log(object, USLUGI, '---Parent USLUGI_1')
 
         this.addToScene({ meshes, group, object, textureData })
     }

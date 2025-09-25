@@ -48,8 +48,8 @@ const isInSelectionMode = computed(() => {
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
-  console.log('Pre-Create-Uniform-Group')
+  // console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
+  // console.log('Pre-Create-Uniform-Group')
   
   // Обновляем локальное состояние
   isCreatingGroup.value = true
@@ -59,7 +59,7 @@ const preCreateUniformGroup = () => {
 };
 
 const сreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
+  // console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   console.log('Create-Uniform-Group')
   
   // Обновляем локальное состояние
@@ -70,7 +70,7 @@ const сreateUniformGroup = () => {
 };
 
 const cancelGroupCreation = () => {
-  console.log('Cancel group creation')
+  // console.log('Cancel group creation')
   
   // Сбрасываем локальное состояние
   isCreatingGroup.value = false
