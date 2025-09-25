@@ -100,12 +100,12 @@ defineExpose({
   </Modal>
 </template>
 
-<style scoped lang="scss">
+<style  lang="scss">
 .modal {
   &--tableTop {
     border: none;
-    width: 95vw;
-    height: 95vh;
+    max-height: 95vh;
+    max-width: 95vw;
     display: none;
     border-radius: 8px;
     overflow: hidden;

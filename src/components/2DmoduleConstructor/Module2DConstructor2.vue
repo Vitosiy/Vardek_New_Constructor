@@ -19,6 +19,8 @@ import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
+import ModuleOptionsManager from "@/components/2DmoduleConstructor/utils/ModuleOptionsManager.vue";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -64,6 +66,8 @@ const mode = ref<constructorMode>('module');
 
 const visualizationRef = ref(null);
 const optionsRef = ref(null);
+const materialConfRef = ref(null);
+const optionsManagerRef = ref(null);
 
 const totalHeight = ref(0);
 const totalWidth = ref(0);
@@ -923,11 +927,15 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
 
 //#endregion
 
-const reset = (reset = false) => {
+const reset = (reset = false, moduleGrid = false) => {
   const PROPS = productData.value.PROPS;
 
-  let sectionsTotalWidth = totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - (module.value.sections.length - 1) * PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"];
-  let sectionsTotalHeight = totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
+  module.value.moduleColor = PROPS.CONFIG.MODULE_COLOR;
+  module.value.moduleThickness = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18;
+  module.value.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
+
+  let sectionsTotalWidth = totalWidth.value - module.value.moduleThickness * 2 - (module.value.sections.length - 1) * module.value.moduleThickness;
+  let sectionsTotalHeight = totalHeight.value - module.value.moduleThickness * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
   let sectionsWidthSum = 0;
 
   module.value.sections.forEach((section, secIndex) => {
@@ -1105,14 +1113,20 @@ watch(visualizationRef, () => {
     <div
         class="constructor2d-container constructor2d-container--left"
     >
+
       <div
-          class="constructor2d-container--left-module-sizes"
+          class="constructor2d-container--left--module-configs"
       >
+
+        <div class="actions-sections-header">
+          <h1>Размеры модуля</h1>
+        </div>
+
         <div
-            class="constructor2d-container--left-module-sizes--module-size"
+            class="constructor2d-container--left--module-configs--module-size"
         >
 
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Высота модуля</p>
             <div class="actions-input--container">
               <MainInput
@@ -1126,7 +1140,7 @@ watch(visualizationRef, () => {
             </div>
           </div>
 
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Ширина модуля</p>
             <div class="actions-input--container">
               <MainInput
@@ -1140,7 +1154,7 @@ watch(visualizationRef, () => {
             </div>
           </div>
 
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Глубина модуля</p>
             <div class="actions-input--container">
               <MainInput
@@ -1154,15 +1168,15 @@ watch(visualizationRef, () => {
             </div>
           </div>
 
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Цоколь</p>
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
                   :inputClass="'actions-input'"
                   :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                  min="0"
-                  max="150"
+                  min="50"
+                  max="300"
                   :type="'number'"
                   placeholder="0"
               />
@@ -1170,6 +1184,34 @@ watch(visualizationRef, () => {
           </div>
 
         </div>
+
+        <div class="actions-sections-header">
+          <h1>Параметры модуля</h1>
+        </div>
+
+        <div
+            class="constructor2d-container--left--module-configs--module-color"
+        >
+          <ModuleMaterialsConfig
+              ref="materialConfRef"
+              :visualizationRef="visualizationRef"
+              :module="module"
+              :objectData="productData"
+              @product-reset="reset"
+          />
+        </div>
+
+        <div class="actions-sections-header">
+          <h1>Опции</h1>
+        </div>
+
+        <ModuleOptionsManager
+            ref="optionsManagerRef"
+            :visualizationRef="visualizationRef"
+            :module="module"
+            @product-reset="reset"
+        />
+
       </div>
 
     </div>
@@ -1342,22 +1384,32 @@ watch(visualizationRef, () => {
 
     &--left {
       flex-direction: column;
-      max-height: 50vh;
-      max-width: 9vw;
+      max-width: 20vw;
       overflow: hidden;
 
-      &-module-sizes {
+      &--module-configs {
         position: absolute;
         overflow: scroll;
-        max-height: 47vh;
+        max-height: 90vh;
+        width: 18.5vw;
 
         &--module-size {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
+          gap: 1rem;
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          align-items: center;
+          align-content: space-between;
 
           &-item {
             padding-bottom: 15px;
           }
+        }
+
+        &--module-color {
+          display: flex;
+          flex-direction: column;
         }
 
         &::-webkit-scrollbar {
@@ -1380,7 +1432,7 @@ watch(visualizationRef, () => {
 
     &--mid {
       flex-direction: column;
-      max-width: 75vw;
+      max-width: 60vw;
       overflow: hidden;
     }
 

@@ -2,7 +2,7 @@
 //@ts-nocheck 
 import MaterialSelector from "./MaterialSelector.vue";
 import ConfigurationOption from "./ConfigurationOption.vue";
-import { ref, onMounted, onBeforeMount, watch } from "vue";
+import {ref, onMounted, onBeforeMount, watch, toRefs} from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
@@ -18,6 +18,14 @@ const selectedSurfaceID = ref(null);
 const currentSurfaceData = ref<any>({});
 const isMillingExist = ref(false);
 const currentMillingData = ref(null);
+
+const props = defineProps({
+  is2Dconstructor: {
+    type: Boolean,
+    default: false,
+  }
+});
+const {is2Dconstructor} = toRefs(props);
 
 onBeforeMount(() => {
   materialList.value =
@@ -74,7 +82,7 @@ watch(
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" v-if="!is2Dconstructor">
     <h2 class="container__title">Конфигурация корпуса</h2>
     <div class="configuration">
       <ConfigurationOption
@@ -87,6 +95,23 @@ watch(
         :type="'milling'"
         :data="currentMillingData"
         @delete-choise="deleteSelectedOptions"
+      />
+    </div>
+
+    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
+  </div>
+  <div class="container container--2D-constructor" v-else>
+    <div class="configuration">
+      <ConfigurationOption
+          :type="'surface'"
+          :data="currentSurfaceData"
+          @delete-choise="deleteSelectedOptions"
+      />
+      <ConfigurationOption
+          v-if="isMillingExist"
+          :type="'milling'"
+          :data="currentMillingData"
+          @delete-choise="deleteSelectedOptions"
       />
     </div>
 
@@ -109,6 +134,11 @@ watch(
   &__title {
     font-size: large;
     font-weight: 600;
+  }
+
+  &--2D-constructor {
+    border: unset;
+    padding: 0;
   }
 }
 

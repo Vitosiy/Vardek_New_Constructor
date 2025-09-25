@@ -34,7 +34,7 @@ onMounted(() => {
 
 <template>
   <!-- <component :is="teleportComponent"> -->
-    <dialog :class="['modal', props.container]" ref="dialogBody">
+    <dialog :class="['modal', props.container || 'modal--default-size']" ref="dialogBody">
       <slot name="modalClose" :onModalClose="closeModal" />
       <slot
         name="modalBody"
@@ -52,7 +52,6 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   width: 100%;
-  max-width: 85vw;
   padding: 0;
   border: none;
   background-color: transparent;
@@ -60,6 +59,10 @@ onMounted(() => {
   opacity: 0;
   filter: blur(10px);
   transition: all ease-in 0.25s;
+
+  &--default-size {
+    max-width: 85vw;
+  }
 }
 
 .modal:focus {
