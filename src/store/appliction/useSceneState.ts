@@ -79,6 +79,7 @@ export const useSceneState = defineStore('SceneState', () => {
         default_palit_down,
         default_palit_up,
         default_table_model,
+        default_handles,
         project_name
 
     }: IProjectParams) => {
@@ -104,6 +105,7 @@ export const useSceneState = defineStore('SceneState', () => {
             default_palit_down: default_palit_down ?? startProjectParams.value.default_palit_down,
             default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
             default_table_model: default_table_model ?? startProjectParams.value.default_table_model,
+            default_handles: default_handles ?? startProjectParams.value.default_handles,
             project_name: project_name ?? startProjectParams.value.project_name
 
         } as IProjectParams;

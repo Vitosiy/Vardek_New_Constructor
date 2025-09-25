@@ -193,6 +193,10 @@ export class Application {
     get _tableTopCreator() {
         return this.tableTopCreator
     }
+
+    get _useEdgeBuilder(){
+        return this.useEdgeBuilder
+    }
     /** singleton для PROD */
 
     // public static getInstance(canvas: HTMLElement): Application {

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 //@ts-nocheck
 
-import { defineProps, computed, defineEmits } from "vue";
+import { defineProps, computed, defineEmits, onMounted } from "vue";
 import default_url from "@/assets/svg/surface-redactor/default.svg";
 import delete_url from "@/assets/svg/surface-redactor/delete.svg";
 import { _URL } from "@/types/constants";
@@ -12,22 +12,40 @@ const props = defineProps({
   additionalClass: String,
 });
 
+onMounted(() => {
+  console.log(props, "props");
+});
+
 const emit = defineEmits(["choose-option", "delete-choise"]);
 
 let title = computed(() => {
-  if (props.type === "surface") return "Тип покрытия";
-  if (props.type === "milling") return "Тип фрезеровки";
-  if (props.type === "palette") return "Цвет покрытия";
-  if (props.type === "patina") return "Цвет патины";
-  if (props.type === "glass") return "Цвет стекла";
+  const typeMap = {
+    surface: "Тип покрытия",
+    milling: "Тип фрезеровки",
+    palette: "Цвет покрытия",
+    patina: "Цвет патины",
+    glass: "Цвет стекла",
+    Handles: "Ручка",
+  };
+
+  return typeMap[props.type];
 });
 
 let name = computed(() => {
-  return props.data?.name ? props.data.name : "";
+  return props.data?.name || props.data?.NAME
+    ? props.data.name || props.data?.NAME
+    : "";
 });
 
 let imgSrc = computed(() => {
-  return props.data?.imgSrc ? _URL + props.data.imgSrc : default_url;
+  if (props.data?.imgSrc) {
+    return _URL + props.data.imgSrc;
+  }
+
+  if (props.data?.PREVIEW_PICTURE) {
+    return _URL + props.data.PREVIEW_PICTURE;
+  }
+  return default_url;
 });
 
 let isColorChosed = computed(() => {
@@ -151,6 +169,12 @@ const deleteChoise = (event) => {
     // line-height: 14px;
     text-overflow: ellipsis;
     overflow: hidden;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     @media (min-height: 1000px) {
       font-size: medium;

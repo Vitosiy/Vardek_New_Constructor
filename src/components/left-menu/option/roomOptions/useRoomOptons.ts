@@ -121,6 +121,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             }
         }
 
+        console.log(colorMap, 'colorMap')
+
         return colorMap
     }
 

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { TSize, TTrafficManager, TCustomBoxHelper  } from "../types/types";
+import { TSize, TTrafficManager, TCustomBoxHelper } from "../types/types";
 import { FBXLoader, GLTFLoader, ColladaLoader } from "three/examples/jsm/Addons.js";
 
 declare global {
@@ -48,9 +48,11 @@ export interface IProjectParams {
     default_milling_up?: number | null,
     default_palit_down?: number | null,
     default_palit_up?: number | null,
-    default_overlay_id?: number[]
-    default_table_model?: number
+    default_overlay_id?: number[],
+    default_table_model?: number,
+    default_handles?: number,
     project_name?: number | null,
+
 }
 
 export interface IContentItem {

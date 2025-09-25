@@ -12,7 +12,7 @@ export const CUTTER_PARAMS = {
         { ID: 182294, NAME: "Кромкование торцов", pos: 'KROMKA_FULL_TOREC_ZEB', value: false },
 
 
-        { ID: 201638_2, NAME: "Верхний левый скос",type:'rect',  pos: 'LEFT_TOP', corner: 150, value: false },
+        { ID: 201638_2, NAME: "Верхний левый скос", pos: 'LEFT_TOP', corner: 150, value: false },
         { ID: 201639_2, NAME: "Верхний правый скос", pos: 'RIGHT_TOP', corner: 150, value: false },
 
         { ID: 201638, NAME: "Нижний левый скос", pos: 'LEFT_BOTTOM', corner: 150, value: false },
@@ -58,6 +58,8 @@ export const CUTTER_PARAMS = {
 
                     { ID: 201638, value: false, NAME: "Нижний левый скос", pos: 'LEFT_BOTTOM', corner: 150 },
                     { ID: 201639, value: false, NAME: "Нижний правый скос", pos: 'RIGHT_BOTTOM', corner: 150 },
+                    { ID: 1458331, value: false, NAME: "Нижний левый скос", pos: 'LEFT_TOP', corner: 150 },
+                    { ID: 1458332, value: false, NAME: "Нижний правый скос", pos: 'RIGHT_BOTTOM', corner: 150 },
 
                     { ID: 201640_2, value: false, NAME: "Верхнее левое закругление", pos: 'LEFT_TOP', radius: 150 },
                     { ID: 201641_2, value: false, NAME: "Верхнее правое закругление", pos: 'RIGHT_TOP', radius: 150 },
@@ -83,9 +85,9 @@ export const CUTTER_PARAMS = {
             },
         ],
     ],
-    EXTREMUMS:{
-        HOLES:300,
-        CUT:600
+    EXTREMUMS: {
+        HOLES: 300,
+        CUT: 600
     }
 }
 

@@ -105,7 +105,7 @@ const START_PROJECT_PARAMS = {
             castShadow: false,
             mapSize: 512,
             intensity: 1.6,
-            distance: 6500,
+            distance: 6000,
             decay: 0
         }
     },
@@ -181,8 +181,6 @@ const START_PROJECT_PARAMS = {
             }
         ]
     },
-
-
     table_params: {
         "width": 3000,
         "depth": 600,
@@ -211,7 +209,8 @@ const START_PROJECT_PARAMS = {
     default_milling_up: null,
     default_palit_down: null,
     default_palit_up: null,
-    default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338]
+    default_handles: 69920,
+    default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338],
 
 }
 

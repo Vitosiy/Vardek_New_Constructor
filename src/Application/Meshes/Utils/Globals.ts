@@ -24,8 +24,9 @@ export class GlobalsData {
     _USLUGI: THREETypes.TObject = this._APP.USLUGI
     _LOOP_POSITION: THREETypes.TObject = this._APP.LOOP_POSITION
     _LOOPSIDE: THREETypes.TObject = this._APP.LOOPSIDE
+    _OPTION: THREETypes.TObject = this._APP.OPTION
+    _OPTIONS_GROUP: THREETypes.TObject = this._APP.OPTIONS_GROUP
     constructor() {
-
     }
 
 }

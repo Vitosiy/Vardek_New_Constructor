@@ -22,9 +22,13 @@ export class UseEdgeBuilder {
 
         root.traverse((child: Object3D) => {
 
+
             // объекты EdgeBuilder
             if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) {
+
                 if (child.userData.name === 'fasade') {
+
+
                     const show = child.userData.parent.userData.SHOW
 
                     if (show && value) {
@@ -42,6 +46,8 @@ export class UseEdgeBuilder {
 
             // исключение для фасадов
             if (child instanceof Mesh && child.name === 'fasade') {
+
+                console.log(child, 'child')
                 if (child.userData.SHOW && !value) {
                     child.visible = true
                 }

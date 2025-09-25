@@ -64,6 +64,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _SHOWCASE = _APP.SHOWCASE
     const _GLASS = _APP.GLASS
     const _PATINA = _APP.PATINA
+    const _HANDLES = _APP.HANDLES
 
 
     const models = ref<{ [key: string]: {} }>(_PRODUCTS)
@@ -86,7 +87,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentPatinaData = ref<number[]>([])
 
-    const setCurrentModel = (object: THREE.Object3D | null) => {
+    const setCurrentModel = (object: THREE.Object3D | any) => {
         currentModel.value = object
     }
 
@@ -292,6 +293,30 @@ export const useModelState = defineStore('ModelState', () => {
         return currentPatinaData.value
     })
 
+    /** @Опции */
+
+    const getOptions = (option: number[]) => {
+        let filtered = []
+        const curOptionsList = option
+            .map(el => this._OPTION[el])
+            .filter(Boolean);
+
+        for (const el in this._OPTIONS_GROUP) {
+
+            filtered.push({
+                NAME: this._OPTIONS_GROUP[el].NAME,
+                CONTANT: curOptionsList.filter(opt => opt.GROUP == el)
+            })
+        }
+
+        filtered = filtered.filter(item => {
+            if (item.CONTANT.length > 0) return item
+
+        })
+
+        return filtered
+
+    }
 
     return {
         getModels,
@@ -321,7 +346,9 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPatinaData,
 
         createCurrentModuleData,
-        getCurrentModuleData
+        getCurrentModuleData, 
+
+        getOptions
     }
 
 });

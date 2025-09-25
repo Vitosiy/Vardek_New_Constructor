@@ -44,7 +44,7 @@ export class TrafficManager {
     rulerLines: THREE.Object3D[] = [];
     rullerSizeLines: THREE.Object3D[] = [];
 
-    private onRemoveFromRoom: (model: THREE.Object3D | undefined) => void;
+    private onRemoveFromRoom: ({ model }: { model: THREE.Object3D | undefined }) => void;
     private onClearSelectObject: () => void
 
     // constructor(canvas: HTMLElement, scene: THREE.Scene, room: RoomManager, camera: THREE.Camera, controls: OrbitControls) {
@@ -98,9 +98,9 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
-            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
-            // console.log(object, 'object')
+            console.log(object, 'object')
             // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155])
 
             if (object.userData.elementType !== 'raspil') {
@@ -138,13 +138,19 @@ export class TrafficManager {
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
-    removeFromRoom(product: Event | THREE.Object3D | string | numer) {
+    removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer }) {
 
-        if (!this._currentObject) return
+        console.log(product)
 
-        if (product instanceof THREE.Object3D) {
-            const prod = toRaw(product)
-            const { RASPIL_LIST } = product.userData.PROPS
+        const removeObj = product ?? this._currentObject
+
+        if (!removeObj) return
+
+        if (removeObj instanceof THREE.Object3D) {
+            const prod = toRaw(removeObj)
+            const { RASPIL_LIST } = prod.userData.PROPS
+
+            console.log(RASPIL_LIST)
 
             if (RASPIL_LIST.length > 0) {
                 RASPIL_LIST.forEach(elem => {
@@ -157,19 +163,17 @@ export class TrafficManager {
                 })
             }
 
-
-
-            this.room.remove(product.id)
-            this.despose.clearObject(product, this.scene)
+            this.room.remove(removeObj.id)
+            this.despose.clearObject(removeObj, this.scene)
             this.boxHelper.removeBoxHelper()
             this.ruler.clearRuler();
             this.currentObject = null
             return
         }
+        console.log(removeObj)
 
-
-        this.room.remove(this._currentObject.id)
-        this.despose.clearObject(this._currentObject, this.scene)
+        this.room.remove(removeObj.id)
+        this.despose.clearObject(removeObj, this.scene)
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
         this.currentObject = null

@@ -30,6 +30,7 @@ import { AlumBuilder } from './AlumBuilder.ts';
 import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
 import { EdgeBuilder } from './EdgeBuilder/EdgeBuilder.ts';
+import { HandlesBuilder } from './Hendles/Handles.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -50,14 +51,15 @@ export class BuildProduct extends BuildersHelper {
     models_builder: ModelsBuilder;
     milling_builder: MillingBuilder;
     window_builder: WindowBuilder;
+    handles_builder: HandlesBuilder
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBuilder
     tabletop_builder: TableTopBuilder
     alum_builder: AlumBuilder
     uniform_texture_builder: UniformTextureBuilder
     edge_builder: EdgeBuilder
-    heightCorrect: number = 0
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
+
 
     constructor(root: THREETypes.TApplication) {
         super(root)
@@ -76,21 +78,15 @@ export class BuildProduct extends BuildersHelper {
         this.palette_bulider = new PaletteBuilder(this);
         this.alum_builder = new AlumBuilder(this);
         this.uniform_texture_builder = new UniformTextureBuilder(root, this);
+        this.handles_builder = new HandlesBuilder(this)
         this.fasade_builder = new FasadeBuilder(this);
         this.tabletop_builder = new TableTopBuilder(this);
 
-    }
 
-    get _heightCorrect() {
-        return this.heightCorrect
     }
 
     get _currentProduct() {
         return this
-    }
-
-    set _heightCorrect(value) {
-        this.heightCorrect += value
     }
 
     getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject, loaded_size?: THREETypes.TObject): void {
@@ -211,7 +207,8 @@ export class BuildProduct extends BuildersHelper {
             MODULECOLOR,
             type_showcase,
             USLUGI,
-            leg_length
+            leg_length,
+            OPTION
         } = product_data;
 
         let elType
@@ -259,8 +256,13 @@ export class BuildProduct extends BuildersHelper {
                 backupFasadId: null,
                 color: null
             },
-            USLUGI: []
+            OPTIONS: [],
+            USLUGI: [],
         };
+
+        if (OPTION.length && OPTION[0] !== null) {
+            PARAMS.OPTIONS = this.filters.filterOption(OPTION)
+        }
 
         if (FASADE_SIZES?.length) {
             PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, false) as any[];
@@ -279,8 +281,9 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (USLUGI?.[0] != null) {
-            PARAMS.USLUGI = this.filters.filterUslugi(USLUGI);
-            props.RASPIL = this.createStartTopTableCutData(PARAMS.USLUGI, product_data);
+            const uslugi = this.filters.filterUslugi(USLUGI);
+            PARAMS.USLUGI = this.createCutterParams(uslugi);
+            props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
@@ -291,7 +294,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание модели */
 
-    private createProductBody(
+    public createProductBody(
         parentGroup: THREE.Object3D,
         size?: { width: number; height: number; depth: number }
     ) {
@@ -387,7 +390,7 @@ export class BuildProduct extends BuildersHelper {
         /** @Для корректной коллизии */
         //---------------------------
         const tempTotal = new THREE.Object3D();
-        [legs?.clone(), body?.clone(), shelf?.clone(), fasade?.clone()]
+        [legs?.clone(), body?.clone(), shelf?.clone()]
             .filter(Boolean)
             .forEach(part => tempTotal.add(part));
 
@@ -406,7 +409,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание тела модели */
 
-    createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultOptionsConfig) {
+    private createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultOptionsConfig) {
         const { CONFIG } = props;
         const { ELEMENT_TYPE, MODULE_COLOR, ID } = CONFIG;
         const { defModuleUp, defModuleDown, moduleTop, moduleBottom } = defaultConfig
@@ -482,7 +485,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание полок */
 
-    createShelf(
+    private createShelf(
         group: THREE.Object3D,
         props: THREETypes.TObject,
         shelfs: THREEInterfases.IShelfData,
@@ -536,7 +539,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание ножек модели */
 
-    buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D) {
+    private buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D) {
 
         let size = props.CONFIG.SIZE
         let leg_length = this.modelState.getModels[props.PRODUCT].leg_length
@@ -569,7 +572,7 @@ export class BuildProduct extends BuildersHelper {
         return legs
     };
 
-    getLegPositions(start_position: THREETypes.TObject, size: THREETypes.TObject, model: THREETypes.TObject) {
+    private getLegPositions(start_position: THREETypes.TObject, size: THREETypes.TObject, model: THREETypes.TObject) {
         const { x, y, z } = start_position;
         const corr_x = model ? eval(model.corr_x) : 0;
         const corr_y = model ? eval(model.corr_y) : 0;
@@ -594,7 +597,7 @@ export class BuildProduct extends BuildersHelper {
         return leg_position;
     };
 
-    createLeg(leg_length: number) {
+    private createLeg(leg_length: number) {
 
         let group, top, bottom
 
@@ -638,7 +641,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание стрелок размеров модели */
 
-    addArrowSize({ group, object, props }: { group: THREE.Object3D, object: THREE.Object3D, props: THREETypes.TObject }) {
+    private addArrowSize({ group, object, props }: { group: THREE.Object3D, object: THREE.Object3D, props: THREETypes.TObject }) {
         const arrows = new THREE.Object3D()
         let ruler = this.ruler.drawRullerObjects(object)
 

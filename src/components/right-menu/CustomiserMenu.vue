@@ -8,10 +8,11 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
+import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
 import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue";
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
-import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage.vue";
+import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage/FigureRightPage.vue";
 
 import RulerButton from "@/components/ui/buttons/right-menu/RulerRightButton.vue";
 import ColorButton from "@/components/ui/buttons/right-menu/ColorRightButton.vue";
@@ -38,6 +39,7 @@ const checkSelect = (el) => {
   }
   currentModel.value = el.object.userData;
   modelState.setCurrentModel(el.object.userData);
+  customiserStore.switchCustomiser('color')
 };
 
 onMounted(() => {
@@ -81,7 +83,7 @@ onUnmounted(()=>{
         <!--
         <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
         -->
-        <MovingPage v-if="customiserStore.customisers == 'moving'" />
+        <RailsRightPage v-if="customiserStore.customisers == 'moving'" />
         <FigurePage v-if="customiserStore.customisers == 'figure'" />
       </div>
     </div>

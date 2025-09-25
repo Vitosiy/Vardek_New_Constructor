@@ -1,8 +1,9 @@
 
-//@ts-nocheck
+/**//@ts-nocheck */
 import { toRaw } from 'vue';
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
+import { TCreateHandleParams } from '../Hendles/Handles';
 import GUI from 'lil-gui';
 
 import { useEventBus } from '@/store/appliction/useEventBus';
@@ -23,6 +24,12 @@ import { BuildUniversalModule } from "@/Application/Meshes/UniversalModuleUtils/
 
 
 let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
+export type TDataCreateHandle = { data: TCreateHandleParams; fasadeNdx: number }
+export type TDataWithNdx = { data: number | string, fasadeNdx: number } | { data: { [key: string]: any }, fasadeNdx: number };
+export type TDataWithType = { data: { [key: string]: any }, type: string }
+export type TResizeModel = { data: { width: number, height: number, depth: number }, mesh?: THREE.Object3D, type?: string }
+
+
 
 export class MeshEvents extends BuildersHelper {
 
@@ -44,6 +51,7 @@ export class MeshEvents extends BuildersHelper {
     buildAlum: THREETypes.TAlumBuilder
     buildUniformTexture: THREETypes.TUniformTextureBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
+    handlesBuilder: THREETypes.THandlesBuilder
     private millings: any | null = MILLINGS
     private additionaMillinglKeys: any | null = additionaMillinglKeys
     private alumTextures = alumTextures
@@ -55,32 +63,36 @@ export class MeshEvents extends BuildersHelper {
     // millHelper = new GUI()
 
     private onChangeModuleTexture: (data: { [key: string]: any }) => void;
-    private onChangeTotalModuleTexture: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
+    private onChangeTotalModuleTexture: ({ data, type }: TDataWithType) => void;
 
-    private onChangeFasade: ({ data, fasadeNdx }: { data: { [key: string]: any }, fasadeNdx: number }) => void;
-    private onChangeTotalFasadsTexture: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
+    private onChangeFasade: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onChangeTotalFasadsTexture: ({ data, type }: TDataWithType) => void;
 
-    private onChangeGlobalTopTable: ({ data, type }: { data: { [key: string]: any }, type: string }) => void;
+    private onChangeGlobalTopTable: ({ data, type }: TDataWithType) => void;
 
-    private onChangePaletteColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
-    private onChangeGlassColor: ({ data, fasadeNdx }: { data: number, fasadeNdx: number }) => void;
+    private onChangePaletteColor: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onChangeGlassColor: ({ data, fasadeNdx }: TDataWithNdx) => void;
 
-    private onChangeMilling: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
+    private onChangeMilling: ({ data, fasadeNdx }: TDataWithNdx) => void;
     private onDeliteMilling: (fasadeNdx: number) => void;
 
-    private onChangeWindow: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
+    private onChangeWindow: ({ data, fasadeNdx }: TDataWithNdx) => void;
 
-    private onDrawPatina: ({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) => void;
+    private onDrawPatina: ({ data, fasadeNdx }: TDataWithNdx) => void;
     private onDelitePatina: (fasadeNdx: number) => void;
 
-    private onChangeModelSize: (data: { width: number, height: number, depth: number }) => void;
+    private onChangeModelSize: ({ data, mesh, type }: TResizeModel) => void;
     private onUpdateUMModel: (data: Object) => void;
     private onToggleFasade: (fasad_ndx: number) => void;
     private onDeliteFasade: (fasad_ndx: number) => void;
     private onCreateUniformGroup: () => void
     private onDeliteUniformGroup: (id: number) => void
 
-    private searchElementsByType = {
+    private onAddHandle: ({ data, fasadeNdx }: TDataWithNdx) => void
+    private onDeliteHandle: ({ data, fasadeNdx }: TDataWithNdx) => void
+    private onChangeHandlePos: ({ data, fasadeNdx }: TDataWithNdx) => void
+
+    private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
         fasadsTop: "element_up",
         moduleBottom: "element_down",
@@ -94,58 +106,63 @@ export class MeshEvents extends BuildersHelper {
 
         // console.trace('MeshEvents')
 
-        this.root = root
-        this.scene = root._scene
-        this.resources = root._resources
-        this.dispose = root._deepDispose
-        this.trafficManager = root._trafficManager
-        this.useEdgeBuilder = root.useEdgeBuilder
+        this.root = root;
+        this.scene = root._scene!;
+        this.resources = root._resources!;
+        this.dispose = root._deepDispose!;
+        this.trafficManager = root._trafficManager!;
+        this.useEdgeBuilder = root._useEdgeBuilder!;
 
-        this.buildProduct = root.geometryBuilder.buildProduct
-        this.buildUMProduct = root.universalGeometryBuilder.buildProduct
+        this.buildProduct = root._geometryBuilder!.buildProduct;
+        this.buildUMProduct = root._universalGeometryBuilder!.buildProduct;
 
-        this.onChangeModuleTexture = this.changeModuleTexture.bind(root)
-        this.onChangeTotalModuleTexture = this.changeTotalModuleTexture.bind(root)
+        this.onChangeModuleTexture = this.changeModuleTexture.bind(root);
+        this.onChangeTotalModuleTexture = this.changeTotalModuleTexture.bind(root);
 
-        this.onChangeFasade = this.changeFasade.bind(root)
-        this.onChangeTotalFasadsTexture = this.changeTotalFasadsTexture.bind(root)
+        this.onChangeFasade = this.changeFasade.bind(root);
+        this.onChangeTotalFasadsTexture = this.changeTotalFasadsTexture.bind(root);
 
-        this.onChangeGlobalTopTable = this.changeGlobalTopTable.bind(root)
+        this.onChangeGlobalTopTable = this.changeGlobalTopTable.bind(root);
 
-        this.onChangePaletteColor = this.changePaletteColor.bind(root)
-        this.onChangeGlassColor = this.changeGlassColor.bind(root)
+        this.onChangePaletteColor = this.changePaletteColor.bind(root);
+        this.onChangeGlassColor = this.changeGlassColor.bind(root);
 
-        this.onChangeMilling = this.changeMilling.bind(root)
-        this.onDeliteMilling = this.deliteMilling.bind(root)
+        this.onChangeMilling = this.changeMilling.bind(root);
+        this.onDeliteMilling = this.deliteMilling.bind(root);
 
-        this.onDrawPatina = this.drawPatina.bind(root)
-        this.onDelitePatina = this.delitePatina.bind(root)
+        this.onChangeWindow = this.changeWindow.bind(root);
 
-        this.onCreateUniformGroup = this.сreateUniformGroup.bind(root)
-        this.onDeliteUniformGroup = this.deliteUniformGroup.bind(root)
+        this.onDrawPatina = this.drawPatina.bind(root);
+        this.onDelitePatina = this.delitePatina.bind(root);
 
-        this.onChangeModelSize = this.changeModelSize.bind(root)
-        this.onUpdateUMModel = this.updateUMModel.bind(root)
+        this.onCreateUniformGroup = this.сreateUniformGroup.bind(root);
+        this.onDeliteUniformGroup = this.deliteUniformGroup.bind(root);
 
-        this.onToggleFasade = this.toggleFasade.bind(root)
-        this.onDeliteFasade = this.deliteFasade.bind(root)
+        this.onChangeModelSize = this.changeModelSize.bind(root);
+        this.onUpdateUMModel = this.updateUMModel.bind(root);
 
-        this.addVueEvents()
+        this.onToggleFasade = this.toggleFasade.bind(root);
+        this.onDeliteFasade = this.deliteFasade.bind(root);
 
-        this.buildMilling = this.buildProduct.milling_builder
-        this.buildPalette = this.buildProduct.palette_bulider
-        this.buildWindow = this.buildProduct.window_builder
-        this.buildAlum = this.buildProduct.alum_builder
-        this.buildUniformTexture = this.buildProduct.uniform_texture_builder
+        this.onAddHandle = this.addHandle.bind(root);
+        this.onDeliteHandle = this.deliteHandle.bind(root);
+        this.onChangeHandlePos = this.changeHandlePos.bind(root);
 
+        this.addVueEvents();
 
+        this.buildMilling = this.buildProduct.milling_builder;
+        this.buildPalette = this.buildProduct.palette_bulider;
+        this.buildWindow = this.buildProduct.window_builder;
+        this.buildAlum = this.buildProduct.alum_builder;
+        this.buildUniformTexture = this.buildProduct.uniform_texture_builder;
+        this.handlesBuilder = this.buildProduct.handles_builder;
     }
 
     get _currentMesh() {
         return this._overrideMesh ?? this.trafficManager._currentObject;
     }
 
-    set _currentMesh(mesh: THREE.Object3D | undefined) {
+    set _currentMesh(mesh: THREE.Object3D | undefined | null) {
         this._overrideMesh = mesh;
     }
 
@@ -236,7 +253,7 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    changeTotalModuleTexture({ data, type }) {
+    changeTotalModuleTexture({ data, type }: TDataWithType) {
 
         const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
@@ -252,7 +269,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Изменение_поверхности_фасада  */
     //------------------
 
-    async catchFasadeChange({ data, fasadeNdx }: TObjectData) {
+    async catchFasadeChange({ data, fasadeNdx }: TDataWithNdx) {
         const product = this._currentMesh;
         const drowMode = this.menuStore.getDrowModeValue
 
@@ -267,7 +284,7 @@ export class MeshEvents extends BuildersHelper {
         if (UNIFORM_TEXTURE.group !== null) {
             this.removeFromUniformGroup(product);
         }
-        
+
         this.resetFasade({ fasadeNdx, incomingModel });
         fasadeProp.ALUM = incomingModel;
 
@@ -341,7 +358,7 @@ export class MeshEvents extends BuildersHelper {
         fasade.userData.SHOW = fasade.visible
     }
 
-    async changeFasade({ data, fasadeNdx }: TObjectData) {
+    async changeFasade({ data, fasadeNdx }: TDataWithNdx) {
 
         if (!this._currentMesh) return;
         /** Выбран без фасада */
@@ -356,7 +373,7 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    changeTotalFasadsTexture({ data, type }) {
+    changeTotalFasadsTexture({ data, type }: TDataWithType) {
 
         const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
 
@@ -367,7 +384,7 @@ export class MeshEvents extends BuildersHelper {
                 const fasadeList = el.userData.PROPS.FASADE
                 if (fasadeList.length > 0) {
                     fasadeList.forEach(async (fasade, fasadeNdx) => {
-                        const prevMesh = this._currentMesh
+                        // const prevMesh = this._currentMesh
                         this._currentMesh = el;
 
                         if (data.ID == 7397) {
@@ -387,7 +404,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Цвет_палитры  */
     //------------------
 
-    async catchChangePaletteColor({ data, fasadeNdx }: TObjectData) {
+    async catchChangePaletteColor({ data, fasadeNdx }: TDataWithNdx) {
 
         const props = this._currentMesh.userData.PROPS
         const { FASADE, CONFIG } = props
@@ -400,7 +417,7 @@ export class MeshEvents extends BuildersHelper {
         this.buildPalette.createPaletteColor({ fasade, data, fasadeProps })
     }
 
-    async changePaletteColor({ data, fasadeNdx }: TNumeredData) {
+    async changePaletteColor({ data, fasadeNdx }: TDataWithNdx) {
 
         if (!this._currentMesh) return;
         const props = this._currentMesh.userData.PROPS
@@ -411,7 +428,7 @@ export class MeshEvents extends BuildersHelper {
 
         // console.log(data, 'data')
 
-        await this.catchChangePaletteColor({ data, fasadeNdx })
+        await this.catchChangePaletteColor({ data, fasadeNdx } as TDataWithNdx)
         if (patina) {
             await this.catchDrawPatina({ data: patina, fasadeNdx })
         }
@@ -420,7 +437,7 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    changeTotalFasadsPaletteColor({ data, type }) {
+    changeTotalFasadsPaletteColor({ data, type }: TDataWithType) {
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
@@ -440,7 +457,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Алюминевая_поверхнорсть  */
     //------------------
 
-    createAlumColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
+    createAlumColor({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -455,7 +472,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Стекло_витринн  */
     //------------------
 
-    changeGlassColor({ data, fasadeNdx }: { data: number | string, fasadeNdx: number }) {
+    changeGlassColor({ data, fasadeNdx }: TDataWithNdx) {
 
         if (!this._currentMesh) return;
 
@@ -474,7 +491,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Фрезеровка  */
     //------------------
 
-    async catchChangeMilling({ data, fasadeNdx }: TNumeredData) {
+    async catchChangeMilling({ data, fasadeNdx }: TDataWithNdx) {
         const props = this._currentMesh.userData.PROPS
         const { FASADE, FASADE_DEFAULT, CONFIG } = props
         const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG
@@ -498,7 +515,7 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    async changeMilling({ data, fasadeNdx }: TNumeredData) {
+    async changeMilling({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
 
         await this.catchChangeMilling({ data, fasadeNdx })
@@ -523,7 +540,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Патина  */
     //------------------
 
-    async catchDrawPatina({ data, fasadeNdx }: TNumeredData) {
+    async catchDrawPatina({ data, fasadeNdx }: TDataWithNdx) {
         const props = this._currentMesh.userData.PROPS
         const { FASADE, CONFIG } = props
         const { FASADE_PROPS } = CONFIG
@@ -545,7 +562,7 @@ export class MeshEvents extends BuildersHelper {
         FASADE_PROPS[fasadeNdx].PATINA = data
     }
 
-    async drawPatina({ data, fasadeNdx }: TNumeredData) {
+    async drawPatina({ data, fasadeNdx }: TDataWithNdx) {
 
         if (!this._currentMesh) return;
         await this.catchDrawPatina({ data, fasadeNdx })
@@ -572,7 +589,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Витрина  */
     //------------------
 
-    changeWindow({ data, fasadeNdx }: TNumeredData) {
+    changeWindow({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -588,6 +605,7 @@ export class MeshEvents extends BuildersHelper {
             FASADE_HEIGHT: eval(FASADE_POSITIONS[fasadeNdx].FASADE_HEIGHT),
             FASADE_DEPTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_DEPTH)
         };
+        console.log(fasade, 'FW')
 
         this.buildWindow.createWindow({
             fasade,
@@ -626,7 +644,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Стандартная_столешница  */
     //------------------
 
-    changeGlobalTopTable({ data, type }: TNumeredData) {
+    changeGlobalTopTable({ data, type }: TDataWithType) {
         const elementsList = this.scene.getObjectsByProperty('name', type) /** @Находим все элементы выбранного типа */
 
         if (Array.isArray(elementsList) && elementsList[0]) {
@@ -757,10 +775,10 @@ export class MeshEvents extends BuildersHelper {
     }
 
     //------------------
-    /** @УИзменение_размеров_модели  */
+    /** @Изменение_размеров_модели  */
     //------------------
 
-    async changeModelSize(data: { width: number, height: number, depth: number }, mesh, type) {
+    async changeModelSize({ data, mesh, type }: TResizeModel) {
 
         const currentMesh = mesh ? mesh : this._currentMesh
 
@@ -824,7 +842,7 @@ export class MeshEvents extends BuildersHelper {
 
         await rebuild()
 
-        const adjustedPosition = this.root._roomManager.adjustPositionWithRaycasting({
+        const adjustedPosition = this.root._roomManager!.adjustPositionWithRaycasting({
             object: currentMesh,
             targetPosition: currentMesh.userData.targetPosition,
             wall: currentMesh.userData.currentWall
@@ -845,12 +863,58 @@ export class MeshEvents extends BuildersHelper {
             currentMesh.userData.obb.halfSize.y = data.height * 0.5;
         }
 
-        this.root._customBoxHelper.updateBoxHelper();
+        this.root._customBoxHelper!.updateBoxHelper();
 
         if (type !== 'raspil') {
             this.events.emit("U:Model-resize");
         }
 
+    }
+
+    //------------------
+    /** @Ручки  */
+    //------------------
+
+    async addHandle({ data, fasadeNdx }: TDataCreateHandle) {
+        if (!this._currentMesh) return;
+        const product = this._currentMesh;
+
+        const { CONFIG, FASADE, FASADE_DEFAULT } = product.userData.PROPS;
+        const { FASADE_PROPS, UNIFORM_TEXTURE } = CONFIG;
+        const curFasadData = FASADE_PROPS[fasadeNdx]
+        const curFasadeMesh = FASADE[fasadeNdx]
+
+        console.log(data, 'in EVENT')
+        await this.handlesBuilder.createHandle(data, curFasadeMesh, curFasadData)
+        curFasadData.HANDLES.id = data.id
+
+    }
+
+    async deliteHandle({ data, fasadeNdx }: TDataWithNdx) {
+        if (!this._currentMesh) return;
+        const product = this._currentMesh;
+        const { FASADE, CONFIG } = product.userData.PROPS;
+        const { FASADE_PROPS } = CONFIG;
+        const curFasadeMesh = FASADE[fasadeNdx]
+        const curFasad = FASADE_PROPS[fasadeNdx]
+
+        await this.handlesBuilder.deliteHandle(curFasadeMesh)
+        curFasad.HANDLES.id = data
+    }
+
+    async changeHandlePos({ data, fasadeNdx }: TDataWithNdx) {
+        if (!this._currentMesh) return;
+        const product = this._currentMesh;
+        const { FASADE, CONFIG } = product.userData.PROPS;
+        const { FASADE_PROPS } = CONFIG;
+
+        const curFasadData = FASADE_PROPS[fasadeNdx]
+        const curFasadeMesh = FASADE[fasadeNdx]
+        const handle = curFasadeMesh.getObjectByProperty('name', 'HANDLE')
+
+        await this.handlesBuilder.getHandlesPosition(data, handle, curFasadeMesh);
+        curFasadData.HANDLES.position = data
+        console.log(handle, curFasadeMesh, data, 'ONchangeHandlePos')
     }
 
     addVueEvents() {
@@ -895,8 +959,8 @@ export class MeshEvents extends BuildersHelper {
             this.changeWindow({ data, fasadeNdx });
         }
 
-        this.onDrawPatina = ({ data, fasadeNdx }) => {
-            this.drawPatina({ data, fasadeNdx });
+        this.onDrawPatina = (data) => {
+            this.drawPatina(data);
         }
 
         this.onDelitePatina = (fasadeNdx) => {
@@ -912,7 +976,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         this.onChangeModelSize = (data) => {
-            this.changeModelSize(data as { width: number, height: number, depth: number })
+            this.changeModelSize(data)
         }
 
         this.onToggleFasade = (fasad_ndx) => {
@@ -925,6 +989,18 @@ export class MeshEvents extends BuildersHelper {
 
         this.onUpdateUMModel = (data) => {
             this.updateUMModel(data)
+        }
+
+        this.onAddHandle = (data) => {
+            this.addHandle(data)
+        }
+
+        this.onDeliteHandle = (fasad_ndx) => {
+            this.deliteHandle(fasad_ndx)
+        }
+
+        this.onChangeHandlePos = (data) => {
+            this.changeHandlePos(data)
         }
 
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
@@ -958,6 +1034,10 @@ export class MeshEvents extends BuildersHelper {
 
         this.events.on('A:UM-update', this.onUpdateUMModel)
 
+        this.events.on('A:AddHandle', this.onAddHandle)
+        this.events.on('A:DeliteHandle', this.onDeliteHandle)
+        this.events.on('A:ChangeHandlePose', this.onChangeHandlePos)
+
 
     }
 
@@ -986,6 +1066,9 @@ export class MeshEvents extends BuildersHelper {
         this.events.off('A:UM-update', this.onUpdateUMModel)
         this.events.off('A:Toggle-Fasad', this.onToggleFasade)
         this.events.off('A:Delite-Fasad', this.onDeliteFasade)
+
+        this.events.off('A:AddHandle', this.onAddHandle)
+        this.events.off('A:DeliteHandle', this.onDeliteHandle)
 
         this.alumTextures = null
         this.millings = null

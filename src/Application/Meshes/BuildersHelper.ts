@@ -416,6 +416,11 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
+        console.log(uslugi, 'uslugi')
+
+        const convert = this.createCutterParams(uslugi)
+        console.log(convert, 'convert')
+
         const { width, depth, height } = product_data
         const startCutData = {
             groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы
@@ -428,7 +433,7 @@ export class BuildersHelper extends GlobalsData {
                         height: depth,
                         roundCut: {},
                         holes: [],
-                        serviseData: CUTTER_PARAMS.CUT_SERVISES
+                        serviseData: convert
 
                     }
                 ]
@@ -436,6 +441,62 @@ export class BuildersHelper extends GlobalsData {
         }
 
         return startCutData
+    }
+
+    createCutterParams(uslugi) {
+        const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        return uslugi.map(obj1 => {
+            const obj2 = SERVISES.find(o => o.ID === obj1.ID);
+            let merged;
+            if (obj2) {
+                const extras = Object.fromEntries(
+                    Object.entries(obj2).filter(([key]) => !(key in obj1))
+                );
+                merged = { ...obj1, ...extras };
+
+                // if ("width" in merged) {
+                //     const w1 = obj1.width;
+                //     const w2 = obj2.width;
+
+                //     // случай: строка + число → число
+                //     if (typeof w1 === "string" && typeof w2 === "number") {
+                //         merged.width = w2;
+                //     }
+
+                //     // случай: строка + отсутствует → удалить
+                //     if (typeof w1 === "string" && w2 === undefined) {
+                //         delete merged.width;
+                //     }
+                // }
+
+                // return merged;
+            }
+
+            else {
+                merged = { ...obj1 };
+                if (!("pos" in merged)) {
+                    merged.pos = "CENTER";
+                }
+            }
+
+            if ("width" in merged) {
+                const w1 = obj1.width;
+                const w2 = obj2 ? obj2.width : undefined;
+
+                if (typeof w1 === "string" && typeof w2 === "number") {
+                    merged.width = w2;
+                }
+
+                if (typeof w1 === "string" && w2 === undefined) {
+                    delete merged.width;
+                }
+            }
+
+            return merged;
+
+        }).filter(el => el.ID !== 98683);
+
+        // .filter(el => parseInt(el.separated) !== 0);
     }
 
     findElementsBySectorId(data, sectorId) {
@@ -490,6 +551,45 @@ export class BuildersHelper extends GlobalsData {
         box.getSize(size)
 
         return box;
+    }
+
+    mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+        return arr1.map(obj1 => {
+            const obj2 = arr2.find(o => o[key] === obj1[key]);
+            let merged;
+
+            if (obj2) {
+                if (overwrite) {
+                    merged = { ...obj1, ...obj2 };
+                } else {
+                    const extras = Object.fromEntries(
+                        Object.entries(obj2).filter(([k]) => !(k in obj1))
+                    );
+                    merged = { ...obj1, ...extras };
+                }
+            } else {
+                merged = { ...obj1 };
+                if (!("pos" in merged)) {
+                    merged.pos = "CENTER";
+                }
+            }
+
+            // обработка width у всех объектов
+            if ("width" in merged) {
+                const w1 = obj1.width;
+                const w2 = obj2 ? obj2.width : undefined;
+
+                if (typeof w1 === "string" && typeof w2 === "number") {
+                    merged.width = w2;
+                }
+
+                if (typeof w1 === "string" && w2 === undefined) {
+                    delete merged.width;
+                }
+            }
+
+            return merged;
+        });
     }
 
 }

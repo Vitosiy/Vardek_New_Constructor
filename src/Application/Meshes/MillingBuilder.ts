@@ -32,6 +32,7 @@ export class MillingBuilder extends MillingsUtils {
 
   createMillingFasade(object, fasadePosition, millingParams: number, defaultGeometry, patina) {
 
+    console.log(object, 'object')
     /** Данные для корректировки положения булевой геометрии */
 
     const millingKey = this.additionaMillinglKeys[millingParams] ?? millingParams

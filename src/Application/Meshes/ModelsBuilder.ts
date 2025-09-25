@@ -27,9 +27,9 @@ export class ModelsBuilder {
 
     }
 
-    create(params: CreateParams) {
+    public create(params: CreateParams) {
         const { url, onLoad, props, sizeRulers = true } = params;
-        
+
         const arrows = new THREE.Object3D()
         const model = this.parent._MODELS[props.CONFIG.MODELID]
         const path = url ?? model.file ?? model.DAE
@@ -134,7 +134,7 @@ export class ModelsBuilder {
         return
     }
 
-    normalizeUploadedModel(model, params = {}) {
+    public normalizeUploadedModel(model, params = {}) {
         // Проверяем входные параметры
         if (!model || !model.isObject3D) {
             throw new Error('Invalid model: Must be a valid THREE.Object3D');
@@ -172,7 +172,7 @@ export class ModelsBuilder {
         return model;
     }
 
-    changeModelScale(model, scaleVector = new THREE.Vector3(1, 1, 1)) {
+    private changeModelScale(model, scaleVector = new THREE.Vector3(1, 1, 1)) {
         if (!model || !model.isObject3D) {
             throw new Error('Invalid model: Must be a valid THREE.Object3D');
         }
@@ -198,7 +198,7 @@ export class ModelsBuilder {
         model.updateMatrixWorld(true);
     }
 
-    translateGeometry(model, translateVector) {
+    private translateGeometry(model, translateVector) {
         if (model.geometry) {
             model.geometry.translate(translateVector.x, translateVector.y, translateVector.z);
             model.geometry.computeVertexNormals();
@@ -209,7 +209,7 @@ export class ModelsBuilder {
         }
     }
 
-    scaleGeometry(model, scaleVector) {
+    private scaleGeometry(model, scaleVector) {
         if (model.geometry) {
             model.geometry.scale(scaleVector.x, scaleVector.y, scaleVector.z);
         }
@@ -219,7 +219,7 @@ export class ModelsBuilder {
         }
     }
 
-    calculateUnionBoundingBox(group) {
+    private calculateUnionBoundingBox(group) {
         const boundingBox = new THREE.Box3();
 
         if (group.geometry) {
@@ -243,3 +243,4 @@ export class ModelsBuilder {
         return null;
     }
 }
+

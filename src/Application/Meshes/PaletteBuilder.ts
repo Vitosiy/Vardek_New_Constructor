@@ -64,9 +64,9 @@ export class PaletteBuilder {
         const roughnessValue = !useTexture && fasadeName.includes("матовый") ? 0.5 : 0.02;
 
         fasade.traverse((child) => {
-
-              // Пропускаем меш чертежа
-            if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) return
+            if (child.name === "HANDLE") return;
+            // Пропускаем меш чертежа
+            if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) return;
 
             if (!(child instanceof THREE.Mesh)) return;
             if (!useTexture && child.userData.type === "glass") return;

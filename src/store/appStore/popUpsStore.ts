@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { POPUP_CONFIG, PopupKey } from '@/components/popUp';
+import { useEventBus } from '../appliction/useEventBus';
 
 export type PopupsState = Record<PopupKey, boolean>
 
 export const usePopupStore = defineStore('popup', () => {
+  const eventBus = useEventBus()
   // Создаем состояние на основе конфигурации
   const popups = ref(
     Object.keys(POPUP_CONFIG).reduce((acc, key) => {
@@ -17,6 +19,7 @@ export const usePopupStore = defineStore('popup', () => {
 
   const openPopup = (popupName: PopupKey) => {
     popups.value[popupName] = true;
+    eventBus.emit("A:ClearSelected", { object: null });
   };
 
   const closePopup = (popupName: PopupKey) => {
@@ -44,7 +47,7 @@ export const usePopupStore = defineStore('popup', () => {
   return {
     popups,
     isInfoPopupOpen,
-    
+
     openPopup,
     closePopup,
     toggleInfoPopup,

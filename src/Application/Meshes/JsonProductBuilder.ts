@@ -82,18 +82,18 @@ export class JsonBuilder {
         }
 
         if (data.type == "object") {
-            switch (data.geometry.type) {
-                case 'BoxGeometry':
-                case 'ExtrudeBoxGeometry':
-                    geometry = this.createGeometry(data.geometry, parent_size)
-                    break;
-                case 'ExtrudeGeometry':
-                    geometry = this.createShapeGeometry(data.geometry, parent_size)
-                    break;
-                case "PlaneGeometry":
-                    geometry = this.createPlaneGeometry(data.geometry, parent_size)
+            const geometryMap: Record<string, Function> = {
+                'BoxGeometry': () => this.createGeometry(data.geometry, parent_size),
+                'ExtrudeBoxGeometry': () => this.createGeometry(data.geometry, parent_size),
+                'ExtrudeGeometry': () => this.createShapeGeometry(data.geometry, parent_size),
+                'PlaneGeometry': () => this.createPlaneGeometry(data.geometry, parent_size)
+            };
 
+            const geometryCreator = geometryMap[data.geometry.type];
+            if (geometryCreator) {
+                geometry = geometryCreator();
             }
+
             obj[data.id] = new THREE.Mesh(geometry, this.material);
             obj[data.id].receiveShadow = true;
             obj[data.id].castShadow = true;

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // @ts-nocheck
-import {ref, onMounted, onBeforeMount, watch, computed} from "vue";
+import { ref, onMounted, onBeforeMount, watch, computed } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
@@ -27,11 +27,11 @@ const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
 
 const getIsUMproduct = computed(() => {
-  return !currentModel.value?.PROPS.CONFIG.MODULEGRID
-})
+  return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
+});
 
 const prepareData = () => {
-  console.log(modelState.getCurrentModel, 'modelState.getCurrentModel')
+  console.log(modelState.getCurrentModel, "modelState.getCurrentModel");
   currentModel.value = modelState.getCurrentModel;
 
   sizeEditData.value = {
@@ -52,7 +52,8 @@ const prepareData = () => {
 
 const resizeModel = (value: object) => {
   if (!isMounted.value) return; // игнорируем вызов до готовности
-  eventBus.emit("A:Model-resize", { ...resizeData.value, ...value });
+  console.log({ ...resizeData.value, ...value }, "RES");
+  eventBus.emit("A:Model-resize", { data: { ...resizeData.value, ...value } });
 };
 
 onBeforeMount(() => {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
 import {
   onMounted,
   onBeforeMount,
@@ -20,9 +21,9 @@ import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
 import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
 
 const eventBus = useEventBus();
+const modelState = useModelState();
 
 const emit = defineEmits(["save-table-data"]);
-
 
 const {
   MAX_AREA_WIDTH,
@@ -166,7 +167,6 @@ const addVerticalCut = (colIndex) => {
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
-
 };
 
 const addHorizontalCut = (colIndex, rowIndex) => {
@@ -216,7 +216,8 @@ const addRoundСut = (colIndex) => {
       ? row.width - SECTOR_PADDING * 2
       : row.height - SECTOR_PADDING * 2;
 
-  if (extremum > CUTTER_PARAMS.EXTREMUMS.CUT) extremum = CUTTER_PARAMS.EXTREMUMS.CUT;
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.CUT)
+    extremum = CUTTER_PARAMS.EXTREMUMS.CUT;
 
   if (
     row.width < 300 + SECTOR_PADDING * 2 ||
@@ -251,7 +252,8 @@ const createHoleDataToCheck = (type, row, col) => {
     return;
   }
 
-  if (extremum > CUTTER_PARAMS.EXTREMUMS.HOLES) extremum = CUTTER_PARAMS.EXTREMUMS.HOLES;
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.HOLES)
+    extremum = CUTTER_PARAMS.EXTREMUMS.HOLES;
 
   width = extremum;
   height = extremum;
@@ -364,10 +366,35 @@ const getHoleOptionsActive = computed(() => {
   };
 });
 
-const convertServisData = (value, type, pos) => {
+const convertServisData = (value, item) => {
+  const { PROPS } = modelState.getCurrentModel;
+  const { USLUGI } = PROPS.CONFIG;
+  console.log(USLUGI, item)
+
+  if (parseInt(item.separated) === 0) {
+    console.log('EP')
+    grid.value.forEach((col) => {
+      col.forEach((row) => {
+        const cur = row.serviseData.find((el) => el.ID === item.ID);
+        cur.value = value;
+        console.log(cur, "row");
+      });
+    });
+    // console.log(item, USLUGI);
+
+    const cur = USLUGI.find((el) => el.ID === item.ID);
+    cur.value = value;
+
+    console.log(USLUGI, 'cur')
+
+    return;
+  }
+
   const data = getCurrentSection.value.currentRow.serviseData;
 
-  const servise = data.find((el) => el.NAME.toLowerCase() === type);
+  const servise = data.find(
+    (el) => el.NAME.toLowerCase() === item.NAME.toLowerCase()
+  );
 
   data.forEach((el) => {
     el.pos === servise.pos ? (el.value = false) : "";
@@ -476,8 +503,6 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
 };
 
 const updateHole = (event, key, type, holeType) => {
-
-
   const rowNdx = selectedCell.value.row;
   const colNdx = selectedCell.value.col;
 
@@ -505,7 +530,6 @@ const updateHole = (event, key, type, holeType) => {
 
   if (check) {
     currenthole[type] = newValue;
-
   } else {
     currenthole[type] = prevValue;
     currenthole[`M${type}`] = prevValue;
@@ -679,7 +703,11 @@ const handleCellSelect = (colIndex, rowIndex, type) => {
 };
 
 const createServiseData = () => {
-  const convertParams = CUTTER_PARAMS.CUT_SERVISES.reduce((acc, el) => {
+  const { PROPS } = modelState.getCurrentModel;
+  const { USLUGI } = PROPS.CONFIG;
+  console.log(PROPS, USLUGI, props.grid, "USLUGI");
+
+  const convertParams = USLUGI.reduce((acc, el) => {
     const param = {
       ID: el.ID,
       NAME: el.NAME,
@@ -688,11 +716,25 @@ const createServiseData = () => {
       radius: el.radius,
       width: el.width,
       corner: el.corner,
+      separated: el.separated
     };
     acc.push(param);
     return acc;
   }, []);
 
+  // const convertParams = CUTTER_PARAMS.CUT_SERVISES.reduce((acc, el) => {
+  //   const param = {
+  //     ID: el.ID,
+  //     NAME: el.NAME,
+  //     value: false,
+  //     pos: el.pos,
+  //     radius: el.radius,
+  //     width: el.width,
+  //     corner: el.corner,
+  //   };
+  //   acc.push(param);
+  //   return acc;
+  // }, []);
 
   return convertParams;
 };
@@ -704,6 +746,9 @@ const clearServiseData = (row) => {
 };
 
 const reset = (reset = false) => {
+  const { PROPS } = modelState.getCurrentModel;
+  const { USLUGI } = PROPS.CONFIG;
+
   grid.value.length = 0;
   grid.value.push([
     {
@@ -711,7 +756,7 @@ const reset = (reset = false) => {
       height: totalHeight.value,
       roundCut: {},
       holes: [],
-      serviseData: CUTTER_PARAMS.CUT_SERVISES,
+      serviseData: USLUGI,
     },
   ]);
   holeOptions.value = { show: false, section: { col: 0, row: 0 } };
@@ -749,7 +794,6 @@ const saveGrid = () => {
     acc.push(correct);
     return acc;
   }, []);
-
 
   const data = {
     modelHeight: props.modelHeight,

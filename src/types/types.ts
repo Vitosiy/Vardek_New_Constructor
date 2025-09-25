@@ -23,6 +23,8 @@ import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
 import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
+import { HandlesBuilder } from "@/Application/Meshes/Hendles/Handles";
+import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -34,8 +36,6 @@ import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
-
-
 
 export type TApplication = Application
 export type TMeshEvents = MeshEvents
@@ -59,9 +59,11 @@ export type TDeepDispose = DeepDispose
 export type TAppLights = AppLights
 export type TUniversalGeometryBuilder = UniversalGeometryBuilder
 export type TGeometryBuilder = GeometryBuilder
-export type TJSONBuilder = JsonBuilder 
+export type TJSONBuilder = JsonBuilder
 export type TEdgeBuilder = EdgeBuilder
 export type TUseEdgeBuilder = UseEdgeBuilder
+export type THandlesBuilder = HandlesBuilder
+export type TModelsBuilder = ModelsBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 
@@ -102,7 +104,7 @@ export type MenuType = 'tech' | 'roomPar' | 'customiser';
 export type TQuality = {
   lable: string,
   value: TQualityValue,
-  active:boolean
+  active: boolean
 }
 
 type TOptionItem = {
@@ -124,7 +126,7 @@ export type TOptionsMap = {
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
-  tableTop:TOptionItem
+  tableTop: TOptionItem
 };
 
 export type TTextureActionMap = {
@@ -146,7 +148,7 @@ export type TTextureItem = {
   sort: number;
 };
 
-export type TFasadeItem = {
+export type eTFasadeItem = {
   ID: number;
   NAME: string;
   IBLOCK_SECTION_ID: string;
@@ -217,9 +219,9 @@ export type TUniformGroups = {
 };
 
 export type TSize = {
-    width: number;
-    height: number;
-    depth: number;
+  width: number;
+  height: number;
+  depth: number;
 }
 
 type TModuleGrid = {
@@ -251,7 +253,7 @@ export type TDefaultOptionsConfig = {
 //------------------
 
 // Утилиты
-type NumStr = number | string; 
+type NumStr = number | string;
 
 // Материал
 interface TMaterial {
@@ -291,6 +293,156 @@ export type TModelJSON = {
   position?: TVector3;
 };
 
+export type TFasadeProp = {
+  SHOW: boolean | null,
+  POSITION: number | null,
+  COLOR: number | null,
+  TYPE: number | null,
+  MILLING: number | null,
+  PALETTE: number | null,
+  WINDOW: number | null,
+  ALUM: number | null,
+  GLASS: number | null,
+  PATINA: number | null,
+  HANDLES: {
+    id: number | null,
+    position: number | null
+    drawer: null | string
+  }
+}
+
+export type TModelData = {
+  id: number;
+  name: string;
+  json: any | null;
+  type_label: string;
+  type: any | null;
+  shininess: number | null;
+  material: string;
+  color: string;
+  DAE: string;
+  file: string;
+  model_type: string;
+  scale: number;
+  width: number | null;
+  height: number | null;
+  depth: number | null;
+  corr_x: number | string | null;
+  corr_y: number | string | null;
+  corr_z: number | string | null;
+  loop_position: any | null;
+  loop_model: any | null;
+  wall_thickness: number | null;
+};
+
+
+/** @Product */
+
+export type TNullable = string | number | null;
+export type TNullableArray = Array<TNullable>;
+
+export type TIpropertyValues = {
+  SECTION_META_TITLE: string | null;
+  ELEMENT_META_TITLE: string | null;
+  ELEMENT_META_DESCRIPTION: string | null;
+  SECTION_META_DESCRIPTION: string | null;
+  SECTION_PAGE_TITLE: string | null;
+};
+
+export type TTexture = {
+  src: string;
+  width: number;
+  height: number;
+  size: string;
+};
+
+export type IProductFull = {
+  ID: number;
+  SORT: number;
+  NAME: string;
+  IPROPERTY_VALUES: TIpropertyValues;
+  FACADE: number[]; // массив id фасадов
+  OPTION: number[];
+  GLASS: TNullableArray;
+  MILLING: number[];
+  CITY: TNullableArray;
+  COLOR: TNullableArray;
+  SIZE_EDIT: TNullable;
+  SIZE_EDIT_HEIGHT: TNullableArray;
+  SIZE_EDIT_WIDTH_MIN: number;
+  SIZE_EDIT_WIDTH_MAX: number;
+  SIZE_EDIT_HEIGHT_MIN: TNullable;
+  SIZE_EDIT_HEIGHT_MAX: TNullable;
+  SIZE_EDIT_WIDTH: TNullableArray;
+  models: number[];
+  width: number;
+  depth: number;
+  element_type: TNullable;
+  tabletop: TNullable;
+  height: number;
+  HEM: TNullableArray;
+  SIZE_EDIT_STEP_WIDTH: number;
+  SIZE_EDIT_TERMS_MULTIPLICITY: TNullable;
+  SIZE_EDIT_STEP_HEIGHT: TNullable;
+  texture: TTexture;
+  INCITY: TNullableArray;
+  plinth_length: TNullable;
+  disable_raycast: number;
+  count_in_basket: TNullable;
+  SIZE_EDIT_STEP_DEPTH: TNullable;
+  SIZE_EDIT_DEPTH: TNullableArray;
+  SIZE_EDIT_DEPTH_MIN: TNullable;
+  SIZE_EDIT_DEPTH_MAX: TNullable;
+  MILLING_ALT: TNullable;
+  USLUGI: TNullableArray;
+  SIZE_EDIT_CALC_TYPE: TNullable;
+  FILLING: TNullableArray;
+  leg_length: number;
+  profile: TNullableArray;
+  FACADEALIGNSELECT: TNullable;
+  substitution_width: TNullable;
+  substitution_height: TNullable;
+  substitution_depth: TNullable;
+  texture_type: TNullable;
+  texture_rotation: TNullable;
+  texture_scale: TNullable;
+  EN_NAME: string;
+  MODULECOLOR: number[];
+  SHELFQUANT: TNullable;
+  type_showcase: TNullableArray;
+  fasade_type: number[];
+  other_models: TNullableArray;
+  DE_NAME: string;
+  FASADE_SIZES: TNullableArray;
+  texture_map: TNullable;
+  ACTUAL_DEPT: TNullable;
+  IS_BOX_SECTION: number;
+  CAN_HIDE_EL: number;
+  SIZE_EDIT_JOINDEPTH_MIN: TNullable;
+  SIZE_EDIT_JOINDEPTH_MAX: TNullable;
+  PRODUCT_MECHANISM: TNullableArray;
+  DATA_PETROVICH: TNullable;
+  CNSTR_MIN_WIDTH: TNullable;
+  NULL_PRICE: number;
+  TEST: number;
+  MIN_FASADE_SIZE: TNullable;
+  MAX_FASADE_SIZE: TNullable;
+  LOOPSIDE: TNullableArray;
+  REC_HEM: TNullableArray;
+  productType: TNullable;
+  DOP_PRODUCT: TNullableArray;
+  HANDLES: TNullableArray;
+  canSetSideProfile: number;
+  ALTERNATIVE_PRODUCT: number[];
+  LANG: string;
+  OPTIONSECTION_ID: number;
+  PREVIEW_PICTURE: string;
+  FILLING_SECTION: boolean;
+  FASADE_POSITION: number[];
+}
+
+
 
 /** Заглушка */
+
 export type TObject = { [key: string]: any }

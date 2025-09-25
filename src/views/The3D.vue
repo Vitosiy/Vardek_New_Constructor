@@ -215,7 +215,7 @@ const selected = async (item: any) => {
   const { PROPS } = userData;
   const { CONFIG, RASPIL } = PROPS;
 
-  // console.log(item, "SELECT");
+  console.log(RASPIL, "SELECT");
 
   objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
@@ -452,7 +452,7 @@ const take3DScreenshot = () => {
 
 const removeModel = (model) => {
   if (VerdekConstructor.value) {
-    eventBus.emit("A:RemoveModel", model);
+    eventBus.emit("A:RemoveModel", { product: model });
     controller.value = false;
   }
 };
@@ -587,7 +587,7 @@ const deliteTable = () => {
   if (parent) {
     removeModel(parent);
   } else {
-    removeModel();
+    removeModel(null);
   }
 };
 
@@ -674,7 +674,7 @@ defineExpose({
         />
         <DeleteControllerButton
           v-if="Object.keys(CutData).length == 0"
-          @click="removeModel"
+          @click="removeModel(null)"
         />
       </div>
       <div class="controller-right">
