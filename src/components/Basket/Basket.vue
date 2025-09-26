@@ -1,6 +1,7 @@
 <template>
   <div class="basket">
     <div class="basket-header">
+      <div v-if="loading" class="basket__loader"></div>
       <div class="basket-header__title">Корзина</div>
       <ClosePopUpButton
         class="basket-header__close-btn" 
@@ -9,7 +10,7 @@
     </div>
     <div class="basket-container">
       <!-- {{ loading }} -->
-      <div v-if="loading">Загрузка...</div>
+      <!-- {{ mainItems }} -->
       <div class="basket-container__main-table">
         <BasketTable
           :key="basketUpdateKey"
@@ -33,10 +34,10 @@
         <p class="basket__sum-no">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
       </div>
       <div class="basket-footer-buttons">
-        <div class="basket__error">
+        <!-- <div class="basket__error">
           <p class="error__title"></p>
           <p class="error__title">1 Ошибка</p>
-        </div>
+        </div> -->
         <button class="basket__close" @click="closePopup">Закрыть</button>
         <button class="basket__save">Печать</button>
         <button class="basket__order" @click="setInvoice">Оформить заказ</button>
@@ -53,11 +54,11 @@ import { useBasketStore } from '@/store/appStore/useBasketStore';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useEventBus } from '@/store/appliction/useEventBus';
 
-const { basketData, syncBasket, syncInvoce, loading } = useBasketStore();
+const { basketData, syncBasket, syncInvoce} = useBasketStore();
 const popupStore = usePopupStore();
 const items = ref<any>(null);
 const eventBus: ReturnType<typeof useEventBus> = useEventBus()
-
+const loading = ref(true)
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 
@@ -93,6 +94,7 @@ const updateBasketData = async () => {
     const basketData = await syncBasket();
     items.value = basketData;
     basketUpdateKey.value++; // Принудительно обновляем ключ для перерисовки
+    loading.value = false;
   } catch (error) {
     console.error('Ошибка при обновлении корзины:', error);
   }
@@ -110,6 +112,7 @@ watch(() => useBasketStore().basketData, (newValue) => {
   console.log('Basket data changed:', newValue);
   items.value = newValue;
   basketUpdateKey.value++;
+  loading.value = false;
 }, { deep: true });
 
 
@@ -254,6 +257,45 @@ watch(() => useBasketStore().basketData, (newValue) => {
         }
       }
     }
+
+    &__loader {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      position: absolute;
+      top: 1px;
+      left: 0;
+      animation: rotate 1s linear infinite
+    }
+
+    &__loader::before , &__loader::after {
+      content: "";
+      box-sizing: border-box;
+      position: absolute;
+      inset: 0px;
+      border-radius: 50%;
+      border: 5px solid #da444c73;
+      animation: prixClipFix 2s linear infinite ;
+    }
+
+    &__loader::after{
+      border-color: #DA444C;
+      animation: prixClipFix 2s linear infinite , rotate 0.5s linear infinite reverse;
+      inset: 6px;
+    }
+  }
+
+  @keyframes rotate {
+    0%   {transform: rotate(0deg)}
+    100%   {transform: rotate(360deg)}
+  }
+
+  @keyframes prixClipFix {
+    0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+    25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+    50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+    75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+    100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
   }
 
 </style>

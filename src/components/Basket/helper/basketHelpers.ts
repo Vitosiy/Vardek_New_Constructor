@@ -81,9 +81,10 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
       //   251698, 251699, 251701, 732170, 1458340, 
       //   1920165, 4169375
       // ],
-      USLUGI: [
-        98683, 249713, 1467341
-      ],
+      USLUGI: [],
+      // USLUGI: [
+      //   98683, 249713, 1467341
+      // ],
       TABLETOP:  (objProps),
     },
     QUANTITY: 1,

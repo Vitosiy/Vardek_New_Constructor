@@ -1,10 +1,10 @@
 <template>
   <div class="auth-slider" >
-    <ImageSwiper 
-      :images="images"
-      v-if="!newsStore.isLoading"
-      :autoplay="{ delay: 3000, disableOnInteraction: false }"
-    />
+      <ImageSwiper 
+        :images="images"
+        v-if="!newsStore.isLoading"
+        :autoplay="{ delay: 3000, disableOnInteraction: false }"
+      />
   </div>
 </template>
 

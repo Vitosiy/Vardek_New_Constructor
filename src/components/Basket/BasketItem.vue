@@ -8,7 +8,7 @@
     </div>
 
     <div class="basket-item__product">
-      <h3>{{ item?.product.NAME }}</h3>
+      <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">{{ item?.product.NAME }}</h3> 
 
       <!-- Секция свойств товара -->
       <div class="basket-item__props" v-if="item?.product.PROPS">
@@ -137,6 +137,20 @@
             </span>
 
           </div>
+          <!-- <div v-if="propValue?.RASPIL?.data">
+            <div v-for="(raspil, index) in propValue?.RASPIL?.data"> 
+              <div class="basket-item__props-lable">Распил  {{++index}}</div>
+                <ul>
+                  <li>Ширина: {{ raspil[0].width }}</li>
+                  <li>Высота: {{ raspil[0].height }}</li>
+                </ul>
+                <div  class="basket-item__props-lable">Услуги:</div>
+                <ul v-for="(service, index) in raspil[0].serviseData">
+                    <li v-if="service.value">{{ service.NAME }}</li>
+                </ul>
+
+            </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -144,20 +158,20 @@
     
     <div class="basket-item__quantity">
       <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="decrement(item.product.BASKETID, item?.product.TYPE)">-</button>
-      <input type="text" :disabled="item?.product.TYPE !== 'catalog'" class="basket-item__quantity-input" v-model="item.product.quantity" @change="() => updateQuantity(item.product.BASKETID, item?.product.TYPE)" />
+      <input type="text" :disabled="item?.product.TYPE !== 'catalog'" class="basket-item__quantity-input" v-model="item.product.quantity" placeholder="1" @change="() => updateQuantity(item.product.BASKETID, item?.product.TYPE)" />
       <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="increment(item.product.BASKETID, item?.product.TYPE)">+</button>
     </div>
 
     <div class="basket-item__price">
-      {{ item.product.unitPriceFormat }}
+      {{ item.product.unitPriceFormat ?? 0 }}
     </div>
 
     <div class="basket-item__price basket-item__total">
-      {{ item.product.allPriceFormat }}
+      {{ item.product.allPriceFormat ?? 0}}
     </div>
 
     <div class="basket-item__price basket-item__old-total">
-      <span>{{ item.product.allPriceOldFormat }}</span>
+      <span>{{ item.product.allPriceOldFormat ?? 0 }}</span>
     </div>
 
     <div class="basket-item__price basket-item__action">
@@ -713,6 +727,9 @@ const deleteProductInBusket = (id: string, type: string) => {
   padding: 15px 0;
   &:not(:last-child) {
     border-bottom: 1px solid #eee;
+  }
+  &__product-name--error {
+    color: red !important;
   }
 
   @media (max-width: 768px) {

@@ -100,8 +100,7 @@ export class TrafficManager {
             })
             console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
-            const basketStore = useBasketStore();
-            basketStore.addFromScene();
+            // Обновление корзины при простом выборе/перемещении не требуется
 
             if (object.userData.elementType !== 'raspil') {
                 const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
@@ -177,7 +176,7 @@ export class TrafficManager {
     //     this.currentObject = null
     // }
 
-    removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer }) {
+    removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer } = {}) {
 
         const removeObj = product ?? this._currentObject
         console.log('product', product, removeObj)

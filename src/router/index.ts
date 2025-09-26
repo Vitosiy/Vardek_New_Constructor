@@ -60,7 +60,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
   const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
-
+  console.log('COOKIE_NAMES.AUTH_TOKEN', COOKIE_NAMES.AUTH_TOKEN)
+  console.log('COOKIE_NAMES.TOKEN_EXPIRATION', COOKIE_NAMES.TOKEN_EXPIRATION)
   const appDataStore = useAppData()
   const authStore = useAuthStore()
 
@@ -77,7 +78,6 @@ router.beforeEach((to, from, next) => {
       const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
       console.log(`Токен действителен еще ${secondsLeft} сек.`);
       // next('/2d');
-
     }
   }
   

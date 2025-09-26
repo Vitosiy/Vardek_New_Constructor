@@ -118,13 +118,13 @@ export const useBasketStore = defineStore("basket", () => {
       };
 
       const response = await BasketService.getBasket(newBasket);
-      if (response?.DATA?.type !== "error") {
-        // ОБЯЗАТЕЛЬНО: присваиваем новое значение для реактивности
-        basketData.value = { ...response.DATA };
-        return basketData.value;
-      } else {
-        clearBasket();
-      }
+      basketData.value = { ...response.DATA };
+      return basketData.value;
+      // if (response?.DATA?.type !== "error") {
+      //   // ОБЯЗАТЕЛЬНО: присваиваем новое значение для реактивности
+      // } else {
+      //   clearBasket();
+      // }
     } catch (err: any) {
       error.value = err.message || "Ошибка при синхронизации корзины";
       console.error("Sync basket error:", err);
