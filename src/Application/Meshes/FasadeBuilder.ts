@@ -57,6 +57,7 @@ export class FasadeBuilder {
         const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
+        console.log(FASADE_PROPS, 'FFGGFASADE_PROPS')
 
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
@@ -79,22 +80,37 @@ export class FasadeBuilder {
 
         // Хелпер: выбор дефолтного цвета по типу элемента (точно как в исходнике)
         const resolveColorId = (fasadeColor: number) => {
+
             const isDefault = fasadeColor === this.parent.project.default_fasade_color;
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    // return ((defFasadeDown && isDefault) || (fasadsBottom.global && (defFasadeDown && isDefault))) ? defFasadeDown : fasadeColor;
+                    console.log('down')
 
-                    return (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor;
+                    return {
+                        color: (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor,
+                        pallite: fasadsBottom.palitte
+                    }
                 case "element_up":
-                    // return ((defFasadeUp && isDefault) || (fasadsTop.global && (defFasadeDown && isDefault))) ? defFasadeUp : fasadeColor; 
 
-                    return (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor;
+                    console.log('Top ')
+                    return {
+                        color: (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor,
+                        pallite: fasadsTop.palitte
+                    }
                 default:
-                    return fasadeColor;
+                    console.log('None ')
+                    return {
+                        color: fasadeColor,
+                        pallite: null
+                    };
             }
         };
 
+
+
         if (Number.isInteger(fasadeNdx)) {
+            const { color, pallite } = resolveColorId(fasadeData.COLOR);
+
             console.log('--2')
             const fasadeData: THREETypes.TFasadeProp = FASADE_PROPS[fasadeNdx];
             const curFasade = FASADE[fasadeNdx]
@@ -108,15 +124,15 @@ export class FasadeBuilder {
                 fasadeData.HANDLES = this.handlesBuilder.restoreDefaultHandleData(fasadeData)
             }
             else {
-                fasadeData.COLOR = resolveColorId(fasadeData.COLOR);
+                fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
                 fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
-                if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
-                    fasadeData.PALETTE = firstValuePall.ID;
+                if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
+                    fasadeData.PALETTE = pallite;
                 }
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
                     fasadeData.PALETTE = null;
@@ -219,6 +235,7 @@ export class FasadeBuilder {
         for (let key = 0; key < FASADE_PROPS.length; key++) {
             const fasadeData = FASADE_PROPS[key];
 
+
             // if (fasadeNdx !== null && fasadeNdx !== key) continue; // важно: 0 считается как "все", как в исходнике
 
             // Обнуление при remove + точечный индекс
@@ -234,15 +251,19 @@ export class FasadeBuilder {
             // Массовая инициализация, когда remove=false и индекс не задан
             if (!remove && !fasadeNdx) {
 
-                fasadeData.COLOR = resolveColorId(fasadeData.COLOR);
+                const { color, pallite } = resolveColorId(fasadeData.COLOR);
+
+                console.log(pallite, '5')
+
+                fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
                 fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
-                if (fasadeData.SHOW && firstValuePall && fasadeData.PALETTE === null) {
-                    fasadeData.PALETTE = firstValuePall.ID;
+                if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
+                    fasadeData.PALETTE = pallite;
                 }
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
                     fasadeData.PALETTE = null;
@@ -292,6 +313,8 @@ export class FasadeBuilder {
             // const fasadeEdge = this.edgeBuilder.createEdge(fasade);
             fasade.userData.edgeID = fasadeEdge.id;
 
+            console.log(fasadeData, 'fasadeData')
+
             if (isNewFasade) {
                 FASADE.push(fasade);
                 const copy = fasade.clone();
@@ -302,6 +325,7 @@ export class FasadeBuilder {
 
             // Палитра
             if (fasadeData.PALETTE != null) {
+
                 this.parent.palette_bulider.createPaletteColor({
                     fasade,
                     data: fasadeData.PALETTE,

@@ -54,7 +54,7 @@ export class MeshEvents extends BuildersHelper {
     handlesBuilder: THREETypes.THandlesBuilder
     private millings: any | null = MILLINGS
     private additionaMillinglKeys: any | null = additionaMillinglKeys
-    private alumTextures = alumTextures
+    private alumTextures: string | null = alumTextures
 
     private _overrideMesh?: THREE.Object3D | null;
 
@@ -71,6 +71,8 @@ export class MeshEvents extends BuildersHelper {
     private onChangeGlobalTopTable: ({ data, type }: TDataWithType) => void;
 
     private onChangePaletteColor: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onChangeTotalPaletteTop: ({ data, type }: TDataWithType) => void;
+
     private onChangeGlassColor: ({ data, fasadeNdx }: TDataWithNdx) => void;
 
     private onChangeMilling: ({ data, fasadeNdx }: TDataWithNdx) => void;
@@ -125,6 +127,8 @@ export class MeshEvents extends BuildersHelper {
         this.onChangeGlobalTopTable = this.changeGlobalTopTable.bind(root);
 
         this.onChangePaletteColor = this.changePaletteColor.bind(root);
+        this.onChangeTotalPaletteTop = this.changeTotalFasadsPaletteColor.bind(root)
+
         this.onChangeGlassColor = this.changeGlassColor.bind(root);
 
         this.onChangeMilling = this.changeMilling.bind(root);
@@ -176,13 +180,6 @@ export class MeshEvents extends BuildersHelper {
         const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS } = CONFIG
         const defaultConfig: THREETypes.TDefaultOptionsConfig = this.buildProduct.getDefaultOptionsConfig();
-
-        // const rootFasadeParent = this.getRootObject(FASADE[fasadeNdx]).children[0]
-
-        // console.log(this.getRootObject(FASADE[fasadeNdx]).children[0], 'ROOT_1',
-
-        //     rootFasadeParent, 'ROOT_2'
-        // )
         const fasadeExist = FASADE[fasadeNdx]
 
         const rebuild = (fasadeNdx) => {
@@ -438,15 +435,21 @@ export class MeshEvents extends BuildersHelper {
     }
 
     changeTotalFasadsPaletteColor({ data, type }: TDataWithType) {
+        console.log({ data, type })
+
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
+
+        console.log(elementsList, 'elementsList')
 
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
                 if (fasadeList.length > 0) {
                     fasadeList.forEach(async (_fasade, fasadeNdx) => {
-                        await this.catchChangePaletteColor({ data, fasadeNdx, currentMesh: el });
+                        this._currentMesh = el;
+                        await this.catchChangePaletteColor({ data: data.ID, fasadeNdx });
+                        this._currentMesh = null
                     });
                 }
             });
@@ -943,6 +946,10 @@ export class MeshEvents extends BuildersHelper {
             this.changePaletteColor({ data, fasadeNdx });
         }
 
+        this.onChangeTotalPaletteTop = ({ data, type }) => {
+            this.changeTotalFasadsPaletteColor({ data, type })
+        }
+
         this.onChangeGlassColor = ({ data, fasadeNdx }) => {
             this.changeGlassColor({ data, fasadeNdx });
         }
@@ -1014,6 +1021,8 @@ export class MeshEvents extends BuildersHelper {
         this.events.on("A:ChangeTableTop", this.onChangeGlobalTopTable)
 
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
+        this.events.on('A:ChangePalitteTop', this.onChangeTotalPaletteTop)
+
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
 
         this.events.on('A:ChangeMilling', this.onChangeMilling);

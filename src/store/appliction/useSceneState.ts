@@ -1,10 +1,10 @@
-// @ts-nocheck
+/**// @ts-nocheck */
 
 import { defineStore } from 'pinia';
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { computed, ref } from 'vue';
 import * as THREEInterfases from "../../types/interfases"
-import { TLightRange, TQuality, TOptionsMap } from '@/types/types';
+import { TLightRange, TQuality, TOptionsMap, TOptionItem } from '@/types/types';
 import { IWallSizes, ICameraData, ILightsObjects, IProjectParams } from '@/types/interfases';
 
 import { START_PROJECT_PARAMS } from '@/Application/F-startData';
@@ -31,8 +31,20 @@ export const useSceneState = defineStore('SceneState', () => {
 
     const keys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
         moduleTop: 'default_module_color_up',
-        moduleBottom: 'default_module_color_down'
+        moduleBottom: 'default_module_color_down',
+        fasadsTop: 'default_fasade_up',
+        fasadsBottom: 'default_fasade_down',
     };
+
+    const externalPalitteKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
+        fasadsTop: 'default_palit_top',
+        fasadsBottom: 'default_palit_bottom'
+    }
+
+    const externalMillingKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
+        fasadsTop: 'default_milling_top',
+        fasadsBottom: 'default_milling_bottom'
+    }
 
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
@@ -162,12 +174,27 @@ export const useSceneState = defineStore('SceneState', () => {
         startRoomData.value[type] = value
     }
 
-    const updateDefaultData = <T extends keyof typeof keys>(type: T, value: string | number | null
+    const updateDefaultData = <T extends keyof typeof keys>(type: T, value: TOptionItem | null
     ) => {
         const curOption = keys[type];
+        const curPalitte = externalPalitteKeys[type];
+
+        console.log(value, 'curOption')
         if (curOption) {
-            startProjectParams.value[curOption] = value;
-            currentProjectParams.value[curOption] = value;
+            console.log(startProjectParams.value, 'startProjectParams_1')
+
+            startProjectParams.value[curOption] = value?.id;
+            currentProjectParams.value[curOption] = value?.id;
+
+            if (value?.palitte) {
+                console.log('P1')
+                if (curPalitte) {
+                    console.log('P2')
+                    startProjectParams.value[curOption] = value?.palitte;
+                    currentProjectParams.value[curOption] = value?.palitte;
+                }
+
+            }
         }
     };
 

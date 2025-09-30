@@ -72,8 +72,7 @@ const isGlassExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
   const product = _APP.CATALOG.PRODUCTS[productId.value];
-  const { COLOR } =
-    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
+  const { COLOR } = productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
   const dataOfFasadeType = _FASADE[COLOR];
 
   isSurfaceSelected.value = true;
@@ -94,7 +93,14 @@ const onSelectMaterial = (data) => {
   isPatinaExist.value = patinaList.value.length > 0 && !product.GLASS[0];
 
   currentSurfaceData.value = data;
-  currentMillingData.value = {};
+  if (millingList.value.length > 0) {
+    const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
+    modelState.setMillingId(props.tabIndex, ID);
+    currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  } else {
+    currentMillingData.value = {};
+  }
+
   currentPatinaData.value = {};
 
   if (isPalleteExist.value) {
@@ -142,7 +148,10 @@ const deleteSelectedOptions = (type: String) => {
   }
   if (type === "milling") {
     eventBus.emit("A:DeliteMilling", props.tabIndex);
-    currentMillingData.value = { name: "", imgSrc: null };
+
+    const { NAME, PREVIEW_PICTURE } = millingList.value[0];
+    currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    // currentMillingData.value = { name: "", imgSrc: null };
     eventBus.emit("A:DelitePatina", props.tabIndex);
     currentPatinaData.value = { name: "", imgSrc: null };
   }
@@ -260,6 +269,8 @@ const prepareData = () => {
     isSurfaceSelected.value = true;
   }
 
+  console.log(modelState.getCurrentMillingData, "INPREPARE");
+
   if (MILLING) {
     const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
       modelState.getCurrentMillingData.find(
@@ -300,7 +311,7 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  console.log('START')
+  console.log("START");
   prepareData();
 });
 

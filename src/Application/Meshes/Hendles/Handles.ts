@@ -107,7 +107,7 @@ export class HandlesBuilder {
 
         const W = handlSize.x;
         const H = handlSize.y;
-        const offset = 50; // мм
+        const offset = 25; // мм
 
         const cfg = this.positionMap[action];
         if (!cfg) {
@@ -137,7 +137,7 @@ export class HandlesBuilder {
         else posY = 0;
 
         // Z оставляем как было в normalizeHandlePivot (или пересчитываем аналогично)
-        const posZ = (FASADE_DEPTH / 2) + handlSize.z * 0.6;
+        const posZ = (FASADE_DEPTH / 2) + handlSize.z * 0.55;
 
         // Применяем позицию и поворот
         handleMesh.position.set(posX, posY, posZ);

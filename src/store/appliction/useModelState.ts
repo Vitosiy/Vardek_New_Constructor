@@ -164,8 +164,10 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Палитра */
-    const createCurrentPaletteData = (value: number) => {
+    const createCurrentPaletteData = (value: number | string) => {
+
         let result = {}
+        if (!_FASADE[value]) return result
         if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
             result = Object.keys(_PALETTE)
                 .filter(
@@ -222,6 +224,13 @@ export const useModelState = defineStore('ModelState', () => {
     const getCurrentMillingData = computed(() => {
         return currentMillingData.value
     })
+
+    const setMillingId = (fasadeId, id) => {
+
+        const { FASADE_PROPS } = currentModel.value?.PROPS.CONFIG
+        FASADE_PROPS[fasadeId].MILLING = id
+        console.log(id)
+    }
 
     /** Витрины */
     const createCurrentWindowsData = ({ fasadeId, productId }) => {
@@ -332,6 +341,7 @@ export const useModelState = defineStore('ModelState', () => {
 
         createCurrentMillingData,
         getCurrentMillingData,
+        setMillingId,
 
         createCurrentWindowsData,
         getCurrentWindowsData,
@@ -346,7 +356,7 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPatinaData,
 
         createCurrentModuleData,
-        getCurrentModuleData, 
+        getCurrentModuleData,
 
         getOptions
     }

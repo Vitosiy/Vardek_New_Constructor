@@ -1,24 +1,24 @@
 <script setup lang="ts">
-/**// @ts-nocheck */
+/** @ts-nocheck */
 import {
   ref,
   computed,
   watch,
   onBeforeMount,
-  onMounted,
   onUnmounted,
   defineExpose,
 } from "vue";
 import { _URL } from "@/types/constants";
-import { TQuality } from "@/types/types";
-import {
+import type {
+  TQuality,
   TOptionsMap,
   TTextureActionMap,
   TTextureItem,
-  TFasadeItem,
   MenuType,
+  TPalitte,
+  TOptionItem,
 } from "@/types/types";
-import { IWallSizes } from "@/types/interfases";
+import type { IWallSizes } from "@/types/interfases";
 
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useSceneState } from "@/store/appliction/useSceneState";
@@ -27,24 +27,21 @@ import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useRoomOptions } from "./roomOptions/useRoomOptons";
 
-import MainInput from "@/components/ui/inputs/MainInput.vue";
-import MainButton from "@/components/ui/buttons/MainButton.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
-import Accordion from "@/components/ui/accordion/Accordion.vue";
-import RangeSlider from "@/components/ui/rangeSlider/RangeSlider.vue";
-import Toggle from "@vueform/toggle";
-import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
-import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
-import { AppLights } from "@/Application/World/Lights";
+import RoomList from "./roomOptions/RoomList.vue";
+import RoomOptions from "./roomOptions/RoomOptions.vue";
+import RoomHeight from "./roomOptions/RoomHeight.vue";
+import RoomVisualSettings from "./roomOptions/RoomVisualSettings.vue";
+import ColorSelector from "./roomOptions/ColorSelector.vue";
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
 const roomState = useRoomState();
 const menuStore = useMenuStore();
 const appData = useAppData();
-const roomOptions = useRoomOptions()
+const roomOptions = useRoomOptions();
 
-const clampHeight = ref<number | null>(null);
+const clampHeight = ref<number | null | string>(null);
 const quality = ref<TQuality[] | null>(null);
 const currentQuality = ref<TQuality | null>(null);
 
@@ -58,13 +55,20 @@ const currentOption = ref<keyof TTextureActionMap | null>(null);
 const currentOptionLable = ref<string | null>(null);
 
 const optionsData = ref<{ [key: string]: any } | null | any[]>(null);
+const palitteData = ref<{ [key: string]: any } | null>(null);
+const palittSelect = ref<boolean>(false);
+
 const roomRef = ref<HTMLElement | null>(null);
 
-const modulesColorData = ref(null);
-const defaultFasadeData = ref(null);
-const defaultTableTopData = ref(null);
-const wallsTextures = ref(null);
-const floorTextures = ref(null);
+const visualData = ref<any>({
+  module: null,
+  fasade: null,
+  table: null,
+  walls: null,
+  floor: null,
+  palitteTop: null,
+  palitteBottom: null,
+});
 
 const optionsType = ref<TTextureActionMap>({
   wall: "A:ChangeWallTexture",
@@ -74,6 +78,8 @@ const optionsType = ref<TTextureActionMap>({
   fasadsTop: "A:ChangeFasadsTopTexture",
   fasadsBottom: "A:ChangeFasadsBottomTexture",
   tableTop: "A:ChangeTableTop",
+  palitteTop: "A:ChangePalitteTop",
+  palitteBottom: "A:ChangePalitteBottom",
 });
 
 const globalOptions = ref<TOptionsMap | null>(null);
@@ -88,11 +94,10 @@ onUnmounted(() => {
   roomOptions.setLightRange("ambientLight", ambientLight.value);
   roomOptions.setRefractionValue(refraction.value);
   roomOptions.setShadowValue(shadows.value);
+  palittSelect.value = false;
 });
 
-defineExpose({
-  roomRef,
-});
+defineExpose({ roomRef });
 
 const prepareOptions = () => {
   const { wall, floor } = roomState.getCurrentRoomParams as IWallSizes;
@@ -100,16 +105,23 @@ const prepareOptions = () => {
   roomOptions.updateOption("wall", wall as number);
   roomOptions.updateOption("floor", floor as number);
 
+  visualData.value = {
+    module: roomOptions.getDefaultModuleData(),
+    fasade: roomOptions.getDefaultFasadeData(),
+    table: roomOptions.getDefaultTableTopData(),
+    walls: roomOptions.getWallsTextures(),
+    floor: roomOptions.getFloorTextures(),
+  };
+
   globalOptions.value = roomOptions.getGlobalOptions;
-  modulesColorData.value = roomOptions.getDefaultModuleData();
-  wallsTextures.value = roomOptions.getWallsTextures();
-  floorTextures.value = roomOptions.getFloorTextures();
-  defaultFasadeData.value = roomOptions.getDefaultFasadeData();
-  defaultTableTopData.value = roomOptions.getDefaultTableTopData();
+  const { fasadsBottom, fasadsTop } = globalOptions.value;
+  prepareFasade([fasadsBottom, fasadsTop]);
+
+  console.log(globalOptions.value, "globalOptions");
 
   clampHeight.value = roomOptions.getHeightClamp;
   quality.value = roomOptions.getQuality;
-  currentQuality.value = quality.value.find((el) => el.active);
+  currentQuality.value = quality.value?.find((el) => el.active) ?? null;
 
   shadows.value = roomOptions.getShadowValue;
   refraction.value = roomOptions.getRefractionValue;
@@ -117,12 +129,22 @@ const prepareOptions = () => {
   ambientLight.value = roomOptions.getAmbientLightRange;
 };
 
+const prepareFasade = (arr: TOptionItem[]) => {
+  for (const el in arr) {
+    const option = arr[el];
+    if (option.palitte) {
+      option.palitteData = checkPalitte(option.id);
+    }
+  }
+};
+
 const closeMenu = (menuType: MenuType) => {
   menuStore.closeMenu(menuType);
 };
 
-const changeHeightClamp = () => {
-  eventBus.emit("A:Height-clamp", clampHeight.value);
+const changeHeightClamp = (value: number | null) => {
+  clampHeight.value = value;
+  eventBus.emit("A:Height-clamp", value);
 };
 
 const loadRoom = (id: number) => {
@@ -140,7 +162,7 @@ const deliteRoom = (value: number) => {
 
 const changeQuality = (data: TQuality) => {
   currentQuality.value = data;
-  roomOptions.setQuality(data.value, true);
+  roomOptions.setQuality(data.value);
   eventBus.emit("A:Quality", data.value);
 };
 
@@ -169,85 +191,61 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
   currentOption.value = value;
   switch (value) {
     case "wall":
-      optionsData.value = Object.values(wallsTextures.value);
+      optionsData.value = Object.values(visualData.value.walls);
       break;
     case "floor":
-      optionsData.value = Object.values(floorTextures.value);
+      optionsData.value = Object.values(visualData.value.floor);
       break;
     case "moduleTop":
-      optionsData.value = Object.values(modulesColorData.value);
-      break;
     case "moduleBottom":
-      optionsData.value = Object.values(modulesColorData.value);
+      optionsData.value = Object.values(visualData.value.module);
       break;
     case "fasadsTop":
-      optionsData.value = defaultFasadeData.value as [];
-      break;
     case "fasadsBottom":
-      optionsData.value = defaultFasadeData.value as [];
+      optionsData.value = visualData.value.fasade as [];
       break;
     case "tableTop":
-      optionsData.value = Object.values(defaultTableTopData.value);
+      optionsData.value = Object.values(visualData.value.table);
       break;
   }
-
   currentOptionLable.value = title;
+  palittSelect.value = false;
 };
 
 const totalSelect = (event: Event, value: keyof TOptionsMap) => {
-  roomOptions.updateOptionGlobal(value, event.target!.checked);
+  roomOptions.updateOptionGlobal(
+    value,
+    (event.target as HTMLInputElement).checked
+  );
   const selectOption = roomOptions.getGlobalOptions[value];
+  console.log(selectOption, value, "selectOption");
 
-  switch (value) {
-    case "wall":
-      if (selectOption.global) {
-        roomOptions.apllyProjectWall(selectOption.id);
-        sceneState.updateStartRoomData(value, selectOption.id);
-        return;
-      }
-      sceneState.updateStartRoomData(value, 44128);
-
-      break;
-    case "floor":
-      if (selectOption.global) {
-        roomOptions.apllyProjectFloor(selectOption.id);
-        sceneState.updateStartRoomData(value, selectOption.id);
-        return;
-      }
-      sceneState.updateStartRoomData(value, 44013);
-      break;
-
-    case "moduleTop":
-      if (selectOption.global) {
-        sceneState.updateDefaultData(value, selectOption.id);
-        return;
-      }
-      sceneState.updateDefaultData(value, null);
-      break;
-
-    case "moduleBottom":
-      if (selectOption.global) {
-        sceneState.updateDefaultData(value, selectOption.id);
-        return;
-      }
-      sceneState.updateDefaultData(value, null);
-      break;
-
-    case "fasadsTop":
-      if (selectOption.global) {
-        sceneState.updateDefaultData(value, selectOption.id);
-        return;
-      }
-      sceneState.updateDefaultData(value, null);
-      break;
-
-    case "fasadsBottom":
-      if (selectOption.global) {
-        sceneState.updateDefaultData(value, selectOption.id);
-        return;
-      }
-      sceneState.updateDefaultData(value, null);
-      break;
+  if (selectOption) {
+    switch (value) {
+      case "wall":
+        if (selectOption.global) {
+          roomOptions.apllyProjectWall(selectOption.id);
+          sceneState.updateStartRoomData(value, selectOption.id);
+          return;
+        }
+        sceneState.updateStartRoomData(value, 44128);
+        break;
+      case "floor":
+        if (selectOption.global) {
+          roomOptions.apllyProjectFloor(selectOption.id);
+          sceneState.updateStartRoomData(value, selectOption.id);
+          return;
+        }
+        sceneState.updateStartRoomData(value, 44013);
+        break;
+      default:
+        if (selectOption.global) {
+          console.log("55");
+          sceneState.updateDefaultData(value, selectOption);
+          return;
+        }
+        sceneState.updateDefaultData(value, null);
+    }
   }
 };
 
@@ -259,6 +257,8 @@ const selectOption = (value: TTextureItem) => {
     case "fasadsTop":
     case "fasadsBottom":
     case "tableTop":
+    case "palitteTop":
+    case "palitteBottom":
       data = { data: value, type: currentOption.value };
       break;
     default:
@@ -267,89 +267,96 @@ const selectOption = (value: TTextureItem) => {
   }
 
   if (currentOption.value) {
-    // console.log(data);
-    eventBus.emit(
-      optionsType.value[currentOption.value as keyof TTextureActionMap],
-      data
-    );
-    globalOptions.value![currentOption.value as keyof TTextureActionMap].id =
-      value.ID;
+    const curOption = globalOptions.value![currentOption.value];
+    console.log(palittSelect.value, value.ID)
+
+    if (!palittSelect.value) curOption.id = value.ID;
+
+    const isPalitte = checkPalitte(value.ID);
+    curOption.palitteData = isPalitte;
+    console.log(isPalitte, curOption, "CO");
+    if (isPalitte && curOption) {
+      if (curOption.palitte === null) {
+        if (isPalitte.length > 0) {
+          roomOptions.setGlobalPalitte(isPalitte[0].ID, currentOption.value);
+        } else {
+          roomOptions.setGlobalPalitte(null, currentOption.value);
+        }
+      } else {
+        roomOptions.setGlobalPalitte(value.ID, currentOption.value);
+        eventBus.emit(optionsType.value["palitteTop"], data);
+        return;
+      }
+    } else {
+      roomOptions.setGlobalPalitte(null, currentOption.value);
+    }
+
+    eventBus.emit(optionsType.value[currentOption.value], data);
     roomOptions.updateOption(currentOption.value, value.ID);
   }
 };
 
-/** Иконка выбранной опции */
+const palitteSelect = (
+  palitteTitle: string,
+  key: keyof TOptionsMap,
+  palitteData: TPalitte[]
+) => {
+  console.log(palitteData, "paliteData");
+  optionsData.value = palitteData;
+  currentOption.value = key;
+  currentOptionLable.value = palitteTitle;
+  palittSelect.value = true;
+};
+
+const checkPalitte = (fasadeId?: number | string): TPalitte[] | null => {
+  const curOption = globalOptions.value![currentOption.value!];
+  const id = curOption?.id ?? fasadeId;
+
+  const check = Object.values(roomOptions.getDefaultPalitData(id!));
+  if (check.length > 0) {
+    return check;
+  }
+  return null;
+};
+
 const getOptionImg = computed(() => {
   return (id: number | string, type: string) => {
     let result;
     const FASADE = appData.getAppData.FASADE;
     switch (type) {
       case "wall":
-        result = wallsTextures.value[id].PREVIEW_PICTURE;
+        result = visualData.value.walls[id].PREVIEW_PICTURE;
         break;
       case "floor":
-        result = floorTextures.value[id].PREVIEW_PICTURE;
+        result = visualData.value.floor[id].PREVIEW_PICTURE;
         break;
       case "moduleTop":
-        result = modulesColorData.value[id].PREVIEW_PICTURE;
-        break;
       case "moduleBottom":
-        result = modulesColorData.value[id].PREVIEW_PICTURE;
+        result = visualData.value.module[id].PREVIEW_PICTURE;
         break;
       case "fasadsTop":
-        result = FASADE[id].PREVIEW_PICTURE;
-        break;
       case "fasadsBottom":
         result = FASADE[id].PREVIEW_PICTURE;
         break;
       case "tableTop":
-        result = defaultTableTopData.value[id].PREVIEW_PICTURE;
+        result = visualData.value.table[id].PREVIEW_PICTURE;
         break;
     }
     return result;
   };
 });
 
-const roomsList = computed(() => {
-  return roomState.getRooms;
-});
-
-const getCurrentRoom = computed(() => {
-  return (id: number) => {
-    if (!roomState.getRoomId) return;
-    return {
-      active: id === roomState.getRoomId,
-    };
-  };
-});
-
-const getCurrentRedactor = computed(() => {
-  return currentOption.value?.includes("fasads");
-});
-
-watch(
-  () => pointLight.value,
-  () => {
-    changePointLightPower(pointLight.value);
-  }
+const roomsList = computed(() => roomState.getRooms);
+const getCurrentRoomId = computed(() => roomState.getRoomId);
+const getCurrentRedactor = computed(
+  () =>
+    (currentOption.value?.includes("fasads") && !palittSelect.value) ?? false
 );
 
-watch(
-  () => ambientLight.value,
-  () => {
-    changeAmbientLightPower(ambientLight.value);
-  }
-);
-
-watch(
-  () => refraction.value,
-  () => toggleRefraction(refraction.value)
-);
-
-watch(
-  () => shadows.value,
-  () => toggleShadow(shadows.value)
-);
+watch(pointLight, () => changePointLightPower(pointLight.value));
+watch(ambientLight, () => changeAmbientLightPower(ambientLight.value));
+watch(refraction, () => toggleRefraction(refraction.value));
+watch(shadows, () => toggleShadow(shadows.value));
 </script>
 
 <template>
@@ -359,163 +366,46 @@ watch(
       <ClosePopUpButton class="menu__close" @close="closeMenu('roomPar')" />
 
       <div class="room-popup__container">
-        <div class="room-select">
-          <div v-for="(room, key) in roomsList" :key="key">
-            <div class="room-select__item">
-              <button
-                :class="[
-                  'button__filled button__filled--text',
-                  getCurrentRoom(room.id),
-                ]"
-                @click="loadRoom(room.id)"
-              >
-                <span> {{ room.label }}</span>
-              </button>
-              <button class="button__filled" @click="deliteRoom(room.id)">
-                <span class="icon icon-garbage"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="room-options">
-          <div
-            v-for="(item, key) in globalOptions"
-            :key="key"
-            class="option-small"
-          >
-            <div class="option-label" @click="getOption(key, item.title)">
-              <img
-                class="label__img"
-                :src="_URL + getOptionImg(item.id, key)"
-                alt=""
-              />
+        <RoomList
+          :rooms="roomsList"
+          :currentRoomId="getCurrentRoomId"
+          @load-room="loadRoom"
+          @delete-room="deliteRoom"
+        />
+        <RoomOptions
+          v-if="globalOptions"
+          :palitte="palitteData"
+          :options="globalOptions"
+          :getOptionImg="getOptionImg"
+          @toSelect="getOption"
+          @toToggle="totalSelect"
+          @toPalitteSelect="palitteSelect"
+        />
 
-              <p class="label__text">{{ item.title }}</p>
-            </div>
-            <div class="option__checkbox">
-              <label class="control control-checkbox">
-                <input
-                  type="checkbox"
-                  :checked="item.global"
-                  @change="totalSelect($event, key)"
-                />
-                <span class="control_indicator"></span>
-                <span class="text-lg text-gray-800 font-medium">{{
-                  item.label
-                }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
         <h3 class="popup__title">Высота навесных модулей</h3>
-        <div class="room-modheight">
-          <!-- Добавить валидацию -->
-          <MainInput
-            v-model="clampHeight"
-            :min="500"
-            :max="3000"
-            class="input__search"
-            type="number"
-            placeholder="3000"
-          />
-          <MainButton
-            :className="'red__button right-menu'"
-            @click="changeHeightClamp"
-            >Применить</MainButton
-          >
-        </div>
-        <div class="visual">
-          <h3 class="visual__title">Свет и тени</h3>
-          <div class="visual__contant">
-            <div class="visual__top">
-              <div class="visual__top--left">
-                <Accordion>
-                  <template #title>
-                    <div class="label__container">
-                      <p class="label__text label__text--xs">Качество теней</p>
-                      <p class="label__text">{{ currentQuality.lable }}</p>
-                    </div>
-                  </template>
-                  <template #params="{ onToggle }">
-                    <ul class="accordion__contant">
-                      <li
-                        class="label__text"
-                        v-for="(param, key) in quality"
-                        :key="key"
-                        @click="
-                          () => {
-                            changeQuality(param);
-                            onToggle();
-                          }
-                        "
-                      >
-                        {{ param.lable }}
-                      </li>
-                    </ul>
-                  </template>
-                </Accordion>
-              </div>
-              <div class="visual__top--right visual__top--switch">
-                <div class="switch__container">
-                  <h4 class="label__text">Тени</h4>
-                  <Toggle v-model="shadows" />
-                </div>
-                <div class="switch__container">
-                  <h4 class="label__text">Отражение</h4>
-                  <Toggle v-model="refraction" />
-                </div>
-              </div>
-            </div>
-            <div class="visual__bottom">
-              <div class="visual__bottom--left">
-                <RangeSlider
-                  v-model="ambientLight"
-                  :min="0"
-                  :max="5"
-                  :step="0.01"
-                  :showValue="true"
-                >
-                  <template #title>
-                    <p class="label__text">Основное освещение</p>
-                  </template>
-                </RangeSlider>
-              </div>
-              <div class="visual__bottom--right">
-                <RangeSlider
-                  v-model="pointLight"
-                  :min="0"
-                  :max="5"
-                  :step="0.01"
-                  :showValue="true"
-                >
-                  <template #title>
-                    <p class="label__text">Направленное освещение</p>
-                  </template>
-                </RangeSlider>
-              </div>
-            </div>
-          </div>
-        </div>
+        <RoomHeight :clampHeight="clampHeight" @apply="changeHeightClamp" />
+
+        <RoomVisualSettings
+          :currentQuality="currentQuality"
+          :quality="quality"
+          v-model:shadows="shadows"
+          v-model:refraction="refraction"
+          v-model:ambientLight="ambientLight"
+          v-model:pointLight="pointLight"
+          @change-quality="changeQuality"
+        />
       </div>
     </div>
 
     <transition name="slide--left" mode="out-in">
-      <div class="color-select" v-if="optionsData" key="color-select">
-        <h1 class="color__title">{{ currentOptionLable }}</h1>
-
-        <SurfaceRedactor
-          :materialList="optionsData"
-          @select_material="selectOption"
-          :tempWork="true"
-          v-if="getCurrentRedactor"
-        />
-
-        <MaterialSelector
-          :materials="optionsData"
-          @select="selectOption"
-          v-else
-        />
-      </div>
+      <ColorSelector
+        v-if="optionsData"
+        key="color-select"
+        :optionsData="optionsData"
+        :currentOptionLabel="currentOptionLable"
+        :getCurrentRedactor="getCurrentRedactor"
+        @select="selectOption"
+      />
     </transition>
   </div>
 </template>
@@ -569,12 +459,10 @@ watch(
     gap: 15px;
     position: relative;
     padding: 15px;
-    // background: rgba($white, 0.6);
     background: rgba($white, 1);
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: 1;
     border-radius: 15px;
-    // backdrop-filter: blur(5px);
 
     &__container {
       max-height: 80vh;
@@ -583,92 +471,6 @@ watch(
       gap: 15px;
       padding-right: 10px;
       overflow: auto;
-    }
-  }
-}
-
-.option {
-  &-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    border-radius: 15px;
-    transition-property: background-color;
-    transition-duration: 0.25s;
-    transition-timing-function: ease;
-    cursor: pointer;
-
-    @media (hover: hover) {
-      &:hover {
-        .label__text {
-          color: $black;
-        }
-
-        // background-color: $stroke;
-      }
-    }
-  }
-
-  &-small {
-    flex: 46%;
-    padding: 10px;
-    border-radius: 15px;
-    background-color: $bg;
-  }
-
-  &-standart {
-    width: 100%;
-    padding: 10px;
-    border-radius: 15px;
-    background-color: $bg;
-  }
-
-  &-standart {
-    width: 100%;
-    padding: 10px;
-    border-radius: 15px;
-    background-color: $bg;
-  }
-}
-
-.color {
-  &-select {
-    position: absolute;
-    left: 575px;
-    width: 100%;
-    max-width: 373px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px;
-    background: rgba($white, 1);
-    // background: rgba($white, 0.6);
-    box-shadow: 0px 0px 10px 0px #3030301a;
-    z-index: -1;
-    border-radius: 15px;
-    // backdrop-filter: blur(5px);
-
-    &__container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      overflow: auto;
-    }
-
-    &-item {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      padding: 10px;
-      background-color: $bg;
-      border-radius: 15px;
-      gap: 10px;
-
-      &__title {
-        font-size: 15px;
-        font-weight: 500;
-      }
     }
   }
 }
@@ -722,6 +524,13 @@ watch(
   }
 }
 
+.menu__close {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+  cursor: pointer;
+}
+
 .label {
   &__container {
     display: flex;
@@ -742,12 +551,6 @@ watch(
     transition-property: color;
     transition-duration: 0.25s;
     transition-timing-function: ease;
-
-    // @media (hover: hover) {
-    //   &:hover {
-    //     color: $black;
-    //   }
-    // }
 
     &--xs {
       color: $dark-grey;
@@ -772,14 +575,7 @@ watch(
   }
 }
 
-.menu__close {
-  position: absolute;
-  right: 15px;
-  top: 15px;
-  cursor: pointer;
-}
-
-@media screen and (width <=1023px) {
+@media screen and (width <= 1023px) {
   .visual {
     &__top {
       max-width: 100%;

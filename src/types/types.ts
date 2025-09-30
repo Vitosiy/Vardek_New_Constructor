@@ -107,11 +107,16 @@ export type TQuality = {
   active: boolean
 }
 
-type TOptionItem = {
+export type TOptionItem = {
   id: number | string;
-  global: boolean;
+  palitte?: number | string | null,
+  milling?: number | string | null,
+  global?: boolean;
   title: string;
-  label: string;
+  label?: string;
+  prefix?: string,
+  palitteTitle?: string,
+  palitteData?: TPalitte[] | null
 };
 
 export type TLightRange = {
@@ -124,6 +129,8 @@ export type TOptionsMap = {
   floor: TOptionItem;
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
+  palitteTop?: TOptionItem;
+  palitteBottom?: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
@@ -136,6 +143,9 @@ export type TTextureActionMap = {
   moduleBottom: 'A:ChangeModuleTotalTexture';
   fasadsTop: 'A:ChangeFasadsTopTexture';
   fasadsBottom: 'A:ChangeFasadsBottomTexture';
+  tableTop: 'A:ChangeTableTop',
+  palitteTop: 'A:ChangePalitteTop',
+  palitteBottom: 'A:ChangePalitteBottom',
 };
 
 export type TTextureItem = {
@@ -148,7 +158,7 @@ export type TTextureItem = {
   sort: number;
 };
 
-export type eTFasadeItem = {
+export type TFasadeItem = {
   ID: number;
   NAME: string;
   IBLOCK_SECTION_ID: string;
@@ -297,6 +307,7 @@ export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
   COLOR: number | null,
+  BODY: number | null,
   TYPE: number | null,
   MILLING: number | null,
   PALETTE: number | null,
@@ -439,6 +450,17 @@ export type IProductFull = {
   PREVIEW_PICTURE: string;
   FILLING_SECTION: boolean;
   FASADE_POSITION: number[];
+}
+
+
+export type TPalitte = {
+  ID: number;
+  NAME: string;
+  TYPE: string;
+  UNAME: string;
+  HTML: string;
+  PREVIEW_PICTURE: string | null;
+  DETAIL_PICTURE: string | null;
 }
 
 
