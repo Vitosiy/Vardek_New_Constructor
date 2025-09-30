@@ -21,6 +21,7 @@ import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorCon
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
 import ModuleOptionsManager from "@/components/2DmoduleConstructor/utils/ModuleOptionsManager.vue";
+import Toggle from "@vueform/toggle";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -72,6 +73,7 @@ const optionsManagerRef = ref(null);
 const totalHeight = ref(0);
 const totalWidth = ref(0);
 const totalDepth = ref(0);
+const onHorizont = ref<boolean>(true);
 
 const module = computed(() => {
 
@@ -869,7 +871,17 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
 const updateHorizont = (value) => {
   debounce(() => {
     const PROPS = productData.value.PROPS;
-    PROPS.CONFIG.HORIZONT = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] = parseInt(value);
+
+    let delta = parseInt(value) - module.value.horizont
+    module.value.sections.forEach((section, secIndex) => {
+      section.fasades.forEach((door) => {
+        door.forEach((segment) => {
+          segment.position.y += delta;
+        })
+      })
+    })
+
+    module.value.horizont = PROPS.CONFIG.HORIZONT = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] = parseInt(value);
     reset();
   }, 1000)
 };
@@ -1074,6 +1086,7 @@ onBeforeMount(() => {
   totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
+  onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
 
   console.log(totalHeight.value, totalWidth.value)
 });
@@ -1105,6 +1118,13 @@ watch(visualizationRef, () => {
   }
 })
 
+watch(onHorizont, () => {
+
+  if (!onHorizont.value)
+    updateHorizont(0)
+  else
+    updateHorizont(78)
+});
 </script>
 
 <template>
@@ -1169,7 +1189,9 @@ watch(visualizationRef, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Цоколь</p>
+            <p class="actions-title">Цоколь
+              <Toggle v-model="onHorizont"/>
+            </p>
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
@@ -1179,6 +1201,7 @@ watch(visualizationRef, () => {
                   max="300"
                   :type="'number'"
                   placeholder="0"
+                  :disabled="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
               />
             </div>
           </div>
@@ -1209,6 +1232,7 @@ watch(visualizationRef, () => {
             ref="optionsManagerRef"
             :visualizationRef="visualizationRef"
             :module="module"
+            :objectData="productData"
             @product-reset="reset"
         />
 
@@ -1634,6 +1658,9 @@ watch(visualizationRef, () => {
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
   }
 
   &-inputs {
