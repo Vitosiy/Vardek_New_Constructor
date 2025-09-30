@@ -23,15 +23,18 @@
             </div>
           </div>
         </div>
-        <div class="search-results" v-else>
-          <MainButton
-            v-for="id in learningStore.search.results"
-            :key="id"
-            :className="'grey__button'"
-            @click="() => learningStore.selectFromSearch(id)"
-          >
-            {{ learningStore.getNode(id)?.title }}
-          </MainButton>
+        <div class="search-results" v-if="learningStore.search.isActive">
+          <template v-if="learningStore.search.results && learningStore.search.results.length > 0">
+            <MainButton
+              v-for="id in learningStore.search.results"
+              :key="id"
+              :className="'grey__button'"
+              @click="() => learningStore.selectFromSearch(id)"
+            >
+              {{ learningStore.getNode(id)?.title }}
+            </MainButton>
+          </template>
+          <div v-else class="search-empty">Ничего не найдено</div>
         </div>
       </template>
     </template>
@@ -39,8 +42,6 @@
     <template #search>
       <div class="search-row">
         <MainInput
-          :min="0"
-          :max="999"
           class="input__search"
           type="text"
           placeholder="Поиск..."
@@ -122,6 +123,13 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 6px;
   width: 100%;
+}
+.search-empty {
+  width: 100%;
+  text-align: center;
+  color: #7b7b7b;
+  font-size: 14px;
+  padding: 16px;
 }
 .first-image {
   float: left;

@@ -66,6 +66,7 @@ export class Camera {
 
         this.onKeyDown = this.keyDown.bind(this)
         this.onKeyUp = this.keyUp.bind(this)
+        this.onSetPosition = this.setPosition.bind(this)
 
         this.setInstance();
         this.setOrbitControls();
@@ -128,6 +129,7 @@ export class Camera {
     }
 
     setPosition(value): void {
+        console.log('CH')
         this.instance.position.copy(this.cameraPositions[value].pos)
         this.controls.target.set(...this.cameraPositions[value].target)
         this.controls?.update()

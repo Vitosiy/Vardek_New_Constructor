@@ -4,7 +4,8 @@ import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { CSG } from 'three-csg-ts';
 import { DeepDispose } from '@/Application/Utils/DeepDispose';
-import { BuildersHelper } from "../BuildersHelper";
+import { BuildersHelper } from "../../Application/Meshes/BuildersHelper";
+import { useMenuStore } from '@/store/appStore/useMenuStore.ts';
 
 type TTextureData = {
 
@@ -16,6 +17,8 @@ type TTextureData = {
 }
 
 class TableTopCreator extends BuildersHelper {
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
+
     root: THREETypes.TApplication
     roomManager: THREETypes.TRoomManager
     moveManager: THREETypes.TMoveManager
@@ -54,10 +57,16 @@ class TableTopCreator extends BuildersHelper {
 
             const parent: THREE.Object3D = this.root._scene?.getObjectByProperty('id', object.userData.groupId)!;
 
+
+            const { USLUGI } = parent.userData.PROPS.CONFIG
             const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
-          
-            await this.events.changeModelSize({ width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, parent, 'raspil')
-      
+
+            console.log(parent, USLUGI, '---Parent USLUGI_1')
+
+            await this.events.changeModelSize({
+                data: { width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, mesh: parent, type: 'raspil'
+            })
+
             const textureData = this._PRODUCTS[parent.userData.globalData].texture
             let { RASPIL_LIST } = parent.userData.PROPS
 
@@ -72,7 +81,7 @@ class TableTopCreator extends BuildersHelper {
             const raspilCount = parent.userData.PROPS.RASPIL_COUNT = RASPIL_LIST.length
             RASPIL_LIST.length = 0
 
-            await this.createGroup(raspil, group, meshes, parent, parent.id)
+            await this.createGroup(raspil, group, meshes, parent, parent.id, USLUGI)
             this.addToScene({ meshes, group, object: parent, raspilCount, textureData })
 
             parent.userData.PROPS.RASPIL = meshes[0].userData.PROPS.RASPIL
@@ -81,7 +90,8 @@ class TableTopCreator extends BuildersHelper {
         }
 
 
-        let { RASPIL_LIST } = object.userData.PROPS
+        let { RASPIL_LIST, CONFIG } = object.userData.PROPS
+        const { USLUGI } = CONFIG
 
         RASPIL_LIST.forEach((mesh: THREE.Mesh) => {
             const meshInScene = this.root._scene?.getObjectByProperty('id', mesh.id) as THREE.Object3D
@@ -94,11 +104,15 @@ class TableTopCreator extends BuildersHelper {
 
         const { BODY_WIDTH, BODY_HEIGHT } = object.userData.PROPS.BODY.userData.trueSize
 
-        await this.events.changeModelSize({ width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, object, 'raspil')
+        await this.events.changeModelSize({
+            data: { width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, mesh: object, type: 'raspil'
+        })
 
-        await this.createGroup(raspil, group, meshes, object, id)
+        await this.createGroup(raspil, group, meshes, object, id, USLUGI)
 
         const textureData = this._PRODUCTS[object.userData.globalData].texture
+
+        console.log(object, USLUGI, '---Parent USLUGI_1')
 
         this.addToScene({ meshes, group, object, textureData })
     }
@@ -143,7 +157,7 @@ class TableTopCreator extends BuildersHelper {
         return shape;
     }
 
-    async createGroup(raspil: any, group: THREE.Group, meshes: THREE.Object3D[], object: THREE.Object3D, groupId: number | null) {
+    async createGroup(raspil: any, group: THREE.Group, meshes: THREE.Object3D[], object: THREE.Object3D, groupId: number | null, uslugi) {
 
         // const material = new THREE.MeshPhongMaterial({
         //     color: this.getRandomHexColor(),
@@ -231,7 +245,7 @@ class TableTopCreator extends BuildersHelper {
                     mesh.userData.rotation = null
                 }
 
-                this.createCollisionData(mesh, size, raspil, groupId, row.roundCut);
+                this.createCollisionData(mesh, size, raspil, groupId, row.roundCut, uslugi);
                 this.addArrowSize(mesh, row)
                 meshes.push(mesh);
                 group.add(mesh); // Добавляем в группу
@@ -356,7 +370,7 @@ class TableTopCreator extends BuildersHelper {
                 mesh.position.copy(mesh.userData.position);
                 mesh.rotation.copy(mesh.userData.rotation);
             } else {
- 
+
                 mesh.position.copy(worldGeometryCenter);
                 mesh.quaternion.copy(worldQuaternion);
             }
@@ -409,8 +423,6 @@ class TableTopCreator extends BuildersHelper {
         object.userData.PROPS.RASPIL_LIST = resultData
         object.userData.PROPS.RASPIL_COUNT = meshes.length
 
-
-
     }
 
     private centeredGroup(group: THREE.Group) {
@@ -439,7 +451,7 @@ class TableTopCreator extends BuildersHelper {
         return `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
     }
 
-    private createCollisionData(mesh: THREE.Object3D, { width, depth, height }: { width: number, depth: number, height: number }, raspil: [], groupId: number | null, roundCut: THREETypes.TObject) {
+    private createCollisionData(mesh: THREE.Object3D, { width, depth, height }: { width: number, depth: number, height: number }, raspil: [], groupId: number | null, roundCut: THREETypes.TObject, uslugi) {
         const data = {
             DEPTH: roundCut.radius ? roundCut.radius * 0.5 : height * 0.5,
             HEIGHT: depth * 0.5,
@@ -450,9 +462,7 @@ class TableTopCreator extends BuildersHelper {
         const obb = new OBB().fromBox3(aabb);
 
         mesh.userData.trueSizes = data
-        if (groupId != null) {
-            mesh.userData.groupId = groupId
-        }
+
 
         mesh.userData.elementType = 'raspil'
 
@@ -460,10 +470,16 @@ class TableTopCreator extends BuildersHelper {
             CONFIG: {
                 UNIFORM_TEXTURE: {
                     group: null
-                }
+                },
+                USLUGI: uslugi
             },
             RASPIL: raspil
 
+        }
+
+        if (groupId != null) {
+            mesh.userData.groupId = groupId
+            mesh.userData.PROPS.groupId = groupId
         }
 
         mesh.userData.obb = obb
@@ -494,6 +510,12 @@ class TableTopCreator extends BuildersHelper {
 
         ruler.forEach(item => {
             for (let i in item) {
+                if (!this.menuStore.getRulerVisibility) {
+                    item[i].visible = false
+                    item[i].traverse(child => {
+                        child.visible = false;
+                    });
+                }
                 arrows.add(item[i])
             }
         })

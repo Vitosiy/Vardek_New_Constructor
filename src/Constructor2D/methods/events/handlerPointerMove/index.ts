@@ -30,6 +30,7 @@ export function handlerPointerMove(this: any, e: PIXI.FederatedPointerEvent): vo
     this.layers.doorsAndWindows!.updateScenePosition(); // обновляем слой с дверями и окнами
     this.layers.arrowRulerActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
     this.layers.startPointActiveObject!.updateScenePosition(); // обновляем слой со стрелками от активной точки
+    this.layers.dimensionDisplay!.updateScenePosition();
     
   }
 

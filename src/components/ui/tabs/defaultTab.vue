@@ -1,11 +1,16 @@
 <script lang="ts" setup>
-//@ts-nocheck
+/**/ /@ts-nocheck */;
+import { TFasadeProp } from "@/types/types";
 import { ref, defineProps, defineEmits, computed, defineExpose } from "vue";
 
 // Интерфейс для табов
-interface Tab {
+export interface Tab {
   name: string;
   label: string;
+  title?: string;
+  type?: string;
+  props?: TFasadeProp;
+  action?: Function;
 }
 
 // Пропсы
@@ -21,7 +26,9 @@ const props = defineProps({
 });
 
 // События
-const emit = defineEmits(["tab-change"]);
+const emit = defineEmits<{
+  "tab-change": [{ tab: Tab; index: number }];
+}>();
 
 // Состояние
 const selectedTab = ref<string | null>(null);
@@ -31,9 +38,14 @@ selectedTab.value =
   props.initialTab || (props.tabs.length > 0 ? props.tabs[0].name : null);
 
 // Метод для смены таба
-const selectTab = (name: string, index: number, local?: boolean = false) => {
-  selectedTab.value = name;
-  if (!local) emit("tab-change", { name: name, index: index });
+const selectTab = (tab: Tab, index: number, local?: boolean = false) => {
+  selectedTab.value = tab.name;
+  if (!local) emit("tab-change", { tab: tab, index: index });
+};
+
+// Вычисляемое свойство для проверки активного таба
+const isTabActive = (tabName: string) => {
+  return selectedTab.value === tabName;
 };
 
 defineExpose({
@@ -48,8 +60,12 @@ defineExpose({
       <button
         v-for="(tab, i) in tabs"
         :key="tab.name"
-        :class="{ active: selectedTab === tab.name }"
-        @click="selectTab(tab.name, i)"
+        :class="{ active: isTabActive(tab.name) }"
+        @click="selectTab(tab, i)"
+        :aria-label="`Переключить на ${tab.label}`"
+        :tabindex="0"
+        @keydown.enter="selectTab(tab.name, i)"
+        @keydown.space.prevent="selectTab(tab.name, i)"
       >
         {{ tab.label }}
       </button>

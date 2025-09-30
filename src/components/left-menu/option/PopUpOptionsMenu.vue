@@ -4,15 +4,23 @@
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
-import { useMenuStore } from "@/store/appStore/useMenuStore";
-import { usePopupStore } from "@/store/appStore/popUpsStore";
-import { computed } from "vue";
+import { useMenuStore } from '@/store/appStore/useMenuStore';
+import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
+import { computed, ref } from "vue";
 
 import { _URL } from "@/types/constants";
+import axios from "axios";
 
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
+ const { getAppData } = useAppData();
 
+const currentProductInfo = ref({
+  title: '',
+  description: '',
+  image: ''
+});
+const isShowInfoPopup = ref(false);
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
     return Object.values(catalogProducts).filter((item) =>
@@ -45,42 +53,54 @@ const closeMenu = (menuType: MenuType) => {
   menuStore.closeMenu(menuType);
 };
 
-const popupStore = usePopupStore();
+const openPopup = async (item) => {
+  console.log(getAppData, 'getAppData')
+  try {
+    const {data} = await axios.post(`/api/modeller/product/getbyid/`, {
+      ID: item.ID
+    })
 
-const openPopup = (popupName: keyof typeof popupStore.popups) => {
-  popupStore.openPopup(popupName);
+    const { NAME, DETAIL_TEXT, DETAIL_PICTURE, PREVIEW_PICTURE, PREVIEW_TEXT, PROPERTY_IMAGES_VALUE, PROPERTY_VIDEO_VALUE, PROPERTY_VIDEO_IMAGE_VALUE } = data.DATA.response;
+
+    currentProductInfo.value = {
+    title: NAME,
+    detailText: DETAIL_TEXT,
+    previewText: PREVIEW_TEXT,
+    image: getImageUrl(DETAIL_PICTURE),
+    images: PROPERTY_IMAGES_VALUE.length ? PROPERTY_IMAGES_VALUE.map((image: string) => getImageUrl(image)) : [],
+    videoUrl: PROPERTY_VIDEO_VALUE,
+    videoPoster: getImageUrl(PROPERTY_VIDEO_IMAGE_VALUE)
+  };
+    isShowInfoPopup.value = true;
+  } catch (error) {
+    console.error('API Error:', error);
+  }
+
+
+
 };
 
-const toggleInfoPopup = () => {
-  popupStore.toggleInfoPopup();
+const closeInfoPopup = () => {
+  isShowInfoPopup.value = false;
+  currentProductInfo.value = {
+    title: '',
+    description: '',
+    image: ''
+  };
 };
+
 </script>
 
 <template>
-  <div class="options-popup">
+  <div class="options-popup" :class="{ active: menuStore.openMenus == 'tech' }">
     <h1 class="popup__title">Основное</h1>
     <ClosePopUpButton class="menu__close" @close="closeMenu('tech')" />
-    <div
-      v-if="menuStore.catalogFilterProductsId"
-      class="options-popup__container"
-    >
-      <div
-        v-for="item in filteredData"
-        class="popup-items"
-        draggable="true"
-        :key="item.name"
-        @dragstart="onDrag($event, item)"
-      >
+    <div v-if="menuStore.catalogFilterProductsId" class="options-popup__container">
+      <div v-for="item in filteredData" class="popup-items" draggable="true" :key="item.name"
+        @dragstart="onDrag($event, item)">
         <div class="popup-items-picture">
-          <img
-            src="@/assets/svg/left-menu/question.svg"
-            class="popup-items__question"
-            @click="toggleInfoPopup"
-          />
-          <img
-            :src="getImageUrl(item.PREVIEW_PICTURE)"
-            class="popup-items__image"
-          />
+          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="openPopup(item)">
+          <img :src="getImageUrl(item.PREVIEW_PICTURE)" class="popup-items__image" />
         </div>
         <p class="popup-items__title">{{ item.NAME }}</p>
       </div>
@@ -88,6 +108,7 @@ const toggleInfoPopup = () => {
     <div v-else class="options-popup-isempty">
       Товары в каталоге отсутсвуют, обратитесь в поддержку
     </div>
+    <InfoPopUp v-if="isShowInfoPopup" @close="closeInfoPopup" v-bind="currentProductInfo" />
   </div>
 </template>
 

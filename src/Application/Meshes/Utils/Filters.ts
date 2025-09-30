@@ -1,4 +1,4 @@
-// @ts-nocheck
+/**@ts-nocheck */
 
 import * as THREETypes from "@/types/types"
 import { GlobalsData } from "./Globals"
@@ -6,6 +6,26 @@ import { useAppData } from "@/store/appliction/useAppData"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useModelState } from "@/store/appliction/useModelState"
 import { unwatchFile } from "fs"
+
+import { TFasadeProp, IProductFull } from "@/types/types"
+
+export type TFasadeProps = {
+    SHOW: boolean | null,
+    POSITION: number | null,
+    COLOR: number | null,
+    TYPE: number | null,
+    MILLING: number | null,
+    PALETTE: number | null,
+    WINDOW: number | null,
+    ALUM: number | null,
+    GLASS: number | null,
+    PATINA: number | null,
+    HANDLES: {
+        id: number | null,
+        position: number | null
+        drawer: null | string
+    }
+}
 
 export class Filters extends GlobalsData {
 
@@ -76,25 +96,20 @@ export class Filters extends GlobalsData {
 
         sortFasadePositionList.forEach((fasade: number, key) => {
 
+
+
             const fasadePosition = this._FASADE_POSITION[fasade]
+            const handlerPosition = fasadePosition.drawer ? 4 : 0
+
+            console.log(fasadePosition.drawer
+                , 'FASADE_POSITION')
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
             const fasad = FASADE_PROPS[fasadeNumber]?.TYPE ?? this.project.default_fasade_color ?? 7397;
+            const handles = this.project.default_handles
 
-            const fasadeProps: {
-                SHOW: boolean | null,
-                POSITION: number | null,
-                COLOR: number | null,
-                TYPE: number | null,
-                MILLING: number | null,
-                PALETTE: number | null,
-                WINDOW: number | null,
-                ALUM: number | null,
-                GLASS: number | null,
-                PATINA: number | null,
-
-            } = {
+            const fasadeProps: TFasadeProp = {
                 /** --- FASADE_PROPS ---*/
                 // COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
                 COLOR: this.project.default_fasade_color,
@@ -108,6 +123,11 @@ export class Filters extends GlobalsData {
                 GLASS: null,
                 PATINA: null,
                 TYPE: null,
+                HANDLES: {
+                    id: handles,
+                    position: handlerPosition,
+                    drawer: fasadePosition.drawer
+                },
             }
 
             FASADE_PROPS.push(fasadeProps)
@@ -182,6 +202,35 @@ export class Filters extends GlobalsData {
 
     }
 
+    filterOption(option: number[]) {
+        let filtered = []
+        let curOptionsList = option
+            .map(el => this._OPTION[el])
+            .filter(Boolean);
 
+        const result = curOptionsList.map(el => {
+            return { id: el.ID, active: false, group: el.GROUP, close: el.CLOSE_OTHER_OPTIONS }
+        })
+
+        console.log(result, 'result')
+
+        return result
+
+        for (const el in this._OPTIONS_GROUP) {
+
+            filtered.push({
+                NAME: this._OPTIONS_GROUP[el].NAME,
+                CONTANT: curOptionsList.filter(opt => opt.GROUP == el)
+            })
+        }
+
+        filtered = filtered.filter(item => {
+            if (item.CONTANT.length > 0) return item
+
+        })
+
+        return filtered
+
+    }
 
 } 

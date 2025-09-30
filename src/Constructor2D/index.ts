@@ -4,6 +4,7 @@ import * as PIXI from 'pixi.js';
 import Grid from "./Layers/Grid";
 import HalfRoom from "./Layers/HalfRoom";
 import Rulers from "./Layers/Rulers";
+import DimensionDisplay from "./Layers/DimensionDisplay";
 import Planner from "./Layers/Planner";
 import ArrowRulerActiveObject from "./Layers/ArrowRulerActiveObject";
 import StartPointActiveObject from "./Layers/StartPointActiveObject";
@@ -31,6 +32,7 @@ import { useEventBus } from '@/store/constructor2d/useEventBus';
 interface ILayers {
   grid: Grid | null;
   halfRoom: HalfRoom | null;
+  dimensionDisplay: DimensionDisplay | null;
   arrowRulerActiveObject: ArrowRulerActiveObject | null;
   planner: Planner | null;
   doorsAndWindows: DoorsAndWindows | null;
@@ -46,6 +48,7 @@ export default class Constructor2D {
   public layers: ILayers = {
     grid: null,
     halfRoom: null, // пол комнаты
+    dimensionDisplay: null, // менеджер отображения размеров
     arrowRulerActiveObject: null,
     planner: null,
     doorsAndWindows: null, // двери и окна
@@ -157,9 +160,10 @@ export default class Constructor2D {
 
     this.layers.grid = new Grid(this.app2d, this);
     this.layers.halfRoom = new HalfRoom(this.app2d, this);
-    this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
+    this.layers.dimensionDisplay = new DimensionDisplay(this.app2d, this);
     this.layers.planner = new Planner(this.app2d!, this);
     this.layers.doorsAndWindows = new DoorsAndWindows(this.app2d!, this);
+    this.layers.arrowRulerActiveObject = new ArrowRulerActiveObject(this.app2d!, this);
     this.layers.startPointActiveObject = new StartPointActiveObject(this.app2d!, this);
     this.layers.rulers = new Rulers(this.app2d!, this);
 
@@ -179,36 +183,149 @@ export default class Constructor2D {
   }
 
   public destroy(): void {
-    if (this.app2d) {
-
-      window.removeEventListener('resize', this.handleWindowResize);
-      window.removeEventListener('keydown', this.handleKeyDown);
-      window.removeEventListener('keyup', this.handleKeyUp);
-
-      this.app2d.stage
-        .off('rightdown', this.handlerMouseRightDown)
-        .off('rightup', this.handlerMouseRightUp)
-        .off('pointermove', this.handlerPointerMove)
-        .off('pointerout', this.handlerMouseRightUp)
-        .off('pointerdown', this.handlerMouseLeftDown)
-        .off('pointerup', this.handlerMouseLeftUp)
-        .off('wheel', this.handlerWheel);
-
-      // Удаляем все компоненты
-      for (const key in this.layers) {
-        const component = this.layers[key as keyof ILayers];
-        if (component && typeof component.destroy === 'function') {
-          component.destroy();
-        }
-        this.layers[key as keyof ILayers] = null;
+    try {
+      // Проверяем, что объект еще не уничтожен
+      if (!this.app2d && !this.layers) {
+        console.warn('Constructor2D уже уничтожен');
+        return;
       }
 
-      // Уничтожаем приложение PIXI
-      this.app2d.destroy(true, { children: true });
+      // Отключаем обработчики событий окна
+      try {
+        window.removeEventListener('resize', this.handleWindowResize);
+        window.removeEventListener('keydown', this.handleKeyDown);
+        window.removeEventListener('keyup', this.handleKeyUp);
+      } catch (error) {
+        console.warn('Ошибка при удалении обработчиков событий окна:', error);
+      }
+
+      // Безопасно отключаем события сцены
+      if (this.app2d && this.app2d.stage) {
+        try {
+          this.app2d.stage
+            .off('rightdown', this.handlerMouseRightDown)
+            .off('rightup', this.handlerMouseRightUp)
+            .off('pointermove', this.handlerPointerMove)
+            .off('pointerout', this.handlerMouseRightUp)
+            .off('pointerdown', this.handlerMouseLeftDown)
+            .off('pointerup', this.handlerMouseLeftUp)
+            .off('wheel', this.handlerWheel);
+        } catch (error) {
+          console.warn('Ошибка при отключении событий сцены:', error);
+        }
+      }
+
+      // Удаляем все компоненты
+      if (this.layers) {
+        for (const key in this.layers) {
+          try {
+            const component = this.layers[key as keyof ILayers];
+            if (component && typeof component.destroy === 'function') {
+              try {
+                component.destroy();
+              } catch (error) {
+                console.warn(`Ошибка при уничтожении компонента ${key}:`, error);
+              }
+            }
+            this.layers[key as keyof ILayers] = null;
+          } catch (error) {
+            console.warn(`Ошибка при обработке компонента ${key}:`, error);
+            this.layers[key as keyof ILayers] = null;
+          }
+        }
+      }
+
+      // Безопасно уничтожаем приложение PIXI
+      if (this.app2d && typeof this.app2d.destroy === 'function') {
+        try {
+          // Сначала очищаем сцену
+          if (this.app2d.stage) {
+            // Удаляем все дочерние объекты из сцены
+            this.app2d.stage.removeChildren();
+            
+            // Очищаем все события сцены
+            this.app2d.stage.eventMode = 'none';
+            this.app2d.stage.hitArea = null;
+          }
+          
+          // Очищаем рендерер
+          if (this.app2d.renderer) {
+            try {
+              // Очищаем все текстуры и ресурсы
+              const rAny = this.app2d.renderer as any;
+              if (rAny.texture && typeof rAny.texture.destroy === 'function') {
+                try { rAny.texture.destroy(true); } catch {}
+              }
+              
+              // Очищаем все шейдеры
+              if (rAny.shader && typeof rAny.shader.destroy === 'function') {
+                try { rAny.shader.destroy(); } catch {}
+              }
+              
+              // Очищаем все батчи
+              if (rAny.batch && typeof rAny.batch.destroy === 'function') {
+                try {
+                  rAny.batch.destroy();
+                } catch (error) {
+                  console.warn('Ошибка при очистке batch:', error);
+                }
+              }
+              
+              // Очищаем все пулы
+              if (rAny.gl) {
+                try {
+                  // Принудительно очищаем WebGL контекст
+                  const gl = rAny.gl;
+                  if (gl && gl.getExtension) {
+                    const loseContext = gl.getExtension('WEBGL_lose_context');
+                    if (loseContext) {
+                      loseContext.loseContext();
+                    }
+                  }
+                } catch (error) {
+                  console.warn('Ошибка при очистке WebGL контекста:', error);
+                }
+              }
+            } catch (error) {
+              console.warn('Ошибка при очистке рендерера:', error);
+            }
+          }
+          
+          // Затем уничтожаем приложение без дочерних объектов
+          this.app2d.destroy(false, { children: false });
+        } catch (error) {
+          console.warn('Ошибка при уничтожении PIXI приложения:', error);
+        }
+      }
+      
+      // Очищаем все ссылки
       this.app2d = null;
-
+      this.layers = {
+        grid: null,
+        halfRoom: null,
+        dimensionDisplay: null,
+        arrowRulerActiveObject: null,
+        planner: null,
+        doorsAndWindows: null,
+        startPointActiveObject: null,
+        rulers: null,
+      };
+    } catch (error) {
+      console.error('Ошибка при уничтожении Constructor2D:', error);
+      
+      // Принудительно очищаем ссылки даже при ошибке
+      this.app2d = null;
+      this.layers = {
+        grid: null,
+        halfRoom: null,
+        dimensionDisplay: null,
+        arrowRulerActiveObject: null,
+        planner: null,
+        doorsAndWindows: null,
+        startPointActiveObject: null,
+        rulers: null,
+      };
     }
-
   }
 
   makeScreen() {

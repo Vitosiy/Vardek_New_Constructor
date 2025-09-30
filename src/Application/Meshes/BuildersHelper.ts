@@ -99,8 +99,9 @@ export class BuildersHelper extends GlobalsData {
             depth: parseInt(depthCalc),
         };
 
-        if (PARAMS.MODEL) {
-            const model = this.expressionsReplace(PARAMS.MODEL, expressions);
+        if (PARAMS.MODELID) {
+            const modelData = this._MODELS[PARAMS.MODELID]
+            const model = this.expressionsReplace(modelData, expressions);
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));
             if (model.depth) size.depth = parseInt(eval(model.depth));
@@ -231,6 +232,9 @@ export class BuildersHelper extends GlobalsData {
         });
     }
 
+    //----------------------------------------------------------
+    /** @Настройка материала */
+    //----------------------------------------------------------
     changeColor({
         object,
         url,
@@ -239,48 +243,65 @@ export class BuildersHelper extends GlobalsData {
     }: {
         object: THREE.Object3D;
         url: string;
-        textureSize?: THREETypes.TObject;
+        textureSize?: THREE.Vector3;
         type?: string;
     }) {
         object.traverse((child) => {
-            if (!(child instanceof THREE.Mesh) || child.userData.type === "glass") return;
+            if (!(child instanceof THREE.Mesh)) return;
+            if (child.userData.type === "glass") return;
 
-            // Восстановление оригинального материала
+            // Восстановление оригинального материала при наличии
             if (child.userData.ORIGINAL_COLOR) {
                 child.material = child.userData.ORIGINAL_COLOR;
+            }
+            if (child.material.opacity < 1) {
+                child.material.opacity = 1
+                child.material.color = new THREE.Color('rgb(255,255,255)')
             }
 
             this.resources.startLoading(url, "texture", (file) => {
                 if (!(file instanceof THREE.Texture)) return;
 
-                // Создаём новый материал при смене на палитру или стекло
-                if (["Palette", "Glass"].includes(type || "")) {
+                // Создание материала при необходимости
+                if (type && ["Palette", "Glass"].includes(type)) {
                     child.material = new THREE.MeshStandardMaterial();
                 }
 
-                file.colorSpace = THREE.SRGBColorSpace;
-                child.material.map = file;
-
-                // Настройка повторения и смещения
-                if (textureSize) {
-                    file.wrapS = file.wrapT = THREE.RepeatWrapping;
-                    file.repeat.set(1 / textureSize.x, 1 / textureSize.y);
-                    file.offset.set(0.5, 0.5);
-                }
-
-                // Спец. настройки для палитры
-                if (type === "Palette") {
-                    Object.assign(child.material, {
-                        metalness: 0.7,
-                        roughness: 0.05,
-                        clearcoat: 1,
-                        clearcoatRoughness: 0
-                    });
-                }
-
-                child.material.needsUpdate = true;
+                this.applyTexture(child, file, textureSize, type);
             });
         });
+    }
+
+    //----------------------------------------------------------
+    /** @Настройка текстуры и параметров материала */
+    //----------------------------------------------------------
+    private applyTexture(
+        child: THREE.Mesh,
+        texture: THREE.Texture,
+        textureSize?: THREE.Vector3,
+        type?: string
+    ) {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        child.material.map = texture;
+
+        // Настройка повторения и смещения
+        if (textureSize) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1 / textureSize.x, 1 / textureSize.y);
+            texture.offset.set(0.5, 0.5);
+        }
+
+        // Настройки для палитры
+        if (type === "Palette" && child.material instanceof THREE.MeshStandardMaterial) {
+            Object.assign(child.material, {
+                metalness: 0.7,
+                roughness: 0.05,
+                clearcoat: 1,
+                clearcoatRoughness: 0
+            });
+        }
+
+        child.material.needsUpdate = true;
     }
 
     createExtrudeBoxGeometry(options: THREETypes.TObject) {
@@ -395,6 +416,11 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
+        console.log(uslugi, 'uslugi')
+
+        const convert = this.createCutterParams(uslugi)
+        console.log(convert, 'convert')
+
         const { width, depth, height } = product_data
         const startCutData = {
             groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы
@@ -407,7 +433,7 @@ export class BuildersHelper extends GlobalsData {
                         height: depth,
                         roundCut: {},
                         holes: [],
-                        serviseData: CUTTER_PARAMS.CUT_SERVISES
+                        serviseData: convert
 
                     }
                 ]
@@ -415,6 +441,62 @@ export class BuildersHelper extends GlobalsData {
         }
 
         return startCutData
+    }
+
+    createCutterParams(uslugi) {
+        const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        return uslugi.map(obj1 => {
+            const obj2 = SERVISES.find(o => o.ID === obj1.ID);
+            let merged;
+            if (obj2) {
+                const extras = Object.fromEntries(
+                    Object.entries(obj2).filter(([key]) => !(key in obj1))
+                );
+                merged = { ...obj1, ...extras };
+
+                // if ("width" in merged) {
+                //     const w1 = obj1.width;
+                //     const w2 = obj2.width;
+
+                //     // случай: строка + число → число
+                //     if (typeof w1 === "string" && typeof w2 === "number") {
+                //         merged.width = w2;
+                //     }
+
+                //     // случай: строка + отсутствует → удалить
+                //     if (typeof w1 === "string" && w2 === undefined) {
+                //         delete merged.width;
+                //     }
+                // }
+
+                // return merged;
+            }
+
+            else {
+                merged = { ...obj1 };
+                if (!("pos" in merged)) {
+                    merged.pos = "CENTER";
+                }
+            }
+
+            if ("width" in merged) {
+                const w1 = obj1.width;
+                const w2 = obj2 ? obj2.width : undefined;
+
+                if (typeof w1 === "string" && typeof w2 === "number") {
+                    merged.width = w2;
+                }
+
+                if (typeof w1 === "string" && w2 === undefined) {
+                    delete merged.width;
+                }
+            }
+
+            return merged;
+
+        }).filter(el => el.ID !== 98683);
+
+        // .filter(el => parseInt(el.separated) !== 0);
     }
 
     findElementsBySectorId(data, sectorId) {
@@ -453,7 +535,7 @@ export class BuildersHelper extends GlobalsData {
 
 
         object.traverse((child) => {
-            if (child instanceof THREE.Mesh && child.userData.name !== 'TABLETOP' && child.name !== "ARROWS") {
+            if (child instanceof THREE.Mesh && child.userData.name !== 'TABLETOP' && child.name !== "ARROWS" && child.name !== 'FASADE') {
                 const geometry = child.geometry;
                 if (!geometry.boundingBox) {
                     geometry.computeBoundingBox();
@@ -469,6 +551,45 @@ export class BuildersHelper extends GlobalsData {
         box.getSize(size)
 
         return box;
+    }
+
+    mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+        return arr1.map(obj1 => {
+            const obj2 = arr2.find(o => o[key] === obj1[key]);
+            let merged;
+
+            if (obj2) {
+                if (overwrite) {
+                    merged = { ...obj1, ...obj2 };
+                } else {
+                    const extras = Object.fromEntries(
+                        Object.entries(obj2).filter(([k]) => !(k in obj1))
+                    );
+                    merged = { ...obj1, ...extras };
+                }
+            } else {
+                merged = { ...obj1 };
+                if (!("pos" in merged)) {
+                    merged.pos = "CENTER";
+                }
+            }
+
+            // обработка width у всех объектов
+            if ("width" in merged) {
+                const w1 = obj1.width;
+                const w2 = obj2 ? obj2.width : undefined;
+
+                if (typeof w1 === "string" && typeof w2 === "number") {
+                    merged.width = w2;
+                }
+
+                if (typeof w1 === "string" && w2 === undefined) {
+                    delete merged.width;
+                }
+            }
+
+            return merged;
+        });
     }
 
 }

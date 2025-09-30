@@ -7,16 +7,20 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 import { Resources } from "../Utils/Resources";
 import { useAppData } from "@/store/appliction/useAppData";
+import { useMenuStore } from '@/store/appStore/useMenuStore.ts';
 
 export class WallBuilder {
 
     appData: ReturnType<typeof useAppData> = useAppData()
-    resources: Resources 
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore();
+    resources: Resources
+    ruler: THREETypes.TRuler
     floorTextureData: { [key: string]: any } = this.appData.getAppData.FLOOR
     wallTextureData: { [key: string]: any } = this.appData.getAppData.WALL
 
-    constructor(root:THREETypes.TApplication){
+    constructor(root: THREETypes.TApplication) {
         this.resources = root._resources
+        this.ruler = root._ruler!
     }
 
     createMesh(
@@ -36,6 +40,25 @@ export class WallBuilder {
         mesh.receiveShadow = true;
         mesh.position.set(position.x as number, position.y as number, position.z as number)
         mesh.rotation.set(rotation._x, rotation._y, rotation._z, rotation._order);
+
+        const tempMesh = mesh.clone()
+
+        console.log(rotation._x, rotation._y, rotation._z)
+
+        tempMesh.updateMatrix()
+        tempMesh.geometry.applyMatrix4(mesh.matrix);
+        //  Сбрасываем трансформации меша
+        tempMesh.position.set(0, 0, 0);
+        tempMesh.rotation.set(0, 0, 0);
+        tempMesh.scale.set(1, 1, 1);
+        tempMesh.matrix.identity();
+
+
+        // geometry.rotateX(rotation._x);
+        // geometry.rotateY(rotation._y);
+        // geometry.rotateZ(rotation._z);
+        // geometry.translate(position.x, position.y, position.z);
+        this.addArrowSize(mesh, tempMesh)
 
         geometry.computeBoundingBox();
 
@@ -90,6 +113,7 @@ export class WallBuilder {
         mesh.userData.middleVector = vector
         mesh.userData.center = center
         mesh.userData.elementType = 'element_room'
+        mesh.elementType = 'element_room'
 
         return mesh;
     }
@@ -307,5 +331,29 @@ export class WallBuilder {
 
         return perpendicular;
     }
+
+    private addArrowSize(object: THREE.Mesh, tempMesh:THREE.Mesh) {
+        const arrows = new THREE.Object3D()
+        let ruler = this.ruler.drawRullerObjects(tempMesh)
+
+        ruler.forEach(item => {
+            for (let i in item) {
+                if (!this.menuStore.getRulerVisibility) {
+                    item[i].visible = false
+                    item[i].traverse(child => {
+                        child.visible = false;
+                    });
+                }
+                arrows.add(item[i])
+            }
+        })
+
+
+        arrows.name = "ARROWS"
+        // object.userData.PROPS.ARROWS = arrows
+
+
+        object.add(arrows)
+    };
 
 }

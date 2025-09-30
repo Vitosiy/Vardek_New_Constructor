@@ -10,14 +10,14 @@ export default defineConfig({
   root: "./",
   server: {
     port: 5000,
-    // proxy: {
-    //   '/api': {
-    //     target: 'https://vardek.ru',
-    //     changeOrigin: true,
-    //     secure: false,
-    //     rewrite: (path) => path.replace(/^\/api/, ''),
-    //   },
-    // },
+    proxy: {
+      '/api': {
+        target: 'https://dev.vardek.online',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
+      },
+    },
   },
   resolve: {
     alias: {

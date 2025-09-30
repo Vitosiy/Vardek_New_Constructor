@@ -14,6 +14,7 @@ import {
   computed,
   reactive,
   onBeforeMount,
+  onBeforeUnmount,
 } from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
@@ -72,7 +73,7 @@ const isGlassExist = ref<boolean>(false);
 const onSelectMaterial = (data) => {
   const product = _APP.CATALOG.PRODUCTS[productId.value];
   const { COLOR } =
-    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
   const dataOfFasadeType = _FASADE[COLOR];
 
   isSurfaceSelected.value = true;
@@ -103,7 +104,7 @@ const onSelectMaterial = (data) => {
 
     eventBus.emit("A:ChangePaletteColor", {
       data: ID,
-      fasadeNdx: props.tabIndex - 1,
+      fasadeNdx: props.tabIndex,
     });
   }
 };
@@ -128,7 +129,7 @@ const onSelectGlass = (data) => {
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
   if (type == "surface") {
-    eventBus.emit("A:Delite-Fasad", props.tabIndex - 1);
+    eventBus.emit("A:Delite-Fasad", props.tabIndex);
     let { NAME, DETAIL_PICTURE } = _FASADE[7397];
     currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
     isMillingExist.value = false;
@@ -140,9 +141,9 @@ const deleteSelectedOptions = (type: String) => {
     return;
   }
   if (type === "milling") {
-    eventBus.emit("A:DeliteMilling", props.tabIndex - 1);
+    eventBus.emit("A:DeliteMilling", props.tabIndex);
     currentMillingData.value = { name: "", imgSrc: null };
-    eventBus.emit("A:DelitePatina", props.tabIndex - 1);
+    eventBus.emit("A:DelitePatina", props.tabIndex);
     currentPatinaData.value = { name: "", imgSrc: null };
   }
 
@@ -156,7 +157,7 @@ const deleteSelectedOptions = (type: String) => {
   }
 
   if (type === "patina") {
-    eventBus.emit("A:DelitePatina", props.tabIndex - 1);
+    eventBus.emit("A:DelitePatina", props.tabIndex);
     currentPatinaData.value = { name: "", imgSrc: null };
   }
 
@@ -204,10 +205,10 @@ const prepareData = () => {
   const product = _APP.CATALOG.PRODUCTS[productId.value];
 
   const currentFasadeData =
-    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
 
   const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
-    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex - 1];
+    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
 
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
   const dataOfFasadeType = _FASADE[COLOR];
@@ -284,7 +285,6 @@ const prepareData = () => {
   }
 
   if (GLASS) {
-   
     const { NAME, DETAIL_PICTURE } = modelState.getCurrentGlassData.find(
       (glass) => glass.ID == GLASS
     );
@@ -300,20 +300,25 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
+  console.log('START')
   prepareData();
 });
 
-watch(
-  () => modelState.getCurrentModel,
-  () => {
-    materialList.value = modelState.getCurrentModelFasadesData;
-    productData.value = modelState.getCurrentModel;
-    productId.value = productData.value.PROPS.PRODUCT;
-    update();
-    prepareData();
-  },
-  { flush: "post", immediate: true }
-);
+onBeforeUnmount(() => {
+  update();
+});
+
+// watch(
+//   () => modelState.getCurrentModel,
+//   () => {
+//     materialList.value = modelState.getCurrentModelFasadesData;
+//     productData.value = modelState.getCurrentModel;
+//     productId.value = productData.value.PROPS.PRODUCT;
+//     update();
+//     prepareData();
+//   },
+//   { flush: "post", immediate: true }
+// );
 </script>
 
 <template>
@@ -364,35 +369,35 @@ watch(
     <SurfaceRedactor
       v-if="currentEditableOption === 'surface'"
       :materialList="materialList"
-      :tabIndex="props.tabIndex - 1"
+      :tabIndex="props.tabIndex"
       @select_material="onSelectMaterial"
     />
 
     <MillingRedactor
       v-if="currentEditableOption === 'milling'"
       :millingList="millingList"
-      :tabIndex="props.tabIndex - 1"
+      :tabIndex="props.tabIndex"
       @select_milling="onSelectMilling"
     />
 
     <ColorRedactor
       v-if="currentEditableOption === 'palette'"
       :paletteList="paletteList"
-      :tabIndex="props.tabIndex - 1"
+      :tabIndex="props.tabIndex"
       @select_color="onSelectPalette"
     />
 
     <PatinaRedactor
       v-if="currentEditableOption === 'patina'"
       :patinaList="patinaList"
-      :tabIndex="props.tabIndex - 1"
+      :tabIndex="props.tabIndex"
       @select_patina="onSelectPatina"
     />
 
     <GlassRedactor
       v-if="currentEditableOption === 'glass'"
       :glassList="glassList"
-      :tabIndex="props.tabIndex - 1"
+      :tabIndex="props.tabIndex"
       @select_glass="onSelectGlass"
     />
 

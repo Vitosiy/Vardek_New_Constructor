@@ -101,48 +101,50 @@ export class DeepDispose {
     }
 
     clearObject(object: THREE.Object3D, scene: THREE.Scene) {
-
         if (object instanceof THREE.Group || object instanceof THREE.Object3D) {
             // Удаляем все дочерние объекты рекурсивно
             for (let i = object.children.length - 1; i >= 0; i--) {
                 this.clearObject(object.children[i], scene);
+                object.remove(object.children[i]); // Удаляем из родителя
             }
         }
 
-        // Проверяем, является ли объект CSS2DObject
-        object.traverse(child => {
-            if (child instanceof CSS2DObject) {
-                // Удаляем элемент DOM, связанный с CSS2DObject
-                if (child.element && child.element.parentNode) {
-                    child.element.parentNode.removeChild(child.element);
-                }
+        // Обработка CSS2DObject
+        if (object instanceof CSS2DObject) {
+            if (object.element && object.element.parentNode) {
+                object.element.parentNode.removeChild(object.element);
             }
-        })
+        }
 
+        // Очистка Mesh
         if (object instanceof THREE.Mesh) {
-            // Очистка геометрии
             if (object.geometry) {
                 object.geometry.dispose();
                 object.geometry = null;
             }
-
-            // Очистка материалов и текстур
             if (object.material) {
                 if (Array.isArray(object.material)) {
                     object.material.forEach((material) => {
-                        material.map?.dispose();
+                        if (material.map) material.map.dispose();
                         material.dispose();
                     });
                 } else {
-                    object.material.map?.dispose();
+                    if (object.material.map) object.material.map.dispose();
                     object.material.dispose();
                 }
                 object.material = null;
             }
         }
 
+        // Удаляем объект из родителя, если он есть
+        if (object.parent) {
+            object.parent.remove(object);
+        }
+
         // Удаляем объект из сцены
-        scene.remove(object);
+        if (scene.children.includes(object)) {
+            scene.remove(object);
+        }
     }
 
     clearParent(object: THREE.Object3D) {

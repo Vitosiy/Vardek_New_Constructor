@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-//@ts-nocheck 
+//@ts-nocheck
 import { ref, computed, onBeforeMount } from "vue";
 import { _URL } from "@/types/constants";
 
@@ -67,7 +67,7 @@ const handleSelect = (material: any) => {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style  lang="scss">
 .redactor {
   &__title {
     margin-bottom: 20px;
@@ -112,7 +112,12 @@ const handleSelect = (material: any) => {
   transition-timing-function: ease;
 
   &__img {
+    // width: 100%;
+    // height: 100%;
+    // max-height: 60px;
+    // max-width: 60px;
     height: 60px;
+    width: 60px;
     padding: 5px;
     border-radius: 15px;
     background-color: $white;

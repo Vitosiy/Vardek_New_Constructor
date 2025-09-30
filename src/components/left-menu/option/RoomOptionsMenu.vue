@@ -1,11 +1,12 @@
 <script setup lang="ts">
-// @ts-nocheck
+/**// @ts-nocheck */
 import {
   ref,
   computed,
   watch,
   onBeforeMount,
   onMounted,
+  onUnmounted,
   defineExpose,
 } from "vue";
 import { _URL } from "@/types/constants";
@@ -24,6 +25,7 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useAppData } from "@/store/appliction/useAppData";
+import { useRoomOptions } from "./roomOptions/useRoomOptons";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
@@ -40,10 +42,11 @@ const sceneState = useSceneState();
 const roomState = useRoomState();
 const menuStore = useMenuStore();
 const appData = useAppData();
+const roomOptions = useRoomOptions()
 
-const clampHeight = ref<number>(sceneState.getStartHeightClamp);
-const quality = ref<TQuality[]>(sceneState.getQuality);
-const currentQuality = ref<TQuality>(quality.value[0]);
+const clampHeight = ref<number | null>(null);
+const quality = ref<TQuality[] | null>(null);
+const currentQuality = ref<TQuality | null>(null);
 
 const pointLight = ref<number | string>(1);
 const ambientLight = ref<number | string>(1);
@@ -57,6 +60,12 @@ const currentOptionLable = ref<string | null>(null);
 const optionsData = ref<{ [key: string]: any } | null | any[]>(null);
 const roomRef = ref<HTMLElement | null>(null);
 
+const modulesColorData = ref(null);
+const defaultFasadeData = ref(null);
+const defaultTableTopData = ref(null);
+const wallsTextures = ref(null);
+const floorTextures = ref(null);
+
 const optionsType = ref<TTextureActionMap>({
   wall: "A:ChangeWallTexture",
   floor: "A:ChangeFloorTexture",
@@ -64,21 +73,21 @@ const optionsType = ref<TTextureActionMap>({
   moduleBottom: "A:ChangeModuleTotalTexture",
   fasadsTop: "A:ChangeFasadsTopTexture",
   fasadsBottom: "A:ChangeFasadsBottomTexture",
+  tableTop: "A:ChangeTableTop",
 });
 
 const globalOptions = ref<TOptionsMap | null>(null);
 
-onMounted(() => {
-  shadows.value = sceneState.getShadowValue;
-  refraction.value = sceneState.getRefractionValue;
-  pointLight.value = sceneState.getLightRange.pointLight;
-  ambientLight.value = sceneState.getLightRange.ambientLight;
-
+onBeforeMount(() => {
+  prepareOptions();
 });
 
-onBeforeMount(() => {
-  globalOptions.value = menuStore.getGlobalOptions;
-  prepareOptions();
+onUnmounted(() => {
+  roomOptions.setHeightClamp(clampHeight.value);
+  roomOptions.setLightRange("pointLight", pointLight.value);
+  roomOptions.setLightRange("ambientLight", ambientLight.value);
+  roomOptions.setRefractionValue(refraction.value);
+  roomOptions.setShadowValue(shadows.value);
 });
 
 defineExpose({
@@ -88,8 +97,24 @@ defineExpose({
 const prepareOptions = () => {
   const { wall, floor } = roomState.getCurrentRoomParams as IWallSizes;
 
-  menuStore.updateOption("wall", wall as number);
-  menuStore.updateOption("floor", floor as number);
+  roomOptions.updateOption("wall", wall as number);
+  roomOptions.updateOption("floor", floor as number);
+
+  globalOptions.value = roomOptions.getGlobalOptions;
+  modulesColorData.value = roomOptions.getDefaultModuleData();
+  wallsTextures.value = roomOptions.getWallsTextures();
+  floorTextures.value = roomOptions.getFloorTextures();
+  defaultFasadeData.value = roomOptions.getDefaultFasadeData();
+  defaultTableTopData.value = roomOptions.getDefaultTableTopData();
+
+  clampHeight.value = roomOptions.getHeightClamp;
+  quality.value = roomOptions.getQuality;
+  currentQuality.value = quality.value.find((el) => el.active);
+
+  shadows.value = roomOptions.getShadowValue;
+  refraction.value = roomOptions.getRefractionValue;
+  pointLight.value = roomOptions.getPointLightRange;
+  ambientLight.value = roomOptions.getAmbientLightRange;
 };
 
 const closeMenu = (menuType: MenuType) => {
@@ -101,9 +126,11 @@ const changeHeightClamp = () => {
 };
 
 const loadRoom = (id: number) => {
-  menuStore.resetGlobalOptions();
+  roomOptions.resetGlobalOptions();
   eventBus.emit("A:Load", id);
   eventBus.emit("A:ContantLoaded", false);
+  eventBus.emit("A:DrawingMode", false);
+  eventBus.emit("A:ToggleRulerVisibility", true);
   closeMenu("roomPar");
 };
 
@@ -111,8 +138,9 @@ const deliteRoom = (value: number) => {
   roomState.removeRoom(value);
 };
 
-const changeQualit = (data: TQuality) => {
+const changeQuality = (data: TQuality) => {
   currentQuality.value = data;
+  roomOptions.setQuality(data.value, true);
   eventBus.emit("A:Quality", data.value);
 };
 
@@ -141,22 +169,25 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
   currentOption.value = value;
   switch (value) {
     case "wall":
-      optionsData.value = Object.values(roomState.getWallsTextures());
+      optionsData.value = Object.values(wallsTextures.value);
       break;
     case "floor":
-      optionsData.value = Object.values(roomState.getFloorTextures());
+      optionsData.value = Object.values(floorTextures.value);
       break;
     case "moduleTop":
-      optionsData.value = Object.values(roomState.getDefaultModuleData());
+      optionsData.value = Object.values(modulesColorData.value);
       break;
     case "moduleBottom":
-      optionsData.value = Object.values(roomState.getDefaultModuleData());
+      optionsData.value = Object.values(modulesColorData.value);
       break;
     case "fasadsTop":
-      optionsData.value = roomState.getDefaultFasadeData() as [];
+      optionsData.value = defaultFasadeData.value as [];
       break;
     case "fasadsBottom":
-      optionsData.value = roomState.getDefaultFasadeData() as [];
+      optionsData.value = defaultFasadeData.value as [];
+      break;
+    case "tableTop":
+      optionsData.value = Object.values(defaultTableTopData.value);
       break;
   }
 
@@ -164,13 +195,13 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
 };
 
 const totalSelect = (event: Event, value: keyof TOptionsMap) => {
-  menuStore.updateOptionGlobal(value, event.target!.checked);
-  const selectOption = menuStore.getGlobalOptions[value];
+  roomOptions.updateOptionGlobal(value, event.target!.checked);
+  const selectOption = roomOptions.getGlobalOptions[value];
 
   switch (value) {
     case "wall":
       if (selectOption.global) {
-        roomState.apllyProjectWall(selectOption.id);
+        roomOptions.apllyProjectWall(selectOption.id);
         sceneState.updateStartRoomData(value, selectOption.id);
         return;
       }
@@ -179,7 +210,7 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
       break;
     case "floor":
       if (selectOption.global) {
-        roomState.apllyProjectFloor(selectOption.id);
+        roomOptions.apllyProjectFloor(selectOption.id);
         sceneState.updateStartRoomData(value, selectOption.id);
         return;
       }
@@ -227,6 +258,7 @@ const selectOption = (value: TTextureItem) => {
     case "moduleBottom":
     case "fasadsTop":
     case "fasadsBottom":
+    case "tableTop":
       data = { data: value, type: currentOption.value };
       break;
     default:
@@ -235,13 +267,14 @@ const selectOption = (value: TTextureItem) => {
   }
 
   if (currentOption.value) {
+    // console.log(data);
     eventBus.emit(
       optionsType.value[currentOption.value as keyof TTextureActionMap],
       data
     );
     globalOptions.value![currentOption.value as keyof TTextureActionMap].id =
       value.ID;
-    menuStore.updateOption(currentOption.value, value.ID);
+    roomOptions.updateOption(currentOption.value, value.ID);
   }
 };
 
@@ -252,22 +285,25 @@ const getOptionImg = computed(() => {
     const FASADE = appData.getAppData.FASADE;
     switch (type) {
       case "wall":
-        result = roomState.getWallsTextures()[id].PREVIEW_PICTURE;
+        result = wallsTextures.value[id].PREVIEW_PICTURE;
         break;
       case "floor":
-        result = roomState.getFloorTextures()[id].PREVIEW_PICTURE;
+        result = floorTextures.value[id].PREVIEW_PICTURE;
         break;
       case "moduleTop":
-        result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
+        result = modulesColorData.value[id].PREVIEW_PICTURE;
         break;
       case "moduleBottom":
-        result = roomState.getDefaultModuleData()[id].PREVIEW_PICTURE;
+        result = modulesColorData.value[id].PREVIEW_PICTURE;
         break;
       case "fasadsTop":
         result = FASADE[id].PREVIEW_PICTURE;
         break;
       case "fasadsBottom":
         result = FASADE[id].PREVIEW_PICTURE;
+        break;
+      case "tableTop":
+        result = defaultTableTopData.value[id].PREVIEW_PICTURE;
         break;
     }
     return result;
@@ -282,7 +318,6 @@ const getCurrentRoom = computed(() => {
   return (id: number) => {
     if (!roomState.getRoomId) return;
     return {
-      // "btn-active": id === roomState.getCurrentRoomId.id,
       active: id === roomState.getRoomId,
     };
   };
@@ -296,7 +331,6 @@ watch(
   () => pointLight.value,
   () => {
     changePointLightPower(pointLight.value);
-    sceneState.setLightRange("pointLight", pointLight.value);
   }
 );
 
@@ -307,15 +341,15 @@ watch(
   }
 );
 
-watch(refraction, () => {
-  sceneState.setRefractionValue(refraction.value);
-  toggleRefraction(refraction.value);
-});
+watch(
+  () => refraction.value,
+  () => toggleRefraction(refraction.value)
+);
 
-watch(shadows, () => {
-  sceneState.setShadowValue(shadows.value);
-  toggleShadow(shadows.value);
-});
+watch(
+  () => shadows.value,
+  () => toggleShadow(shadows.value)
+);
 </script>
 
 <template>
@@ -410,7 +444,7 @@ watch(shadows, () => {
                         :key="key"
                         @click="
                           () => {
-                            changeQualit(param);
+                            changeQuality(param);
                             onToggle();
                           }
                         "

@@ -6,6 +6,7 @@ import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 
 import { useEventBus } from '@/store/appliction/useEventBus';
+import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 
 export class Environment {
 
@@ -13,6 +14,7 @@ export class Environment {
 
     parent: THREETypes.TApplication
     eventsStore: ReturnType<typeof useEventBus>
+    roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions()
     scene: THREE.Scene
 
     resources: THREETypes.TResources
@@ -69,41 +71,9 @@ export class Environment {
         });
     }
 
-
-    setQuality(params: string) {
-
-        switch (params) {
-            case 'low':
-                this.toggleEnvironmentMap(false)
-                // console.log(params, 'Low')
-                break
-            case 'medium':
-                this.toggleEnvironmentMap(false)
-                // console.log(params, 'Medium')
-                break
-            case 'hight':
-                this.addEnvironmentMap()
-                // console.log(params, 'Hight')
-                break
-            default:
-                throw new Error(`Качество ${params}`);
-        }
-
-    }
-
     toggleRefraction(value: boolean) {
-        switch (value) {
-            case true:
-                this.addEnvironmentMap()
-                console.log(value, 'Hight')
-                break
-
-            case false:
-                this.toggleEnvironmentMap(false)
-                break;
-        }
+        value ? this.addEnvironmentMap() : this.toggleEnvironmentMap(false)
     }
-
 
     addVueEvents() {
 
@@ -125,6 +95,4 @@ export class Environment {
             this.boundQuality = null;
         }
     }
-
-
 }

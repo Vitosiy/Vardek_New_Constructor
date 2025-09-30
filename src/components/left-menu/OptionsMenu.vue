@@ -14,6 +14,7 @@ import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue
 import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import MainButton from "../ui/buttons/MainButton.vue";
+import DirectionControl from "./option/direction/DirectionControl.vue";
 
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import CatalogSVG from "../ui/svg/CatalogSVG.vue";
@@ -189,20 +190,11 @@ onUnmounted(() => {
         ref="roomOptionsRef"
       />
     </transition>
+    <!-- <DirectionControl @changeDirectionPos="changeCameraPos"/> -->
     <div class="options__camera">
       <h1 class="options__title">Позиция камеры</h1>
       <div class="options__camera--container">
-        <div class="options__camera--items">
-          <div v-for="(btn, key) in controlBtn" :key="key">
-            <button
-              :className="'button__rounded'"
-              ref="cameraBtn"
-              @click="changeCameraPos(btn.action)"
-            >
-              <div :class="['icon', btn.icon]"></div>
-            </button>
-          </div>
-        </div>
+        <DirectionControl @changeDirectionPos="changeCameraPos" />
       </div>
     </div>
   </section>
@@ -453,19 +445,7 @@ onUnmounted(() => {
       align-items: center;
       justify-content: center;
     }
-    &--items {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-      max-width: 170px;
-    }
-    &.active {
-      pointer-events: all;
-      opacity: 1;
-      filter: blur(0);
-    }
+    
 
     @media screen and (min-width: 1329px) {
       padding: 0 20px;

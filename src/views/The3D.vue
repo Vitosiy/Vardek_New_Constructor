@@ -22,6 +22,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useObjectData } from "@/store/appliction/useObjectData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -38,6 +39,15 @@ import UpControllerButton from "@/components/ui/buttons/right-menu/controller/Up
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useScreenshotsStore } from "@/features/store/screenshotsStore/screenshotsStore";
+
+const schemeTransitionStore = useSchemeTransition();
+const menuStore = useMenuStore();
+const roomState = useRoomState();
+const screenshotsStore = useScreenshotsStore();
 
 const appData = ref<{ [key: string]: any } | null>(null);
 
@@ -92,56 +102,80 @@ const CutCash = ref({});
 const CutSave = ref(false);
 
 onMounted(async () => {
-  appData.value = useAppData().getAppData;
+  try {
+    appData.value = useAppData().getAppData;
 
-  models.value = useAppData().getAppData.CATALOG.PRODUCTS;
-  wallMaterials.value = useAppData().getAppData.WALL;
-  floorMaterials.value = useAppData().getAppData.FLOOR;
+    models.value = useAppData().getAppData.CATALOG.PRODUCTS;
+    wallMaterials.value = useAppData().getAppData.WALL;
+    floorMaterials.value = useAppData().getAppData.FLOOR;
 
-  objectData.value = useObjectData(); /** Текущий объект */
-  roomContantData.value = useRoomContantData();
+    objectData.value = useObjectData(); /** Текущий объект */
+    roomContantData.value = useRoomContantData();
 
-  if (sceneContainer.value) {
-    _FASADE.value = appData.FASADE;
-    _MILLING.value = appData.MILLING;
+    if (sceneContainer.value) {
+      _FASADE.value = appData.FASADE;
+      _MILLING.value = appData.MILLING;
 
-    eventBus.on("A:Move", getMove);
-    eventBus.on("A:Selected", selected);
-    eventBus.on("A:ContantLoaded", checkContantLoad);
-    eventBus.on("A:ClearSelected", clearSelected);
+      // Подписываемся на события
+      eventBus.on("A:Move", getMove);
+      eventBus.on("A:Selected", selected);
+      eventBus.on("A:ContantLoaded", checkContantLoad);
+      eventBus.on("A:ClearSelected", clearSelected);
+      eventBus.on("A:ScreenPrint", screenPrint);
+      eventBus.on("A:Take3DScreenshot", take3DScreenshot);
 
-    VerdekConstructor.value = new Application(sceneContainer.value);
+      // Создаем приложение
+      VerdekConstructor.value = new Application(sceneContainer.value);
 
-    await nextTick();
-    VerdekConstructor.value.refreshViewer();
+      await nextTick();
+      VerdekConstructor.value.refreshViewer();
+    }
+  } catch (error) {
+    console.error("Ошибка при инициализации The3D компонента:", error);
   }
-
 });
 
 onBeforeUnmount(() => {
-  uniformState.resetUniformState();
+  try {
+    // Отключаем все события
+    eventBus.off("A:Move", getMove);
+    eventBus.off("A:Selected", selected);
+    eventBus.off("A:ContantLoaded", checkContantLoad);
+    eventBus.off("A:ClearSelected", clearSelected);
+    eventBus.off("A:ScreenPrint", screenPrint);
+    eventBus.off("A:Take3DScreenshot", take3DScreenshot);
 
-  productColor.value = {};
-  productFasades.value = [];
-  fasades.value = {};
-  currentFasadeId.value = {};
-  productData.value = {};
-  product.value = null;
+    // Сбрасываем состояние
+    uniformState.resetUniformState();
 
-  _FASADE.value = {};
-  _MILLING.value = {};
+    // Очищаем данные
+    productColor.value = {};
+    productFasades.value = [];
+    fasades.value = {};
+    currentFasadeId.value = {};
+    productData.value = {};
+    product.value = null;
 
-  appData.value = null;
+    _FASADE.value = {};
+    _MILLING.value = {};
 
-  models.value = null;
-  wallMaterials.value = null;
-  floorMaterials.value = null;
+    appData.value = null;
 
-  objectData.value = null;
-  roomContantData.value = null;
+    models.value = null;
+    wallMaterials.value = null;
+    floorMaterials.value = null;
 
-  VerdekConstructor.value?.destroy();
-  VerdekConstructor.value = null;
+    objectData.value = null;
+    roomContantData.value = null;
+
+    // Уничтожаем приложение
+    if (VerdekConstructor.value) {
+      VerdekConstructor.value.destroy();
+      VerdekConstructor.value = null;
+    }
+  } catch (error) {
+    console.error("Ошибка при очистке компонента The3D:", error);
+  }
 });
 
 onUnmounted(() => {
@@ -181,7 +215,7 @@ const selected = async (item: any) => {
   const { PROPS } = userData;
   const { CONFIG, RASPIL } = PROPS;
 
-  // console.log(item, "SELECT");
+  console.log(RASPIL, "SELECT");
 
   objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
@@ -230,9 +264,195 @@ const clearSelected = () => {
   universalModuleData.value = null;
 };
 
+const screenPrint = async () => {
+  if (!VerdekConstructor.value) return;
+
+  try {
+    const renderer = VerdekConstructor.value._renderer;
+    if (!renderer) {
+      console.error("Renderer не найден");
+      return;
+    }
+
+    // Очищаем предыдущие скриншоты перед созданием новых
+    screenshotsStore.clearScreenshots();
+    console.log("Предыдущие скриншоты очищены");
+
+    // Получаем все комнаты из store - используем правильный источник данных
+    // const allRooms = schemeTransitionStore.getSchemeTransitionData;
+    const allRooms = roomState.getRooms;
+
+    console.log(`Начинаем создание скриншотов для ${allRooms.length} комнат`);
+
+    // Сохраняем текущую комнату, чтобы восстановить её после создания скриншотов
+    const currentRoomId = roomContantData.value?.roomId || null;
+
+    // Сохраняем текущий режим чертежа
+    const currentDrawingMode = menuStore.getDrowModeValue;
+
+    for (let i = 0; i < allRooms.length; i++) {
+      const room = allRooms[i];
+      console.log(
+        `Обрабатываем комнату ${i + 1}/${allRooms.length}: ${
+          room.label || room.id
+        }`
+      );
+
+      try {
+        // Загружаем комнату в сцену через eventBus
+        eventBus.emit("A:Load", room.id);
+
+        // Ждем загрузки комнаты
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Принудительно рендерим сцену перед созданием скриншота
+
+        // 1. Создаем скриншот комнаты в обычном режиме
+        console.log(
+          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`
+        );
+        await new Promise<void>((resolve) => {
+          renderer.domElement.toBlob((blob: Blob | null) => {
+            if (blob) {
+              // Сохраняем скриншот в стор вместо скачивания
+              const cleanRoomName = (room.label || `Комната_${i + 1}`)
+                .replace(/[^a-zA-Z0-9а-яё\s-]/gi, "_")
+                .trim();
+              const screenshot = {
+                id: `${room.id}-normal-${Date.now()}`,
+                roomId: room.id,
+                roomLabel: room.label || `Комната_${i + 1}`,
+                mode: "normal" as const,
+                blob: blob,
+                timestamp: Date.now(),
+                fileName: `3d-screenshot-${cleanRoomName}-normal.png`,
+              };
+
+              screenshotsStore.addScreenshot(screenshot);
+              console.log(
+                `Скриншот комнаты "${
+                  room.label || room.id
+                }" в обычном режиме сохранен в стор`
+              );
+            }
+            resolve();
+          }, "image/png");
+        });
+
+        // 2. Включаем режим чертежа
+        console.log(
+          `Включаем режим чертежа для комнаты "${room.label || room.id}"`
+        );
+        await menuStore.toggleDrowModeValue();
+        const drawingModeValue = menuStore.getDrowModeValue;
+        eventBus.emit("A:DrawingMode", drawingModeValue);
+
+        // Ждем применения режима чертежа
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // 3. Создаем скриншот комнаты в режиме чертежа
+        console.log(
+          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`
+        );
+        await new Promise<void>((resolve) => {
+          renderer.domElement.toBlob((blob: Blob | null) => {
+            if (blob) {
+              // Сохраняем скриншот в стор вместо скачивания
+              const cleanRoomName = (room.label || `Комната_${i + 1}`)
+                .replace(/[^a-zA-Z0-9а-яё\s-]/gi, "_")
+                .trim();
+              const screenshot = {
+                id: `${room.id}-drawing-${Date.now()}`,
+                roomId: room.id,
+                roomLabel: room.label || `Комната_${i + 1}`,
+                mode: "drawing" as const,
+                blob: blob,
+                timestamp: Date.now(),
+                fileName: `3d-screenshot-${cleanRoomName}-drawing.png`,
+              };
+
+              screenshotsStore.addScreenshot(screenshot);
+              console.log(
+                `Скриншот комнаты "${
+                  room.label || room.id
+                }" в режиме чертежа сохранен в стор`
+              );
+            }
+            resolve();
+          }, "image/png");
+        });
+
+        // 4. Возвращаем режим чертежа в исходное состояние
+        if (drawingModeValue !== currentDrawingMode) {
+          await menuStore.toggleDrowModeValue();
+          eventBus.emit("A:DrawingMode", currentDrawingMode);
+        }
+
+        // Пауза между скриншотами
+        if (i < allRooms.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      } catch (roomError) {
+        console.warn(
+          `Ошибка при обработке комнаты ${room.label || room.id}:`,
+          roomError
+        );
+        // Продолжаем с следующей комнатой
+        continue;
+      }
+    }
+
+    // Восстанавливаем исходную комнату, если она была
+    if (currentRoomId) {
+      eventBus.emit("A:Load", currentRoomId);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    // Восстанавливаем исходный режим чертежа
+    if (menuStore.getDrowModeValue !== currentDrawingMode) {
+      await menuStore.toggleDrowModeValue();
+      eventBus.emit("A:DrawingMode", currentDrawingMode);
+    }
+
+    console.log(
+      `Все скриншоты комнат созданы и сохранены в стор. Всего скриншотов: ${
+        screenshotsStore.getScreenshots().length
+      }`
+    );
+    eventBus.emit("A:3DScreenshotCreated");
+  } catch (error) {
+    console.error("Ошибка при создании 3D скриншотов:", error);
+    eventBus.emit("A:3DScreenshotCreated");
+  }
+};
+
+const take3DScreenshot = () => {
+  if (VerdekConstructor.value) {
+    try {
+      const renderer = VerdekConstructor.value._renderer;
+      if (!renderer) {
+        console.error("Renderer не найден");
+        return;
+      }
+
+      renderer.domElement.toBlob((blob: Blob | null) => {
+        if (blob) {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "3d-screenshot.png";
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      }, "image/png");
+    } catch (error) {
+      console.error("Ошибка при создании 3D скриншота:", error);
+    }
+  }
+};
+
 const removeModel = (model) => {
   if (VerdekConstructor.value) {
-    eventBus.emit("A:RemoveModel", model);
+    eventBus.emit("A:RemoveModel", { product: model });
     controller.value = false;
   }
 };
@@ -240,13 +460,17 @@ const removeModel = (model) => {
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
+  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
+    console.log('Pre-Create-Uniform-Group')
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
+  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
+    console.log('Create-Uniform-Group')
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
@@ -367,7 +591,7 @@ const deliteTable = () => {
   if (parent) {
     removeModel(parent);
   } else {
-    removeModel();
+    removeModel(null);
   }
 };
 
@@ -377,6 +601,10 @@ defineExpose({
   openTableRedactor,
   selected,
   activePreloader,
+  getScreenshots: () => screenshotsStore.getScreenshots(),
+  getScreenshotsByRoom: (roomId: string) =>
+    screenshotsStore.getScreenshotsByRoom(roomId),
+  clearScreenshots: () => screenshotsStore.clearScreenshots(),
 });
 </script>
 
@@ -384,7 +612,8 @@ defineExpose({
   <div ref="sceneContainer" class="scene-container"></div>
   <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
-  <div
+
+  <!-- Пока что закоментил потом удалим <div
     class="uniform__container"
     v-if="
       uniformState!.getUniformGroups.length > 0 &&
@@ -411,11 +640,9 @@ defineExpose({
         Убрать ЭЛЕМЕНТ
       </button>
     </div>
-  </div>
+  </div> -->
 
-  <div class="ui-panel--right">
-    <!-- <button class="btn" @click="save">Сохранить</button>
-    <button class="btn" @click="create">Создать новую</button> -->
+  <!-- <div class="ui-panel--right">
     <button
       style="margin-top: 2rem"
       v-show="uniformState!.getUniformModeData.uniformMode"
@@ -435,7 +662,7 @@ defineExpose({
     >
       Создать
     </button>
-  </div>
+  </div> -->
 
   <div
     :class="['model-controller', activeController]"
@@ -452,7 +679,7 @@ defineExpose({
         />
         <DeleteControllerButton
           v-if="Object.keys(CutData).length == 0"
-          @click="removeModel"
+          @click="removeModel(null)"
         />
       </div>
       <div class="controller-right">
@@ -609,7 +836,7 @@ defineExpose({
   transform-origin: top center;
   pointer-events: none;
   user-select: none;
-  
+
   -webkit-user-drag: none;
   transition: all 0.2s ease-in-out;
   &--active {

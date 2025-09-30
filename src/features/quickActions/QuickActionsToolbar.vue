@@ -5,9 +5,11 @@
       :key="index"
       :content="action.tooltip"
       position="bottom"
+      v-show="action.path=='default' || route.path == action.path"
     >
       <template #trigger>
         <button
+       
           class="grey-radial__button"
           @click="action.action"
         >
@@ -19,10 +21,12 @@
 </template>
 
 <script setup lang="ts">
-import Tooltip from '@/components/ui/tooltip/Tooltip.vue';
-import { useQuickActionsToolbar } from './useQuickActionsToolbar';
+import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
+import { useQuickActionsToolbar } from "./useQuickActionsToolbar";
+import { useRoute } from "vue-router";
 
 const { actions } = useQuickActionsToolbar();
+const route = useRoute();
 </script>
 
 <style scoped>
@@ -30,4 +34,4 @@ const { actions } = useQuickActionsToolbar();
   display: flex;
   gap: 8px;
 }
-</style> 
+</style>

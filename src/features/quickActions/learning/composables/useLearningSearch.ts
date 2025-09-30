@@ -8,9 +8,9 @@ export function useLearningSearch(indexes: Ref<IndexMaps>, initialQuery = '') {
   const setQuery = (value: string) => { query.value = value; };
   const clearQuery = () => { query.value = ''; };
 
-  const results = computed<NodeId[]>(() => {
+  const results = computed<NodeId[] | null>(() => {
     const q = query.value.trim().toLowerCase();
-    if (!q) return [];
+    if (!q) return null;
     const ids: NodeId[] = [];
     indexes.value.nodesById.forEach((node, id) => {
       if (node.title.toLowerCase().includes(q)) ids.push(id);

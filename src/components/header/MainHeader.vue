@@ -13,6 +13,9 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { useRoomOptions } from "../left-menu/option/roomOptions/useRoomOptons";
 import { TApplication } from "@/types/types";
 
 import {
@@ -50,11 +53,16 @@ const inputDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 const restorLength = ref<number>(0);
 const curActionCount = ref<number>(0);
 const contentLoaded = ref<boolean>(true);
+const drowModeValue = ref<boolean>(false);
+const rulerVisibility = ref<boolean>(true);
 
 const eventBus = useEventBus();
 const sceneState = useSceneState();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
+const modelState = useModelState();
+const roomOptions = useRoomOptions();
+const customiserStore = useCustomiserStore();
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -98,6 +106,18 @@ const saveProject = async () => {
   // if (historyActions.value) eventBus.emit("A:Save");
 };
 
+// const drowMode = async () => {
+//   drowModeValue.value = !drowModeValue.value;
+//   menuStore.setDrowModeValue(drowModeValue.value);
+//   eventBus.emit("A:DrawingMode", drowModeValue.value);
+// };
+
+// const toggleRulerVisibility = async () => {
+//   rulerVisibility.value = !rulerVisibility.value;
+//   menuStore.setRulerVisibility(rulerVisibility.value);
+//   eventBus.emit("A:ToggleRulerVisibility", rulerVisibility.value);
+// };
+
 const loadProject = async () => {
   // return;
   const data = {
@@ -121,7 +141,11 @@ const updateProject = async () => {
 const createNewRoom = (value: string) => {
   if (!verdekConstructor.value) return;
   props.pageComponent.selected();
-  menuStore.resetGlobalOptions();
+  roomOptions.resetGlobalOptions();
+
+  menuStore.setRulerVisibility(true);
+  menuStore.setDrowModeValue(false);
+
   eventBus.emit("A:Create", value);
   restorLength.value = 0;
   curActionCount.value = 0;
@@ -143,50 +167,85 @@ const lessThenActions = computed(() => {
 });
 
 const prevAction = () => {
-  if (historyActions.value) {
-    /** Активируем preloader */
-    contentLoaded.value = false;
-    props.pageComponent.activePreloader = false;
-    eventBus.emit("A:PrevAction");
-    curActionCount.value = verdekConstructor.value!.userHistory._currentIndex;
-    props.pageComponent.selected();
+  if (historyActions.value && verdekConstructor.value) {
+    try {
+      /** Активируем preloader */
+      contentLoaded.value = false;
+      props.pageComponent.activePreloader = false;
+      eventBus.emit("A:PrevAction");
+      curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+      props.pageComponent.selected();
+      customiserStore.hideCustomiserPopup();
+    } catch (error) {
+      console.error('Ошибка при выполнении prevAction:', error);
+    }
   }
 };
 
 const nextAction = () => {
-  if (historyActions.value) {
-    /** Активируем preloader */
-    contentLoaded.value = false;
-    props.pageComponent.activePreloader = false;
-    eventBus.emit("A:NextAction");
-    curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
-    props.pageComponent.selected();
+  if (historyActions.value && verdekConstructor.value) {
+    try {
+      /** Активируем preloader */
+      contentLoaded.value = false;
+      props.pageComponent.activePreloader = false;
+      eventBus.emit("A:NextAction");
+      curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
+      props.pageComponent.selected();
+      customiserStore.hideCustomiserPopup();
+    } catch (error) {
+      console.error('Ошибка при выполнении nextAction:', error);
+    }
   }
 };
 
 const addEvents3D = () => {
-  eventBus.on("A:Load", () => {
-    props.pageComponent.selected();
+  try {
+    // Отключаем предыдущие события, если они есть
+    eventBus.off("A:Load");
+    eventBus.off("A:ChangeCameraPos");
+    eventBus.off("A:ContantLoaded");
+    
+    // Подписываемся на новые события
+    eventBus.on("A:Load", () => {
+      try {
+        if (props.pageComponent?.selected) {
+          props.pageComponent.selected();
+        }
+        restorLength.value = 0;
+        curActionCount.value = 0;
+      } catch (error) {
+        console.error('Ошибка в обработчике A:Load:', error);
+      }
+    });
 
-    restorLength.value = 0;
-    curActionCount.value = 0;
-  });
+    eventBus.on("A:ChangeCameraPos", () => {
+      try {
+        if (props.pageComponent?.selected) {
+          props.pageComponent.selected();
+        }
+      } catch (error) {
+        console.error('Ошибка в обработчике A:ChangeCameraPos:', error);
+      }
+    });
 
-  eventBus.on("A:ChangeCameraPos", () => {
-    props.pageComponent.selected();
-  });
-
-  eventBus.onEmitCalled(async (event, payload) => {
-    if (!historyActions.value) return;
-    if (!verdekConstructor.value) return;
-    await nextTick();
-    if (verdekConstructor.value.userHistory.checkEvent(event)) {
-      const total = verdekConstructor.value.userHistory.getHistory().length - 1;
-      restorLength.value = total;
-      curActionCount.value = total;
-    }
-  });
-  eventBus.on("A:ContantLoaded", checkContantLoad);
+    eventBus.onEmitCalled(async (event, payload) => {
+      try {
+        if (!historyActions.value || !verdekConstructor.value) return;
+        await nextTick();
+        if (verdekConstructor.value.userHistory.checkEvent(event)) {
+          const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+          restorLength.value = total;
+          curActionCount.value = total;
+        }
+      } catch (error) {
+        console.error('Ошибка в обработчике onEmitCalled:', error);
+      }
+    });
+    
+    eventBus.on("A:ContantLoaded", checkContantLoad);
+  } catch (error) {
+    console.error('Ошибка при добавлении событий 3D:', error);
+  }
 };
 
 const getHistoruBtnsState = computed(() => {
@@ -218,28 +277,59 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
+    try {
+    menuStore.setRulerVisibility(true);
+    menuStore.setDrowModeValue(false);
+    modelState.setCurrentModel(null);
 
-    roomState.mergeRoomsData();
-    let constructor = await waitForConstructor();
-    await nextTick();
+    roomState.routConvertData(newPath);
 
-    if (constructor) {
-      verdekConstructor.value = constructor as TApplication;
-      historyActions.value = true;
-      addEvents3D();
-      return;
+      historyActions.value = false;
+      restorLength.value = 0;
+      curActionCount.value = 0;
+
+      let constructor = await waitForConstructor();
+      await nextTick();
+
+      if (constructor) {
+        verdekConstructor.value = constructor as TApplication;
+        historyActions.value = true;
+        addEvents3D();
+      }
+    } catch (error) {
+      console.error('Ошибка при изменении маршрута в MainHeader:', error);
     }
-    historyActions.value = false;
-    restorLength.value = 0;
-    curActionCount.value = 0;
   },
-  // { immediate: true }
   { flush: "post", immediate: true }
 );
 
 onBeforeUnmount(() => {
-  restorLength.value = 0;
-  curActionCount.value = 0;
+  try {
+    // Отключаем все события
+    eventBus.off("A:Load");
+    eventBus.off("A:ChangeCameraPos");
+    eventBus.off("A:ContantLoaded");
+    
+    // Очищаем данные
+    restorLength.value = 0;
+    curActionCount.value = 0;
+    historyActions.value = false;
+    
+    // Безопасно очищаем ссылку на конструктор
+    if (verdekConstructor.value) {
+      try {
+        // Если у конструктора есть метод destroy, вызываем его
+        if (typeof verdekConstructor.value.destroy === 'function') {
+          verdekConstructor.value.destroy();
+        }
+      } catch (error) {
+        console.warn('Ошибка при уничтожении конструктора:', error);
+      }
+      verdekConstructor.value = null;
+    }
+  } catch (error) {
+    console.error('Ошибка при очистке MainHeader:', error);
+  }
 });
 </script>
 
@@ -253,7 +343,7 @@ onBeforeUnmount(() => {
         <div class="header-main-ui">
           <div
             :class="['history', 'history__btns', getHistoruBtnsState]"
-            v-if="historyActions"
+            v-if="historyActions && route.path == '/3d'"
           >
             <!-- {{ restorLength }}{{ curActionCount }} -->
             <LeftLightHeaderButton
@@ -269,7 +359,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <!-- <div class="header-ui-group">
+          <div class="header-ui-group" v-if="route.path == '/3d'">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -302,6 +392,16 @@ onBeforeUnmount(() => {
                 </button>
               </template>
             </Modal>
+          </div>
+          <!-- <div class="header-ui-group" v-if="route.path=='/3d'">
+            <button class="button__rounded" @click="drowMode">
+              <span class="icon icon-show"></span>
+            </button>
+          </div>
+          <div class="header-ui-group" v-if="route.path=='/3d'">
+            <button class="button__rounded" @click="toggleRulerVisibility">
+              <span class="icon icon-ruler"></span>
+            </button>
           </div> -->
         </div>
       </div>

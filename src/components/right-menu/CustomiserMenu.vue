@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck 31
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { onMounted, onBeforeUnmount, ref, onUnmounted } from "vue";
 import type { Mesh, Object3D, Vector3, PerspectiveCamera } from "three";
 
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
@@ -8,10 +8,11 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
+import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
 import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue";
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
-import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage.vue";
+import FigurePage from "@/components/right-menu/customiser-pages/FigureRightPage/FigureRightPage.vue";
 
 import RulerButton from "@/components/ui/buttons/right-menu/RulerRightButton.vue";
 import ColorButton from "@/components/ui/buttons/right-menu/ColorRightButton.vue";
@@ -26,11 +27,13 @@ const modelState = useModelState();
 const currentModel = ref(null);
 
 const closeCustomiser = () => {
+  // Отключаем режим переходящего рисунка при закрытии кастомизатора
+  eventBus.emit("A:Disable-Uniform-Mode");
+  console.log('Close customiser')
   customiserStore.hideCustomiserPopup();
 };
 
 const checkSelect = (el) => {
-
   if (!el.object) {
     closeCustomiser();
     currentModel.value = null;
@@ -39,8 +42,7 @@ const checkSelect = (el) => {
   }
   currentModel.value = el.object.userData;
   modelState.setCurrentModel(el.object.userData);
-  // customiserStore.switchCustomiser('ruler')
-  // console.log(currentModel.value, "o");
+  customiserStore.switchCustomiser('color')
 };
 
 onMounted(() => {
@@ -53,6 +55,9 @@ onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
   eventBus.off("A:ClearSelected", checkSelect);
 });
+onUnmounted(()=>{
+  closeCustomiser()
+})
 </script>
 
 <template>
@@ -81,7 +86,7 @@ onBeforeUnmount(() => {
         <!--
         <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
         -->
-        <MovingPage v-if="customiserStore.customisers == 'moving'" />
+        <RailsRightPage v-if="customiserStore.customisers == 'moving'" />
         <FigurePage v-if="customiserStore.customisers == 'figure'" />
       </div>
     </div>

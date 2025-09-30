@@ -27,9 +27,13 @@ const emit = defineEmits([
 
 const cutServisShow = ref(false);
 
-const cutChacked = (event: Event, type: string, pos: string) => {
-  const typeLow = type.toLowerCase();
-  emit("cut-servisData", event.target.checked, typeLow, pos);
+const cutChacked = (
+  event: Event,
+  item: Record<string,string>,
+) => {
+  console.log(item, "item");
+  // const typeLow = item.NAME.toLowerCase();
+  emit("cut-servisData", event.target.checked, item);
 };
 
 const toggleCutServise = () => {
@@ -49,7 +53,7 @@ const getMaxWidth = computed(() => {
 const updateEuroWidth = (event: Event, type: string) => {
   const typeLow = type.toLowerCase();
   // if (event!.target!.value <= 1) event!.target!.value = 1;
-    // if (event!.target!.value <= 1) event!.target!.value = 1;
+  // if (event!.target!.value <= 1) event!.target!.value = 1;
 
   emit("cut-updateServise", event, typeLow);
 };
@@ -75,7 +79,7 @@ const updateEuroWidth = (event: Event, type: string) => {
             <input
               type="checkbox"
               :checked="item.value"
-              @change="cutChacked($event, item.NAME, item.pos)"
+              @change="cutChacked($event, item)"
             />
             <span class="control_indicator"></span>
             <span class="text-lg text-gray-800 font-medium">{{
@@ -172,5 +176,4 @@ const updateEuroWidth = (event: Event, type: string) => {
     display: flex;
   }
 }
-
 </style>

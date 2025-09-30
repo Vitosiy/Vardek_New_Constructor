@@ -9,19 +9,17 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from '../appliction/useModelState';
 import { useSceneState } from './useSceneState';
 
-
 import * as THREEInterfases from "../../types/interfases"
 import { TFasadeItem } from "@/types/types";
 
-
+export type TempRoomParamsKey = 'wall' | 'floor';
+export type TRoutPath = '/3d' | '/2d';
 
 export const useRoomState = defineStore('RoomState', () => {
 
-  //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
-
-  const roomsStore = useSchemeTransition();
+  const schemeTransition = useSchemeTransition();
   const sceneState = useSceneState();
-  const roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData));
+  const roomsData = JSON.parse(JSON.stringify(schemeTransition.getSchemeTransitionData));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
 
   const APP = useAppData();
@@ -31,8 +29,46 @@ export const useRoomState = defineStore('RoomState', () => {
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
-  const mergeRoomsData = () => {
-    rooms.value = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData))
+  const convertDataTo3DConstuctor = () => {
+    console.log('3D', schemeTransition.getSchemeTransitionData)
+    const clone = schemeTransition.getSchemeTransitionData.map(item => {
+      return item
+    })
+    const parseData = clone.map(elem => {
+      console.log(elem.content)
+
+      const content = JSON.stringify(elem.content)
+      return {
+        ...elem,
+        content: content
+      }
+    })
+    rooms.value = parseData
+  }
+
+  const convertDataTo2DConstuctor = () => {
+    console.log('2D')
+    const clone = rooms.value.map(item => {
+      return item
+    })
+
+    const parseData = clone.map(elem => {
+      const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+      return {
+        ...elem,
+        content: content
+      }
+    })
+    schemeTransition.setAppData(parseData)
+  }
+
+  const converActions = {
+    '/2d': () => convertDataTo2DConstuctor(),
+    '/3d': () => convertDataTo3DConstuctor()
+  }
+
+  const routConvertData = (value: TRoutPath) => {
+    converActions[value]()
   }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
@@ -45,6 +81,8 @@ export const useRoomState = defineStore('RoomState', () => {
     if (room) {
       room.content = content;
       room.params = params;
+
+      return
     }
 
   };
@@ -76,15 +114,9 @@ export const useRoomState = defineStore('RoomState', () => {
     tempRoomSize.value = null
   }
 
-  const setWallTexture = (value: number | string) => {
+  const tempRoomUpdate = (value: number | string, type: TempRoomParamsKey) => {
     if (tempRoomSize.value) {
-      tempRoomSize.value.wall = value
-    }
-  }
-
-  const setFloorTexture = (value: number | string) => {
-    if (tempRoomSize.value) {
-      tempRoomSize.value.floor = value
+      tempRoomSize.value[type] = value
     }
   }
 
@@ -96,30 +128,17 @@ export const useRoomState = defineStore('RoomState', () => {
 
   /** Возвращаем с использованием ID комнаты */
   const getCurrentRoomData = (roomId) => {
-    let centerized = roomsStore.getRoomDataFor3DScene(roomId);
-    const currentRoom = rooms.value.find(value => value.id === roomId)
+    let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
+    console.log(centerized)
+    // const currentRoom = rooms.value.find(value => value.id === roomId)
 
-    if (centerized) {
-      currentRoom.params = centerized?.params ?? currentRoom?.params;
-      currentRoom.content = centerized?.content ?? currentRoom?.content;
-    }
+    // if (centerized) {
+    //   currentRoom.params = centerized?.params ?? currentRoom?.params;
+    //   currentRoom.content = centerized?.content ?? currentRoom?.content;
+    // }
 
     return rooms.value.find(value => value.id === roomId)
   }
-
-  const getCurrentRoomId = computed(() => {
-
-    let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
-
-    const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
-
-    if (centerized) {
-      currentRoom.params = centerized?.params ?? currentRoom?.params;
-      currentRoom.content = centerized?.content ?? currentRoom?.content;
-    }
-
-    return rooms.value.find(value => value.id === currentRoomId.value)
-  });
 
   const getRoomId = computed(() => {
     return currentRoomId.value
@@ -137,63 +156,6 @@ export const useRoomState = defineStore('RoomState', () => {
     return rooms.value
   })
 
-  const apllyProjectWall = (value) => {
-    rooms.value.forEach((room) => {
-      room.params.wall = value;
-    });
-  }
-
-  const apllyProjectFloor = (value) => {
-    rooms.value.forEach((room) => {
-      room.params.floor = value;
-    });
-  }
-
-
-  const getWallsTextures = () => {
-    return useAppData().getAppData.WALL
-
-  }
-
-  const getFloorTextures = () => {
-    return useAppData().getAppData.FLOOR
-  }
-
-  const getDefaultModuleData = () => {
-    const colorMap: Record<number, TFasadeItem> = {};
-    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
-    const FASADE = APP.getAppData.FASADE;
-
-    for (const el in PRODUCTS) {
-      const product = PRODUCTS[el];
-
-
-      if (Array.isArray(product.MODULECOLOR) && product.MODULECOLOR[0] != null) {
-        product.MODULECOLOR.forEach(color => {
-          if (FASADE[color] !== undefined && colorMap[color] === undefined) {
-            colorMap[color] = FASADE[color] as TFasadeItem;
-          }
-        });
-      }
-
-    }
-
-    return colorMap
-  }
-
-  const getDefaultFasadeData = () => {
-    const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
-    const [key, value] = Object.entries(PRODUCTS)[0]
-    const fasade = value.FACADE
-    const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
-
-    return defaultFasadData
-
-
-
-  }
-
-
   return {
     rooms,
     getRooms,
@@ -201,33 +163,23 @@ export const useRoomState = defineStore('RoomState', () => {
     updateRoom,
     removeRoom,
     getRoomId,
-    mergeRoomsData,
-    // updateRoomSize,
+
 
     setCurrentRoomId,
-    getCurrentRoomId,
     clearCurrentRoomId,
 
     setCurrentRoomParams,
     getCurrentRoomParams,
     clearTempRoomSize,
+    tempRoomUpdate,
 
     updatedRoomContent,
     getRoomContent,
 
-
-    getWallsTextures,
-    getFloorTextures,
-    setWallTexture,
-    setFloorTexture,
-
     getCurrentRoomData,
 
-    apllyProjectWall,
-    apllyProjectFloor,
-
-    getDefaultModuleData,
-    getDefaultFasadeData
-
+    convertDataTo3DConstuctor,
+    convertDataTo2DConstuctor,
+    routConvertData
   };
 });

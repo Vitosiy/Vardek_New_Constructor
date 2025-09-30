@@ -42,6 +42,9 @@ export class AlumBuilder {
         fasade.visible = true;
 
         fasade.traverse((child: THREE.Object3D) => {
+            // Пропускаем меш чертежа
+            if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) return
+
             if (child instanceof THREE.Mesh && child.userData.type !== 'glass') {
                 if (!child.userData.ORIGINAL_COLOR) {
                     child.userData.ORIGINAL_COLOR = child.material;

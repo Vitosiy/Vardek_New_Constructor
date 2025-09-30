@@ -14,6 +14,7 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useUniformState } from "@/store/appliction/useUniformState";
 
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
+import { UniformModeHandler } from "../Utils/UniformModeHandler";
 
 export class MoveManager {
 
@@ -42,6 +43,7 @@ export class MoveManager {
     selectedObject: THREE.Object3D | null = null;
     obbHelper: OBBHelper = new OBBHelper()
     startPos: THREE.Vector3 = new THREE.Vector3()
+    uniformModeHandler: UniformModeHandler
 
     // rulerLines: THREE.Object3D[] = []
 
@@ -91,6 +93,15 @@ export class MoveManager {
         this.uniformEvents = this.uniformTextureBuilder.uniformEvents
         this.boxHelper = root._customBoxHelper
         this.ruler = root._ruler
+
+        // Инициализируем обработчик режима переходящего рисунка
+        this.uniformModeHandler = new UniformModeHandler(
+            this.uniformEvents,
+            this.uniformState,
+            this.boxHelper,
+            this.trafficManager,
+            this.uniformTextureBuilder
+        )
 
         this.onMouseDownBound = this.onMouseDown.bind(this)
         this.onMouseMoveBound = this.onMouseMove.bind(this)
@@ -257,6 +268,8 @@ export class MoveManager {
             if (this.uniformEvents._unionMode) {
                 /** предварительный выбор объектов в новую группу */
                 if (this.uniformEvents._preGroup) {
+
+                    console.log(this.selectedObject)
                     this.uniformTextureBuilder.preGrouping(this.selectedObject)
                     this.boxHelper.createSelectGroup(this.selectedObject)
                 }
@@ -422,38 +435,20 @@ export class MoveManager {
 
     keyDown(event) {
 
-        return
+        // return
 
         if (event.repeat) return
 
-        if (event.shiftKey) {
+        // if (event.shiftKey) {
+        //     this.uniformModeHandler.toggleUniformMode()
+        //     this.selectedObject = null
 
-            this.uniformEvents.togleUnionMode()
-            this.uniformEvents.desablePreGrouping()
-            this.uniformEvents.desableGroupAddition()
-
-
-            if (this.uniformEvents._unionMode) {
-                /** Убираем хелпер */
-                this.boxHelper.removeBoxHelper()
-                /** Убираем линейку */
-                this.trafficManager.ruler.clearRuler()
-
-                this.boxHelper.toggleGroupBox(true, this.uniformTextureBuilder._groupsBoxHelper)
-            }
-            else {
-                this.boxHelper.clearSelect()
-                this.uniformState.setPreGroup(0)
-                this.uniformTextureBuilder.clearTemporaryGroups()
-                this.uniformEvents.desableGroupAddition()
-                this.uniformEvents.desableDegrouping()
-                this.boxHelper.toggleGroupBox(false, this.uniformTextureBuilder._groupsBoxHelper)
-                this.selectedObject = null
-
-            }
-
-            // console.log(this.uniformEvents._unionMode)
-        }
+        //     // Эмитим событие для синхронизации состояния UI
+        //     this.eventBuss.emit('A:Uniform-Mode-Toggled', {
+        //         uniformMode: this.uniformEvents._unionMode,
+        //         showGroupsManager: false 
+        //     })
+        // }
 
     }
 
@@ -463,10 +458,11 @@ export class MoveManager {
         })
 
         this.eventBuss.on('A:Pre-Create-Uniform-Group', () => {
+            console.log('Pre-Create-Uniform-Group - MoveManager')
             this.uniformEvents.enablePreGrouping()
             this.uniformEvents.desableGroupAddition()
             this.uniformEvents.desableDegrouping()
-            // console.log(this.uniformState.getUniformModeData)
+
 
         })
 
@@ -482,6 +478,30 @@ export class MoveManager {
             this.uniformEvents.enableDegrouping(groupId)
             this.uniformEvents.desablePreGrouping()
 
+        })
+
+        this.eventBuss.on('A:Toggle-Uniform-Mode', (options = {}) => {
+            console.log('Toggle-Uniform-Mode - MoveManager', options)
+            this.uniformModeHandler.toggleUniformMode()
+            this.selectedObject = null
+
+            // Эмитим событие обратно для синхронизации состояния UI
+            this.eventBuss.emit('A:Uniform-Mode-Toggled', {
+                uniformMode: this.uniformEvents._unionMode,
+                showGroupsManager: options.showGroupsManager || false
+            })
+        })
+
+        this.eventBuss.on('A:Disable-Uniform-Mode', () => {
+            console.log('Disable-Uniform-Mode - MoveManager')
+            this.uniformModeHandler.disableUniformMode()
+            this.selectedObject = null
+
+            // Эмитим событие обратно для синхронизации состояния UI
+            this.eventBuss.emit('A:Uniform-Mode-Toggled', {
+                uniformMode: false,
+                showGroupsManager: false
+            })
         })
 
         this.eventBuss.on('A:ClearSelected', () => {

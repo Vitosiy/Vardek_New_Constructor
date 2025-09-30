@@ -36,7 +36,7 @@ export const useCustomiserStore = defineStore('customiser', () => {
     }
   }
 
-  const customiserState = computed(()=>{
+  const customiserState = computed(() => {
     return isCustomiserOpen.value
   })
 
