@@ -60,15 +60,13 @@ const isPalleteExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
   isSurfaceSelected.value = true;
-  const { COLOR } = currentElementData.value;
-  const dataOfFasadeType = _FASADE[COLOR];
 
-  modelState.createCurrentPaletteData(COLOR);
+  modelState.createCurrentPaletteData(data.ID);
 
   paletteList.value = modelState.getCurrentPaletteData;
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
 
-  const { NAME, PREVIEW_PICTURE } = dataOfFasadeType;
+  let { NAME, PREVIEW_PICTURE } = data;
   currentSurfaceData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
 
   let palette
@@ -196,7 +194,7 @@ watch(
     <SurfaceRedactor
       v-if="currentEditableOption === 'surface'"
       :materialList="materialList"
-      :props.elementIndex="props.elementIndex"
+      :elementIndex="props.elementIndex"
       :temp-work="true"
       @select_material="onSelectMaterial"
     />
@@ -204,7 +202,7 @@ watch(
     <ColorRedactor
       v-if="currentEditableOption === 'palette'"
       :paletteList="paletteList"
-      :props.elementIndex="props.elementIndex"
+      :elementIndex="props.elementIndex"
       :temp-work="true"
       @select_color="onSelectPalette"
     />

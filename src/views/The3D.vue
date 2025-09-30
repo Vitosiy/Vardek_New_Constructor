@@ -445,7 +445,7 @@ defineExpose({
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
         <ControllerButton
-          v-if="Object.keys(CutData).length == 0"
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
         />
         <ContentControllerButton
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"
