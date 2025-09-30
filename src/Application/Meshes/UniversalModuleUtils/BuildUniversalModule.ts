@@ -152,8 +152,8 @@ export class BuildUniversalModule extends BuildProduct {
             CONFIG.BACKWALL.COLOR = this.filters.filterModuleColor(product_data.BACKWALL)[0] || CONFIG["MODULE_COLOR"];
         }
 
-        CONFIG.LEFTSIDECOLOR = {}
-        CONFIG.RIGHTSIDECOLOR = {}
+        CONFIG.LEFTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
+        CONFIG.RIGHTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
         CONFIG.TOPFASADECOLOR = {}
 
         if (product_data.moduleType.CODE !== "wardrobe")

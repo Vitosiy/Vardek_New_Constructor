@@ -27,6 +27,14 @@ const props = defineProps({
 });
 const {is2Dconstructor} = toRefs(props);
 
+const emit = defineEmits([
+  "parent-callback",
+]);
+
+const callback = (material) => {
+  emit("parent-callback", material);
+}
+
 onBeforeMount(() => {
   materialList.value =
     modelState.getCurrentModuleData
@@ -50,7 +58,10 @@ const changeModuleTexture = (data: any) => {
     name: data.NAME,
     imgSrc: data.DETAIL_PICTURE,
   };
-  eventBus.emit("A:ChangeModuleTexture", data);
+  callback(data)
+
+  if(!is2Dconstructor)
+    eventBus.emit("A:ChangeModuleTexture", data);
 };
 
 const deleteSelectedOptions = (type: string) => {

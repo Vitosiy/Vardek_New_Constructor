@@ -1,13 +1,10 @@
 <script setup lang="ts" xmlns="http://www.w3.org/1999/html">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
-import {_URL} from "@/types/constants";
+import {computed, defineExpose, ref, toRefs} from "vue";
 
-import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
-import MaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialRedactor.vue";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
-import CounterInput from "@/components/ui/inputs/CounterInput.vue";
+import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
 
 const props = defineProps({
   module: {
@@ -25,10 +22,49 @@ const props = defineProps({
   }
 });
 
-type CATALOG_TYPE = 'FASADE' | 'PALETTE' | 'MILLING';
+type CATALOG_TYPE = 'FASADE' | 'PALETTE' | 'MILLING' | 'FASADETYPE' | 'GLASS' | 'PATINA';
+
+const moduleParts = [
+  'MODULE_COLOR', 'BACKWALL', 'LEFTSIDECOLOR', 'RIGHTSIDECOLOR', 'TOPFASADECOLOR'
+]
+enum partsNames {
+  MODULE_COLOR = 'Цвет корпуса',
+  BACKWALL = 'Задняя стенка',
+  LEFTSIDECOLOR = 'Левая стенка',
+  RIGHTSIDECOLOR = 'Правая стенка',
+  TOPFASADECOLOR = 'Накладка на крышку'
+}
 
 const {module, objectData, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
+
+const currentOption = ref<string | boolean>(false);
+
+const getMaterialsList = computed(() => {
+  return (_module: Object) => {
+    let result = {}
+
+    moduleParts.forEach((item) => {
+      if (_module.PROPS.CONFIG[item]) {
+
+        if (typeof _module.PROPS.CONFIG[item] === "object") {
+          let tmpObj = {}
+          Object.entries(_module.PROPS.CONFIG[item]).forEach(([key, value]) => {
+            let name = key === "COLOR" ? "FASADE" : key;
+            tmpObj[key] = getMaterialInfo(name, value)
+          })
+
+          if(Object.keys(tmpObj).length > 0)
+            result[item] = tmpObj
+
+        } else
+          result[item] = {COLOR: getMaterialInfo("FASADE", _module.PROPS.CONFIG[item])}
+      }
+    })
+
+    return result;
+  };
+});
 
 const emit = defineEmits([
   "product-reset",
@@ -42,142 +78,94 @@ const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
   return APP[type][materialID]
 }
 
+const getOption = (part: string) => {
+  if (part == currentOption.value) {
+    currentOption.value = false;
+    return;
+  }
+  currentOption.value = part;
+};
+
+const selectOption = (value: Object, type: string, palette: Object = false) => {
+  if(value) {
+
+    switch (currentOption.value) {
+      case "MODULE_COLOR":
+        objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
+        module.value.moduleColor = value.ID;
+        module.value.moduleThickness = value.DEPTH;
+        break;
+      default:
+        if(!objectData.value.PROPS.CONFIG[currentOption.value]){
+          objectData.value.PROPS.CONFIG[currentOption.value] = {}
+        }
+
+        objectData.value.PROPS.CONFIG[currentOption.value][type] = value.ID;
+        if(palette)
+          objectData.value.PROPS.CONFIG[currentOption.value]['PALETTE'] = palette
+        break;
+    }
+    reset()
+  }
+};
+
+const getCurrentRedactor = computed(() => {
+  return (!currentOption.value?.includes("MODULE") && !currentOption.value?.includes("BACKWALL"));
+});
+
 </script>
 
 <template>
-  <div class="accordion-sections">
+  <div class="actions-materials-wrapper">
     <div
-        :class="'actions-sections-items--container'"
+        :class="'actions-materials-items--container'"
     >
-      <details class="item-group">
-
-        <summary>
-          <h3 class="item-group__title">
-            Цвет корпуса
-          </h3>
-        </summary>
-
+      <div class="config-options">
         <div
-            :class="'actions-sections-items--container'"
+            v-for="(value, part) in getMaterialsList(objectData)"
+            :key="part"
+            class="option-small"
         >
-          <CorpusMaterialRedactor :is2-dconstructor="true"/>
+          <div
+              :class="['option-small-item', {active: currentOption === part}]"
+              @click="getOption(part)"
+          >
+              {{partsNames[part]}}
+
+            <div :class="['option-small-item-chevron', {active: currentOption === part}]">
+              ❯
+            </div>
+
+          </div>
+
         </div>
-      </details>
-
-      <details class="item-group">
-
-        <summary>
-          <h3 class="item-group__title">
-            Цвет задней стенки
-          </h3>
-        </summary>
-
-        <div
-            :class="'actions-sections-items--container'"
-        >
-          <CorpusMaterialRedactor :is2-dconstructor="true"/>
-        </div>
-      </details>
-
-      <details class="item-group">
-
-        <summary>
-          <h3 class="item-group__title">
-            Цвет левой стенки
-          </h3>
-        </summary>
-
-        <div
-            :class="'actions-sections-items--container'"
-        >
-          <CorpusMaterialRedactor :is2-dconstructor="true"/>
-        </div>
-      </details>
-
-      <details class="item-group">
-
-        <summary>
-          <h3 class="item-group__title">
-            Цвет правой стенки
-          </h3>
-        </summary>
-
-        <div
-            :class="'actions-sections-items--container'"
-        >
-          <CorpusMaterialRedactor :is2-dconstructor="true"/>
-        </div>
-      </details>
-
-      <details class="item-group">
-
-        <summary>
-          <h3 class="item-group__title">
-            Накладка на крышку
-          </h3>
-        </summary>
-
-        <div
-            :class="'actions-sections-items--container'"
-        >
-          <CorpusMaterialRedactor :is2-dconstructor="true"/>
-        </div>
-      </details>
-
+      </div>
     </div>
   </div>
+
+  <transition name="slide--left" mode="out-in">
+    <div class="color-select" v-if="currentOption" key="color-select">
+      <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
+
+      <AdvanceCorpusMaterialRedactor
+          v-if="getCurrentRedactor"
+          :key="currentOption"
+          :element-data="objectData.PROPS.CONFIG[currentOption]"
+          :element-index="currentOption"
+          @parent-callback="selectOption"
+      />
+      <CorpusMaterialRedactor
+          v-else
+          :is2Dconstructor="true"
+          @parent-callback="selectOption"
+      />
+    </div>
+  </transition>
+
 </template>
 
 <style scoped lang="scss">
-.item-group {
-  display: flex;
-  flex-direction: column;
-  color: #a3a9b5;
-  margin-right: 10px;
-
-  &__title {
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  &-color {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 15px;
-    background-color: $bg;
-    cursor: pointer;
-
-    .item-group-name {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      .name__bg {
-        max-width: 60px;
-        max-height: 60px;
-        border-radius: 15px;
-      }
-
-      .name__text {
-        font-weight: 500;
-      }
-    }
-
-    @media (hover: hover) {
-      /* when hover is supported */
-      &:hover {
-        color: white;
-        background-color: #da444c;
-        border: 1px solid transparent;
-      }
-    }
-  }
-}
-
-.actions-sections {
+.actions-materials {
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -263,10 +251,10 @@ const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
 
     &--container {
       display: flex;
-      flex-direction: column;
       width: 100%;
       padding: 1rem 0;
       border-bottom: 1px solid #ecebf1;
+      flex-direction: column;
 
       // &:first-child {
       //   padding-top: 0;
@@ -485,5 +473,206 @@ const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
   }
 }
 
+.config {
+  display: flex;
+  gap: 5px;
+  position: absolute;
+  top: 15px;
+  left: 320px;
+  max-height: calc(100vh - 120px);
+  z-index: -1;
+  user-select: none;
+
+  &-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex-direction: column;
+  }
+
+  &-modheight {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  &-select {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 0;
+    border-top: 1px solid $stroke;
+    border-bottom: 1px solid $stroke;
+
+    &__item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px;
+      border: 1px solid $dark-grey;
+      border-radius: 50px;
+    }
+  }
+
+  &-popup {
+    width: 570px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+    padding: 15px;
+    // background: rgba($white, 0.6);
+    background: rgba($white, 1);
+    box-shadow: 0px 0px 10px 0px #3030301a;
+    z-index: 1;
+    border-radius: 15px;
+    // backdrop-filter: blur(5px);
+
+    &__container {
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-right: 10px;
+      overflow: auto;
+    }
+  }
+}
+
+.option {
+  &-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    border-radius: 15px;
+    transition-property: background-color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover {
+        .label__text {
+          color: $black;
+        }
+
+        // background-color: $stroke;
+      }
+    }
+  }
+
+  &-small {
+    flex: 46%;
+    margin: 10px;
+    border-radius: 15px;
+    flex-direction: column;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    color: #a3a9b5;
+
+    @media (hover: hover) {
+      &:hover {
+        color: #da444c;
+        border-color: #da444c;
+      }
+    }
+
+    &-item {
+      padding: 1rem;
+      border: 1px solid #ecebf1;
+      border-radius: 15px;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      align-content: center;
+
+      &-chevron {
+        font-size: 1rem;
+        transform: rotate(-180deg);
+
+        &.active {
+          transform: rotate(0deg);
+          color: #da444c;
+        }
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          color: #da444c;
+          border-color: #da444c;
+
+          .chevron {
+            color: #da444c;
+          }
+        }
+      }
+
+      &.active{
+        color: #da444c;
+        border-color: #da444c;
+      }
+    }
+  }
+
+  &-standart {
+    width: 100%;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: $bg;
+  }
+
+  &-standart {
+    width: 100%;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: $bg;
+  }
+}
+
+.color {
+  &-select {
+    position: fixed;
+    left: 20.8vw;
+    top: 0;
+    width: 100%;
+    max-width: 373px;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background: rgba($white, 1);
+    box-shadow: 0px 0px 10px 0px #3030301a;
+    z-index: 0;
+    border-radius: 15px;
+
+    &__container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      overflow: auto;
+    }
+
+    &-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: $bg;
+      border-radius: 15px;
+      gap: 10px;
+
+      &__title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+    }
+  }
+}
 
 </style>
