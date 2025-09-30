@@ -22,6 +22,7 @@ import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtil
 import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
 import ModuleOptionsManager from "@/components/2DmoduleConstructor/utils/ModuleOptionsManager.vue";
 import Toggle from "@vueform/toggle";
+import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -872,8 +873,9 @@ const updateHorizont = (value) => {
   debounce(() => {
     const PROPS = productData.value.PROPS;
 
-    let delta = parseInt(value) - module.value.horizont
+    let delta = parseInt(value) - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]
     module.value.sections.forEach((section, secIndex) => {
+      section.position.y += delta
       section.fasades.forEach((door) => {
         door.forEach((segment) => {
           segment.position.y += delta;
@@ -1228,13 +1230,7 @@ watch(onHorizont, () => {
           <h1>Опции</h1>
         </div>
 
-        <ModuleOptionsManager
-            ref="optionsManagerRef"
-            :visualizationRef="visualizationRef"
-            :module="module"
-            :objectData="productData"
-            @product-reset="reset"
-        />
+        <RailsRightPage />
 
       </div>
 

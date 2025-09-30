@@ -16,10 +16,8 @@ const props = defineProps<{
   }
 }>();
 
-// const materialList = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
-// const selectedSurfaceID = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 
-// const materialList = ref(null);
+const materialList = ref(null);
 const selectedSurfaceID = ref(null);
 
 const currentSurfaceData = ref<any>({});
@@ -37,12 +35,12 @@ const callback = (material) => {
 }
 
 onBeforeMount(() => {
-  // materialList.value = modelState.getCurrentModuleData;
+  materialList.value = props.materialList || modelState.getCurrentModuleData;
   selectedSurfaceID.value = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
-  const current = props.materialList!.find(
+  const current = materialList.value!.find(
     (m) => m.ID === selectedSurfaceID.value
   );
   if (current) {
@@ -65,7 +63,7 @@ const changeModuleTexture = (data: any) => {
 };
 
 const deleteSelectedOptions = (type: string) => {
-  const fallback = props.materialList.value![0];
+  const fallback = materialList.value![0];
   currentSurfaceData.value = {
     name: fallback.NAME,
     imgSrc: fallback.PREVIEW_PICTURE,
@@ -75,13 +73,12 @@ const deleteSelectedOptions = (type: string) => {
 
 watch(
   () => props.materialList,
-  // modelState.getCurrentModel
-
   () => {
-    // materialList.value = modelState.getCurrentModuleData;
+    materialList.value = props.materialList || modelState.getCurrentModuleData;
+
     selectedSurfaceID.value =
       modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
-    const current = props.materialList!.find(
+    const current = materialList.value!.find(
       (m) => m.ID === selectedSurfaceID.value
     );
     if (current) {
@@ -112,7 +109,7 @@ watch(
       />
     </div>
 
-    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
+    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
   </div>
   <div class="container container--2D-constructor" v-else>
     <div class="configuration">
@@ -129,7 +126,7 @@ watch(
       />
     </div>
 
-    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
+    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
   </div>
 </template>
 
