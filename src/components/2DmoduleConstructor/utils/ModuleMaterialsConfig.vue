@@ -87,8 +87,6 @@ const getOption = (part: string) => {
 };
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
-  if(value) {
-
     switch (currentOption.value) {
       case "MODULE_COLOR":
         objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
@@ -100,13 +98,12 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
           objectData.value.PROPS.CONFIG[currentOption.value] = {}
         }
 
-        objectData.value.PROPS.CONFIG[currentOption.value][type] = value.ID;
+        objectData.value.PROPS.CONFIG[currentOption.value][type] = value ? value.ID : false;
         if(palette)
           objectData.value.PROPS.CONFIG[currentOption.value]['PALETTE'] = palette
         break;
     }
     reset()
-  }
 };
 
 const getCurrentRedactor = computed(() => {

@@ -390,8 +390,6 @@ export class BuildUniversalModule extends BuildProduct {
         // const model = this._MODELS[parentModel.loop_model];
         const model = this._MODELS[parentModel.loop_model].id;
 
-
-
         const loopPosition = this._LOOP_POSITION[parentModel.loop_position];
         let allLoopsMesh = new THREE.Object3D();
 
@@ -474,8 +472,8 @@ export class BuildUniversalModule extends BuildProduct {
                     rightSide ? rightPosition : leftPosition,
                     coord,
                     rightSide ?
-                        PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z + loop.depth / 2 :
-                        PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z + loop.depth / 2,
+                        PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z :
+                        PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z,
                 );
 
                 loopMesh.rotation.set(rotation.x, rotation.y, rotation.z);

@@ -7,6 +7,10 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 const props = defineProps({
   glassList: Array,
   tabIndex: Number,
+  tempWork: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["select_glass"]);
@@ -15,14 +19,16 @@ const eventBus = useEventBus();
 const selectPatina = ref<any>(null);
 
 const changeGlass = (glass) => {
-  eventBus.emit("A:ChangeGlassColor", {
-    data: glass.ID,
-    fasadeNdx: props.tabIndex,
-  });
+  if (!props.tempWork)
+    eventBus.emit("A:ChangeGlassColor", {
+      data: glass.ID,
+      fasadeNdx: props.tabIndex,
+    });
 
   emit("select_glass", {
     name: glass.NAME,
     imgSrc: glass.PREVIEW_PICTURE,
+    ID: glass.ID,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 </script>

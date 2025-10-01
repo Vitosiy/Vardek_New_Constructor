@@ -1230,7 +1230,7 @@ watch(onHorizont, () => {
           <h1>Опции</h1>
         </div>
 
-        <RailsRightPage />
+        <RailsRightPage style="margin-top: 5px"/>
 
       </div>
 
@@ -1421,7 +1421,7 @@ watch(onHorizont, () => {
           justify-content: flex-start;
           align-items: center;
           align-content: space-between;
-
+          margin-top: 5px;
           &-item {
             padding-bottom: 15px;
           }

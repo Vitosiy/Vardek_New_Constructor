@@ -7,6 +7,10 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 const props = defineProps({
   patinaList: Array,
   tabIndex: Number,
+  tempWork: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["select_patina"]);
@@ -15,13 +19,16 @@ const eventBus = useEventBus();
 const selectPatina = ref<any>(null);
 
 const changePatina = (patina) => {
-  eventBus.emit("A:DrawPatina", {
-    data: patina.ID,
-    fasadeNdx: props.tabIndex,
-  });
+  if (!props.tempWork)
+    eventBus.emit("A:DrawPatina", {
+      data: patina.ID,
+      fasadeNdx: props.tabIndex,
+    });
+
   emit("select_patina", {
     name: patina.NAME,
     imgSrc: patina.DETAIL_PICTURE,
+    ID: patina.ID,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 </script>
