@@ -45,7 +45,8 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
 
 const props = defineProps(["pageComponent"]);
 const route = useRoute();
-import Avatar from "@/components/header/Avatar.vue";
+import Avatar from "@/components/ui/avatar/Avatar.vue";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 const historyActions = ref<boolean>(false);
 const verdekConstructor = ref<TApplication | null>(null);
@@ -254,6 +255,8 @@ const getHistoruBtnsState = computed(() => {
   };
 });
 
+const basketStore = useBasketStore();
+
 /** @Проверка загрузки Application доп функция */
 const waitForConstructor = async (timeout = 2000, interval = 50) => {
   const start = Date.now();
@@ -408,7 +411,8 @@ onBeforeUnmount(() => {
       <div class="header-utilitys">
         <div class="header-basket">
           <div class="header-utilitys-basket">
-            <p class="header-utilitys-basket-cost">14 548 ₽</p>
+            <p class="header-utilitys-basket-cost">{{ basketStore.totalPrice.toLocaleString('ru-RU') }} ₽</p>
+            <!-- <p class="header-utilitys-basket-cost">14 548 ₽</p> -->
           </div>
           <BuyBasketButton />
         </div>

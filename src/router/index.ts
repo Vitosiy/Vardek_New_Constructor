@@ -1,14 +1,11 @@
 // @ts-nocheck
 import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } from "vue-router";
+import { getCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookieUtils';
+import { useAppData } from "@/store/appliction/useAppData";
+import { useAuthStore } from "@/store/appStore/authStore";
 
 const baseUrl = '/';
-
-import MainView from "@/views/MainView.vue";
-import Constructor2D from "@/views/Constructor2D.vue";
-import Constructor3DView from "@/views/The3D.vue";
-import AuthView from "@/views/auth/AuthView.vue";
-
-import DefaultLayout from "@/layouts/DefaultLayout.vue";
+// const baseUrl = '/dev_modeller/';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -40,7 +37,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/auth",
     name: "Auth",
-    component: () => import('@/views/auth/AuthView.vue'),
+    component: () => import('@/views/AuthView.vue'),
     meta: { requiresAuth: false }
   },
 ];
@@ -61,18 +58,26 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token');
-  const expirationTime = localStorage.getItem('tokenExpiration');
+  const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+  const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
+  console.log('COOKIE_NAMES.AUTH_TOKEN', COOKIE_NAMES.AUTH_TOKEN)
+  console.log('COOKIE_NAMES.TOKEN_EXPIRATION', COOKIE_NAMES.TOKEN_EXPIRATION)
+  const appDataStore = useAppData()
+  const authStore = useAuthStore()
 
   if (token && expirationTime) {
-    if (Date.now() > parseInt(expirationTime)) {
+    const expirationTimestamp = parseInt(expirationTime);
+    if (Date.now() > expirationTimestamp) {
       console.log('Токен просрочен! Удаляю...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('tokenExpiration');
+      // Удаляем просроченные куки
+      document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       next('/auth');
       return;
     } else {
-      console.log(`Токен действителен еще ${Math.round((parseInt(expirationTime) - Date.now())/1000)} сек.`);
+      const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
+      console.log(`Токен действителен еще ${secondsLeft} сек.`);
+      // next('/2d');
     }
   }
   

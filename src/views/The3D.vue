@@ -23,6 +23,7 @@ import { useObjectData } from "@/store/appliction/useObjectData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useBasketStore } from '@/store/appStore/useBasketStore';
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -64,6 +65,9 @@ const objectData = ref<THREETypes.TUseObjectData | null>(
   null
 ); /** Текущий объект */
 const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
+
+const basketStore = useBasketStore();
+
 
 const _FASADE = ref({});
 const _MILLING = ref({});
@@ -187,11 +191,24 @@ const checkContantLoad = (state: boolean) => {
   activePreloader.value = state;
 };
 
+// Дебоунс пересчёта корзины
+let basketDebounceTimer: any = null;
+const scheduleBasketSync = () => {
+  clearTimeout(basketDebounceTimer);
+  basketDebounceTimer = setTimeout(() => {
+    try {
+      basketStore.addFromScene();
+    } catch (e) {
+      console.warn('Basket addFromScene debounce failed', e);
+    }
+  }, 250);
+};
+
 const getMove = (move: boolean) => {
   if (!product.value) return;
-
   controller.value = move;
   controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+  // Важно: не пересчитываем корзину при простом движении
 };
 
 const selected = async (item: any) => {
@@ -255,6 +272,8 @@ const selected = async (item: any) => {
   await nextTick(() => {
     controllerPositionData.value = userData.MOUSE_POSITION;
   });
+  // Пересчитываем корзину при выборе нового объекта (может измениться набор элементов)
+  scheduleBasketSync();
 };
 
 const clearSelected = () => {
@@ -538,6 +557,8 @@ const saveTableData = () => {
   CutSave.value = true;
 
   APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
+  // Пересчёт после сохранения распила
+  scheduleBasketSync();
 };
 
 const openTableRedactor = () => {

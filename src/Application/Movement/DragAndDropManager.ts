@@ -104,6 +104,13 @@ export class DragAndDropManager {
 
 
                             this.trafficManager._currentObject = object
+                            // После дропа нового объекта синхронизируем корзину
+                            try {
+                                const basketStore = useBasketStore();
+                                basketStore.addFromScene();
+                            } catch (e) {
+                                console.warn('Basket addFromScene on drop failed', e)
+                            }
                             this.trafficManager.ruler.drawRulerToObjects(object)
 
                             object.userData.MOUSE_POSITION = {
@@ -128,6 +135,13 @@ export class DragAndDropManager {
 
 
                             this.trafficManager._currentObject = object
+                            // После дропа нового объекта синхронизируем корзину
+                            try {
+                                const basketStore = useBasketStore();
+                                basketStore.addFromScene();
+                            } catch (e) {
+                                console.warn('Basket addFromScene on drop failed', e)
+                            }
                             this.trafficManager.ruler.drawRulerToObjects(object)
 
                             object.userData.MOUSE_POSITION = {
