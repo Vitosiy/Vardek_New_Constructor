@@ -16,7 +16,7 @@ import { useMenuStore } from '@/store/appStore/useMenuStore';
 
 import { BuildersHelper } from '../BuildersHelper';
 
-import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
+import { MILLINGS, additionalMillingKeys } from '@/Application/F-millings';
 import { directionToColor } from 'three/webgpu';
 
 import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
@@ -53,7 +53,7 @@ export class MeshEvents extends BuildersHelper {
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
     handlesBuilder: THREETypes.THandlesBuilder
     private millings: any | null = MILLINGS
-    private additionaMillinglKeys: any | null = additionaMillinglKeys
+    private additionalMillingKeys: any | null = additionalMillingKeys
     private alumTextures: string | null = alumTextures
 
     private _overrideMesh?: THREE.Object3D | null;
@@ -71,12 +71,13 @@ export class MeshEvents extends BuildersHelper {
     private onChangeGlobalTopTable: ({ data, type }: TDataWithType) => void;
 
     private onChangePaletteColor: ({ data, fasadeNdx }: TDataWithNdx) => void;
-    private onChangeTotalPaletteTop: ({ data, type }: TDataWithType) => void;
+    private onChangePaletteTotal: ({ data, type }: TDataWithType) => void;
 
     private onChangeGlassColor: ({ data, fasadeNdx }: TDataWithNdx) => void;
 
     private onChangeMilling: ({ data, fasadeNdx }: TDataWithNdx) => void;
     private onDeliteMilling: (fasadeNdx: number) => void;
+    private onChangeMillingTotal: ({ data, type }: TDataWithType) => void;
 
     private onChangeWindow: ({ data, fasadeNdx }: TDataWithNdx) => void;
 
@@ -127,12 +128,13 @@ export class MeshEvents extends BuildersHelper {
         this.onChangeGlobalTopTable = this.changeGlobalTopTable.bind(root);
 
         this.onChangePaletteColor = this.changePaletteColor.bind(root);
-        this.onChangeTotalPaletteTop = this.changeTotalFasadsPaletteColor.bind(root)
+        this.onChangePaletteTotal = this.changePaletteTotal.bind(root)
 
         this.onChangeGlassColor = this.changeGlassColor.bind(root);
 
         this.onChangeMilling = this.changeMilling.bind(root);
         this.onDeliteMilling = this.deliteMilling.bind(root);
+        this.onChangeMillingTotal = this.changeMillingTotal.bind(root);
 
         this.onChangeWindow = this.changeWindow.bind(root);
 
@@ -277,6 +279,8 @@ export class MeshEvents extends BuildersHelper {
         const fasade = FASADE[fasadeNdx] ?? FASADE_DEFAULT[fasadeNdx];
         const fasadeProp = FASADE_PROPS[fasadeNdx];
         fasadeProp.COLOR = data.ID
+
+        console.log(this._FASADE[data.ID], 'fasade')
 
         if (UNIFORM_TEXTURE.group !== null) {
             this.removeFromUniformGroup(product);
@@ -434,8 +438,7 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    changeTotalFasadsPaletteColor({ data, type }: TDataWithType) {
-        console.log({ data, type })
+    changePaletteTotal({ data, type }: TDataWithType) {
 
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
@@ -503,7 +506,7 @@ export class MeshEvents extends BuildersHelper {
         const defaultGeometry = FASADE_DEFAULT[fasadeNdx]
         const patina = FASADE_PROPS[fasadeNdx].PATINA
 
-        let millingData = this.millings[data] || this.additionaMillinglKeys[data] ? data : 2462671
+        let millingData = this.millings[data] || this.additionalMillingKeys[data] ? data : 2462671
 
         const fasadePosition = {
             FASADE_WIDTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_WIDTH),
@@ -537,6 +540,27 @@ export class MeshEvents extends BuildersHelper {
         this.changeMilling({ data: '1596264', fasadeNdx })
         fasade.PATINA = null
         fasade.MILLING = null
+    }
+
+    changeMillingTotal({ data, type }: TDataWithType) {
+
+        const currentType = this.searchElementsByType[type];
+        const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
+
+        console.log(elementsList, 'elementsList')
+
+        if (Array.isArray(elementsList) && elementsList.length > 0) {
+            elementsList.forEach((el) => {
+                const fasadeList = el.userData.PROPS.FASADE;
+                if (fasadeList.length > 0) {
+                    fasadeList.forEach(async (_fasade, fasadeNdx) => {
+                        this._currentMesh = el;
+                        await this.catchChangeMilling({ data: data.ID, fasadeNdx });
+                        this._currentMesh = null
+                    });
+                }
+            });
+        }
     }
 
     //------------------
@@ -946,8 +970,8 @@ export class MeshEvents extends BuildersHelper {
             this.changePaletteColor({ data, fasadeNdx });
         }
 
-        this.onChangeTotalPaletteTop = ({ data, type }) => {
-            this.changeTotalFasadsPaletteColor({ data, type })
+        this.onChangePaletteTotal = ({ data, type }) => {
+            this.changePaletteTotal({ data, type })
         }
 
         this.onChangeGlassColor = ({ data, fasadeNdx }) => {
@@ -960,6 +984,10 @@ export class MeshEvents extends BuildersHelper {
 
         this.onDeliteMilling = (fasadeNdx) => {
             this.deliteMilling(fasadeNdx);
+        }
+
+        this.onChangeMillingTotal = ({ data, type }) => {
+            this.changeMillingTotal({ data, type })
         }
 
         this.onChangeWindow = ({ data, fasadeNdx }) => {
@@ -1021,12 +1049,13 @@ export class MeshEvents extends BuildersHelper {
         this.events.on("A:ChangeTableTop", this.onChangeGlobalTopTable)
 
         this.events.on('A:ChangePaletteColor', this.onChangePaletteColor);
-        this.events.on('A:ChangePalitteTop', this.onChangeTotalPaletteTop)
+        this.events.on('A:ChangePaletteTotal', this.onChangePaletteTotal)
 
         this.events.on('A:ChangeGlassColor', this.onChangeGlassColor);
 
         this.events.on('A:ChangeMilling', this.onChangeMilling);
         this.events.on('A:DeliteMilling', this.onDeliteMilling);
+        this.events.on('A:ChangeMillingTotal', this.onChangeMillingTotal)
 
         this.events.on('A:ChangeWindow', this.onChangeWindow);
 

@@ -1,204 +1,205 @@
-// @ts-nocheck 
+// @ts-nocheck
 
 import * as THREE from 'three';
-import * as THREETypes from "@/types/types"
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { CSG } from 'three-csg-ts';
 import { SUBTRACTION, Brush, Evaluator } from 'three-bvh-csg';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-
-// import { PatternBuilder } from './MillingsUtils/PatternBuilder';
-// import { BuildersHelper } from './BuildersHelper';
 import { MillingsUtils } from './MillingsUtils/MillingsUtils';
+import { MILLINGS, additionalMillingKeys } from '@/Application/F-millings';
 
-import { MILLINGS, additionaMillinglKeys } from '@/Application/F-millings';
-
-import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
-import { isConstructorDeclaration } from 'typescript';
-
+/**
+ * Класс для создания фрезеровок на фасадах.
+ * Наследуется от MillingsUtils и использует Three.js для булевых операций.
+ */
 export class MillingBuilder extends MillingsUtils {
-  svgLoader: SVGLoader = new SVGLoader();
-  private millingsStore = MILLINGS
-  private additionaMillinglKeys = additionaMillinglKeys
-  private result = null
-  root: THREETypes.TApplication | null = null
-  currentObject: THREE.Object3D
+  // Загрузчик SVG для парсинга путей
+  private svgLoader = new SVGLoader();
+  // Хранилище данных о фрезеровках
+  private millingsStore = MILLINGS;
+  // Дополнительные ключи для фрезеровок
+  private additionalMillingKeys = additionalMillingKeys;
+  // Корень приложения
+  root: any = null; // Assuming THREETypes.TApplication
 
-
-  constructor(root) {
-    super(root)
-    this.root = root
+  /**
+   * Конструктор класса.
+   * @param root - Корневой объект приложения.
+   */
+  constructor(root: any) {
+    super(root);
+    this.root = root;
   }
 
-  createMillingFasade(object, fasadePosition, millingParams: number, defaultGeometry, patina) {
+  /**
+   * Основной метод для создания фрезерованной фасады.
+   * Выполняет булевы операции вычитания фигур из базовой геометрии.
+   * @param object - Объект меша фасада.
+   * @param fasadePosition - Параметры фасада (ширина, высота, глубина).
+   * @param millingParams - Параметры фрезеровки (ID).
+   * @param defaultGeometry - Базовая геометрия фасада (Mesh).
+   * @param patina - ID патины (опционально).
+   */
+  createMillingFasade(object: THREE.Mesh, fasadePosition: any, millingParams: number, defaultGeometry: THREE.Mesh, patina?: any) {
+    // Определяем ключ фрезеровки
+    const millingKey = this.additionalMillingKeys[millingParams] ?? millingParams;
+    // Получаем данные фрезеровки
+    const millingData = this.millingsStore[millingKey] ?? this.millingsStore[2462671];
 
-    console.log(object, 'object')
-    /** Данные для корректировки положения булевой геометрии */
-
-    const millingKey = this.additionaMillinglKeys[millingParams] ?? millingParams
-
-    const millingData = this.millingsStore[millingKey] ? this.millingsStore[millingKey] : this.millingsStore[2462671]
-    /** Для дебагинга */
-    // const millingData = millingParams
-    // const startMaterial = object.material.clone()
-
-    let startGeometry = defaultGeometry.clone()
+    // Клонируем базовую геометрию
+    let startGeometry = defaultGeometry.clone();
+    // Создаём BSP-структуру для базовой геометрии
     let csgStartGeometry = CSG.fromGeometry(startGeometry.geometry);
-    let clonedfasadePosition = JSON.parse(JSON.stringify(fasadePosition))
-    let brush_1 = new Brush(startGeometry.geometry);
-    let evaluator = new Evaluator()
+    // BVH-щётка для базовой геометрии
+    let brush1 = new Brush(startGeometry.geometry);
+    // Оценщик для BVH-операций
+    let evaluator = new Evaluator();
+    // Результат булевой операции
+    let result: THREE.Mesh | null = null;
 
-    let result
+    // Размеры фасада
+    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition;
+    // Клон позиции фасада
+    const clonedFasadePosition = { ...fasadePosition };
 
-    switch (millingData) {
+    // Специальный случай для ручек (ID 2475715)
+    if (millingData === 2475715) {
+      // TODO: Fix incomplete handle case - variables back_bsp, csgStartGeometryback_bsp undefined
+      const handle = this.hendlesCreate(clonedFasadePosition, millingData, object);
+      const shapeBsp = CSG.fromMesh(handle);
+      // csgStartGeometryback_bsp = back_bsp.subtract(shapeBsp); // Broken - needs fix
+      return;
+    }
 
-      case 2475715:
-        const hendless = this.hendlesCreate(clonedfasadePosition, millingData, object);
-        const shape_bsp = CSG.fromMesh(hendless);
-        csgStartGeometryback_bsp = back_bsp.subtract(shape_bsp);
-        break;
+    // Основная обработка фигур
+    const shapesArray = (millingData as any[]).flatMap(figure => this.extractShape(clonedFasadePosition, figure)).filter(Boolean);
 
-      default:
+    // Обрабатываем каждую фигуру
+    shapesArray.forEach(figureParams => {
+      let mesh: THREE.Mesh;
 
-        const shapesArray = millingData.map(figure => this.extractShape(clonedfasadePosition, figure)).flat(Infinity).filter(Boolean);
+      // Создаём булевый меш в зависимости от типа
+      let boolMesh: THREE.Mesh;
+      switch ((figureParams as any).type) {
+        case 'svg':
+          boolMesh = this.svgShapeCreate(figureParams as any, fasadePosition, startGeometry);
+          break;
+        case 'capsule':
+          boolMesh = this.capsuleCreate(figureParams as any, fasadePosition);
+          break;
+        default:
+          return; // Неизвестный тип - пропускаем
+      }
 
-        // console.log(shapesArray, 'SHAPES')
-
-        shapesArray.forEach((figureParams, key) => {
-
-          let mesh, boolMesh, patternMesh, booleanCSGMesh
-
-          switch (figureParams.type) {
-            case 'svg':
-              boolMesh = this.svgShapeCreate(figureParams, fasadePosition, startGeometry);
-              break;
-
-            case 'capsule':
-              boolMesh = this.capsuleCreate(figureParams, fasadePosition);
-              break
-          }
-
-          switch (typeof figureParams.pattern) {
-
-            case 'object':
-              mesh = this.patternBuilder.createPatternMesh({
-                boolMesh,
-                figureParams,
-                fasadePosition,
-                type: figureParams.type
-              })
-              // object.add(mesh) // Визуализация фрезеровки
-
-              break;
-
-            default:
-              boolMesh.updateMatrixWorld(true);
-              mesh = boolMesh;
-
-              // object.add(boolMesh) // Визуализация фрезеровки
-              break;
-          }
-
-          ({ brush_1, csgStartGeometry } = this.processMesh(mesh, brush_1, evaluator, csgStartGeometry, figureParams.lib));
-
+      // Применяем паттерн, если он объект
+      if (typeof (figureParams as any).pattern === 'object') {
+        mesh = this.patternBuilder.createPatternMesh({
+          boolMesh,
+          figureParams: figureParams as any,
+          fasadePosition,
+          type: (figureParams as any).type
         });
+      } else {
+        boolMesh.updateMatrixWorld(true);
+        mesh = boolMesh;
+      }
 
-        break;
-    }
+      // Выполняем булевую операцию
+      const lib = (figureParams as any).lib;
+      if (lib === 'bvh') {
+        const brush = new Brush(mesh.geometry, mesh.material);
+        brush.position.copy(mesh.position);
+        brush.updateMatrixWorld();
+        result = evaluator.evaluate(brush1, brush, SUBTRACTION);
+        brush1 = new Brush(result.geometry);
+      } else {
+        csgStartGeometry = csgStartGeometry.subtract(CSG.fromMesh(mesh));
+      }
+    });
 
-    // Преобразуем BSP-геометрию обратно
-    let newGeometry = this.result ? this.result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
+    // Преобразуем обратно в геометрию
+    let newGeometry = result ? result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
+    // Создаём UV-развёртку
+    this.planarUV(newGeometry);
 
+    // Освобождаем старую геометрию
+    object.geometry.dispose();
+    object.geometry = null;
 
-    /** Создаём UV развёртку для новой геометрии */
-
-    this.planarUV(newGeometry)
-
-    /** Удаляем старую геометрию */
-    object.geometry.dispose()
-    object.geometry = null
-    // object.geometry = newGeometry;
-
+    // Применяем патину, если указана
     if (patina != null) {
-      const startMaterial = object.userData.millingMaterial
-      const { geometry, material } = this.patinaBuilder.createPatinaColor({ geometry: newGeometry, patinaId: patina, startMaterial })
+      const startMaterial = object.userData.millingMaterial;
+      const { geometry, material } = this.patinaBuilder.createPatinaColor({
+        geometry: newGeometry,
+        patinaId: patina,
+        startMaterial
+      });
       object.geometry = geometry;
-      object.material = material
-    }
-    else {
+      object.material = material;
+    } else {
       object.geometry = newGeometry;
     }
 
-
-    // object.material = material
-    // object.geometry = geometry;
-
-    // const helper = new VertexNormalsHelper(object, 10, 0x00ffff);
-    // this.scene.add(helper);
-
-
-    /** Очищяем память от временной геометрии */
-    newGeometry.dispose()
-    newGeometry = null
-    this.result = null
-
+    // Очистка памяти
+    newGeometry.dispose();
+    newGeometry = null;
+    if (result) {
+      result.geometry.dispose();
+    }
+    startGeometry.geometry.dispose();
+    startGeometry = null;
   }
 
-  private svgShapeCreate(figureParams, fasadePosition, startGeometry) {
+  /**
+   * Создаёт SVG-фигуру для фрезеровки.
+   * @param figureParams - Параметры фигуры.
+   * @param fasadePosition - Параметры фасада.
+   * @param startGeometry - Базовая геометрия.
+   * @returns Mesh с SVG-экструзией.
+   */
+  private svgShapeCreate(figureParams: any, fasadePosition: any, startGeometry: THREE.Mesh) {
+    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition;
+    const { shape, extrudeSettings = { steps: 1, depth: 2, bevelEnabled: false } } = figureParams;
 
-    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition
-
-    const geometries = figureParams.shape.map((path) => {
-
-      const shape = path.toShapes();
-
-      if (path.userData.holes) {
-        shape[0].holes = path.userData.holes;
-      }
-
-      return new THREE.ExtrudeGeometry(
-        shape,
-        figureParams.extrudeSettings || { steps: 1, depth: 2, bevelEnabled: false }
-      );
+    // Создаём геометрии из путей
+    const geometries = shape.map((path: any) => {
+      const shapes = path.toShapes();
+      if (path.userData.holes) shapes[0].holes = path.userData.holes;
+      return new THREE.ExtrudeGeometry(shapes, extrudeSettings);
     });
 
+    // Объединяем геометрии
     const mergedGeometry = mergeGeometries(geometries);
     mergedGeometry.computeBoundingBox();
 
+    // Материал для визуализации
     const material = new THREE.MeshStandardMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3 });
     material.color.convertSRGBToLinear();
-
     const shapeMesh = new THREE.Mesh(mergedGeometry, material);
 
-    let size
+    // Вычисляем размер
+    let size = new THREE.Vector3();
+    const box = new THREE.Box3().setFromObject(shapeMesh);
+    box.getSize(size);
 
+    // Применяем boolParams, если есть
     if (figureParams.boolParams) {
-
       const { depth, position, rotate, type } = figureParams.boolParams;
+      if (type === 'rotate') shapeMesh.rotation.set(rotate.x || 0, rotate.y || 0, rotate.z || 0);
 
-      // Ротация
-      if (type === 'rotate') {
-        shapeMesh.rotation.set(rotate.x || 0, rotate.y || 0, rotate.z || 0);
-      }
-
-      const box = new THREE.Box3().setFromObject(shapeMesh);
-      size = box.getSize(new THREE.Vector3());
-
-      // Позиция
       shapeMesh.position.set(
-        position.right ? -FASADE_WIDTH * 0.5 + (size.x * 0.5 + depth.offset || 0) :
-          position.left ? FASADE_WIDTH * 0.5 - (size.x * 0.5 + depth.offset || 0) :
-            position.centerHorizontal ? -size.z * 0.5 : 0,
+        position.right ? -FASADE_WIDTH * 0.5 + (size.x * 0.5 + (depth.offset || 0)) :
+        position.left ? FASADE_WIDTH * 0.5 - (size.x * 0.5 + (depth.offset || 0)) :
+        position.centerHorizontal ? -size.z * 0.5 : 0,
 
-        position.bottom ? -FASADE_HEIGHT * 0.5 + (size.x * 0.5 + depth.offset || 0) :
-          position.top ? FASADE_HEIGHT * 0.5 - (size.x * 0.5 + depth.offset || 0) :
-            position.centerVertical ? -size.z * 0.5 : 0,
+        position.bottom ? -FASADE_HEIGHT * 0.5 + (size.x * 0.5 + (depth.offset || 0)) :
+        position.top ? FASADE_HEIGHT * 0.5 - (size.x * 0.5 + (depth.offset || 0)) :
+        position.centerVertical ? -size.z * 0.5 : 0,
 
         position.front ? FASADE_DEPTH * 0.5 + position.front :
-          -FASADE_DEPTH * 0.5 + size.z
+        -FASADE_DEPTH * 0.5 + size.z
       );
 
-      // Дополнительная ротация, если тип не "rotate"
       if (type !== 'rotate') {
         shapeMesh.rotation.set(
           rotate.x || shapeMesh.rotation.x,
@@ -206,40 +207,24 @@ export class MillingBuilder extends MillingsUtils {
           rotate.z || shapeMesh.rotation.z
         );
       }
-
     } else {
-      // Дефолтное значение для случая отсутствия boolParams
-      const box = new THREE.Box3().setFromObject(shapeMesh);
-      size = box.getSize(new THREE.Vector3());
-
+      // Дефолтная ротация и позиция
       shapeMesh.rotation.y = -Math.PI;
       shapeMesh.position.z = -FASADE_DEPTH * 0.5 + size.z;
     }
 
-    if (figureParams.topPosition) {
-      shapeMesh.position.y = (FASADE_HEIGHT * 0.5) + figureParams.topPosition
-    }
+    // Верхняя позиция
+    if (figureParams.topPosition) shapeMesh.position.y = FASADE_HEIGHT * 0.5 + figureParams.topPosition;
 
-    shapeMesh.userData.fasadePosition = fasadePosition
-    shapeMesh.userData.startSize = size
+    shapeMesh.userData.fasadePosition = fasadePosition;
+    shapeMesh.userData.startSize = size;
 
     // Дополнительная позиция
     if (figureParams.position) {
       const { x, y, z, inpostOffset = 0 } = figureParams.position;
-
-      if (y) {
-        switch (y) {
-          case "inpostTop":
-            shapeMesh.position.y = FASADE_HEIGHT * 0.5 - size.y * 0.5 - inpostOffset
-            break
-          case "inpostBottom":
-            shapeMesh.position.y = -FASADE_HEIGHT * 0.5 + size.y * 0.5 + inpostOffset
-            break
-          default:
-            shapeMesh.position.y += y;
-            break
-        }
-      }
+      if (y === 'inpostTop') shapeMesh.position.y = FASADE_HEIGHT * 0.5 - size.y * 0.5 - inpostOffset;
+      else if (y === 'inpostBottom') shapeMesh.position.y = -FASADE_HEIGHT * 0.5 + size.y * 0.5 + inpostOffset;
+      else if (y) shapeMesh.position.y += y;
       if (x && typeof x !== 'string') shapeMesh.position.x += x;
       if (z && typeof z !== 'string') shapeMesh.position.z += z;
     }
@@ -252,364 +237,279 @@ export class MillingBuilder extends MillingsUtils {
       if (z) shapeMesh.rotation.z = z;
     }
 
-    shapeMesh.position.z += FASADE_DEPTH + 4 /** Корректировка */
-
-    return shapeMesh
+    // Корректировка Z
+    shapeMesh.position.z += FASADE_DEPTH + 4;
+    return shapeMesh;
   }
 
-  private capsuleCreate(figureParams, fasadePosition) {
+  /**
+   * Создаёт капсульную фигуру для фрезеровки.
+   * @param figureParams - Параметры капсулы.
+   * @param fasadePosition - Параметры фасада.
+   * @returns Mesh капсулы.
+   */
+  private capsuleCreate(figureParams: any, fasadePosition: any) {
+    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition;
 
-    let capsuleWidth
-
+    // Вычисляем ширину капсулы
+    let capsuleWidth: number;
     switch (figureParams.length) {
-
       case 'FASADE_HEIGHT':
-
-        capsuleWidth = fasadePosition.FASADE_HEIGHT - figureParams.padding * 2 - figureParams.radius;
+        capsuleWidth = FASADE_HEIGHT - figureParams.padding * 2 - figureParams.radius;
         break;
       case 'FASADE_WIDTH':
-
-        capsuleWidth = fasadePosition.FASADE_WIDTH - figureParams.padding * 2 - figureParams.radius;
+        capsuleWidth = FASADE_WIDTH - figureParams.padding * 2 - figureParams.radius;
         break;
       default:
-
-        capsuleWidth = parseInt(figureParams.length)
+        capsuleWidth = parseInt(figureParams.length);
     }
+    if (figureParams.percent) capsuleWidth *= figureParams.percent;
 
-    if (figureParams.percent) {
-      capsuleWidth *= figureParams.percent
-    }
-
-    const geometry = new THREE.CapsuleGeometry(figureParams.radius, capsuleWidth, figureParams.capSegments, figureParams.radialSegments);
+    // Создаём геометрию и меш
+    const geometry = new THREE.CapsuleGeometry(
+      figureParams.radius,
+      capsuleWidth,
+      figureParams.capSegments,
+      figureParams.radialSegments
+    );
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.1 });
-    const capsule = new THREE.Mesh(geometry, material)
+    const capsule = new THREE.Mesh(geometry, material);
 
-    const box = new THREE.Box3().setFromObject(capsule)
-    const vec = new THREE.Vector3();
-    const size = box.getSize(vec);
+    // Размер капсулы
+    const box = new THREE.Box3().setFromObject(capsule);
+    const size = box.getSize(new THREE.Vector3());
 
-    let position = { x: 0, y: 0, z: 0 }
-
+    // Инициализируем позицию
+    let position = { x: 0, y: 0, z: 0 };
     if (figureParams.position) {
-
       const { x, y, z } = figureParams.position;
-
-      if (x) {
-        switch (x) {
-          case 'center':
-            position.x = 0
-            capsule.rotateY(Math.PI)
-            break;
-          case 'right':
-            position.x = -fasadePosition.FASADE_WIDTH + (fasadePosition.FASADE_WIDTH * 0.5 + figureParams.radius * 2)
-            break;
-          case 'left':
-            position.x = fasadePosition.FASADE_WIDTH - (fasadePosition.FASADE_WIDTH * 0.5 + figureParams.radius * 2)
-            // capsule.rotateY(Math.PI)
-            break;
-          default:
-            position.x = x
-        }
+      if (x === 'center') {
+        position.x = 0;
+        capsule.rotation.y = Math.PI;
+      } else if (x === 'right') {
+        position.x = -FASADE_WIDTH + (FASADE_WIDTH * 0.5 + figureParams.radius * 2);
+      } else if (x === 'left') {
+        position.x = FASADE_WIDTH - (FASADE_WIDTH * 0.5 + figureParams.radius * 2);
+      } else {
+        position.x = x;
       }
 
-      if (y) {
-        switch (y) {
-          case 'center':
-            position.y = fasadePosition.FASADE_HEIGHT * 0.5;
-            break;
-          case 'bottom':
-            position.y = -fasadePosition.FASADE_HEIGHT * 0.5
-            break;
-          case 'top':
-            position.y = fasadePosition.FASADE_HEIGHT
-            break;
-          default:
-            position.y = y
-            break;
-        }
-      }
+      if (y === 'center') position.y = FASADE_HEIGHT * 0.5;
+      else if (y === 'bottom') position.y = -FASADE_HEIGHT * 0.5;
+      else if (y === 'top') position.y = FASADE_HEIGHT;
+      else position.y = y;
 
-      if (z) {
-        switch (z) {
-          case 'center':
-            position.z = -fasadePosition.FASADE_DEPTH;
-            break;
-          default:
-            position.z = z
-        }
-      }
-
+      if (z === 'center') position.z = -FASADE_DEPTH;
+      else position.z = z;
     }
 
-    switch (typeof figureParams.rotation) {
-      case 'object':
-        if (figureParams.rotation.x) {
+    // Ротация
+    if (figureParams.rotation?.x) capsule.rotation.x = figureParams.rotation.x;
+    if (figureParams.rotation?.y) capsule.rotation.y = figureParams.rotation.y;
+    if (figureParams.rotation?.z) capsule.rotation.z = figureParams.rotation.z;
 
-          capsule.rotation.x = figureParams.rotation.x
-        }
-        if (figureParams.rotation.y) {
+    // Устанавливаем позицию
+    capsule.position.set(position.x, position.y, position.z);
 
-          capsule.rotation.y = figureParams.rotation.y
-        }
-        if (figureParams.rotation.z) {
+    // Офсеты
+    if (figureParams.offsetX) capsule.position.x += figureParams.offsetX;
+    if (figureParams.offsetY) capsule.position.y += figureParams.offsetY;
+    capsule.position.z += FASADE_DEPTH + 4;
 
-          capsule.rotation.z = figureParams.rotation.z
-        }
-      case undefined:
-        break
-    }
-
-    capsule.position.x = position.x
-    capsule.position.y = position.y
-    capsule.position.z = position.z
-
-    if (figureParams.offsetX) {
-      capsule.position.x += figureParams.offsetX
-    }
-
-    if (figureParams.offsetY) {
-      capsule.position.y += figureParams.offsetY
-    }
-
-    capsule.position.z += fasadePosition.FASADE_DEPTH + 4
-
-    capsule.userData.fasadePosition = fasadePosition
-
-    capsule.userData.startSize = size
-
-
+    capsule.userData.fasadePosition = fasadePosition;
+    capsule.userData.startSize = size;
     return capsule;
   }
 
-  private hendlesCreate(fasadePosition, millingData, object) {
-
-    let shape = new THREE.Shape();
-    let c = Math.PI / 180;
+  /**
+   * Создаёт ручку (hendle) для специального случая.
+   * @param fasadePosition - Параметры фасада.
+   * @param millingData - Данные фрезеровки.
+   * @param object - Объект фасада.
+   * @returns Mesh ручки.
+   */
+  private hendlesCreate(fasadePosition: any, millingData: any, object: THREE.Mesh) {
+    // Создаём форму ручки
+    const shape = new THREE.Shape();
+    const c = Math.PI / 180;
     shape.moveTo(7.5, -15);
     shape.lineTo(-5, -15);
     shape.absarc(-2, 15, 3, -180 * c, 0 * c, true);
     shape.absarc(5, 9, 2, -180 * c, 0 * c, false);
 
-    var extrudeSettings = {
+    const extrudeSettings = {
       steps: 2,
       depth: fasadePosition.FASADE_WIDTH,
       bevelEnabled: false,
     };
 
-    let geometryq = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    let materialq = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    let shapeMesh = new THREE.Mesh(geometryq, materialq);
+    // Создаём геометрию и меш
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const shapeMesh = new THREE.Mesh(geometry, material);
 
-    shapeMesh.rotation.y = -Math.PI * 0.5
-    shapeMesh.rotation.z = - Math.PI
-
-    shapeMesh.position.y = fasadePosition.FASADE_HEIGHT * 0.5 - 10
-    shapeMesh.position.x = fasadePosition.FASADE_WIDTH / 2
-    shapeMesh.position.z = fasadePosition.FASADE_DEPTH / 2 - 2.5
+    // Ротация
+    shapeMesh.rotation.y = -Math.PI * 0.5;
+    shapeMesh.rotation.z = -Math.PI;
+    // Позиция
+    shapeMesh.position.set(
+      fasadePosition.FASADE_WIDTH / 2,
+      fasadePosition.FASADE_HEIGHT * 0.5 - 10,
+      fasadePosition.FASADE_DEPTH / 2 - 2.5
+    );
 
     shapeMesh.updateMatrixWorld(true);
-
-    return shapeMesh
+    return shapeMesh;
   }
 
-  private extractShape(fasadePosition, data) {
-
-    const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition
-
-    let width = FASADE_WIDTH
-    // const height = FASADE_HEIGHT * 0.60
-    let height = FASADE_HEIGHT
-
+  /**
+   * Извлекает фигуры для фрезеровки на основе условий.
+   * @param fasadePosition - Параметры фасада.
+   * @param data - Данные фигуры.
+   * @returns Массив параметров фигур или null.
+   */
+  private extractShape(fasadePosition: any, data: any) {
+    const { FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition;
+    let height = FASADE_HEIGHT;
+    let width = FASADE_WIDTH;
 
     switch (data.type) {
-
       case 'capsule':
-
-        let figureParams = this.matchesCondition(fasadePosition, data.capsuleParams.condition)
-
-        if (!figureParams) return
-
-        const params = data.capsuleParams;
-        params.type = data.type
-
-        return params;
+        // Проверяем условие для капсулы
+        const capsuleParams = this.matchesCondition(fasadePosition, data.capsuleParams.condition) ? data.capsuleParams : null;
+        if (!capsuleParams) return null;
+        return { ...capsuleParams, type: data.type };
 
       case 'svg':
+        return data.figureParams
+          .map((item: any) => {
+            // Проверяем условие
+            const figureParams = this.matchesCondition(fasadePosition, item.condition);
+            if (!figureParams) return null;
 
-        let svgParams = data.figureParams.map(item => {
+            const { figure, hole, inpost } = item;
+            const { boolParams, pattern, position, rotation } = figure;
+            let { inpostOffset = 0 } = position || {};
 
-          // console.log(item, '--ITEM')
-
-          let figureParams = this.matchesCondition(fasadePosition, item.condition)
-
-          if (!figureParams) return null;
-
-          const { figure, hole, inpost } = item
-
-          const { boolParams, pattern, position, rotation, pading } = figure
-
-
-          if (inpost) {
-            let { inpostOffset = 0 } = position;
-            switch (inpost) {
-              case "top":
-                height = FASADE_HEIGHT * 0.6 - inpostOffset * 0.5
-                break;
-              case "bottom":
-                height = FASADE_HEIGHT * 0.4 - inpostOffset * 0.5
-                break;
-
+            // Корректируем высоту для inpost
+            if (inpost) {
+              height = inpost === 'top' ? FASADE_HEIGHT * 0.6 - inpostOffset * 0.5 : FASADE_HEIGHT * 0.4 - inpostOffset * 0.5;
             }
-          }
 
-          const shape = this.parseSVG(
-            {
+            // Парсим SVG для формы
+            const shape = this.parseSVG({
               svgStr: figure.svg,
               width: width * 0.5 + (figure.widthOffset || 0),
               height: height * 0.5 + (figure.heightOffset || 0),
               radius: figure.radius
-            }
-          );
+            });
 
-          if (hole.svg.length > 0) {
-
-            const holes = this.parseSVG(
-              {
+            // Добавляем отверстия
+            if (hole.svg.length > 0) {
+              const holes = this.parseSVG({
                 svgStr: hole.svg,
                 width: width * 0.5 + (hole.widthOffset || 0),
                 height: height * 0.5 + (hole.heightOffset || 0),
                 radius: figure.radius,
                 isHole: true
+              });
+              holes.forEach((holeShape: any, key: number) => {
+                shape[key].userData.holes = [...holeShape.toShapes()];
+              });
+            }
+
+            // Корректируем глубину экструзии
+            if (boolParams) {
+              const { depth } = boolParams;
+              if (boolParams.type === 'rotate' && pattern) {
+                data.extrudeSettings.depth = ((width * 0.5) / Math.sin(pattern.rotation.y)) * 2;
+              } else {
+                const extrudeSize = depth.size === 'FASADE_HEIGHT' ? height : depth.size === 'FASADE_WIDTH' ? width : 0;
+                data.extrudeSettings.depth = extrudeSize + depth.offset * 2 || depth.size + depth.offset * 2 || 0;
               }
-            );
-
-            // console.log(holes, "HOLES")
-
-            holes.forEach((hole, key) => {
-              shape[key].userData.holes = [...hole.toShapes()]
-              return
-            });
-
-          }
-
-          if (boolParams) {
-
-            let { depth } = boolParams
-
-            if (boolParams?.type === 'rotate' && pattern) {
-              data.extrudeSettings.depth = (((width * 0.5) / Math.sin(pattern.rotation.y)) * 2)
-            }
-            else {
-
-              let extrudeSize = depth.size === 'FASADE_HEIGHT' ? height : depth.size === 'FASADE_WIDTH' ? width : 0
-
-              data.extrudeSettings.depth = extrudeSize + depth.offset * 2 ||
-                depth.size + depth.offset * 2 ||
-                0
             }
 
-          }
+            if (pattern) data.extrudeSettings.depth *= pattern.multiply;
 
-          if (pattern) {
-            data.extrudeSettings.depth *= pattern.multiply
-          }
-
-          return {
-            type: data.type,
-            lib: data.lib,
-            shape,
-            extrudeSettings: data.extrudeSettings,
-            topPosition: figure.topPosition,
-            inpost,
-            boolParams,
-            pattern,
-            position,
-            rotation,
-            pading
-          };
-
-        })
-
-        return svgParams
-
+            return {
+              type: data.type,
+              lib: data.lib,
+              shape,
+              extrudeSettings: data.extrudeSettings,
+              topPosition: figure.topPosition,
+              inpost,
+              boolParams,
+              pattern,
+              position,
+              rotation
+            };
+          })
+          .filter(Boolean);
     }
-
+    return null;
   }
 
-  private matchesCondition({ FASADE_WIDTH, FASADE_HEIGHT }, { width, height }) {
-
-    return (
-      width.min <= FASADE_WIDTH && FASADE_WIDTH <= width.max &&
-      height.min <= FASADE_HEIGHT && FASADE_HEIGHT <= height.max
-    );
+  /**
+   * Проверяет соответствие размеров фасада условиям.
+   * @param fasade - Параметры фасада.
+   * @param condition - Условия (min/max ширина/высота).
+   * @returns true, если соответствует.
+   */
+  private matchesCondition({ FASADE_WIDTH, FASADE_HEIGHT }: any, { width, height }: any) {
+    return width.min <= FASADE_WIDTH && FASADE_WIDTH <= width.max &&
+           height.min <= FASADE_HEIGHT && FASADE_HEIGHT <= height.max;
   }
 
-  private parseSVG({ svgStr, width, height, radius, isHole = false }: { svgStr: string, width: number, height: number, radius?: number, isHole?: boolean }): THREE.Shape | THREE.Shape[] {
-    // Заменяем wth, hgh и radius на реальные значения
+  /**
+   * Парсит SVG-строку, заменяя плейсхолдеры и вычисляя выражения.
+   * @param params - Параметры парсинга (svgStr, width, height и т.д.).
+   * @returns Массив путей THREE.Shape.
+   */
+  private parseSVG({ svgStr, width, height, radius, isHole = false }: { svgStr: string; width: number; height: number; radius?: number; isHole?: boolean }) {
+    // Заменяем плейсхолдеры
+    svgStr = svgStr.replaceAll('wth', width.toString()).replaceAll('hgh', height.toString());
+    if (radius) svgStr = svgStr.replaceAll('radius', radius.toString());
 
-    svgStr = svgStr.replaceAll("wth", width.toString()).replaceAll("hgh", height.toString());
-    if (radius) {
-      svgStr = svgStr.replaceAll("radius", radius.toString());
-    }
-
-    // Обрабатываем выражения в скобках, суммируя их
-
+    // Обрабатываем выражения в скобках
     while (/\(([^()]+)\)/g.test(svgStr)) {
-      svgStr = svgStr.replace(/\(([^()]+)\)/g, (match, expr) => {
-        // console.log("Внутреннее выражение:", expr);
-
-        // Вычисляем значение текущего выражения
-        // const computedValue = Math.floor(Math.abs(eval(expr))); // Обрабатываем выражение
-
-        const computedValue = Math.floor(Math.abs(this.calculateFromString(expr)))
-
-        // console.log("Вычисленное значение:", computedValue);
-
-        return computedValue.toString(); // Заменяем выражение на результат
+      svgStr = svgStr.replace(/\(([^()]+)\)/g, (_, expr) => {
+        const computedValue = Math.floor(Math.abs(this.calculateFromString(expr)));
+        return computedValue.toString();
       });
     }
 
-    // Дополнительная обработка для вычислений без скобок (если нужно)
-
+    // Обрабатываем суммы через запятые
     svgStr = svgStr
       .split(/, | /)
-      .map(item => item.includes(",") ? item.split(",").reduce((sum, val) => sum + parseFloat(val), 0) : item)
-      .join(" ");
+      .map(item => item.includes(',') ? item.split(',').reduce((sum, val) => sum + parseFloat(val), 0) : item)
+      .join(' ');
 
-    // console.log(svgStr, 'svgStr после вычислений');
-
-    // Парсим SVG через SVGLoader
-    const paths = this.svgLoader.parse(svgStr).paths
-
-    return paths;
-
+    // Парсим через SVGLoader
+    return this.svgLoader.parse(svgStr).paths;
   }
 
-  private processMesh(mesh, brush_1, evaluator, csgStartGeometry, lib) {
+  /**
+   * Обрабатывает меш в булевой операции (BVH или CSG).
+   * @param mesh - Входной меш.
+   * @param brush_1 - Текущая BVH-щётка.
+   * @param evaluator - Оценщик BVH.
+   * @param csgStartGeometry - Текущая CSG-геометрия.
+   * @param lib - Тип библиотеки ('bvh' или default CSG).
+   * @returns Обновлённые brush_1, csgStartGeometry и result.
+   */
+  private processMesh(mesh: THREE.Mesh, brush_1: Brush, evaluator: Evaluator, csgStartGeometry: any, lib: string) {
     switch (lib) {
       case 'bvh': {
         const brush = new Brush(mesh.geometry, mesh.material);
         brush.position.copy(mesh.position);
         brush.updateMatrixWorld();
-        this.result = evaluator.evaluate(brush_1, brush, SUBTRACTION);
-        brush_1 = new Brush(this.result.geometry);
-
-        break;
+        const result = evaluator.evaluate(brush_1, brush, SUBTRACTION);
+        brush_1 = new Brush(result.geometry);
+        return { brush_1, csgStartGeometry, result };
       }
       default:
         csgStartGeometry = csgStartGeometry.subtract(CSG.fromMesh(mesh));
-        break;
+        return { brush_1, csgStartGeometry };
     }
-    return { brush_1, csgStartGeometry };
   }
-  
-  // private calculate(expression) {
-  //   try {
-  //     const func = new Function("return " + expression);
-  //     return func();
-  //   } catch (error) {
-  //     return "Недопустимое выражение!";
-  //   }
-  // }
-
 }

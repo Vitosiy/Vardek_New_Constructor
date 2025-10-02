@@ -117,6 +117,8 @@ export type TOptionItem = {
   prefix?: string,
   palitteTitle?: string,
   palitteData?: TPalitte[] | null
+  millingTitle?: string,
+  millingData?: TMilling[] | null
 };
 
 export type TLightRange = {
@@ -129,8 +131,8 @@ export type TOptionsMap = {
   floor: TOptionItem;
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
-  palitteTop?: TOptionItem;
-  palitteBottom?: TOptionItem;
+  // palitteTop?: TOptionItem;
+  // palitteBottom?: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
@@ -144,8 +146,9 @@ export type TTextureActionMap = {
   fasadsTop: 'A:ChangeFasadsTopTexture';
   fasadsBottom: 'A:ChangeFasadsBottomTexture';
   tableTop: 'A:ChangeTableTop',
-  palitteTop: 'A:ChangePalitteTop',
-  palitteBottom: 'A:ChangePalitteBottom',
+  palitteTotal: 'A:ChangePaletteTotal',
+  millingTotal: "A:ChangeMillingTotal",
+
 };
 
 export type TTextureItem = {
@@ -461,6 +464,28 @@ export type TPalitte = {
   HTML: string;
   PREVIEW_PICTURE: string | null;
   DETAIL_PICTURE: string | null;
+}
+
+export type TMilling = {
+  ID: number;
+  NAME: string;
+  IBLOCK_SECTION_ID: string;
+  '~IBLOCK_SECTION_ID': string;
+  DETAIL_PICTURE: string;
+  PREVIEW_PICTURE: string;
+  SORT: number;
+  '~SORT': string;
+  FACADEALIGNSELECT: 0 | 1;
+  PATINAOFF: 0 | 1;
+  MODEL: string | null;
+  INCITY: (string | null)[];
+  CITY: (string | null)[];
+  delay_date: string | null;
+  date_shipment: string | null;
+  date_build: string | null;
+  type_showcase: number[];
+  fasade_type: number[];
+  DENSITY: number | string | null;
 }
 
 

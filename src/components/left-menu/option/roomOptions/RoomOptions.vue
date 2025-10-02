@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { _URL } from "@/types/constants";
-import { TOptionsMap, TPalitte, TOptionItem } from "@/types/types";
+import { TOptionsMap, TPalitte, TOptionItem, TMilling } from "@/types/types";
 
 interface Props {
-  palitte: TPalitte[] | null;
+  // palitte: TPalitte[] | null;
   options: TOptionsMap;
   getOptionImg: (id: number | string, type: string) => string;
 }
@@ -18,6 +18,12 @@ const emit = defineEmits<{
     palitteTitle: string,
     key: keyof TOptionsMap,
     palitteData: TPalitte[]
+  ): void;
+  (
+    e: "toMillingSelect",
+    millingTitle: string,
+    key: keyof TOptionsMap,
+    millingData: TMilling[]
   ): void;
   (e: "toToggle", event: Event, key: keyof TOptionsMap): void;
 }>();
@@ -34,6 +40,14 @@ const palitteSelect = (
   emit("toPalitteSelect", palitteTitle, key, palitteData);
 };
 
+const millingSelect = (
+  millingTitle: string,
+  key: keyof TOptionsMap,
+  millingData: TMilling[]
+) => {
+  emit("toMillingSelect", millingTitle, key, millingData);
+};
+
 const handleToggle = (event: Event, key: keyof TOptionsMap) => {
   emit("toToggle", event, key);
 };
@@ -46,8 +60,6 @@ const getPalitteIcon = computed(() => {
       return cur?.HTML;
     }
     return "";
-
-    // return props.palitte[id].HTML;
   };
 });
 
@@ -55,8 +67,30 @@ const getPaliteName = computed(() => {
   return (id: number | string, palitteData: TPalitte[]) => {
     let cur;
     if (palitteData) {
-      cur = palitteData.find((el) => el.ID === id);
+      cur = palitteData.find((el) => el.ID == id);
       return cur?.UNAME;
+    }
+    return "";
+  };
+});
+
+const getMillingIcon = computed(() => {
+  return (id: number | string, millingData: TMilling[]) => {
+    let cur;
+    if (millingData) {
+      cur = millingData.find((el) => el.ID === id);
+      return cur?.PREVIEW_PICTURE;
+    }
+    return "";
+  };
+});
+
+const getMillineName = computed(() => {
+  return (id: number | string, millingData: TMilling[]) => {
+    let cur;
+    if (millingData) {
+      cur = millingData.find((el) => el.ID === id);
+      return cur?.NAME;
     }
     return "";
   };
@@ -93,6 +127,8 @@ const getContainerType = computed(() => {
           <p class="label__text">{{ item.title }}</p>
         </div>
 
+        <!-- {{ getPaliteName(item.palitte, item.palitteData!) }} -->
+
         <div
           v-if="item?.palitte"
           class="option-label"
@@ -100,10 +136,11 @@ const getContainerType = computed(() => {
             palitteSelect(
               item.palitteTitle!,
               key as keyof TOptionsMap,
-              item.palitteData
+              item.palitteData!
             )
           "
         >
+
           <div
             class="label__color"
             :style="{ backgroundColor: `#${getPalitteIcon(item.palitte, item.palitteData!)}` }"
@@ -111,6 +148,28 @@ const getContainerType = computed(() => {
 
           <p class="label__text">
             {{ getPaliteName(item.palitte, item.palitteData!) }}
+          </p>
+        </div>
+
+        <div
+          v-if="item?.milling"
+          class="option-label"
+          @click="
+            millingSelect(
+              item.millingTitle!,
+              key as keyof TOptionsMap,
+              item.millingData!
+            )
+          "
+        >
+          <img
+            class="label__img"
+            :src="_URL + getMillingIcon(item?.milling, item.millingData!)"
+            alt=""
+          />
+
+          <p class="label__text">
+            {{ getMillineName(item?.milling, item.millingData!) }}
           </p>
         </div>
       </div>
@@ -142,6 +201,7 @@ const getContainerType = computed(() => {
 .option {
   &-container {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     width: 100%;
   }
@@ -163,6 +223,7 @@ const getContainerType = computed(() => {
 }
 
 .option-label {
+  width: calc(100% / 2 - 15px);
   display: flex;
   align-items: center;
   gap: 10px;

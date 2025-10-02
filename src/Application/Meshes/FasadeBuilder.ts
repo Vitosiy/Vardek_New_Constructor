@@ -57,7 +57,6 @@ export class FasadeBuilder {
         const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
-        console.log(FASADE_PROPS, 'FFGGFASADE_PROPS')
 
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
@@ -88,20 +87,23 @@ export class FasadeBuilder {
 
                     return {
                         color: (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor,
-                        pallite: fasadsBottom.palitte
+                        pallite: fasadsBottom.palitte,
+                        milling: fasadsBottom.milling
                     }
                 case "element_up":
 
                     console.log('Top ')
                     return {
                         color: (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor,
-                        pallite: fasadsTop.palitte
+                        pallite: fasadsTop.palitte,
+                        milling: fasadsTop.milling
                     }
                 default:
                     console.log('None ')
                     return {
                         color: fasadeColor,
-                        pallite: null
+                        pallite: null,
+                        milling: null
                     };
             }
         };
@@ -109,10 +111,10 @@ export class FasadeBuilder {
 
 
         if (Number.isInteger(fasadeNdx)) {
-            const { color, pallite } = resolveColorId(fasadeData.COLOR);
 
-            console.log('--2')
             const fasadeData: THREETypes.TFasadeProp = FASADE_PROPS[fasadeNdx];
+            const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
+
             const curFasade = FASADE[fasadeNdx]
             if (remove) {
                 fasadeData.COLOR = 7397;
@@ -130,6 +132,7 @@ export class FasadeBuilder {
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
+                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -137,6 +140,17 @@ export class FasadeBuilder {
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
                     fasadeData.PALETTE = null;
                 }
+
+
+                if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
+                    fasadeData.MILLING = milling;
+                }
+                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
+                    fasadeData.MILLING = null;
+                }
+
+
+
                 if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
@@ -251,7 +265,7 @@ export class FasadeBuilder {
             // Массовая инициализация, когда remove=false и индекс не задан
             if (!remove && !fasadeNdx) {
 
-                const { color, pallite } = resolveColorId(fasadeData.COLOR);
+                const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
 
                 console.log(pallite, '5')
 
@@ -261,6 +275,7 @@ export class FasadeBuilder {
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
+                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -268,6 +283,14 @@ export class FasadeBuilder {
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
                     fasadeData.PALETTE = null;
                 }
+
+                if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
+                    fasadeData.MILLING = milling;
+                }
+                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
+                    fasadeData.MILLING = null;
+                }
+
                 if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
@@ -447,6 +470,8 @@ export class FasadeBuilder {
                 fasade.userData.obb = obb
                 fasade.userData.curBodyExceptions = curBodyExceptions
                 fasade.name = 'fasade'
+                fasade.receiveShadow = true;
+                fasade.castShadow = true
 
                 const fasadeEdge = this.edgeBuilder.createEdge(fasade, fasade);
 
@@ -506,6 +531,7 @@ export class FasadeBuilder {
         fasade.name = 'fasade'
         const fasadeEdge = this.edgeBuilder.createEdge(fasade);
         fasade.receiveShadow = true;
+        fasade.castShadow = true
 
         return { fasade, fasadeEdge }
     }

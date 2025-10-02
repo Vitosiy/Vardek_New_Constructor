@@ -196,6 +196,9 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId }) => {
 
+        console.log(fasadeId, productId, 'IN_MILL')
+        let result = []
+
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] === null) {
 
             currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;
@@ -212,13 +215,37 @@ export const useModelState = defineStore('ModelState', () => {
 
             millings.sort((a, b) => a.SORT - b.SORT)
 
-            currentMillingData.value = millings.sort((a, b) => a.SORT - b.SORT)
+            result = millings.sort((a, b) => a.SORT - b.SORT)
 
-            return
+            currentMillingData.value = result
+
+            return result
         }
 
 
-        currentMillingData.value = []
+        currentMillingData.value = result
+        return result
+    }
+
+    const createTotalMillingList = (fasadeId) => {
+
+        if (!_FASADE[fasadeId]) return []
+
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
+            let millings: IMilling[] = []
+            let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
+            let percept = {}
+            const result = fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
+                return percept[mill] = _MILLING[mill]
+            })
+
+            result.sort((a, b) => a.SORT - b.SORT)
+
+            console.log(result, 'result')
+            return result
+        }
+        return []
+
     }
 
     const getCurrentMillingData = computed(() => {
@@ -340,6 +367,7 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPaletteData,
 
         createCurrentMillingData,
+        createTotalMillingList,
         getCurrentMillingData,
         setMillingId,
 
