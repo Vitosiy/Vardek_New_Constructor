@@ -2,26 +2,28 @@
   <div class="basket-item">
     <div class="basket-item__picture">
       <div class="basket-item__picture-container">
-        <img :src="`${API_URL + item?.product.PREVIEW_PICTURE}`" alt="" class="basket-items__picture_img"/>
+        <img :src="`${API_URL + item?.product.PREVIEW_PICTURE}`" alt="" class="basket-items__picture_img"/> 
         <img src="@/assets/svg/left-menu/question.svg" class="basket-items__picture-question" @click="openPopup(item)">
       </div>
     </div>
 
     <div class="basket-item__product">
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">{{ item?.product.NAME }}</h3> 
+      
 
       <!-- Секция свойств товара -->
-      <div class="basket-item__props" v-if="item?.product.PROPS">
+      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-          
+          <!-- {{ item.error.props[0].id }} -->
+
           <div v-if="getPropDefinition(String(propKey))">
-            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
             
+            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
             <!-- Обработка массивов -->
             <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
               <li v-for="(propVal, index) in propValue" :key="index">
                 <span v-if="shouldShowPropValue(propKey, propVal)" 
-                      :class="getErrorClass(propVal, item.product.props_error)">
+                      :class="getErrorClass(propVal, item?.error?.props)">
                   {{ formatPropValue(propKey, propVal) }}
                   <span v-if="hasArticle(propKey, propVal)">
                     - артикул {{ getArticleCode(propKey, propVal) }}
@@ -46,7 +48,7 @@
             </ul>
             
             <!-- Обработка одиночных значений -->
-            <span v-else :class="getErrorClass(propValue, item.product.props_error)">
+            <span  v-else :class="getErrorClass(propValue, item?.error?.props)">
               <template v-if="getPropDefinition(propKey).val === 'obj_list'">
                 <ul>
                   <div v-for="(objItem, objIndex) in propValue" :key="objIndex">
@@ -60,7 +62,7 @@
                             <span v-if="hasArticleForSegment(segment, segmentKey)"> 
                               - артикул {{ getArticleCodeForSegment(segment, segmentKey) }}
                             </span>
-                            {{ hasError(segment, segment.props_error) ? '(НЕДОСТУПНО!)' : '' }};
+                            {{ hasError(segment, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                           </span>
                         </template>
                         
@@ -70,7 +72,7 @@
                             <span v-if="hasArticleForSegment(segment, key)"> 
                               - артикул {{ getArticleCodeForSegment(segment, key) }}
                             </span>
-                            {{ hasError(segment, segment.props_error) ? '(НЕДОСТУПНО!)' : '' }};
+                            {{ hasError(segment, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                           </span>
                         </template>
                         
@@ -79,7 +81,7 @@
                           <span v-if="hasArticleForSegment(val, key)"> 
                             - артикул {{ getArticleCodeForSegment(val, key) }}
                           </span>
-                          {{ hasError(val, val.props_error) ? '(НЕДОСТУПНО!)' : '' }};
+                          {{ hasError(val, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                         </template>
                       </p>
                     </li>
@@ -89,7 +91,7 @@
                       <span v-if="hasArticleForSegment(objItem, propKey)"> 
                         - артикул {{ getArticleCodeForSegment(objItem, propKey) }}
                       </span>
-                      {{ hasError(objItem, objItem.props_error) ? '(НЕДОСТУПНО!)' : '' }};
+                      {{ hasError(objItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
                   </div>
                 </ul>
@@ -104,12 +106,12 @@
                         - артикул {{ getArticleCodeForSegment(colorItem, propKey) }}
                       </span>
                       <span v-if="propValue.PALETTE"> - {{ getPaletteName(propValue.PALETTE) }}</span>
-                      {{ hasError(colorItem, colorItem.props_error) ? '(НЕДОСТУПНО!)' : '' }};
+                      {{ hasError(colorItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
                     
                     <li v-if="String(colorKey) === 'MILLING'">
                       Фрезеровка: {{ getMillingSectionName(colorItem) }} - {{ getMillingName(colorItem) }}
-                      {{ hasError(colorItem, colorItem.props_error) ? '(НЕДОСТУПНО!)' : '' }};
+                      {{ hasError(colorItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
                   </div>
                 </ul>
@@ -120,7 +122,8 @@
                 <span v-if="hasArticle(propKey, propValue)"> 
                   - артикул {{ getArticleCode(propKey, propValue) }}
                 </span>
-                {{ hasError(propValue, item.product.props_error) ? '(НЕДОСТУПНО!)' : '' }}
+                <!-- {{ propValue }} {{ item.error.props[0].id }} -->
+                {{ hasError(propValue, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }}
               </template>
               
               <template v-else-if="getPropDefinition(propKey).val === 'list'">
@@ -132,7 +135,7 @@
               </template>
               
               <template v-else>
-                {{ propValue }}
+                 {{  getUsliguName(propValue) }}  
               </template>
             </span>
 
@@ -157,9 +160,9 @@
     
     
     <div class="basket-item__quantity">
-      <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="decrement(item.product.BASKETID, item?.product.TYPE)">-</button>
+      <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="decrement(item.product.BASKETID, item?.product.TYPE)" :disabled="item.error">-</button>
       <input type="text" :disabled="item?.product.TYPE !== 'catalog'" class="basket-item__quantity-input" v-model="item.product.quantity" placeholder="1" @change="() => updateQuantity(item.product.BASKETID, item?.product.TYPE)" />
-      <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="increment(item.product.BASKETID, item?.product.TYPE)">+</button>
+      <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="increment(item.product.BASKETID, item?.product.TYPE)" :disabled="item.error">+</button>
     </div>
 
     <div class="basket-item__price">
@@ -592,7 +595,9 @@ const formatPropValue = (key: string, propVal: any) => {
 const getErrorClass = (propVal: any, propsError: any) => {
   // Здесь должна быть логика определения классов ошибок
   // Это упрощенная версия, нужно адаптировать под вашу логику
-  if (propsError && propsError.includes(propVal)) {
+  if (!propsError || !Array.isArray(propsError)) return false;
+
+  if (propsError.some(error => error.id && error.id.includes(propVal))) {
     return 'error-background';
   }
   return '';
@@ -633,11 +638,18 @@ const getArticleCodeForSegment = (_segment: any, _key: string) => {
 
 const hasError = (value: any, propsError: any) => {
   // Логика проверки ошибки
-  return propsError && propsError.includes(value);
+  console.log(propsError);
+  // return propsError && propsError.includes(value);
+  if (!propsError || !Array.isArray(propsError)) return false;
+  
+  return propsError.some(error => error.id && error.id.includes(value));
 };
 
 const getTypeName = (type: any, value: any) => {
   // Получаем имя из store данных
+  if (value && typeof value === 'object' && value.NAME) {
+    return value.NAME;
+  }
   if (appData.value && appData.value[type] && appData.value[type][value]) {
     return appData.value[type][value].NAME || `[${type}:${value}]`;
   }
@@ -646,7 +658,35 @@ const getTypeName = (type: any, value: any) => {
 
 const getListValue = (key: string, value: any) => {
   const propDef = getPropDefinition(key);
+  console.log(key,value,propDef)
   return (propDef as any)?.VALUE ? (propDef as any).VALUE[value] : value;
+};
+
+// Возвращает название услуги/опции по ID или объекту
+const getServiceName = (raw: any) => {
+  if (raw && typeof raw === 'object') {
+    if (raw.NAME) return raw.NAME;
+    if (raw.value && typeof raw.value === 'object' && raw.value.NAME) return raw.value.NAME;
+  }
+
+  const idCandidate = (raw && typeof raw === 'object') ? (raw.ID ?? raw.value ?? raw.id ?? raw) : raw;
+  const keyId = typeof idCandidate === 'string' || typeof idCandidate === 'number' ? idCandidate : String(idCandidate);
+
+  const dicts = [
+    appData.value?.USLUGI,
+    appData.value?.OPTION,
+    appData.value?.SERVICE,
+    appData.value?.SERVICES,
+    appData.value?.USLUGI_LIST
+  ];
+
+  for (const dict of dicts) {
+    if (dict && dict[keyId]) {
+      return dict[keyId].NAME || dict[keyId].name || keyId;
+    }
+  }
+
+  return keyId;
 };
 
 const getFasadeSectionName = (id: any) => {
@@ -687,6 +727,13 @@ const getMillingName = (id: any) => {
     return appData.value.MILLING[id].NAME || `Фрезеровка ${id}`;
   }
   return `Фрезеровка ${id}`;
+};
+const getUsliguName = (id: any) => {
+  // Получаем название фрезеровки из store данных
+  if (appData.value && appData.value.USLUGI && appData.value.USLUGI[id]) {
+    return appData.value.USLUGI[id].NAME || `Услуга ${id}`;
+  }
+  return `Услуга ${id}`;
 };
 
 const getProductInfo = (id: any) => {
@@ -821,8 +868,8 @@ const deleteProductInBusket = (id: string, type: string) => {
     }
     
     .error-background {
-      background-color: red;
-      color: white;
+      // background-color: red;
+      color: red;
       padding: 2px 4px;
     }
   }

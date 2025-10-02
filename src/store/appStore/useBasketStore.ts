@@ -118,6 +118,7 @@ export const useBasketStore = defineStore("basket", () => {
       };
 
       const response = await BasketService.getBasket(newBasket);
+      console.log('response', response);
       basketData.value = { ...response.DATA };
       return basketData.value;
       // if (response?.DATA?.type !== "error") {

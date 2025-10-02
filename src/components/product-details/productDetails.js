@@ -6,6 +6,10 @@ import { useBasketStore } from "@/store/appStore/useBasketStore";
 function CatalogApp() {
 	var self = this;
 
+	// Безопасная начальная инициализация для предотвращения обращения к undefined
+	// Используется в doChangeProps через self.raspil[<align>]
+	this.raspil = this.raspil || {};
+
 	// var apiPath = '/ajax';
 	var apiPath = 'https://vardek.ru/local/templates/constructor';
 
@@ -563,9 +567,10 @@ function CatalogApp() {
 														!$(k).data('relations-width')
 													)
 													||
-													(
-														eval($(k).data('relations-width').split('#W#').join(self.raspil[k_prop_parent.data('align')]))
-													)
+										(
+											// Если self.raspil или ключ отсутствуют, подставляем 0
+											eval($(k).data('relations-width').split('#W#').join(((self.raspil && self.raspil[k_prop_parent.data('align')]) ?? 0)))
+										)
 												)
 												&&
 												(
@@ -1280,6 +1285,15 @@ if ($('input[data-opt-specific="true"]').val()) {
 
 	this.catalogInitEvent = function (ElementGetPriceFunc, addToBasketFunc) {
 
+		// Глобальный флаг, чтобы регистрировать document-обработчики только один раз на все переходы
+		if (typeof window !== 'undefined') {
+			if (window.__catalogHandlersBound) {
+				self.productIsInit = true;
+				return;
+			}
+			window.__catalogHandlersBound = true;
+		}
+
 	    $(document).on("change", "input[name='SELECTFASADE']", function (){
 	      if ($("input[name='SELECTFASADE']:checked").val() >= 1) {
 
@@ -1353,7 +1367,7 @@ if ($('input[data-opt-specific="true"]').val()) {
 			return false;
 		});
 
-		self.productIsInit = !self.productIsInit;
+		self.productIsInit = true;
 	}
 
 	this.catalogControlRelation = function (propsShow, k) {
@@ -1707,6 +1721,10 @@ if ($('input[data-opt-specific="true"]').val()) {
   this.catalogElementGetPrice = function (elem) {
       clearTimeout(self.getPriceTimer);
 
+      document.querySelector('.product-details__back-page').disabled = true;
+      document.querySelector('.product__cart-button').disabled = true;
+
+
       self.getPriceTimer = setTimeout(function () {
           const form = document.querySelector(".product__form");
           if (!form) return;
@@ -1752,6 +1770,9 @@ if ($('input[data-opt-specific="true"]').val()) {
           })
           .catch(error => {
               console.error("Ошибка при получении цены:", error);
+          }).finally(()=> {
+            document.querySelector('.product-details__back-page').disabled = false;
+            document.querySelector('.product__cart-button').disabled = false;
           });
       }, 300);
   };
@@ -1777,7 +1798,7 @@ if ($('input[data-opt-specific="true"]').val()) {
 
 			$('body').css('overflow', 'hidden');
 
-			$(document).mouseup(function (e) {
+			$(document).off('mouseup.catalogPopupClose').on('mouseup.catalogPopupClose', function (e) {
 				var container = $(".popup-window-catalog .product__wrapper");
 				if (container.has(e.target).length === 0){
 					$(".popup-wrap").hide();

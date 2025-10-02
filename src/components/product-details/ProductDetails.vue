@@ -30,6 +30,46 @@
     console.log('Add to cart clicked');
     // Логика добавления в корзину
   };
+  // const clickQuantity = (e) => {
+  //   e.preventDefault();
+  //   console.log('Add to cart clicked');
+  //     const quantiti = e.target.value;
+  //     const price = document.querySelector('.product__price-text').textContent;
+  //     const priceNotdiscount = document.querySelector('.product__price-notdiscount').textContent;
+  //     document.querySelector('.product__price-text').textContent = calculateTotal(price, quantiti);
+  //     document.querySelector('.product__price-notdiscount').textContent = calculateTotal(priceNotdiscount, quantiti);
+
+   
+  //   // Логика добавления в корзину
+  // };
+  
+  // function calculateTotal(priceString, quantity) {
+  //   // Извлекаем числовую часть и валюту
+  //   console.log('priceString', priceString);
+  //   const numberPart = priceString.replace(/\s/g, '').replace(/руб/g, '').replace('.', '').trim();
+  //   console.log('numberPart',numberPart);
+  //   console.log('quantity',quantity);
+  //   // Вычисляем общую сумму
+  //   let total
+  //   if(quantity === 1) {
+  //     total = +numberPart;
+  //     console.log('tota1',total);
+  //   } else {
+  //     total = +numberPart * quantity;
+  //     console.log('total2',total);
+  //   }
+  //   console.log('total', total);
+    
+  //   // Форматируем результат
+  //   const formattedTotal = toLocal(total);
+  //   console.log('formattedTotal', formattedTotal);
+    
+  //   return `${formattedTotal} руб`;
+  // }
+
+  // function toLocal(number) {
+  //   return new Intl.NumberFormat('ru-RU').format(number);
+  // }
 
   const inputHandler = (e) => {
     console.log('Form input changed:', e.target);
@@ -57,6 +97,25 @@
         if (addToCartButton) {
           addToCartButton.addEventListener('click', clickHandler);
         }
+        // const addQuantitiButton = document.querySelector('[name="QUANTITY"]');
+        // if (addQuantitiButton) {
+        //   addQuantitiButton.addEventListener('click', clickQuantity);
+        // }
+
+        const addTargetLink = document.querySelector('.product-details').querySelectorAll('a');
+
+        addTargetLink.forEach(el => {
+          el.addEventListener('click', function(e) {
+            // Проверяем, был ли клик по ссылке
+            if (e.target.tagName === 'A') {
+                const link = e.target;
+                const href = link.getAttribute('href');
+                e.preventDefault();
+                window.open(link.href, '_blank');
+            }
+          });
+        });
+
         
         await catalogStore.fetchProductPrice(formElement);  
         initAddLisiner();
@@ -67,6 +126,7 @@
       // Можно добавить обработку ошибки (например, показать уведомление)
     }
   };
+
 
 
   defineExpose({
@@ -85,6 +145,8 @@
     if (addToCartButton) {
       addToCartButton.removeEventListener('click', clickHandler);
     }
+
+
   });
 
 
@@ -92,7 +154,7 @@
   const initAddLisiner = () => {
     // Создаём экземпляр
     const catalogApp = new CatalogApp();
-
+    
     // Запускаем приложение
     catalogApp.start();
   }

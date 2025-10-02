@@ -9,9 +9,7 @@
       />
     </div>
     <div class="basket-container">
-      <!-- {{ loading }} -->
-      <!-- {{ mainItems }} -->
-      <div class="basket-container__main-table">
+      <div class="basket-container__main-table" v-if="mainItems.length || !additionalItems.length ">
         <BasketTable
           :key="basketUpdateKey"
           :items="mainItems"
