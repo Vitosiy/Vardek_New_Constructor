@@ -240,7 +240,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         }
 
         this.backupMaterial = this.backupMaterial ?? await this.getBackupTexture(rootFasadeData) as THREE.MeshPhongMaterial | THREE.MeshStandardMaterial | null; // Создаём общий материала фасада
-        const bigTexturePath = rootFasadeData.BIG_PICTURE
+        const bigTexturePath = rootFasadeData.BIG_PICTURE ?? ''
         this.createTexture.setTexture(bigTexturePath)
 
         this.maxGroupHeight = rootFasadeData.MAX_HEIGHT ?? this.maxGroupHeight
