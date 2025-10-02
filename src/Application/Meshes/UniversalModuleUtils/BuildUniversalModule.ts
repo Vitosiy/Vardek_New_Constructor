@@ -156,14 +156,17 @@ export class BuildUniversalModule extends BuildProduct {
 
         CONFIG.MODULEGRID = {}
 
-        CONFIG.BACKWALL = {}
         if (product_data.BACKWALL?.length && product_data.BACKWALL?.[0]) {
+            CONFIG.BACKWALL = {}
             CONFIG.BACKWALL.COLOR = this.filters.filterModuleColor(product_data.BACKWALL)[0] || CONFIG["MODULE_COLOR"];
         }
 
-        CONFIG.LEFTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
-        CONFIG.RIGHTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
-        CONFIG.TOPFASADECOLOR = {}
+        if (product_data.SIDEWALL?.length && product_data.SIDEWALL?.[0]) {
+            CONFIG.LEFTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
+            CONFIG.RIGHTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
+        }
+
+        CONFIG.TOPFASADECOLOR = {COLOR: 7397, SHOW: false}
 
         if (product_data.moduleType.CODE !== "wardrobe")
             CONFIG.LOOPS = {}

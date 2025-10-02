@@ -432,8 +432,69 @@ export class BuildProduct extends BuildersHelper {
         CONFIG.MODULE_COLOR = moduleColorId;
 
         const moduleColor = this._FASADE[moduleColorId];
+        let left, right, top, back;
 
-        const body = this.json_builder.createMesh({ data, fasade: moduleColor });
+        const {BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR} = CONFIG;
+        if(TOPFASADECOLOR?.SHOW) {
+            let moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor.DEPTH
+            top = this._FASADE[TOPFASADECOLOR.COLOR]
+
+            let topFasade_width = CONFIG.SIZE.width;
+            let topFasade_depth = CONFIG.SIZE.depth + moduleThickness;
+            let topFasade_thickness = top.DEPTH;
+
+            TOPFASADECOLOR.width = topFasade_width
+            TOPFASADECOLOR.depth = topFasade_depth
+            TOPFASADECOLOR.thickness = topFasade_thickness
+
+            let startPos =  this.getStartPosition(CONFIG.SIZE);
+
+            data.json.items.push({
+                id: 'top_fasade',
+                "type": "object",
+                "geometry": {
+                    "type": "BoxGeometry",
+                    "opt": {
+                        "x": topFasade_width,
+                        "y": topFasade_thickness,
+                        "z": topFasade_depth
+                    }
+                },
+                "rotation": {"x": 0, "y": 0, "z": 0},
+                "position": {
+                    "x": 0,
+                    "y": startPos.y + CONFIG.SIZE.height + top.DEPTH / 2,
+                    "z": startPos.z + CONFIG.SIZE.depth / 2 + moduleThickness / 2
+                }
+            })
+
+            if(TOPFASADECOLOR.PALETTE)
+                top = this._PALETTE[TOPFASADECOLOR.PALETTE]
+        }
+        if(LEFTSIDECOLOR?.SHOW) {
+            left = this._FASADE[LEFTSIDECOLOR.COLOR]
+            if(LEFTSIDECOLOR.PALETTE)
+                left = this._PALETTE[LEFTSIDECOLOR.PALETTE]
+        }
+        if(RIGHTSIDECOLOR?.SHOW) {
+            right = this._FASADE[RIGHTSIDECOLOR.COLOR]
+            if(RIGHTSIDECOLOR.PALETTE)
+                right = this._PALETTE[RIGHTSIDECOLOR.PALETTE]
+        }
+        if(BACKWALL?.SHOW) {
+            back = this._FASADE[BACKWALL.COLOR]
+            if(BACKWALL.PALETTE)
+                back = this._PALETTE[BACKWALL.PALETTE]
+        }
+
+        const body = this.json_builder.createMesh({
+            data,
+            fasade: moduleColor,
+            left,
+            right,
+            back,
+            top,
+        });
 
         const edge = this.edge_builder.createEdge(body);
         body.add(edge)

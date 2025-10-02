@@ -1715,6 +1715,8 @@ defineExpose({
 .visualization {
   canvas {
     border: 1px solid #bbbbbb;
+    display: flex;
+    justify-content: center;
   }
 }
 

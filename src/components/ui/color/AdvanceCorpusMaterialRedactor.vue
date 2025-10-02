@@ -81,8 +81,6 @@ const glassList = ref<Array>([]);
 const isGlassExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
-  const product = _APP.CATALOG.PRODUCTS[productId.value];
-
   modelState.createCurrentPaletteData(data.ID);
   modelState.createCurrentMillingData({
     fasadeId: data.ID,

@@ -1,10 +1,11 @@
 <script setup lang="ts" xmlns="http://www.w3.org/1999/html">
 // @ts-nocheck
-import {computed, defineExpose, ref, toRefs} from "vue";
+import {computed, defineExpose, onMounted, ref, toRefs} from "vue";
 
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 const props = defineProps({
   module: {
@@ -37,10 +38,11 @@ enum partsNames {
 
 const {module, objectData, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
+const modelState = useModelState()
 
 const currentOption = ref<string | boolean>(false);
-
-const getMaterialsList = computed(() => {
+const materialList = ref(null);
+const getMaterialsParts = computed(() => {
   return (_module: Object) => {
     let result = {}
 
@@ -75,15 +77,39 @@ const reset = () => {
 }
 
 const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
-  return APP[type][materialID]
+  return APP[type]?.[materialID]
 }
 
 const getOption = (part: string) => {
   if (part == currentOption.value) {
     currentOption.value = false;
+    materialList.value = null
     return;
   }
   currentOption.value = part;
+  getMaterialsList()
+};
+
+const getMaterialsList = () => {
+  let result = {};
+
+  switch (currentOption.value) {
+    case "MODULE_COLOR":
+      materialList.value = modelState.getCurrentModuleData
+      break;
+    case "BACKWALL":
+      materialList.value = modelState.getCurrentBackwallData
+      break;
+    case "RIGHTSIDECOLOR":
+    case "LEFTSIDECOLOR":
+      materialList.value = modelState.getCurrentSidewallData
+      break;
+    default:
+      materialList.value = modelState.getCurrentModelFasadesData
+      break;
+  }
+
+  return result;
 };
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
@@ -98,6 +124,13 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
           objectData.value.PROPS.CONFIG[currentOption.value] = {}
         }
 
+        if (type === "COLOR") {
+          if (!value || value.ID === 7397)
+            objectData.value.PROPS.CONFIG[currentOption.value]['SHOW'] = false
+          else
+            objectData.value.PROPS.CONFIG[currentOption.value]['SHOW'] = true
+        }
+
         objectData.value.PROPS.CONFIG[currentOption.value][type] = value ? value.ID : false;
         if(palette)
           objectData.value.PROPS.CONFIG[currentOption.value]['PALETTE'] = palette
@@ -110,6 +143,11 @@ const getCurrentRedactor = computed(() => {
   return (!currentOption.value?.includes("MODULE") && !currentOption.value?.includes("BACKWALL"));
 });
 
+onMounted(() => {
+  modelState.createCurrentBackwallData(objectData.value.globalData);
+  modelState.createCurrentSidewallData(objectData.value.globalData);
+})
+
 </script>
 
 <template>
@@ -119,7 +157,7 @@ const getCurrentRedactor = computed(() => {
     >
       <div class="config-options">
         <div
-            v-for="(value, part) in getMaterialsList(objectData)"
+            v-for="(value, part) in getMaterialsParts(objectData)"
             :key="part"
             class="option-small"
         >
@@ -154,6 +192,7 @@ const getCurrentRedactor = computed(() => {
       <CorpusMaterialRedactor
           v-else
           :is2Dconstructor="true"
+          :material-list="materialList"
           @parent-callback="selectOption"
       />
     </div>
