@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import * as THREETypes from "../types/types"
+import { TSize, TTrafficManager, TCustomBoxHelper } from "../types/types";
 import { FBXLoader, GLTFLoader, ColladaLoader } from "three/examples/jsm/Addons.js";
 
 declare global {
@@ -21,36 +21,68 @@ declare global {
 
 /** THREE JS */
 
+
+//------------------
+/** @PROJECT_PARAMS */
+//------------------
+
 export interface IProjectParams {
     rooms?: IRoom[],
     camera?: ICameraData,
-    orto_camera?: IOrtoCameraData,
     lights?: ILightsObjects,
     height_clamp?: number,
     table?: { [key: string]: any },
     table_params?: { [key: string]: any },
     table_color?: number | null,
-    table_top_type_auto?: boolean
-    default_fasade_up?: number,
-    default_fasade_down?: number,
+    table_top_type_auto?: number | null,
+    default_table_color?: number | null,
+    default_fasade_up?: number | null,
+    default_fasade_down?: number | null,
+    default_fasade_color?: number | null,
+    default_floor?: number | null,
+    default_wall?: number | null,
+    default_module_color_down?: number | null,
+    default_module_color_up?: number | null,
+    default_module_color?: number | null,
+    default_milling_down?: number | null,
+    default_milling_up?: number | null,
+    default_palit_down?: number | null,
+    default_palit_up?: number | null,
+    default_overlay_id?: number[],
+    default_table_model?: number,
+    default_handles?: number,
+    project_name?: number | null,
+
 }
 
-
 export interface IContentItem {
-    type?: THREETypes.TContentType;
-    position?: [number, number, number];
-    rotation?: number[];
-    sizes?: { [key: string]: number }
+    id?: number;
+    uuid?: string;
+    position?: IVector3;
+    rotation?: IRotationEuler;
+    size?: TSize;
 }
 
 export interface IRoom {
-    id: number;
+    id: number | string;
     label?: string;
     description?: string;
-    size: IWallSizes;
-    content?: IContentItem[];
+    params: IWallSizes;
+    content?: IContentItem[] | any[];
 }
 
+export interface IWallSizes {
+
+    walls: IWallData[]
+    floor: string | number
+    wall: string | number
+}
+
+interface IVector3 {
+    x: number;
+    y: number;
+    z: number;
+}
 
 interface IGeometryOpt {
     x: number | string,
@@ -76,7 +108,7 @@ export interface IRotationEuler {
     _x: number,
     _y: number,
     _z: number,
-    _order: 'XYZ'
+    _order: 'XYZ' | string
 }
 
 export interface IRotation {
@@ -92,26 +124,19 @@ export interface IPosition {
 }
 
 export interface IWallData {
-    width: number,
-    height: number,
-    position: IPosition,
+    id: number | string
+    width: number;
+    height: number;
+    depth?: number;
+    position: IVector3,
     rotation: IRotationEuler,
     side: number
 }
 
-export interface IWallSizes {
-    // width?: number,
-    // height?: number,
-    // depth?: number,
-    // thickness?: number,
-    // numberOfWalls?: number,
-    walls: IWallData[]
-    floor?: THREE.Texture | number | string
-    wall?: THREE.Texture | number | string
-}
+/**---------------------------------------------- */
 
 export interface ICameraData {
-    position: [number, number, number],
+    position: number[],
     target: { x: number, y: number, z: number },
     fov: number,
     near: number,
@@ -184,6 +209,7 @@ export interface ILoaders {
 }
 
 export interface IModelsData {
+    ID?: string | number;
     id: string;
     name: string;
     json: any | null;
@@ -205,6 +231,7 @@ export interface IModelsData {
     loop_position: number | null;
     loop_model: string | null;
     wall_thickness: number | null;
+    moduleType: any
 }
 
 export interface IShelfData {
@@ -219,16 +246,16 @@ export interface IMouseData {
 }
 
 export interface ISetProduct {
-    scene: THREE.Scene,
-    config: THREETypes.TObject,
-    object: THREE.Object3D,
-    point: THREE.Vector3,
-    rotate: THREE.Vector3 | THREE.Euler | null,
 
-    roomManager: THREETypes.TRoomManager,
-    trafficManager?: THREETypes.TTrafficManager,
-    boxHelper?: THREETypes.TCustomBoxHelper,
-    wall?:THREE.Object3D | THREE.Mesh,
+
+    object?: THREE.Object3D,
+    point?: THREE.Vector3,
+    rotate?: THREE.Vector3 | THREE.Euler | null,
+
+
+    trafficManager?: TTrafficManager,
+    boxHelper?: TCustomBoxHelper,
+    wall?: THREE.Object3D | THREE.Mesh,
 }
 
 export interface IClampPosition {
@@ -237,5 +264,121 @@ export interface IClampPosition {
     quaternion: THREE.Quaternion
 }
 
+//------------------
+/** @PRODUCT */
+//------------------
 
-/** ----------------------------------------------------------------------------------------- */
+type Nullable<T> = T | null;
+type NullableArray<T> = Array<Nullable<T>>;
+
+interface IIPropertyValues {
+    SECTION_META_DESCRIPTION: string;
+    ELEMENT_META_DESCRIPTION: string;
+    ELEMENT_META_TITLE: string;
+    SECTION_META_TITLE: string;
+    SECTION_PAGE_TITLE: string;
+}
+
+interface ITexture {
+    src: string;
+    width: number;
+    height: number;
+    size: string;
+}
+
+export interface IProduct {
+    ID: number;
+    SORT: number;
+    NAME: string;
+    IPROPERTY_VALUES: IIPropertyValues;
+
+    FACADE: NullableArray<number>;
+    OPTION: NullableArray<number>;
+    GLASS: NullableArray<number>;
+    MILLING: NullableArray<number>;
+    CITY: NullableArray<number>;
+    COLOR: NullableArray<number>;
+
+    SIZE_EDIT: Nullable<number>;
+    SIZE_EDIT_HEIGHT: NullableArray<number>;
+    SIZE_EDIT_WIDTH_MIN: Nullable<number>;
+    SIZE_EDIT_WIDTH_MAX: Nullable<number>;
+    SIZE_EDIT_HEIGHT_MIN: Nullable<number>;
+    SIZE_EDIT_HEIGHT_MAX: Nullable<number>;
+    SIZE_EDIT_WIDTH: NullableArray<number>;
+
+    models: number[];
+    width: number;
+    depth: number;
+    height: number;
+
+    element_type: Nullable<string>;
+    tabletop: Nullable<string>;
+    HEM: NullableArray<number>;
+
+    SIZE_EDIT_STEP_WIDTH: Nullable<number>;
+    SIZE_EDIT_TERMS_MULTIPLICITY: Nullable<number>;
+    SIZE_EDIT_STEP_HEIGHT: Nullable<number>;
+
+    texture: ITexture;
+    INCITY: NullableArray<number>;
+
+    plinth_length: Nullable<number>;
+    disable_raycast: number;
+    count_in_basket: Nullable<number>;
+    SIZE_EDIT_STEP_DEPTH: Nullable<number>;
+    SIZE_EDIT_DEPTH: NullableArray<number>;
+    SIZE_EDIT_DEPTH_MIN: Nullable<number>;
+    SIZE_EDIT_DEPTH_MAX: Nullable<number>;
+    MILLING_ALT: Nullable<number>;
+
+    USLUGI: number[];
+    SIZE_EDIT_CALC_TYPE: Nullable<number>;
+    FILLING: NullableArray<number>;
+    leg_length: number;
+    profile: NullableArray<number>;
+    FACADEALIGNSELECT: Nullable<number>;
+    substitution_width: Nullable<number>;
+    substitution_height: Nullable<number>;
+    substitution_depth: Nullable<number>;
+
+    texture_type: Nullable<string>;
+    texture_rotation: Nullable<string>;
+    texture_scale: Nullable<string>;
+
+    EN_NAME: string;
+    MODULECOLOR: NullableArray<number>;
+    SHELFQUANT: Nullable<number>;
+    type_showcase: NullableArray<number>;
+    fasade_type: NullableArray<number>;
+    other_models: NullableArray<number>;
+
+    DE_NAME: string;
+    FASADE_SIZES: NullableArray<number>;
+    texture_map: Nullable<string>;
+    ACTUAL_DEPT: Nullable<number>;
+    IS_BOX_SECTION: number;
+    CAN_HIDE_EL: number;
+    SIZE_EDIT_JOINDEPTH_MIN: Nullable<number>;
+    SIZE_EDIT_JOINDEPTH_MAX: Nullable<number>;
+    PRODUCT_MECHANISM: NullableArray<number>;
+
+    DATA_PETROVICH: Nullable<number>;
+    CNSTR_MIN_WIDTH: Nullable<number>;
+    NULL_PRICE: number;
+    TEST: number;
+    MIN_FASADE_SIZE: Nullable<number>;
+    MAX_FASADE_SIZE: Nullable<number>;
+    LOOPSIDE: NullableArray<number>;
+    REC_HEM: NullableArray<number>;
+    productType: Nullable<string>;
+    DOP_PRODUCT: NullableArray<number>;
+    HANDLES: NullableArray<number>;
+    canSetSideProfile: number;
+    ALTERNATIVE_PRODUCT: NullableArray<number>;
+
+    LANG: string;
+    OPTIONSECTION_ID: false | number;
+    PREVIEW_PICTURE: string;
+    FILLING_SECTION: false | number;
+}

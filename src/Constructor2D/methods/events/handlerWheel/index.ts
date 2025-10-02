@@ -35,8 +35,10 @@ export function handlerWheel(this: any, e: WheelEvent): void {
       this.layers.halfRoom.scale = this.config.scale; // обновляем пол комнаты
       this.layers.rulers?.drawRulers(); // обновляем линейки
       this.layers.planner!.scale = this.config.scale; // обновляем сетку
+      this.layers.doorsAndWindows!.scale = this.config.scale; // обновляем двери и окна
       this.layers.arrowRulerActiveObject!.scale = this.config.scale; // обновляем стрелки
       this.layers.startPointActiveObject!.scale = this.config.scale; // обновляем стрелки
+      this.layers.dimensionDisplay!.scale = this.config.scale;
 
     }
 

@@ -12,7 +12,7 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
 
 export class SetObject {
-    eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    eventBus: ReturnType<typeof useEventBus> = useEventBus()
     modelState: ReturnType<typeof useModelState> = useModelState();
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
 
@@ -28,9 +28,14 @@ export class SetObject {
 
     constructor(root: THREETypes.TApplication) {
         this.root = root
+        this.scene = root._scene
+
     }
 
-    create({ scene, object, point, rotate, roomManager, trafficManager, boxHelper, wall }: THREEInterfases.ISetProduct) {
+    async create({ object, point, rotate, boxHelper, wall, trafficManager }: THREEInterfases.ISetProduct) {
+
+
+        this.roomManager = this.root._roomManager
 
         const { CONFIG } = object.userData.PROPS
         const { POSITION, ROTATION, UNIFORM_TEXTURE } = CONFIG
@@ -54,14 +59,9 @@ export class SetObject {
 
         object.position.copy(point);
 
-        const aabb = new THREE.Box3().setFromObject(object);
-        let obb = new OBB();
-        obb = obb.fromBox3(aabb);
-        obb.applyMatrix4(object.matrixWorld)
-        object.userData.obb = obb
 
         const adjustedPosition = positionEmpty && rotationEmpty
-            ? roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
+            ? this.roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
             : { position, rotation };
 
 
@@ -74,38 +74,49 @@ export class SetObject {
 
         object.userData.current = true
 
-        scene.add(object);
+        this.scene.add(object);
+        object.userData.aabb = new THREE.Box3().setFromObject(object);
 
         /** Добавляем helper */
-        object.userData.helper ? scene.add(object.userData.helper) : ''
+        object.userData.helper ? this.scene.add(object.userData.helper) : ''
 
         /** Добавляем объект в RoomContant для последующего использования */
-        roomManager._roomContant = object
+        this.roomManager._roomContant = object
+        // if (object.userData.elementType !==
+        //     "element_room") {
+        //     this.roomManager._roomContant = object
+        // }
+
+        object.userData.currentWall = wall
+        object.userData.targetPosition = point
+
+
 
         /** Режим объединения в группы для переходящей текстуры */
-        if (this.uniformState.getUniformModeData.uniformMode) {
+        if (this.uniformState.getUniformModeData.uniformMode) return
 
-            // const uniformTextureBuilder = this.root._trafficManager?.geometryBuilder.buildProduct.uniform_texture_builder
-            // uniformTextureBuilder.preGrouping(object)
-            return
-        }
+        // Передаём данные созданного объекта
 
-        // Передаём данные созданного объекта для events
+        // if (trafficManager) {
 
-        if (trafficManager) {
-            trafficManager._currentObject = object
-            trafficManager.ruler.drawRulerToObjects(object)
-        }
+        //     // object.userData.aabb = new THREE.Box3().setFromObject(this.object);
+        //     // trafficManager._currentObject = object
+
+        //     trafficManager.ruler.drawRulerToObjects(object)
+        // }
+
+
 
         if (!boxHelper) return
 
         if (!boxHelper._boxHelperCheck) {
             boxHelper.addBoxHelper(object);
-            return
+
         }
 
         boxHelper.removeBoxHelper();
         boxHelper.addBoxHelper(object);
+
     }
 
 }

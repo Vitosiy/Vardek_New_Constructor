@@ -163,13 +163,14 @@ const init = async () => {
   app.stage.hitArea = app.screen;
 
   shapeAdjuster = new ShapeAdjuster();
-  shapeAdjuster.setStep(props.step)
+  shapeAdjuster.setStep(props.step);
   addTicker();
 
   renderGrid();
 };
 
 const renderGrid = () => {
+  if (!props.grid) return;
   clearRender();
 
   let xOffset = 0;
@@ -221,9 +222,9 @@ const renderGrid = () => {
     roundSectionsContainer.addChild(elem);
   });
 
-  deviders.forEach((elem) => {
-    sectionsContainer.addChild(elem);
-  });
+  // deviders.forEach((elem) => {
+  //   sectionsContainer.addChild(elem);
+  // });
 
   holes.forEach((elem) => {
     holesContainer.addChild(elem);
@@ -233,8 +234,15 @@ const renderGrid = () => {
     lablesContainer.addChild(elem);
   });
 
+  // deviders.forEach((elem) => {
+  //   sectionsContainer.addChild(elem);
+  // });
+
   dementions.forEach((elem) => {
     dementionContainer.addChild(elem);
+  });
+  deviders.forEach((elem) => {
+    sectionsContainer.addChild(elem);
   });
 };
 
@@ -283,6 +291,8 @@ const createSector = ({
   sector.addChild(cell.cellGraphics);
   sector.addChild(cell.highlightGraphics);
   createRoundCut(row, sector);
+
+  row.path = cell.cellGraphics.cellPath;
 
   sections.push(sector);
 
@@ -361,7 +371,6 @@ const createVerticalCut = ({ width, height, row, col, colIndex, sector }) => {
   const dashVert = new Graphics();
 
   divider.rect(0, 0, 10, convertTotalHeight);
-
   divider.fill("#A3A9B5");
   divider.alpha = 0;
 
@@ -369,7 +378,7 @@ const createVerticalCut = ({ width, height, row, col, colIndex, sector }) => {
   divider.cursor = "col-resize";
   divider.col = colIndex;
 
-  dashVert.rect(0, 0, 0, convertTotalHeight);
+  dashVert.rect(0, 0, 0.1, convertTotalHeight);
   dashVert.stroke({ width: 1, color: "#5D6069" });
   divider.dev_name = `dev${divider.uid}`;
 
@@ -428,7 +437,7 @@ const createHorozontalCut = ({
   //   graphics: dashHor,
   // });
 
-  dashHor.rect(row.xOffset, row.yOffset + pxHeight, pxWidth, 0);
+  dashHor.rect(row.xOffset, row.yOffset + pxHeight, pxWidth, 0.1);
   dashHor.stroke({ width: 1, color: "#5D6069" });
 
   divider.on("pointerdown", onHorizontalDragStart, divider);
@@ -455,8 +464,6 @@ const createRoundCut = (row, sector) => {
     );
 
   if (!("x" in row.roundCut)) {
-    console.log(x, y);
-
     row.roundCut.x = x;
     row.roundCut.y = y;
 
@@ -529,8 +536,6 @@ const createHole = (data, sector) => {
 
 // Выбор сектора, передача в родительский компонент
 const selectCell = (colIndex, rowIndex, parent = false) => {
-  console.log(colIndex, rowIndex, "CR");
-
   selectedCell.value = { col: colIndex, row: rowIndex };
   toggleSectorColor(colIndex, rowIndex);
   if (!parent) emit("cell-selected", colIndex, rowIndex);
@@ -612,16 +617,13 @@ function onHorizontalDragStart(event) {
 }
 
 function onDragMove(event) {
-
-  if(!event)  return
+  if (!event) return;
 
   lastDragEvent.value = event;
 }
 
 function dragMove(event) {
   if (!dragState.isDragging || !lastDragEvent.value) return;
-
-  console.log('55')
 
   const {
     type,
@@ -709,7 +711,7 @@ const onDragEnd = () => {
   dragState.rowIndex = null;
   dragState.curRoundMax = null;
   dragState.nextRoundMax = null;
-  lastDragEvent.value = null
+  lastDragEvent.value = null;
 
   app.stage.off("pointermove", onDragMove);
   app.stage.off("pointerup", onDragEnd);
@@ -921,7 +923,7 @@ const destroy = () => {
 };
 
 const addTicker = () => {
-  app.ticker.maxFPS = 60
+  app.ticker.maxFPS = 60;
   app.ticker.add(() => {
     dragMove(lastDragEvent.value);
   });
@@ -933,9 +935,8 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  // console.log(toRaw(props.maxAreaHeight), 'TT')
-  // getMaxAreaHeight.value = props.maxAreaHeight;
   init();
+  console.log(props.grid);
   document.addEventListener("mousemove", handleGlobalPointerMove, false);
 });
 

@@ -26,7 +26,7 @@ export const catalogSections: CatalogSectionInt[] = [
     goods: [
       { id: MathUtils.generateUUID(), name: 'Стена', nameMode: 'wall', icon: 'icon-wall-c2d.png' },
       { id: MathUtils.generateUUID(), name: 'Верт. Стена', nameMode: 'wall_vertical', icon: 'icon-v-wall-c2d.png' },
-      { id: MathUtils.generateUUID(), name: 'Арка', nameMode: 'arc', icon: '' },
+      // { id: MathUtils.generateUUID(), name: 'Внутр. ст.', nameMode: 'dividing_wall', icon: 'icon-v-wall-c2d.png' },
       { id: MathUtils.generateUUID(), name: 'Угл. стена', nameMode: 'corner', icon: '' },
       { id: MathUtils.generateUUID(), name: 'Верт. ниша', nameMode: 'vert', icon: '' },
       { id: MathUtils.generateUUID(), name: 'Гор. ниша', nameMode: 'hor', icon: '' },
@@ -42,7 +42,9 @@ export const catalogSections: CatalogSectionInt[] = [
       viewBox: "0 0 12 16",
       d: pathD.door
     },
-    goods: []
+    goods: [
+      { id: MathUtils.generateUUID(), name: 'Дверь', nameMode: 'door', icon: 'icon-window-c2d.png' },
+    ]
   },
   {
     id: MathUtils.generateUUID(),
@@ -54,8 +56,11 @@ export const catalogSections: CatalogSectionInt[] = [
       viewBox: "0 0 18 18",
       d: pathD.window
     },
-    goods: []
+    goods: [
+      { id: MathUtils.generateUUID(), name: 'Окно', nameMode: 'window', icon: 'icon-window-c2d.png' },
+    ]
   },
+  /*
   {
     id: MathUtils.generateUUID(),
     name: "Полы",
@@ -104,4 +109,5 @@ export const catalogSections: CatalogSectionInt[] = [
     },
     goods: []
   }
+    */
 ];

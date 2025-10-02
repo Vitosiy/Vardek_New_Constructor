@@ -1,402 +1,397 @@
-import * as THREE from 'three'
-import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
+import * as THREE from 'three';
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { RoomManager } from '../Room/RoomManager';
+import { useMenuStore } from '@/store/appStore/useMenuStore';
+
+// Интерфейс для конфигурации линейки
+interface RulerConfig {
+  POINT_COUNT: number;
+  MIN_DISTANCE: number;
+  MAX_DISTANCE: number;
+  LINE_COLOR: string;
+  LABEL_HEIGHT_OFFSET: number;
+  DIRECTIONS: THREE.Vector3[];
+  ARROW_WIDTH: number;
+  ARROW_HEIGHT: number;
+  OBJECT_ARROW_WIDTH: number;
+  OBJECT_ARROW_HEIGHT: number;
+}
+
+// Интерфейс для параметров создания метки
+interface DrawLabelParams {
+  axis: number;
+  position: THREE.Vector3;
+  css: string;
+}
 
 export class Ruler {
+  private menuStore = useMenuStore();
 
-    rulerLines: THREE.Object3D[] | null = null;
-    rullerSizeLines: THREE.Object3D[] | null = null;
-    room: RoomManager | null = null
-    scene: THREE.Scene | null = null;
-    raycasterWall: THREE.Raycaster = new THREE.Raycaster()
-    raycasterProd: THREE.Raycaster = new THREE.Raycaster()
+  private rulerLines: THREE.Object3D[] = [];
+  private rullerSizeLines: THREE.Object3D[] = [];
+  private room: RoomManager | null = null;
+  private scene: THREE.Scene | null = null;
+  private readonly raycasterWall = new THREE.Raycaster();
+  private readonly raycasterProd = new THREE.Raycaster();
 
-    constructor(scene?: THREE.Scene, room?: RoomManager, rulerLines?: THREE.Object3D[], rullerSizeLines?: THREE.Object3D[]) {
-        this.scene = scene as THREE.Scene
-        this.rulerLines = rulerLines as THREE.Object3D[]
-        this.rullerSizeLines = rullerSizeLines as THREE.Object3D[]
-        this.room = room as RoomManager
+  private readonly config: RulerConfig = {
+    POINT_COUNT: 3,
+    MIN_DISTANCE: 0.01,
+    MAX_DISTANCE: 1500,
+    LINE_COLOR: '#444444',
+    LABEL_HEIGHT_OFFSET: 100,
+    ARROW_WIDTH: 75,
+    ARROW_HEIGHT: 38,
+    OBJECT_ARROW_WIDTH: 25,
+    OBJECT_ARROW_HEIGHT: 50,
+    DIRECTIONS: [
+      new THREE.Vector3(1, 0, 0),
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 1),
+      new THREE.Vector3(-1, 0, 0),
+      new THREE.Vector3(0, -1, 0),
+      new THREE.Vector3(0, 0, -1),
+    ],
+  };
 
-    }
+  constructor(scene?: THREE.Scene, room?: RoomManager, rulerLines?: THREE.Object3D[], rullerSizeLines?: THREE.Object3D[]) {
+    this.scene = scene ?? null;
+    this.rulerLines = rulerLines ?? [];
+    this.rullerSizeLines = rullerSizeLines ?? [];
+    this.room = room ?? null;
+  }
 
-    setParams({ scene, room, rulerLines, rullerSizeLines }: { scene?: THREE.Scene, room?: RoomManager, rulerLines?: THREE.Object3D[], rullerSizeLines?: THREE.Object3D[] }) {
+  public setParams({ scene, room, rulerLines, rullerSizeLines }: { scene?: THREE.Scene; room?: RoomManager; rulerLines?: THREE.Object3D[]; rullerSizeLines?: THREE.Object3D[] }) {
+    this.scene = scene ?? null;
+    this.rulerLines = rulerLines ?? [];
+    this.rullerSizeLines = rullerSizeLines ?? [];
+    this.room = room ?? null;
+  }
 
-
-        this.scene = scene as THREE.Scene
-        this.rulerLines = rulerLines as THREE.Object3D[]
-        this.rullerSizeLines = rullerSizeLines as THREE.Object3D[]
-        this.room = room as RoomManager
-    }
-
-    /** Линейка до стен */
-    drawRulerWalls(object: THREE.Object3D, ray?: THREE.Raycaster) {
-
-
-        // const raycaster = new THREE.Raycaster();
-
-        const raycaster = ray;
-        // Получаем габаритную рамку объекта
-        const objectBox = new THREE.Box3().setFromObject(object);
-
-        // Получаем центры каждой грани объекта
-
-        const faceCenters = [
-            new THREE.Vector3(objectBox.max.x, (objectBox.max.y), (objectBox.min.z + objectBox.max.z) / 2), // x
-            new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, objectBox.max.y, (objectBox.min.z + objectBox.max.z) / 2), // y
-            new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, (objectBox.max.y), objectBox.max.z), // z
-
-            new THREE.Vector3(objectBox.min.x, (objectBox.max.y), (objectBox.min.z + objectBox.max.z) / 2),//-x
-            new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, objectBox.min.y, (objectBox.min.z + objectBox.max.z) / 2), // -y
-            new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, (objectBox.max.y), objectBox.min.z - 20), //-z 
-        ];
-
-        const directions = [
-            new THREE.Vector3(1, 0, 0),   // X-положительное направление
-            new THREE.Vector3(0, 1, 0),   // Y-положительное направление
-            new THREE.Vector3(0, 0, 1),   // Z-положительное направление
-            new THREE.Vector3(-1, 0, 0),  // X-отрицательное направление
-            new THREE.Vector3(0, -1, 0),  // Y-отрицательное направление
-            new THREE.Vector3(0, 0, -1),  // Z-отрицательное направление
-        ];
-
-        const minDistance = 0.01; // Минимальная дистанция для фильтрации
-
-        directions.forEach((direction, i) => {
-
-            const originPoint = faceCenters[i]
-
-            raycaster!.set(originPoint, direction);
-
-            const intersects = raycaster!.intersectObjects(
-                [...this.room!._roomWalls, this.room!._roomFloor] as THREE.Object3D[],
-                true
-            );
-
-            if (intersects.length > 0 && intersects[0].distance > minDistance) {
-
-                const closestIntersection = intersects[0];
-
-                let middle = new THREE.Vector3(0, 0, 0,)
-                middle.lerpVectors(closestIntersection.point, originPoint, 0.5)
-                middle.y += 100
-
-                this.createArrow(direction, originPoint, closestIntersection.distance, '#77cadb');
-
-                let distanceLabel = this.cssDrow({ axis: closestIntersection.distance, position: middle, css: 'distance-label--wall' })
-                this.scene!.add(distanceLabel)
-                this.rulerLines!.push(distanceLabel);
-            }
+  // Переключение видимости линеек расстояния и размеров
+  public toggleRulerVisibility(visible: boolean): void {
+    const toggleObjects = (objects: THREE.Object3D[]) => {
+      objects.forEach(obj => {
+        obj.visible = visible;
+        obj.traverse(child => {
+          child.visible = visible;
         });
+      });
+    };
+
+    toggleObjects(this.rulerLines);
+    toggleObjects(this.rullerSizeLines);
+  }
+
+  // Отрисовка сплошных линий до стен
+  public drawRulerWalls(objectBox: THREE.Box3): void {
+    const faceCenters = [
+      new THREE.Vector3(objectBox.max.x, objectBox.max.y, (objectBox.min.z + objectBox.max.z) / 2),
+      new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, objectBox.max.y, (objectBox.min.z + objectBox.max.z) / 2),
+      new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, objectBox.max.y, objectBox.max.z),
+      new THREE.Vector3(objectBox.min.x, objectBox.max.y, (objectBox.min.z + objectBox.max.z) / 2),
+      new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, objectBox.min.y, (objectBox.min.z + objectBox.max.z) / 2),
+      new THREE.Vector3((objectBox.min.x + objectBox.max.x) / 2, objectBox.max.y, objectBox.min.z - 20),
+    ];
+
+    this.config.DIRECTIONS.forEach((direction, i) => {
+      if (!this.scene || !this.room) return;
+
+      this.raycasterWall.set(faceCenters[i], direction);
+      const intersects = this.raycasterWall.intersectObjects(
+        [...this.room._roomWalls, this.room._roomFloor].filter(obj => obj instanceof THREE.Object3D),
+        true
+      );
+
+      if (intersects.length > 0 && intersects[0].distance > this.config.MIN_DISTANCE) {
+        const { point, distance } = intersects[0];
+        const middle = new THREE.Vector3().lerpVectors(point, faceCenters[i], 0.5).add(new THREE.Vector3(0, this.config.LABEL_HEIGHT_OFFSET, 0));
+
+        this.createArrow(direction, faceCenters[i], distance, '#77cadb', false);
+        const distanceLabel = this.createLabel({ axis: distance, position: middle, css: 'distance-label--wall' });
+        this.scene.add(distanceLabel);
+        this.rulerLines.push(distanceLabel);
+      }
+    });
+  }
+
+  // Отрисовка сплошных линий до объектов
+  public drawRulerToObjects(object: THREE.Object3D | null): void {
+    if (!this.isValidState()) {
+      console.warn('Отсутствуют необходимые свойства: комната, границы комнаты или сцена');
+      return;
     }
 
-    /** Линейка до объектов */
-    public drawRulerToObjects(object: THREE.Object3D) {
-        const raycaster = this.raycasterProd;
-        this.clearRuler(); // Очищаем предыдущие линии/стрелки
-        this.drawRulerWalls(object, this.raycasterWall);
+    this.clearRuler();
+    if (!this.menuStore.getRulerVisibility) return
 
-        const additionalPoints = 3;
-        const objectBox = new THREE.Box3().setFromObject(object);
-        // const xPoints = [objectBox.min.x, objectBox.max.x];
-        // const zPoints = [objectBox.min.z, objectBox.max.z];
+    const objectBox = object!.userData.aabb as THREE.Box3;
+    this.drawRulerWalls(objectBox);
+    this.calculateAndRenderRulers(objectBox);
+  }
 
-        const xPoints = this.generatePoints(objectBox.min.x, objectBox.max.x, additionalPoints);
-        const zPoints = this.generatePoints(objectBox.min.z, objectBox.max.z, additionalPoints);
-        const yCenter = (objectBox.min.y + objectBox.max.y) / 2;
+  // Отрисовка пунктирных линий размеров объекта
+  public drawRullerObjects(object: THREE.Object3D): { arrowPos: THREE.ArrowHelper; arrowNeg: THREE.ArrowHelper; labelDiv: CSS2DObject }[] {
+    const arrows: { arrowPos: THREE.ArrowHelper; arrowNeg: THREE.ArrowHelper; labelDiv: CSS2DObject }[] = [];
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const percentage = 0.85;
 
-        const directions = [
-            new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1),
-            new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1),
-        ]; // Упростили направления
+    const axes = [
+      {
+        dir: new THREE.Vector3(1, 0, 0),
+        start: new THREE.Vector3(
+          (box.min.x + box.max.x) * 0.5 - (size.x * percentage) * 0.5,
+          box.max.y - this.config.OBJECT_ARROW_WIDTH * 0.5,
+          box.min.z + this.config.OBJECT_ARROW_WIDTH * 0.5
+        ),
+        length: size.x * percentage,
+      },
+      {
+        dir: new THREE.Vector3(0, 1, 0),
+        start: new THREE.Vector3(
+          box.min.x + this.config.OBJECT_ARROW_WIDTH * 0.5,
+          (box.min.y + box.max.y) * 0.5 - (size.y * percentage) * 0.5,
+          box.min.z + this.config.OBJECT_ARROW_WIDTH * 0.5
+        ),
+        length: size.y * percentage,
+      },
+      {
+        dir: new THREE.Vector3(0, 0, 1),
+        start: new THREE.Vector3(
+          box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
+          box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
+          (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
+        ),
+        length: size.z * percentage,
+      },
+    ];
 
-        const minDistance = 1;
+    axes.forEach(({ dir, start, length }) => {
+      if (!this.scene) return;
+      if(length<1) return
 
-        // Фильтруем только ближайшие объекты
-        const nearbyBoxes = this.getNearbyBoxes(objectBox, this.room!._roomTotalBounds);
+      const arrowPos = new THREE.ArrowHelper(dir, start, length, this.config.LINE_COLOR, this.config.OBJECT_ARROW_HEIGHT, this.config.OBJECT_ARROW_WIDTH);
+      const arrowNeg = new THREE.ArrowHelper(dir.clone().negate(), start, 0, this.config.LINE_COLOR, this.config.OBJECT_ARROW_HEIGHT, this.config.OBJECT_ARROW_WIDTH);
 
-        for (const box of nearbyBoxes) {
-            for (const direction of directions) {
-                this.processIntersection(
-                    box,
-                    direction,
-                    raycaster,
-                    objectBox,
-                    yCenter,
-                    xPoints,
-                    zPoints,
-                    minDistance,
-                    this.createArrow.bind(this),
-                    this.createLine.bind(this),
-                    this.cssDrow.bind(this),
-                    this.scene!,
-                    this.rulerLines!
-                );
-            }
-        }
+      this.configureArrow(arrowPos, true);
+      this.configureArrow(arrowNeg, true);
+      arrowPos.line.computeLineDistances();
+
+      const middle = new THREE.Vector3().addVectors(start, dir.clone().multiplyScalar(length / 2));
+      middle.add(dir.x || dir.z ? new THREE.Vector3(0, 60, 0) : new THREE.Vector3(-100, 0, 0));
+
+      const labelDiv = this.createLabel({ axis: length / percentage, position: middle, css: 'dimension-label' });
+      this.scene.add(arrowPos, arrowNeg, labelDiv);
+      this.rullerSizeLines.push(arrowPos, arrowNeg, labelDiv);
+      arrows.push({ arrowPos, arrowNeg, labelDiv });
+    });
+
+    return arrows;
+  }
+
+  // Проверка валидности состояния
+  private isValidState(): boolean {
+    return !!this.room && !!this.room._roomTotalBounds && !!this.scene && !!this.rulerLines;
+  }
+
+  // Получение ближайших боксов
+  private getNearbyBoxes(objectBox: THREE.Box3): THREE.Box3[] {
+    if (!this.room?._roomTotalBounds) return [];
+
+    const nearbyBoxes: THREE.Box3[] = [];
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+
+    for (const box of this.room._roomTotalBounds) {
+      if (objectBox.distanceToPoint(box.getCenter(center)) < this.config.MAX_DISTANCE + box.getSize(size).x) {
+        nearbyBoxes.push(box);
+      }
     }
 
-    private getNearbyBoxes(objectBox: THREE.Box3, allBoxes: THREE.Box3[]): THREE.Box3[] {
-        const nearbyBoxes: THREE.Box3[] = [];
-        const maxDistance = 3000; // Максимальное расстояние для проверки
+    return nearbyBoxes;
+  }
 
-        for (const box of allBoxes) {
-            if (objectBox.distanceToPoint(box.getCenter(new THREE.Vector3())) < maxDistance) {
-                nearbyBoxes.push(box);
-            }
-        }
+  // Генерация точек для рейкастинга
+  private generatePoints(min: number, max: number): number[] {
+    const step = (max - min) / (this.config.POINT_COUNT - 1);
+    return Array.from({ length: this.config.POINT_COUNT }, (_, i) => min + step * i);
+  }
 
-        return nearbyBoxes;
-    }
+  // Расчёт и отрисовка сплошных линий до объектов
+  private calculateAndRenderRulers(objectBox: THREE.Box3): void {
+    const xPoints = this.generatePoints(objectBox.min.x, objectBox.max.x);
+    const zPoints = this.generatePoints(objectBox.min.z, objectBox.max.z);
+    const yMid = (objectBox.min.y + objectBox.max.y) / 2;
+    const intersectionPoint = new THREE.Vector3();
+    const originPoint = new THREE.Vector3();
+    const offset = new THREE.Vector3();
 
-    private processIntersection(box: THREE.Box3, direction: THREE.Vector3, raycaster: THREE.Raycaster, objectBox: THREE.Box3, yCenter: number, xPoints: number[], zPoints: number[], minDistance: number, createArrow: Function, createLine: Function, cssDrow: Function, scene: THREE.Scene, rulerLines: any[]) {
-        const intersectionPoint = new THREE.Vector3();
-        const isXAxis = direction.x !== 0;
-        const isZAxis = direction.z !== 0;
+    for (const box of this.getNearbyBoxes(objectBox)) {
+
+      if (objectBox.intersectsBox(box)) {
+        continue; // Пропускаем отрисовку линейки, если есть пересечение
+      }
+
+      for (const direction of this.config.DIRECTIONS) {
+        let intersectionFound = false;
 
         for (const x of xPoints) {
-            for (const z of zPoints) {
-                const originX = isXAxis ? (direction.x > 0 ? objectBox.max.x : objectBox.min.x) : x;
-                const originZ = isZAxis ? (direction.z > 0 ? objectBox.max.z : objectBox.min.z) : z;
+          for (const z of zPoints) {
+            originPoint.set(x, yMid, z);
+            const offsetMagnitude = this.calculateOffsetMagnitude(direction, originPoint, objectBox);
+            offset.copy(direction).multiplyScalar(offsetMagnitude);
+            originPoint.add(offset);
 
-                raycaster.set(new THREE.Vector3(originX, yCenter, originZ), direction);
-
-                if (raycaster.ray.intersectsBox(box) && raycaster.ray.intersectBox(box, intersectionPoint)) {
-                    const distance = raycaster.ray.origin.distanceTo(intersectionPoint);
-                    if (distance > minDistance) {
-                        createArrow(direction, raycaster.ray.origin, distance, '#444444');
-                        createLine(intersectionPoint, '#444444');
-
-                        const labelPosition = intersectionPoint.clone().setY(intersectionPoint.y + 100);
-                        const distanceLabel = cssDrow({ axis: distance, position: labelPosition, css: 'distance-label' });
-                        scene.add(distanceLabel);
-                        rulerLines.push(distanceLabel);
-                    }
-                    return; // Прерывание цикла при первом пересечении
-                }
+            this.raycasterProd.set(originPoint, direction);
+            if (this.raycasterProd.ray.intersectBox(box, intersectionPoint)) {
+              const distance = originPoint.distanceTo(intersectionPoint);
+              if (distance > this.config.MIN_DISTANCE && distance < this.config.MAX_DISTANCE) {
+                this.renderRulerElements(direction, originPoint, intersectionPoint, distance);
+                intersectionFound = true;
+                break;
+              }
             }
+          }
+          if (intersectionFound) break;
         }
+      }
     }
+  }
 
-    private generatePoints(min: number, max: number, count: number): number[] {
-        const step = (max - min) / (count - 1);
-        return Array.from({ length: count }, (_, i) => min + step * i);
-    }
+  // Расчёт смещения для начальной точки
+  private calculateOffsetMagnitude(direction: THREE.Vector3, origin: THREE.Vector3, box: THREE.Box3): number {
+    if (direction.x !== 0) return direction.x > 0 ? box.max.x - origin.x : origin.x - box.min.x;
+    if (direction.y !== 0) return direction.y > 0 ? box.max.y - origin.y : origin.y - box.min.y;
+    return direction.z > 0 ? box.max.z - origin.z : origin.z - box.min.z;
+  }
 
-    /** Линейка размера */
-    public drawRullerObjects(object: THREE.Object3D) {
-        let arrows: any[] = [];
+  // Отрисовка элементов линейки со сплошными линиями
+  private renderRulerElements(direction: THREE.Vector3, originPoint: THREE.Vector3, intersectionPoint: THREE.Vector3, distance: number): void {
+    if (!this.scene) return;
 
-        // Рассчитываем Bounding Box объекта
-        const box = new THREE.Box3().setFromObject(object);
-        const size = box.getSize(new THREE.Vector3());
+    // const middle = new THREE.Vector3().lerpVectors(intersectionPoint, originPoint, 0.5).add(new THREE.Vector3(0, this.config.LABEL_HEIGHT_OFFSET, 0));
+    const extreme = intersectionPoint.clone().add(new THREE.Vector3(0, this.config.LABEL_HEIGHT_OFFSET, 0));
 
-        const headWidth = 25;
-        const headLength = 50
+    this.createArrow(direction, originPoint, distance, this.config.LINE_COLOR, false);
+    this.createLine(intersectionPoint, this.config.LINE_COLOR);
+    const distanceLabel = this.createLabel({ axis: distance, position: extreme, css: 'distance-label' });
+    this.scene.add(distanceLabel);
+    this.rulerLines.push(distanceLabel);
+  }
 
-        const percentage = 0.85;
-        const arrowLengthX = size.x * percentage;
-        const arrowLengthY = size.y * percentage;
-        const arrowLengthZ = size.z * percentage;
+  // Создание стрелки с выбором сплошной или пунктирной линии
+  private createArrow(direction: THREE.Vector3, originPoint: THREE.Vector3, distance: number, color: string | THREE.Color, dashed: boolean): void {
+    if (!this.scene) return;
 
+    const arrow = new THREE.ArrowHelper(direction.clone().normalize(), originPoint, distance, color, this.config.ARROW_WIDTH, this.config.ARROW_HEIGHT);
+    const arrow2 = new THREE.ArrowHelper(direction.clone().negate().normalize(), originPoint, 0, color, this.config.ARROW_WIDTH, this.config.ARROW_HEIGHT);
 
+    this.configureArrow(arrow, dashed);
+    this.configureArrow(arrow2, dashed);
+    this.scene.add(arrow, arrow2);
+    this.rulerLines.push(arrow, arrow2);
+  }
 
-        // Рассчитываем начальные точки для каждой оси
-        const axes = [
-            {
-                dir: new THREE.Vector3(1, 0, 0), // Направление по X
-                start: new THREE.Vector3((box.min.x + box.max.x) * 0.5 - arrowLengthX * 0.5, box.max.y - (headWidth * 0.5), box.min.z + (headWidth * 0.5)), // Центр по оси X
-                color: '#444444',
-                label: arrowLengthX
-            },
-            {
-                dir: new THREE.Vector3(0, 1, 0), // Направление по Y
-                start: new THREE.Vector3(box.min.x + (headWidth * 0.5), (box.min.y + box.max.y) * 0.5 - arrowLengthY * 0.5, box.min.z + (headWidth * 0.5)), // Центр по оси Y
-                color: '#444444',
-                label: arrowLengthY
-            },
-            {
-                dir: new THREE.Vector3(0, 0, 1), // Направление по Z
-                start: new THREE.Vector3(box.max.x - (headWidth * 0.5), box.min.y + (headWidth * 0.5), (box.min.z + box.max.z) * 0.5 - arrowLengthZ * 0.5), // Центр по оси Z
-                color: '#444444',
-                label: arrowLengthZ
-            }
-        ];
+  // Создание сплошной линии
+  private createLine(intersectionPoint: THREE.Vector3, color: string | THREE.Color): void {
+    if (!this.scene) return;
 
-        axes.forEach(({ dir, start, color, label }) => {
-            // Создаём ArrowHelper с учётом направления и длины
-            const arrowPos = new THREE.ArrowHelper(dir, start, label, color, headLength, headWidth);
-            const arrowNeg = new THREE.ArrowHelper(dir.clone().negate(), start, 0, color, headLength, headWidth);
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color,
+      depthTest: false,
+      depthWrite: false,
+      transparent: true,
+      opacity: 1,
+    });
 
-            configureArrow(arrowPos, color);
-            configureArrow(arrowNeg, color);
+    const points = [intersectionPoint.clone(), new THREE.Vector3(intersectionPoint.x, 0, intersectionPoint.z)];
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const line = new THREE.Line(lineGeometry, lineMaterial);
+    line.renderOrder = 1;
 
-            arrowPos.line.computeLineDistances();
+    this.scene.add(line);
+    this.rulerLines.push(line);
+  }
 
-            let middle;
+  // Конфигурация стрелки с выбором сплошной или пунктирной линии
+  private configureArrow(arrow: THREE.ArrowHelper, dashed: boolean = false): void {
+    arrow.traverse(child => {
+      child.userData.isArrowHelper = true;
+    });
 
-            // Вычисление средней точки для размещения метки
-            if (dir.x || dir.z > 0) {
-                middle = new THREE.Vector3().addVectors(start, dir.clone().multiplyScalar(label / 2));
-                middle.y += 60; // Смещение метки по оси Y
-            } else {
-                middle = new THREE.Vector3().addVectors(start, dir.clone().multiplyScalar(label / 2));
-                middle.x -= 100; // Смещение метки по оси X
-            }
-
-            // Создаём метку на средней точке
-            const labelDiv = this.cssDrow({ axis: label / percentage, position: middle, css: 'dimension-label' });
-            arrows.push({ arrowPos, arrowNeg, labelDiv });
+    if (arrow.line.material instanceof THREE.LineBasicMaterial) {
+      if (dashed) {
+        arrow.line.material = new THREE.LineDashedMaterial({
+          color: arrow.line.material.color,
+          dashSize: 10,
+          gapSize: 5,
+          linewidth: 2,
+          scale: 250,
+          transparent: true,
+          opacity: 1,
         });
-
-        return arrows;
-
-        // Функция для конфигурации стрелок
-        function configureArrow(arrow: any, color: string | THREE.Color) {
-            arrow.traverse((child: any) => {
-                child.userData.isArrowHelper = true;
-            });
-
-            if (arrow.line.material instanceof THREE.LineBasicMaterial) {
-                arrow.line.material = new THREE.LineDashedMaterial({
-                    color: color,
-                    dashSize: 10,
-                    gapSize: 5,
-                    linewidth: 2,
-                    scale: 250,
-                    transparent: true,
-                    opacity: 1.0,
-                });
-
-                arrow.line.material.depthTest = false;
-                arrow.line.material.depthWrite = false;
-            }
-
-            if (arrow.cone.material instanceof THREE.MeshBasicMaterial) {
-                arrow.cone.material.depthTest = false;
-                arrow.cone.material.depthWrite = false;
-                arrow.cone.material.transparent = true;
-                arrow.cone.material.opacity = 1;
-            }
-
-            arrow.renderOrder = 1;
-            arrow.name = 'ARROW_SIZE';
-        }
-    }
-
-    createArrow(direction: THREE.Vector3, originPoint: THREE.Vector3, distance: number, color: string | THREE.Color) {
-        const arrow = new THREE.ArrowHelper(
-            direction.clone().normalize(),
-            originPoint,
-            distance,
-            color,
-            100 * 0.75,
-            50 * 0.75
-        );
-        const arrow2 = new THREE.ArrowHelper(
-            direction.clone().negate().normalize(),
-            originPoint,  // Используем центр грани для обратной стрелки
-            0,
-            color,
-            100 * 0.75,
-            50 * 0.75
-        );
-
-        function configureArrow(arrow: any) {
-
-            if (arrow.cone.material instanceof THREE.MeshBasicMaterial) {
-                arrow.cone.material.depthTest = false;
-                arrow.cone.material.depthWrite = false;
-                arrow.cone.material.transparent = true;
-                arrow.cone.material.opacity = 1;
-
-                arrow.renderOrder = 1;
-            }
-
-            if (arrow.line.material instanceof THREE.LineBasicMaterial) {
-                arrow.line.material.depthTest = false;
-                arrow.line.material.depthWrite = false;
-                arrow.line.material.transparent = true;
-                arrow.line.material.opacity = 1;
-            }
-
-
-        }
-
-        configureArrow(arrow);
-        configureArrow(arrow2);
-
-
-
-
-
-        this.scene!.add(arrow, arrow2);
-        this.rulerLines!.push(arrow, arrow2);
-    }
-
-    createLine(intersectionPoint: THREE.Vector3, color: string | THREE.Color) {
-        const lineMaterial = new THREE.LineBasicMaterial({
-            color,
-            depthTest: false,
-            depthWrite: false,
-            transparent: true,
-            opacity: 1
+      } else {
+        arrow.line.material = new THREE.LineBasicMaterial({
+          color: arrow.line.material.color,
+          transparent: true,
+          opacity: 1,
         });
-
-
-        const points = [
-            intersectionPoint.clone(),
-            new THREE.Vector3(intersectionPoint.x, 0, intersectionPoint.z),
-        ];
-        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(lineGeometry, lineMaterial);
-        line.renderOrder = 1;
-
-        this.scene!.add(line);
-        this.rulerLines!.push(line);
+      }
+      arrow.line.material.depthTest = false;
+      arrow.line.material.depthWrite = false;
     }
 
-    cssDrow({ axis, position, css }: { [key: string]: any }) {
-
-        const lableDiv = document.createElement('div');
-        lableDiv.className = css;
-        lableDiv.textContent = `${axis.toFixed(0)}`;
-        const heightLabel = new CSS2DObject(lableDiv);
-        heightLabel.position.copy(position);
-        return heightLabel
+    if (arrow.cone.material instanceof THREE.MeshBasicMaterial) {
+      arrow.cone.material.depthTest = false;
+      arrow.cone.material.depthWrite = false;
+      arrow.cone.material.transparent = true;
+      arrow.cone.material.opacity = 1;
     }
 
-    // Обновление линейки расстояния
-    clearRuler() {
-        if (this.rulerLines) {
-            this.clear(this.rulerLines)
-            this.rulerLines = [];
+    arrow.renderOrder = 1;
+    arrow.name = 'ARROW_SIZE';
+  }
+
+  // Создание метки
+  private createLabel({ axis, position, css }: DrawLabelParams): CSS2DObject {
+    const labelDiv = document.createElement('div');
+    labelDiv.className = css;
+    labelDiv.textContent = `${axis.toFixed(0)}`;
+    const heightLabel = new CSS2DObject(labelDiv);
+    heightLabel.position.copy(position);
+    return heightLabel;
+  }
+
+  // Очистка линейки расстояния
+  public clearRuler(): void {
+    this.clear(this.rulerLines);
+    this.rulerLines = [];
+  }
+
+  // Очистка объектов сцены
+  private clear(rulerStorage: THREE.Object3D[]): void {
+    if (!this.scene) return;
+
+    rulerStorage.forEach(line => {
+      this.scene!.remove(line);
+      line.traverse(child => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(mat => mat.dispose());
+          } else {
+            child.material?.dispose();
+          }
         }
-    }
+      });
+    });
+  }
 
-    // Обновление линейки размера
-    // clearRullerSize() {
-    //     if (this.rullerSizeLines) {
-    //         this.clear(this.rullerSizeLines)
-    //         this.rullerSizeLines = [];
-    //     }
-    // }
-
-    clear(rulerStorage: THREE.Object3D[]) {
-        rulerStorage.forEach(line => {
-            this.scene!.remove(line);
-            line.traverse(children => {
-                if (children instanceof THREE.Mesh) {
-                    children.geometry.dispose();
-                    (children.material as THREE.Material).dispose();
-                }
-            })
-        })
-    }
-
-    update(room: RoomManager, rulerLines: THREE.Object3D[], rullerSizeLines: THREE.Object3D[]) {
-        this.room = room
-        this.rulerLines = rulerLines
-        this.rullerSizeLines = rullerSizeLines
-    }
-
+  // Обновление параметров линейки
+  public update(room: RoomManager, rulerLines: THREE.Object3D[], rullerSizeLines: THREE.Object3D[]): void {
+    this.room = room;
+    this.rulerLines = rulerLines;
+    this.rullerSizeLines = rullerSizeLines;
+  }
 }

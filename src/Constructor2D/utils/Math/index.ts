@@ -1,6 +1,4 @@
-import {
-  Vector2
-} from "@/types/constructor2d/interfaсes";
+import { Vector2 } from '@/types/constructor2d/interfaсes';
 
 const calculateMouseDistanceByAxes =
   (previous: Vector2, current: Vector2): { distanceX: number; distanceY: number } => {
@@ -313,6 +311,63 @@ const offsetVectorBySegment =
   }
 
 /**
+ * Изменяет длину отрезка, перемещая точку A или B вдоль линии.
+ * @param segment - Отрезок [A, B].
+ * @param pointIndex - Индекс точки (0 для A, 1 для B), которую нужно переместить.
+ * @param cursorPos - Позиция курсора.
+ * @returns Новый отрезок с изменённой длиной.
+ */
+const adjustSegmentLength = (
+  segment: [Vector2, Vector2],
+  pointIndex: 0 | 1,
+  cursorPos: Vector2
+): Vector2 => {
+  const [A, B] = segment;
+  const pointToMove = pointIndex === 0 ? A : B;
+  const anchorPoint = pointIndex === 0 ? B : A; // Неподвижная точка
+
+  // Вектор направления отрезка (от anchorPoint к pointToMove)
+  const direction = {
+    x: pointToMove.x - anchorPoint.x,
+    y: pointToMove.y - anchorPoint.y,
+  };
+
+  // Длина отрезка
+  const segmentLength = Math.sqrt(direction.x ** 2 + direction.y ** 2);
+
+  // Если отрезок вырожден (длина = 0), создаём небольшой отрезок по горизонтали
+  if (segmentLength < 0.001) {
+    const newPoint = { ...pointToMove };
+    newPoint.x += 1; // Произвольное небольшое смещение
+    return newPoint;
+  }
+
+  // Нормализованный вектор направления
+  const normalizedDir = {
+    x: direction.x / segmentLength,
+    y: direction.y / segmentLength,
+  };
+
+  // Вектор от anchorPoint до курсора
+  const cursorVector = {
+    x: cursorPos.x - anchorPoint.x,
+    y: cursorPos.y - anchorPoint.y,
+  };
+
+  // Проекция курсора на направление отрезка (скалярное произведение)
+  const projection = cursorVector.x * normalizedDir.x + cursorVector.y * normalizedDir.y;
+
+  // Новая позиция точки (двигаем вдоль отрезка)
+  const newPoint = {
+    x: anchorPoint.x + projection * normalizedDir.x,
+    y: anchorPoint.y + projection * normalizedDir.y,
+  };
+
+  // Возвращаем обновлённый отрезок
+  return newPoint;
+};
+
+/**
  * Вычисляет центр массива точек.
  * @param points - Массив точек.
  * @returns Центр точек.
@@ -438,6 +493,286 @@ const doesVectorIntersectSegment = (
   return null;
 };
 
+/**
+ * Проверяет, лежит ли точка на отрезке между p1 и p2.
+ */
+function isPointOnSegment(p1: Vector2, p2: Vector2, point: Vector2): boolean {
+  // Проверка коллинеарности (точка лежит на прямой p1-p2)
+  const crossProduct = (point.x - p1.x) * (p2.y - p1.y) - (point.y - p1.y) * (p2.x - p1.x);
+  if (Math.abs(crossProduct) > 1e-10) {
+    return false;
+  }
+
+  // Проверка, что точка внутри bounding box отрезка
+  const minX = Math.min(p1.x, p2.x);
+  const maxX = Math.max(p1.x, p2.x);
+  const minY = Math.min(p1.y, p2.y);
+  const maxY = Math.max(p1.y, p2.y);
+
+  return (
+    point.x >= minX - 1e-10 &&
+    point.x <= maxX + 1e-10 &&
+    point.y >= minY - 1e-10 &&
+    point.y <= maxY + 1e-10
+  );
+}
+
+/**
+ * Проверяет, находится ли точка внутри многоугольника или на его границе.
+ * Использует алгоритм "луч пересекает границу" (ray casting algorithm).
+ * 
+ * @param polygon Массив вершин многоугольника в порядке обхода (по или против часовой стрелки)
+ * @param point Точка, которую проверяем на принадлежность многоугольнику
+ * @returns true, если точка внутри или на границе многоугольника, false иначе
+ */
+function isPointInPolygon(polygon: Vector2[], point: Vector2, minPoints: number = 3): boolean {
+  const n = polygon.length;
+  let inside = false; // Флаг нахождения точки внутри
+
+  // Проверка, если полигон имеет менее 3 вершин (не является многоугольником)
+  if (n < minPoints) {
+    return false;
+  }
+
+  // Проходим по всем рёбрам многоугольника (текущая вершина i, предыдущая j)
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const vertex1 = polygon[i]; // Текущая вершина
+    const vertex2 = polygon[j]; // Предыдущая вершина
+
+    // Проверяем, лежит ли точка точно на вершине многоугольника
+    if (vertex1.x === point.x && vertex1.y === point.y) {
+      return true; // Точка на вершине считается принадлежащей многоугольнику
+    }
+
+    // Проверяем пересечение горизонтального луча (вправо от точки) с ребром многоугольника
+    if (
+      // Точка находится между y-координатами вершин ребра (пересечение возможно)
+      ((vertex1.y > point.y) !== (vertex2.y > point.y)) &&
+      // Проверяем, что x-координата точки меньше x-координаты точки пересечения луча с ребром
+      point.x <
+      vertex1.x +
+      ((point.y - vertex1.y) * (vertex2.x - vertex1.x)) /
+      (vertex2.y - vertex1.y)
+    ) {
+      inside = !inside; // Инвертируем флаг при каждом пересечении
+    }
+
+    // Проверяем, лежит ли точка на текущем ребре многоугольника
+    if (
+      // Проверяем, что точка находится между вершин по y-координате
+      Math.min(vertex1.y, vertex2.y) <= point.y &&
+      point.y <= Math.max(vertex1.y, vertex2.y) &&
+      // И между вершин по x-координате
+      Math.min(vertex1.x, vertex2.x) <= point.x &&
+      point.x <= Math.max(vertex1.x, vertex2.x)
+    ) {
+      // Вычисляем векторное произведение для проверки коллинеарности
+      const crossProduct =
+        (point.y - vertex1.y) * (vertex2.x - vertex1.x) -
+        (point.x - vertex1.x) * (vertex2.y - vertex1.y);
+
+      // Если векторное произведение близко к нулю, точка лежит на ребре
+      if (Math.abs(crossProduct) < Number.EPSILON) {
+        return true;
+      }
+    }
+  }
+
+  return inside; // Возвращаем итоговый статус
+}
+
+/**
+ * Находит точку пересечения между линией (заданной двумя точками) и перпендикуляром,
+ * опущенным из заданной точки на эту линию. По сути вычисляет проекцию точки на линию.
+ * 
+ * Алгоритм:
+ * 1. Строит направляющий вектор исходной линии
+ * 2. Строит перпендикулярный вектор
+ * 3. Решает систему параметрических уравнений для нахождения точки пересечения
+ * 
+ * @param [pointStart, pointEnd] - Две точки, определяющие исходную линию
+ * @param vector2d - Точка, из которой опускается перпендикуляр
+ * @returns Точка пересечения (проекция) или null, если линия вырождена (точки совпадают)
+ */
+function getIntersectVectorLine([pointStart, pointEnd]: [Vector2, Vector2], vector2d: Vector2): Vector2 | null {
+  // Вычисляем направляющий вектор исходной линии
+  const lineDir: Vector2 = {
+    x: pointEnd.x - pointStart.x, // Разность x-координат
+    y: pointEnd.y - pointStart.y  // Разность y-координат
+  };
+
+  // Проверяем, что линия не вырождена (длина > 0)
+  const lineLength = Math.sqrt(lineDir.x ** 2 + lineDir.y ** 2);
+  if (lineLength === 0) {
+    return null; // Точки совпадают - линия не существует
+  }
+
+  // Строим вектор, перпендикулярный направлению линии (поворот на 90°)
+  const perpDir: Vector2 = {
+    x: -lineDir.y, // Перпендикулярная x-компонента
+    y: lineDir.x   // Перпендикулярная y-компонента
+  };
+
+  // Параметрические уравнения:
+  // Исходная линия: P(t) = pointStart + t*lineDir
+  // Перпендикуляр: Q(s) = vector2d + s*perpDir
+
+  // Вычисляем определитель системы уравнений
+  const denom = lineDir.x * perpDir.y - lineDir.y * perpDir.x;
+  
+  // Теоретически для перпендикуляра denom != 0, но проверка на всякий случай
+  if (Math.abs(denom) < 1e-10) {
+    return null; // Линии параллельны (в данном контексте маловероятно)
+  }
+
+  // Находим параметр t для исходной линии
+  const t =
+    ((vector2d.x - pointStart.x) * perpDir.y - (vector2d.y - pointStart.y) * perpDir.x) / denom;
+
+  // Вычисляем координаты точки пересечения
+  const intersection: Vector2 = {
+    x: pointStart.x + t * lineDir.x, // x-координата проекции
+    y: pointStart.y + t * lineDir.y  // y-координата проекции
+  };
+
+  return intersection;
+}
+
+/**
+ * Определяет, находится ли точка v0 близко к отрезку [p0, p1] в пределах заданного порога.
+ * Если точка находится близко, возвращает ближайшую точку на отрезке. В противном случае возвращает null.
+ *
+ * @param segment - Массив из двух точек, определяющих отрезок [p0, p1].
+ * @param v0 - Точка, для которой проверяется близость к отрезку.
+ * @param threshold - Максимальное расстояние, при котором точка считается "находящейся на линии".
+ * @returns Vector2 | null - Ближайшая точка на отрезке, если v0 находится в пределах порога, иначе null.
+ */
+function isPointNearLine([p0, p1]: [Vector2, Vector2], v0: Vector2, threshold = 5): Vector2 | null {
+  // Вектор отрезка (p0 -> p1)
+  const dx = p1.x - p0.x;
+  const dy = p1.y - p0.y;
+  const segmentLengthSquared = dx * dx + dy * dy; // Квадрат длины отрезка
+
+  // Если отрезок вырожден (p0 == p1), проверяем расстояние до точки
+  if (segmentLengthSquared === 0) {
+    const distSquared = (v0.x - p0.x) * (v0.x - p0.x) + (v0.y - p0.y) * (v0.y - p0.y);
+    // Возвращаем новый объект для консистентности, если точка близка
+    return distSquared <= threshold * threshold ? { x: p0.x, y: p0.y } : null;
+  }
+
+  // Параметр проекции точки v0 на прямую (p0, p1)
+  // t = ( (v0 - p0) . (p1 - p0) ) / |p1 - p0|^2
+  const t = ((v0.x - p0.x) * dx + (v0.y - p0.y) * dy) / segmentLengthSquared;
+
+  // Ограничиваем t в пределах [0, 1], чтобы найти ближайшую точку на *отрезке*
+  const tClamped = Math.max(0, Math.min(1, t));
+
+  // Находим ближайшую точку на отрезке
+  const closestX = p0.x + tClamped * dx;
+  const closestY = p0.y + tClamped * dy;
+
+  // Квадрат расстояния от v0 до ближайшей точки на отрезке
+  const distX = v0.x - closestX;
+  const distY = v0.y - closestY;
+  const distanceSquared = distX * distX + distY * distY;
+
+  // Если точка в пределах threshold, возвращаем проекцию
+  return distanceSquared <= threshold * threshold
+    ? { x: closestX, y: closestY }
+    : null;
+}
+
+/**
+ * Находит точку пересечения двух отрезков [A,B] и [C,D]
+ * @param segment1 Первый отрезок [A, B]
+ * @param segment2 Второй отрезок [C, D]
+ * @returns Точка пересечения или null, если отрезки не пересекаются
+ */
+function findSegmentIntersection(
+  segment1: [Vector2, Vector2],
+  segment2: [Vector2, Vector2]
+): Vector2 | null {
+  const [A, B] = segment1;
+  const [C, D] = segment2;
+
+  // Вектора отрезков
+  const AB = { x: B.x - A.x, y: B.y - A.y };
+  const CD = { x: D.x - C.x, y: D.y - C.y };
+
+  // Вычисляем знаменатель
+  const denominator = AB.x * CD.y - AB.y * CD.x;
+
+  // Отрезки параллельны или коллинеарны
+  if (Math.abs(denominator) < 1e-10) {
+    return null;
+  }
+
+  // Вектора от начала отрезков
+  const AC = { x: C.x - A.x, y: C.y - A.y };
+
+  // Параметры пересечения
+  const t = (AC.x * CD.y - AC.y * CD.x) / denominator;
+  const u = (AC.x * AB.y - AC.y * AB.x) / denominator;
+
+  // Проверяем, что точка пересечения лежит на обоих отрезках
+  if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+    return {
+      x: A.x + AB.x * t,
+      y: A.y + AB.y * t
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Находит точку пересечения луча и отрезка
+ * @param AP0 - Первая точка отрезка A
+ * @param AP1 - Вторая точка отрезка A
+ * @param BP0 - Начальная точка луча B
+ * @param BP1 - Направляющая точка луча B (луч идет от BP0 через BP1)
+ * @returns Точка пересечения или null, если пересечения нет
+ */
+function findRayLineIntersection(
+  AP0: Vector2,
+  AP1: Vector2,
+  BP0: Vector2,
+  BP1: Vector2
+): Vector2 | null {
+  // Векторы для параметрических уравнений
+  const a = AP1.x - AP0.x;
+  const b = BP0.x - BP1.x;
+  const c = AP1.y - AP0.y;
+  const d = BP0.y - BP1.y;
+
+  // Свободные члены
+  const e = BP0.x - AP0.x;
+  const f = BP0.y - AP0.y;
+
+  // Определитель системы
+  const det = a * d - b * c;
+
+  // Если определитель близок к нулю, линии параллельны или совпадают
+  if (Math.abs(det) < 1e-10) {
+    return null;
+  }
+
+  // Находим параметры t (для отрезка) и u (для луча)
+  const t = (e * d - b * f) / det;
+  const u = (a * f - e * c) / det;
+
+  // Проверяем, что точка пересечения находится на отрезке (t ∈ [0, 1])
+  // и на луче (u ≥ 0)
+  if (t >= 0 && t <= 1 && u >= 0) {
+    return {
+      x: AP0.x + a * t,
+      y: AP0.y + c * t
+    };
+  }
+
+  return null;
+}
+
 export {
 
   calculateMouseDistanceByAxes,
@@ -451,9 +786,16 @@ export {
   getMidpoint,
   offsetVectorBySegmentNormal,
   offsetVectorBySegment,
+  adjustSegmentLength,
   getCenterOfPoints,
   rotatePointsAroundCenter,
   adjustP1ForPerpendicularity,
   doesVectorIntersectSegment,
+  isPointOnSegment,
+  isPointInPolygon,
+  getIntersectVectorLine,
+  isPointNearLine,
+  findSegmentIntersection,
+  findRayLineIntersection,
 
 };

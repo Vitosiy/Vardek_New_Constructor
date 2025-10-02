@@ -27,9 +27,13 @@ const emit = defineEmits([
 
 const cutServisShow = ref(false);
 
-const cutChacked = (event: Event, type: string, pos: string) => {
-  const typeLow = type.toLowerCase();
-  emit("cut-servisData", event.target.checked, typeLow, pos);
+const cutChacked = (
+  event: Event,
+  item: Record<string,string>,
+) => {
+  console.log(item, "item");
+  // const typeLow = item.NAME.toLowerCase();
+  emit("cut-servisData", event.target.checked, item);
 };
 
 const toggleCutServise = () => {
@@ -49,7 +53,7 @@ const getMaxWidth = computed(() => {
 const updateEuroWidth = (event: Event, type: string) => {
   const typeLow = type.toLowerCase();
   // if (event!.target!.value <= 1) event!.target!.value = 1;
-    // if (event!.target!.value <= 1) event!.target!.value = 1;
+  // if (event!.target!.value <= 1) event!.target!.value = 1;
 
   emit("cut-updateServise", event, typeLow);
 };
@@ -75,7 +79,7 @@ const updateEuroWidth = (event: Event, type: string) => {
             <input
               type="checkbox"
               :checked="item.value"
-              @change="cutChacked($event, item.NAME, item.pos)"
+              @change="cutChacked($event, item)"
             />
             <span class="control_indicator"></span>
             <span class="text-lg text-gray-800 font-medium">{{
@@ -170,134 +174,6 @@ const updateEuroWidth = (event: Event, type: string) => {
 
   &--wrapper {
     display: flex;
-  }
-}
-
-.control {
-  font-family: arial;
-  display: block;
-  position: relative;
-  padding-left: 30px;
-  margin-bottom: 5px;
-  padding-top: 3px;
-  cursor: pointer;
-  font-size: 16px;
-
-  input {
-    position: absolute;
-    z-index: -1;
-    opacity: 0;
-  }
-}
-
-.control_indicator {
-  position: absolute;
-  top: 5px;
-  left: 0;
-  height: 20px;
-  width: 20px;
-  background: #ffffff;
-  border: 1px solid #c7c7c7;
-  border-radius: 5px;
-
-  &:after {
-    box-sizing: unset;
-    content: "";
-    position: absolute;
-    display: none;
-  }
-}
-
-.control:hover input ~ .control_indicator {
-  background: #eaeaea;
-}
-
-.control input:checked ~ .control_indicator {
-  background: #000000;
-
-  &:after {
-    display: block;
-  }
-}
-
-.control:hover input:not([disabled]):checked ~ .control_indicator,
-.control input:checked:focus ~ .control_indicator {
-  background: #000000;
-}
-
-.control input:disabled ~ .control_indicator {
-  background: #e6e6e6;
-  opacity: 0.6;
-  pointer-events: none;
-
-  &:after {
-    border-color: #7b7b7b;
-  }
-}
-
-.control-checkbox .control_indicator {
-  &:after {
-    left: 7px;
-    top: 3px;
-    width: 3px;
-    height: 8px;
-    border: solid #ffffff;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
-
-  &::before {
-    content: "";
-    display: block;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 30px;
-    height: 30px;
-    margin-left: -6px;
-    margin-top: -6px;
-    background: #191d1e;
-    border-radius: 50px;
-    opacity: 0.6;
-    z-index: 99999;
-    transform: scale(0);
-  }
-}
-
-.control-checkbox input + .control_indicator::before {
-  animation: s-ripple 250ms ease-out;
-}
-
-.control-checkbox input:checked + .control_indicator::before {
-  animation-name: s-ripple-dup;
-}
-
-@keyframes s-ripple {
-  0% {
-    transform: scale(0);
-  }
-  20% {
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-
-@keyframes s-ripple-dup {
-  0% {
-    transform: scale(0);
-  }
-  30% {
-    transform: scale(1);
-  }
-  60% {
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
   }
 }
 </style>

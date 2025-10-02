@@ -1,9 +1,11 @@
 //@ts-nocheck
+import * as THREE from "three"
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
+import { TFasadeItem } from "@/types/types";
 
-import * as THREE from "three"
+
 
 interface IProductFasades {
     NAME: string,
@@ -56,17 +58,26 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_SECTION = _APP.FASADE_SECTION;
     const _FASADE_POSITION = _APP.FASADE_POSITION;
     const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
-    const _PRODUCTS = _APP.CATALOG.PRODUCTS
+    const _PRODUCTS = _APP.CATALOG?.PRODUCTS
     const _PALETTE = _APP.PALETTE
     const _MILLING = _APP.MILLING
     const _SHOWCASE = _APP.SHOWCASE
     const _GLASS = _APP.GLASS
     const _PATINA = _APP.PATINA
+    const _HANDLES = _APP.HANDLES
 
 
     const models = ref<{ [key: string]: {} }>(_PRODUCTS)
 
     const currentModel = ref<THREE.Object3D | null>(null)
+
+    const currentModulData = ref<any>(null)
+
+    const currentBackwallData = ref<any>(null)
+
+    const currentSidewallData = ref<any>(null)
+
+    const currentTopfasadeData = ref<any>(null)
 
     const currentModelFasadesData = ref<IProductFasades[]>([])
 
@@ -82,7 +93,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentPatinaData = ref<number[]>([])
 
-    const setCurrentModel = (object: THREE.Object3D | null) => {
+    const setCurrentModel = (object: THREE.Object3D | any) => {
         currentModel.value = object
     }
 
@@ -94,12 +105,96 @@ export const useModelState = defineStore('ModelState', () => {
         return models.value
     })
 
+    /** ------- Работа с Модулем -------- */
+
+    const createCurrentModuleData = (value: number[]) => {
+
+        const colorMap = new Set();
+        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+
+        colorsList.forEach(color => {
+            if (_FASADE[color] !== undefined) {
+                colorMap.add(_FASADE[color]);
+            }
+        });
+        currentModulData.value = Array.from(colorMap)
+    }
+
+    const getCurrentModuleData = computed(() => {
+        return currentModulData.value
+    })
+
+    /** ------- Задняя стенка -------- */
+
+    const createCurrentBackwallData = (productId: number) => {
+        const productInfo = _PRODUCTS[productId]
+
+        if(productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
+            const colorMap = new Set();
+            const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE[colorId]);
+
+            colorsList.forEach(color => {
+                if (_FASADE[color] !== undefined) {
+                    colorMap.add(_FASADE[color]);
+                }
+            });
+            currentBackwallData.value = Array.from(colorMap)
+        }
+    }
+
+    const getCurrentBackwallData = computed(() => {
+        return currentBackwallData.value
+    })
+
+    /** ------- Боковые стенки -------- */
+
+    const createCurrentSidewallData = (productId: number) => {
+
+        const productInfo = _PRODUCTS[productId]
+
+        if(productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
+            const colorMap = new Set();
+            const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE[colorId]);
+
+            colorsList.forEach(color => {
+                if (_FASADE[color] !== undefined) {
+                    colorMap.add(_FASADE[color]);
+                }
+            });
+            currentSidewallData.value = Array.from(colorMap)
+        }
+    }
+
+    const getCurrentSidewallData = computed(() => {
+        return currentSidewallData.value
+    })
+
+    /** ------- Накладка на крышку -------- */
+
+    /*const createCurrentTopfasadeData = (value: number[]) => {
+
+        const colorMap = new Set();
+        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+
+        colorsList.forEach(color => {
+            if (_FASADE[color] !== undefined) {
+                colorMap.add(_FASADE[color]);
+            }
+        });
+        currentTopfasadeData.value = Array.from(colorMap)
+    }
+
+    const getCurrentTopfasadeData = computed(() => {
+        return currentTopfasadeData.value
+    })*/
+
     /** ------- Работа с фасадами -------- */
 
-
-    const createCurrentModelFasadesData = (value: number[]) => {
+    const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
 
         const groupedFasades: { [key: string]: number[] } = {};
+        let exception = !def ? 'Без фасада' : ''
+
 
         value.forEach(facadeId => {
             const facade = _FASADE[facadeId];
@@ -121,7 +216,11 @@ export const useModelState = defineStore('ModelState', () => {
         const result = Object.entries(_FASADE_GROUPS).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0 && group.NAME !== 'Без фасада');
+        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception);
+
+        if (def) {
+            return result
+        }
 
         currentModelFasadesData.value = result
     }
@@ -136,9 +235,9 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** Палитра */
     const createCurrentPaletteData = (value: number) => {
-
+        let result = {}
         if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
-            currentPaletteData.value = Object.keys(_PALETTE)
+            result = Object.keys(_PALETTE)
                 .filter(
                     (key) =>
                         _PALETTE[key].TYPE ===
@@ -148,10 +247,14 @@ export const useModelState = defineStore('ModelState', () => {
                     obj[key] = _PALETTE[key];
                     return obj;
                 }, {});
-            return
+
+            currentPaletteData.value = result
+
+            return result
         }
 
-        currentPaletteData.value = {}
+        currentPaletteData.value = result
+        return result
     }
 
     const getCurrentPaletteData = computed(() => {
@@ -234,7 +337,9 @@ export const useModelState = defineStore('ModelState', () => {
         const currentClass = glassArray.reduce((acc, index) =>
             acc.concat(_GLASS[index] || []),
             []);
+
         currentGlassData.value = currentClass;
+        return currentClass
     }
 
     const getCurrentGlassData = computed(() => {
@@ -244,9 +349,7 @@ export const useModelState = defineStore('ModelState', () => {
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
-        console.log('PATINA')
         if (_PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] !== null) {
-            console.log('W')
             return
         }
 
@@ -260,6 +363,30 @@ export const useModelState = defineStore('ModelState', () => {
         return currentPatinaData.value
     })
 
+    /** @Опции */
+
+    const getOptions = (option: number[]) => {
+        let filtered = []
+        const curOptionsList = option
+            .map(el => this._OPTION[el])
+            .filter(Boolean);
+
+        for (const el in this._OPTIONS_GROUP) {
+
+            filtered.push({
+                NAME: this._OPTIONS_GROUP[el].NAME,
+                CONTANT: curOptionsList.filter(opt => opt.GROUP == el)
+            })
+        }
+
+        filtered = filtered.filter(item => {
+            if (item.CONTANT.length > 0) return item
+
+        })
+
+        return filtered
+
+    }
 
     return {
         getModels,
@@ -287,6 +414,20 @@ export const useModelState = defineStore('ModelState', () => {
 
         createCurrentPatinaData,
         getCurrentPatinaData,
+
+        createCurrentModuleData,
+        getCurrentModuleData,
+
+        createCurrentBackwallData,
+        getCurrentBackwallData,
+
+        createCurrentSidewallData,
+        getCurrentSidewallData,
+
+        /*createCurrentTopfasadeData,
+        getCurrentTopfasadeData,*/
+
+        getOptions
     }
 
 });

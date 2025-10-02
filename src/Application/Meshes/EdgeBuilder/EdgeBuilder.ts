@@ -1,0 +1,94 @@
+import * as THREE from 'three'
+// import { TBuildProduct } from '@/types/types'
+
+export class EdgeBuilder {
+    // private parent: TBuildProduct
+
+
+    private fasadeMaterial: THREE.MeshBasicMaterial
+    private defaultMaterial: THREE.MeshBasicMaterial
+    private lineMaterial: THREE.LineBasicMaterial
+
+    constructor() {
+        // this.parent = parent
+        this.defaultMaterial = new THREE.MeshBasicMaterial({
+            color: 'rgba(252, 252, 139, 1)',
+            // transparent: true,
+            // opacity: 0.15,
+            side: THREE.DoubleSide // иначе будет видно только снаружи
+        })
+        this.fasadeMaterial = new THREE.MeshBasicMaterial({
+            color: 'rgba(154, 154, 255, 1)',
+            depthTest: false,
+            depthWrite: false,
+            // transparent: true,
+            // opacity: 1,
+            side: THREE.DoubleSide // иначе будет видно только снаружи
+        })
+        this.lineMaterial = new THREE.LineBasicMaterial({
+            color: 'rgba(32, 32, 32, 1)', linewidth: 1,
+            depthTest: false,
+            depthWrite: false,
+            transparent: true,
+            opacity: 1,
+        })
+
+    }
+
+    createEdge(object: THREE.Object3D, manualParent?: THREE.Object3D) {
+        const edgeBody = new THREE.Object3D()
+        // Привязываем ссылку на родителя для возможного внешнего использования
+        edgeBody.userData.parentProduct = manualParent ?? this.parent
+        object.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                // линии
+                const edge = this.createSingleEdge(child, object.name, manualParent)
+                edgeBody.add(edge)
+
+                // плоскости
+                const face = this.createSingleFace(child, object.name, manualParent)
+                edgeBody.add(face)
+            }
+        })
+
+        edgeBody.userData.edge = true
+        edgeBody.visible = false
+        return edgeBody
+    }
+
+    private createSingleEdge(mesh: THREE.Mesh, name?: string, manualParent?: THREE.Object3D) {
+        const edges = new THREE.EdgesGeometry(mesh.geometry)
+        const meshEdge = new THREE.LineSegments(
+            edges,
+            this.lineMaterial
+        )
+        meshEdge.renderOrder = 1;
+
+        meshEdge.rotation.copy(mesh.rotation)
+        meshEdge.position.copy(mesh.position)
+
+        meshEdge.userData.edge = true
+        meshEdge.userData.name = name
+        meshEdge.userData.parent = manualParent ?? mesh
+
+        return meshEdge
+    }
+
+    private createSingleFace(mesh: THREE.Mesh, name?: string, manualParent?: THREE.Object3D) {
+        const material = name === 'fasade' ? this.fasadeMaterial : this.defaultMaterial
+
+        const faceMesh = new THREE.Mesh(mesh.geometry, material)
+        if (name === 'fasade') faceMesh.renderOrder = 1;
+
+
+        faceMesh.rotation.copy(mesh.rotation)
+        faceMesh.position.copy(mesh.position)
+
+        faceMesh.userData.edge = true
+        faceMesh.userData.name = name
+        faceMesh.userData.parent = manualParent ?? mesh
+
+
+        return faceMesh
+    }
+}

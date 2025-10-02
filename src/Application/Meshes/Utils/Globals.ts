@@ -22,9 +22,12 @@ export class GlobalsData {
     _SHELF_POSITION: THREETypes.TObject = this._APP.PRODUCT_SHELF_POSITION
     _GLASS: THREETypes.TObject = this._APP.GLASS
     _USLUGI: THREETypes.TObject = this._APP.USLUGI
-
+    _LOOP_POSITION: THREETypes.TObject = this._APP.LOOP_POSITION
+    _LOOPSIDE: THREETypes.TObject = this._APP.LOOPSIDE
+    _OPTION: THREETypes.TObject = this._APP.OPTION
+    _OPTIONS_GROUP: THREETypes.TObject = this._APP.OPTIONS_GROUP
+    _PALETTE: THREETypes.TObject = this._APP.PALETTE;
     constructor() {
-
     }
 
 }

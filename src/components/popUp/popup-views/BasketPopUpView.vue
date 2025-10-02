@@ -1,27 +1,31 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
 
-import { nextTick, onMounted, ref, watch } from 'vue';
-import axios from 'axios';
+import { nextTick, onMounted, ref, watch } from "vue";
+import axios from "axios";
 
-import { usePopupStore } from '@/store/appStore/popUpsStore';
+import { usePopupStore } from "@/store/appStore/popUpsStore";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { _URL } from "@/types/constants";
+import { POPUP_CONFIG } from "@/components/popUp";
 
 import CopyBasketButton from "@/components/ui/buttons/basket/CopyBasketButton.vue";
 import DeleteBasketButton from "@/components/ui/buttons/basket/DeleteBasketButton.vue";
 
 const eventBus = useEventBus();
 const popupStore = usePopupStore();
-const roomContantData = useRoomContantData().getRoomContantData
-const _roomContantData = useRoomContantData()
+const roomContantData = useRoomContantData().getRoomContantData;
+const _roomContantData = useRoomContantData();
 
-const contentLenght = ref<number>(0)
-const produtcCount = ref<number>(1)
-contentLenght.value = Object.keys(roomContantData).length
+// Получаем конфигурацию для этого компонента
+const config = POPUP_CONFIG.basket;
 
-const errorMessage = ref('');
+const contentLenght = ref<number>(0);
+const produtcCount = ref<number>(1);
+contentLenght.value = Object.keys(roomContantData).length;
+
+const errorMessage = ref("");
 const basketCostData = ref(null);
 
 // Будущие запросы на сервер ================================================
@@ -32,16 +36,19 @@ async function getBasketPrice() {
 
   try {
     // Выполнение POST-запроса
-    const response = await axios.post('path' + '/API/data.basket.getprice.php', params)
+    const response = await axios.post(
+      "path" + "/API/data.basket.getprice.php",
+      params
+    );
 
     // Сохраняем ответ от сервера
     basketCostData.value = response.data;
   } catch (error) {
     // Обработка ошибок
     if (axios.isAxiosError(error)) {
-      errorMessage.value = error.response?.data || 'Request failed';
+      errorMessage.value = error.response?.data || "Request failed";
     } else {
-      errorMessage.value = 'An unexpected error occurred';
+      errorMessage.value = "An unexpected error occurred";
     }
   }
 }
@@ -50,19 +57,22 @@ async function setBasketOrder() {
   // Параметры, которые передаются на сервер
   const params = {};
   console.log(roomContantData);
-  
+
   try {
     // Выполнение POST-запроса
-    const response = await axios.post('path' + '/API/data.basket.getprice.php', params)
+    const response = await axios.post(
+      "path" + "/API/data.basket.getprice.php",
+      params
+    );
 
     // Сохраняем ответ от сервера
     basketCostData.value = response.data;
   } catch (error) {
     // Обработка ошибок
     if (axios.isAxiosError(error)) {
-      errorMessage.value = error.response?.data || 'Request failed';
+      errorMessage.value = error.response?.data || "Request failed";
     } else {
-      errorMessage.value = 'An unexpected error occurred';
+      errorMessage.value = "An unexpected error occurred";
     }
   }
 }
@@ -70,11 +80,13 @@ async function setBasketOrder() {
 // ==========================================================================
 
 const deleteProductInBusket = (basketProduct: any) => {
-  eventBus.emit("A:RemoveModelFromBasket", basketProduct);
+  console.log(basketProduct, 'basketProduct');
+  eventBus.emit("A:RemoveModelFromBasket", { product: basketProduct });
+  eventBus.emit("A:RemoveModel", { product: basketProduct });
   nextTick(() => {
-    _roomContantData.setRoomContantData({ ...roomContantData })
-  })
-}
+    _roomContantData.setRoomContantData({ ...roomContantData });
+  });
+};
 
 const toggleInfoPopup = () => {
   popupStore.toggleInfoPopup();
@@ -82,14 +94,14 @@ const toggleInfoPopup = () => {
 
 const closePopup = () => {
   // console.log(roomContantData);
-  popupStore.closePopup('basket');
+  popupStore.closePopup("basket");
 };
 </script>
 
 <template>
   <div>
     <div class="basket">
-      <div class="basket__title">Корзина</div>
+      <div class="basket__title">{{ config.title }}</div>
       <div class="basket__container">
         <div class="basket-inlist">
           <div class="basket-inlist-names">
@@ -102,16 +114,28 @@ const closePopup = () => {
             <div class="names__title"></div>
           </div>
           <div v-if="contentLenght != 0" class="basket-inlist-table">
-            <div v-for="(product, key) in _roomContantData.getRoomContantData" :key="product.userData.PROPS.PRODUCT.NAME + key"
-              class="basket-item">
+            <div
+              v-for="(product, key) in _roomContantData.getRoomContantData"
+              :key="product.userData.PROPS.PRODUCT.NAME + key"
+              class="basket-item"
+            >
               <div class="basket-item-image">
-                <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
+                <img
+                  src="@/assets/svg/left-menu/question.svg"
+                  class="popup-items__question"
+                  @click="toggleInfoPopup"
+                />
 
-                <img class="" :src="_URL + product.userData.PROPS.PRODUCT.PREVIEW_PICTURE" />
+                <img
+                  class=""
+                  :src="_URL + product.userData.PROPS.PRODUCT.PREVIEW_PICTURE"
+                />
               </div>
 
               <div class="basket- item-text" style="width: 500px">
-                <span class="text__title">{{ product.userData.PROPS.PRODUCT.NAME }}</span>
+                <span class="text__title">{{
+                  product.userData.PROPS.PRODUCT.NAME
+                }}</span>
                 <div class="text-item-list">
                   <p>Услуга:</p>
                   <ul>
@@ -124,7 +148,11 @@ const closePopup = () => {
               </div>
               <div class="basket-item-amount">
                 -
-                <input v-model="produtcCount" type="text" class="amount__input" />
+                <input
+                  v-model="produtcCount"
+                  type="text"
+                  class="amount__input"
+                />
                 +
               </div>
               <p class="basket-item-cost__text">12 348 руб.</p>
@@ -132,7 +160,7 @@ const closePopup = () => {
               <p class="basket-item-cost__text">12 348 руб.</p>
               <p class="basket-item-edit">
                 <CopyBasketButton />
-                <DeleteBasketButton @click="deleteProductInBusket(product)"/>
+                <DeleteBasketButton @click="deleteProductInBusket(product)" />
               </p>
             </div>
           </div>
@@ -142,7 +170,9 @@ const closePopup = () => {
       <div class="basket-footer">
         <div class="basket-footer-info">
           <p class="basket__sum">Общая стоимость: <span>12 348 руб.</span></p>
-          <p class="basket__sum-no">Общая стоимость без скидки: <span>12 348 руб.</span></p>
+          <p class="basket__sum-no">
+            Общая стоимость без скидки: <span>12 348 руб.</span>
+          </p>
         </div>
         <div class="basket-footer-buttons">
           <div class="basket__error">
@@ -151,7 +181,9 @@ const closePopup = () => {
           </div>
           <button class="basket__close" @click="closePopup">Закрыть</button>
           <button class="basket__save">Печать</button>
-          <button class="basket__order" @click="setBasketOrder">Оформить заказ</button>
+          <button class="basket__order" @click="setBasketOrder">
+            Оформить заказ
+          </button>
         </div>
       </div>
     </div>
@@ -276,7 +308,8 @@ const closePopup = () => {
               align-items: center;
               gap: 10px;
 
-              &__result {}
+              &__result {
+              }
             }
           }
 
@@ -319,14 +352,14 @@ const closePopup = () => {
         border-radius: 15px;
       }
 
-      &::-webkit-scrollbar-track {}
+      &::-webkit-scrollbar-track {
+      }
 
       &::-webkit-scrollbar-thumb {
         background-color: $dark-grey;
         transform: translateX(-5px);
         box-shadow: inset 0 0 1px $dark-grey;
         border-radius: 15px;
-
       }
     }
   }

@@ -5,21 +5,24 @@ import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useSceneState } from "@/store/appliction/useSceneState"
+import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 
 export class AppLights {
     parent: THREETypes.TApplication
     eventsStore: ReturnType<typeof useEventBus> = useEventBus()
+    sceneState: ReturnType<typeof useSceneState> = useSceneState()
+    roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions()
     scene: THREE.Scene
     params: any
     private lights: THREE.Light[] = []
-    light: any
+    private ambientLight: THREE.Light
 
     constructor(parent: THREETypes.TApplication) {
 
         this.parent = parent
         this.scene = parent.scene
 
-        this.params = useSceneState().getStartLightsData
+        this.params = this.sceneState.getStartLightsData
         this.setQuality('low')
         this.vueEvents()
 
@@ -28,7 +31,8 @@ export class AppLights {
     addPointLight(params: THREEInterfases.IlightData) {
         const pointLight = new THREE.PointLight(
             params.color,
-            params.intensity,
+            // this.sceneState.getLightRange.pointLight,
+            this.roomOptions.getPointLightRange,
             params.distance,
             params.decay,
         )
@@ -39,7 +43,7 @@ export class AppLights {
         // pointLight.shadow.normalBias = 0.02
         // pointLight.shadow.bias = 0.0001
         pointLight.shadow.camera.near = 0.5;
-        pointLight.shadow.camera.far = 6000;
+        pointLight.shadow.camera.far = 2000;
 
         pointLight.shadow.normalBias = 0
         pointLight.shadow.bias = -0.001
@@ -51,16 +55,17 @@ export class AppLights {
 
     addAmbientLight(params: THREEInterfases.IlightData) {
 
-        const ambiemtLight = new THREE.AmbientLight(
+        this.ambientLight = new THREE.AmbientLight(
             params.color,
-            params.intensity,
+            this.roomOptions.getAmbientLightRange,
         )
 
-        this.scene.add(ambiemtLight)
+        this.scene.add(this.ambientLight)
     }
 
     setLight(position: { [key: string]: number } | any, lightCount: number) {
-
+        const shadowValue = this.roomOptions.getShadowValue
+        this.lights = []
         const margin = 250
         const step = (position.depth - 2 * margin) / (lightCount - 1);
 
@@ -74,6 +79,7 @@ export class AppLights {
         }
 
         this.addAmbientLight(this.params.ambientLight);
+        this.toggleShadow(shadowValue)
     }
 
     setLightPosition(position: { [key: string]: number } | any, lightCount: number) {
@@ -90,21 +96,6 @@ export class AppLights {
         }
     }
 
-    removeAllLights(scene: THREE.Scene) {
-
-        if (!scene) return;
-
-        const objects = [...scene.children];
-
-        objects.forEach(children => {
-            if (children instanceof THREE.Light) {
-                scene.remove(children);
-            }
-        })
-
-        this.lights = []
-    }
-
     setQuality(params: string) {
         switch (params) {
             case 'low':
@@ -114,7 +105,7 @@ export class AppLights {
                         light.shadow.map?.dispose()
                         light.shadow.map = null;
                         light.shadow.mapSize.set(512, 512)
-   
+
                         light.shadow.normalBias = 0
                         light.shadow.bias = -0.001
 
@@ -137,7 +128,6 @@ export class AppLights {
                     }
                 })
                 break;
-
             case 'hight':
                 this.lights.forEach(light => {
                     if (light instanceof THREE.PointLight) {
@@ -145,7 +135,7 @@ export class AppLights {
                         light.shadow.map = null;
                         light.shadow.mapSize.set(512 * 4, 512 * 4)
 
-  
+
                         light.shadow.normalBias = 0
                         light.shadow.bias = -0.0005
 
@@ -182,8 +172,14 @@ export class AppLights {
 
     changePointLightPower(value: number) {
         this.lights.forEach(light => {
-            light.intensity = value * 0.1
+            light.intensity = value
         })
+    }
+
+    changeAmbientLightPower(value: number) {
+
+        this.ambientLight.intensity = value
+
     }
 
     vueEvents() {
@@ -198,6 +194,10 @@ export class AppLights {
 
         this.eventsStore.on('A:ChangePointLightPower', (value: number) => {
             this.changePointLightPower(value)
+        })
+
+        this.eventsStore.on('A:ChangeAmbientLightPower', (value: number) => {
+            this.changeAmbientLightPower(value)
         })
     }
 

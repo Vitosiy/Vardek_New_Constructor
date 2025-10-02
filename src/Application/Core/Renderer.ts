@@ -54,32 +54,47 @@ export class Renderer {
     setInstance() {
 
         if (this.instance) {
+            try {
+                if (this.canvas.contains(this.instance.domElement)) {
+                    this.canvas.removeChild(this.instance.domElement);
+                }
 
-            if (this.canvas.contains(this.instance.domElement)) {
-                this.canvas.removeChild(this.instance.domElement);
+                // Безопасно освобождаем ресурсы старого рендерера
+                if (typeof this.instance.dispose === 'function') {
+                    try {
+                        this.instance.dispose();
+                    } catch (error) {
+                        console.warn('Ошибка при dispose старого рендерера:', error);
+                    }
+                }
+            } catch (error) {
+                console.warn('Ошибка при очистке старого рендерера:', error);
             }
-
-            this.instance.dispose();
         }
 
-        this.instance = new THREE.WebGLRenderer({
-            antialias: this.antialiasing
-        });
+        try {
+            this.instance = new THREE.WebGLRenderer({
+                antialias: this.antialiasing,
+                preserveDrawingBuffer: true
+            });
 
-        this.instance.outputColorSpace = THREE.SRGBColorSpace;
-        this.instance.setSize(this.sizes.width, this.sizes.height);
-        this.instance.setPixelRatio(this.sizes.pixelRatio);
-        this.instance.setClearColor('#cccccc')
-        this.instance.logarithmicDepthBuffer = true
-        // this.instance.shadowMap.autoUpdate = true;
-        this.canvas.appendChild(this.instance.domElement)
+            this.instance.outputColorSpace = THREE.SRGBColorSpace;
+            this.instance.setSize(this.sizes.width, this.sizes.height);
+            this.instance.setPixelRatio(this.sizes.pixelRatio);
+            this.instance.setClearColor('#cccccc')
+            this.instance.logarithmicDepthBuffer = true
+            // this.instance.shadowMap.autoUpdate = true;
+            this.canvas.appendChild(this.instance.domElement)
 
-        this.instance.physicallyCorrectLights = true;
-        this.instance.shadowMap.enabled = true;
-        this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.instance.toneMapping = THREE.ReinhardToneMapping;
-        this.instance.toneMappingExposure = 1.8;
-        this.instance.receiveShadow = true;
+            this.instance.physicallyCorrectLights = true;
+            this.instance.shadowMap.enabled = true;
+            this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
+            this.instance.toneMapping = THREE.ReinhardToneMapping;
+            this.instance.toneMappingExposure = 1.8;
+            this.instance.receiveShadow = true;
+        } catch (error) {
+            console.error('Ошибка при создании нового WebGL рендерера:', error);
+        }
 
     }
 
@@ -131,7 +146,7 @@ export class Renderer {
                 this.instance.receiveShadow = true;
 
                 this.instance.shadowMap.needsUpdate = true
-                this.instance.setPixelRatio(0.5);
+                this.instance.setPixelRatio(1);
                 break;
             case 'medium':
                 // this.toggleAntialias('medium')
@@ -144,7 +159,7 @@ export class Renderer {
                 this.instance.receiveShadow = true;
                 // this.instance.shadowMap.autoUpdate = true;
                 this.instance.shadowMap.needsUpdate = true
-                this.instance.setPixelRatio(1);
+                this.instance.setPixelRatio(this.sizes.pixelRatio);
                 break;
             case 'hight':
                 // this.toggleAntialias('hight')
@@ -179,30 +194,78 @@ export class Renderer {
     removeVueEvents() {
         this.eventsStore.off('A:Quality', this.onSetQuality)
 
-        // this.canvas.removeChild(this.instance.domElement);
-        this.cleanupRenderer(this.instance)
-        this.cleanupRenderer(this.labelRenderer)
+        // Безопасная очистка WebGL рендерера
+        if (this.instance) {
+            try {
+                // Очищаем DOM элементы
+                this.cleanupRenderer(this.instance)
+                this.cleanupRenderer(this.labelRenderer)
 
-        this.instance.dispose(); // Освобождаем ресурсы рендерера
-        this.instance.renderLists.dispose();
-        this.instance.forceContextLoss(); // Принудительно завершаем WebGL-контекст
-        this.instance.domElement = null; // Удаляем ссылку на DOM-элемент
-        this.instance = null; // Удаляем ссылку на рендерер
+                // Безопасно освобождаем ресурсы рендерера
+                if (this.instance.renderLists && typeof this.instance.renderLists.dispose === 'function') {
+                    try {
+                        this.instance.renderLists.dispose();
+                    } catch (error) {
+                        console.warn('Ошибка при освобождении renderLists:', error);
+                    }
+                }
 
-        
+                // Освобождаем ресурсы рендерера
+                if (typeof this.instance.dispose === 'function') {
+                    try {
+                        this.instance.dispose();
+                    } catch (error) {
+                        console.warn('Ошибка при dispose рендерера:', error);
+                    }
+                }
+
+                // Очищаем ссылки
+                this.instance.domElement = null;
+                this.instance = null;
+            } catch (error) {
+                console.error('Ошибка при очистке WebGL рендерера:', error);
+            }
+        }
     }
 
-    cleanupRenderer(Renderer) {
-
-        const RendererElements = Renderer.domElement.querySelectorAll('*');
-        RendererElements.forEach((element) => {
-          element.remove();
-        });
-
-        if (Renderer.domElement.parentElement) {
-            Renderer.domElement.parentElement.removeChild(Renderer.domElement);
+    cleanupRenderer(renderer) {
+        if (!renderer || !renderer.domElement) {
+            return;
         }
-      
-        Renderer = null;
-      }
+
+        try {
+            // Проверяем, не является ли это PIXI рендерером
+            if (renderer.constructor && renderer.constructor.name && 
+                renderer.constructor.name.toLowerCase().includes('pixi')) {
+                console.warn('Обнаружен PIXI рендерер, пропускаем очистку DOM элементов');
+                return;
+            }
+
+            // Удаляем все дочерние элементы
+            const rendererElements = renderer.domElement.querySelectorAll('*');
+            rendererElements.forEach((element) => {
+                if (element && element.remove) {
+                    try {
+                        element.remove();
+                    } catch (error) {
+                        console.warn('Ошибка при удалении элемента:', error);
+                    }
+                }
+            });
+
+            // Удаляем DOM элемент из родителя
+            if (renderer.domElement.parentElement) {
+                try {
+                    renderer.domElement.parentElement.removeChild(renderer.domElement);
+                } catch (error) {
+                    console.warn('Ошибка при удалении DOM элемента из родителя:', error);
+                }
+            }
+
+            // Очищаем ссылку на DOM элемент
+            renderer.domElement = null;
+        } catch (error) {
+            console.warn('Ошибка при очистке DOM элементов рендерера:', error);
+        }
+    }
 }

@@ -3,6 +3,7 @@
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 
 import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
+import FormLabelRoom from "@/components/popUp/constructor2d/FormLabelRoom.vue";
 
 import {
   Vector2,
@@ -15,9 +16,11 @@ let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
 let canvas2d: Ref<HTMLCanvasElement | undefined> = ref();
 
-document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
+// document.oncontextmenu = document.body.oncontextmenu = function() {return false;};
 
 let App2d: Constructor2D | null = null;
+
+const preventContextMenu = (e: Event) => e.preventDefault();
 
 // Сохраняем ссылку на обработчик события
 let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
@@ -45,10 +48,21 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
     };
 
     if(App2d){
-      App2d.layers.planner?.addWall({
-        position: pointerPosition, 
-        type: draggedData
-      });
+      if(draggedData === "wall" || draggedData === "wall_vertical" || draggedData === "dividing_wall") {
+        // Добавляем стену в слой planner
+        App2d.layers.planner?.addWall({
+          position: pointerPosition, 
+          type: draggedData
+        });
+      } else if(draggedData === "door" || draggedData === "window") {
+        // Добавляем дверь или окно в слой doorsAndWindows
+        App2d.layers.doorsAndWindows?.addObject({
+          position: pointerPosition,
+          type: draggedData
+        });
+      } else {
+        console.warn("Неизвестный тип перетаскиваемого объекта:", draggedData);
+      }
     }
 
   } catch (error) {
@@ -57,32 +71,55 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
 };
 
 onMounted(async () => {
+  
   if (root2d.value && canvas2d.value) {
 
     App2d = new Constructor2D(root2d.value, canvas2d.value);
     await App2d.init();
 
+    if (canvas2d.value) {
+      canvas2d.value.addEventListener('contextmenu', preventContextMenu);
+    }
+    
     // Добавляем обработчик события
     canvas2d.value.addEventListener('drop', dropHandler);
 
     console.log("!!! App2d:", App2d);
-    
+    // @ts-ignore
+    window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
+  }
+    // Безопасное скрытие loader
+  const loader = document.querySelector('#main-loader');
+  if (loader) {
+    (loader as HTMLElement).style.display = 'none';
   }
 
 });
 
 onUnmounted(() => {
+  try {
+    if (App2d) {
+      // Безопасно уничтожаем объект App2d
+      try {
+        App2d.destroy();
+      } catch (error) {
+        console.warn('Ошибка при уничтожении App2d:', error);
+      }
+      App2d = null;    // Сбрасываем переменную в null
+    }
 
-  if (App2d) {
-    App2d.destroy(); // Уничтожаем объект App2d
-    App2d = null;    // Сбрасываем переменную в null
+    // Удаляем обработчик события, если он был добавлен
+    if (canvas2d.value && dropHandler) {
+      try {
+        canvas2d.value.removeEventListener('drop', dropHandler);
+        canvas2d.value.removeEventListener('contextmenu', preventContextMenu);
+      } catch (error) {
+        console.warn('Ошибка при удалении обработчиков событий:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка при очистке компонента Constructor2D:', error);
   }
-
-  // Удаляем обработчик события, если он был добавлен
-  if (canvas2d.value && dropHandler) {
-    canvas2d.value.removeEventListener('drop', dropHandler);
-  }
-
 });
 
 </script>
@@ -104,7 +141,8 @@ onUnmounted(() => {
 <template>
   <div ref="root2d" id="app2D">
     <canvas ref="canvas2d" id="constructor2D"
-      @dragover.prevent></canvas>
+      @dragover.prevent @contextmenu.prevent></canvas>
     <ModifyWall />
+    <FormLabelRoom />
   </div>
 </template>

@@ -1,71 +1,121 @@
 <script lang="ts" setup>
-// @ts-nocheck 31
-import { reactive } from "vue";
+// @ts-nocheck
+import { ref, onMounted, onBeforeMount, watch, computed } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
-const eventBus = useEventBus();
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { useObjectData } from "@/store/appliction/useObjectData";
 import { useModelState } from "@/store/appliction/useModelState";
 
-const modelState = useModelState().getCurrentModel;
+const modelState = useModelState();
+const eventBus = useEventBus();
 
-/* данные размера модели */
-let resizeData: { width: number; height: number; depth: number } = {
-  width: modelState.PROPS.CONFIG.SIZE.width,
-  height: modelState.PROPS.CONFIG.SIZE.height,
-  depth: modelState.PROPS.CONFIG.SIZE.depth,
+const sizeEditData = ref({
+  widthMin: 0,
+  widthMax: 0,
+  heightMin: 0,
+  heightMax: 0,
+  depthMin: 0,
+  depthMax: 0,
+});
+
+const resizeData = ref({
+  width: 0,
+  height: 0,
+  depth: 0,
+});
+
+const currentModel = ref(null);
+const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
+
+const getIsUMproduct = computed(() => {
+  return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
+});
+
+const prepareData = () => {
+  console.log(modelState.getCurrentModel, "modelState.getCurrentModel");
+  currentModel.value = modelState.getCurrentModel;
+
+  sizeEditData.value = {
+    widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
+    widthMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
+    heightMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
+    heightMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
+    depthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
+    depthMax: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX,
+  };
+
+  resizeData.value = {
+    width: currentModel.value.PROPS.CONFIG.SIZE.width,
+    height: currentModel.value.PROPS.CONFIG.SIZE.height,
+    depth: currentModel.value.PROPS.CONFIG.SIZE.depth,
+  };
 };
 
-/* данные ограничения размера модели */
-let sizeEditData = {
-  widthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
-  widthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
-  heightMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN,
-  heightMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
-  depthMin: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
-  depthMax: modelState.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
-}
-
 const resizeModel = (value: object) => {
-  eventBus.emit("A:Model-resize", {... resizeData, ... value});
-}
+  if (!isMounted.value) return; // игнорируем вызов до готовности
+  console.log({ ...resizeData.value, ...value }, "RES");
+  eventBus.emit("A:Model-resize", { data: { ...resizeData.value, ...value } });
+};
 
+onBeforeMount(() => {
+  prepareData();
+});
+
+onMounted(() => {
+  isMounted.value = true;
+});
+
+watch(
+  () => modelState.getCurrentModel,
+  () => {
+    isMounted.value = false; // сбрасываем, чтобы при смене модели не было вызова
+    prepareData();
+    // включаем реакцию после обновления данных
+    requestAnimationFrame(() => {
+      isMounted.value = true;
+    });
+  }
+);
 </script>
 
 <template>
   <div class="ruler">
-    <!-- component -->
     <div class="customiser-section">
       <p class="customiser-section__title">Размер товара</p>
       <div class="settings-size">
         <div class="size-item">
           <p class="item__label text-grey">Ширина</p>
-          <MainInput class="input__search right-menu"
-                     v-model="resizeData.width" 
-                     @update:modelValue="resizeModel" 
-                     type="number"   
-                     :min="sizeEditData.widthMin"
-                     :max="sizeEditData.widthMax"
+          <MainInput
+            class="input__search right-menu"
+            v-model="resizeData.width"
+            @update:modelValue="resizeModel"
+            type="number"
+            :min="sizeEditData.widthMin"
+            :max="sizeEditData.widthMax"
+            :disabled="!getIsUMproduct"
           />
         </div>
         <div class="size-item">
-          <p class="item__label text-grey ">Высота</p>
-          <MainInput class="input__search right-menu" 
-                    v-model="resizeData.height"
-                    @update:modelValue="resizeModel" 
-                    type="number"
-                    :min="sizeEditData.heightMin"
-                    :max="sizeEditData.heightMax"  
-           />
+          <p class="item__label text-grey">Высота</p>
+          <MainInput
+            class="input__search right-menu"
+            v-model="resizeData.height"
+            @update:modelValue="resizeModel"
+            type="number"
+            :min="sizeEditData.heightMin"
+            :max="sizeEditData.heightMax"
+            :disabled="!getIsUMproduct"
+          />
         </div>
         <div class="size-item">
-          <p class="item__label text-grey ">Глубина</p>
-          <MainInput class="input__search right-menu" 
-                      v-model="resizeData.depth" 
-                      @update:modelValue="resizeModel" 
-                      type="number"
-                      :min="sizeEditData.depthMin"
-                      :max="sizeEditData.depthMax" 
+          <p class="item__label text-grey">Глубина</p>
+          <MainInput
+            class="input__search right-menu"
+            v-model="resizeData.depth"
+            @update:modelValue="resizeModel"
+            type="number"
+            :min="sizeEditData.depthMin"
+            :max="sizeEditData.depthMax"
+            :disabled="!getIsUMproduct"
           />
         </div>
       </div>

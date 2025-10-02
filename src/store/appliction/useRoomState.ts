@@ -5,50 +5,97 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
+import { useAppData } from "@/store/appliction/useAppData";
+import { useModelState } from '../appliction/useModelState';
+import { useSceneState } from './useSceneState';
 
 import * as THREEInterfases from "../../types/interfases"
+import { TFasadeItem } from "@/types/types";
 
-
+export type TempRoomParamsKey = 'wall' | 'floor';
+export type TRoutPath = '/3d' | '/2d';
 
 export const useRoomState = defineStore('RoomState', () => {
 
-  //   const rooms = ref<THREEInterfases.IRoom[]>(rooms_mok || []);
-
-  const roomsStore = useSchemeTransition();
-  let roomsData = JSON.parse(JSON.stringify(roomsStore.getSchemeTransitionData.concat(rooms_mok)));
+  const schemeTransition = useSchemeTransition();
+  const sceneState = useSceneState();
+  const roomsData = JSON.parse(JSON.stringify(schemeTransition.getSchemeTransitionData));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
- 
+
+  const APP = useAppData();
+  const modelState = useModelState()
 
   const currentRoomId = ref<number | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
+  const convertDataTo3DConstuctor = () => {
+    console.log('3D', schemeTransition.getSchemeTransitionData)
+    const clone = schemeTransition.getSchemeTransitionData.map(item => {
+      return item
+    })
+    const parseData = clone.map(elem => {
+      console.log(elem.content)
+
+      const content = JSON.stringify(elem.content)
+      return {
+        ...elem,
+        content: content
+      }
+    })
+    rooms.value = parseData
+  }
+
+  const convertDataTo2DConstuctor = () => {
+    console.log('2D')
+    const clone = rooms.value.map(item => {
+      return item
+    })
+
+    const parseData = clone.map(elem => {
+      const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+      return {
+        ...elem,
+        content: content
+      }
+    })
+    schemeTransition.setAppData(parseData)
+  }
+
+  const converActions = {
+    '/2d': () => convertDataTo2DConstuctor(),
+    '/3d': () => convertDataTo3DConstuctor()
+  }
+
+  const routConvertData = (value: TRoutPath) => {
+    converActions[value]()
+  }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
     rooms.value.push(room);
   };
 
-  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], size: THREEInterfases.IWallSizes) => {
+  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes) => {
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {
-
-
       room.content = content;
-      room.size = size;
+      room.params = params;
+
+      return
     }
 
   };
 
-  const updateRoomSize = (id: number, size: THREEInterfases.IWallSizes) => {
-    const room = rooms.value.find(room => room.id === id);
-    if (room) {
-      room.size = size;
-    }
-  }
-
   const removeRoom = (id: number) => {
     rooms.value = rooms.value.filter(room => room.id !== id);
+    if (rooms.value.length == 0) {
+      clearCurrentRoomId()
+    }
+
+    /** Обновляем общий стор */
+    sceneState.updateProjectParams({ rooms: rooms.value })
+
   };
 
   const setCurrentRoomId = (id: number) => {
@@ -59,7 +106,7 @@ export const useRoomState = defineStore('RoomState', () => {
     currentRoomId.value = null;
   };
 
-  const setCurrentRoomSize = (value: THREEInterfases.IWallSizes) => {
+  const setCurrentRoomParams = (value: THREEInterfases.IWallSizes) => {
     tempRoomSize.value = value
   }
 
@@ -67,51 +114,47 @@ export const useRoomState = defineStore('RoomState', () => {
     tempRoomSize.value = null
   }
 
-  const setWallTexture = (value: number | string) => {
+  const tempRoomUpdate = (value: number | string, type: TempRoomParamsKey) => {
     if (tempRoomSize.value) {
-      tempRoomSize.value.wall = value
-    }
-  }
-
-  const setFloorTexture = (value: number | string) => {
-    if (tempRoomSize.value) {
-      tempRoomSize.value.floor = value
+      tempRoomSize.value[type] = value
     }
   }
 
   //------------------------------------------------------------------------------------------
 
-  const getCurrentRoomSize = computed(() => {
+  const getCurrentRoomParams = computed(() => {
     return tempRoomSize.value
   });
 
+  /** Возвращаем с использованием ID комнаты */
+  const getCurrentRoomData = (roomId) => {
+    let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
+    console.log(centerized)
+    // const currentRoom = rooms.value.find(value => value.id === roomId)
 
-  const getCurrentRoomId = computed(() => {
+    // if (centerized) {
+    //   currentRoom.params = centerized?.params ?? currentRoom?.params;
+    //   currentRoom.content = centerized?.content ?? currentRoom?.content;
+    // }
 
-    
-    let centerized = roomsStore.getRoomDataFor3DScene(currentRoomId.value);
-
-    const currentRoom = rooms.value.find(value => value.id === currentRoomId.value)
-
-    if(centerized){
-      currentRoom.size = centerized?.size ?? currentRoom?.size;
-    }
-
-    return rooms.value.find(value => value.id === currentRoomId.value)
-  });
+    return rooms.value.find(value => value.id === roomId)
+  }
 
   const getRoomId = computed(() => {
     return currentRoomId.value
   });
 
-  const getUpdatedRoomContent = computed(() => {
-    return updatedRoomContent.value
+  const getRoomContent = computed(() => {
+    const room = rooms.value.find(room => room.id === currentRoomId.value);
+    if (room) {
+      return room.content
+    }
+    return []
   })
 
   const getRooms = computed(() => {
     return rooms.value
   })
-
 
   return {
     rooms,
@@ -120,21 +163,23 @@ export const useRoomState = defineStore('RoomState', () => {
     updateRoom,
     removeRoom,
     getRoomId,
-    updateRoomSize,
+
 
     setCurrentRoomId,
-    getCurrentRoomId,
     clearCurrentRoomId,
 
-    setCurrentRoomSize,
-    getCurrentRoomSize,
+    setCurrentRoomParams,
+    getCurrentRoomParams,
     clearTempRoomSize,
+    tempRoomUpdate,
 
     updatedRoomContent,
-    getUpdatedRoomContent,
+    getRoomContent,
 
-    setWallTexture,
-    setFloorTexture
+    getCurrentRoomData,
 
+    convertDataTo3DConstuctor,
+    convertDataTo2DConstuctor,
+    routConvertData
   };
 });

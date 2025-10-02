@@ -12,6 +12,11 @@ import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
 
+import { usePopupStore } from "@/store/appStore/popUpsStore";
+import CatalogSVG from '@/components/ui/svg/CatalogSVG.vue';
+  
+const popupStore = usePopupStore();
+
 const constructor2dMenu = useC2DLeftMenuStore();
 
 const menuItemActive = ref<string | null>(null);
@@ -81,6 +86,10 @@ onUnmounted(() => {
   
 });
 
+const openPopup = (popupName: keyof typeof popupStore.popups) => {
+  popupStore.openPopup(popupName);
+};
+
 </script>
 
 <template>
@@ -97,17 +106,22 @@ onUnmounted(() => {
             <div class="radial-sphere"></div>
           </div>
           
-          <div class="goods-item">
+          <!-- <div class="goods-item">
             <RoomPlaneSVG class="goods-item__image" />
             <p class="goods-item__title">Шаблоны комнат</p>
             <div class="radial-sphere"></div>
-          </div>
+          </div> -->
 
         </div>
       </div>
 
       <div class="options-design">
         <h1 class="options__title">Товары</h1>
+        <div class="goods-items" @click="openPopup('catalog')">
+          <CatalogSVG class="goods-items__image" />
+          <p class="goods-items__title">Общий каталог</p>
+          <div class="radial-sphere"></div>
+        </div>
         <div class="goods">
           <div v-for="(item, index) in catalogSections">
             <div :key="index" 
@@ -161,7 +175,7 @@ onUnmounted(() => {
     gap: 30px;
     padding: 20px;
     position: relative;
-    transform-style: preserve-3d;
+    // transform-style: preserve-3d;
 
     .options-design {
       z-index: 10;
@@ -221,7 +235,7 @@ onUnmounted(() => {
       }
 
       .goods {
-        max-height: 70vh;
+        max-height: 30vh;
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -494,4 +508,51 @@ onUnmounted(() => {
     }
   }
 }
+
+.goods-items {
+  min-height: 50px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 0 15px;
+  cursor: pointer;
+  transition: 0.15s ease-in-out;
+  margin-bottom: 1rem;
+
+  &__title {
+    z-index: 5;
+    transition: 0.15s;
+  }
+
+  &__image {
+    z-index: 5;
+  }
+
+  .radial-sphere {
+    width: 100%;
+    min-width: 50px;
+    max-width: 50px;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 360px;
+    background: $stroke;
+    z-index: 1;
+    transition: 0.3s ease;
+  }
+
+  &.active {
+    .goods-item__title {
+      color: $white;
+    }
+
+    .radial-sphere {
+      max-width: 300px;
+      background: $red;
+    }
+  }
+}
+
 </style>

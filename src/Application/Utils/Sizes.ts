@@ -6,7 +6,7 @@ export class Sizes extends EventEmitter {
     width: number;
     height: number;
     pixelRatio: number
-    canvas:HTMLElement
+    canvas: HTMLElement
 
     constructor(canvas: HTMLElement) {
 
@@ -25,7 +25,7 @@ export class Sizes extends EventEmitter {
 
     // Получение новых параметров 
     getNewSize(): void {
-        
+
         this.width = this.canvas.offsetWidth
         this.height = this.canvas.offsetHeight
         this.pixelRatio = Math.min(window.devicePixelRatio, 2)

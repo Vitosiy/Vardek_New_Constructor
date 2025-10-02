@@ -1,19 +1,28 @@
 <script setup lang="ts">
-// @ts-nocheck
+//@ts-nocheck
+
+import * as THREETypes from "@/types/types";
 import * as THREEInterfases from "@/types/interfases";
-import * as THREE from "three";
+import { TMyObject } from "@/types/types";
 import { _URL } from "@/types/constants";
 
-import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  onUnmounted,
+  toRaw,
+  defineExpose,
+  nextTick,
+} from "vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { useRoomState } from "@/store/appliction/useRoomState";
 import { useAppData } from "@/store/appliction/useAppData";
-import { useSceneState } from "@/store/appliction/useSceneState";
-import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useObjectData } from "@/store/appliction/useObjectData";
-import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
+import { useRoomContantData } from "@/store/appliction/useRoomContantData";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -21,7 +30,6 @@ import { Application } from "@/Application/Core/Application";
 
 // import customInput from "@/components/customInput.vue";
 import TableTopManager from "@/ConstructorTabletop/TableTopManager.vue";
-import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
@@ -29,456 +37,458 @@ import ContentControllerButton from "@/components/ui/buttons/right-menu/controll
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
 import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
+import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
+import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 
-import Toggle from "@vueform/toggle";
-import Slider from "@vueform/slider";
-import {useMenuStore} from "@/store/appStore/useMenuStore.ts";
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useScreenshotsStore } from "@/features/store/screenshotsStore/screenshotsStore";
 
-type TSize = {
-  width: {
-    title: "Ширина";
-    value: number;
-    min: number | null;
-    max: number | null;
-  };
-  height: {
-    title: "Высота";
-    value: number;
-    min: number | null;
-    max: number | null;
-  };
-  depth: {
-    title: "Глубина";
-    value: number;
-    min: number | null;
-    max: number | null;
-  };
-};
+const schemeTransitionStore = useSchemeTransition();
+const menuStore = useMenuStore();
+const roomState = useRoomState();
+const screenshotsStore = useScreenshotsStore();
 
-type TEditSize = {
-  SIZE_EDIT_WIDTH_MIN: number | null;
-  SIZE_EDIT_WIDTH_MAX: number | null;
-  SIZE_EDIT_HEIGHT_MIN: number | null;
-  SIZE_EDIT_HEIGHT_MAX: number | null;
-  SIZE_EDIT_DEPTH_MIN: number | null;
-  SIZE_EDIT_DEPTH_MAX: number | null;
-};
+const appData = ref<{ [key: string]: any } | null>(null);
 
-interface IProductSizeEdit {
-  size: TSize | null;
-}
-
-// TODO прокинуть сюда данные из indexedDB при перезагрузке. Проблема: DefaultLayout грузится позже этого компонента
-const appData = useAppData().getAppData;
-const startData = useSceneState();
-const roomStore = useRoomState();
 const eventBus = useEventBus();
-let uniformState = useUniformState();
-
+// uniformStat= useUniformState();
 const modelState = useModelState();
-const models = useAppData().getAppData.CATALOG.PRODUCTS;
-const wallMaterials = useAppData().getAppData.WALL;
-const floorMaterials = useAppData().getAppData.FLOOR;
-const customiserStore = useCustomiserStore();
-const objectData = useObjectData(); /** Текущий объект */
-const roomContantData = useRoomContantData();
+const uniformState = useUniformState();
+// const modelState = ref<THREETypes.TUseModelState | null>(null);
+const models = ref<any>(null);
+const wallMaterials = ref<number | null>(null);
+const floorMaterials = ref<number | null>(null);
+// const customiserStore = ref<THREETypes.TUseCustomiserStore | null>(null);
+const objectData = ref<THREETypes.TUseObjectData | null>(
+  null
+); /** Текущий объект */
+const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
 
-const _FASADE = appData.FASADE;
-const _MILLING = appData.MILLING;
+const _FASADE = ref({});
+const _MILLING = ref({});
 
-const sceneContainer: Ref<HTMLElement | null> = ref(null);
-let VerdekConstructor: Application | null = null;
+const preloaderRef = ref<HTMLElement | null>(null);
+const activePreloader = ref<boolean>(false);
 
-const selectedRoom = computed(() => {
-  return (
-    roomStore.getRooms.find((room) => room.id === selectValue.value) || null
-  );
-});
-
-const wallTexture = ref<number | string | null>(null);
-
-const floorTexture = ref<number | string | null>(null);
-
-const selectValue = ref<number | null>(null);
-
-const cameraView = ref<boolean>(false);
-
-const inputValue = ref({
-  width: 4,
-  height: 3,
-  depth: 7,
-  thickness: 0.1,
-});
-
-const productSize = ref<TSize>({
-  width: { title: "Ширина", value: 0, min: 0, max: 0 },
-  height: { title: "Высота", value: 0, min: 0, max: 0 },
-  depth: { title: "Глубина", value: 0, min: 0, max: 0 },
-});
-
-const dropItems: { [key: string]: {} }[] = models;
-
-const quality = ref(["low", "medium", "hight"]);
-
+const sceneContainer = ref<HTMLElement | null>(null);
+const VerdekConstructor = ref<Application | null>(null);
 const controller = ref(false);
-
-const shadows = ref<boolean>(false);
-
-const refraction = ref<boolean>(false);
-
-const pointLightValue = ref<number>(2);
-
-const clampHeight = ref<number>(startData.getStartHeightClamp);
-
 const productColor = ref<{ [key: string]: any }>({});
-
-const fasadeColor = ref<{ [key: string]: any }>({});
-
 const currentFasadeId = ref<{ [key: string]: any }>({});
-
 const productData = ref<{ [key: string]: any }>({});
-
 const product = ref<{ [key: string]: any } | null>(null);
-
 const controllerPositionData = ref<THREEInterfases.IMouseData>({ x: 0, y: 0 });
-
 const totalContent = ref<any>();
-
-const paletteColorsData = ref<{ [key: string]: any }>({});
-
-const showPalette = ref<boolean>(false);
-
-const selectPalette = ref<any>(null);
 
 /**----------------- 01.12.24-------------------- */
 
 const fasades = ref<{ [key: string]: any }>({});
 const productFasades = ref<any[]>([]);
-const glassColorsData = ref<{ [key: string]: any }>({});
-const showGlass = ref<boolean>(false);
-
-const selectGlass = ref<any>(null);
-const selectMilling = ref<any>(null);
 
 /** ----------------- 19.05.25 ----------------------------- */
 
 //Универсальный модуль
-const universalModule2DConstructor = ref();
-const universalModuleData = ref({});
-const isUMModalOpen = ref(false);
-const gridUMSaved = ref(false);
-const universalModuleCash = ref({});
+const universalModule2DConstructor = ref<typeof ModalUM2Dconstructor | null>(
+  null
+);
+const universalModuleData = ref<TMyObject | null>(null);
 
 //Распил
 const tableTopManager = ref();
 const CutData = ref({});
 const isModalOpen = ref(false);
-const gridSaved = ref(false);
 const CutCash = ref({});
+const CutSave = ref(false);
 
-onMounted(() => {
-  if (sceneContainer.value) {
-    VerdekConstructor = new Application(sceneContainer.value);
+onMounted(async () => {
+  try {
+    appData.value = useAppData().getAppData;
 
-    eventBus.on("A:Move", (move: boolean) => {
-      if (!product.value) return;
-      controller.value = move;
-      controllerPositionData.value = product.value?.MOUSE_POSITION;
-    });
+    models.value = useAppData().getAppData.CATALOG.PRODUCTS;
+    wallMaterials.value = useAppData().getAppData.WALL;
+    floorMaterials.value = useAppData().getAppData.FLOOR;
 
-    // Пописать интерфейс *item*
-    eventBus.on("A:Selected", selected);
+    objectData.value = useObjectData(); /** Текущий объект */
+    roomContantData.value = useRoomContantData();
+
+    if (sceneContainer.value) {
+      _FASADE.value = appData.FASADE;
+      _MILLING.value = appData.MILLING;
+
+      // Подписываемся на события
+      eventBus.on("A:Move", getMove);
+      eventBus.on("A:Selected", selected);
+      eventBus.on("A:ContantLoaded", checkContantLoad);
+      eventBus.on("A:ClearSelected", clearSelected);
+      eventBus.on("A:ScreenPrint", screenPrint);
+      eventBus.on("A:Take3DScreenshot", take3DScreenshot);
+
+      // Создаем приложение
+      VerdekConstructor.value = new Application(sceneContainer.value);
+
+      await nextTick();
+      VerdekConstructor.value.refreshViewer();
+    }
+  } catch (error) {
+    console.error("Ошибка при инициализации The3D компонента:", error);
   }
 });
 
 onBeforeUnmount(() => {
-  console.log("onBeforeUnmount");
-  uniformState.resetUniformState();
+  try {
+    // Отключаем все события
+    eventBus.off("A:Move", getMove);
+    eventBus.off("A:Selected", selected);
+    eventBus.off("A:ContantLoaded", checkContantLoad);
+    eventBus.off("A:ClearSelected", clearSelected);
+    eventBus.off("A:ScreenPrint", screenPrint);
+    eventBus.off("A:Take3DScreenshot", take3DScreenshot);
 
-  VerdekConstructor?.destroy();
-  VerdekConstructor = null;
+    // Сбрасываем состояние
+    uniformState.resetUniformState();
+
+    // Очищаем данные
+    productColor.value = {};
+    productFasades.value = [];
+    fasades.value = {};
+    currentFasadeId.value = {};
+    productData.value = {};
+    product.value = null;
+
+    _FASADE.value = {};
+    _MILLING.value = {};
+
+    appData.value = null;
+
+    models.value = null;
+    wallMaterials.value = null;
+    floorMaterials.value = null;
+
+    objectData.value = null;
+    roomContantData.value = null;
+
+    // Уничтожаем приложение
+    if (VerdekConstructor.value) {
+      VerdekConstructor.value.destroy();
+      VerdekConstructor.value = null;
+    }
+  } catch (error) {
+    console.error("Ошибка при очистке компонента The3D:", error);
+  }
 });
 
-watch(shadows, () => {
-  toggleShadow(shadows.value);
+onUnmounted(() => {
+  eventBus.clearEvents();
 });
 
-watch(refraction, () => {
-  toggleRefraction(refraction.value);
-});
+const checkContantLoad = (state: boolean) => {
+  // console.log("checkContantLoad", state);
+  activePreloader.value = state;
+};
 
-watch(pointLightValue, () => {
-  changePointLightPower(pointLightValue.value);
-});
+const getMove = (move: boolean) => {
+  if (!product.value) return;
 
-// watch(paletteColorsData, () => {
-//   showPalette.value =
-//     Object.keys(paletteColorsData.value).length > 0 ? true : false;
-// });
+  controller.value = move;
+  controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+};
 
-const selected = (item: any) => {
-  let object = item.object;
-
-  let roomContant = item.roomContant;
-  totalContent.value = roomContant;
-
-  // let roomContant = item.roomContant;
-  // totalContent.value = roomContant;
-
-  if (!object) {
+const selected = async (item: any) => {
+  if (!item || !item.object) {
     controller.value = false;
     CutData.value = {};
     CutCash.value = {};
+    universalModuleData.value = null;
     return;
   }
 
-  const { PROPS } = object;
-  const { CONFIG, RASPIL } = object.PROPS;
+  CutData.value = {};
+  CutCash.value = {};
+  universalModuleData.value = null;
 
-  objectData.setObjectData(object);
-  roomContantData.setRoomContantData(totalContent.value);
+  let object = item.object;
+  let roomContant = item.roomContant;
+  totalContent.value = roomContant;
 
-  getProductSizeProps(CONFIG.SIZE, CONFIG.SIZE_EDIT);
+  const { userData } = object;
+  const { PROPS } = userData;
+  const { CONFIG, RASPIL } = PROPS;
 
-  // CutData.value = {};
-  // CutCash.value = {};
+  console.log(RASPIL, "SELECT");
 
-  controller.value = true;
-
+  objectData.value!.setObjectData(userData);
+  roomContantData.value!.setRoomContantData(totalContent.value);
   product.value = object;
-
   controller.value = true;
-
-  /**  Координаты мыши */
-  controllerPositionData.value = object?.MOUSE_POSITION;
 
   productData.value = { ...PROPS };
 
-  if(RASPIL?.data) {
+  if (RASPIL.data) {
     CutData.value = {
       data: RASPIL.data,
       canvasHeight: RASPIL.canvasHeight,
+      modelHeight: RASPIL.modelHeight,
     };
 
     CutCash.value = {
       data: RASPIL.data,
       canvasHeight: RASPIL.canvasHeight,
+      modelHeight: RASPIL.modelHeight,
     };
-
-    useModelState().setCurrentModel(item.object);
   }
-  else if(CONFIG.MODULEGRID) {
+
+  if (CONFIG.MODULEGRID) {
     universalModuleData.value = {
-      data: CONFIG.MODULEGRID,
-      object: object,
+      MODULEGRID: CONFIG.MODULEGRID || false,
+      PROPS: userData,
       canvasHeight: CONFIG.MODULEGRID.canvasHeight,
-      canvasHeight: CONFIG.MODULEGRID.canvasWidth,
+      canvasWidth: CONFIG.MODULEGRID.canvasWidth,
     };
+  }
 
-    useModelState().setCurrentModel(item.object);
+  if (CONFIG.MODULEGRID && universalModule2DConstructor.value) {
+    universalModule2DConstructor.value.selectUMData(universalModuleData.value);
+  }
+
+  /**  Координаты мыши */
+  await nextTick(() => {
+    controllerPositionData.value = userData.MOUSE_POSITION;
+  });
+};
+
+const clearSelected = () => {
+  controller.value = false;
+  CutData.value = {};
+  CutCash.value = {};
+  universalModuleData.value = null;
+};
+
+const screenPrint = async () => {
+  if (!VerdekConstructor.value) return;
+
+  try {
+    const renderer = VerdekConstructor.value._renderer;
+    if (!renderer) {
+      console.error("Renderer не найден");
+      return;
+    }
+
+    // Очищаем предыдущие скриншоты перед созданием новых
+    screenshotsStore.clearScreenshots();
+    console.log("Предыдущие скриншоты очищены");
+
+    // Получаем все комнаты из store - используем правильный источник данных
+    // const allRooms = schemeTransitionStore.getSchemeTransitionData;
+    const allRooms = roomState.getRooms;
+
+    console.log(`Начинаем создание скриншотов для ${allRooms.length} комнат`);
+
+    // Сохраняем текущую комнату, чтобы восстановить её после создания скриншотов
+    const currentRoomId = roomContantData.value?.roomId || null;
+
+    // Сохраняем текущий режим чертежа
+    const currentDrawingMode = menuStore.getDrowModeValue;
+
+    for (let i = 0; i < allRooms.length; i++) {
+      const room = allRooms[i];
+      console.log(
+        `Обрабатываем комнату ${i + 1}/${allRooms.length}: ${
+          room.label || room.id
+        }`
+      );
+
+      try {
+        // Загружаем комнату в сцену через eventBus
+        eventBus.emit("A:Load", room.id);
+
+        // Ждем загрузки комнаты
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Принудительно рендерим сцену перед созданием скриншота
+
+        // 1. Создаем скриншот комнаты в обычном режиме
+        console.log(
+          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`
+        );
+        await new Promise<void>((resolve) => {
+          renderer.domElement.toBlob((blob: Blob | null) => {
+            if (blob) {
+              // Сохраняем скриншот в стор вместо скачивания
+              const cleanRoomName = (room.label || `Комната_${i + 1}`)
+                .replace(/[^a-zA-Z0-9а-яё\s-]/gi, "_")
+                .trim();
+              const screenshot = {
+                id: `${room.id}-normal-${Date.now()}`,
+                roomId: room.id,
+                roomLabel: room.label || `Комната_${i + 1}`,
+                mode: "normal" as const,
+                blob: blob,
+                timestamp: Date.now(),
+                fileName: `3d-screenshot-${cleanRoomName}-normal.png`,
+              };
+
+              screenshotsStore.addScreenshot(screenshot);
+              console.log(
+                `Скриншот комнаты "${
+                  room.label || room.id
+                }" в обычном режиме сохранен в стор`
+              );
+            }
+            resolve();
+          }, "image/png");
+        });
+
+        // 2. Включаем режим чертежа
+        console.log(
+          `Включаем режим чертежа для комнаты "${room.label || room.id}"`
+        );
+        await menuStore.toggleDrowModeValue();
+        const drawingModeValue = menuStore.getDrowModeValue;
+        eventBus.emit("A:DrawingMode", drawingModeValue);
+
+        // Ждем применения режима чертежа
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // 3. Создаем скриншот комнаты в режиме чертежа
+        console.log(
+          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`
+        );
+        await new Promise<void>((resolve) => {
+          renderer.domElement.toBlob((blob: Blob | null) => {
+            if (blob) {
+              // Сохраняем скриншот в стор вместо скачивания
+              const cleanRoomName = (room.label || `Комната_${i + 1}`)
+                .replace(/[^a-zA-Z0-9а-яё\s-]/gi, "_")
+                .trim();
+              const screenshot = {
+                id: `${room.id}-drawing-${Date.now()}`,
+                roomId: room.id,
+                roomLabel: room.label || `Комната_${i + 1}`,
+                mode: "drawing" as const,
+                blob: blob,
+                timestamp: Date.now(),
+                fileName: `3d-screenshot-${cleanRoomName}-drawing.png`,
+              };
+
+              screenshotsStore.addScreenshot(screenshot);
+              console.log(
+                `Скриншот комнаты "${
+                  room.label || room.id
+                }" в режиме чертежа сохранен в стор`
+              );
+            }
+            resolve();
+          }, "image/png");
+        });
+
+        // 4. Возвращаем режим чертежа в исходное состояние
+        if (drawingModeValue !== currentDrawingMode) {
+          await menuStore.toggleDrowModeValue();
+          eventBus.emit("A:DrawingMode", currentDrawingMode);
+        }
+
+        // Пауза между скриншотами
+        if (i < allRooms.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      } catch (roomError) {
+        console.warn(
+          `Ошибка при обработке комнаты ${room.label || room.id}:`,
+          roomError
+        );
+        // Продолжаем с следующей комнатой
+        continue;
+      }
+    }
+
+    // Восстанавливаем исходную комнату, если она была
+    if (currentRoomId) {
+      eventBus.emit("A:Load", currentRoomId);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    // Восстанавливаем исходный режим чертежа
+    if (menuStore.getDrowModeValue !== currentDrawingMode) {
+      await menuStore.toggleDrowModeValue();
+      eventBus.emit("A:DrawingMode", currentDrawingMode);
+    }
+
+    console.log(
+      `Все скриншоты комнат созданы и сохранены в стор. Всего скриншотов: ${
+        screenshotsStore.getScreenshots().length
+      }`
+    );
+    eventBus.emit("A:3DScreenshotCreated");
+  } catch (error) {
+    console.error("Ошибка при создании 3D скриншотов:", error);
+    eventBus.emit("A:3DScreenshotCreated");
   }
 };
 
-const resizeRoom = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Room-resize", inputValue.value);
+const take3DScreenshot = () => {
+  if (VerdekConstructor.value) {
+    try {
+      const renderer = VerdekConstructor.value._renderer;
+      if (!renderer) {
+        console.error("Renderer не найден");
+        return;
+      }
+
+      renderer.domElement.toBlob((blob: Blob | null) => {
+        if (blob) {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "3d-screenshot.png";
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      }, "image/png");
+    } catch (error) {
+      console.error("Ошибка при создании 3D скриншота:", error);
+    }
   }
 };
 
-const toggleShadow = (value: boolean) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ToggleShadow", value);
-  }
-};
-
-const toggleRefraction = (value: boolean) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ToggleRefraction", value);
-  }
-};
-
-const changePointLightPower = (value: number) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangePointLightPower", value);
-  }
-};
-
-const setQuality = (value: string) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Quality", value);
-  }
-};
-
-const create = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Create");
-  }
-};
-
-const save = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Save");
-  }
-};
-
-const load = () => {
-  if (VerdekConstructor) {
-    shadows.value = false;
-    refraction.value = false;
-    eventBus.emit("A:ToggleShadow", shadows.value);
-    eventBus.emit("A:ToggleRefraction", refraction.value);
-    eventBus.emit("A:Load", selectedRoom.value?.id);
-  }
-};
-
-const toggleiew = () => {
-  cameraView.value = !cameraView.value;
-  eventBus.emit("A:CameraToggle", cameraView.value);
-};
-
-const changeWallTexture = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangeWallTexture", wallTexture.value);
-  }
-};
-
-const changeFloorTexture = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangeFloorTexture", floorTexture.value);
-  }
-};
-
-const changeModuleTexture = (value: { [key: string]: any }) => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:ChangeModuleTexture", value);
-  }
-};
-
-// const changeFasadeTexture = (value: { [key: string]: any }) => {
-//   if (VerdekConstructor) {
-//     currentFasadeId.value = value.ID;
-
-//     if (
-//       appData.FASADE[currentFasadeId.value].PALETTE.length &&
-//       appData.FASADE[currentFasadeId.value].PALETTE[0] != null
-//     ) {
-//       paletteColorsData.value = Object.keys(appData.PALETTE)
-//         .filter(
-//           (key) =>
-//             appData.PALETTE[key].TYPE ===
-//             appData.FASADE[currentFasadeId.value].PALETTE[0]
-//         )
-//         .reduce((obj, key) => {
-//           obj[key] = appData.PALETTE[key];
-//           return obj;
-//         }, {});
-
-//       return;
-//     }
-
-//     paletteColorsData.value = {};
-//     eventBus.emit("A:ChangeFasadeTexture", value);
-//   }
-// };
-
-const changePaletteColor = () => {
-  // const selectedPalette = paletteColorsData.find(
-  //   (palette) => palette.UNAME === selectPalette.value
-  // );
-
-  eventBus.emit("A:ChangePaletteColor", selectPalette.value);
-};
-
-const onDrag = (event: any, model: { [key: string]: any } | string) => {
-  event.dataTransfer?.setData("text", JSON.stringify(model));
-};
-
-const removeModel = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:RemoveModel");
+const removeModel = (model) => {
+  if (VerdekConstructor.value) {
+    eventBus.emit("A:RemoveModel", { product: model });
     controller.value = false;
   }
-};
-
-const changeHeightClamp = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Height-clamp", clampHeight.value);
-  }
-};
-
-const getCurrentProduct = (item: any) => {
-  if (VerdekConstructor) {
-    product.value = item;
-  }
-};
-
-const toggleFasad = () => {
-  if (VerdekConstructor) {
-    eventBus.emit("A:Toggle-Fasad", clampHeight.value);
-  }
-};
-
-const getProductSizeProps = (
-  size?: { width: number; height: number; depth: number },
-  edit?: TEditSize
-) => {
-  productSize.value.width.value = 0;
-  productSize.value.height.value = 0;
-  productSize.value.depth.value = 0;
-
-  productSize.value.width.min = null;
-  productSize.value.width.max = null;
-  productSize.value.height.min = null;
-  productSize.value.height.max = null;
-  productSize.value.depth.min = null;
-  productSize.value.depth.max = null;
-
-  if (productSize.value) {
-    productSize.value.width.value = size.width;
-    productSize.value.height.value = size.height;
-    productSize.value.depth.value = size.depth;
-
-    productSize.value.width.min = edit.SIZE_EDIT_WIDTH_MIN;
-    productSize.value.width.max = edit.SIZE_EDIT_WIDTH_MAX;
-    productSize.value.height.min = edit.SIZE_EDIT_HEIGHT_MIN;
-    productSize.value.height.max = edit.SIZE_EDIT_HEIGHT_MAX;
-    productSize.value.depth.min = edit.SIZE_EDIT_DEPTH_MIN;
-    productSize.value.depth.max = edit.SIZE_EDIT_DEPTH_MAX;
-  }
-};
-
-const togglePopup = () => {
-  customiserStore.toggleCustomiserPopup();
 };
 
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
-  if (VerdekConstructor) {
+  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
+  if (VerdekConstructor.value) {
+    console.log('Pre-Create-Uniform-Group')
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
-  if (VerdekConstructor) {
+  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
+  if (VerdekConstructor.value) {
+    console.log('Create-Uniform-Group')
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
 
 const deliteUniformGroup = (id) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Delite-Uniform-Group", id);
   }
 };
 
 const addToUniformGroup = (id) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Add-To-Uniform-Group", id);
   }
 };
 
 const removeFromUniformGroup = (id) => {
-  if (VerdekConstructor) {
+  if (VerdekConstructor.value) {
     eventBus.emit("A:Remove-From-Uniform-Group", id);
   }
 };
@@ -503,76 +513,116 @@ const pregropping = computed(() => {
 });
 
 const controllerPosition = computed(() => {
+  const curX = controllerPositionData.value.x;
+  const curY = controllerPositionData.value.y;
+  if (controller.value) {
+    return {
+      transform: `translate(${curX}px, ${curY}px) scale(1)`,
+    };
+  }
   return {
-    transform: `translate(${controllerPositionData.value.x}px, ${controllerPositionData.value.y}px )`,
+    transform: `translate(${curX}px, ${curY}px) scale(0)`,
   };
 });
 
-/** Работа о сталешницами */
+/** Работа о столешницами */
 
-const saveTableData = ({ data, canvasHeight }) => {
+const saveTableData = () => {
   if (!product.value) return;
-  CutCash.value= product.value.PROPS.RASPIL = tableTopManager.value.saveGrid();
-  gridSaved.value = true;
+  const APP = VerdekConstructor.value;
+  const { userData, id } = product.value;
+
+  const groupID = userData.type !== "raspil" ? id : null;
+
+  CutCash.value = userData.PROPS.RASPIL = tableTopManager.value.saveGrid();
+  CutSave.value = true;
+
+  APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
 };
 
 const openTableRedactor = () => {
+  if (!product.value) return;
+  const APP = VerdekConstructor.value;
+  const { userData, id } = product.value;
+
   isModalOpen.value = true;
+
+  const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
+
+  if (parent) {
+    parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
+    APP!.tableTopCreator?.applyMovements(parent);
+  }
+  controller.value = false;
 };
 
 const closeTableRedactor = () => {
-  if (!gridSaved.value) product.value.PROPS.RASPIL = CutCash.value;
-
-  CutData.value = product.value.PROPS.RASPIL;
+  if (!product.value) return;
+  const APP = VerdekConstructor.value;
+  const { userData } = product.value;
+  if (!CutSave.value) {
+    userData.PROPS.RASPIL = CutCash.value;
+  }
+  CutData.value = userData.PROPS.RASPIL;
   isModalOpen.value = false;
-  gridSaved.value = false;
-};
-//
+  CutSave.value = false;
 
-/** Редактор УМ */
+  /** Сохраняем данные в родителе */
 
-const saveUMData = ({ data, canvasHeight }) => {
-  if (!product.value)
-    return;
-  universalModuleCash.value= product.value.PROPS.CONFIG.MODULEGRID = universalModule2DConstructor.value.saveGrid();
-  gridUMSaved.value = true;
+  const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
+  if (parent) {
+    parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
+  }
 };
 
-const openUMRedactor = () => {
-  //isUMModalOpen.value = true;
-  const menuStore = useMenuStore();
-  menuStore.openMenu('2dModuleConstructor', universalModuleData.value.object.globalData, [universalModuleData.value.object])
+const deliteTable = () => {
+  if (!product.value) return;
+  const APP = VerdekConstructor.value;
+  const { userData } = product.value;
+
+  const parent = toRaw(
+    APP!._scene!.getObjectByProperty("id", userData.groupId)
+  );
+
+  isModalOpen.value = false;
+  CutSave.value = false;
+  CutData.value = {};
+  CutCash.value = {};
+  if (parent) {
+    removeModel(parent);
+  } else {
+    removeModel(null);
+  }
 };
 
-const closeUMRedactor = () => {
-  if (!gridUMSaved.value) product.value.PROPS.CONFIG.MODULEGRID = universalModuleCash.value;
-
-  universalModuleData.value = product.value.PROPS.CONFIG.MODULEGRID;
-  isUMModalOpen.value = false;
-  gridUMSaved.value = false;
-};
-//
-
+defineExpose({
+  VerdekConstructor,
+  closeTableRedactor,
+  openTableRedactor,
+  selected,
+  activePreloader,
+  getScreenshots: () => screenshotsStore.getScreenshots(),
+  getScreenshotsByRoom: (roomId: string) =>
+    screenshotsStore.getScreenshotsByRoom(roomId),
+  clearScreenshots: () => screenshotsStore.clearScreenshots(),
+});
 </script>
 
 <template>
   <div ref="sceneContainer" class="scene-container"></div>
+  <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
-  <!-- <div class="inputs">
-    <customInput v-model="clampHeight" :min="758" :max="2000" :step="10" />
-    <button class="btn" @click="changeHeightClamp">Поменять</button>
-  </div> -->
 
-  <div
+  <!-- Пока что закоментил потом удалим <div
     class="uniform__container"
     v-if="
-      uniformState.getUniformGroups.length > 0 &&
-      uniformState.getUniformModeData.uniformMode
+      uniformState!.getUniformGroups.length > 0 &&
+      uniformState!.getUniformModeData.uniformMode
     "
   >
     <div
       class="uniform__item"
-      v-for="(item, key) in uniformState.getUniformGroups"
+      v-for="(item, key) in uniformState!.getUniformGroups as THREETypes.TUniformGroups[]"
       :key="key + item.id"
     >
       <p class="uniform__name" :style="[`background-color: ${item.color}`]">
@@ -590,14 +640,12 @@ const closeUMRedactor = () => {
         Убрать ЭЛЕМЕНТ
       </button>
     </div>
-  </div>
+  </div> -->
 
-  <div class="ui-panel--right">
-    <!-- <button class="btn" @click="save">Сохранить</button>
-    <button class="btn" @click="create">Создать новую</button> -->
+  <!-- <div class="ui-panel--right">
     <button
       style="margin-top: 2rem"
-      v-show="uniformState.getUniformModeData.uniformMode"
+      v-show="uniformState!.getUniformModeData.uniformMode"
       :class="['btn', pregropping]"
       @click="preCreateUniformGroup"
     >
@@ -606,261 +654,102 @@ const closeUMRedactor = () => {
 
     <button
       class="btn btn_green"
-      @click="сreateUniformGroup"
+      @click="сreateUniformGroup()"
       v-show="
-        uniformState.getPreGroup > 0 &&
-        uniformState.getUniformModeData.uniformMode
+        uniformState!.getPreGroup > 0 &&
+        uniformState!.getUniformModeData.uniformMode
       "
     >
       Создать
     </button>
-  </div>
-
-  <div class="quality">
-    <div>
-      <p>Тени</p>
-      <Toggle v-model="shadows" />
-    </div>
-
-    <div>
-      <p>Отражение</p>
-      <Toggle v-model="refraction" />
-    </div>
-
-    <!-- <div>
-      <p>Направленный свет</p>
-      <Slider v-model="pointLightValue" />
-    </div> -->
-
-    <!-- <button class="btn" v-for="(item, key) in quality" :key="key + item" @click="setQuality(item)">
-      {{ item }}
-    </button> -->
-  </div>
-
-  <select
-    class="example"
-    id="rooms"
-    v-model="selectValue"
-    name="rooms"
-    @change="load"
-    style="top: 15rem; left: 25rem"
-  >
-    <option
-      v-for="(room, key) in roomStore.getRooms"
-      :key="key"
-      :value="room.id"
-    >
-      {{ room.label }}
-    </option>
-  </select>
-
-  <!-- <div class="ui-panel--right">
-    <button class="btn" @click="save">Сохранить</button>
-    <button class="btn" @click="create">Создать новую</button>
-    <button class="btn" @click="toggleiew">Поменять вид</button>  -->
-  <!-- </div> -->
-
-  <!-- <div class="room-textures">
-    <select class="room-textures--item" id="wall" v-model="wallTexture" name="wall" @change="changeWallTexture">
-      <option v-for="(texture, key) in wallMaterials" :key="key" :value="texture.ID">
-        {{ texture.NAME }}
-      </option>
-    </select>
-
-    <select class="room-textures--item" id="floor" v-model="floorTexture" name="floor" @change="changeFloorTexture">
-      <option v-for="(texture, key) in floorMaterials" :key="key" :value="texture.ID">
-        {{ texture.NAME }}
-      </option>
-    </select>
-  </div> -->
-
-  <!-- <div
-    :class="['model-controller', activeController]"
-    :style="controllerPosition"
-    v-if="product"
-  >
-    <div>
-      <h2>{{ productData.PRODUCT?.NAME }}</h2>
-      <div class="model-controller_controls">
-        <div class="model-controller_items">
-          <h3>Корпус</h3>
-          <div class="model-controller_elements">
-            <div
-              v-for="(fasade_data, key) in productColor"
-              :key="fasade_data!.NAME + key"
-              class="model-controller_item"
-              @click="changeModuleTexture(fasade_data)"
-            >
-              <img
-                class="model-controller_image"
-                :src="_URL + fasade_data.DETAIL_PICTURE"
-                alt=""
-              />
-              <p class="model-controller_text">{{ fasade_data.NAME }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="product-size" v-if="product">
-          <div v-for="size in productSize">
-            <p>{{ size.title }}</p>
-            <b></b>
-            <customInput
-              v-model="size.value"
-              :min="size.min !== null ? size.min : null"
-              :max="size.max !== null ? size.max : null"
-              :step="1"
-            />
-          </div>
-          <button class="btn" @click="resizeModel">Resize</button>
-        </div>
-        <div class="model-controller_items">
-          <h3>Фасад</h3>
-          <div class="model-controller_elements">
-            <div
-              v-for="(fasade_data, key) in fasadeColor"
-              :key="fasade_data!.NAME + key"
-              class="model-controller_item"
-              @click="changeFasadeTexture(fasade_data)"
-            >
-              <img
-                class="model-controller_image"
-                :src="_URL + fasade_data.DETAIL_PICTURE"
-                alt=""
-              />
-              <p class="model-controller_text">{{ fasade_data.NAME }}</p>
-            </div>
-          </div>
-          <select
-            v-if="showPalette"
-            class="palette-textures--items"
-            id="palette"
-            v-model="selectPalette"
-            name="palette"
-            @change="changePaletteColor"
-          >
-            <option
-              v-for="(palette, key) in paletteColorsData"
-              :key="key"
-              :value="palette.ID"
-            >
-              {{ palette.NAME }} {{ palette.UNAME }}
-            </option>
-          </select>
-
-          <button class="btn" @click="toggleFasad">Скрыть/Показать</button>
-        </div>
-      </div>
-    </div>
-    <button class="btn" @click="removeModel">Удалить</button>
   </div> -->
 
   <div
     :class="['model-controller', activeController]"
     :style="controllerPosition"
   >
-    <div class="controller-left">
-      <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-      <ControllerButton />
-      <ContentControllerButton />
-      <DeleteControllerButton @click="removeModel" />
-    </div>
-    <div class="controller-right">
-      <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-      <UpControllerButton />
-      <OpenFacadeButton />
+    <div class="controller-container">
+      <div class="controller-left">
+        <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
+        <ControllerButton
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+        />
+        <ContentControllerButton
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+        />
+        <DeleteControllerButton
+          v-if="Object.keys(CutData).length == 0"
+          @click="removeModel(null)"
+        />
+      </div>
+      <div class="controller-right">
+        <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
+        <!-- <UpControllerButton /> -->
+        <OpenFacadeButton />
 
-      <Modal
-        v-if="CutData.data"
-        :container="`modal--tableTop`"
-        @open-modal="openTableRedactor"
-        @close-modal="closeTableRedactor"
-      >
-        <template #modalBody="{ onModalClose }" class="modal--tableTop">
-          <TableTopManager
-            ref="tableTopManager"
-            :grid="CutData.data"
-            :canvasHeight="CutData.canvasHeight"
-            v-if="isModalOpen"
-          >
-            <template #save>
-              <button
-                class="actions-btn actions-btn--footer"
-                @click="saveTableData"
-              >
-                Сохранить
-              </button>
-            </template>
-            <template #close>
-              <button
-                @click="
-                  () => {
-                    onModalClose();
-                  }
-                "
-                class="actions-btn actions-btn--footer"
-              >
-                Закрыть
-              </button>
-            </template>
-          </TableTopManager>
-        </template>
-        <template #modalOpen="{ onModalOpen }">
-          <button class="cut-btn" @click="onModalOpen">
-            <img class="cut-icon" src="/icons/cut.svg" alt="" />
-          </button>
-        </template>
-      </Modal>
-
-      <button
-          v-if="universalModuleData.data"
-          class="cut-btn" @click="openUMRedactor">
-        <img class="cut-icon" src="/icons/cut.svg" alt="" />
-      </button>
-
-<!--      <Modal
-          v-if="universalModuleData.data"
-          :container="`modal&#45;&#45;tableTop`"
-          @open-modal="openUMRedactor"
-          @close-modal="closeUMRedactor"
-      >
-        <template #modalBody="{ onModalClose }" class="modal&#45;&#45;tableTop">
-          <Module2DConstructor2
-              ref="universalModule2DConstructor"
-              :grid="universalModuleData.data"
-              :canvasHeight="universalModuleData.canvasHeight"
-              v-if="isUMModalOpen"
-          >
-            <template #save>
-              <button
-                  class="actions-btn actions-btn&#45;&#45;footer"
-                  @click="saveUMData"
-              >
-                Сохранить
-              </button>
-            </template>
-
-            <template #close>
-              <button
+        <Modal
+          v-if="Object.keys(CutData).length > 0"
+          :container="`modal--tableTop`"
+          @open-modal="openTableRedactor"
+          @close-modal="closeTableRedactor"
+        >
+          <template #modalBody="{ onModalClose }" class="modal--tableTop">
+            <TableTopManager
+              ref="tableTopManager"
+              :grid="CutData.data"
+              :canvas-height="CutData.canvasHeight"
+              :model-height="CutData.modelHeight"
+              v-if="isModalOpen"
+            >
+              <template #delite>
+                <button
+                  class="actions-btn actions-btn--footer"
                   @click="
-                  () => {
-                    onModalClose();
-                  }
-                "
-                  class="actions-btn actions-btn&#45;&#45;footer"
-              >
-                Закрыть
-              </button>
-            </template>
-
-          </Module2DConstructor2>
-        </template>
-        <template #modalOpen="{ onModalOpen }">
-          <button class="cut-btn" @click="onModalOpen">
-            <img class="cut-icon" src="/icons/cut.svg" alt="" />
-          </button>
-        </template>
-      </Modal>-->
+                    () => {
+                      deliteTable();
+                      onModalClose();
+                    }
+                  "
+                >
+                  Удалить
+                </button>
+              </template>
+              <template #save>
+                <button
+                  class="actions-btn actions-btn--footer"
+                  @click="saveTableData"
+                >
+                  Сохранить
+                </button>
+              </template>
+              <template #close>
+                <button
+                  @click="
+                    () => {
+                      onModalClose();
+                    }
+                  "
+                  class="actions-btn actions-btn--footer"
+                >
+                  Закрыть
+                </button>
+              </template>
+            </TableTopManager>
+          </template>
+          <template #modalOpen="{ onModalOpen }">
+            <CutButton @click="onModalOpen" />
+            <!-- <button class="cut-btn" @click="onModalOpen">
+              <img class="cut-icon" src="/icons/cut.svg" alt="" />
+            </button> -->
+          </template>
+        </Modal>
+        <div v-show="universalModuleData && product">
+          <ModalUM2Dconstructor
+            ref="universalModule2DConstructor"
+            :product="product"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -885,12 +774,20 @@ const closeUMRedactor = () => {
 }
 
 .scene-container {
-  width: 100dvw;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
   position: relative;
   overflow: hidden;
   background-color: white;
   z-index: 0;
+}
+
+.preloader {
+  position: absolute;
+  width: 100dvw;
+  height: 100dvh;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
 }
 
 .inputs {
@@ -915,68 +812,6 @@ const closeUMRedactor = () => {
   background-color: rgba(255, 255, 255, 0.615);
 }
 
-.quality {
-  position: absolute;
-  right: 2rem;
-  top: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.example {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  // width: clamp(100px, 10vw - 1rem, 250px );
-  aspect-ratio: 1;
-  height: 2rem;
-  width: fit-content;
-  border-radius: 5px;
-  border: none;
-  outline: none;
-}
-
-.drag_example {
-  width: fit-content;
-  position: absolute;
-
-  bottom: 5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-
-  &--items {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  &--item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    color: black;
-    max-width: 50px;
-
-    p {
-      font-size: 0.75rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  }
-
-  &--image {
-    width: 50px;
-    object-fit: cover;
-  }
-}
-
 .ui-panel--right {
   position: absolute;
   right: 2rem;
@@ -995,37 +830,29 @@ const closeUMRedactor = () => {
   left: 50%;
   top: 50%;
   padding: 1rem;
-  filter: blur(10px);
+
   opacity: 0;
-  transform: translate(-50%, -50%);
+  filter: blur(10px);
+  transform-origin: top center;
   pointer-events: none;
   user-select: none;
-  -webkit-user-drag: none;
-  max-height: 0;
-  z-index: -1;
 
+  -webkit-user-drag: none;
+  transition: all 0.2s ease-in-out;
   &--active {
-    filter: blur(0);
     opacity: 1;
-    height: fit-content;
-    max-height: 50vh;
-    z-index: 0;
+    filter: blur(0);
   }
 
   .controller-left {
-    position: absolute;
-    left: 30px;
-    top: -30px;
+    transform: translate(23px, -69px);
 
     .left-line {
     }
   }
 
   .controller-right {
-    position: absolute;
-    left: 80px;
-    top: 30px;
-
+    transform: translate(69px, -46 * 5px);
     .right-line {
     }
   }
@@ -1076,6 +903,34 @@ const closeUMRedactor = () => {
 
   &_text {
     font-size: 12px;
+  }
+}
+
+.controller {
+  &-container {
+    position: relative;
+  }
+}
+
+.right-menu__button {
+  border-color: #ecebf1;
+  transition-property: background-color, border-color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+
+  &.active {
+    background-color: #131313;
+
+    &:active {
+      background-color: #131313;
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: #131313;
+      border-color: #131313;
+    }
   }
 }
 
@@ -1194,6 +1049,13 @@ const closeUMRedactor = () => {
   &-icon {
     width: 25px;
     height: 25px;
+    svg {
+      g {
+        path {
+          fill: black;
+        }
+      }
+    }
   }
 }
 </style>

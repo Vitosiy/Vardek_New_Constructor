@@ -11,7 +11,7 @@ import {
   defineExpose,
   render,
   onBeforeMount,
-  toRef,
+  toRef, toRefs,
 } from "vue";
 import {Application, Container, Graphics, Text} from "pixi.js";
 import {Shape, ShapeAdjuster, Section} from "./utils/Methods";
@@ -19,7 +19,7 @@ import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
 
 const props = defineProps({
   module: {
-    type: Array,
+    type: Object,
     required: true,
   },
 
@@ -48,12 +48,17 @@ const props = defineProps({
   container: {},
 });
 
-const emit = defineEmits(["cell-selected", "position-non"]);
+const emit = defineEmits([
+    "cell-selected",
+    "position-non",
+    "calcDrawersFasades"
+]);
 const canvasContainer = ref();
 
 const selectedCell = ref({sec: 0, cell: 0, row: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
 const selectedFilling = ref({sec: 0, cell: 0, row: null, item: 0});
+const {module} = toRefs(props)
 
 let app: Application,
     sectionsContainer: Container,
@@ -61,6 +66,7 @@ let app: Application,
     dementionContainer: Container,
     fillingsContainer: Container,
     fasadesContainer: Container,
+    loopsContainer: Container,
     shapeAdjuster: ShapeAdjuster;
 
 let cursorCheck = false;
@@ -73,10 +79,11 @@ const deviders: Graphics[] = [];
 const dementions: Graphics[] = [];
 const fillings: Graphics[] = [];
 const fasades: Graphics[] = [];
+const loops: Container[] = [];
 
 const {
-  MAX_AREA_WIDTH,
-  MAX_AREA_HEIGHT,
+  CONST_MAX_AREA_WIDTH,
+  CONST_MAX_AREA_HEIGHT,
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
@@ -109,84 +116,85 @@ const dragState = reactive({
   element: null,
 });
 
+const MAX_AREA_WIDTH = computed(() => {
+  let midArea = document.getElementById("midAreaUM2Dconstructor")
+  return midArea?.clientWidth * 0.7 || CONST_MAX_AREA_WIDTH;
+});
+
+const MAX_AREA_HEIGHT = computed(() => {
+  let midArea = document.getElementById("midAreaUM2Dconstructor")
+  return midArea?.clientHeight * 0.75 || CONST_MAX_AREA_HEIGHT;
+});
+
 const TOTAL_HEIGHT = ref(0);
 const TOTAL_WIDTH = ref(0);
-const areaHeight = ref(MAX_AREA_HEIGHT);
-const areaWidth = ref(MAX_AREA_WIDTH);
+const areaHeight = ref(0);
+const areaWidth = ref(0);
 const mode = ref('module');
 
-const pixelRatio = computed(() => TOTAL_WIDTH.value / MAX_AREA_WIDTH);
+const calcDrawersFasades = (secIndex, fillingData = false) => {
+  emit("calcDrawersFasades", secIndex, fillingData);
+}
 
-const getMaxAreaHeight = () =>
-    (TOTAL_HEIGHT.value * MAX_AREA_WIDTH) / TOTAL_WIDTH.value;
+const pixelRatio = computed(() => TOTAL_WIDTH.value / areaWidth.value);
 
-const getMaxAreaWidth = () =>
-    (TOTAL_WIDTH.value * MAX_AREA_HEIGHT) / TOTAL_HEIGHT.value;
+const calcMaxAreaSize = () => {
+  let scale = Math.min(MAX_AREA_WIDTH.value / TOTAL_WIDTH.value, MAX_AREA_HEIGHT.value / TOTAL_HEIGHT.value)
 
-const updateTotalHeight = (value) => {
-  TOTAL_HEIGHT.value = parseInt(value);
-  areaHeight.value = getMaxAreaHeight();
-
-  app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
-  app.renderer.resize(areaWidth.value, areaHeight.value);
-};
-
-const updateTotalWidth = (value) => {
-  TOTAL_WIDTH.value = parseInt(value);
-  areaWidth.value = getMaxAreaWidth();
-
-  app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
-  app.renderer.resize(areaWidth.value, areaHeight.value);
-};
+  areaWidth.value = TOTAL_WIDTH.value * scale;
+  areaHeight.value = TOTAL_HEIGHT.value * scale;
+}
 
 const updateTotalSize = (value, dimension) => {
-  if (dimension === "width") {
-    TOTAL_WIDTH.value = parseInt(value);
-    areaWidth.value = getMaxAreaWidth();
-    areaHeight.value = getMaxAreaHeight();
-  } else {
-    TOTAL_HEIGHT.value = parseInt(value);
-    areaHeight.value = getMaxAreaHeight();
-    areaWidth.value = getMaxAreaWidth();
+
+  switch (dimension) {
+    case "width":
+      TOTAL_WIDTH.value = parseInt(value);
+      break;
+    case "height":
+      TOTAL_HEIGHT.value = parseInt(value);
+      break;
+    default:
+      break;
   }
 
-  app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
-  app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
-  app.renderer.resize(MAX_AREA_WIDTH, MAX_AREA_HEIGHT);
+  calcMaxAreaSize();
+
+  app.canvas.style.width = `${areaWidth.value}px`;
+  app.canvas.style.height = `${areaHeight.value}px`;
+  app.renderer.resize(areaWidth.value, areaHeight.value);
 };
 
-
 const getPixelWidth = (mmWidth) => {
-  // return Math.floor((mmWidth / TOTAL_LENGTH) * MAX_AREA_WIDTH);
-  return (mmWidth / TOTAL_WIDTH.value) * MAX_AREA_WIDTH;
+  return (mmWidth / TOTAL_WIDTH.value) * areaWidth.value;
 };
 
 const getPixelHeight = (mmHeight) => {
-  // return Math.floor((mmHeight / TOTAL_HEIGHT) * getMaxAreaHeight.value);
-  return (mmHeight / TOTAL_HEIGHT.value) * MAX_AREA_HEIGHT;
+  return (mmHeight / TOTAL_HEIGHT.value) * areaHeight.value;
 };
 
 const getMmWidth = (pxWidth) => {
-  return (pxWidth / MAX_AREA_WIDTH) * TOTAL_WIDTH.value;
+  return (pxWidth / areaWidth.value) * TOTAL_WIDTH.value;
 };
 
 const getMmHeight = (pxHeight) => {
-  return (pxHeight / MAX_AREA_HEIGHT) * TOTAL_HEIGHT.value;
+  return (pxHeight / areaHeight.value) * TOTAL_HEIGHT.value;
 };
 
 const init = async () => {
   app = new Application();
   await app.init({
     canvas: canvasContainer.value,
-    width: MAX_AREA_WIDTH,
-    height: MAX_AREA_HEIGHT,
+    width: areaWidth.value,
+    height: areaHeight.value,
     backgroundColor: BACKGROUND_COLOR,
     resolution: window.devicePixelRatio || 1,
     // autoDensity: true,
     antialias: true,
     premultipliedAlpha: false,
   });
-
+  updateTotalSize();
+  loopsContainer = new Container();
   sectionsContainer = new Container();
   lablesContainer = new Container();
   dementionContainer = new Container();
@@ -195,6 +203,7 @@ const init = async () => {
 
   // sectionsContainer.interactive = true;
   fillingsContainer.interactive = true;
+  //loopsContainer.interactiveChildren = true;
   fasadesContainer.interactive = true;
   lablesContainer.interactiveChildren = false;
   dementionContainer.interactiveChildren = false;
@@ -202,6 +211,7 @@ const init = async () => {
   app.stage.addChild(dementionContainer);
   app.stage.addChild(fillingsContainer);
   app.stage.addChild(sectionsContainer);
+  app.stage.addChild(loopsContainer);
   app.stage.addChild(fasadesContainer);
   app.stage.addChild(lablesContainer);
 
@@ -247,6 +257,8 @@ const renderGrid = () => {
     yOffset = getPixelHeight(props.module.moduleThickness);
     xOffset += getPixelWidth(props.module.moduleThickness)
 
+    let tmp_array_sectors = []
+
     if (section.cells.length > 0) {
       section.cells.forEach((cell, cellIndex, section) => {
         const pxHeight = getPixelHeight(cell.height);
@@ -260,7 +272,7 @@ const renderGrid = () => {
             cellRow.xOffset = rowxOffset;
             cellRow.yOffset = yOffset;
 
-            createSector({
+            let sector = createSector({
               x: rowxOffset,
               y: yOffset,
               width: RowpxWidth,
@@ -275,6 +287,9 @@ const renderGrid = () => {
               gridType: "module",
             });
 
+            if(cellRowIndex === 0)
+              tmp_array_sectors.push(sector)
+
             //Добавляем отступ по вертикали
             rowxOffset += RowpxWidth + getPixelWidth(props.module.moduleThickness);
             const colBond = shapeAdjuster.createColumnBounds(sections, sectionIndex);
@@ -285,8 +300,8 @@ const renderGrid = () => {
             cellRow.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
           });
         }
-        else
-          createSector({
+        else {
+          let sector = createSector({
             x: xOffset,
             y: yOffset,
             width: pxWidth,
@@ -298,6 +313,9 @@ const renderGrid = () => {
             _sector: moduleSector,
             gridType: "module",
           });
+
+          tmp_array_sectors.push(sector)
+        }
 
         //Добавляем отступ по вертикали
         yOffset += pxHeight + getPixelHeight(props.module.moduleThickness);
@@ -316,7 +334,7 @@ const renderGrid = () => {
 
       // Отрисовываем секцию
 
-      createSector({
+      let sector = createSector({
         x: xOffset,
         y: yOffset,
         width: pxWidth,
@@ -328,6 +346,7 @@ const renderGrid = () => {
         _sector: moduleSector,
         gridType: "module",
       });
+      tmp_array_sectors.push(sector)
 
       //Добавляем отступ по вертикали
       yOffset += pxHeight;
@@ -339,47 +358,161 @@ const renderGrid = () => {
       section.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
     }
 
-
     //Добавляем отступ по горизонтали
     xOffset += pxWidth;
-  })
 
+    if (section.loops?.length) {
 
-  if (mode.value === "fasades") {
-    xOffset = getPixelWidth(2);
-    props.module?.sections.forEach((section, sectionIndex) => {
+      section.loops.forEach((door, doorIndex, ) => {
+        door.forEach((loop, loopIndex) => {
+          let tmpLoopData = Object.assign({}, loop)
+          delete tmpLoopData.coords;
+          delete tmpLoopData.errors;
+
+          let loopXOffset = getPixelWidth(tmpLoopData.positionX);
+          let loopYOffset = getPixelHeight(module.value.height);
+          const pxWidth = getPixelWidth(tmpLoopData.width);
+          const pxHeight = getPixelHeight(tmpLoopData.height);
+
+          tmpLoopData.xOffset = loopXOffset;
+
+          loop.coords.forEach((pos, posIndex, ) => {
+            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height);
+            // Отрисовываем секцию
+
+            let loopSector = createLoop({
+              x: tmpLoopData.xOffset,
+              y: tmpLoopData.yOffset,
+              width: pxWidth,
+              height: pxHeight,
+              loopData: {
+                ...tmpLoopData,
+                error: loop.errors?.includes(posIndex),
+                position: {x: tmpLoopData.xOffset, y: tmpLoopData.yOffset}
+              },
+            });
+
+            for(let i = 0; i < tmp_array_sectors.length; i++) {
+              let sector = tmp_array_sectors[i];
+
+              if(checkSectorsCollision(loopSector.sectorData, sector)) {
+                let tempShape = new Shape({
+                  type: "loop",
+                  sector,
+                  data: tmpLoopData,
+                  position: {x: getMmHeight(loopSector.sectorData.position.x), y: getMmHeight(loopSector.sectorData.position.y)},
+                  getMmWidth,
+                  getMmHeight,
+                  getPixelHeight,
+                  getPixelWidth,
+                  calcDrawersFasades,
+                });
+
+                sector.shapes.push(tempShape);
+                break;
+              }
+
+            }
+          })
+        })
+      })
+    }
+
+    if (mode.value === "fasades" && !module.value?.isSlidingDoors) {
       section.fasades.forEach((column, colIndex) => {
+
+        if(!column.length)
+          return;
+
         const pxWidth = getPixelWidth(column[0].width);
-        yOffset = getPixelHeight(2);
+        let fasadeXOffset = getPixelWidth(column[0].position.x);
 
         column.forEach((row, rowIndex, col) => {
+          let fasadeYOffset = getPixelHeight(module.value.height - row.position.y - row.height);
+
           const pxHeight = getPixelHeight(row.height);
-          row.xOffset = xOffset;
-          row.yOffset = yOffset;
+          row.xOffset = fasadeXOffset;
+          row.yOffset = fasadeYOffset;
 
           // Отрисовываем секцию
 
           createSector({
-            x: xOffset,
-            y: yOffset,
+            x: fasadeXOffset,
+            y: fasadeYOffset,
             width: pxWidth,
             height: pxHeight,
             sectionIndex,
             cellIndex: colIndex,
-            rowIndex: rowIndex,
+            rowIndex: row.id - 1,
             cellData: row,
             section: col,
             _sector: moduleSector,
             gridType: 'fasades',
           });
-
-          //Добавляем отступ по вертикали
-          yOffset += pxHeight + getPixelHeight(4);
         });
         //Добавляем отступ по горизонтали
-        xOffset += pxWidth + getPixelWidth(4);
+        fasadeXOffset += pxWidth + getPixelWidth(4);
       });
-    })
+
+      let fasadeXOffset = getPixelWidth(section.fasadesDrawers?.[0]?.position.x);
+      section.fasadesDrawers?.forEach((row, rowIndex, col) => {
+        const pxWidth = getPixelWidth(row.width);
+        let fasadeYOffset = getPixelHeight(module.value.height - row.position.y - row.height);
+
+        const pxHeight = getPixelHeight(row.height);
+        row.xOffset = fasadeXOffset;
+        row.yOffset = fasadeYOffset;
+
+        // Отрисовываем секцию
+
+        createSector({
+          x: fasadeXOffset,
+          y: fasadeYOffset,
+          width: pxWidth,
+          height: pxHeight,
+          sectionIndex,
+          cellIndex: 0,
+          rowIndex: row.id - 1,
+          cellData: row,
+          section: col,
+          _sector: moduleSector,
+          gridType: 'fasades',
+        });
+      });
+    }
+  })
+
+  if (mode.value === "fasades" && module.value?.isSlidingDoors) {
+    module.value?.fasades?.forEach((column, colIndex) => {
+      const pxWidth = getPixelWidth(column[0].width);
+      let fasadeXOffset = getPixelWidth(column[0].position.x);
+
+      column.forEach((row, rowIndex, col) => {
+        let fasadeYOffset = getPixelHeight(module.value.height - row.position.y - row.height);
+
+        const pxHeight = getPixelHeight(row.height);
+        row.xOffset = fasadeXOffset;
+        row.yOffset = fasadeYOffset;
+
+        // Отрисовываем секцию
+
+        createSector({
+          x: fasadeXOffset,
+          y: fasadeYOffset,
+          width: pxWidth,
+          height: pxHeight,
+          sectionIndex: null,
+          cellIndex: colIndex,
+          rowIndex: column.length > 1 ? row.id - 1 : null,
+          cellData: row,
+          section: col,
+          _sector: moduleSector,
+          gridType: 'fasades',
+        });
+      });
+      //Добавляем отступ по горизонтали
+      fasadeXOffset += pxWidth + getPixelWidth(4);
+    });
   }
 
   sections.forEach((elem) => {
@@ -388,6 +521,10 @@ const renderGrid = () => {
 
   deviders.forEach((elem) => {
     sectionsContainer.addChild(elem);
+  });
+
+  loops.forEach((elem) => {
+    loopsContainer.addChild(elem);
   });
 
   fillings.forEach((elem) => {
@@ -437,6 +574,8 @@ const createModule = ({
 
   moduleData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
   moduleData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+  moduleData.maxX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxX));
+  moduleData.minX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minX));
 
   moduleData.sector = sector;
 
@@ -494,10 +633,9 @@ const createSector = ({
   sector.addChild(cell.cellGraphics);
   sector.addChild(cell.highlightGraphics);
 
-  if(gridType === "fasades") {
+  if (gridType === "fasades") {
     fasades.push(sector);
-  }
-  else if (!_sector)
+  } else if (!_sector)
     sections.push(sector);
   else
     _sector.addChild(sector);
@@ -511,12 +649,12 @@ const createSector = ({
   });
 
   // Создаём ограничения для секторов по высоте
-  if(gridType !== "fasades") {
+  if (gridType !== "fasades") {
     const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
     sector.bound = sectorBounds;
 
-    cell.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-    cell.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
+    cellData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
+    cellData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
   }
 
   cellData.sector = sector;
@@ -535,6 +673,40 @@ const createSector = ({
     // /**Создание горизонтального драга */
     //createHorozontalCut({width, height, cell: cellData, section, sectionIndex, sector, cellIndex, rowIndex});
   }
+
+  return sector;
+};
+
+const createLoop = ({
+                        x,
+                        y,
+                        width,
+                        height,
+                        loopData,
+                      }) => {
+  const sector = new Container();
+
+  sector.position.set(x, y);
+
+  sector.shapes = [];
+  sector.sectorData = loopData;
+  sector.sections = sections;
+
+  const cell = new Section(loopData, width, height, sector, false);
+  cell.highlightGraphics.visible = false;
+  cell.cellGraphics.eventMode = "static";
+
+  sector.addChild(cell.cellGraphics);
+
+  loops.push(sector);
+
+  // Создаём ограничения для секторов по высоте
+  const sectorBounds = shapeAdjuster.getSectorBounds(sector);
+  sector.bound = sectorBounds;
+
+  loopData.sector = sector;
+
+  return sector;
 };
 
 const createFilling = (data, sector) => {
@@ -549,6 +721,7 @@ const createFilling = (data, sector) => {
     getMmHeight,
     getPixelHeight,
     getPixelWidth,
+    calcDrawersFasades,
     dementions,
     dementionContainer,
     dragActive: mode.value === "fillings",
@@ -556,7 +729,7 @@ const createFilling = (data, sector) => {
 
   data.sector = filling.sector;
 
-  if(mode.value === "fillings") {
+  if (mode.value === "fillings") {
     createSectioNum({
       x: getPixelWidth(filling.data.position.x),
       y: getPixelHeight(filling.data.position.y),
@@ -598,14 +771,22 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
   const xOffset = cell.xOffset || x;
   const yOffset = cell.yOffset || y;
 
-  let text = rowIndex !== null ? `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}` : `${sectionIndex + 1}.${cellIndex + 1}`;
-  if(itemIndex)
+  let text
+
+  if(sectionIndex === null) {
+    text = rowIndex !== null ? `${cellIndex + 1}.${rowIndex + 1}` : `${cellIndex + 1}`;
+  }
+  else {
+    text = rowIndex !== null ? `${sectionIndex + 1}.${cellIndex + 1}.${rowIndex + 1}` : `${sectionIndex + 1}.${cellIndex + 1}`;
+  }
+
+  if (itemIndex)
     text += ` ${itemIndex}`
 
   const cellNumber = new Text({
-        text: text,
-        style: {fontSize: 14, fill: "#131313", align: "center"},
-      })
+    text: text,
+    style: {fontSize: 14, fill: "#131313", align: "center"},
+  })
 
   cellNumber.anchor.set(0.5);
   cellNumber.x = xOffset + pxWidth / 2;
@@ -743,8 +924,11 @@ const checkPositionFillingToCreate = (data) => {
     sector,
     position: {x: 0, y: 0},
     data,
-    getMmWidth: getMmWidth,
-    getMmHeight: getMmHeight,
+    getMmWidth,
+    getMmHeight,
+    getPixelHeight,
+    getPixelWidth,
+    calcDrawersFasades,
   });
 
   /** Проверяем на возможность размещения отверстия */
@@ -757,7 +941,7 @@ const checkPositionFillingToCreate = (data) => {
 
   return {
     x: Math.round(getMmWidth(position.x)),
-    y: Math.round(getMmWidth(position.y)),
+    y: Math.round(getMmHeight(position.y)),
     width: data.width,
     height: data.height,
     type: data.type,
@@ -781,6 +965,7 @@ const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = nu
       break;
     default:
       selectedCell.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex};
+      selectedFilling.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, item: item};
       toggleSectionColor(sectionIndex, cellIndex, rowIndex);
       break;
   }
@@ -804,8 +989,12 @@ const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null) => {
   // sector.children[0].alpha = 0.5;
 };
 
+const checkSectorsCollision = (currShape, targetSector) => {
+  return shapeAdjuster.checkToCollision(targetSector, false, currShape);
+}
+
 const toggleFasadeColor = (sectionIndex, doorIndex, segmentIndex = 0) => {
-  const _fasades = props.module.sections[sectionIndex].fasades
+  const _fasades = sectionIndex === null ? module?.value?.fasades : props.module.sections[sectionIndex].fasades
   const door = _fasades[doorIndex]
   const segment = door?.[segmentIndex]
 
@@ -1092,8 +1281,7 @@ const adjustSectionSize = (
     module[dimension] = newValue
 
     calcValue = newValue
-  }
-  else {
+  } else {
     if (dimension === "width") {
       const column = module.sections[sectionIndex];
       const cell = column.cells?.[cellIndex];
@@ -1125,8 +1313,7 @@ const adjustSectionSize = (
             minCurrent,
             minNext
         );
-      }
-      else if (sectionIndex > 0) {
+      } else if (sectionIndex > 0) {
         const prevRow = rowIndex !== null ? cell.cellsRows[rowIndex - 1] :
             cellIndex !== null ? column.cells[cellIndex - 1] :
                 module.sections[sectionIndex - 1];
@@ -1175,14 +1362,12 @@ const adjustSectionSize = (
               minCurrent,
               minPrev
           );
-        }
-        else {
+        } else {
           column.cells.forEach((cell) => (cell.width = newValue));
           column.width = newValue
         }
       }
-    }
-    else {
+    } else {
       const column = module.sections[sectionIndex];
       const cell = column.cells?.[cellIndex];
       const row = cell?.cellsRows?.[rowIndex];
@@ -1289,8 +1474,7 @@ const adjustFasadeSize = (
           minNext,
           maxNext
       );
-    }
-    else if (sectionIndex > 0) {
+    } else if (sectionIndex > 0) {
       const prevRow = door[segmentIndex - 1]
 
       const totalWidth = currentSegment.width + prevRow.width;
@@ -1320,8 +1504,7 @@ const adjustFasadeSize = (
     } else {
       calcValue = newValue
     }
-  }
-  else {
+  } else {
     const section = module.sections[sectionIndex];
     const door = section.fasades?.[doorIndex];
     const currentSegment = door?.[segmentIndex];
@@ -1343,8 +1526,7 @@ const adjustFasadeSize = (
           minNext,
           maxNext
       );
-    }
-    else if (segmentIndex > 0) {
+    } else if (segmentIndex > 0) {
       const prevRow = door[segmentIndex - 1]
       const totalHeight = currentSegment.height + prevRow.height;
 
@@ -1361,8 +1543,7 @@ const adjustFasadeSize = (
           minPrev,
           maxPrev
       );
-    }
-    else {
+    } else {
       calcValue = newValue
     }
   }
@@ -1463,8 +1644,9 @@ const clearRender = () => {
   dementions.length = 0;
   fillings.length = 0;
   fasades.length = 0;
+  loops.length = 0;
 
-  sectionsContainer.removeChildren();
+  loopsContainer.removeChildren();
   lablesContainer.removeChildren();
   fillingsContainer.removeChildren();
   dementionContainer.removeChildren();
@@ -1491,13 +1673,11 @@ onBeforeMount(() => {
   TOTAL_HEIGHT.value = props.maxAreaHeight;
   TOTAL_WIDTH.value = props.maxAreaWidth;
   mode.value = props.mode;
-  areaHeight.value = getMaxAreaHeight();
-  areaWidth.value = getMaxAreaWidth();
+
+  calcMaxAreaSize();
 });
 
 onMounted(() => {
-  // console.log(toRaw(props.maxAreaHeight), 'TT')
-  // getMaxAreaHeight.value = props.maxAreaHeight;
   init();
   document.addEventListener("mousemove", handleGlobalPointerMove, false);
 });
@@ -1511,8 +1691,6 @@ defineExpose({
   adjustSizeFromExternal,
   renderGrid,
   selectCell,
-  updateTotalHeight,
-  updateTotalWidth,
   updateTotalSize,
   destroy,
   changeConstructorMode,
@@ -1527,7 +1705,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="visualization" :style="`height:${MAX_AREA_HEIGHT}px width:${MAX_AREA_WIDTH}px`">
+  <div class="visualization" :style="`height:${areaHeight}px width:${areaWidth}px`">
     <canvas ref="canvasContainer"></canvas>
   </div>
   <!-- :style="'height:getMaxAreaHeight'" -->
@@ -1537,12 +1715,9 @@ defineExpose({
 .visualization {
   canvas {
     border: 1px solid #bbbbbb;
+    display: flex;
+    justify-content: center;
   }
-
-  position: relative;
-  right: 17vh;
-  height: 500px;
-  width: 1100px;
 }
 
 /*  height: 320px;

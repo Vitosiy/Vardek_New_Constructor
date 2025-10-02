@@ -5,20 +5,29 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from '@/store/appStore/useMenuStore';
-import { usePopupStore } from '@/store/appStore/popUpsStore';
-import { computed } from "vue";
+import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
+import { computed, ref } from "vue";
 
 import { _URL } from "@/types/constants";
+import axios from "axios";
 
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
+ const { getAppData } = useAppData();
 
+const currentProductInfo = ref({
+  title: '',
+  description: '',
+  image: ''
+});
+const isShowInfoPopup = ref(false);
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
-    
-    return Object.values(catalogProducts).filter(item => menuStore.catalogFilterProductsId.includes(item.ID));
+    return Object.values(catalogProducts).filter((item) =>
+      menuStore.catalogFilterProductsId.includes(item.ID)
+    );
   } else {
-    console.log('empty');
+    console.log("empty");
   }
 });
 
@@ -36,25 +45,50 @@ const getImageUrl = (imageName: string) => {
 
 const dropItems: { [key: string]: {} } = catalogProducts;
 
-
 const onDrag = (event: any, model: { [key: string]: any } | string) => {
   event.dataTransfer?.setData("text", JSON.stringify(model));
 };
 
 const closeMenu = (menuType: MenuType) => {
-
   menuStore.closeMenu(menuType);
 };
 
-const popupStore = usePopupStore();
+const openPopup = async (item) => {
+  console.log(getAppData, 'getAppData')
+  try {
+    const {data} = await axios.post(`/api/modeller/product/getbyid/`, {
+      ID: item.ID
+    })
 
-const openPopup = (popupName: keyof typeof popupStore.popups) => {
-  popupStore.openPopup(popupName);
+    const { NAME, DETAIL_TEXT, DETAIL_PICTURE, PREVIEW_PICTURE, PREVIEW_TEXT, PROPERTY_IMAGES_VALUE, PROPERTY_VIDEO_VALUE, PROPERTY_VIDEO_IMAGE_VALUE } = data.DATA.response;
+
+    currentProductInfo.value = {
+    title: NAME,
+    detailText: DETAIL_TEXT,
+    previewText: PREVIEW_TEXT,
+    image: getImageUrl(DETAIL_PICTURE),
+    images: PROPERTY_IMAGES_VALUE.length ? PROPERTY_IMAGES_VALUE.map((image: string) => getImageUrl(image)) : [],
+    videoUrl: PROPERTY_VIDEO_VALUE,
+    videoPoster: getImageUrl(PROPERTY_VIDEO_IMAGE_VALUE)
+  };
+    isShowInfoPopup.value = true;
+  } catch (error) {
+    console.error('API Error:', error);
+  }
+
+
+
 };
 
-const toggleInfoPopup = () => {
-  popupStore.toggleInfoPopup();
+const closeInfoPopup = () => {
+  isShowInfoPopup.value = false;
+  currentProductInfo.value = {
+    title: '',
+    description: '',
+    image: ''
+  };
 };
+
 </script>
 
 <template>
@@ -65,7 +99,7 @@ const toggleInfoPopup = () => {
       <div v-for="item in filteredData" class="popup-items" draggable="true" :key="item.name"
         @dragstart="onDrag($event, item)">
         <div class="popup-items-picture">
-          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="toggleInfoPopup">
+          <img src="@/assets/svg/left-menu/question.svg" class="popup-items__question" @click="openPopup(item)">
           <img :src="getImageUrl(item.PREVIEW_PICTURE)" class="popup-items__image" />
         </div>
         <p class="popup-items__title">{{ item.NAME }}</p>
@@ -74,26 +108,26 @@ const toggleInfoPopup = () => {
     <div v-else class="options-popup-isempty">
       Товары в каталоге отсутсвуют, обратитесь в поддержку
     </div>
+    <InfoPopUp v-if="isShowInfoPopup" @close="closeInfoPopup" v-bind="currentProductInfo" />
   </div>
-
 </template>
-
 
 <style lang="scss" scoped>
 .options-popup {
   width: max-content;
-  max-width: 731px;
+  max-width: 575px;
   min-width: 210px;
   position: absolute;
   top: 15px;
-  left: -840px;
+  // left: -840px;
+  left: 320px;
   padding: 15px;
   background: $white;
   box-shadow: 0px 0px 10px 0px #3030301a;
-  z-index: 1;
+  z-index: -1;
   border-radius: 15px;
-  transition: 0.5s ease-in-out;
-  transform: translateZ(-10px);
+  // transition: 0.5s ease-in-out;
+  // transform: translateZ(-10px);
 
   &__container {
     max-height: 80vh;
@@ -126,7 +160,7 @@ const toggleInfoPopup = () => {
         }
         .popup-items__image {
           height: 150px;
-          max-width: 150px; 
+          max-width: 150px;
           padding: 10px;
           background: #ffffff;
           border-radius: 15px;

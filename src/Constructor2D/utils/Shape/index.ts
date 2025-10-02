@@ -11,6 +11,8 @@ const rect = (graphic: PIXI.Graphics, data: RectData): PIXI.Graphics => {
   data = {
     points: [Vector2, Vector2, Vector2, Vector2]; // 4 точки для прямоугольника
     color: number | string; // Цвет заливки
+    colorEdge: number | string = 0x000000, // Цвет обводки (по умолчанию чёрный)
+    widthEdge: number = 1, // Толщина линии обводки (по умолчанию 1)
     angleDegress: number = 0; // 
     rotatePoint: Vector2 | null = null;
   }
@@ -18,23 +20,33 @@ const rect = (graphic: PIXI.Graphics, data: RectData): PIXI.Graphics => {
 
   graphic.clear();
 
-  const { points, color } = data;
+  const { points, color, colorEdge, widthEdge } = data;
 
   if (points.length !== 4) {
     throw new Error("Data must contain exactly 4 points.");
   }
 
+  if(!color && !colorEdge) {
+    throw new Error("At least one of color or colorEdge must be provided.");
+  }
+  
   // Логика рисования прямоугольника через точки
   graphic.moveTo(points[0].x, points[0].y); // Перемещаемся к первой точке
   graphic.lineTo(points[1].x, points[1].y); // Линия ко второй точке
   graphic.lineTo(points[2].x, points[2].y); // Линия к третьей точке
   graphic.lineTo(points[3].x, points[3].y); // Линия к четвертой точке
   graphic.lineTo(points[0].x, points[0].y); // Замыкаем контур
-  graphic.fill(color); // Устанавливаем цвет заливки
+  if(color) graphic.fill(color); // Устанавливаем цвет заливки
+  if(colorEdge) {
+    graphic.stroke({
+      color: colorEdge,
+      width: widthEdge ?? 1 // Толщина линии обводки
+    });
+  }
 
   // Возвращаем объект graphics
   return graphic;
-  
+
 };
 
 const shape = (graphic: PIXI.Graphics, points: Vector2[], color: number | string): void => {
@@ -43,22 +55,20 @@ const shape = (graphic: PIXI.Graphics, points: Vector2[], color: number | string
   points: [{x: number, y: number}, {x: number, y: number}, ...]; // 4 точки для прямоугольника
   */
 
-  if (points.length < 4) {
-    throw new Error("Data must contain exactly 4 points.");
-  }
+  if (points.length < 4) return;
 
   for (let i = 0; i < points.length; i++) {
     const point = points[i];
 
     // Рисуем линию
-    if(i==0) graphic.moveTo(point.x, point.y);
+    if (i == 0) graphic.moveTo(point.x, point.y);
     graphic.lineTo(point.x, point.y);
-    if((points.length - 1) === i){
+    if ((points.length - 1) === i) {
       graphic.lineTo(points[0].x, points[0].y);
     }
   }
   graphic.fill(color); // Устанавливаем цвет заливки
-  
+
 };
 
 const rectV2 = (graphic: PIXI.Graphics, data: any): PIXI.Graphics => {
@@ -71,10 +81,29 @@ const rectV2 = (graphic: PIXI.Graphics, data: any): PIXI.Graphics => {
   lineColor: number = 0x000000, // Цвет обводки (по умолчанию чёрный)
   lineWidth: number = 2         // Толщина линии обводки
   angleDegrees: number = 0
+
+  _____________________________________
+  Example: 
+
+  const graphics = new PIXI.Graphics();
+  rectV2(
+    graphics,
+    {
+      center: {x: 400, y: 250},
+      width: 150,
+      height: 75,
+      fillColor: 0x006600,
+      lineColor: 0x000000,
+      lineWidth: this.config.line,
+      angleDegrees: 45
+    }
+  );
+  _____________________________________
+  
   */
 
-  if(data.width && data.height){
-  
+  if (data.width && data.height) {
+
     // Вычисляем верхний левый угол из центра
     const x = data.center.x - data.width / 2;
     const y = data.center.y - data.height / 2;
@@ -83,15 +112,14 @@ const rectV2 = (graphic: PIXI.Graphics, data: any): PIXI.Graphics => {
     graphic.clear();
 
     // Рисуем прямоугольник
-    // graphic.beginFill(0xff0000); // Устанавливаем цвет заливки (например, красный)
     graphic.rect(x, y, data.width, data.height); // Рисуем прямоугольник
-    if(data.lineColor){
+    graphic.fill(data.fillColor ?? "rgba(0,0,0,0)");
+    if( data.lineWidth ){
       graphic.stroke({
-        width: data.lineWidth ?? 1,
+        width: data.lineWidth,
         color: data.lineColor ?? "rgba(0,0,0,0)"
       });
     }
-    graphic.fill(data.fillColor ?? "rgba(0,0,0,0)");
 
     const angleRadians = (data.angleDegrees ?? 0) * (Math.PI / 180);
 
@@ -105,7 +133,7 @@ const rectV2 = (graphic: PIXI.Graphics, data: any): PIXI.Graphics => {
     graphic.rotation = angleRadians;
 
   }
-    
+
   return graphic;
 
 }
@@ -119,9 +147,11 @@ const drawVerticalLines = (
   heightDirection: 1 | -1 = -1, // Направление линий по оси Y
   color: number | string = 0x000000, // Цвет линий
   lineWidth: number = 1, // Толщина линий
-  rotationDegrees: number = 0 // Угол поворота линий вокруг startPoint
-): void  => {
-  graphics.clear(); // Очистка предыдущего содержимого
+  rotationDegrees: number = 0, // Угол поворота линий вокруг startPoint,
+  clear: boolean = true
+): void => {
+
+  if(clear) graphics.clear(); // Очистка предыдущего содержимого
 
   const baseAngleDegrees = 76; // Базовый угол линий
   const baseAngleRadians = (baseAngleDegrees * Math.PI) / 180; // Преобразуем базовый угол в радианы
@@ -269,7 +299,7 @@ const drawDashedOutline = (
     color: color,
     width: lineWidth
   });
-  
+
 }
 
 const drawArrow = (
@@ -277,12 +307,12 @@ const drawArrow = (
   startPoint: Vector2,
   width: number, // Длина стрелки
   angleDegrees: number, // Угол направления стрелки в градусах
-  color: {line: number | string, head: number | string} | number | string = 0x000000, // Цвет стрелки
+  color: { line: number | string, head: number | string } | number | string = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   triangleSize: number = 12, // Размер треугольника (основание и высота)
   clearGraphics: boolean = false // Флаг: очищать графику или нет,
 ): void => {
-  if(clearGraphics){
+  if (clearGraphics) {
     graphics.clear(); // Очистка графики
   }
 
@@ -344,7 +374,7 @@ const drawArrowHead = (
   if (clearGraphics) {
     graphics.clear(); // Очистка графики, если требуется
   }
-// Преобразуем угол из градусов в радианы
+  // Преобразуем угол из градусов в радианы
   const angleRadians = (angleDegrees * Math.PI) / 180;
 
   // Размер треугольника (половина основания)
@@ -390,7 +420,7 @@ const drawArrowHead = (
     }
   }
 
-  function rotatePoint(x:number, y:number, centerX:number, centerY:number, angle:number) {
+  function rotatePoint(x: number, y: number, centerX: number, centerY: number, angle: number) {
     // Перевод угла в радианы
     let rad = angle * Math.PI / 180;
     // Применяем матрицу поворота
@@ -415,7 +445,7 @@ const drawArrowHead = (
 const drawCircle = (
   graphics: PIXI.Graphics,
   startPoint: Vector2,
-  size: number, 
+  size: number,
   color: string | number
 ): void => {
   // Определяем центр геометрии
@@ -448,7 +478,7 @@ const drawShape = (
     return;
   }
 
-  if(clearGraphics){
+  if (clearGraphics) {
     graphics.clear(); // Очистка графики
   }
 
@@ -457,9 +487,9 @@ const drawShape = (
     const point = points[i];
 
     // Рисуем линию
-    if(i==0) graphics.moveTo(point.x, point.y);
+    if (i == 0) graphics.moveTo(point.x, point.y);
     graphics.lineTo(point.x, point.y);
-    if((points.length - 1) === i){
+    if ((points.length - 1) === i) {
       graphics.lineTo(points[0].x, points[0].y);
     }
   }
@@ -482,10 +512,11 @@ const drawLine = (
   color: number | string = 0x000000, // Цвет стрелки
   lineWidth: number = 1, // Толщина линии
   clearGraphics: boolean = false, // Флаг: очищать графику или нет
-  stepNormal: number = 0 // смещение линии по нормали
+  stepNormal: number = 0, // смещение линии по нормали
+  __endPoint: Vector2 | null = null // Конечная точка линии (опционально)
 ): Vector2[] => {
 
-  if(clearGraphics){
+  if (clearGraphics) {
     graphics.clear(); // Очистка графики
   }
 
@@ -493,7 +524,7 @@ const drawLine = (
   const angleRadians = (angleDegrees * Math.PI) / 180;
 
   // Вычисляем конечную точку линии на основе длины и угла
-  const endPoint = {
+  const endPoint = __endPoint || {
     x: startPoint.x + Math.cos(angleRadians) * width,
     y: startPoint.y + Math.sin(angleRadians) * width,
   };
@@ -517,10 +548,42 @@ const drawLine = (
     width: lineWidth,
   });
 
+  graphics.closePath();
+
   return [
-    startPointShifted, 
+    startPointShifted,
     endPointShifted
   ];
+
+}
+
+const drawArc = (
+  graphics: PIXI.Graphics,
+  center: Vector2,
+  radius: number, // Радиус дуги
+  startAngleDegrees: number = 0, // Начальный угол в градусах
+  endAngleDegrees: number = 360, // Конечный угол в градусах
+  color: number | string = 0x000000, // Цвет дуги
+  lineWidth: number = 1, // Толщина линии
+  clearGraphics: boolean = false // Флаг: очищать графику или нет
+): void => {
+
+  if (clearGraphics) {
+    graphics.clear(); // Очистка графики
+  }
+
+  // Преобразуем углы из градусов в радианы
+  const startAngleRadians = (startAngleDegrees * Math.PI) / 180;
+  const endAngleRadians = (endAngleDegrees * Math.PI) / 180;
+
+  // Рисуем дугу
+  graphics.arc(center.x, center.y, radius, startAngleRadians, endAngleRadians);
+  
+  // Устанавливаем цвет и толщину линии
+  graphics.stroke({
+    color: color,
+    width: lineWidth,
+  });
   
 }
 
@@ -534,5 +597,6 @@ export {
   drawArrowHead,
   drawCircle,
   drawShape,
-  drawLine
-}
+  drawLine,
+  drawArc
+};

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 //@ts-nocheck
 
-import { defineProps, computed, defineEmits } from "vue";
+import { defineProps, computed, defineEmits, onMounted } from "vue";
 import default_url from "@/assets/svg/surface-redactor/default.svg";
 import delete_url from "@/assets/svg/surface-redactor/delete.svg";
 import { _URL } from "@/types/constants";
@@ -12,21 +12,40 @@ const props = defineProps({
   additionalClass: String,
 });
 
+onMounted(() => {
+  console.log(props, "props");
+});
+
 const emit = defineEmits(["choose-option", "delete-choise"]);
 
 let title = computed(() => {
-  if (props.type === "surface") return "Тип покрытия";
-  if (props.type === "milling") return "Тип фрезеровки";
-  if (props.type === "palette") return "Цвет покрытия";
-  if (props.type === "patina") return "Цвет патины";
+  const typeMap = {
+    surface: "Тип покрытия",
+    milling: "Тип фрезеровки",
+    palette: "Цвет покрытия",
+    patina: "Цвет патины",
+    glass: "Цвет стекла",
+    Handles: "Ручка",
+  };
+
+  return typeMap[props.type];
 });
 
 let name = computed(() => {
-  return props.data?.name ? props.data.name : "";
+  return props.data?.name || props.data?.NAME
+    ? props.data.name || props.data?.NAME
+    : "";
 });
 
 let imgSrc = computed(() => {
-  return props.data?.imgSrc ? _URL + props.data.imgSrc : default_url;
+  if (props.data?.imgSrc) {
+    return _URL + props.data.imgSrc;
+  }
+
+  if (props.data?.PREVIEW_PICTURE) {
+    return _URL + props.data.PREVIEW_PICTURE;
+  }
+  return default_url;
 });
 
 let isColorChosed = computed(() => {
@@ -38,15 +57,20 @@ let chooseOption = () => {
 };
 
 const deleteChoise = (event) => {
-  event.stopPropagation()
-  emit("delete-choise", props.type)
+  event.stopPropagation();
+  emit("delete-choise", props.type);
 };
 </script>
 
 <template>
   <div :class="`config ${props.additionalClass}`" @click="chooseOption">
     <div class="config__top">
-      <img v-if="props.type !== 'palette' " class="config__img" :src="imgSrc" alt="">
+      <img
+        v-if="props.type !== 'palette'"
+        class="config__img"
+        :src="imgSrc"
+        alt=""
+      />
       <div v-else @click="chooseOption">
         <img v-if="!isColorChosed" class="config__img" :src="imgSrc" alt="" />
         <div
@@ -66,8 +90,8 @@ const deleteChoise = (event) => {
       <div>
         <p class="config__title">{{ title }}</p>
       </div>
-        <p class="config__name">{{ name }}</p>
-        <!--
+      <p class="config__name">{{ name }}</p>
+      <!--
         
         -->
     </div>
@@ -78,19 +102,33 @@ const deleteChoise = (event) => {
 .config {
   display: flex;
   flex-direction: column;
-  height: 15vh;
-  width: 15vh;
-  padding: 0.8vh;
-  border-radius: 1vh;
+  // height: 100%;
+  width: 100%;
+
+  max-width: 150px;
+  // max-height: 200px;
+  padding: 10px;
+  gap: 10px;
+  border-radius: 15px;
   box-shadow: 4px 4px 4px 4px rgba(34, 60, 80, 0.11);
   overflow: hidden;
   cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow: 4px 4px 4px 4px #da444c;
+    }
+  }
+
+  &.active {
+    box-shadow: 4px 4px 4px 4px #da444c;
+  }
 
   &__top {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    height: 50%;
+    // max-height: 50%;
     width: 100%;
   }
 
@@ -98,35 +136,30 @@ const deleteChoise = (event) => {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    height: 50%;
+    // max-height: 50%;
     overflow: hidden;
   }
 
   &__img {
     height: 50px;
+    padding: 5px;
     cursor: pointer;
-
-    @media (min-height: 1000px) { 
-      height: 60px;
-    }
+    box-shadow: 0px 0px 6px 0px rgba(48, 48, 48, 0.1019607843);
+    border-radius: 15px;
   }
 
   &__color {
-    height: 50px;
-    width: 50px;
+    height: 40px;
+    width: 40px;
     border-radius: 12px;
     cursor: pointer;
-
-    @media (min-height: 1000px) { 
-      height: 60px;
-    }
   }
 
   &__delete {
     height: 20px;
     cursor: pointer;
 
-    @media (min-height: 1000px) { 
+    @media (min-height: 1000px) {
       height: 25px;
     }
   }
@@ -136,27 +169,42 @@ const deleteChoise = (event) => {
     font-size: small;
     // flex: 2;
 
-    @media (min-height: 1000px) { 
+    @media (min-height: 1000px) {
       font-size: medium;
     }
   }
 
   &__name {
     font-size: small;
-    line-height: 14px;
+    // line-height: 14px;
     text-overflow: ellipsis;
     overflow: hidden;
 
-    @media (min-height: 1000px) { 
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    @media (min-height: 1000px) {
       font-size: medium;
-      line-height: 10px;
+      // line-height: 10px;
     }
   }
-
 }
 
-.disabled{
+.disabled {
   pointer-events: none;
   background-color: rgba(228, 140, 140, 0.133);
+}
+
+@media screen and (min-width: 1000px) {
+  .config {
+    &__img,
+    &__color {
+      height: 60px;
+      width: 60px;
+    }
+  }
 }
 </style>

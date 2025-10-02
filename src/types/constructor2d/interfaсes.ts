@@ -75,7 +75,9 @@ export interface PlannerObject {
 export interface RectData {
   points: Vector2[]; // 4 точки для прямоугольника
   heightDirection: -1 | 1;
-  color: number | string; // Цвет заливки
+  color?: number | string; // Цвет заливки
+  colorEdge?: number | string, // Цвет обводки (по умолчанию чёрный)
+  widthEdge?: number, // Толщина линии обводки (по умолчанию 1)
 }
 
 export interface DrawObjects {
@@ -108,11 +110,20 @@ export interface FillingObject {
   sec: number;
   cell?: number;
   row?: number;
+  error?: boolean;
+}
+
+export enum LOOPSIDE {
+  left = 4693746,
+  left_on_partition= 7080918,
+  right = 4693757,
+  right_on_partition= 7080949
 }
 
 export interface FasadeObject {
   id: number;
   type: "fasade";
+  loopsSide: number | boolean;
   position: THREE.Vector2;
   width: number;
   height: number;
@@ -146,8 +157,6 @@ export enum MANUFACTURER {
 
 export interface DrawerFasadeObject extends FasadeObject {
   manufacturerOffset: MANUFACTURER;
-  minHeight: number;
-  maxHeight: number;
   item: number;
   sec: number | null;
   cell?: number | null;
@@ -181,15 +190,22 @@ export interface GridSection {
   type: "section";
   cells: GridCell[];
   fasades?: FasadeObject[];
+  fasadesDrawers?: FasadeObject[];
+  loops?: [];
+  loopsSides?: {};
+  profiles?: FillingObject[];
 }
 
 export interface GridModule {
   width: number;
   height: number;
   depth?: number;
+  productID: number;
   moduleThickness: number;
+  moduleColor: number;
   sections: GridSection[];
   type: "module";
   horizont?: number;
   fasades?: FasadeObject[];
+  isSlidingDoors?: boolean;
 }

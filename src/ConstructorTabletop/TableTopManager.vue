@@ -1,11 +1,11 @@
 <script setup lang="ts">
 // @ts-nocheck
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
 import {
   onMounted,
   onBeforeMount,
   onBeforeUnmount,
-  reactive,
   computed,
   ref,
   toRaw,
@@ -21,6 +21,7 @@ import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
 import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
 
 const eventBus = useEventBus();
+const modelState = useModelState();
 
 const emit = defineEmits(["save-table-data"]);
 
@@ -31,6 +32,7 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  SECTOR_PADDING,
 } = CUTTER_PARAMS;
 
 let shapeAdjuster = null;
@@ -43,6 +45,10 @@ const props = defineProps({
   canvasHeight: {
     type: Number,
     default: 600,
+  },
+  modelHeight: {
+    type: Number,
+    default: 20,
   },
 });
 
@@ -145,6 +151,7 @@ const addVerticalCut = (colIndex) => {
     row.width = halfWidth;
     row.holes = [];
     row.roundCut = {};
+    row.serviseData = createServiseData();
   });
 
   // Создаем новую колонку с такими же параметрами
@@ -160,7 +167,6 @@ const addVerticalCut = (colIndex) => {
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
-  console.log(grid.value, "55555");
 };
 
 const addHorizontalCut = (colIndex, rowIndex) => {
@@ -173,6 +179,7 @@ const addHorizontalCut = (colIndex, rowIndex) => {
   column.forEach((row) => {
     row.holes = [];
     row.roundCut = {};
+    row.serviseData = createServiseData();
   });
 
   const curRow = getCurrentSection.value.currentRow;
@@ -186,15 +193,13 @@ const addHorizontalCut = (colIndex, rowIndex) => {
 
   // Обновляем высоту последней строки
   curRow.height = halfHeight;
-  const serviseData = createServiseData();
-
   // Добавляем новую строку в эту колонку
   column.splice(rowIndex, 0, {
     width: curRow.width,
     height: curRow.height, // Оставшаяся высота
     roundCut: {},
     holes: [],
-    serviseData: serviseData,
+    serviseData: createServiseData(),
   });
 
   // Обновляем рендер
@@ -206,15 +211,22 @@ const addRoundСut = (colIndex) => {
   const row = column[selectedCell.value.row];
   row.holes = [];
 
-  let extremum = row.width < row.height ? row.width : row.height;
-  if (extremum > 300) extremum = 300;
+  let extremum =
+    row.width < row.height
+      ? row.width - SECTOR_PADDING * 2
+      : row.height - SECTOR_PADDING * 2;
 
-  if (extremum < 300) {
-    alert("Высота и ширина секции должны быть не меньше 300 мм.");
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.CUT)
+    extremum = CUTTER_PARAMS.EXTREMUMS.CUT;
+
+  if (
+    row.width < 300 + SECTOR_PADDING * 2 ||
+    row.height < 300 + SECTOR_PADDING * 2
+  ) {
+    alert("Высота и ширина секции должны быть не меньше 360 мм.");
     return;
   }
 
-  // Добавляем круглый вырез с дефолтными параметрами
   row.roundCut = {
     radius: extremum,
   };
@@ -227,9 +239,21 @@ const addRoundСut = (colIndex) => {
 const createHoleDataToCheck = (type, row, col) => {
   let width, height, radius, tempHole;
 
-  let extremum = row.width < row.height ? row.width * 0.5 : row.height * 0.5;
+  let extremum =
+    row.width < row.height
+      ? row.width - SECTOR_PADDING * 2
+      : row.height - SECTOR_PADDING * 2;
 
-  if (extremum > 600) extremum = 300;
+  if (
+    row.width < 300 + SECTOR_PADDING * 2 ||
+    row.height < 300 + SECTOR_PADDING * 2
+  ) {
+    alert("Высота и ширина секции должны быть не меньше 360 мм.");
+    return;
+  }
+
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.HOLES)
+    extremum = CUTTER_PARAMS.EXTREMUMS.HOLES;
 
   width = extremum;
   height = extremum;
@@ -262,7 +286,7 @@ const addHole = (type) => {
   const startHoleData = createHoleDataToCheck(type, row, col);
 
   if (!startHoleData) {
-    alert("Позиция не найдена");
+    // alert("Позиция не найдена");
     return;
   }
 
@@ -342,10 +366,35 @@ const getHoleOptionsActive = computed(() => {
   };
 });
 
-const convertServisData = (value, type, pos) => {
+const convertServisData = (value, item) => {
+  const { PROPS } = modelState.getCurrentModel;
+  const { USLUGI } = PROPS.CONFIG;
+  console.log(USLUGI, item)
+
+  if (parseInt(item.separated) === 0) {
+    console.log('EP')
+    grid.value.forEach((col) => {
+      col.forEach((row) => {
+        const cur = row.serviseData.find((el) => el.ID === item.ID);
+        cur.value = value;
+        console.log(cur, "row");
+      });
+    });
+    // console.log(item, USLUGI);
+
+    const cur = USLUGI.find((el) => el.ID === item.ID);
+    cur.value = value;
+
+    console.log(USLUGI, 'cur')
+
+    return;
+  }
+
   const data = getCurrentSection.value.currentRow.serviseData;
 
-  const servise = data.find((el) => el.NAME.toLowerCase() === type);
+  const servise = data.find(
+    (el) => el.NAME.toLowerCase() === item.NAME.toLowerCase()
+  );
 
   data.forEach((el) => {
     el.pos === servise.pos ? (el.value = false) : "";
@@ -454,8 +503,6 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
 };
 
 const updateHole = (event, key, type, holeType) => {
-  console.log("ww");
-
   const rowNdx = selectedCell.value.row;
   const colNdx = selectedCell.value.col;
 
@@ -475,8 +522,6 @@ const updateHole = (event, key, type, holeType) => {
   const holeData = JSON.parse(JSON.stringify(currenthole));
   holeData[type] = newValue;
 
-  console.log(holeData, "0");
-
   const pixiSector = currentRow.sector;
 
   currenthole[`M${type}`] = 600;
@@ -485,9 +530,7 @@ const updateHole = (event, key, type, holeType) => {
 
   if (check) {
     currenthole[type] = newValue;
-    console.log("1");
   } else {
-    console.log("2");
     currenthole[type] = prevValue;
     currenthole[`M${type}`] = prevValue;
   }
@@ -660,7 +703,11 @@ const handleCellSelect = (colIndex, rowIndex, type) => {
 };
 
 const createServiseData = () => {
-  const convertParams = CUTTER_PARAMS.CUT_SERVISES.reduce((acc, el) => {
+  const { PROPS } = modelState.getCurrentModel;
+  const { USLUGI } = PROPS.CONFIG;
+  console.log(PROPS, USLUGI, props.grid, "USLUGI");
+
+  const convertParams = USLUGI.reduce((acc, el) => {
     const param = {
       ID: el.ID,
       NAME: el.NAME,
@@ -669,12 +716,25 @@ const createServiseData = () => {
       radius: el.radius,
       width: el.width,
       corner: el.corner,
+      separated: el.separated
     };
     acc.push(param);
     return acc;
   }, []);
 
-  console.log(convertParams);
+  // const convertParams = CUTTER_PARAMS.CUT_SERVISES.reduce((acc, el) => {
+  //   const param = {
+  //     ID: el.ID,
+  //     NAME: el.NAME,
+  //     value: false,
+  //     pos: el.pos,
+  //     radius: el.radius,
+  //     width: el.width,
+  //     corner: el.corner,
+  //   };
+  //   acc.push(param);
+  //   return acc;
+  // }, []);
 
   return convertParams;
 };
@@ -686,6 +746,9 @@ const clearServiseData = (row) => {
 };
 
 const reset = (reset = false) => {
+  const { PROPS } = modelState.getCurrentModel;
+  const { USLUGI } = PROPS.CONFIG;
+
   grid.value.length = 0;
   grid.value.push([
     {
@@ -693,7 +756,7 @@ const reset = (reset = false) => {
       height: totalHeight.value,
       roundCut: {},
       holes: [],
-      serviseData: CUTTER_PARAMS.CUT_SERVISES,
+      serviseData: USLUGI,
     },
   ]);
   holeOptions.value = { show: false, section: { col: 0, row: 0 } };
@@ -716,7 +779,13 @@ const saveGrid = () => {
               delete el[value].graphic;
             }
           }
-          clone[value] = el[value];
+          if (value === "xOffset") {
+            clone[value] = shapeAdjuster.getMmWidth(el[value]);
+          } else if (value === "yOffset") {
+            clone[value] = shapeAdjuster.getMmHeight(el[value]);
+          } else {
+            clone[value] = el[value];
+          }
         }
       }
       acc.push(clone);
@@ -727,6 +796,7 @@ const saveGrid = () => {
   }, []);
 
   const data = {
+    modelHeight: props.modelHeight,
     canvasHeight: totalHeight.value,
     data: clone,
   };
@@ -754,7 +824,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  console.log("close");
   shapeAdjuster = null;
   grid.value = null;
 });
@@ -1025,9 +1094,12 @@ onBeforeUnmount(() => {
         </div>
       </section>
       <section class="actions-footer">
-        <button class="actions-btn actions-btn--footer" @click="reset(true)">
-          Сбросить
-        </button>
+        <div class="actions-footer--delite">
+          <button class="actions-btn actions-btn--footer" @click="reset(true)">
+            Сбросить
+          </button>
+          <slot name="delite"></slot>
+        </div>
         <div class="actions-footer--save">
           <!-- <button class="actions-btn actions-btn--footer" @click="save">
             Сохранить
@@ -1143,7 +1215,8 @@ onBeforeUnmount(() => {
     display: flex;
     justify-content: space-between;
     margin-top: auto;
-    &--save {
+    &--save,
+    &--delite {
       display: flex;
       gap: 1rem;
     }

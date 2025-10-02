@@ -13,6 +13,12 @@ export class UniformTextureCreateTexture {
     // uniformTexture = new URL('@/assets/uniform', import.meta.url).href + "/"
     uniformTexture = textureUrl
 
+    setTexture(path) {
+        this.uniformTexture = path
+    }
+    clearTexture() {
+        this.uniformTexture = ''
+    }
 
     onCreateTexture: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void
 
@@ -119,8 +125,6 @@ export class UniformTextureCreateTexture {
                     return
                 }
 
-                console.log('HERE_2', levelNdx)
-
                 this.elementTexured({
                     element,
                     levelNdx,
@@ -226,7 +230,7 @@ export class UniformTextureCreateTexture {
                 let prevWidthToString, prevHeightToString, prevHeightToDefault;
 
                 if (fasadeNdx > 0 && TYPE_POSITION === "col") {
-                    
+
                     // console.log('--DEFAULT')
                     // console.log(totalHeightToDefault, '--totalHeightToDefault')
 

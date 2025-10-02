@@ -51,6 +51,16 @@ export class DeepDispose {
 
         objects.forEach((child) => {
 
+            child.traverse(elem => {
+                if (elem instanceof CSS2DObject) {
+                    // Удаляем элемент DOM, связанный с CSS2DObject
+                    if (elem.element && elem.element.parentNode) {
+                        elem.element.parentNode.removeChild(elem.element);
+                    }
+                }
+            })
+
+
             if (child instanceof THREE.Camera) {
                 // Не удаляем камеры и свет, оставляем их в сцене
                 return;
@@ -91,46 +101,50 @@ export class DeepDispose {
     }
 
     clearObject(object: THREE.Object3D, scene: THREE.Scene) {
-
         if (object instanceof THREE.Group || object instanceof THREE.Object3D) {
             // Удаляем все дочерние объекты рекурсивно
             for (let i = object.children.length - 1; i >= 0; i--) {
                 this.clearObject(object.children[i], scene);
+                object.remove(object.children[i]); // Удаляем из родителя
             }
         }
 
-        // Проверяем, является ли объект CSS2DObject
+        // Обработка CSS2DObject
         if (object instanceof CSS2DObject) {
-            // Удаляем элемент DOM, связанный с CSS2DObject
             if (object.element && object.element.parentNode) {
                 object.element.parentNode.removeChild(object.element);
             }
         }
 
+        // Очистка Mesh
         if (object instanceof THREE.Mesh) {
-            // Очистка геометрии
             if (object.geometry) {
                 object.geometry.dispose();
                 object.geometry = null;
             }
-
-            // Очистка материалов и текстур
             if (object.material) {
                 if (Array.isArray(object.material)) {
                     object.material.forEach((material) => {
-                        material.map?.dispose();
+                        if (material.map) material.map.dispose();
                         material.dispose();
                     });
                 } else {
-                    object.material.map?.dispose();
+                    if (object.material.map) object.material.map.dispose();
                     object.material.dispose();
                 }
                 object.material = null;
             }
         }
 
+        // Удаляем объект из родителя, если он есть
+        if (object.parent) {
+            object.parent.remove(object);
+        }
+
         // Удаляем объект из сцены
-        scene.remove(object);
+        if (scene.children.includes(object)) {
+            scene.remove(object);
+        }
     }
 
     clearParent(object: THREE.Object3D) {
@@ -196,12 +210,14 @@ export class DeepDispose {
                 });
             }
 
-            if (object instanceof CSS2DObject) {
-                // Удаляем элемент DOM, связанный с CSS2DObject
-                if (object.element && object.element.parentNode) {
-                    object.element.parentNode.removeChild(object.element);
+            object.traverse(child => {
+                if (child instanceof CSS2DObject) {
+                    // Удаляем элемент DOM, связанный с CSS2DObject
+                    if (child.element && child.element.parentNode) {
+                        child.element.parentNode.removeChild(child.element);
+                    }
                 }
-            }
+            })
 
             if (object.texture) {
                 object.texture.dispose(); // Освобождаем текстуру
@@ -227,5 +243,79 @@ export class DeepDispose {
         }
 
         console.log('Сцена и ресурсы полностью очищены.');
+    }
+
+    clearExceptEssential(scene: THREE.Scene) {
+        function disposeObject(object: THREE.Object3D) {
+            // Освобождаем геометрию
+            if ((object as any).geometry) {
+                (object as any).geometry.dispose();
+            }
+
+            // Освобождаем материалы и текстуры
+            if ((object as any).material) {
+                const materials = Array.isArray((object as any).material)
+                    ? (object as any).material
+                    : [(object as any).material];
+
+                materials.forEach(material => {
+                    ['map', 'lightMap', 'bumpMap', 'normalMap', 'specularMap'].forEach(mapType => {
+                        if (material[mapType]) {
+                            material[mapType].dispose();
+                        }
+                    });
+                    material.dispose();
+                });
+            }
+
+            // Удаляем DOM-элементы у CSS2DObject
+            object.traverse(child => {
+                if (child instanceof CSS2DObject) {
+                    if (child.element?.parentNode) {
+                        child.element.parentNode.removeChild(child.element);
+                    }
+                }
+            });
+
+            // Освобождаем текстуру
+            if ((object as any).texture) {
+                (object as any).texture.dispose();
+            }
+
+            // Рекурсивная очистка дочерних объектов
+            if (object.children?.length > 0) {
+                object.children.slice().forEach(child => disposeObject(child));
+            }
+
+            // Вызов dispose, если доступен
+            if ((object as any).dispose) {
+                (object as any).dispose();
+            }
+        }
+
+        // Проверка, нужно ли сохранять объект
+        function shouldKeep(object: THREE.Object3D): boolean {
+
+            const cam = object instanceof THREE.Camera
+            const light = object instanceof THREE.Light
+            const room = object.children.find(el => el.userData.elementType === 'element_room')
+
+            const shood = cam || light || room
+
+
+            return shood
+        }
+
+        // Удаляем объекты, которые не должны сохраняться
+        scene.children.slice().forEach(object => {
+            if (!shouldKeep(object)) {
+                // console.log(object, 'OOOOO')
+                disposeObject(object);
+                scene.remove(object);
+            }
+        });
+
+
+        console.log('Сцена очищена, ключевые объекты сохранены.');
     }
 }
