@@ -1,24 +1,25 @@
 import { IBasket, IBasketFacade } from "@/types/basket";
 
 export function createFacadeProps(objProps: any): IBasketFacade[] {
-  if(objProps.CONFIG.FASADE_PROPS) {
-    return objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => ({
-      COLOR: fp.COLOR ?? null,
-      MILLING: fp.MILLING ?? null,
-      PALETTE: fp.PALETTE ?? null,
-      SHOWCASE: fp.SHOWCASE ?? null,
-      ALUM: fp.ALUM ?? null,
-      GLASS: fp.GLASS ?? null,
-      PATINA: fp.PATINA ?? null,
-      TYPE: fp.TYPE ?? null,
-      SIZE: {
-        WIDTH: objProps.FASADE[index]?.object?.userData?.trueSize?.WIDTH ?? null,
-        HEIGHT: objProps.FASADE[index]?.object?.userData?.trueSize?.HEIGHT ?? null,
-        DEPTH: objProps.FASADE[index]?.object?.userData?.trueSize?.DEPTH ?? null,
-      },
-      HEANDLES: [],
-    }));
-  };
+  console.log('objProps', objProps);
+  return objProps.CONFIG.FASADE_PROPS 
+    ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => ({
+        COLOR: fp.COLOR ?? null,
+        MILLING: fp.MILLING ?? null,
+        PALETTE: fp.PALETTE ?? null,
+        SHOWCASE: fp.SHOWCASE ?? null,
+        ALUM: fp.ALUM ?? null,
+        GLASS: fp.GLASS ?? null,
+        PATINA: fp.PATINA ?? null,
+        TYPE: fp.TYPE ?? null,
+        SIZE: {
+          WIDTH: objProps.FASADE[index]?.object?.userData?.trueSize?.WIDTH ?? null,
+          HEIGHT: objProps.FASADE[index]?.object?.userData?.trueSize?.HEIGHT ?? null,
+          DEPTH: objProps.FASADE[index]?.object?.userData?.trueSize?.DEPTH ?? null,
+        },
+        HEANDLES: [],
+      }))
+    : [];
 }
 
 export function createBodyProps(objProps: any) {
