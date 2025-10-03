@@ -25,11 +25,6 @@ export class AlumBuilder {
             this.setupTexture(file);
             this.roughnessMap = file;
         });
-
-        this.resources.startLoading(metallicUrl, 'localTexture', (file) => {
-            this.setupTexture(file);
-            this.metalnessMap = file;
-        });
     }
 
     private setupTexture(texture: THREE.Texture) {

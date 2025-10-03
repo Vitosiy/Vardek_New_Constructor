@@ -107,11 +107,18 @@ export type TQuality = {
   active: boolean
 }
 
-type TOptionItem = {
+export type TOptionItem = {
   id: number | string;
-  global: boolean;
+  palitte?: number | string | null,
+  milling?: number | string | null,
+  global?: boolean;
   title: string;
-  label: string;
+  label?: string;
+  prefix?: string,
+  palitteTitle?: string,
+  palitteData?: TPalitte[] | null
+  millingTitle?: string,
+  millingData?: TMilling[] | null
 };
 
 export type TLightRange = {
@@ -124,6 +131,8 @@ export type TOptionsMap = {
   floor: TOptionItem;
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
+  // palitteTop?: TOptionItem;
+  // palitteBottom?: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
@@ -136,6 +145,10 @@ export type TTextureActionMap = {
   moduleBottom: 'A:ChangeModuleTotalTexture';
   fasadsTop: 'A:ChangeFasadsTopTexture';
   fasadsBottom: 'A:ChangeFasadsBottomTexture';
+  tableTop: 'A:ChangeTableTop',
+  palitteTotal: 'A:ChangePaletteTotal',
+  millingTotal: "A:ChangeMillingTotal",
+
 };
 
 export type TTextureItem = {
@@ -148,7 +161,7 @@ export type TTextureItem = {
   sort: number;
 };
 
-export type eTFasadeItem = {
+export type TFasadeItem = {
   ID: number;
   NAME: string;
   IBLOCK_SECTION_ID: string;
@@ -297,6 +310,7 @@ export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
   COLOR: number | null,
+  BODY: number | null,
   TYPE: number | null,
   MILLING: number | null,
   PALETTE: number | null,
@@ -439,6 +453,39 @@ export type IProductFull = {
   PREVIEW_PICTURE: string;
   FILLING_SECTION: boolean;
   FASADE_POSITION: number[];
+}
+
+
+export type TPalitte = {
+  ID: number;
+  NAME: string;
+  TYPE: string;
+  UNAME: string;
+  HTML: string;
+  PREVIEW_PICTURE: string | null;
+  DETAIL_PICTURE: string | null;
+}
+
+export type TMilling = {
+  ID: number;
+  NAME: string;
+  IBLOCK_SECTION_ID: string;
+  '~IBLOCK_SECTION_ID': string;
+  DETAIL_PICTURE: string;
+  PREVIEW_PICTURE: string;
+  SORT: number;
+  '~SORT': string;
+  FACADEALIGNSELECT: 0 | 1;
+  PATINAOFF: 0 | 1;
+  MODEL: string | null;
+  INCITY: (string | null)[];
+  CITY: (string | null)[];
+  delay_date: string | null;
+  date_shipment: string | null;
+  date_build: string | null;
+  type_showcase: number[];
+  fasade_type: number[];
+  DENSITY: number | string | null;
 }
 
 

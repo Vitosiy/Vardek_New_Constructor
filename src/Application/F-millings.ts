@@ -1,6 +1,6 @@
 
 //@ts-nocheck
-export const additionaMillinglKeys = {
+export const additionalMillingKeys = {
     // Модерн
     2839850: "566720",
     2503106: "566720",

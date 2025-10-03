@@ -43,12 +43,13 @@ export class PaletteBuilder {
         fasade,
         data,
         fasadeProps,
-
     }: {
         fasade: THREE.Object3D;
         data: number | string;
         fasadeProps: { [key: string]: any };
     }) {
+        console.log(data, 'INPALLI');
+
         const { _APP, _FASADE } = this.parent;
         const palette = _APP.PALETTE[data];
         const fasadeId = fasadeProps.COLOR ?? 567323;
@@ -63,24 +64,46 @@ export class PaletteBuilder {
 
         const roughnessValue = !useTexture && fasadeName.includes("матовый") ? 0.5 : 0.02;
 
-        fasade.traverse((child) => {
-            if (child.name === "HANDLE") return;
-            // Пропускаем меш чертежа
-            if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) return;
+        if (useTexture && fasadeSize) {
+            this.applyTexture(fasade, palette, fasadeSize);
+        } else {
+            this.applyMaterial(fasade, fasade, palette, roughnessValue);
+        }
 
-            if (!(child instanceof THREE.Mesh)) return;
-            if (!useTexture && child.userData.type === "glass") return;
+        // fasade.traverse((child) => {
+        //     // Проверяем, является ли объект THREE.Mesh
+        //     if (!(child instanceof THREE.Mesh)) {
+        //         return;
+        //     }
 
-            if (!child.userData.ORIGINAL_COLOR) {
-                child.userData.ORIGINAL_COLOR = child.material;
-            }
+        //     // Пропускаем объекты с именем "HANDLE"
+        //     if (child.name === "HANDLE") {
+        //         console.log(child, 'HANDLE')
+        //         return;
+        //     }
 
-            if (useTexture) {
-                this.applyTexture(child, palette, fasadeSize!);
-            } else {
-                this.applyMaterial(child, fasade, palette, roughnessValue);
-            }
-        });
+        //     // Пропускаем объекты с userData.edge или у которых родитель имеет userData.edge
+        //     if (child.userData?.edge || child.parent?.userData?.edge) {
+        //         return;
+        //     }
+
+        //     // Пропускаем объекты с типом "glass", если не используется текстура
+        //     if (!useTexture && child.userData?.type === "glass") {
+        //         return;
+        //     }
+
+        //     // Сохраняем оригинальный материал, если он ещё не сохранён
+        //     if (!child.userData.ORIGINAL_COLOR) {
+        //         child.userData.ORIGINAL_COLOR = child.material;
+        //     }
+
+        //     // Применяем текстуру или материал
+        //     if (useTexture && fasadeSize) {
+        //         this.applyTexture(child, palette, fasadeSize);
+        //     } else {
+        //         this.applyMaterial(child, fasade, palette, roughnessValue);
+        //     }
+        // });
 
         fasadeProps.SHOW = true;
         fasadeProps.PALETTE = palette.ID;
