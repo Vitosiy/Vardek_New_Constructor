@@ -469,6 +469,8 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
         let fasadeClone = Object.assign(<FasadeObject>{}, baseFasade)
         fasadeClone.id = index + 1
         fasadeClone.height = item.height
+        fasadeClone.material = {...baseFasade.material}
+
         fasadeClone.position = new THREE.Vector2(baseFasade.position.x, item.y)
 
         if (fasadeClone.height < fasadeClone.minY || fasadeClone.width < fasadeClone.minX)
@@ -481,6 +483,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
         if (baseFasade2) {
           let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
           fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
+          fasadeClone2.material = {...fasadeClone.material}
 
           module.value.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))
         }
@@ -1027,9 +1030,9 @@ const reset = (reset = false, moduleGrid = false) => {
 };
 
 const saveGrid = () => {
-  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset"];
-  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops"];
+  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
+  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
+  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers"];
 
   //Рекурсивная очистка сетки от "технических" полей 2D конструктора
   const removeGarbage = (object) => {
@@ -1044,8 +1047,11 @@ const saveGrid = () => {
               return item = item.map(_item => {
                 return removeGarbage(_item)
               })
-            else
+            else {
+              if(item.fasade)
+                item.fasade = removeGarbage(item.fasade)
               return removeGarbage(item)
+            }
           })
         }
 

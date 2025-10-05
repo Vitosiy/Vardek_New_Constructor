@@ -1705,14 +1705,14 @@ defineExpose({
 </script>
 
 <template>
-  <div class="visualization" :style="`height:${areaHeight}px width:${areaWidth}px`">
+  <div class="visualization-interactive" :style="`height:${areaHeight}px width:${areaWidth}px`">
     <canvas ref="canvasContainer"></canvas>
   </div>
   <!-- :style="'height:getMaxAreaHeight'" -->
 </template>
 
-<style>
-.visualization {
+<style lang="scss" scoped>
+.visualization-interactive {
   canvas {
     border: 1px solid #bbbbbb;
     display: flex;

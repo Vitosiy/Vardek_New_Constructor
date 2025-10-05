@@ -27,6 +27,7 @@ export class GlobalsData {
     _OPTION: THREETypes.TObject = this._APP.OPTION
     _OPTIONS_GROUP: THREETypes.TObject = this._APP.OPTIONS_GROUP
     _PALETTE: THREETypes.TObject = this._APP.PALETTE;
+    _PRODUCTS_TYPES: THREETypes.TObject = this._APP.PRODUCTS_TYPES
     constructor() {
     }
 

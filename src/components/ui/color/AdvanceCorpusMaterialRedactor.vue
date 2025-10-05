@@ -356,7 +356,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="container">
-    <div class="container__title" v-if="props.isFasade">Конфигурация фасада {{ props.elementIndex + 1}}</div>
+    <div class="container__title" v-if="props.isFasade && props.elementIndex !== null">Конфигурация фасада {{ props.elementIndex + 1}}</div>
     <div class="configuration" v-if="isSurfaceSelected">
       <ConfigurationOption
           :type="'surface'"

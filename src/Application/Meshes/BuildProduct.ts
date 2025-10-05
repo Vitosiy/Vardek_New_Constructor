@@ -68,6 +68,7 @@ export class BuildProduct extends BuildersHelper {
         this.ruler = root.ruler!
         this.resources = root._resources!
         this.useEdgeBuilder = root.useEdgeBuilder
+        this.disabledProducts = {};
 
         this.filters = new Filters(root);
         this.json_builder = new JsonBuilder(this);
@@ -405,6 +406,29 @@ export class BuildProduct extends BuildersHelper {
 
 
         return total;
+    }
+
+    getProductInfo = function (id) {
+        let info = this._PRODUCTS[id]
+
+        if (!info) {
+            info = this.disabledProducts[id]
+
+            if (info?.ALTERNATIVE_PRODUCT?.[0]) {
+                for (let i = 0; i < info.ALTERNATIVE_PRODUCT.length; i++) {
+                    if (this._PRODUCTS[info.ALTERNATIVE_PRODUCT[i]]) {
+                        info = this._PRODUCTS[info.ALTERNATIVE_PRODUCT[i]]
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        if (info)
+            info = Object.assign({}, info)
+
+        return info;
     }
 
     /** Создание тела модели */

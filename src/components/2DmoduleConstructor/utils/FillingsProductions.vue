@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
+import {defineExpose, ref, toRefs, onBeforeMount, onMounted} from "vue";
 import {_URL} from "@/types/constants";
 import {
   DrawerFasadeObject,
@@ -11,6 +11,8 @@ import {
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
+import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 
 const props = defineProps({
   fillings: {
@@ -46,7 +48,8 @@ const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0});
-
+const isOpenMaterialSelector = ref<boolean>(false);
+const currentFasadeMaterial = ref<Object | boolean>(false);
 type workMode = 'config' | 'add';
 const mode = ref<workMode>('add');
 const changeConstructorMode = (_mode: workMode) => {
@@ -110,6 +113,11 @@ const addFilling = (type, product, oldFillingObject = false) => {
     return;
   }
 
+  if (product.MIN_FASADE_SIZE && row) {
+    alert("Нельзя установить ящик с фасадом в вертикальную перегородку!");
+    return;
+  }
+
   const currentSection = module.value.sections[sec];
   const currentCell = currentSection.cells?.[cell];
   const currentRow = currentCell?.cellsRows?.[row];
@@ -136,12 +144,14 @@ const addFilling = (type, product, oldFillingObject = false) => {
       depth -= 100;
   }
 
+  let _type = product.NAME?.toLowerCase().includes('полка') ? 'shelf' : 'any';
+
   let fillingObject = <FillingObject>{
     product: product.ID,
     id: currentFillingsArray.length + 1,
     name: product.NAME,
     image: product.PREVIEW_PICTURE,
-    type: "any",
+    type: _type,
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
     size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
     width: startFillingData.width,
@@ -201,6 +211,10 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
   const curRow = row || cell || sec;
   let needFasadesUpdate = false
   let curItem = curRow.fillings[itemIndex];
+  curRow.fillings.forEach((filling, index) => {
+    if (index > itemIndex && filling.fasade)
+      filling.fasade.item -= 1;
+  })
 
   curRow.fillings = curRow.fillings.filter((el, index) => {
     if (index === itemIndex && el.fasade)
@@ -215,6 +229,11 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
       sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
         return el.id !== curItem.fasade.id;
       });
+
+      sec.fasadesDrawers.forEach((el, index) => {
+        if (el.id > curItem.fasade.id)
+          el.id -= 1;
+      })
 
       if(!sec.fasadesDrawers.length)
         delete sec.fasadesDrawers
@@ -281,9 +300,68 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   visualizationRef.value.renderGrid();
 };
 
+const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
+  isOpenMaterialSelector.value = false;
+
+  if (
+      currentFasadeMaterial.value &&
+      (
+          secIndex == currentFasadeMaterial.value.secIndex &&
+          cellIndex == currentFasadeMaterial.value.cellIndex &&
+          rowIndex == currentFasadeMaterial.value.rowIndex &&
+          itemIndex == currentFasadeMaterial.value.itemIndex
+      )
+  ) {
+    currentFasadeMaterial.value = false;
+    return;
+  }
+
+  setTimeout(() => {
+    const curSection = module.value.sections[secIndex]
+    const curCell = curSection?.cells?.[cellIndex]
+    const curRow = curCell?.cellsRows?.[rowIndex]
+
+    const curModuleSegment = curRow || curCell || curSection
+
+    let data = curModuleSegment.fillings[itemIndex].fasade.material
+    currentFasadeMaterial.value = {
+      secIndex,
+      curCell,
+      curRow,
+      itemIndex,
+      data
+    }
+    selectCell(secIndex, cellIndex, rowIndex, itemIndex)
+    isOpenMaterialSelector.value = true
+  }, 10)
+}
+
+const selectOption = (value: Object, type: string, palette: Object = false) => {
+
+  currentFasadeMaterial.value.data[type] = value ? value.ID : null;
+  if (palette)
+    currentFasadeMaterial.value.data['PALETTE'] = palette
+
+  let {secIndex, cellIndex, rowIndex, itemIndex} = currentFasadeMaterial.value;
+  const curSection = module.value.sections[secIndex]
+  const curCell = curSection?.cells?.[cellIndex]
+  const curRow = curCell?.cellsRows?.[rowIndex]
+
+  const curModuleSegment = curRow || curCell || curSection
+  curModuleSegment.fillings[itemIndex].fasade.material =
+      Object.assign(curModuleSegment.fillings[itemIndex].fasade.material, currentFasadeMaterial.value.data)
+};
+
 defineExpose({
   handleCellSelect,
 });
+
+onMounted(() => {
+  let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
+  let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
+
+  selectCell(0, cellIndex, rowIndex)
+})
 
 </script>
 
@@ -464,7 +542,8 @@ defineExpose({
 
                   <div
                       v-if="filling.fasade"
-                      class="actions-items--height">
+                      class="actions-items--height"
+                  >
                     <div class="actions-inputs">
                       <p class="actions-title">
                         Высота фасада
@@ -483,6 +562,13 @@ defineExpose({
                       </div>
                     </div>
                   </div>
+
+                  <ConfigurationOption
+                      v-if="filling.fasade"
+                      :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
+                      :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
+                      @click="openFasadeSelector(secIndex, null, null, fillingIndex)"
+                  />
 
                 </div>
               </article>
@@ -561,7 +647,8 @@ defineExpose({
 
                         <div
                             v-if="filling.fasade"
-                            class="actions-items--height">
+                            class="actions-items--height"
+                        >
                           <div class="actions-inputs">
                             <p class="actions-title">
                               Высота фасада
@@ -581,29 +668,37 @@ defineExpose({
                           </div>
                         </div>
 
+                        <ConfigurationOption
+                            v-if="filling.fasade"
+                            :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
+                            :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
+                            @click="openFasadeSelector(secIndex, cellIndex, null, fillingIndex)"
+                        />
                       </div>
                     </article>
 
                   </div>
 
-                  <div class="accordion" v-if="cell.cellsRows?.length">
-                    <div
-                        v-for="(row, rowIndex) in cell.cellsRows"
-                        :key="rowIndex"
-                        :class="'actions-items--container'"
-                    >
-                      <details class="item-group" v-if="row.fillings?.length">
+                </details>
 
-                        <summary>
-                          <h3 class="item-group__title">
-                            {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}
-                          </h3>
-                        </summary>
+                <div class="accordion" v-if="cell.cellsRows?.length">
+                  <div
+                      v-for="(row, rowIndex) in cell.cellsRows"
+                      :key="rowIndex"
+                      :class="'actions-items--container'"
+                  >
+                    <details class="item-group" v-if="row.fillings?.length">
 
-                        <div
-                            v-for="(filling, fillingIndex) in row.fillings"
-                            :key="fillingIndex"
-                            :class="[
+                      <summary>
+                        <h3 class="item-group__title">
+                          {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}
+                        </h3>
+                      </summary>
+
+                      <div
+                          v-for="(filling, fillingIndex) in row.fillings"
+                          :key="fillingIndex"
+                          :class="[
                               'actions-items--container',
                               {
                                 active:
@@ -613,47 +708,47 @@ defineExpose({
                                   fillingIndex === selectedFilling.item
                               },
                             ]"
-                        >
+                      >
 
-                          <article class="actions-items actions-items--left">
-                            <div class="actions-items--left-wrapper">
+                        <article class="actions-items actions-items--left">
+                          <div class="actions-items--left-wrapper">
 
-                              <div class="actions-items--title">
-                                <button
-                                    class="actions-btn actions-icon"
-                                    @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
-                                >
-                                  <img
-                                      class="actions-icon--delete"
-                                      src="/icons/delite.svg"
-                                      alt=""
-                                  />
-                                </button>
-                                <p class="actions-title actions-title--part">
-                                  {{ filling.name }} №{{ filling.id }}
-                                </p>
-                              </div>
-
+                            <div class="actions-items--title">
+                              <button
+                                  class="actions-btn actions-icon"
+                                  @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
+                              >
+                                <img
+                                    class="actions-icon--delete"
+                                    src="/icons/delite.svg"
+                                    alt=""
+                                />
+                              </button>
+                              <p class="actions-title actions-title--part">
+                                {{ filling.name }} №{{ filling.id }}
+                              </p>
                             </div>
-                          </article>
 
-                          <article class="actions-items actions-items--right">
-                            <div class="actions-items--right-items">
+                          </div>
+                        </article>
 
-                              <div class="actions-items--width">
-                                <div class="actions-inputs">
-                                  <p class="actions-title">Позиция</p>
-                                  <div
-                                      :class="['actions-input--container']"
-                                  >
-                                    <input
-                                        type="number"
-                                        :step="1"
-                                        :max="section.height - filling.height"
-                                        min="0"
-                                        class="actions-input"
-                                        :value="filling.distances?.bottom"
-                                        @input="debounce((event) => {
+                        <article class="actions-items actions-items--right">
+                          <div class="actions-items--right-items">
+
+                            <div class="actions-items--width">
+                              <div class="actions-inputs">
+                                <p class="actions-title">Позиция</p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="1"
+                                      :max="section.height - filling.height"
+                                      min="0"
+                                      class="actions-input"
+                                      :value="filling.distances?.bottom"
+                                      @input="debounce((event) => {
                                 changeFillingPositionY(
                                     $event,
                                     $event.target.value,
@@ -663,42 +758,50 @@ defineExpose({
                                     rowIndex
                                     )
                                 }, 1000)"
-                                    />
-                                  </div>
+                                  />
                                 </div>
                               </div>
-
-                              <div
-                                  v-if="filling.fasade"
-                                  class="actions-items--height">
-                                <div class="actions-inputs">
-                                  <p class="actions-title">
-                                    Высота фасада
-                                  </p>
-                                  <div
-                                      :class="['actions-input--container']"
-                                  >
-                                    <input
-                                        type="number"
-                                        :step="step"
-                                        min="150"
-                                        class="actions-input"
-                                        :value="filling.fasade.height"
-                                        disabled
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
                             </div>
-                          </article>
 
-                        </div>
-                      </details>
+                            <div
+                                v-if="filling.fasade"
+                                class="actions-items--height"
+                            >
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Высота фасада
+                                </p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="step"
+                                      min="150"
+                                      class="actions-input"
+                                      :value="filling.fasade.height"
+                                      disabled
+                                  />
+                                </div>
+                              </div>
+                            </div>
 
-                    </div>
+                            <ConfigurationOption
+                                v-if="filling.fasade"
+                                :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
+                                :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
+                                @click="openFasadeSelector(secIndex, cellIndex, rowIndex, fillingIndex)"
+                            />
+
+                          </div>
+                        </article>
+
+                      </div>
+                    </details>
+
                   </div>
-                </details>
+                </div>
+
               </div>
             </div>
           </div>
@@ -708,9 +811,19 @@ defineExpose({
     </div>
 
   </div>
+
+  <transition name="slide--right" mode="out-in">
+    <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <AdvanceCorpusMaterialRedactor
+          :is-fasade="true"
+          :elementData="currentFasadeMaterial.data"
+          @parent-callback="selectOption"
+      />
+    </div>
+  </transition>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .splitter {
   &-container {
     &--product {
@@ -718,6 +831,7 @@ defineExpose({
       flex-direction: column;
       gap: 0.5rem;
       color: #a3a9b5;
+      width: 19.5vw;
 
       &-icon {
         cursor: pointer;
@@ -923,8 +1037,8 @@ defineExpose({
     &--container {
       display: flex;
       width: 100%;
-      padding: 1rem 0;
       border-bottom: 1px solid #ecebf1;
+      margin-top: 0.5rem;
 
       // &:first-child {
       //   padding-top: 0;
@@ -1182,4 +1296,46 @@ defineExpose({
     max-width: 100% !important;
   }
 }
+
+.color {
+  &-select {
+    position: fixed;
+    right: 20.8vw;
+    top: 0;
+    width: 100%;
+    max-width: 373px;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background: rgba($white, 1);
+    box-shadow: 0px 0px 10px 0px #3030301a;
+    z-index: 0;
+    border-radius: 15px;
+
+    &__container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      overflow: auto;
+    }
+
+    &-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: $bg;
+      border-radius: 15px;
+      gap: 10px;
+
+      &__title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
 </style>

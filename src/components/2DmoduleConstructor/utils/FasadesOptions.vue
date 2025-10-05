@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
+import {defineExpose, onMounted, ref, toRefs} from "vue";
 import {FasadeMaterial, FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {_URL} from "@/types/constants.ts";
@@ -552,6 +552,8 @@ const checkAddDoor = (secIndex, doorIndex) => {
 }
 
 const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
+  isOpenMaterialSelector.value = false;
+
   if (
       currentFasadeMaterial.value &&
       (
@@ -561,19 +563,20 @@ const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
       )
   ) {
     currentFasadeMaterial.value = false;
-    isOpenMaterialSelector.value = false;
     return;
   }
 
-  let data = module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material
-  currentFasadeMaterial.value = {
-    secIndex,
-    doorIndex,
-    segmentIndex,
-    data
-  }
-  selectCell(secIndex, doorIndex, segmentIndex)
-  isOpenMaterialSelector.value = true
+  setTimeout(() => {
+    let data = module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material
+    currentFasadeMaterial.value = {
+      secIndex,
+      doorIndex,
+      segmentIndex,
+      data
+    }
+    selectCell(secIndex, doorIndex, segmentIndex)
+    isOpenMaterialSelector.value = true
+  }, 10)
 
 }
 
@@ -591,6 +594,13 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
 defineExpose({
   handleCellSelect,
 });
+
+onMounted(() => {
+  let doorIndex = module.value.sections[0].fasades?.[0] ? 0 : null
+  let segmentIndex = module.value.sections[0].fasades?.[0]?.[0] ? 0 : null
+
+  selectCell(0, doorIndex, segmentIndex)
+})
 
 </script>
 

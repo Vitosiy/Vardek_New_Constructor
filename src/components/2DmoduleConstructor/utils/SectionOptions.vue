@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
+import {defineExpose, onMounted, ref, toRefs} from "vue";
 
 import {GridCell, GridCellsRow, GridSection} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
@@ -150,7 +150,7 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
 
     if (section.fillings?.length) {
       cell.fillings = [...section.fillings];
-      section.fillings.length = 0
+      delete section.fillings
     }
 
     section.cells.push(cell);
@@ -181,6 +181,7 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
       ...cell,
       number: cell.number + 1 + i,
       position: new THREE.Vector2(cell.position.x, cell.position.y + (halfHeight + module.value.moduleThickness) * (i + 1)),
+      fillings: [],
       //fillings: newFillings,
     }
 
@@ -197,7 +198,7 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
   visualizationRef.value.renderGrid();
 };
 
-const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
+const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) =>  {
   const count = parseInt(_count)
 
   selectCell(secIndex, cellIndex, rowIndex);
@@ -218,6 +219,7 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
       position: new THREE.Vector2(cell.position.x, cell.position.y),
     }
     cell.cellsRows.push(row);
+    delete cell.fillings
   }
 
   const halfWidth = Math.floor((row.width - module.value.moduleThickness * count) / (count + 1));
@@ -242,6 +244,7 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
       ...row,
       number: row.number + 1 + i,
       position: new THREE.Vector2(row.position.x + (row.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), row.position.y),
+      fillings: [],
     }
 
     if(i === count - 1) {
@@ -572,6 +575,14 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 defineExpose({
   handleCellSelect,
 });
+
+onMounted(() => {
+  let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
+  let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
+
+  selectCell(0, cellIndex, rowIndex)
+})
+
 </script>
 
 <template>
