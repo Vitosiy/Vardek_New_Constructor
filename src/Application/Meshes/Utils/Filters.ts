@@ -9,24 +9,6 @@ import { unwatchFile } from "fs"
 
 import { TFasadeProp, IProductFull } from "@/types/types"
 
-export type TFasadeProps = {
-    SHOW: boolean | null,
-    POSITION: number | null,
-    COLOR: number | null,
-    TYPE: number | null,
-    MILLING: number | null,
-    PALETTE: number | null,
-    WINDOW: number | null,
-    ALUM: number | null,
-    GLASS: number | null,
-    PATINA: number | null,
-    HANDLES: {
-        id: number | null,
-        position: number | null
-        drawer: null | string
-    }
-}
-
 export class Filters extends GlobalsData {
 
     root: THREETypes.TApplication
@@ -82,27 +64,27 @@ export class Filters extends GlobalsData {
 
         // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
 
-
+        const fasadeTypeList = this._FASADETYPE
         const fasadePositionList = product.FASADE_POSITION
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
-
-        params.FASADE_TYPE = fasadeSorted.reduce((acc, index) =>
+        const fasadeTypeSorted = fasadeSorted.reduce((acc, index) =>
             acc.concat(this._FASADE_POSITION[index]?.fasade_type || []),
             []);
+        params.FASADE_TYPE = fasadeTypeSorted
+
+        console.log(fasadeTypeSorted, fasadeTypeList, 'fasadeTypeSorted')
 
         const sizes = product.FASADE_SIZES
 
         let sortFasadePositionList = sizes.length > 0 && sizes[0] != null ? sizes : fasadeSorted
 
-        sortFasadePositionList.forEach((fasade: number, key) => {
-
-
+        sortFasadePositionList.forEach((fasade: number) => {
 
             const fasadePosition = this._FASADE_POSITION[fasade]
             const handlerPosition = fasadePosition.drawer ? 4 : 0
 
-            console.log(fasadePosition.drawer
-                , 'FASADE_POSITION')
+            // console.log(fasadePosition.drawer
+            //     , 'FASADE_POSITION')
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
@@ -112,7 +94,7 @@ export class Filters extends GlobalsData {
             const fasadeProps: TFasadeProp = {
                 /** --- FASADE_PROPS ---*/
                 // COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
-                COLOR: this.project.default_fasade_color,
+                COLOR: this.project.default_fasade_color!,
                 SHOW: false,
                 POSITION: fasadePosition.ID,
                 BODY: fasad,
@@ -124,7 +106,7 @@ export class Filters extends GlobalsData {
                 PATINA: null,
                 TYPE: null,
                 HANDLES: {
-                    id: handles,
+                    id: handles!,
                     position: handlerPosition,
                     drawer: fasadePosition.drawer
                 },

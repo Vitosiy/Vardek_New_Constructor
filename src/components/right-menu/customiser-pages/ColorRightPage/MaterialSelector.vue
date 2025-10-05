@@ -56,10 +56,16 @@ const handleSelect = (material: any) => {
           @click="handleSelect(material)"
         >
           <img
+            v-if="!material.HTML"
             class="item__img"
             :src="_URL + material.PREVIEW_PICTURE"
             alt=""
           />
+          <div
+            class="item__color"
+            :style="{ backgroundColor: `#${material.HTML}` }"
+            v-else
+          ></div>
           <p class="item__name">{{ material.NAME }}</p>
         </li>
       </ul>
@@ -67,7 +73,7 @@ const handleSelect = (material: any) => {
   </div>
 </template>
 
-<style  lang="scss">
+<style lang="scss">
 .redactor {
   &__title {
     margin-bottom: 20px;
@@ -126,6 +132,12 @@ const handleSelect = (material: any) => {
 
   &__name {
     margin-left: 30px;
+  }
+  &__color {
+    height: 60px;
+    width: 60px;
+    border-radius: 12px;
+    cursor: pointer;
   }
   @media (hover: hover) {
     &:hover {

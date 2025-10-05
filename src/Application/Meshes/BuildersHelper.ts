@@ -243,29 +243,34 @@ export class BuildersHelper extends GlobalsData {
     }: {
         object: THREE.Object3D;
         url: string;
-        textureSize?: THREE.Vector3;
+        textureSize?: { x: number, y: number };
         type?: string;
     }) {
+        const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#ffffff'),
+            opacity: 1
+        });
         object.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             if (child.userData.type === "glass") return;
 
-            // Восстановление оригинального материала при наличии
-            if (child.userData.ORIGINAL_COLOR) {
-                child.material = child.userData.ORIGINAL_COLOR;
-            }
-            if (child.material.opacity < 1) {
-                child.material.opacity = 1
-                child.material.color = new THREE.Color('rgb(255,255,255)')
-            }
+            // // Восстановление оригинального материала при наличии
+            // if (child.userData.ORIGINAL_COLOR) {
+            //     child.material = child.userData.ORIGINAL_COLOR;
+            // }
+            // if (child.material.opacity < 1) {
+            //     child.material.opacity = 1
+            //     child.material.color = new THREE.Color('rgb(255,255,255)')
+            // }
 
             this.resources.startLoading(url, "texture", (file) => {
                 if (!(file instanceof THREE.Texture)) return;
-
+                child.material = material
+                // child.material.needsUpdate = true
                 // Создание материала при необходимости
-                if (type && ["Palette", "Glass"].includes(type)) {
-                    child.material = new THREE.MeshStandardMaterial();
-                }
+                // if (type && ["Palette", "Glass"].includes(type)) {
+                //     child.material = new THREE.MeshStandardMaterial();
+                // }
 
                 this.applyTexture(child, file, textureSize, type);
             });

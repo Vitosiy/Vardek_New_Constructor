@@ -212,7 +212,7 @@ const onSearchChange = (e) => {
 }
 </style>
 
-.search { position: absolute; top: 10px; height: 40px; width: 95%;
+<!-- .search { position: absolute; top: 10px; height: 40px; width: 95%;
 border-radius: 5px; padding-left: 15px; } .list { overflow: scroll; height:
 100%; margin-top: 40px; padding-right: 10px; &__details { &_contant {
 margin-top: 10px; } } } .list { position: relative; &::-webkit-scrollbar {
@@ -221,4 +221,4 @@ the thumb */ border-radius: 5px; /* Rounded corners */ } } .item { display:
 flex; flex-direction: row; align-items: center; cursor: pointer; height: 60px;
 border-radius: 15px; background-color: #e7e7e7; margin-bottom: 4px; &__img {
 height: 45px; width: 45px; border-radius: 10px; margin-left: 10px; padding: 5px;
-background-color: $white; } &__name { margin-left: 30px; } }
+background-color: $white; } &__name { margin-left: 30px; } } -->

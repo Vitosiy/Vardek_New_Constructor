@@ -234,8 +234,10 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Палитра */
-    const createCurrentPaletteData = (value: number) => {
+    const createCurrentPaletteData = (value: number | string) => {
+
         let result = {}
+        if (!_FASADE[value]) return result
         if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
             result = Object.keys(_PALETTE)
                 .filter(
@@ -264,6 +266,9 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId }) => {
 
+        console.log(fasadeId, productId, 'IN_MILL')
+        let result = []
+
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] === null) {
 
             currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;
@@ -280,18 +285,49 @@ export const useModelState = defineStore('ModelState', () => {
 
             millings.sort((a, b) => a.SORT - b.SORT)
 
-            currentMillingData.value = millings.sort((a, b) => a.SORT - b.SORT)
+            result = millings.sort((a, b) => a.SORT - b.SORT)
 
-            return
+            currentMillingData.value = result
+
+            return result
         }
 
 
-        currentMillingData.value = []
+        currentMillingData.value = result
+        return result
+    }
+
+    const createTotalMillingList = (fasadeId) => {
+
+        if (!_FASADE[fasadeId]) return []
+
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
+            let millings: IMilling[] = []
+            let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
+            let percept = {}
+            const result = fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
+                return percept[mill] = _MILLING[mill]
+            })
+
+            result.sort((a, b) => a.SORT - b.SORT)
+
+            console.log(result, 'result')
+            return result
+        }
+        return []
+
     }
 
     const getCurrentMillingData = computed(() => {
         return currentMillingData.value
     })
+
+    const setMillingId = (fasadeId, id) => {
+
+        const { FASADE_PROPS } = currentModel.value?.PROPS.CONFIG
+        FASADE_PROPS[fasadeId].MILLING = id
+        console.log(id)
+    }
 
     /** Витрины */
     const createCurrentWindowsData = ({ fasadeId, productId }) => {
@@ -401,7 +437,9 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPaletteData,
 
         createCurrentMillingData,
+        createTotalMillingList,
         getCurrentMillingData,
+        setMillingId,
 
         createCurrentWindowsData,
         getCurrentWindowsData,

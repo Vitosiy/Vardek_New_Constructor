@@ -11,14 +11,10 @@ export class UniformTextureCreateTexture {
     // backupFasadId: number | null = null
 
     // uniformTexture = new URL('@/assets/uniform', import.meta.url).href + "/"
-    uniformTexture = textureUrl
+    private uniformTexture = ''
+    private localTexture = textureUrl
 
-    setTexture(path) {
-        this.uniformTexture = path
-    }
-    clearTexture() {
-        this.uniformTexture = ''
-    }
+
 
     onCreateTexture: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void
 
@@ -28,14 +24,22 @@ export class UniformTextureCreateTexture {
 
     }
 
+    setTexture(path) {
+        this.uniformTexture = path
+    }
+    clearTexture() {
+        this.uniformTexture = ''
+    }
+
     loadTexture(callback: (group: UniformTypes.LevelItem[][], texture: THREE.Texture) => void, group: UniformTypes.LevelItem[][]) {
         // return
         // const url = `${this.uniformTexture}example_small.webp`
-        const url = this.uniformTexture
+        const url = this.uniformTexture.length > 0 ? this.uniformTexture : this.localTexture
+        const type = this.uniformTexture.length > 0 ? 'texture' : 'localTexture'
 
         // console.log('loadTexture')
 
-        this.resources!.startLoading(url, 'localTexture', (texture: THREE.Texture) => {
+        this.resources!.startLoading(url, type, (texture: THREE.Texture) => {
 
             texture.colorSpace = THREE.SRGBColorSpace
 

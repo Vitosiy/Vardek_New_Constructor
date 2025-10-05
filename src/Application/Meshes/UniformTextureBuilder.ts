@@ -230,6 +230,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         this.backupFasadId = this.backupFasadId ?? FASADE_PROPS.filter(element => parseInt(element.COLOR) !== 7397)[0].COLOR  // Создаём общий индекс материала фасада
         const rootFasadeData = this.parent._FASADE[this.backupFasadId as number]
+        console.log(rootFasadeData, 'rootFasadeData')
 
 
         if (rootFasadeData.MAX_WIDTH === null) {
@@ -239,6 +240,8 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         }
 
         this.backupMaterial = this.backupMaterial ?? await this.getBackupTexture(rootFasadeData) as THREE.MeshPhongMaterial | THREE.MeshStandardMaterial | null; // Создаём общий материала фасада
+        const bigTexturePath = rootFasadeData.BIG_PICTURE ?? ''
+        this.createTexture.setTexture(bigTexturePath)
 
         this.maxGroupHeight = rootFasadeData.MAX_HEIGHT ?? this.maxGroupHeight
         this.maxGroupWidth = rootFasadeData.MAX_WIDTH ?? this.maxGroupWidth
