@@ -73,6 +73,12 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentModulData = ref<any>(null)
 
+    const currentBackwallData = ref<any>(null)
+
+    const currentSidewallData = ref<any>(null)
+
+    const currentTopfasadeData = ref<any>(null)
+
     const currentModelFasadesData = ref<IProductFasades[]>([])
 
     const currentPaletteData = ref<{ [key: string]: IPalette }>({})
@@ -117,6 +123,70 @@ export const useModelState = defineStore('ModelState', () => {
     const getCurrentModuleData = computed(() => {
         return currentModulData.value
     })
+
+    /** ------- Задняя стенка -------- */
+
+    const createCurrentBackwallData = (productId: number) => {
+        const productInfo = _PRODUCTS[productId]
+
+        if(productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
+            const colorMap = new Set();
+            const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE[colorId]);
+
+            colorsList.forEach(color => {
+                if (_FASADE[color] !== undefined) {
+                    colorMap.add(_FASADE[color]);
+                }
+            });
+            currentBackwallData.value = Array.from(colorMap)
+        }
+    }
+
+    const getCurrentBackwallData = computed(() => {
+        return currentBackwallData.value
+    })
+
+    /** ------- Боковые стенки -------- */
+
+    const createCurrentSidewallData = (productId: number) => {
+
+        const productInfo = _PRODUCTS[productId]
+
+        if(productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
+            const colorMap = new Set();
+            const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE[colorId]);
+
+            colorsList.forEach(color => {
+                if (_FASADE[color] !== undefined) {
+                    colorMap.add(_FASADE[color]);
+                }
+            });
+            currentSidewallData.value = Array.from(colorMap)
+        }
+    }
+
+    const getCurrentSidewallData = computed(() => {
+        return currentSidewallData.value
+    })
+
+    /** ------- Накладка на крышку -------- */
+
+    /*const createCurrentTopfasadeData = (value: number[]) => {
+
+        const colorMap = new Set();
+        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+
+        colorsList.forEach(color => {
+            if (_FASADE[color] !== undefined) {
+                colorMap.add(_FASADE[color]);
+            }
+        });
+        currentTopfasadeData.value = Array.from(colorMap)
+    }
+
+    const getCurrentTopfasadeData = computed(() => {
+        return currentTopfasadeData.value
+    })*/
 
     /** ------- Работа с фасадами -------- */
 
@@ -385,6 +455,15 @@ export const useModelState = defineStore('ModelState', () => {
 
         createCurrentModuleData,
         getCurrentModuleData,
+
+        createCurrentBackwallData,
+        getCurrentBackwallData,
+
+        createCurrentSidewallData,
+        getCurrentSidewallData,
+
+        /*createCurrentTopfasadeData,
+        getCurrentTopfasadeData,*/
 
         getOptions
     }

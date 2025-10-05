@@ -1,10 +1,14 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
+import {defineExpose, onMounted, ref, toRefs} from "vue";
 import {FasadeMaterial, FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {_URL} from "@/types/constants.ts";
 import {useAppData} from "@/store/appliction/useAppData.ts";
+import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
+import MaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialRedactor.vue";
+import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 
 const props = defineProps({
   module: {
@@ -29,16 +33,21 @@ const {module, visualizationRef, moduleProps} = toRefs(props);
 const selectedFasade = ref({sec: 0, cell: null, row: null});
 const APP = useAppData().getAppData;
 
+const isOpenMaterialSelector = ref<boolean>(false);
+const currentFasadeMaterial = ref<Object | boolean>(false);
+
 const emit = defineEmits([
   "product-selectCell",
   "product-updateFasades",
   "product-getFasadePositionMinMax",
-    "product-calcDrawersFasades",
+  "product-calcDrawersFasades",
   "product-calcLoops",
   "product-calcSlideDoor",
+  "product-checkLoopsCollision",
 ]);
 
 const timer = ref(false);
+
 const debounce = (callback, wait) => {
   if (timer.value) {
     clearTimeout(timer.value)
@@ -54,6 +63,7 @@ const selectCell = (sec, cell = null, row = null) => {
   selectedFasade.value = {sec, cell, row};
   visualizationRef.value.selectCell("fasades", sec, cell, true, row);
 };
+
 const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
   selectedFasade.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
 };
@@ -68,6 +78,10 @@ const calcSlideDoor = (positionId, doorIndex, callback) => {
 
 const calcLoops = (secIndex) => {
   emit("product-calcLoops", secIndex);
+}
+
+const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, segmentIndex = null) => {
+  emit("product-checkLoopsCollision", secIndex, cellIndex, rowIndex, segmentIndex);
 }
 
 const calcDrawersFasades = () => {
@@ -121,7 +135,7 @@ const addSlideDoor = (doorIndex) => {
 
     //Пересчитываем параметры старых дверей
     fasades.forEach((door, index) => {
-      if(index + 1 !== doorIndex) {
+      if (index + 1 !== doorIndex) {
         calcSlideDoor(door[0].material.POSITION, index + 1, (tmp_fasadePosition) => {
           door.forEach((segment, segmentIndex) => {
             segment.width = tmp_fasadePosition.FASADE_WIDTH
@@ -147,7 +161,7 @@ const addSlideDoor = (doorIndex) => {
 const deleteSlideDoor = (doorIndex) => {
   const fasades = module.value.fasades
 
-  if(doorIndex === 4)
+  if (doorIndex === 4)
     fasades[doorIndex - 2].forEach(item => item.material.POSITION = fasades[0][0].material.POSITION)
 
   fasades.pop();
@@ -218,12 +232,13 @@ const addDoor = (secIndex) => {
   const newDoor: FasadeObject = {
     ...firstFasade,
     position: newDoorPosition,
+    material: Object.assign({}, firstFasade.material),
   }
   newDoor.height = module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length)
 
-  if(!loopsidesList.length){
+  if (!loopsidesList.length) {
     alert("Нельзя добавить дверь")
     return
   }
@@ -235,7 +250,7 @@ const addDoor = (secIndex) => {
 
   section.loopsSides[section.fasades.length - 1] = newDoor.loopsSide
 
-  if(!module.value.isSlidingDoors)
+  if (!module.value.isSlidingDoors)
     calcLoops(secIndex)
 
   // Обновляем рендер
@@ -259,16 +274,27 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   else
     delete segment.error;
 
+  let delta = segment.height - halfHeight * 2 - (module.value.isSlidingDoors ? 0 : 4)
+
   segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
   fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
     ...segment,
-    position: module.value.isSlidingDoors ? new THREE.Vector3(segment.position.x, segment.position.y + segment.height, segment.position.z) :
-        new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height),
+    position: module.value.isSlidingDoors ? new THREE.Vector3(segment.position.x, segment.position.y + segment.height + delta, segment.position.z) :
+        new THREE.Vector2(segment.position.x, segment.position.y + 4 + segment.height + delta),
+    material: Object.assign({}, segment.material),
   });
 
-  if(!module.value.isSlidingDoors)
+  segment.height += delta;
+
+  for (let i = 0; i < fasades[doorIndex].length; i++) {
+    if (i > segmentIndex)
+      fasades[doorIndex][i].id += 1;
+  }
+
+
+  if (!module.value.isSlidingDoors)
     calcLoops(secIndex)
 
   // Обновляем рендер
@@ -293,8 +319,7 @@ const deleteDoor = (secIndex, doorIndex) => {
       else
         delete segment.error;
     })
-  }
-  else {
+  } else {
     prev.forEach((segment, index) => {
       segment.width = combinedWidth;
 
@@ -309,8 +334,7 @@ const deleteDoor = (secIndex, doorIndex) => {
     module.value.sections[secIndex].fasades.splice(doorIndex + 1, 1);
     module.value.sections[secIndex].loops.splice(doorIndex + 1, 1);
     delete module.value.sections[secIndex].loopsSides[doorIndex + 1];
-  }
-  else {
+  } else {
     module.value.sections[secIndex].fasades.splice(doorIndex, 1);
     module.value.sections[secIndex].loops.splice(doorIndex, 1);
     delete module.value.sections[secIndex].loopsSides[doorIndex];
@@ -320,7 +344,7 @@ const deleteDoor = (secIndex, doorIndex) => {
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = 0;
 
-  if(!module.value.isSlidingDoors)
+  if (!module.value.isSlidingDoors)
     calcLoops(secIndex)
 
   visualizationRef.value.renderGrid();
@@ -347,8 +371,12 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   else
     delete tmpSegment.error;
 
-  if(prev)
-    prev.position.y = currentSegment.position.y;
+  next ? (next.position.y = next.position.y) : (prev.position.y = currentSegment.position.y);
+
+  for (let i = 0; i < fasades[doorIndex].length; i++) {
+    if (i > segmentIndex)
+      fasades[doorIndex][i].id -= 1;
+  }
 
   if (currentSection.length > 1) {
     currentSection.splice(segmentIndex, 1);
@@ -361,7 +389,7 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = secIndex;
 
-  if(!module.value.isSlidingDoors)
+  if (!module.value.isSlidingDoors)
     calcLoops(secIndex)
 
   visualizationRef.value.renderGrid();
@@ -416,7 +444,7 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
   }
   module.value = clone;
 
-  if(!module.value.isSlidingDoors)
+  if (!module.value.isSlidingDoors)
     calcLoops(secIndex)
 
   visualizationRef.value.renderGrid();
@@ -517,15 +545,62 @@ const checkAddDoor = (secIndex, doorIndex) => {
   let loopsSidesList = getLoopsideList(secIndex, doorIndex)
   const currSection = module.value.sections[secIndex]
 
-  if(currSection.loopsSides?.[doorIndex])
+  if (currSection.loopsSides?.[doorIndex])
     loopsSidesList = loopsSidesList.filter(item => item.ID !== currSection.loopsSides[doorIndex])
 
   return loopsSidesList.length > 0
 }
 
+const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
+  isOpenMaterialSelector.value = false;
+
+  if (
+      currentFasadeMaterial.value &&
+      (
+          secIndex === currentFasadeMaterial.value.secIndex &&
+          doorIndex === currentFasadeMaterial.value.doorIndex &&
+          segmentIndex === currentFasadeMaterial.value.segmentIndex
+      )
+  ) {
+    currentFasadeMaterial.value = false;
+    return;
+  }
+
+  setTimeout(() => {
+    let data = module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material
+    currentFasadeMaterial.value = {
+      secIndex,
+      doorIndex,
+      segmentIndex,
+      data
+    }
+    selectCell(secIndex, doorIndex, segmentIndex)
+    isOpenMaterialSelector.value = true
+  }, 10)
+
+}
+
+const selectOption = (value: Object, type: string, palette: Object = false) => {
+
+  currentFasadeMaterial.value.data[type] = value ? value.ID : null;
+  if (palette)
+    currentFasadeMaterial.value.data['PALETTE'] = palette
+
+  let {secIndex, doorIndex, segmentIndex} = currentFasadeMaterial.value;
+  module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material =
+      Object.assign(module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material, currentFasadeMaterial.value.data)
+};
+
 defineExpose({
   handleCellSelect,
 });
+
+onMounted(() => {
+  let doorIndex = module.value.sections[0].fasades?.[0] ? 0 : null
+  let segmentIndex = module.value.sections[0].fasades?.[0]?.[0] ? 0 : null
+
+  selectCell(0, doorIndex, segmentIndex)
+})
 
 </script>
 
@@ -591,94 +666,100 @@ defineExpose({
                 class="actions-items--wrapper"
                 v-if="selectedFasade.cell === doorIndex"
             >
-                <div class="accordion">
-                  <div
-                      v-for="(segment, segmentIndex) in door"
-                      :key="segmentIndex"
-                      :class="'actions-items--container'"
-                  >
-                    <details class="item-group">
-                      <summary>
-                        <h3 class="item-group__title">
-                          Сегмент №{{ doorIndex + 1 }}{{ door.length > 1 ? `.${segmentIndex + 1}` : '' }}
-                        </h3>
-                      </summary>
+              <div class="accordion">
+                <div
+                    v-for="(segment, segmentIndex) in door"
+                    :key="segmentIndex"
+                    :class="'actions-items--container'"
+                >
+                  <details class="item-group">
+                    <summary>
+                      <h3 class="item-group__title">
+                        Сегмент №{{ doorIndex + 1 }}{{ door.length > 1 ? `.${segmentIndex + 1}` : '' }}
+                      </h3>
+                    </summary>
 
-                      <div
-                          :class="'actions-items--container'"
-                      >
-                        <article class="actions-items actions-items--left">
-                          <div class="actions-items--left-wrapper">
+                    <div
+                        :class="'actions-items--container'"
+                    >
+                      <article class="actions-items actions-items--left">
+                        <div class="actions-items--left-wrapper">
 
-                            <div class="actions-items--width">
-                              <div class="actions-inputs">
-                                <p class="actions-title">
-                                  Ширина
-                                </p>
-                                <div
-                                    :class="['actions-input--container']"
-                                >
-                                  <input
-                                      type="number"
-                                      :step="step"
-                                      min="150"
-                                      class="actions-input"
-                                      :value="segment.width"
-                                      disabled
-                                  />
-                                </div>
+                          <div class="actions-items--width">
+                            <div class="actions-inputs">
+                              <p class="actions-title">
+                                Ширина
+                              </p>
+                              <div
+                                  :class="['actions-input--container']"
+                              >
+                                <input
+                                    type="number"
+                                    :step="step"
+                                    min="150"
+                                    class="actions-input"
+                                    :value="segment.width"
+                                    disabled
+                                />
                               </div>
                             </div>
-
-                            <div class="actions-items--height">
-                              <div class="actions-inputs">
-                                <p class="actions-title">
-                                  Высота
-                                </p>
-                                <div
-                                    :class="['actions-input--container']"
-                                >
-                                  <input
-                                      type="number"
-                                      :step="step"
-                                      min="150"
-                                      class="actions-input"
-                                      :value="segment.height"
-                                      disabled
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
                           </div>
-                        </article>
 
-                        <article class="actions-items actions-items--right">
-                          <div class="actions-items--right-items">
+                          <div class="actions-items--height">
+                            <div class="actions-inputs">
+                              <p class="actions-title">
+                                Высота
+                              </p>
+                              <div
+                                  :class="['actions-input--container']"
+                              >
+                                <input
+                                    type="number"
+                                    :step="step"
+                                    min="150"
+                                    class="actions-input"
+                                    :value="segment.height"
+                                    disabled
+                                />
+                              </div>
+                            </div>
+                          </div>
 
-                            <button
-                                :class="[
+                        </div>
+                      </article>
+
+                      <article class="actions-items actions-items--right">
+                        <div class="actions-items--right-items">
+
+                          <button
+                              :class="[
                             'actions-btn actions-btn--default'
                           ]"
-                                @click="splitFasade(null, doorIndex, segmentIndex)"
-                            >
-                              Разделить фасад
-                            </button>
+                              @click="splitFasade(null, doorIndex, segmentIndex)"
+                          >
+                            Разделить фасад
+                          </button>
 
-                            <button
-                                v-if="door.length > 1"
-                                class="actions-btn actions-btn--default"
-                                @click="removeFasadeSegment(null, doorIndex, segmentIndex)"
-                            >
-                              Удалить
-                            </button>
+                          <button
+                              v-if="door.length > 1"
+                              class="actions-btn actions-btn--default"
+                              @click="removeFasadeSegment(null, doorIndex, segmentIndex)"
+                          >
+                            Удалить
+                          </button>
 
-                          </div>
-                        </article>
-                      </div>
-                    </details>
-                  </div>
+                          <ConfigurationOption
+                              :type="segment.material.PALETTE ? 'palette' : 'surface'"
+                              :data="segment.material.PALETTE ? {...APP.PALETTE[segment.material.PALETTE], hex: APP.PALETTE[segment.material.PALETTE].HTML} : APP.FASADE[segment.material.COLOR]"
+                              @click="openFasadeSelector(null, doorIndex, segmentIndex)"
+                          />
+
+                        </div>
+                      </article>
+                    </div>
+                  </details>
                 </div>
+              </div>
 
 
             </div>
@@ -749,7 +830,7 @@ defineExpose({
                         alt=""
                     />
                   </button>
-                  <p>Дверь №{{doorIndex + 1}}</p>
+                  <p>Дверь №{{ doorIndex + 1 }}</p>
                 </div>
 
                 <div class="accordion">
@@ -761,7 +842,7 @@ defineExpose({
                     <details class="item-group">
                       <summary>
                         <h3 class="item-group__title">
-                          Сегмент №{{secIndex + 1}}.{{doorIndex + 1}}.{{ segmentIndex + 1 }}
+                          Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{ segmentIndex + 1 }}
                         </h3>
                       </summary>
 
@@ -872,27 +953,46 @@ defineExpose({
                               Удалить
                             </button>
 
+                            <ConfigurationOption
+                                :class="[{
+                                  active: currentFasadeMaterial.secIndex === secIndex &&
+                                  currentFasadeMaterial.doorIndex === doorIndex &&
+                                  currentFasadeMaterial.segmentIndex === segmentIndex
+                                }]"
+                                :type="segment.material.PALETTE ? 'palette' : 'surface'"
+                                :data="segment.material.PALETTE ? {...APP.PALETTE[segment.material.PALETTE], hex: APP.PALETTE[segment.material.PALETTE].HTML} : APP.FASADE[segment.material.COLOR]"
+                                @click="openFasadeSelector(secIndex, doorIndex, segmentIndex)"
+                            />
+
                           </div>
                         </article>
                       </div>
                     </details>
                   </div>
                 </div>
-
               </div>
-
             </div>
-
-
           </div>
         </div>
 
       </section>
     </div>
   </div>
+
+  <transition name="slide--right" mode="out-in">
+    <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <AdvanceCorpusMaterialRedactor
+          :is-fasade="true"
+          :elementData="currentFasadeMaterial.data"
+          :elementIndex="currentFasadeMaterial.segmentIndex"
+          @parent-callback="selectOption"
+      />
+    </div>
+  </transition>
+
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 
 .splitter {
   &-container {
@@ -1352,6 +1452,47 @@ defineExpose({
 .width {
   &-max {
     max-width: 100% !important;
+  }
+}
+
+.color {
+  &-select {
+    position: fixed;
+    right: 20.8vw;
+    top: 0;
+    width: 100%;
+    max-width: 373px;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background: rgba($white, 1);
+    box-shadow: 0px 0px 10px 0px #3030301a;
+    z-index: 0;
+    border-radius: 15px;
+
+    &__container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      overflow: auto;
+    }
+
+    &-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: $bg;
+      border-radius: 15px;
+      gap: 10px;
+
+      &__title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+    }
   }
 }
 
