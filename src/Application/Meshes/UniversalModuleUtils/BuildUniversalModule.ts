@@ -350,6 +350,9 @@ export class BuildUniversalModule extends BuildProduct {
                         return
 
                     const onLoad = (productFilling, isModel = true) => {
+                        if(filling.isProfile)
+                            productFilling.userData.isProfile = true
+
                         let sizeModule = PROPS.CONFIG.SIZE
                         let start_position = this.getStartPosition(sizeModule)
 
