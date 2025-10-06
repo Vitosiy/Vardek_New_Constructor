@@ -2,7 +2,7 @@
 //@ts-nocheck
 import MaterialSelector from "./MaterialSelector.vue";
 import ConfigurationOption from "./ConfigurationOption.vue";
-import { ref, onMounted, onBeforeMount, watch, defineExpose } from "vue";
+import {ref, onMounted, onBeforeMount, watch, toRefs, defineExpose} from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
@@ -10,26 +10,37 @@ const modelState = useModelState();
 const eventBus = useEventBus();
 const props = defineProps<{
   materialList: Object;
+  is2Dconstructor: {
+    type: Boolean,
+    default: false,
+  }
 }>();
 
-// const materialList = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR_LIST;
-// const selectedSurfaceID = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 
-// const materialList = ref(null);
+const materialList = ref(null);
 const selectedSurfaceID = ref(null);
 
 const currentSurfaceData = ref<any>({});
 const isMillingExist = ref(false);
 const currentMillingData = ref(null);
 
+const {is2Dconstructor} = toRefs(props);
+
+const emit = defineEmits([
+  "parent-callback",
+]);
+
+const callback = (material) => {
+  emit("parent-callback", material);
+}
+
 onBeforeMount(() => {
-  // materialList.value = modelState.getCurrentModuleData;
+  materialList.value = props.materialList || modelState.getCurrentModuleData;
   selectedSurfaceID.value = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
-
-  const current = props.materialList!.find(
+  const current = materialList.value!.find(
     (m) => m.ID === selectedSurfaceID.value
   );
   if (current) {
@@ -45,7 +56,10 @@ const changeModuleTexture = (data: any) => {
     name: data.NAME,
     imgSrc: data.DETAIL_PICTURE,
   };
-  eventBus.emit("A:ChangeModuleTexture", data);
+  callback(data)
+
+  if(!is2Dconstructor)
+    eventBus.emit("A:ChangeModuleTexture", data);
 };
 
 const deleteSelectedOptions = (type: string) => {
@@ -59,13 +73,12 @@ const deleteSelectedOptions = (type: string) => {
 
 watch(
   () => props.materialList,
-  // modelState.getCurrentModel
-
   () => {
-    // materialList.value = modelState.getCurrentModuleData;
+    materialList.value = props.materialList || modelState.getCurrentModuleData;
+
     selectedSurfaceID.value =
       modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
-    const current = props.materialList!.find(
+    const current = materialList.value!.find(
       (m) => m.ID === selectedSurfaceID.value
     );
     if (current) {
@@ -80,7 +93,7 @@ watch(
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" v-if="!is2Dconstructor">
     <h2 class="container__title">Конфигурация корпуса</h2>
     <div class="configuration">
       <ConfigurationOption
@@ -96,10 +109,24 @@ watch(
       />
     </div>
 
-    <MaterialSelector
-      :materials="props.materialList"
-      @select="changeModuleTexture"
-    />
+    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
+  </div>
+  <div class="container container--2D-constructor" v-else>
+    <div class="configuration">
+      <ConfigurationOption
+          :type="'surface'"
+          :data="currentSurfaceData"
+          @delete-choise="deleteSelectedOptions"
+      />
+      <ConfigurationOption
+          v-if="isMillingExist"
+          :type="'milling'"
+          :data="currentMillingData"
+          @delete-choise="deleteSelectedOptions"
+      />
+    </div>
+
+    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
   </div>
 </template>
 
@@ -118,6 +145,11 @@ watch(
   &__title {
     font-size: large;
     font-weight: 600;
+  }
+
+  &--2D-constructor {
+    border: unset;
+    padding: 0;
   }
 }
 

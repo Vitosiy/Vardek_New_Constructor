@@ -666,7 +666,7 @@ defineExpose({
   <div ref="sceneContainer" class="scene-container"></div>
   <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
-  
+
   <!-- Пока что закоментил потом удалим <div
     class="uniform__container"
     v-if="
@@ -725,7 +725,9 @@ defineExpose({
     <div class="controller-container">
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-        <ControllerButton v-if="Object.keys(CutData).length == 0" />
+        <ControllerButton
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+        />
         <ContentControllerButton
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"
         />

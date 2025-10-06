@@ -10,6 +10,10 @@ export class JsonBuilder {
 
     parent: BuildProduct
     material: THREE.Material | null = null
+    rightMaterial: THREE.Material | null = null
+    leftMaterial: THREE.Material | null = null
+    backMaterial: THREE.Material | null = null
+    topMaterial: THREE.Material | null = null
     keys: string[] = ['fasade', 'center', 'front', 'front1', 'front2']
     convert: Function
 
@@ -18,13 +22,31 @@ export class JsonBuilder {
         this.convert = parent.calculateFromString
     }
 
-    createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
+    createMesh({ data, parent_size, fasade, left, right, back, top }: {
+        data: THREETypes.TObject,
+        parent_size?: THREETypes.TObject,
+        fasade?: THREETypes.TObject,
+        left?: THREETypes.TObject,
+        right?: THREETypes.TObject,
+        back?: THREETypes.TObject,
+        top?: THREETypes.TObject,
+    }) {
 
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
 
         this.material = this.createMaterial(json.material, fasade) as THREE.Material
+
+        if(left)
+            this.leftMaterial = this.createMaterial(json.material, left) as THREE.Material
+        if(right)
+            this.rightMaterial = this.createMaterial(json.material, right) as THREE.Material
+        if(back)
+            this.backMaterial = this.createMaterial(json.material, back) as THREE.Material
+        if(top)
+            this.topMaterial = this.createMaterial(json.material, top) as THREE.Material
+
 
         if (Array.isArray(json.items)) {
 
@@ -94,7 +116,33 @@ export class JsonBuilder {
                 geometry = geometryCreator();
             }
 
-            obj[data.id] = new THREE.Mesh(geometry, this.material);
+            let material = this.material
+            if (data.glass) {
+                const materialConf = {
+                    color: "#" + 939393,
+                    transparent: true,
+                    opacity: 0.5,
+                    shininess: 100,
+                    specular: 0x999999,
+                };
+                material = new THREE.MeshPhongMaterial(materialConf);
+                material.color.convertSRGBToLinear();
+            }
+
+            if(data.id.includes("left") && this.leftMaterial) {
+                material = this.leftMaterial
+            }
+            else if(data.id.includes("right") && this.rightMaterial) {
+                material = this.rightMaterial
+            }
+            else if(data.id.includes("back") && this.backMaterial) {
+                material = this.backMaterial
+            }
+            else if(data.id.includes("top_fasade") && this.topMaterial) {
+                material = this.topMaterial
+            }
+
+            obj[data.id] = new THREE.Mesh(geometry, material);
             obj[data.id].receiveShadow = true;
             obj[data.id].castShadow = true;
         }

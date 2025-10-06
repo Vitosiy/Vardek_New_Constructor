@@ -82,8 +82,8 @@ const fasades: Graphics[] = [];
 const loops: Container[] = [];
 
 const {
-  MAX_AREA_WIDTH,
-  MAX_AREA_HEIGHT,
+  CONST_MAX_AREA_WIDTH,
+  CONST_MAX_AREA_HEIGHT,
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
@@ -116,88 +116,84 @@ const dragState = reactive({
   element: null,
 });
 
+const MAX_AREA_WIDTH = computed(() => {
+  let midArea = document.getElementById("midAreaUM2Dconstructor")
+  return midArea?.clientWidth * 0.7 || CONST_MAX_AREA_WIDTH;
+});
+
+const MAX_AREA_HEIGHT = computed(() => {
+  let midArea = document.getElementById("midAreaUM2Dconstructor")
+  return midArea?.clientHeight * 0.75 || CONST_MAX_AREA_HEIGHT;
+});
+
 const TOTAL_HEIGHT = ref(0);
 const TOTAL_WIDTH = ref(0);
-const areaHeight = ref(MAX_AREA_HEIGHT);
-const areaWidth = ref(MAX_AREA_WIDTH);
+const areaHeight = ref(0);
+const areaWidth = ref(0);
 const mode = ref('module');
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
   emit("calcDrawersFasades", secIndex, fillingData);
 }
 
-const pixelRatio = computed(() => TOTAL_WIDTH.value / MAX_AREA_WIDTH);
+const pixelRatio = computed(() => TOTAL_WIDTH.value / areaWidth.value);
 
-const getMaxAreaHeight = () =>
-    (TOTAL_HEIGHT.value * MAX_AREA_WIDTH) / TOTAL_WIDTH.value;
+const calcMaxAreaSize = () => {
+  let scale = Math.min(MAX_AREA_WIDTH.value / TOTAL_WIDTH.value, MAX_AREA_HEIGHT.value / TOTAL_HEIGHT.value)
 
-const getMaxAreaWidth = () =>
-    (TOTAL_WIDTH.value * MAX_AREA_HEIGHT) / TOTAL_HEIGHT.value;
-
-const updateTotalHeight = (value) => {
-  TOTAL_HEIGHT.value = parseInt(value);
-  areaHeight.value = getMaxAreaHeight();
-
-  app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
-  app.renderer.resize(areaWidth.value, areaHeight.value);
-};
-
-const updateTotalWidth = (value) => {
-  TOTAL_WIDTH.value = parseInt(value);
-  areaWidth.value = getMaxAreaWidth();
-
-  app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
-  app.renderer.resize(areaWidth.value, areaHeight.value);
-};
+  areaWidth.value = TOTAL_WIDTH.value * scale;
+  areaHeight.value = TOTAL_HEIGHT.value * scale;
+}
 
 const updateTotalSize = (value, dimension) => {
-  if (dimension === "width") {
-    TOTAL_WIDTH.value = parseInt(value);
-    areaWidth.value = getMaxAreaWidth();
-    areaHeight.value = getMaxAreaHeight();
-  } else {
-    TOTAL_HEIGHT.value = parseInt(value);
-    areaHeight.value = getMaxAreaHeight();
-    areaWidth.value = getMaxAreaWidth();
+
+  switch (dimension) {
+    case "width":
+      TOTAL_WIDTH.value = parseInt(value);
+      break;
+    case "height":
+      TOTAL_HEIGHT.value = parseInt(value);
+      break;
+    default:
+      break;
   }
 
-  app.canvas.style.width = `${MAX_AREA_WIDTH}px`;
-  app.canvas.style.height = `${MAX_AREA_HEIGHT}px`;
-  app.renderer.resize(MAX_AREA_WIDTH, MAX_AREA_HEIGHT);
+  calcMaxAreaSize();
+
+  app.canvas.style.width = `${areaWidth.value}px`;
+  app.canvas.style.height = `${areaHeight.value}px`;
+  app.renderer.resize(areaWidth.value, areaHeight.value);
 };
 
-
 const getPixelWidth = (mmWidth) => {
-  // return Math.floor((mmWidth / TOTAL_LENGTH) * MAX_AREA_WIDTH);
-  return (mmWidth / TOTAL_WIDTH.value) * MAX_AREA_WIDTH;
+  return (mmWidth / TOTAL_WIDTH.value) * areaWidth.value;
 };
 
 const getPixelHeight = (mmHeight) => {
-  // return Math.floor((mmHeight / TOTAL_HEIGHT) * getMaxAreaHeight.value);
-  return (mmHeight / TOTAL_HEIGHT.value) * MAX_AREA_HEIGHT;
+  return (mmHeight / TOTAL_HEIGHT.value) * areaHeight.value;
 };
 
 const getMmWidth = (pxWidth) => {
-  return (pxWidth / MAX_AREA_WIDTH) * TOTAL_WIDTH.value;
+  return (pxWidth / areaWidth.value) * TOTAL_WIDTH.value;
 };
 
 const getMmHeight = (pxHeight) => {
-  return (pxHeight / MAX_AREA_HEIGHT) * TOTAL_HEIGHT.value;
+  return (pxHeight / areaHeight.value) * TOTAL_HEIGHT.value;
 };
 
 const init = async () => {
   app = new Application();
   await app.init({
     canvas: canvasContainer.value,
-    width: MAX_AREA_WIDTH,
-    height: MAX_AREA_HEIGHT,
+    width: areaWidth.value,
+    height: areaHeight.value,
     backgroundColor: BACKGROUND_COLOR,
     resolution: window.devicePixelRatio || 1,
     // autoDensity: true,
     antialias: true,
     premultipliedAlpha: false,
   });
-
+  updateTotalSize();
   loopsContainer = new Container();
   sectionsContainer = new Container();
   lablesContainer = new Container();
@@ -369,41 +365,49 @@ const renderGrid = () => {
 
       section.loops.forEach((door, doorIndex, ) => {
         door.forEach((loop, loopIndex) => {
-          let loopXOffset = getPixelWidth(loop.positionX);
-          let loopYOffset = getPixelHeight(module.value.height);
+          let tmpLoopData = Object.assign({}, loop)
+          delete tmpLoopData.coords;
+          delete tmpLoopData.errors;
 
-          const pxWidth = getPixelWidth(loop.width);
-          const pxHeight = getPixelHeight(loop.height);
-          loop.xOffset = loopXOffset;
+          let loopXOffset = getPixelWidth(tmpLoopData.positionX);
+          let loopYOffset = getPixelHeight(module.value.height);
+          const pxWidth = getPixelWidth(tmpLoopData.width);
+          const pxHeight = getPixelHeight(tmpLoopData.height);
+
+          tmpLoopData.xOffset = loopXOffset;
 
           loop.coords.forEach((pos, posIndex, ) => {
-            loop.yOffset = loopYOffset - getPixelHeight(pos + loop.height);
+            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height);
             // Отрисовываем секцию
 
             let loopSector = createLoop({
-              x: loop.xOffset,
-              y: loop.yOffset,
+              x: tmpLoopData.xOffset,
+              y: tmpLoopData.yOffset,
               width: pxWidth,
               height: pxHeight,
-              loopData: loop
-            });
-
-            let tempShape = new Shape({
-              type: "loop",
-              sector: loopSector,
-              data: loop,
-              position: {x: loop.positionX, y: pos + loop.height},
-              getMmWidth,
-              getMmHeight,
-              getPixelHeight,
-              getPixelWidth,
-              calcDrawersFasades,
+              loopData: {
+                ...tmpLoopData,
+                error: loop.errors?.includes(posIndex),
+                position: {x: tmpLoopData.xOffset, y: tmpLoopData.yOffset}
+              },
             });
 
             for(let i = 0; i < tmp_array_sectors.length; i++) {
               let sector = tmp_array_sectors[i];
 
-              if(checkSectorsCollision(loopSector, sector)) {
+              if(checkSectorsCollision(loopSector.sectorData, sector)) {
+                let tempShape = new Shape({
+                  type: "loop",
+                  sector,
+                  data: tmpLoopData,
+                  position: {x: getMmHeight(loopSector.sectorData.position.x), y: getMmHeight(loopSector.sectorData.position.y)},
+                  getMmWidth,
+                  getMmHeight,
+                  getPixelHeight,
+                  getPixelWidth,
+                  calcDrawersFasades,
+                });
+
                 sector.shapes.push(tempShape);
                 break;
               }
@@ -697,13 +701,8 @@ const createLoop = ({
   loops.push(sector);
 
   // Создаём ограничения для секторов по высоте
-  const sectorBounds = shapeAdjuster.getTotalBounds(sector, loopData);
+  const sectorBounds = shapeAdjuster.getSectorBounds(sector);
   sector.bound = sectorBounds;
-
-  loopData.maxY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxY));
-  loopData.minY = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minY));
-  loopData.maxX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.maxX));
-  loopData.minX = shapeAdjuster.convertToTen(getMmWidth(sectorBounds.minX));
 
   loopData.sector = sector;
 
@@ -942,7 +941,7 @@ const checkPositionFillingToCreate = (data) => {
 
   return {
     x: Math.round(getMmWidth(position.x)),
-    y: Math.round(getMmWidth(position.y)),
+    y: Math.round(getMmHeight(position.y)),
     width: data.width,
     height: data.height,
     type: data.type,
@@ -966,6 +965,7 @@ const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = nu
       break;
     default:
       selectedCell.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex};
+      selectedFilling.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, item: item};
       toggleSectionColor(sectionIndex, cellIndex, rowIndex);
       break;
   }
@@ -1673,13 +1673,11 @@ onBeforeMount(() => {
   TOTAL_HEIGHT.value = props.maxAreaHeight;
   TOTAL_WIDTH.value = props.maxAreaWidth;
   mode.value = props.mode;
-  areaHeight.value = getMaxAreaHeight();
-  areaWidth.value = getMaxAreaWidth();
+
+  calcMaxAreaSize();
 });
 
 onMounted(() => {
-  // console.log(toRaw(props.maxAreaHeight), 'TT')
-  // getMaxAreaHeight.value = props.maxAreaHeight;
   init();
   document.addEventListener("mousemove", handleGlobalPointerMove, false);
 });
@@ -1693,8 +1691,6 @@ defineExpose({
   adjustSizeFromExternal,
   renderGrid,
   selectCell,
-  updateTotalHeight,
-  updateTotalWidth,
   updateTotalSize,
   destroy,
   changeConstructorMode,
@@ -1709,19 +1705,18 @@ defineExpose({
 </script>
 
 <template>
-  <div class="visualization" :style="`height:${MAX_AREA_HEIGHT}px width:${MAX_AREA_WIDTH}px`">
+  <div class="visualization-interactive" :style="`height:${areaHeight}px width:${areaWidth}px`">
     <canvas ref="canvasContainer"></canvas>
   </div>
   <!-- :style="'height:getMaxAreaHeight'" -->
 </template>
 
-<style>
-.visualization {
-  width: 800px;
-  height: 500px;
-
+<style lang="scss" scoped>
+.visualization-interactive {
   canvas {
     border: 1px solid #bbbbbb;
+    display: flex;
+    justify-content: center;
   }
 }
 
