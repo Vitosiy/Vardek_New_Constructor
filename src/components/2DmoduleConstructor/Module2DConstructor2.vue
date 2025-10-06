@@ -20,7 +20,6 @@ import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
-import ModuleOptionsManager from "@/components/2DmoduleConstructor/utils/ModuleOptionsManager.vue";
 import Toggle from "@vueform/toggle";
 import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
 
@@ -440,8 +439,8 @@ const updateFasades = () => {
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
 
-  if (fillingData) {
-    fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+  if (fillingData?.fasade) {
+      fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
   }
 
   let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
@@ -505,7 +504,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
 
   //Ящики с фасадами
   const BOX_FASADE = module.value.sections[secIndex].fasadesDrawers || []
-  const HI_TECH_PROFILES = module.value.sections[secIndex].profiles || []
+  const HI_TECH_PROFILES = module.value.sections[secIndex].hiTechProfiles || []
 
   const boxesArray = []
   BOX_FASADE.forEach((box, box_key) => {
@@ -515,9 +514,16 @@ const calcDrawersFasadesPositons = (secIndex) => {
     boxesArray.push(box)
   })
 
-  HI_TECH_PROFILES.forEach((profile, box_key) => {
+  HI_TECH_PROFILES.forEach((_profile, box_key) => {
+    let profile = Object.assign({}, _profile)
     if (!profile.position) {
       profile.position = new THREE.Vector3()
+    }
+    else {
+      profile.position = {
+        x: profile.position.x,
+        y: module.value.height - (profile.position.y + profile.height + profile.isProfile.manufacturerOffset)
+      }
     }
     boxesArray.push(profile)
   })
@@ -565,7 +571,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
       box.position = new THREE.Vector3()
     }
 
-    const boxFasadeHeight = box.isProfile && box.otstup ? box.otstup : box.height
+    const boxFasadeHeight = box.isProfile && box.isProfile.offsetFasades ? box.isProfile.offsetFasades : box.height
 
     fasadeList.push({
       y: bottomFasadePosition,
@@ -1030,7 +1036,7 @@ const reset = (reset = false, moduleGrid = false) => {
 };
 
 const saveGrid = () => {
-  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
+/*  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
   const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
   const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers"];
 
@@ -1067,20 +1073,12 @@ const saveGrid = () => {
     }
 
     return object;
-  }
+  }*/
 
   let tmpClone = Object.assign({}, module.value)
-  tmpClone = removeGarbage(tmpClone)
+  //tmpClone = removeGarbage(tmpClone)
 
   return tmpClone;
-
-  /*const data = {
-    canvasHeight: totalHeight.value,
-    canvasWidth: totalWidth.value,
-    data: tmpClone,
-  };*/
-
-  //return data;
 };
 
 defineExpose({

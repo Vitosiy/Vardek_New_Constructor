@@ -580,7 +580,8 @@ onMounted(() => {
   let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
   let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
 
-  selectCell(0, cellIndex, rowIndex)
+  if(visualizationRef.value)
+    selectCell(0, cellIndex, rowIndex)
 })
 
 </script>

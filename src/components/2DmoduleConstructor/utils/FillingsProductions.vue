@@ -13,6 +13,7 @@ import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 const props = defineProps({
   fillings: {
@@ -46,6 +47,7 @@ const emit = defineEmits([
 
 const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
+const modelState = useModelState();
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0});
 const isOpenMaterialSelector = ref<boolean>(false);
@@ -107,6 +109,9 @@ const createFillingDataToCheck = (product, currentSpace) => {
 const addFilling = (type, product, oldFillingObject = false) => {
 
   const {sec, cell, row} = selectedFilling.value
+  const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
+  const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
+  const { PROPS } = modelState.getCurrentModel;
 
   if (row === null && cell === null && sec === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения");
@@ -118,22 +123,28 @@ const addFilling = (type, product, oldFillingObject = false) => {
     return;
   }
 
+  if (isBottomHiTechProfile && !PROPS.CONFIG.OPTION?.includes(4722965)) {
+    alert("Г-образный профиль доступен только для навесного модуля", "error")
+    return;
+  }
+
   const currentSection = module.value.sections[sec];
   const currentCell = currentSection.cells?.[cell];
   const currentRow = currentCell?.cellsRows?.[row];
 
-  let currentFillingsArray = currentRow || currentCell || currentSection
+  let currentModuleSegment = currentRow || currentCell || currentSection
+  let currentFillingsArray = []
 
-  const startFillingData = createFillingDataToCheck(product, currentFillingsArray);
+  const startFillingData = createFillingDataToCheck(product, currentModuleSegment);
 
   if (!startFillingData) {
     alert("Позиция не найдена");
     return;
   }
 
-  if (!currentFillingsArray.fillings)
-    currentFillingsArray.fillings = []
-  currentFillingsArray = currentFillingsArray.fillings
+  if (!currentModuleSegment.fillings)
+    currentModuleSegment.fillings = []
+  currentFillingsArray = currentModuleSegment.fillings
 
   let depth = product.depth
   if (product.SIZE_EDIT_DEPTH_MAX) {
@@ -145,6 +156,39 @@ const addFilling = (type, product, oldFillingObject = false) => {
   }
 
   let _type = product.NAME?.toLowerCase().includes('полка') ? 'shelf' : 'any';
+  _type = isHiTechProfile ? 'profile' : _type;
+
+  let width = startFillingData.width;
+  let height = startFillingData.height;
+  let profileData = {}
+  if (isHiTechProfile) {
+
+    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section"))
+      width = startFillingData.width + module.value.moduleThickness * 2 || startFillingData.width
+
+    height = product.height || module.value.moduleThickness
+
+    if (!module.value.profilesConfig)
+      module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+
+    profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+
+    let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
+    if (typeProfile !== "c" && typeProfile !== "l")
+      typeProfile = typeProfile.split(",").pop().replace(/\s/g, '')
+
+    profileData.TYPE_PROFILE = typeProfile
+    profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
+    profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
+
+    if(isBottomHiTechProfile)
+      profileData.isBottomHiTechProfile = true
+
+    if(!currentModuleSegment.hiTechProfiles)
+      currentModuleSegment.hiTechProfiles = []
+
+    profileData.id = currentModuleSegment.hiTechProfiles.length + 1
+  }
 
   let fillingObject = <FillingObject>{
     product: product.ID,
@@ -154,15 +198,23 @@ const addFilling = (type, product, oldFillingObject = false) => {
     type: _type,
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
     size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
-    width: startFillingData.width,
-    height: startFillingData.height,
+    width,
+    height,
     color: module.value.moduleColor,
     sec,
     cell,
     row,
   };
 
-  currentFillingsArray.push(fillingObject);
+  if(isHiTechProfile) {
+    fillingObject.isProfile = profileData
+    currentModuleSegment.hiTechProfiles.push(fillingObject)
+    currentFillingsArray.push(fillingObject);
+
+    calcDrawersFasades(sec)
+  }
+  else
+    currentFillingsArray.push(fillingObject);
 
   if (product.MIN_FASADE_SIZE) {
     if(!currentSection.fasadesDrawers)
@@ -217,26 +269,42 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
   })
 
   curRow.fillings = curRow.fillings.filter((el, index) => {
-    if (index === itemIndex && el.fasade)
+    if (index === itemIndex && (el.fasade || el.isProfile))
       needFasadesUpdate = true
 
     return index !== itemIndex;
   });
 
   if (needFasadesUpdate) {
-    if(sec.fasadesDrawers?.length) {
+    if(sec.fasadesDrawers?.length || sec.hiTechProfiles?.length) {
 
-      sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
-        return el.id !== curItem.fasade.id;
-      });
+      if(sec.fasadesDrawers?.length) {
+        sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
+          return el.id !== curItem.fasade.id;
+        });
 
-      sec.fasadesDrawers.forEach((el, index) => {
-        if (el.id > curItem.fasade.id)
-          el.id -= 1;
-      })
+        sec.fasadesDrawers.forEach((el, index) => {
+          if (el.id > curItem.fasade.id)
+            el.id -= 1;
+        })
 
-      if(!sec.fasadesDrawers.length)
-        delete sec.fasadesDrawers
+        if(!sec.fasadesDrawers.length)
+          delete sec.fasadesDrawers
+      }
+
+      if(sec.hiTechProfiles?.length) {
+        sec.hiTechProfiles = sec.hiTechProfiles.filter((el, index) => {
+          return el.isProfile.id !== curItem.isProfile.id;
+        });
+
+        sec.hiTechProfiles.forEach((el, index) => {
+          if (el.isProfile.id > curItem.isProfile.id)
+            el.isProfile.id -= 1;
+        })
+
+        if(!sec.hiTechProfiles.length)
+          delete sec.hiTechProfiles
+      }
 
       calcDrawersFasades(secIndex)
     }
@@ -360,7 +428,8 @@ onMounted(() => {
   let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
   let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
 
-  selectCell(0, cellIndex, rowIndex)
+  if(visualizationRef.value)
+    selectCell(0, cellIndex, rowIndex)
 })
 
 </script>

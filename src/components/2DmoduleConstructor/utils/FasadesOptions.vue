@@ -567,7 +567,7 @@ const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
   }
 
   setTimeout(() => {
-    let data = module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material
+    let data = secIndex === null ? module.value.fasades[doorIndex][segmentIndex].material : module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material
     currentFasadeMaterial.value = {
       secIndex,
       doorIndex,
@@ -587,8 +587,14 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
     currentFasadeMaterial.value.data['PALETTE'] = palette
 
   let {secIndex, doorIndex, segmentIndex} = currentFasadeMaterial.value;
-  module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material =
-      Object.assign(module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material, currentFasadeMaterial.value.data)
+  if(secIndex === null){
+    module.value.fasades[doorIndex][segmentIndex].material =
+        Object.assign(module.value.fasades[doorIndex][segmentIndex].material, currentFasadeMaterial.value.data)
+  }
+  else {
+    module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material =
+        Object.assign(module.value.sections[secIndex].fasades[doorIndex][segmentIndex].material, currentFasadeMaterial.value.data)
+  }
 };
 
 defineExpose({
@@ -596,10 +602,18 @@ defineExpose({
 });
 
 onMounted(() => {
-  let doorIndex = module.value.sections[0].fasades?.[0] ? 0 : null
-  let segmentIndex = module.value.sections[0].fasades?.[0]?.[0] ? 0 : null
-
-  selectCell(0, doorIndex, segmentIndex)
+  if(visualizationRef.value) {
+    if(module.value.fasades) {
+      let doorIndex = module.value.fasades[0] ? 0 : null
+      let segmentIndex = module.value.fasades?.[0]?.[0] ? 0 : null
+      selectCell(null, doorIndex, segmentIndex)
+    }
+    else {
+      let doorIndex = module.value.sections[0].fasades?.[0] ? 0 : null
+      let segmentIndex = module.value.sections[0].fasades?.[0]?.[0] ? 0 : null
+      selectCell(0, doorIndex, segmentIndex)
+    }
+  }
 })
 
 </script>
