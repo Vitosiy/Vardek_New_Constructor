@@ -630,7 +630,7 @@ class Shape extends Helpers {
                     this.data.y = Math.round(this.getMmHeight(self.graphic.position.y));
                 }
 
-                if (this.data.fasade) {
+                if (this.data.fasade || this.data.isProfile) {
                     this.calcDrawersFasades(this.data.sec, this.data)
                 }
 
