@@ -11,7 +11,7 @@ export interface IBasket {
         DEPTH: string | null;
       };
     };
-    OPTIONS: any[];
+    OPTION: any[];
     UNIFORM_TEXTURE: {
       GROUP: string | null;
       LEVEL: string | null;
@@ -20,9 +20,10 @@ export interface IBasket {
     };
     USLUGI: number[];
     TABLETOP: any;
+    MODULECOLOR: string | null;
   };
   QUANTITY: number;
-  TYPE: string;
+  TYPE: "scene" | "catalog";
 }
 
 export interface IBasketFacade {
@@ -68,4 +69,25 @@ export interface IRoomObject {
     };
   };
 }
+
+export interface IPriceInfo {
+  sum: number;
+  sumOld: number;
+  sumFormat: string;
+  sumFormatOld: string;
+}
+
+export interface IProduct {
+  handles?: {};
+  product?: {};
+  error?: {};
+  // другие поля продукта
+}
+
+export interface IBasketResponse {
+  basket: IPriceInfo;
+  products: IProduct[] | null;
+  type: "success" | "error";
+}
+
 

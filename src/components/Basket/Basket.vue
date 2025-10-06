@@ -32,6 +32,7 @@
         <p class="basket__sum-no">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
       </div>
       <div class="basket-footer-buttons">
+        
         <!-- <div class="basket__error">
           <p class="error__title"></p>
           <p class="error__title">1 Ошибка</p>
@@ -50,13 +51,13 @@ import ClosePopUpButton from '../ui/svg/ClosePopUpButton.vue';
 import BasketTable from "./BasketTable.vue"
 import { useBasketStore } from '@/store/appStore/useBasketStore';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useEventBus } from '@/store/appliction/useEventBus';
+import { IBasketResponse, IProduct } from '@/types/basket';
 
 const { basketData, syncBasket, syncInvoce} = useBasketStore();
 const popupStore = usePopupStore();
-const items = ref<any>(null);
-const eventBus: ReturnType<typeof useEventBus> = useEventBus()
+const items = ref<IBasketResponse[] | null>(null);
 const loading = ref(true)
+
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 
@@ -66,11 +67,11 @@ const closePopup = () => {
 
 // Вычисляемые свойства для данных корзины
 const mainItems = computed(() => {
-  return items.value?.products?.filter((item: any) => item.product?.TYPE === "scene") || [];
+  return items.value?.products?.filter((item: IProduct) => item.product?.TYPE === "scene") || [];
 });
 
 const additionalItems = computed(() => {
-  return items.value?.products?.filter((item: any) => item.product?.TYPE === "catalog") || [];
+  return items.value?.products?.filter((item: IProduct) => item.product?.TYPE === "catalog") || [];
 });
 
 const totalPrice = computed(() => {
@@ -91,7 +92,7 @@ const updateBasketData = async () => {
   try {
     const basketData = await syncBasket();
     items.value = basketData;
-    basketUpdateKey.value++; // Принудительно обновляем ключ для перерисовки
+    basketUpdateKey.value++;
     loading.value = false;
   } catch (error) {
     console.error('Ошибка при обновлении корзины:', error);
@@ -100,7 +101,6 @@ const updateBasketData = async () => {
 
 onMounted(() => {
   console.log('basketData', basketData);
-  // Синхронизируем корзину при открытии попапа
   updateBasketData();
 });
 

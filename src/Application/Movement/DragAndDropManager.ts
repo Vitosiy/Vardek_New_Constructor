@@ -3,6 +3,7 @@ import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 export class DragAndDropManager {
 
@@ -104,13 +105,6 @@ export class DragAndDropManager {
 
 
                             this.trafficManager._currentObject = object
-                            // После дропа нового объекта синхронизируем корзину
-                            try {
-                                const basketStore = useBasketStore();
-                                basketStore.addFromScene();
-                            } catch (e) {
-                                console.warn('Basket addFromScene on drop failed', e)
-                            }
                             this.trafficManager.ruler.drawRulerToObjects(object)
 
                             object.userData.MOUSE_POSITION = {
@@ -135,13 +129,6 @@ export class DragAndDropManager {
 
 
                             this.trafficManager._currentObject = object
-                            // После дропа нового объекта синхронизируем корзину
-                            try {
-                                const basketStore = useBasketStore();
-                                basketStore.addFromScene();
-                            } catch (e) {
-                                console.warn('Basket addFromScene on drop failed', e)
-                            }
                             this.trafficManager.ruler.drawRulerToObjects(object)
 
                             object.userData.MOUSE_POSITION = {

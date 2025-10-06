@@ -2,29 +2,32 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useRoomContantData } from "../appliction/useRoomContantData";
 import { BasketService } from "@/services/basketService";
-import { createBasketItem } from "@/components/basket/helper/basketHelpers";
+import { createBasketItem } from "@/components/basket/helper/basketMapper.";
 import { useEventBus } from "../appliction/useEventBus";
-import { usePopupStore } from "./popUpsStore";
+import { IBasket, IBasketResponse } from "@/types/basket";
 
 export const useBasketStore = defineStore("basket", () => {
   // Реактивные ссылки для данных
-  const mainConstructor = ref<any[]>([]);
-  const mainCatalog = ref<any[]>([]);
-  const basketData = ref<any | null>(null);
-  const loading = ref(false);
+  const mainConstructor = ref<IBasket[]>([]);
+  const mainCatalog = ref<IBasket[]>([]);
+  const basketData = ref<IBasketResponse | null>(null);
+  const loading = ref<boolean>(false);
   const error = ref<string | null>(null);
-  const popupStore = usePopupStore();
+
   // Восстановление из localStorage
-  const saved = localStorage.getItem("basket-data");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      mainConstructor.value = parsed.mainConstructor || [];
-      mainCatalog.value = parsed.mainCatalog || [];
-    } catch (e) {
-      console.error("Error parsing saved basket data", e);
-    }
-  }
+  // function initializeFromStorage() {
+  //   const saved = localStorage.getItem("basket-data");
+  //   if (saved) {
+  //     try {
+  //       const parsed = JSON.parse(saved);
+  //       mainConstructor.value = parsed.mainConstructor || [];
+  //       mainCatalog.value = parsed.mainCatalog || [];
+  //     } catch (e) {
+  //       console.error("Error parsing saved basket data", e);
+  //     }
+  //   }
+  // }
+  // initializeFromStorage();
 
   // Вычисляемые свойства
   const totalItems = computed(() => 
@@ -52,24 +55,18 @@ export const useBasketStore = defineStore("basket", () => {
   }
 
   async function addFromScene() {   
-    console.log('start') 
     const roomContantData = useRoomContantData().getRoomContantData;
     const roomDataCopy = JSON.parse(JSON.stringify(roomContantData));
-    console.log(roomDataCopy)
-    console.log(roomContantData)
-
     const dataForGetPrices = Object.entries(roomDataCopy)
-      .filter(([key, obj]) => obj?.object?.userData?.PROPS.PRODUCT)
+      .filter(([_, obj]) => obj?.object?.userData?.PROPS.PRODUCT)
       .map(([key, obj]: [string, any]) => createBasketItem(
         obj?.object?.userData?.PROPS, 
         mainConstructor.value.length,
         key
       ));
 
-    console.log('dataForGetPrices', dataForGetPrices);
     mainConstructor.value = dataForGetPrices;
     syncBasket();
-    console.log('end')
   }
 
   function removeItem(type: "mainConstructor" | "mainCatalog", basketId: string) {
@@ -205,20 +202,34 @@ export const useBasketStore = defineStore("basket", () => {
     syncBasket();
   };
 
-  const updateQuantityFromBaske = (idBasket: string, type: string, quantity: any) => {
-    if (type === 'catalog') {
-      mainCatalog.value.find(item => item.BASKETID === idBasket).QUANTITY = quantity;
-    }
-    syncBasket();
-  }
 
   
+  // const updateQuantityFromBaske = (idBasket: string, type: string, quantity: any) => {
+  //   if (type === 'catalog') {
+  //     mainCatalog.value.find(item => item.BASKETID === idBasket).QUANTITY = quantity;
+  //   }
+  //   syncBasket();
+  // }
+
+  function updateQuantityFromBaske(
+    basketId: string,
+    type: any,
+    quantity: number
+  ) {
+    const list = type === "catalog" ? mainCatalog.value : mainConstructor.value;
+    const item = list.find((i) => i.BASKETID === basketId);
+    if (item) {
+      item.QUANTITY = quantity;
+      syncBasket();
+    }
+  }
+
 
   return {  
     // State
-    basketData,
-    loading,
-    error,
+    basketData: computed(() => basketData.value),
+    loading: computed(() => loading.value),
+    error: computed(() => error.value),
     
     // Getters
     mainConstructor: computed(() => mainConstructor.value),

@@ -105,6 +105,25 @@ const isModalOpen = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
+// Список событий
+const priceUpdateEvents  = [
+    // "A:Move",
+    // "A:Selected",
+    // "A:ContantLoaded", 
+    // "A:ClearSelected",
+    // "A:ScreenPrint",
+    // "A:Take3DScreenshot"
+    // "U:PositionChanged",
+    "U:Drop",
+    // 'U:ChangeModule',
+    "U:Model-resize",
+    "U:ChangePaletteColor",
+    "U:ChangeMilling",
+    // "U:DrawPatina",
+    // "U:DeliteFasad",
+    'U:ChangeFasade'
+];
+
 onMounted(async () => {
   try {
     appData.value = useAppData().getAppData;
@@ -127,7 +146,10 @@ onMounted(async () => {
       eventBus.on("A:ClearSelected", clearSelected);
       eventBus.on("A:ScreenPrint", screenPrint);
       eventBus.on("A:Take3DScreenshot", take3DScreenshot);
-
+      // Подписываем все события на один обработчик
+      priceUpdateEvents.forEach(event => {
+          eventBus.on(event, commonEventHandler);
+      });
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);
 
@@ -186,6 +208,17 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
+
+const commonEventHandler = (data) => {
+   console.log('Обновление корзиный', data);
+    try {
+        scheduleBasketSync();
+    } catch (e) {
+        console.warn('Basket addFromScene on drop failed', e)
+    }
+}
+
+
 const checkContantLoad = (state: boolean) => {
   // console.log("checkContantLoad", state);
   activePreloader.value = state;
@@ -201,7 +234,7 @@ const scheduleBasketSync = () => {
     } catch (e) {
       console.warn('Basket addFromScene debounce failed', e);
     }
-  }, 250);
+  }, 500);
 };
 
 const getMove = (move: boolean) => {
@@ -273,7 +306,7 @@ const selected = async (item: any) => {
     controllerPositionData.value = userData.MOUSE_POSITION;
   });
   // Пересчитываем корзину при выборе нового объекта (может измениться набор элементов)
-  scheduleBasketSync();
+  // scheduleBasketSync();
 };
 
 const clearSelected = () => {
@@ -558,7 +591,7 @@ const saveTableData = () => {
 
   APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
   // Пересчёт после сохранения распила
-  scheduleBasketSync();
+  // scheduleBasketSync();
 };
 
 const openTableRedactor = () => {

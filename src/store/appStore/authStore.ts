@@ -128,12 +128,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const handleSuccessfulLogin = async (token: string) => {
-    // Сохраняем токен в cookie
-    setCookie(COOKIE_NAMES.AUTH_TOKEN, token, TOKEN_EXPIRATION_HOURS / 24)
+    // Сохраняем токен в cookie на 24 часа (1 день)
+    setCookie(COOKIE_NAMES.AUTH_TOKEN, token, 1)
     
     // Сохраняем время истечения токена
     const expirationTime = Date.now() + (TOKEN_EXPIRATION_HOURS * 60 * 60 * 1000)
-    setCookie(COOKIE_NAMES.TOKEN_EXPIRATION, expirationTime.toString(), TOKEN_EXPIRATION_HOURS / 24)
+    setCookie(COOKIE_NAMES.TOKEN_EXPIRATION, expirationTime.toString(), 1)
+    
+    // Логируем для отладки
+    console.log('Токен сохранен:', {
+      tokenExpiration: new Date(expirationTime).toLocaleString(),
+      hoursFromNow: TOKEN_EXPIRATION_HOURS,
+      cookieDays: 1
+    })
     
     isAuthenticated.value = true
     await appDataStore.initAppData()
