@@ -181,8 +181,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
     profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
     profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
 
-    if(isBottomHiTechProfile)
+    if(isBottomHiTechProfile) {
       profileData.isBottomHiTechProfile = true
+      startFillingData.y = module.value.height.value - module.value.horizont - height
+    }
 
     if(!currentModuleSegment.hiTechProfiles)
       currentModuleSegment.hiTechProfiles = []
@@ -262,23 +264,31 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
 
   const curRow = row || cell || sec;
   let needFasadesUpdate = false
+  let profileUpdate = false
   let curItem = curRow.fillings[itemIndex];
   curRow.fillings.forEach((filling, index) => {
-    if (index > itemIndex && filling.fasade)
-      filling.fasade.item -= 1;
+    if (index > itemIndex) {
+      if(filling.fasade)
+        filling.fasade.item -= 1;
+      filling.id -= 1;
+    }
   })
 
   curRow.fillings = curRow.fillings.filter((el, index) => {
-    if (index === itemIndex && (el.fasade || el.isProfile))
-      needFasadesUpdate = true
+    if (index === itemIndex) {
+      if (el.fasade)
+        needFasadesUpdate = true
+      if(el.isProfile)
+        profileUpdate = true
+    }
 
     return index !== itemIndex;
   });
 
-  if (needFasadesUpdate) {
+  if (needFasadesUpdate || profileUpdate) {
     if(sec.fasadesDrawers?.length || sec.hiTechProfiles?.length) {
 
-      if(sec.fasadesDrawers?.length) {
+      if(sec.fasadesDrawers?.length && needFasadesUpdate) {
         sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
           return el.id !== curItem.fasade.id;
         });
@@ -292,7 +302,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
           delete sec.fasadesDrawers
       }
 
-      if(sec.hiTechProfiles?.length) {
+      if(sec.hiTechProfiles?.length && profileUpdate) {
         sec.hiTechProfiles = sec.hiTechProfiles.filter((el, index) => {
           return el.isProfile.id !== curItem.isProfile.id;
         });
@@ -335,6 +345,12 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
 
   const currentfilling = currentRow.fillings[key];
+
+  if (currentfilling?.isProfile?.isBottomHiTechProfile) {
+    alert("Г-образный профиль нельзя перемещать!");
+    return;
+  }
+
   const prevValue = currentfilling.position.y; //Предыдущее значение
 
   let delta = +value - currentfilling.distances.bottom
@@ -418,6 +434,52 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
   const curModuleSegment = curRow || curCell || curSection
   curModuleSegment.fillings[itemIndex].fasade.material =
       Object.assign(curModuleSegment.fillings[itemIndex].fasade.material, currentFasadeMaterial.value.data)
+};
+
+const changeDrawerFasade = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
+  selectCell(secIndex, cellIndex, rowIndex, key);
+
+  const gridCopy = Object.assign({}, module.value);
+
+  const sec = gridCopy.sections[secIndex];
+  const currentColl = sec.cells?.[cellIndex];
+  const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
+
+  const currentfilling = currentRow.fillings[key];
+
+  if (!currentfilling?.fasade){
+    alert("У элемента нет фасада!");
+    return
+  }
+
+  const prevValue = currentfilling.fasade.height; //Предыдущее значение
+  const newValue = parseInt(value)
+/*
+  let tmpSector = currentfilling.sector
+  delete currentfilling.sector
+
+  const fillingData = JSON.parse(JSON.stringify(currentfilling));
+  fillingData.fasade.height = newValue;
+  fillingData.sector = tmpSector;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+
+  if (check) {
+    currentfilling.fasade.height = fillingData.fasade.height;
+  } else {
+    currentfilling.fasade.height = prevValue;
+  }
+  currentfilling.sector = tmpSector;*/
+
+  currentfilling.fasade.height = newValue;
+  module.value = gridCopy;
+
+  calcDrawersFasades(secIndex)
+
+  visualizationRef.value.renderGrid();
 };
 
 defineExpose({
@@ -623,10 +685,18 @@ onMounted(() => {
                         <input
                             type="number"
                             :step="step"
-                            min="150"
+                            :min="filling.fasade.minY"
+                            :max="filling.fasade.maxY"
                             class="actions-input"
                             :value="filling.fasade.height"
-                            disabled
+                            @input="debounce((event) => {
+                                changeDrawerFasade(
+                                    $event,
+                                    $event.target.value,
+                                    fillingIndex,
+                                    secIndex
+                                    )
+                                }, 1000)"
                         />
                       </div>
                     </div>
@@ -728,10 +798,19 @@ onMounted(() => {
                               <input
                                   type="number"
                                   :step="step"
-                                  min="150"
+                                  :min="filling.fasade.minY"
+                                  :max="filling.fasade.maxY"
                                   class="actions-input"
                                   :value="filling.fasade.height"
-                                  disabled
+                                  @input="debounce((event) => {
+                                    changeDrawerFasade(
+                                        $event,
+                                        $event.target.value,
+                                        fillingIndex,
+                                        secIndex,
+                                        cellIndex
+                                        )
+                                    }, 1000)"
                               />
                             </div>
                           </div>
@@ -846,10 +925,20 @@ onMounted(() => {
                                   <input
                                       type="number"
                                       :step="step"
-                                      min="150"
+                                      :min="filling.fasade.minY"
+                                      :max="filling.fasade.maxY"
                                       class="actions-input"
                                       :value="filling.fasade.height"
-                                      disabled
+                                      @input="debounce((event) => {
+                                        changeDrawerFasade(
+                                            $event,
+                                            $event.target.value,
+                                            fillingIndex,
+                                            secIndex,
+                                            cellIndex,
+                                            rowIndex
+                                            )
+                                        }, 1000)"
                                   />
                                 </div>
                               </div>
