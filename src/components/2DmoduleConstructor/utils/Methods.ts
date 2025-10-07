@@ -42,7 +42,8 @@ const {
     MIN_SECTION_WIDTH,
     MIN_SECTION_HEIGHT,
     MAX_SECTION_WIDTH,
-
+    CONST_MAX_AREA_HEIGHT,
+    CONST_MAX_AREA_WIDTH
 } = UI_PARAMS;
 
 type TExtremum = { maxX: number, maxY: number, minX: number, minY: number }
@@ -54,9 +55,7 @@ class Helpers {
     step: number = 1
 
     constructor() {
-
-
-        this.maxAreaHeight = UI_PARAMS.TOTAL_HEIGHT * UI_PARAMS.MAX_AREA_WIDTH / UI_PARAMS.TOTAL_LENGTH
+        this.maxAreaHeight = UI_PARAMS.TOTAL_HEIGHT * CONST_MAX_AREA_WIDTH / UI_PARAMS.TOTAL_LENGTH
     }
 
     setStep(value: number) {
@@ -64,7 +63,7 @@ class Helpers {
     }
 
     getPixelWidth(mmWidth: number) {
-        return (mmWidth / UI_PARAMS.TOTAL_LENGTH) * UI_PARAMS.MAX_AREA_WIDTH;
+        return (mmWidth / UI_PARAMS.TOTAL_LENGTH) * CONST_MAX_AREA_WIDTH;
     };
 
     getPixelHeight(mmHeight: number) {
@@ -73,7 +72,7 @@ class Helpers {
     };
 
     getMmWidth(pxWidth: number) {
-        return (pxWidth / UI_PARAMS.MAX_AREA_WIDTH) * UI_PARAMS.TOTAL_LENGTH;
+        return (pxWidth / CONST_MAX_AREA_WIDTH) * UI_PARAMS.TOTAL_LENGTH;
     };
 
     getMmHeight(pxHeight: number) {
@@ -540,7 +539,7 @@ class Shape extends Helpers {
         this.highlightGraphics.visible = false;
 
         // Настройка перетаскивания
-        if (dragActive) {
+        if (dragActive && (!data.isProfile || !data.isProfile.isBottomHiTechProfile)) {
             // Настройка интерактивности
             this.graphic.eventMode = "static";
             this.graphic.cursor = "grab";
@@ -650,25 +649,50 @@ class Shape extends Helpers {
         if (this === otherShape)
             return false;
 
+        let thisPosY = this.graphic.position.y
+        let thisHeight = this.height
+        let otherShapePosY = otherShape.graphic.position.y
+        let otherShapeHeight = otherShape.height
+
+        if(otherShape.data.type != 'loop') {
+            thisPosY = this.data.fasade ? this.graphic.position.y - this.getPixelHeight(this.data.fasade.manufacturerOffset + 2) : thisPosY
+            thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
+
+            otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y - this.getPixelHeight(otherShape.data.fasade.manufacturerOffset) : otherShapePosY
+            otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
+
+            if(!(this.data.isProfile && otherShape.data.isProfile)) {
+                if (this.data.isProfile && otherShape.data.fasade) {
+                    thisPosY = this.graphic.position.y - this.getPixelHeight(this.data.isProfile.TYPE_PROFILE === 'l' ? 0 : this.data.isProfile.manufacturerOffset)
+                    thisHeight = this.getPixelHeight(this.data.isProfile.offsetFasades)
+                }
+
+                if (otherShape.data.isProfile && this.data.fasade) {
+                    otherShapePosY = otherShape.graphic.position.y - this.getPixelHeight(otherShape.data.isProfile.TYPE_PROFILE === 'l' ? 0 : otherShape.data.isProfile.manufacturerOffset)
+                    otherShapeHeight = this.getPixelHeight(otherShape.data.isProfile.offsetFasades)
+                }
+            }
+        }
+
         // Проверка наложения прямоугольников
         return (
                 (
-                    this.graphic.position.y + this.height <= otherShape.graphic.position.y + otherShape.height &&
-                    this.graphic.position.y + this.height >= otherShape.graphic.position.y
+                    thisPosY + thisHeight <= otherShapePosY + otherShapeHeight &&
+                    thisPosY + thisHeight >= otherShapePosY
                 ) ||
                 (
-                    this.graphic.position.y <= otherShape.graphic.position.y + otherShape.height &&
-                    this.graphic.position.y >= otherShape.graphic.position.y
+                    thisPosY <= otherShapePosY + otherShapeHeight &&
+                    thisPosY >= otherShapePosY
                 )
             ) ||
             (
                 (
-                    otherShape.graphic.position.y + otherShape.height <= this.graphic.position.y + this.height &&
-                    otherShape.graphic.position.y + otherShape.height >= this.graphic.position.y
+                    otherShapePosY + otherShapeHeight <= thisPosY + thisHeight &&
+                    otherShapePosY + otherShapeHeight >= thisPosY
                 ) ||
                 (
-                    otherShape.graphic.position.y <= this.graphic.position.y + this.height &&
-                    otherShape.graphic.position.y >= this.graphic.position.y
+                    otherShapePosY <= thisPosY + thisHeight &&
+                    otherShapePosY >= thisPosY
                 )
             );
         /*|| (
