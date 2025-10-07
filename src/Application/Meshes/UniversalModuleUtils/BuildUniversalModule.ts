@@ -29,7 +29,8 @@ export class BuildUniversalModule extends BuildProduct {
         width: number,
         height: number,
         depth: number
-    }, moduleParams?: GridModule) {
+    }, moduleParams?: GridModule)
+    {
 
         const total = new THREE.Object3D();
 
@@ -189,7 +190,6 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.CONFIG.FASADE_POSITIONS = []
         PROPS.CONFIG.FASADE_PROPS = []
         PROPS.CONFIG.SECTIONS = {}
-        PROPS.CONFIG.LOOPS = {}
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
         product_data.sections.forEach((section, secIndex) => {
@@ -309,8 +309,13 @@ export class BuildUniversalModule extends BuildProduct {
                 }
             })
 
-            if (section.loops)
+            if (section.loops && PROPS.CONFIG.LOOPS)
                 PROPS.CONFIG.LOOPS[secIndex + 1] = section.loops
+            else {
+                delete section.loops
+                delete section.loopsSides
+            }
+
         })
 
         if (product_data.fasades) {

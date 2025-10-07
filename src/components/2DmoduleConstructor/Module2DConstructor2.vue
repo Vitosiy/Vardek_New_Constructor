@@ -804,6 +804,11 @@ const calcLoopPositions = (fasades, section) => {
 }
 
 const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasadeSegmentIndex = null) => {
+  const CONFIG = productData.value.PROPS.CONFIG
+
+  if (!CONFIG.LOOPS)
+    return
+
   const currentSection = module.value.sections[secIndex];
   const currentCol = currentSection.cells?.[cellIndex];
   const currentRow = currentCol?.cellsRows?.[rowIndex];
