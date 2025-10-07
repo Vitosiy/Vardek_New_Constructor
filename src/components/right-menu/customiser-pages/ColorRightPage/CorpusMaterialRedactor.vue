@@ -40,7 +40,7 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  const current = materialList.value!.find(
+  const current = props.materialList!.find(
     (m) => m.ID === selectedSurfaceID.value
   );
   if (current) {
@@ -56,10 +56,11 @@ const changeModuleTexture = (data: any) => {
     name: data.NAME,
     imgSrc: data.DETAIL_PICTURE,
   };
-  callback(data)
 
-  if(!is2Dconstructor)
+  if(!is2Dconstructor.value)
     eventBus.emit("A:ChangeModuleTexture", data);
+  else
+    callback(data)
 };
 
 const deleteSelectedOptions = (type: string) => {
