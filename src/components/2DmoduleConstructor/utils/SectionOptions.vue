@@ -111,10 +111,13 @@ const addSection = (secIndex, _count = 1) => {
       width: halfWidth,
       cells: [],
       fasades: [],
-      loops: [],
-      loopsSides: {},
       fillings: [],
       position: new THREE.Vector2(section.position.x + (section.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), section.position.y),
+    }
+
+    if(section.loops) {
+      newColumn.loops = []
+      newColumn.loopsSides = {}
     }
 
     if(i === count - 1) {
