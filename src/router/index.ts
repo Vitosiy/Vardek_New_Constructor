@@ -76,7 +76,7 @@ router.beforeEach((to, from, next) => {
       // Удаляем просроченные куки
       document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      next('/auth');
+      // next('/auth');
       return;
     } else {
       const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);

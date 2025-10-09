@@ -8,7 +8,9 @@
     </div>
 
     <div class="basket-item__product">
-      <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">{{ item?.product.NAME }}</h3> 
+      <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">
+        {{ item?.product.NAME }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
+      </h3> 
       
       <!-- Секция свойств товара тип сцена-->
       <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'scene'">
