@@ -29,7 +29,6 @@ const currentModel = ref(null);
 const closeCustomiser = () => {
   // Отключаем режим переходящего рисунка при закрытии кастомизатора
   eventBus.emit("A:Disable-Uniform-Mode");
-  console.log("Close customiser");
   customiserStore.hideCustomiserPopup();
 };
 

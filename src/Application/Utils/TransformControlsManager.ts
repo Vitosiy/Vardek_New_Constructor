@@ -100,7 +100,6 @@ export class TransformControlsManager {
     onDraggingChanged(value: boolean) {
 
         if (value) {
-            console.log(this.orbitControls)
             this.orbitControls.enabled = false
         }
         else {
@@ -118,7 +117,7 @@ export class TransformControlsManager {
         this.currentTarget.userData.obb.rotation.setFromMatrix4(this.currentTarget.matrixWorld);
         this.currentTarget.userData.PROPS.CONFIG.ROTATION = this.currentTarget.rotation;
         this.currentTarget.userData.targetPosition = this.currentTarget.position
-        
+
 
         this.controls.detach();
         this.callbacks.onDetach(this.currentTarget);
@@ -207,7 +206,6 @@ export class TransformControlsManager {
             this.attach()
         }
         const onDisable = () => {
-            console.log(this.root)
             this.disable()
         }
 
@@ -219,5 +217,10 @@ export class TransformControlsManager {
         this.eventBus.on("A:TransformMode_Off", onDisable)
         this.eventBus.on("A:Load", onTotalDetach)
         this.eventBus.on("A:Create", onTotalDetach)
+        this.eventBus.on("A:NextAction", onTotalDetach)
+        this.eventBus.on("A:PrevAction", onTotalDetach)
+
+
+
     }
 }

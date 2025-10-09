@@ -13,7 +13,6 @@ const props = defineProps({
 });
 
 onMounted(() => {
-  console.log(props, "props");
 });
 
 const emit = defineEmits(["choose-option", "delete-choise"]);

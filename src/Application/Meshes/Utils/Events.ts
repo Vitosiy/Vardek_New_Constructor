@@ -303,8 +303,6 @@ export class MeshEvents extends BuildersHelper {
 
         fasadeProp.COLOR = data.ID
 
-        console.log(fasadeProp, 'fasadeProp_1')
-
         if (UNIFORM_TEXTURE.group !== null) {
             this.removeFromUniformGroup(product);
         }
@@ -335,7 +333,6 @@ export class MeshEvents extends BuildersHelper {
     private handleWindowChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
         const showcaseWindow = CONFIG.SHOWCASE;
         const milling = fasadeProp.MILLING
-        console.log(milling)
 
         if (showcaseWindow.length > 0 && (fasadeProp.WINDOW === null || !incomingModel)) {
             this.changeWindow({ data: showcaseWindow[0], fasadeNdx });
@@ -466,8 +463,6 @@ export class MeshEvents extends BuildersHelper {
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
-        console.log(elementsList, 'elementsList')
-
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
@@ -570,8 +565,6 @@ export class MeshEvents extends BuildersHelper {
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
-        console.log(elementsList, 'elementsList')
-
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
@@ -655,7 +648,6 @@ export class MeshEvents extends BuildersHelper {
             FASADE_HEIGHT: eval(FASADE_POSITIONS[fasadeNdx].FASADE_HEIGHT),
             FASADE_DEPTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_DEPTH)
         };
-        console.log(fasade, 'FW')
 
         this.buildWindow.createWindow({
             fasade,
@@ -952,7 +944,6 @@ export class MeshEvents extends BuildersHelper {
         const curFasadData = FASADE_PROPS[fasadeNdx]
         const curFasadeMesh = FASADE[fasadeNdx]
 
-        console.log(data, 'in EVENT')
         await this.handlesBuilder.createHandle(data, curFasadeMesh, curFasadData)
         curFasadData.HANDLES.id = data.id
 
@@ -982,7 +973,6 @@ export class MeshEvents extends BuildersHelper {
 
         await this.handlesBuilder.getHandlesPosition(data, handle, curFasadeMesh);
         curFasadData.HANDLES.position = data
-        console.log(handle, curFasadeMesh, data, 'ONchangeHandlePos')
     }
 
     //------------------

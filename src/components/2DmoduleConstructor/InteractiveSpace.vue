@@ -225,16 +225,12 @@ const init = async () => {
     getPixelWidth,
   });
   shapeAdjuster.setStep(props.step)
-  console.log('init')
-
   addTicker();
 
   renderGrid();
 };
 
 const renderGrid = () => {
-  console.log('renderGrid')
-
   clearRender();
   let xOffset = 0;
   let yOffset = 0;
@@ -951,7 +947,6 @@ const checkPositionFillingToCreate = (data) => {
 
 // Выбор сектора, передача в родительский компонент
 const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = null, item = null) => {
-  console.log(sectionIndex, cellIndex, rowIndex, "CR");
 
   switch (type) {
     case "fillings":
@@ -1121,8 +1116,6 @@ function onDragMove(event) {
 function dragMove(event) {
   if (!dragState.isDragging || !lastDragEvent.value)
     return;
-
-  console.log('55')
 
   const {
     type,

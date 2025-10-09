@@ -134,7 +134,6 @@ export class MoveManager {
     }
 
     private onMouseDown(event: MouseEvent) {
-        console.log('Start')
         if (this.modelState.getTransformControlsValue) {
 
             return
@@ -277,8 +276,6 @@ export class MoveManager {
             if (this.uniformEvents._unionMode) {
                 /** предварительный выбор объектов в новую группу */
                 if (this.uniformEvents._preGroup) {
-
-                    console.log(this.selectedObject)
                     this.uniformTextureBuilder.preGrouping(this.selectedObject)
                     this.boxHelper.createSelectGroup(this.selectedObject)
                 }
@@ -476,7 +473,6 @@ export class MoveManager {
         })
 
         this.eventBuss.on('A:Pre-Create-Uniform-Group', () => {
-            console.log('Pre-Create-Uniform-Group - MoveManager')
             this.uniformEvents.enablePreGrouping()
             this.uniformEvents.desableGroupAddition()
             this.uniformEvents.desableDegrouping()
@@ -499,7 +495,6 @@ export class MoveManager {
         })
 
         this.eventBuss.on('A:Toggle-Uniform-Mode', (options = {}) => {
-            console.log('Toggle-Uniform-Mode - MoveManager', options)
             this.uniformModeHandler.toggleUniformMode()
             this.selectedObject = null
 

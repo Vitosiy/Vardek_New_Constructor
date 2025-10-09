@@ -75,7 +75,6 @@ const _saveProject = async () => {
     config: 43830,
     type: "user",
   };
-  console.log(data);
 
   await postRequest(`${_GET_URL}`, data);
 
@@ -135,7 +134,6 @@ const updateProject = async () => {
 
   const resp = await postRequest(`${_UPDATE_PROJECT}`, data);
 
-  console.log(JSON.parse(resp.DATA.DETAIL_TEXT), "RESP");
 };
 
 const createNewRoom = (value: string) => {

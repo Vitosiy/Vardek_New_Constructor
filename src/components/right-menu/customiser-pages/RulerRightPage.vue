@@ -46,7 +46,6 @@ const getIsUMproduct = computed(() => {
 // };
 
 const rotateModel = (id: number) => {
-  console.log(id);
   eventBus.emit("A:RotateModel", id);
 };
 

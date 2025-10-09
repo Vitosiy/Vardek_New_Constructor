@@ -245,6 +245,11 @@ export class DeepDispose {
 
     clearExceptEssential(scene: THREE.Scene) {
         function disposeObject(object: THREE.Object3D) {
+            // ИСКЛЮЧЕНИЕ: Пропускаем TransformControls gizmo/helper (не dispose)
+            if (object.userData && object.userData.isTransformGizmo) {
+                return;  // Не очищаем и не рекурсируем
+            }
+
             // Освобождаем геометрию
             if ((object as any).geometry) {
                 (object as any).geometry.dispose();
@@ -293,26 +298,25 @@ export class DeepDispose {
 
         // Проверка, нужно ли сохранять объект
         function shouldKeep(object: THREE.Object3D): boolean {
+            const cam = object instanceof THREE.Camera;
+            const light = object instanceof THREE.Light;
+            const room = object.children.find(el => el.userData.elementType === 'element_room');
 
-            const cam = object instanceof THREE.Camera
-            const light = object instanceof THREE.Light
-            const room = object.children.find(el => el.userData.elementType === 'element_room')
+            // ИСКЛЮЧЕНИЕ: Сохраняем TransformControls gizmo/helper
+            const isTransformGizmo = object.userData && object.userData.isTransformGizmo;
 
-            const shood = cam || light || room
+            const should = cam || light || !!room || isTransformGizmo;  // Добавили || isTransformGizmo
 
-
-            return shood
+            return should;
         }
 
         // Удаляем объекты, которые не должны сохраняться
         scene.children.slice().forEach(object => {
             if (!shouldKeep(object)) {
-                // console.log(object, 'OOOOO')
                 disposeObject(object);
                 scene.remove(object);
             }
         });
-
 
         console.log('Сцена очищена, ключевые объекты сохранены.');
     }

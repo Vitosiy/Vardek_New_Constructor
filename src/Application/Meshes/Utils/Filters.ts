@@ -78,12 +78,8 @@ export class Filters extends GlobalsData {
 
         sortFasadePositionList.forEach((fasade: number, key: number) => {
 
-            console.log(key % 2)
-
             const fasadePosition = this._FASADE_POSITION[fasade]
 
-
-            console.log(fasadePosition, 'fasadePosition')
             const hendleDirection = key % 2
             const handleInDorPosition = () => {
                 if (!ELEMENT_TYPE || sortFasadePositionList.length < 2) return 0
@@ -196,7 +192,6 @@ export class Filters extends GlobalsData {
     }
 
     filterOption(option: number[]) {
-        let filtered = []
         let curOptionsList = option
             .map(el => this._OPTION[el])
             .filter(Boolean);
@@ -205,25 +200,7 @@ export class Filters extends GlobalsData {
             return { id: el.ID, active: false, group: el.GROUP, close: el.CLOSE_OTHER_OPTIONS }
         })
 
-        console.log(result, 'result')
-
         return result
-
-        for (const el in this._OPTIONS_GROUP) {
-
-            filtered.push({
-                NAME: this._OPTIONS_GROUP[el].NAME,
-                CONTANT: curOptionsList.filter(opt => opt.GROUP == el)
-            })
-        }
-
-        filtered = filtered.filter(item => {
-            if (item.CONTANT.length > 0) return item
-
-        })
-
-        return filtered
-
     }
 
 } 

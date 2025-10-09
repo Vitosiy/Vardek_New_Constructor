@@ -28,8 +28,6 @@ export class WindowBuilder extends MillingBuilder {
 
     }) {
 
-        console.log(fasade, '--createWindow')
-
         const windowData = alum ?? data
 
         this.createMillingFasade(fasade, fasadePosition, windowData, defaultGeometry);

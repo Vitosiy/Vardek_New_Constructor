@@ -123,7 +123,6 @@ export const useSceneState = defineStore('SceneState', () => {
 
         } as IProjectParams;
 
-        console.log(currentProjectParams.value.rooms)
 
         // const clone = currentProjectParams.value.rooms?.map(item => {
         //     return item
@@ -188,9 +187,9 @@ export const useSceneState = defineStore('SceneState', () => {
             currentProjectParams.value[curOption] = value?.id;
 
             if (value?.palitte) {
-                console.log('P1')
+
                 if (curPalitte) {
-                    console.log('P2')
+     
                     startProjectParams.value[curOption] = value?.palitte;
                     currentProjectParams.value[curOption] = value?.palitte;
                 }

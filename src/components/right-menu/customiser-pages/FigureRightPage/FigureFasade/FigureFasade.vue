@@ -47,17 +47,14 @@ onBeforeMount(() => {
   figureFasad.value.props = startProp;
   controllerVisible.value = curHandleId !== clearId && !drawer;
 
-  console.log(startProp, "startProp");
   getCurrendHendleData(figureFasad.value.props);
 });
 
 const handleList = ref<THandlesItem[]>();
 
 const handleTabChange = ({ index, tab }: ITabChangeParams) => {
-  console.log(tab, "TAB");
   figureFasad.value.ndx = index;
   figureFasad.value.props = tab.props;
-  console.log(tab, "--tab");
   getCurrendHendleData(tab.props);
 };
 
@@ -68,14 +65,7 @@ const getCurrendHendleData = (prop) => {
 };
 
 const onHandleSelect = (data) => {
-  // console.log(
-  //   figureFasad.value.props.HANDLES.drawer === null,
-  //   data.ID ,
-  //   "HANDLES"
-  // );
-
   figureFasad.value.data = data;
-  console.log(figureFasad.value.props);
 
   controllerVisible.value =
     data.ID !== clearId && figureFasad.value.props.HANDLES.drawer === null;
@@ -94,7 +84,6 @@ const onChangeHandlePos = (pos) => {
 
 const onDeleteHandle = () => {
   const curHandleData = handleList.value!.find((el) => el.ID === clearId);
-  console.log(curHandleData, "curHandleData");
 
   figureFasad.value.data = curHandleData;
   controllerVisible.value = false;

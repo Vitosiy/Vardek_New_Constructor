@@ -141,8 +141,6 @@ export class TrafficManager {
 
     removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer }) {
 
-        console.log(product)
-
         const removeObj = product ?? this._currentObject
 
         if (!removeObj) return
@@ -150,8 +148,6 @@ export class TrafficManager {
         if (removeObj instanceof THREE.Object3D) {
             const prod = toRaw(removeObj)
             const { RASPIL_LIST } = prod.userData.PROPS
-
-            console.log(RASPIL_LIST)
 
             if (RASPIL_LIST.length > 0) {
                 RASPIL_LIST.forEach(elem => {
@@ -171,7 +167,6 @@ export class TrafficManager {
             this.currentObject = null
             return
         }
-        console.log(removeObj)
 
         this.room.remove(removeObj.id)
         this.despose.clearObject(removeObj, this.scene)

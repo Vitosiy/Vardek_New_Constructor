@@ -31,7 +31,7 @@ const cutChacked = (
   event: Event,
   item: Record<string,string>,
 ) => {
-  console.log(item, "item");
+
   // const typeLow = item.NAME.toLowerCase();
   emit("cut-servisData", event.target.checked, item);
 };

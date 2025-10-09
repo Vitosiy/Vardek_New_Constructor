@@ -138,7 +138,6 @@ const prepareOptions = () => {
 const prepareExtras = (arr: TOptionItem[]) => {
   for (const el in arr) {
     const option = arr[el];
-    console.log(option, "option");
     const { isPalitte } = checkExtras(option.id);
     if (option.palitte) {
       option.palitteData = isPalitte;
@@ -229,7 +228,6 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
     (event.target as HTMLInputElement).checked
   );
   const selectOption = roomOptions.getGlobalOptions[value];
-  console.log(selectOption, value, "selectOption");
 
   if (selectOption) {
     switch (value) {
@@ -251,7 +249,6 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
         break;
       default:
         if (selectOption.global) {
-          console.log("55");
           sceneState.updateDefaultData(value, selectOption);
           return;
         }
@@ -275,13 +272,11 @@ const selectOption = (value: TTextureItem) => {
       data = value.ID;
       break;
   }
-  console.log("ev");
 
   const checkMillingSelect = "type_showcase" in value;
   if (!currentOption.value) return;
 
   const curOption = globalOptions.value![currentOption.value];
-  console.log(curOption, currentOption.value, "----5555");
 
   if (curOption.id === value.ID) return;
 
@@ -374,13 +369,13 @@ const selectOption = (value: TTextureItem) => {
   if (!isPalitte && isMilling && curOption && checkMillingSelect) {
     if (curOption.milling === null) {
       if (isMilling.length > 0) {
-        console.log("Start_MILL_1");
+
         roomOptions.setGlobalMilling(isMilling[0].ID, currentOption.value);
       } else {
         roomOptions.setGlobalMilling(null, currentOption.value);
       }
     } else {
-      console.log("Start_MILL_2");
+
       roomOptions.setGlobalMilling(value.ID, currentOption.value);
       eventBus.emit(optionsType.value["millingTotal"], data);
     }
@@ -389,7 +384,7 @@ const selectOption = (value: TTextureItem) => {
       roomOptions.updateOption(currentOption.value, value.ID);
       eventBus.emit(optionsType.value[currentOption.value], data);
 
-      console.log("Start_MILL3");
+
     }
 
     return;
@@ -430,7 +425,6 @@ const plinthSelect = (
   key: keyof TOptionsMap,
   plinthgData: TMilling[]
 ) => {
-  console.log(key, "key");
 
   optionsData.value = plinthgData;
   currentOption.value = key;

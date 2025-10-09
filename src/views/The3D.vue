@@ -130,6 +130,8 @@ onMounted(async () => {
       eventBus.on("A:Take3DScreenshot", take3DScreenshot);
       eventBus.on("A:Load", setLocalActivateValue);
       eventBus.on("A:Create", setLocalActivateValue);
+      eventBus.on("A:NextAction", setLocalActivateValue);
+      eventBus.on("A:PrevAction", setLocalActivateValue);
 
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);
@@ -214,7 +216,13 @@ const controlsActivate = () => {
     eventBus.emit("A:TransformMode_On");
   } else {
     eventBus.emit("A:TransformMode_Off");
-    controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+    try {
+      if (product.value?.userData.MOUSE_POSITION) {
+        controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+      }
+    } catch (e) {
+      console.log("Не удалось найти параметр MOUSE_POSITION", e);
+    }
   }
 
   modelState.setTransformControlsValue(transformControlsValue.value);
@@ -490,17 +498,13 @@ const removeModel = (model) => {
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, "uniformMode");
   if (VerdekConstructor.value) {
-    console.log("Pre-Create-Uniform-Group");
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, "uniformMode");
   if (VerdekConstructor.value) {
-    console.log("Create-Uniform-Group");
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
@@ -710,7 +714,11 @@ watch(
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
         <ControllerButton
-          v-if="Object.keys(CutData).length == 0 && modelState.getCurrentModel?.name!='MODEL' && !universalModuleData"
+          v-if="
+            Object.keys(CutData).length == 0 &&
+            modelState.getCurrentModel?.name != 'MODEL' &&
+            !universalModuleData
+          "
         />
         <ContentControllerButton
           @click="duplicateProduct"
@@ -724,7 +732,12 @@ watch(
       <div class="controller-right">
         <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
         <!-- <UpControllerButton /> -->
-        <OpenFacadeButton v-if="Object.keys(CutData).length == 0 && modelState.getCurrentModel?.name!='MODEL'" />
+        <OpenFacadeButton
+          v-if="
+            Object.keys(CutData).length == 0 &&
+            modelState.getCurrentModel?.name != 'MODEL'
+          "
+        />
 
         <Modal
           v-if="Object.keys(CutData).length > 0"

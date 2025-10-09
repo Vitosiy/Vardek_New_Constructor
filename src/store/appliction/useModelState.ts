@@ -98,7 +98,7 @@ export const useModelState = defineStore('ModelState', () => {
     const transformControls = ref<boolean>(false)
 
     const setCurrentModel = (object: THREE.Object3D | any) => {
-        console.log(object, 'SETED')
+
         currentModel.value = object
     }
 
@@ -305,7 +305,6 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId }) => {
 
-        console.log(fasadeId, productId, 'IN_MILL')
         let result = []
 
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] === null) {
@@ -364,7 +363,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         const { FASADE_PROPS } = currentModel.value?.userData.PROPS.CONFIG
         FASADE_PROPS[fasadeId].MILLING = id
-        console.log(id)
     }
 
     /** Витрины */

@@ -42,8 +42,6 @@ const transitionFasadeSelect = ref<boolean>(false);
 
 const prepareData = () => {
   materialList.value = modelState.getCurrentModuleData;
-  console.log(modelState.getCurrentModel, "modelState.getCurrentModel");
-
   fasadeList.value =
     modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
@@ -91,7 +89,6 @@ onMounted(() => {
 });
 
 const handleTabChange = ({ index, tab }) => {
-  console.log(index, tab);
 
   // Если переключаемся на другой таб, отключаем режим переходящего рисунка
   if (isGroupsManagerActive.value) {
@@ -125,7 +122,6 @@ const handleUniformModeToggled = (data: {
   uniformMode: boolean;
   showGroupsManager: boolean;
 }) => {
-  console.log("Uniform mode toggled:", data);
   isGroupsManagerActive.value = data.showGroupsManager && data.uniformMode;
 };
 
@@ -153,12 +149,6 @@ watch(
       customiserStore.hideCustomiserPopup();
       return;
     }
-
-    console.log(modelState.getCurrentModel?.name == "MODEL");
-
-    // if (modelState.getCurrentModel.name == "MODEL") {
-    //   customiserStore.hideCustomiserPopup();
-    // }
 
     tabIndex.value = 0;
     materialList.value = modelState.getCurrentModuleData;

@@ -344,7 +344,6 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  console.log('START')
   prepareData();
 });
 

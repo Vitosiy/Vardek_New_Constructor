@@ -56,7 +56,7 @@ async function getBasketPrice() {
 async function setBasketOrder() {
   // Параметры, которые передаются на сервер
   const params = {};
-  console.log(roomContantData);
+
 
   try {
     // Выполнение POST-запроса
@@ -80,7 +80,6 @@ async function setBasketOrder() {
 // ==========================================================================
 
 const deleteProductInBusket = (basketProduct: any) => {
-  console.log(basketProduct, 'basketProduct');
   eventBus.emit("A:RemoveModelFromBasket", { product: basketProduct });
   eventBus.emit("A:RemoveModel", { product: basketProduct });
   nextTick(() => {

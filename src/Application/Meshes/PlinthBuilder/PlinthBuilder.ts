@@ -112,7 +112,6 @@ export class PlinthBuilder {
         const model = this.jsonBuilder.createMesh({ data: convertedData });
         const edgeBody = this.edgeBuilder.createEdge(model)
         model.add(edgeBody)
-        console.log(model, 'model')
         model.castShadow = true
         model.name = 'PLINTH';
         model.userData.type = key || 'front'
@@ -153,7 +152,6 @@ export class PlinthBuilder {
         if (plinthSurfase != null) {
             const surface = this.buildProduct._FASADE[plinthSurfase]
             const texture = surface.TEXTURE
-            console.log(surface, 'texture')
 
             this.buildProduct.resources.startLoading(texture, 'texture', (file) => {
                 if (file instanceof THREE.Texture) {

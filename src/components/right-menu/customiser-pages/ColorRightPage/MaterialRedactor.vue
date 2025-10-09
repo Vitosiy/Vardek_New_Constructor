@@ -273,7 +273,6 @@ const prepareData = () => {
     isSurfaceSelected.value = true;
   }
 
-  console.log(modelState.getCurrentMillingData, "INPREPARE");
 
   if (MILLING) {
     const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
@@ -315,7 +314,7 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  console.log("START");
+
   prepareData();
 });
 

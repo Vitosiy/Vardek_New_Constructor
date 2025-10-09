@@ -32,7 +32,6 @@ export class JsonBuilder {
         top?: THREETypes.TObject,
     }) {
 
-        console.log('5')
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};

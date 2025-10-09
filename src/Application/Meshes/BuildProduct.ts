@@ -376,7 +376,6 @@ export class BuildProduct extends BuildersHelper {
         const bodyHeight = body ? this.calculateHeight(body) : 0;
         const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
-        console.log(plinth, 'plinth')
         // Позиционирование
         const baseY = legsHeight * 0.5;
         if (legs) legs.position.y = baseY;

@@ -58,8 +58,6 @@ export class FasadeBuilder {
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
 
-        console.log(defaultConfig, 'defaultConfig')
-
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
         const modelType = CONFIG.MODEL?.type ?? "left";
@@ -85,7 +83,7 @@ export class FasadeBuilder {
             const isDefault = fasadeColor === this.parent.project.default_fasade_color;
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    console.log('down')
+                    // console.log('down')
 
                     return {
                         color: (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor,
@@ -94,14 +92,14 @@ export class FasadeBuilder {
                     }
                 case "element_up":
 
-                    console.log('Top ')
+                    // console.log('Top ')
                     return {
                         color: (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor,
                         pallite: fasadsTop.palitte,
                         milling: fasadsTop.milling
                     }
                 default:
-                    console.log('None ')
+                    // console.log('None ')
                     return {
                         color: fasadeColor,
                         pallite: null,
@@ -145,12 +143,12 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
-                    console.log('YES_2', milling)
+
                     fasadeData.MILLING = milling;
                 }
 
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
-                    console.log('NO_2')
+
                     fasadeData.MILLING = null;
                 }
 
@@ -158,8 +156,6 @@ export class FasadeBuilder {
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
             }
-
-            console.log(fasadeData, '---555 fasadeData!!!')
 
             // Позиция фасада вычисляется один раз
             const fasadePositionData = this.getFasadePosition(CONFIG, fasadeNdx, isUMmodule);
@@ -177,10 +173,9 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null) {
-                console.log(fasadeData.MILLING, 'MILLING', remove)
+          
                 const millingParams = remove ? 2462671 : fasadeData.MILLING;
                 if (remove) {
-                    console.log('ON REM')
                     this.parent.milling_builder.createMillingFasade(
                         curFasade,
                         curFasade.userData.trueSize,
@@ -247,8 +242,6 @@ export class FasadeBuilder {
                 }
             }
 
-            console.log(FASADE_PROPS[fasadeNdx], 'FASADE_PROPS')
-
             this.uniformeTextureStartData = [];
             return;
         }
@@ -262,8 +255,6 @@ export class FasadeBuilder {
 
                 const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
 
-                console.log(milling, '5--milling')
-
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
                 fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
@@ -272,7 +263,6 @@ export class FasadeBuilder {
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
                 const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
-                console.log(firstValueMilling, 'firstValueMilling')
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -282,11 +272,9 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
-                    console.log('YES')
                     fasadeData.MILLING = milling;
                 }
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
-                    console.log('NO')
                     fasadeData.MILLING = null;
                 }
 
@@ -295,8 +283,6 @@ export class FasadeBuilder {
                 }
 
             }
-
-            console.log(fasadeData, '---fasadeData!!!')
 
             // Позиция фасада вычисляется один раз
             const fasadePositionData = this.getFasadePosition(CONFIG, key, isUMmodule);
@@ -336,8 +322,6 @@ export class FasadeBuilder {
             const isNewFasade = FASADE_DEFAULT.length < FASADE_PROPS.length;
             // const fasadeEdge = this.edgeBuilder.createEdge(fasade);
             fasade.userData.edgeID = fasadeEdge.id;
-
-            console.log(fasadeData, 'fasadeData')
 
             if (isNewFasade) {
                 FASADE.push(fasade);
@@ -494,8 +478,6 @@ export class FasadeBuilder {
             opacity: 0.5,
             color: new THREE.Color('rgb(255, 0, 0)')
         });
-
-        console.log(curBodyExceptions)
 
         if (curBodyExceptions && currentFasadeColor == 7397) {
             material.transparent = true

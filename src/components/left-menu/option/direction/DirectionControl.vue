@@ -77,20 +77,35 @@ const getContainerWidth = computed(() => {
 
 const getControlsData = () => {
   const map = diretionMap.value[props.type!];
-  console.log(map, "map");
-  if (map) {
+
+  console.log(props.type, "map");
+  if (map && props.type !== "smallMap") {
     const refactor = controlBtn.value.map((el, ndx) => {
       if (map.includes(ndx)) {
         return el;
       } else {
-        return {btnActive:"disabled", icon: "", size: 20, fontSize: 10, action: NaN };
+        return {
+          btnActive: "disabled",
+          icon: "",
+          size: 20,
+          fontSize: 10,
+          action: NaN,
+        };
       }
     });
 
-    console.log(refactor, "refactor");
-
     controlsData.value = refactor;
+  } else if (map && props.type == "smallMap") {
+    console.log("smallMap----");
+
+    controlsData.value = controlBtn.value.filter((el, ndx) => {
+      if (map.includes(ndx)) {
+        return el;
+      }
+    });
+    console.log(controlsData.value, ' controlsData.value');
   } else {
+    console.log('5')
     controlsData.value = controlBtn.value;
   }
 };
@@ -156,7 +171,7 @@ onMounted(() => {
 .button__rounded {
   padding: var(--value);
 
-  &.disabled{
+  &.disabled {
     pointer-events: none;
     opacity: 0;
   }

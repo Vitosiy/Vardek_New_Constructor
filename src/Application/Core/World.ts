@@ -125,7 +125,7 @@ export class World {
             })
 
             const rooms = this.roomState.getRooms
-            console.log(rooms)
+            // console.log(rooms)
 
             this.sceneState.updateProjectParams({ rooms })
             this.roomState.setCurrentRoomId(roomId)

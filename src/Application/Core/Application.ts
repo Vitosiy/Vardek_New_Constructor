@@ -26,7 +26,9 @@ import { UseEdgeBuilder } from "../Meshes/EdgeBuilder/useEdgeBuilder";
 import { useEventBus } from '../../store/appliction/useEventBus';
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useModelState } from "@/store/appliction/useModelState";
 import { DeepDispose } from "../Utils/DeepDispose"
+
 // import { MeshEvents } from '../Meshes/Utils/Events';
 
 import { Resources } from "../Utils/Resources";
@@ -41,6 +43,7 @@ export class Application {
     appData: ReturnType<typeof useAppData> = useAppData();
     menuStore: ReturnType<typeof useMenuStore> = useMenuStore();
     userHistory: UserHistory<string[]> = new UserHistory();
+    modelState: ReturnType<typeof useModelState> = useModelState()
     // meshEvents: MeshEvents | null = null
 
     private canvas: HTMLElement | null;
@@ -364,7 +367,8 @@ export class Application {
         });
         this.eventBus.on('A:PrevAction', () => {
             const prev = this.userHistory!.undo()
-            // console.log('PREV')
+            this.modelState.setCurrentModel(null)
+
             if (prev) {
                 this.deepDispose!.clearExceptEssential(this.scene!)
                 this.room?.update(prev)
@@ -373,8 +377,7 @@ export class Application {
         })
         this.eventBus.on('A:NextAction', () => {
             const next = this.userHistory!.redo()
-
-            // console.log('NEXT')
+            this.modelState.setCurrentModel(null)
             if (next) {
                 this.deepDispose!.clearExceptEssential(this.scene!)
                 this.room?.update(next)
