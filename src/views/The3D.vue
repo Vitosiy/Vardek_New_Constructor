@@ -113,7 +113,7 @@ const CutSave = ref(false);
 // Список событий
 const priceUpdateEvents  = [
     // "A:Move",
-    "A:Selected",
+    // "A:Selected",
     // "A:ContantLoaded", 
     // "A:ClearSelected",
     // "A:ScreenPrint",
