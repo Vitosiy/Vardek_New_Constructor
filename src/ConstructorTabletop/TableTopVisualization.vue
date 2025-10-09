@@ -936,7 +936,6 @@ onBeforeMount(() => {
 
 onMounted(() => {
   init();
-  console.log(props.grid);
   document.addEventListener("mousemove", handleGlobalPointerMove, false);
 });
 

@@ -61,7 +61,6 @@ class TableTopCreator extends BuildersHelper {
             const { USLUGI } = parent.userData.PROPS.CONFIG
             const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
 
-            console.log(parent, USLUGI, '---Parent USLUGI_1')
 
             await this.events.changeModelSize({
                 data: { width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, mesh: parent, type: 'raspil'

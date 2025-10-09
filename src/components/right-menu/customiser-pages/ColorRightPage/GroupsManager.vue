@@ -60,7 +60,7 @@ const preCreateUniformGroup = () => {
 
 const сreateUniformGroup = () => {
   // console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
-  console.log('Create-Uniform-Group')
+
   
   // Обновляем локальное состояние
   isCreatingGroup.value = false

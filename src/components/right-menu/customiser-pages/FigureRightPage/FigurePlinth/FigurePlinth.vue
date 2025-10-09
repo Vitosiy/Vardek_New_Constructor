@@ -1,44 +1,40 @@
 <script lang="ts" setup>
 //@ts-nocheck
-import { onBeforeMount, computed, ref } from "vue";
-import { useRailsRightPage } from "./useRailsRightPage";
+import { useFigurePlinth } from "./useFigurePlinth";
 
-const { createOptionList, checkActive } = useRailsRightPage();
-const optionList = ref([]);
+const { checkActive } = useFigurePlinth();
 
-const createList = () => {
-  const { data } = createOptionList();
-  optionList.value = data;
-};
 
-const changeValue = (event: InputEvent, id: number) => {
-  const check = event.target!.checked;
-  checkActive(id, check);
-  createList();
-};
-
-onBeforeMount(() => {
-  createList();
+const props = defineProps({
+  data: {
+    type: Object,
+    required: true,
+  },
 });
 
+const changeValue = (event: InputEvent, key: string) => {
+  const check = event.target!.checked;
+  checkActive(check, key);
+};
 </script>
 <template>
   <div class="rails">
-    <div v-for="(item, key) in optionList" :key="item.NAME + key">
-      <h3 class="rails__title">{{ item.NAME }}</h3>
-      <div class="option__checkbox" v-for="(option, key) in item.CONTANT">
-        <label class="control control-checkbox">
-          <input
-            type="checkbox"
-            :checked="option.active"
-            @change="changeValue($event, option.ID)"
-          />
-          <span class="control_indicator"></span>
-          <span class="text-lg text-gray-800 font-medium">{{
-            option.NAME
-          }}</span>
-        </label>
-      </div>
+    <!-- <h3 class="rails__title">{{ item.NAME }}</h3> -->
+    <div
+      class="option__checkbox"
+      v-for="(item, key, ndx) in props.data"
+      :key="item.NAME + key"
+    >
+      <label class="control control-checkbox">
+        
+        <input
+          type="checkbox"
+          :checked="item.value"
+          @change="changeValue($event, key, ndx)"
+        />
+        <span class="control_indicator"></span>
+        <span class="text-lg text-gray-800 font-medium">{{ item.label }}</span>
+      </label>
     </div>
   </div>
 </template>

@@ -37,11 +37,10 @@ watch(() => props.ambientLight, (v) => (localAmbient.value = v));
 watch(localAmbient, (v) => emit("update:ambientLight", v));
 
 watch(() => props.pointLight, (v) => (localPoint.value = v));
-watch(localPoint, (v) => emit("update:pointPoint" as any, v)); // safety: will be overridden by parent watchers
+watch(localPoint, (v) => emit("update:pointLight" as any, v)); 
 
-// Correct emit key for point light
-const emitPoint = (v: number | string) => emit("update:pointLight", v);
-watch(localPoint, (v) => emitPoint(v));
+// const emitPoint = (v: number | string) => emit("update:pointLight", v);
+// watch(localPoint, (v) => emitPoint(v));
 </script>
 
 <template>

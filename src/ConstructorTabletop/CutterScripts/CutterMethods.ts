@@ -944,7 +944,6 @@ class Section extends Helpers {
 
   createSection() {
     const data = this.getServiseData();
-    console.log(data, 'data')
     this.createFormSection(data);
   }
 

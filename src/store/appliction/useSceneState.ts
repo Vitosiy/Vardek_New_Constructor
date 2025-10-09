@@ -1,4 +1,4 @@
-/**// @ts-nocheck */
+//@ts-nocheck
 
 import { defineStore } from 'pinia';
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
@@ -41,41 +41,40 @@ export const useSceneState = defineStore('SceneState', () => {
         fasadsBottom: 'default_palit_bottom'
     }
 
-    const externalMillingKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
-        fasadsTop: 'default_milling_top',
-        fasadsBottom: 'default_milling_bottom'
-    }
+    // const externalMillingKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
+    //     fasadsTop: 'default_milling_top',
+    //     fasadsBottom: 'default_milling_bottom'
+    // }
 
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
 
-    const quality = ref<TQuality[]>([{
-        lable: "Низкое",
-        value: "low",
-    },
-    {
-        lable: "Среднее",
-        value: "medium",
-    },
-    {
-        lable: "Высокое",
-        value: "hight",
-    }
+    // const quality = ref<TQuality[]>([{
+    //     lable: "Низкое",
+    //     value: "low",
+    // },
+    // {
+    //     lable: "Среднее",
+    //     value: "medium",
+    // },
+    // {
+    //     lable: "Высокое",
+    //     value: "hight",
+    // }
 
-    ],)
+    // ],)
 
-    const lightRange = ref<TLightRange>({
-        pointLight: startParamsClone.lights.pointLight.intensity,
-        ambientLight: startParamsClone.lights.ambientLight.intensity
-    })
+    // const lightRange = ref<TLightRange>({
+    //     pointLight: startParamsClone.lights.pointLight.intensity,
+    //     ambientLight: startParamsClone.lights.ambientLight.intensity
+    // })
 
     const updateProjectParams = ({
         rooms,
         camera,
         lights,
         height_clamp,
-        table,
-        table_params,
+
         default_table_color,
         table_top_type_auto,
         default_fasade_up,
@@ -92,6 +91,8 @@ export const useSceneState = defineStore('SceneState', () => {
         default_palit_up,
         default_table_model,
         default_handles,
+        default_plinth_body,
+        default_plinth_color,
         project_name
 
     }: IProjectParams) => {
@@ -100,8 +101,6 @@ export const useSceneState = defineStore('SceneState', () => {
             camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
             lights: lights ?? startProjectParams.value.lights,
             height_clamp: height_clamp ?? startProjectParams.value.height_clamp,
-            table: table ?? startProjectParams.value.table,
-            table_params: table_params ?? startProjectParams.value.table_params,
             table_top_type_auto: table_top_type_auto ?? startProjectParams.value.table_top_type_auto,
             default_table_color: default_table_color ?? startProjectParams.value.default_table_color,
             default_fasade_up: default_fasade_up ?? startProjectParams.value.default_fasade_up,
@@ -118,11 +117,12 @@ export const useSceneState = defineStore('SceneState', () => {
             default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
             default_table_model: default_table_model ?? startProjectParams.value.default_table_model,
             default_handles: default_handles ?? startProjectParams.value.default_handles,
+            default_plinth_body: default_plinth_body ?? startProjectParams.value.default_plinth_body,
+            default_plinth_color: default_plinth_color ?? startProjectParams.value.default_plinth_color,
             project_name: project_name ?? startProjectParams.value.project_name
 
         } as IProjectParams;
 
-        console.log(currentProjectParams.value.rooms)
 
         // const clone = currentProjectParams.value.rooms?.map(item => {
         //     return item
@@ -179,17 +179,17 @@ export const useSceneState = defineStore('SceneState', () => {
         const curOption = keys[type];
         const curPalitte = externalPalitteKeys[type];
 
-        console.log(value, 'curOption')
+        // console.log(value, 'curOption')
         if (curOption) {
-            console.log(startProjectParams.value, 'startProjectParams_1')
+            // console.log(startProjectParams.value, 'startProjectParams_1')
 
             startProjectParams.value[curOption] = value?.id;
             currentProjectParams.value[curOption] = value?.id;
 
             if (value?.palitte) {
-                console.log('P1')
+
                 if (curPalitte) {
-                    console.log('P2')
+     
                     startProjectParams.value[curOption] = value?.palitte;
                     currentProjectParams.value[curOption] = value?.palitte;
                 }

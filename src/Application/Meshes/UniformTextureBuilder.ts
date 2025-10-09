@@ -80,8 +80,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
     crteateUniformGroup({ objects, id, maxHeight, maxWidth, fasadeId, groupColor }) {
 
-        console.log(objects, id, maxHeight, maxWidth, fasadeId, groupColor, 'DATA_UNIFORM')
-
         let organizedLevels, indexedParts, groupId, fasad
 
         if (objects) {
@@ -199,12 +197,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
             return acc
         }, []).includes(true)
 
-        FASADE_PROPS.forEach(el => {
-            console.log(this.parent._FASADE[el.COLOR], 'FFF')
-        })
-
-
-
 
         const fasaded = FASADE_PROPS.filter((element) => element.COLOR !== null && element.COLOR !== 7397).length > 0
 
@@ -230,8 +222,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
         this.backupFasadId = this.backupFasadId ?? FASADE_PROPS.filter(element => parseInt(element.COLOR) !== 7397)[0].COLOR  // Создаём общий индекс материала фасада
         const rootFasadeData = this.parent._FASADE[this.backupFasadId as number]
-        console.log(rootFasadeData, 'rootFasadeData')
-
 
         if (rootFasadeData.MAX_WIDTH === null) {
             alert(`Выбранный фасад не может иметь переходящий рисунок`)

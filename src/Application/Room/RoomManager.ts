@@ -157,6 +157,7 @@ export class RoomManager extends Room {
             snapHeight?: number
         }): THREETypes.TAdjustPosition {
 
+
         const position = this.OBBCollider.getCorrectPosition({
             object,
             targetPosition,
@@ -274,33 +275,73 @@ export class RoomManager extends Room {
 
     }
 
-    save(): string[] {
+    // save(): string[] {
 
+    //     const convert = Object.values(this.contant)
+    //         .filter(item => item.userData.elementType !== 'raspil')
+    //         .map(item => {
+    //             return {
+    //                 id: item.userData.globalData,
+    //                 position: item.position.clone(),
+    //                 rotation: item.rotation.clone(),
+    //                 obb: item.userData.obb,
+    //                 data: this.convertProps(item),
+    //                 type: item.userData.elementType,
+    //                 size: item.userData.PROPS.CONFIG.SIZE
 
-        const convert = Object.values(this.contant)
-            .filter(item => item.userData.elementType !== 'raspil')
-            .map(item => {
-                return {
-                    id: item.userData.globalData,
-                    position: item.position.clone(),
-                    rotation: item.rotation.clone(),
-                    obb: item.userData.obb,
-                    data: this.convertProps(item),
-                    type: item.userData.elementType,
-                    size: item.userData.PROPS.CONFIG.SIZE
+    //             }
 
-                }
+    //         });
+    //     const result = JSON.stringify(convert)
 
-            });
-        const result = JSON.stringify(convert)
+    //     return result
+    // }
 
-        console.log('SAVE')
-        return result
+    saveSingle(item: THREE.Object3D, duplicate: boolean = false): any {
+
+        if (item.userData.elementType === 'raspil') {
+            return null; // или бросить ошибку, если не нужно сохранять
+        }
+
+        const data = {
+            id: item.userData.globalData,
+            position: item.position.clone(),
+            rotation: item.rotation.clone(),
+            obb: item.userData.obb,
+            data: this.convertProps(item, duplicate),
+            type: item.userData.elementType,
+            size: item.userData.PROPS.CONFIG.SIZE
+        }
+
+        if (duplicate) {
+            return JSON.stringify(data)
+        }
+
+        return data;
     }
 
-    convertProps(product: THREETypes.TObject) {
+    save(): string {
+        const convert = Object.values(this.contant)
+            .filter(item => item.userData.elementType !== 'raspil')
+            .map(item => this.saveSingle(item))
+            .filter(Boolean); // убираем null, если они есть
+
+        return JSON.stringify(convert);
+    }
+
+    convertProps(product: THREETypes.TObject, duplicate: boolean) {
 
         const { PROPS } = product.userData;
+        if (duplicate) {
+            PROPS.CONFIG.UNIFORM_TEXTURE = {
+                group: null,
+                level: null,
+                index: null,
+                column_index: null,
+                backupFasadId: null,
+                color: null
+            }
+        }
 
         const saveData = {
             ...PROPS,
@@ -312,8 +353,9 @@ export class RoomManager extends Room {
             FASADE: [],
             FASADE_DEFAULT: [],
             TABLETOP: {},
-            DRAWERS:{},
-            JSON_FILLINGS:[]
+            DRAWERS: {},
+            JSON_FILLINGS: [],
+            PLINTH_MESH: []
         };
 
         const raspilList = saveData.RASPIL_LIST ?? [];
@@ -369,40 +411,107 @@ export class RoomManager extends Room {
 
     }
 
-    async loadData(data: string[]) {
-        // console.log(data)
-        let counts = 0;
-        const parse = typeof data === 'string' ? JSON.parse(data) : data
+    // async loadData(data: string[]) {
+    //     // console.log(data)
+    //     let counts = 0;
+    //     const parse = typeof data === 'string' ? JSON.parse(data) : data
 
+    //     for (const item of parse) {
+    //         const model = typeof item === 'string' ? JSON.parse(item) : item;
+    //         const point = model.position as THREE.Vector3;
+    //         const rotation = model.rotation as THREE.Euler;
+    //         const loadData = model.data ?? '';
+    //         const size = model.size ?? '';
+
+    //         await new Promise<void>((resolve) => {
+    //             this.geometryBuilder!.craeteModel(
+    //                 this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
+    //                 (object: THREE.Object3D) => {
+    //                     this.setObject!.create({ object, rotate: rotation, point });
+
+    //                     if (loadData?.RASPIL_LIST?.length > 0) {
+    //                         this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
+    //                     }
+
+    //                     counts++;
+    //                     resolve();
+    //                 },
+    //                 loadData,
+    //                 size
+    //             );
+    //         });
+    //     }
+
+    //     return counts;
+    // }
+
+    async loadSingle(data: any): Promise<number> {
+
+        const model = typeof data === 'string' ? JSON.parse(data) : data;
+
+        let count = 0;
+        const point = model.position as THREE.Vector3;
+        const rotation = model.rotation as THREE.Euler;
+        const loadData = model.data ?? '';
+        const size = model.size ?? '';
+
+        await new Promise<void>((resolve) => {
+            this.geometryBuilder!.craeteModel(
+                this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
+                (object: THREE.Object3D) => {
+                    this.setObject!.create({ object, rotate: rotation, point });
+
+                    if (loadData?.RASPIL_LIST?.length > 0) {
+                        this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
+                    }
+
+                    count++;
+                    resolve();
+                },
+                loadData,
+                size
+            );
+        });
+
+        return count; // возвращает 1, если успешно загружено
+    }
+
+    async loadData(data: string | string[]): Promise<number> {
+        let counts = 0;
+        const parse = typeof data === 'string' ? JSON.parse(data) : data;
 
         for (const item of parse) {
             const model = typeof item === 'string' ? JSON.parse(item) : item;
-            const point = model.position as THREE.Vector3;
-            const rotation = model.rotation as THREE.Euler;
-            const loadData = model.data ?? '';
-            const size = model.size ?? '';
-
-            await new Promise<void>((resolve) => {
-                this.geometryBuilder!.craeteModel(
-                    this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
-                    (object: THREE.Object3D) => {
-                        this.setObject!.create({ object, rotate: rotation, point });
-
-                        if (loadData?.RASPIL_LIST?.length > 0) {
-                            this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
-                        }
-
-                        counts++;
-                        resolve();
-                    },
-                    loadData,
-                    size
-                );
-            });
+            counts += await this.loadSingle(model);
         }
 
         return counts;
     }
+
+    async duplicateProd() {
+        const curProd = this.root._trafficManager._currentObject
+        curProd.userData.current = false
+        const { MOUSE_POSITION } = curProd.userData
+
+        const saved = await this.saveSingle(curProd, true)
+        await this.loadSingle(saved)
+        this.createTotalObbBounds()
+        this.root._trafficManager?.moveManager?.setSelectObj(this.root._trafficManager._currentObject)
+
+
+        document.addEventListener('mousemove', this.addMouseEvent, false)
+
+    }
+
+    private bindMouseEvent(event: MouseEvent) {
+        console.log(event)
+        this.root._trafficManager?.moveManager?.handleInteractionMove(event.clientX, event.clientY)
+    }
+
+    public disableDuplicateProd() {
+        document.removeEventListener('mousemove', this.addMouseEvent, false)
+    }
+
 
     addVueEvents() {
 
@@ -421,12 +530,18 @@ export class RoomManager extends Room {
             this.heightClamp = value
         }
 
+        this.boundDuplicateProd = () => {
+            this.duplicateProd()
+        }
+
 
         this.eventBus.on('A:ChangeWallTexture', this.boundWallMaterial)
 
         this.eventBus.on('A:ChangeFloorTexture', this.boundFloorMaterial)
 
         this.eventBus.on('A:Height-clamp', this.boundHeightClampValue)
+
+        this.eventBus.on('A:Duplicate', this.boundDuplicateProd)
 
     }
 

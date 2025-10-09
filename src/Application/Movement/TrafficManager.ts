@@ -98,12 +98,20 @@ export class TrafficManager {
                 object: object,
                 roomContant: this.room._roomContant
             })
+<<<<<<< HEAD
             console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // Обновление корзины при простом выборе/перемещении не требуется
+=======
+
+            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
+            // console.log(object, 'object')
+            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155], 'Model')
+>>>>>>> d8917eea20a7fb655eb3ef09f752b2e4ec781037
 
             if (object.userData.elementType !== 'raspil') {
-                const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+                const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
@@ -134,6 +142,7 @@ export class TrafficManager {
 
         this.dragAndDropManager.updateRoomData(room)
         this.moveManager.updateRoomData(room)
+ 
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
@@ -147,8 +156,6 @@ export class TrafficManager {
         if (removeObj instanceof THREE.Object3D) {
             const prod = toRaw(removeObj)
             const { RASPIL_LIST } = prod.userData.PROPS
-
-            console.log(RASPIL_LIST)
 
             if (RASPIL_LIST.length > 0) {
                 RASPIL_LIST.forEach(elem => {
@@ -175,7 +182,6 @@ export class TrafficManager {
             }
             return
         }
-        console.log(removeObj)
 
         this.room.remove(removeObj.id)
         this.despose.clearObject(removeObj, this.scene)

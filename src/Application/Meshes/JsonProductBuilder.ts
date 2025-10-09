@@ -194,7 +194,7 @@ export class JsonBuilder {
             this.convert(geometry_data.opt.z)
         )
 
-        geometry.computeBoundingBox()
+        // geometry.computeBoundingBox()
         return geometry
     }
 
@@ -245,7 +245,7 @@ export class JsonBuilder {
                 break;
         }
 
-        // geometry!.computeBoundingBox();
+        geometry!.computeBoundingBox();
         return geometry
     }
 

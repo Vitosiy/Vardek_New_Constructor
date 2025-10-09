@@ -30,12 +30,11 @@ export const useRoomState = defineStore('RoomState', () => {
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
   const convertDataTo3DConstuctor = () => {
-    console.log('3D', schemeTransition.getSchemeTransitionData)
+    // console.log('3D', schemeTransition.getSchemeTransitionData)
     const clone = schemeTransition.getSchemeTransitionData.map(item => {
       return item
     })
     const parseData = clone.map(elem => {
-      console.log(elem.content)
 
       const content = JSON.stringify(elem.content)
       return {
@@ -47,7 +46,6 @@ export const useRoomState = defineStore('RoomState', () => {
   }
 
   const convertDataTo2DConstuctor = () => {
-    console.log('2D')
     const clone = rooms.value.map(item => {
       return item
     })

@@ -1091,7 +1091,6 @@ defineExpose({
 });
 
 onBeforeMount(() => {
-  console.log('onBeforeMount')
   productData.value = props.productData //menuStore.catalogFilterProductsId[0]
 
   totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
@@ -1099,11 +1098,9 @@ onBeforeMount(() => {
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
 
-  console.log(totalHeight.value, totalWidth.value)
 });
 
 onMounted(() => {
-  console.log('onMounted')
   shapeAdjuster = new ShapeAdjuster({});
   nextTick().then(() => {
     isMounted.value = true;
@@ -1111,7 +1108,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  console.log("close");
   shapeAdjuster = null;
   module.value = null;
 });

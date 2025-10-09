@@ -13,7 +13,6 @@ const props = defineProps({
 });
 
 onMounted(() => {
-  console.log(props, "props");
 });
 
 const emit = defineEmits(["choose-option", "delete-choise"]);
@@ -114,9 +113,13 @@ const deleteChoise = (event) => {
   overflow: hidden;
   cursor: pointer;
 
+  transition-property: box-shadow;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+
   @media (hover: hover) {
     &:hover {
-      box-shadow: 4px 4px 4px 4px #da444c;
+      box-shadow: 4px 4px 4px 4px $dark-stroke;
     }
   }
 

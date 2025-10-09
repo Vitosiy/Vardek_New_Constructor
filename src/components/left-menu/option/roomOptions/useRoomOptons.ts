@@ -1,5 +1,5 @@
 
-/**// @ts-nocheck  */
+//@ts-nocheck
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
@@ -58,7 +58,9 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         fasadsBottom: 'default_milling_bottom'
     }
 
-
+    const plinthKey: Record<keyof TOptionsMap, string> = {
+        plinth: 'default_plinth_color'
+    }
 
     const defaultIds: Record<keyof TOptionsMap, string> = {
         moduleTop: 'default_module_color',
@@ -67,7 +69,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         fasadsBottom: 'default_fasade_color',
         wall: 'default_wall',
         floor: 'default_floor',
-        tableTop: 'default_table_model'
+        tableTop: 'default_table_model',
+        plinth: 'default_plinth_body'
     }
 
     const {
@@ -82,13 +85,35 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         default_palit_bottom: defaultPalitBottom,
         default_milling_bottom: defaultMillingBottom,
         default_milling_top: defaultMillingTop,
+        default_plinth_body: defaultPlinthBody,
+        default_plinth_color: defaultPlinthColor
     } = startParams;
 
     const globalOptions = ref<TOptionsMap>({
-        wall: { id: defaultWall, global: false, title: "Оформление стен", label: 'Для всех комнат' },
-        floor: { id: defaultFloor, global: false, title: "Оформление пола", label: 'Для всех комнат' },
-        moduleTop: { id: defaultModuleTop, global: false, title: "Цвет корпуса (верхний)", label: 'Для всех комнат' },
-        moduleBottom: { id: defaultModuleBottom, global: false, title: "Цвет корпуса (нижний)", label: 'Для всех комнат' },
+        wall: {
+            id: defaultWall,
+            global: false,
+            title: "Оформление стен",
+            label: 'Для всех комнат'
+        },
+        floor: {
+            id: defaultFloor,
+            global: false,
+            title: "Оформление пола",
+            label: 'Для всех комнат'
+        },
+        moduleTop: {
+            id: defaultModuleTop,
+            global: false,
+            title: "Цвет корпуса (верхний)",
+            label: 'Для всех комнат'
+        },
+        moduleBottom: {
+            id: defaultModuleBottom,
+            global: false,
+            title: "Цвет корпуса (нижний)",
+            label: 'Для всех комнат'
+        },
         fasadsTop: {
             id: defaultFasadeTop,
             palitte: defaultPalitTop,
@@ -111,7 +136,21 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             palitteTitle: 'Цвет Палитры',
             millingTitle: 'Тип Фрезеровки'
         },
-        tableTop: { id: defaulttableTop, global: false, title: "Тип столешницы", label: 'Для всех комнат' },
+        tableTop: {
+            id: defaulttableTop,
+            global: false,
+            title: "Тип столешницы",
+            label: 'Для всех комнат'
+        },
+        plinth: {
+            id: defaultPlinthBody,
+            plinthSurfase: defaultPlinthColor,
+            global: false,
+            title: 'Тип цокольных планок',
+            label: 'Для всех комнат',
+            plinthTitle: 'Тип фасада цокольных планок'
+        }
+
     });
 
     //------------------------------------------------------------------------------------------
@@ -165,7 +204,14 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         const fasade = value.FACADE
         const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
         return defaultFasadData
+    }
 
+    const getDefaultTotalPlinthData = () => {
+        return modelState.createTotalPlinthData()
+    }
+
+    const getTotalPlinthColorData = (id: number | string) => {
+        return modelState.createTotalPlinthColorData(id)
     }
 
     const getDefaultPalitData = (id: number | string): TPalitte[] => {
@@ -290,7 +336,9 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             const optionKey = key as keyof TOptionsMap
             const palitt = palittKey[optionKey]
             const milling = mllingKeys[optionKey]
-            console.log(palitt, optionKey, 'PP')
+            const plinth = plinthKey[optionKey]
+
+            console.log(key, plinth, 'PP')
 
             try {
                 if (globalOptions.value[optionKey]) {
@@ -301,6 +349,9 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
                         }
                         if (milling) {
                             globalOptions.value[optionKey].milling = startParams[milling]
+                        }
+                        if (plinth) {
+                            globalOptions.value[optionKey].plinthSurfase = startParams[plinth]
                         }
                     }
                 }
@@ -334,8 +385,17 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
 
     const setGlobalMilling = (id: number | string | null, type: keyof TTextureActionMap) => {
         const option = globalOptions.value[type];
+
         if (option) {
             option.milling = id;
+        }
+    };
+
+    const setGlobalPlinth = (id: number | string | null, type: keyof TTextureActionMap) => {
+        const option = globalOptions.value[type];
+
+        if (option) {
+            option.plinthSurfase = id;
         }
     };
 
@@ -351,6 +411,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         getDefaultTableTopData,
         getDefaultPalitData,
         getDefaultMillingData,
+        getDefaultTotalPlinthData,
+        getTotalPlinthColorData,
 
         getGlobalOptions,
         updateOption,
@@ -364,6 +426,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         setQuality,
         setGlobalPalitte,
         setGlobalMilling,
+        setGlobalPlinth,
 
         getShadowValue,
         getRefractionValue,

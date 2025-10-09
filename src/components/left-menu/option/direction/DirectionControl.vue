@@ -1,57 +1,62 @@
 <script setup lang="ts">
-import { ref, onMounted, defineEmits, defineProps, computed } from "vue";
+import {
+  ref,
+  onMounted,
+  defineEmits,
+  defineProps,
+  computed,
+  onBeforeMount,
+} from "vue";
 import MainButton from "../ui/buttons/MainButton.vue";
 
 type TDirection = {
-icon: string, size: number, fontSize: number, action: number 
+  icon: string;
+  size: number;
+  fontSize: number;
+  action: number;
+  btnActive: string;
+};
+
+type TDirectionMap = {
+  smallMap: number[];
+  rotateMap: number[];
+};
+type TDirectionController = TDirection[];
+
+interface Props {
+  scale?: number;
+  type?: keyof TDirectionMap;
+  disactive?: boolean;
+  fontSize?: number;
+  size?: number;
+  maxWidth?: number;
+  gap?: number;
+  container?: string;
 }
-type TDirectionController = TDirection[]
 
 const controlBtn = ref<TDirectionController>([
-  { icon: "icon-t-45-l", size: 20, fontSize: 10, action: 0 },
-  { icon: "icon-t-90", size: 25, fontSize: 10, action: 1 },
-  { icon: "icon-t-45-r", size: 20, fontSize: 10, action: 2 },
-  { icon: "icon-l-90", size: 25, fontSize: 15, action: 3 },
-  { icon: "icon-centered", size: 25, fontSize: 25, action: 4 },
-  { icon: "icon-r-90", size: 25, fontSize: 15, action: 5 },
-  { icon: "icon-b-45-l", size: 20, fontSize: 10, action: 6 },
-  { icon: "icon-b-90", size: 25, fontSize: 10, action: 7 },
-  { icon: "icon-b-45-r", size: 20, fontSize: 10, action: 8 },
+  { btnActive: "", icon: "icon-t-45-l", size: 20, fontSize: 10, action: 0 },
+  { btnActive: "", icon: "icon-t-90", size: 25, fontSize: 10, action: 1 },
+  { btnActive: "", icon: "icon-t-45-r", size: 20, fontSize: 10, action: 2 },
+  { btnActive: "", icon: "icon-l-90", size: 25, fontSize: 15, action: 3 },
+  { btnActive: "", icon: "icon-centered", size: 25, fontSize: 25, action: 4 },
+  { btnActive: "", icon: "icon-r-90", size: 25, fontSize: 15, action: 5 },
+  { btnActive: "", icon: "icon-b-45-l", size: 20, fontSize: 10, action: 6 },
+  { btnActive: "", icon: "icon-b-90", size: 25, fontSize: 10, action: 7 },
+  { btnActive: "", icon: "icon-b-45-r", size: 20, fontSize: 10, action: 8 },
 ]);
 
-const props = defineProps({
-  scale: {
-    type: Number,
-    default: 1,
-  },
-  smallController: {
-    type: Boolean,
-    default: false,
-  },
-  disactive: {
-    type: Boolean,
-    default: false,
-  },
-  fontSize: {
-    type: Number,
-  },
-
-  size: {
-    type: Number,
-  },
-
-  maxWidth: {
-    type: Number,
-  },
-
-  gap: {
-    type: Number,
-  },
-
-  container: {
-    type: String,
-  },
+const diretionMap = ref<TDirectionMap>({
+  smallMap: [0, 1, 2, 7],
+  rotateMap: [3, 1, 4, 5, 7],
 });
+
+const props = withDefaults(defineProps<Props>(), {
+  scale: 1,
+  disactive: false,
+});
+
+const controlsData = ref<TDirectionController | []>([]);
 
 const directionBtn = ref<InstanceType<typeof MainButton>[]>([]);
 const emit = defineEmits<{
@@ -70,17 +75,43 @@ const getContainerWidth = computed(() => {
   };
 });
 
-const getControlsData = computed(() => {
-  const smallMap = [0, 1, 2, 7];
-  if (props.smallController) {
-    const controller = controlBtn.value.filter((el, ndx) => {
-      if (smallMap.includes(ndx)) {
+const getControlsData = () => {
+  const map = diretionMap.value[props.type!];
+
+  console.log(props.type, "map");
+  if (map && props.type !== "smallMap") {
+    const refactor = controlBtn.value.map((el, ndx) => {
+      if (map.includes(ndx)) {
+        return el;
+      } else {
+        return {
+          btnActive: "disabled",
+          icon: "",
+          size: 20,
+          fontSize: 10,
+          action: NaN,
+        };
+      }
+    });
+
+    controlsData.value = refactor;
+  } else if (map && props.type == "smallMap") {
+    console.log("smallMap----");
+
+    controlsData.value = controlBtn.value.filter((el, ndx) => {
+      if (map.includes(ndx)) {
         return el;
       }
     });
-    return controller;
+    console.log(controlsData.value, ' controlsData.value');
+  } else {
+    console.log('5')
+    controlsData.value = controlBtn.value;
   }
-  return controlBtn.value;
+};
+
+onBeforeMount(() => {
+  getControlsData();
 });
 
 onMounted(() => {
@@ -99,11 +130,10 @@ onMounted(() => {
     :style="getContainerWidth"
     v-if="!disactive"
   >
-  
     <button
-      v-for="(btn, key) in getControlsData"
+      v-for="(btn, key) in controlsData"
       :key="key"
-      class="button__rounded"
+      :class="['button__rounded', btn.btnActive]"
       ref="directionBtn"
       @click="changeDirectionPos(btn.action)"
     >
@@ -140,5 +170,10 @@ onMounted(() => {
 
 .button__rounded {
   padding: var(--value);
+
+  &.disabled {
+    pointer-events: none;
+    opacity: 0;
+  }
 }
 </style>

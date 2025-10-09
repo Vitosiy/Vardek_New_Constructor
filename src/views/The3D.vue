@@ -15,6 +15,7 @@ import {
   toRaw,
   defineExpose,
   nextTick,
+  watch,
 } from "vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -40,6 +41,7 @@ import UpControllerButton from "@/components/ui/buttons/right-menu/controller/Up
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+import Toggle from "@vueform/toggle";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -53,14 +55,14 @@ const screenshotsStore = useScreenshotsStore();
 const appData = ref<{ [key: string]: any } | null>(null);
 
 const eventBus = useEventBus();
-// uniformStat= useUniformState();
+
 const modelState = useModelState();
 const uniformState = useUniformState();
-// const modelState = ref<THREETypes.TUseModelState | null>(null);
+
 const models = ref<any>(null);
 const wallMaterials = ref<number | null>(null);
 const floorMaterials = ref<number | null>(null);
-// const customiserStore = ref<THREETypes.TUseCustomiserStore | null>(null);
+
 const objectData = ref<THREETypes.TUseObjectData | null>(
   null
 ); /** Текущий объект */
@@ -77,7 +79,10 @@ const activePreloader = ref<boolean>(false);
 
 const sceneContainer = ref<HTMLElement | null>(null);
 const VerdekConstructor = ref<Application | null>(null);
+
 const controller = ref(false);
+const transformControlsValue = ref<boolean>(false);
+
 const productColor = ref<{ [key: string]: any }>({});
 const currentFasadeId = ref<{ [key: string]: any }>({});
 const productData = ref<{ [key: string]: any }>({});
@@ -150,6 +155,11 @@ onMounted(async () => {
       priceUpdateEvents.forEach(event => {
           eventBus.on(event, commonEventHandler);
       });
+      eventBus.on("A:Load", setLocalActivateValue);
+      eventBus.on("A:Create", setLocalActivateValue);
+      eventBus.on("A:NextAction", setLocalActivateValue);
+      eventBus.on("A:PrevAction", setLocalActivateValue);
+
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);
 
@@ -193,6 +203,8 @@ onBeforeUnmount(() => {
 
     objectData.value = null;
     roomContantData.value = null;
+    transformControlsValue.value = false;
+    modelState.setTransformControlsValue(false);
 
     // Уничтожаем приложение
     if (VerdekConstructor.value) {
@@ -244,12 +256,36 @@ const getMove = (move: boolean) => {
   // Важно: не пересчитываем корзину при простом движении
 };
 
+const setLocalActivateValue = () => {
+  transformControlsValue.value = false;
+};
+
+const controlsActivate = () => {
+  const curModel = modelState.getCurrentModel;
+
+  if (transformControlsValue.value) {
+    eventBus.emit("A:TransformMode_On");
+  } else {
+    eventBus.emit("A:TransformMode_Off");
+    try {
+      if (product.value?.userData.MOUSE_POSITION) {
+        controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+      }
+    } catch (e) {
+      console.log("Не удалось найти параметр MOUSE_POSITION", e);
+    }
+  }
+
+  modelState.setTransformControlsValue(transformControlsValue.value);
+};
+
 const selected = async (item: any) => {
   if (!item || !item.object) {
     controller.value = false;
     CutData.value = {};
     CutCash.value = {};
     universalModuleData.value = null;
+    product.value = null;
     return;
   }
 
@@ -265,9 +301,7 @@ const selected = async (item: any) => {
   const { PROPS } = userData;
   const { CONFIG, RASPIL } = PROPS;
 
-  console.log(RASPIL, "SELECT");
-
-  objectData.value!.setObjectData(userData);
+  // objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
   product.value = object;
   controller.value = true;
@@ -314,6 +348,10 @@ const clearSelected = () => {
   CutData.value = {};
   CutCash.value = {};
   universalModuleData.value = null;
+};
+
+const duplicateProduct = async () => {
+  eventBus.emit("A:Duplicate");
 };
 
 const screenPrint = async () => {
@@ -506,23 +544,20 @@ const removeModel = (model) => {
   if (VerdekConstructor.value) {
     eventBus.emit("A:RemoveModel", { product: model });
     controller.value = false;
+    transformControlsValue.value = false;
   }
 };
 
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
-    console.log('Pre-Create-Uniform-Group')
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
-    console.log('Create-Uniform-Group')
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
@@ -552,7 +587,9 @@ const activeController = computed(() => {
 
   return {
     "model-controller--active":
-      controller.value && !uniformState.getUniformModeData.uniformMode,
+      controller.value &&
+      !uniformState.getUniformModeData.uniformMode &&
+      !transformControlsValue.value,
   };
 });
 
@@ -660,12 +697,18 @@ defineExpose({
     screenshotsStore.getScreenshotsByRoom(roomId),
   clearScreenshots: () => screenshotsStore.clearScreenshots(),
 });
+
+watch(
+  () => transformControlsValue.value,
+  () => {
+    controlsActivate();
+  }
+);
 </script>
 
 <template>
   <div ref="sceneContainer" class="scene-container"></div>
   <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
-
 
   <!-- Пока что закоментил потом удалим <div
     class="uniform__container"
@@ -726,9 +769,14 @@ defineExpose({
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
         <ControllerButton
-          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+          v-if="
+            Object.keys(CutData).length == 0 &&
+            modelState.getCurrentModel?.name != 'MODEL' &&
+            !universalModuleData
+          "
         />
         <ContentControllerButton
+          @click="duplicateProduct"
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"
         />
         <DeleteControllerButton
@@ -739,7 +787,12 @@ defineExpose({
       <div class="controller-right">
         <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
         <!-- <UpControllerButton /> -->
-        <OpenFacadeButton />
+        <OpenFacadeButton
+          v-if="
+            Object.keys(CutData).length == 0 &&
+            modelState.getCurrentModel?.name != 'MODEL'
+          "
+        />
 
         <Modal
           v-if="Object.keys(CutData).length > 0"
@@ -806,6 +859,20 @@ defineExpose({
       </div>
     </div>
   </div>
+  <transition name="controller-toggle">
+    <div
+      class="switch__wrapper"
+      v-if="
+        modelState.getCurrentModel &&
+        !uniformState.getUniformModeData.uniformMode
+      "
+    >
+      <p class="switch__title">Позиционирование</p>
+      <div class="switch__container">
+        <Toggle v-model="transformControlsValue" />
+      </div>
+    </div>
+  </transition>
 </template>
 
 <style lang="scss" scoped>
@@ -884,6 +951,7 @@ defineExpose({
   left: 50%;
   top: 50%;
   padding: 1rem;
+  scale: 0;
 
   opacity: 0;
   filter: blur(10px);
@@ -896,6 +964,7 @@ defineExpose({
   &--active {
     opacity: 1;
     filter: blur(0);
+    scale: 1;
   }
 
   .controller-left {
@@ -1110,6 +1179,19 @@ defineExpose({
         }
       }
     }
+  }
+}
+
+.switch {
+  &__wrapper {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
   }
 }
 </style>

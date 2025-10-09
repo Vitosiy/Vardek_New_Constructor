@@ -38,9 +38,12 @@ const tabsList = ref<any[]>([]);
 const tabIndex = ref<Number>(0);
 const tabName = ref<string>("Корпус");
 const isGroupsManagerActive = ref<boolean>(false);
+const transitionFasadeSelect = ref<boolean>(false);
+
 const prepareData = () => {
   materialList.value = modelState.getCurrentModuleData;
-  fasadeList.value = modelState.getCurrentModel.PROPS.CONFIG.FASADE_PROPS;
+  fasadeList.value =
+    modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
   tabName.value = tabsList.value[0].name;
 };
@@ -86,7 +89,6 @@ onMounted(() => {
 });
 
 const handleTabChange = ({ index, tab }) => {
-  console.log(index, tab);
 
   // Если переключаемся на другой таб, отключаем режим переходящего рисунка
   if (isGroupsManagerActive.value) {
@@ -120,8 +122,12 @@ const handleUniformModeToggled = (data: {
   uniformMode: boolean;
   showGroupsManager: boolean;
 }) => {
-  console.log("Uniform mode toggled:", data);
   isGroupsManagerActive.value = data.showGroupsManager && data.uniformMode;
+};
+
+const checkTransition = (value) => {
+  const { transitionT } = value;
+  transitionFasadeSelect.value = transitionT;
 };
 
 // Экспортируем метод для использования в других компонентах
@@ -137,6 +143,11 @@ watch(
     // Отключаем режим переходящего рисунка при смене модели
     if (isGroupsManagerActive.value) {
       eventBus.emit("A:Toggle-Uniform-Mode", { showGroupsManager: false });
+    }
+
+    if (modelState.getCurrentModel?.name == "MODEL") {
+      customiserStore.hideCustomiserPopup();
+      return;
     }
 
     tabIndex.value = 0;
@@ -176,11 +187,13 @@ onUnmounted(() => {
     ref="redactorsRef"
     :tabs="tabsList"
     @tab-change="handleTabChange"
+    v-if="!isGroupsManagerActive"
   />
   <TransitionDrawingButton
     :class="$style.transitionDrawingButton"
     :is-active="isGroupsManagerActive"
     @click="handleTransitionDrawingClick"
+    v-if="transitionFasadeSelect"
   />
   <CorpusMaterialRedactor
     :materialList="materialList"
@@ -194,6 +207,7 @@ onUnmounted(() => {
     :key="tabIndex"
     :fasadeData="fasadeList[fasadeIndex]"
     :tabIndex="fasadeIndex"
+    @select_material="checkTransition"
   />
 
   <GroupsManager v-if="isGroupsManagerActive" />

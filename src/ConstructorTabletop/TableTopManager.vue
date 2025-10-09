@@ -367,7 +367,7 @@ const getHoleOptionsActive = computed(() => {
 });
 
 const convertServisData = (value, item) => {
-  const { PROPS } = modelState.getCurrentModel;
+  const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
   console.log(USLUGI, item)
 
@@ -703,7 +703,7 @@ const handleCellSelect = (colIndex, rowIndex, type) => {
 };
 
 const createServiseData = () => {
-  const { PROPS } = modelState.getCurrentModel;
+  const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
   console.log(PROPS, USLUGI, props.grid, "USLUGI");
 
@@ -746,7 +746,7 @@ const clearServiseData = (row) => {
 };
 
 const reset = (reset = false) => {
-  const { PROPS } = modelState.getCurrentModel;
+  const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
 
   grid.value.length = 0;

@@ -1,4 +1,4 @@
-/**@ts-nocheck */
+ //@ts-nocheck
 
 import * as THREETypes from "@/types/types"
 import { GlobalsData } from "./Globals"
@@ -60,11 +60,11 @@ export class Filters extends GlobalsData {
     filterFasadePosition(params: THREETypes.TObject, product: THREETypes.TObject) {
 
 
-        const { FASADE_PROPS } = params
+        const { FASADE_PROPS, ELEMENT_TYPE } = params
 
         // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
 
-        const fasadeTypeList = this._FASADETYPE
+
         const fasadePositionList = product.FASADE_POSITION
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
         const fasadeTypeSorted = fasadeSorted.reduce((acc, index) =>
@@ -72,16 +72,23 @@ export class Filters extends GlobalsData {
             []);
         params.FASADE_TYPE = fasadeTypeSorted
 
-        console.log(fasadeTypeSorted, fasadeTypeList, 'fasadeTypeSorted')
-
         const sizes = product.FASADE_SIZES
 
         let sortFasadePositionList = sizes.length > 0 && sizes[0] != null ? sizes : fasadeSorted
 
-        sortFasadePositionList.forEach((fasade: number) => {
+        sortFasadePositionList.forEach((fasade: number, key: number) => {
 
             const fasadePosition = this._FASADE_POSITION[fasade]
-            const handlerPosition = fasadePosition.drawer ? 4 : 0
+
+            const hendleDirection = key % 2
+            const handleInDorPosition = () => {
+                if (!ELEMENT_TYPE || sortFasadePositionList.length < 2) return 0
+                if (hendleDirection && ELEMENT_TYPE.includes('up')) { return 6 }
+                if (!hendleDirection && ELEMENT_TYPE.includes('up')) { return 8 }
+                if (hendleDirection && ELEMENT_TYPE.includes('down')) { return 0 }
+                if (!hendleDirection && ELEMENT_TYPE.includes('down')) { return 2 }
+            }
+            const handlerPosition = fasadePosition.drawer ? 4 : handleInDorPosition()
 
             // console.log(fasadePosition.drawer
             //     , 'FASADE_POSITION')
@@ -185,7 +192,6 @@ export class Filters extends GlobalsData {
     }
 
     filterOption(option: number[]) {
-        let filtered = []
         let curOptionsList = option
             .map(el => this._OPTION[el])
             .filter(Boolean);
@@ -194,25 +200,7 @@ export class Filters extends GlobalsData {
             return { id: el.ID, active: false, group: el.GROUP, close: el.CLOSE_OTHER_OPTIONS }
         })
 
-        console.log(result, 'result')
-
         return result
-
-        for (const el in this._OPTIONS_GROUP) {
-
-            filtered.push({
-                NAME: this._OPTIONS_GROUP[el].NAME,
-                CONTANT: curOptionsList.filter(opt => opt.GROUP == el)
-            })
-        }
-
-        filtered = filtered.filter(item => {
-            if (item.CONTANT.length > 0) return item
-
-        })
-
-        return filtered
-
     }
 
 } 

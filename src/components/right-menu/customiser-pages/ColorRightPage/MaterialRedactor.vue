@@ -36,6 +36,7 @@ const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
 const eventBus = useEventBus();
+const emit = defineEmits(["select_material"]);
 
 const modelState = useModelState();
 
@@ -71,6 +72,8 @@ const glassList = ref<Array>([]);
 const isGlassExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
+   emit("select_material", data);
+
   const product = _APP.CATALOG.PRODUCTS[productId.value];
   const { COLOR } = productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
   const dataOfFasadeType = _FASADE[COLOR];
@@ -93,6 +96,7 @@ const onSelectMaterial = (data) => {
   isPatinaExist.value = patinaList.value.length > 0 && !product.GLASS[0];
 
   currentSurfaceData.value = data;
+
   if (millingList.value.length > 0) {
     const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
     modelState.setMillingId(props.tabIndex, ID);
@@ -269,7 +273,6 @@ const prepareData = () => {
     isSurfaceSelected.value = true;
   }
 
-  console.log(modelState.getCurrentMillingData, "INPREPARE");
 
   if (MILLING) {
     const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
@@ -306,12 +309,12 @@ const prepareData = () => {
 
 onBeforeMount(() => {
   materialList.value = modelState.getCurrentModelFasadesData;
-  productData.value = modelState.getCurrentModel;
+  productData.value = modelState.getCurrentModel.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 });
 
 onMounted(() => {
-  console.log("START");
+
   prepareData();
 });
 

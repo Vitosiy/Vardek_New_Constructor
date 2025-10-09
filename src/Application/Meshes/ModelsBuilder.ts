@@ -41,6 +41,7 @@ export class ModelsBuilder {
             }
 
             const normolized = this.normalizeUploadedModel(file, model);
+            normolized.name = 'MODEL'
 
             // const parentObject = new THREE.Object3D()
 
