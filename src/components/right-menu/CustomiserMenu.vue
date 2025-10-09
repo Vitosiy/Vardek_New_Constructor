@@ -6,6 +6,7 @@ import type { Mesh, Object3D, Vector3, PerspectiveCamera } from "three";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
@@ -23,12 +24,16 @@ import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.v
 const customiserStore = useCustomiserStore();
 const eventBus = useEventBus();
 const modelState = useModelState();
+const uniformState = useUniformState();
 
 const currentModel = ref(null);
 
 const closeCustomiser = () => {
+  const { uniformMode } = uniformState.getUniformModeData;
   // Отключаем режим переходящего рисунка при закрытии кастомизатора
-  eventBus.emit("A:Disable-Uniform-Mode");
+  if (uniformMode) {
+    eventBus.emit("A:Disable-Uniform-Mode");
+  }
   customiserStore.hideCustomiserPopup();
 };
 
