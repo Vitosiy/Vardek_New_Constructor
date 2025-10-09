@@ -19,6 +19,9 @@ import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
+import Toggle from "@vueform/toggle";
+import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -64,10 +67,13 @@ const mode = ref<constructorMode>('module');
 
 const visualizationRef = ref(null);
 const optionsRef = ref(null);
+const materialConfRef = ref(null);
+const optionsManagerRef = ref(null);
 
 const totalHeight = ref(0);
 const totalWidth = ref(0);
 const totalDepth = ref(0);
+const onHorizont = ref<boolean>(true);
 
 const module = computed(() => {
 
@@ -86,7 +92,6 @@ const module = computed(() => {
                 "#Y#": totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"],
                 "#Z#": totalDepth.value,
               }))
-
 
 
       const isSlidingDoors = !PROPS.CONFIG.LOOPS;
@@ -158,8 +163,7 @@ const module = computed(() => {
           ]
         ]
         _module.fasades = fasades
-      }
-      else {
+      } else {
         fasades = [
           [
             <FasadeObject>{
@@ -190,29 +194,12 @@ const module = computed(() => {
   }
 });
 
-const getMinHeight = computed(() => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MIN
-})
+const getMinMaxModuleSize = (_dimension, _minmax) => {
+  const dimension = _dimension.toUpperCase()
+  const minmax = _minmax.toUpperCase()
 
-const getMaxHeight = computed(() => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX
-})
-
-const getMinWidth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN
-})
-
-const getMaxWidth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MAX
-})
-
-const getMinDepth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MIN
-})
-
-const getMaxDepth = computed((dimension, minmax) => {
-  return +productData.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_DEPTH_MAX
-})
+  return +productData.value.PROPS.CONFIG.SIZE_EDIT[`SIZE_EDIT_` + dimension + `_` + minmax];
+}
 
 const selectedCell = ref({sec: 0, cell: 0, row: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
@@ -341,81 +328,81 @@ const getFasadePositionMinMax = (fasade) => {
 
 const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
-  if(!module.value.isSlidingDoors)
+  if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-    if (section.fasadesDrawers?.length) {
-      calcDrawersFasades(secIndex)
-    } else if (section.fasades?.[0]) {
-      const countDoors = section.fasades.length;
+      if (section.fasadesDrawers?.length) {
+        calcDrawersFasades(secIndex)
+      } else if (section.fasades?.[0]) {
+        const countDoors = section.fasades.length;
 
-      const correctSectionFasadeWidth =
-          module.value.sections.length > 1 ?
-              secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
-                  section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
-              module.value.width - 4;
+        const correctSectionFasadeWidth =
+            module.value.sections.length > 1 ?
+                secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
+                    section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
+                module.value.width - 4;
 
-      const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
+        const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
 
-      const sumDoorsWidth = section.fasades.reduce(
-          (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
-          0) / countDoors - ((countDoors - 1) * 2);
-      const sumDoorsHeight = section.fasades[0].reduce(
-          (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
-          0);
+        const sumDoorsWidth = section.fasades.reduce(
+            (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
+            0) / countDoors - ((countDoors - 1) * 2);
+        const sumDoorsHeight = section.fasades[0].reduce(
+            (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
+            0);
 
-      const deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
-      const deltaHeight = correctFasadeHeight - sumDoorsHeight;
+        const deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
+        const deltaHeight = correctFasadeHeight - sumDoorsHeight;
 
-      if (deltaWidth !== 0) {
+        if (deltaWidth !== 0) {
           section.fasades.forEach((door, doorIndex) => {
-          door.forEach((segment) => {
+            door.forEach((segment) => {
 
-            let fasadeMinMax = getFasadePositionMinMax(segment)
-            Object.entries(fasadeMinMax).forEach(([key, value]) => {
-              segment[key] = value;
+              let fasadeMinMax = getFasadePositionMinMax(segment)
+              Object.entries(fasadeMinMax).forEach(([key, value]) => {
+                segment[key] = value;
+              })
+
+              segment.width += deltaWidth;
+
+              if (secIndex !== 0) {
+                segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((section.width + 4) * doorIndex);
+              } else if (doorIndex > 0) {
+                segment.position.x += deltaWidth;
+              }
+
+              if (segment.width < segment.minX || segment.height < segment.minY)
+                segment.error = true
+              else
+                delete segment.error;
             })
-
-            segment.width += deltaWidth;
-
-            if (secIndex !== 0) {
-              segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((section.width + 4) * doorIndex);
-            } else if (doorIndex > 0) {
-              segment.position.x += deltaWidth;
-            }
-
-            if (segment.width < segment.minX || segment.height < segment.minY)
-              segment.error = true
-            else
-              delete segment.error;
           })
-        })
-      }
+        }
 
-      if (deltaHeight !== 0) {
+        if (deltaHeight !== 0) {
           section.fasades.forEach((door) => {
-          door.forEach((segment) => {
-            let fasadeMinMax = getFasadePositionMinMax(segment)
-            Object.entries(fasadeMinMax).forEach(([key, value]) => {
-              segment[key] = value;
+            door.forEach((segment) => {
+              let fasadeMinMax = getFasadePositionMinMax(segment)
+              Object.entries(fasadeMinMax).forEach(([key, value]) => {
+                segment[key] = value;
+              })
             })
+
+            let lastSegment = door[0]
+            if (!lastSegment.manufacturerOffset) {
+              lastSegment.height += deltaHeight;
+
+              if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+                lastSegment.error = true
+              else
+                delete lastSegment.error;
+            }
           })
-
-          let lastSegment = door[0]
-          if (!lastSegment.manufacturerOffset) {
-            lastSegment.height += deltaHeight;
-
-            if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
-              lastSegment.error = true
-            else
-              delete lastSegment.error;
-          }
-        })
-      }
+        }
 
         calcLoops(secIndex)
-    }
+      }
 
-  })
+    })
   else {
     module.value.fasades.forEach((door, doorIndex) => {
       let tmp_fasadePosition = calcSlideDoor(door[0].material.POSITION, doorIndex + 1)
@@ -426,35 +413,34 @@ const updateFasades = () => {
       const deltaHeight = tmp_fasadePosition.FASADE_HEIGHT - sumDoorsHeight;
 
       door[door.length - 1].height += deltaHeight;
-      if(door[door.length - 1].height < door[door.length - 1].minY) {
+      if (door[door.length - 1].height < door[door.length - 1].minY) {
         door[0].height = tmp_fasadePosition.FASADE_HEIGHT
         door = [door[0]]
         return;
-      }
-      else
+      } else
         door.forEach((segment) => {
-        let fasadeMinMax = getFasadePositionMinMax(segment)
-        Object.entries(fasadeMinMax).forEach(([key, value]) => {
-          segment[key] = value;
+          let fasadeMinMax = getFasadePositionMinMax(segment)
+          Object.entries(fasadeMinMax).forEach(([key, value]) => {
+            segment[key] = value;
+          })
+
+          segment.width = tmp_fasadePosition.FASADE_WIDTH
+          segment.position.x = tmp_fasadePosition.POSITION_X
+          segment.position.z = tmp_fasadePosition.POSITION_Z
+
+          if (segment.width < segment.minX || segment.height < segment.minY)
+            segment.error = true
+          else
+            delete segment.error;
         })
-
-        segment.width = tmp_fasadePosition.FASADE_WIDTH
-        segment.position.x = tmp_fasadePosition.POSITION_X
-        segment.position.z = tmp_fasadePosition.POSITION_Z
-
-        if (segment.width < segment.minX || segment.height < segment.minY)
-          segment.error = true
-        else
-          delete segment.error;
-      })
     })
   }
 };
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
 
-  if (fillingData) {
-    fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+  if (fillingData?.fasade) {
+      fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
   }
 
   let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
@@ -482,6 +468,8 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
         let fasadeClone = Object.assign(<FasadeObject>{}, baseFasade)
         fasadeClone.id = index + 1
         fasadeClone.height = item.height
+        fasadeClone.material = {...baseFasade.material}
+
         fasadeClone.position = new THREE.Vector2(baseFasade.position.x, item.y)
 
         if (fasadeClone.height < fasadeClone.minY || fasadeClone.width < fasadeClone.minX)
@@ -494,6 +482,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
         if (baseFasade2) {
           let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
           fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
+          fasadeClone2.material = {...fasadeClone.material}
 
           module.value.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))
         }
@@ -515,7 +504,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
 
   //Ящики с фасадами
   const BOX_FASADE = module.value.sections[secIndex].fasadesDrawers || []
-  const HI_TECH_PROFILES = module.value.sections[secIndex].profiles || []
+  const HI_TECH_PROFILES = module.value.sections[secIndex].hiTechProfiles || []
 
   const boxesArray = []
   BOX_FASADE.forEach((box, box_key) => {
@@ -525,9 +514,16 @@ const calcDrawersFasadesPositons = (secIndex) => {
     boxesArray.push(box)
   })
 
-  HI_TECH_PROFILES.forEach((profile, box_key) => {
+  HI_TECH_PROFILES.forEach((_profile, box_key) => {
+    let profile = Object.assign({}, _profile)
     if (!profile.position) {
       profile.position = new THREE.Vector3()
+    }
+    else {
+      profile.position = {
+        x: profile.position.x,
+        y: module.value.height - (profile.position.y + profile.height + profile.isProfile.manufacturerOffset)
+      }
     }
     boxesArray.push(profile)
   })
@@ -575,7 +571,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
       box.position = new THREE.Vector3()
     }
 
-    const boxFasadeHeight = box.isProfile && box.otstup ? box.otstup : box.height
+    const boxFasadeHeight = box.isProfile && box.isProfile.offsetFasades ? box.isProfile.offsetFasades : box.height
 
     fasadeList.push({
       y: bottomFasadePosition,
@@ -603,7 +599,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
       upperFasadeSize = Math.abs(totalHeight.value - 2 - bottomFasadePosition)
     }
 
-    if(upperFasadeSize >= MIN_FASADE_HEIGHT)
+    if (upperFasadeSize >= MIN_FASADE_HEIGHT)
       fasadeList.push({
         y: bottomFasadePosition,
         height: upperFasadeSize,
@@ -619,7 +615,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
     }
   }
 
-  if(fullFasadelSize >= MIN_FASADE_HEIGHT)
+  if (fullFasadelSize >= MIN_FASADE_HEIGHT)
     fasadeList.push({
       y: bottomFasadePosition,
       height: fullFasadelSize,
@@ -699,7 +695,7 @@ const calcSlideDoor = (fasadePositionID, doorNumber, callback) => {
     fasadePosition.POSITION_X += fasadePosition.FASADE_WIDTH * (doorNumber - 1)
   }
 
-  if(callback)
+  if (callback)
     callback(fasadePosition)
   else
     return fasadePosition
@@ -732,6 +728,8 @@ const calcLoops = (secIndex, grid = false) => {
 
   if (!curSection.loops.length)
     delete curSection.loops
+  else if (!grid)
+    checkLoopsCollision(secIndex)
 }
 
 const calcLoopPositions = (fasades, section) => {
@@ -805,7 +803,80 @@ const calcLoopPositions = (fasades, section) => {
   return allLoops
 }
 
-const checkLoopsErrorPosition = (secIndex) => {
+const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasadeSegmentIndex = null) => {
+  const CONFIG = productData.value.PROPS.CONFIG
+
+  if (!CONFIG.LOOPS)
+    return
+
+  const currentSection = module.value.sections[secIndex];
+  const currentCol = currentSection.cells?.[cellIndex];
+  const currentRow = currentCol?.cellsRows?.[rowIndex];
+  const currentFasade = currentSection.fasades?.[cellIndex]?.[fasadeSegmentIndex];
+  const moduleThickness = module.value.moduleThickness
+
+  const currentSector = currentFasade || currentRow || currentCol || currentSection
+  const loops = currentSection.loops
+
+  if (!loops)
+    return
+
+  let loopsSectors = {}
+  Object.entries(loops).forEach(([doorKey, doorLoops]) => {
+    loopsSectors[doorKey] = {}
+    doorLoops.forEach((fasade, fasadeKey) => {
+      loopsSectors[doorKey][fasadeKey] = []
+      fasade.coords.forEach((coord, key) => {
+        loopsSectors[doorKey][fasadeKey].push({
+          id: key,
+          minY: coord,
+          maxY: coord + fasade.height,
+          minX: fasade.positionX,
+          maxX: fasade.positionX + fasade.width,
+        })
+      })
+    })
+    /*
+        loopsSectors[doorKey] = loopsSectors[doorKey].sort((a, b) => {
+          return a.minY - b.minY
+        })*/
+  })
+
+  if (currentSector.cells?.length) {
+    Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
+      Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
+        loops[doorKey][fasadeKey].errors = []
+        currentSector.cells.forEach((cell, cellKey) => {
+          _loops.forEach(loop => {
+            if (
+                (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
+                (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
+            ) {
+              if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
+                loops[doorKey][fasadeKey].errors.push(loop.id)
+            }
+          })
+        })
+      })
+    })
+  } else {
+    Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
+      Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
+        loops[doorKey][fasadeKey].errors = []
+        _loops.forEach(loop => {
+          if (
+              (loop.minY <= (currentSector.position.y - moduleThickness) && loop.maxY >= (currentSector.position.y - moduleThickness)) ||
+              (loop.minY <= currentSector.position.y && loop.maxY >= currentSector.position.y)
+          ) {
+            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
+              loops[doorKey][fasadeKey].errors.push(loop.id)
+          }
+        })
+      })
+    })
+  }
+
+  return loops;
 
 }
 
@@ -815,7 +886,18 @@ const checkLoopsErrorPosition = (secIndex) => {
 const updateHorizont = (value) => {
   debounce(() => {
     const PROPS = productData.value.PROPS;
-    PROPS.CONFIG.HORIZONT = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] = parseInt(value);
+
+    let delta = parseInt(value) - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]
+    module.value.sections.forEach((section, secIndex) => {
+      section.position.y += delta
+      section.fasades.forEach((door) => {
+        door.forEach((segment) => {
+          segment.position.y += delta;
+        })
+      })
+    })
+
+    module.value.horizont = PROPS.CONFIG.HORIZONT = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] = parseInt(value);
     reset();
   }, 1000)
 };
@@ -864,6 +946,7 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
       break;
     default:
       selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
+      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
       break;
   }
 
@@ -872,11 +955,15 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
 
 //#endregion
 
-const reset = (reset = false) => {
+const reset = (reset = false, moduleGrid = false) => {
   const PROPS = productData.value.PROPS;
 
-  let sectionsTotalWidth = totalWidth.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - (module.value.sections.length - 1) * PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"];
-  let sectionsTotalHeight = totalHeight.value - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
+  module.value.moduleColor = PROPS.CONFIG.MODULE_COLOR;
+  module.value.moduleThickness = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18;
+  module.value.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
+
+  let sectionsTotalWidth = totalWidth.value - module.value.moduleThickness * 2 - (module.value.sections.length - 1) * module.value.moduleThickness;
+  let sectionsTotalHeight = totalHeight.value - module.value.moduleThickness * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
   let sectionsWidthSum = 0;
 
   module.value.sections.forEach((section, secIndex) => {
@@ -954,9 +1041,9 @@ const reset = (reset = false) => {
 };
 
 const saveGrid = () => {
-  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset"];
-  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops"];
+/*  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
+  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
+  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers"];
 
   //Рекурсивная очистка сетки от "технических" полей 2D конструктора
   const removeGarbage = (object) => {
@@ -967,12 +1054,15 @@ const saveGrid = () => {
 
         if (nesting.includes(key)) {
           value = value.map(item => {
-            if(Array.isArray(item))
+            if (Array.isArray(item))
               return item = item.map(_item => {
                 return removeGarbage(_item)
               })
-            else
+            else {
+              if(item.fasade)
+                item.fasade = removeGarbage(item.fasade)
               return removeGarbage(item)
+            }
           })
         }
 
@@ -988,20 +1078,12 @@ const saveGrid = () => {
     }
 
     return object;
-  }
+  }*/
 
   let tmpClone = Object.assign({}, module.value)
-  tmpClone = removeGarbage(tmpClone)
+  //tmpClone = removeGarbage(tmpClone)
 
   return tmpClone;
-
-  /*const data = {
-    canvasHeight: totalHeight.value,
-    canvasWidth: totalWidth.value,
-    data: tmpClone,
-  };*/
-
-  //return data;
 };
 
 defineExpose({
@@ -1015,6 +1097,7 @@ onBeforeMount(() => {
   totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
+  onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
 
   console.log(totalHeight.value, totalWidth.value)
 });
@@ -1046,6 +1129,13 @@ watch(visualizationRef, () => {
   }
 })
 
+watch(onHorizont, () => {
+
+  if (!onHorizont.value)
+    updateHorizont(0)
+  else
+    updateHorizont(78)
+});
 </script>
 
 <template>
@@ -1054,86 +1144,109 @@ watch(visualizationRef, () => {
     <div
         class="constructor2d-container constructor2d-container--left"
     >
+
       <div
-          class="constructor2d-container--left-module-sizes"
+          class="constructor2d-container--left--module-configs"
       >
+
+        <div class="actions-sections-header">
+          <h1>Размеры модуля</h1>
+        </div>
+
         <div
-            class="constructor2d-container--left-module-sizes--module-size"
+            class="constructor2d-container--left--module-configs--module-size"
         >
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Высота модуля</p>
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateTotalHeight"
                   :inputClass="'actions-input'"
                   :modelValue="totalHeight"
-                  :min="getMinHeight"
-                  :max="getMaxHeight"
+                  :min="getMinMaxModuleSize('height', 'min')"
+                  :max="getMinMaxModuleSize('height', 'max')"
                   :type="'number'"
               />
             </div>
           </div>
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Ширина модуля</p>
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateTotalWidth"
                   :inputClass="'actions-input'"
                   :modelValue="totalWidth"
-                  :min="getMinWidth"
-                  :max="getMaxWidth"
+                  :min="getMinMaxModuleSize('width', 'min')"
+                  :max="getMinMaxModuleSize('width', 'max')"
                   :type="'number'"
               />
             </div>
           </div>
 
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
             <p class="actions-title">Глубина модуля</p>
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateTotalDepth"
                   :inputClass="'actions-input'"
                   :modelValue="totalDepth"
-                  :min="getMinDepth"
-                  :max="getMaxDepth"
-                  :type="'number'"
-              />
-            </div>
-          </div>
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
-            <p class="actions-title">Глубина модуля</p>
-            <div class="actions-input--container">
-              <MainInput
-                  @update:modelValue="updateTotalDepth"
-                  :inputClass="'actions-input'"
-                  :modelValue="productData.PROPS.CONFIG.SIZE.depth"
-                  :min="getMinDepth"
-                  :max="getMaxDepth"
+                  :min="getMinMaxModuleSize('depth', 'min')"
+                  :max="getMinMaxModuleSize('depth', 'max')"
                   :type="'number'"
               />
             </div>
           </div>
 
-          <div class="constructor2d-container--left-module-sizes--module-size-item actions-inputs">
-            <p class="actions-title">Цоколь</p>
+          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
+            <p class="actions-title">Цоколь
+              <Toggle v-model="onHorizont"/>
+            </p>
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
                   :inputClass="'actions-input'"
                   :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                  min="0"
-                  max="150"
+                  min="50"
+                  max="300"
                   :type="'number'"
                   placeholder="0"
+                  :disabled="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
               />
             </div>
           </div>
+
         </div>
+
+        <div class="actions-sections-header">
+          <h1>Параметры модуля</h1>
+        </div>
+
+        <div
+            class="constructor2d-container--left--module-configs--module-color"
+        >
+          <ModuleMaterialsConfig
+              ref="materialConfRef"
+              :visualizationRef="visualizationRef"
+              :module="module"
+              :objectData="productData"
+              @product-reset="reset"
+          />
+        </div>
+
+        <div class="actions-sections-header">
+          <h1>Опции</h1>
+        </div>
+
+        <RailsRightPage style="margin-top: 5px"/>
+
       </div>
 
     </div>
 
     <div
+        id="midAreaUM2Dconstructor"
         class="constructor2d-container constructor2d-container--mid"
         ref="constructor2dContainer"
     >
@@ -1223,6 +1336,7 @@ watch(visualizationRef, () => {
             :step="step"
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
+            @product-checkLoopsCollision="checkLoopsCollision"
             @product-updateFilling="updateFilling"
         />
       </div>
@@ -1241,6 +1355,7 @@ watch(visualizationRef, () => {
             :step="step"
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
+            @product-checkLoopsCollision="checkLoopsCollision"
             @product-calcDrawersFasades="calcDrawersFasades"
             @product-getFasadePositionMinMax="getFasadePositionMinMax"
             @product-calcSlideDoor="calcSlideDoor"
@@ -1257,6 +1372,7 @@ watch(visualizationRef, () => {
             class="constructor2d-container--right--content"
             :visualizationRef="visualizationRef"
             :module="module"
+            :shapeAdjuster="shapeAdjuster"
             :fillings="getFillings"
             :step="step"
             @product-updateFilling="updateFilling"
@@ -1297,29 +1413,55 @@ watch(visualizationRef, () => {
 
     &--left {
       flex-direction: column;
-      max-height: 56vh;
-      max-width: 8vw;
+      max-width: 20vw;
       overflow: hidden;
 
-      &-module-sizes {
+      &--module-configs {
         position: absolute;
         overflow: scroll;
-        max-height: 55vh;
+        max-height: 90vh;
+        width: 18.5vw;
 
         &--module-size {
           display: flex;
-          flex-direction: column;
-
+          flex-direction: row;
+          gap: 1rem;
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          align-items: center;
+          align-content: space-between;
+          margin-top: 5px;
           &-item {
             padding-bottom: 15px;
           }
+        }
+
+        &--module-color {
+          display: flex;
+          flex-direction: column;
+        }
+
+        &::-webkit-scrollbar {
+          width: 2px;
+          /* Ширина скроллбара */
+        }
+
+        &::-webkit-scrollbar-button {
+          display: none;
+          /* Убираем стрелки */
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #888;
+          /* Цвет ползунка */
+          border-radius: 4px;
         }
       }
     }
 
     &--mid {
       flex-direction: column;
-      max-width: 75vw;
+      max-width: 60vw;
       overflow: hidden;
     }
 
@@ -1521,6 +1663,9 @@ watch(visualizationRef, () => {
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
   }
 
   &-inputs {

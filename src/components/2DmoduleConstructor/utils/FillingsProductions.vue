@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
+import {defineExpose, ref, toRefs, onBeforeMount, onMounted} from "vue";
 import {_URL} from "@/types/constants";
 import {
   DrawerFasadeObject,
@@ -10,6 +10,10 @@ import {
   MANUFACTURER
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
+import {useAppData} from "@/store/appliction/useAppData.ts";
+import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 const props = defineProps({
   fillings: {
@@ -28,6 +32,9 @@ const props = defineProps({
   },
   visualizationRef: {
     type: [ref, Object],
+  },
+  shapeAdjuster: {
+    type: [ref, Object],
   }
 });
 
@@ -39,9 +46,12 @@ const emit = defineEmits([
 ]);
 
 const {module, fillings, visualizationRef} = toRefs(props);
+const APP = useAppData().getAppData;
+const modelState = useModelState();
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0});
-
+const isOpenMaterialSelector = ref<boolean>(false);
+const currentFasadeMaterial = ref<Object | boolean>(false);
 type workMode = 'config' | 'add';
 const mode = ref<workMode>('add');
 const changeConstructorMode = (_mode: workMode) => {
@@ -99,9 +109,22 @@ const createFillingDataToCheck = (product, currentSpace) => {
 const addFilling = (type, product, oldFillingObject = false) => {
 
   const {sec, cell, row} = selectedFilling.value
+  const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
+  const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
+  const { PROPS } = modelState.getCurrentModel;
 
   if (row === null && cell === null && sec === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения");
+    return;
+  }
+
+  if (product.MIN_FASADE_SIZE && row) {
+    alert("Нельзя установить ящик с фасадом в вертикальную перегородку!");
+    return;
+  }
+
+  if (isBottomHiTechProfile && !PROPS.CONFIG.OPTION?.includes(4722965)) {
+    alert("Г-образный профиль доступен только для навесного модуля", "error")
     return;
   }
 
@@ -109,42 +132,97 @@ const addFilling = (type, product, oldFillingObject = false) => {
   const currentCell = currentSection.cells?.[cell];
   const currentRow = currentCell?.cellsRows?.[row];
 
-  let currentFillingsArray = currentRow || currentCell || currentSection
+  let currentModuleSegment = currentRow || currentCell || currentSection
+  let currentFillingsArray = []
 
-  const startFillingData = createFillingDataToCheck(product, currentFillingsArray);
+  const startFillingData = createFillingDataToCheck(product, currentModuleSegment);
 
   if (!startFillingData) {
     alert("Позиция не найдена");
     return;
   }
 
-  if (!currentFillingsArray.fillings)
-    currentFillingsArray.fillings = []
-  currentFillingsArray = currentFillingsArray.fillings
+  if (!currentModuleSegment.fillings)
+    currentModuleSegment.fillings = []
+  currentFillingsArray = currentModuleSegment.fillings
+
+  let depth = product.depth
+  if (product.SIZE_EDIT_DEPTH_MAX) {
+    depth = module.value.depth;
+
+    const moduleProductInfo = APP.CATALOG.PRODUCTS[module.value.productID]
+    if (moduleProductInfo?.moduleType?.CODE === "wardrobe")
+      depth -= 100;
+  }
+
+  let _type = product.NAME?.toLowerCase().includes('полка') ? 'shelf' : 'any';
+  _type = isHiTechProfile ? 'profile' : _type;
+
+  let width = startFillingData.width;
+  let height = startFillingData.height;
+  let profileData = {}
+  if (isHiTechProfile) {
+
+    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section"))
+      width = startFillingData.width + module.value.moduleThickness * 2 || startFillingData.width
+
+    height = product.height || module.value.moduleThickness
+
+    if (!module.value.profilesConfig)
+      module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+
+    profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+
+    let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
+    if (typeProfile !== "c" && typeProfile !== "l")
+      typeProfile = typeProfile.split(",").pop().replace(/\s/g, '')
+
+    profileData.TYPE_PROFILE = typeProfile
+    profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
+    profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
+
+    if(isBottomHiTechProfile) {
+      profileData.isBottomHiTechProfile = true
+      startFillingData.y = module.value.height.value - module.value.horizont - height
+    }
+
+    if(!currentModuleSegment.hiTechProfiles)
+      currentModuleSegment.hiTechProfiles = []
+
+    profileData.id = currentModuleSegment.hiTechProfiles.length + 1
+  }
 
   let fillingObject = <FillingObject>{
     product: product.ID,
     id: currentFillingsArray.length + 1,
     name: product.NAME,
     image: product.PREVIEW_PICTURE,
-    type: "any",
+    type: _type,
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
-    size: new THREE.Vector3(startFillingData.width, startFillingData.height, product.depth),
-    width: startFillingData.width,
-    height: startFillingData.height,
+    size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
+    width,
+    height,
     color: module.value.moduleColor,
     sec,
     cell,
     row,
   };
 
-  currentFillingsArray.push(fillingObject);
+  if(isHiTechProfile) {
+    fillingObject.isProfile = profileData
+    currentModuleSegment.hiTechProfiles.push(fillingObject)
+    currentFillingsArray.push(fillingObject);
+
+    calcDrawersFasades(sec)
+  }
+  else
+    currentFillingsArray.push(fillingObject);
 
   if (product.MIN_FASADE_SIZE) {
     if(!currentSection.fasadesDrawers)
       currentSection.fasadesDrawers = []
 
-    let baseFasade = module.value.sections[sec].fasades[0][0] || module.value.sections[0].fasades[0][0]
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0].fasades[0][0]
     let manufacturer_name = product.EN_NAME?.toLowerCase().split(/\s|,/).shift() || product.NAME?.toLowerCase().split(/\s|,/).shift();
     let manufacturerOffset = MANUFACTURER[manufacturer_name]
 
@@ -186,24 +264,57 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
 
   const curRow = row || cell || sec;
   let needFasadesUpdate = false
+  let profileUpdate = false
   let curItem = curRow.fillings[itemIndex];
+  curRow.fillings.forEach((filling, index) => {
+    if (index > itemIndex) {
+      if(filling.fasade)
+        filling.fasade.item -= 1;
+      filling.id -= 1;
+    }
+  })
 
   curRow.fillings = curRow.fillings.filter((el, index) => {
-    if (index === itemIndex && el.fasade)
-      needFasadesUpdate = true
+    if (index === itemIndex) {
+      if (el.fasade)
+        needFasadesUpdate = true
+      if(el.isProfile)
+        profileUpdate = true
+    }
 
     return index !== itemIndex;
   });
 
-  if (needFasadesUpdate) {
-    if(sec.fasadesDrawers?.length) {
+  if (needFasadesUpdate || profileUpdate) {
+    if(sec.fasadesDrawers?.length || sec.hiTechProfiles?.length) {
 
-      sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
-        return el.id !== curItem.fasade.id;
-      });
+      if(sec.fasadesDrawers?.length && needFasadesUpdate) {
+        sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
+          return el.id !== curItem.fasade.id;
+        });
 
-      if(!sec.fasadesDrawers.length)
-        delete sec.fasadesDrawers
+        sec.fasadesDrawers.forEach((el, index) => {
+          if (el.id > curItem.fasade.id)
+            el.id -= 1;
+        })
+
+        if(!sec.fasadesDrawers.length)
+          delete sec.fasadesDrawers
+      }
+
+      if(sec.hiTechProfiles?.length && profileUpdate) {
+        sec.hiTechProfiles = sec.hiTechProfiles.filter((el, index) => {
+          return el.isProfile.id !== curItem.isProfile.id;
+        });
+
+        sec.hiTechProfiles.forEach((el, index) => {
+          if (el.isProfile.id > curItem.isProfile.id)
+            el.isProfile.id -= 1;
+        })
+
+        if(!sec.hiTechProfiles.length)
+          delete sec.hiTechProfiles
+      }
 
       calcDrawersFasades(secIndex)
     }
@@ -234,6 +345,12 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
 
   const currentfilling = currentRow.fillings[key];
+
+  if (currentfilling?.isProfile?.isBottomHiTechProfile) {
+    alert("Г-образный профиль нельзя перемещать!");
+    return;
+  }
+
   const prevValue = currentfilling.position.y; //Предыдущее значение
 
   let delta = +value - currentfilling.distances.bottom
@@ -250,7 +367,7 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   const pixiSector = currentRow.sector;
 
   // Проверяем коллизию
-  const check = shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
 
   if (check) {
     currentfilling.position.y = fillingData.position.y;
@@ -267,9 +384,115 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   visualizationRef.value.renderGrid();
 };
 
+const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
+  isOpenMaterialSelector.value = false;
+
+  if (
+      currentFasadeMaterial.value &&
+      (
+          secIndex == currentFasadeMaterial.value.secIndex &&
+          cellIndex == currentFasadeMaterial.value.cellIndex &&
+          rowIndex == currentFasadeMaterial.value.rowIndex &&
+          itemIndex == currentFasadeMaterial.value.itemIndex
+      )
+  ) {
+    currentFasadeMaterial.value = false;
+    return;
+  }
+
+  setTimeout(() => {
+    const curSection = module.value.sections[secIndex]
+    const curCell = curSection?.cells?.[cellIndex]
+    const curRow = curCell?.cellsRows?.[rowIndex]
+
+    const curModuleSegment = curRow || curCell || curSection
+
+    let data = curModuleSegment.fillings[itemIndex].fasade.material
+    currentFasadeMaterial.value = {
+      secIndex,
+      curCell,
+      curRow,
+      itemIndex,
+      data
+    }
+    selectCell(secIndex, cellIndex, rowIndex, itemIndex)
+    isOpenMaterialSelector.value = true
+  }, 10)
+}
+
+const selectOption = (value: Object, type: string, palette: Object = false) => {
+
+  currentFasadeMaterial.value.data[type] = value ? value.ID : null;
+  if (palette)
+    currentFasadeMaterial.value.data['PALETTE'] = palette
+
+  let {secIndex, cellIndex, rowIndex, itemIndex} = currentFasadeMaterial.value;
+  const curSection = module.value.sections[secIndex]
+  const curCell = curSection?.cells?.[cellIndex]
+  const curRow = curCell?.cellsRows?.[rowIndex]
+
+  const curModuleSegment = curRow || curCell || curSection
+  curModuleSegment.fillings[itemIndex].fasade.material =
+      Object.assign(curModuleSegment.fillings[itemIndex].fasade.material, currentFasadeMaterial.value.data)
+};
+
+const changeDrawerFasade = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
+  selectCell(secIndex, cellIndex, rowIndex, key);
+
+  const gridCopy = Object.assign({}, module.value);
+
+  const sec = gridCopy.sections[secIndex];
+  const currentColl = sec.cells?.[cellIndex];
+  const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
+
+  const currentfilling = currentRow.fillings[key];
+
+  if (!currentfilling?.fasade){
+    alert("У элемента нет фасада!");
+    return
+  }
+
+  const prevValue = currentfilling.fasade.height; //Предыдущее значение
+  const newValue = parseInt(value)
+/*
+  let tmpSector = currentfilling.sector
+  delete currentfilling.sector
+
+  const fillingData = JSON.parse(JSON.stringify(currentfilling));
+  fillingData.fasade.height = newValue;
+  fillingData.sector = tmpSector;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+
+  if (check) {
+    currentfilling.fasade.height = fillingData.fasade.height;
+  } else {
+    currentfilling.fasade.height = prevValue;
+  }
+  currentfilling.sector = tmpSector;*/
+
+  currentfilling.fasade.height = newValue;
+  module.value = gridCopy;
+
+  calcDrawersFasades(secIndex)
+
+  visualizationRef.value.renderGrid();
+};
+
 defineExpose({
   handleCellSelect,
 });
+
+onMounted(() => {
+  let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
+  let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
+
+  if(visualizationRef.value)
+    selectCell(0, cellIndex, rowIndex)
+})
 
 </script>
 
@@ -450,7 +673,8 @@ defineExpose({
 
                   <div
                       v-if="filling.fasade"
-                      class="actions-items--height">
+                      class="actions-items--height"
+                  >
                     <div class="actions-inputs">
                       <p class="actions-title">
                         Высота фасада
@@ -461,14 +685,29 @@ defineExpose({
                         <input
                             type="number"
                             :step="step"
-                            min="150"
+                            :min="filling.fasade.minY"
+                            :max="filling.fasade.maxY"
                             class="actions-input"
                             :value="filling.fasade.height"
-                            disabled
+                            @input="debounce((event) => {
+                                changeDrawerFasade(
+                                    $event,
+                                    $event.target.value,
+                                    fillingIndex,
+                                    secIndex
+                                    )
+                                }, 1000)"
                         />
                       </div>
                     </div>
                   </div>
+
+                  <ConfigurationOption
+                      v-if="filling.fasade"
+                      :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
+                      :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
+                      @click="openFasadeSelector(secIndex, null, null, fillingIndex)"
+                  />
 
                 </div>
               </article>
@@ -547,7 +786,8 @@ defineExpose({
 
                         <div
                             v-if="filling.fasade"
-                            class="actions-items--height">
+                            class="actions-items--height"
+                        >
                           <div class="actions-inputs">
                             <p class="actions-title">
                               Высота фасада
@@ -558,38 +798,55 @@ defineExpose({
                               <input
                                   type="number"
                                   :step="step"
-                                  min="150"
+                                  :min="filling.fasade.minY"
+                                  :max="filling.fasade.maxY"
                                   class="actions-input"
                                   :value="filling.fasade.height"
-                                  disabled
+                                  @input="debounce((event) => {
+                                    changeDrawerFasade(
+                                        $event,
+                                        $event.target.value,
+                                        fillingIndex,
+                                        secIndex,
+                                        cellIndex
+                                        )
+                                    }, 1000)"
                               />
                             </div>
                           </div>
                         </div>
 
+                        <ConfigurationOption
+                            v-if="filling.fasade"
+                            :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
+                            :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
+                            @click="openFasadeSelector(secIndex, cellIndex, null, fillingIndex)"
+                        />
                       </div>
                     </article>
 
                   </div>
 
-                  <div class="accordion" v-if="cell.cellsRows?.length">
-                    <div
-                        v-for="(row, rowIndex) in cell.cellsRows"
-                        :key="rowIndex"
-                        :class="'actions-items--container'"
-                    >
-                      <details class="item-group" v-if="row.fillings?.length">
+                </details>
 
-                        <summary>
-                          <h3 class="item-group__title">
-                            {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}
-                          </h3>
-                        </summary>
+                <div class="accordion" v-if="cell.cellsRows?.length">
+                  <div
+                      v-for="(row, rowIndex) in cell.cellsRows"
+                      :key="rowIndex"
+                      :class="'actions-items--container'"
+                  >
+                    <details class="item-group" v-if="row.fillings?.length">
 
-                        <div
-                            v-for="(filling, fillingIndex) in row.fillings"
-                            :key="fillingIndex"
-                            :class="[
+                      <summary>
+                        <h3 class="item-group__title">
+                          {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}
+                        </h3>
+                      </summary>
+
+                      <div
+                          v-for="(filling, fillingIndex) in row.fillings"
+                          :key="fillingIndex"
+                          :class="[
                               'actions-items--container',
                               {
                                 active:
@@ -599,47 +856,47 @@ defineExpose({
                                   fillingIndex === selectedFilling.item
                               },
                             ]"
-                        >
+                      >
 
-                          <article class="actions-items actions-items--left">
-                            <div class="actions-items--left-wrapper">
+                        <article class="actions-items actions-items--left">
+                          <div class="actions-items--left-wrapper">
 
-                              <div class="actions-items--title">
-                                <button
-                                    class="actions-btn actions-icon"
-                                    @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
-                                >
-                                  <img
-                                      class="actions-icon--delete"
-                                      src="/icons/delite.svg"
-                                      alt=""
-                                  />
-                                </button>
-                                <p class="actions-title actions-title--part">
-                                  {{ filling.name }} №{{ filling.id }}
-                                </p>
-                              </div>
-
+                            <div class="actions-items--title">
+                              <button
+                                  class="actions-btn actions-icon"
+                                  @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
+                              >
+                                <img
+                                    class="actions-icon--delete"
+                                    src="/icons/delite.svg"
+                                    alt=""
+                                />
+                              </button>
+                              <p class="actions-title actions-title--part">
+                                {{ filling.name }} №{{ filling.id }}
+                              </p>
                             </div>
-                          </article>
 
-                          <article class="actions-items actions-items--right">
-                            <div class="actions-items--right-items">
+                          </div>
+                        </article>
 
-                              <div class="actions-items--width">
-                                <div class="actions-inputs">
-                                  <p class="actions-title">Позиция</p>
-                                  <div
-                                      :class="['actions-input--container']"
-                                  >
-                                    <input
-                                        type="number"
-                                        :step="1"
-                                        :max="section.height - filling.height"
-                                        min="0"
-                                        class="actions-input"
-                                        :value="filling.distances?.bottom"
-                                        @input="debounce((event) => {
+                        <article class="actions-items actions-items--right">
+                          <div class="actions-items--right-items">
+
+                            <div class="actions-items--width">
+                              <div class="actions-inputs">
+                                <p class="actions-title">Позиция</p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="1"
+                                      :max="section.height - filling.height"
+                                      min="0"
+                                      class="actions-input"
+                                      :value="filling.distances?.bottom"
+                                      @input="debounce((event) => {
                                 changeFillingPositionY(
                                     $event,
                                     $event.target.value,
@@ -649,42 +906,60 @@ defineExpose({
                                     rowIndex
                                     )
                                 }, 1000)"
-                                    />
-                                  </div>
+                                  />
                                 </div>
                               </div>
-
-                              <div
-                                  v-if="filling.fasade"
-                                  class="actions-items--height">
-                                <div class="actions-inputs">
-                                  <p class="actions-title">
-                                    Высота фасада
-                                  </p>
-                                  <div
-                                      :class="['actions-input--container']"
-                                  >
-                                    <input
-                                        type="number"
-                                        :step="step"
-                                        min="150"
-                                        class="actions-input"
-                                        :value="filling.fasade.height"
-                                        disabled
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
                             </div>
-                          </article>
 
-                        </div>
-                      </details>
+                            <div
+                                v-if="filling.fasade"
+                                class="actions-items--height"
+                            >
+                              <div class="actions-inputs">
+                                <p class="actions-title">
+                                  Высота фасада
+                                </p>
+                                <div
+                                    :class="['actions-input--container']"
+                                >
+                                  <input
+                                      type="number"
+                                      :step="step"
+                                      :min="filling.fasade.minY"
+                                      :max="filling.fasade.maxY"
+                                      class="actions-input"
+                                      :value="filling.fasade.height"
+                                      @input="debounce((event) => {
+                                        changeDrawerFasade(
+                                            $event,
+                                            $event.target.value,
+                                            fillingIndex,
+                                            secIndex,
+                                            cellIndex,
+                                            rowIndex
+                                            )
+                                        }, 1000)"
+                                  />
+                                </div>
+                              </div>
+                            </div>
 
-                    </div>
+                            <ConfigurationOption
+                                v-if="filling.fasade"
+                                :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
+                                :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
+                                @click="openFasadeSelector(secIndex, cellIndex, rowIndex, fillingIndex)"
+                            />
+
+                          </div>
+                        </article>
+
+                      </div>
+                    </details>
+
                   </div>
-                </details>
+                </div>
+
               </div>
             </div>
           </div>
@@ -694,9 +969,19 @@ defineExpose({
     </div>
 
   </div>
+
+  <transition name="slide--right" mode="out-in">
+    <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <AdvanceCorpusMaterialRedactor
+          :is-fasade="true"
+          :elementData="currentFasadeMaterial.data"
+          @parent-callback="selectOption"
+      />
+    </div>
+  </transition>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .splitter {
   &-container {
     &--product {
@@ -704,6 +989,7 @@ defineExpose({
       flex-direction: column;
       gap: 0.5rem;
       color: #a3a9b5;
+      width: 19.5vw;
 
       &-icon {
         cursor: pointer;
@@ -909,8 +1195,8 @@ defineExpose({
     &--container {
       display: flex;
       width: 100%;
-      padding: 1rem 0;
       border-bottom: 1px solid #ecebf1;
+      margin-top: 0.5rem;
 
       // &:first-child {
       //   padding-top: 0;
@@ -1168,4 +1454,46 @@ defineExpose({
     max-width: 100% !important;
   }
 }
+
+.color {
+  &-select {
+    position: fixed;
+    right: 20.8vw;
+    top: 0;
+    width: 100%;
+    max-width: 373px;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background: rgba($white, 1);
+    box-shadow: 0px 0px 10px 0px #3030301a;
+    z-index: 0;
+    border-radius: 15px;
+
+    &__container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      overflow: auto;
+    }
+
+    &-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: $bg;
+      border-radius: 15px;
+      gap: 10px;
+
+      &__title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
 </style>

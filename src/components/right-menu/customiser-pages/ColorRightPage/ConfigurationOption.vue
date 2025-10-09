@@ -105,7 +105,7 @@ const deleteChoise = (event) => {
   // height: 100%;
   width: 100%;
 
-  max-width: 155px;
+  max-width: 150px;
   // max-height: 200px;
   padding: 10px;
   gap: 10px;
@@ -113,6 +113,16 @@ const deleteChoise = (event) => {
   box-shadow: 4px 4px 4px 4px rgba(34, 60, 80, 0.11);
   overflow: hidden;
   cursor: pointer;
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow: 4px 4px 4px 4px #da444c;
+    }
+  }
+
+  &.active {
+    box-shadow: 4px 4px 4px 4px #da444c;
+  }
 
   &__top {
     display: flex;

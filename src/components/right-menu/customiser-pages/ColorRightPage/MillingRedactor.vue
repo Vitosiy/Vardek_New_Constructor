@@ -7,6 +7,10 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 const props = defineProps({
   millingList: Array,
   tabIndex: Number,
+  tempWork: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["select_milling"]);
@@ -20,13 +24,16 @@ const isSearch = computed(() => {
 });
 
 const changeMilling = (milling) => {
-  eventBus.emit("A:ChangeMilling", {
-    data: milling.ID,
-    fasadeNdx: props.tabIndex,
-  });
+  if (!props.tempWork)
+    eventBus.emit("A:ChangeMilling", {
+      data: milling.ID,
+      fasadeNdx: props.tabIndex,
+    });
+
   emit("select_milling", {
     name: milling.NAME,
     imgSrc: milling.PREVIEW_PICTURE,
+    ID: milling.ID,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 

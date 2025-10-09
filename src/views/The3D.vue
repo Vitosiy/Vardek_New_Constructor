@@ -709,7 +709,9 @@ watch(
     <div class="controller-container">
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
-        <ControllerButton v-if="Object.keys(CutData).length == 0 && modelState.getCurrentModel?.name!='MODEL'" />
+        <ControllerButton
+          v-if="Object.keys(CutData).length == 0 && modelState.getCurrentModel?.name!='MODEL' && !universalModuleData"
+        />
         <ContentControllerButton
           @click="duplicateProduct"
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"

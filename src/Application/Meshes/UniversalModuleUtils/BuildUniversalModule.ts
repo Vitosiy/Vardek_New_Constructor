@@ -2,17 +2,17 @@
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
-import { OBB } from 'three/examples/jsm/math/OBB.js';
+import {OBB} from 'three/examples/jsm/math/OBB.js';
 
 import {
     GridModule, LOOPSIDE
 } from "@/types/constructor2d/interfaсes.ts";
 
-import { useSceneState } from "@/store/appliction/useSceneState"
-import { useModelState } from '@/store/appliction/useModelState';
+import {useSceneState} from "@/store/appliction/useSceneState"
+import {useModelState} from '@/store/appliction/useModelState';
 
-import { BuildProduct } from "../BuildProduct"
-import { _URL } from "@/types/constants";
+import {BuildProduct} from "../BuildProduct"
+import {_URL} from "@/types/constants";
 
 export class BuildUniversalModule extends BuildProduct {
 
@@ -25,14 +25,19 @@ export class BuildUniversalModule extends BuildProduct {
         super(root);
     }
 
-    createProductBody(perent_group: THREE.Object3D, _size?: { width: number, height: number, depth: number }, moduleParams?: GridModule) {
+    createProductBody(perent_group: THREE.Object3D, _size?: {
+        width: number,
+        height: number,
+        depth: number
+    }, moduleParams?: GridModule)
+    {
 
         const total = new THREE.Object3D();
 
         const defaultConfig: THREETypes.TDefaultOptionsConfig = this.getDefaultOptionsConfig();
 
-        const { PROPS } = perent_group.userData
-        const { CONFIG } = PROPS;
+        const {PROPS} = perent_group.userData
+        const {CONFIG} = PROPS;
 
         const productId = CONFIG.ID
         const productInfo = this._PRODUCTS[productId];
@@ -44,7 +49,11 @@ export class BuildUniversalModule extends BuildProduct {
 
         const MODULEGRID = moduleParams || Object.keys(PROPS.CONFIG.MODULEGRID)?.length || false
 
-        const size = _size ? _size : MODULEGRID ? { width: MODULEGRID.width, height: MODULEGRID.height, depth: MODULEGRID.depth } : null
+        const size = _size ? _size : MODULEGRID ? {
+            width: MODULEGRID.width,
+            height: MODULEGRID.height,
+            depth: MODULEGRID.depth
+        } : null
 
         const modelSize = size ?? PROPS.CONFIG.SIZE;
 
@@ -63,9 +72,9 @@ export class BuildUniversalModule extends BuildProduct {
 
         const data = this.createModelData(modelData, PROPS, modelSize);
         // Сборка частей
-        const { body, tempMaterial } = !this.isEmpty(modelData)
+        const {body, tempMaterial} = !this.isEmpty(modelData)
             ? this.createBody(data, PROPS, defaultConfig)
-            : { body: null, tempMaterial: null };
+            : {body: null, tempMaterial: null};
 
         const shelf = this._SHELF_POSITION[productId]
             ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
@@ -76,13 +85,14 @@ export class BuildUniversalModule extends BuildProduct {
             : null;
 
         const tableTop = CONFIG.HAVETABLETOP
-            ? this.tabletop_builder.createTableTop({ props: PROPS })
+            ? this.tabletop_builder.createTableTop({props: PROPS})
             : null;
 
         if (MODULEGRID) {
 
             this.parseModulegrid(MODULEGRID, PROPS)
             this.buildModulegrid(PROPS, total)
+            this.calcSubElementsAdditives(PROPS)
         }
 
         if (CONFIG.LOOPS && Object.keys(CONFIG.LOOPS)?.length) {
@@ -102,7 +112,7 @@ export class BuildUniversalModule extends BuildProduct {
             : null;
 
         /** Добавляем стреки размеров */
-        const arrows = this.addArrowSize({ object: body, props: PROPS })
+        const arrows = this.addArrowSize({object: body, props: PROPS})
 
         // Вычисление высот
         const legsHeight = legs ? this.calculateHeight(legs) : 0;
@@ -126,7 +136,7 @@ export class BuildUniversalModule extends BuildProduct {
             .forEach((part) => total.add(part as THREE.Object3D));
         //---------------------------
         /** @Для корректной коллизии */
-        //---------------------------
+            //---------------------------
         const tempTotal = new THREE.Object3D();
         [legs?.clone(), body?.clone(), shelf?.clone()]
             .filter(Boolean)
@@ -156,6 +166,18 @@ export class BuildUniversalModule extends BuildProduct {
 
         CONFIG.MODULEGRID = {}
 
+        if (product_data.BACKWALL?.length && product_data.BACKWALL?.[0]) {
+            CONFIG.BACKWALL = {}
+            CONFIG.BACKWALL.COLOR = this.filters.filterModuleColor(product_data.BACKWALL)[0] || CONFIG["MODULE_COLOR"];
+        }
+
+        if (product_data.SIDEWALL?.length && product_data.SIDEWALL?.[0]) {
+            CONFIG.LEFTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
+            CONFIG.RIGHTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
+        }
+
+        CONFIG.TOPFASADECOLOR = {COLOR: 7397, SHOW: false}
+
         if (product_data.moduleType.CODE !== "wardrobe")
             CONFIG.LOOPS = {}
 
@@ -168,13 +190,14 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.CONFIG.FASADE_POSITIONS = []
         PROPS.CONFIG.FASADE_PROPS = []
         PROPS.CONFIG.SECTIONS = {}
-        PROPS.CONFIG.LOOPS = {}
+        const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
         product_data.sections.forEach((section, secIndex) => {
 
             let sectionSize = new THREE.Vector3(section.width, section.height,
                 product_data.depth - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"])
-            let prevSection = PROPS.CONFIG.SECTIONS[secIndex] || false;
+            const prevSection = PROPS.CONFIG.SECTIONS[secIndex] || false;
+            const nextSection = product_data.sections[secIndex + 1] || false;
 
             PROPS.CONFIG.SECTIONS[secIndex + 1] = {
                 fillings: [],
@@ -183,16 +206,18 @@ export class BuildUniversalModule extends BuildProduct {
                     PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"],
                     PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + sectionSize.z / 2)
             }
-            let curSection = PROPS.CONFIG.SECTIONS[secIndex + 1]
 
-            if (secIndex + 1 > 1)
+            const curSection = PROPS.CONFIG.SECTIONS[secIndex + 1]
+
+            if (nextSection)
                 curSection.fillings.push({  //Добавляем разделитель секций, как товар наполнения
-                    position: new THREE.Vector3(curSection.position.x - curSection.size.x / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
-                        curSection.position.y, curSection.position.z),
+                    position: new THREE.Vector3(curSection.position.x + curSection.size.x / 2 + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
+                        curSection.position.y - full_horizont_height, curSection.position.z),
                     size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, curSection.size.z),
                     product: 5820274,
                     material: PROPS.CONFIG.MODULE_COLOR,
                     id: curSection.fillings.length + 1,
+                    type: 'section_partition',
                 })
 
             let cells = [...section.cells].reverse()
@@ -200,28 +225,30 @@ export class BuildUniversalModule extends BuildProduct {
 
                 if (cellIndex > 0)
                     curSection.fillings.push({  //Добавляем полку, как товар наполнения
-                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.position.z),
+                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
                         size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.z),
                         product: 4263392,
                         id: curSection.fillings.length + 1,
                         material: PROPS.CONFIG.MODULE_COLOR,
+                        type: 'shelf',
                     })
 
                 cell.cellsRows?.forEach((row, rowIndex) => {
 
                     if (rowIndex > 0)
                         curSection.fillings.push({  //Добавляем верт. полку, как товар наполнения
-                            position: new THREE.Vector3(row.position.x, row.position.y, curSection.position.z),
+                            position: new THREE.Vector3(row.position.x - row.width / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2, row.position.y - full_horizont_height, curSection.position.z),
                             size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, curSection.size.z),
                             product: 5820266,
                             id: curSection.fillings.length + 1,
                             material: PROPS.CONFIG.MODULE_COLOR,
+                            type: 'vertical_shelf',
                         })
 
                     row.fillings?.forEach((filling) => {
                         curSection.fillings.push({
                             ...filling,
-                            position: new THREE.Vector3(row.position.x, row.position.y + filling.distances.bottom, curSection.position.z),
+                            position: new THREE.Vector3(row.position.x, row.position.y + filling.distances.bottom - full_horizont_height, curSection.position.z),
                             id: curSection.fillings.length + 1,
                         })
                     })
@@ -230,7 +257,7 @@ export class BuildUniversalModule extends BuildProduct {
                 cell.fillings?.forEach((filling) => {
                     curSection.fillings.push({
                         ...filling,
-                        position: new THREE.Vector3(cell.position.x, cell.position.y + filling.distances.bottom, curSection.position.z),
+                        position: new THREE.Vector3(cell.position.x, cell.position.y + filling.distances.bottom - full_horizont_height, curSection.position.z),
                         id: curSection.fillings.length + 1,
                     })
                 })
@@ -239,14 +266,20 @@ export class BuildUniversalModule extends BuildProduct {
             section.fillings?.forEach((filling) => {
                 curSection.fillings.push({
                     ...filling,
-                    position: new THREE.Vector3(curSection.position.x, curSection.position.y + filling.distances.bottom, curSection.position.z),
+                    position: new THREE.Vector3(curSection.position.x, curSection.position.y + filling.distances.bottom - full_horizont_height, curSection.position.z),
                     id: curSection.fillings.length + 1,
                 })
             })
 
             let allFasades = []
             section.fasades?.forEach((door, doorID) => {
-                allFasades.push(...door)
+                let tmp = []
+                door.forEach((fasade, fasadeID) => {
+                    fasade.section = secIndex + 1
+                    fasade.door = doorID + 1
+                    tmp.push(fasade)
+                })
+                allFasades.push(...tmp)
             })
 
             if (section.fasadesDrawers)
@@ -256,7 +289,7 @@ export class BuildUniversalModule extends BuildProduct {
 
             allFasades.forEach((fasade, fasadeID) => {
                 if (!fasade.error) {
-                    PROPS.CONFIG.FASADE_POSITIONS.push({
+                    let tmp = {
                         ...OLD_FASADES[0],
                         FASADE_WIDTH: fasade.width,
                         FASADE_HEIGHT: fasade.height,
@@ -264,13 +297,25 @@ export class BuildUniversalModule extends BuildProduct {
                         POSITION_Y: fasade.position.y,  //(PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"]) + 2,
                         POSITION_Z: PROPS.CONFIG.SIZE.depth + 2,
                         FASADE_NUMBER: PROPS.CONFIG.FASADE_POSITIONS.length,
-                    })
+                        SECTION: fasade.section || fasade.sec || 1,
+                        DOOR: fasade.door || fasade.cellIndex || null,
+                        SEGMENT: fasade.id || fasade.key || null,
+                    }
+                    if (fasade.item)
+                        tmp.drawer = fasade.item
+
+                    PROPS.CONFIG.FASADE_POSITIONS.push(tmp)
                     PROPS.CONFIG.FASADE_PROPS.push(fasade.material)
                 }
             })
 
-            if (section.loops)
+            if (section.loops && PROPS.CONFIG.LOOPS)
                 PROPS.CONFIG.LOOPS[secIndex + 1] = section.loops
+            else {
+                delete section.loops
+                delete section.loopsSides
+            }
+
         })
 
         if (product_data.fasades) {
@@ -299,6 +344,7 @@ export class BuildUniversalModule extends BuildProduct {
     buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D) {
 
         PROPS.JSON_FILLINGS = []
+        const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
             if (section.fillings?.length) {
@@ -309,8 +355,11 @@ export class BuildUniversalModule extends BuildProduct {
                         return
 
                     const onLoad = (productFilling, isModel = true) => {
-                        let size = PROPS.CONFIG.SIZE
-                        let start_position = this.getStartPosition(size)
+                        if(filling.isProfile)
+                            productFilling.userData.isProfile = true
+
+                        let sizeModule = PROPS.CONFIG.SIZE
+                        let start_position = this.getStartPosition(sizeModule)
 
                         if (isModel) {
                             const box = new THREE.Box3().setFromObject(productFilling);
@@ -326,9 +375,12 @@ export class BuildUniversalModule extends BuildProduct {
                             productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
                             productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
                         }
+                        else {
+                            filling.position.z = sizeModule.depth - filling.size.z / 2;
+                        }
 
                         start_position.add(filling.position)
-                        start_position.y += filling.size.y / 2
+                        start_position.y += filling.size.y / 2 + full_horizont_height
 
                         productFilling.position.copy(start_position)
 
@@ -338,12 +390,12 @@ export class BuildUniversalModule extends BuildProduct {
                         group.add(productFilling)
                     }
 
-                    const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
+                    const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
                     const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
 
                     let productFilling
                     if (data.DAE) {
-                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID } }, sizeRulers: false })
+                        this.models_builder.create({onLoad, props: {CONFIG: {MODELID: data.ID}}, sizeRulers: false})
                     } else {
                         productFilling = this.createSubProductObject(data, PROPS)
                         onLoad(productFilling, false)
@@ -357,7 +409,7 @@ export class BuildUniversalModule extends BuildProduct {
 
     createSubProductObject(data: THREETypes.TObject, props: THREETypes.TObject) {
         let fasade = this._FASADE[props.CONFIG.MODULE_COLOR]
-        let body = this.json_builder.createMesh({ data, fasade })
+        let body = this.json_builder.createMesh({data, fasade})
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
         body.matrixWorldNeedsUpdate = true
@@ -380,8 +432,6 @@ export class BuildUniversalModule extends BuildProduct {
         const parentModel = this._MODELS[product.models[0]];
         // const model = this._MODELS[parentModel.loop_model];
         const model = this._MODELS[parentModel.loop_model].id;
-
-
 
         const loopPosition = this._LOOP_POSITION[parentModel.loop_position];
         let allLoopsMesh = new THREE.Object3D();
@@ -465,8 +515,8 @@ export class BuildUniversalModule extends BuildProduct {
                     rightSide ? rightPosition : leftPosition,
                     coord,
                     rightSide ?
-                        PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z + loop.depth / 2 :
-                        PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z + loop.depth / 2,
+                        PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z :
+                        PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z,
                 );
 
                 loopMesh.rotation.set(rotation.x, rotation.y, rotation.z);
@@ -492,9 +542,249 @@ export class BuildUniversalModule extends BuildProduct {
             })
         }
 
-        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: model } }, sizeRulers: false })
+        this.models_builder.create({onLoad, props: {CONFIG: {MODELID: model}}, sizeRulers: false})
 
         return allLoopsMesh
     };
+
+    calcSubElementsAdditives(PROPS) {
+        const fasadeThickness = this._FASADE[PROPS.CONFIG.MODULE_COLOR]?.DEPTH || 18
+
+        Object.entries(PROPS.CONFIG.SECTIONS).forEach(([sectionNumber, sectionConf]) => {
+            if (sectionConf.fillings)
+                Object.entries(sectionConf.fillings).forEach(([elementNumber, element]) => {
+                    element.ADDITIVES = {}
+                })
+        })
+
+        Object.entries(PROPS.CONFIG.SECTIONS).forEach(([sectionNumber, sectionConf]) => {
+            if (sectionConf.fillings) {
+                const sectionSize = {width: sectionConf.size.x, height: sectionConf.size.y, depth: sectionConf.size.z}
+                Object.entries(sectionConf.fillings).forEach(([_elementNumber, element])=> {
+                    const product = this.getProductInfo(element.product)
+                    const elementNumber = +_elementNumber + 1
+                    if(!product)
+                        return
+
+                    const PRODUCT_TYPE = this._PRODUCTS_TYPES[product.productType]?.CODE || false;
+
+                    if (element.position) {
+
+                        let leftObj, rightObj, bottomObj, topObj;
+
+                        let positionX = element.position.x - fasadeThickness
+                        let positionY = element.position.y
+
+                        let sectionPos = sectionConf.position.x;
+
+                        let leftPos = sectionPos - sectionSize.width / 2 - fasadeThickness,
+                            rightPos = sectionPos + sectionSize.width / 2 - fasadeThickness,
+                            bottomPos = 0,
+                            topPos = sectionSize.height
+
+                        if (!["vertical_shelf", "section_partition"].includes(element.type)) {
+                            positionX = element.position.x
+
+                            Object.entries(PROPS.CONFIG.SECTIONS[sectionNumber].fillings)?.filter(([key, item]) => item.type === "vertical_shelf")
+                                .sort(([key1, item1], [key2, item2]) => {
+                                    return item1.POSITION - item2.POSITION
+                                })
+                                .forEach(([key, object]) => {
+                                    if (elementNumber != object.id && (positionY < object.position.y + object.size.y && positionY > object.position.y)) {
+                                        let objPos = object.position.x
+
+                                        if ((objPos + object.size.x / 2 <= positionX) && (objPos + object.size.x / 2 >= leftPos)) {
+                                            leftObj = object
+                                            leftPos = objPos + object.size.x / 2
+                                        }
+
+                                        if ((objPos - object.size.x / 2 >= positionX) && (objPos - object.size.x / 2 <= rightPos)) {
+                                            rightObj = object
+                                            rightPos = objPos - object.size.x / 2
+                                        }
+                                    }
+                                })
+
+                            if (leftObj) {
+                                let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+
+                                leftObj.ADDITIVES[elementNumber || element.id || element.product] = {
+                                    id_subelement: element.product,
+                                    additive_position: relative_pos,
+                                    orientation: "right",
+                                    section: +sectionNumber,
+                                }
+
+                                element.ADDITIVES[leftObj.id || leftObj.product] = {
+                                    id_subelement: leftObj.product,
+                                    additive_position: relative_pos,
+                                    orientation: "left",
+                                    section: +sectionNumber,
+                                }
+
+                                delete element.ADDITIVES["left"]
+
+                            }
+                            else {
+                                if (PROPS.CONFIG.SECTIONS[+sectionNumber - 1]?.fillings?.[0] && PROPS.CONFIG.SECTIONS[+sectionNumber - 1].fillings[0].type === "section_partition") {
+                                    leftObj = PROPS.CONFIG.SECTIONS[+sectionNumber - 1].fillings[0]
+                                    let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+
+                                    element.ADDITIVES[`${+sectionNumber - 1}_${leftObj.id || leftObj.product}`] = {
+                                        id_subelement: leftObj.product,
+                                        additive_position: relative_pos,
+                                        orientation: "left",
+                                        section: +sectionNumber - 1,
+                                    }
+                                    delete element.ADDITIVES["left"]
+
+                                    leftObj.ADDITIVES[`${+sectionNumber}_${elementNumber || element.id || element.product}`] = {
+                                        id_subelement: element.product,
+                                        additive_position: relative_pos,
+                                        orientation: "right",
+                                        section: +sectionNumber,
+                                    }
+                                } else
+                                    element.ADDITIVES["left"] = {
+                                        id_subelement: false,
+                                        additive_position: positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2),
+                                        orientation: "left"
+                                    }
+                            }
+
+                            if (rightObj) {
+                                let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+
+                                let righAdditiveName = elementNumber || element.id || element.product;
+                                rightObj.ADDITIVES[righAdditiveName] = {
+                                    id_subelement: element.product,
+                                    additive_position: relative_pos,
+                                    orientation: "left",
+                                    section: +sectionNumber,
+                                }
+
+                                element.ADDITIVES[rightObj.id || rightObj.product] = {
+                                    id_subelement: rightObj.product,
+                                    additive_position: relative_pos,
+                                    orientation: "right",
+                                    section: +sectionNumber,
+                                }
+
+                                delete element.ADDITIVES["right"]
+
+                            }
+                            else {
+                                if (PROPS.CONFIG.SECTIONS[+sectionNumber + 1] && PROPS.CONFIG.SECTIONS[+sectionNumber].fillings[0].type === "section_partition") {
+                                    rightObj = PROPS.CONFIG.SECTIONS[+sectionNumber].fillings[0]
+                                    let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+
+                                    element.ADDITIVES[`${sectionNumber}_${rightObj.id || rightObj.product}`] = {
+                                        id_subelement: rightObj.product,
+                                        additive_position: relative_pos,
+                                        orientation: "right",
+                                        section: +sectionNumber,
+                                    }
+                                    delete element.ADDITIVES["right"]
+
+                                    rightObj.ADDITIVES[`${sectionNumber}_${elementNumber || element.id || element.product}`] = {
+                                        id_subelement: element.product,
+                                        additive_position: relative_pos,
+                                        orientation: "left",
+                                        section: +sectionNumber,
+                                    }
+                                } else
+                                    element.ADDITIVES["right"] = {
+                                        id_subelement: false,
+                                        additive_position: positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2),
+                                        orientation: "right"
+                                    }
+                            }
+                        }
+                        else {
+
+                            Object.entries(PROPS.CONFIG.SECTIONS[sectionNumber].fillings)?.filter(([key, item]) => item.type === "shelf" || item.MANUFACTURER)
+                                .sort(([key1, item1], [key2, item2]) => {
+                                    return item1.POSITION - item2.POSITION
+                                })
+                                .forEach(([key, object]) => {
+                                    let objRelPos = object.position.x - fasadeThickness
+                                    let objHeight = object.fasade?.size?.y || object.size.y
+                                    if (elementNumber != object.id && (positionX < objRelPos + object.size.x / 2 && positionX > objRelPos - object.size.x / 2)) {
+                                        let objPos = object.position.y - (object.MANUFACTURER_OFFSET || 0)
+                                        if (objPos + objHeight <= positionY && objPos + objHeight >= bottomPos) {
+                                            bottomObj = object
+                                            bottomPos = objPos + objHeight
+                                        }
+
+                                        if (objPos >= positionY && objPos <= topPos) {
+                                            topObj = object
+                                            topPos = objPos
+                                        }
+                                    }
+                                })
+
+                            let relative_posX = positionX - (sectionConf.position.x - sectionSize.width / 2) + fasadeThickness
+                            if (bottomObj) {
+                                let bottomObjPositionX = bottomObj.position.x - bottomObj.size.x / 2 - fasadeThickness
+                                let relative_pos = relative_posX - (bottomObjPositionX - leftPos)
+
+                                bottomObj.ADDITIVES[elementNumber || element.id || element.product] = {
+                                    id_subelement: element.product,
+                                    additive_position: relative_pos,
+                                    orientation: "top",
+                                    section: +sectionNumber,
+                                }
+
+                                element.ADDITIVES[bottomObj.id || bottomObj.product] = {
+                                    id_subelement: bottomObj.product,
+                                    additive_position: relative_pos,
+                                    orientation: "bottom",
+                                    section: +sectionNumber,
+                                }
+
+                                delete element.ADDITIVES["bottom"]
+
+                            } else {
+                                element.ADDITIVES["bottom"] = {
+                                    id_subelement: false,
+                                    additive_position: positionX,
+                                    orientation: "bottom"
+                                }
+                            }
+
+                            if (topObj) {
+                                let topObjPositionX = topObj.position.x - topObj.size.x / 2 - fasadeThickness
+                                let relative_pos = relative_posX - (topObjPositionX - leftPos)
+
+                                topObj.ADDITIVES[elementNumber || element.id || element.product] = {
+                                    id_subelement: element.product,
+                                    additive_position: relative_pos,
+                                    orientation: "bottom",
+                                    section: +sectionNumber,
+                                }
+
+                                element.ADDITIVES[topObj.id || topObj.product] = {
+                                    id_subelement: topObj.product,
+                                    additive_position: relative_pos,
+                                    orientation: "top",
+                                    section: +sectionNumber,
+                                }
+
+                                delete element.ADDITIVES["top"]
+
+                            } else {
+                                element.ADDITIVES["top"] = {
+                                    id_subelement: false,
+                                    additive_position: positionX,
+                                    orientation: "top"
+                                }
+                            }
+                        }
+
+                    }
+                })
+            }
+        })
+    }
 
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {defineExpose, ref, toRefs} from "vue";
+import {defineExpose, onMounted, ref, toRefs} from "vue";
 
 import {GridCell, GridCellsRow, GridSection} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
@@ -34,6 +34,7 @@ const emit = defineEmits([
   "product-updateFasades",
   "product-updateFilling",
   "product-calcLoops",
+  "product-checkLoopsCollision",
 ]);
 
 const timer = ref(false);
@@ -63,6 +64,10 @@ const updateFasades = () => {
 
 const calcLoops = (secIndex) => {
   emit("product-calcLoops", secIndex);
+}
+
+const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null) => {
+  emit("product-checkLoopsCollision", secIndex, cellIndex, rowIndex);
 }
 
 const updateFilling = (value, filling, type, render = false) => {
@@ -106,10 +111,13 @@ const addSection = (secIndex, _count = 1) => {
       width: halfWidth,
       cells: [],
       fasades: [],
-      loops: [],
-      loopsSides: {},
       fillings: [],
       position: new THREE.Vector2(section.position.x + (section.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), section.position.y),
+    }
+
+    if(section.loops) {
+      newColumn.loops = []
+      newColumn.loopsSides = {}
     }
 
     if(i === count - 1) {
@@ -145,7 +153,7 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
 
     if (section.fillings?.length) {
       cell.fillings = [...section.fillings];
-      section.fillings.length = 0
+      delete section.fillings
     }
 
     section.cells.push(cell);
@@ -161,20 +169,10 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
     return;
   }
 
-  const deltaLastCell = section.height - halfHeight * (count + 1) - module.value.moduleThickness * count;
+  const deltaLastCell = cell.height - halfHeight * (count + 1) - module.value.moduleThickness * count;
 
   // Обновляем высоту последней строки
   cell.height = halfHeight;
-
-  /*let newFillings = []
-  cell.fillings?.filter((filling, index) => {
-    if (filling.position.y >= cell.position.y + cell.height + module.value.moduleThickness) {
-      newFillings.push(filling);
-    } else {
-      filling.cell += 1
-    }
-    return filling.position.y + filling.height <= cell.position.y + cell.height;
-  })*/
 
   if (cell.fillings)
     cell.fillings.length = 0
@@ -186,21 +184,24 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
       ...cell,
       number: cell.number + 1 + i,
       position: new THREE.Vector2(cell.position.x, cell.position.y + (halfHeight + module.value.moduleThickness) * (i + 1)),
+      fillings: [],
       //fillings: newFillings,
     }
 
-    if(i === count - 1) {
+    if(deltaLastCell && i === count - 1) {
       newCell.height += deltaLastCell;
     }
 
     section.cells.splice(cellIndex || 0, 0, newCell);
   }
 
+  calcLoops(secIndex);
+
   // Обновляем рендер
   visualizationRef.value.renderGrid();
 };
 
-const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
+const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) =>  {
   const count = parseInt(_count)
 
   selectCell(secIndex, cellIndex, rowIndex);
@@ -221,6 +222,7 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
       position: new THREE.Vector2(cell.position.x, cell.position.y),
     }
     cell.cellsRows.push(row);
+    delete cell.fillings
   }
 
   const halfWidth = Math.floor((row.width - module.value.moduleThickness * count) / (count + 1));
@@ -245,6 +247,7 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) => {
       ...row,
       number: row.number + 1 + i,
       position: new THREE.Vector2(row.position.x + (row.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), row.position.y),
+      fillings: [],
     }
 
     if(i === count - 1) {
@@ -575,6 +578,15 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 defineExpose({
   handleCellSelect,
 });
+
+onMounted(() => {
+  let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
+  let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
+
+  if(visualizationRef.value)
+    selectCell(0, cellIndex, rowIndex)
+})
+
 </script>
 
 <template>

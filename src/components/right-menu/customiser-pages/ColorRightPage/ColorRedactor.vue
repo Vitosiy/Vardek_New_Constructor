@@ -10,6 +10,10 @@ const emit = defineEmits(["select_color"]);
 const props = defineProps({
   paletteList: Object,
   tabIndex: Number,
+  tempWork: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const filteredPaletteList = ref<Array>([]);
@@ -18,11 +22,15 @@ const isSearch = computed(() => {
 });
 
 const changePaletteColor = (color) => {
-  eventBus.emit("A:ChangePaletteColor", {
-    data: color.ID,
-    fasadeNdx: props.tabIndex,
-  });
-  emit("select_color", { name: color.NAME, data: "", hex: color.HTML }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+
+  if(!props.tempWork) {
+    eventBus.emit("A:ChangePaletteColor", {
+      data: color.ID,
+      fasadeNdx: props.tabIndex,
+    });
+  }
+
+  emit("select_color", { name: color.NAME, data: "", hex: color.HTML, ID: color.ID }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {
