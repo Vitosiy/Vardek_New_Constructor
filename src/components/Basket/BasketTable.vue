@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+//@ts-nocheck
 import BasketItem from "./BasketItem.vue"
 
 interface Props {

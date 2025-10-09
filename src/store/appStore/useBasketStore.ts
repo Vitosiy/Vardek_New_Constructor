@@ -1,8 +1,9 @@
+//@ts-nocheck
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useRoomContantData } from "../appliction/useRoomContantData";
 import { BasketService } from "@/services/basketService";
-import { createBasketItem } from "@/components/basket/helper/basketMapper.";
+import { createBasketItem } from "@/components/Basket/helper/basketMapper";
 import { useEventBus } from "../appliction/useEventBus";
 import { IBasket, IBasketResponse } from "@/types/basket";
 

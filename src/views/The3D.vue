@@ -126,7 +126,9 @@ const priceUpdateEvents  = [
     "U:ChangeMilling",
     // "U:DrawPatina",
     // "U:DeliteFasad",
-    'U:ChangeFasade'
+    'U:ChangeFasade',
+    'A:Disable-Uniform-Mode',
+    'A:UM-update'
 ];
 
 onMounted(async () => {
@@ -151,14 +153,14 @@ onMounted(async () => {
       eventBus.on("A:ClearSelected", clearSelected);
       eventBus.on("A:ScreenPrint", screenPrint);
       eventBus.on("A:Take3DScreenshot", take3DScreenshot);
-      // Подписываем все события на один обработчик
-      priceUpdateEvents.forEach(event => {
-          eventBus.on(event, commonEventHandler);
-      });
       eventBus.on("A:Load", setLocalActivateValue);
       eventBus.on("A:Create", setLocalActivateValue);
       eventBus.on("A:NextAction", setLocalActivateValue);
       eventBus.on("A:PrevAction", setLocalActivateValue);
+      // Подписываем все события на один обработчик
+      priceUpdateEvents.forEach(event => {
+          eventBus.on(event, commonEventHandler);
+      });
 
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);

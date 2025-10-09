@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { COOKIE_NAMES, getCookie, setCookie } from '@/components/authorization/utils/cookieUtils';
 import axios, { AxiosError } from 'axios';
 

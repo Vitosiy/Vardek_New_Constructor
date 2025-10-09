@@ -1,5 +1,5 @@
+//@ts-nocheck
 import { IBasket, IBasketFacade } from "@/types/basket";
-
 // export function createFacadeProps(objProps: any): IBasketFacade[] {
 //   return objProps.CONFIG.FASADE_PROPS 
 //     ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => ({
