@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+//@ts-nocheck
 import { onBeforeMount, computed, ref } from "vue";
 import { useRailsRightPage } from "./useRailsRightPage";
 

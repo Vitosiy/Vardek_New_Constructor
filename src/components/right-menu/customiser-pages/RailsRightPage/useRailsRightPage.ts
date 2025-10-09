@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 

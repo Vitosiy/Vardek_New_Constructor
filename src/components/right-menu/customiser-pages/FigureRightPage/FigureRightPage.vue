@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onBeforeMount, computed } from "vue";
+
+import { ref, computed } from "vue";
 
 import FigureFasade from "./FigureFasade/FigureFasade.vue";
 import FigurePlinth from "./FigurePlinth/FigurePlinth.vue";

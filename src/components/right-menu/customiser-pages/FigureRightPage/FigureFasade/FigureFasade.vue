@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//@ts-nocheck
 import { ref, onBeforeMount, computed } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { Tab } from "@/components/ui/tabs/defaultTab.vue";

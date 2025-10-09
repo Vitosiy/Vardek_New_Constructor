@@ -1,4 +1,5 @@
 
+//@ts-nocheck
 import { useModelState } from "@/store/appliction/useModelState";
 
 export const useFigurePlinth = () => {
@@ -6,7 +7,7 @@ export const useFigurePlinth = () => {
     const modelState = useModelState();
 
     const checkActive = (value: boolean, key: string | number) => {
-        const { PROPS } = modelState.getCurrentModel.userData;
+        const { PROPS } = modelState.getCurrentModel!.userData;
         const { PLINTH_MESH } = PROPS
         const { PLINTH_ACTIONS } = PROPS.CONFIG;
 

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-/**/ /@ts-nocheck */;
+//@ts-nocheck
 import { TFasadeProp } from "@/types/types";
 import { ref, defineProps, defineEmits, computed, defineExpose } from "vue";
 

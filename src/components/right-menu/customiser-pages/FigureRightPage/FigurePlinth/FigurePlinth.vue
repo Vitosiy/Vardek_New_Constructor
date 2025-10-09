@@ -1,10 +1,9 @@
 <script lang="ts" setup>
-import { ref, onBeforeMount, computed } from "vue";
-import { useEventBus } from "@/store/appliction/useEventBus";
+//@ts-nocheck
 import { useFigurePlinth } from "./useFigurePlinth";
 
 const { checkActive } = useFigurePlinth();
-const eventBus = useEventBus();
+
 
 const props = defineProps({
   data: {

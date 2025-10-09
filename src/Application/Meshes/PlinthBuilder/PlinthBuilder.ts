@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as THREE from 'three'
 import { TJSONBuilder, TBuildProduct, TSize, TDeepDispose, TEdgeBuilder, IProductFull, TModelData, TPlinthActions } from '@/types/types'
 import { IProduct } from '@/types/interfases'

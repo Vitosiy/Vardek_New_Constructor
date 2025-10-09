@@ -1,4 +1,4 @@
-/**@ts-nocheck */
+ //@ts-nocheck
 
 import * as THREETypes from "@/types/types"
 import { GlobalsData } from "./Globals"

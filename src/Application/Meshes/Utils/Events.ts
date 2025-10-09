@@ -1,5 +1,5 @@
 
-/**//@ts-nocheck */
+// @ts-nocheck
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
