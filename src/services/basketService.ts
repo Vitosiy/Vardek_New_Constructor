@@ -1,3 +1,4 @@
+import { COOKIE_NAMES, getCookie, setCookie } from '@/components/authorization/utils/cookieUtils';
 import axios, { AxiosError } from 'axios';
 
 // Предполагаемые типы (настройте под ваш бэкенд)
@@ -84,6 +85,8 @@ export const BasketService = {
   },
 
   async invoceBasket(basket:any): Promise<BasketResponse> {
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+    
     try {
       const { data } = await axios.post<BasketResponse>(
         `${BASE_API_URL}/addtobasket/`,
@@ -91,11 +94,22 @@ export const BasketService = {
         {
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json',
+            'Accept': 'application/json',
+            "Authorization": `Bearer ${token}`
           },
           timeout: REQUEST_TIMEOUT,
         }
       );
+
+      // Проверяем успешный ответ и наличие токена
+      console.log('123213', data.DATA.token)
+      if (data.DATA && data.DATA.type === "success" && data.DATA.token) {
+        // Сохраняем токен в cookie
+
+        // Делаем редирект в новое окно
+        window.open(`https://dev.vardek.online/personal/basket?basket_token=${data.DATA.token}`, '_blank');
+      }
+
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {

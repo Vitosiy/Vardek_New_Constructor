@@ -69,6 +69,7 @@ export const clearAllCookies = (): void => {
 // Константы для часто используемых названий cookies
 export const COOKIE_NAMES = {
   AUTH_TOKEN: 'auth_token',
+  BASKET_TOKEN: 'basket_token',
   TOKEN_EXPIRATION: 'token_expiration',
   USER_DATA: 'user_data'
 } as const

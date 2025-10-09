@@ -1,23 +1,62 @@
 import { IBasket, IBasketFacade } from "@/types/basket";
 
+// export function createFacadeProps(objProps: any): IBasketFacade[] {
+//   return objProps.CONFIG.FASADE_PROPS 
+//     ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => ({
+//         COLOR: fp.COLOR ?? null,
+//         MILLING: fp.MILLING ?? null,
+//         PALETTE: fp.PALETTE ?? null,
+//         SHOWCASE: fp.SHOWCASE ?? null,
+//         ALUM: fp.ALUM ?? null,
+//         GLASS: fp.GLASS ?? null,
+//         PATINA: fp.PATINA ?? null,
+//         TYPE: fp.TYPE ?? null,
+//         SIZE: {
+//           WIDTH: objProps.FASADE[index]?.object?.userData?.trueSize?.WIDTH ?? null,
+//           HEIGHT: objProps.FASADE[index]?.object?.userData?.trueSize?.HEIGHT ?? null,
+//           DEPTH: objProps.FASADE[index]?.object?.userData?.trueSize?.DEPTH ?? null,
+//         },
+//         HEANDLES: [],
+//       }))
+//     : [];
+// }
+
 export function createFacadeProps(objProps: any): IBasketFacade[] {
   return objProps.CONFIG.FASADE_PROPS 
-    ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => ({
-        COLOR: fp.COLOR ?? null,
-        MILLING: fp.MILLING ?? null,
-        PALETTE: fp.PALETTE ?? null,
-        SHOWCASE: fp.SHOWCASE ?? null,
-        ALUM: fp.ALUM ?? null,
-        GLASS: fp.GLASS ?? null,
-        PATINA: fp.PATINA ?? null,
-        TYPE: fp.TYPE ?? null,
-        SIZE: {
-          WIDTH: objProps.FASADE[index]?.object?.userData?.trueSize?.WIDTH ?? null,
-          HEIGHT: objProps.FASADE[index]?.object?.userData?.trueSize?.HEIGHT ?? null,
-          DEPTH: objProps.FASADE[index]?.object?.userData?.trueSize?.DEPTH ?? null,
-        },
-        HEANDLES: [],
-      }))
+    ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => {
+        const facade = objProps.FASADE[index];
+        const trueSize = facade?.object?.userData?.trueSize;
+        
+        const result: any = {};
+        
+        // Добавляем свойства только если они имеют значения
+        if (fp.COLOR != null) result.COLOR = fp.COLOR;
+        if (fp.MILLING != null) result.MILLING = fp.MILLING;
+        if (fp.PALETTE != null) result.PALETTE = fp.PALETTE;
+        if (fp.SHOWCASE != null) result.SHOWCASE = fp.SHOWCASE;
+        if (fp.ALUM != null) result.ALUM = fp.ALUM;
+        if (fp.GLASS != null) result.GLASS = fp.GLASS;
+        if (fp.PATINA != null) result.PATINA = fp.PATINA;
+        if (fp.TYPE != null) result.TYPE = fp.TYPE;
+        
+        // Добавляем SIZE только если есть хотя бы одно измерение
+        const size: any = {};
+        if (trueSize?.WIDTH != null) size.WIDTH = trueSize.WIDTH;
+        if (trueSize?.HEIGHT != null) size.HEIGHT = trueSize.HEIGHT;
+        if (trueSize?.DEPTH != null) size.DEPTH = trueSize.DEPTH;
+        
+        // Если есть хотя бы одно измерение, добавляем объект SIZE
+        if (Object.keys(size).length > 0) {
+          result.SIZE = size;
+        }
+        
+        // Добавляем HEANDLES только если массив не пустой
+        if (fp.HEANDLES && Array.isArray(fp.HEANDLES) && fp.HEANDLES.length > 0) {
+          result.HEANDLES = fp.HEANDLES;
+        }
+        
+        return result;
+      })
     : [];
 }
 
@@ -72,34 +111,128 @@ export function createUniformTexture(objProps: any) {
   };
 }
 
-export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
-  // const objProps = obj.object.userData.PROPS;
-  console.log('createBasketItem', objProps)
+function convertModuleToLegacyFormat(newModuleObject) {
+  
+    // Базовые размеры
+    const legacyProps = {
+        SIZEEDITWIDTH: newModuleObject.CONFIG?.SIZE?.width ||  0,
+        SIZEEDITHEIGHT: newModuleObject.CONFIG?.SIZE?.height ||  0,
+        SIZEEDITDEPTH: newModuleObject.CONFIG?.SIZE?.depth || 0,
+        MODULECOLOR: newModuleObject.CONFIG.MODULE_COLOR || 0,
+        BACKWALL: newModuleObject.CONFIG.BACKWALL || {},
+        HORIZONT: newModuleObject.CONFIG.MODULEGRID.horizont,
+        LEFTSIDECOLOR: newModuleObject.CONFIG.LEFTSIDECOLOR,
+        RIGHTSIDECOLOR: newModuleObject.CONFIG.RIGHTSIDECOLOR,
+        TOPFASADECOLOR: newModuleObject.CONFIG.TOPFASADECOLOR,
+        OPTION: createOptionsProps(newModuleObject),
+        SECTIONS1:newModuleObject.CONFIG?.MODULEGRID.sections[0].width,
+        SECTIONS2:newModuleObject.CONFIG?.MODULEGRID.sections[1].width,
+        SECTIONSFILLING1: newModuleObject?.CONFIG?.SECTIONS['1'].fillings,
+        SECTIONSFILLING2: newModuleObject?.CONFIG?.SECTIONS['2'].fillings,
+        // FASADESIZES1
+        // FASADEWIDTH1
+        // FASADESIZES2
+        // FASADEWIDTH2
+        // LOOPSSIDE
+        LOOPS: newModuleObject.CONFIG?.LOOPS,
+        DOORS: newModuleObject.CONFIG?.FASADE_PROPS
+    };
 
-  return {
-    BASKETID: key,
-    PRODUCT: objProps.CONFIG.ID,
-    PROPS: {
-      FASADE: createFacadeProps(objProps),
-      BODY: createBodyProps(objProps),
-      OPTION: createOptionsProps(objProps),
-      UNIFORM_TEXTURE: createUniformTexture(objProps),
-      MODULECOLOR: objProps.CONFIG.MODULE_COLOR,
-      // USLUGI: [
-      //   98683, 249713, 1467341, 1467342, 4722755, 
-      //   251698, 251699, 251701, 732170, 1458340, 
-      //   1920165, 4169375
-      // ],
-      USLUGI: [],
-      // USLUGI: [
-      //   98683, 249713, 1467341
-      // ],
-      // TABLETOP:  (objProps),
-      TABLETOP:  null,
-    },
-    QUANTITY: 1,
-    TYPE: "scene",
-  };
+
+
+    return legacyProps;
+}
+
+// Пример использования:
+// const legacyModule = convertModuleToLegacyFormat(newModuleObject);
+
+// export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
+//   // const objProps = obj.object.userData.PROPS;
+//   console.log('createBasketItem', objProps)
+
+//  if(objProps.CONFIG.SECTIONS) {
+//     return {
+//      BASKETID: key,
+//      PRODUCT: objProps.CONFIG.ID,
+//      PROPS: convertModuleToLegacyFormat(objProps.CONFIG),
+//      QUANTITY: 1,
+//      TYPE: "scene",
+//     }
+//  } else {
+//    return {
+//      BASKETID: key,
+//      PRODUCT: objProps.CONFIG.ID,
+//      PROPS: {
+//        FASADE: createFacadeProps(objProps),
+//        BODY: createBodyProps(objProps),
+//        OPTION: createOptionsProps(objProps),
+//        UNIFORM_TEXTURE: createUniformTexture(objProps),
+//        MODULECOLOR: objProps.CONFIG.MODULE_COLOR,
+//        // USLUGI: [
+//        //   98683, 249713, 1467341, 1467342, 4722755, 
+//        //   251698, 251699, 251701, 732170, 1458340, 
+//        //   1920165, 4169375
+//        // ],
+//        USLUGI: [],
+//        // USLUGI: [
+//        //   98683, 249713, 1467341
+//        // ],
+//        // TABLETOP:  (objProps),
+//        TABLETOP:  null,
+//      },
+//      QUANTITY: 1,
+//      TYPE: "scene",
+//    };
+//  }
+// }
+export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
+  console.log('createBasketItem', objProps);
+
+  const props: any = {};
+
+  // Добавляем свойства только если они существуют и не пустые
+  const facadeProps = createFacadeProps(objProps);
+  if (facadeProps && facadeProps.length > 0) {
+    props.FASADE = facadeProps;
+  }
+
+  const bodyProps = createBodyProps(objProps);
+  if (bodyProps && Object.keys(bodyProps).length > 0) {
+    props.BODY = bodyProps;
+  }
+
+  const optionsProps = createOptionsProps(objProps);
+  if (optionsProps && Object.keys(optionsProps).length > 0) {
+    props.OPTION = optionsProps;
+  }
+
+  const uniformTexture = createUniformTexture(objProps);
+  if (uniformTexture != null) {
+    props.UNIFORM_TEXTURE = uniformTexture;
+  }
+
+  if (objProps.CONFIG.MODULE_COLOR != null) {
+    props.MODULECOLOR = objProps.CONFIG.MODULE_COLOR;
+  }
+
+
+  if(objProps.CONFIG.SECTIONS) {
+    return {
+      BASKETID: key,
+      PRODUCT: objProps.CONFIG.ID,
+      PROPS:convertModuleToLegacyFormat(objProps),
+      QUANTITY: 1,
+      TYPE: "scene",
+    };
+  } else {
+    return {
+      BASKETID: key,
+      PRODUCT: objProps.CONFIG.ID,
+      PROPS: props,
+      QUANTITY: 1,
+      TYPE: "scene",
+    };
+  }
 }
 
 // Определения свойств (перенесено из Angular кода)
@@ -124,7 +257,7 @@ export const propsLabel = {
   LEFTSIDECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Левая стенка", SORT: 100},
   RIGHTSIDECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Правая стенка", SORT: 100},
   TOPFASADECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Накладка на крышку", SORT: 100},
-
+ 
   DOORS: {type: "FASADE", val: "obj_list", NAME: "Двери", SORT: 100},
   FACADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
   FASADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
