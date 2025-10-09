@@ -111,36 +111,83 @@ export function createUniformTexture(objProps: any) {
   };
 }
 
-function convertModuleToLegacyFormat(newModuleObject) {
-  
-    // Базовые размеры
-    const legacyProps = {
-        SIZEEDITWIDTH: newModuleObject.CONFIG?.SIZE?.width ||  0,
-        SIZEEDITHEIGHT: newModuleObject.CONFIG?.SIZE?.height ||  0,
-        SIZEEDITDEPTH: newModuleObject.CONFIG?.SIZE?.depth || 0,
-        MODULECOLOR: newModuleObject.CONFIG.MODULE_COLOR || 0,
-        BACKWALL: newModuleObject.CONFIG.BACKWALL || {},
-        HORIZONT: newModuleObject.CONFIG.MODULEGRID.horizont,
-        LEFTSIDECOLOR: newModuleObject.CONFIG.LEFTSIDECOLOR,
-        RIGHTSIDECOLOR: newModuleObject.CONFIG.RIGHTSIDECOLOR,
-        TOPFASADECOLOR: newModuleObject.CONFIG.TOPFASADECOLOR,
-        OPTION: createOptionsProps(newModuleObject),
-        SECTIONS1:newModuleObject.CONFIG?.MODULEGRID.sections[0].width,
-        SECTIONS2:newModuleObject.CONFIG?.MODULEGRID.sections[1].width,
-        SECTIONSFILLING1: newModuleObject?.CONFIG?.SECTIONS['1'].fillings,
-        SECTIONSFILLING2: newModuleObject?.CONFIG?.SECTIONS['2'].fillings,
-        // FASADESIZES1
-        // FASADEWIDTH1
-        // FASADESIZES2
-        // FASADEWIDTH2
-        // LOOPSSIDE
-        LOOPS: newModuleObject.CONFIG?.LOOPS,
-        DOORS: newModuleObject.CONFIG?.FASADE_PROPS
-    };
 
 
+export function creatSectionFilling(arr: any[] | null | undefined): any[] {
+  if (!arr || !Array.isArray(arr)) {
+    return [];
+  }
 
-    return legacyProps;
+  return arr.map(el => ({
+    ID: el.id, // ID товара полки
+    PATH: false,
+    MATERIAL_ID: el.material, // Материал полки
+    type: el.type,
+    SIZE: { // Размеры
+      width: el.size?.x || 0,
+      height: el.size?.z || 0,
+      depth: el.size?.y || 0
+    },
+    ADDITIVES: el.ADDITIVES || {},
+  }));
+}
+
+export function convertModuleToLegacyFormat(newModuleObject: any): any {
+  if (!newModuleObject?.CONFIG) {
+    return {};
+  }
+
+  const { CONFIG } = newModuleObject;
+  const legacyProps: any = {
+    SIZEEDITWIDTH: CONFIG.SIZE?.width || 0,
+    SIZEEDITHEIGHT: CONFIG.SIZE?.height || 0,
+    SIZEEDITDEPTH: CONFIG.SIZE?.depth || 0,
+    MODULECOLOR: CONFIG.MODULE_COLOR || 0,
+    BACKWALL: CONFIG.BACKWALL || {},
+    HORIZONT: CONFIG.MODULEGRID?.horizont || 0,
+    LEFTSIDECOLOR: CONFIG.LEFTSIDECOLOR,
+    RIGHTSIDECOLOR: CONFIG.RIGHTSIDECOLOR,
+    TOPFASADECOLOR: CONFIG.TOPFASADECOLOR,
+    OPTION: createOptionsProps(newModuleObject),
+    LOOPS: CONFIG.LOOPS || {},
+    DOORS: CONFIG.FASADE_PROPS || {}
+  };
+
+  // Динамически добавляем секции из MODULEGRID
+  if (CONFIG.MODULEGRID?.sections && Array.isArray(CONFIG.MODULEGRID.sections)) {
+    CONFIG.MODULEGRID.sections.forEach((section: any, index: number) => {
+      const sectionNumber = index + 1;
+      legacyProps[`SECTIONS${sectionNumber}`] = section.width || 0;
+    });
+  }
+
+  // Динамически добавляем заполнения секций
+  if (CONFIG.SECTIONS) {
+    Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
+      const section = CONFIG.SECTIONS[sectionKey];
+      if (section?.fillings) {
+        legacyProps[`SECTIONSFILLING${sectionKey}`] = creatSectionFilling(section.fillings);
+      }
+    });
+  }
+
+  // Динамически добавляем фасады
+  if (CONFIG.FASADES) {
+    Object.keys(CONFIG.FASADES).forEach((fasadeKey, index) => {
+      const fasadeNumber = index + 1;
+      const fasade = CONFIG.FASADES[fasadeKey];
+      
+      legacyProps[`FASADESIZES${fasadeNumber}`] = fasade.sizes || {};
+      legacyProps[`FASADEWIDTH${fasadeNumber}`] = fasade.width || 0;
+    });
+  }
+
+  // Добавляем петли сбоку, если есть
+  if (CONFIG.LOOPS_SIDE) {
+    legacyProps.LOOPSSIDE = CONFIG.LOOPS_SIDE;
+  }
+
+  return legacyProps;
 }
 
 // Пример использования:
@@ -222,7 +269,7 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
       PRODUCT: objProps.CONFIG.ID,
       PROPS:convertModuleToLegacyFormat(objProps),
       QUANTITY: 1,
-      TYPE: "scene",
+      TYPE: "umscene",
     };
   } else {
     return {

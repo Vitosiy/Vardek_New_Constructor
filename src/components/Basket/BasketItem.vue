@@ -11,9 +11,8 @@
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">{{ item?.product.NAME }}</h3> 
       
       <!-- Секция свойств товара тип сцена-->
-      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'scene'">
+      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'scene'">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-          <!-- {{ propKey }} --- {{ getPropDefinition(String(propKey)) }} -->
           <div v-if="getPropDefinition(String(propKey))">
             <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
 
@@ -36,32 +35,16 @@
 
             </ul>
 
-            <!-- Обработка одиночных значений -->
             <span  v-else :class="getErrorClass(propValue, item?.error?.props)">
                 {{ getTypeName(getPropDefinition(propKey).type, propValue) }}
             </span>
 
           </div>
-
-
-          <!-- <div v-if="propValue?.RASPIL?.data">
-            <div v-for="(raspil, index) in propValue?.RASPIL?.data"> 
-              <div class="basket-item__props-lable">Распил  {{++index}}</div>
-                <ul>
-                  <li>Ширина: {{ raspil[0].width }}</li>
-                  <li>Высота: {{ raspil[0].height }}</li>
-                </ul>
-                <div  class="basket-item__props-lable">Услуги:</div>
-                <ul v-for="(service, index) in raspil[0].serviseData">
-                    <li v-if="service.value">{{ service.NAME }}</li>
-                </ul>
-
-            </div>
-          </div> -->
         </div>
-      </div>
+      </div> -->
 
       <!-- Секция свойств товара тип каталог-->
+      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'"> -->
       <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 

@@ -98,17 +98,14 @@ export class TrafficManager {
                 object: object,
                 roomContant: this.room._roomContant
             })
-<<<<<<< HEAD
             console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // Обновление корзины при простом выборе/перемещении не требуется
-=======
 
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
             // console.log(object, 'object')
             // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155], 'Model')
->>>>>>> d8917eea20a7fb655eb3ef09f752b2e4ec781037
 
             if (object.userData.elementType !== 'raspil') {
                 const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];

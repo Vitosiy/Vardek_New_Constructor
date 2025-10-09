@@ -67,7 +67,7 @@ const closePopup = () => {
 
 // Вычисляемые свойства для данных корзины
 const mainItems = computed(() => {
-  return items.value?.products?.filter((item: IProduct) => item.product?.TYPE === "scene") || [];
+  return items.value?.products?.filter((item: IProduct) => item.product?.TYPE === "scene" || item.product?.TYPE === "umscene" ) || [];
 });
 
 const additionalItems = computed(() => {

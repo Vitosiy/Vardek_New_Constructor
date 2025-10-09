@@ -23,7 +23,7 @@ export interface IBasket {
     MODULECOLOR: string | null;
   };
   QUANTITY: number;
-  TYPE: "scene" | "catalog";
+  TYPE: "scene" | "catalog" | 'umscene';
 }
 
 export interface IBasketFacade {
