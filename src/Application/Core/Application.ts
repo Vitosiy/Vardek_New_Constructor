@@ -1,6 +1,5 @@
 import * as THREE from "three"
 
-
 import { Sizes } from "../Utils/Sizes"
 import { Time } from "../Utils/Time"
 import { Camera } from "./Camera";
@@ -11,6 +10,7 @@ import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { RoomManager } from "../Room/RoomManager"
 import { AppLights } from "../World/Lights"
 import { TrafficManager } from "../Movement/TrafficManager"
+import { TransformControlsManager } from "../Utils/TransformControlsManager";
 
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { TableTopCreator } from "../../ConstructorTabletop/CutBuilder/CutBuilder";
@@ -51,6 +51,7 @@ export class Application {
     private renderer: Renderer | null = null;
     private resources: Resources | null = null
     private deepDispose: DeepDispose | null = null
+    private transformControlsManager: TransformControlsManager | null = null
     private enviromentData: { [key: string]: any } | null = ENVIROMENT_MAP[0]
 
     private world: World | null = null;
@@ -84,6 +85,7 @@ export class Application {
         this.scene = new THREE.Scene()
         this.camera = new Camera(this)
         this.renderer = new Renderer(this)
+
         this.lights = new AppLights(this)
 
         this.useEdgeBuilder = new UseEdgeBuilder(this)
@@ -101,6 +103,7 @@ export class Application {
         this.room = new RoomManager(this)
 
         this.trafficManager = new TrafficManager(this, this.room)
+        this.transformControlsManager = new TransformControlsManager(this)
         this.meshEvents = new MeshEvents(this);
 
 
@@ -150,6 +153,10 @@ export class Application {
         return this.resources
     }
 
+    get _transformControlsManager() {
+        return this.transformControlsManager
+    }
+
     get _deepDispose() {
         return this.deepDispose
     }
@@ -194,7 +201,7 @@ export class Application {
         return this.tableTopCreator
     }
 
-    get _useEdgeBuilder(){
+    get _useEdgeBuilder() {
         return this.useEdgeBuilder
     }
     /** singleton для PROD */
@@ -217,8 +224,10 @@ export class Application {
     }
 
     private update() {
+
         this.camera!.update()
         this.renderer!.update()
+        this.transformControlsManager!.update()
     }
 
     public destroy() {
@@ -231,7 +240,16 @@ export class Application {
                     console.warn('Ошибка при удалении слушателей клавиатуры:', error);
                 }
             }
-            
+
+            if (this.transformControlsManager) {
+                try {
+                    this.transformControlsManager.dispose()
+                } catch (error) {
+                    console.warn('Ошибка при уничтожении transformControlsManager:', error);
+                }
+
+            }
+
             if (this.sizes) {
                 try {
                     this.sizes.off('resize');
@@ -240,7 +258,7 @@ export class Application {
                     console.warn('Ошибка при уничтожении sizes:', error);
                 }
             }
-            
+
             if (this.time) {
                 try {
                     this.time.off('tick');
@@ -249,7 +267,7 @@ export class Application {
                     console.warn('Ошибка при остановке time:', error);
                 }
             }
-            
+
             // Удаляем события компонентов
             if (this.camera) {
                 try {
@@ -258,7 +276,7 @@ export class Application {
                     console.warn('Ошибка при удалении камеры:', error);
                 }
             }
-            
+
             if (this.world) {
                 try {
                     this.world.removeVueEvents();
@@ -266,7 +284,7 @@ export class Application {
                     console.warn('Ошибка при удалении событий мира:', error);
                 }
             }
-            
+
             if (this.renderer) {
                 try {
                     this.renderer.removeVueEvents();
@@ -274,7 +292,7 @@ export class Application {
                     console.warn('Ошибка при удалении событий рендерера:', error);
                 }
             }
-            
+
             if (this.meshEvents) {
                 try {
                     this.meshEvents.removeVueEvents();
@@ -282,7 +300,7 @@ export class Application {
                     console.warn('Ошибка при удалении событий мешей:', error);
                 }
             }
-            
+
             // Очищаем сцену и историю
             if (this.deepDispose && this.scene) {
                 try {
@@ -291,7 +309,7 @@ export class Application {
                     console.warn('Ошибка при очистке сцены:', error);
                 }
             }
-            
+
             if (this.userHistory) {
                 try {
                     this.userHistory.clearHistory();

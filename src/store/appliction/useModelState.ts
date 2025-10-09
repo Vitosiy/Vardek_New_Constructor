@@ -4,6 +4,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
+import { userData } from "three/webgpu";
 
 
 
@@ -60,6 +61,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
     const _PRODUCTS = _APP.CATALOG?.PRODUCTS
     const _PALETTE = _APP.PALETTE
+    const _PLINTH = _APP.PLINTH
     const _MILLING = _APP.MILLING
     const _SHOWCASE = _APP.SHOWCASE
     const _GLASS = _APP.GLASS
@@ -87,12 +89,16 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentPatinaData = ref<number[]>([])
 
+    const transformControls = ref<boolean>(false)
+
     const setCurrentModel = (object: THREE.Object3D | any) => {
+        console.log(object, 'SETED')
         currentModel.value = object
     }
 
     const getCurrentModel = computed(() => {
-        return currentModel.value?.userData || currentModel.value
+        // return currentModel.value?.userData || currentModel.value
+        return currentModel.value
         //return currentModel.value?.userData
     })
     const getModels = computed(() => {
@@ -117,6 +123,38 @@ export const useModelState = defineStore('ModelState', () => {
     const getCurrentModuleData = computed(() => {
         return currentModulData.value
     })
+
+
+    /** ------- Работа с Цоколем -------- */
+
+    const createTotalPlinthData = () => {
+        let percept = {}
+        const result = Object.entries(_PLINTH).map(([key, el]) => {
+            return percept[key] = _PRODUCTS[el]
+        })
+
+        // console.log(percept)
+
+        // const filtered = Object.values(_PLINTH).map(el => {
+        //     return _PRODUCTS[el]
+        // })
+
+
+        return percept
+    }
+
+    const createTotalPlinthColorData = (plinthId) => {
+        if (!_PLINTH[plinthId]) return []
+
+        const { FACADE } = _PRODUCTS[plinthId]
+        const filter = FACADE.map(el => {
+            return _FASADE[el] ?? null
+        })
+
+        return filter
+
+
+    }
 
     /** ------- Работа с фасадами -------- */
 
@@ -241,7 +279,6 @@ export const useModelState = defineStore('ModelState', () => {
 
             result.sort((a, b) => a.SORT - b.SORT)
 
-            console.log(result, 'result')
             return result
         }
         return []
@@ -254,7 +291,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     const setMillingId = (fasadeId, id) => {
 
-        const { FASADE_PROPS } = currentModel.value?.PROPS.CONFIG
+        const { FASADE_PROPS } = currentModel.value?.userData.PROPS.CONFIG
         FASADE_PROPS[fasadeId].MILLING = id
         console.log(id)
     }
@@ -354,6 +391,15 @@ export const useModelState = defineStore('ModelState', () => {
 
     }
 
+    /** @Контроллер */
+    const setTransformControlsValue = (value) => {
+        transformControls.value = value
+    }
+
+    const getTransformControlsValue = computed(() => {
+        return transformControls.value
+    })
+
     return {
         getModels,
 
@@ -386,7 +432,13 @@ export const useModelState = defineStore('ModelState', () => {
         createCurrentModuleData,
         getCurrentModuleData,
 
-        getOptions
+        createTotalPlinthData,
+        createTotalPlinthColorData,
+
+        getOptions,
+
+        setTransformControlsValue,
+        getTransformControlsValue
     }
 
 });

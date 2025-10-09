@@ -27,7 +27,7 @@ export class Camera {
     instance: THREE.Camera | any = null
     controls: OrbitControls | null = null
     params: THREEInterfases.ICameraData
-    ortoParams: THREEInterfases.IOrtoCameraData
+    // ortoParams: THREEInterfases.IOrtoCameraData
     ortoCamera: boolean = false
     screenSpacePanning: boolean = false
     keybordListeners: TKeybordListeners
@@ -40,17 +40,17 @@ export class Camera {
     private onKeyUp: (event) => void
 
     private cameraPositions = [
-        { pos:new THREE.Vector3(5000, 8000, -8000) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(8000, 1500, 0) , target: new THREE.Vector3(0,1500,0)},
-        { pos:new THREE.Vector3(-5000, 8000, -8000) , target: new THREE.Vector3(0,0,0)},
+        { pos: new THREE.Vector3(5000, 8000, -8000), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(8000, 1500, 0), target: new THREE.Vector3(0, 1500, 0) },
+        { pos: new THREE.Vector3(-5000, 8000, -8000), target: new THREE.Vector3(0, 0, 0) },
 
-        { pos:new THREE.Vector3(0, 5000, -10000) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(0, 12000, 0) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(0, 5000, 10000) , target: new THREE.Vector3(0,0,0)},
+        { pos: new THREE.Vector3(0, 5000, -10000), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(0, 12000, 0), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(0, 5000, 10000), target: new THREE.Vector3(0, 0, 0) },
 
-        { pos:new THREE.Vector3(5000, 8000, 8000) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(-8000, 1500, 0) , target: new THREE.Vector3(0,1500,0)},
-        { pos:new THREE.Vector3(-5000, 8000, 8000) , target: new THREE.Vector3(0,0,0)},
+        { pos: new THREE.Vector3(5000, 8000, 8000), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(-8000, 1500, 0), target: new THREE.Vector3(0, 1500, 0) },
+        { pos: new THREE.Vector3(-5000, 8000, 8000), target: new THREE.Vector3(0, 0, 0) },
     ]
 
 
@@ -61,7 +61,7 @@ export class Camera {
         this.sizes = parent.sizes
         this.canvas = parent.canvas
         this.params = useSceneState().getStartCameraData
-        this.ortoParams = useSceneState().getStartOrtoCameraData
+        // this.ortoParams = useSceneState().getStartOrtoCameraData
         this.scene = parent.scene
 
         this.onKeyDown = this.keyDown.bind(this)
@@ -76,6 +76,10 @@ export class Camera {
 
     get _controls() {
         return this.controls
+    }
+
+    get _instanse() {
+        return this.instance
     }
 
     setupKeys() {
@@ -145,15 +149,16 @@ export class Camera {
 
     resize(): void {
         let aspect = this.sizes.width / this.sizes.height;
+        this.instance!.aspect = aspect;
 
-        if (this.ortoCamera) {
-            this.instance!.left = (this.sizes.width / -2) * 0.01;
-            this.instance!.right = (this.sizes.width / 2) * 0.01;
-            this.instance!.top = (this.sizes.height / 2) * 0.01;
-            this.instance!.bottom = (this.sizes.height / -2) * 0.01
-        } else {
-            this.instance!.aspect = aspect;
-        }
+        // if (this.ortoCamera) {
+        //     this.instance!.left = (this.sizes.width / -2) * 0.01;
+        //     this.instance!.right = (this.sizes.width / 2) * 0.01;
+        //     this.instance!.top = (this.sizes.height / 2) * 0.01;
+        //     this.instance!.bottom = (this.sizes.height / -2) * 0.01
+        // } else {
+        //     this.instance!.aspect = aspect;
+        // }
         this.instance?.updateProjectionMatrix()
     }
 

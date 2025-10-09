@@ -15,7 +15,6 @@ const emit = defineEmits<{
 }>();
 
 const handleSelect = (value: any) => {
-  console.log(value)
   emit("select", value);
 };
 </script>

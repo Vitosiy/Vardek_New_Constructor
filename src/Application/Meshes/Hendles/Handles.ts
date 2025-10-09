@@ -233,10 +233,10 @@ export class HandlesBuilder {
     private createHandleMaterial(model: TModelData) {
         console.log(model)
         const materialMap: Record<string, Function> = {
-            'MeshPhongMaterial': () => new THREE.MeshPhongMaterial({
+            'MeshPhongMaterial': () => new THREE.MeshStandardMaterial({
                 color: "#" + model.color,
-                shininess: model.shininess,
-                specular: "#ffffff",
+                roughness: model.shininess || 0,
+                // metalness: "#ffffff",
                 emissive: "#000000",
             })
         }

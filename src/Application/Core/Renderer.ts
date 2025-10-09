@@ -51,6 +51,10 @@ export class Renderer {
 
     }
 
+    get _instance(){
+        return this.instance
+    }
+
     setInstance() {
 
         if (this.instance) {

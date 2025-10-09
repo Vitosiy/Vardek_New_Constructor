@@ -42,24 +42,26 @@ export class DeepDispose {
 
     clearScene(scene: THREE.Scene) {
         // Проверяем, что сцена существует
-
         if (!scene) return;
 
         // Копируем массив детей, чтобы избежать изменений во время итерации
-
         const objects = [...scene.children];
 
         objects.forEach((child) => {
+            // ИСКЛЮЧЕНИЕ: Пропускаем TransformControls gizmo/helper
+            if (child.userData && child.userData.isTransformGizmo) {
+                return;  // Не удаляем и не traverse
+            }
 
-            child.traverse(elem => {
+            // Traverse для CSS2DObject (остаётся, но только если не gizmo)
+            child.traverse((elem) => {
                 if (elem instanceof CSS2DObject) {
                     // Удаляем элемент DOM, связанный с CSS2DObject
                     if (elem.element && elem.element.parentNode) {
                         elem.element.parentNode.removeChild(elem.element);
                     }
                 }
-            })
-
+            });
 
             if (child instanceof THREE.Camera) {
                 // Не удаляем камеры и свет, оставляем их в сцене
@@ -72,7 +74,6 @@ export class DeepDispose {
                     child.geometry.dispose();
                     child.geometry = null;
                 }
-
 
                 // Очистка материалов и текстур
                 if (child.material) {
@@ -90,14 +91,11 @@ export class DeepDispose {
 
                 // Удаляем меш из сцены
                 scene.remove(child);
-
             } else if (child instanceof THREE.Object3D) {
-
                 this.clearScene(child as THREE.Scene);
                 scene.remove(child);
             }
         });
-
     }
 
     clearObject(object: THREE.Object3D, scene: THREE.Scene) {

@@ -92,7 +92,6 @@ export class TableTopBuilder {
         if (!props.CONFIG.HAVETABLETOP) return;
         const savedTableTopId = props.CONFIG.TABLETOP_ID
 
-
         const defTableTopModel = this.buildProduct.getDefaultOptionsConfig().tableTop.id
 
         const defModel: number | string = incomeModel ?? savedTableTopId ?? defTableTopModel;
@@ -103,50 +102,7 @@ export class TableTopBuilder {
 
         const sizes = { ...props.CONFIG.SIZE, depth: props.CONFIG.SIZE.depth };
         const material = this.createMaterial(tableProduct);
-        // const topJson = model_data.json?.tables;
 
-        // if (topJson) {
-        //     console.log('topJson')
-
-        //     const tableTop = new THREE.Object3D()
-        //     const localExpr = { ...props.CONFIG.EXPRESSIONS }
-
-        //     Object.values(topJson).forEach((table: any) => {
-        //         const width = this.buildProduct.calculateFromString(table.width)
-        //         const depth = this.buildProduct.calculateFromString(table.depth)
-
-        //         if (!width && !depth) return
-
-        //         const expr = this.buildExpressions(localExpr, sizes, params, width, depth)
-        //         const opt = {
-        //             ...this.buildProduct.expressionsReplace(model, expr),
-        //             material
-        //         }
-
-        //         const tablet = this.jsonBuilder.createMesh({ data: opt })
-
-        //         if (table.position) {
-        //             const posX = this.buildProduct.calculateFromString(table.position.x)
-        //             const posZ = this.buildProduct.calculateFromString(table.position.z)
-        //             if (posX) tablet.position.x = posX
-        //             if (posZ) tablet.position.z = posZ
-        //         }
-
-        //         if (table.rotation?.y) {
-        //             const rotY = this.buildProduct.calculateFromString(table.rotation.y)
-        //             if (rotY) tablet.rotation.y = rotY
-        //         }
-
-        //         tableTop.add(tablet)
-        //     })
-
-        //     tableTop.position.z = this.buildProduct.getStartPosition(sizes).z + 300
-        //     tableTop.name = 'TABLETOP'
-        //     props.TABLETOP = tableTop
-        //     return tableTop
-        // }
-
-        // Если нет topJson
         const expr = this.buildExpressions(props.CONFIG.EXPRESSIONS, sizes, tableProduct);
 
         const tableOptions = {
@@ -156,15 +112,12 @@ export class TableTopBuilder {
 
         const tableBody = this.jsonBuilder.createMesh({ data: tableOptions, parent_size: sizes })
 
-
         tableBody.traverse((child) => {
             if (child instanceof THREE.Mesh) {
                 child.userData.name = 'TABLETOP'
                 const pos = new THREE.Vector3(30, 0, 0)
                 child.geometry.translate(pos)
                 child.geometry.computeBoundingBox()
-
-                // this.root.scene?.add(edge)
             }
         });
 

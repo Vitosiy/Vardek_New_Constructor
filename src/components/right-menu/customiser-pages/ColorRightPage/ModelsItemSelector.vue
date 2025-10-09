@@ -38,9 +38,14 @@ const tabsList = ref<any[]>([]);
 const tabIndex = ref<Number>(0);
 const tabName = ref<string>("Корпус");
 const isGroupsManagerActive = ref<boolean>(false);
+const transitionFasadeSelect = ref<boolean>(false);
+
 const prepareData = () => {
   materialList.value = modelState.getCurrentModuleData;
-  fasadeList.value = modelState.getCurrentModel.PROPS.CONFIG.FASADE_PROPS;
+  console.log(modelState.getCurrentModel, "modelState.getCurrentModel");
+
+  fasadeList.value =
+    modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
   tabName.value = tabsList.value[0].name;
 };
@@ -124,6 +129,11 @@ const handleUniformModeToggled = (data: {
   isGroupsManagerActive.value = data.showGroupsManager && data.uniformMode;
 };
 
+const checkTransition = (value) => {
+  const { transitionT } = value;
+  transitionFasadeSelect.value = transitionT;
+};
+
 // Экспортируем метод для использования в других компонентах
 defineExpose({
   returnToTabs,
@@ -138,6 +148,17 @@ watch(
     if (isGroupsManagerActive.value) {
       eventBus.emit("A:Toggle-Uniform-Mode", { showGroupsManager: false });
     }
+
+    if (modelState.getCurrentModel?.name == "MODEL") {
+      customiserStore.hideCustomiserPopup();
+      return;
+    }
+
+    console.log(modelState.getCurrentModel?.name == "MODEL");
+
+    // if (modelState.getCurrentModel.name == "MODEL") {
+    //   customiserStore.hideCustomiserPopup();
+    // }
 
     tabIndex.value = 0;
     materialList.value = modelState.getCurrentModuleData;
@@ -176,11 +197,13 @@ onUnmounted(() => {
     ref="redactorsRef"
     :tabs="tabsList"
     @tab-change="handleTabChange"
+    v-if="!isGroupsManagerActive"
   />
   <TransitionDrawingButton
     :class="$style.transitionDrawingButton"
     :is-active="isGroupsManagerActive"
     @click="handleTransitionDrawingClick"
+    v-if="transitionFasadeSelect"
   />
   <CorpusMaterialRedactor
     :materialList="materialList"
@@ -194,6 +217,7 @@ onUnmounted(() => {
     :key="tabIndex"
     :fasadeData="fasadeList[fasadeIndex]"
     :tabIndex="fasadeIndex"
+    @select_material="checkTransition"
   />
 
   <GroupsManager v-if="isGroupsManagerActive" />

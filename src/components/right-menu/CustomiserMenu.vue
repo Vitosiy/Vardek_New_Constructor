@@ -29,7 +29,7 @@ const currentModel = ref(null);
 const closeCustomiser = () => {
   // Отключаем режим переходящего рисунка при закрытии кастомизатора
   eventBus.emit("A:Disable-Uniform-Mode");
-  console.log('Close customiser')
+  console.log("Close customiser");
   customiserStore.hideCustomiserPopup();
 };
 
@@ -40,24 +40,31 @@ const checkSelect = (el) => {
     modelState.setCurrentModel(null);
     return;
   }
-  currentModel.value = el.object.userData;
-  modelState.setCurrentModel(el.object.userData);
-  customiserStore.switchCustomiser('color')
+  // console.log(el.object, "A:Selected");
+
+  currentModel.value = el.object;
+  // modelState.setCurrentModel(el.object.userData);
+  modelState.setCurrentModel(el.object);
+  if (el.object.name == "MODEL") {
+    return;
+  }
+  customiserStore.switchCustomiser("color");
 };
 
 onMounted(() => {
   eventBus.on("A:Selected", checkSelect);
   eventBus.on("A:ClearSelected", checkSelect);
-  eventBus.on("A:RemoveModel", closeCustomiser)
+  eventBus.on("A:RemoveModel", closeCustomiser);
+  eventBus.on("A:Duplicate", closeCustomiser);
 });
 
 onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
   eventBus.off("A:ClearSelected", checkSelect);
 });
-onUnmounted(()=>{
-  closeCustomiser()
-})
+onUnmounted(() => {
+  closeCustomiser();
+});
 </script>
 
 <template>

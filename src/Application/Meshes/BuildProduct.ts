@@ -31,6 +31,7 @@ import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
 import { EdgeBuilder } from './EdgeBuilder/EdgeBuilder.ts';
 import { HandlesBuilder } from './Hendles/Handles.ts';
+import { PlinthBuilder } from './PlinthBuilder/PlinthBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -56,8 +57,9 @@ export class BuildProduct extends BuildersHelper {
     palette_bulider: PaletteBuilder
     tabletop_builder: TableTopBuilder
     alum_builder: AlumBuilder
-    uniform_texture_builder: UniformTextureBuilder
     edge_builder: EdgeBuilder
+    plinth_builder: PlinthBuilder
+    uniform_texture_builder: UniformTextureBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
 
 
@@ -81,6 +83,7 @@ export class BuildProduct extends BuildersHelper {
         this.handles_builder = new HandlesBuilder(this)
         this.fasade_builder = new FasadeBuilder(this);
         this.tabletop_builder = new TableTopBuilder(this);
+        this.plinth_builder = new PlinthBuilder(this)
 
 
     }
@@ -177,6 +180,7 @@ export class BuildProduct extends BuildersHelper {
             LEG: {},
             MILLINGS: [],
             PRODUCT: product_data.ID,
+            PLINTH_MESH: null,
             RASPIL: [],
             RASPIL_LIST: [],
             RASPIL_COUNT: 0,
@@ -211,7 +215,7 @@ export class BuildProduct extends BuildersHelper {
             OPTION
         } = product_data;
 
-        let elType
+        let elType: THREETypes.TElementType
         if (element_type === null && Number.isInteger(leg_length)) {
             elType = "element_down"
         }
@@ -247,6 +251,7 @@ export class BuildProduct extends BuildersHelper {
             },
             SHOWCASE: [],
             POSITION: null,
+            PLINTH_ACTIONS: {},
             ROTATION: null,
             UNIFORM_TEXTURE: {
                 group: null,
@@ -259,6 +264,10 @@ export class BuildProduct extends BuildersHelper {
             OPTIONS: [],
             USLUGI: [],
         };
+
+        if (this._PRODUCTS[ID].leg_length) {
+            PARAMS.PLINTH_ACTIONS = this.createPlinthParams(this._PRODUCTS[ID].models)
+        }
 
         if (OPTION.length && OPTION[0] !== null) {
             PARAMS.OPTIONS = this.filters.filterOption(OPTION)
@@ -341,6 +350,10 @@ export class BuildProduct extends BuildersHelper {
             ? this.buildLegs(PROPS, data, total)
             : null;
 
+        const plinth = this._PRODUCTS[productId]?.leg_length
+            ? this.plinth_builder.buildPlinth(PROPS)
+            : null;
+
         const tableTop = CONFIG.HAVETABLETOP
             ? this.tabletop_builder.createTableTop({ props: PROPS })
             : null;
@@ -362,9 +375,11 @@ export class BuildProduct extends BuildersHelper {
         const bodyHeight = body ? this.calculateHeight(body) : 0;
         const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
+        console.log(plinth, 'plinth')
         // Позиционирование
         const baseY = legsHeight * 0.5;
         if (legs) legs.position.y = baseY;
+        if (plinth) plinth.position.y = 0;
         if (body) {
             body.position.y = baseY;
             body.visible = !curBodyExceptions;
@@ -380,7 +395,7 @@ export class BuildProduct extends BuildersHelper {
 
 
         // Добавление в итоговую группу
-        [tableTop, legs, body, shelf, fasade, arrows]
+        [tableTop, legs, plinth, body, shelf, fasade, arrows]
             .filter(Boolean)
             .forEach((part) => {
                 total.add(part as THREE.Object3D)
@@ -402,7 +417,6 @@ export class BuildProduct extends BuildersHelper {
         if (drowMode) {
             this.useEdgeBuilder.drawingMode(drowMode, total)
         }
-
 
         return total;
     }
@@ -426,7 +440,7 @@ export class BuildProduct extends BuildersHelper {
                     return MODULE_COLOR;
             }
         };
-        console.log(texture)
+
         const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
 
         CONFIG.MODULE_COLOR = moduleColorId;
@@ -436,10 +450,10 @@ export class BuildProduct extends BuildersHelper {
         const body = this.json_builder.createMesh({ data, fasade: moduleColor });
 
         const edge = this.edge_builder.createEdge(body);
+        
         body.add(edge)
 
         const { geometryType } = body.userData;
-
 
         if ("src" in texture && !moduleColor) {
             const textureSize = {
@@ -681,7 +695,7 @@ export class BuildProduct extends BuildersHelper {
 
     /** @Дефолдтные глобальные значения цвета фасада/модуля */
     getDefaultOptionsConfig(): THREETypes.TDefaultOptionsConfig {
-        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop } = this.roomOptions.getGlobalOptions;
+        const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop, plinth } = this.roomOptions.getGlobalOptions;
         return {
             defModuleUp: moduleTop.id ?? this.project.default_module_color_up,
             defModuleDown: moduleBottom.id ?? this.project.default_module_color_down,
@@ -691,7 +705,8 @@ export class BuildProduct extends BuildersHelper {
             moduleBottom,
             fasadsTop,
             fasadsBottom,
-            tableTop
+            tableTop,
+            plinth
         }
     }
 

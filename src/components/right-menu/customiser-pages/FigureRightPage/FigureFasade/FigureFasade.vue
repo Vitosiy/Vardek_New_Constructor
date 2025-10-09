@@ -116,7 +116,7 @@ const onDeleteHandle = () => {
         />
         <DirectionControl
           v-if="controllerVisible"
-          :smallController="true"
+          :type="'smallMap'"
           @changeDirectionPos="onChangeHandlePos"
           :container="'card'"
           :scale="1"

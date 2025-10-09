@@ -31,8 +31,6 @@ export interface IProjectParams {
     camera?: ICameraData,
     lights?: ILightsObjects,
     height_clamp?: number,
-    table?: { [key: string]: any },
-    table_params?: { [key: string]: any },
     table_color?: number | null,
     table_top_type_auto?: number | null,
     default_table_color?: number | null,
@@ -52,6 +50,8 @@ export interface IProjectParams {
     default_table_model?: number,
     default_handles?: number,
     project_name?: number | null,
+    default_plinth_body?: number | null,
+    default_plinth_color?: number | null
 
 }
 

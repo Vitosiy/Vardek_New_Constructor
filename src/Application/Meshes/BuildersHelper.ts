@@ -6,6 +6,7 @@ import { useAppData } from "@/store/appliction/useAppData"
 
 import { GlobalsData } from './Utils/Globals'
 import { CUTTER_PARAMS } from "@/ConstructorTabletop/CutterScripts/CutterConst"
+import { label } from 'three/webgpu'
 export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
@@ -421,11 +422,7 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
-        console.log(uslugi, 'uslugi')
-
         const convert = this.createCutterParams(uslugi)
-        console.log(convert, 'convert')
-
         const { width, depth, height } = product_data
         const startCutData = {
             groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы
@@ -502,6 +499,24 @@ export class BuildersHelper extends GlobalsData {
         }).filter(el => el.ID !== 98683);
 
         // .filter(el => parseInt(el.separated) !== 0);
+    }
+
+    createPlinthParams(models) {
+        const basePlinth = Object.values(this._PLINTH)[0]
+        const inProdModel = this._MODELS[models[0]]
+        const jsonPlinth = inProdModel.json.plinth
+
+        if (jsonPlinth) {
+            return {
+                front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный плинтус' },
+            }
+        }
+
+        return {
+            front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный плинтус' },
+            left: { value: false, modelId: basePlinth, surfaceId: null, label: 'Левый плинтус' },
+            right: { value: false, modelId: basePlinth, surfaceId: null, label: 'Правый плинтус' }
+        }
     }
 
     findElementsBySectorId(data, sectorId) {

@@ -134,6 +134,12 @@ export class MoveManager {
     }
 
     private onMouseDown(event: MouseEvent) {
+        console.log('Start')
+        if (this.modelState.getTransformControlsValue) {
+
+            return
+        }
+
         this.eventBuss.emit('A:MouseDown');
         switch (event.button) {
             case 0:
@@ -154,10 +160,15 @@ export class MoveManager {
     }
 
     private onWheel(event: WheelEvent) {
+        if (this.modelState.getTransformControlsValue) {
+
+            return
+        }
         this.clearSelectObject()
     }
 
     private onTouchStart(event: TouchEvent) {
+
         const touch = event.touches[0];  // Получаем первое касание
         this.handleInteractionStart(touch.clientX, touch.clientY);
     }
@@ -173,6 +184,8 @@ export class MoveManager {
 
     // Универсальная функция для начала взаимодействия (мышь или касание)
     private handleInteractionStart(clientX: number, clientY: number) {
+
+
         this.boxHelper._boxHelperCheck ? this.boxHelper.removeBoxHelper() : ''
         this.updateMousePosition(clientX, clientY);
         this.selectObject();
@@ -185,10 +198,11 @@ export class MoveManager {
     }
 
     // Универсальная функция для перемещения объекта (мышь или касание)
-    private handleInteractionMove(clientX: number, clientY: number) {
+    public handleInteractionMove(clientX: number, clientY: number) {
         if (this.uniformEvents._unionMode) return
-
+        // console.log(this.selectedObject)
         if (this.selectedObject) {
+
             this.updateMousePosition(clientX, clientY);
             this.moveSelectedObject();
             this.eventBuss.emit('A:Move', false);
@@ -197,6 +211,7 @@ export class MoveManager {
 
     // Универсальная функция для завершения взаимодействия (мышь или касание)
     private handleInteractionEnd() {
+        this.roomManager.disableDuplicateProd()
         /**Проверка на выбранный объект и режим выбора группы */
         if (this.selectedObject && !this.uniformEvents._unionMode) {
 
@@ -205,10 +220,7 @@ export class MoveManager {
             CONFIG.POSITION = this.selectedObject.position
             CONFIG.ROTATION = this.selectedObject.rotation
 
-            this.selectedObject.userData.MOUSE_POSITION = {
-                x: this.selectedObject.position.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
-                y: this.selectedObject.position.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
-            }
+            this.selectedObject.userData.MOUSE_POSITION = this.getMousePos(this.selectedObject.position)
 
             this.eventBuss.emit('A:Move', true);
             if (!this.selectedObject.position.equals(this.startPos)) {
@@ -252,17 +264,14 @@ export class MoveManager {
             if (check.userData.elementType === "element_room") return
             this.selectedObject = check
 
-
+            this.selectedObject.userData.aabb = this.trafficManager.geometryBuilder.buildProduct.computeAABB(this.selectedObject)
 
             this.selectedObject.userData.current = true
             this.startPos = this.selectedObject.position.clone() /** @Для_тригера_изменения_позиции */
 
             this.roomManager.createTotalObbBounds() /** @Формируем_данные_для_коллизии */
 
-            this.selectedObject.userData.MOUSE_POSITION = {
-                x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
-                y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
-            }
+            this.selectedObject.userData.MOUSE_POSITION = this.getMousePos(point)
 
             /** Переходящий рисунок */
             if (this.uniformEvents._unionMode) {
@@ -337,7 +346,6 @@ export class MoveManager {
 
         if (intersects.length > 0) {
 
-
             const point = intersects[0].point; // Точка пересечения с полом или стеной
             const surface = intersects[0].object // стена
 
@@ -351,8 +359,6 @@ export class MoveManager {
             this.selectedObject.rotation.copy(adjustedPosition.rotation);
             this.selectedObject.userData.targetPosition = point
 
-            // const center = new THREE.Vector3()
-            // this.selectedObject.userData.aabb.getCenter(center)
             this.selectedObject.userData.obb.center.copy(this.selectedObject.position)
 
             this.selectedObject.userData.obb.rotation.setFromMatrix4(this.selectedObject.matrixWorld);
@@ -386,7 +392,7 @@ export class MoveManager {
 
     }
 
-    clearSelectVisual() {
+    public clearSelectVisual() {
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler()
     }
@@ -423,6 +429,18 @@ export class MoveManager {
 
     updateControl(controls: OrbitControls) {
         this.controls = controls
+    }
+
+    public setSelectObj(value) {
+        this.selectedObject = value
+    }
+
+    public getMousePos(point) {
+        return {
+            x: point.clone().project(this.camera).x * this.trafficManager._sizes.width * 0.5,
+            y: point.clone().project(this.camera).y * this.trafficManager._sizes.height * -0.5,
+        }
+
     }
 
     checkMove() {
@@ -493,7 +511,6 @@ export class MoveManager {
         })
 
         this.eventBuss.on('A:Disable-Uniform-Mode', () => {
-            console.log('Disable-Uniform-Mode - MoveManager')
             this.uniformModeHandler.disableUniformMode()
             this.selectedObject = null
 

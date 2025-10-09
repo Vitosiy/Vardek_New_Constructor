@@ -20,6 +20,7 @@ export class JsonBuilder {
 
     createMesh({ data, parent_size, fasade }: { data: THREETypes.TObject, parent_size?: THREETypes.TObject, fasade?: THREETypes.TObject }) {
 
+        console.log('5')
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
@@ -146,7 +147,7 @@ export class JsonBuilder {
             this.convert(geometry_data.opt.z)
         )
 
-        geometry.computeBoundingBox()
+        // geometry.computeBoundingBox()
         return geometry
     }
 
@@ -197,7 +198,7 @@ export class JsonBuilder {
                 break;
         }
 
-        // geometry!.computeBoundingBox();
+        geometry!.computeBoundingBox();
         return geometry
     }
 

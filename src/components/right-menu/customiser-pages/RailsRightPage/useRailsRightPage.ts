@@ -10,7 +10,7 @@ export const useRailsRightPage = () => {
         const data = appData.getAppData
         const options = data.OPTION
         const optGroup = data.OPTIONS_GROUP
-        const { PROPS } = modelState.getCurrentModel;
+        const { PROPS } = modelState.getCurrentModel.userData;
         // const option = data.CATALOG.PRODUCTS[PROPS.PRODUCT].OPTION
         const option = PROPS.CONFIG.OPTIONS
 
@@ -42,7 +42,7 @@ export const useRailsRightPage = () => {
     }
 
     const checkActive = (id: string | number, values: boolean) => {
-        const { PROPS } = modelState.getCurrentModel;
+        const { PROPS } = modelState.getCurrentModel.userData;
         const { OPTIONS } = PROPS.CONFIG;
 
         const curOpt = OPTIONS.find(el => el.id == id);

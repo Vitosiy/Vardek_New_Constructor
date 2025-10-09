@@ -2,18 +2,19 @@
 import { ref, onBeforeMount, computed } from "vue";
 
 import FigureFasade from "./FigureFasade/FigureFasade.vue";
+import FigurePlinth from "./FigurePlinth/FigurePlinth.vue";
 
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 import { Tab } from "@/components/ui/tabs/defaultTab.vue";
 import { useFigureRightPage } from "./useFigureRightPage";
-
 
 interface ITabChangeParams {
   index: number;
   tab: Tab;
 }
 
-const { figureItems, createSurfaceList } = useFigureRightPage();
+const { figureItems, createSurfaceList, createPlinthData } =
+  useFigureRightPage();
 
 const currentFigure = ref<string>("Handles");
 const optionsTabChange = ({ tab }: ITabChangeParams) => {
@@ -22,6 +23,7 @@ const optionsTabChange = ({ tab }: ITabChangeParams) => {
 const filteredFigure = computed(() => {
   const figureTypeMap: Record<string, Function> = {
     Handles: createSurfaceList,
+    Plinth: createPlinthData,
   };
 
   return figureTypeMap[currentFigure.value]?.();
@@ -32,6 +34,7 @@ const filteredFigure = computed(() => {
   <div class="figure">
     <defaultTab :tabs="figureItems" @tab-change="optionsTabChange" />
     <FigureFasade :data="filteredFigure" v-if="currentFigure == 'Handles'" />
+    <FigurePlinth :data="filteredFigure"  v-if="currentFigure == 'Plinth'" />
   </div>
 </template>
 

@@ -58,6 +58,8 @@ export class FasadeBuilder {
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
 
+        console.log(defaultConfig, 'defaultConfig')
+
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
         const modelType = CONFIG.MODEL?.type ?? "left";
@@ -108,12 +110,12 @@ export class FasadeBuilder {
             }
         };
 
-
-
         if (Number.isInteger(fasadeNdx)) {
 
             const fasadeData: THREETypes.TFasadeProp = FASADE_PROPS[fasadeNdx];
             const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
+
+
 
             const curFasade = FASADE[fasadeNdx]
             if (remove) {
@@ -137,24 +139,27 @@ export class FasadeBuilder {
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
                 }
+                
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
                     fasadeData.PALETTE = null;
                 }
 
-
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
+                    console.log('YES_2', milling)
                     fasadeData.MILLING = milling;
                 }
+
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
+                    console.log('NO_2')
                     fasadeData.MILLING = null;
                 }
-
-
 
                 if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
             }
+
+            console.log(fasadeData, '---555 fasadeData!!!')
 
             // Позиция фасада вычисляется один раз
             const fasadePositionData = this.getFasadePosition(CONFIG, fasadeNdx, isUMmodule);
@@ -172,8 +177,10 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null) {
+                console.log(fasadeData.MILLING, 'MILLING', remove)
                 const millingParams = remove ? 2462671 : fasadeData.MILLING;
                 if (remove) {
+                    console.log('ON REM')
                     this.parent.milling_builder.createMillingFasade(
                         curFasade,
                         curFasade.userData.trueSize,
@@ -240,6 +247,7 @@ export class FasadeBuilder {
                 }
             }
 
+            console.log(FASADE_PROPS[fasadeNdx], 'FASADE_PROPS')
 
             this.uniformeTextureStartData = [];
             return;
@@ -249,25 +257,12 @@ export class FasadeBuilder {
         for (let key = 0; key < FASADE_PROPS.length; key++) {
             const fasadeData = FASADE_PROPS[key];
 
-
-            // if (fasadeNdx !== null && fasadeNdx !== key) continue; // важно: 0 считается как "все", как в исходнике
-
-            // Обнуление при remove + точечный индекс
-            // if (remove && fasadeNdx === key) {
-            //     fasadeData.COLOR = 7397;
-            //     fasadeData.PALETTE = null;
-            //     fasadeData.SHOW = false;
-            //     fasadeData.GLASS = null;
-            //     fasadeData.PATINA = null;
-            //     fasadeData.WINDOW = null;
-            // }
-
             // Массовая инициализация, когда remove=false и индекс не задан
             if (!remove && !fasadeNdx) {
 
                 const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
 
-                console.log(pallite, '5')
+                console.log(milling, '5--milling')
 
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
@@ -277,6 +272,8 @@ export class FasadeBuilder {
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
                 const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
 
+                console.log(firstValueMilling, 'firstValueMilling')
+
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
                 }
@@ -285,9 +282,11 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
+                    console.log('YES')
                     fasadeData.MILLING = milling;
                 }
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
+                    console.log('NO')
                     fasadeData.MILLING = null;
                 }
 
@@ -296,6 +295,8 @@ export class FasadeBuilder {
                 }
 
             }
+
+            console.log(fasadeData, '---fasadeData!!!')
 
             // Позиция фасада вычисляется один раз
             const fasadePositionData = this.getFasadePosition(CONFIG, key, isUMmodule);
@@ -413,6 +414,7 @@ export class FasadeBuilder {
             }
         }
         // Очистка стартовых данных текстур как в исходнике
+
         this.uniformeTextureStartData = [];
         return parent;
     }

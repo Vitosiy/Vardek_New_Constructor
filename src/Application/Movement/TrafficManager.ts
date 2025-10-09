@@ -98,13 +98,13 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
-            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
-            console.log(object, 'object')
-            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155])
+            // console.log(object, 'object')
+            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155], 'Model')
 
             if (object.userData.elementType !== 'raspil') {
-                const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+                const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
@@ -135,6 +135,7 @@ export class TrafficManager {
 
         this.dragAndDropManager.updateRoomData(room)
         this.moveManager.updateRoomData(room)
+ 
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 

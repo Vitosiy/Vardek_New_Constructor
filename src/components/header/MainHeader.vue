@@ -177,7 +177,7 @@ const prevAction = () => {
       props.pageComponent.selected();
       customiserStore.hideCustomiserPopup();
     } catch (error) {
-      console.error('Ошибка при выполнении prevAction:', error);
+      console.error("Ошибка при выполнении prevAction:", error);
     }
   }
 };
@@ -193,7 +193,7 @@ const nextAction = () => {
       props.pageComponent.selected();
       customiserStore.hideCustomiserPopup();
     } catch (error) {
-      console.error('Ошибка при выполнении nextAction:', error);
+      console.error("Ошибка при выполнении nextAction:", error);
     }
   }
 };
@@ -204,7 +204,7 @@ const addEvents3D = () => {
     eventBus.off("A:Load");
     eventBus.off("A:ChangeCameraPos");
     eventBus.off("A:ContantLoaded");
-    
+
     // Подписываемся на новые события
     eventBus.on("A:Load", () => {
       try {
@@ -213,8 +213,9 @@ const addEvents3D = () => {
         }
         restorLength.value = 0;
         curActionCount.value = 0;
+        menuStore.closeAllMenus();
       } catch (error) {
-        console.error('Ошибка в обработчике A:Load:', error);
+        console.error("Ошибка в обработчике A:Load:", error);
       }
     });
 
@@ -224,7 +225,7 @@ const addEvents3D = () => {
           props.pageComponent.selected();
         }
       } catch (error) {
-        console.error('Ошибка в обработчике A:ChangeCameraPos:', error);
+        console.error("Ошибка в обработчике A:ChangeCameraPos:", error);
       }
     });
 
@@ -233,18 +234,19 @@ const addEvents3D = () => {
         if (!historyActions.value || !verdekConstructor.value) return;
         await nextTick();
         if (verdekConstructor.value.userHistory.checkEvent(event)) {
-          const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+          const total =
+            verdekConstructor.value.userHistory.getHistory().length - 1;
           restorLength.value = total;
           curActionCount.value = total;
         }
       } catch (error) {
-        console.error('Ошибка в обработчике onEmitCalled:', error);
+        console.error("Ошибка в обработчике onEmitCalled:", error);
       }
     });
-    
+
     eventBus.on("A:ContantLoaded", checkContantLoad);
   } catch (error) {
-    console.error('Ошибка при добавлении событий 3D:', error);
+    console.error("Ошибка при добавлении событий 3D:", error);
   }
 };
 
@@ -278,11 +280,11 @@ watch(
   () => route.path,
   async (newPath, oldPath) => {
     try {
-    menuStore.setRulerVisibility(true);
-    menuStore.setDrowModeValue(false);
-    modelState.setCurrentModel(null);
+      menuStore.setRulerVisibility(true);
+      menuStore.setDrowModeValue(false);
+      modelState.setCurrentModel(null);
 
-    roomState.routConvertData(newPath);
+      roomState.routConvertData(newPath);
 
       historyActions.value = false;
       restorLength.value = 0;
@@ -297,7 +299,7 @@ watch(
         addEvents3D();
       }
     } catch (error) {
-      console.error('Ошибка при изменении маршрута в MainHeader:', error);
+      console.error("Ошибка при изменении маршрута в MainHeader:", error);
     }
   },
   { flush: "post", immediate: true }
@@ -309,26 +311,26 @@ onBeforeUnmount(() => {
     eventBus.off("A:Load");
     eventBus.off("A:ChangeCameraPos");
     eventBus.off("A:ContantLoaded");
-    
+
     // Очищаем данные
     restorLength.value = 0;
     curActionCount.value = 0;
     historyActions.value = false;
-    
+
     // Безопасно очищаем ссылку на конструктор
     if (verdekConstructor.value) {
       try {
         // Если у конструктора есть метод destroy, вызываем его
-        if (typeof verdekConstructor.value.destroy === 'function') {
+        if (typeof verdekConstructor.value.destroy === "function") {
           verdekConstructor.value.destroy();
         }
       } catch (error) {
-        console.warn('Ошибка при уничтожении конструктора:', error);
+        console.warn("Ошибка при уничтожении конструктора:", error);
       }
       verdekConstructor.value = null;
     }
   } catch (error) {
-    console.error('Ошибка при очистке MainHeader:', error);
+    console.error("Ошибка при очистке MainHeader:", error);
   }
 });
 </script>
