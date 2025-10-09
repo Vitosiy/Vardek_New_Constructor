@@ -119,15 +119,16 @@ const priceUpdateEvents  = [
     // "A:ScreenPrint",
     // "A:Take3DScreenshot"
     // "U:PositionChanged",
-    "U:Drop",
+    // "U:DrawPatina",
+    // "U:DeliteFasad",
     // 'U:ChangeModule',
+    
+    "U:Drop",
     "U:Model-resize",
     "U:ChangePaletteColor",
     "U:ChangeMilling",
-    // "U:DrawPatina",
-    // "U:DeliteFasad",
     'U:ChangeFasade',
-    'A:Disable-Uniform-Mode',
+    // 'A:Disable-Uniform-Mode',
     'A:UM-update'
 ];
 
