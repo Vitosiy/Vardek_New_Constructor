@@ -1,6 +1,7 @@
 // import * as THREEInterfases from "../types/interfases"
 
 const START_PROJECT_PARAMS = {
+    type: 'New',
     rooms: [Object.freeze({
         id: 1000001,
         label: 'Комната 1',

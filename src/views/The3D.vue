@@ -24,7 +24,7 @@ import { useObjectData } from "@/store/appliction/useObjectData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useRoomState } from "@/store/appliction/useRoomState";
-import { useBasketStore } from '@/store/appStore/useBasketStore';
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -70,7 +70,6 @@ const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
 
 const basketStore = useBasketStore();
 
-
 const _FASADE = ref({});
 const _MILLING = ref({});
 
@@ -114,7 +113,7 @@ const CutSave = ref(false);
 const priceUpdateEvents  = [
     // "A:Move",
     // "A:Selected",
-    // "A:ContantLoaded", 
+    // "A:ContantLoaded",
     // "A:ClearSelected",
     // "A:ScreenPrint",
     // "A:Take3DScreenshot"
@@ -128,8 +127,10 @@ const priceUpdateEvents  = [
     // "U:DeliteFasad",
     'U:ChangeFasade',
     'A:Disable-Uniform-Mode',
-    'A:UM-update'
+    'A:UM-update',
+    'A:Duplicate'
 ];
+
 
 onMounted(async () => {
   try {
@@ -158,8 +159,10 @@ onMounted(async () => {
       eventBus.on("A:NextAction", setLocalActivateValue);
       eventBus.on("A:PrevAction", setLocalActivateValue);
       // Подписываем все события на один обработчик
-      priceUpdateEvents.forEach(event => {
-          eventBus.on(event, commonEventHandler);
+
+      priceUpdateEvents.forEach((event) => {
+        console.log(event,'EV')
+        eventBus.on(event, commonEventHandler);
       });
 
       // Создаем приложение
@@ -222,16 +225,14 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
-
 const commonEventHandler = (data) => {
-   console.log('Обновление корзиный', data);
-    try {
-        scheduleBasketSync();
-    } catch (e) {
-        console.warn('Basket addFromScene on drop failed', e)
-    }
-}
-
+  console.log("Обновление корзиный", data);
+  try {
+    scheduleBasketSync();
+  } catch (e) {
+    console.warn("Basket addFromScene on drop failed", e);
+  }
+};
 
 const checkContantLoad = (state: boolean) => {
   // console.log("checkContantLoad", state);
@@ -246,7 +247,7 @@ const scheduleBasketSync = () => {
     try {
       basketStore.addFromScene();
     } catch (e) {
-      console.warn('Basket addFromScene debounce failed', e);
+      console.warn("Basket addFromScene debounce failed", e);
     }
   }, 500);
 };
