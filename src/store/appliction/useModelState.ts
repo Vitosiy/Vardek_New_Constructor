@@ -195,37 +195,6 @@ export const useModelState = defineStore('ModelState', () => {
     })*/
 
 
-    /** ------- Работа с Цоколем -------- */
-
-    const createTotalPlinthData = () => {
-        let percept = {}
-        const result = Object.entries(_PLINTH).map(([key, el]) => {
-            return percept[key] = _PRODUCTS[el]
-        })
-
-        // console.log(percept)
-
-        // const filtered = Object.values(_PLINTH).map(el => {
-        //     return _PRODUCTS[el]
-        // })
-
-
-        return percept
-    }
-
-    const createTotalPlinthColorData = (plinthId) => {
-        if (!_PLINTH[plinthId]) return []
-
-        const { FACADE } = _PRODUCTS[plinthId]
-        const filter = FACADE.map(el => {
-            return _FASADE[el] ?? null
-        })
-
-        return filter
-
-
-    }
-
 
     /** ------- Работа с Цоколем -------- */
 
