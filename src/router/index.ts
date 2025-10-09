@@ -74,8 +74,8 @@ router.beforeEach((to, from, next) => {
         timeDiff: Math.round((Date.now() - expirationTimestamp) / 1000 / 60) + ' минут'
       });
       // Удаляем просроченные куки
-      document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      // document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      // document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       // next('/auth');
       return;
     } else {
