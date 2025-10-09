@@ -339,7 +339,7 @@ const prepareData = () => {
 
 onBeforeMount(() => {
   materialList.value = modelState.getCurrentModelFasadesData;
-  productData.value = modelState.getCurrentModel;
+  productData.value = modelState.getCurrentModel?.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 });
 
