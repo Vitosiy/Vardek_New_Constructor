@@ -62,6 +62,7 @@ export class FasadeBuilder {
         const parent = new THREE.Object3D();
         const modelType = CONFIG.MODEL?.type ?? "left";
 
+        console.log(SHOWCASE,'SHOWCASE')
 
         if (remove) {
             CONFIG.UNIFORM_TEXTURE = {
@@ -116,19 +117,20 @@ export class FasadeBuilder {
 
 
             const curFasade = FASADE[fasadeNdx]
+            curFasade.geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             if (remove) {
                 fasadeData.COLOR = 7397;
                 fasadeData.PALETTE = null;
                 fasadeData.SHOW = false;
                 fasadeData.GLASS = null;
                 fasadeData.PATINA = null;
-                fasadeData.WINDOW = null;
+                fasadeData.SHOWCASE = null;
                 fasadeData.HANDLES = this.handlesBuilder.restoreDefaultHandleData(fasadeData)
             }
             else {
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
+                fasadeData.SHOWCASE = fasadeData.SHOW ?  fasadeData.SHOWCASE : null;
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -196,11 +198,11 @@ export class FasadeBuilder {
             }
 
             // Окно
-            if (fasadeData.WINDOW != null) {
-                this.parent.window_builder.createWindow({
+            if (fasadeData.SHOWCASE != null) {
+                this.parent.showcase_builder.createShowcase({
                     fasade: curFasade,
                     fasadePosition: curFasade.userData.trueSize,
-                    data: fasadeData.WINDOW,
+                    data: fasadeData.SHOWCASE,
                     defaultGeometry: FASADE_DEFAULT[fasadeNdx],
                     alum: FASADE_PROPS[fasadeNdx].ALUM
                 });
@@ -214,7 +216,7 @@ export class FasadeBuilder {
 
             // Цвет стекла
             if (fasadeData.GLASS != null) {
-                this.parent.window_builder.changeGlassColor({
+                this.parent.showcase_builder.changeGlassColor({
                     fasade: curFasade,
                     glassId: FASADE_PROPS[fasadeNdx].GLASS
                 });
@@ -257,7 +259,7 @@ export class FasadeBuilder {
 
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
+                fasadeData.SHOWCASE = fasadeData.SHOW ? fasadeData.SHOWCASE : null;
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -354,11 +356,11 @@ export class FasadeBuilder {
             }
 
             // Окно
-            if (fasadeData.WINDOW != null) {
-                this.parent.window_builder.createWindow({
+            if (fasadeData.SHOWCASE != null) {
+                this.parent.showcase_builder.createShowcase({
                     fasade,
                     fasadePosition: fasade.userData.trueSize,
-                    data: fasadeData.WINDOW,
+                    data: fasadeData.SHOWCASE,
                     defaultGeometry: FASADE_DEFAULT[key],
                     alum: FASADE_PROPS[key].ALUM
                 });
@@ -372,7 +374,7 @@ export class FasadeBuilder {
 
             // Цвет стекла
             if (fasadeData.GLASS != null) {
-                this.parent.window_builder.changeGlassColor({
+                this.parent.showcase_builder.changeGlassColor({
                     fasade,
                     glassId: FASADE_PROPS[key].GLASS
                 });

@@ -9,7 +9,7 @@ import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { BuildProduct } from "@/Application/Meshes/BuildProduct";
 import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
 import { PaletteBuilder } from "@/Application/Meshes/PaletteBuilder";
-import { WindowBuilder } from "@/Application/Meshes/WindowBuilder";
+import { ShowcaseBuilder } from "@/Application/Meshes/ShowcaseBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
 import { SetObject } from "@/Application/Utils/SetObject";
 import { AlumBuilder } from "@/Application/Meshes/AlumBuilder";
@@ -49,7 +49,7 @@ export type TScene = THREE.Scene
 export type TCustomBoxHelper = CustomBoxHelper
 export type TBuildProduct = BuildProduct
 export type TMillingBuilder = MillingBuilder
-export type TWindowBuilder = WindowBuilder
+export type TShowcaseBuilder = ShowcaseBuilder
 export type TPaletteBulider = PaletteBuilder
 export type TSetObject = SetObject
 export type TAlumBuilder = AlumBuilder

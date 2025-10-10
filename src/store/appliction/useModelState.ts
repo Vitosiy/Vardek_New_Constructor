@@ -87,7 +87,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentMillingData = ref<IMilling[]>([])
 
-    const currentWindowsData = ref<number[]>([])
+    const currentShowcaseData = ref<number[]>([])
 
     const currentFasadeTypesData = ref<number[]>([])
 
@@ -135,7 +135,7 @@ export const useModelState = defineStore('ModelState', () => {
     const createCurrentBackwallData = (productId: number) => {
         const productInfo = _PRODUCTS[productId]
 
-        if(productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
+        if (productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
             const colorMap = new Set();
             const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE[colorId]);
 
@@ -158,7 +158,7 @@ export const useModelState = defineStore('ModelState', () => {
 
         const productInfo = _PRODUCTS[productId]
 
-        if(productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
+        if (productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
             const colorMap = new Set();
             const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE[colorId]);
 
@@ -366,23 +366,29 @@ export const useModelState = defineStore('ModelState', () => {
     }
 
     /** Витрины */
-    const createCurrentWindowsData = ({ fasadeId, productId }) => {
+    const createCurrentShowcaseData = ({ fasadeId, productId }) => {
 
-        // console.log(_PRODUCTS[productId].type_showcase)
+        const defaultShowcase = _PRODUCTS[productId].type_showcase[0]
+   
 
+        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && defaultShowcase) {
+            const prepare = [..._PRODUCTS[productId].type_showcase].map(el => {
+                return _SHOWCASE[el]
+            })
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] != null) {
-            currentWindowsData.value = [..._PRODUCTS[productId].type_showcase]
+            currentShowcaseData.value = prepare
+            return
         }
 
         if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] == null) {
-            currentWindowsData.value = []
-            currentWindowsData.value.push(_PRODUCTS[productId].type_showcase[0])
+
+            currentShowcaseData.value = [_SHOWCASE[defaultShowcase]]
+            return
         }
     }
 
-    const getCurrentWindowsData = computed(() => {
-        return currentWindowsData.value
+    const getCurrentShowcaseData = computed(() => {
+        return currentShowcaseData.value
     })
 
     /** Типы фасада (интегрированная ручка) */
@@ -486,8 +492,8 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentMillingData,
         setMillingId,
 
-        createCurrentWindowsData,
-        getCurrentWindowsData,
+        createCurrentShowcaseData,
+        getCurrentShowcaseData,
 
         createCurrentFasadeTypesData,
         getCurrentFasadeTypesData,

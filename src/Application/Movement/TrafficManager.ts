@@ -90,7 +90,7 @@ export class TrafficManager {
         /** Получаем выбранный объект */
 
         this.currentObject = object
-        // console.log('object', object);
+        // 
 
         if (object) {
 
@@ -99,6 +99,7 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
+            console.log('OBJ', object.userData);
             
             // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')

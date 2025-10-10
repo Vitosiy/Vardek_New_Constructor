@@ -25,6 +25,7 @@ let title = computed(() => {
     patina: "Цвет патины",
     glass: "Цвет стекла",
     Handles: "Ручка",
+    showcase:"Витрина"
   };
 
   return typeMap[props.type];

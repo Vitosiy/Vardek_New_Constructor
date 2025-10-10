@@ -77,7 +77,7 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   modelState.createCurrentPaletteData(ID);
   modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
   modelState.createCurrentMillingData({ fasadeId: ID, productId });
-  modelState.createCurrentWindowsData({ fasadeId: ID, productId });
+  modelState.createCurrentShowcaseData({ fasadeId: ID, productId });
   modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
 
 

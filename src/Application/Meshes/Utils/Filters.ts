@@ -107,7 +107,7 @@ export class Filters extends GlobalsData {
                 BODY: fasad,
                 MILLING: null,
                 PALETTE: null,
-                WINDOW: null,
+                SHOWCASE: null,
                 ALUM: null,
                 GLASS: null,
                 PATINA: null,

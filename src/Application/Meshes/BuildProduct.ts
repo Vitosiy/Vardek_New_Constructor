@@ -21,7 +21,7 @@ import { Filters } from './Utils/Filters'
 import { JsonBuilder } from './JsonProductBuilder'
 import { ModelsBuilder } from './ModelsBuilder'
 import { MillingBuilder } from './MillingBuilder';
-import { WindowBuilder } from './WindowBuilder';
+import { ShowcaseBuilder } from './ShowcaseBuilder.ts';
 
 import { FasadeBuilder } from './FasadeBuilder';
 import { TableTopBuilder } from './TableTopBuilder/TableTopBuilder.ts';
@@ -51,7 +51,7 @@ export class BuildProduct extends BuildersHelper {
     json_builder: JsonBuilder;
     models_builder: ModelsBuilder;
     milling_builder: MillingBuilder;
-    window_builder: WindowBuilder;
+    showcase_builder: ShowcaseBuilder;
     handles_builder: HandlesBuilder
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBuilder
@@ -77,7 +77,7 @@ export class BuildProduct extends BuildersHelper {
         this.edge_builder = new EdgeBuilder(this);
         this.models_builder = new ModelsBuilder(this);
         this.milling_builder = new MillingBuilder(root);
-        this.window_builder = new WindowBuilder(root);
+        this.showcase_builder = new ShowcaseBuilder(root);
         this.palette_bulider = new PaletteBuilder(this);
         this.alum_builder = new AlumBuilder(this);
         this.uniform_texture_builder = new UniformTextureBuilder(root, this);
@@ -85,8 +85,6 @@ export class BuildProduct extends BuildersHelper {
         this.fasade_builder = new FasadeBuilder(this);
         this.tabletop_builder = new TableTopBuilder(this);
         this.plinth_builder = new PlinthBuilder(this)
-
-
     }
 
     get _currentProduct() {
