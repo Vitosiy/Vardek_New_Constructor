@@ -31,7 +31,7 @@ export const useBasketStore = defineStore("basket", () => {
   // initializeFromStorage();
 
   // Вычисляемые свойства
-  const totalItems = computed(() => 
+  const totalItems = computed(() =>
     mainConstructor.value.length + mainCatalog.value.length
   );
 
@@ -55,13 +55,15 @@ export const useBasketStore = defineStore("basket", () => {
     syncBasket();
   }
 
-  async function addFromScene() {   
-    const roomContantData = useRoomContantData().getRoomContantData;
-    const roomDataCopy = JSON.parse(JSON.stringify(roomContantData));
+  async function addFromScene() {
+    const roomContantData = useRoomContantData().getRoomContantDataForBasket;
+
+    const roomDataCopy = JSON.parse(roomContantData);
+
     const dataForGetPrices = Object.entries(roomDataCopy)
-      .filter(([_, obj]) => obj?.object?.userData?.PROPS.PRODUCT)
+      .filter(([_, obj]) => obj.data.PRODUCT)
       .map(([key, obj]: [string, any]) => createBasketItem(
-        obj?.object?.userData?.PROPS, 
+        obj.data,
         mainConstructor.value.length,
         key
       ));
@@ -104,7 +106,7 @@ export const useBasketStore = defineStore("basket", () => {
       // }));
 
       const merged = [...mainConstructor.value, ...mainCatalog.value];
-      
+
       if (merged.length === 0) {
         basketData.value = null;
         return;
@@ -139,7 +141,7 @@ export const useBasketStore = defineStore("basket", () => {
     try {
 
       const merged = [...mainConstructor.value, ...mainCatalog.value];
-      
+
       if (merged.length === 0) {
         basketData.value = null;
         return;
@@ -199,12 +201,12 @@ export const useBasketStore = defineStore("basket", () => {
         modelController.classList.remove('model-controller--active');
       }
     }
-    
+
     syncBasket();
   };
 
 
-  
+
   // const updateQuantityFromBaske = (idBasket: string, type: string, quantity: any) => {
   //   if (type === 'catalog') {
   //     mainCatalog.value.find(item => item.BASKETID === idBasket).QUANTITY = quantity;
@@ -226,12 +228,12 @@ export const useBasketStore = defineStore("basket", () => {
   }
 
 
-  return {  
+  return {
     // State
     basketData: computed(() => basketData.value),
     loading: computed(() => loading.value),
     error: computed(() => error.value),
-    
+
     // Getters
     mainConstructor: computed(() => mainConstructor.value),
     mainCatalog: computed(() => mainCatalog.value),

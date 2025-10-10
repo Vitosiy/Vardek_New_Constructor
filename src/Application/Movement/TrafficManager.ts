@@ -90,7 +90,7 @@ export class TrafficManager {
         /** Получаем выбранный объект */
 
         this.currentObject = object
-        console.log('object', object);
+        // console.log('object', object);
 
         if (object) {
 
@@ -98,8 +98,10 @@ export class TrafficManager {
                 object: object,
                 roomContant: this.room._roomContant
             })
-            console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
-            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+
+            
+            // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
+            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // Обновление корзины при простом выборе/перемещении не требуется
 
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
