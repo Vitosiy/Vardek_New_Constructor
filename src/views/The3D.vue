@@ -88,6 +88,7 @@ const productData = ref<{ [key: string]: any }>({});
 const product = ref<{ [key: string]: any } | null>(null);
 const controllerPositionData = ref<THREEInterfases.IMouseData>({ x: 0, y: 0 });
 const totalContent = ref<any>();
+const actions = ref<Record<string, Function> | null>(null);
 
 /**----------------- 01.12.24-------------------- */
 
@@ -110,27 +111,26 @@ const CutCash = ref({});
 const CutSave = ref(false);
 
 // Список событий
-const priceUpdateEvents  = [
-    // "A:Move",
-    // "A:Selected",
-    // "A:ContantLoaded",
-    // "A:ClearSelected",
-    // "A:ScreenPrint",
-    // "A:Take3DScreenshot"
-    // "U:PositionChanged",
-    "U:Drop",
-    // 'U:ChangeModule',
-    "U:Model-resize",
-    "U:ChangePaletteColor",
-    "U:ChangeMilling",
-    // "U:DrawPatina",
-    // "U:DeliteFasad",
-    'U:ChangeFasade',
-    'A:Disable-Uniform-Mode',
-    'A:UM-update',
-    'A:Duplicate'
+const priceUpdateEvents = [
+  // "A:Move",
+  // "A:Selected",
+  // "A:ContantLoaded",
+  // "A:ClearSelected",
+  // "A:ScreenPrint",
+  // "A:Take3DScreenshot"
+  // "U:PositionChanged",
+  "U:Drop",
+  // 'U:ChangeModule',
+  "U:Model-resize",
+  "U:ChangePaletteColor",
+  "U:ChangeMilling",
+  // "U:DrawPatina",
+  // "U:DeliteFasad",
+  "U:ChangeFasade",
+  "A:Disable-Uniform-Mode",
+  "A:UM-update",
+  "A:Duplicate",
 ];
-
 
 onMounted(async () => {
   try {
@@ -161,7 +161,7 @@ onMounted(async () => {
       // Подписываем все события на один обработчик
 
       priceUpdateEvents.forEach((event) => {
-        console.log(event,'EV')
+        console.log(event, "EV");
         eventBus.on(event, commonEventHandler);
       });
 
@@ -170,6 +170,8 @@ onMounted(async () => {
 
       await nextTick();
       VerdekConstructor.value.refreshViewer();
+      actions.value = VerdekConstructor.value.getAction()
+      // console.log( actions.value)
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);
@@ -226,6 +228,7 @@ onUnmounted(() => {
 });
 
 const commonEventHandler = (data) => {
+
   console.log("Обновление корзиный", data);
   try {
     scheduleBasketSync();
@@ -240,16 +243,20 @@ const checkContantLoad = (state: boolean) => {
 };
 
 // Дебоунс пересчёта корзины
-let basketDebounceTimer: any = null;
-const scheduleBasketSync = () => {
-  clearTimeout(basketDebounceTimer);
-  basketDebounceTimer = setTimeout(() => {
-    try {
-      basketStore.addFromScene();
-    } catch (e) {
-      console.warn("Basket addFromScene debounce failed", e);
-    }
-  }, 500);
+// let basketDebounceTimer: any = null;
+const scheduleBasketSync = async () => {
+  const data = actions.value.save()
+  roomContantData.value?.setRoomContantDataForBasket(data)
+  await nextTick();
+  basketStore.addFromScene();
+  // clearTimeout(basketDebounceTimer);
+  // basketDebounceTimer = setTimeout(() => {
+  //   try {
+  //     basketStore.addFromScene();
+  //   } catch (e) {
+  //     console.warn("Basket addFromScene debounce failed", e);
+  //   }
+  // }, 500);
 };
 
 const getMove = (move: boolean) => {

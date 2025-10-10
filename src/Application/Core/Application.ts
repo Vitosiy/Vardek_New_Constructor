@@ -394,4 +394,11 @@ export class Application {
             this.ruler?.toggleRulerVisibility(value)
         })
     }
+
+    public getAction(action: string) {
+        return {
+            save: () => this.room?.save()
+        }
+
+    }
 }
