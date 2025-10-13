@@ -15,7 +15,7 @@ export const useRoomContantData = defineStore('RoomContantData', () => {
 
     })
 
-    const setRoomContantDataForBasket = (value) => {
+    const setRoomContantDataForBasket = (value: any) => {
         roomContantDataForBasket.value = value
     }
 

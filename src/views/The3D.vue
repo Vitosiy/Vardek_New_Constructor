@@ -130,7 +130,8 @@ const priceUpdateEvents  = [
     'U:ChangeFasade',
     'A:Disable-Uniform-Mode',
     'A:UM-update',
-    'A:Duplicate'
+    'A:Duplicate',
+    'A:RemoveModel'
 ];
 
 onMounted(async () => {

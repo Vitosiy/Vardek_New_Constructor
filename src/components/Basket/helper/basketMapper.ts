@@ -113,24 +113,130 @@ export function createUniformTexture(objProps: any) {
 
 
 
+
+function generateDoorsSimple(moduleData) {
+    const DOORS = {};
+    
+    moduleData.sections.forEach(section => {
+        const sectionNum = section.number;
+        DOORS[sectionNum] = {};
+        
+        section.fasades.forEach(fasadeArray => {
+            fasadeArray.forEach((fasade, index) => {
+                const doorNum = fasade.door || 1;
+                const segmentNum = index; // номер сегмента = индекс в массиве
+                const color = fasade.material.COLOR;
+                
+                if (!DOORS[sectionNum][doorNum]) {
+                    DOORS[sectionNum][doorNum] = {};
+                }
+                
+                DOORS[sectionNum][doorNum][segmentNum] = color;
+            });
+        });
+    });
+    
+    return DOORS;
+}
+
+
+function transformLoops(loopsObj) {
+  const result = {};
+  
+  for (const [sectionKey, sectionArray] of Object.entries(loopsObj)) {
+    result[sectionKey] = {};
+    
+    sectionArray.forEach((doorArray, doorIndex) => {
+      const doorKey = (doorIndex + 1).toString();
+      
+      // Если в массиве только один объект, сохраняем как массив координат
+      if (doorArray.length === 1) {
+        result[sectionKey][doorKey] = doorArray[0].coords;
+      } else {
+        // Если несколько объектов, создаем под-объект с нумерацией
+        doorArray.forEach((item, itemIndex) => {
+          const itemKey = (itemIndex + 1).toString();
+          result[sectionKey][itemKey] = item.coords;
+        });
+      }
+    });
+  }
+  
+  return result;
+}
+
+function transformLoopsSide(loopsObj) {
+  const result = {};
+  
+  for (const [sectionKey, sectionArray] of Object.entries(loopsObj)) {
+    result[sectionKey] = {};
+    
+    sectionArray.forEach((doorArray, doorIndex) => {
+      const doorKey = (doorIndex + 1).toString();
+      
+      // Если в массиве только один объект, сохраняем как массив координат
+      if (doorArray.length === 1) {
+        result[sectionKey][doorKey] = doorArray[0].side;
+      } else {
+        // Если несколько объектов, создаем под-объект с нумерацией
+        doorArray.forEach((item, itemIndex) => {
+          const itemKey = (itemIndex + 1).toString();
+          result[sectionKey][itemKey] = item.side;
+        });
+      }
+    });
+  }
+  
+  return result;
+}
+
+
 export function creatSectionFilling(arr: any[] | null | undefined): any[] {
   if (!arr || !Array.isArray(arr)) {
     return [];
   }
 
-  return arr.map(el => ({
-    ID: el.id, // ID товара полки
-    PATH: false,
-    MATERIAL_ID: el.material, // Материал полки
-    type: el.type,
-    SIZE: { // Размеры
-      width: el.size?.x || 0,
-      height: el.size?.z || 0,
-      depth: el.size?.y || 0
-    },
-    ADDITIVES: el.ADDITIVES || {},
-  }));
+  
+  const item = arr.map(el => {
+    if(el.type === 'section_partition') {
+      return {
+        PARTITION_ID: el.product,
+        SECTION_ID: el.id, // ID товара полки
+        SIZE: { // Размеры
+          width: el.size?.x || 0,
+          height: el.size?.y || 0,
+          depth: el.size?.z || 0
+        },
+        UP_POSITION: el.ADDITIVES.top.additive_position,
+        DOWN_POSITION: el.ADDITIVES.bottom.additive_position,
+        MATERIAL_ID: el.material, // Материал полки
+        ADDITIVES: el.ADDITIVES || {},
+        ID:el.product,
+        PATH: false,
+        PRODUCT_TYPE: el.type,
+      }
+    } else {
+      return {
+        ID: el.product,
+        PATH: false,
+        MATERIAL_ID: el.material, // Материал полки
+        PRODUCT_TYPE: el.type,
+        SIZE: { // Размеры
+          width: el.size?.x || 0,
+          height: el.size?.y || 0,
+          depth: el.size?.z || 0
+        },
+        ADDITIVES: el.ADDITIVES || {},
+      }
+    }
+    
+  })
+
+  return item
 }
+
+
+
 
 export function convertModuleToLegacyFormat(newModuleObject: any): any {
   if (!newModuleObject?.CONFIG) {
@@ -149,8 +255,12 @@ export function convertModuleToLegacyFormat(newModuleObject: any): any {
     RIGHTSIDECOLOR: CONFIG.RIGHTSIDECOLOR,
     TOPFASADECOLOR: CONFIG.TOPFASADECOLOR,
     OPTION: createOptionsProps(newModuleObject),
-    LOOPS: CONFIG.LOOPS || {},
-    DOORS: CONFIG.FASADE_PROPS || {}
+    // LOOPS: CONFIG.LOOPS || {},
+    // DOORS: CONFIG.FASADE_PROPS || {}
+    LOOPS: transformLoops(CONFIG.LOOPS),
+    LOOPSSIDE: transformLoopsSide(CONFIG.LOOPS),
+    DOORS: generateDoorsSimple(CONFIG.MODULEGRID),
+
   };
 
   // Динамически добавляем секции из MODULEGRID
@@ -171,20 +281,44 @@ export function convertModuleToLegacyFormat(newModuleObject: any): any {
     });
   }
 
-  // Динамически добавляем фасады
-  if (CONFIG.FASADES) {
-    Object.keys(CONFIG.FASADES).forEach((fasadeKey, index) => {
-      const fasadeNumber = index + 1;
-      const fasade = CONFIG.FASADES[fasadeKey];
-      
-      legacyProps[`FASADESIZES${fasadeNumber}`] = fasade.sizes || {};
-      legacyProps[`FASADEWIDTH${fasadeNumber}`] = fasade.width || 0;
-    });
-  }
 
-  // Добавляем петли сбоку, если есть
-  if (CONFIG.LOOPS_SIDE) {
-    legacyProps.LOOPSSIDE = CONFIG.LOOPS_SIDE;
+
+  // Динамически добавляем фасады
+  if (CONFIG.MODULEGRID.sections) {
+    const result = {};
+    // CONFIG.MODULEGRID.sections.forEach((fasadeKey, index) => {
+    //   const fasadeNumber = index + 1;
+    //   const fasade = CONFIG.FASADES[fasadeKey];
+      
+    //   legacyProps[`FASADESIZES${fasadeNumber}`] = fasade.sizes || {};
+    //   legacyProps[`FASADEWIDTH${fasadeNumber}`] = fasade.width || 0;
+    // });
+    CONFIG.MODULEGRID.sections.forEach(section => {
+        const sectionNumber = section.number;
+        const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
+        const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
+        
+        result[fasadesSizeKey] = {};
+        result[fasadesWidthKey] = {}; // Добавляем объект для ширины
+
+        section.fasades.forEach(doorGroup => {
+            doorGroup.forEach(fasade => {
+                const doorNumber = fasade.door;
+                
+                if (!result[fasadesSizeKey][doorNumber]) {
+                    result[fasadesSizeKey][doorNumber] = [];
+                }
+                
+                result[fasadesSizeKey][doorNumber].push(fasade.height);
+
+                if (!result[fasadesWidthKey][doorNumber]) {
+                  result[fasadesWidthKey][doorNumber] = fasade.width;
+                }
+            });
+        });
+        legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
+        legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
+    });
   }
 
   return legacyProps;

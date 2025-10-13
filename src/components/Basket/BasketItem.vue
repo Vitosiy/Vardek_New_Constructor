@@ -47,7 +47,7 @@
 
       <!-- Секция свойств товара тип каталог-->
       <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'"> -->
-      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'">
+      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog' || item?.product.TYPE === 'umscene'">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 
           <div v-if="getPropDefinition(String(propKey))">
