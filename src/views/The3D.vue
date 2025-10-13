@@ -131,7 +131,10 @@ const priceUpdateEvents  = [
     'A:Disable-Uniform-Mode',
     'A:UM-update',
     'A:Duplicate',
-    'A:RemoveModel'
+    'A:RemoveModel',
+    'A:close-modal-custom',
+    'close-modal'
+    
 ];
 
 onMounted(async () => {
@@ -249,6 +252,7 @@ const checkContantLoad = (state: boolean) => {
 const scheduleBasketSync = async () => {
   const data = actions.value.save()
   roomContantData.value?.setRoomContantDataForBasket(data)
+  console.log('data', JSON.parse(data))
   await nextTick();
   basketStore.addFromScene();
   // clearTimeout(basketDebounceTimer);

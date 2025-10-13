@@ -47,7 +47,8 @@
 
       <!-- Секция свойств товара тип каталог-->
       <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'"> -->
-      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog' || item?.product.TYPE === 'umscene'">
+      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog' || item?.product.TYPE === 'umscene'"> -->
+      <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 
           <div v-if="getPropDefinition(String(propKey))">
@@ -786,6 +787,7 @@ function updateQuantity(id: string, type: string) {
 }
 
 const deleteProductInBusket = (id: string, type: string) => {
+  console.log(id, type)
   basketStore.removeFromBasket(id, type);
 }
 

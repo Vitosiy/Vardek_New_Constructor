@@ -60,6 +60,7 @@ export const useBasketStore = defineStore("basket", () => {
 
     const roomDataCopy = JSON.parse(roomContantData);
 
+    console.log('Object.entries(roomDataCopy)', Object.entries(roomDataCopy))
     const dataForGetPrices = Object.entries(roomDataCopy)
       .filter(([_, obj]) => obj.data.PRODUCT)
       .map(([key, obj]: [string, any]) => createBasketItem(
@@ -69,6 +70,7 @@ export const useBasketStore = defineStore("basket", () => {
       ));
 
     mainConstructor.value = dataForGetPrices;
+    console.log('dataForGetPrices', dataForGetPrices)
     syncBasket();
   }
 
@@ -183,12 +185,13 @@ export const useBasketStore = defineStore("basket", () => {
 
 
       const roomContantData = useRoomContantData().getRoomContantData;
+      console.log(roomContantData);
       const { setRoomContantData } = useRoomContantData();
 
       const map: any = roomContantData as any;
       const item: any = map?.[idBasket];
       const object3D = item?.object;
-
+      console.log('idBasket', idBasket);
       useEventBus().emit('A:RemoveModelFromBasket', { product: object3D, basketId: idBasket });
 
       if (item) {
