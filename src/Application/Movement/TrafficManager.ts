@@ -90,7 +90,7 @@ export class TrafficManager {
         /** Получаем выбранный объект */
 
         this.currentObject = object
-        // console.log('object', object);
+        // 
 
         if (object) {
 
@@ -99,9 +99,10 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
+            console.log('OBJ', object.userData);
             
             // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
-            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // Обновление корзины при простом выборе/перемещении не требуется
 
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
@@ -179,6 +180,8 @@ export class TrafficManager {
             } catch (e) {
                 console.warn('Basket sync remove failed', e)
             }
+
+            this.modelState.setCurrentModel(null)
             return
         }
 
@@ -194,6 +197,7 @@ export class TrafficManager {
         } catch (e) {
             console.warn('Basket sync remove failed', e)
         }
+        
     }
 
     vueEvents() {

@@ -477,6 +477,8 @@ export class RoomManager extends Room {
     }
 
     async loadData(data: string | string[]): Promise<number> {
+
+
         let counts = 0;
         const parse = typeof data === 'string' ? JSON.parse(data) : data;
 

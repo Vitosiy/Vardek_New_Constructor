@@ -136,6 +136,8 @@ export const useSceneState = defineStore('SceneState', () => {
         //     }
         // })
 
+        // console.log(parseData)
+
 
         // const parseData = clone.map(elem => {
         //     return {
@@ -189,7 +191,7 @@ export const useSceneState = defineStore('SceneState', () => {
             if (value?.palitte) {
 
                 if (curPalitte) {
-     
+
                     startProjectParams.value[curOption] = value?.palitte;
                     currentProjectParams.value[curOption] = value?.palitte;
                 }

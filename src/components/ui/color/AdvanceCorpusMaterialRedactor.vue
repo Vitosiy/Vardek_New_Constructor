@@ -94,7 +94,7 @@ const onSelectMaterial = (data) => {
     fasadeId: data.ID,
     productId: productId.value,
   });
-  modelState.createCurrentWindowsData({
+  modelState.createCurrentShowcaseData({
     fasadeId: data.ID,
     productId: productId.value,
   });
@@ -271,7 +271,7 @@ const prepareData = () => {
     fasadeId: COLOR,
     productId: productId.value,
   });
-  modelState.createCurrentWindowsData({
+  modelState.createCurrentShowcaseData({
     fasadeId: COLOR,
     productId: productId.value,
   });

@@ -8,7 +8,7 @@ import { TApplication, TDeepDispose } from "@/types/types"
 import { MillingBuilder } from './MillingBuilder';
 import { useModelState } from "@/store/appliction/useModelState";
 
-export class WindowBuilder extends MillingBuilder {
+export class ShowcaseBuilder extends MillingBuilder {
     scene: THREE.Scene
     clear: TDeepDispose
     private modelState = useModelState()
@@ -19,7 +19,7 @@ export class WindowBuilder extends MillingBuilder {
         this.clear = root._deepDispose!
     }
 
-    createWindow({
+    createShowcase({
         fasade,
         fasadePosition,
         data,
@@ -28,9 +28,11 @@ export class WindowBuilder extends MillingBuilder {
 
     }) {
 
-        const windowData = alum ?? data
+        console.log(data)
 
-        this.createMillingFasade(fasade, fasadePosition, windowData, defaultGeometry);
+        const showcaseData = alum ?? data
+
+        this.createMillingFasade(fasade, fasadePosition, showcaseData, defaultGeometry);
         this.createGlass(fasade, fasadePosition, alum)
         this.createHeandless(fasade, fasadePosition)
     }
@@ -151,12 +153,6 @@ export class WindowBuilder extends MillingBuilder {
         if (!fasade.children.some(obj => obj.userData.type === 'hendless')) {
             fasade.add(shapeMesh)
         }
-
-
-
-
-        // console.log(paths)
-
 
     }
 

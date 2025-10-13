@@ -26,6 +26,7 @@ import MillingRedactor from "./MillingRedactor.vue";
 import ColorRedactor from "./ColorRedactor.vue";
 import PatinaRedactor from "./PatinaRedactor.vue";
 import GlassRedactor from "./GlassRedactor.vue";
+import ShowcaseRedactor from "./ShowcaseRedactor.vue";
 
 const props = defineProps({
   tabIndex: Number /** Индекс выбранного фасада в defaultTab.vue */,
@@ -54,7 +55,7 @@ const currentSurfaceData = ref<Object>({});
 const currentMillingData = ref<Object>({});
 const currentPaletteData = ref<Object>({});
 const currentPatinaData = ref<Object>({});
-const currentWindowsData = ref<Object>({});
+const currentShowcaseData = ref<Object>({});
 const currentGlassData = ref<Object>({});
 
 const isSurfaceSelected = ref<boolean>(false);
@@ -71,8 +72,11 @@ const isPatinaExist = ref<boolean>(false);
 const glassList = ref<Array>([]);
 const isGlassExist = ref<boolean>(false);
 
+const showcaseList = ref<Array>([]);
+const isShowcaseExist = ref<boolean>(false);
+
 const onSelectMaterial = (data) => {
-   emit("select_material", data);
+  emit("select_material", data);
 
   const product = _APP.CATALOG.PRODUCTS[productId.value];
   const { COLOR } = productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
@@ -81,6 +85,7 @@ const onSelectMaterial = (data) => {
   isSurfaceSelected.value = true;
 
   millingList.value = modelState.getCurrentMillingData;
+  console.log(millingList.value);
   isMillingExist.value = millingList.value.length > 0 && !product.GLASS[0];
 
   // console.log(millingList.value, "MILLING_0");
@@ -89,11 +94,19 @@ const onSelectMaterial = (data) => {
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
 
   glassList.value = modelState.getCurrentGlassData;
-  isGlassExist.value = glassList.value.length > 0;
+  isGlassExist.value = glassList.value.length > 0 && product.type_showcase[0] != null;
 
   /** Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value = patinaList.value.length > 0 && !product.GLASS[0];
+  isPatinaExist.value =
+    patinaList.value.length > 0 && !product.type_showcase[0];
+
+  /** @Витрины */
+
+  showcaseList.value = modelState.getCurrentShowcaseData;
+  isShowcaseExist.value = showcaseList.value.length > 0 && product.type_showcase[0] != null;
+
+  /**------------------------------ */
 
   currentSurfaceData.value = data;
 
@@ -117,6 +130,21 @@ const onSelectMaterial = (data) => {
       fasadeNdx: props.tabIndex,
     });
   }
+
+  if (isGlassExist.value) {
+    const { NAME, PREVIEW_PICTURE } = glassList.value[0];
+    currentGlassData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  } else {
+    currentGlassData.value = {};
+  }
+
+  if (isShowcaseExist.value) {
+    const { NAME, PREVIEW_PICTURE } = showcaseList.value[0];
+    console.log(PREVIEW_PICTURE);
+    currentShowcaseData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  } else {
+    currentShowcaseData.value = {};
+  }
 };
 
 const onSelectMilling = (data) => {
@@ -134,6 +162,10 @@ const onSelectPatina = (data) => {
 
 const onSelectGlass = (data) => {
   currentGlassData.value = data;
+};
+
+const onSelectShowcase = (data) => {
+  currentShowcaseData.value = data;
 };
 
 /** Удаление опций конфигурации */
@@ -174,6 +206,11 @@ const deleteSelectedOptions = (type: String) => {
     currentPatinaData.value = { name: "", imgSrc: null };
   }
 
+  if (type === "showcase") {
+    eventBus.emit("A:DeliteShowcase", props.tabIndex);
+    currentShowcaseData.value = { name: "", imgSrc: null };
+  }
+
   // if(type="glass"){
 
   // }
@@ -196,7 +233,7 @@ const update = () => {
   currentMillingData.value = {};
   currentPaletteData.value = {};
   currentPatinaData.value = {};
-  currentWindowsData.value = {};
+  currentShowcaseData.value = {};
   currentGlassData.value = {};
 
   isSurfaceSelected.value = false;
@@ -212,6 +249,9 @@ const update = () => {
 
   glassList.value = [];
   isGlassExist.value = false;
+
+  showcaseList.value = [];
+  isShowcaseExist.value = false;
 };
 
 const prepareData = () => {
@@ -220,7 +260,7 @@ const prepareData = () => {
   const currentFasadeData =
     productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
 
-  const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } =
+  const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS, SHOWCASE } =
     productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
 
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
@@ -240,14 +280,14 @@ const prepareData = () => {
     fasadeId: COLOR,
     productId: productId.value,
   });
-  modelState.createCurrentWindowsData({
+  modelState.createCurrentShowcaseData({
     fasadeId: COLOR,
     productId: productId.value,
   });
 
   if (dataOfFasadeType.ATTACH_MILLINGS[0] && !product.GLASS[0]) {
     millingList.value = modelState.getCurrentMillingData;
-    if (millingList.value.length > 0) isMillingExist.value = true;
+    isMillingExist.value = millingList.value.length > 0;
   }
 
   if (dataOfFasadeType.PALETTE[0]) {
@@ -257,14 +297,21 @@ const prepareData = () => {
 
   if (dataOfFasadeType.PATINA[0] && dataOfFasadeType.ATTACH_MILLINGS[0]) {
     patinaList.value = modelState.getCurrentPatinaData;
-    if (patinaList.value.length > 0) isPatinaExist.value = true;
+    isPatinaExist.value = patinaList.value.length > 0;
   }
   // console.log(dataOfFasadeType.ATTACH_GLASS , 'ATTACH_GLASS', product.GLASS[0])
 
-  if (dataOfFasadeType.ATTACH_GLASS[0] && product.GLASS[0]) {
+  if (dataOfFasadeType.ATTACH_GLASS[0] && product.GLASS[0] && product.type_showcase[0] != null) {
     glassList.value = modelState.getCurrentGlassData;
-    if (patinaList.value.length > 0) isGlassExist.value = true;
+    isGlassExist.value = patinaList.value.length > 0;
   }
+
+  if (dataOfFasadeType.type_showcase[0] && product.type_showcase[0] != null) {
+    showcaseList.value = modelState.getCurrentShowcaseData;
+    isShowcaseExist.value = showcaseList.value.length > 0;
+  }
+
+  console.log(dataOfFasadeType, "dataOfFasadeType");
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
   if (COLOR) {
@@ -272,7 +319,6 @@ const prepareData = () => {
     currentSurfaceData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     isSurfaceSelected.value = true;
   }
-
 
   if (MILLING) {
     const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
@@ -289,7 +335,7 @@ const prepareData = () => {
     isPalleteExist.value = true;
   }
 
-  if (PATINA) {
+  if (PATINA && !product.type_showcase[0]) {
     if (modelState.getCurrentPatinaData) {
       const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
         modelState.getCurrentPatinaData.find((patina) => patina.ID === PATINA);
@@ -299,11 +345,19 @@ const prepareData = () => {
   }
 
   if (GLASS) {
-    const { NAME, DETAIL_PICTURE } = modelState.getCurrentGlassData.find(
+    const { NAME, PREVIEW_PICTURE } = modelState.getCurrentGlassData.find(
       (glass) => glass.ID == GLASS
     );
-    currentGlassData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
+    currentGlassData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     isGlassExist.value = true;
+  }
+  if (SHOWCASE) {
+    const { NAME, PREVIEW_PICTURE } = modelState.getCurrentShowcaseData.find(
+      (showcase) => showcase.ID == SHOWCASE
+    );
+
+    currentShowcaseData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    isShowcaseExist.value = true;
   }
 };
 
@@ -314,7 +368,6 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-
   prepareData();
 });
 
@@ -378,6 +431,14 @@ onBeforeUnmount(() => {
         @choose-option="setCurrentEditableOption"
         @delete-choise="deleteSelectedOptions"
       />
+
+      <ConfigurationOption
+        v-if="isShowcaseExist"
+        :type="'showcase'"
+        :data="currentShowcaseData"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
+      />
     </div>
 
     <SurfaceRedactor
@@ -413,6 +474,13 @@ onBeforeUnmount(() => {
       :glassList="glassList"
       :tabIndex="props.tabIndex"
       @select_glass="onSelectGlass"
+    />
+
+    <ShowcaseRedactor
+      v-if="currentEditableOption === 'showcase'"
+      :showcaseList="showcaseList"
+      :tabIndex="props.tabIndex"
+      @select_showcase="onSelectShowcase"
     />
 
     <!-- <div class="container__list">
