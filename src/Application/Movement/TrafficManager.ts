@@ -99,8 +99,9 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
-            console.log('OBJ', object.userData);
-            
+            console.log('OBJ', object);
+            console.log('OBJ_userData', object.userData);
+
             // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // Обновление корзины при простом выборе/перемещении не требуется
@@ -142,7 +143,7 @@ export class TrafficManager {
 
         this.dragAndDropManager.updateRoomData(room)
         this.moveManager.updateRoomData(room)
- 
+
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
@@ -197,7 +198,7 @@ export class TrafficManager {
         } catch (e) {
             console.warn('Basket sync remove failed', e)
         }
-        
+
     }
 
     vueEvents() {
@@ -209,25 +210,27 @@ export class TrafficManager {
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
         this.events.on('A:RemoveModelFromBasket', (payload: any) => {
-          let target = payload?.product;
+            console.log(payload, 'payload')
 
-          if (!(target instanceof THREE.Object3D)) {
-            const basketId = payload?.basketId || payload?.BASKETID || payload?.id || payload;
+            let target = payload?.product;
 
-            // 1) Пробуем взять напрямую из RoomManager.contant по ключу id
-            if (!target && basketId && this.room && this.room.contant) {
-              const byId = (this.room.contant as any)[`${basketId}`];
-              if (byId) target = byId;
+            if (!(target instanceof THREE.Object3D)) {
+                const basketId = payload?.basketId || payload?.BASKETID || payload?.id || payload;
+
+                // 1) Пробуем взять напрямую из RoomManager.contant по ключу id
+                if (!target && basketId && this.room && this.room.contant) {
+                    const byId = (this.room.contant as any)[`${basketId}`];
+                    if (byId) target = byId;
+                }
+
+                // 2) Пробуем найти в сцене по id
+                if (!target && basketId && this.scene) {
+                    const byScene = this.scene.getObjectByProperty('id', basketId as any) as THREE.Object3D | undefined;
+                    if (byScene) target = byScene;
+                }
             }
 
-            // 2) Пробуем найти в сцене по id
-            if (!target && basketId && this.scene) {
-              const byScene = this.scene.getObjectByProperty('id', basketId as any) as THREE.Object3D | undefined;
-              if (byScene) target = byScene;
-            }
-          }
-
-          this.removeFromRoom({ product: target });
+            this.removeFromRoom({ product: target });
         });
 
     }
