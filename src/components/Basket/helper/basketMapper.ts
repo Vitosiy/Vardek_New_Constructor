@@ -38,7 +38,7 @@ export function createFacadeProps(objProps: any): IBasketFacade[] {
         if (fp.GLASS != null) result.GLASS = fp.GLASS;
         if (fp.PATINA != null) result.PATINA = fp.PATINA;
         if (fp.TYPE != null) result.TYPE = fp.TYPE;
-        if (fp.HANDLES != null) result.HANDLES = fp.HANDLES;
+        if (fp.HANDLES != null) result.HANDLES = {ID: fp.HANDLES.id};
         
         // Добавляем SIZE только если есть хотя бы одно измерение
         const size: any = {};
@@ -395,6 +395,14 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
   if (objProps.CONFIG.MODULE_COLOR != null) {
     props.MODULECOLOR = objProps.CONFIG.MODULE_COLOR;
+  }
+
+  if (objProps.RASPIL && objProps.RASPIL.length !== 0) {
+    props.RASPIL = objProps.RASPIL;
+  }
+
+  if (objProps.RASPIL.data && objProps.RASPIL.data.length > 1) {
+    props.USLUGI = ["98683"]
   }
 
 

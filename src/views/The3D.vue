@@ -132,8 +132,8 @@ const priceUpdateEvents  = [
     'A:UM-update',
     'A:Duplicate',
     'A:RemoveModel',
-    'A:close-modal-custom',
-    'close-modal'
+    // 'A:close-modal-custom',
+    // 'close-modal'
     
 ];
 
@@ -562,6 +562,7 @@ const removeModel = (model) => {
     controller.value = false;
     transformControlsValue.value = false;
   }
+   scheduleBasketSync();
 };
 
 /** Работа с переходящий рисунок */
@@ -643,8 +644,9 @@ const saveTableData = () => {
   CutSave.value = true;
 
   APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
+
   // Пересчёт после сохранения распила
-  // scheduleBasketSync();
+  scheduleBasketSync();
 };
 
 const openTableRedactor = () => {
