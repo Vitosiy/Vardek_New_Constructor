@@ -53,6 +53,7 @@ export interface IProjectParams {
     default_plinth_body?: number | null,
     default_plinth_color?: number | null
 
+
 }
 
 export interface IContentItem {

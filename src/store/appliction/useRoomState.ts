@@ -33,39 +33,40 @@ export const useRoomState = defineStore('RoomState', () => {
     // console.log('3D', schemeTransition.getSchemeTransitionData)
     const data = toRaw(schemeTransition.getSchemeTransitionData)
 
-    console.log(data, 'clone')
+    // console.log(data, 'clone')
 
-    const clone = data.map(item => {
-      return item
-    })
-
-
+    // const clone = data.map(item => {
+    //   return item
+    // })
 
 
-    const parseData = clone.map(elem => {
+    // const parseData = clone.map(elem => {
 
-      const content = JSON.stringify(elem.content)
-      return {
-        ...elem,
-        content: content
-      }
-    })
-    rooms.value = parseData
+    //   const content = JSON.stringify(elem.content)
+    //   return {
+    //     ...elem,
+    //     content: content
+    //   }
+    // })
+    // rooms.value = parseData
+    rooms.value = data
   }
 
   const convertDataTo2DConstuctor = () => {
-    const clone = rooms.value.map(item => {
-      return item
-    })
+    // const clone = rooms.value.map(item => {
+    //   return item
+    // })
 
-    const parseData = clone.map(elem => {
-      const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
-      return {
-        ...elem,
-        content: content
-      }
-    })
-    schemeTransition.setAppData(parseData)
+    // const parseData = clone.map(elem => {
+    //   const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+    //   return {
+    //     ...elem,
+    //     content: content
+    //   }
+    // })
+    // schemeTransition.setAppData(parseData)
+
+    schemeTransition.setAppData(rooms.value)
   }
 
   const converActions = {
@@ -135,15 +136,15 @@ export const useRoomState = defineStore('RoomState', () => {
   /** Возвращаем с использованием ID комнаты */
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
-    console.log(centerized)
+    console.log(centerized, 'centerized')
 
 
-    // const currentRoom = rooms.value.find(value => value.id === roomId)
+    const currentRoom = rooms.value.find(value => value.id === roomId)
 
-    // if (centerized) {
-    //   currentRoom.params = centerized?.params ?? currentRoom?.params;
-    //   currentRoom.content = centerized?.content ?? currentRoom?.content;
-    // }
+    if (centerized) {
+      currentRoom.params = centerized?.params ?? currentRoom?.params;
+      currentRoom.content = centerized?.content ?? currentRoom?.content;
+    }
 
     return rooms.value.find(value => value.id === roomId)
   }
