@@ -132,7 +132,7 @@ const priceUpdateEvents  = [
     'A:UM-update',
     'A:Duplicate',
     'A:RemoveModel',
-    // 'A:close-modal-custom',
+    'A:close-modal-custom',
     // 'close-modal'
     
 ];
