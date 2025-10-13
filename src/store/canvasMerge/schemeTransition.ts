@@ -419,7 +419,8 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	 * @returns {Array} Копия массива с данными комнат
 	 */
 	const getAllData = () => {
-		return JSON.parse(JSON.stringify(SchemeTransitionData.value));
+		// return JSON.parse(JSON.stringify(SchemeTransitionData.value));
+		return SchemeTransitionData.value
 	};
 
 	const clearStore = () => {
@@ -562,8 +563,9 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);
 		if (!data) return;
 
-		const roomData = JSON.parse(JSON.stringify(data));
+		// const roomData = JSON.parse(JSON.stringify(data));
 
+		const roomData = data
 		/*
 	  
 		// Если нет стен - возвращаем как есть

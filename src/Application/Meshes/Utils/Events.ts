@@ -46,7 +46,7 @@ export class MeshEvents extends BuildersHelper {
     buildProduct: BuildProduct
     buildUMProduct: BuildUniversalModule
     buildMilling: THREETypes.TMillingBuilder
-    buildWindow: THREETypes.TWindowBuilder
+    buildShowcase: THREETypes.TShowcaseBuilder
     buildPalette: THREETypes.TPaletteBulider
     buildAlum: THREETypes.TAlumBuilder
     buildUniformTexture: THREETypes.TUniformTextureBuilder
@@ -80,7 +80,8 @@ export class MeshEvents extends BuildersHelper {
     private onDeliteMilling: (fasadeNdx: number) => void;
     private onChangeMillingTotal: ({ data, type }: TDataWithType) => void;
 
-    private onChangeWindow: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onChangeShowcase: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onDeliteShowcase: (fasadeNdx: number) => void;
 
     private onDrawPatina: ({ data, fasadeNdx }: TDataWithNdx) => void;
     private onDelitePatina: (fasadeNdx: number) => void;
@@ -148,7 +149,8 @@ export class MeshEvents extends BuildersHelper {
         this.onDeliteMilling = this.deliteMilling.bind(root);
         this.onChangeMillingTotal = this.changeMillingTotal.bind(root);
 
-        this.onChangeWindow = this.changeWindow.bind(root);
+        this.onChangeShowcase = this.changeShowcase.bind(root);
+        this.onDeliteShowcase = this.deliteShowcase.bind(root)
 
         this.onDrawPatina = this.drawPatina.bind(root);
         this.onDelitePatina = this.delitePatina.bind(root);
@@ -173,7 +175,7 @@ export class MeshEvents extends BuildersHelper {
 
         this.buildMilling = this.buildProduct.milling_builder;
         this.buildPalette = this.buildProduct.palette_bulider;
-        this.buildWindow = this.buildProduct.window_builder;
+        this.buildShowcase = this.buildProduct.showcase_builder;
         this.buildAlum = this.buildProduct.alum_builder;
         this.buildUniformTexture = this.buildProduct.uniform_texture_builder;
         this.handlesBuilder = this.buildProduct.handles_builder;
@@ -233,6 +235,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
+            console.log('hhhhhhh')
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
             FASADE_PROPS[fasadeNdx].MILLING = globalMilling
@@ -331,11 +334,11 @@ export class MeshEvents extends BuildersHelper {
     }
 
     private handleWindowChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
-        const showcaseWindow = CONFIG.SHOWCASE;
+        const showcase = CONFIG.SHOWCASE;
         const milling = fasadeProp.MILLING
 
-        if (showcaseWindow.length > 0 && (fasadeProp.WINDOW === null || !incomingModel)) {
-            this.changeWindow({ data: showcaseWindow[0], fasadeNdx });
+        if (showcase.length > 0 && (fasadeProp.SHOWCASE === null || !incomingModel)) {
+            this.changeShowcase({ data: showcase[0], fasadeNdx });
         } else {
             Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
         }
@@ -505,7 +508,7 @@ export class MeshEvents extends BuildersHelper {
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE[fasadeNdx]
 
-        this.buildWindow.changeGlassColor({ fasade, glassId: data })
+        this.buildShowcase.changeGlassColor({ fasade, glassId: data })
 
         FASADE_PROPS[fasadeNdx].GLASS = data
 
@@ -568,6 +571,9 @@ export class MeshEvents extends BuildersHelper {
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
+                const showcase = el.userData.PROPS.CONFIG.PRODUCT_SHOWCASE
+                if (showcase) return
+
                 if (fasadeList.length > 0) {
                     fasadeList.forEach(async (_fasade, fasadeNdx) => {
                         this._currentMesh = el;
@@ -632,7 +638,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Витрина  */
     //------------------
 
-    changeWindow({ data, fasadeNdx }: TDataWithNdx) {
+    changeShowcase({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -649,7 +655,7 @@ export class MeshEvents extends BuildersHelper {
             FASADE_DEPTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_DEPTH)
         };
 
-        this.buildWindow.createWindow({
+        this.buildShowcase.createShowcase({
             fasade,
             fasadePosition,
             data,
@@ -659,11 +665,25 @@ export class MeshEvents extends BuildersHelper {
 
         // console.log(this.modelState.getCurrentGlassData, '-----GLAAS')
 
-        FASADE_PROPS[fasadeNdx].WINDOW = data
+        FASADE_PROPS[fasadeNdx].SHOWCASE = data
         FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
         FASADE_PROPS[fasadeNdx].GLASS = FASADE_PROPS[fasadeNdx].GLASS ?? '76033'
 
     }
+
+    deliteShowcase(fasadeNdx: number) {
+        if (!this._currentMesh) return;
+        const product = this._currentMesh
+        const { PROPS } = product.userData
+        const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
+        const { FASADE_PROPS } = CONFIG
+        const fasade = FASADE_PROPS[fasadeNdx]
+
+        this.changeMilling({ data: '1013628', fasadeNdx })
+        fasade.SHOWCASE = 1013628
+
+    }
+
 
     //------------------
     /** @Переходящий_рисунок  */
@@ -1034,8 +1054,12 @@ export class MeshEvents extends BuildersHelper {
             this.changeMillingTotal({ data, type })
         }
 
-        this.onChangeWindow = ({ data, fasadeNdx }) => {
-            this.changeWindow({ data, fasadeNdx });
+        this.onChangeShowcase = ({ data, fasadeNdx }) => {
+            this.changeShowcase({ data, fasadeNdx });
+        }
+
+        this.onDeliteShowcase = (fasadeNdx) => {
+            this.deliteShowcase(fasadeNdx)
         }
 
         this.onDrawPatina = (data) => {
@@ -1109,7 +1133,8 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:DeliteMilling', this.onDeliteMilling);
         this.events.on('A:ChangeMillingTotal', this.onChangeMillingTotal)
 
-        this.events.on('A:ChangeWindow', this.onChangeWindow);
+        this.events.on('A:ChangeShowcase', this.onChangeShowcase);
+        this.events.on("A:DeliteShowcase", this.onDeliteShowcase)
 
         this.events.on('A:DrawPatina', this.onDrawPatina);
         this.events.on('A:DelitePatina', this.onDelitePatina);
@@ -1147,7 +1172,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.off('A:ChangeMilling', this.onChangeMilling);
         this.events.off('A:DeliteMilling', this.onDeliteMilling);
 
-        this.events.off('A:ChangeWindow', this.onChangeWindow);
+        this.events.off('A:ChangeShowcase', this.onChangeShowcase);
 
         this.events.off('A:DrawPatina', this.onDrawPatina);
         this.events.off('A:DelitePatina', this.onDelitePatina);

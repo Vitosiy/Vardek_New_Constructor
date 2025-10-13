@@ -23,6 +23,8 @@ export class BuildersHelper extends GlobalsData {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
 
+        console.log(props.CONFIG.EXPRESSIONS)
+
         model_data = this.expressionsReplace(
             model_data,
             {
@@ -35,6 +37,8 @@ export class BuildersHelper extends GlobalsData {
                         props.EXPRESSIONS["#HORIZONT#"] || 78,  //78 - стандартная высота цоколя на случай отсутствия данных
             },
         )
+
+        console.log(model_data, 'model_data')
 
         model_data = this.expressionsReplace(
             model_data,
@@ -52,6 +56,7 @@ export class BuildersHelper extends GlobalsData {
                 PARAMS.HORIZONT ?? 78;
 
         const filling = this._FILLING[product.FILLING[0]] || {};
+        const { FASADE_PROPS } = PARAMS
 
         // Базовые подстановки
         const expressions: Record<string, any> = {
@@ -74,13 +79,19 @@ export class BuildersHelper extends GlobalsData {
             "#VSECTION_MIN#": filling.VSECTION_MIN,
         };
 
+        console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
+
+
         // Обработка фасадных размеров
         Object.entries(PARAMS.FASADE_SIZE).forEach(([key, value]) => {
-            expressions[`#${key}#`] = value;
-            if (key === "FASADESIZE1" || key === "FASADESIZE2") {
-                const idx = value as number;
+            const customKey = `FASADESIZE${key}`
+            console.log(FASADE_PROPS[key - 1], this._FASADESIZE, '{{value')
+
+            expressions[`#${customKey}#`] = FASADE_PROPS[key - 1].SIZES;
+            if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
+                const idx = FASADE_PROPS[key - 1].SIZES as number;
                 const size = this._FASADESIZE[idx];
-                const suffix = key.endsWith("1") ? "1" : "2";
+                const suffix = customKey.endsWith("1") ? "1" : "2";
                 expressions[`#FASADESIZEWIDTH${suffix}#`] = size.WIDTH;
                 expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
                 expressions[`#FASADESIZEDIFFWIDTH${suffix}#`] = size.DIFFWIDTH;
@@ -94,6 +105,8 @@ export class BuildersHelper extends GlobalsData {
             ? PARAMS.SIZE.depth
             : productData.depth;
 
+        console.log(depthCalc,productData,'depthCalc')
+
         const size = {
             width: parseInt(PARAMS.SIZE.width),
             height: parseInt(PARAMS.SIZE.height),
@@ -102,7 +115,11 @@ export class BuildersHelper extends GlobalsData {
 
         if (PARAMS.MODELID) {
             const modelData = this._MODELS[PARAMS.MODELID]
+            console.log(modelData, 'modelData')
+
             const model = this.expressionsReplace(modelData, expressions);
+            console.log(model, 'MODEL')
+
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));
             if (model.depth) size.depth = parseInt(eval(model.depth));
@@ -125,6 +142,9 @@ export class BuildersHelper extends GlobalsData {
 
     getExec(obj) {
         Object.entries(obj).forEach(([key, value]) => {
+            console.log(obj, 'obj')
+
+
             if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
                 obj[key] = value;
             } else {
@@ -360,6 +380,8 @@ export class BuildersHelper extends GlobalsData {
     }
 
     planarUV(geometry) {
+
+        console.log('OO')
 
         geometry.computeBoundingBox();
 

@@ -2,6 +2,7 @@
 
 import * as THREE from "three"
 import * as THREETypes from "@/types/types"
+import * as BufferGeometry from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { useAppData } from "@/store/appliction/useAppData"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 // import * as THREEInterfases from "@/types/interfases"
@@ -23,6 +24,7 @@ export class FasadeBuilder {
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
     menuStore: THREETypes.TMenuStore
     handlesBuilder: THREETypes.THandlesBuilder
+
 
     constructor(parent: THREETypes.TBuildProduct) {
         this.parent = parent
@@ -55,13 +57,12 @@ export class FasadeBuilder {
         const drowMode = this.menuStore.getDrowModeValue;
 
         const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
-        const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, SHOWCASE } = CONFIG;
+        const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, PRODUCT_SHOWCASE, SHOWCASE } = CONFIG;
         const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
 
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
         const modelType = CONFIG.MODEL?.type ?? "left";
-
 
         if (remove) {
             CONFIG.UNIFORM_TEXTURE = {
@@ -116,19 +117,20 @@ export class FasadeBuilder {
 
 
             const curFasade = FASADE[fasadeNdx]
+            curFasade.geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             if (remove) {
                 fasadeData.COLOR = 7397;
                 fasadeData.PALETTE = null;
                 fasadeData.SHOW = false;
                 fasadeData.GLASS = null;
                 fasadeData.PATINA = null;
-                fasadeData.WINDOW = null;
+                fasadeData.SHOWCASE = null;
                 fasadeData.HANDLES = this.handlesBuilder.restoreDefaultHandleData(fasadeData)
             }
             else {
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
+                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE ? fasadeData.SHOWCASE || SHOWCASE[0] : null;
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -137,7 +139,7 @@ export class FasadeBuilder {
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
                 }
-                
+
                 if (fasadeData.SHOW && !firstValuePall && fasadeData.PALETTE != null) {
                     fasadeData.PALETTE = null;
                 }
@@ -173,7 +175,7 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null) {
-          
+
                 const millingParams = remove ? 2462671 : fasadeData.MILLING;
                 if (remove) {
                     this.parent.milling_builder.createMillingFasade(
@@ -196,11 +198,11 @@ export class FasadeBuilder {
             }
 
             // Окно
-            if (fasadeData.WINDOW != null) {
-                this.parent.window_builder.createWindow({
+            if (fasadeData.SHOWCASE != null) {
+                this.parent.showcase_builder.createShowcase({
                     fasade: curFasade,
                     fasadePosition: curFasade.userData.trueSize,
-                    data: fasadeData.WINDOW,
+                    data: fasadeData.SHOWCASE,
                     defaultGeometry: FASADE_DEFAULT[fasadeNdx],
                     alum: FASADE_PROPS[fasadeNdx].ALUM
                 });
@@ -214,7 +216,7 @@ export class FasadeBuilder {
 
             // Цвет стекла
             if (fasadeData.GLASS != null) {
-                this.parent.window_builder.changeGlassColor({
+                this.parent.showcase_builder.changeGlassColor({
                     fasade: curFasade,
                     glassId: FASADE_PROPS[fasadeNdx].GLASS
                 });
@@ -257,7 +259,7 @@ export class FasadeBuilder {
 
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.WINDOW = fasadeData.SHOW ? SHOWCASE[0] : null;
+                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE ? fasadeData.SHOWCASE || SHOWCASE[0] : null;
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -274,7 +276,7 @@ export class FasadeBuilder {
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
                     fasadeData.MILLING = milling;
                 }
-                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
+                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE) {
                     fasadeData.MILLING = null;
                 }
 
@@ -354,11 +356,11 @@ export class FasadeBuilder {
             }
 
             // Окно
-            if (fasadeData.WINDOW != null) {
-                this.parent.window_builder.createWindow({
+            if (fasadeData.SHOWCASE != null) {
+                this.parent.showcase_builder.createShowcase({
                     fasade,
                     fasadePosition: fasade.userData.trueSize,
-                    data: fasadeData.WINDOW,
+                    data: fasadeData.SHOWCASE,
                     defaultGeometry: FASADE_DEFAULT[key],
                     alum: FASADE_PROPS[key].ALUM
                 });
@@ -372,7 +374,7 @@ export class FasadeBuilder {
 
             // Цвет стекла
             if (fasadeData.GLASS != null) {
-                this.parent.window_builder.changeGlassColor({
+                this.parent.showcase_builder.changeGlassColor({
                     fasade,
                     glassId: FASADE_PROPS[key].GLASS
                 });
@@ -434,7 +436,7 @@ export class FasadeBuilder {
             const fasadeModel = this._APP.MODELS[modelName];
             if (fasadeModel) {
                 // Создание фасада из модели
-                const fasade = this.parent.json_builder.createMesh({
+                let fasade = this.parent.json_builder.createMesh({
                     data: fasadeModel,
                     parent_size: {
                         x: this.parent.calculateFromString(fasade_position.FASADE_WIDTH ?? props.CONFIG.SIZE.width),
@@ -445,14 +447,34 @@ export class FasadeBuilder {
                         mZ: props.CONFIG.SIZE.depth
                     }
                 });
-                const created = fasade.children[0]
+
+                console.log( fasade.isObject3D, 'JJJ')
+
+                if (fasade.isObject3D) {
+
+                    const geometrys = []
+                    fasade.children.forEach((el, key) => {
+                        const clone = el.geometry.clone()
+                        el.updateMatrixWorld();
+                        clone.applyMatrix4(el.matrix)
+                        geometrys.push(clone)
+                        // this.parent.scene.add(new THREE.Mesh(clone, new THREE.MeshBasicMaterial({ color: "#ff0000" })))
+                    })
+
+                    const clonedMaterial = fasade.children[0].material
+                    const merged = BufferGeometry.mergeGeometries(geometrys, true);
+                    this.parent.planarUV(merged)
+
+                    fasade = new THREE.Mesh(merged, clonedMaterial);
+
+                }
+
 
                 fasade.userData.partPosition = this.uniformeTextureStartData[key];
                 if (curBodyExceptions) fasade.userData.curBodyExceptionsMaterial = curExceptionsMaterial.clone()
 
                 const aabb = new THREE.Box3().setFromObject(fasade);
                 const obb = new OBB().fromBox3(aabb);
-                // created.name = 'fasade'
                 fasade.userData.obb = obb
                 fasade.userData.curBodyExceptions = curBodyExceptions
                 fasade.name = 'fasade'

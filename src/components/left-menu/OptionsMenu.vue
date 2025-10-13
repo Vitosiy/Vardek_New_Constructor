@@ -20,18 +20,6 @@ import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import CatalogSVG from "../ui/svg/CatalogSVG.vue";
 import Accordion from "../ui/accordion/Accordion.vue";
 
-const controlBtn = [
-  { icon: "icon-t-45-l", size: "20", fontSize: 10, action: 0 },
-  { icon: "icon-t-90", size: "25", fontSize: 10, action: 1 },
-  { icon: "icon-t-45-r", size: "20", fontSize: 10, action: 2 },
-  { icon: "icon-l-90", size: "25", fontSize: 15, action: 3 },
-  { icon: "icon-centered", size: "25", fontSize: 25, action: 4 },
-  { icon: "icon-r-90", size: "25", fontSize: 15, action: 5 },
-  { icon: "icon-b-45-l", size: "20", fontSize: 10, action: 6 },
-  { icon: "icon-b-90", size: "25", fontSize: 10, action: 7 },
-  { icon: "icon-b-45-r", size: "20", fontSize: 10, action: 8 },
-];
-
 const eventBus = useEventBus();
 const store = useModelStore();
 
@@ -85,10 +73,6 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
 };
 
 onMounted(() => {
-  cameraBtn.value.forEach((el, key) => {
-    el.style.setProperty("--value", `${controlBtn[key].size}px`);
-    el.style.setProperty("--font", `${controlBtn[key].fontSize}px`);
-  });
 
   eventBus.on("A:Selected", () => {
     menuStore.closeMenu("roomPar");

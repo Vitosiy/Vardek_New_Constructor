@@ -21,7 +21,7 @@ import { Filters } from './Utils/Filters'
 import { JsonBuilder } from './JsonProductBuilder'
 import { ModelsBuilder } from './ModelsBuilder'
 import { MillingBuilder } from './MillingBuilder';
-import { WindowBuilder } from './WindowBuilder';
+import { ShowcaseBuilder } from './ShowcaseBuilder.ts';
 
 import { FasadeBuilder } from './FasadeBuilder';
 import { TableTopBuilder } from './TableTopBuilder/TableTopBuilder.ts';
@@ -45,13 +45,12 @@ export class BuildProduct extends BuildersHelper {
     roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
     modelState: ReturnType<typeof useModelState> = useModelState();
 
-
     ruler: THREETypes.TRuler
     filters: Filters;
     json_builder: JsonBuilder;
     models_builder: ModelsBuilder;
     milling_builder: MillingBuilder;
-    window_builder: WindowBuilder;
+    showcase_builder: ShowcaseBuilder;
     handles_builder: HandlesBuilder
     fasade_builder: FasadeBuilder;
     palette_bulider: PaletteBuilder
@@ -77,7 +76,7 @@ export class BuildProduct extends BuildersHelper {
         this.edge_builder = new EdgeBuilder(this);
         this.models_builder = new ModelsBuilder(this);
         this.milling_builder = new MillingBuilder(root);
-        this.window_builder = new WindowBuilder(root);
+        this.showcase_builder = new ShowcaseBuilder(root);
         this.palette_bulider = new PaletteBuilder(this);
         this.alum_builder = new AlumBuilder(this);
         this.uniform_texture_builder = new UniformTextureBuilder(root, this);
@@ -85,8 +84,6 @@ export class BuildProduct extends BuildersHelper {
         this.fasade_builder = new FasadeBuilder(this);
         this.tabletop_builder = new TableTopBuilder(this);
         this.plinth_builder = new PlinthBuilder(this)
-
-
     }
 
     get _currentProduct() {
@@ -229,7 +226,7 @@ export class BuildProduct extends BuildersHelper {
             ELEMENT_TYPE: elType,
             ID,
             FASADE_PROPS: [],
-            FASADE_SIZE: [],
+            FASADE_SIZE: {},
             FASADE_POSITIONS: [],
             FASADE_TYPE: [],
             HANDLES: {},
@@ -253,7 +250,8 @@ export class BuildProduct extends BuildersHelper {
             SHOWCASE: [],
             POSITION: null,
             PLINTH_ACTIONS: {},
-            ROTATION: null,
+            PRODUCT_SHOWCASE: null,
+            // ROTATION: null,
             UNIFORM_TEXTURE: {
                 group: null,
                 level: null,
@@ -275,7 +273,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (FASADE_SIZES?.length) {
-            PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, false) as any[];
+            PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, this._PRODUCTS[ID]) as any[];
         }
 
         if (FACADE?.[0]) {
@@ -288,6 +286,7 @@ export class BuildProduct extends BuildersHelper {
 
         if (type_showcase?.[0] != null) {
             PARAMS.SHOWCASE = [...type_showcase];
+            PARAMS.PRODUCT_SHOWCASE = type_showcase[0]
         }
 
         if (USLUGI?.[0] != null) {
@@ -330,18 +329,20 @@ export class BuildProduct extends BuildersHelper {
 
         if (size) {
             PROPS.CONFIG.SIZE = size;
-            this.getProductSize(CONFIG, size);
+            // this.getProductSize(CONFIG, size);
         }
 
         if (!modelData) return;
+
+        console.log(modelData,'modelData')
 
         const data = this.createModelData(modelData, PROPS, modelSize);
         const curBodyExceptions = bodyExceptions?.includes(modelData.id)
 
         // Сборка частей
-        const { body, tempMaterial } = !this.isEmpty(modelData)
+        const { body, tempMaterial, move } = !this.isEmpty(modelData)
             ? this.createBody(data, PROPS, defaultConfig)
-            : { body: null, tempMaterial: null };
+            : { body: null, tempMaterial: null, move: null };
 
         const shelf = this._SHELF_POSITION[productId]
             ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
@@ -381,6 +382,7 @@ export class BuildProduct extends BuildersHelper {
         if (legs) legs.position.y = baseY;
         if (plinth) plinth.position.y = 0;
         if (body) {
+            body.position.set(move.x, move.y, move.z)
             body.position.y = baseY;
             body.visible = !curBodyExceptions;
         }
@@ -448,7 +450,7 @@ export class BuildProduct extends BuildersHelper {
 
     private createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultOptionsConfig) {
         const { CONFIG } = props;
-        const { ELEMENT_TYPE, MODULE_COLOR, ID } = CONFIG;
+        const { ELEMENT_TYPE, MODULE_COLOR, ID, SIZE } = CONFIG;
         const { defModuleUp, defModuleDown, moduleTop, moduleBottom } = defaultConfig
         const texture = this._PRODUCTS[ID].texture;
 
@@ -471,8 +473,9 @@ export class BuildProduct extends BuildersHelper {
         const moduleColor = this._FASADE[moduleColorId];
         let left, right, top, back;
 
-        const {BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR} = CONFIG;
-        if(TOPFASADECOLOR?.SHOW) {
+        const { BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR } = CONFIG;
+
+        if (TOPFASADECOLOR?.SHOW) {
             let moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor.DEPTH
             top = this._FASADE[TOPFASADECOLOR.COLOR]
 
@@ -484,7 +487,7 @@ export class BuildProduct extends BuildersHelper {
             TOPFASADECOLOR.depth = topFasade_depth
             TOPFASADECOLOR.thickness = topFasade_thickness
 
-            let startPos =  this.getStartPosition(CONFIG.SIZE);
+            let startPos = this.getStartPosition(CONFIG.SIZE);
 
             data.json.items.push({
                 id: 'top_fasade',
@@ -497,7 +500,7 @@ export class BuildProduct extends BuildersHelper {
                         "z": topFasade_depth
                     }
                 },
-                "rotation": {"x": 0, "y": 0, "z": 0},
+                "rotation": { "x": 0, "y": 0, "z": 0 },
                 "position": {
                     "x": 0,
                     "y": startPos.y + CONFIG.SIZE.height + top.DEPTH / 2,
@@ -505,22 +508,22 @@ export class BuildProduct extends BuildersHelper {
                 }
             })
 
-            if(TOPFASADECOLOR.PALETTE)
+            if (TOPFASADECOLOR.PALETTE)
                 top = this._PALETTE[TOPFASADECOLOR.PALETTE]
         }
-        if(LEFTSIDECOLOR?.SHOW) {
+        if (LEFTSIDECOLOR?.SHOW) {
             left = this._FASADE[LEFTSIDECOLOR.COLOR]
-            if(LEFTSIDECOLOR.PALETTE)
+            if (LEFTSIDECOLOR.PALETTE)
                 left = this._PALETTE[LEFTSIDECOLOR.PALETTE]
         }
-        if(RIGHTSIDECOLOR?.SHOW) {
+        if (RIGHTSIDECOLOR?.SHOW) {
             right = this._FASADE[RIGHTSIDECOLOR.COLOR]
-            if(RIGHTSIDECOLOR.PALETTE)
+            if (RIGHTSIDECOLOR.PALETTE)
                 right = this._PALETTE[RIGHTSIDECOLOR.PALETTE]
         }
-        if(BACKWALL?.SHOW) {
+        if (BACKWALL?.SHOW) {
             back = this._FASADE[BACKWALL.COLOR]
-            if(BACKWALL.PALETTE)
+            if (BACKWALL.PALETTE)
                 back = this._PALETTE[BACKWALL.PALETTE]
         }
 
@@ -534,7 +537,7 @@ export class BuildProduct extends BuildersHelper {
         });
 
         const edge = this.edge_builder.createEdge(body);
-        
+
         body.add(edge)
 
         const { geometryType } = body.userData;
@@ -561,11 +564,12 @@ export class BuildProduct extends BuildersHelper {
         body.userData.MATERIAL_TYPE = data.json.material.type;
 
         const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z));
-        body.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
-                child.geometry.translate(move);
-            }
-        });
+        console.log(move, data, 'CORRECT')
+        // body.traverse((child) => {
+        //     if (child instanceof THREE.Mesh) {
+        //         child.geometry.translate(move);
+        //     }
+        // });
 
         props.BODY = body;
 
@@ -578,7 +582,7 @@ export class BuildProduct extends BuildersHelper {
 
         props.BODY_DEFAULT = body.clone();
 
-        return { body, tempMaterial: body.children[0]?.material };
+        return { body, tempMaterial: body.children[0]?.material, move };
     }
 
     /** Создание полок */
@@ -589,10 +593,14 @@ export class BuildProduct extends BuildersHelper {
         shelfs: THREEInterfases.IShelfData,
         material?: Material
     ) {
+
+        console.log(props.CONFIG.SIZE, 'CONFIG')
         const { depth, width: initWidth, height } = props.CONFIG.SIZE;
         const correction = shelfs.WIDTH_CORRECTION;
         const startPos = this.getStartPosition(props.CONFIG.SIZE);
         const parent = new THREE.Object3D();
+
+        console.log(shelfs, 'SHELFS')
 
         // Выбор материала
         const materialMap: Record<string, Material> = {

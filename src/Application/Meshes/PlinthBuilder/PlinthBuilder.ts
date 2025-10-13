@@ -68,9 +68,11 @@ export class PlinthBuilder {
 
         if (havePlinth) {
             Object.values(havePlinth).forEach(el => {
+                console.log(el.width, 'el.width')
+
                 const position = this.buildProduct.getExec(el.position);
                 const rotation = this.buildProduct.getExec(el.rotation);
-                const plinthWidth = this.buildProduct.getExec(el.width)
+                const plinthWidth = this.buildProduct.calculateFromString(el.width)
 
                 const model = this.createPlinth(plinthWidth, plinthProd, plinthModel, material, startPosition);
                 model.position.set(position.x, startPosition.y, position.z);
@@ -129,7 +131,7 @@ export class PlinthBuilder {
             front: {
                 widthOffset: 0,
                 posX: 0,
-                posZ: depthHalf - offset,
+                posZ: depthHalf - offset * 1.8,
                 rotY: 0
             },
             left: {
