@@ -305,6 +305,7 @@ export class RoomManager extends Room {
 
         const data = {
             id: item.userData.globalData,
+            basketId: item.userData.basketId,
             position: item.position.clone(),
             rotation: item.rotation.clone(),
             obb: item.userData.obb,

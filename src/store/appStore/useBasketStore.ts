@@ -65,7 +65,7 @@ export const useBasketStore = defineStore("basket", () => {
       .map(([key, obj]: [string, any]) => createBasketItem(
         obj.data,
         mainConstructor.value.length,
-        key
+         obj.basketId
       ));
 
     mainConstructor.value = dataForGetPrices;
@@ -176,20 +176,25 @@ export const useBasketStore = defineStore("basket", () => {
         mainCatalog.value.splice(index, 1);
       }
     } else if (type === 'scene') {
-      const index = mainConstructor.value.findIndex(item => item.BASKETID === idBasket);
+      console.log(mainConstructor.value, 'mainConstructor.value', idBasket, '---idBasket')
+
+      const index = mainConstructor.value.findIndex(item => item.BASKETID === parseInt(idBasket));
       if (index !== -1) {
         mainConstructor.value.splice(index, 1);
       }
 
 
-      const roomContantData = useRoomContantData().getRoomContantData;
-      const { setRoomContantData } = useRoomContantData();
+      // const roomContantData = useRoomContantData().getRoomContantData;
+      // const { setRoomContantData } = useRoomContantData();
+      const roomContantData = JSON.parse((useRoomContantData().getRoomContantDataForBasket))
 
       const map: any = roomContantData as any;
       const item: any = map?.[idBasket];
       const object3D = item?.object;
 
-      useEventBus().emit('A:RemoveModelFromBasket', { product: object3D, basketId: idBasket });
+      console.log(map, item, object3D,'object3D')
+
+      useEventBus().emit('A:RemoveModelFromBasket', { product: null, basketId: idBasket });
 
       if (item) {
         const newMap: any = { ...(map || {}) };

@@ -76,6 +76,7 @@ export class SetObject {
 
         this.scene.add(object);
         object.userData.aabb = new THREE.Box3().setFromObject(object);
+        object.userData.basketId = object.id
 
         /** Добавляем helper */
         object.userData.helper ? this.scene.add(object.userData.helper) : ''
