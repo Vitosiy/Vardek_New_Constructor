@@ -65,6 +65,7 @@ export class World {
 
 
         if (this.roomState.getRooms.length > 0) {
+            console.log('LOAD')
             const startRoomId = this.roomState.getRooms[0].id
             this.loadRoom(startRoomId)
         }
@@ -125,9 +126,9 @@ export class World {
             })
 
             const rooms = this.roomState.getRooms
-            // console.log(rooms)
+            console.log(rooms)
 
-            this.sceneState.updateProjectParams({ rooms })
+            this.sceneState.updateProjectParams({ rooms: rooms })
             this.roomState.setCurrentRoomId(roomId)
             return
         }
@@ -141,6 +142,7 @@ export class World {
 
         this.roomState.updateRoom(roomId, contant, roomParams)
         const rooms = this.roomState.getRooms
+               console.log(rooms)
         // console.log(rooms, 'ROOMS')
         this.sceneState.updateProjectParams({ rooms })
 

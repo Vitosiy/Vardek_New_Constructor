@@ -94,16 +94,17 @@ const onSelectMaterial = (data) => {
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
 
   glassList.value = modelState.getCurrentGlassData;
-  isGlassExist.value = glassList.value.length > 0;
+  isGlassExist.value = glassList.value.length > 0 && product.type_showcase[0] != null;
 
   /** Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value = patinaList.value.length > 0 && !product.GLASS[0];
+  isPatinaExist.value =
+    patinaList.value.length > 0 && !product.type_showcase[0];
 
   /** @Витрины */
 
   showcaseList.value = modelState.getCurrentShowcaseData;
-  isShowcaseExist.value = showcaseList.value.length > 0;
+  isShowcaseExist.value = showcaseList.value.length > 0 && product.type_showcase[0] != null;
 
   /**------------------------------ */
 
@@ -300,12 +301,12 @@ const prepareData = () => {
   }
   // console.log(dataOfFasadeType.ATTACH_GLASS , 'ATTACH_GLASS', product.GLASS[0])
 
-  if (dataOfFasadeType.ATTACH_GLASS[0] && product.GLASS[0]) {
+  if (dataOfFasadeType.ATTACH_GLASS[0] && product.GLASS[0] && product.type_showcase[0] != null) {
     glassList.value = modelState.getCurrentGlassData;
     isGlassExist.value = patinaList.value.length > 0;
   }
 
-  if (dataOfFasadeType.type_showcase[0] && product.type_showcase[0]) {
+  if (dataOfFasadeType.type_showcase[0] && product.type_showcase[0] != null) {
     showcaseList.value = modelState.getCurrentShowcaseData;
     isShowcaseExist.value = showcaseList.value.length > 0;
   }
@@ -334,7 +335,7 @@ const prepareData = () => {
     isPalleteExist.value = true;
   }
 
-  if (PATINA) {
+  if (PATINA && !product.type_showcase[0]) {
     if (modelState.getCurrentPatinaData) {
       const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
         modelState.getCurrentPatinaData.find((patina) => patina.ID === PATINA);

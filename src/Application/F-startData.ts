@@ -77,8 +77,8 @@ const START_PROJECT_PARAMS = {
                     "side": 0
                 }
             ],
-            floor: 44013,
-            wall: 44128,
+            floor: 44035,
+            wall: 85074,
         },
         content: [],
     }),

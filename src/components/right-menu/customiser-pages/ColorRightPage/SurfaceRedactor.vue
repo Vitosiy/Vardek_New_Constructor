@@ -80,7 +80,6 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   modelState.createCurrentShowcaseData({ fasadeId: ID, productId });
   modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
 
-
   const transitionT = checkTransitionTexture(data.ID);
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
@@ -98,12 +97,16 @@ const onSearchChange = (e) => {
 };
 
 const checkTransitionTexture = (id: number) => {
-  const start = modelState.getCurrentModelFasadesData.filter(
+  const prepare = modelState.getCurrentModelFasadesData.filter(
     (el) => el.NAME === "Шпон Вардек 19мм"
-  )[0].FASADES;
+  );
+
+  if (prepare.length == 0) return false;
+
+  const start = prepare[0].FASADES;
 
   if (!start) return false;
-  return start.includes(id)
+  return start.includes(id);
 };
 </script>
 

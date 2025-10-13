@@ -81,7 +81,7 @@ export class MeshEvents extends BuildersHelper {
     private onChangeMillingTotal: ({ data, type }: TDataWithType) => void;
 
     private onChangeShowcase: ({ data, fasadeNdx }: TDataWithNdx) => void;
-    private onDeliteShowcase:  (fasadeNdx: number) => void;
+    private onDeliteShowcase: (fasadeNdx: number) => void;
 
     private onDrawPatina: ({ data, fasadeNdx }: TDataWithNdx) => void;
     private onDelitePatina: (fasadeNdx: number) => void;
@@ -571,6 +571,9 @@ export class MeshEvents extends BuildersHelper {
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
+                const showcase = el.userData.PROPS.CONFIG.PRODUCT_SHOWCASE
+                if (showcase) return
+
                 if (fasadeList.length > 0) {
                     fasadeList.forEach(async (_fasade, fasadeNdx) => {
                         this._currentMesh = el;

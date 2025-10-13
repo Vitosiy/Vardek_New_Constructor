@@ -154,12 +154,6 @@ export class ShowcaseBuilder extends MillingBuilder {
             fasade.add(shapeMesh)
         }
 
-
-
-
-        // console.log(paths)
-
-
     }
 
 }  

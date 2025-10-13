@@ -116,6 +116,7 @@ export function useProjectAPI() {
       eventBus.emit('A:Save')
       
       const projectData = sceneState.getCurrentProjectParams
+      console.log(projectData, 'projectData')
       
       // Валидируем данные перед отправкой
       if (!validateProjectData(projectData)) {

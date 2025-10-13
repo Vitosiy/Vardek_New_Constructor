@@ -2,7 +2,7 @@
 // @ts-nocheck
 
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { useAppData } from "@/store/appliction/useAppData";
@@ -31,9 +31,17 @@ export const useRoomState = defineStore('RoomState', () => {
 
   const convertDataTo3DConstuctor = () => {
     // console.log('3D', schemeTransition.getSchemeTransitionData)
-    const clone = schemeTransition.getSchemeTransitionData.map(item => {
+    const data = toRaw(schemeTransition.getSchemeTransitionData)
+
+    console.log(data, 'clone')
+
+    const clone = data.map(item => {
       return item
     })
+
+
+
+
     const parseData = clone.map(elem => {
 
       const content = JSON.stringify(elem.content)
@@ -128,6 +136,8 @@ export const useRoomState = defineStore('RoomState', () => {
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
     console.log(centerized)
+
+
     // const currentRoom = rooms.value.find(value => value.id === roomId)
 
     // if (centerized) {
