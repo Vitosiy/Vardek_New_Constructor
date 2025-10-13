@@ -316,6 +316,9 @@ export class FasadeBuilder {
 
             fasade.userData.trueSize = sizeRec;
             fasade.userData.type = FASADE_TYPE;
+            if (FASADE_PROPS[key].SIZES.id) {
+                FASADE_PROPS[key].SIZES.params = sizeRec
+            }
 
             // Позиционирование в сцене
             this.setFasadePosition(fasade, fasadePositionData, modelType, startPosition, fasadeEdge);
@@ -448,7 +451,7 @@ export class FasadeBuilder {
                     }
                 });
 
-                console.log( fasade.isObject3D, 'JJJ')
+                console.log(fasade.isObject3D, 'JJJ')
 
                 if (fasade.isObject3D) {
 

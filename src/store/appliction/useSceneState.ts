@@ -41,40 +41,14 @@ export const useSceneState = defineStore('SceneState', () => {
         fasadsBottom: 'default_palit_bottom'
     }
 
-    // const externalMillingKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
-    //     fasadsTop: 'default_milling_top',
-    //     fasadsBottom: 'default_milling_bottom'
-    // }
-
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
-
-    // const quality = ref<TQuality[]>([{
-    //     lable: "Низкое",
-    //     value: "low",
-    // },
-    // {
-    //     lable: "Среднее",
-    //     value: "medium",
-    // },
-    // {
-    //     lable: "Высокое",
-    //     value: "hight",
-    // }
-
-    // ],)
-
-    // const lightRange = ref<TLightRange>({
-    //     pointLight: startParamsClone.lights.pointLight.intensity,
-    //     ambientLight: startParamsClone.lights.ambientLight.intensity
-    // })
 
     const updateProjectParams = ({
         rooms,
         camera,
         lights,
         height_clamp,
-
         default_table_color,
         table_top_type_auto,
         default_fasade_up,
@@ -93,6 +67,7 @@ export const useSceneState = defineStore('SceneState', () => {
         default_handles,
         default_plinth_body,
         default_plinth_color,
+        default_overlay_id,
         project_name
 
     }: IProjectParams) => {
@@ -119,6 +94,7 @@ export const useSceneState = defineStore('SceneState', () => {
             default_handles: default_handles ?? startProjectParams.value.default_handles,
             default_plinth_body: default_plinth_body ?? startProjectParams.value.default_plinth_body,
             default_plinth_color: default_plinth_color ?? startProjectParams.value.default_plinth_color,
+            default_overlay_id: default_overlay_id ?? startProjectParams.value.default_overlay_id,
             project_name: project_name ?? startProjectParams.value.project_name
 
         } as IProjectParams;
@@ -219,23 +195,39 @@ export const useSceneState = defineStore('SceneState', () => {
 
     }
 
-    const loadProjectFromData = (newProject: IProjectParams) => {
+    const loadProjectFromData = async (newProject: IProjectParams) => {
 
-        const clone = JSON.parse(JSON.stringify(newProject))
+        startProjectParams.value = newProject
 
-        startProjectParams.value = JSON.parse(JSON.stringify(newProject))
+        startParamsClone.value = newProject
 
-        startParamsClone.value = clone
+        startRoomData.value = newProject.rooms[0].params
 
-        startRoomData.value = clone.rooms[0].params
+        // startCameraData.value = newProject.camera
 
-        startCameraData.value = clone.camera
+        // startLightsDat.value = newProject.lights
 
-        startLightsDat.value = clone.lights
+        // startHeightClamp.value = newProject.height_clamp
 
-        startHeightClamp.value = clone.height_clamp
+        // currentProjectParams.value = newProject
 
-        currentProjectParams.value = clone
+
+
+        // const clone = JSON.parse(JSON.stringify(newProject))
+
+        // startProjectParams.value = JSON.parse(JSON.stringify(newProject))
+
+        // startParamsClone.value = clone
+
+        // startRoomData.value = clone.rooms[0].params
+
+        // startCameraData.value = clone.camera
+
+        // startLightsDat.value = clone.lights
+
+        // startHeightClamp.value = clone.height_clamp
+
+        // currentProjectParams.value = clone
     }
 
     const getStartProgectParams = computed(() => {

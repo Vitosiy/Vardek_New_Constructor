@@ -136,7 +136,10 @@ export class Filters extends GlobalsData {
                     position: handlerPosition,
                     drawer: fasadePosition.drawer
                 },
-                SIZES: sizes
+                SIZES: {
+                    id: sizes,
+                    params: {}
+                }
             }
 
             FASADE_PROPS.push(fasadeProps)

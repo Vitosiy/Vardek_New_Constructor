@@ -85,11 +85,13 @@ export class BuildersHelper extends GlobalsData {
         // Обработка фасадных размеров
         Object.entries(PARAMS.FASADE_SIZE).forEach(([key, value]) => {
             const customKey = `FASADESIZE${key}`
+
+
             console.log(FASADE_PROPS[key - 1], this._FASADESIZE, '{{value')
 
-            expressions[`#${customKey}#`] = FASADE_PROPS[key - 1].SIZES;
+            expressions[`#${customKey}#`] = FASADE_PROPS[key - 1].SIZES.id;
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
-                const idx = FASADE_PROPS[key - 1].SIZES as number;
+                const idx = FASADE_PROPS[key - 1].SIZES.id as number;
                 const size = this._FASADESIZE[idx];
                 const suffix = customKey.endsWith("1") ? "1" : "2";
                 expressions[`#FASADESIZEWIDTH${suffix}#`] = size.WIDTH;
