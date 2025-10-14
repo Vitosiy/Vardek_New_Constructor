@@ -39,6 +39,7 @@ export function createFacadeProps(objProps: any): IBasketFacade[] {
         if (fp.PATINA != null) result.PATINA = fp.PATINA;
         if (fp.TYPE != null) result.TYPE = fp.TYPE;
         if (fp.HANDLES != null) result.HANDLES = {ID: fp.HANDLES.id};
+        if (fp.SIZES != null) result.SIZES = fp.SIZES;
         
         // Добавляем SIZE только если есть хотя бы одно измерение
         const size: any = {};
