@@ -111,25 +111,30 @@ const CutCash = ref({});
 const CutSave = ref(false);
 
 // Список событий
-const priceUpdateEvents = [
-  // "A:Move",
-  // "A:Selected",
-  // "A:ContantLoaded",
-  // "A:ClearSelected",
-  // "A:ScreenPrint",
-  // "A:Take3DScreenshot"
-  // "U:PositionChanged",
-  "U:Drop",
-  // 'U:ChangeModule',
-  "U:Model-resize",
-  "U:ChangePaletteColor",
-  "U:ChangeMilling",
-  // "U:DrawPatina",
-  // "U:DeliteFasad",
-  "U:ChangeFasade",
-  "A:Disable-Uniform-Mode",
-  "A:UM-update",
-  "A:Duplicate",
+const priceUpdateEvents  = [
+    // "A:Move",
+    // "A:Selected",
+    // "A:ContantLoaded",
+    // "A:ClearSelected",
+    // "A:ScreenPrint",
+    // "A:Take3DScreenshot"
+    // "U:PositionChanged",
+    // "U:DrawPatina",
+    // "U:DeliteFasad",
+    // 'U:ChangeModule',
+    
+    "U:Drop",
+    "U:Model-resize",
+    "U:ChangePaletteColor",
+    "U:ChangeMilling",
+    'U:ChangeFasade',
+    'A:Disable-Uniform-Mode',
+    'A:UM-update',
+    'A:Duplicate',
+    'A:RemoveModel',
+    'A:close-modal-custom',
+    // 'close-modal'
+    
 ];
 
 onMounted(async () => {
@@ -243,20 +248,21 @@ const checkContantLoad = (state: boolean) => {
 };
 
 // Дебоунс пересчёта корзины
-// let basketDebounceTimer: any = null;
+let basketDebounceTimer: any = null;
 const scheduleBasketSync = async () => {
   const data = actions.value.save()
   roomContantData.value?.setRoomContantDataForBasket(data)
-  await nextTick();
-  basketStore.addFromScene();
-  // clearTimeout(basketDebounceTimer);
-  // basketDebounceTimer = setTimeout(() => {
-  //   try {
-  //     basketStore.addFromScene();
-  //   } catch (e) {
-  //     console.warn("Basket addFromScene debounce failed", e);
-  //   }
-  // }, 500);
+  console.log('data', JSON.parse(data))
+  // await nextTick();
+  // basketStore.addFromScene();
+  clearTimeout(basketDebounceTimer);
+  basketDebounceTimer = setTimeout(() => {
+    try {
+      basketStore.addFromScene();
+    } catch (e) {
+      console.warn("Basket addFromScene debounce failed", e);
+    }
+  }, 500);
 };
 
 const getMove = (move: boolean) => {
@@ -556,6 +562,7 @@ const removeModel = (model) => {
     controller.value = false;
     transformControlsValue.value = false;
   }
+   scheduleBasketSync();
 };
 
 /** Работа с переходящий рисунок */
@@ -637,8 +644,9 @@ const saveTableData = () => {
   CutSave.value = true;
 
   APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
+
   // Пересчёт после сохранения распила
-  // scheduleBasketSync();
+  scheduleBasketSync();
 };
 
 const openTableRedactor = () => {

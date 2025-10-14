@@ -34,6 +34,8 @@ const closeCustomiser = () => {
   if (uniformMode) {
     eventBus.emit("A:Disable-Uniform-Mode");
   }
+  console.log('1232121321');
+  eventBus.emit("A:close-modal-custom");
   customiserStore.hideCustomiserPopup();
 };
 

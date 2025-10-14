@@ -47,7 +47,8 @@
 
       <!-- Секция свойств товара тип каталог-->
       <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'"> -->
-      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'">
+      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog' || item?.product.TYPE === 'umscene'"> -->
+      <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 
           <div v-if="getPropDefinition(String(propKey))">
@@ -605,6 +606,8 @@ const shouldShowPropValue = (key: string, propVal: any) => {
 
 const formatPropValue = (key: string, propVal: any) => {
   const propDef = getPropDefinition(key);
+  console.log('propValpropVal', propVal);
+
   if (propDef && propDef.type === 'PRODUCTS') {
     if (propVal.ID) {
       return propVal.VALUE === null 
@@ -614,6 +617,9 @@ const formatPropValue = (key: string, propVal: any) => {
       return getProductInfo(propVal).NAME;
     }
   }
+  if(propVal.COLOR) {
+    return getTypeName(propDef?.type, propVal.COLOR);
+  } 
   return getTypeName(propDef?.type, propVal);
 };
 
@@ -786,6 +792,7 @@ function updateQuantity(id: string, type: string) {
 }
 
 const deleteProductInBusket = (id: string, type: string) => {
+  console.log(id, type)
   basketStore.removeFromBasket(id, type);
 }
 

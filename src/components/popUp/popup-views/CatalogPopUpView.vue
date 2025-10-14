@@ -310,7 +310,7 @@ const toggleShowAllSubCategories = () => {
   // padding: 20px;
   border-radius: 8px;
   box-sizing: border-box;
-  height: 851px; // Ограничиваем максимальную высоту попапа
+  height: 80vh; // Ограничиваем максимальную высоту попапа
   display: flex;
   flex-direction: column;
   
