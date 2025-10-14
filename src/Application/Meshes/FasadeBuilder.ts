@@ -316,9 +316,17 @@ export class FasadeBuilder {
 
             fasade.userData.trueSize = sizeRec;
             fasade.userData.type = FASADE_TYPE;
-            if (FASADE_PROPS[key].SIZES.id) {
-                FASADE_PROPS[key].SIZES.params = sizeRec
+
+            try {
+                if (FASADE_PROPS[key].SIZES.id) {
+                    FASADE_PROPS[key].SIZES.params = sizeRec
+                }
             }
+            catch (e) {
+                console.log('❌ Параметр SIZES.id не определён')
+            }
+
+
 
             // Позиционирование в сцене
             this.setFasadePosition(fasade, fasadePositionData, modelType, startPosition, fasadeEdge);

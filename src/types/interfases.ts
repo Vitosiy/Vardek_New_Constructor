@@ -27,7 +27,9 @@ declare global {
 //------------------
 
 export interface IProjectParams {
-    rooms?: IRoom[],
+    projectId: number | string | null,
+    type: string,
+    rooms: IRoom[],
     camera?: ICameraData,
     lights?: ILightsObjects,
     height_clamp?: number,

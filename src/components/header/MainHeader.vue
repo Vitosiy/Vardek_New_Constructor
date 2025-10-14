@@ -1,5 +1,5 @@
 <script setup lang="ts">
-//@ts-nocheck
+/**@ts-nocheck */
 import {
   onMounted,
   onBeforeUnmount,
@@ -134,7 +134,6 @@ const updateProject = async () => {
   };
 
   const resp = await postRequest(`${_UPDATE_PROJECT}`, data);
-
 };
 
 const createNewRoom = (value: string) => {
@@ -281,11 +280,12 @@ watch(
   () => route.path,
   async (newPath, oldPath) => {
     try {
+      roomState.routConvertData(newPath);
+
       menuStore.setRulerVisibility(true);
       menuStore.setDrowModeValue(false);
       modelState.setCurrentModel(null);
-
-      roomState.routConvertData(newPath);
+      menuStore.closeAllMenus();
 
       historyActions.value = false;
       restorLength.value = 0;
@@ -302,8 +302,8 @@ watch(
     } catch (error) {
       console.error("Ошибка при изменении маршрута в MainHeader:", error);
     }
-  },
-  { flush: "post", immediate: true }
+  }
+  // { flush: "post", immediate: true }
 );
 
 onBeforeUnmount(() => {
@@ -411,7 +411,9 @@ onBeforeUnmount(() => {
       <div class="header-utilitys">
         <div class="header-basket">
           <div class="header-utilitys-basket">
-            <p class="header-utilitys-basket-cost">{{ basketStore.totalPrice.toLocaleString('ru-RU') }} ₽</p>
+            <p class="header-utilitys-basket-cost">
+              {{ basketStore.totalPrice.toLocaleString("ru-RU") }} ₽
+            </p>
             <!-- <p class="header-utilitys-basket-cost">14 548 ₽</p> -->
           </div>
           <BuyBasketButton />

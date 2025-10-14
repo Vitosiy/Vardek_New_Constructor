@@ -493,7 +493,12 @@ export class RoomManager extends Room {
 
     async duplicateProd() {
         const curProd = this.root._trafficManager._currentObject
-        curProd.userData.current = false
+        try {
+            curProd.userData.current = false
+        }
+        catch (e) {
+            console.log('❌ Контекст userData.current потерян')
+        }
         const { MOUSE_POSITION } = curProd.userData
 
         const saved = await this.saveSingle(curProd, true)

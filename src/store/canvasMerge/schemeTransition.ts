@@ -569,7 +569,22 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	const getRoomDataFor3DScene = (idRoom: string | number): any => {
 		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);
+		console.log(data, 'IN SCHEME')
+
 		if (!data) return;
+
+		data.content = typeof data.content != 'string' ? JSON.stringify(data.content) : data.content
+
+		// const prepareData = data.map(elem => {
+		// 	const content = typeof elem.content != 'string' ? JSON.stringify(elem.content) : elem.content
+		// 	return {
+		// 		...elem,
+		// 		content: content
+		// 	}
+		// })
+
+
+
 
 		// const roomData = JSON.parse(JSON.stringify(data));
 
@@ -619,7 +634,18 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	};
 
 	const getSchemeTransitionData = computed(() => {
-		return SchemeTransitionData.value
+		const start = SchemeTransitionData.value
+
+		const prepareData = start.map(elem => {
+			const content = typeof elem.content != 'string' ? JSON.stringify(elem.content) : elem.content
+			return {
+				...elem,
+				content: content
+			}
+		})
+
+
+		return prepareData
 	})
 
 	const getWalls = computed(() => {

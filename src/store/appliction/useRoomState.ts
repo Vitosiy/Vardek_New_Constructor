@@ -79,10 +79,14 @@ export const useRoomState = defineStore('RoomState', () => {
   }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
-    rooms.value.push(room);
+    console.log(room, 'rooms.value')
+    const newValue = [...rooms.value, ...[room]]
+    rooms.value = newValue
   };
 
   const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes) => {
+    console.log(params, 'params')
+
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {

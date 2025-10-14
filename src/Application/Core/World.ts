@@ -65,7 +65,6 @@ export class World {
 
 
         if (this.roomState.getRooms.length > 0) {
-            console.log('LOAD')
             const startRoomId = this.roomState.getRooms[0].id
             this.loadRoom(startRoomId)
         }
@@ -115,7 +114,6 @@ export class World {
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
-
             const contant = this.room!.save() as string[]
 
             this.roomState.addRoom({
@@ -125,10 +123,10 @@ export class World {
                 content: contant
             })
 
-            const rooms = this.roomState.getRooms
-            console.log(rooms)
+            const newrooms = this.roomState.getRooms
+            console.log(newrooms, 'NEW')
 
-            this.sceneState.updateProjectParams({ rooms: rooms })
+            this.sceneState.updateProjectParams({ rooms: newrooms })
             this.roomState.setCurrentRoomId(roomId)
             return
         }
@@ -142,9 +140,9 @@ export class World {
 
         this.roomState.updateRoom(roomId, contant, roomParams)
         const rooms = this.roomState.getRooms
-               console.log(rooms)
+        console.log(rooms, 'HAVE')
         // console.log(rooms, 'ROOMS')
-        this.sceneState.updateProjectParams({ rooms })
+        this.sceneState.updateProjectParams({ rooms: rooms })
 
     }
 
