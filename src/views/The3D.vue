@@ -248,21 +248,21 @@ const checkContantLoad = (state: boolean) => {
 };
 
 // Дебоунс пересчёта корзины
-// let basketDebounceTimer: any = null;
+let basketDebounceTimer: any = null;
 const scheduleBasketSync = async () => {
   const data = actions.value.save()
   roomContantData.value?.setRoomContantDataForBasket(data)
   console.log('data', JSON.parse(data))
-  await nextTick();
-  basketStore.addFromScene();
-  // clearTimeout(basketDebounceTimer);
-  // basketDebounceTimer = setTimeout(() => {
-  //   try {
-  //     basketStore.addFromScene();
-  //   } catch (e) {
-  //     console.warn("Basket addFromScene debounce failed", e);
-  //   }
-  // }, 500);
+  // await nextTick();
+  // basketStore.addFromScene();
+  clearTimeout(basketDebounceTimer);
+  basketDebounceTimer = setTimeout(() => {
+    try {
+      basketStore.addFromScene();
+    } catch (e) {
+      console.warn("Basket addFromScene debounce failed", e);
+    }
+  }, 500);
 };
 
 const getMove = (move: boolean) => {

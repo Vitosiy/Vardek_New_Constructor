@@ -63,11 +63,29 @@ export const useBasketStore = defineStore("basket", () => {
     console.log('Object.entries(roomDataCopy)', Object.entries(roomDataCopy))
     const dataForGetPrices = Object.entries(roomDataCopy)
       .filter(([_, obj]) => obj.data.PRODUCT)
-      .map(([key, obj]: [string, any]) => createBasketItem(
-        obj.data,
-        mainConstructor.value.length,
-         obj.basketId
-      ));
+      .map(([key, obj]: [string, any]) => {
+
+        // if(obj.data.CONFIG.FASADE_PROPS) {
+        //   obj.data.CONFIG.FASADE_PROPS.forEach(el => {
+        //     console.log('212',el.HANDLES.id instanceof Number)
+        //     console.log('212',el.HANDLES.id)
+        //     if(typeof el.HANDLES.id === "number") {
+        //       console.log('212', el.HANDLES.id)
+        //       addFromCatalog({
+        //         ID :el.HANDLES.id,
+        //         IGNORE_SIZE:  0,
+        //         NOT_DISCOUNT: 1.25,
+        //         QUANTITY:1
+        //       })
+        //     }
+        //   })
+        // }
+        return createBasketItem(
+          obj.data,
+          mainConstructor.value.length,
+          obj.basketId
+        )
+      });
 
     mainConstructor.value = dataForGetPrices;
     console.log('dataForGetPrices', dataForGetPrices)

@@ -606,6 +606,8 @@ const shouldShowPropValue = (key: string, propVal: any) => {
 
 const formatPropValue = (key: string, propVal: any) => {
   const propDef = getPropDefinition(key);
+  console.log('propValpropVal', propVal);
+
   if (propDef && propDef.type === 'PRODUCTS') {
     if (propVal.ID) {
       return propVal.VALUE === null 
@@ -615,6 +617,9 @@ const formatPropValue = (key: string, propVal: any) => {
       return getProductInfo(propVal).NAME;
     }
   }
+  if(propVal.COLOR) {
+    return getTypeName(propDef?.type, propVal.COLOR);
+  } 
   return getTypeName(propDef?.type, propVal);
 };
 
