@@ -124,6 +124,7 @@ const priceUpdateEvents  = [
     // 'U:ChangeModule',
     
     "U:Drop",
+    "U:DropUM",
     "U:Model-resize",
     "U:ChangePaletteColor",
     "U:ChangeMilling",
@@ -247,6 +248,7 @@ const checkContantLoad = (state: boolean) => {
 const scheduleBasketSync = async () => {
   const data = actions.value.save()
   roomContantData.value?.setRoomContantDataForBasket(data)
+  console.log('data', JSON.parse(data))
   await nextTick();
   basketStore.addFromScene();
   basketStore.syncBasket();

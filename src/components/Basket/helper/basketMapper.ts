@@ -119,7 +119,7 @@ export function createUniformTexture(objProps: any) {
 function generateDoorsSimple(moduleData) {
     const DOORS = {};
     
-    moduleData.sections.forEach(section => {
+    moduleData?.sections?.forEach(section => {
         const sectionNum = section.number;
         DOORS[sectionNum] = {};
         

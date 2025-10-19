@@ -177,7 +177,7 @@ export class TrafficManager {
             // Синхронизируем корзину: удаляем товар, соответствующий удалённому объекту сцены
             try {
                 const basketStore = useBasketStore();
-                basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+                basketStore.removeItem('scene', String((removeObj as any).id));
             } catch (e) {
                 console.warn('Basket sync remove failed', e)
             }
@@ -195,7 +195,7 @@ export class TrafficManager {
         // Синхронизируем корзину для случая, когда пришёл не Object3D
         try {
             const basketStore = useBasketStore();
-            basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+            basketStore.removeItem('scene', String((removeObj as any).id));
         } catch (e) {
             console.warn('Basket sync remove failed', e)
         }

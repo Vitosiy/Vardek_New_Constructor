@@ -111,7 +111,8 @@ export class DragAndDropManager {
                                 x: point.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
                                 y: point.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
                             };
-
+                            
+                            this.eventBus.emit('U:DropUM')
 
                             //useModelState().setCurrentModel(object);
                         });

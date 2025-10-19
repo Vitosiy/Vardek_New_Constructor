@@ -5,10 +5,50 @@ import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage'
 import { useRoomContantData } from '../appliction/useRoomContantData'
 import { createBasketItem } from '@/components/Basket/helper/basketMapper'
 import type { IBasket, IBasketResponse, BasketItemType } from '@/types/basket'
+import { number } from 'yup'
 
 // Вспомогательные функции
+
+// Генерация ID
 const generateUniqueId = (): string => 
   `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+// Формирования массива ручик фасадов
+const countHandles = (items: any[]): number[] => {
+  const handles: number[] = []
+  
+  items.forEach(item => {
+    item.PROPS?.FASADE?.forEach(facade => {
+      if(facade.HANDLES?.ID && facade.HANDLES?.ID !== 69920) {
+        handles.push(facade.HANDLES.ID)
+      }
+    })
+  })
+  
+  return handles
+}
+
+// Преобразование данных для получение цены ручик фасадов
+const transformCountHandles = (numbers: number[]) => {
+    const countMap = new Map();
+
+    // Подсчитываем повторения
+    numbers.forEach(num => {
+        countMap.set(num, (countMap.get(num) || 0) + 1);
+    });
+
+    return Array.from(countMap.entries()).map(([id, quantity]) => ({
+      BASKETID: generateUniqueId(),
+      PRODUCT: id,
+      PROPS: {
+        ID: id,
+        IGNORE_SIZE: 0,
+        NOT_DISCOUNT: 1.25,
+      },
+      QUANTITY: quantity,
+      TYPE: "catalog",
+    }));
+}
 
 export const useBasketStore = defineStore('basket', () => {
   // Композиции
@@ -17,6 +57,7 @@ export const useBasketStore = defineStore('basket', () => {
 
   // State
   const basketData = ref<IBasketResponse | null>(null)
+  const handlesData = ref<number[] | null>(null)
 
   // Инициализация
   // initializeFromStorage()
@@ -44,7 +85,6 @@ export const useBasketStore = defineStore('basket', () => {
   const addFromScene = () => {
     const roomContantData = useRoomContantData().getRoomContantDataForBasket
     const roomDataCopy = JSON.parse(roomContantData)
-
     const sceneItems = Object.entries(roomDataCopy)
       .filter(([_, obj]: [string, any]) => obj.data.PRODUCT)
       .map(([key, obj]: [string, any]) => 
@@ -83,7 +123,12 @@ export const useBasketStore = defineStore('basket', () => {
   }
 
   const syncBasket = async (): Promise<IBasketResponse | null> => {
-    const result = await syncBasketWithServer(allBasketItems.value)
+    const currentHandlesData = countHandles(mainConstructor.value)
+    const data = currentHandlesData.length > 0 
+        ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
+        : allBasketItems.value
+
+    const result = await syncBasketWithServer(data)
     if (result) {
       basketData.value = result
     }
@@ -94,6 +139,8 @@ export const useBasketStore = defineStore('basket', () => {
     const result = await syncInvoice(allBasketItems.value)
     return result
   }
+
+
 
   return {
     // State

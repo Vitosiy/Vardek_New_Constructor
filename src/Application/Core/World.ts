@@ -122,7 +122,7 @@ export class World {
                 id: roomId, // Присваиваем id 
                 label: name ?? `Комната N:${this.roomState.rooms.length + 1}`,
                 params: this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes,
-                content: contant
+                content: contant,
             })
 
             const rooms = this.roomState.getRooms
