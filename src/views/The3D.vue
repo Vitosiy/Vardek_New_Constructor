@@ -131,10 +131,7 @@ const priceUpdateEvents  = [
     'A:Disable-Uniform-Mode',
     'A:UM-update',
     'A:Duplicate',
-    'A:RemoveModel',
-    'A:close-modal-custom',
-    // 'close-modal'
-    
+    'A:RemoveModelSuccses',
 ];
 
 onMounted(async () => {
@@ -233,7 +230,6 @@ onUnmounted(() => {
 });
 
 const commonEventHandler = (data) => {
-
   console.log("Обновление корзиный", data);
   try {
     scheduleBasketSync();
@@ -247,22 +243,13 @@ const checkContantLoad = (state: boolean) => {
   activePreloader.value = state;
 };
 
-// Дебоунс пересчёта корзины
-let basketDebounceTimer: any = null;
+// Пересчёта корзины
 const scheduleBasketSync = async () => {
   const data = actions.value.save()
   roomContantData.value?.setRoomContantDataForBasket(data)
-  console.log('data', JSON.parse(data))
-  // await nextTick();
-  // basketStore.addFromScene();
-  clearTimeout(basketDebounceTimer);
-  basketDebounceTimer = setTimeout(() => {
-    try {
-      basketStore.addFromScene();
-    } catch (e) {
-      console.warn("Basket addFromScene debounce failed", e);
-    }
-  }, 500);
+  await nextTick();
+  basketStore.addFromScene();
+  basketStore.syncBasket();
 };
 
 const getMove = (move: boolean) => {
@@ -562,7 +549,6 @@ const removeModel = (model) => {
     controller.value = false;
     transformControlsValue.value = false;
   }
-   scheduleBasketSync();
 };
 
 /** Работа с переходящий рисунок */

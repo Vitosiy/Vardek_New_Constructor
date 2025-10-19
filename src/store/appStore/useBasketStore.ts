@@ -1,277 +1,119 @@
-//@ts-nocheck
-import { defineStore } from "pinia";
-import { ref, computed } from "vue";
-import { useRoomContantData } from "../appliction/useRoomContantData";
-import { BasketService } from "@/services/basketService";
-import { createBasketItem } from "@/components/Basket/helper/basketMapper";
-import { useEventBus } from "../appliction/useEventBus";
-import { IBasket, IBasketResponse } from "@/types/basket";
+import { defineStore } from 'pinia'
+import { computed, readonly, ref } from 'vue'
+import { useBasketApi } from '@/store/appStore/basket/useBasketApi'
+import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage'
+import { useRoomContantData } from '../appliction/useRoomContantData'
+import { createBasketItem } from '@/components/Basket/helper/basketMapper'
+import type { IBasket, IBasketResponse, BasketItemType } from '@/types/basket'
 
-export const useBasketStore = defineStore("basket", () => {
-  // Реактивные ссылки для данных
-  const mainConstructor = ref<IBasket[]>([]);
-  const mainCatalog = ref<IBasket[]>([]);
-  const basketData = ref<IBasketResponse | null>(null);
-  const loading = ref<boolean>(false);
-  const error = ref<string | null>(null);
+// Вспомогательные функции
+const generateUniqueId = (): string => 
+  `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-  // Восстановление из localStorage
-  // function initializeFromStorage() {
-  //   const saved = localStorage.getItem("basket-data");
-  //   if (saved) {
-  //     try {
-  //       const parsed = JSON.parse(saved);
-  //       mainConstructor.value = parsed.mainConstructor || [];
-  //       mainCatalog.value = parsed.mainCatalog || [];
-  //     } catch (e) {
-  //       console.error("Error parsing saved basket data", e);
-  //     }
-  //   }
-  // }
-  // initializeFromStorage();
+export const useBasketStore = defineStore('basket', () => {
+  // Композиции
+  const { mainConstructor, mainCatalog, initializeFromStorage, clearStorage } = useBasketStorage()
+  const { loading, error, syncBasketWithServer, syncInvoice } = useBasketApi()
 
-  // Вычисляемые свойства
-  const totalItems = computed(() =>
-    mainConstructor.value.length + mainCatalog.value.length
-  );
+  // State
+  const basketData = ref<IBasketResponse | null>(null)
 
-  const totalPrice = computed(() => basketData.value?.basket?.sum ?? 0);
-  const totalOldPrice = computed(() => basketData.value?.basket?.sumOld ?? 0);
+  // Инициализация
+  // initializeFromStorage()
 
-  // Функции
-  function addFromCatalog(data: any) {
-    const generateUniqueId = () =>
-      `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  // Getters
+  const totalItems = computed(() => mainConstructor.value.length + mainCatalog.value.length)
+  const totalPrice = computed(() => basketData.value?.basket?.sum ?? 0)
+  const totalOldPrice = computed(() => basketData.value?.basket?.sumOld ?? 0)
+  const allBasketItems = computed(() => [...mainConstructor.value, ...mainCatalog.value])
 
-    const obj = {
+  // Actions
+  const addFromCatalog = (productData: any) => {
+    const basketItem: IBasket = {
       BASKETID: generateUniqueId(),
-      PRODUCT: data.ID,
-      PROPS: data,
-      QUANTITY: data.QUANTITY,
-      TYPE: "catalog",
-    };
-
-    mainCatalog.value.push(obj);
-    syncBasket();
-  }
-
-  async function addFromScene() {
-    const roomContantData = useRoomContantData().getRoomContantDataForBasket;
-
-    const roomDataCopy = JSON.parse(roomContantData);
-
-    console.log('Object.entries(roomDataCopy)', Object.entries(roomDataCopy))
-    const dataForGetPrices = Object.entries(roomDataCopy)
-      .filter(([_, obj]) => obj.data.PRODUCT)
-      .map(([key, obj]: [string, any]) => {
-
-        // if(obj.data.CONFIG.FASADE_PROPS) {
-        //   obj.data.CONFIG.FASADE_PROPS.forEach(el => {
-        //     console.log('212',el.HANDLES.id instanceof Number)
-        //     console.log('212',el.HANDLES.id)
-        //     if(typeof el.HANDLES.id === "number") {
-        //       console.log('212', el.HANDLES.id)
-        //       addFromCatalog({
-        //         ID :el.HANDLES.id,
-        //         IGNORE_SIZE:  0,
-        //         NOT_DISCOUNT: 1.25,
-        //         QUANTITY:1
-        //       })
-        //     }
-        //   })
-        // }
-        return createBasketItem(
-          obj.data,
-          mainConstructor.value.length,
-          obj.basketId
-        )
-      });
-
-    mainConstructor.value = dataForGetPrices;
-    console.log('dataForGetPrices', dataForGetPrices)
-    syncBasket();
-  }
-
-  function removeItem(type: "mainConstructor" | "mainCatalog", basketId: string) {
-    if (type === "mainConstructor") {
-      const index = mainConstructor.value.findIndex(item => item.BASKETID === basketId);
-      if (index !== -1) {
-        mainConstructor.value.splice(index, 1);
-      }
-    } else {
-      const index = mainCatalog.value.findIndex(item => item.BASKETID === basketId);
-      if (index !== -1) {
-        mainCatalog.value.splice(index, 1);
-      }
+      PRODUCT: productData.ID,
+      PROPS: productData,
+      QUANTITY: productData.QUANTITY,
+      TYPE: 'catalog',
     }
-    syncBasket();
+
+    mainCatalog.value.push(basketItem)
   }
 
-  function clearBasket() {
-    mainConstructor.value = [];
-    mainCatalog.value = [];
-    basketData.value = null;
-    localStorage.removeItem("basket-data");
+  const addFromScene = () => {
+    const roomContantData = useRoomContantData().getRoomContantDataForBasket
+    const roomDataCopy = JSON.parse(roomContantData)
+
+    const sceneItems = Object.entries(roomDataCopy)
+      .filter(([_, obj]: [string, any]) => obj.data.PRODUCT)
+      .map(([key, obj]: [string, any]) => 
+        createBasketItem(obj.data, mainConstructor.value.length, obj.basketId)
+      )
+    mainConstructor.value = sceneItems
   }
 
-  async function syncBasket() {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      // Сохраняем в localStorage
-      // localStorage.setItem("basket-data", JSON.stringify({
-      //   mainConstructor: mainConstructor.value,
-      //   mainCatalog: mainCatalog.value
-      // }));
-
-      const merged = [...mainConstructor.value, ...mainCatalog.value];
-
-      if (merged.length === 0) {
-        basketData.value = null;
-        return;
-      }
-
-      const newBasket = {
-        BASKET: merged,
-        TYPE_PRICE: 25,
-      };
-
-      const response = await BasketService.getBasket(newBasket);
-      console.log('response', response);
-      basketData.value = { ...response.DATA };
-      return basketData.value;
-      // if (response?.DATA?.type !== "error") {
-      //   // ОБЯЗАТЕЛЬНО: присваиваем новое значение для реактивности
-      // } else {
-      //   clearBasket();
-      // }
-    } catch (err: any) {
-      error.value = err.message || "Ошибка при синхронизации корзины";
-      console.error("Sync basket error:", err);
-    } finally {
-      loading.value = false;
+  const removeItem = (type: string, basketId: string) => {
+    const list = type === 'scean' ? mainConstructor : mainCatalog
+    const index = list.value.findIndex(item => item.BASKETID === basketId)
+    
+    if (index !== -1) {
+      list.value.splice(index, 1)
     }
   }
 
-  async function syncInvoce() {
-    loading.value = true;
-    error.value = null;
-
-    try {
-
-      const merged = [...mainConstructor.value, ...mainCatalog.value];
-
-      if (merged.length === 0) {
-        basketData.value = null;
-        return;
-      }
-
-      const newBasket = {
-        BASKET: merged,
-        TYPE_PRICE: 25,
-      };
-
-      const response = await BasketService.invoceBasket(newBasket);
-      if (response?.DATA?.type !== "error") {
-        // ОБЯЗАТЕЛЬНО: присваиваем новое значение для реактивности
-        // basketData.value = { ...response.DATA };
-        console.log('responseBasket', response);
-        return basketData.value;
-      } else {
-        clearBasket();
-      }
-    } catch (err: any) {
-      error.value = err.message || "Ошибка при синхронизации корзины";
-      console.error("Sync basket error:", err);
-    } finally {
-      loading.value = false;
-    }
+  const removeFromBasket = (basketId: string, type: BasketItemType) => {
+    removeItem(type, basketId)
   }
 
-  const removeFromBasket = (idBasket: string, type: string) => {
-    if (type === 'catalog') {
-      const index = mainCatalog.value.findIndex(item => item.BASKETID === idBasket);
-      if (index !== -1) {
-        mainCatalog.value.splice(index, 1);
-      }
-    } else if (type === 'scene') {
-      console.log(mainConstructor.value, 'mainConstructor.value', idBasket, '---idBasket')
-
-      const index = mainConstructor.value.findIndex(item => item.BASKETID === parseInt(idBasket));
-      if (index !== -1) {
-        mainConstructor.value.splice(index, 1);
-      }
-
-
-      const roomContantData = JSON.parse((useRoomContantData().getRoomContantDataForBasket))
-
-      const map: any = roomContantData as any;
-      const item: any = map?.[idBasket];
-      const object3D = item?.object;
-
-      console.log(map, item, object3D,'object3D')
-
-      useEventBus().emit('A:RemoveModelFromBasket', { product: null, basketId: idBasket });
-
-      if (item) {
-        const newMap: any = { ...(map || {}) };
-        delete newMap[idBasket];
-        setRoomContantData(newMap);
-      }
-      const modelController = document.querySelector('.model-controller');
-      if (modelController) {
-        modelController.classList.remove('model-controller--active');
-      }
-    }
-
-    syncBasket();
-  };
-
-
-
-  // const updateQuantityFromBaske = (idBasket: string, type: string, quantity: any) => {
-  //   if (type === 'catalog') {
-  //     mainCatalog.value.find(item => item.BASKETID === idBasket).QUANTITY = quantity;
-  //   }
-  //   syncBasket();
-  // }
-
-  function updateQuantityFromBaske(
-    basketId: string,
-    type: any,
-    quantity: number
-  ) {
-    const list = type === "catalog" ? mainCatalog.value : mainConstructor.value;
-    const item = list.find((i) => i.BASKETID === basketId);
+  const updateQuantity = (basketId: string, type: BasketItemType, quantity: number) => {
+    const list = type === 'catalog' ? mainCatalog.value : mainConstructor.value
+    const item = list.find(i => i.BASKETID === basketId)
+    
     if (item) {
-      item.QUANTITY = quantity;
-      syncBasket();
+      item.QUANTITY = quantity
     }
   }
 
+  const clearBasket = () => {
+    clearStorage()
+    basketData.value = null
+  }
+
+  const syncBasket = async (): Promise<IBasketResponse | null> => {
+    const result = await syncBasketWithServer(allBasketItems.value)
+    if (result) {
+      basketData.value = result
+    }
+    return result
+  }
+
+  const syncInvoce = async (): Promise<IBasketResponse | null> => {
+    const result = await syncInvoice(allBasketItems.value)
+    return result
+  }
 
   return {
     // State
-    basketData: computed(() => basketData.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
+    basketData: readonly(basketData),
+    loading: readonly(loading),
+    error: readonly(error),
 
     // Getters
-    mainConstructor: computed(() => mainConstructor.value),
-    mainCatalog: computed(() => mainCatalog.value),
+    mainConstructor: readonly(mainConstructor),
+    mainCatalog: readonly(mainCatalog),
     totalItems,
     totalPrice,
     totalOldPrice,
+    allBasketItems: readonly(allBasketItems),
 
     // Actions
     addFromCatalog,
     addFromScene,
     removeItem,
+    removeFromBasket,
+    updateQuantity,
     clearBasket,
     syncBasket,
     syncInvoce,
-    removeFromBasket,
-    updateQuantityFromBaske
-  };
-});
+  }
+})

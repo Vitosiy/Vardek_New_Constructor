@@ -183,6 +183,7 @@ export class TrafficManager {
             }
 
             this.modelState.setCurrentModel(null)
+
             return
         }
 
@@ -205,6 +206,7 @@ export class TrafficManager {
 
         this.onRemoveFromRoom = (model) => {
             this.removeFromRoom(model)
+            this.events.emit("A:RemoveModelSuccses");
         }
 
 
