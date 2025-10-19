@@ -38,6 +38,7 @@ export const useBasketStore = defineStore('basket', () => {
     }
 
     mainCatalog.value.push(basketItem)
+    syncBasket();
   }
 
   const addFromScene = () => {
@@ -53,24 +54,26 @@ export const useBasketStore = defineStore('basket', () => {
   }
 
   const removeItem = (type: string, basketId: string) => {
-    const list = type === 'scean' ? mainConstructor : mainCatalog
-    const index = list.value.findIndex(item => item.BASKETID === basketId)
+    const list = type === 'scene' ? mainConstructor : mainCatalog
+    const index = list.value.findIndex(item => String(item.BASKETID) === String(basketId))
     
     if (index !== -1) {
       list.value.splice(index, 1)
+      syncBasket();
     }
   }
 
-  const removeFromBasket = (basketId: string, type: BasketItemType) => {
+  const removeFromBasket = (basketId: string, type: string) => {
     removeItem(type, basketId)
   }
 
-  const updateQuantity = (basketId: string, type: BasketItemType, quantity: number) => {
+  const updateQuantity = (basketId: string, type: string, quantity: number) => {
     const list = type === 'catalog' ? mainCatalog.value : mainConstructor.value
-    const item = list.find(i => i.BASKETID === basketId)
+    const item = list.find(i => String(i.BASKETID) === String(basketId))
     
     if (item) {
       item.QUANTITY = quantity
+      syncBasket();
     }
   }
 
