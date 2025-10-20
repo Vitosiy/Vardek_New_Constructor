@@ -65,6 +65,8 @@ router.beforeEach((to, from, next) => {
   const appDataStore = useAppData()
   const authStore = useAuthStore()
 
+     document.querySelector('#main-loader').style.display = 'block';
+
   if (token && expirationTime) {
     const expirationTimestamp = parseInt(expirationTime);
     if (Date.now() > expirationTimestamp) {
@@ -85,17 +87,26 @@ router.beforeEach((to, from, next) => {
       // next('/2d');
     }
   }
-  
+
   if (to.meta.requiresAuth && !token) {
     // Перенаправляем на страницу авторизации, если требуется аутентификация
     next('/auth');
   } else if (to.path === '/auth' && token) {
     // Если пользователь уже авторизован, но пытается попасть на страницу авторизации
     next('/2d');
+    
+
   } else {
     // В остальных случаях разрешаем переход
     next();
   }
+});
+
+router.afterEach((to, from) => {
+      document.querySelector('#main-loader').style.display = 'none';
+  // Здесь выполняется код после завершения навигации.
+  // 'to' - новый маршрут, 'from' - старый маршрут.
+  console.log(`Переход на страницу ${to.path} завершен.`);
 });
 
 export default router;

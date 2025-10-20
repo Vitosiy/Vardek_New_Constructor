@@ -64,7 +64,9 @@ export class BuildProduct extends BuildersHelper {
 
     constructor(root: THREETypes.TApplication) {
         super(root)
-        // console.trace('BuildProduct')
+
+        console.log(this._APP, 'BUILD')
+
         this.root = root
         this.ruler = root.ruler!
         this.resources = root._resources!
@@ -92,9 +94,11 @@ export class BuildProduct extends BuildersHelper {
 
     getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject, loaded_size?: THREETypes.TObject): void {
 
+        console.log(product_data, 'product_data')
+
         const type = this._MODELS[product_data.models[0]]
 
-        // console.log(type, 'TYPE')
+        console.log(type, 'TYPE')
 
         let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
 
@@ -154,6 +158,7 @@ export class BuildProduct extends BuildersHelper {
             WIDTH: productSize.x * 0.5
         }
 
+        parent_group.userData.disableRaycast = product_data.disable_raycast == 1
         parent_group.userData.aabb = product.userData.aabb ?? aabb
         parent_group.userData.obb = product.userData.obb ?? obb
 
@@ -305,7 +310,8 @@ export class BuildProduct extends BuildersHelper {
 
     public createProductBody(
         parentGroup: THREE.Object3D,
-        size?: { width: number; height: number; depth: number }
+        size?: { width: number; height: number; depth: number } | null,
+        fisadeSize?: boolean = false
     ) {
         // Режим чертежа
         const drowMode = this.menuStore.getDrowModeValue
@@ -327,14 +333,21 @@ export class BuildProduct extends BuildersHelper {
         const bodyExceptions = this.project.default_overlay_id
 
 
-        if (size) {
+        if (size && !fisadeSize) {
             PROPS.CONFIG.SIZE = size;
-            // this.getProductSize(CONFIG, size);
         }
+        if (size && fisadeSize) {
+            PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, size);
+        }
+        // if (size === null && !fisadeSize) {
+        //     PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, this._PRODUCTS[PROPS.PRODUCT]);
+        // }
+
+        total.userData.prodSize = PROPS.CONFIG.SIZE
+
 
         if (!modelData) return;
 
-        console.log(modelData,'modelData')
 
         const data = this.createModelData(modelData, PROPS, modelSize);
         const curBodyExceptions = bodyExceptions?.includes(modelData.id)
@@ -345,7 +358,7 @@ export class BuildProduct extends BuildersHelper {
             : { body: null, tempMaterial: null, move: null };
 
         const shelf = this._SHELF_POSITION[productId]
-            ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
+            ? this.createShelf(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
             : null;
 
         const legs = this._PRODUCTS[productId]?.leg_length
@@ -368,7 +381,7 @@ export class BuildProduct extends BuildersHelper {
             })
             : null;
 
-        const arrows = this.addArrowSize({ object: body, props: PROPS });
+        const arrows = this.addArrowSize({ object: body, props: PROPS, group: total });
 
         // console.log(body, fasade, 'curBodyExceptions')
 
@@ -392,6 +405,7 @@ export class BuildProduct extends BuildersHelper {
             tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
             tableTop.userData.positionWithoutTableTopHeight = baseY + bodyHeight * 0.5
         }
+        arrows.position.copy(body?.position)
         arrows.position.y = baseY;
 
 
@@ -564,7 +578,7 @@ export class BuildProduct extends BuildersHelper {
         body.userData.MATERIAL_TYPE = data.json.material.type;
 
         const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z));
-        console.log(move, data, 'CORRECT')
+        // console.log(move, data, 'CORRECT')
         // body.traverse((child) => {
         //     if (child instanceof THREE.Mesh) {
         //         child.geometry.translate(move);
@@ -588,19 +602,25 @@ export class BuildProduct extends BuildersHelper {
     /** Создание полок */
 
     private createShelf(
-        group: THREE.Object3D,
         props: THREETypes.TObject,
         shelfs: THREEInterfases.IShelfData,
-        material?: Material
+        material?: Material,
+        move: THREETypes.TVector3
     ) {
 
-        console.log(props.CONFIG.SIZE, 'CONFIG')
+        // console.log(props.CONFIG.SIZE, 'CONFIG')
+
         const { depth, width: initWidth, height } = props.CONFIG.SIZE;
         const correction = shelfs.WIDTH_CORRECTION;
         const startPos = this.getStartPosition(props.CONFIG.SIZE);
         const parent = new THREE.Object3D();
 
-        console.log(shelfs, 'SHELFS')
+        const { BODY_DEPTH, BODY_WIDTH, BODY_HEIGHT } = props.BODY.userData.trueSize
+        const correctDepth = depth > BODY_DEPTH ? BODY_DEPTH : depth
+        // const { depth, width, height } = props.CONFIG.SIZE;
+        // const checkCorrect = depth >= BODY_DEPTH
+        // const sizes = checkCorrect ? { depth: BODY_DEPTH, width: BODY_WIDTH, height: BODY_HEIGHT } : props.CONFIG.SIZE
+
 
         // Выбор материала
         const materialMap: Record<string, Material> = {
@@ -620,14 +640,17 @@ export class BuildProduct extends BuildersHelper {
         const createShelves = (axis: "X" | "Y", sizeKey: "width" | "height", posKey: "x" | "y", prefix: string) => {
             let width = initWidth;
             shelfs[axis].forEach((shelf, key) => {
+                console.log(shelf, 'shelf')
+
                 if (correction) width += correction;
 
                 const mesh = new THREE.Mesh(
-                    new THREE.BoxGeometry(width - 32, 16, depth),
+                    new THREE.BoxGeometry(width - 32, 16, correctDepth),
                     shelfMaterial
                 );
                 mesh.receiveShadow = true;
                 mesh.position[posKey] = startPos[posKey] + eval(this.expressionsReplace(shelf, { [`#${axis}#`]: props.CONFIG.SIZE[sizeKey] }));
+                mesh.position.z = move.z
                 mesh.name = `${prefix}_${key}`;
 
                 props.SHELF.push(mesh);
@@ -749,7 +772,7 @@ export class BuildProduct extends BuildersHelper {
 
     private addArrowSize({ group, object, props }: { group: THREE.Object3D, object: THREE.Object3D, props: THREETypes.TObject }) {
         const arrows = new THREE.Object3D()
-        let ruler = this.ruler.drawRullerObjects(object)
+        let ruler = this.ruler.drawRullerObjects(object, group)
 
         ruler.forEach(item => {
             for (let i in item) {

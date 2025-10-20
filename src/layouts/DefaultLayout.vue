@@ -24,7 +24,7 @@ const pageComponentRef = ref(null);
   <MainPopUp />
   <div class="main__container">
     <OptionsMenu v-if="route.name === 'Constructor3d'" />
-    <OptionsMenu2D v-else-if="route.name === 'Constructor2d'" />
+    <OptionsMenu2D v-if="route.name === 'Constructor2d'" />
     <CustomiserMenu v-if="route.name === 'Constructor3d'" />
     <RouterView v-slot="{ Component }">
       <component :is="Component" ref="pageComponentRef" />

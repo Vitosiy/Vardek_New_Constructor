@@ -18,7 +18,7 @@ import { UniformModeHandler } from "../Utils/UniformModeHandler";
 
 export class MoveManager {
 
-    eventBuss: ReturnType<typeof useEventBus> = useEventBus();
+    eventBus: ReturnType<typeof useEventBus> = useEventBus();
     modelState: ReturnType<typeof useModelState> = useModelState();
     uniformState: ReturnType<typeof useUniformState> = useUniformState();
     uniformEvents: THREETypes.TUniformTextureEvents
@@ -44,6 +44,7 @@ export class MoveManager {
     obbHelper: OBBHelper = new OBBHelper()
     startPos: THREE.Vector3 = new THREE.Vector3()
     uniformModeHandler: UniformModeHandler
+    leftDown: boolean = false
 
     // rulerLines: THREE.Object3D[] = []
 
@@ -135,18 +136,20 @@ export class MoveManager {
 
     private onMouseDown(event: MouseEvent) {
         if (this.modelState.getTransformControlsValue) {
-
             return
         }
 
-        this.eventBuss.emit('A:MouseDown');
+        this.eventBus.emit('A:MouseDown');
         switch (event.button) {
             case 0:
+                this.leftDown = true
                 this.handleInteractionStart(event.clientX, event.clientY);
                 break;
             case 1:
             case 2:
                 this.clearSelectObject()
+                break;
+
         }
     }
 
@@ -155,7 +158,22 @@ export class MoveManager {
     }
 
     private onMouseUp(event: MouseEvent) {
+
+
         this.handleInteractionEnd();
+
+        switch (event.button) {
+            case 1:
+            case 2:
+                if (this.leftDown) {
+                    this.clearSelectVisual()
+                }
+                break;
+
+        }
+
+
+        this.leftDown = false
     }
 
     private onWheel(event: WheelEvent) {
@@ -204,7 +222,7 @@ export class MoveManager {
 
             this.updateMousePosition(clientX, clientY);
             this.moveSelectedObject();
-            this.eventBuss.emit('A:Move', false);
+            this.eventBus.emit('A:Move', false);
         }
     }
 
@@ -221,9 +239,9 @@ export class MoveManager {
 
             this.selectedObject.userData.MOUSE_POSITION = this.getMousePos(this.selectedObject.position)
 
-            this.eventBuss.emit('A:Move', true);
+            this.eventBus.emit('A:Move', true);
             if (!this.selectedObject.position.equals(this.startPos)) {
-                this.eventBuss.emit('U:PositionChanged');
+                this.eventBus.emit('U:PositionChanged');
             }
             this.startPos = new THREE.Vector3();
         }
@@ -240,6 +258,8 @@ export class MoveManager {
 
     // Выбор Объекта 
     private selectObject() {
+
+        console.log('Select')
 
         this.roomManager._rulerContant = false
 
@@ -305,6 +325,8 @@ export class MoveManager {
             !this.boxHelper._boxHelperCheck ? this.boxHelper.addBoxHelper(this.selectedObject) : '';
             // Передаём данные выбранного объекта для events
             this.trafficManager._currentObject = this.selectedObject
+            this.roomManager.setRoomTotalBounds()
+
             // Создаём линейку до объектов
             this.ruler.drawRulerToObjects(this.selectedObject)
             // Передаём координаты мыши для отрисовкм меню
@@ -313,8 +335,8 @@ export class MoveManager {
             return
         }
 
+        this.trafficManager.checkSelect(null)
         this.clearSelectObject()
-
         return
     }
 
@@ -333,7 +355,7 @@ export class MoveManager {
 
         if (!this.roomManager._roomFloor || !this.selectedObject) return;
 
-        // this.eventBuss.emit('A:Move')
+        // this.eventBus.emit('A:Move')
 
         // Устанавливаем луч для получения пересечения
         this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -371,6 +393,7 @@ export class MoveManager {
     }
 
     public clearSelectObject() {
+
         if (!this.trafficManager._currentObject) return
 
         this.boxHelper.removeBoxHelper()
@@ -459,7 +482,7 @@ export class MoveManager {
         //     this.selectedObject = null
 
         //     // Эмитим событие для синхронизации состояния UI
-        //     this.eventBuss.emit('A:Uniform-Mode-Toggled', {
+        //     this.eventBus.emit('A:Uniform-Mode-Toggled', {
         //         uniformMode: this.uniformEvents._unionMode,
         //         showGroupsManager: false 
         //     })
@@ -468,11 +491,11 @@ export class MoveManager {
     }
 
     addVueEvents() {
-        this.eventBuss.emit('A:Move', () => {
+        this.eventBus.emit('A:Move', () => {
             this.checkMove()
         })
 
-        this.eventBuss.on('A:Pre-Create-Uniform-Group', () => {
+        this.eventBus.on('A:Pre-Create-Uniform-Group', () => {
             this.uniformEvents.enablePreGrouping()
             this.uniformEvents.desableGroupAddition()
             this.uniformEvents.desableDegrouping()
@@ -480,43 +503,43 @@ export class MoveManager {
 
         })
 
-        this.eventBuss.on('A:Add-To-Uniform-Group', (groupId) => {
+        this.eventBus.on('A:Add-To-Uniform-Group', (groupId) => {
 
             this.uniformEvents.enableGroupAddition(groupId)
             this.uniformEvents.desablePreGrouping()
 
         })
 
-        this.eventBuss.on('A:Remove-From-Uniform-Group', (groupId) => {
+        this.eventBus.on('A:Remove-From-Uniform-Group', (groupId) => {
 
             this.uniformEvents.enableDegrouping(groupId)
             this.uniformEvents.desablePreGrouping()
 
         })
 
-        this.eventBuss.on('A:Toggle-Uniform-Mode', (options = {}) => {
+        this.eventBus.on('A:Toggle-Uniform-Mode', (options = {}) => {
             this.uniformModeHandler.toggleUniformMode()
             this.selectedObject = null
 
             // Эмитим событие обратно для синхронизации состояния UI
-            this.eventBuss.emit('A:Uniform-Mode-Toggled', {
+            this.eventBus.emit('A:Uniform-Mode-Toggled', {
                 uniformMode: this.uniformEvents._unionMode,
                 showGroupsManager: options.showGroupsManager || false
             })
         })
 
-        this.eventBuss.on('A:Disable-Uniform-Mode', () => {
+        this.eventBus.on('A:Disable-Uniform-Mode', () => {
             this.uniformModeHandler.disableUniformMode()
             this.selectedObject = null
 
             // Эмитим событие обратно для синхронизации состояния UI
-            this.eventBuss.emit('A:Uniform-Mode-Toggled', {
+            this.eventBus.emit('A:Uniform-Mode-Toggled', {
                 uniformMode: false,
                 showGroupsManager: false
             })
         })
 
-        this.eventBuss.on('A:ClearSelected', () => {
+        this.eventBus.on('A:ClearSelected', () => {
             this.clearSelectObject()
         });
     }

@@ -15,9 +15,7 @@ const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
 const { getAppData } = useAppData();
 
-const exeption=ref([
-  1814256,971222,2050360
-])
+const exeption = ref([1814256, 971222, 2050360]);
 
 const currentProductInfo = ref({
   title: "",
@@ -27,9 +25,14 @@ const currentProductInfo = ref({
 const isShowInfoPopup = ref(false);
 const filteredData = computed(() => {
   if (menuStore.catalogFilterProductsId) {
-    return Object.values(catalogProducts).filter((item) =>
-      menuStore.catalogFilterProductsId.includes(item.ID) && !exeption.value.includes(item.ID)
-    );
+    return Object.values(catalogProducts)
+      .filter((item) => {
+        return (
+          menuStore.catalogFilterProductsId.includes(item.ID) &&
+          !exeption.value.includes(item.ID)
+        );
+      })
+      .sort((a, b) => a.SORT - b.SORT);
   } else {
     console.log("empty");
   }
@@ -168,13 +171,19 @@ const closeInfoPopup = () => {
 
     .popup-items {
       width: 167px;
-      height: 240px;
+      min-height: 240px;
       display: flex;
       flex-direction: column;
       padding: 10px;
       background: #f6f5fa;
       border-radius: 15px;
       gap: 10px;
+
+      cursor: pointer;
+      box-shadow: 4px 4px 4px 4px rgba(34, 60, 80, 0);
+      transition-property: box-shadow;
+      transition-duration: 0.25s;
+      transition-timing-function: ease;
 
       &__title {
         font-size: 15px;
@@ -190,11 +199,17 @@ const closeInfoPopup = () => {
         }
         .popup-items__image {
           height: 150px;
-          max-width: 150px;
+          width: 150px;
           padding: 10px;
           background: #ffffff;
           border-radius: 15px;
           object-fit: contain;
+        }
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          box-shadow: 4px 4px 4px 4px $light-stroke;
         }
       }
     }

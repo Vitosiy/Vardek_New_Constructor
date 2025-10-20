@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/**@ts-nocheck */
+//@ts-nocheck
 import {
   onMounted,
   onBeforeUnmount,

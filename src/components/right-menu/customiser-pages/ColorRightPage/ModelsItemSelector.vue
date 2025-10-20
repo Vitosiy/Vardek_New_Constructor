@@ -42,10 +42,13 @@ const transitionFasadeSelect = ref<boolean>(false);
 
 const prepareData = () => {
   materialList.value = modelState.getCurrentModuleData;
+
   fasadeList.value =
     modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
-  tabName.value = tabsList.value[0].name;
+  console.log(tabsList.value);
+
+  tabName.value = tabsList.value[0]?.name;
 };
 
 const createTabList = (
@@ -61,14 +64,16 @@ const createTabList = (
       })
     : false;
 
-  fasadeList.forEach((item, key) => {
-    data.push({
-      name: `Фасад ${key + 1}`,
-      label: `Фасад ${key + 1}`,
-      title: "Цвет фасада",
-      type: (item as any).TYPE,
-    });
-  });
+  fasadeList.length > 0
+    ? fasadeList.forEach((item, key) => {
+        data.push({
+          name: `Фасад ${key + 1}`,
+          label: `Фасад ${key + 1}`,
+          title: "Цвет фасада",
+          type: (item as any).TYPE,
+        });
+      })
+    : false;
 
   return data;
 };
@@ -89,7 +94,6 @@ onMounted(() => {
 });
 
 const handleTabChange = ({ index, tab }) => {
-
   // Если переключаемся на другой таб, отключаем режим переходящего рисунка
   if (isGroupsManagerActive.value) {
     eventBus.emit("A:Toggle-Uniform-Mode", { showGroupsManager: false });
@@ -152,7 +156,7 @@ watch(
 
     tabIndex.value = 0;
     materialList.value = modelState.getCurrentModuleData;
-    tabName.value = tabsList.value[0].name;
+    tabName.value = tabsList.value[0]?.name;
     isGroupsManagerActive.value = false;
 
     prepareData();

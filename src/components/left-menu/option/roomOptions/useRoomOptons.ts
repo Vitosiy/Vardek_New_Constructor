@@ -15,7 +15,11 @@ import { useRoomState } from '@/store/appliction/useRoomState';
 
 export const useRoomOptions = defineStore('RoomOptions', () => {
 
-    const APP = useAppData();
+    // const APP = useAppData();
+
+    const appStore = useAppData()
+    const APP = computed(() => appStore.getAppData || {})
+
     const sceneState = useSceneState();
     const modelState = useModelState()
     const roomState = useRoomState();
@@ -172,17 +176,17 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     }
 
     const getWallsTextures = () => {
-        return APP.getAppData.WALL
+        return APP.value.WALL
     }
 
     const getFloorTextures = () => {
-        return APP.getAppData.FLOOR
+        return APP.value.FLOOR
     }
 
     const getDefaultModuleData = () => {
         const colorMap: Record<number, TFasadeItem> = {};
-        const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
-        const FASADE = APP.getAppData.FASADE;
+        const PRODUCTS = APP.value.CATALOG.PRODUCTS
+        const FASADE = APP.value.FASADE;
 
         for (const el in PRODUCTS) {
             const product = PRODUCTS[el];
@@ -199,7 +203,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     }
 
     const getDefaultFasadeData = () => {
-        const PRODUCTS = APP.getAppData.CATALOG.PRODUCTS
+        const PRODUCTS = APP.value.CATALOG.PRODUCTS
         const [key, value] = Object.entries(PRODUCTS)[0]
         const fasade = value.FACADE
         const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
@@ -224,7 +228,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
 
     const getDefaultTableTopData = () => {
         const tableTopIds = ['7292933', '7358837', '7358946', '7360269', '4066731'];
-        const { CATALOG: { SECTIONS, PRODUCTS } } = APP.getAppData;
+        const { CATALOG: { SECTIONS, PRODUCTS } } = APP.value;
 
         const relevantSections = Object.entries(SECTIONS).filter(([key]) => tableTopIds.includes(key));
 

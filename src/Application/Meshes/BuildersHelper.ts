@@ -49,6 +49,8 @@ export class BuildersHelper extends GlobalsData {
     };
 
     getProductSize(PARAMS: any, productData: THREETypes.TObject) {
+        // console.log(productData, 'productData')
+
         const product = this._PRODUCTS[PARAMS.ID];
         const materialThickness = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH ?? 18;
         const horizont =
@@ -79,27 +81,31 @@ export class BuildersHelper extends GlobalsData {
             "#VSECTION_MIN#": filling.VSECTION_MIN,
         };
 
-        console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
+        // console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
 
 
         // Обработка фасадных размеров
-        Object.entries(PARAMS.FASADE_SIZE).forEach(([key, value]) => {
-            const customKey = `FASADESIZE${key}`
+        Object.entries(PARAMS.FASADE_SIZE).forEach(([_, value], ndx) => {
+            const incomeData = FASADE_PROPS[ndx].SIZES
+            const customKey = `FASADESIZE${ndx + 1}`
+            expressions[`#${customKey}#`] = incomeData.id;
+
+            console.log(incomeData)
 
 
-            console.log(FASADE_PROPS[key - 1], this._FASADESIZE, '{{value')
-
-            expressions[`#${customKey}#`] = FASADE_PROPS[key - 1].SIZES.id;
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
-                const idx = FASADE_PROPS[key - 1].SIZES.id as number;
-                const size = this._FASADESIZE[idx];
+                const size = this._FASADESIZE[incomeData.id];
+                console.log(size, 'size')
+
                 const suffix = customKey.endsWith("1") ? "1" : "2";
-                expressions[`#FASADESIZEWIDTH${suffix}#`] = size.WIDTH;
+                expressions[`#FASADESIZEWIDTH${suffix}#`] = incomeData.params.FASADE_WIDTH ?? size.WIDTH;
                 expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
                 expressions[`#FASADESIZEDIFFWIDTH${suffix}#`] = size.DIFFWIDTH;
                 expressions[`#FASADESIZEDIFFDEPTH${suffix}#`] = size.DIFFDEPTH;
             }
         });
+
+        console.log(expressions, 'EXPRESSIONS')
 
         PARAMS.EXPRESSIONS = expressions;
 
@@ -107,20 +113,20 @@ export class BuildersHelper extends GlobalsData {
             ? PARAMS.SIZE.depth
             : productData.depth;
 
-        console.log(depthCalc,productData,'depthCalc')
-
         const size = {
-            width: parseInt(PARAMS.SIZE.width),
-            height: parseInt(PARAMS.SIZE.height),
+            // width: parseInt(PARAMS.SIZE.width),
+            // height: parseInt(PARAMS.SIZE.height),
+            // depth: parseInt(depthCalc),
+
+            width: parseInt(productData.width),
+            height: parseInt(productData.height),
             depth: parseInt(depthCalc),
         };
 
         if (PARAMS.MODELID) {
             const modelData = this._MODELS[PARAMS.MODELID]
-            console.log(modelData, 'modelData')
 
             const model = this.expressionsReplace(modelData, expressions);
-            console.log(model, 'MODEL')
 
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));
@@ -276,25 +282,19 @@ export class BuildersHelper extends GlobalsData {
         object.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             if (child.userData.type === "glass") return;
-
-            // // Восстановление оригинального материала при наличии
-            // if (child.userData.ORIGINAL_COLOR) {
-            //     child.material = child.userData.ORIGINAL_COLOR;
-            // }
-            // if (child.material.opacity < 1) {
-            //     child.material.opacity = 1
-            //     child.material.color = new THREE.Color('rgb(255,255,255)')
-            // }
+            if (child.userData.mergedGeometry) {
+                child.material = material
+                this.getTexture({
+                    material,
+                    url: url,
+                });
+                return
+            }
 
             this.resources.startLoading(url, "texture", (file) => {
                 if (!(file instanceof THREE.Texture)) return;
                 child.material = material
-                // child.material.needsUpdate = true
-                // Создание материала при необходимости
-                // if (type && ["Palette", "Glass"].includes(type)) {
-                //     child.material = new THREE.MeshStandardMaterial();
-                // }
-
+                console.log(child.userData.mergedGeometry, 'ТЕКСТУРА 2')
                 this.applyTexture(child, file, textureSize, type);
             });
         });
@@ -383,7 +383,6 @@ export class BuildersHelper extends GlobalsData {
 
     planarUV(geometry) {
 
-        console.log('OO')
 
         geometry.computeBoundingBox();
 
@@ -419,6 +418,45 @@ export class BuildersHelper extends GlobalsData {
         }
         geometry.uvsNeedUpdate = true;
     }
+
+    // planarUV(geometry: THREE.BufferGeometry): void {
+    //     console.log('Applying planar UV to geometry...');
+
+    //     geometry.computeBoundingBox();
+    //     const bbox = geometry.boundingBox!;
+    //     if (!bbox) {
+    //         console.warn('No bounding box computed');
+    //         return;
+    //     }
+
+    //     const min = bbox.min;
+    //     const max = bbox.max;
+    //     const offset = new THREE.Vector2(-min.x, -min.y);
+    //     const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
+
+    //     const position = geometry.attributes.position;
+    //     if (!position) {
+    //         console.warn('No position attribute');
+    //         return;
+    //     }
+
+    //     // Создаём/обновляем UV-атрибут (2 компонента на вершину)
+    //     const uvArray = new Float32Array(position.count * 2);
+    //     const uv = new THREE.BufferAttribute(uvArray, 2);
+
+    //     for (let i = 0; i < position.count; i++) {
+    //         const x = position.getX(i);
+    //         const y = position.getY(i);
+    //         // Планарная проекция на XY, нормализация по локальному bbox
+    //         const u = range.x > 0 ? (x + offset.x) / range.x : 0;
+    //         const v = range.y > 0 ? (y + offset.y) / range.y : 0;
+    //         uv.setXY(i, u, v);
+    //     }
+
+    //     geometry.setAttribute('uv', uv);
+    //     geometry.attributes.uv!.needsUpdate = true;
+    //     geometry.computeVertexNormals(); // Фикс нормалей
+    // }
 
     addAdditionalKeys = (obj, additionalKeys) => (
         Object.entries(additionalKeys).forEach(([newKey, existingKey]) =>

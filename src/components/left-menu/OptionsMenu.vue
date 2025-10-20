@@ -1,7 +1,14 @@
 <script setup lang="ts">
 //@ts-nocheck
 
-import { computed, ref, onMounted, onUnmounted, toRaw } from "vue";
+import {
+  computed,
+  ref,
+  onMounted,
+  onUnmounted,
+  toRaw,
+  onBeforeMount,
+} from "vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -27,21 +34,18 @@ const menuStore = useMenuStore();
 const customiserStore = useCustomiserStore();
 const popupStore = usePopupStore();
 
-const catalogSectionsType = useAppData().getAppData.CATALOG.SECTIONS_TYPE;
-const catalogSections = useAppData().getAppData.CATALOG.SECTIONS;
+const catalogSectionsType = ref(null);
+const catalogSections = ref(null);
 
 const selectedSectionType = ref<string>("standart");
 const cameraBtn = ref<InstanceType<typeof MainButton>[]>([]);
 const roomOptionsRef = ref<HTMLElement | null>(null);
 
-const filteredCatalogSections = computed(() => {
-  return Object.values(catalogSections).filter(
-    (item) => item.TYPE === selectedSectionType.value
-  );
-});
+const filteredCatalogSections = ref(null);
 
 const selectCatalog = (value: string) => {
   selectedSectionType.value = value;
+  filterCatalog(value);
 };
 
 const onDragStart = (modelId: string) => {
@@ -59,8 +63,8 @@ const showTechMenu = (id: string, products: []) => {
 
 // Новое меню
 const showRoomParMenu = () => {
+  // customiserStore.hideCustomiserPopup();
   menuStore.openMenu("roomPar");
-  customiserStore.hideCustomiserPopup();
   eventBus.emit("A:ClearSelected", { object: null });
 };
 
@@ -72,9 +76,25 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
-onMounted(() => {
+const filterCatalog = (type) => {
+  filteredCatalogSections.value = Object.values(catalogSections.value)
+    .filter((item) => {
+      return item.TYPE === type && item.PRODUCTS;
+    })
+    .sort((a, b) => a.SORT - b.SORT);
+};
 
+onBeforeMount(() => {
+  const app = useAppData().getAppData;
+  catalogSectionsType.value = app.CATALOG.SECTIONS_TYPE;
+  catalogSections.value = app.CATALOG.SECTIONS;
+
+  filterCatalog(selectedSectionType.value);
+});
+
+onMounted(() => {
   eventBus.on("A:Selected", () => {
+    // menuStore.closeAllMenus();
     menuStore.closeMenu("roomPar");
   });
 });
@@ -174,7 +194,7 @@ onUnmounted(() => {
         ref="roomOptionsRef"
       />
     </transition>
-    <!-- <DirectionControl @changeDirectionPos="changeCameraPos"/> -->
+
     <div class="options__camera">
       <h1 class="options__title">Позиция камеры</h1>
       <div class="options__camera--container">
@@ -429,7 +449,6 @@ onUnmounted(() => {
       align-items: center;
       justify-content: center;
     }
-    
 
     @media screen and (min-width: 1329px) {
       padding: 0 20px;

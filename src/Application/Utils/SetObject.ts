@@ -34,7 +34,6 @@ export class SetObject {
 
     async create({ object, point, rotate, boxHelper, wall, trafficManager }: THREEInterfases.ISetProduct) {
 
-
         this.roomManager = this.root._roomManager
 
         const { CONFIG } = object.userData.PROPS
@@ -58,7 +57,6 @@ export class SetObject {
         // /** Проверяем положение объекта внутри комнаты */
 
         object.position.copy(point);
-
 
         const adjustedPosition = positionEmpty && rotationEmpty
             ? this.roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
@@ -90,8 +88,6 @@ export class SetObject {
 
         object.userData.currentWall = wall
         object.userData.targetPosition = point
-
-
 
         /** Режим объединения в группы для переходящей текстуры */
         if (this.uniformState.getUniformModeData.uniformMode) return

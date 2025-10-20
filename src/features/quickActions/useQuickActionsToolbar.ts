@@ -44,12 +44,13 @@ export const useQuickActionsToolbar = () => {
   const { toggleFullscreen } = useFullscreen();
   const { printPage } = usePrint();
   const { makeScreen } = use2DScreenshot();
-  const { saveProject } = projectAPI
+  // const { saveProject } = projectAPI
 
   // Функция сохранения проекта
   const onSaveProject = async () => {
     // projectState.isSaving = true;
-    // eventBus.emit("A:Save");
+    eventBus.emit("A:Save");
+    return
 
     projectState.isSaving = true;
 

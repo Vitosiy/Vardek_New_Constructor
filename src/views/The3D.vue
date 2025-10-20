@@ -111,30 +111,29 @@ const CutCash = ref({});
 const CutSave = ref(false);
 
 // Список событий
-const priceUpdateEvents  = [
-    // "A:Move",
-    // "A:Selected",
-    // "A:ContantLoaded",
-    // "A:ClearSelected",
-    // "A:ScreenPrint",
-    // "A:Take3DScreenshot"
-    // "U:PositionChanged",
-    // "U:DrawPatina",
-    // "U:DeliteFasad",
-    // 'U:ChangeModule',
-    
-    "U:Drop",
-    "U:Model-resize",
-    "U:ChangePaletteColor",
-    "U:ChangeMilling",
-    'U:ChangeFasade',
-    'A:Disable-Uniform-Mode',
-    'A:UM-update',
-    'A:Duplicate',
-    'A:RemoveModel',
-    'A:close-modal-custom',
-    // 'close-modal'
-    
+const priceUpdateEvents = [
+  // "A:Move",
+  // "A:Selected",
+  // "A:ContantLoaded",
+  // "A:ClearSelected",
+  // "A:ScreenPrint",
+  // "A:Take3DScreenshot"
+  // "U:PositionChanged",
+  // "U:DrawPatina",
+  // "U:DeliteFasad",
+  // 'U:ChangeModule',
+
+  "U:Drop",
+  "U:Model-resize",
+  "U:ChangePaletteColor",
+  "U:ChangeMilling",
+  "U:ChangeFasade",
+  'A:Disable-Uniform-Mode',
+  "A:UM-update",
+  "A:Duplicate",
+  "A:RemoveModel",
+  // "A:close-modal-custom",
+  // 'close-modal'
 ];
 
 onMounted(async () => {
@@ -175,7 +174,7 @@ onMounted(async () => {
 
       await nextTick();
       VerdekConstructor.value.refreshViewer();
-      actions.value = VerdekConstructor.value.getAction()
+      actions.value = VerdekConstructor.value.getAction();
       // console.log( actions.value)
     }
   } catch (error) {
@@ -233,7 +232,6 @@ onUnmounted(() => {
 });
 
 const commonEventHandler = (data) => {
-
   console.log("Обновление корзиный", data);
   try {
     scheduleBasketSync();
@@ -250,9 +248,9 @@ const checkContantLoad = (state: boolean) => {
 // Дебоунс пересчёта корзины
 let basketDebounceTimer: any = null;
 const scheduleBasketSync = async () => {
-  const data = actions.value.save()
-  roomContantData.value?.setRoomContantDataForBasket(data)
-  console.log('data', JSON.parse(data))
+  const data = actions.value.save();
+  roomContantData.value?.setRoomContantDataForBasket(data);
+  console.log("data", JSON.parse(data));
   // await nextTick();
   // basketStore.addFromScene();
   clearTimeout(basketDebounceTimer);
@@ -562,7 +560,7 @@ const removeModel = (model) => {
     controller.value = false;
     transformControlsValue.value = false;
   }
-   scheduleBasketSync();
+  scheduleBasketSync();
 };
 
 /** Работа с переходящий рисунок */
@@ -598,6 +596,8 @@ const removeFromUniformGroup = (id) => {
 };
 
 const activeController = computed(() => {
+  if (!modelState.getCurrentModel) controller.value = false;
+
   if (uniformState.getUniformModeData.uniformMode) {
     controller.value = false;
   }

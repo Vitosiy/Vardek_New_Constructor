@@ -7,6 +7,7 @@ import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useUniformState } from "@/store/appliction/useUniformState";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
@@ -21,12 +22,27 @@ import MovingButton from "@/components/ui/buttons/right-menu/MovingRightButton.v
 import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.vue";
 import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
 
+type TCustomiserMap = ["ruler", "color", "moving", "figure", "hammer"];
+type TButtonVisibles = {
+  ruler: boolean;
+  color: boolean;
+  moving: boolean;
+  figure: boolean;
+};
+
 const customiserStore = useCustomiserStore();
 const eventBus = useEventBus();
 const modelState = useModelState();
 const uniformState = useUniformState();
+const menuStore= useMenuStore()
 
 const currentModel = ref(null);
+const buttonVisibles = ref<TButtonVisibles>({
+  ruler: true,
+  color: false,
+  moving: false,
+  figure: false,
+});
 
 const closeCustomiser = () => {
   const { uniformMode } = uniformState.getUniformModeData;
@@ -34,7 +50,6 @@ const closeCustomiser = () => {
   if (uniformMode) {
     eventBus.emit("A:Disable-Uniform-Mode");
   }
-  console.log('1232121321');
   eventBus.emit("A:close-modal-custom");
   customiserStore.hideCustomiserPopup();
 };
@@ -51,10 +66,29 @@ const checkSelect = (el) => {
   currentModel.value = el.object;
   // modelState.setCurrentModel(el.object.userData);
   modelState.setCurrentModel(el.object);
+  if(el.object.userData.elementType === 'raspil') return
+
+  checkData(el.object);
+
   if (el.object.name == "MODEL") {
+    closeCustomiser();
     return;
   }
-  customiserStore.switchCustomiser("color");
+  customiserStore.switchCustomiser("ruler");
+};
+
+const checkData = (object) => {
+  const products = modelState.getModels;
+  const { PRODUCT } = object.userData.PROPS;
+  const prodData = products[PRODUCT];
+
+  const checkColor = prodData.FACADE.length > 0 && prodData.FACADE[0] !== null;
+  const checkOptions = prodData.OPTION.length > 0 && prodData.OPTION[0] !== null;
+
+  buttonVisibles.value.color = checkColor;
+  buttonVisibles.value.figure = checkColor;
+  buttonVisibles.value.moving = checkOptions
+
 };
 
 onMounted(() => {
@@ -68,6 +102,7 @@ onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
   eventBus.off("A:ClearSelected", checkSelect);
 });
+
 onUnmounted(() => {
   closeCustomiser();
 });
@@ -81,11 +116,11 @@ onUnmounted(() => {
           <p class="customiser__title">Редактирование</p>
           <div class="customiser-links">
             <!-- Rework -->
-            <RulerButton />
-            <ColorButton />
-            <MovingButton />
-            <FigureButton />
-            <HammerButton />
+            <RulerButton v-if="buttonVisibles.ruler" />
+            <ColorButton v-if="buttonVisibles.color" />
+            <MovingButton v-if="buttonVisibles.moving" />
+            <FigureButton v-if="buttonVisibles.figure" />
+            <!-- <HammerButton /> -->
           </div>
           <img
             src="@/assets/svg/right-menu/close.svg"
@@ -96,9 +131,6 @@ onUnmounted(() => {
 
         <RulerPage v-if="customiserStore.customisers == 'ruler'" />
         <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
-        <!--
-        <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
-        -->
         <RailsRightPage v-if="customiserStore.customisers == 'moving'" />
         <FigurePage v-if="customiserStore.customisers == 'figure'" />
       </div>
@@ -123,6 +155,11 @@ onUnmounted(() => {
   // transform: translateZ(-10px);
   // box-sizing: border-box;
   overflow: hidden;
+
+  user-select: none; /* Стандартное */
+  -webkit-user-select: none; /* Safari, Chrome */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
 
   &__container {
     display: flex;

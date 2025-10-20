@@ -848,6 +848,7 @@ export class MeshEvents extends BuildersHelper {
         const { PROPS } = currentMesh!.userData
         const { CONFIG } = PROPS
         const { POSITION, UNIFORM_TEXTURE } = CONFIG
+        const fasadeSize = type === 'fasade'
 
         /** Очищаем родительский объект */
         this.dispose.clearParent(currentMesh as THREE.Object3D)
@@ -855,24 +856,28 @@ export class MeshEvents extends BuildersHelper {
         const rebuild = async () => {
 
             /** Пересоздаём по новым параметрам */
-            let body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data);
+            let body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data, fasadeSize);
             /** Добавляем к родителю */
             currentMesh?.add(body as THREE.Object3D);
             currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
             currentMesh?.updateMatrixWorld(true);
 
+            const { SIZE } = currentMesh?.userData.PROPS.CONFIG
 
-            // const aabb = new THREE.Box3().setFromObject(currentMesh);
-            // const aabb = this.buildProduct.computeAABB(currentMesh)
-            // const size = new THREE.Vector3()
-            // aabb.getSize(size);
 
             const height = body.userData.trueSizes.HEIGHT
-
-            /** Для корректного примагничивания к стенам */
-            currentMesh.userData.trueSizes = {
-                DEPTH: data.depth * 0.5, HEIGHT: height, WIDTH: data.width * 0.5
+            const incomeSize = {
+                DEPTH: fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5,
+                HEIGHT: height,
+                WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5
             }
+
+            console.log(incomeSize, 'PROPS')
+            /** Для корректного примагничивания к стенам */
+            // currentMesh.userData.trueSizes = {
+            //     DEPTH: data.depth * 0.5, HEIGHT: height, WIDTH: data.width * 0.5
+            // }
+            currentMesh.userData.trueSizes = incomeSize
             /** Пересоздаём UNIFORM_TEXTURE*/
             if (UNIFORM_TEXTURE.group !== null) {
 
@@ -900,6 +905,8 @@ export class MeshEvents extends BuildersHelper {
 
             }
 
+
+
         }
 
         await rebuild()
@@ -917,9 +924,9 @@ export class MeshEvents extends BuildersHelper {
         currentMesh.userData.aabb.getCenter(center);
         currentMesh.userData.obb.center.copy(center);
         /** @Корректная_коллизия */
-        // console.log(currentMesh)
+        const { SIZE } = currentMesh?.userData.PROPS.CONFIG
 
-        currentMesh.userData.obb.halfSize.x = data.width * 0.5;
+        currentMesh.userData.obb.halfSize.x = fasadeSize ? SIZE.width * 0.5 : data.width * 0.5;
 
         if (PROPS.FASADE.length === 0) {
             currentMesh.userData.obb.halfSize.y = data.height * 0.5;

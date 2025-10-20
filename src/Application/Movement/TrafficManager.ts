@@ -17,6 +17,7 @@ import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 export class TrafficManager {
 
@@ -26,6 +27,7 @@ export class TrafficManager {
 
     events: ReturnType<typeof useEventBus> = useEventBus()
     modelState: ReturnType<typeof useModelState> = useModelState()
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
 
     raycaster: THREE.Raycaster = new THREE.Raycaster()
     mouse: THREE.Vector2 = new THREE.Vector2()
@@ -99,27 +101,24 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
-            console.log('OBJ', object);
-            console.log('OBJ_userData', object.userData);
+            // console.log('OBJ', object);
+            // console.log('OBJ_userData', object.userData);
 
             // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
-            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // Обновление корзины при простом выборе/перемещении не требуется
 
-            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
-            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
-            // console.log(object, 'object')
-            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155], 'Model')
-
-            if (object.userData.elementType !== 'raspil') {
+            if (object.userData.elementType !== 'raspil' && !object.userData.disableRaycast) {
                 const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
         }
         else {
+
             this.events.emit("A:ClearSelected", { object: null, roomContant: this.room._roomContant });
             this.modelState.clearCurrentModelFasadesData()
+            // this.menuStore.closeAllMenus();
         }
 
     }
@@ -130,6 +129,14 @@ export class TrafficManager {
 
     get _camera() {
         return this.root._camera
+    }
+
+    public checkSelect(value) {
+        if (value == null) {
+            console.log('NO')
+            this.modelState.clearCurrentModelFasadesData()
+            this.menuStore.closeAllMenus();
+        }
     }
 
     async update(room: THREETypes.TRoomManager) {

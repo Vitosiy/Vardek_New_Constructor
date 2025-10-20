@@ -33,6 +33,9 @@ export class ModelsBuilder {
         const arrows = new THREE.Object3D()
         const model = this.parent._MODELS[props.CONFIG.MODELID]
         const path = url ?? model.file ?? model.DAE
+        const PROD = this.parent._PRODUCTS[props.PRODUCT]
+
+        console.log(PROD, 'LOADED')
 
         this.resources.startLoading(path, model.model_type, (file: any) => {
 
@@ -42,6 +45,10 @@ export class ModelsBuilder {
 
             const normolized = this.normalizeUploadedModel(file, model);
             normolized.name = 'MODEL'
+            if (PROD) {
+                normolized.userData.disableRaycast = PROD.disable_raycast == 1
+            }
+
 
             // const parentObject = new THREE.Object3D()
 

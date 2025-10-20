@@ -4,7 +4,7 @@ import '@vueform/toggle/themes/default.css'
 import '@/style.scss'
 import App from './App.vue'
 import router from './router'
-import { createPinia } from 'pinia'
+import { createPinia, setActivePinia } from 'pinia'
 import { COOKIE_NAMES, getCookie } from './components/authorization/utils/cookieUtils'
 import { useAppData } from './store/appliction/useAppData'
 
@@ -46,7 +46,7 @@ async function loadDependencies() {
 //   await router.isReady()
 
 //   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
-  
+
 //   if (!token) {
 //     // Нет токена — показываем /auth
 //     if (router.currentRoute.value.path !== '/auth') {
@@ -68,42 +68,88 @@ async function loadDependencies() {
 //   app.mount('#app')
 // }
 
+// async function bootApp() {
+//   await loadDependencies()
+
+//   const app = createApp(App)
+//   const pinia = createPinia()
+
+//   app.use(pinia)
+//   app.use(router)
+
+//   await router.isReady()
+
+//   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+//   // const appDataStore = useAppData()
+//   // await appDataStore.initAppData()
+
+//   if (!token) {
+//     // Нет токена — показываем /auth
+//     if (router.currentRoute.value.path !== '/auth') {
+//       await router.push('/auth')
+//     }
+
+//     app.mount('#app')
+//     return
+//   }
+
+//   // Есть токен — начинаем загрузку данных
+//   // Пока данные не загрузились — остаёмся на /auth
+//   if (router.currentRoute.value.path !== '/auth') {
+//     const appDataStore = useAppData()
+//     await appDataStore.initAppData()
+//     await router.push('/auth')
+//   }
+
+//   const appDataStore = useAppData()
+//   await appDataStore.initAppData()
+
+
+//   // Данные загрузились — редиректим в /2d
+//   await router.push('/2d')
+
+//   app.mount('#app')
+
+// }
+
 async function bootApp() {
   await loadDependencies()
 
   const app = createApp(App)
   const pinia = createPinia()
+  setActivePinia(pinia)  // Активируем Pinia для глобального доступа к stores
 
   app.use(pinia)
   app.use(router)
 
   await router.isReady()
 
-  const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
-  const appDataStore = useAppData()
-  await appDataStore.initAppData()
+  const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
 
-  if (!token) {
-    // Нет токена — показываем /auth
-    if (router.currentRoute.value.path !== '/auth') {
-      await router.push('/auth')
-    }
-    app.mount('#app')
-    return
-  }
-
-  // Есть токен — начинаем загрузку данных
-  // Пока данные не загрузились — остаёмся на /auth
+  // Всегда стартуем с /auth как loading (если не там)
   if (router.currentRoute.value.path !== '/auth') {
     await router.push('/auth')
   }
 
+  app.mount('#app')  // Монтируем рано — пользователь видит loading сразу
 
-  // Данные загрузились — редиректим в /2d
+  if (!token) {
+    // Нет токена — остаёмся на /auth (форма авторизации)
+    return
+  }
+
+  // Есть токен — инициализируем данные
+  const appDataStore = useAppData()
+  try {
+    await appDataStore.initAppData()
+  } catch (error) {
+    console.error('Failed to init app data:', error)
+    // Fallback: остаёмся на /auth (или можно push на error-страницу)
+    return
+  }
+
+  // Данные загружены — редиректим в /2d
   await router.push('/2d')
-
-  app.mount('#app')
-
 }
 
 bootApp()

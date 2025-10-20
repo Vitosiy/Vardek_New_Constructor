@@ -27,23 +27,11 @@ const resizeData = ref({
 
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
-// const transformControlsValue = ref<Boolean>(false);
 
 const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
 
-// const controlsActivate = () => {
-//   const curModel = modelState.getCurrentModel;
-
-//   if (transformControlsValue.value) {
-//     eventBus.emit("A:TransformMode_On");
-//   } else {
-//     eventBus.emit("A:TransformMode_Off");
-//   }
-
-//   modelState.setTransformControlsValue(transformControlsValue.value)
-// };
 
 const rotateModel = (id: number) => {
   eventBus.emit("A:RotateModel", id);
@@ -93,12 +81,6 @@ watch(
   }
 );
 
-// watch(
-//   () => transformControlsValue.value,
-//   () => {
-//     controlsActivate();
-//   }
-// );
 </script>
 
 <template>

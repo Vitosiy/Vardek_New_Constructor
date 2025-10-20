@@ -43,6 +43,7 @@ export class RoomManager extends Room {
     heightClamp: number = useSceneState().getStartHeightClamp
     heightLine: THREE.Object3D[] = []
     totalObbBounds: OBB[] = []
+    totalAABBBounds: THREE.Box3[] = []
 
     constructor(root: THREETypes.TApplication) {
 
@@ -78,6 +79,32 @@ export class RoomManager extends Room {
     }
 
     get _roomTotalBounds() {
+        console.log('HEVO')
+        return this.totalAABBBounds
+
+
+        // let boundsArray: THREE.Box3[] = []
+
+        // const intersects = this._rulerContant as THREE.Object3D[];
+
+        // intersects.forEach(object => {
+
+        //     if (!object.userData?.current) {
+        //         const box = new THREE.Box3().setFromObject(object);
+        //         const boxTop = new THREE.Box3().setFromObject(object);
+        //         box.max.y = 3000;
+        //         box.min.y = 0
+
+        //         boundsArray.push(box);
+        //         boundsArray.push(boxTop);
+        //     }
+
+        // });
+
+        // return boundsArray
+    }
+
+    setRoomTotalBounds() {
 
         let boundsArray: THREE.Box3[] = []
 
@@ -97,7 +124,7 @@ export class RoomManager extends Room {
 
         });
 
-        return boundsArray
+        this.totalAABBBounds = boundsArray
     }
 
     createTotalObbBounds() {
@@ -165,7 +192,6 @@ export class RoomManager extends Room {
             targetRotation,
             snapHeight,
             heightClamp: this.heightClamp,
-
             wallStore: this._roomTotal,
             boundsStore: this._roomBounds,
             objectsBoundsStore: this._totalObbBounds,
@@ -304,7 +330,7 @@ export class RoomManager extends Room {
         }
 
         const data = {
-            id: item.userData.globalData,
+            id: item.userData.PROPS.PRODUCT,
             basketId: item.userData.basketId,
             position: item.position.clone(),
             rotation: item.rotation.clone(),
@@ -456,11 +482,25 @@ export class RoomManager extends Room {
         const loadData = model.data ?? '';
         const size = model.size ?? '';
 
+        if (!this._PRODUCTS[model.id]) {
+            console.log(`❌ Товара c ID:${model.id} нет в списке PRODUCTS`)
+            count++;
+            return count
+        }
+
+        console.log(model, this._PRODUCTS, model.id, 'model')
+
         await new Promise<void>((resolve) => {
             this.geometryBuilder!.craeteModel(
                 this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
                 (object: THREE.Object3D) => {
-                    this.setObject!.create({ object, rotate: rotation, point });
+                    try {
+                        this.setObject!.create({ object, rotate: rotation, point });
+                    } catch (e) {
+                        console.log('LOAD Error')
+                        resolve();
+                        return
+                    }
 
                     if (loadData?.RASPIL_LIST?.length > 0) {
                         this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
@@ -493,6 +533,7 @@ export class RoomManager extends Room {
 
     async duplicateProd() {
         const curProd = this.root._trafficManager._currentObject
+        if (!curProd) return
         try {
             curProd.userData.current = false
         }

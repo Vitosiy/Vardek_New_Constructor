@@ -170,18 +170,18 @@ export class Filters extends GlobalsData {
                 if (!validFasadeIds.length > 0) return
 
                 // Если ключ уже существует, используем существующий массив, иначе создаем новый
-                result[key] = result[key] || [];
+                result[size] = result[key] || [];
                 // Добавляем отфильтрованные фасады в массив
-                result[key].push(...validFasadeIds);
+                result[size].push(...validFasadeIds);
                 // Сортируем массив по полю SORT
-                result[key].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+                result[size].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
 
             });
 
             console.log(ndx, 'ndx')
 
-            const convert = this.groupSizers(result[ndx + 1], product)
-            result[ndx + 1] = convert
+            const convert = this.groupSizers(result[size], product)
+            result[size] = convert
         });
 
 

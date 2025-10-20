@@ -110,6 +110,19 @@ export type TQuality = {
   active?: boolean
 }
 
+export type TFasadeSize = {
+  ID: number;
+  NAME: string;
+  SORT: number;
+  SIZE_EDIT_WIDTH_MIN: number | null;
+  SIZE_EDIT_WIDTH_MAX: number | null;
+  WIDTH: number;
+  DEPTH: number | null;
+  DIFFWIDTH: number | null;
+  DIFFDEPTH: number | null;
+  active?: boolean;
+};
+
 export type TOptionItem = {
   id: number | string;
   palitte?: number | string | null,

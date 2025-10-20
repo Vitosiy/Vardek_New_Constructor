@@ -22,7 +22,12 @@ export const useRoomState = defineStore('RoomState', () => {
   const roomsData = JSON.parse(JSON.stringify(schemeTransition.getSchemeTransitionData));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
 
-  const APP = useAppData();
+  const appDataStore = useAppData()
+  const appData = appDataStore.getAppData
+
+  const APP = computed(() => useAppData().getAppData || {})
+
+  // const APP = useAppData();
   const modelState = useModelState()
 
   const currentRoomId = ref<number | null>(null);

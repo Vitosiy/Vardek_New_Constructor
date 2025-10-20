@@ -4,8 +4,6 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
-import { userData } from "three/webgpu";
-
 
 
 interface IProductFasades {
@@ -51,25 +49,29 @@ interface IMilling {
 
 export const useModelState = defineStore('ModelState', () => {
 
-    const _APP = useAppData().getAppData;
-    const _COLOR = _APP.COLOR;
-    const _FASADE = _APP.FASADE;
-    const _FASADESIZE = _APP.FASADESIZE;
-    const _FASADENUMBERSIZE = _APP.FASADENUMBERSIZE;
-    const _FASADE_SECTION = _APP.FASADE_SECTION;
-    const _FASADE_POSITION = _APP.FASADE_POSITION;
-    const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
-    const _PRODUCTS = _APP.CATALOG?.PRODUCTS
-    const _PALETTE = _APP.PALETTE
-    const _PLINTH = _APP.PLINTH
-    const _MILLING = _APP.MILLING
-    const _SHOWCASE = _APP.SHOWCASE
-    const _GLASS = _APP.GLASS
-    const _PATINA = _APP.PATINA
-    const _HANDLES = _APP.HANDLES
+    const appStore = useAppData()
+    const _APP = computed(() => appStore.getAppData || {})
+
+    console.log(_APP, 'OOOOO')
+
+    const _COLOR = computed(() => _APP.value.COLOR || [])
+    const _FASADE = computed(() => _APP.value.FASADE || [])
+    const _FASADESIZE = computed(() => _APP.value.FASADESIZE || [])
+    const _FASADENUMBERSIZE = computed(() => _APP.value.FASADENUMBERSIZE || [])
+    const _FASADE_SECTION = computed(() => _APP.value.FASADE_SECTION || [])
+    const _FASADE_POSITION = computed(() => _APP.value.FASADE_POSITION || [])
+    const _FASADE_GROUPS = computed<IFasadeGroups>(() => _APP.value.FASADE_GROUPS || {})
+    const _PRODUCTS = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
+    const _PALETTE = computed(() => _APP.value.PALETTE || [])
+    const _PLINTH = computed(() => _APP.value.PLINTH || [])
+    const _MILLING = computed(() => _APP.value.MILLING || [])
+    const _SHOWCASE = computed(() => _APP.value.SHOWCASE || [])
+    const _GLASS = computed(() => _APP.value.GLASS || [])
+    const _PATINA = computed(() => _APP.value.PATINA || [])
+    const _HANDLES = computed(() => _APP.value.HANDLES || [])
 
 
-    const models = ref<{ [key: string]: {} }>(_PRODUCTS)
+    // const models = ref<{ [key: string]: {} }>(_PRODUCTS.value)
 
     const currentModel = ref<THREE.Object3D | null>(null)
 
@@ -107,22 +109,27 @@ export const useModelState = defineStore('ModelState', () => {
         return currentModel.value
         //return currentModel.value?.userData
     })
-    const getModels = computed(() => {
-        return models.value
-    })
+    const getModels = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
+
+    // const getModels = computed(() => {
+    //     return models.value
+    // })
 
     /** ------- Работа с Модулем -------- */
 
     const createCurrentModuleData = (value: number[]) => {
 
         const colorMap = new Set();
-        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+        const colorsList = value.filter((colorId: number) => {
+            return _FASADE.value[colorId]
+        });
 
         colorsList.forEach(color => {
-            if (_FASADE[color] !== undefined) {
-                colorMap.add(_FASADE[color]);
+            if (_FASADE.value[color] !== undefined) {
+                colorMap.add(_FASADE.value[color]);
             }
         });
+
         currentModulData.value = Array.from(colorMap)
     }
 
@@ -133,15 +140,15 @@ export const useModelState = defineStore('ModelState', () => {
     /** ------- Задняя стенка -------- */
 
     const createCurrentBackwallData = (productId: number) => {
-        const productInfo = _PRODUCTS[productId]
+        const productInfo = _PRODUCTS.value[productId]
 
         if (productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
             const colorMap = new Set();
-            const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE[colorId]);
+            const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE.value[colorId]);
 
             colorsList.forEach(color => {
-                if (_FASADE[color] !== undefined) {
-                    colorMap.add(_FASADE[color]);
+                if (_FASADE.value[color] !== undefined) {
+                    colorMap.add(_FASADE.value[color]);
                 }
             });
             currentBackwallData.value = Array.from(colorMap)
@@ -156,15 +163,15 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createCurrentSidewallData = (productId: number) => {
 
-        const productInfo = _PRODUCTS[productId]
+        const productInfo = _PRODUCTS.value[productId]
 
         if (productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
             const colorMap = new Set();
-            const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE[colorId]);
+            const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE.value[colorId]);
 
             colorsList.forEach(color => {
-                if (_FASADE[color] !== undefined) {
-                    colorMap.add(_FASADE[color]);
+                if (_FASADE.value[color] !== undefined) {
+                    colorMap.add(_FASADE.value[color]);
                 }
             });
             currentSidewallData.value = Array.from(colorMap)
@@ -180,11 +187,11 @@ export const useModelState = defineStore('ModelState', () => {
     /*const createCurrentTopfasadeData = (value: number[]) => {
 
         const colorMap = new Set();
-        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+        const colorsList = value.filter((colorId: number) => _FASADE.value[colorId]);
 
         colorsList.forEach(color => {
-            if (_FASADE[color] !== undefined) {
-                colorMap.add(_FASADE[color]);
+            if (_FASADE.value[color] !== undefined) {
+                colorMap.add(_FASADE.value[color]);
             }
         });
         currentTopfasadeData.value = Array.from(colorMap)
@@ -200,14 +207,14 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createTotalPlinthData = () => {
         let percept = {}
-        const result = Object.entries(_PLINTH).map(([key, el]) => {
-            return percept[key] = _PRODUCTS[el]
+        const result = Object.entries(_PLINTH.value).map(([key, el]) => {
+            return percept[key] = _PRODUCTS.value[el]
         })
 
         // console.log(percept)
 
         // const filtered = Object.values(_PLINTH).map(el => {
-        //     return _PRODUCTS[el]
+        //     return _PRODUCTS.value[el]
         // })
 
 
@@ -215,11 +222,11 @@ export const useModelState = defineStore('ModelState', () => {
     }
 
     const createTotalPlinthColorData = (plinthId) => {
-        if (!_PLINTH[plinthId]) return []
+        if (!_PLINTH.value[plinthId]) return []
 
-        const { FACADE } = _PRODUCTS[plinthId]
+        const { FACADE } = _PRODUCTS.value[plinthId]
         const filter = FACADE.map(el => {
-            return _FASADE[el] ?? null
+            return _FASADE.value[el] ?? null
         })
 
         return filter
@@ -236,10 +243,10 @@ export const useModelState = defineStore('ModelState', () => {
 
 
         value.forEach(facadeId => {
-            const facade = _FASADE[facadeId];
+            const facade = _FASADE.value[facadeId];
             if (!facade) return;
 
-            const section = _FASADE_SECTION[facade.IBLOCK_SECTION_ID];
+            const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
             if (!section || !section.UF_GROUP) return;
 
             const groupId: string = section.UF_GROUP;
@@ -252,10 +259,12 @@ export const useModelState = defineStore('ModelState', () => {
         });
 
         // Формирование итогового массива
-        const result = Object.entries(_FASADE_GROUPS).map(([groupId, group]) => ({
+        const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
         })).filter(group => group.FASADES.length > 0 && group.NAME !== exception);
+
+        console.log(result, 'result')
 
         if (def) {
             return result
@@ -276,16 +285,16 @@ export const useModelState = defineStore('ModelState', () => {
     const createCurrentPaletteData = (value: number | string) => {
 
         let result = {}
-        if (!_FASADE[value]) return result
-        if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
-            result = Object.keys(_PALETTE)
+        if (!_FASADE.value[value]) return result
+        if (_FASADE.value[value].PALETTE.length && _FASADE.value[value].PALETTE[0] != null) {
+            result = Object.keys(_PALETTE.value)
                 .filter(
                     (key) =>
-                        _PALETTE[key].TYPE ===
-                        _FASADE[value].PALETTE[0]
+                        _PALETTE.value[key].TYPE ===
+                        _FASADE.value[value].PALETTE[0]
                 )
                 .reduce((obj, key) => {
-                    obj[key] = _PALETTE[key];
+                    obj[key] = _PALETTE.value[key];
                     return obj;
                 }, {});
 
@@ -307,16 +316,16 @@ export const useModelState = defineStore('ModelState', () => {
 
         let result = []
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] === null) {
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS.value[productId].type_showcase.length && _PRODUCTS.value[productId].type_showcase[0] === null) {
 
-            currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;
+            currentMillingData.value = _FASADE.value[fasadeId].ATTACH_MILLINGS;
             let millings: IMilling[] = []
-            let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
+            let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
             let percept = {}
-            let prodMilling: number[] = _PRODUCTS[productId].MILLING
+            let prodMilling: number[] = _PRODUCTS.value[productId].MILLING
 
-            fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
-                percept[mill] = _MILLING[mill]
+            fasadeMilling.filter(mill => _MILLING.value[mill] != undefined).map((mill) => {
+                percept[mill] = _MILLING.value[mill]
             })
 
             prodMilling.filter(mill => percept[mill] != undefined).map((mill) => { millings.push(percept[mill]) })
@@ -337,14 +346,14 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createTotalMillingList = (fasadeId) => {
 
-        if (!_FASADE[fasadeId]) return []
+        if (!_FASADE.value[fasadeId]) return []
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null) {
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null) {
             let millings: IMilling[] = []
-            let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
+            let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
             let percept = {}
-            const result = fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
-                return percept[mill] = _MILLING[mill]
+            const result = fasadeMilling.filter(mill => _MILLING.value[mill] != undefined).map((mill) => {
+                return percept[mill] = _MILLING.value[mill]
             })
 
             result.sort((a, b) => a.SORT - b.SORT)
@@ -368,21 +377,27 @@ export const useModelState = defineStore('ModelState', () => {
     /** Витрины */
     const createCurrentShowcaseData = ({ fasadeId, productId }) => {
 
-        const defaultShowcase = _PRODUCTS[productId].type_showcase[0]
-   
+        const prodShowcases = _PRODUCTS.value[productId].type_showcase
+        const defaultShowcase = prodShowcases[0]
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && defaultShowcase) {
-            const prepare = [..._PRODUCTS[productId].type_showcase].map(el => {
-                return _SHOWCASE[el]
+
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && defaultShowcase) {
+
+            const prepare = [..._PRODUCTS.value[productId].type_showcase].map(el => {
+                return _SHOWCASE.value[el]
             })
 
             currentShowcaseData.value = prepare
             return
         }
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] == null) {
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] == null) {
 
-            currentShowcaseData.value = [_SHOWCASE[defaultShowcase]]
+            const prepare = prodShowcases.map(el => {
+                return _SHOWCASE.value[el]
+            })
+
+            currentShowcaseData.value = prepare
             return
         }
     }
@@ -393,10 +408,10 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** Типы фасада (интегрированная ручка) */
     const createCurrentFasadeTypesData = ({ fasadeId, productId }) => {
-        const incomeTypes = _FASADE[fasadeId].fasade_type
-        const productPositions = _PRODUCTS[productId].FASADE_POSITION
+        const incomeTypes = _FASADE.value[fasadeId].fasade_type
+        const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
         const defaultTypes = productPositions.reduce((acc, index) =>
-            acc.concat(_FASADE_POSITION[index]?.fasade_type || []),
+            acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
             []);
 
         currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
@@ -409,8 +424,9 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** Стёкла */
     const createCurrentGlassData = ({ fasadeId, productId }) => {
-        const incomeGlass = _FASADE[fasadeId].ATTACH_GLASS
-        const productGlass = _PRODUCTS[productId].GLASS
+
+        const incomeGlass = _FASADE.value[fasadeId].ATTACH_GLASS
+        const productGlass = _PRODUCTS.value[productId].GLASS
         const glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
         const currentClass = glassArray.reduce((acc, index) =>
             acc.concat(_GLASS[index] || []),
@@ -427,12 +443,15 @@ export const useModelState = defineStore('ModelState', () => {
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
-        if (_PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] !== null) {
+
+        console.log(_PRODUCTS.value)
+
+        if (_PRODUCTS.value[productId].type_showcase.length && _PRODUCTS.value[productId].type_showcase[0] !== null) {
             return
         }
 
-        const incomePatina = _FASADE[fasadeId].PATINA
-        const currentPataina = incomePatina.filter(key => _PATINA.hasOwnProperty(key)).map(key => _PATINA[key])
+        const incomePatina = _FASADE.value[fasadeId].PATINA
+        const currentPataina = incomePatina.filter(key => _PATINA.value.hasOwnProperty(key)).map(key => _PATINA.value[key])
 
         currentPatinaData.value = currentPataina
     }
@@ -506,15 +525,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         createCurrentModuleData,
         getCurrentModuleData,
-
-        createCurrentBackwallData,
-        getCurrentBackwallData,
-
-        createCurrentSidewallData,
-        getCurrentSidewallData,
-
-        /*createCurrentTopfasadeData,
-        getCurrentTopfasadeData,*/
 
         createCurrentBackwallData,
         getCurrentBackwallData,
