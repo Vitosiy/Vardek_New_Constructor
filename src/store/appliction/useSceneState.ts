@@ -1,4 +1,4 @@
-/**// @ts-nocheck */
+//@ts-nocheck
 
 import { defineStore } from 'pinia';
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
@@ -41,121 +41,153 @@ export const useSceneState = defineStore('SceneState', () => {
         fasadsBottom: 'default_palit_bottom'
     }
 
-    const externalMillingKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
-        fasadsTop: 'default_milling_top',
-        fasadsBottom: 'default_milling_bottom'
-    }
-
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
 
-    const quality = ref<TQuality[]>([{
-        lable: "Низкое",
-        value: "low",
-    },
-    {
-        lable: "Среднее",
-        value: "medium",
-    },
-    {
-        lable: "Высокое",
-        value: "hight",
-    }
+    // const updateProjectParams = ({
+    //     rooms,
+    //     camera,
+    //     lights,
+    //     height_clamp,
+    //     default_table_color,
+    //     table_top_type_auto,
+    //     default_fasade_up,
+    //     default_fasade_down,
+    //     default_fasade_color,
+    //     default_floor,
+    //     default_wall,
+    //     default_module_color_down,
+    //     default_module_color_up,
+    //     default_module_color,
+    //     default_milling_down,
+    //     default_milling_up,
+    //     default_palit_down,
+    //     default_palit_up,
+    //     default_table_model,
+    //     default_handles,
+    //     default_plinth_body,
+    //     default_plinth_color,
+    //     default_overlay_id,
+    //     project_name
 
-    ],)
-
-    const lightRange = ref<TLightRange>({
-        pointLight: startParamsClone.lights.pointLight.intensity,
-        ambientLight: startParamsClone.lights.ambientLight.intensity
-    })
-
-    const updateProjectParams = ({
-        rooms,
-        camera,
-        lights,
-        height_clamp,
-        table,
-        table_params,
-        default_table_color,
-        table_top_type_auto,
-        default_fasade_up,
-        default_fasade_down,
-        default_fasade_color,
-        default_floor,
-        default_wall,
-        default_module_color_down,
-        default_module_color_up,
-        default_module_color,
-        default_milling_down,
-        default_milling_up,
-        default_palit_down,
-        default_palit_up,
-        default_table_model,
-        default_handles,
-        project_name
-
-    }: IProjectParams) => {
-        currentProjectParams.value = {
-            rooms: rooms ?? currentProjectParams.value.rooms,
-            camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
-            lights: lights ?? startProjectParams.value.lights,
-            height_clamp: height_clamp ?? startProjectParams.value.height_clamp,
-            table: table ?? startProjectParams.value.table,
-            table_params: table_params ?? startProjectParams.value.table_params,
-            table_top_type_auto: table_top_type_auto ?? startProjectParams.value.table_top_type_auto,
-            default_table_color: default_table_color ?? startProjectParams.value.default_table_color,
-            default_fasade_up: default_fasade_up ?? startProjectParams.value.default_fasade_up,
-            default_fasade_down: default_fasade_down ?? startProjectParams.value.default_fasade_down,
-            default_fasade_color: default_fasade_color ?? startProjectParams.value.default_fasade_color,
-            default_floor: default_floor ?? startProjectParams.value.default_floor,
-            default_wall: default_wall ?? startProjectParams.value.default_wall,
-            default_module_color_down: default_module_color_down ?? startProjectParams.value.default_module_color_down,
-            default_module_color_up: default_module_color_up ?? startProjectParams.value.default_module_color_up,
-            default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
-            default_milling_down: default_milling_down ?? startProjectParams.value.default_milling_down,
-            default_milling_up: default_milling_up ?? startProjectParams.value.default_milling_up,
-            default_palit_down: default_palit_down ?? startProjectParams.value.default_palit_down,
-            default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
-            default_table_model: default_table_model ?? startProjectParams.value.default_table_model,
-            default_handles: default_handles ?? startProjectParams.value.default_handles,
-            project_name: project_name ?? startProjectParams.value.project_name
-
-        } as IProjectParams;
-
-        console.log(currentProjectParams.value.rooms)
-
-        // const clone = currentProjectParams.value.rooms?.map(item => {
-        //     return item
-        // })
-
-        // const parseData = clone.map(elem => {
-        //     const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
-        //     return {
-        //         ...elem,
-        //         content: content
-        //     }
-        // })
+    // }: IProjectParams) => {
+    //     currentProjectParams.value = {
+    //         rooms: ((rooms) => {
+    //             if (rooms) {
+    //                 rooms.forEach(el => {
+    //                     console.log(el.content)
+    //                 })
+    //                 return rooms
+    //             }
+    //             return currentProjectParams.value.rooms
 
 
-        // const parseData = clone.map(elem => {
-        //     return {
-        //         ...elem,
-        //         content: elem.content.map((el) => {
-        //             if (typeof el == 'string') {
-        //                 return JSON.parse(el)
-        //             }
-        //             return el
-        //         })
-        //     }
-        // })
+    //         })(rooms),
+    //         camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
+    //         lights: lights ?? startProjectParams.value.lights,
+    //         height_clamp: height_clamp ?? startProjectParams.value.height_clamp,
+    //         table_top_type_auto: table_top_type_auto ?? startProjectParams.value.table_top_type_auto,
+    //         default_table_color: default_table_color ?? startProjectParams.value.default_table_color,
+    //         default_fasade_up: default_fasade_up ?? startProjectParams.value.default_fasade_up,
+    //         default_fasade_down: default_fasade_down ?? startProjectParams.value.default_fasade_down,
+    //         default_fasade_color: default_fasade_color ?? startProjectParams.value.default_fasade_color,
+    //         default_floor: default_floor ?? startProjectParams.value.default_floor,
+    //         default_wall: default_wall ?? startProjectParams.value.default_wall,
+    //         default_module_color_down: default_module_color_down ?? startProjectParams.value.default_module_color_down,
+    //         default_module_color_up: default_module_color_up ?? startProjectParams.value.default_module_color_up,
+    //         default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
+    //         default_milling_down: default_milling_down ?? startProjectParams.value.default_milling_down,
+    //         default_milling_up: default_milling_up ?? startProjectParams.value.default_milling_up,
+    //         default_palit_down: default_palit_down ?? startProjectParams.value.default_palit_down,
+    //         default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
+    //         default_table_model: default_table_model ?? startProjectParams.value.default_table_model,
+    //         default_handles: default_handles ?? startProjectParams.value.default_handles,
+    //         default_plinth_body: default_plinth_body ?? startProjectParams.value.default_plinth_body,
+    //         default_plinth_color: default_plinth_color ?? startProjectParams.value.default_plinth_color,
+    //         default_overlay_id: default_overlay_id ?? startProjectParams.value.default_overlay_id,
+    //         project_name: project_name ?? startProjectParams.value.project_name
+
+    //     } as IProjectParams;
+
+
+    //     // const clone = currentProjectParams.value.rooms?.map(item => {
+    //     //     return item
+    //     // })
+
+    //     // const parseData = clone.map(elem => {
+    //     //     const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+    //     //     return {
+    //     //         ...elem,
+    //     //         content: content
+    //     //     }
+    //     // })
+
+    //     // console.log(parseData)
+
+
+    //     // const parseData = clone.map(elem => {
+    //     //     return {
+    //     //         ...elem,
+    //     //         content: elem.content.map((el) => {
+    //     //             if (typeof el == 'string') {
+    //     //                 return JSON.parse(el)
+    //     //             }
+    //     //             return el
+    //     //         })
+    //     //     }
+    //     // })
 
 
 
-        // console.log(parseData, 'parseData')
+    //     // console.log(parseData, 'parseData')
 
-        // schemeTransition.setAppData(parseData)
-        // roomState.mergeRoomsData();
+    //     // schemeTransition.setAppData(parseData)
+    //     // roomState.mergeRoomsData();
 
+    // };
+
+
+    const mergeRooms = (
+        currentRooms: IRoom[] | undefined,
+        newRooms: IRoom[] | undefined
+    ): IRoom[] | undefined => {
+        if (!newRooms) return currentRooms;
+        if (!currentRooms) return newRooms;
+
+        const mergedRooms = newRooms.map(newRoom => {
+            const existing = currentRooms.find(r => r.id === newRoom.id);
+            return existing ? { ...existing, ...newRoom } : newRoom;
+        });
+
+        // Добавляем старые, которые не пришли в обновлении
+        const missing = currentRooms.filter(
+            oldRoom => !newRooms.some(r => r.id === oldRoom.id) && oldRoom.id !== 1000001
+        );
+
+        return [...mergedRooms, ...missing];
+    };
+
+    const updateProjectParams = (params: Partial<IProjectParams>) => {
+        const base = startProjectParams.value;
+        const current = currentProjectParams.value;
+
+        const merged: IProjectParams = {
+            ...base,
+            ...current,
+            ...params,
+            rooms: mergeRooms(current.rooms, params.rooms) ?? base.rooms,
+            camera: params.camera ?? current.camera ?? base.camera,
+            lights: params.lights ?? current.lights ?? base.lights,
+            height_clamp: params.height_clamp ?? current.height_clamp ?? base.height_clamp,
+        };
+
+        if (params.rooms) {
+            params.rooms.forEach(room => console.log(room.content));
+        }
+
+        console.log(merged, 'merged')
+
+        currentProjectParams.value = merged;
     };
 
     const setShadowValue = (value: boolean) => {
@@ -179,17 +211,17 @@ export const useSceneState = defineStore('SceneState', () => {
         const curOption = keys[type];
         const curPalitte = externalPalitteKeys[type];
 
-        console.log(value, 'curOption')
+        // console.log(value, 'curOption')
         if (curOption) {
-            console.log(startProjectParams.value, 'startProjectParams_1')
+            // console.log(startProjectParams.value, 'startProjectParams_1')
 
             startProjectParams.value[curOption] = value?.id;
             currentProjectParams.value[curOption] = value?.id;
 
             if (value?.palitte) {
-                console.log('P1')
+
                 if (curPalitte) {
-                    console.log('P2')
+
                     startProjectParams.value[curOption] = value?.palitte;
                     currentProjectParams.value[curOption] = value?.palitte;
                 }
@@ -217,23 +249,41 @@ export const useSceneState = defineStore('SceneState', () => {
 
     }
 
-    const loadProjectFromData = (newProject: IProjectParams) => {
+    const loadProjectFromData = async (newProject: IProjectParams) => {
 
-        const clone = JSON.parse(JSON.stringify(newProject))
+        console.log(newProject, 'loadProjectFromData')
 
-        startProjectParams.value = JSON.parse(JSON.stringify(newProject))
+        startProjectParams.value = newProject
 
-        startParamsClone.value = clone
+        startParamsClone.value = newProject
 
-        startRoomData.value = clone.rooms[0].params
+        startRoomData.value = newProject.rooms[0].params
 
-        startCameraData.value = clone.camera
+        // startCameraData.value = newProject.camera
 
-        startLightsDat.value = clone.lights
+        // startLightsDat.value = newProject.lights
 
-        startHeightClamp.value = clone.height_clamp
+        // startHeightClamp.value = newProject.height_clamp
 
-        currentProjectParams.value = clone
+        // currentProjectParams.value = newProject
+
+
+
+        // const clone = JSON.parse(JSON.stringify(newProject))
+
+        // startProjectParams.value = JSON.parse(JSON.stringify(newProject))
+
+        // startParamsClone.value = clone
+
+        // startRoomData.value = clone.rooms[0].params
+
+        // startCameraData.value = clone.camera
+
+        // startLightsDat.value = clone.lights
+
+        // startHeightClamp.value = clone.height_clamp
+
+        // currentProjectParams.value = clone
     }
 
     const getStartProgectParams = computed(() => {

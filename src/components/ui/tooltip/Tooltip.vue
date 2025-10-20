@@ -55,7 +55,6 @@ const hideTooltip = () => {
 };
 
 onMounted(()=>{
-    console.log(props.content, 'CONT')
 })
 </script>
 

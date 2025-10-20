@@ -43,8 +43,6 @@ export class WallBuilder {
 
         const tempMesh = mesh.clone()
 
-        console.log(rotation._x, rotation._y, rotation._z)
-
         tempMesh.updateMatrix()
         tempMesh.geometry.applyMatrix4(mesh.matrix);
         //  Сбрасываем трансформации меша

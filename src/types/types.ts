@@ -9,7 +9,7 @@ import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { BuildProduct } from "@/Application/Meshes/BuildProduct";
 import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
 import { PaletteBuilder } from "@/Application/Meshes/PaletteBuilder";
-import { WindowBuilder } from "@/Application/Meshes/WindowBuilder";
+import { ShowcaseBuilder } from "@/Application/Meshes/ShowcaseBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
 import { SetObject } from "@/Application/Utils/SetObject";
 import { AlumBuilder } from "@/Application/Meshes/AlumBuilder";
@@ -25,6 +25,7 @@ import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
 import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
 import { HandlesBuilder } from "@/Application/Meshes/Hendles/Handles";
 import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder";
+import { PlinthBuilder } from "@/Application/Meshes/PlinthBuilder/PlinthBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -48,7 +49,7 @@ export type TScene = THREE.Scene
 export type TCustomBoxHelper = CustomBoxHelper
 export type TBuildProduct = BuildProduct
 export type TMillingBuilder = MillingBuilder
-export type TWindowBuilder = WindowBuilder
+export type TShowcaseBuilder = ShowcaseBuilder
 export type TPaletteBulider = PaletteBuilder
 export type TSetObject = SetObject
 export type TAlumBuilder = AlumBuilder
@@ -64,8 +65,10 @@ export type TEdgeBuilder = EdgeBuilder
 export type TUseEdgeBuilder = UseEdgeBuilder
 export type THandlesBuilder = HandlesBuilder
 export type TModelsBuilder = ModelsBuilder
+export type TPlinthBuilder = PlinthBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
+export type TElementType = "element_down" | "element_up"
 
 export type TMaterialType =
   'MeshBasicMaterial'
@@ -104,7 +107,7 @@ export type MenuType = 'tech' | 'roomPar' | 'customiser';
 export type TQuality = {
   lable: string,
   value: TQualityValue,
-  active: boolean
+  active?: boolean
 }
 
 export type TOptionItem = {
@@ -119,6 +122,9 @@ export type TOptionItem = {
   palitteData?: TPalitte[] | null
   millingTitle?: string,
   millingData?: TMilling[] | null
+  plinthTitle?: string,
+  plinthSurfase?: number | string | null,
+  plinthData?: TFasadeItem[] | null
 };
 
 export type TLightRange = {
@@ -136,6 +142,7 @@ export type TOptionsMap = {
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
+  plinth: TOptionItem
 };
 
 export type TTextureActionMap = {
@@ -148,6 +155,8 @@ export type TTextureActionMap = {
   tableTop: 'A:ChangeTableTop',
   palitteTotal: 'A:ChangePaletteTotal',
   millingTotal: "A:ChangeMillingTotal",
+  plinth: "A:ChangePlinthBody",
+  plinthColor: "A:ChangePlinthColor"
 
 };
 
@@ -259,6 +268,7 @@ export type TDefaultOptionsConfig = {
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
+  plinth: TOptionItem
 }
 
 //------------------
@@ -486,6 +496,19 @@ export type TMilling = {
   type_showcase: number[];
   fasade_type: number[];
   DENSITY: number | string | null;
+}
+
+export type TPlinthActions = {
+  front: TPlinthAction,
+  left: TPlinthAction,
+  right: TPlinthAction
+}
+
+type TPlinthAction = {
+  value: boolean,
+  modelId: number | null,
+  surfaceId: number | null,
+
 }
 
 

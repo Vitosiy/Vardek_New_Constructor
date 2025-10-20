@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { TFasadeProp } from "@/types/types";
@@ -32,7 +33,7 @@ export const useFigureRightPage = () => {
     const modelState = useModelState();
 
     const createHandlesList = () => {
-        const { PROPS } = modelState.getCurrentModel
+        const { PROPS } = modelState.getCurrentModel.userData
         const ptoductId = PROPS.PRODUCT
 
         const data = appData.getAppData
@@ -60,7 +61,7 @@ export const useFigureRightPage = () => {
     }
 
     const createSurfaceList = () => {
-        const { PROPS } = modelState.getCurrentModel;
+        const { PROPS } = modelState.getCurrentModel.userData;
         const { FASADE_PROPS } = PROPS.CONFIG
         const tempList: IFigureFasade[] = []
 
@@ -77,14 +78,24 @@ export const useFigureRightPage = () => {
 
     }
 
+    const createPlinthData = () => {
+        const { PROPS } = modelState.getCurrentModel.userData
+        // console.log(PROPS, 'PROPS')
+        return PROPS.CONFIG.PLINTH_ACTIONS
+    }
+
     const figureItems: IFigureItems[] = [
         {
             label: 'Ручки',
             name: 'Handles',
             // action: () => createSurfaceList()
+        },
+        {
+            label: 'Плинтус',
+            name: 'Plinth',
         }
     ]
 
-    return { figureItems, createSurfaceList, createHandlesList }
+    return { figureItems, createSurfaceList, createHandlesList, createPlinthData }
 
 }

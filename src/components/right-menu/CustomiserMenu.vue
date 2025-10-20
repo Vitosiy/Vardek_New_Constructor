@@ -6,6 +6,7 @@ import type { Mesh, Object3D, Vector3, PerspectiveCamera } from "three";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useUniformState } from "@/store/appliction/useUniformState";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
@@ -23,13 +24,18 @@ import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.v
 const customiserStore = useCustomiserStore();
 const eventBus = useEventBus();
 const modelState = useModelState();
+const uniformState = useUniformState();
 
 const currentModel = ref(null);
 
 const closeCustomiser = () => {
+  const { uniformMode } = uniformState.getUniformModeData;
   // Отключаем режим переходящего рисунка при закрытии кастомизатора
-  eventBus.emit("A:Disable-Uniform-Mode");
-  console.log('Close customiser')
+  if (uniformMode) {
+    eventBus.emit("A:Disable-Uniform-Mode");
+  }
+  console.log('1232121321');
+  eventBus.emit("A:close-modal-custom");
   customiserStore.hideCustomiserPopup();
 };
 
@@ -40,24 +46,31 @@ const checkSelect = (el) => {
     modelState.setCurrentModel(null);
     return;
   }
-  currentModel.value = el.object.userData;
-  modelState.setCurrentModel(el.object.userData);
-  customiserStore.switchCustomiser('color')
+  // console.log(el.object, "A:Selected");
+
+  currentModel.value = el.object;
+  // modelState.setCurrentModel(el.object.userData);
+  modelState.setCurrentModel(el.object);
+  if (el.object.name == "MODEL") {
+    return;
+  }
+  customiserStore.switchCustomiser("color");
 };
 
 onMounted(() => {
   eventBus.on("A:Selected", checkSelect);
   eventBus.on("A:ClearSelected", checkSelect);
-  eventBus.on("A:RemoveModel", closeCustomiser)
+  eventBus.on("A:RemoveModel", closeCustomiser);
+  eventBus.on("A:Duplicate", closeCustomiser);
 });
 
 onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
   eventBus.off("A:ClearSelected", checkSelect);
 });
-onUnmounted(()=>{
-  closeCustomiser()
-})
+onUnmounted(() => {
+  closeCustomiser();
+});
 </script>
 
 <template>

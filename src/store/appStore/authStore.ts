@@ -5,6 +5,7 @@ import { AuthService } from '@/services/authService'
 import { useRouter } from 'vue-router'
 import { LoginData, UserData } from '@/types/authTypes'
 import { useAppData } from '@/store/appliction/useAppData'
+import { setCookie, getCookie, deleteCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookieUtils'
 
 const TOKEN_EXPIRATION_HOURS = 24
 
@@ -12,7 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   const appDataStore = useAppData()
   
-  const isAuthenticated = ref(!!localStorage.getItem('token'))
+  const isAuthenticated = ref(!!getCookie(COOKIE_NAMES.AUTH_TOKEN))
   const isSubmitting = ref(false)
   const error = ref({
     isError: false,
@@ -36,30 +37,85 @@ export const useAuthStore = defineStore('auth', () => {
 
   const fetchUserData = async () => {
     try {
-      // Здесь должен быть реальный запрос к API
-      // Заглушка для демонстрации
-      userData.value = {
-        avatar: null,
-        name: 'Тест Тестов',
-        status: 'online'
+      const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+      
+      if (!token) {
+        throw new Error('Токен не найден');
       }
+
+      const response = await AuthService.getUserData(token);
+      
+      // Логируем ответ только в development режиме
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Ответ сервера:', response);
+      }
+
+      // Проверяем структуру ответа
+      if (!response?.DATA) {
+        throw new Error('Некорректная структура ответа сервера');
+      }
+
+      const { type, data } = response.DATA;
+
+      // Обрабатываем ошибку от сервера
+      if (type === 'error') {
+        throw new Error('Ошибка авторизации: неверный токен');
+      }
+
+      // Проверяем наличие данных пользователя
+      if (!data?.user) {
+        throw new Error('Данные пользователя не получены');
+      }
+
+      const user = data.user;
+
+      // Проверяем активность пользователя
+      if (user.ACTIVE !== "Y") {
+        throw new Error('Пользователь неактивен');
+      }
+
+      // Формируем данные пользователя
+      userData.value = {
+        avatar: user.PERSONAL_PHOTO || null,
+        name: `${user.NAME || ''} ${user.LAST_NAME || ''}`.trim() || 'Пользователь',
+        status: 'online',
+        // Добавляем дополнительные полезные поля
+        id: user.ID,
+        email: user.EMAIL,
+        login: user.LOGIN
+      };
+      return userData.value;
+
     } catch (error) {
-      console.error('Ошибка загрузки данных пользователя:', error)
+      console.error('Ошибка загрузки данных пользователя:', error);
+      
+      // Определяем тип ошибки для соответствующей обработки
+      const errorMessage = error.message.toLowerCase();
+      const isAuthError = errorMessage.includes('авторизации') || 
+                        errorMessage.includes('токен') ||
+                        errorMessage.includes('неактивен');
+
+      if (isAuthError) {
+        await logout();
+      }
+      
+      // Пробрасываем ошибку дальше для обработки в вызывающем коде
+      throw error;
     }
-  }
-  
-  const login = async (credentials:LoginData) => {
+  };
+
+  const login = async (credentials: LoginData) => {
     try {
       isSubmitting.value = true
       error.value = { isError: false, message: '' }
       
       const response = await AuthService.login(credentials)
-      const { type, data: responseData } = response.DATA
-      console.log('response', response);
-      if (type === 'success' && responseData.id) {
-        await handleSuccessfulLogin(responseData.id)
-      } else if (type === 'error' && responseData.MESSAGE) {
-        throw new Error(responseData.MESSAGE)
+      const { type } = response.DATA
+      
+      if (type === 'success' && response.DATA.token) {
+        await handleSuccessfulLogin(response.DATA.token)
+      } else if (type === 'error' && response.DATA.MESSAGE) {
+        throw new Error(response.DATA.MESSAGE)
       } else {
         throw new Error('Неизвестный тип ответа от сервера')
       }
@@ -72,17 +128,30 @@ export const useAuthStore = defineStore('auth', () => {
   }
   
   const handleSuccessfulLogin = async (token: string) => {
-    // await appDataStore.initAppData()
-
-    const expiresIn = TOKEN_EXPIRATION_HOURS * 60 * 60 * 1000
+    // Сохраняем токен в cookie на 24 часа (1 день)
+    setCookie(COOKIE_NAMES.AUTH_TOKEN, token, 1)
     
-    localStorage.setItem('token', token)
-    localStorage.setItem('tokenExpiration', (Date.now() + expiresIn).toString())
+    // Сохраняем время истечения токена
+    const expirationTime = Date.now() + (TOKEN_EXPIRATION_HOURS * 60 * 60 * 1000)
+    setCookie(COOKIE_NAMES.TOKEN_EXPIRATION, expirationTime.toString(), 1)
+    
+    // Логируем для отладки
+    console.log('Токен сохранен:', {
+      tokenExpiration: new Date(expirationTime).toLocaleString(),
+      hoursFromNow: TOKEN_EXPIRATION_HOURS,
+      cookieDays: 1
+    })
+    
     isAuthenticated.value = true
-    
+    await appDataStore.initAppData()
 
-    // await appDataStore.initAppData();
-    await router.push('/2d')
+    // Загружаем данные пользователя
+    // await fetchUserData().then(res => {
+    //   console.log(res);
+    // })
+    // await appDataStore.initAppData()
+    
+    // await router.push('/2d')
   }
   
   const handleError = (err: unknown) => {
@@ -104,8 +173,14 @@ export const useAuthStore = defineStore('auth', () => {
   
   const logout = async () => {
     try {
+      // Удаляем cookies
+      deleteCookie(COOKIE_NAMES.AUTH_TOKEN)
+      deleteCookie(COOKIE_NAMES.TOKEN_EXPIRATION)
+      
+      // Очищаем localStorage на всякий случай
       localStorage.removeItem('token')
       localStorage.removeItem('tokenExpiration')
+      
       isAuthenticated.value = false
       userData.value = {
         avatar: null,
@@ -118,11 +193,30 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       console.error('Ошибка при выходе:', error)
       // Форсированный выход при ошибке
+      document.cookie.split(';').forEach(cookie => {
+        const eqPos = cookie.indexOf('=')
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
+        deleteCookie(name)
+      })
       localStorage.clear()
       await router.push('/auth')
     }
   }
-  
+
+  // Функция для проверки истечения токена
+  const checkTokenExpiration = (): boolean => {
+    const expiration = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION)
+    if (!expiration) return true
+    
+    const expirationTime = parseInt(expiration)
+    return Date.now() > expirationTime
+  }
+
+  // Автоматическая проверка токена при инициализации
+  if (isAuthenticated.value && checkTokenExpiration()) {
+    logout()
+  }
+
   return {
     isAuthenticated,
     isSubmitting,
@@ -131,6 +225,7 @@ export const useAuthStore = defineStore('auth', () => {
     userInitials,
     fetchUserData,
     login,
-    logout
+    logout,
+    checkTokenExpiration
   }
 })

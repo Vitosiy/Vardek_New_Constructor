@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 // @ts-nocheck
 import { ref, onMounted, onBeforeMount, watch, computed } from "vue";
+import Toggle from "@vueform/toggle";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
+import DirectionControl from "@/components/left-menu/option/direction/DirectionControl.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -25,14 +27,30 @@ const resizeData = ref({
 
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
+// const transformControlsValue = ref<Boolean>(false);
 
 const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
 
+// const controlsActivate = () => {
+//   const curModel = modelState.getCurrentModel;
+
+//   if (transformControlsValue.value) {
+//     eventBus.emit("A:TransformMode_On");
+//   } else {
+//     eventBus.emit("A:TransformMode_Off");
+//   }
+
+//   modelState.setTransformControlsValue(transformControlsValue.value)
+// };
+
+const rotateModel = (id: number) => {
+  eventBus.emit("A:RotateModel", id);
+};
+
 const prepareData = () => {
-  console.log(modelState.getCurrentModel, "modelState.getCurrentModel");
-  currentModel.value = modelState.getCurrentModel;
+  currentModel.value = modelState.getCurrentModel.userData;
 
   sizeEditData.value = {
     widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
@@ -52,7 +70,6 @@ const prepareData = () => {
 
 const resizeModel = (value: object) => {
   if (!isMounted.value) return; // игнорируем вызов до готовности
-  console.log({ ...resizeData.value, ...value }, "RES");
   eventBus.emit("A:Model-resize", { data: { ...resizeData.value, ...value } });
 };
 
@@ -75,6 +92,13 @@ watch(
     });
   }
 );
+
+// watch(
+//   () => transformControlsValue.value,
+//   () => {
+//     controlsActivate();
+//   }
+// );
 </script>
 
 <template>
@@ -119,6 +143,20 @@ watch(
           />
         </div>
       </div>
+
+      <p class="customiser-section__title">Вращение</p>
+      <DirectionControl
+        @changeDirectionPos="rotateModel"
+        :type="'rotateMap'"
+        :scale="0.8"
+        :max-width="140"
+        :gap="2"
+      />
+
+      <!-- <p class="customiser-section__title">Произвольное позиционирование</p>
+      <div class="switch__container">
+        <Toggle v-model="transformControlsValue" />
+      </div> -->
     </div>
   </div>
 </template>

@@ -1,10 +1,10 @@
 
-/**//@ts-nocheck */
-import { toRaw } from 'vue';
+// @ts-nocheck
+
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import { TCreateHandleParams } from '../Hendles/Handles';
-import GUI from 'lil-gui';
+// import GUI from 'lil-gui';
 
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { DeepDispose } from '@/Application/Utils/DeepDispose';
@@ -13,22 +13,21 @@ import { useAppData } from '@/store/appliction/useAppData';
 import { useModelState } from "@/store/appliction/useModelState";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useMenuStore } from '@/store/appStore/useMenuStore';
-
+import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoomOptons';
 import { BuildersHelper } from '../BuildersHelper';
 
 import { MILLINGS, additionalMillingKeys } from '@/Application/F-millings';
-import { directionToColor } from 'three/webgpu';
-
-import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
+// import { directionToColor } from 'three/webgpu';
+// import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 import { BuildUniversalModule } from "@/Application/Meshes/UniversalModuleUtils/BuildUniversalModule.ts";
 
 
-let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
+// let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
+type TRotateActions = Record<number, number>
 export type TDataCreateHandle = { data: TCreateHandleParams; fasadeNdx: number }
 export type TDataWithNdx = { data: number | string, fasadeNdx: number } | { data: { [key: string]: any }, fasadeNdx: number };
 export type TDataWithType = { data: { [key: string]: any }, type: string }
 export type TResizeModel = { data: { width: number, height: number, depth: number }, mesh?: THREE.Object3D, type?: string }
-
 
 
 export class MeshEvents extends BuildersHelper {
@@ -39,6 +38,7 @@ export class MeshEvents extends BuildersHelper {
     uniformState: ReturnType<typeof useUniformState> = useUniformState()
     modelState: ReturnType<typeof useModelState> = useModelState()
     menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
+    roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions()
     trafficManager: THREETypes.TTrafficManager
 
     resources: THREETypes.TResources
@@ -46,15 +46,16 @@ export class MeshEvents extends BuildersHelper {
     buildProduct: BuildProduct
     buildUMProduct: BuildUniversalModule
     buildMilling: THREETypes.TMillingBuilder
-    buildWindow: THREETypes.TWindowBuilder
+    buildShowcase: THREETypes.TShowcaseBuilder
     buildPalette: THREETypes.TPaletteBulider
     buildAlum: THREETypes.TAlumBuilder
     buildUniformTexture: THREETypes.TUniformTextureBuilder
+    plinthBuilder: THREETypes.TPlinthBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
     handlesBuilder: THREETypes.THandlesBuilder
     private millings: any | null = MILLINGS
     private additionalMillingKeys: any | null = additionalMillingKeys
-    private alumTextures: string | null = alumTextures
+    // private alumTextures: string | null = alumTextures
 
     private _overrideMesh?: THREE.Object3D | null;
 
@@ -79,12 +80,12 @@ export class MeshEvents extends BuildersHelper {
     private onDeliteMilling: (fasadeNdx: number) => void;
     private onChangeMillingTotal: ({ data, type }: TDataWithType) => void;
 
-    private onChangeWindow: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onChangeShowcase: ({ data, fasadeNdx }: TDataWithNdx) => void;
+    private onDeliteShowcase: (fasadeNdx: number) => void;
 
     private onDrawPatina: ({ data, fasadeNdx }: TDataWithNdx) => void;
     private onDelitePatina: (fasadeNdx: number) => void;
 
-    private onChangeModelSize: ({ data, mesh, type }: TResizeModel) => void;
     private onUpdateUMModel: (data: Object) => void;
     private onToggleFasade: (fasad_ndx: number) => void;
     private onDeliteFasade: (fasad_ndx: number) => void;
@@ -94,6 +95,10 @@ export class MeshEvents extends BuildersHelper {
     private onAddHandle: ({ data, fasadeNdx }: TDataWithNdx) => void
     private onDeliteHandle: ({ data, fasadeNdx }: TDataWithNdx) => void
     private onChangeHandlePos: ({ data, fasadeNdx }: TDataWithNdx) => void
+    private onChangePlinth: () => void
+
+    private onChangeModelSize: ({ data, mesh, type }: TResizeModel) => void;
+    private onCgangeRotation: (data: number) => void
 
     private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
@@ -101,6 +106,14 @@ export class MeshEvents extends BuildersHelper {
         moduleBottom: "element_down",
         fasadsBottom: "element_down"
 
+    }
+
+    private rotateActions: TRotateActions = {
+        1: Math.PI,
+        3: Math.PI * -0.5,
+        4: Math.PI * -0.5,
+        5: Math.PI * 0.5,
+        7: 0
     }
 
     constructor(root: THREETypes.TApplication) {
@@ -136,7 +149,8 @@ export class MeshEvents extends BuildersHelper {
         this.onDeliteMilling = this.deliteMilling.bind(root);
         this.onChangeMillingTotal = this.changeMillingTotal.bind(root);
 
-        this.onChangeWindow = this.changeWindow.bind(root);
+        this.onChangeShowcase = this.changeShowcase.bind(root);
+        this.onDeliteShowcase = this.deliteShowcase.bind(root)
 
         this.onDrawPatina = this.drawPatina.bind(root);
         this.onDelitePatina = this.delitePatina.bind(root);
@@ -144,7 +158,6 @@ export class MeshEvents extends BuildersHelper {
         this.onCreateUniformGroup = this.сreateUniformGroup.bind(root);
         this.onDeliteUniformGroup = this.deliteUniformGroup.bind(root);
 
-        this.onChangeModelSize = this.changeModelSize.bind(root);
         this.onUpdateUMModel = this.updateUMModel.bind(root);
 
         this.onToggleFasade = this.toggleFasade.bind(root);
@@ -153,15 +166,20 @@ export class MeshEvents extends BuildersHelper {
         this.onAddHandle = this.addHandle.bind(root);
         this.onDeliteHandle = this.deliteHandle.bind(root);
         this.onChangeHandlePos = this.changeHandlePos.bind(root);
+        this.onChangePlinth = this.changePlinth.bind(root)
+
+        this.onChangeModelSize = this.changeModelSize.bind(root);
+        this.onCgangeRotation = this.changeRotation.bind(root)
 
         this.addVueEvents();
 
         this.buildMilling = this.buildProduct.milling_builder;
         this.buildPalette = this.buildProduct.palette_bulider;
-        this.buildWindow = this.buildProduct.window_builder;
+        this.buildShowcase = this.buildProduct.showcase_builder;
         this.buildAlum = this.buildProduct.alum_builder;
         this.buildUniformTexture = this.buildProduct.uniform_texture_builder;
         this.handlesBuilder = this.buildProduct.handles_builder;
+        this.plinthBuilder = this.buildProduct.plinth_builder
     }
 
     get _currentMesh() {
@@ -174,15 +192,23 @@ export class MeshEvents extends BuildersHelper {
 
     async resetFasade({ fasadeNdx, incomingModel, totalFasad, remove = false }: { fasadeNdx: number, incomingModel?: any, totalFasad?: THREE.Object3D, remove: boolean }) {
 
+        const fTypeMap: Record<string, keyof THREETypes.TOptionsMap> = {
+            element_up: 'fasadsTop',
+            element_down: 'fasadsBottom'
+
+        }
         const product = totalFasad ?? this._currentMesh
+
 
         if (!product) return;
 
         const { PROPS } = product.userData
         const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
-        const { FASADE_PROPS } = CONFIG
+        const { FASADE_PROPS, ELEMENT_TYPE } = CONFIG
         const defaultConfig: THREETypes.TDefaultOptionsConfig = this.buildProduct.getDefaultOptionsConfig();
         const fasadeExist = FASADE[fasadeNdx]
+        const curGlobalOptions: THREETypes.TOptionsMap = this.roomOptions.getGlobalOptions
+        const globalMilling = curGlobalOptions[fTypeMap[ELEMENT_TYPE]] ? curGlobalOptions[fTypeMap[ELEMENT_TYPE]].milling : null
 
         const rebuild = (fasadeNdx) => {
             this.buildProduct.fasade_builder.getFasade(
@@ -209,12 +235,11 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
+            console.log('hhhhhhh')
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
-            FASADE_PROPS[fasadeNdx].MILLING = null
+            FASADE_PROPS[fasadeNdx].MILLING = globalMilling
             FASADE_PROPS[fasadeNdx].PATINA = null
-
-            return
         }
     }
 
@@ -272,15 +297,14 @@ export class MeshEvents extends BuildersHelper {
         const product = this._currentMesh;
         const drowMode = this.menuStore.getDrowModeValue
 
-        const { CONFIG, FASADE, FASADE_DEFAULT } = product.userData.PROPS;
+        const { CONFIG, FASADE, FASADE_DEFAULT, ELEMENT_TYPE } = product.userData.PROPS;
         const { FASADE_PROPS, UNIFORM_TEXTURE } = CONFIG;
 
         const incomingModel = data.MODEL;
         const fasade = FASADE[fasadeNdx] ?? FASADE_DEFAULT[fasadeNdx];
         const fasadeProp = FASADE_PROPS[fasadeNdx];
-        fasadeProp.COLOR = data.ID
 
-        console.log(this._FASADE[data.ID], 'fasade')
+        fasadeProp.COLOR = data.ID
 
         if (UNIFORM_TEXTURE.group !== null) {
             this.removeFromUniformGroup(product);
@@ -310,12 +334,13 @@ export class MeshEvents extends BuildersHelper {
     }
 
     private handleWindowChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
-        const showcaseWindow = CONFIG.SHOWCASE;
+        const showcase = CONFIG.SHOWCASE;
+        const milling = fasadeProp.MILLING
 
-        if (showcaseWindow.length > 0 && (fasadeProp.WINDOW === null || !incomingModel)) {
-            this.changeWindow({ data: showcaseWindow[0], fasadeNdx });
+        if (showcase.length > 0 && (fasadeProp.SHOWCASE === null || !incomingModel)) {
+            this.changeShowcase({ data: showcase[0], fasadeNdx });
         } else {
-            Object.assign(fasadeProp, { MILLING: null, PATINA: null });
+            Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
         }
     }
 
@@ -370,8 +395,6 @@ export class MeshEvents extends BuildersHelper {
 
         await this.catchFasadeChange({ data, fasadeNdx })
         this.events.emit('U:ChangeFasade')
-
-
     }
 
     changeTotalFasadsTexture({ data, type }: TDataWithType) {
@@ -443,8 +466,6 @@ export class MeshEvents extends BuildersHelper {
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
-        console.log(elementsList, 'elementsList')
-
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
@@ -487,7 +508,7 @@ export class MeshEvents extends BuildersHelper {
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE[fasadeNdx]
 
-        this.buildWindow.changeGlassColor({ fasade, glassId: data })
+        this.buildShowcase.changeGlassColor({ fasade, glassId: data })
 
         FASADE_PROPS[fasadeNdx].GLASS = data
 
@@ -547,11 +568,12 @@ export class MeshEvents extends BuildersHelper {
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
-        console.log(elementsList, 'elementsList')
-
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
                 const fasadeList = el.userData.PROPS.FASADE;
+                const showcase = el.userData.PROPS.CONFIG.PRODUCT_SHOWCASE
+                if (showcase) return
+
                 if (fasadeList.length > 0) {
                     fasadeList.forEach(async (_fasade, fasadeNdx) => {
                         this._currentMesh = el;
@@ -616,7 +638,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Витрина  */
     //------------------
 
-    changeWindow({ data, fasadeNdx }: TDataWithNdx) {
+    changeShowcase({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -632,9 +654,8 @@ export class MeshEvents extends BuildersHelper {
             FASADE_HEIGHT: eval(FASADE_POSITIONS[fasadeNdx].FASADE_HEIGHT),
             FASADE_DEPTH: eval(FASADE_POSITIONS[fasadeNdx].FASADE_DEPTH)
         };
-        console.log(fasade, 'FW')
 
-        this.buildWindow.createWindow({
+        this.buildShowcase.createShowcase({
             fasade,
             fasadePosition,
             data,
@@ -644,11 +665,25 @@ export class MeshEvents extends BuildersHelper {
 
         // console.log(this.modelState.getCurrentGlassData, '-----GLAAS')
 
-        FASADE_PROPS[fasadeNdx].WINDOW = data
+        FASADE_PROPS[fasadeNdx].SHOWCASE = data
         FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
         FASADE_PROPS[fasadeNdx].GLASS = FASADE_PROPS[fasadeNdx].GLASS ?? '76033'
 
     }
+
+    deliteShowcase(fasadeNdx: number) {
+        if (!this._currentMesh) return;
+        const product = this._currentMesh
+        const { PROPS } = product.userData
+        const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
+        const { FASADE_PROPS } = CONFIG
+        const fasade = FASADE_PROPS[fasadeNdx]
+
+        this.changeMilling({ data: '1013628', fasadeNdx })
+        fasade.SHOWCASE = 1013628
+
+    }
+
 
     //------------------
     /** @Переходящий_рисунок  */
@@ -899,6 +934,24 @@ export class MeshEvents extends BuildersHelper {
     }
 
     //------------------
+    /** @Позиционирование  */
+    //------------------
+
+    async changeRotation(actionId: number) {
+
+        const currentMesh = this._currentMesh
+        if (!currentMesh) return
+
+        const curAction = this.rotateActions[actionId]
+        if (actionId === 4) {
+            currentMesh.rotation.y += curAction
+            return
+        }
+        currentMesh.rotation.y = curAction
+
+    }
+
+    //------------------
     /** @Ручки  */
     //------------------
 
@@ -911,7 +964,6 @@ export class MeshEvents extends BuildersHelper {
         const curFasadData = FASADE_PROPS[fasadeNdx]
         const curFasadeMesh = FASADE[fasadeNdx]
 
-        console.log(data, 'in EVENT')
         await this.handlesBuilder.createHandle(data, curFasadeMesh, curFasadData)
         curFasadData.HANDLES.id = data.id
 
@@ -941,8 +993,20 @@ export class MeshEvents extends BuildersHelper {
 
         await this.handlesBuilder.getHandlesPosition(data, handle, curFasadeMesh);
         curFasadData.HANDLES.position = data
-        console.log(handle, curFasadeMesh, data, 'ONchangeHandlePos')
     }
+
+    //------------------
+    /** @Плинтусы  */
+    //------------------
+
+    async changePlinth() {
+        const elType = 'element_down'
+        const elementsList = this.scene.getObjectsByProperty('elementType', elType) /** @Находим все элементы выбранного типа */
+        elementsList.forEach((el: THREE.Object3D) => {
+            this.plinthBuilder.updatePlinth(el)
+        })
+    }
+
 
     addVueEvents() {
 
@@ -990,8 +1054,12 @@ export class MeshEvents extends BuildersHelper {
             this.changeMillingTotal({ data, type })
         }
 
-        this.onChangeWindow = ({ data, fasadeNdx }) => {
-            this.changeWindow({ data, fasadeNdx });
+        this.onChangeShowcase = ({ data, fasadeNdx }) => {
+            this.changeShowcase({ data, fasadeNdx });
+        }
+
+        this.onDeliteShowcase = (fasadeNdx) => {
+            this.deliteShowcase(fasadeNdx)
         }
 
         this.onDrawPatina = (data) => {
@@ -1038,6 +1106,14 @@ export class MeshEvents extends BuildersHelper {
             this.changeHandlePos(data)
         }
 
+        this.onChangePlinth = () => {
+            this.changePlinth()
+        }
+
+        this.onCgangeRotation = (data) => {
+            this.changeRotation(data)
+        }
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
 
@@ -1057,7 +1133,8 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:DeliteMilling', this.onDeliteMilling);
         this.events.on('A:ChangeMillingTotal', this.onChangeMillingTotal)
 
-        this.events.on('A:ChangeWindow', this.onChangeWindow);
+        this.events.on('A:ChangeShowcase', this.onChangeShowcase);
+        this.events.on("A:DeliteShowcase", this.onDeliteShowcase)
 
         this.events.on('A:DrawPatina', this.onDrawPatina);
         this.events.on('A:DelitePatina', this.onDelitePatina);
@@ -1075,6 +1152,9 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:AddHandle', this.onAddHandle)
         this.events.on('A:DeliteHandle', this.onDeliteHandle)
         this.events.on('A:ChangeHandlePose', this.onChangeHandlePos)
+        this.events.on('A:ChangePlinthColor', this.onChangePlinth)
+
+        this.events.on('A:RotateModel', this.onCgangeRotation)
 
 
     }
@@ -1092,7 +1172,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.off('A:ChangeMilling', this.onChangeMilling);
         this.events.off('A:DeliteMilling', this.onDeliteMilling);
 
-        this.events.off('A:ChangeWindow', this.onChangeWindow);
+        this.events.off('A:ChangeShowcase', this.onChangeShowcase);
 
         this.events.off('A:DrawPatina', this.onDrawPatina);
         this.events.off('A:DelitePatina', this.onDelitePatina);
@@ -1108,7 +1188,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.off('A:AddHandle', this.onAddHandle)
         this.events.off('A:DeliteHandle', this.onDeliteHandle)
 
-        this.alumTextures = null
+        // this.alumTextures = null
         this.millings = null
     }
 

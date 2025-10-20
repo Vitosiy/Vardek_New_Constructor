@@ -64,7 +64,7 @@
         </div>
         <div v-if="filteredSubCategories.length > 0" class="catalog-popup__level-two">
           <div 
-            v-for="subsection in filteredSubCategories" 
+            v-for="subsection in displayedSubCategories" 
             :key="subsection.ID"
             class="catalog-section-sub"
             :class="{ 'active': currentSubID === subsection.ID }"
@@ -75,6 +75,13 @@
               {{ subsection.NAME }}
             </h3>
           </div>
+          <button 
+            v-if="hasMoreSubCategories"
+            @click="toggleShowAllSubCategories"
+            class="catalog-section-sub catalog-section-sub__show-more-btn"
+          >
+            <span class="catalog-section__title">{{ showAllSubCategories ? 'Скрыть' : `Показать еще (${filteredSubCategories.length - 6})` }}</span>
+          </button>
         </div>
         <div v-if="products.length > 0" class="products-grid">
           <div 
@@ -85,16 +92,15 @@
           >
             <div class="product-item__img">
               <img 
-                v-if="product?.IMG" 
-                :src="`${API_URL}${product.IMG}`" 
+                :src="product?.IMG ?`${API_URL}${product.IMG}` : `logo_vardek_mebel.png`" 
                 :alt="product?.NAME || 'Product image'"
                 loading="lazy"
               >
             </div>
             <div class="product-item__wrapper">
-              <h4 class="product-item__title">{{ product.NAME }}</h4>
+              <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">{{ product.NAME }}</h4>
               <div class="product-item__price">{{ product.PRICE }}</div>
-              <button class="product-item__basket"     @click="callChildMethod(Number(product.ID))" >В корзину</button>
+              <button class="product-item__basket"  @click="callChildMethod(Number(product.ID))" >В корзину</button>
               <!-- <button class="product-item__basket" @click="handleProductClick(Number(product.ID))">В корзину</button> -->
             </div>
           </div>
@@ -192,10 +198,16 @@ const {
 } = catalogStore;
 
 const searchTimeout = ref(null);
+const showAllSubCategories = ref(false);
 
 // Использование в шаблоне
 const filteredCategories = computed(() => filterHiddenCategories(сategoriesList.value));
 const filteredSubCategories = computed(() => filterHiddenCategories(subCategoriesList.value));
+const displayedSubCategories = computed(() => {
+  const categories = filteredSubCategories.value;
+  return showAllSubCategories.value ? categories : categories.slice(0, 6);
+});
+const hasMoreSubCategories = computed(() => filteredSubCategories.value.length > 6);
 const priceProduct = computed(() => catalogStore.updateProductPrice(productPrice.value));
 
 onMounted(async () => {
@@ -213,18 +225,21 @@ watch(
 
 // Methods
 const handleCategoriesListClick = async (data) => {
+  showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   catalogStore.resetCatalogData()
   catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
   await catalogStore.fetchSubCatalogData({ idSection: data.ID });
 };
 
 const handleSubCategoriesListClick = async (data) => {
+  showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
   await catalogStore.fetchSubCatalogData({ idSection: data.ID });
   catalogStore.searchQuery = "";
 };
 
 const handleBreadcrumbClick = async (data) => {
+  showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   trimArrayByLevel(data.level)
   await catalogStore.fetchSubCatalogData({ idSection: data.id });
   catalogStore.searchQuery = "";
@@ -274,11 +289,16 @@ const closePopup = () => {
 };
 
 const resetCatalog = () => {
+  showAllSubCategories.value = false; // Сбрасываем состояние при сбросе
   catalogStore.resetCatalogData();
 };
 
 const handleBackPage = () => {
   catalogStore.productDetails = null;
+};
+
+const toggleShowAllSubCategories = () => {
+  showAllSubCategories.value = !showAllSubCategories.value;
 };
 
 </script>
@@ -290,7 +310,7 @@ const handleBackPage = () => {
   // padding: 20px;
   border-radius: 8px;
   box-sizing: border-box;
-  height: 851px; // Ограничиваем максимальную высоту попапа
+  height: 80vh; // Ограничиваем максимальную высоту попапа
   display: flex;
   flex-direction: column;
   
@@ -442,6 +462,26 @@ const handleBackPage = () => {
       @media (min-width: 992px) {
         width: calc(25% - 0.75rem);
       }
+    }
+  }
+
+  &__show-more-btn {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #C6C6C6;
+    border-radius: 8px;
+    background: transparent;
+    color: #5D6069;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+
+    &:hover {
+      border-color: #131313;
+      color: #131313;
+      background: #F6F5FA;
     }
   }
 
@@ -650,5 +690,12 @@ const handleBackPage = () => {
     50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
     75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
     100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+}
+
+.catalog-section-sub__show-more-btn {
+  background-color: #DA444C;
+  span {
+    color: #fff;
+  }
 }
 </style>

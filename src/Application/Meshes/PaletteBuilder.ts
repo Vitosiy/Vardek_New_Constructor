@@ -1,4 +1,5 @@
 // @ts-nocheck 
+
 import * as THREE from "three";
 import * as THREETypes from "@/types/types";
 
@@ -48,7 +49,6 @@ export class PaletteBuilder {
         data: number | string;
         fasadeProps: { [key: string]: any };
     }) {
-        console.log(data, 'INPALLI');
 
         const { _APP, _FASADE } = this.parent;
         const palette = _APP.PALETTE[data];

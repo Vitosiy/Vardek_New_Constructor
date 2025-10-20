@@ -94,7 +94,7 @@ const onSelectMaterial = (data) => {
     fasadeId: data.ID,
     productId: productId.value,
   });
-  modelState.createCurrentWindowsData({
+  modelState.createCurrentShowcaseData({
     fasadeId: data.ID,
     productId: productId.value,
   });
@@ -271,7 +271,7 @@ const prepareData = () => {
     fasadeId: COLOR,
     productId: productId.value,
   });
-  modelState.createCurrentWindowsData({
+  modelState.createCurrentShowcaseData({
     fasadeId: COLOR,
     productId: productId.value,
   });
@@ -339,12 +339,11 @@ const prepareData = () => {
 
 onBeforeMount(() => {
   materialList.value = modelState.getCurrentModelFasadesData;
-  productData.value = modelState.getCurrentModel;
+  productData.value = modelState.getCurrentModel?.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 });
 
 onMounted(() => {
-  console.log('START')
   prepareData();
 });
 

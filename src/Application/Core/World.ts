@@ -17,6 +17,7 @@ import { useRoomState } from "@/store/appliction/useRoomState";
 import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoomOptons';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useUniformState } from "@/store/appliction/useUniformState";
+import { useModelState } from "@/store/appliction/useModelState"
 
 export class World {
 
@@ -31,6 +32,7 @@ export class World {
     eventsStore: ReturnType<typeof useEventBus> = useEventBus();
     uniformState: ReturnType<typeof useUniformState> = useUniformState();
     roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
+    modelState: ReturnType<typeof useModelState> = useModelState()
 
     trafficManager: THREETypes.TTrafficManager | null;
     room: THREETypes.TRoomManager | null = null;
@@ -101,6 +103,8 @@ export class World {
         this.saveRoom(name)
         const toAction: string[] = this.room?.save()
         this.root.userHistory.clearHistory(toAction as string[])
+        this.modelState.setCurrentModel(null)
+        this.modelState.setTransformControlsValue(false)
 
     }
 
@@ -110,7 +114,6 @@ export class World {
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
-
             const contant = this.room!.save() as string[]
 
             this.roomState.addRoom({
@@ -120,10 +123,10 @@ export class World {
                 content: contant
             })
 
-            const rooms = this.roomState.getRooms
-            console.log(rooms)
+            const newrooms = this.roomState.getRooms
+            console.log(newrooms, 'NEW')
 
-            this.sceneState.updateProjectParams({ rooms })
+            this.sceneState.updateProjectParams({ rooms: newrooms })
             this.roomState.setCurrentRoomId(roomId)
             return
         }
@@ -137,8 +140,9 @@ export class World {
 
         this.roomState.updateRoom(roomId, contant, roomParams)
         const rooms = this.roomState.getRooms
-        console.log(rooms, 'ROOMS')
-        this.sceneState.updateProjectParams({ rooms })
+        console.log(rooms, 'HAVE')
+        // console.log(rooms, 'ROOMS')
+        this.sceneState.updateProjectParams({ rooms: rooms })
 
     }
 
@@ -147,6 +151,8 @@ export class World {
         this.uniformState.clearUniformGroupsStors()
         this.roomState.clearCurrentRoomId()
         this.roomState.clearTempRoomSize()
+        this.modelState.setCurrentModel(null)
+        this.modelState.setTransformControlsValue(false)
 
         /** Добавляем ID комнаты в хранилище */
         this.roomState.setCurrentRoomId(roomId);

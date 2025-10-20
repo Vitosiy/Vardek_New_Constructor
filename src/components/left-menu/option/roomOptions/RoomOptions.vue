@@ -1,7 +1,14 @@
 <script setup lang="ts">
+//@ts-nocheck
 import { computed } from "vue";
 import { _URL } from "@/types/constants";
-import { TOptionsMap, TPalitte, TOptionItem, TMilling } from "@/types/types";
+import {
+  TOptionsMap,
+  TPalitte,
+  TOptionItem,
+  TMilling,
+  TFasadeItem,
+} from "@/types/types";
 
 interface Props {
   // palitte: TPalitte[] | null;
@@ -25,6 +32,13 @@ const emit = defineEmits<{
     key: keyof TOptionsMap,
     millingData: TMilling[]
   ): void;
+  (
+    e: "toPlinthSelect",
+    plinthTitle: string,
+    key: keyof TOptionsMap,
+    plinthData: TFasadeItem[]
+  ): void;
+
   (e: "toToggle", event: Event, key: keyof TOptionsMap): void;
 }>();
 
@@ -46,6 +60,14 @@ const millingSelect = (
   millingData: TMilling[]
 ) => {
   emit("toMillingSelect", millingTitle, key, millingData);
+};
+
+const plinthSelect = (
+  plinthTitle: string,
+  key: keyof TOptionsMap,
+  plinthData: TFasadeItem[]
+) => {
+  emit("toPlinthSelect", plinthTitle, key, plinthData);
 };
 
 const handleToggle = (event: Event, key: keyof TOptionsMap) => {
@@ -96,9 +118,31 @@ const getMillineName = computed(() => {
   };
 });
 
+const getPlinthIcon = computed(() => {
+  return (id: number | string, plinthData: TFasadeItem[]) => {
+    let cur;
+    if (plinthData) {
+      cur = plinthData.find((el) => el.ID === id);
+      return cur?.PREVIEW_PICTURE;
+    }
+    return "";
+  };
+});
+
+const getPlinthName = computed(() => {
+  return (id: number | string, plinthData: TFasadeItem[]) => {
+    let cur;
+    if (plinthData) {
+      cur = plinthData.find((el) => el.ID === id);
+      return cur?.NAME;
+    }
+    return "";
+  };
+});
+
 const getContainerType = computed(() => {
   return (type: string) => {
-    if (type.includes("fasad")) {
+    if (type.includes("fasad") || type.includes("plinth")) {
       return "option-full";
     }
     return "option-small";
@@ -113,7 +157,6 @@ const getContainerType = computed(() => {
       :key="key"
       :class="getContainerType(key)"
     >
-      <!-- {{ item }} -->
       <div class="option-container">
         <div
           class="option-label"
@@ -127,8 +170,6 @@ const getContainerType = computed(() => {
           <p class="label__text">{{ item.title }}</p>
         </div>
 
-        <!-- {{ getPaliteName(item.palitte, item.palitteData!) }} -->
-
         <div
           v-if="item?.palitte"
           class="option-label"
@@ -140,7 +181,6 @@ const getContainerType = computed(() => {
             )
           "
         >
-
           <div
             class="label__color"
             :style="{ backgroundColor: `#${getPalitteIcon(item.palitte, item.palitteData!)}` }"
@@ -170,6 +210,28 @@ const getContainerType = computed(() => {
 
           <p class="label__text">
             {{ getMillineName(item?.milling, item.millingData!) }}
+          </p>
+        </div>
+
+        <div
+          v-if="item?.plinthSurfase"
+          class="option-label"
+          @click="
+            plinthSelect(
+              item.plinthTitle!,
+              key as keyof TOptionsMap,
+              item.plinthData!
+            )
+          "
+        >
+          <img
+            class="label__img"
+            :src="_URL + getPlinthIcon(item?.plinthSurfase, item.plinthData!)"
+            alt=""
+          />
+
+          <p class="label__text">
+            {{ getPlinthName(item?.plinthSurfase, item.plinthData!) }}
           </p>
         </div>
       </div>
@@ -248,7 +310,10 @@ const getContainerType = computed(() => {
 
 .label__img {
   height: 60px;
+  width: 60px;
+  padding: 5px;
   border-radius: 15px;
+  background-color: #ffffff;
 }
 
 .label__text {

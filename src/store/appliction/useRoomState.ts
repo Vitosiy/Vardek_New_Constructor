@@ -2,7 +2,7 @@
 // @ts-nocheck
 
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import { rooms_mok } from "@/Application/F-mockapi"
 import { useSchemeTransition } from '../canvasMerge/schemeTransition';
 import { useAppData } from "@/store/appliction/useAppData";
@@ -30,36 +30,43 @@ export const useRoomState = defineStore('RoomState', () => {
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
   const convertDataTo3DConstuctor = () => {
-    console.log('3D', schemeTransition.getSchemeTransitionData)
-    const clone = schemeTransition.getSchemeTransitionData.map(item => {
-      return item
-    })
-    const parseData = clone.map(elem => {
-      console.log(elem.content)
+    // console.log('3D', schemeTransition.getSchemeTransitionData)
+    const data = toRaw(schemeTransition.getSchemeTransitionData)
 
-      const content = JSON.stringify(elem.content)
-      return {
-        ...elem,
-        content: content
-      }
-    })
-    rooms.value = parseData
+    // console.log(data, 'clone')
+
+    // const clone = data.map(item => {
+    //   return item
+    // })
+
+
+    // const parseData = clone.map(elem => {
+
+    //   const content = JSON.stringify(elem.content)
+    //   return {
+    //     ...elem,
+    //     content: content
+    //   }
+    // })
+    // rooms.value = parseData
+    rooms.value = data
   }
 
   const convertDataTo2DConstuctor = () => {
-    console.log('2D')
-    const clone = rooms.value.map(item => {
-      return item
-    })
+    // const clone = rooms.value.map(item => {
+    //   return item
+    // })
 
-    const parseData = clone.map(elem => {
-      const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
-      return {
-        ...elem,
-        content: content
-      }
-    })
-    schemeTransition.setAppData(parseData)
+    // const parseData = clone.map(elem => {
+    //   const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+    //   return {
+    //     ...elem,
+    //     content: content
+    //   }
+    // })
+    // schemeTransition.setAppData(parseData)
+
+    schemeTransition.setAppData(rooms.value)
   }
 
   const converActions = {
@@ -72,10 +79,14 @@ export const useRoomState = defineStore('RoomState', () => {
   }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
-    rooms.value.push(room);
+    console.log(room, 'rooms.value')
+    const newValue = [...rooms.value, ...[room]]
+    rooms.value = newValue
   };
 
   const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes) => {
+    console.log(params, 'params')
+
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {
@@ -129,13 +140,15 @@ export const useRoomState = defineStore('RoomState', () => {
   /** Возвращаем с использованием ID комнаты */
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
-    console.log(centerized)
-    // const currentRoom = rooms.value.find(value => value.id === roomId)
+    console.log(centerized, 'centerized')
 
-    // if (centerized) {
-    //   currentRoom.params = centerized?.params ?? currentRoom?.params;
-    //   currentRoom.content = centerized?.content ?? currentRoom?.content;
-    // }
+
+    const currentRoom = rooms.value.find(value => value.id === roomId)
+
+    if (centerized) {
+      currentRoom.params = centerized?.params ?? currentRoom?.params;
+      currentRoom.content = centerized?.content ?? currentRoom?.content;
+    }
 
     return rooms.value.find(value => value.id === roomId)
   }

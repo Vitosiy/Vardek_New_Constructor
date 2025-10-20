@@ -16,6 +16,7 @@ import { MoveManager } from "./MoveManager";
 import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 export class TrafficManager {
 
@@ -89,7 +90,7 @@ export class TrafficManager {
         /** Получаем выбранный объект */
 
         this.currentObject = object
-
+        // 
 
         if (object) {
 
@@ -98,13 +99,20 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
+            console.log('OBJ', object);
+            console.log('OBJ_userData', object.userData);
+
+            // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
             console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            // Обновление корзины при простом выборе/перемещении не требуется
+
+            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
             // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
-            console.log(object, 'object')
-            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155])
+            // console.log(object, 'object')
+            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155], 'Model')
 
             if (object.userData.elementType !== 'raspil') {
-                const product = this.modelState.getModels[object.userData.PROPS.PRODUCT];
+                const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];
                 this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
@@ -135,22 +143,20 @@ export class TrafficManager {
 
         this.dragAndDropManager.updateRoomData(room)
         this.moveManager.updateRoomData(room)
+
         // this.ruler.update(room, this.rulerLines, this.rullerSizeLines)
     }
 
-    removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer }) {
 
-        console.log(product)
+    removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer } = {}) {
 
         const removeObj = product ?? this._currentObject
-
+        console.log('product', product, removeObj)
         if (!removeObj) return
 
         if (removeObj instanceof THREE.Object3D) {
             const prod = toRaw(removeObj)
             const { RASPIL_LIST } = prod.userData.PROPS
-
-            console.log(RASPIL_LIST)
 
             if (RASPIL_LIST.length > 0) {
                 RASPIL_LIST.forEach(elem => {
@@ -168,15 +174,31 @@ export class TrafficManager {
             this.boxHelper.removeBoxHelper()
             this.ruler.clearRuler();
             this.currentObject = null
+            // Синхронизируем корзину: удаляем товар, соответствующий удалённому объекту сцены
+            try {
+                const basketStore = useBasketStore();
+                basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+            } catch (e) {
+                console.warn('Basket sync remove failed', e)
+            }
+
+            this.modelState.setCurrentModel(null)
             return
         }
-        console.log(removeObj)
 
         this.room.remove(removeObj.id)
         this.despose.clearObject(removeObj, this.scene)
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
         this.currentObject = null
+        // Синхронизируем корзину для случая, когда пришёл не Object3D
+        try {
+            const basketStore = useBasketStore();
+            basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+        } catch (e) {
+            console.warn('Basket sync remove failed', e)
+        }
+
     }
 
     vueEvents() {
@@ -187,6 +209,29 @@ export class TrafficManager {
 
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
+        this.events.on('A:RemoveModelFromBasket', (payload: any) => {
+            console.log(payload, 'payload')
+
+            let target = payload?.product;
+
+            if (!(target instanceof THREE.Object3D)) {
+                const basketId = payload?.basketId || payload?.BASKETID || payload?.id || payload;
+
+                // 1) Пробуем взять напрямую из RoomManager.contant по ключу id
+                if (!target && basketId && this.room && this.room.contant) {
+                    const byId = (this.room.contant as any)[`${basketId}`];
+                    if (byId) target = byId;
+                }
+
+                // 2) Пробуем найти в сцене по id
+                if (!target && basketId && this.scene) {
+                    const byScene = this.scene.getObjectByProperty('id', basketId as any) as THREE.Object3D | undefined;
+                    if (byScene) target = byScene;
+                }
+            }
+
+            this.removeFromRoom({ product: target });
+        });
 
     }
 

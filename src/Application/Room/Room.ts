@@ -27,6 +27,7 @@ export class Room extends BuildersHelper {
     boundWallMaterial: ((item: number) => void) | null = null
     boundFloorMaterial: ((item: number) => void) | null = null
     boundHeightClampValue: ((item: number) => void) | null = null
+    boundDuplicateProd: (() => void) | null = null
 
     root: THREETypes.TApplication
     private params: { [key: string]: any }
@@ -232,6 +233,8 @@ export class Room extends BuildersHelper {
 
     updateWallMaterial(materialId: number | string) {
 
+        console.log(materialId, 'Wall')
+
         const total = this.scene.getObjectsByProperty('elementType', 'element_room')
         total.forEach(el => {
             el.traverse(child => {
@@ -259,6 +262,9 @@ export class Room extends BuildersHelper {
     }
 
     updateFloorMaterial(materialId: number | string) {
+
+        
+        console.log(materialId, 'floor')
 
         this.wallBuilder.updateTexture(this.floor as THREE.Mesh, 'floor', materialId, this.floor?.userData.dimensions);
 

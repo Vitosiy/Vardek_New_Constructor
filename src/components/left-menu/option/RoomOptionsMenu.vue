@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** @ts-nocheck */
+//@ts-nocheck
 import {
   ref,
   computed,
@@ -38,6 +38,7 @@ import ColorSelector from "./roomOptions/ColorSelector.vue";
 type TExtras = {
   isPalitte: TPalitte[] | null;
   isMilling: TMilling[] | null;
+  isPlinth: any;
 };
 
 const eventBus = useEventBus();
@@ -61,7 +62,6 @@ const currentOption = ref<keyof TTextureActionMap | null>(null);
 const currentOptionLable = ref<string | null>(null);
 
 const optionsData = ref<{ [key: string]: any } | null | any[]>(null);
-const palitteData = ref<{ [key: string]: any } | null>(null);
 const extrasSelect = ref<boolean>(false);
 
 const roomRef = ref<HTMLElement | null>(null);
@@ -72,6 +72,7 @@ const visualData = ref<any>({
   table: null,
   walls: null,
   floor: null,
+  plinth: null,
 });
 
 const optionsType = ref<TTextureActionMap>({
@@ -84,6 +85,8 @@ const optionsType = ref<TTextureActionMap>({
   tableTop: "A:ChangeTableTop",
   palitteTotal: "A:ChangePaletteTotal",
   millingTotal: "A:ChangeMillingTotal",
+  plinth: "A:ChangePlinthBody",
+  plinthColor: "A:ChangePlinthColor",
 });
 
 const globalOptions = ref<TOptionsMap | null>(null);
@@ -115,13 +118,12 @@ const prepareOptions = () => {
     table: roomOptions.getDefaultTableTopData(),
     walls: roomOptions.getWallsTextures(),
     floor: roomOptions.getFloorTextures(),
+    plinth: roomOptions.getDefaultTotalPlinthData(),
   };
 
   globalOptions.value = roomOptions.getGlobalOptions;
-  const { fasadsBottom, fasadsTop } = globalOptions.value;
-  prepareFasade([fasadsBottom, fasadsTop]);
-
-  console.log(globalOptions.value, "globalOptions");
+  const { fasadsBottom, fasadsTop, plinth } = globalOptions.value;
+  prepareExtras([fasadsBottom, fasadsTop, plinth]);
 
   clampHeight.value = roomOptions.getHeightClamp;
   quality.value = roomOptions.getQuality;
@@ -133,10 +135,10 @@ const prepareOptions = () => {
   ambientLight.value = roomOptions.getAmbientLightRange;
 };
 
-const prepareFasade = (arr: TOptionItem[]) => {
+const prepareExtras = (arr: TOptionItem[]) => {
   for (const el in arr) {
     const option = arr[el];
-    const { isPalitte, isMilling } = checkExtras(option.id);
+    const { isPalitte } = checkExtras(option.id);
     if (option.palitte) {
       option.palitteData = isPalitte;
     }
@@ -158,7 +160,6 @@ const loadRoom = (id: number) => {
   eventBus.emit("A:ContantLoaded", false);
   eventBus.emit("A:DrawingMode", false);
   eventBus.emit("A:ToggleRulerVisibility", true);
-  closeMenu("roomPar");
 };
 
 const deliteRoom = (value: number) => {
@@ -188,13 +189,17 @@ const toggleRefraction = (value: boolean) => {
 };
 
 const getOption = (value: keyof TTextureActionMap, title: string) => {
-  if (value == currentOption.value) {
-    optionsData.value = null;
-    currentOption.value = null;
-    return;
-  }
+  // if (value == currentOption.value) {
+  //   // optionsData.value = null;
+  //   // currentOption.value = null;
+  //   return;
+  // }
   currentOption.value = value;
+
   switch (value) {
+    case "plinth":
+      optionsData.value = Object.values(visualData.value.plinth);
+      break;
     case "wall":
       optionsData.value = Object.values(visualData.value.walls);
       break;
@@ -223,7 +228,6 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
     (event.target as HTMLInputElement).checked
   );
   const selectOption = roomOptions.getGlobalOptions[value];
-  console.log(selectOption, value, "selectOption");
 
   if (selectOption) {
     switch (value) {
@@ -245,7 +249,6 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
         break;
       default:
         if (selectOption.global) {
-          console.log("55");
           sceneState.updateDefaultData(value, selectOption);
           return;
         }
@@ -262,6 +265,7 @@ const selectOption = (value: TTextureItem) => {
     case "fasadsTop":
     case "fasadsBottom":
     case "tableTop":
+    case "plinth":
       data = { data: value, type: currentOption.value };
       break;
     default:
@@ -274,22 +278,55 @@ const selectOption = (value: TTextureItem) => {
 
   const curOption = globalOptions.value![currentOption.value];
 
+  if (curOption.id === value.ID) return;
+
   if (!extrasSelect.value) {
     if (curOption.id != value.ID) {
       roomOptions.setGlobalPalitte(null, currentOption.value);
       roomOptions.setGlobalMilling(null, currentOption.value);
+      roomOptions.setGlobalPlinth(null, currentOption.value);
     }
     curOption.id = value.ID;
   }
-  const { isPalitte, isMilling } = checkExtras(value.ID);
+  const { isPalitte, isMilling, isPlinth } = checkExtras(value.ID);
 
-  curOption.palitteData = isPalitte;
-  curOption.millingData = isMilling;
+  if (isPlinth) {
+    curOption.plinthData = isPlinth;
+  } else {
+    curOption.palitteData = isPalitte;
+    curOption.millingData = isMilling;
+  }
 
-  const startMill = curOption.milling
-  const startPall = curOption.palitte
+  const startMill = curOption.milling;
+  const startPlinth = curOption.plinthSurfase;
+  // const startPall = curOption.palitte;
 
-  console.log(startMill, startPall)
+  if (isPlinth && curOption) {
+    if (curOption.plinthSurfase === null) {
+      if (isPlinth.length > 0) {
+        if (isPlinth[0] != null) {
+          roomOptions.setGlobalPlinth(isPlinth[0].ID, currentOption.value);
+          eventBus.emit(optionsType.value["plinthColor"], data);
+        } else {
+          roomOptions.setGlobalPlinth(null, currentOption.value);
+          eventBus.emit(optionsType.value["plinthColor"], data);
+        }
+      } else {
+        roomOptions.setGlobalPlinth(null, currentOption.value);
+        eventBus.emit(optionsType.value["plinthColor"], data);
+      }
+    } else {
+      roomOptions.setGlobalPlinth(value.ID, currentOption.value);
+      eventBus.emit(optionsType.value["plinthColor"], data);
+    }
+
+    if (startPlinth === null) {
+      roomOptions.updateOption(currentOption.value, value.ID);
+      eventBus.emit(optionsType.value["plinthColor"], data);
+    }
+
+    return;
+  }
 
   // Ветка 1: если есть палитра
   if (isPalitte && curOption) {
@@ -305,7 +342,6 @@ const selectOption = (value: TTextureItem) => {
         eventBus.emit(optionsType.value["palitteTotal"], data);
       }
     }
-
     // внутри палитры дополнительно проверяем milling
     if (isMilling && checkMillingSelect) {
       if (curOption.milling === null) {
@@ -320,13 +356,10 @@ const selectOption = (value: TTextureItem) => {
       }
     }
 
- 
-
     if (isPalitte && isMilling && curOption) {
       if (startMill === null) {
-        eventBus.emit(optionsType.value[currentOption.value], data);
         roomOptions.updateOption(currentOption.value, value.ID);
-        console.log('Start')
+        eventBus.emit(optionsType.value[currentOption.value], data);
       }
     }
     return; // если палитра true, на этом завершаем
@@ -336,22 +369,31 @@ const selectOption = (value: TTextureItem) => {
   if (!isPalitte && isMilling && curOption && checkMillingSelect) {
     if (curOption.milling === null) {
       if (isMilling.length > 0) {
+
         roomOptions.setGlobalMilling(isMilling[0].ID, currentOption.value);
       } else {
         roomOptions.setGlobalMilling(null, currentOption.value);
       }
     } else {
+
       roomOptions.setGlobalMilling(value.ID, currentOption.value);
       eventBus.emit(optionsType.value["millingTotal"], data);
     }
+
+    if (startMill === null) {
+      roomOptions.updateOption(currentOption.value, value.ID);
+      eventBus.emit(optionsType.value[currentOption.value], data);
+
+
+    }
+
     return;
   }
-
-      console.log('MILLLL')
 
   // Ветка 3: ни палитры, ни milling
   roomOptions.setGlobalPalitte(null, currentOption.value);
   roomOptions.setGlobalMilling(null, currentOption.value);
+  roomOptions.setGlobalPlinth(null, currentOption.value);
   eventBus.emit(optionsType.value[currentOption.value], data);
   roomOptions.updateOption(currentOption.value, value.ID);
 };
@@ -361,7 +403,6 @@ const palitteSelect = (
   key: keyof TOptionsMap,
   palitteData: TPalitte[]
 ) => {
-  console.log(palitteData, "paliteData");
   optionsData.value = palitteData;
   currentOption.value = key;
   currentOptionLable.value = palitteTitle;
@@ -373,10 +414,21 @@ const millingSelect = (
   key: keyof TOptionsMap,
   millingData: TMilling[]
 ) => {
-  console.log(millingData, "millingData");
   optionsData.value = millingData;
   currentOption.value = key;
   currentOptionLable.value = millingTitle;
+  extrasSelect.value = true;
+};
+
+const plinthSelect = (
+  plinthTitle: string,
+  key: keyof TOptionsMap,
+  plinthgData: TMilling[]
+) => {
+
+  optionsData.value = plinthgData;
+  currentOption.value = key;
+  currentOptionLable.value = plinthTitle;
   extrasSelect.value = true;
 };
 
@@ -386,12 +438,12 @@ const checkExtras = (fasadeId?: number | string): TExtras => {
 
   const palitte = roomOptions.getDefaultPalitData(id!);
   const milling = roomOptions.getDefaultMillingData(id!);
-
-  console.log(milling, "milling");
+  const plinth = roomOptions.getTotalPlinthColorData(id);
 
   return {
     isPalitte: palitte.length > 0 ? palitte : null,
     isMilling: milling.length > 0 ? milling : null,
+    isPlinth: plinth.length > 0 ? plinth : null,
   };
 };
 
@@ -416,6 +468,9 @@ const getOptionImg = computed(() => {
         break;
       case "tableTop":
         result = visualData.value.table[id].PREVIEW_PICTURE;
+        break;
+      case "plinth":
+        result = visualData.value.plinth[id].PREVIEW_PICTURE;
         break;
     }
     return result;
@@ -456,6 +511,7 @@ watch(shadows, () => toggleShadow(shadows.value));
           @toToggle="totalSelect"
           @toPalitteSelect="palitteSelect"
           @toMillingSelect="millingSelect"
+          @toPlinthSelect="plinthSelect"
         />
 
         <h3 class="popup__title">Высота навесных модулей</h3>

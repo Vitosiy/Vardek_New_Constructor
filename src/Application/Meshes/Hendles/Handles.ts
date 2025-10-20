@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as THREE from 'three'
 import { TResources, TBuildProduct, TModelData, TDeepDispose } from '@/types/types'
 import { TFasadeProp } from '@/types/types';
@@ -46,8 +47,6 @@ export class HandlesBuilder {
 
     public async createHandle(params: TCreateHandleParams, fasade: THREE.Object3D, fasadeData: TFasadeProp): Promise<THREE.Object3D | null> {
         const { id, model } = params;
-
-        console.log('START')
 
         const startAction = fasadeData.HANDLES.position ?? 4
         const handleData: TModelData = this.parent._MODELS[model]
@@ -197,7 +196,6 @@ export class HandlesBuilder {
                 if (modelType === 'DAE') {
                     child.scale.copy(scaleVector);
                     if (handleMesh) {
-                        console.log('Materia')
                         child.material = handleMaterial
                         child.material.needsUpdate = true
                     }
@@ -231,12 +229,11 @@ export class HandlesBuilder {
     }
 
     private createHandleMaterial(model: TModelData) {
-        console.log(model)
         const materialMap: Record<string, Function> = {
-            'MeshPhongMaterial': () => new THREE.MeshPhongMaterial({
+            'MeshPhongMaterial': () => new THREE.MeshStandardMaterial({
                 color: "#" + model.color,
-                shininess: model.shininess,
-                specular: "#ffffff",
+                roughness: model.shininess || 0,
+                // metalness: "#ffffff",
                 emissive: "#000000",
             })
         }

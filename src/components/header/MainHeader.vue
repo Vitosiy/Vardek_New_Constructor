@@ -1,5 +1,5 @@
 <script setup lang="ts">
-//@ts-nocheck
+/**@ts-nocheck */
 import {
   onMounted,
   onBeforeUnmount,
@@ -45,7 +45,8 @@ import VisibilityHelperButton from "@/components/ui/buttons/header/helpers/Visib
 
 const props = defineProps(["pageComponent"]);
 const route = useRoute();
-import Avatar from "@/components/header/Avatar.vue";
+import Avatar from "@/components/ui/avatar/Avatar.vue";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 const historyActions = ref<boolean>(false);
 const verdekConstructor = ref<TApplication | null>(null);
@@ -75,7 +76,6 @@ const _saveProject = async () => {
     config: 43830,
     type: "user",
   };
-  console.log(data);
 
   await postRequest(`${_GET_URL}`, data);
 
@@ -134,8 +134,6 @@ const updateProject = async () => {
   };
 
   const resp = await postRequest(`${_UPDATE_PROJECT}`, data);
-
-  console.log(JSON.parse(resp.DATA.DETAIL_TEXT), "RESP");
 };
 
 const createNewRoom = (value: string) => {
@@ -177,7 +175,7 @@ const prevAction = () => {
       props.pageComponent.selected();
       customiserStore.hideCustomiserPopup();
     } catch (error) {
-      console.error('Ошибка при выполнении prevAction:', error);
+      console.error("Ошибка при выполнении prevAction:", error);
     }
   }
 };
@@ -193,7 +191,7 @@ const nextAction = () => {
       props.pageComponent.selected();
       customiserStore.hideCustomiserPopup();
     } catch (error) {
-      console.error('Ошибка при выполнении nextAction:', error);
+      console.error("Ошибка при выполнении nextAction:", error);
     }
   }
 };
@@ -204,7 +202,7 @@ const addEvents3D = () => {
     eventBus.off("A:Load");
     eventBus.off("A:ChangeCameraPos");
     eventBus.off("A:ContantLoaded");
-    
+
     // Подписываемся на новые события
     eventBus.on("A:Load", () => {
       try {
@@ -213,8 +211,9 @@ const addEvents3D = () => {
         }
         restorLength.value = 0;
         curActionCount.value = 0;
+        menuStore.closeAllMenus();
       } catch (error) {
-        console.error('Ошибка в обработчике A:Load:', error);
+        console.error("Ошибка в обработчике A:Load:", error);
       }
     });
 
@@ -224,7 +223,7 @@ const addEvents3D = () => {
           props.pageComponent.selected();
         }
       } catch (error) {
-        console.error('Ошибка в обработчике A:ChangeCameraPos:', error);
+        console.error("Ошибка в обработчике A:ChangeCameraPos:", error);
       }
     });
 
@@ -233,18 +232,19 @@ const addEvents3D = () => {
         if (!historyActions.value || !verdekConstructor.value) return;
         await nextTick();
         if (verdekConstructor.value.userHistory.checkEvent(event)) {
-          const total = verdekConstructor.value.userHistory.getHistory().length - 1;
+          const total =
+            verdekConstructor.value.userHistory.getHistory().length - 1;
           restorLength.value = total;
           curActionCount.value = total;
         }
       } catch (error) {
-        console.error('Ошибка в обработчике onEmitCalled:', error);
+        console.error("Ошибка в обработчике onEmitCalled:", error);
       }
     });
-    
+
     eventBus.on("A:ContantLoaded", checkContantLoad);
   } catch (error) {
-    console.error('Ошибка при добавлении событий 3D:', error);
+    console.error("Ошибка при добавлении событий 3D:", error);
   }
 };
 
@@ -253,6 +253,8 @@ const getHistoruBtnsState = computed(() => {
     disabled: !contentLoaded.value,
   };
 });
+
+const basketStore = useBasketStore();
 
 /** @Проверка загрузки Application доп функция */
 const waitForConstructor = async (timeout = 2000, interval = 50) => {
@@ -278,11 +280,12 @@ watch(
   () => route.path,
   async (newPath, oldPath) => {
     try {
-    menuStore.setRulerVisibility(true);
-    menuStore.setDrowModeValue(false);
-    modelState.setCurrentModel(null);
+      roomState.routConvertData(newPath);
 
-    roomState.routConvertData(newPath);
+      menuStore.setRulerVisibility(true);
+      menuStore.setDrowModeValue(false);
+      modelState.setCurrentModel(null);
+      menuStore.closeAllMenus();
 
       historyActions.value = false;
       restorLength.value = 0;
@@ -297,10 +300,10 @@ watch(
         addEvents3D();
       }
     } catch (error) {
-      console.error('Ошибка при изменении маршрута в MainHeader:', error);
+      console.error("Ошибка при изменении маршрута в MainHeader:", error);
     }
-  },
-  { flush: "post", immediate: true }
+  }
+  // { flush: "post", immediate: true }
 );
 
 onBeforeUnmount(() => {
@@ -309,26 +312,26 @@ onBeforeUnmount(() => {
     eventBus.off("A:Load");
     eventBus.off("A:ChangeCameraPos");
     eventBus.off("A:ContantLoaded");
-    
+
     // Очищаем данные
     restorLength.value = 0;
     curActionCount.value = 0;
     historyActions.value = false;
-    
+
     // Безопасно очищаем ссылку на конструктор
     if (verdekConstructor.value) {
       try {
         // Если у конструктора есть метод destroy, вызываем его
-        if (typeof verdekConstructor.value.destroy === 'function') {
+        if (typeof verdekConstructor.value.destroy === "function") {
           verdekConstructor.value.destroy();
         }
       } catch (error) {
-        console.warn('Ошибка при уничтожении конструктора:', error);
+        console.warn("Ошибка при уничтожении конструктора:", error);
       }
       verdekConstructor.value = null;
     }
   } catch (error) {
-    console.error('Ошибка при очистке MainHeader:', error);
+    console.error("Ошибка при очистке MainHeader:", error);
   }
 });
 </script>
@@ -408,7 +411,10 @@ onBeforeUnmount(() => {
       <div class="header-utilitys">
         <div class="header-basket">
           <div class="header-utilitys-basket">
-            <p class="header-utilitys-basket-cost">14 548 ₽</p>
+            <p class="header-utilitys-basket-cost">
+              {{ basketStore.totalPrice.toLocaleString("ru-RU") }} ₽
+            </p>
+            <!-- <p class="header-utilitys-basket-cost">14 548 ₽</p> -->
           </div>
           <BuyBasketButton />
         </div>

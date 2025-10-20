@@ -1,4 +1,4 @@
-/**@ts-nocheck */
+//@ts-nocheck
 
 import * as THREETypes from "@/types/types"
 import { GlobalsData } from "./Globals"
@@ -60,11 +60,11 @@ export class Filters extends GlobalsData {
     filterFasadePosition(params: THREETypes.TObject, product: THREETypes.TObject) {
 
 
-        const { FASADE_PROPS } = params
+        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE } = params
 
         // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
 
-        const fasadeTypeList = this._FASADETYPE
+        let sortFasadePositionList = [];
         const fasadePositionList = product.FASADE_POSITION
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
         const fasadeTypeSorted = fasadeSorted.reduce((acc, index) =>
@@ -72,16 +72,40 @@ export class Filters extends GlobalsData {
             []);
         params.FASADE_TYPE = fasadeTypeSorted
 
-        console.log(fasadeTypeSorted, fasadeTypeList, 'fasadeTypeSorted')
+        // const sizes = product.FASADE_SIZES
 
-        const sizes = product.FASADE_SIZES
+        // console.log(FASADE_SIZE, 'filterFasadePosition')
 
-        let sortFasadePositionList = sizes.length > 0 && sizes[0] != null ? sizes : fasadeSorted
+        if (Object.keys(FASADE_SIZE).length > 0) {
+            Object.values(FASADE_SIZE).forEach((el, key) => {
+                sortFasadePositionList.push(Object.values(el)[0])
+            })
+        }
+        else {
+            sortFasadePositionList = fasadeSorted
+        }
 
-        sortFasadePositionList.forEach((fasade: number) => {
 
-            const fasadePosition = this._FASADE_POSITION[fasade]
-            const handlerPosition = fasadePosition.drawer ? 4 : 0
+        // sortFasadePositionList = FASADE_SIZE.length > 0 && FASADE_SIZE[0] != null ? sizes : fasadeSorted
+
+
+        sortFasadePositionList.forEach((fasade: number, key: number) => {
+
+            const curFasade = fasade.ID ? fasade.ID : fasade
+
+            console.log(fasade, 'curFasade')
+
+            const fasadePosition = this._FASADE_POSITION[curFasade]
+
+            const hendleDirection = key % 2
+            const handleInDorPosition = () => {
+                if (!ELEMENT_TYPE || sortFasadePositionList.length < 2) return 0
+                if (hendleDirection && ELEMENT_TYPE.includes('up')) { return 6 }
+                if (!hendleDirection && ELEMENT_TYPE.includes('up')) { return 8 }
+                if (hendleDirection && ELEMENT_TYPE.includes('down')) { return 0 }
+                if (!hendleDirection && ELEMENT_TYPE.includes('down')) { return 2 }
+            }
+            const handlerPosition = fasadePosition.drawer ? 4 : handleInDorPosition()
 
             // console.log(fasadePosition.drawer
             //     , 'FASADE_POSITION')
@@ -90,6 +114,8 @@ export class Filters extends GlobalsData {
 
             const fasad = FASADE_PROPS[fasadeNumber]?.TYPE ?? this.project.default_fasade_color ?? 7397;
             const handles = this.project.default_handles
+            const sizes = fasade.FASADE_SIZE ?? null
+
 
             const fasadeProps: TFasadeProp = {
                 /** --- FASADE_PROPS ---*/
@@ -100,7 +126,7 @@ export class Filters extends GlobalsData {
                 BODY: fasad,
                 MILLING: null,
                 PALETTE: null,
-                WINDOW: null,
+                SHOWCASE: null,
                 ALUM: null,
                 GLASS: null,
                 PATINA: null,
@@ -110,6 +136,10 @@ export class Filters extends GlobalsData {
                     position: handlerPosition,
                     drawer: fasadePosition.drawer
                 },
+                SIZES: {
+                    id: sizes,
+                    params: {}
+                }
             }
 
             FASADE_PROPS.push(fasadeProps)
@@ -117,53 +147,62 @@ export class Filters extends GlobalsData {
 
     }
 
-    filterFasadeSizer(items: THREETypes.TObject, number: boolean | number) {
+    filterFasadeSizer(items: number[], product: IProductFull) {
 
         const fasadeSize = this._FASADESIZE;
         const fasadeNumberSize = this._FASADENUMBERSIZE;
 
-        if (number === false) {
+        const result: Record<number | string, number[]> = {};
 
-            const result: THREETypes.TObject = {};
 
-            // Перебираем все элементы массива items
-            Object.values(items).forEach(size => {
+        // Перебираем все элементы массива items
+        items.forEach((size, ndx) => {
 
-                if (size === null) return
+            console.log(fasadeNumberSize[size], 'fasadeNumberSize')
 
-                // Для каждого размера проходим по фасадным элементам
-                Object.entries(fasadeNumberSize[size]).forEach(([key, fasadeSizeIds]: any[]) => {
+            if (size === null) return
 
-                    // Фильтруем только те фасадные элементы, которые существуют в fasadeSize
-                    const validFasadeIds = fasadeSizeIds.filter((fasadeSizeId: any) => fasadeSize[fasadeSizeId]);
-                    if (!validFasadeIds.length > 0) return
+            // Для каждого размера проходим по фасадным элементам
+            Object.entries(fasadeNumberSize[size]).forEach(([key, fasadeSizeIds]: any[]) => {
 
-                    // Если ключ уже существует, используем существующий массив, иначе создаем новый
-                    result[key] = result[key] || [];
-                    // Добавляем отфильтрованные фасады в массив
-                    result[key].push(...validFasadeIds);
-                    // Сортируем массив по полю SORT
-                    result[key].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+                // Фильтруем только те фасадные элементы, которые существуют в fasadeSize
+                const validFasadeIds = fasadeSizeIds.filter((fasadeSizeId: any) => fasadeSize[fasadeSizeId]);
+                if (!validFasadeIds.length > 0) return
 
-                });
+                // Если ключ уже существует, используем существующий массив, иначе создаем новый
+                result[key] = result[key] || [];
+                // Добавляем отфильтрованные фасады в массив
+                result[key].push(...validFasadeIds);
+                // Сортируем массив по полю SORT
+                result[key].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+
             });
 
+            console.log(ndx, 'ndx')
 
-            return result;
-        }
+            const convert = this.groupSizers(result[ndx + 1], product)
+            result[ndx + 1] = convert
+        });
 
-        const result = Object.values(items)
-            // Преобразуем объект в массив и разворачиваем его, получая плоский массив значений
-            .flatMap(size => {
-                // Получаем массив фасадов для данного размера, если он существует
-                return fasadeNumberSize[size]?.[number as number] || [];
-            })
-            // Фильтруем элементы, оставляя только те, у которых существует ID фасада
-            .filter(fasadeSizeId => fasadeSize[fasadeSizeId])
-            // Сортируем фасады по их значению сортировки (SORT)
-            .sort((a, b) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+
+        console.log(result, 'result')
 
         return result;
+
+
+        // const result = items
+        //     // Преобразуем объект в массив и разворачиваем его, получая плоский массив значений
+        //     .flatMap(size => {
+        //         // Получаем массив фасадов для данного размера, если он существует
+        //         return fasadeNumberSize[size]?.[number as number] || [];
+        //     })
+        //     // Фильтруем элементы, оставляя только те, у которых существует ID фасада
+        //     .filter(fasadeSizeId => fasadeSize[fasadeSizeId])
+        //     // Сортируем фасады по их значению сортировки (SORT)
+        //     .sort((a, b) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+        //     console.log(result, 'result-2')
+
+        // return result;
     }
 
     filterModuleColor(items: THREETypes.TObject) {
@@ -185,7 +224,6 @@ export class Filters extends GlobalsData {
     }
 
     filterOption(option: number[]) {
-        let filtered = []
         let curOptionsList = option
             .map(el => this._OPTION[el])
             .filter(Boolean);
@@ -194,25 +232,23 @@ export class Filters extends GlobalsData {
             return { id: el.ID, active: false, group: el.GROUP, close: el.CLOSE_OTHER_OPTIONS }
         })
 
-        console.log(result, 'result')
-
         return result
+    }
 
-        for (const el in this._OPTIONS_GROUP) {
+    groupSizers(el: number[], product: IProductFull) {
+        const fasadePos = product.FASADE_POSITION
 
-            filtered.push({
-                NAME: this._OPTIONS_GROUP[el].NAME,
-                CONTANT: curOptionsList.filter(opt => opt.GROUP == el)
-            })
-        }
-
-        filtered = filtered.filter(item => {
-            if (item.CONTANT.length > 0) return item
+        const maped = el.map(size => {
+            const key = fasadePos.find(pos => this._FASADE_POSITION[pos].FASADE_SIZE === size)
+            return this._FASADE_POSITION[key]
 
         })
 
-        return filtered
+        const result = maped.reduce((object, value, index) => {
+            return { ...object, [value.FASADE_SIZE]: value };
+        }, {});
 
+        return result
     }
 
 } 

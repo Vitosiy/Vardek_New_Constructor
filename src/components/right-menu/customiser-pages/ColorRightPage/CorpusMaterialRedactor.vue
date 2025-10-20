@@ -2,20 +2,27 @@
 //@ts-nocheck
 import MaterialSelector from "./MaterialSelector.vue";
 import ConfigurationOption from "./ConfigurationOption.vue";
-import {ref, onMounted, onBeforeMount, watch, toRefs, defineExpose} from "vue";
+import {
+  ref,
+  onMounted,
+  onBeforeMount,
+  watch,
+  toRefs,
+  defineExpose,
+} from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
 const modelState = useModelState();
 const eventBus = useEventBus();
-const props = defineProps<{
-  materialList: Object;
-  is2Dconstructor: {
-    type: Boolean,
-    default: false,
-  }
-}>();
+interface IProps {
+  materialList: [];
+  is2Dconstructor?: boolean;
+}
 
+const props = withDefaults(defineProps<IProps>(), {
+  is2Dconstructor: false,
+});
 
 const materialList = ref(null);
 const selectedSurfaceID = ref(null);
@@ -24,19 +31,18 @@ const currentSurfaceData = ref<any>({});
 const isMillingExist = ref(false);
 const currentMillingData = ref(null);
 
-const {is2Dconstructor} = toRefs(props);
+const { is2Dconstructor } = toRefs(props);
 
-const emit = defineEmits([
-  "parent-callback",
-]);
+const emit = defineEmits(["parent-callback"]);
 
 const callback = (material) => {
   emit("parent-callback", material);
-}
+};
 
 onBeforeMount(() => {
-  materialList.value = props.materialList || modelState.getCurrentModuleData;
-  selectedSurfaceID.value = modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
+  // materialList.value = modelState.getCurrentModuleData;
+  selectedSurfaceID.value =
+    modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
@@ -57,10 +63,8 @@ const changeModuleTexture = (data: any) => {
     imgSrc: data.DETAIL_PICTURE,
   };
 
-  if(!is2Dconstructor.value)
-    eventBus.emit("A:ChangeModuleTexture", data);
-  else
-    callback(data)
+  if (!is2Dconstructor.value) eventBus.emit("A:ChangeModuleTexture", data);
+  else callback(data);
 };
 
 const deleteSelectedOptions = (type: string) => {
@@ -78,8 +82,8 @@ watch(
     materialList.value = props.materialList || modelState.getCurrentModuleData;
 
     selectedSurfaceID.value =
-      modelState.getCurrentModel.PROPS.CONFIG.MODULE_COLOR;
-    const current = materialList.value!.find(
+      modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+    const current = props.materialList!.find(
       (m) => m.ID === selectedSurfaceID.value
     );
     if (current) {
@@ -110,20 +114,20 @@ watch(
       />
     </div>
 
-    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
+    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
   </div>
   <div class="container container--2D-constructor" v-else>
     <div class="configuration">
       <ConfigurationOption
-          :type="'surface'"
-          :data="currentSurfaceData"
-          @delete-choise="deleteSelectedOptions"
+        :type="'surface'"
+        :data="currentSurfaceData"
+        @delete-choise="deleteSelectedOptions"
       />
       <ConfigurationOption
-          v-if="isMillingExist"
-          :type="'milling'"
-          :data="currentMillingData"
-          @delete-choise="deleteSelectedOptions"
+        v-if="isMillingExist"
+        :type="'milling'"
+        :data="currentMillingData"
+        @delete-choise="deleteSelectedOptions"
       />
     </div>
 

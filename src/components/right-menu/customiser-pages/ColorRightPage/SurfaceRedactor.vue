@@ -1,7 +1,14 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
 
-import { defineProps, defineEmits, computed, ref, onMounted } from "vue";
+import {
+  defineProps,
+  defineEmits,
+  computed,
+  ref,
+  onMounted,
+  onBeforeMount,
+} from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -21,14 +28,19 @@ const props = defineProps({
   },
 });
 
-onMounted(() => {
+onBeforeMount(() => {
+  if (modelState.getCurrentModel) {
+    productData.value = modelState.getCurrentModel.userData;
+  }
 });
 
 const emit = defineEmits(["select_material", "select"]);
 const modelState = useModelState();
 const eventBus = useEventBus();
 
-const productData = modelState.getCurrentModel;
+// console.log(modelState.getCurrentModel);
+const productData = ref(null);
+
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
@@ -48,29 +60,30 @@ const isSearch = computed(() => {
 });
 
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
-
   if (props.tempWork) {
     // eventBus.emit(`${props.typeChanger.event}`, {
     //   data: id,
     //   type: props.typeChanger.type,
     // });
-    emit("select_material", data)
+    emit("select_material", data);
 
     return;
   }
 
-  const productId = productData.PROPS.PRODUCT;
+  const productId = productData.value.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = data;
 
   modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
   modelState.createCurrentPaletteData(ID);
   modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
   modelState.createCurrentMillingData({ fasadeId: ID, productId });
-  modelState.createCurrentWindowsData({ fasadeId: ID, productId });
+  modelState.createCurrentShowcaseData({ fasadeId: ID, productId });
   modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
 
+  const transitionT = checkTransitionTexture(data.ID);
+
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
-  emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE });
+  emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE, transitionT });
 };
 
 const onSearchChange = (e) => {
@@ -81,6 +94,19 @@ const onSearchChange = (e) => {
   filteredMaterialList.value = filtered;
 
   if (e.target.value === "") filteredMaterialList.value = [];
+};
+
+const checkTransitionTexture = (id: number) => {
+  const prepare = modelState.getCurrentModelFasadesData.filter(
+    (el) => el.NAME === "Шпон Вардек 19мм"
+  );
+
+  if (prepare.length == 0) return false;
+
+  const start = prepare[0].FASADES;
+
+  if (!start) return false;
+  return start.includes(id);
 };
 </script>
 

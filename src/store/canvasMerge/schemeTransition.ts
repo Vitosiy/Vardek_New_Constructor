@@ -419,7 +419,8 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	 * @returns {Array} Копия массива с данными комнат
 	 */
 	const getAllData = () => {
-		return JSON.parse(JSON.stringify(SchemeTransitionData.value));
+		// return JSON.parse(JSON.stringify(SchemeTransitionData.value));
+		return SchemeTransitionData.value
 	};
 
 	const clearStore = () => {
@@ -427,7 +428,15 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	};
 
 	const setAppData = (value: any) => {
-		SchemeTransitionData.value = value
+		// console.log(value, 'HHH')
+		const prepareData = value.map(elem => {
+			const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+			return {
+				...elem,
+				content: content
+			}
+		})
+		SchemeTransitionData.value = prepareData
 		// console.log(SchemeTransitionData.value);
 	};
 
@@ -560,10 +569,26 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	const getRoomDataFor3DScene = (idRoom: string | number): any => {
 		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);
+		console.log(data, 'IN SCHEME')
+
 		if (!data) return;
 
-		const roomData = JSON.parse(JSON.stringify(data));
+		data.content = typeof data.content != 'string' ? JSON.stringify(data.content) : data.content
 
+		// const prepareData = data.map(elem => {
+		// 	const content = typeof elem.content != 'string' ? JSON.stringify(elem.content) : elem.content
+		// 	return {
+		// 		...elem,
+		// 		content: content
+		// 	}
+		// })
+
+
+
+
+		// const roomData = JSON.parse(JSON.stringify(data));
+
+		const roomData = data
 		/*
 	  
 		// Если нет стен - возвращаем как есть
@@ -609,7 +634,18 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	};
 
 	const getSchemeTransitionData = computed(() => {
-		return SchemeTransitionData.value
+		const start = SchemeTransitionData.value
+
+		const prepareData = start.map(elem => {
+			const content = typeof elem.content != 'string' ? JSON.stringify(elem.content) : elem.content
+			return {
+				...elem,
+				content: content
+			}
+		})
+
+
+		return prepareData
 	})
 
 	const getWalls = computed(() => {

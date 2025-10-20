@@ -1,6 +1,8 @@
 // import * as THREEInterfases from "../types/interfases"
 
 const START_PROJECT_PARAMS = {
+    projectId: null,
+    type: 'New',
     rooms: [Object.freeze({
         id: 1000001,
         label: 'Комната 1',
@@ -76,8 +78,8 @@ const START_PROJECT_PARAMS = {
                     "side": 0
                 }
             ],
-            floor: 44013,
-            wall: 44128,
+            floor: 44035,
+            wall: 85074,
         },
         content: [],
     }),
@@ -130,6 +132,8 @@ const START_PROJECT_PARAMS = {
     default_palit_top: null,
     default_handles: 69920,
     default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338],
+    default_plinth_body: 70096,
+    default_plinth_color: null
 }
 
 Object.freeze(START_PROJECT_PARAMS)
