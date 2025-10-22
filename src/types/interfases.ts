@@ -70,6 +70,7 @@ export interface IRoom {
     description?: string;
     params: IWallSizes;
     content?: IContentItem[] | any[];
+    basket?: any[]
 }
 
 export interface IWallSizes {

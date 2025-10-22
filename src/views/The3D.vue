@@ -133,6 +133,7 @@ const priceUpdateEvents  = [
     'A:UM-update',
     'A:Duplicate',
     'A:RemoveModelSuccses',
+    'close-modal'
 ];
 
 onMounted(async () => {

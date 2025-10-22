@@ -92,12 +92,12 @@
           >
             <div class="product-item__img">
               <img 
-                :src="product?.IMG ?`${API_URL}${product.IMG}` : `logo_vardek_mebel.png`" 
+                :src="product?.IMG ?`${API_URL}${product.IMG}` : `/upload/709778d1-2ada-44ff-99a6-ac20e9ea9b03.png`" 
                 :alt="product?.NAME || 'Product image'"
                 loading="lazy"
               >
             </div>
-            <div class="product-item__wrapper">
+            <div class="product-item__wrapper">!category.hidden
               <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">{{ product.NAME }}</h4>
               <div class="product-item__price">{{ product.PRICE }}</div>
               <button class="product-item__basket"  @click="callChildMethod(Number(product.ID))" >В корзину</button>
@@ -275,7 +275,7 @@ const handleProductClick = async (id) => {
 };
 
 const filterHiddenCategories = (categories) => {
-  return categories?.filter(category => !category.hidden) || [];
+  return categories?.filter(category => !category.hidden && !category.UF_TEMPLATE) || [];
 };
 
 const trimArrayByLevel = (targetLevel) => {

@@ -400,11 +400,18 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
   if (objProps.RASPIL && objProps.RASPIL.length !== 0) {
     props.RASPIL = objProps.RASPIL;
+    props.PROFILE = '251698';
+    
   }
 
   if (objProps.RASPIL.data && objProps.RASPIL.data.length > 1) {
     props.USLUGI = ["98683"]
+    props.PROFILE = '251698';
   }
+
+  if(objProps.RASPIL.data && objProps.RASPIL.data.length === 1) {
+    props.USLUGI = []
+  } 
 
 
   if(objProps.CONFIG.SECTIONS) {
@@ -451,7 +458,7 @@ export const propsLabel = {
  
   DOORS: {type: "FASADE", val: "obj_list", NAME: "Двери", SORT: 100},
   FACADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
-  FASADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
+  FASADE: {type: "FASADE", val: "int", NAME: "Фасад", SORT: 100},
   FASADE1: {type: "FASADE", val: "int", NAME: "Цвет фасада 1", SORT: 1000},
   FASADE2: {type: "FASADE", val: "int", NAME: "Цвет фасада 2", SORT: 1100},
   FASADE3: {type: "FASADE", val: "int", NAME: "Цвет фасада 3", SORT: 1200},
@@ -459,7 +466,9 @@ export const propsLabel = {
   FASADE5: {type: "FASADE", val: "int", NAME: "Цвет фасада 5", SORT: 1300},
 
   FASADEWIDTH: {type: false, val: "int", NAME: "Ширина фасада", SORT: 1360},
+  FASADE_WIDTH: {type: false, val: "int", NAME: "Ширина фасада", SORT: 1360},
   FASADESIZE: {type: "FASADESIZE", val: "int", NAME: "Высота фасада", SORT: 1350},
+  SIZES: {type: "SIZES", val: "int", NAME: "Высота фасада", SORT: 1350},
   FASADESIZE1: {
     type: "FASADESIZE",
     val: "int",

@@ -82,12 +82,13 @@ export const useRoomState = defineStore('RoomState', () => {
     rooms.value.push(room);
   };
 
-  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes) => {
+  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes, basket: any) => {
     const room = rooms.value.find(room => room.id === id);
 
     if (room) {
       room.content = content;
       room.params = params;
+      room.basket = basket;
 
       return
     }

@@ -52,14 +52,15 @@
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 
           <div v-if="getPropDefinition(String(propKey))">
-            
-            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
+            <!-- {{ propValue }} -->
+            <span class="basket-item__props-lable" v-if="propValue">{{ getPropLabel(String(propKey)) }}:</span>
             <!-- Обработка массивов -->
             <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
               <li v-for="(propVal, index) in propValue" :key="index">
                 <span v-if="shouldShowPropValue(propKey, propVal)" 
                       :class="getErrorClass(propVal, item?.error?.props)">
-                  {{ formatPropValue(propKey, propVal) }}
+                  <!-- {{ formatPropValue(propKey, propVal , item) }} -->
+                  <span v-html="formatPropValue(propKey, propVal, item, index)"></span>
                   <span v-if="hasArticle(propKey, propVal)">
                     - артикул {{ getArticleCode(propKey, propVal) }}
                   </span>
@@ -306,7 +307,43 @@ const shouldShowPropValue = (key: string, propVal: any) => {
   return propDef && propDef.type && propDef.type !== 'PRODUCT';
 };
 
-const formatPropValue = (key: string, propVal: any) => {
+// const formatPropValue = (key: string, propVal: any, item: any) => {
+//   const propDef = getPropDefinition(key);
+//   console.log('propValpropVal', propVal);
+
+//   if (propDef && propDef.type === 'PRODUCTS') {
+//     if (propVal.ID) {
+//       return propVal.VALUE === null 
+//         ? getProductInfo(propVal.ID).NAME 
+//         : `${getProductInfo(propVal.ID).NAME} - поз. ${propVal.VALUE} мм.`;
+//     } else {
+//       return getProductInfo(propVal).NAME;
+//     }
+//   }
+
+//   if(item?.product.TYPE=== 'scene') {
+//     if (typeof propVal === 'object' && propVal !== null) {
+//       let getListValue = '';
+//       Object.entries(propVal).forEach(([key, value]) => {
+//         if (typeof value === 'object' && value !== null) {
+//           value = JSON.stringify(value);
+//         }
+//         getListValue += `<li><strong>${key}:</strong> ${value}</li>`;
+//       });
+      
+//       const ul = document.createElement('ul');
+//       ul.innerHTML = getListValue;
+//       console.log(ul);
+//       return ul; // возвращаем DOM элемент
+//     }
+//     console.log('тип')
+
+//     return getTypeName(propDef?.type, propVal.COLOR);
+//   } 
+//   return getTypeName(propDef?.type, propVal);
+// };
+
+const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
   const propDef = getPropDefinition(key);
   console.log('propValpropVal', propVal);
 
@@ -319,8 +356,26 @@ const formatPropValue = (key: string, propVal: any) => {
       return getProductInfo(propVal).NAME;
     }
   }
-  if(propVal.COLOR) {
-    return getTypeName(propDef?.type, propVal.COLOR);
+
+  if(item?.product.TYPE === 'scene') {
+    if (typeof propVal === 'object' && propVal !== null) {
+      // Вместо создания DOM элемента, возвращаем HTML строку
+      let listValue = '';
+      const count = ++index;
+      Object.entries(propVal).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+          value = JSON.stringify(value);
+        }
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE)) {
+          listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)}</li>`; // ${getTypeName(key, value)}
+        }
+      });
+      
+      // Возвращаем HTML строку, а не DOM элемент
+      return `<ul>${listValue}</ul>`;
+    }
+    console.log('тип')
+    return ;
   } 
   return getTypeName(propDef?.type, propVal);
 };
@@ -378,16 +433,25 @@ const hasError = (value: any, propsError: any) => {
   return propsError.some(error => error.id && error.id.includes(value));
 };
 
-const getTypeName = (type: any, value: any) => {
+const getTypeName = (type: any, value: any, mainType: any = '') => {
   // Получаем имя из store данных
+  console.log('data', appData.value, type, value);
   if (value && typeof value === 'object' && value.NAME) {
     return value.NAME;
   }
   if (appData.value && appData.value[type] && appData.value[type][value]) {
     return appData.value[type][value].NAME || `[${type}:${value}]`;
   }
+  if (mainType === 'scene' && type === 'COLOR') {     
+    return appData.value['FASADE'][value]?.NAME;  
+  }
+
+  if(mainType === 'scene' && type === 'SIZES') {
+    console.log();  
+    return appData.value['FASADESIZE'][JSON.parse(value).id]?.NAME;  
+  }
   return `[${type}:${value}]`;
-};
+}; 
 
 const getListValue = (key: string, value: any) => {
   const propDef = getPropDefinition(key);

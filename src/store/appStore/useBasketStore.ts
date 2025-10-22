@@ -5,7 +5,7 @@ import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage'
 import { useRoomContantData } from '../appliction/useRoomContantData'
 import { createBasketItem } from '@/components/Basket/helper/basketMapper'
 import type { IBasket, IBasketResponse, BasketItemType } from '@/types/basket'
-import { number } from 'yup'
+import { useAppData } from '../appliction/useAppData'
 
 // Вспомогательные функции
 
@@ -54,10 +54,10 @@ export const useBasketStore = defineStore('basket', () => {
   // Композиции
   const { mainConstructor, mainCatalog, initializeFromStorage, clearStorage } = useBasketStorage()
   const { loading, error, syncBasketWithServer, syncInvoice } = useBasketApi()
+  const appDataStore = useAppData();
 
   // State
   const basketData = ref<IBasketResponse | null>(null)
-  const handlesData = ref<number[] | null>(null)
 
   // Инициализация
   // initializeFromStorage()
@@ -87,9 +87,17 @@ export const useBasketStore = defineStore('basket', () => {
     const roomDataCopy = JSON.parse(roomContantData)
     const sceneItems = Object.entries(roomDataCopy)
       .filter(([_, obj]: [string, any]) => obj.data.PRODUCT)
+      .filter(([_, obj]: [string, any]) => {
+        // Проверяем, есть ли ID в массиве decor
+        const itemId = obj.data.CONFIG?.ID;
+        const decorIds = appDataStore.getAppData.decor || [];
+        return !decorIds.includes(itemId);
+      })
       .map(([key, obj]: [string, any]) => 
         createBasketItem(obj.data, mainConstructor.value.length, obj.basketId)
       )
+    // console.log('appDataStore', appDataStore.getAppData.decor);
+
     mainConstructor.value = sceneItems
   }
 
@@ -120,7 +128,18 @@ export const useBasketStore = defineStore('basket', () => {
   const clearBasket = () => {
     clearStorage()
     basketData.value = null
+    syncBasket();
   }
+  
+  const loadBasket = async (data: any) => { 
+    console.log('datadata', data);
+    mainConstructor.value = data.scene;
+    mainCatalog.value = data.catalog;
+    console.log('allBasketItems.value', allBasketItems.value);
+    syncBasket();
+  }
+
+
 
   const syncBasket = async (): Promise<IBasketResponse | null> => {
     const currentHandlesData = countHandles(mainConstructor.value)
@@ -136,7 +155,13 @@ export const useBasketStore = defineStore('basket', () => {
   }
 
   const syncInvoce = async (): Promise<IBasketResponse | null> => {
-    const result = await syncInvoice(allBasketItems.value)
+    const currentHandlesData = countHandles(mainConstructor.value)
+    const data = currentHandlesData.length > 0 
+        ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
+        : allBasketItems.value
+
+    const result = await syncBasketWithServer(data)
+    // const result = await syncInvoice(allBasketItems.value)
     return result
   }
 
@@ -163,6 +188,7 @@ export const useBasketStore = defineStore('basket', () => {
     removeFromBasket,
     updateQuantity,
     clearBasket,
+    loadBasket,
     syncBasket,
     syncInvoce,
   }

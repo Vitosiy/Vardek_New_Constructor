@@ -19,7 +19,7 @@
       <div class="basket__additional-table">
         <BasketTable
           :key="basketUpdateKey + 'additional'"
-          title="Дополнительные товары (Не отображаются на эскизе)"
+          title="Дополнительные товары"
           :items="additionalItems"
           type="additional"
         />
@@ -32,14 +32,13 @@
         <p class="basket__sum-no">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
       </div>
       <div class="basket-footer-buttons">
-        
-        <!-- <div class="basket__error">
+        <div class="basket__error" v-if="errorBasket">
           <p class="error__title"></p>
-          <p class="error__title">1 Ошибка</p>
-        </div> -->
+          <p class="error__title">Ошибка - {{ errorCount }} шт. </p>
+        </div>
         <button class="basket__close" @click="closePopup">Закрыть</button>
         <button class="basket__save">Печать</button>
-        <button class="basket__order" @click="setInvoice">Оформить заказ</button>
+        <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
       </div>
     </div>
   </div>
@@ -58,6 +57,8 @@ const { basketData, syncBasket, syncInvoce} = useBasketStore();
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
 const loading = ref(true)
+const errorBasket = ref(false);
+const errorCount = ref(0);
 
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
@@ -112,6 +113,8 @@ watch(() => useBasketStore().basketData, (newValue) => {
   items.value = newValue;
   basketUpdateKey.value++;
   loading.value = false;
+  errorCount.value = newValue.products.filter((item: IProduct) => item.error).length;
+  errorBasket.value = newValue.type === 'error';
 }, { deep: true });
 
 
@@ -253,6 +256,10 @@ watch(() => useBasketStore().basketData, (newValue) => {
             width: auto;
             flex: 2;
           }
+          &:disabled {
+            background-color: #A3A9B5;
+            cursor: not-allowed;
+          }
         }
       }
     }
@@ -281,6 +288,18 @@ watch(() => useBasketStore().basketData, (newValue) => {
       border-color: #DA444C;
       animation: prixClipFix 2s linear infinite , rotate 0.5s linear infinite reverse;
       inset: 6px;
+    }
+    &__sum {
+      font-weight: 600;
+      line-height: 100%;
+      letter-spacing: 0%;
+
+    }
+    &__sum-no {
+      // font-weight: 600;
+      line-height: 100%;
+      letter-spacing: 0%;
+
     }
   }
 

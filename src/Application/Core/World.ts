@@ -18,6 +18,7 @@ import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoo
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState"
+import { useBasketStore } from "@/store/appStore/useBasketStore"
 
 export class World {
 
@@ -33,6 +34,7 @@ export class World {
     uniformState: ReturnType<typeof useUniformState> = useUniformState();
     roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
     modelState: ReturnType<typeof useModelState> = useModelState()
+    basketStore: ReturnType<typeof useBasketStore> = useBasketStore()
 
     trafficManager: THREETypes.TTrafficManager | null;
     room: THREETypes.TRoomManager | null = null;
@@ -106,24 +108,29 @@ export class World {
         this.root.userHistory.clearHistory(toAction as string[])
         this.modelState.setCurrentModel(null)
         this.modelState.setTransformControlsValue(false)
-
+        this.basketStore.clearBasket();
     }
 
     saveRoom(name: string) {
 
-
+        
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
 
             const contant = this.room!.save() as string[]
-
+                
             this.roomState.addRoom({
                 id: roomId, // Присваиваем id 
                 label: name ?? `Комната N:${this.roomState.rooms.length + 1}`,
                 params: this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes,
                 content: contant,
+                basket: JSON.stringify({
+                    scene: this.basketStore.mainConstructor,
+                    catalog: this.basketStore.mainCatalog
+                })
             })
+            this.basketStore.clearBasket();
 
             const rooms = this.roomState.getRooms
             console.log(rooms)
@@ -139,10 +146,15 @@ export class World {
         const roomId = this.roomState.getRoomId as number
         // const roomParams = this.roomState.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
         const roomParams = this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes
-
-        this.roomState.updateRoom(roomId, contant, roomParams)
+        const basket = JSON.stringify({
+                    scene: this.basketStore.mainConstructor,
+                    catalog: this.basketStore.mainCatalog
+                })
+        this.roomState.updateRoom(roomId, contant, roomParams, basket)
         const rooms = this.roomState.getRooms
                console.log(rooms)
+
+               
         // console.log(rooms, 'ROOMS')
         this.sceneState.updateProjectParams({ rooms })
 
@@ -176,8 +188,9 @@ export class World {
         const invValue = this.roomOptions.getRefractionValue
         if (this.enviroment) this.enviroment.toggleRefraction(invValue)
 
-
-        console.log(invValue, 'invValue')
+        const basket = JSON.parse(this.roomState.rooms.find(el=> el.id === roomId).basket);
+        console.log('basket', basket);
+        if (basket) this.basketStore.loadBasket(basket)
 
     }
 
