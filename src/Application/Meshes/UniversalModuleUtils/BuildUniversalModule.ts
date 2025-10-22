@@ -192,6 +192,10 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.CONFIG.SECTIONS = {}
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
+        if(product_data.profilesConfig) {
+            PROPS.CONFIG['PROFILECOLOR'] = product_data.profilesConfig.COLOR
+        }
+
         product_data.sections.forEach((section, secIndex) => {
 
             let sectionSize = new THREE.Vector3(section.width, section.height,
@@ -397,7 +401,7 @@ export class BuildUniversalModule extends BuildProduct {
                     if (data.DAE) {
                         this.models_builder.create({onLoad, props: {CONFIG: {MODELID: data.ID}}, sizeRulers: false})
                     } else {
-                        productFilling = this.createSubProductObject(data, PROPS)
+                        productFilling = this.createSubProductObject(filling, data, PROPS)
                         onLoad(productFilling, false)
                     }
                 })
@@ -407,8 +411,8 @@ export class BuildUniversalModule extends BuildProduct {
         return
     }
 
-    createSubProductObject(data: THREETypes.TObject, props: THREETypes.TObject) {
-        let fasade = this._FASADE[props.CONFIG.MODULE_COLOR]
+    createSubProductObject(filling: Object, data: THREETypes.TObject, props: THREETypes.TObject) {
+        let fasade = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']] : this._FASADE[filling.color || props.CONFIG.MODULE_COLOR]
         let body = this.json_builder.createMesh({data, fasade})
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));

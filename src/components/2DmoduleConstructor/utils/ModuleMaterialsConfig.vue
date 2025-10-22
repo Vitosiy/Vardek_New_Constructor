@@ -26,14 +26,16 @@ const props = defineProps({
 type CATALOG_TYPE = 'FASADE' | 'PALETTE' | 'MILLING' | 'FASADETYPE' | 'GLASS' | 'PATINA';
 
 const moduleParts = [
-  'MODULE_COLOR', 'BACKWALL', 'LEFTSIDECOLOR', 'RIGHTSIDECOLOR', 'TOPFASADECOLOR'
+  'MODULE_COLOR', 'BACKWALL', 'LEFTSIDECOLOR', 'RIGHTSIDECOLOR', 'TOPFASADECOLOR', 'PROFILECOLOR'
 ]
+
 enum partsNames {
   MODULE_COLOR = 'Цвет корпуса',
   BACKWALL = 'Задняя стенка',
   LEFTSIDECOLOR = 'Левая стенка',
   RIGHTSIDECOLOR = 'Правая стенка',
-  TOPFASADECOLOR = 'Накладка на крышку'
+  TOPFASADECOLOR = 'Накладка на крышку',
+  PROFILECOLOR = 'Цвет профилей'
 }
 
 const {module, objectData, visualizationRef} = toRefs(props);
@@ -64,6 +66,10 @@ const getMaterialsParts = computed(() => {
       }
     })
 
+    if(module.value.profilesConfig) {
+      result['PROFILECOLOR'] = {COLOR: getMaterialInfo("COLOR", module.value.profilesConfig.COLOR)}
+    }
+
     return result;
   };
 });
@@ -91,8 +97,6 @@ const getOption = (part: string) => {
 };
 
 const getMaterialsList = () => {
-  let result = {};
-
   switch (currentOption.value) {
     case "MODULE_COLOR":
       materialList.value = modelState.getCurrentModuleData
@@ -103,13 +107,18 @@ const getMaterialsList = () => {
     case "RIGHTSIDECOLOR":
     case "LEFTSIDECOLOR":
       materialList.value = modelState.getCurrentSidewallData
+      break
+    case 'PROFILECOLOR':
+      materialList.value = module.value.profilesConfig.colorsList.map(colorID => {
+        return getMaterialInfo("COLOR", colorID)
+      })
       break;
     default:
       materialList.value = modelState.getCurrentModelFasadesData
       break;
   }
 
-  return result;
+  return materialList.value;
 };
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
@@ -118,6 +127,49 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
         module.value.moduleColor = value.ID;
         module.value.moduleThickness = value.DEPTH;
+        break;
+      case 'PROFILECOLOR':
+        objectData.value.PROPS.CONFIG['PROFILECOLOR'] = value ? value.ID : false;
+
+        if(!objectData.value.PROPS.CONFIG['PROFILECOLOR']) {
+          delete objectData.value.PROPS.CONFIG['PROFILECOLOR'];
+        }
+        else {
+          module.value.profilesConfig.COLOR = objectData.value.PROPS.CONFIG['PROFILECOLOR']
+          module.value.sections.forEach((section, secIndex) => {
+
+            module.value.sections.cells.forEach((cell, cellIndex) => {
+              if(cell.hiTechProfiles) {
+                cell.fillings.forEach(filling => {
+                  if(filling.isProfile) {
+                    filling.color = module.value.profilesConfig.COLOR
+                    filling.isProfile.COLOR = module.value.profilesConfig.COLOR
+                  }
+                })
+
+                cell.hiTechProfiles.forEach(profile => {
+                  profile.color = module.value.profilesConfig.COLOR
+                  profile.isProfile.COLOR = module.value.profilesConfig.COLOR
+                })
+              }
+            })
+
+            if(section.hiTechProfiles) {
+              section.fillings.forEach(filling => {
+                if(filling.isProfile) {
+                  filling.color = module.value.profilesConfig.COLOR
+                  filling.isProfile.COLOR = module.value.profilesConfig.COLOR
+                }
+              })
+
+              section.hiTechProfiles.forEach(profile => {
+                profile.color = module.value.profilesConfig.COLOR
+                profile.isProfile.COLOR = module.value.profilesConfig.COLOR
+              })
+            }
+          })
+        }
+
         break;
       default:
         if(!objectData.value.PROPS.CONFIG[currentOption.value]){
@@ -140,7 +192,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
 };
 
 const getCurrentRedactor = computed(() => {
-  return (!currentOption.value?.includes("MODULE") && !currentOption.value?.includes("BACKWALL"));
+  return !["MODULE_COLOR", "BACKWALL"].includes(currentOption.value);
 });
 
 onMounted(() => {
@@ -187,6 +239,7 @@ onMounted(() => {
           :key="currentOption"
           :element-data="objectData.PROPS.CONFIG[currentOption]"
           :element-index="currentOption"
+          :material-list="materialList"
           @parent-callback="selectOption"
       />
       <CorpusMaterialRedactor

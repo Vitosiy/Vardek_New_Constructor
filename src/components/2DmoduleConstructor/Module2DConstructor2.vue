@@ -330,7 +330,7 @@ const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-      if (section.fasadesDrawers?.length) {
+      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
         calcDrawersFasades(secIndex)
       } else if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;

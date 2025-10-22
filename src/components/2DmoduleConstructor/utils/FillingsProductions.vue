@@ -111,7 +111,8 @@ const addFilling = (type, product, oldFillingObject = false) => {
   const {sec, cell, row} = selectedFilling.value
   const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
   const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
-  const { PROPS } = modelState.getCurrentModel;
+  const { userData } = modelState.getCurrentModel;
+  const { PROPS } = userData;
 
   if (row === null && cell === null && sec === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения");
@@ -168,8 +169,11 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
     height = product.height || module.value.moduleThickness
 
-    if (!module.value.profilesConfig)
+    if (!module.value.profilesConfig) {
       module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+      module.value.profilesConfig.colorsList = [...product.COLOR]
+      PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+    }
 
     profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
 
@@ -202,7 +206,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
     width,
     height,
-    color: module.value.moduleColor,
+    color: profileData.COLOR || module.value.moduleColor,
     sec,
     cell,
     row,

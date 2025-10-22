@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // @ts-nocheck 31
 // Интерфейс для табов
+import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
+
 interface Tab {
   name: string;
   label: string;
@@ -35,6 +37,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  materialList: {
+    type: Array,
+    default: [],
+  }
 });
 
 const emit = defineEmits([
@@ -47,6 +53,7 @@ const callback = (material: Object, type: String, palette: Number) => {
 
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
+const _COLOR = _APP.COLOR;
 
 const eventBus = useEventBus();
 
@@ -81,23 +88,32 @@ const glassList = ref<Array>([]);
 const isGlassExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
+
+  if (data.ATTACH_MILLINGS?.[0]) {
+    modelState.createCurrentMillingData({
+      fasadeId: data.ID,
+      productId: productId.value,
+    });
+
+    modelState.createCurrentPatinaData({
+      fasadeId: data.ID,
+      productId: productId.value,
+    });
+
+    modelState.createCurrentShowcaseData({
+      fasadeId: data.ID,
+      productId: productId.value,
+    });
+  }
+
+  if (data.ATTACH_GLASS?.[0]) {
+    modelState.createCurrentGlassData({
+      fasadeId: data.ID,
+      productId: productId.value,
+    });
+  }
+
   modelState.createCurrentPaletteData(data.ID);
-  modelState.createCurrentMillingData({
-    fasadeId: data.ID,
-    productId: productId.value,
-  });
-  modelState.createCurrentPatinaData({
-    fasadeId: data.ID,
-    productId: productId.value,
-  });
-  modelState.createCurrentGlassData({
-    fasadeId: data.ID,
-    productId: productId.value,
-  });
-  modelState.createCurrentShowcaseData({
-    fasadeId: data.ID,
-    productId: productId.value,
-  });
 
   isSurfaceSelected.value = true;
 
@@ -248,58 +264,64 @@ const prepareData = () => {
   const product = _APP.CATALOG.PRODUCTS[productId.value];
   currentElementData.value = props.elementData ? props.elementData :
                               props.isFasade ? productData.value.PROPS.CONFIG.FASADE_PROPS[props.elementIndex] :
-                              productData.value.PROPS.CONFIG[props.elementIndex];
+                              productData.value.PROPS.CONFIG[props.elementIndex] || {COLOR: props};
 
   const currentFasadeData = currentElementData.value;
 
-  const { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } = currentFasadeData
+  let { MILLING, PALETTE, COLOR, SHOW, PATINA, GLASS } = currentFasadeData
+  if (typeof currentFasadeData === "number") {
+    COLOR = currentFasadeData
+  }
 
   // Проверка есть ли у текущего фасада опции выбора фрезеровки и цвета
-  const dataOfFasadeType = _FASADE[COLOR];
+  const dataOfFasadeType = _FASADE[COLOR] || _COLOR[COLOR];
 
-  modelState.createCurrentPaletteData(COLOR);
+  if (dataOfFasadeType.ATTACH_MILLINGS?.[0] /*&& !product.GLASS[0]*/) {
+    modelState.createCurrentMillingData({
+      fasadeId: COLOR,
+      productId: productId.value,
+    });
 
-  modelState.createCurrentMillingData({
-    fasadeId: COLOR,
-    productId: productId.value,
-  });
-  modelState.createCurrentPatinaData({
-    fasadeId: COLOR,
-    productId: productId.value,
-  });
-  modelState.createCurrentGlassData({
-    fasadeId: COLOR,
-    productId: productId.value,
-  });
-  modelState.createCurrentShowcaseData({
-    fasadeId: COLOR,
-    productId: productId.value,
-  });
+    modelState.createCurrentShowcaseData({
+      fasadeId: COLOR,
+      productId: productId.value,
+    });
 
-  if (dataOfFasadeType.ATTACH_MILLINGS[0] /*&& !product.GLASS[0]*/) {
     millingList.value = modelState.getCurrentMillingData;
     if (millingList.value.length > 0) isMillingExist.value = true;
   }
 
-  if (dataOfFasadeType.PALETTE[0]) {
+  if (dataOfFasadeType.PALETTE?.[0]) {
+    modelState.createCurrentPaletteData(COLOR);
+
     paletteList.value = modelState.getCurrentPaletteData;
     isPalleteExist.value = true;
   }
 
-  if (dataOfFasadeType.PATINA[0] && dataOfFasadeType.ATTACH_MILLINGS[0]) {
+  if (dataOfFasadeType.PATINA?.[0] && dataOfFasadeType.ATTACH_MILLINGS?.[0]) {
+    modelState.createCurrentPatinaData({
+      fasadeId: COLOR,
+      productId: productId.value,
+    });
+
     patinaList.value = modelState.getCurrentPatinaData;
     if (patinaList.value.length > 0) isPatinaExist.value = true;
   }
   // console.log(dataOfFasadeType.ATTACH_GLASS , 'ATTACH_GLASS', product.GLASS[0])
 
-  if (dataOfFasadeType.ATTACH_GLASS[0] /*&& product.GLASS[0]*/) {
+  if (dataOfFasadeType.ATTACH_GLASS?.[0] /*&& product.GLASS[0]*/) {
+    modelState.createCurrentGlassData({
+      fasadeId: COLOR,
+      productId: productId.value,
+    });
+
     glassList.value = modelState.getCurrentGlassData;
     if (patinaList.value.length > 0) isGlassExist.value = true;
   }
 
   // проверка уже установленных значений фасада, фрезеровки и цвета
   if (COLOR) {
-    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = _FASADE[COLOR];
+    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = _FASADE[COLOR] || _COLOR[COLOR];
     currentSurfaceData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     isSurfaceSelected.value = true;
   }
@@ -338,7 +360,7 @@ const prepareData = () => {
 };
 
 onBeforeMount(() => {
-  materialList.value = modelState.getCurrentModelFasadesData;
+  materialList.value = props.materialList?.length ? props.materialList : modelState.getCurrentModelFasadesData;
   productData.value = modelState.getCurrentModel?.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 });
@@ -399,11 +421,16 @@ onBeforeUnmount(() => {
     </div>
 
     <SurfaceRedactor
-        v-if="currentEditableOption === 'surface'"
+        v-if="currentEditableOption === 'surface' && materialList[0].FASADES"
         :materialList="materialList"
         :elementIndex="props.elementIndex"
         :temp-work="true"
         @select_material="onSelectMaterial"
+    />
+    <MaterialSelector
+        v-if="currentEditableOption === 'surface' && !materialList[0].FASADES"
+        :materials="materialList"
+        @select="onSelectMaterial"
     />
 
     <MillingRedactor
