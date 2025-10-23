@@ -258,8 +258,6 @@ export class Ruler {
 
     for (const box of this.getNearbyBoxes(objectBox)) {
 
-       console.log('ASTRAL')
-
       if (objectBox.intersectsBox(box)) {
         continue; // Пропускаем отрисовку линейки, если есть пересечение
       }

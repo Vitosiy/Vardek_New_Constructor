@@ -52,8 +52,6 @@ export const useModelState = defineStore('ModelState', () => {
     const appStore = useAppData()
     const _APP = computed(() => appStore.getAppData || {})
 
-    console.log(_APP, 'OOOOO')
-
     const _COLOR = computed(() => _APP.value.COLOR || [])
     const _FASADE = computed(() => _APP.value.FASADE || [])
     const _FASADESIZE = computed(() => _APP.value.FASADESIZE || [])
@@ -70,8 +68,6 @@ export const useModelState = defineStore('ModelState', () => {
     const _PATINA = computed(() => _APP.value.PATINA || [])
     const _HANDLES = computed(() => _APP.value.HANDLES || [])
 
-
-    // const models = ref<{ [key: string]: {} }>(_PRODUCTS.value)
 
     const currentModel = ref<THREE.Object3D | null>(null)
 
@@ -262,9 +258,9 @@ export const useModelState = defineStore('ModelState', () => {
         const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => ({
             NAME: group.NAME,
             FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception);
+            SORT: group.SORT
+        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
 
-        console.log(result, 'result')
 
         if (def) {
             return result
@@ -375,9 +371,26 @@ export const useModelState = defineStore('ModelState', () => {
     }
 
     /** Витрины */
-    const createCurrentShowcaseData = ({ fasadeId, productId }) => {
+    const createCurrentShowcaseData = ({ fasadeId, productId, fasadeNdx }) => {
 
-        const prodShowcases = _PRODUCTS.value[productId].type_showcase
+        const product = _PRODUCTS.value[productId]
+        const prodShowcases = product.type_showcase
+        const positionId = product.FASADE_POSITION[fasadeNdx]
+        const fasadePosData = _FASADE_POSITION.value[positionId]
+        const haveShowCase = fasadePosData.glass == 1
+
+
+        console.log(fasadePosData, 'fasadePosData')
+
+
+        console.log(fasadePosData)
+
+        if (!haveShowCase) {
+            currentShowcaseData.value = []
+            return
+        }
+
+
         const defaultShowcase = prodShowcases[0]
 
 
@@ -427,13 +440,14 @@ export const useModelState = defineStore('ModelState', () => {
 
         const incomeGlass = _FASADE.value[fasadeId].ATTACH_GLASS
         const productGlass = _PRODUCTS.value[productId].GLASS
-        const glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
+        let glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
+
         const currentClass = glassArray.reduce((acc, index) =>
-            acc.concat(_GLASS[index] || []),
+            acc.concat(_GLASS.value[index] || []),
             []);
 
         currentGlassData.value = currentClass;
-        return currentClass
+        return []
     }
 
     const getCurrentGlassData = computed(() => {
@@ -443,8 +457,6 @@ export const useModelState = defineStore('ModelState', () => {
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
-
-        console.log(_PRODUCTS.value)
 
         if (_PRODUCTS.value[productId].type_showcase.length && _PRODUCTS.value[productId].type_showcase[0] !== null) {
             return

@@ -82,7 +82,7 @@ const optionsType = ref<TTextureActionMap>({
   moduleBottom: "A:ChangeModuleTotalTexture",
   fasadsTop: "A:ChangeFasadsTopTexture",
   fasadsBottom: "A:ChangeFasadsBottomTexture",
-  tableTop: "A:ChangeTableTop",
+  // tableTop: "A:ChangeTableTop",
   palitteTotal: "A:ChangePaletteTotal",
   millingTotal: "A:ChangeMillingTotal",
   plinth: "A:ChangePlinthBody",
@@ -115,7 +115,7 @@ const prepareOptions = () => {
   visualData.value = {
     module: roomOptions.getDefaultModuleData(),
     fasade: roomOptions.getDefaultFasadeData(),
-    table: roomOptions.getDefaultTableTopData(),
+    // table: roomOptions.getDefaultTableTopData(),
     walls: roomOptions.getWallsTextures(),
     floor: roomOptions.getFloorTextures(),
     plinth: roomOptions.getDefaultTotalPlinthData(),
@@ -214,9 +214,9 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
     case "fasadsBottom":
       optionsData.value = visualData.value.fasade as [];
       break;
-    case "tableTop":
-      optionsData.value = Object.values(visualData.value.table);
-      break;
+    // case "tableTop":
+    //   optionsData.value = Object.values(visualData.value.table);
+    //   break;
   }
   currentOptionLable.value = title;
   extrasSelect.value = false;
@@ -264,7 +264,7 @@ const selectOption = (value: TTextureItem) => {
     case "moduleBottom":
     case "fasadsTop":
     case "fasadsBottom":
-    case "tableTop":
+    // case "tableTop":
     case "plinth":
       data = { data: value, type: currentOption.value };
       break;
@@ -466,9 +466,9 @@ const getOptionImg = computed(() => {
       case "fasadsBottom":
         result = FASADE[id].PREVIEW_PICTURE;
         break;
-      case "tableTop":
-        result = visualData.value.table[id].PREVIEW_PICTURE;
-        break;
+      // case "tableTop":
+      //   result = visualData.value.table[id].PREVIEW_PICTURE;
+      //   break;
       case "plinth":
         result = visualData.value.plinth[id].PREVIEW_PICTURE;
         break;

@@ -113,6 +113,8 @@ export class Filters extends GlobalsData {
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
             const fasad = FASADE_PROPS[fasadeNumber]?.TYPE ?? this.project.default_fasade_color ?? 7397;
+            console.log(FASADE_PROPS, 'FASADE_PROPS')
+
             const handles = this.project.default_handles
             const sizes = fasade.FASADE_SIZE ?? null
 
@@ -123,7 +125,7 @@ export class Filters extends GlobalsData {
                 COLOR: this.project.default_fasade_color!,
                 SHOW: false,
                 POSITION: fasadePosition.ID,
-                BODY: fasad,
+                RESET_COLOR: fasad,
                 MILLING: null,
                 PALETTE: null,
                 SHOWCASE: null,
@@ -158,7 +160,6 @@ export class Filters extends GlobalsData {
         // Перебираем все элементы массива items
         items.forEach((size, ndx) => {
 
-            console.log(fasadeNumberSize[size], 'fasadeNumberSize')
 
             if (size === null) return
 
@@ -184,8 +185,6 @@ export class Filters extends GlobalsData {
             result[size] = convert
         });
 
-
-        console.log(result, 'result')
 
         return result;
 
@@ -224,12 +223,22 @@ export class Filters extends GlobalsData {
     }
 
     filterOption(option: number[]) {
+        console.log(Object.values(this._OPTION).length, 'ОПЦИИ')
+
+
+        console.log(this._OPTION, '--option')
+
+        // option.forEach(el=>{
+        //     console.log(this._OPTION[el], 'ОПЦИИ')
+        // })
+
         let curOptionsList = option
             .map(el => this._OPTION[el])
             .filter(Boolean);
 
         const result = curOptionsList.map(el => {
-            return { id: el.ID, active: false, group: el.GROUP, close: el.CLOSE_OTHER_OPTIONS }
+            const groupName = el.GROUP ?? ''
+            return { id: el.ID, active: false, group: groupName, close: el.CLOSE_OTHER_OPTIONS, visible: true }
         })
 
         return result

@@ -187,7 +187,6 @@ export class HandlesBuilder {
         aabb.getCenter(center);
         handleMesh.position.sub(center);
 
-
         const handleMaterial = this.createHandleMaterial(handleData)
         handleMesh.scale.copy(scaleVector);
 

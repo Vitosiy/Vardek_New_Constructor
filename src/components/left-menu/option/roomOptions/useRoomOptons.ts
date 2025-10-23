@@ -140,12 +140,12 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             palitteTitle: 'Цвет Палитры',
             millingTitle: 'Тип Фрезеровки'
         },
-        tableTop: {
-            id: defaulttableTop,
-            global: false,
-            title: "Тип столешницы",
-            label: 'Для всех комнат'
-        },
+        // tableTop: {
+        //     id: defaulttableTop,
+        //     global: false,
+        //     title: "Тип столешницы",
+        //     label: 'Для всех комнат'
+        // },
         plinth: {
             id: defaultPlinthBody,
             plinthSurfase: defaultPlinthColor,
@@ -270,7 +270,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     })
 
     //--------------------------------------------------
-    /** @Высота_примагничивания_по_высоте */
+    /** @Высота_примагничивания */
     //--------------------------------------------------
 
     const setHeightClamp = (value: number | string | null) => {

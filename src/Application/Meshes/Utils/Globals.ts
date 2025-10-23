@@ -33,8 +33,6 @@ export class GlobalsData {
     _PALETTE: THREETypes.TObject = this._APP.PALETTE;
     _PRODUCTS_TYPES: THREETypes.TObject = this._APP.PRODUCTS_TYPES
     constructor() {
-
-        console.log(this._APP, ' _APP')
     }
 
 }

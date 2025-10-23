@@ -79,7 +79,6 @@ export class RoomManager extends Room {
     }
 
     get _roomTotalBounds() {
-        console.log('HEVO')
         return this.totalAABBBounds
 
 

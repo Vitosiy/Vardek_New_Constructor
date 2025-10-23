@@ -19,7 +19,6 @@ const changeValue = (event: InputEvent, key: string) => {
 </script>
 <template>
   <div class="rails">
-    <!-- <h3 class="rails__title">{{ item.NAME }}</h3> -->
     <div
       class="option__checkbox"
       v-for="(item, key, ndx) in props.data"
@@ -38,6 +37,7 @@ const changeValue = (event: InputEvent, key: string) => {
     </div>
   </div>
 </template>
+
 <style lang="scss" scoped>
 .rails {
   max-height: calc(100vh - 220px);

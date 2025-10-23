@@ -15,7 +15,7 @@ const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
 const { getAppData } = useAppData();
 
-const exeption = ref([1814256, 971222, 2050360]);
+const exeption = ref([1814256, 971222]); //2050360
 
 const currentProductInfo = ref({
   title: "",

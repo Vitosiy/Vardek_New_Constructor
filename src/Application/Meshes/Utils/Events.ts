@@ -336,8 +336,9 @@ export class MeshEvents extends BuildersHelper {
     private handleWindowChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
         const showcase = CONFIG.SHOWCASE;
         const milling = fasadeProp.MILLING
+        const fasadeShowcase = CONFIG.FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
 
-        if (showcase.length > 0 && (fasadeProp.SHOWCASE === null || !incomingModel)) {
+        if (showcase.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
             this.changeShowcase({ data: showcase[0], fasadeNdx });
         } else {
             Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
@@ -640,6 +641,8 @@ export class MeshEvents extends BuildersHelper {
 
     changeShowcase({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
+
+        console.log('CHANGE----')
 
         const props = this._currentMesh.userData.PROPS
         const { FASADE, FASADE_DEFAULT, CONFIG } = props
@@ -984,8 +987,10 @@ export class MeshEvents extends BuildersHelper {
         const curFasadeMesh = FASADE[fasadeNdx]
         const curFasad = FASADE_PROPS[fasadeNdx]
 
+        console.log(data, 'data')
+
         await this.handlesBuilder.deliteHandle(curFasadeMesh)
-        curFasad.HANDLES.id = data
+        curFasad.HANDLES.id = data.ID
     }
 
     async changeHandlePos({ data, fasadeNdx }: TDataWithNdx) {

@@ -42,6 +42,7 @@ import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/Open
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 import Toggle from "@vueform/toggle";
+import Accordion from "@/components/ui/accordion/Accordion.vue";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -110,6 +111,13 @@ const isModalOpen = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
+//Контроллер
+const controllerValue = ref([
+  { name: "Позиционирование", type: "translate" },
+  { name: "Вращение", type: "rotate" },
+]);
+const curControllerValue = ref(null);
+
 // Список событий
 const priceUpdateEvents = [
   // "A:Move",
@@ -128,7 +136,7 @@ const priceUpdateEvents = [
   "U:ChangePaletteColor",
   "U:ChangeMilling",
   "U:ChangeFasade",
-  'A:Disable-Uniform-Mode',
+  "A:Disable-Uniform-Mode",
   "A:UM-update",
   "A:Duplicate",
   "A:RemoveModel",
@@ -175,6 +183,7 @@ onMounted(async () => {
       await nextTick();
       VerdekConstructor.value.refreshViewer();
       actions.value = VerdekConstructor.value.getAction();
+      curControllerValue.value = controllerValue.value[0].name;
       // console.log( actions.value)
     }
   } catch (error) {
@@ -291,6 +300,12 @@ const controlsActivate = () => {
   }
 
   modelState.setTransformControlsValue(transformControlsValue.value);
+};
+
+const changeControllerType = (data) => {
+  const mode = data.type;
+  curControllerValue.value = data.name;
+  eventBus.emit("A:TransformSetMode", mode);
 };
 
 const selected = async (item: any) => {
@@ -728,57 +743,6 @@ watch(
   <div ref="sceneContainer" class="scene-container"></div>
   <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
-  <!-- Пока что закоментил потом удалим <div
-    class="uniform__container"
-    v-if="
-      uniformState!.getUniformGroups.length > 0 &&
-      uniformState!.getUniformModeData.uniformMode
-    "
-  >
-    <div
-      class="uniform__item"
-      v-for="(item, key) in uniformState!.getUniformGroups as THREETypes.TUniformGroups[]"
-      :key="key + item.id"
-    >
-      <p class="uniform__name" :style="[`background-color: ${item.color}`]">
-        Группа {{ item.id + 1 }}
-      </p>
-      <button class="uniform__btn" @click="deliteUniformGroup(item.id)">
-        УДАЛИТЬ ГРУППУ
-      </button>
-
-      <button class="uniform__btn" @click="addToUniformGroup(item.id)">
-        ДОБАВИТЬ ЭЛЕМЕНТ
-      </button>
-
-      <button class="uniform__btn" @click="removeFromUniformGroup(item.id)">
-        Убрать ЭЛЕМЕНТ
-      </button>
-    </div>
-  </div> -->
-
-  <!-- <div class="ui-panel--right">
-    <button
-      style="margin-top: 2rem"
-      v-show="uniformState!.getUniformModeData.uniformMode"
-      :class="['btn', pregropping]"
-      @click="preCreateUniformGroup"
-    >
-      Создать новую группу
-    </button>
-
-    <button
-      class="btn btn_green"
-      @click="сreateUniformGroup()"
-      v-show="
-        uniformState!.getPreGroup > 0 &&
-        uniformState!.getUniformModeData.uniformMode
-      "
-    >
-      Создать
-    </button>
-  </div> -->
-
   <div
     :class="['model-controller', activeController]"
     :style="controllerPosition"
@@ -885,7 +849,37 @@ watch(
         !uniformState.getUniformModeData.uniformMode
       "
     >
-      <p class="switch__title">Позиционирование</p>
+      <transition name="controller-toggle">
+        <p class="switch__title" v-if="!transformControlsValue" > {{ curControllerValue }}</p>
+      </transition>
+
+      <transition name="controller-toggle">
+        <Accordion v-if="transformControlsValue">
+          <template #title>
+            <h4 class="accordion__header">
+              {{ curControllerValue }}
+            </h4>
+          </template>
+          <template #params="{ onToggle }">
+            <ul class="accordion__contant">
+              <li
+                class="accordion__text"
+                v-for="(data, key) in controllerValue"
+                :key="key + data.name"
+                @click="
+                  () => {
+                    changeControllerType(data);
+                    onToggle();
+                  }
+                "
+              >
+                {{ data.name }}
+              </li>
+            </ul>
+          </template>
+        </Accordion>
+      </transition>
+
       <div class="switch__container">
         <Toggle v-model="transformControlsValue" />
       </div>
@@ -1208,8 +1202,45 @@ watch(
 
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-end;
     gap: 5px;
+  }
+  &__title{
+    position: absolute;
+    bottom: 2rem;
+  }
+}
+
+
+
+.accordion {
+  padding: 0.5rem 1rem;
+  color: $alter-gray;
+  // background-color: #ffffff;
+  backdrop-filter: blur(5px);
+  &__header {
+    margin-right: 0.5rem;
+  }
+  &__summary {
+    gap: 10rem;
+  }
+
+  &__contant {
+    padding-top: 0.5rem;
+    border-top: 1px solid #a3a9b5;
+  }
+
+  &__text {
+    cursor: pointer;
+    transition-property: color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+    @media (hover: hover) {
+      /* when hover is supported */
+      &:hover {
+        color: $strong-grey;
+      }
+    }
   }
 }
 </style>

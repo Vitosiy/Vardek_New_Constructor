@@ -329,11 +329,18 @@ export type TModelJSON = {
   position?: TVector3;
 };
 
+type TFasadePropsSizes = {
+  FASADE_WIDTH?: number,
+  min?: number,
+  max?: number
+
+}
+
 export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
-  COLOR: number | null,
-  BODY: number | null,
+  COLOR: number,
+  RESET_COLOR: number | null,
   TYPE: number | null,
   MILLING: number | null,
   PALETTE: number | null,
@@ -345,6 +352,10 @@ export type TFasadeProp = {
     id: number | null,
     position: number | null
     drawer: null | string
+  },
+  SIZES: {
+    id: number,
+    params: TFasadePropsSizes
   }
 }
 

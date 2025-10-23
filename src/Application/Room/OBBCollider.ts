@@ -510,16 +510,6 @@ export class OBBCollider {
         let collidedOBB: OBB | null = null;
         const defCollided = object.userData.disableRaycast         // с кем столкнулись
 
-        console.log(object, 'OOOO')
-
-        // if (object.name === 'MODEL') {
-        //     return {
-        //         position: object.position,
-        //         rotation: object.rotation
-        //     };
-        // }
-
-
         //  1. Пошаговый прогон
 
         for (let i = 1; i <= steps; i++) {

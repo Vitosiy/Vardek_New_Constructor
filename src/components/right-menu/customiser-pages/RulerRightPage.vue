@@ -32,7 +32,6 @@ const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
 
-
 const rotateModel = (id: number) => {
   eventBus.emit("A:RotateModel", id);
 };
@@ -80,7 +79,6 @@ watch(
     });
   }
 );
-
 </script>
 
 <template>
@@ -90,6 +88,12 @@ watch(
       <div class="settings-size">
         <div class="size-item">
           <p class="item__label text-grey">Ширина</p>
+          <p class="item__label text-grey">
+            Мин: {{ sizeEditData.widthMin ?? "н/о" }}
+          </p>
+          <p class="item__label text-grey">
+            Макс: {{ sizeEditData.widthMax ?? "н/о" }}
+          </p>
           <MainInput
             class="input__search right-menu"
             v-model="resizeData.width"
@@ -102,6 +106,12 @@ watch(
         </div>
         <div class="size-item">
           <p class="item__label text-grey">Высота</p>
+          <p class="item__label text-grey">
+            Мин: {{ sizeEditData.heightMin ?? "н/о" }}
+          </p>
+          <p class="item__label text-grey">
+            Макс: {{ sizeEditData.heightMax ?? "н/о" }}
+          </p>
           <MainInput
             class="input__search right-menu"
             v-model="resizeData.height"
@@ -114,6 +124,12 @@ watch(
         </div>
         <div class="size-item">
           <p class="item__label text-grey">Глубина</p>
+          <p class="item__label text-grey">
+            Мин: {{ sizeEditData.depthMin ?? "н/о" }}
+          </p>
+          <p class="item__label text-grey">
+            Макс: {{ sizeEditData.depthMax ?? "н/о" }}
+          </p>
           <MainInput
             class="input__search right-menu"
             v-model="resizeData.depth"

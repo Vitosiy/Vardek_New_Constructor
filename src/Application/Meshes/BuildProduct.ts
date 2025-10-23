@@ -192,6 +192,7 @@ export class BuildProduct extends BuildersHelper {
             SECTIONSOBJ: [],
             SECTIONCONTROL: [],
             TABLETOP: null,
+            NAME: product_data.NAME
         }
 
         let params = this.createProductObject(product_data, props)
@@ -243,6 +244,8 @@ export class BuildProduct extends BuildersHelper {
             MODELID: models[0],
             MODEL: this._MODELS[models[0]],
             MODULE_COLOR: null,
+            MECHANIZM: null,
+            MECHANIZM_TEMP: [],
             SIZE: { width, height, depth },
             SIZE_EDIT: {
                 SIZE_EDIT_WIDTH_MIN: null,
@@ -365,13 +368,13 @@ export class BuildProduct extends BuildersHelper {
             ? this.buildLegs(PROPS, data, total)
             : null;
 
-        const plinth = this._PRODUCTS[productId]?.leg_length
+        const plinth = this._PRODUCTS[productId]?.leg_length > 0
             ? this.plinth_builder.buildPlinth(PROPS)
             : null;
 
-        const tableTop = CONFIG.HAVETABLETOP
-            ? this.tabletop_builder.createTableTop({ props: PROPS })
-            : null;
+        // const tableTop = CONFIG.HAVETABLETOP
+        //     ? this.tabletop_builder.createTableTop({ props: PROPS })
+        //     : null;
 
         const fasade = Object.keys(CONFIG.FASADE_PROPS).length
             ? this.fasade_builder.getFasade({
@@ -388,7 +391,7 @@ export class BuildProduct extends BuildersHelper {
         // Вычисление высот
         const legsHeight = legs ? this.calculateHeight(legs) : 0;
         const bodyHeight = body ? this.calculateHeight(body) : 0;
-        const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
+        // const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
         // Позиционирование
         const baseY = legsHeight * 0.5;
@@ -401,17 +404,17 @@ export class BuildProduct extends BuildersHelper {
         }
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
-        if (tableTop) {
-            tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
-            tableTop.userData.positionWithoutTableTopHeight = baseY + bodyHeight * 0.5
-        }
+        // if (tableTop) {
+        //     tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
+        //     tableTop.userData.positionWithoutTableTopHeight = baseY + bodyHeight * 0.5
+        // }
         arrows.position.copy(body?.position)
         arrows.position.y = baseY;
 
 
 
         // Добавление в итоговую группу
-        [tableTop, legs, plinth, body, shelf, fasade, arrows]
+        [legs, plinth, body, shelf, fasade, arrows]
             .filter(Boolean)
             .forEach((part) => {
                 total.add(part as THREE.Object3D)
