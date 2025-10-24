@@ -380,16 +380,13 @@ export const useModelState = defineStore('ModelState', () => {
         const haveShowCase = fasadePosData.glass == 1
 
 
-        console.log(fasadePosData, 'fasadePosData')
+        console.log(haveShowCase, 'fasadePosData')
 
-
-        console.log(fasadePosData)
 
         if (!haveShowCase) {
             currentShowcaseData.value = []
             return
         }
-
 
         const defaultShowcase = prodShowcases[0]
 
@@ -398,7 +395,7 @@ export const useModelState = defineStore('ModelState', () => {
 
             const prepare = [..._PRODUCTS.value[productId].type_showcase].map(el => {
                 return _SHOWCASE.value[el]
-            })
+            }).filter(Boolean)
 
             currentShowcaseData.value = prepare
             return
@@ -408,7 +405,7 @@ export const useModelState = defineStore('ModelState', () => {
 
             const prepare = prodShowcases.map(el => {
                 return _SHOWCASE.value[el]
-            })
+            }).filter(Boolean)
 
             currentShowcaseData.value = prepare
             return

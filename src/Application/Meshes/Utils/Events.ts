@@ -313,6 +313,8 @@ export class MeshEvents extends BuildersHelper {
         this.resetFasade({ fasadeNdx, incomingModel });
         fasadeProp.ALUM = incomingModel;
 
+        console.log(incomingModel, 'incomingModel')
+
         const apply = async () => {
             this.handleWindowChange(CONFIG, fasadeProp, fasadeNdx, incomingModel);
             if (this.tryApplyPalette(data, fasadeNdx, fasadeProp)) return
@@ -334,13 +336,17 @@ export class MeshEvents extends BuildersHelper {
     }
 
     private handleWindowChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
-        const showcase = CONFIG.SHOWCASE;
+        const { SHOWCASE } = CONFIG;
         const milling = fasadeProp.MILLING
         const fasadeShowcase = CONFIG.FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
 
-        if (showcase.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
-            this.changeShowcase({ data: showcase[0], fasadeNdx });
-        } else {
+        if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
+            this.changeShowcase({ data: SHOWCASE[0], fasadeNdx });
+        }
+        else if (incomingModel) {
+            this.changeShowcase({ data: incomingModel, fasadeNdx });
+        }
+        else {
             Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
         }
     }
@@ -640,6 +646,8 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     changeShowcase({ data, fasadeNdx }: TDataWithNdx) {
+        console.log(data)
+
         if (!this._currentMesh) return;
 
         console.log('CHANGE----')
@@ -686,7 +694,6 @@ export class MeshEvents extends BuildersHelper {
         fasade.SHOWCASE = 1013628
 
     }
-
 
     //------------------
     /** @Переходящий_рисунок  */
@@ -845,11 +852,13 @@ export class MeshEvents extends BuildersHelper {
 
     async changeModelSize({ data, mesh, type }: TResizeModel) {
 
+
+        const extrasYsize = [2050360, 1059832]
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return
         const { PROPS } = currentMesh!.userData
-        const { CONFIG } = PROPS
+        const { CONFIG, PRODUCT } = PROPS
         const { POSITION, UNIFORM_TEXTURE } = CONFIG
         const fasadeSize = type === 'fasade'
 
@@ -874,8 +883,6 @@ export class MeshEvents extends BuildersHelper {
                 HEIGHT: height,
                 WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5
             }
-
-            console.log(incomeSize, 'PROPS')
             /** Для корректного примагничивания к стенам */
             // currentMesh.userData.trueSizes = {
             //     DEPTH: data.depth * 0.5, HEIGHT: height, WIDTH: data.width * 0.5
@@ -908,8 +915,6 @@ export class MeshEvents extends BuildersHelper {
 
             }
 
-
-
         }
 
         await rebuild()
@@ -931,7 +936,7 @@ export class MeshEvents extends BuildersHelper {
 
         currentMesh.userData.obb.halfSize.x = fasadeSize ? SIZE.width * 0.5 : data.width * 0.5;
 
-        if (PROPS.FASADE.length === 0) {
+        if (PROPS.FASADE.length === 0 || extrasYsize.includes(PRODUCT)) {
             currentMesh.userData.obb.halfSize.y = data.height * 0.5;
         }
 

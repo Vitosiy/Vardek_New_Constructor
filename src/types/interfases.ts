@@ -54,7 +54,7 @@ export interface IProjectParams {
     project_name?: number | null,
     default_plinth_body?: number | null,
     default_plinth_color?: number | null
-
+    defaul_showcase?: number | null
 
 }
 

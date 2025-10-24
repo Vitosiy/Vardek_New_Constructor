@@ -136,7 +136,9 @@ const onSelectMaterial = (data) => {
       isShowcaseExist.value) ||
     (glassList.value.length > 0 &&
       product.type_showcase[0] != null &&
-      ALUM != null);
+      ALUM != null)||
+    (glassList.value.length > 0 && ALUM != null);
+      ;
 
   /**------------------------------ */
 
@@ -336,6 +338,8 @@ const prepareData = () => {
   const glassData = modelState.getCurrentGlassData;
   const showcaseData = modelState.getCurrentShowcaseData;
 
+  console.log(showcaseData, "IN prepareData --showcaseData");
+
   // Установка списков и флагов существования
 
   /** @Фрезеровка */
@@ -376,7 +380,8 @@ const prepareData = () => {
     (fasadeData.ATTACH_GLASS?.[0] &&
       product.GLASS?.[0] &&
       product.type_showcase?.[0] != null &&
-      ALUM !== null)
+      ALUM !== null) ||
+    (fasadeData.ATTACH_GLASS?.[0] && product.GLASS?.[0] && ALUM !== null)
   ) {
     glassList.value = glassData;
     isGlassExist.value = glassData.length > 0;
@@ -396,8 +401,6 @@ const prepareData = () => {
     key: string,
     imageKey = "PREVIEW_PICTURE"
   ) => {
-    console.log(key, "key");
-
     const item = list?.find((i) => i.ID == id);
 
     if (item) target.value = { name: item.NAME, imgSrc: item[imageKey] };

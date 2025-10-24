@@ -819,6 +819,7 @@ export class BuildProduct extends BuildersHelper {
             defModuleDown: moduleBottom.id ?? this.project.default_module_color_down,
             defFasadeUp: fasadsTop.id ?? this.project.default_fasade_up,
             defFasadeDown: fasadsBottom.id ?? this.project.default_fasade_down,
+            deffShowcase:this.project.defaul_showcase,
             moduleTop,
             moduleBottom,
             fasadsTop,

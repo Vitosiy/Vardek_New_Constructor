@@ -6,7 +6,7 @@ import * as BufferGeometry from 'three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { useAppData } from "@/store/appliction/useAppData"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
-// import * as THREEInterfases from "@/types/interfases"
+
 
 type TFasadePartPosition = {
     WIDTH: number | null,
@@ -59,7 +59,7 @@ export class FasadeBuilder {
 
         const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, PRODUCT_SHOWCASE, SHOWCASE } = CONFIG;
-        const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom } = defaultConfig;
+        const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom, deffShowcase } = defaultConfig;
 
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
@@ -79,7 +79,6 @@ export class FasadeBuilder {
         // Индексация под униформное текстурирование
         this.indexedFasadeToUtiformTexturing(props, isUMmodule);
 
-        // Хелпер: выбор дефолтного цвета по типу элемента (точно как в исходнике)
         const resolveColorId = (fasadeColor: number) => {
 
             const isDefault = fasadeColor === this.parent.project.default_fasade_color;
@@ -126,13 +125,13 @@ export class FasadeBuilder {
                 fasadeData.GLASS = null;
                 fasadeData.PATINA = null;
                 fasadeData.SHOWCASE = null;
+                fasadeData.ALUM = null
                 fasadeData.HANDLES = this.handlesBuilder.restoreDefaultHandleData(fasadeData)
             }
             else {
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE && haveShowcase ? fasadeData.SHOWCASE || SHOWCASE[0] : null
-
+                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 // const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -214,9 +213,11 @@ export class FasadeBuilder {
 
             // Алюм. профиль
             if (fasadeData.ALUM != null && FASADE_PROPS[fasadeNdx].COLOR != null) {
+
                 const alumData = this.parent._FASADE[FASADE_PROPS[fasadeNdx].COLOR];
                 this.parent.alum_builder.createAlum({ fasade: curFasade, data: alumData });
             }
+
 
             // Цвет стекла
             if (fasadeData.GLASS != null) {
@@ -265,7 +266,7 @@ export class FasadeBuilder {
 
                 fasadeData.COLOR = color;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE && haveShowcase ? fasadeData.SHOWCASE || SHOWCASE[0] : null
+                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -355,19 +356,18 @@ export class FasadeBuilder {
             if (fasadeData.MILLING != null) {
                 this.parent.milling_builder.createMillingFasade(
                     result,
-                    fasade.userData.trueSize,
+                    result.userData.trueSize,
                     fasadeData.MILLING,
                     FASADE_DEFAULT[key],
                     fasadeData.PATINA
                 );
-
             }
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
                 this.parent.showcase_builder.createShowcase({
                     fasade: result,
-                    fasadePosition: fasade.userData.trueSize,
+                    fasadePosition: result.userData.trueSize,
                     data: fasadeData.SHOWCASE,
                     defaultGeometry: FASADE_DEFAULT[key],
                     alum: FASADE_PROPS[key].ALUM
@@ -376,6 +376,15 @@ export class FasadeBuilder {
 
             // Алюм. профиль
             if (fasadeData.ALUM != null && FASADE_PROPS[key].COLOR != null) {
+
+                console.log('RESET ALUM')
+
+                this.parent.showcase_builder.createShowcase({
+                    fasade: result,
+                    fasadePosition: result.userData.trueSize,
+                    defaultGeometry: FASADE_DEFAULT[key],
+                    alum: FASADE_PROPS[key].ALUM
+                });
 
                 const alumData = this.parent._FASADE[FASADE_PROPS[key].COLOR];
                 this.parent.alum_builder.createAlum({ fasade: result, data: alumData });

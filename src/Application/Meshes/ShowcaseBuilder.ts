@@ -28,7 +28,7 @@ export class ShowcaseBuilder extends MillingBuilder {
 
     }) {
 
-        console.log(data, 'SHOWCASE')
+        console.log(data,alum, 'SHOWCASE')
 
         const showcaseData = alum ?? data
 

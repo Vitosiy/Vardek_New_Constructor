@@ -112,6 +112,7 @@ watch(localPoint, (v) => emit("update:pointLight" as any, v));
   padding: 1rem;
   border: 1px solid $dark-grey;
   border-radius: 15px;
+  background-color:$white ;
 
   &__contant {
     display: flex;

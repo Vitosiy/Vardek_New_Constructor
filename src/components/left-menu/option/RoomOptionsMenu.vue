@@ -369,13 +369,11 @@ const selectOption = (value: TTextureItem) => {
   if (!isPalitte && isMilling && curOption && checkMillingSelect) {
     if (curOption.milling === null) {
       if (isMilling.length > 0) {
-
         roomOptions.setGlobalMilling(isMilling[0].ID, currentOption.value);
       } else {
         roomOptions.setGlobalMilling(null, currentOption.value);
       }
     } else {
-
       roomOptions.setGlobalMilling(value.ID, currentOption.value);
       eventBus.emit(optionsType.value["millingTotal"], data);
     }
@@ -383,8 +381,6 @@ const selectOption = (value: TTextureItem) => {
     if (startMill === null) {
       roomOptions.updateOption(currentOption.value, value.ID);
       eventBus.emit(optionsType.value[currentOption.value], data);
-
-
     }
 
     return;
@@ -425,7 +421,6 @@ const plinthSelect = (
   key: keyof TOptionsMap,
   plinthgData: TMilling[]
 ) => {
-
   optionsData.value = plinthgData;
   currentOption.value = key;
   currentOptionLable.value = plinthTitle;
@@ -591,7 +586,9 @@ watch(shadows, () => toggleShadow(shadows.value));
     gap: 15px;
     position: relative;
     padding: 15px;
-    background: rgba($white, 1);
+    background-color: rgba($white, 1);
+    // backdrop-filter: blur(5px);
+    // background: rgba($white, 1);
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: 1;
     border-radius: 15px;

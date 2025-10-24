@@ -276,6 +276,7 @@ export type TDefaultOptionsConfig = {
   defModuleDown: number | string,
   defFasadeUp: number | string,
   defFasadeDown: number | string,
+  deffShowcase: number | string,
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
