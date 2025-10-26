@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Application } from "@/Application/Core/Application";
+import { Renderer } from "@/Application/Core/Renderer";
 import { TrafficManager } from "@/Application/Movement/TrafficManager";
 import { MoveManager } from "@/Application/Movement/MoveManager";
 import { RoomManager } from "@/Application/Room/RoomManager";
@@ -18,7 +19,7 @@ import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import { DeepDispose } from "@/Application/Utils/DeepDispose";
-import { AppLights } from "@/Application/World/Lights";
+import { AppLights } from "@/Application/Lights/Lights";
 import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
@@ -39,6 +40,7 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 export type TApplication = Application
+export type TRenderer = Renderer
 export type TMeshEvents = MeshEvents
 export type TTrafficManager = TrafficManager
 export type TMoveManager = MoveManager

@@ -232,15 +232,35 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** ------- Работа с фасадами -------- */
 
-    const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
+    const createCurrentModelFasadesData = ({ data, def, fasadeNdx, productId }: { data: number[], def?: boolean, fasadeNdx?: number, productId?: number }) => {
+        const defaultFasade = def ?? false
 
-        const groupedFasades: { [key: string]: number[] } = {};
-        let exception = !def ? 'Без фасада' : ''
+        const groupedFasades: Record<string, number> = {};
+        let exception = !defaultFasade ? 'Без фасада' : ''
+        let haveShowCase = null
 
+        // console.log(fasadeNdx && productId, 'fasadeNdx, productId')
 
-        value.forEach(facadeId => {
+        if (fasadeNdx !== undefined && productId !== undefined) {
+            console.log("CH");
+            let fasadePosData = null
+            const product = _PRODUCTS.value[productId]
+            const positionId = product.FASADE_POSITION[fasadeNdx]
+
+            if (positionId) {
+                fasadePosData = _FASADE_POSITION.value[positionId]
+
+                console.log(fasadePosData, 'fasadePosData')
+                haveShowCase = fasadePosData.glass == 1
+            }
+
+        }
+
+        data.forEach(facadeId => {
             const facade = _FASADE.value[facadeId];
+
             if (!facade) return;
+            const hasGlass = _FASADE.value[facadeId].GLASS_ONLY == 1
 
             const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
             if (!section || !section.UF_GROUP) return;
@@ -251,8 +271,11 @@ export const useModelState = defineStore('ModelState', () => {
                 groupedFasades[groupId] = [];
             }
 
+            if (!haveShowCase && hasGlass) return
+
             groupedFasades[groupId].push(facadeId);
         });
+
 
         // Формирование итогового массива
         const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => ({
@@ -262,7 +285,7 @@ export const useModelState = defineStore('ModelState', () => {
         })).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
 
 
-        if (def) {
+        if (defaultFasade) {
             return result
         }
 
@@ -308,11 +331,16 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Фрезеровки */
-    const createCurrentMillingData = ({ fasadeId, productId }) => {
+    const createCurrentMillingData = ({ fasadeId, productId, fasadeNdx }) => {
 
         let result = []
+        const product = _PRODUCTS.value[productId]
+        const positionId = product.FASADE_POSITION[fasadeNdx]
 
-        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS.value[productId].type_showcase.length && _PRODUCTS.value[productId].type_showcase[0] === null) {
+        const fasadePosData = _FASADE_POSITION.value[positionId]
+        const haveShowCase = fasadePosData.glass == 1
+
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
 
             currentMillingData.value = _FASADE.value[fasadeId].ATTACH_MILLINGS;
             let millings: IMilling[] = []
@@ -379,8 +407,7 @@ export const useModelState = defineStore('ModelState', () => {
         const fasadePosData = _FASADE_POSITION.value[positionId]
         const haveShowCase = fasadePosData.glass == 1
 
-
-        console.log(haveShowCase, 'fasadePosData')
+       console.log(fasadePosData, 'fasadePosData')
 
 
         if (!haveShowCase) {
@@ -499,11 +526,18 @@ export const useModelState = defineStore('ModelState', () => {
         transformControls.value = value
     }
 
+    const turnOffTransformControlsValue = ()=>{
+        transformControls.value = false
+    }
+
     const getTransformControlsValue = computed(() => {
         return transformControls.value
     })
 
     return {
+        _APP,
+        _FASADE,
+        _PRODUCTS,
         getModels,
 
         setCurrentModel,
@@ -550,7 +584,7 @@ export const useModelState = defineStore('ModelState', () => {
         getOptions,
 
         setTransformControlsValue,
-        getTransformControlsValue
+        getTransformControlsValue,
     }
 
 });

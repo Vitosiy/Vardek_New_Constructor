@@ -10,7 +10,7 @@ import * as THREETypes from "@/types/types"
 
 import { TrafficManager } from "../Movement/TrafficManager"
 
-import { Environment } from "../World/Environment"
+import { Environment } from "../Lights/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -70,7 +70,7 @@ export class World {
         }
         else {
             this.room?.defaultCreate()
-            this.lights.setLight(this.room!._wallsGroupSize, 3)
+            this.lights.setLight(this.room!._wallsGroupSize, 2)
         }
 
         /** @Для_dev */
@@ -94,7 +94,7 @@ export class World {
         this.roomState.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
         await this.setRoom();
-        this.lights.setLight(this.room!._wallsGroupSize, 3)
+        this.lights.setLight(this.room!._wallsGroupSize, 2)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room!)

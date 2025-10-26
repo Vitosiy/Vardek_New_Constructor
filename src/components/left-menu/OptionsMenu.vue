@@ -13,6 +13,7 @@ import {
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useModelStore } from "@/store/appStore/useModelStore";
+import { useModelState } from "@/store/appliction/useModelState";
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
@@ -29,6 +30,7 @@ import Accordion from "../ui/accordion/Accordion.vue";
 
 const eventBus = useEventBus();
 const store = useModelStore();
+const modelState = useModelState();
 
 const menuStore = useMenuStore();
 const customiserStore = useCustomiserStore();
@@ -65,6 +67,9 @@ const showTechMenu = (id: string, products: []) => {
 const showRoomParMenu = () => {
   // customiserStore.hideCustomiserPopup();
   menuStore.openMenu("roomPar");
+  // eventBus.emit("A:TransformMode_Off");
+  // modelState.setTransformControlsValue(false);
+  eventBus.emit("A:GlobalTransformMode_Off");
   eventBus.emit("A:ClearSelected", { object: null });
 };
 
@@ -267,9 +272,9 @@ onUnmounted(() => {
     background: $bg;
     transform-style: preserve-3d;
 
-    @media screen and (min-width: 1329px) {
-      padding: 10px 20px;
-    }
+    // @media screen and (min-width: 1329px) {
+    //   padding: 10px 20px;
+    // }
 
     .room {
       display: flex;

@@ -24,6 +24,7 @@ export class TrafficManager {
     root: THREETypes.TApplication
     canvas: HTMLElement;
     scene: THREE.Scene;
+    render: THREETypes.TRenderer
 
     events: ReturnType<typeof useEventBus> = useEventBus()
     modelState: ReturnType<typeof useModelState> = useModelState()
@@ -55,6 +56,7 @@ export class TrafficManager {
     constructor(root: THREETypes.TApplication, room: THREETypes.TRoomManager) {
 
         this.root = root
+        this.render = root._renderClass
         this.controls = root._orbitControls
         this.canvas = root._canvas;
         this.scene = root._scene;
@@ -110,7 +112,7 @@ export class TrafficManager {
 
             if (object.userData.elementType !== 'raspil' && !object.userData.disableRaycast) {
                 const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];
-                this.modelState.createCurrentModelFasadesData(product.FACADE);
+                // this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
         }

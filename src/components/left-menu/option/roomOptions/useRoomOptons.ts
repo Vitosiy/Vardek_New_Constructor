@@ -206,7 +206,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         const PRODUCTS = APP.value.CATALOG.PRODUCTS
         const [key, value] = Object.entries(PRODUCTS)[0]
         const fasade = value.FACADE
-        const defaultFasadData = modelState.createCurrentModelFasadesData(fasade, true)
+        const defaultFasadData = modelState.createCurrentModelFasadesData({ data:fasade, def: true })
         return defaultFasadData
     }
 

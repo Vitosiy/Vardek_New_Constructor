@@ -97,10 +97,13 @@ const onSelectMaterial = (data) => {
   emit("select_material", data);
 
   resetGlobal();
-
+  const { PROPS } = productData.value;
+  const { CONFIG } = PROPS;
+  const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
   const product = _APP.CATALOG.PRODUCTS[productId.value];
-  const { COLOR, RESET_COLOR, ALUM } =
-    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
+  const { COLOR, RESET_COLOR, ALUM } = FASADE_PROPS[props.tabIndex];
+
+  const haveShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
   const dataOfFasadeType = _FASADE[COLOR];
 
   isSurfaceSelected.value = true;
@@ -124,21 +127,16 @@ const onSelectMaterial = (data) => {
 
   isShowcaseExist.value =
     showcaseList.value.length > 0 &&
-    product.type_showcase[0] != null &&
+    haveShowcase &&
     ALUM == null &&
     COLOR !== RESET_COLOR;
 
   /** @Стёкла */
 
-  isGlassExist.value =
-    (glassList.value.length > 0 &&
-      product.type_showcase[0] != null &&
-      isShowcaseExist.value) ||
-    (glassList.value.length > 0 &&
-      product.type_showcase[0] != null &&
-      ALUM != null)||
-    (glassList.value.length > 0 && ALUM != null);
-      ;
+  isGlassExist.value = glassList.value.length > 0 && haveShowcase;
+  // (glassList.value.length > 0 && haveShowcase && isShowcaseExist.value) ||
+  // (glassList.value.length > 0 && haveShowcase && ALUM != null)
+  // (glassList.value.length > 0 && ALUM != null);
 
   /**------------------------------ */
 
@@ -301,9 +299,13 @@ const update = () => {
 };
 
 const prepareData = () => {
+  const { PROPS } = productData.value;
+  const { CONFIG } = PROPS;
+  const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
+  const fasadeProps = FASADE_PROPS[props.tabIndex];
   const product = _APP.CATALOG.PRODUCTS[productId.value];
-  const fasadeProps =
-    productData.value.PROPS.CONFIG.FASADE_PROPS[props.tabIndex];
+  const haveShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
+
   const {
     MILLING,
     PALETTE,
@@ -322,7 +324,11 @@ const prepareData = () => {
 
   // Инициализация данных фасада
   modelState.createCurrentPaletteData(COLOR);
-  modelState.createCurrentMillingData({ fasadeId: COLOR, productId: pid });
+  modelState.createCurrentMillingData({
+    fasadeId: COLOR,
+    productId: pid,
+    fasadeNdx: props.tabIndex,
+  });
   modelState.createCurrentPatinaData({ fasadeId: COLOR, productId: pid });
   modelState.createCurrentGlassData({ fasadeId: COLOR, productId: pid });
   modelState.createCurrentShowcaseData({
@@ -338,21 +344,24 @@ const prepareData = () => {
   const glassData = modelState.getCurrentGlassData;
   const showcaseData = modelState.getCurrentShowcaseData;
 
-  console.log(showcaseData, "IN prepareData --showcaseData");
+  console.log(millingData, "millingData");
 
   // Установка списков и флагов существования
 
   /** @Фрезеровка */
-  if (fasadeData.ATTACH_MILLINGS?.[0] && !product.GLASS?.[0]) {
+  if (fasadeData.ATTACH_MILLINGS?.[0] && !haveShowcase) {
     millingList.value = millingData;
     isMillingExist.value = millingData.length > 0;
   }
 
+  console.log(isMillingExist.value, "isMillingExist.value");
+
   /** @Витрины */
   if (
-    showcaseData.length > 0 &&
-    product.type_showcase?.[0] != null &&
-    COLOR !== RESET_COLOR &&
+    // showcaseData.length > 0 &&
+    // product.type_showcase?.[0] != null &&
+    // COLOR !== RESET_COLOR &&
+    haveShowcase &&
     ALUM == null
   ) {
     showcaseList.value = showcaseData;
@@ -373,15 +382,17 @@ const prepareData = () => {
 
   /** @Стёкла */
   if (
-    (fasadeData.ATTACH_GLASS?.[0] &&
-      product.GLASS?.[0] &&
-      product.type_showcase?.[0] != null &&
-      isShowcaseExist.value) ||
-    (fasadeData.ATTACH_GLASS?.[0] &&
-      product.GLASS?.[0] &&
-      product.type_showcase?.[0] != null &&
-      ALUM !== null) ||
-    (fasadeData.ATTACH_GLASS?.[0] && product.GLASS?.[0] && ALUM !== null)
+    haveShowcase &&
+    glassData.length > 0
+    // (fasadeData.ATTACH_GLASS?.[0] &&
+    //   product.GLASS?.[0] &&
+    //   product.type_showcase?.[0] != null &&
+    //   isShowcaseExist.value) ||
+    // (fasadeData.ATTACH_GLASS?.[0] &&
+    //   product.GLASS?.[0] &&
+    //   product.type_showcase?.[0] != null &&
+    //   ALUM !== null) ||
+    // (fasadeData.ATTACH_GLASS?.[0] && product.GLASS?.[0] && ALUM !== null)
   ) {
     glassList.value = glassData;
     isGlassExist.value = glassData.length > 0;

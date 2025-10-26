@@ -8,6 +8,7 @@ import {
   ref,
   watch,
 } from "vue";
+import type { Object3D } from "three";
 import { useModelState } from "@/store/appliction/useModelState";
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 import MaterialRedactor from "./MaterialRedactor.vue";
@@ -29,6 +30,8 @@ interface TabItem {
 const modelState = useModelState();
 const uniformState = useUniformState();
 const customiserStore = useCustomiserStore();
+const currentModel = ref<Object3D | null>(null);
+
 const redactorsRef = ref<HTMLElement | null>(null);
 const fasadeList = ref<any[]>([]);
 const productData = ref(null);
@@ -41,14 +44,25 @@ const isGroupsManagerActive = ref<boolean>(false);
 const transitionFasadeSelect = ref<boolean>(false);
 
 const prepareData = () => {
-  materialList.value = modelState.getCurrentModuleData;
+  const productId = currentModel.value?.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
 
-  fasadeList.value =
-    modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
+  materialList.value = modelState.getCurrentModuleData;
+  fasadeList.value = modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
-  console.log(tabsList.value);
+  createFacadeData();
 
   tabName.value = tabsList.value[0]?.name;
+};
+
+const createFacadeData = () => {
+  const productId = currentModel.value?.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex.value,
+    productId,
+  });
 };
 
 const createTabList = (
@@ -56,6 +70,7 @@ const createTabList = (
   materialList: Array<object>
 ) => {
   let data: Array<object> = [];
+
   materialList.length > 0
     ? data.push({
         name: "Корпус",
@@ -86,6 +101,7 @@ const fasadeIndex = computed(() => {
 });
 
 onBeforeMount(() => {
+  currentModel.value = modelState.getCurrentModel;
   prepareData();
 });
 
@@ -102,6 +118,7 @@ const handleTabChange = ({ index, tab }) => {
   isGroupsManagerActive.value = false;
   tabIndex.value = index;
   tabName.value = tab.name;
+  createFacadeData();
 };
 
 // Добавляем метод для возврата к обычным табам

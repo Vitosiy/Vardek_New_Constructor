@@ -412,13 +412,19 @@ export class MeshEvents extends BuildersHelper {
 
         if (Array.isArray(elementsList) && elementsList[0]) {
             elementsList.forEach((el) => {
-                const fasadeList = el.userData.PROPS.FASADE
-                if (fasadeList.length > 0) {
-                    fasadeList.forEach(async (fasade, fasadeNdx) => {
+                const { PROPS } = el.userData
+                const { CONFIG, FASADE, PRODUCT } = PROPS
+                const { FASADE_PROPS } = CONFIG
+                const currentProduct = this._PRODUCTS[PRODUCT]
+
+                const includeIncomeFasade = currentProduct.FACADE.includes(data.ID)
+        
+                if (FASADE.length > 0) {
+                    FASADE.forEach(async (fasade, fasadeNdx) => {
                         // const prevMesh = this._currentMesh
                         this._currentMesh = el;
 
-                        if (data.ID == 7397) {
+                        if (data.ID == 7397 || !includeIncomeFasade) {
                             await this.catchDeliteFasade(fasadeNdx, el)
                         }
                         else {

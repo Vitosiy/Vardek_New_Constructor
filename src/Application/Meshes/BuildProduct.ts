@@ -144,13 +144,13 @@ export class BuildProduct extends BuildersHelper {
         /** Присваиваем тип объекта */
         parent_group.userData.elementType = product_data.element_type
         parent_group.elementType = product_data.element_type
-        if (product_data.element_type === null && Number.isInteger(product_data.leg_length)) {
-            if (product_data.leg_length > 0) {
-                parent_group.userData.elementType = "element_down"
-                parent_group.elementType = "element_down"
-            }
+        // if (product_data.element_type === null && Number.isInteger(product_data.leg_length)) {
+        //     if (product_data.leg_length > 0) {
+        //         parent_group.userData.elementType = "element_down"
+        //         parent_group.elementType = "element_down"
+        //     }
 
-        }
+        // }
 
         parent_group.userData.trueSizes = product.userData.trueSizes ?? {
             DEPTH: productSize.z * 0.5,
@@ -469,7 +469,8 @@ export class BuildProduct extends BuildersHelper {
         const { CONFIG } = props;
         const { ELEMENT_TYPE, MODULE_COLOR, ID, SIZE } = CONFIG;
         const { defModuleUp, defModuleDown, moduleTop, moduleBottom } = defaultConfig
-        const texture = this._PRODUCTS[ID].texture;
+        const product = this._PRODUCTS[ID]
+        const texture = product.texture;
 
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color;
@@ -560,6 +561,8 @@ export class BuildProduct extends BuildersHelper {
         const { geometryType } = body.userData;
 
         if ("src" in texture && !moduleColor) {
+
+
             const textureSize = {
                 width: geometryType === "ExtrudeGeometry" ? texture.width : 1,
                 height: geometryType === "ExtrudeGeometry" ? texture.height : 1,
@@ -580,6 +583,7 @@ export class BuildProduct extends BuildersHelper {
         body.name = "BODY";
         body.userData.MATERIAL_TYPE = data.json.material.type;
 
+
         const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z));
         // console.log(move, data, 'CORRECT')
         // body.traverse((child) => {
@@ -596,6 +600,25 @@ export class BuildProduct extends BuildersHelper {
             BODY_HEIGHT: size.y,
             BODY_DEPTH: size.z,
         };
+
+        /** @Зеркало */
+        if (product.productType == this.project.mirror_type) {
+
+            body.traverse(el => {
+                if (el instanceof THREE.Mesh && !el.userData.edge) {
+                    const mirrorMat = new THREE.MeshPhysicalMaterial({
+                        color: new THREE.Color(`#ffffff`),
+                        metalness: 0.85,
+                        roughness: 0,
+                        clearcoat: 1,
+                        clearcoatRoughness: 0.0,
+                    })
+
+                    el.material = mirrorMat
+                    el.material.needsUpdate = true;
+                }
+            })
+        }
 
         props.BODY_DEFAULT = body.clone();
 
@@ -819,7 +842,8 @@ export class BuildProduct extends BuildersHelper {
             defModuleDown: moduleBottom.id ?? this.project.default_module_color_down,
             defFasadeUp: fasadsTop.id ?? this.project.default_fasade_up,
             defFasadeDown: fasadsBottom.id ?? this.project.default_fasade_down,
-            deffShowcase:this.project.defaul_showcase,
+            deffShowcase: this.project.default_showcase,
+            defMilling: this.project.default_milling,
             moduleTop,
             moduleBottom,
             fasadsTop,

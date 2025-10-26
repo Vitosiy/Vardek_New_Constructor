@@ -134,7 +134,9 @@ const START_PROJECT_PARAMS = {
     default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338],
     default_plinth_body: 70096,
     default_plinth_color: null,
-    defaul_showcase: 1013628
+    default_showcase: 1013628,
+    default_milling: 2462671,
+    mirror_type: 10336730
 }
 
 Object.freeze(START_PROJECT_PARAMS)

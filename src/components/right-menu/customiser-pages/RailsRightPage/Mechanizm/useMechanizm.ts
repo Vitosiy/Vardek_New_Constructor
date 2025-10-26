@@ -1,5 +1,6 @@
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
+import { useSceneState } from "@/store/appliction/useSceneState";
 import { TFasadeProp } from "@/types/types";
 import { string } from "yup";
 
@@ -27,22 +28,45 @@ export const useMechanizm = () => {
 
     const appData = useAppData()
     const modelState = useModelState();
+    const sceneState = useSceneState();
 
     const weightCalculation = (): TWheightData[] | null[] | [] => {
         try {
-            const { fasade_weight } = appData.getAppData
+            const { fasade_weight, milling_weight, FASADES, CATALOG } = appData.getAppData
+            const { PRODUCTS } = CATALOG
             const { PROPS } = modelState.getCurrentModel!.userData
             const { CONFIG, FASADE } = PROPS
             const { FASADE_PROPS } = CONFIG
 
+            const defMilling = sceneState.getCurrentProjectParams.default_milling as number
+
             const weightData = FASADE_PROPS.map((fasade: TFasadeProp, ndx: number) => {
+                const { PRODUCT } = PROPS
                 const { FASADE_WIDTH, FASADE_HEIGHT } = FASADE[ndx].userData.trueSize
+                const product = PRODUCTS[PRODUCT]
+
+                const prodMill = product.type_showcase[0] !== null && product.MILLING[0] !== null
 
                 const curWeight = fasade_weight[fasade.COLOR]
+                const curMilling = fasade.MILLING ? milling_weight[fasade.MILLING!] : prodMill ? milling_weight[defMilling] : null
 
-                if (fasade_weight[fasade.COLOR]) {
+                console.log( milling_weight[defMilling],'curMilling')
+
+                if (curWeight) {
                     const square = FASADE_WIDTH * FASADE_HEIGHT
                     const weight = parseFloat(curWeight) * (square / 1000000);
+
+                    return {
+                        width: FASADE_WIDTH,
+                        height: FASADE_HEIGHT,
+                        square: parseFloat(square.toFixed(2)),
+                        weight: parseFloat(weight.toFixed(2))
+                    }
+                }
+                else if (curMilling) {
+
+                    const square = FASADE_WIDTH * FASADE_HEIGHT
+                    const weight = parseFloat(curMilling) * (square / 1000000);
 
                     return {
                         width: FASADE_WIDTH,

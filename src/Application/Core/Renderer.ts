@@ -1,18 +1,19 @@
 //@ts-nocheck
 import * as THREE from "three"
-// import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
 
-import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
 
 import { Sizes } from "../Utils/Sizes"
 import { useEventBus } from '@/store/appliction/useEventBus';
+import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 export class Renderer {
 
     parent: THREETypes.TApplication
     /** Глобальное хранилище Events */
-    eventsStore: ReturnType<typeof useEventBus>
+    eventBus: ReturnType<typeof useEventBus> = useEventBus()
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
     sizes: Sizes
     canvas: HTMLElement
     camera: THREE.Camera | null = null
@@ -20,11 +21,12 @@ export class Renderer {
 
     instance: THREE.WebGLRenderer | any
     labelRenderer: CSS2DRenderer = new CSS2DRenderer();
+    labelPool: CSS2DObject[] = [];
+    maxPoolSize: number = 1000
+    labelCullingThreshold: number = 10000;
     ratio: number
-
-    enviroment: any
-    resources: any
     antialiasing: boolean
+    rulerVisible: boolean = true
 
     onSetQuality: (value: string) => void
 
@@ -40,8 +42,6 @@ export class Renderer {
 
         this.ratio = this.sizes.pixelRatio
 
-        this.eventsStore = useEventBus()
-
         this.onSetQuality = this.setQuality.bind(parent)
 
         this.setInstance();
@@ -51,7 +51,7 @@ export class Renderer {
 
     }
 
-    get _instance(){
+    get _instance() {
         return this.instance
     }
 
@@ -109,6 +109,54 @@ export class Renderer {
         this.canvas.appendChild(this.labelRenderer.domElement);
     }
 
+    getLabelFromPool(text: string, position: THREE.Vector3): CSS2DObject {
+        let label = this.labelPool.pop();
+        if (!label) {
+            const div = document.createElement('div');
+            // div.className = 'label';
+            label = new CSS2DObject(div);
+        }
+        label.element.textContent = text;
+        label.position.copy(position);
+        // label.visible = true;
+        return label;
+    }
+
+    recycleLabel(label: CSS2DObject) {
+        if (this.labelPool.length < this.maxPoolSize) {
+            label.visible = false;
+            label.element.textContent = '';
+            this.labelPool.push(label);
+        } else {
+            if (label.parent) label.parent.remove(label);
+            label.element.remove();
+        }
+    }
+
+    cullLabelsByDistance() {
+        if (!this.scene || !this.camera) return;
+        const cameraPosition = this.camera.position;
+        const worldPosition = new THREE.Vector3();
+        let visibleCount = 0;
+        this.scene.traverse((obj) => {
+
+            if (obj instanceof CSS2DObject || obj.name === 'SIZE_VISUAL') {
+                if (!this.rulerVisible) {
+                    obj.visible = this.rulerVisible
+                    return
+                }
+
+                obj.getWorldPosition(worldPosition);
+                const distance = worldPosition.distanceTo(cameraPosition);
+                obj.visible = distance < this.labelCullingThreshold;
+                if (obj.visible) visibleCount++;
+
+                // const distance = obj.position.distanceTo(cameraPosition);
+                // obj.visible = distance < this.labelCullingThreshold;
+            }
+        });
+    }
+
     // toggleAntialias(params: string) {
     //     if (!this.antialiasing && params == 'hight') {
     //         this.antialiasing = true
@@ -132,6 +180,7 @@ export class Renderer {
 
         if (!this.scene || !this.camera) return
         this.instance.render(this.scene, this.camera);
+        this.cullLabelsByDistance();
         this.labelRenderer.render(this.scene, this.camera);
     }
 
@@ -191,12 +240,16 @@ export class Renderer {
             this.setQuality(value)
         }
 
-        this.eventsStore.on('A:Quality', this.onSetQuality)
+        this.eventBus.on('A:Quality', this.onSetQuality)
+        this.eventBus.on('A:ToggleRulerVisibility', (value) => {
+            this.rulerVisible = value
+            console.log(value, '9899')
+        })
 
     }
 
     removeVueEvents() {
-        this.eventsStore.off('A:Quality', this.onSetQuality)
+        this.eventBus.off('A:Quality', this.onSetQuality)
 
         // Безопасная очистка WebGL рендерера
         if (this.instance) {
@@ -223,6 +276,13 @@ export class Renderer {
                     }
                 }
 
+                // Очистка пула лейблов
+                this.labelPool.forEach(label => {
+                    if (label.parent) label.parent.remove(label);
+                    label.element.remove();
+                });
+                this.labelPool = [];
+
                 // Очищаем ссылки
                 this.instance.domElement = null;
                 this.instance = null;
@@ -239,7 +299,7 @@ export class Renderer {
 
         try {
             // Проверяем, не является ли это PIXI рендерером
-            if (renderer.constructor && renderer.constructor.name && 
+            if (renderer.constructor && renderer.constructor.name &&
                 renderer.constructor.name.toLowerCase().includes('pixi')) {
                 console.warn('Обнаружен PIXI рендерер, пропускаем очистку DOM элементов');
                 return;

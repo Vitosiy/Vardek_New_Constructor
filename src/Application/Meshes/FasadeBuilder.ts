@@ -5,6 +5,7 @@ import * as THREETypes from "@/types/types"
 import * as BufferGeometry from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import { useAppData } from "@/store/appliction/useAppData"
+import { useModelState } from "@/store/appliction/useModelState";
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 
@@ -17,6 +18,7 @@ type TFasadePartPosition = {
 
 export class FasadeBuilder {
 
+    modelState: ReturnType<typeof useModelState> = useModelState()
     parent: THREETypes.TBuildProduct
     uniformeTextureStartData: TFasadePartPosition[] = []
     _APP: THREETypes.TObject
@@ -59,7 +61,8 @@ export class FasadeBuilder {
 
         const { FASADE_DEFAULT, FASADE, CONFIG, PRODUCT } = props;
         const { SIZE, FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE, ELEMENT_TYPE, PRODUCT_SHOWCASE, SHOWCASE } = CONFIG;
-        const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom, deffShowcase } = defaultConfig;
+        const { defFasadeUp, defFasadeDown, fasadsTop, fasadsBottom, deffShowcase, default_milling } = defaultConfig;
+        const currentProduct = this.modelState._PRODUCTS[PRODUCT]
 
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
@@ -82,9 +85,9 @@ export class FasadeBuilder {
         const resolveColorId = (fasadeColor: number) => {
 
             const isDefault = fasadeColor === this.parent.project.default_fasade_color;
+
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    // console.log('down')
 
                     return {
                         color: (defFasadeDown && isDefault) || fasadsBottom.global ? defFasadeDown : fasadeColor,
@@ -93,7 +96,6 @@ export class FasadeBuilder {
                     }
                 case "element_up":
 
-                    // console.log('Top ')
                     return {
                         color: (defFasadeUp && isDefault) || fasadsTop.global ? defFasadeUp : fasadeColor,
                         pallite: fasadsTop.palitte,
@@ -129,14 +131,15 @@ export class FasadeBuilder {
                 fasadeData.HANDLES = this.handlesBuilder.restoreDefaultHandleData(fasadeData)
             }
             else {
-                fasadeData.COLOR = color;
+
+                const includeIncomeFasade = currentProduct.FACADE.includes(color)
+                fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
+                fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
-                // const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
                 const firstValueGlass = this.parent.modelState.getCurrentGlassData[0] as any;
-                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
+                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx })[0] as any;
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -147,12 +150,10 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
-
                     fasadeData.MILLING = milling;
                 }
 
-                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null) {
-
+                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && haveShowcase) {
                     fasadeData.MILLING = null;
                 }
 
@@ -263,14 +264,17 @@ export class FasadeBuilder {
             if (!remove && !fasadeNdx) {
 
                 const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
+                const includeIncomeFasade = currentProduct.FACADE.includes(color)
 
-                fasadeData.COLOR = color;
+                console.log(currentProduct.FACADE.includes(color), 'currentProduct.FASADE')
+
+                fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.SHOWCASE = fasadeData.SHOW && PRODUCT_SHOWCASE && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
+                fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
-                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
+                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx: key })[0] as any;
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -280,9 +284,11 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
+
+                    console.log('HERE')
                     fasadeData.MILLING = milling;
                 }
-                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE) {
+                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE && haveShowcase) {
                     fasadeData.MILLING = null;
                 }
 

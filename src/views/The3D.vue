@@ -170,6 +170,7 @@ onMounted(async () => {
       eventBus.on("A:Create", setLocalActivateValue);
       eventBus.on("A:NextAction", setLocalActivateValue);
       eventBus.on("A:PrevAction", setLocalActivateValue);
+      eventBus.on("A:GlobalTransformMode_Off", setLocalActivateValue);
       // Подписываем все события на один обработчик
 
       priceUpdateEvents.forEach((event) => {
@@ -850,7 +851,9 @@ watch(
       "
     >
       <transition name="controller-toggle">
-        <p class="switch__title" v-if="!transformControlsValue" > {{ curControllerValue }}</p>
+        <p class="switch__title" v-if="!transformControlsValue">
+          {{ curControllerValue }}
+        </p>
       </transition>
 
       <transition name="controller-toggle">
@@ -1205,13 +1208,11 @@ watch(
     align-items: flex-end;
     gap: 5px;
   }
-  &__title{
+  &__title {
     position: absolute;
     bottom: 2rem;
   }
 }
-
-
 
 .accordion {
   padding: 0.5rem 1rem;

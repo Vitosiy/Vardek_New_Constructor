@@ -34,7 +34,7 @@ export class ShowcaseBuilder extends MillingBuilder {
 
         this.createMillingFasade(fasade, fasadePosition, showcaseData, defaultGeometry);
         this.createGlass(fasade, fasadePosition, alum)
-        this.createHeandless(fasade, fasadePosition)
+        // this.createHeandless(fasade, fasadePosition)
     }
 
     createGlass(fasade, fasadePosition, alum) {

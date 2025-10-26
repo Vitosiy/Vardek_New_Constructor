@@ -1,7 +1,9 @@
 import * as THREE from 'three';
+import * as THREETypes from "@/types/types"
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { RoomManager } from '../Room/RoomManager';
 import { useMenuStore } from '@/store/appStore/useMenuStore';
+
 
 // Интерфейс для конфигурации линейки
 interface RulerConfig {
@@ -27,6 +29,8 @@ interface DrawLabelParams {
 export class Ruler {
   private menuStore = useMenuStore();
 
+  private root: THREETypes.TApplication
+  private render: THREETypes.TRenderer
   private rulerLines: THREE.Object3D[] = [];
   private rullerSizeLines: THREE.Object3D[] = [];
   private room: RoomManager | null = null;
@@ -54,11 +58,9 @@ export class Ruler {
     ],
   };
 
-  constructor(scene?: THREE.Scene, room?: RoomManager, rulerLines?: THREE.Object3D[], rullerSizeLines?: THREE.Object3D[]) {
-    this.scene = scene ?? null;
-    this.rulerLines = rulerLines ?? [];
-    this.rullerSizeLines = rullerSizeLines ?? [];
-    this.room = room ?? null;
+  constructor(root: THREETypes.TApplication) {
+    this.root = root
+    this.render = root._renderClass!
   }
 
   public setParams({ scene, room, rulerLines, rullerSizeLines }: { scene?: THREE.Scene; room?: RoomManager; rulerLines?: THREE.Object3D[]; rullerSizeLines?: THREE.Object3D[] }) {
@@ -136,9 +138,6 @@ export class Ruler {
     const arrows: { arrowPos: THREE.ArrowHelper; arrowNeg: THREE.ArrowHelper; labelDiv: CSS2DObject }[] = [];
     const box = new THREE.Box3().setFromObject(object);
     const size = box.getSize(new THREE.Vector3());
-
-    console.log(group)
-
     const getLableSizes = () => {
       const obj = {
         width: size.x,
@@ -182,16 +181,16 @@ export class Ruler {
         length: size.y * percentage,
         lable: lableSizes.height
       },
-      {
-        dir: new THREE.Vector3(0, 0, 1),
-        start: new THREE.Vector3(
-          box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
-          box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
-          (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
-        ),
-        length: size.z * percentage,
-        lable: lableSizes.depth
-      },
+      // {
+      //   dir: new THREE.Vector3(0, 0, 1),
+      //   start: new THREE.Vector3(
+      //     box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
+      //     box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
+      //     (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
+      //   ),
+      //   length: size.z * percentage,
+      //   lable: lableSizes.depth
+      // },
     ];
 
     axes.forEach(({ dir, start, length, lable }) => {
@@ -210,7 +209,12 @@ export class Ruler {
       //length / percentage
       const labelDiv = this.createLabel({ axis: lable, position: middle, css: 'dimension-label' });
       this.scene.add(arrowPos, arrowNeg, labelDiv);
+      arrowPos.name = 'SIZE_VISUAL'
+      arrowNeg.name = 'SIZE_VISUAL'
+
       this.rullerSizeLines.push(arrowPos, arrowNeg, labelDiv);
+
+
       arrows.push({ arrowPos, arrowNeg, labelDiv });
     });
 
@@ -220,7 +224,7 @@ export class Ruler {
   // Проверка валидности состояния
   private isValidState(): boolean {
     // return !!this.room && !!this.room._roomTotalBounds && !!this.scene && !!this.rulerLines;
-      return !!this.room && !!this.scene && !!this.rulerLines;
+    return !!this.room && !!this.scene && !!this.rulerLines;
   }
 
   // Получение ближайших боксов
@@ -338,6 +342,8 @@ export class Ruler {
     const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
     const line = new THREE.Line(lineGeometry, lineMaterial);
     line.renderOrder = 1;
+    line.name = 'LINE_VISUAL';
+
 
     this.scene.add(line);
     this.rulerLines.push(line);
@@ -379,17 +385,20 @@ export class Ruler {
     }
 
     arrow.renderOrder = 1;
-    arrow.name = 'ARROW_SIZE';
+    arrow.name = 'ARROW_VISUAL';
   }
 
   // Создание метки
   private createLabel({ axis, position, css }: DrawLabelParams): CSS2DObject {
-    const labelDiv = document.createElement('div');
-    labelDiv.className = css;
-    labelDiv.textContent = `${axis.toFixed(0)}`;
-    const heightLabel = new CSS2DObject(labelDiv);
-    heightLabel.position.copy(position);
-    return heightLabel;
+    // const labelDiv = document.createElement('div');
+    // labelDiv.className = css;
+    // labelDiv.textContent = `${axis.toFixed(0)}`;
+    // const heightLabel = new CSS2DObject(labelDiv);
+    // heightLabel.position.copy(position);
+    // return heightLabel;
+    const label = this.render.getLabelFromPool(`${axis.toFixed(0)}`, position);
+    label.element.className = css;
+    return label;
   }
 
   // Очистка линейки расстояния
@@ -402,18 +411,36 @@ export class Ruler {
   private clear(rulerStorage: THREE.Object3D[]): void {
     if (!this.scene) return;
 
+    // rulerStorage.forEach(line => {
+    //   this.scene!.remove(line);
+    //   line.traverse(child => {
+    //     if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+    //       child.geometry?.dispose();
+    //       if (Array.isArray(child.material)) {
+    //         child.material.forEach(mat => mat.dispose());
+    //       } else {
+    //         child.material?.dispose();
+    //       }
+    //     }
+    //   });
+    // });
+
     rulerStorage.forEach(line => {
-      this.scene!.remove(line);
-      line.traverse(child => {
-        if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
-          child.geometry?.dispose();
-          if (Array.isArray(child.material)) {
-            child.material.forEach(mat => mat.dispose());
-          } else {
-            child.material?.dispose();
+      if (line instanceof CSS2DObject) {
+        this.render.recycleLabel(line);
+      } else {
+        this.scene!.remove(line);
+        line.traverse(child => {
+          if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => mat.dispose());
+            } else {
+              child.material?.dispose();
+            }
           }
-        }
-      });
+        });
+      }
     });
   }
 
