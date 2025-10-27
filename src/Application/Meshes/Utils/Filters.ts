@@ -95,9 +95,6 @@ export class Filters extends GlobalsData {
         sortFasadePositionList.forEach((fasade: number, key: number) => {
 
             const curFasade = fasade.ID ? fasade.ID : fasade
-
-            console.log(fasade, 'curFasade')
-
             const fasadePosition = this._FASADE_POSITION[curFasade]
 
             const hendleDirection = key % 2
@@ -116,8 +113,6 @@ export class Filters extends GlobalsData {
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
             const fasad = FASADE_PROPS[fasadeNumber]?.TYPE ?? this.project.default_fasade_color ?? 7397;
-            console.log(FASADE_PROPS, 'FASADE_PROPS')
-
             const handles = this.project.default_handles
             const sizes = fasade.FASADE_SIZE ?? null
 
@@ -226,14 +221,6 @@ export class Filters extends GlobalsData {
     }
 
     filterOption(option: number[]) {
-        console.log(Object.values(this._OPTION).length, 'ОПЦИИ')
-
-
-        console.log(this._OPTION, '--option')
-
-        // option.forEach(el=>{
-        //     console.log(this._OPTION[el], 'ОПЦИИ')
-        // })
 
         let curOptionsList = option
             .map(el => this._OPTION[el])

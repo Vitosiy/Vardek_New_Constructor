@@ -23,7 +23,7 @@ export class BuildersHelper extends GlobalsData {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
 
-        console.log(props.CONFIG.EXPRESSIONS)
+        // console.log(props.CONFIG.EXPRESSIONS)
 
         model_data = this.expressionsReplace(
             model_data,
@@ -38,7 +38,7 @@ export class BuildersHelper extends GlobalsData {
             },
         )
 
-        console.log(model_data, 'model_data')
+        // console.log(model_data, 'model_data')
 
         model_data = this.expressionsReplace(
             model_data,
@@ -148,6 +148,8 @@ export class BuildersHelper extends GlobalsData {
             if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
                 obj[key] = value;
             } else {
+                console.log(value, 'value')
+
                 obj[key] = eval(value);
             }
         });

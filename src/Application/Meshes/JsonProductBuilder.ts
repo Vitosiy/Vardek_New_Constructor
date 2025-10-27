@@ -280,8 +280,7 @@ export class JsonBuilder {
                     material = new THREE.MeshPhysicalMaterial(data);
                     break
                 case 'MeshLambertMaterial':
-                    console.log(data, 'data')
-                    material = new THREE.MeshLambertMaterial(data.opt);
+                    material = new THREE.MeshLambertMaterial();
                     //    material = new THREE.MeshStandardMaterial(data.opt);
                     break
             }

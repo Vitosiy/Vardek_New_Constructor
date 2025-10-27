@@ -324,6 +324,7 @@ export class BuildProduct extends BuildersHelper {
 
         const total = new THREE.Object3D();
         const edgeBody = new THREE.Object3D()
+        
         const { PROPS } = parentGroup.userData;
         const { CONFIG } = PROPS;
 
@@ -352,14 +353,10 @@ export class BuildProduct extends BuildersHelper {
 
         total.userData.prodSize = PROPS.CONFIG.SIZE
 
-
         if (!modelData) return;
-
 
         const data = this.createModelData(modelData, PROPS, modelSize);
         const curBodyExceptions = bodyExceptions?.includes(modelData.id)
-
-        console.log(data, 'modelData', modelData)
 
         // Сборка частей
         const { body, tempMaterial, move } = !this.isEmpty(modelData)

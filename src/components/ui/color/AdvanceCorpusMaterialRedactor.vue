@@ -245,6 +245,7 @@ const update = () => {
 };
 
 const prepareData = () => {
+
   const product = _APP.CATALOG.PRODUCTS[productId.value];
   currentElementData.value = props.elementData ? props.elementData :
                               props.isFasade ? productData.value.PROPS.CONFIG.FASADE_PROPS[props.elementIndex] :
@@ -338,6 +339,8 @@ const prepareData = () => {
 };
 
 onBeforeMount(() => {
+    console.log('LLL')
+
   materialList.value = modelState.getCurrentModelFasadesData;
   productData.value = modelState.getCurrentModel?.userData;
   productId.value = productData.value.PROPS.PRODUCT;
