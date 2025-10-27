@@ -36,6 +36,8 @@ export class JsonBuilder {
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
 
+        console.log(data)
+
         this.material = this.createMaterial(json.material, fasade) as THREE.Material
 
         if(left)
@@ -79,10 +81,6 @@ export class JsonBuilder {
                 const type = this.parent.findKeyInObject(clone, this.keys)
                 this.parseDate({ data: clone[type], group, obj, parent_size })
             }
-
-
-
-
 
         }
         else {
@@ -162,7 +160,7 @@ export class JsonBuilder {
             // obj[item.id].userData.rotation = item.rotation
         }
         if (data.id === 'back') {
-            obj[data.id].position.y = 0
+            obj[data.id].position.y = this.convert(data.position.y) ?? 0
         }
 
         // const type =

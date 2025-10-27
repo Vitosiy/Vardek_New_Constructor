@@ -90,9 +90,6 @@ export class BuildersHelper extends GlobalsData {
             const customKey = `FASADESIZE${ndx + 1}`
             expressions[`#${customKey}#`] = incomeData.id;
 
-            console.log(incomeData)
-
-
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
                 const size = this._FASADESIZE[incomeData.id];
                 console.log(size, 'size')
@@ -105,8 +102,6 @@ export class BuildersHelper extends GlobalsData {
             }
         });
 
-        console.log(expressions, 'EXPRESSIONS')
-
         PARAMS.EXPRESSIONS = expressions;
 
         const depthCalc = productData.SIZE_EDIT_DEPTH_MAX
@@ -114,13 +109,10 @@ export class BuildersHelper extends GlobalsData {
             : productData.depth;
 
         const size = {
-            // width: parseInt(PARAMS.SIZE.width),
-            // height: parseInt(PARAMS.SIZE.height),
-            // depth: parseInt(depthCalc),
 
-            width: parseInt(productData.width),
-            height: parseInt(productData.height),
-            depth: parseInt(depthCalc),
+            width: parseFloat(productData.width),
+            height: parseFloat(productData.height),
+            depth: parseFloat(depthCalc),
         };
 
         if (PARAMS.MODELID) {
@@ -134,9 +126,9 @@ export class BuildersHelper extends GlobalsData {
         }
 
         // Запасные значения
-        size.width ||= parseInt(productData.width);
-        size.height ||= parseInt(productData.height);
-        size.depth ||= parseInt(productData.depth);
+        size.width ||= parseFloat(productData.width);
+        size.height ||= parseFloat(productData.height);
+        size.depth ||= parseFloat(productData.depth);
 
         return size;
     }

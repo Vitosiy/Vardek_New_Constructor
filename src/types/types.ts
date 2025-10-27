@@ -25,7 +25,7 @@ import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
 import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
 import { HandlesBuilder } from "@/Application/Meshes/Hendles/Handles";
-import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder";
+import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder/ModelsBuilder";
 import { PlinthBuilder } from "@/Application/Meshes/PlinthBuilder/PlinthBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";

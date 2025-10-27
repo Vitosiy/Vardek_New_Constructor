@@ -26,7 +26,7 @@ export class UseEdgeBuilder {
             // if (child instanceof Mesh || child instanceof LineSegments) {
             //     child.visible = !value
             // }
-
+            
             // объекты EdgeBuilder
             if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) {
 
@@ -71,14 +71,16 @@ export class UseEdgeBuilder {
 
 
             if (child.parent?.name == 'raspilPart') {
-                console.log(child.parent)
-                child.parent.visible = true
-                child.parent.material.visible = !value
-                child.parent.traverse(el => {
-                    if (el.userData.edge) {
-                        el.visible = value
-                    }
-                })
+
+                if (child.parent instanceof Mesh) {
+                    child.parent.visible = true
+                    child.parent.material.visible = !value
+                    child.parent.traverse(el => {
+                        if (el.userData.edge) {
+                            el.visible = value
+                        }
+                    })
+                }
 
             }
 

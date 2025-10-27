@@ -70,7 +70,7 @@ export class World {
         }
         else {
             this.room?.defaultCreate()
-            this.lights.setLight(this.room!._wallsGroupSize, 2)
+            this.lights.setLight(this.room!._wallsGroupSize, 1)
         }
 
         /** @Для_dev */
@@ -94,7 +94,7 @@ export class World {
         this.roomState.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
         await this.setRoom();
-        this.lights.setLight(this.room!._wallsGroupSize, 2)
+        this.lights.setLight(this.room!._wallsGroupSize, 1)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room!)

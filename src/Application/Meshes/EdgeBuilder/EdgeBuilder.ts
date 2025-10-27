@@ -42,7 +42,7 @@ export class EdgeBuilder {
         })
 
         this.defaultLineMaterial = new THREE.LineBasicMaterial({
-            color: 'rgba(185, 185, 185, 1)', linewidth: 1,
+            color: 'rgba(232, 232, 232, 1)', linewidth: 1,
             // depthTest: false,
             // depthWrite: false,
             transparent: true,

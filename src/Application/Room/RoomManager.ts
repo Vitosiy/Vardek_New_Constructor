@@ -487,8 +487,6 @@ export class RoomManager extends Room {
             return count
         }
 
-        console.log(model, this._PRODUCTS, model.id, 'model')
-
         await new Promise<void>((resolve) => {
             this.geometryBuilder!.craeteModel(
                 this.modelState.getModels[model.id] as THREEInterfases.IModelsData,

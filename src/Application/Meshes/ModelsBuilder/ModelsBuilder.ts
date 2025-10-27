@@ -3,8 +3,8 @@ import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 import { TBuildProduct } from "@/types/types"
 
-import { Resources } from '../Utils/Resources'
-import { BuildProduct } from './BuildProduct'
+import { Resources } from '../../Utils/Resources'
+import { BuildProduct } from '../BuildProduct'
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 interface CreateParams {
@@ -35,7 +35,7 @@ export class ModelsBuilder {
         const path = url ?? model.file ?? model.DAE
         const PROD = this.parent._PRODUCTS[props.PRODUCT]
 
-        console.log(PROD, 'LOADED')
+        console.log(model, 'LOADED')
 
         this.resources.startLoading(path, model.model_type, (file: any) => {
 
@@ -43,87 +43,20 @@ export class ModelsBuilder {
                 console.error('Модель не может быть загружена', file)
             }
 
+
             const normolized = this.normalizeUploadedModel(file, model);
+
             normolized.name = 'MODEL'
             if (PROD) {
                 normolized.userData.disableRaycast = PROD.disable_raycast == 1
             }
-
-
-            // const parentObject = new THREE.Object3D()
-
-            // console.log(model.id, 'CCreate')
-
-            //3689569
 
             const aabb = new THREE.Box3().setFromObject(normolized);
             const center = new THREE.Vector3();
             aabb.getCenter(center);
             let size = aabb.getSize(center)
 
-            // file.traverse((child: any) => {
-            //     if (child instanceof THREE.Mesh) {
-
-            //         // child.geometry.center();
-
-            //         child.scale.set(model.scale, model.scale, model.scale)
-            //         child.position.sub(center);
-            //         child.position.y += size.y / 2
-            //         child.position.x = 0
-            //         child.position.z = 0
-            //         // child.geometry.translate(0, -size.y * 0.5, 0);
-
-
-            //         if (child.material.map) {
-            //             child.material.map.encoding = THREE.SRGBColorSpace;
-            //             child.material.emissiveMap = child.material.map;
-            //             child.material.emissive = new THREE.Color(0xffffff);
-            //             child.material.emissiveIntensity = 0.1
-            //             child.material.needsUpdate = true;
-
-            //             child.material.map.generateMipmaps = true;
-            //             child.material.map.minFilter = THREE.LinearMipmapLinearFilter; // Включение mipmaps
-            //             child.material.map.needsUpdate = true; // Обновление текстуры
-
-            //         }
-            //         if (child.material.normalMap) {
-            //             child.material.normalMap.generateMipmaps = true;
-            //             child.material.normalMap.minFilter = THREE.LinearMipmapLinearFilter;
-            //             child.material.normalMap.needsUpdate = true;
-            //         }
-            //     }
-
-            // })
-
-            /** Добавляем стрелки размеров */
-
-            // if (sizeRulers) {
-            //     const scale = 1 / model.scale
-            //     let ruler = this.ruler.drawRullerObjects(normolized, scale)
-            //     ruler.forEach(item => {
-            //         for (let i in item) {
-            //             arrows.add(item[i])
-            //         }
-            //     })
-            // }
-
-            // file.add(file)
             normolized.userData.PROPS = props
-
-
-            // parentObject.position.sub(center);
-            // parentObject.traverse(child => {
-            //     if (child instanceof THREE.Mesh) {
-            //         // Создаем матрицу смещения
-            //         // const offsetMatrix = new THREE.Matrix4();
-            //         // // offsetMatrix.makeTranslation(-size.x * 0.5, -size.y * 0.5, -size.z * 0.5);
-            //         // // Применяем смещение
-            //         // child.geometry.applyMatrix4(offsetMatrix);
-            //     }
-            // })
-
-
-            // parentObject.updateMatrixWorld(true)
 
             let obb = new OBB();
             obb = obb.fromBox3(aabb);
@@ -135,8 +68,6 @@ export class ModelsBuilder {
                 DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
             }
 
-            // normolized.add(arrows)
-
             onLoad(normolized)
         })
         return
@@ -146,6 +77,11 @@ export class ModelsBuilder {
         // Проверяем входные параметры
         if (!model || !model.isObject3D) {
             throw new Error('Invalid model: Must be a valid THREE.Object3D');
+        }
+
+        if (isNaN(params.width) || isNaN(params.height) || isNaN(params.depth)) {
+            model.scale.set(1000, 1000, 1000);
+            return model
         }
 
         // Центрируем модель
@@ -165,6 +101,8 @@ export class ModelsBuilder {
 
         // Применяем масштабирование
         const scale = params.scale || 1;
+
+
         const targetScale = new THREE.Vector3(
             params.width || scale,
             params.height || scale,

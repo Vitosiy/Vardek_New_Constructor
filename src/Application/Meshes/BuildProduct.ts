@@ -19,7 +19,7 @@ import { Ruler } from '../Utils/Ruler'
 import { Filters } from './Utils/Filters'
 
 import { JsonBuilder } from './JsonProductBuilder'
-import { ModelsBuilder } from './ModelsBuilder'
+import { ModelsBuilder } from './ModelsBuilder/ModelsBuilder.ts'
 import { MillingBuilder } from './MillingBuilder';
 import { ShowcaseBuilder } from './ShowcaseBuilder.ts';
 
@@ -121,6 +121,8 @@ export class BuildProduct extends BuildersHelper {
         /** Если модель */
 
         if (type.DAE) {
+            console.log('DAE')
+
             this.models_builder.create({ onLoad, props })
             return
         }
@@ -334,6 +336,7 @@ export class BuildProduct extends BuildersHelper {
         const modelData = CONFIG.MODEL;
         const modelSize = size ?? CONFIG.SIZE;
         const bodyExceptions = this.project.default_overlay_id
+        const legsHeight = this._PRODUCTS[productId]?.leg_length
 
 
         if (size && !fisadeSize) {
@@ -342,6 +345,7 @@ export class BuildProduct extends BuildersHelper {
         if (size && fisadeSize) {
             PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, size);
         }
+        /** @Раскоментировать_по_необходимости   */
         // if (size === null && !fisadeSize) {
         //     PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, this._PRODUCTS[PROPS.PRODUCT]);
         // }
@@ -355,6 +359,8 @@ export class BuildProduct extends BuildersHelper {
         const data = this.createModelData(modelData, PROPS, modelSize);
         const curBodyExceptions = bodyExceptions?.includes(modelData.id)
 
+        console.log(data, 'modelData', modelData)
+
         // Сборка частей
         const { body, tempMaterial, move } = !this.isEmpty(modelData)
             ? this.createBody(data, PROPS, defaultConfig)
@@ -364,14 +370,15 @@ export class BuildProduct extends BuildersHelper {
             ? this.createShelf(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
             : null;
 
-        const legs = this._PRODUCTS[productId]?.leg_length
+        const legs = legsHeight
             ? this.buildLegs(PROPS, data, total)
             : null;
 
-        const plinth = this._PRODUCTS[productId]?.leg_length > 0
-            ? this.plinth_builder.buildPlinth(PROPS)
+        const plinth = legsHeight > 0
+            ? this.plinth_builder.buildPlinth(PROPS, legsHeight)
             : null;
 
+        /** @Раскоментировать_по_необходимости   */
         // const tableTop = CONFIG.HAVETABLETOP
         //     ? this.tabletop_builder.createTableTop({ props: PROPS })
         //     : null;
@@ -385,16 +392,13 @@ export class BuildProduct extends BuildersHelper {
             : null;
 
         const arrows = this.addArrowSize({ object: body, props: PROPS, group: total });
-
-        // console.log(body, fasade, 'curBodyExceptions')
-
         // Вычисление высот
-        const legsHeight = legs ? this.calculateHeight(legs) : 0;
+
         const bodyHeight = body ? this.calculateHeight(body) : 0;
-        // const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
         // Позиционирование
         const baseY = legsHeight * 0.5;
+
         if (legs) legs.position.y = baseY;
         if (plinth) plinth.position.y = 0;
         if (body) {
@@ -404,17 +408,27 @@ export class BuildProduct extends BuildersHelper {
         }
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
+
+        /** @Раскоментировать_по_необходимости   */ 
         // if (tableTop) {
         //     tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
         //     tableTop.userData.positionWithoutTableTopHeight = baseY + bodyHeight * 0.5
         // }
-        arrows.position.copy(body?.position)
+        arrows.position.copy(body?.position);
         arrows.position.y = baseY;
 
+        const getTotalGroup = () => {
+            if (curBodyExceptions) {
+                return [body, shelf, fasade, arrows]
+            }
+            return [plinth, legs, body, shelf, fasade, arrows]
+        }
+
+        const totalGroup = getTotalGroup()
 
 
         // Добавление в итоговую группу
-        [legs, plinth, body, shelf, fasade, arrows]
+        totalGroup
             .filter(Boolean)
             .forEach((part) => {
                 total.add(part as THREE.Object3D)
@@ -423,12 +437,18 @@ export class BuildProduct extends BuildersHelper {
         //---------------------------
         /** @Для корректной коллизии */
         //---------------------------
+
         const tempTotal = new THREE.Object3D();
+        const exept = new THREE.Object3D();
+
         [legs?.clone(), body?.clone(), shelf?.clone()]
             .filter(Boolean)
             .forEach(part => tempTotal.add(part));
 
-        const sourceForBounds = curBodyExceptions ? body : tempTotal;
+        [legs?.clone(), body?.clone(), plinth?.clone()].filter(Boolean)
+            .forEach(part => exept.add(part));
+
+        const sourceForBounds = curBodyExceptions ? exept : tempTotal;
         if (sourceForBounds) {
             this.setBounds(total, sourceForBounds);
         }
@@ -581,8 +601,9 @@ export class BuildProduct extends BuildersHelper {
 
         body.matrixWorldNeedsUpdate = true;
         body.name = "BODY";
-        body.userData.MATERIAL_TYPE = data.json.material.type;
+        console.log(body, 'data.json')
 
+        body.userData.MATERIAL_TYPE = data.json.material.type;
 
         const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z));
         // console.log(move, data, 'CORRECT')

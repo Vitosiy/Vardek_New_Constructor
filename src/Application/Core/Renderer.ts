@@ -92,7 +92,7 @@ export class Renderer {
 
             this.instance.physicallyCorrectLights = true;
             this.instance.shadowMap.enabled = true;
-            this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
+            // this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
             this.instance.toneMapping = THREE.ReinhardToneMapping;
             this.instance.toneMappingExposure = 1.8;
             this.instance.receiveShadow = true;
