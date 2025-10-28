@@ -116,7 +116,7 @@ const onSelectMaterial = (data) => {
 
   glassList.value = modelState.getCurrentGlassData;
 
-  /** Патина */
+  /** @Патина */
   patinaList.value = modelState.getCurrentPatinaData;
   isPatinaExist.value =
     patinaList.value.length > 0 && !product.type_showcase[0];
@@ -134,11 +134,7 @@ const onSelectMaterial = (data) => {
   /** @Стёкла */
 
   isGlassExist.value = glassList.value.length > 0 && haveShowcase;
-  // (glassList.value.length > 0 && haveShowcase && isShowcaseExist.value) ||
-  // (glassList.value.length > 0 && haveShowcase && ALUM != null)
-  // (glassList.value.length > 0 && ALUM != null);
 
-  /**------------------------------ */
 
   currentSurfaceData.value = data;
 
@@ -358,9 +354,6 @@ const prepareData = () => {
 
   /** @Витрины */
   if (
-    // showcaseData.length > 0 &&
-    // product.type_showcase?.[0] != null &&
-    // COLOR !== RESET_COLOR &&
     haveShowcase &&
     ALUM == null
   ) {
@@ -384,15 +377,6 @@ const prepareData = () => {
   if (
     haveShowcase &&
     glassData.length > 0
-    // (fasadeData.ATTACH_GLASS?.[0] &&
-    //   product.GLASS?.[0] &&
-    //   product.type_showcase?.[0] != null &&
-    //   isShowcaseExist.value) ||
-    // (fasadeData.ATTACH_GLASS?.[0] &&
-    //   product.GLASS?.[0] &&
-    //   product.type_showcase?.[0] != null &&
-    //   ALUM !== null) ||
-    // (fasadeData.ATTACH_GLASS?.[0] && product.GLASS?.[0] && ALUM !== null)
   ) {
     glassList.value = glassData;
     isGlassExist.value = glassData.length > 0;

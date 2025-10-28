@@ -333,16 +333,29 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId, fasadeNdx }) => {
 
+        console.log(fasadeId, productId, fasadeNdx)
+
         let result = []
+        if (fasadeId == 7397) {
+            currentMillingData.value = []
+            return []
+        }
+
         const product = _PRODUCTS.value[productId]
         const positionId = product.FASADE_POSITION[fasadeNdx]
 
         const fasadePosData = _FASADE_POSITION.value[positionId]
-        const haveShowCase = fasadePosData.glass == 1
+        console.log(fasadePosData)
+
+        const haveShowCase = fasadePosData?.glass == 1
+
 
         if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
 
-            currentMillingData.value = _FASADE.value[fasadeId].ATTACH_MILLINGS;
+            // currentMillingData.value = _FASADE.value[fasadeId].ATTACH_MILLINGS;
+
+
+
             let millings: IMilling[] = []
             let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
             let percept = {}
@@ -359,6 +372,8 @@ export const useModelState = defineStore('ModelState', () => {
             result = millings.sort((a, b) => a.SORT - b.SORT)
 
             currentMillingData.value = result
+
+            console.log(result, 'result')
 
             return result
         }
@@ -407,7 +422,7 @@ export const useModelState = defineStore('ModelState', () => {
         const fasadePosData = _FASADE_POSITION.value[positionId]
         const haveShowCase = fasadePosData.glass == 1
 
-       console.log(fasadePosData, 'fasadePosData')
+        console.log(fasadePosData, 'fasadePosData')
 
 
         if (!haveShowCase) {
@@ -526,7 +541,7 @@ export const useModelState = defineStore('ModelState', () => {
         transformControls.value = value
     }
 
-    const turnOffTransformControlsValue = ()=>{
+    const turnOffTransformControlsValue = () => {
         transformControls.value = false
     }
 
