@@ -2,6 +2,9 @@
 import * as THREE from 'three'
 import { TResources, TBuildProduct, TModelData, TDeepDispose } from '@/types/types'
 import { TFasadeProp } from '@/types/types';
+import { useEventBus } from "@/store/appliction/useEventBus";
+
+
 export type TCreateHandleParams = {
     id: number;
     model: number;
@@ -24,6 +27,7 @@ export class HandlesBuilder {
     private resources: TResources
     private dispose: TDeepDispose
     private scene: THREE.Scene
+    private eventBus: ReturnType<typeof useEventBus> = useEventBus();
     public clearId = 69920
     private positionMap: TPositionMap = {
         0: { col: -1, row: 1, rotation: Math.PI / 2 },   // лево-верх
@@ -79,6 +83,8 @@ export class HandlesBuilder {
         if (modelType != 'UNKNOWN') {
             fasade.add(handleModel)
         }
+
+        this.eventBus.emit('A:AddHandle')
 
         return handleModel
     }
@@ -167,6 +173,7 @@ export class HandlesBuilder {
                 this.dispose.clearObject(children, this.scene)
             }
         })
+        this.eventBus.emit('A:DeliteHandle')
     }
 
     public restoreDefaultHandleData(fasadeData: TFasadeProp) {

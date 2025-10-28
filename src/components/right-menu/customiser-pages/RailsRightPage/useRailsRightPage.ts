@@ -1,14 +1,17 @@
 //@ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
+import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMechanizm } from "./Mechanizm/useMechanizm";
 
 const mechanizm = useMechanizm()
 
 
 export const useRailsRightPage = () => {
-    const appData = useAppData()
+
+    const appData = useAppData();
     const modelState = useModelState();
+    const eventBus = useEventBus();
     const { weightCalculation, createMeckhanizmList } = mechanizm
 
     const mechanizmList = createMeckhanizmList()
@@ -63,7 +66,8 @@ export const useRailsRightPage = () => {
         }
 
         curOpt.active = values;
-        // curMech.active = values;
+        eventBus.emit("A:SelectModelOption")
+        
     };
 
     const checkExeptionOptionForFasade = (options, global) => {

@@ -181,16 +181,16 @@ export class Ruler {
         length: size.y * percentage,
         lable: lableSizes.height
       },
-      {
-        dir: new THREE.Vector3(0, 0, 1),
-        start: new THREE.Vector3(
-          box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
-          box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
-          (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
-        ),
-        length: size.z * percentage,
-        lable: lableSizes.depth
-      },
+      // {
+      //   dir: new THREE.Vector3(0, 0, 1),
+      //   start: new THREE.Vector3(
+      //     box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
+      //     box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
+      //     (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
+      //   ),
+      //   length: size.z * percentage,
+      //   lable: lableSizes.depth
+      // },
     ];
 
     axes.forEach(({ dir, start, length, lable }) => {

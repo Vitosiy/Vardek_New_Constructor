@@ -564,14 +564,14 @@ export class BuildersHelper extends GlobalsData {
 
         if (jsonPlinth) {
             return {
-                front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный плинтус' },
+                front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный цоколь' },
             }
         }
 
         return {
-            front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный плинтус' },
-            left: { value: false, modelId: basePlinth, surfaceId: null, label: 'Левый плинтус' },
-            right: { value: false, modelId: basePlinth, surfaceId: null, label: 'Правый плинтус' }
+            front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный цоколь' },
+            left: { value: false, modelId: basePlinth, surfaceId: null, label: 'Левый цоколь' },
+            right: { value: false, modelId: basePlinth, surfaceId: null, label: 'Правый цоколь' }
         }
     }
 

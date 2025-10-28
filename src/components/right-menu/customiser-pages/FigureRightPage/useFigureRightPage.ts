@@ -105,7 +105,7 @@ export const useFigureRightPage = () => {
             name: 'Handles',
         },
         {
-            label: 'Плинтус',
+            label: 'Цоколь',
             name: 'Plinth',
         }
     ]

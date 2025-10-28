@@ -140,6 +140,18 @@ const priceUpdateEvents = [
   "A:UM-update",
   "A:Duplicate",
   "A:RemoveModel",
+  "A:SelectModelOption",
+  "A:AddHandle",
+  "A:DeliteHandle",
+  "A:SelectPlinth",
+
+  "A:ChangeModuleTotalTexture",
+  "A:ChangeFasadsTopTexture",
+  "A:ChangeFasadsBottomTexture",
+  "A:ChangePaletteTotal",
+  "A:ChangeMillingTotal",
+  "A:ChangePlinthBody",
+  "A:ChangePlinthColor",
   // "A:close-modal-custom",
   // 'close-modal'
 ];
