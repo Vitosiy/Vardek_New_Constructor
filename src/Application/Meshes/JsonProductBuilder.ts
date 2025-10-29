@@ -80,10 +80,6 @@ export class JsonBuilder {
                 this.parseDate({ data: clone[type], group, obj, parent_size })
             }
 
-
-
-
-
         }
         else {
             // console.log('other')
@@ -162,7 +158,7 @@ export class JsonBuilder {
             // obj[item.id].userData.rotation = item.rotation
         }
         if (data.id === 'back') {
-            obj[data.id].position.y = 0
+            obj[data.id].position.y = this.convert(data.position.y) ?? 0
         }
 
         // const type =
@@ -282,7 +278,8 @@ export class JsonBuilder {
                     material = new THREE.MeshPhysicalMaterial(data);
                     break
                 case 'MeshLambertMaterial':
-                    material = new THREE.MeshLambertMaterial(data);
+                    material = new THREE.MeshLambertMaterial();
+                    //    material = new THREE.MeshStandardMaterial(data.opt);
                     break
             }
         }

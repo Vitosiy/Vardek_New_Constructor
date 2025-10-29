@@ -8,6 +8,7 @@ import {
   ref,
   watch,
 } from "vue";
+import type { Object3D } from "three";
 import { useModelState } from "@/store/appliction/useModelState";
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 import MaterialRedactor from "./MaterialRedactor.vue";
@@ -29,6 +30,8 @@ interface TabItem {
 const modelState = useModelState();
 const uniformState = useUniformState();
 const customiserStore = useCustomiserStore();
+const currentModel = ref<Object3D | null>(null);
+
 const redactorsRef = ref<HTMLElement | null>(null);
 const fasadeList = ref<any[]>([]);
 const productData = ref(null);
@@ -41,11 +44,25 @@ const isGroupsManagerActive = ref<boolean>(false);
 const transitionFasadeSelect = ref<boolean>(false);
 
 const prepareData = () => {
+  const productId = currentModel.value?.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+
   materialList.value = modelState.getCurrentModuleData;
-  fasadeList.value =
-    modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
+  fasadeList.value = modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
-  tabName.value = tabsList.value[0].name;
+  createFacadeData();
+
+  tabName.value = tabsList.value[0]?.name;
+};
+
+const createFacadeData = () => {
+  const productId = currentModel.value?.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex.value,
+    productId,
+  });
 };
 
 const createTabList = (
@@ -53,6 +70,7 @@ const createTabList = (
   materialList: Array<object>
 ) => {
   let data: Array<object> = [];
+
   materialList.length > 0
     ? data.push({
         name: "Корпус",
@@ -61,14 +79,16 @@ const createTabList = (
       })
     : false;
 
-  fasadeList.forEach((item, key) => {
-    data.push({
-      name: `Фасад ${key + 1}`,
-      label: `Фасад ${key + 1}`,
-      title: "Цвет фасада",
-      type: (item as any).TYPE,
-    });
-  });
+  fasadeList.length > 0
+    ? fasadeList.forEach((item, key) => {
+        data.push({
+          name: `Фасад ${key + 1}`,
+          label: `Фасад ${key + 1}`,
+          title: "Цвет фасада",
+          type: (item as any).TYPE,
+        });
+      })
+    : false;
 
   return data;
 };
@@ -81,6 +101,7 @@ const fasadeIndex = computed(() => {
 });
 
 onBeforeMount(() => {
+  currentModel.value = modelState.getCurrentModel;
   prepareData();
 });
 
@@ -89,7 +110,6 @@ onMounted(() => {
 });
 
 const handleTabChange = ({ index, tab }) => {
-
   // Если переключаемся на другой таб, отключаем режим переходящего рисунка
   if (isGroupsManagerActive.value) {
     eventBus.emit("A:Toggle-Uniform-Mode", { showGroupsManager: false });
@@ -98,6 +118,7 @@ const handleTabChange = ({ index, tab }) => {
   isGroupsManagerActive.value = false;
   tabIndex.value = index;
   tabName.value = tab.name;
+  createFacadeData();
 };
 
 // Добавляем метод для возврата к обычным табам
@@ -152,7 +173,7 @@ watch(
 
     tabIndex.value = 0;
     materialList.value = modelState.getCurrentModuleData;
-    tabName.value = tabsList.value[0].name;
+    tabName.value = tabsList.value[0]?.name;
     isGroupsManagerActive.value = false;
 
     prepareData();

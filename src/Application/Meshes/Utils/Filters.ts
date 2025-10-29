@@ -66,6 +66,9 @@ export class Filters extends GlobalsData {
 
         let sortFasadePositionList = [];
         const fasadePositionList = product.FASADE_POSITION
+
+        if (!fasadePositionList) return
+
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
         const fasadeTypeSorted = fasadeSorted.reduce((acc, index) =>
             acc.concat(this._FASADE_POSITION[index]?.fasade_type || []),
@@ -92,9 +95,6 @@ export class Filters extends GlobalsData {
         sortFasadePositionList.forEach((fasade: number, key: number) => {
 
             const curFasade = fasade.ID ? fasade.ID : fasade
-
-            console.log(fasade, 'curFasade')
-
             const fasadePosition = this._FASADE_POSITION[curFasade]
 
             const hendleDirection = key % 2
@@ -123,7 +123,7 @@ export class Filters extends GlobalsData {
                 COLOR: this.project.default_fasade_color!,
                 SHOW: false,
                 POSITION: fasadePosition.ID,
-                BODY: fasad,
+                RESET_COLOR: fasad,
                 MILLING: null,
                 PALETTE: null,
                 SHOWCASE: null,
@@ -158,7 +158,6 @@ export class Filters extends GlobalsData {
         // Перебираем все элементы массива items
         items.forEach((size, ndx) => {
 
-            console.log(fasadeNumberSize[size], 'fasadeNumberSize')
 
             if (size === null) return
 
@@ -170,22 +169,18 @@ export class Filters extends GlobalsData {
                 if (!validFasadeIds.length > 0) return
 
                 // Если ключ уже существует, используем существующий массив, иначе создаем новый
-                result[key] = result[key] || [];
+                result[size] = result[key] || [];
                 // Добавляем отфильтрованные фасады в массив
-                result[key].push(...validFasadeIds);
+                result[size].push(...validFasadeIds);
                 // Сортируем массив по полю SORT
-                result[key].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
+                result[size].sort((a: any, b: any) => fasadeSize[a].SORT - fasadeSize[b].SORT);
 
             });
 
-            console.log(ndx, 'ndx')
-
-            const convert = this.groupSizers(result[ndx + 1], product)
-            result[ndx + 1] = convert
+            const convert = this.groupSizers(result[size], product)
+            result[size] = convert
         });
 
-
-        console.log(result, 'result')
 
         return result;
 
@@ -224,12 +219,14 @@ export class Filters extends GlobalsData {
     }
 
     filterOption(option: number[]) {
+
         let curOptionsList = option
             .map(el => this._OPTION[el])
             .filter(Boolean);
 
         const result = curOptionsList.map(el => {
-            return { id: el.ID, active: false, group: el.GROUP, close: el.CLOSE_OTHER_OPTIONS }
+            const groupName = el.GROUP ?? ''
+            return { id: el.ID, active: false, group: groupName, close: el.CLOSE_OTHER_OPTIONS, visible: true }
         })
 
         return result

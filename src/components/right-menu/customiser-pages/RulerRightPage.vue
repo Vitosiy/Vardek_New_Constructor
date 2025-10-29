@@ -27,23 +27,10 @@ const resizeData = ref({
 
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
-// const transformControlsValue = ref<Boolean>(false);
 
 const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
-
-// const controlsActivate = () => {
-//   const curModel = modelState.getCurrentModel;
-
-//   if (transformControlsValue.value) {
-//     eventBus.emit("A:TransformMode_On");
-//   } else {
-//     eventBus.emit("A:TransformMode_Off");
-//   }
-
-//   modelState.setTransformControlsValue(transformControlsValue.value)
-// };
 
 const rotateModel = (id: number) => {
   eventBus.emit("A:RotateModel", id);
@@ -92,13 +79,6 @@ watch(
     });
   }
 );
-
-// watch(
-//   () => transformControlsValue.value,
-//   () => {
-//     controlsActivate();
-//   }
-// );
 </script>
 
 <template>
@@ -108,6 +88,12 @@ watch(
       <div class="settings-size">
         <div class="size-item">
           <p class="item__label text-grey">Ширина</p>
+          <p class="item__label text-grey">
+            Мин: {{ sizeEditData.widthMin ?? "н/о" }}
+          </p>
+          <p class="item__label text-grey">
+            Макс: {{ sizeEditData.widthMax ?? "н/о" }}
+          </p>
           <MainInput
             class="input__search right-menu"
             v-model="resizeData.width"
@@ -120,6 +106,12 @@ watch(
         </div>
         <div class="size-item">
           <p class="item__label text-grey">Высота</p>
+          <p class="item__label text-grey">
+            Мин: {{ sizeEditData.heightMin ?? "н/о" }}
+          </p>
+          <p class="item__label text-grey">
+            Макс: {{ sizeEditData.heightMax ?? "н/о" }}
+          </p>
           <MainInput
             class="input__search right-menu"
             v-model="resizeData.height"
@@ -132,6 +124,12 @@ watch(
         </div>
         <div class="size-item">
           <p class="item__label text-grey">Глубина</p>
+          <p class="item__label text-grey">
+            Мин: {{ sizeEditData.depthMin ?? "н/о" }}
+          </p>
+          <p class="item__label text-grey">
+            Макс: {{ sizeEditData.depthMax ?? "н/о" }}
+          </p>
           <MainInput
             class="input__search right-menu"
             v-model="resizeData.depth"

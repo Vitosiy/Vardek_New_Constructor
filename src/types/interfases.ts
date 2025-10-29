@@ -27,7 +27,9 @@ declare global {
 //------------------
 
 export interface IProjectParams {
-    rooms?: IRoom[],
+    projectId: number | string | null,
+    type: string,
+    rooms: IRoom[],
     camera?: ICameraData,
     lights?: ILightsObjects,
     height_clamp?: number,
@@ -52,7 +54,9 @@ export interface IProjectParams {
     project_name?: number | null,
     default_plinth_body?: number | null,
     default_plinth_color?: number | null
-
+    default_showcase?: number | null,
+    default_milling?: number | null,
+    mirror_type?: number | null,
 
 }
 

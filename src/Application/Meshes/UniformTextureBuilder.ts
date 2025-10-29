@@ -233,8 +233,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         const bigTexturePath = rootFasadeData.BIG_PICTURE ?? ''
         this.createTexture.setTexture(bigTexturePath)
 
-        console.log(rootFasadeData, 'rootFasadeData')
-
         this.maxGroupHeight = rootFasadeData.MAX_HEIGHT ?? this.maxGroupHeight
         this.maxGroupWidth = rootFasadeData.MAX_WIDTH ?? this.maxGroupWidth
 
@@ -375,7 +373,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         const product = this.parent._PRODUCTS[element.userData.globalData].FACADE
 
         this.uniformEvents.modelState.clearCurrentModelFasadesData(); // Очищаем предыдущие данные
-        this.uniformEvents.modelState.createCurrentModelFasadesData(product) // Создаём новые данные
+        this.uniformEvents.modelState.createCurrentModelFasadesData({ data: product }) // Создаём новые данные
 
         const fasades = this.uniformEvents.modelState.getCurrentModelFasadesData  // Получаем новые данные
         const fasadesClone = JSON.parse(JSON.stringify(fasades)) as {

@@ -8,7 +8,7 @@ export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
   const isLoading = ref(false)
-  
+
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
 
@@ -29,7 +29,7 @@ export function useProjectAPI() {
     return new Promise((resolve) => {
       loadTimeout = setTimeout(async () => {
         isLoading.value = true
-        
+
         try {
           const requestBody: any = {
             city: REQUEST_CONSTANTS.CITY,
@@ -52,13 +52,13 @@ export function useProjectAPI() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
           })
-          
+
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
           }
-          
+
           const data = await response.json()
-          
+
           if (data.CODE === 200 && data.DATA?.data?.items) {
             resolve(data.DATA.data.items)
           } else {
@@ -87,11 +87,11 @@ export function useProjectAPI() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       })
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const data = await response.json()
       if (data.CODE === 200 && data.DATA?.data) {
         const projectData = data.DATA.data
@@ -110,21 +110,25 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (projectId: string | null = null): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
-      
+
       const projectData = sceneState.getCurrentProjectParams
-      console.log(projectData, 'projectData')
-      
+      // console.log(projectData, 'projectData')
+
       // Валидируем данные перед отправкой
       if (!validateProjectData(projectData)) {
         throw new Error(ERROR_MESSAGES.INVALID_PROJECT_DATA)
       }
-      
+
+      const projectId = incomeProjectId ?? projectData.projectId
+
       // Если у нас есть ID проекта - обновляем, иначе создаем новый
       if (projectId) {
+        console.log(projectId, 'projectId HAVE')
+
         const response = await fetch(API_ENDPOINTS.UPDATE_PROJECT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -133,11 +137,11 @@ export function useProjectAPI() {
             project: projectData
           })
         })
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
-        
+
         const data = await response.json()
         if (data.CODE === 200) {
           return { success: true, data: data.DATA }
@@ -145,6 +149,12 @@ export function useProjectAPI() {
           throw new Error(`API error: ${data.MESSAGE || 'Unknown error'}`)
         }
       } else {
+        console.log(projectId, 'projectId No')
+
+        const tempProjectId = Date.now().toString();
+        projectData.projectId = tempProjectId
+
+
         const response = await fetch(API_ENDPOINTS.SAVE_PROJECT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -162,11 +172,11 @@ export function useProjectAPI() {
             }
           })
         })
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
-        
+
         const data = await response.json()
         if (data.CODE === 200) {
           return { success: true, data: data.DATA.data }

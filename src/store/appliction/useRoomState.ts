@@ -21,8 +21,14 @@ export const useRoomState = defineStore('RoomState', () => {
   const sceneState = useSceneState();
   const roomsData = JSON.parse(JSON.stringify(schemeTransition.getSchemeTransitionData));
   const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
+  const roomLoad = ref<boolean>(false)
 
-  const APP = useAppData();
+  const appDataStore = useAppData()
+  const appData = appDataStore.getAppData
+
+  const APP = computed(() => useAppData().getAppData || {})
+
+  // const APP = useAppData();
   const modelState = useModelState()
 
   const currentRoomId = ref<number | null>(null);
@@ -79,7 +85,8 @@ export const useRoomState = defineStore('RoomState', () => {
   }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
-    rooms.value.push(room);
+    const newValue = [...rooms.value, ...[room]]
+    rooms.value = newValue
   };
 
   const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes, basket: any) => {
@@ -137,8 +144,6 @@ export const useRoomState = defineStore('RoomState', () => {
   /** Возвращаем с использованием ID комнаты */
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
-    console.log(centerized, 'centerized')
-
 
     const currentRoom = rooms.value.find(value => value.id === roomId)
 
@@ -166,6 +171,14 @@ export const useRoomState = defineStore('RoomState', () => {
     return rooms.value
   })
 
+  const setLoad = async (value) => {
+    roomLoad.value = value
+  }
+
+  const getLoad = computed(() => {
+    return roomLoad.value
+  })
+
   return {
     rooms,
     getRooms,
@@ -190,6 +203,9 @@ export const useRoomState = defineStore('RoomState', () => {
 
     convertDataTo3DConstuctor,
     convertDataTo2DConstuctor,
-    routConvertData
+    routConvertData,
+
+    setLoad,
+    getLoad
   };
 });

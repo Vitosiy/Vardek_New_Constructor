@@ -27,6 +27,7 @@ class TableTopCreator extends BuildersHelper {
     boolHeight: number = 100
     ruler: THREETypes.TRuler
     events: THREETypes.TMeshEvents
+    edgeBuilder: THREETypes.TEdgeBuilder
 
     constructor(root: THREETypes.TApplication) {
         super(root)
@@ -35,6 +36,7 @@ class TableTopCreator extends BuildersHelper {
         this.moveManager = root._trafficManager?.moveManager!
         this.ruler = root._ruler!
         this.events = root.meshEvents!
+        this.edgeBuilder = root._geometryBuilder?.buildProduct.edge_builder
     }
 
     public async create(raspil: THREETypes.TObject, object: THREE.Object3D, groupId: number) {
@@ -200,6 +202,12 @@ class TableTopCreator extends BuildersHelper {
 
 
                 let mesh = new THREE.Mesh(geometry, material);
+                const edge = this.edgeBuilder.createEdge(mesh);
+                const defaultEdge = this.edgeBuilder.createVisibleEdge(mesh)
+
+                mesh.add(defaultEdge)
+                mesh.add(edge)
+                mesh.name = 'raspilPart'
 
                 mesh.position.set(
                     originalPosition.x,
@@ -238,6 +246,7 @@ class TableTopCreator extends BuildersHelper {
 
                     mesh.userData.position = new THREE.Vector3(row.position.x, row.position.y, row.position.z)
                     mesh.userData.rotation = new THREE.Euler(row.rotation._x, row.rotation._y, row.rotation._z, 'XYZ')
+
                 }
                 else {
                     mesh.userData.position = null
@@ -246,6 +255,9 @@ class TableTopCreator extends BuildersHelper {
 
                 this.createCollisionData(mesh, size, raspil, groupId, row.roundCut, uslugi);
                 this.addArrowSize(mesh, row)
+
+
+
                 meshes.push(mesh);
                 group.add(mesh); // Добавляем в группу
 

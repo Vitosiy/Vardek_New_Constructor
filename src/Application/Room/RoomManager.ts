@@ -43,6 +43,7 @@ export class RoomManager extends Room {
     heightClamp: number = useSceneState().getStartHeightClamp
     heightLine: THREE.Object3D[] = []
     totalObbBounds: OBB[] = []
+    totalAABBBounds: THREE.Box3[] = []
 
     constructor(root: THREETypes.TApplication) {
 
@@ -78,6 +79,31 @@ export class RoomManager extends Room {
     }
 
     get _roomTotalBounds() {
+        return this.totalAABBBounds
+
+
+        // let boundsArray: THREE.Box3[] = []
+
+        // const intersects = this._rulerContant as THREE.Object3D[];
+
+        // intersects.forEach(object => {
+
+        //     if (!object.userData?.current) {
+        //         const box = new THREE.Box3().setFromObject(object);
+        //         const boxTop = new THREE.Box3().setFromObject(object);
+        //         box.max.y = 3000;
+        //         box.min.y = 0
+
+        //         boundsArray.push(box);
+        //         boundsArray.push(boxTop);
+        //     }
+
+        // });
+
+        // return boundsArray
+    }
+
+    setRoomTotalBounds() {
 
         let boundsArray: THREE.Box3[] = []
 
@@ -97,7 +123,7 @@ export class RoomManager extends Room {
 
         });
 
-        return boundsArray
+        this.totalAABBBounds = boundsArray
     }
 
     createTotalObbBounds() {
@@ -165,7 +191,6 @@ export class RoomManager extends Room {
             targetRotation,
             snapHeight,
             heightClamp: this.heightClamp,
-
             wallStore: this._roomTotal,
             boundsStore: this._roomBounds,
             objectsBoundsStore: this._totalObbBounds,
@@ -304,7 +329,7 @@ export class RoomManager extends Room {
         }
 
         const data = {
-            id: item.userData.globalData,
+            id: item.userData.PROPS.PRODUCT,
             basketId: item.userData.basketId,
             position: item.position.clone(),
             rotation: item.rotation.clone(),
@@ -402,49 +427,15 @@ export class RoomManager extends Room {
         const parse = typeof data === 'string' ? JSON.parse(data) : data
 
         if (count === parse.length) {
-            this.eventBus.emit('A:ContantLoaded', true)
+            this.roomState.setLoad(true)
+            this.eventBus.emit('A:ContantLoaded')
         }
 
         const uniformGroups: UniformTypes.TUniformGroupMembership[] = toRaw(this.uniformState.getUniformGroupMembership) // Получаем доступ непосредственно к объектам, убирая proxy от VUE
         this.uniformTextureBuilder.clearUniformGroups()
         this.uniformTextureBuilder.loadUniformGroup(uniformGroups)
         this.uniformState.clearUniformGroupMembership();
-
     }
-
-    // async loadData(data: string[]) {
-    //     // console.log(data)
-    //     let counts = 0;
-    //     const parse = typeof data === 'string' ? JSON.parse(data) : data
-
-    //     for (const item of parse) {
-    //         const model = typeof item === 'string' ? JSON.parse(item) : item;
-    //         const point = model.position as THREE.Vector3;
-    //         const rotation = model.rotation as THREE.Euler;
-    //         const loadData = model.data ?? '';
-    //         const size = model.size ?? '';
-
-    //         await new Promise<void>((resolve) => {
-    //             this.geometryBuilder!.craeteModel(
-    //                 this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
-    //                 (object: THREE.Object3D) => {
-    //                     this.setObject!.create({ object, rotate: rotation, point });
-
-    //                     if (loadData?.RASPIL_LIST?.length > 0) {
-    //                         this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
-    //                     }
-
-    //                     counts++;
-    //                     resolve();
-    //                 },
-    //                 loadData,
-    //                 size
-    //             );
-    //         });
-    //     }
-
-    //     return counts;
-    // }
 
     async loadSingle(data: any): Promise<number> {
 
@@ -456,44 +447,63 @@ export class RoomManager extends Room {
         const loadData = model.data ?? '';
         const size = model.size ?? '';
 
-        await new Promise<void>((resolve) => {
-            this.geometryBuilder!.craeteModel(
+        if (!this._PRODUCTS[model.id]) {
+            console.log(`❌ Товара c ID:${model.id} нет в списке PRODUCTS`)
+            return 1
+        }
+        try {
+
+            /** @Загрузка_модели */
+
+            const object = await this.geometryBuilder!.createModel(
                 this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
-                (object: THREE.Object3D) => {
-                    this.setObject!.create({ object, rotate: rotation, point });
-
-                    if (loadData?.RASPIL_LIST?.length > 0) {
-                        this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
-                    }
-
-                    count++;
-                    resolve();
-                },
                 loadData,
                 size
             );
-        });
 
-        return count; // возвращает 1, если успешно загружено
+            /** @Создаём_объект_в_сцене */
+
+            await this.setObject!.create({
+                object,
+                rotate: rotation,
+                point,
+            });
+
+            /** @Столешница */
+
+            if (loadData?.RASPIL_LIST?.length > 0) {
+                this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
+            }
+
+            return 1;
+        } catch (error) {
+            console.error('Ошибка загрузки модели:', model.id, error);
+            return 1; // всё равно считаем обработанным
+        }
+
     }
 
     async loadData(data: string | string[]): Promise<number> {
 
-
         let counts = 0;
         const parse = typeof data === 'string' ? JSON.parse(data) : data;
 
-        for (const item of parse) {
-            const model = typeof item === 'string' ? JSON.parse(item) : item;
-            counts += await this.loadSingle(model);
-        }
+        const results = await Promise.all(
+            parse.map(item => this.loadSingle(item))
+        );
 
-        return counts;
+        return results.reduce((sum, val) => sum + val, 0);
     }
 
     async duplicateProd() {
         const curProd = this.root._trafficManager._currentObject
-        curProd.userData.current = false
+        if (!curProd) return
+        try {
+            curProd.userData.current = false
+        }
+        catch (e) {
+            console.log('❌ Контекст userData.current потерян')
+        }
         const { MOUSE_POSITION } = curProd.userData
 
         const saved = await this.saveSingle(curProd, true)
@@ -503,6 +513,8 @@ export class RoomManager extends Room {
 
 
         document.addEventListener('mousemove', this.addMouseEvent, false)
+
+             this.eventBus.emit('A:Duplicated')
 
     }
 
@@ -517,7 +529,6 @@ export class RoomManager extends Room {
 
 
     addVueEvents() {
-
 
         this.boundWallMaterial = (material) => {
 

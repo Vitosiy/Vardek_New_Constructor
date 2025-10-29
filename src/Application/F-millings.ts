@@ -152,18 +152,62 @@ export const additionalMillingKeys = {
 export const MILLINGS = {
 
     566720: [
+        // {
+        //     name: "corner_milling_1",
+        //     isCorner: true,
+        //     type: 'svg',
+        //     extrudeSettings: {
+        //         steps: 1,
+        //         depth: 1,
+        //         bevelEnabled: false,
+        //         bevelThickness: 0,
+        //         bevelSize: 0,
+        //         bevelOffset: 0,
+        //         bevelSegments: 0,
+
+        //     },
+        //     figureParams: [
+        //         {
+        //             nameCondition: "default",
+        //             condition: {
+        //                 width: {
+        //                     min: 20,
+        //                     max: Infinity,
+        //                 },
+        //                 height: {
+        //                     min: 20,
+        //                     max: Infinity,
+        //                 },
+        //             },
+        //             figure: {
+        //                 svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                 widthOffset: 0,
+        //                 heightOffset: 0,
+        //                 position: {
+        //                     z: 8
+        //                 },
+        //             },
+
+        //             hole: {
+        //                 svg: ``,
+        //                 widthOffset: 0,
+        //                 heightOffset: 0,
+        //             },
+        //         },
+        //     ],
+        // },
         {
             name: "corner_milling_1",
             isCorner: true,
             type: 'svg',
             extrudeSettings: {
-                steps: 1,
-                depth: 1,
-                bevelEnabled: false,
-                bevelThickness: 0,
-                bevelSize: 0,
-                bevelOffset: 0,
-                bevelSegments: 0,
+                steps: 0,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 3.5,
+                bevelSize: 3.5,
+                bevelOffset: -7.5,
+                bevelSegments: 1,
 
             },
             figureParams: [
@@ -181,17 +225,16 @@ export const MILLINGS = {
                     },
                     figure: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        widthOffset: 7.5,
+                        heightOffset: 7.5,
                         position: {
-                            z: 8
-                        },
+                            z: -2
+                        }
                     },
-
                     hole: {
-                        svg: ``,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -7.5,
+                        heightOffset: -7.5,
                     },
                 },
             ],

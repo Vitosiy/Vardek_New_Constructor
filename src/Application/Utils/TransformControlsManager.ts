@@ -167,10 +167,10 @@ export class TransformControlsManager {
 
     // Переключение режима (translate, rotate, scale)
     setMode(mode: 'translate' | 'rotate' | 'scale'): void {
-        this.checkDisposed();
+        // this.checkDisposed();
         if (this.isEnabled && this.currentTarget) {
             this.controls.setMode(mode);
-            this.callbacks.onModeChange(mode);
+            // this.callbacks.onModeChange(mode);
         }
     }
 
@@ -215,14 +215,18 @@ export class TransformControlsManager {
             this.totalDetach()
         }
 
+        const onSetMode = (value) => {
+            this.setMode(value)
+        }
+
+
+        this.eventBus.on("A:TransformSetMode", onSetMode)
         this.eventBus.on("A:TransformMode_On", onAttach)
         this.eventBus.on("A:TransformMode_Off", onDisable)
         this.eventBus.on("A:Load", onTotalDetach)
         this.eventBus.on("A:Create", onTotalDetach)
         this.eventBus.on("A:NextAction", onTotalDetach)
         this.eventBus.on("A:PrevAction", onTotalDetach)
-
-
 
     }
 }

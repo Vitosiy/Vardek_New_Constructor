@@ -2,6 +2,13 @@
 import * as THREE from 'three'
 // import { TBuildProduct } from '@/types/types'
 
+type TEdgeParams = {
+    mesh: THREE.Mesh,
+    name?: string,
+    manualParent?: THREE.Object3D,
+    material: THREE.Material
+}
+
 export class EdgeBuilder {
     // private parent: TBuildProduct
 
@@ -34,16 +41,24 @@ export class EdgeBuilder {
             opacity: 1,
         })
 
+        this.defaultLineMaterial = new THREE.LineBasicMaterial({
+            color: 'rgba(232, 232, 232, 1)', linewidth: 1,
+            // depthTest: false,
+            // depthWrite: false,
+            transparent: true,
+            opacity: 0.5,
+        })
+
     }
 
-    createEdge(object: THREE.Object3D, manualParent?: THREE.Object3D) {
+    public createEdge(object: THREE.Object3D, manualParent?: THREE.Object3D) {
         const edgeBody = new THREE.Object3D()
         // Привязываем ссылку на родителя для возможного внешнего использования
         edgeBody.userData.parentProduct = manualParent ?? this.parent
         object.traverse((child) => {
             if (child instanceof THREE.Mesh) {
                 // линии
-                const edge = this.createSingleEdge(child, object.name, manualParent)
+                const edge = this.createSingleEdge({ mesh: child, name: object.name, manualParent, material: this.lineMaterial })
                 edgeBody.add(edge)
 
                 // плоскости
@@ -57,20 +72,37 @@ export class EdgeBuilder {
         return edgeBody
     }
 
-    private createSingleEdge(mesh: THREE.Mesh, name?: string, manualParent?: THREE.Object3D) {
+    public createVisibleEdge(object: THREE.Object3D) {
+        const edgeBody = new THREE.Object3D()
+
+        object.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                // линии
+                const edge = this.createSingleEdge({ mesh: child, name: 'default', material: this.defaultLineMaterial })
+                edgeBody.add(edge)
+            }
+        })
+
+        return edgeBody
+    }
+
+    private createSingleEdge({ mesh, name, manualParent, material }: TEdgeParams) {
         const edges = new THREE.EdgesGeometry(mesh.geometry)
+
         const meshEdge = new THREE.LineSegments(
             edges,
-            this.lineMaterial
+            material
         )
         meshEdge.renderOrder = 1;
 
         meshEdge.rotation.copy(mesh.rotation)
         meshEdge.position.copy(mesh.position)
 
-        meshEdge.userData.edge = true
-        meshEdge.userData.name = name
-        meshEdge.userData.parent = manualParent ?? mesh
+        if (name != 'default') {
+            meshEdge.userData.edge = true
+            meshEdge.userData.name = name
+            meshEdge.userData.parent = manualParent ?? mesh
+        }
 
         return meshEdge
     }

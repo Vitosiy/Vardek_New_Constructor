@@ -1,6 +1,7 @@
 // import * as THREEInterfases from "../types/interfases"
 
 const START_PROJECT_PARAMS = {
+    projectId: null,
     type: 'New',
     rooms: [Object.freeze({
         id: 1000001,
@@ -106,7 +107,7 @@ const START_PROJECT_PARAMS = {
             castShadow: false,
             mapSize: 512,
             intensity: 1.6,
-            distance: 6000,
+            distance: 5000,
             decay: 0
         }
     },
@@ -130,9 +131,12 @@ const START_PROJECT_PARAMS = {
     default_palit_bottom: null,
     default_palit_top: null,
     default_handles: 69920,
-    default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338],
+    default_overlay_id: [63040, 7014884, 1944070, 1944063, 3922338, 6051066],
     default_plinth_body: 70096,
-    default_plinth_color: null
+    default_plinth_color: null,
+    default_showcase: 1013628,
+    default_milling: 2462671,
+    mirror_type: 10336730
 }
 
 Object.freeze(START_PROJECT_PARAMS)

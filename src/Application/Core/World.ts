@@ -10,7 +10,7 @@ import * as THREETypes from "@/types/types"
 
 import { TrafficManager } from "../Movement/TrafficManager"
 
-import { Environment } from "../World/Environment"
+import { Environment } from "../Lights/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -64,16 +64,17 @@ export class World {
             this.enviroment = new Environment(root)
         })
         this.vueEvents()
-
+        
 
         if (this.roomState.getRooms.length > 0) {
-            console.log('LOAD')
+            this.roomState.setLoad(false)
             const startRoomId = this.roomState.getRooms[0].id
             this.loadRoom(startRoomId)
         }
         else {
+            
             this.room?.defaultCreate()
-            this.lights.setLight(this.room!._wallsGroupSize, 3)
+            this.lights.setLight(this.room!._wallsGroupSize, 1)
         }
 
         /** @Для_dev */
@@ -97,7 +98,7 @@ export class World {
         this.roomState.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
         await this.setRoom();
-        this.lights.setLight(this.room!._wallsGroupSize, 3)
+        this.lights.setLight(this.room!._wallsGroupSize, 1)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room!)
@@ -117,7 +118,6 @@ export class World {
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
-
             const contant = this.room!.save() as string[]
                 
             this.roomState.addRoom({
@@ -132,10 +132,10 @@ export class World {
             })
             this.basketStore.clearBasket();
 
-            const rooms = this.roomState.getRooms
-            console.log(rooms)
+            const newrooms = this.roomState.getRooms
+            console.log(newrooms, 'NEW')
 
-            this.sceneState.updateProjectParams({ rooms: rooms })
+            this.sceneState.updateProjectParams({ rooms: newrooms })
             this.roomState.setCurrentRoomId(roomId)
             return
         }
@@ -152,11 +152,9 @@ export class World {
                 })
         this.roomState.updateRoom(roomId, contant, roomParams, basket)
         const rooms = this.roomState.getRooms
-               console.log(rooms)
-
-               
+        console.log(rooms, 'HAVE')
         // console.log(rooms, 'ROOMS')
-        this.sceneState.updateProjectParams({ rooms })
+        this.sceneState.updateProjectParams({ rooms: rooms })
 
     }
 
@@ -212,21 +210,12 @@ export class World {
         this.eventsStore.on('A:Save', this.onSaveRoom)
         this.eventsStore.on('A:Load', this.onLoadRoom)
 
-        // this.eventsStore.on("A:ContantLoaded", () => {
-        //     console.log()
-        //     const toAction: string[] = this.room?.save()!
-        //     this.root.userHistory.clearHistory(toAction)
-
-        // });
-
     }
 
     removeVueEvents() {
-        // this.resources.off('cubeTextureLoaded', this.onFirstCreate);
         this.eventsStore.off('A:Create', this.onCreateRoom);
         this.eventsStore.off('A:Save', this.onSaveRoom)
         this.eventsStore.off('A:Load', this.onLoadRoom)
-        // this.meshEvents?.removeVueEvents()
 
         this.room?.removeVueEvents();
         this.trafficManager?.moveManager.dispose();
@@ -236,7 +225,6 @@ export class World {
         this.lights = null
         this.enviroment = null
         this.room = null;
-        // this.meshEvents = null
         this.trafficManager = null
     }
 }
