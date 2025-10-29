@@ -160,8 +160,8 @@ export const useBasketStore = defineStore('basket', () => {
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value
     
-    const result = await syncBasketWithServer(data)
-    // const result = await syncInvoice(allBasketItems.value)
+    // const result = await syncBasketWithServer(data)
+    const result = await syncInvoice(data)
     return result
   }
 
