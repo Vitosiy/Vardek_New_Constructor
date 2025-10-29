@@ -26,6 +26,7 @@
                       :class="getErrorClass(propVal, item?.error?.props)">
                   <!-- {{ formatPropValue(propKey, propVal , item) }} -->
                   <span v-html="formatPropValue(propKey, propVal, item, index)"></span>
+                  
                   <span v-if="hasArticle(propKey, propVal)">
                     - артикул {{ getArticleCode(propKey, propVal) }}
                   </span>
@@ -339,8 +340,7 @@ const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
       // Возвращаем HTML строку, а не DOM элемент
       return `<ul>${listValue}</ul>`;
     }
-    console.log('тип')
-    return ;
+
   } 
   return getTypeName(propDef?.type, propVal);
 };
