@@ -77,7 +77,10 @@ const useBascetEvents = () => {
         console.log("dataIII", JSON.parse(data));
 
         clearTimeout(basketDebounceTimer!);
-        basketDebounceTimer = setTimeout(() => basketStore.addFromScene(), 500);
+        basketDebounceTimer = setTimeout(() => {
+            basketStore.addFromScene();
+            basketStore.syncBasket(); 
+        }, 500);
     }
 
     const addListeners = () => {
