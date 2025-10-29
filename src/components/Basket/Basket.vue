@@ -113,8 +113,11 @@ watch(() => useBasketStore().basketData, (newValue) => {
   items.value = newValue;
   basketUpdateKey.value++;
   loading.value = false;
-  errorCount.value = newValue.products.filter((item: IProduct) => item.error).length;
-  errorBasket.value = newValue.type === 'error';
+  console.log(newValue.products);
+  if(newValue.products) {
+    errorCount.value = newValue.products.filter((item: IProduct) => item.error).length;
+    errorBasket.value = newValue.type === 'error';
+  }
 }, { deep: true });
 
 
