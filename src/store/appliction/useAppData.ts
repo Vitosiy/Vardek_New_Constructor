@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookieUtils'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -11,9 +12,14 @@ export const useAppData = defineStore('AppData', () => {
 
   const fetchRemoteData = async () => {
     isLoading.value = true;
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
     const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
-    const response = await fetch(url, { method: 'GET' })
+    // const url = 'https://dev.vardek.online'
+    // const response = await fetch(`${url}/api/modeller/mainobject/GetData/`, { 
+    const response = await fetch(url, { 
+      method: 'GET'
+    })
     if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
 
     const contentType = response.headers.get('content-type')

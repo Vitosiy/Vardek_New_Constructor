@@ -13,41 +13,6 @@
       </h3> 
       
       <!-- Секция свойств товара тип сцена-->
-      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'scene'">
-        <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-          <div v-if="getPropDefinition(String(propKey))">
-            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
-
-            <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
-              <li v-for="(propVal, index) in propValue" :key="index">
-                <span v-if="shouldShowPropSceneValue(propKey, propVal) && propKey !== 'FASADE'"  
-                  :class="getErrorClass(propVal, item?.error?.props)">
-                  {{ formatPropValue(propKey, propVal) }}
-                  {{ getErrorText(propVal, item.product.props_error, item, propKey) }}
-                </span>
-                <span v-if="shouldShowPropSceneValue(propKey, propVal) && propKey === 'FASADE'"  
-                  :class="getErrorClass(propVal, item?.error?.props)">
-                  <ul class="basket-item__props-list">
-                    <li v-for="value in getFilteredProps(propVal)">{{ getPropLabel(String(value.key)) }} : {{ formatPropValue(value.key, value.value) }}</li>
-                  </ul>
-                  {{ getErrorText(propVal, item.product.props_error, item, propKey) }}
-                </span>
-              </li>
-
-
-            </ul>
-
-            <span  v-else :class="getErrorClass(propValue, item?.error?.props)">
-                {{ getTypeName(getPropDefinition(propKey).type, propValue) }}
-            </span>
-
-          </div>
-        </div>
-      </div> -->
-
-      <!-- Секция свойств товара тип каталог-->
-      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'"> -->
-      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog' || item?.product.TYPE === 'umscene'"> -->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 
