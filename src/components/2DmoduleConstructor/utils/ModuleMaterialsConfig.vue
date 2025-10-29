@@ -35,7 +35,7 @@ enum partsNames {
   LEFTSIDECOLOR = 'Левая стенка',
   RIGHTSIDECOLOR = 'Правая стенка',
   TOPFASADECOLOR = 'Накладка на крышку',
-  PROFILECOLOR = 'Цвет профилей'
+  PROFILECOLOR = 'Профили'
 }
 
 const {module, objectData, visualizationRef} = toRefs(props);

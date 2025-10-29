@@ -3,6 +3,7 @@
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import {OBB} from 'three/examples/jsm/math/OBB.js';
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import {
     GridModule, LOOPSIDE
@@ -13,6 +14,8 @@ import {useModelState} from '@/store/appliction/useModelState';
 
 import {BuildProduct} from "../BuildProduct"
 import {_URL} from "@/types/constants";
+import {CSG} from "three-csg-ts";
+import {Brush, Evaluator, SUBTRACTION} from "three-bvh-csg";
 
 export class BuildUniversalModule extends BuildProduct {
 
@@ -91,7 +94,7 @@ export class BuildUniversalModule extends BuildProduct {
         if (MODULEGRID) {
 
             this.parseModulegrid(MODULEGRID, PROPS)
-            this.buildModulegrid(PROPS, total)
+            this.buildModulegrid(PROPS, total, body)
             this.calcSubElementsAdditives(PROPS)
         }
 
@@ -181,6 +184,9 @@ export class BuildUniversalModule extends BuildProduct {
         if (product_data.moduleType.CODE !== "wardrobe")
             CONFIG.LOOPS = {}
 
+        if (this._APP.CATALOG.SECTIONS[product_data.OPTIONSECTION_ID].TYPE.toLowerCase().includes("hitech"))
+            CONFIG.isHiTech = true
+
         return CONFIG
     }
 
@@ -194,6 +200,11 @@ export class BuildUniversalModule extends BuildProduct {
 
         if(product_data.profilesConfig) {
             PROPS.CONFIG['PROFILECOLOR'] = product_data.profilesConfig.COLOR
+
+            if(product_data.profilesConfig.sideProfile)
+                PROPS.CONFIG['SIDEPROFILE'] = product_data.profilesConfig.sideProfile
+            else
+                delete PROPS.CONFIG['SIDEPROFILE']
         }
 
         product_data.sections.forEach((section, secIndex) => {
@@ -345,10 +356,99 @@ export class BuildUniversalModule extends BuildProduct {
         }
     }
 
-    buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D) {
+    subtractGeometry(mainMesh: THREETypes.TObject, subGeometries: Array) {
+
+        let subGeometriesCSG = subGeometries.map((_subGeometry) => {
+            const parentGeometry = _subGeometry.clone()
+
+            if (parentGeometry.geometry){
+                // Клонируем вычитаемую геометрию
+                let childGeometry = parentGeometry.geometry.clone()
+                // Возвращаем BSP-структуру для вычитаемой геометрии
+                return CSG.fromGeometry(childGeometry);
+            }
+            else if(parentGeometry.children[0] && parentGeometry.children[0].geometry) {
+                // Клонируем вычитаемый меш
+                let childMesh = parentGeometry.children[0].clone()
+
+                const {BODY_WIDTH, BODY_HEIGHT, BODY_DEPTH} = parentGeometry.userData.trueSizes
+
+                let childGeometry = new THREE.BoxGeometry(Math.ceil(BODY_WIDTH), Math.ceil(BODY_HEIGHT), Math.ceil(BODY_DEPTH))
+                childGeometry.computeBoundingBox()
+                childGeometry.computeBoundingSphere()
+
+                childMesh.geometry = childGeometry
+                childMesh.rotation.copy(parentGeometry.rotation)
+                childMesh.position.copy(parentGeometry.position)
+
+                childMesh.updateMatrix()
+                childMesh.geometry.applyMatrix4(childMesh.matrix)
+
+                childMesh.position.set(0, 0, 0);
+                childMesh.rotation.set(0, 0, 0);
+                childMesh.scale.set(1, 1, 1);
+                childMesh.matrix.identity();
+
+                // Возвращаем BSP-структуру для вычитаемой геометрии
+                return CSG.fromMesh(childMesh)
+            }
+        })
+
+        mainMesh.children.forEach(child => {
+            if (child.geometry) {
+                // Клонируем базовую геометрию
+                let startMesh = child.clone();
+                let startGeometry = startMesh.geometry.clone();
+                startGeometry.computeBoundingSphere()
+
+                startMesh.geometry = startGeometry
+                startMesh.updateMatrix()
+                startMesh.geometry.applyMatrix4(startMesh.matrix)
+
+                startMesh.position.set(0, 0, 0);
+                startMesh.rotation.set(0, 0, 0);
+                startMesh.scale.set(1, 1, 1);
+                startMesh.matrix.identity();
+
+                // Создаём BSP-структуру для базовой геометрии
+                let csgStartGeometry = CSG.fromMesh(startMesh);
+
+                subGeometriesCSG.forEach((csgChildGeometry) => {
+                    csgStartGeometry = csgStartGeometry.subtract(csgChildGeometry);
+                })
+
+                // Преобразуем обратно в геометрию
+                let newGeometry = CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
+                let directVector = new THREE.Vector3().subVectors(newGeometry.boundingSphere.center, startGeometry.boundingSphere.center)
+                newGeometry.center()
+
+                if (directVector.x !== 0 || directVector.y !== 0 || directVector.z !== 0)
+                    newGeometry.translate(directVector.x, directVector.y, directVector.z)
+
+                // Создаём UV-развёртку
+                this.planarUV(newGeometry);
+
+                // Освобождаем старую геометрию
+                child.geometry.dispose();
+                child.geometry = null;
+
+                child.geometry = newGeometry;
+
+                // Очистка памяти
+                newGeometry.dispose();
+                newGeometry = null;
+
+                startMesh.geometry.dispose();
+                startMesh = null;
+            }
+        })
+    }
+
+    buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D, moduleBody: THREE.Object3D) {
 
         PROPS.JSON_FILLINGS = []
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
+        const subGeometries = []
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
             if (section.fillings?.length) {
@@ -370,14 +470,14 @@ export class BuildUniversalModule extends BuildProduct {
                             const size = box.getSize(new THREE.Vector3());
 
                             productFilling.userData.trueSizes = {
-                                WIDTH: size.x,
-                                HEIGHT: size.y,
-                                DEPTH: size.z,
+                                BODY_WIDTH: size.x,
+                                BODY_HEIGHT: size.y,
+                                BODY_DEPTH: size.z,
                             }
 
-                            productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.WIDTH
-                            productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.HEIGHT
-                            productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.DEPTH
+                            productFilling.scale.x = filling.size.x / productFilling.userData.trueSizes.BODY_WIDTH
+                            productFilling.scale.y = filling.size.y / productFilling.userData.trueSizes.BODY_HEIGHT
+                            productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.BODY_DEPTH
                         }
                         else {
                             filling.position.z = sizeModule.depth - filling.size.z / 2;
@@ -392,6 +492,9 @@ export class BuildUniversalModule extends BuildProduct {
                             PROPS.JSON_FILLINGS.push(productFilling)
 
                         group.add(productFilling)
+
+                        if(filling.isProfile)
+                            subGeometries.push(productFilling)
                     }
 
                     const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
@@ -407,6 +510,58 @@ export class BuildUniversalModule extends BuildProduct {
                 })
             }
         })
+
+
+        if (PROPS.CONFIG['SIDEPROFILE']) {
+            const filling = PROPS.CONFIG['SIDEPROFILE']
+            const productInfo = this._PRODUCTS[filling.product]
+
+            if (!productInfo)
+                return
+
+            const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
+            const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
+
+            const onLoad = (productFilling, isModel = true) => {
+                if(filling.isProfile)
+                    productFilling.userData.isProfile = true
+
+                let sizeModule = PROPS.CONFIG.SIZE
+                let start_position = this.getStartPosition(sizeModule)
+
+                if(filling.rotation) {
+                    productFilling.rotation.x = filling.rotation.x;
+                    productFilling.rotation.y = filling.rotation.y;
+                    productFilling.rotation.z = filling.rotation.z;
+                }
+
+                productFilling.userData.trueSizes = {
+                    BODY_WIDTH: filling.size.x,
+                    BODY_HEIGHT: filling.size.y,
+                    BODY_DEPTH: filling.size.z,
+                }
+
+                filling.position.z = sizeModule.depth - filling.size.z / 2;
+
+                start_position.add(filling.position)
+                start_position.y += filling.size.x / 2
+
+                productFilling.position.copy(start_position)
+
+                productFilling.updateMatrix()
+                productFilling.updateMatrixWorld()
+                group.add(productFilling)
+
+                subGeometries.push(productFilling)
+            }
+
+            let productFilling = this.createSubProductObject(filling, data, PROPS)
+            onLoad(productFilling, false)
+        }
+
+        if(subGeometries.length) {
+            this.subtractGeometry(moduleBody, subGeometries)
+        }
 
         return
     }

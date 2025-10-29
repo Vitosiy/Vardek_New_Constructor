@@ -164,8 +164,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
   let profileData = {}
   if (isHiTechProfile) {
 
-    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section"))
-      width = startFillingData.width + module.value.moduleThickness * 2 || startFillingData.width
+    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section")) {
+      width = startFillingData.width + module.value.moduleThickness * 2
+      startFillingData.x -= module.value.moduleThickness
+    }
 
     height = product.height || module.value.moduleThickness
 
@@ -203,7 +205,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     image: product.PREVIEW_PICTURE,
     type: _type,
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
-    size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
+    size: new THREE.Vector3(width, startFillingData.height, depth),
     width,
     height,
     color: profileData.COLOR || module.value.moduleColor,

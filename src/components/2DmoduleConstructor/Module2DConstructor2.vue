@@ -74,6 +74,7 @@ const totalHeight = ref(0);
 const totalWidth = ref(0);
 const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
+const onSideProfile = ref<boolean>(false);
 
 const module = computed(() => {
 
@@ -953,6 +954,42 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
   optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item);
 };
 
+const initSideProfile = () => {
+  if (!module.value.profilesConfig?.sideProfile) {
+
+    const product = APP.CATALOG.PRODUCTS[6513251] //C - образный профиль
+    let profileData = {}
+
+    if (!module.value.profilesConfig) {
+      module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+      module.value.profilesConfig.colorsList = [...product.COLOR]
+    }
+
+    profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+
+    let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
+    if (typeProfile !== "c" && typeProfile !== "l")
+      typeProfile = typeProfile.split(",").pop().replace(/\s/g, '')
+
+    profileData.isProfile = true
+    profileData.TYPE_PROFILE = typeProfile
+    profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
+    profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
+    profileData.side = "left"
+    profileData.size = {x: module.value.height, y: product.height, z: product.depth}
+    profileData.product = 6513251
+    profileData.position = new THREE.Vector2( -profileData.manufacturerOffset - product.height / 2, 0);
+    profileData.rotation = new THREE.Vector3(0, 0, Math.PI / 2);
+
+    module.value.profilesConfig.sideProfile = profileData
+    onSideProfile.value = true
+  }
+  else {
+    delete module.value.profilesConfig.sideProfile
+    onSideProfile.value = false
+  }
+
+}
 //#endregion
 
 const reset = (reset = false, moduleGrid = false) => {
@@ -1213,6 +1250,17 @@ watch(onHorizont, () => {
             </div>
           </div>
 
+          <div
+              v-if="productData.PROPS.CONFIG.isHiTech"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
+            <p class="actions-title">Боковой профиль</p>
+            <Toggle
+                v-model="onSideProfile"
+                @change="initSideProfile"
+            />
+          </div>
+
         </div>
 
         <div class="actions-sections-header">
@@ -1421,7 +1469,7 @@ watch(onHorizont, () => {
         &--module-size {
           display: flex;
           flex-direction: row;
-          gap: 1rem;
+          gap: 1.5rem;
           flex-wrap: wrap;
           justify-content: flex-start;
           align-items: center;

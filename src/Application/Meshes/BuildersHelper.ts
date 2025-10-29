@@ -147,7 +147,7 @@ export class BuildersHelper extends GlobalsData {
             console.log(obj, 'obj')
 
 
-            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
+            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color" || key.includes("PROPERTY_FASADE_NUMBER_VALUE_ID")) {
                 obj[key] = value;
             } else {
                 obj[key] = eval(value);
