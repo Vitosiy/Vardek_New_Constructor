@@ -370,23 +370,18 @@ const getHoleOptionsActive = computed(() => {
 const convertServisData = (value, item) => {
   const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
-  console.log(USLUGI, item);
 
   if (parseInt(item.separated) === 0) {
-    console.log("EP");
     grid.value.forEach((col) => {
       col.forEach((row) => {
         const cur = row.serviseData.find((el) => el.ID === item.ID);
         cur.value = value;
-        console.log(cur, "row");
       });
     });
     // console.log(item, USLUGI);
 
     const cur = USLUGI.find((el) => el.ID === item.ID);
     cur.value = value;
-
-    console.log(USLUGI, "cur");
 
     return;
   }
@@ -473,7 +468,6 @@ const updateSectionWidth = (
   colIndex: number,
   rowIndex: number
 ) => {
-  console.log("HERE");
 
   const newValue = parseInt(value);
   let adjustedValue;
@@ -490,7 +484,6 @@ const updateSectionWidth = (
     });
   }
 
-  console.log(adjustedValue, "adjustedValue");
   // Обновляем значение в grid для синхронизации
   const clone = grid.value.map((item) => item);
   if (adjustedValue) {
@@ -498,7 +491,6 @@ const updateSectionWidth = (
   }
   grid.value = clone;
 
-  console.log(clone, "clone");
 };
 
 const updateSectionHeight = (value, colIndex, rowIndex) => {
@@ -755,7 +747,6 @@ const handleCellSelect = (colIndex, rowIndex, type) => {
 const createServiseData = () => {
   const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
-  console.log(PROPS, USLUGI, props.grid, "USLUGI");
 
   const convertParams = USLUGI.reduce((acc, el) => {
     const param = {

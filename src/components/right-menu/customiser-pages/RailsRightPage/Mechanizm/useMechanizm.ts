@@ -1,8 +1,8 @@
+// @ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { TFasadeProp } from "@/types/types";
-import { string } from "yup";
 
 type TWheightData = {
     width: number
@@ -32,7 +32,7 @@ export const useMechanizm = () => {
 
     const weightCalculation = (): TWheightData[] | null[] | [] => {
         try {
-            const { fasade_weight, milling_weight, FASADES, CATALOG } = appData.getAppData
+            const { fasade_weight, milling_weight, CATALOG } = appData.getAppData
             const { PRODUCTS } = CATALOG
             const { PROPS } = modelState.getCurrentModel!.userData
             const { CONFIG, FASADE } = PROPS
@@ -49,8 +49,6 @@ export const useMechanizm = () => {
 
                 const curWeight = fasade_weight[fasade.COLOR]
                 const curMilling = fasade.MILLING ? milling_weight[fasade.MILLING!] : prodMill ? milling_weight[defMilling] : null
-
-                console.log( milling_weight[defMilling],'curMilling')
 
                 if (curWeight) {
                     const square = FASADE_WIDTH * FASADE_HEIGHT
@@ -120,7 +118,7 @@ export const useMechanizm = () => {
             };
 
             const filtered: Record<string, string> = {};
-            const mechanism: Record<string, Record<string, any>> = {};
+            const mechanism: Record<string, Record<string, any>> | TMechanizmData[] = {};
 
 
             for (const optionKey in prodOptions) {

@@ -242,15 +242,13 @@ export const useModelState = defineStore('ModelState', () => {
         // console.log(fasadeNdx && productId, 'fasadeNdx, productId')
 
         if (fasadeNdx !== undefined && productId !== undefined) {
-            console.log("CH");
+
             let fasadePosData = null
             const product = _PRODUCTS.value[productId]
             const positionId = product.FASADE_POSITION[fasadeNdx]
 
             if (positionId) {
                 fasadePosData = _FASADE_POSITION.value[positionId]
-
-                console.log(fasadePosData, 'fasadePosData')
                 haveShowCase = fasadePosData.glass == 1
             }
 
@@ -333,8 +331,6 @@ export const useModelState = defineStore('ModelState', () => {
     /** Фрезеровки */
     const createCurrentMillingData = ({ fasadeId, productId, fasadeNdx }) => {
 
-        console.log(fasadeId, productId, fasadeNdx)
-
         let result = []
         if (fasadeId == 7397) {
             currentMillingData.value = []
@@ -345,7 +341,6 @@ export const useModelState = defineStore('ModelState', () => {
         const positionId = product.FASADE_POSITION[fasadeNdx]
 
         const fasadePosData = _FASADE_POSITION.value[positionId]
-        console.log(fasadePosData)
 
         const haveShowCase = fasadePosData?.glass == 1
 
@@ -372,8 +367,6 @@ export const useModelState = defineStore('ModelState', () => {
             result = millings.sort((a, b) => a.SORT - b.SORT)
 
             currentMillingData.value = result
-
-            console.log(result, 'result')
 
             return result
         }
@@ -421,9 +414,6 @@ export const useModelState = defineStore('ModelState', () => {
         const positionId = product.FASADE_POSITION[fasadeNdx]
         const fasadePosData = _FASADE_POSITION.value[positionId]
         const haveShowCase = fasadePosData.glass == 1
-
-        console.log(fasadePosData, 'fasadePosData')
-
 
         if (!haveShowCase) {
             currentShowcaseData.value = []

@@ -28,8 +28,6 @@ interface DrawLabelParams {
 
 export class Ruler {
   private menuStore = useMenuStore();
-
-  private root: THREETypes.TApplication
   private render: THREETypes.TRenderer
   private rulerLines: THREE.Object3D[] = [];
   private rullerSizeLines: THREE.Object3D[] = [];
@@ -59,7 +57,6 @@ export class Ruler {
   };
 
   constructor(root: THREETypes.TApplication) {
-    this.root = root
     this.render = root._renderClass!
   }
 
@@ -157,8 +154,6 @@ export class Ruler {
 
     const lableSizes = getLableSizes()
     const percentage = 0.85;
-
-    console.log(lableSizes, 'lableSizes')
 
     const axes = [
       {

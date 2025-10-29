@@ -925,8 +925,6 @@ const updateSizes = (
   if (newValue < minCurrent) newValue = minCurrent;
   const newAdjacentSize = total - newValue;
 
-  console.log(total - minAdjacent);
-
   if (newAdjacentSize < minAdjacent) newValue = total - minAdjacent;
 
   if (dimension === "width") {

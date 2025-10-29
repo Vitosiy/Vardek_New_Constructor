@@ -235,7 +235,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-            console.log('hhhhhhh')
+
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
             FASADE_PROPS[fasadeNdx].MILLING = globalMilling
@@ -312,8 +312,6 @@ export class MeshEvents extends BuildersHelper {
 
         this.resetFasade({ fasadeNdx, incomingModel });
         fasadeProp.ALUM = incomingModel;
-
-        console.log(incomingModel, 'incomingModel')
 
         const apply = async () => {
             this.handleWindowChange(CONFIG, fasadeProp, fasadeNdx, incomingModel);
@@ -652,11 +650,8 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     changeShowcase({ data, fasadeNdx }: TDataWithNdx) {
-        console.log(data)
 
         if (!this._currentMesh) return;
-
-        console.log('CHANGE----')
 
         const props = this._currentMesh.userData.PROPS
         const { FASADE, FASADE_DEFAULT, CONFIG } = props
@@ -991,14 +986,13 @@ export class MeshEvents extends BuildersHelper {
     }
 
     async deliteHandle({ data, fasadeNdx }: TDataWithNdx) {
-        if (!this._currentMesh) return;
+
+        if (!this._currentMesh || !data) return;
         const product = this._currentMesh;
         const { FASADE, CONFIG } = product.userData.PROPS;
         const { FASADE_PROPS } = CONFIG;
         const curFasadeMesh = FASADE[fasadeNdx]
         const curFasad = FASADE_PROPS[fasadeNdx]
-
-        console.log(data, 'data')
 
         await this.handlesBuilder.deliteHandle(curFasadeMesh)
         curFasad.HANDLES.id = data.ID

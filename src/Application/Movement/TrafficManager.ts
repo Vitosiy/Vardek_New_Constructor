@@ -103,11 +103,11 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
-            console.log('OBJ', object);
-            console.log('OBJ_CONFIG', object.userData.PROPS.CONFIG);
+            // console.log('OBJ', object);
+            // console.log('OBJ_CONFIG', object.userData.PROPS.CONFIG);
 
             // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
-            console.log('PROD', this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT])
+            // console.log('PROD', this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT])
             // Обновление корзины при простом выборе/перемещении не требуется
 
             if (object.userData.elementType !== 'raspil' && !object.userData.disableRaycast) {
@@ -135,7 +135,6 @@ export class TrafficManager {
 
     public checkSelect(value) {
         if (value == null) {
-            console.log('NO')
             this.modelState.clearCurrentModelFasadesData()
             this.menuStore.closeAllMenus();
         }
@@ -160,7 +159,6 @@ export class TrafficManager {
     removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer } = {}) {
 
         const removeObj = product ?? this._currentObject
-        console.log('product', product, removeObj)
         if (!removeObj) return
 
         if (removeObj instanceof THREE.Object3D) {
@@ -192,6 +190,7 @@ export class TrafficManager {
             }
 
             this.modelState.setCurrentModel(null)
+            this.events.emit("U:RemoveModel")
             return
         }
 
@@ -200,6 +199,7 @@ export class TrafficManager {
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
         this.currentObject = null
+        this.events.emit("U:RemoveModel")
         // Синхронизируем корзину для случая, когда пришёл не Object3D
         try {
             const basketStore = useBasketStore();
@@ -216,11 +216,8 @@ export class TrafficManager {
             this.removeFromRoom(model)
         }
 
-
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
         this.events.on('A:RemoveModelFromBasket', (payload: any) => {
-            console.log(payload, 'payload')
-
             let target = payload?.product;
 
             if (!(target instanceof THREE.Object3D)) {

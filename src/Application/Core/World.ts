@@ -62,13 +62,15 @@ export class World {
             this.enviroment = new Environment(root)
         })
         this.vueEvents()
-
+        
 
         if (this.roomState.getRooms.length > 0) {
+            this.roomState.setLoad(false)
             const startRoomId = this.roomState.getRooms[0].id
             this.loadRoom(startRoomId)
         }
         else {
+            
             this.room?.defaultCreate()
             this.lights.setLight(this.room!._wallsGroupSize, 1)
         }
@@ -174,9 +176,6 @@ export class World {
         const invValue = this.roomOptions.getRefractionValue
         if (this.enviroment) this.enviroment.toggleRefraction(invValue)
 
-
-        console.log(invValue, 'invValue')
-
     }
 
     vueEvents() {
@@ -197,21 +196,12 @@ export class World {
         this.eventsStore.on('A:Save', this.onSaveRoom)
         this.eventsStore.on('A:Load', this.onLoadRoom)
 
-        // this.eventsStore.on("A:ContantLoaded", () => {
-        //     console.log()
-        //     const toAction: string[] = this.room?.save()!
-        //     this.root.userHistory.clearHistory(toAction)
-
-        // });
-
     }
 
     removeVueEvents() {
-        // this.resources.off('cubeTextureLoaded', this.onFirstCreate);
         this.eventsStore.off('A:Create', this.onCreateRoom);
         this.eventsStore.off('A:Save', this.onSaveRoom)
         this.eventsStore.off('A:Load', this.onLoadRoom)
-        // this.meshEvents?.removeVueEvents()
 
         this.room?.removeVueEvents();
         this.trafficManager?.moveManager.dispose();
@@ -221,7 +211,6 @@ export class World {
         this.lights = null
         this.enviroment = null
         this.room = null;
-        // this.meshEvents = null
         this.trafficManager = null
     }
 }

@@ -34,43 +34,55 @@ export class ModelsBuilder {
         const model = this.parent._MODELS[props.CONFIG.MODELID]
         const path = url ?? model.file ?? model.DAE
         const PROD = this.parent._PRODUCTS[props.PRODUCT]
+        let normolized;
 
-        console.log(model, 'LOADED')
+        return new Promise((resolve, reject) => {
 
-        this.resources.startLoading(path, model.model_type, (file: any) => {
+            this.resources.startLoading(path, model.model_type, (file: any) => {
 
-            if (!file) {
-                console.error('Модель не может быть загружена', file)
-            }
+                if (!file) {
+                    console.error('Модель не может быть загружена', file)
+                }
+
+                const normolized = this.normalizeUploadedModel(file, model);
+
+                normolized.name = 'MODEL'
+                if (PROD) {
+                    normolized.userData.disableRaycast = PROD.disable_raycast == 1
+                }
+
+                const aabb = new THREE.Box3().setFromObject(normolized);
+                const center = new THREE.Vector3();
+                aabb.getCenter(center);
+                let size = aabb.getSize(center)
+
+                normolized.userData.PROPS = props
+
+                let obb = new OBB();
+                obb = obb.fromBox3(aabb);
+
+                normolized.userData.obb = obb
+                normolized.userData.aabb = aabb
+
+                normolized.userData.trueSizes = {
+                    DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
+                }
 
 
-            const normolized = this.normalizeUploadedModel(file, model);
 
-            normolized.name = 'MODEL'
-            if (PROD) {
-                normolized.userData.disableRaycast = PROD.disable_raycast == 1
-            }
+                if (onLoad) {
+                    onLoad(normolized)
+                }
+                else {
+                    resolve(normolized)
+                }
 
-            const aabb = new THREE.Box3().setFromObject(normolized);
-            const center = new THREE.Vector3();
-            aabb.getCenter(center);
-            let size = aabb.getSize(center)
+                // onLoad(normolized) 
+                // return normolized
 
-            normolized.userData.PROPS = props
+            })
 
-            let obb = new OBB();
-            obb = obb.fromBox3(aabb);
-
-            normolized.userData.obb = obb
-            normolized.userData.aabb = aabb
-
-            normolized.userData.trueSizes = {
-                DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
-            }
-
-            onLoad(normolized)
         })
-        return
     }
 
     public normalizeUploadedModel(model, params = {}) {

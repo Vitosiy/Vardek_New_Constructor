@@ -54,7 +54,6 @@ export class PlinthBuilder {
         const plinthParent = new THREE.Object3D()
         const plinthActions = props.CONFIG.PLINTH_ACTIONS
         const sizes: TSize = { ...props.CONFIG.SIZE };
-        console.log(sizes, 'IN PLINTH')
 
         this.createPlinthMesh(props, plinthActions, sizes, plinthParent, legsHeight)
         props.PLINTH_MESH = (plinthParent)
@@ -123,7 +122,6 @@ export class PlinthBuilder {
         key,
         legsHeight
     }: TPlinthData): THREE.Object3D {
-        console.log(legsHeight, plinthProd)
 
         const expressions = {
             "#X#": width,
@@ -132,7 +130,6 @@ export class PlinthBuilder {
         };
 
         const convertedData = { ...this.buildProduct.expressionsReplace(plinthModel.json, expressions), material };
-        console.log(convertedData, convertedData)
 
         const model = this.jsonBuilder.createMesh({ data: convertedData });
         const edgeBody = this.edgeBuilder.createEdge(model)

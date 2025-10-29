@@ -2,7 +2,7 @@
 import { ref, computed, watch } from "vue";
 
 const props = defineProps<{
-  value: number; // Текущее значение ширины
+  value: number|string; // Текущее значение ширины
   min: number; // Минимальное значение
   max: number; // Максимальное значение
   step: number; // Шаг изменения
@@ -11,7 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:value", value: number): void;
-  (e: "input", value: number): void;
+  (e: "input", value: number | null): void; 
 }>();
 
 const inputValue = ref(props.value); 

@@ -25,6 +25,7 @@ import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { useBascetEvents } from "@/components/Basket/helper/basketEvents";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -43,22 +44,23 @@ import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.v
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 import Toggle from "@vueform/toggle";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
+import MainLoader from "@/components/ui/loader/MainLoader.vue";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useScreenshotsStore } from "@/features/store/screenshotsStore/screenshotsStore";
 
-const schemeTransitionStore = useSchemeTransition();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
-const screenshotsStore = useScreenshotsStore();
-
-const appData = ref<{ [key: string]: any } | null>(null);
-
 const eventBus = useEventBus();
-
 const modelState = useModelState();
 const uniformState = useUniformState();
+const { testConnect, checkLoadContent, scheduleBasketSync } = useBascetEvents();
+
+const screenshotsStore = useScreenshotsStore();
+const schemeTransitionStore = useSchemeTransition();
+
+const appData = ref<Record<string, any> | null>(null);
 
 const models = ref<any>(null);
 const wallMaterials = ref<number | null>(null);
@@ -75,7 +77,6 @@ const _FASADE = ref({});
 const _MILLING = ref({});
 
 const preloaderRef = ref<HTMLElement | null>(null);
-const activePreloader = ref<boolean>(false);
 
 const sceneContainer = ref<HTMLElement | null>(null);
 const VerdekConstructor = ref<Application | null>(null);
@@ -119,42 +120,7 @@ const controllerValue = ref([
 const curControllerValue = ref(null);
 
 // Список событий
-const priceUpdateEvents = [
-  // "A:Move",
-  // "A:Selected",
-  // "A:ContantLoaded",
-  // "A:ClearSelected",
-  // "A:ScreenPrint",
-  // "A:Take3DScreenshot"
-  // "U:PositionChanged",
-  // "U:DrawPatina",
-  // "U:DeliteFasad",
-  // 'U:ChangeModule',
-
-  "U:Drop",
-  "U:Model-resize",
-  "U:ChangePaletteColor",
-  "U:ChangeMilling",
-  "U:ChangeFasade",
-  "A:Disable-Uniform-Mode",
-  "A:UM-update",
-  "A:Duplicate",
-  "A:RemoveModel",
-  "A:SelectModelOption",
-  "A:AddHandle",
-  "A:DeliteHandle",
-  "A:SelectPlinth",
-
-  "A:ChangeModuleTotalTexture",
-  "A:ChangeFasadsTopTexture",
-  "A:ChangeFasadsBottomTexture",
-  "A:ChangePaletteTotal",
-  "A:ChangeMillingTotal",
-  "A:ChangePlinthBody",
-  "A:ChangePlinthColor",
-  // "A:close-modal-custom",
-  // 'close-modal'
-];
+// const pricetEventsMap = bascetEvents.getEventsMap;
 
 onMounted(async () => {
   try {
@@ -174,7 +140,7 @@ onMounted(async () => {
       // Подписываемся на события
       eventBus.on("A:Move", getMove);
       eventBus.on("A:Selected", selected);
-      eventBus.on("A:ContantLoaded", checkContantLoad);
+      // eventBus.on("A:ContantLoaded", checkContantLoad);
       eventBus.on("A:ClearSelected", clearSelected);
       eventBus.on("A:ScreenPrint", screenPrint);
       eventBus.on("A:Take3DScreenshot", take3DScreenshot);
@@ -183,13 +149,6 @@ onMounted(async () => {
       eventBus.on("A:NextAction", setLocalActivateValue);
       eventBus.on("A:PrevAction", setLocalActivateValue);
       eventBus.on("A:GlobalTransformMode_Off", setLocalActivateValue);
-      // Подписываем все события на один обработчик
-
-      priceUpdateEvents.forEach((event) => {
-        console.log(event, "EV");
-        eventBus.on(event, commonEventHandler);
-      });
-
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);
 
@@ -197,7 +156,7 @@ onMounted(async () => {
       VerdekConstructor.value.refreshViewer();
       actions.value = VerdekConstructor.value.getAction();
       curControllerValue.value = controllerValue.value[0].name;
-      // console.log( actions.value)
+      testConnect()
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);
@@ -209,7 +168,7 @@ onBeforeUnmount(() => {
     // Отключаем все события
     eventBus.off("A:Move", getMove);
     eventBus.off("A:Selected", selected);
-    eventBus.off("A:ContantLoaded", checkContantLoad);
+    // eventBus.off("A:ContantLoaded", checkContantLoad);
     eventBus.off("A:ClearSelected", clearSelected);
     eventBus.off("A:ScreenPrint", screenPrint);
     eventBus.off("A:Take3DScreenshot", take3DScreenshot);
@@ -253,37 +212,39 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
-const commonEventHandler = (data) => {
-  console.log("Обновление корзиный", data);
-  try {
-    scheduleBasketSync();
-  } catch (e) {
-    console.warn("Basket addFromScene on drop failed", e);
-  }
-};
+// const commonEventHandler = (data) => {
+//   console.log("Обновление корзиный", data);
+//   try {
+//     scheduleBasketSync();
+//   } catch (e) {
+//     console.warn("Basket addFromScene on drop failed", e);
+//   }
+// };
 
-const checkContantLoad = (state: boolean) => {
-  // console.log("checkContantLoad", state);
-  activePreloader.value = state;
-};
+// const addBascetListener = () => {
+//   if (!checkContantLoad) {
+//     eventBus.on("A:ContantLoaded", scheduleBasketSync);
+//   } else {
+//   }
+// };
 
-// Дебоунс пересчёта корзины
-let basketDebounceTimer: any = null;
-const scheduleBasketSync = async () => {
-  const data = actions.value.save();
-  roomContantData.value?.setRoomContantDataForBasket(data);
-  console.log("data", JSON.parse(data));
-  // await nextTick();
-  // basketStore.addFromScene();
-  clearTimeout(basketDebounceTimer);
-  basketDebounceTimer = setTimeout(() => {
-    try {
-      basketStore.addFromScene();
-    } catch (e) {
-      console.warn("Basket addFromScene debounce failed", e);
-    }
-  }, 500);
-};
+// // Дебоунс пересчёта корзины
+// let basketDebounceTimer: any = null;
+// const scheduleBasketSync = async () => {
+//   console.log('FI')
+//   const data = actions.value.save();
+//   roomContantData.value?.setRoomContantDataForBasket(data);
+//   console.log("data", JSON.parse(data));
+
+//   clearTimeout(basketDebounceTimer);
+//   basketDebounceTimer = setTimeout(() => {
+//     try {
+//       basketStore.addFromScene();
+//     } catch (e) {
+//       console.warn("Basket addFromScene debounce failed", e);
+//     }
+//   }, 500);
+// };
 
 const getMove = (move: boolean) => {
   if (!product.value) return;
@@ -308,7 +269,7 @@ const controlsActivate = () => {
         controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
       }
     } catch (e) {
-      console.log("Не удалось найти параметр MOUSE_POSITION", e);
+      console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
     }
   }
 
@@ -623,6 +584,10 @@ const removeFromUniformGroup = (id) => {
   }
 };
 
+const checkContantLoad = computed(() => {
+  return roomState.getLoad;
+});
+
 const activeController = computed(() => {
   if (!modelState.getCurrentModel) controller.value = false;
 
@@ -737,12 +702,19 @@ defineExpose({
   closeTableRedactor,
   openTableRedactor,
   selected,
-  activePreloader,
+  scheduleBasketSync,
   getScreenshots: () => screenshotsStore.getScreenshots(),
   getScreenshotsByRoom: (roomId: string) =>
     screenshotsStore.getScreenshotsByRoom(roomId),
   clearScreenshots: () => screenshotsStore.clearScreenshots(),
 });
+
+watch(
+  () => checkContantLoad.value,
+  () => {
+    checkLoadContent()
+  }
+);
 
 watch(
   () => transformControlsValue.value,
@@ -753,8 +725,10 @@ watch(
 </script>
 
 <template>
+  <!-- <div ref="preloaderRef" class="preloader" v-show="!roomState.getLoad"></div> -->
+  <MainLoader v-show="!roomState.getLoad" />
+
   <div ref="sceneContainer" class="scene-container"></div>
-  <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
 
   <div
     :class="['model-controller', activeController]"
@@ -930,13 +904,15 @@ watch(
   z-index: 0;
 }
 
-.preloader {
-  position: absolute;
-  width: 100dvw;
-  height: 100dvh;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-}
+// .preloader {
+//   position: absolute;
+//   width: 100dvw;
+//   height: 100dvh;
+
+//   background: rgba(145, 144, 144, 0.5);
+//   backdrop-filter: blur(5px);
+//   z-index: 999;
+// }
 
 .inputs {
   position: absolute;

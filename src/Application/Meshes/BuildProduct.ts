@@ -65,8 +65,6 @@ export class BuildProduct extends BuildersHelper {
     constructor(root: THREETypes.TApplication) {
         super(root)
 
-        console.log(this._APP, 'BUILD')
-
         this.root = root
         this.ruler = root.ruler!
         this.resources = root._resources!
@@ -92,24 +90,112 @@ export class BuildProduct extends BuildersHelper {
         return this
     }
 
-    getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject, loaded_size?: THREETypes.TObject): void {
+    // _getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject, loaded_size?: THREETypes.TObject): void {
 
-        console.log(product_data, 'product_data')
+    //     const type = this._MODELS[product_data.models[0]]
 
-        const type = this._MODELS[product_data.models[0]]
+    //     let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
 
-        console.log(type, 'TYPE')
+    //     if (!!type.DAE) return;
 
-        let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
+    //     onLoad(model as THREE.Object3D)
+    // }
 
-        if (!!type.DAE) return;
+    //========================================================================================================
 
-        onLoad(model as THREE.Object3D)
+    getModel(
+        product_data: THREETypes.TObject,
+        loaded_props?: THREETypes.TObject,
+        loaded_size?: THREETypes.TObject
+    ): Promise<THREE.Object3D> {
+        return new Promise((resolve) => {
+            const type = this._MODELS[product_data.models[0]];
+            if (type.DAE) {
+                return this.models_builder.create({
+                    props: this.createStartProps(product_data),
+                    size: loaded_size
+                }).then(model => {
+                    return this.finalizeModel(model, resolve, type);
+                }).catch(err => {
+                    console.error('Ошибка загрузки DAE:', err);
+                });
+            } else {
+
+                const parentGroup = this.createPerentGroup(product_data, type, loaded_props, loaded_size);
+                return this.finalizeModel(parentGroup, resolve);
+            }
+
+
+        });
     }
 
-    /** Создание данных модели */
+    private finalizeModel(model: THREE.Object3D, resolve: (obj: THREE.Object3D) => void, type: any) {
+        if (type) {
+            resolve(model);
+            return;
+        }
 
-    createPerentGroup(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, type: THREETypes.TObject, loadedProps?: THREETypes.TObject, loaded_size?: THREETypes.TObject) {
+        const textures: THREE.Texture[] = [];
+
+        model.traverse((child) => {
+            if (!(child instanceof THREE.Mesh)) return;
+
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+
+            materials.forEach((mat: THREE.Material) => {
+                if (!mat) return;
+
+                const maps = [
+                    mat.map,
+                    mat.normalMap,
+                    mat.roughnessMap,
+                    mat.metalnessMap,
+                    mat.emissiveMap,
+                    mat.aoMap,
+                    mat.lightMap
+                ];
+
+                maps.forEach(tex => {
+                    if (tex instanceof THREE.Texture && !tex.image) {
+                        textures.push(tex);
+                    }
+                });
+            });
+        });
+
+        if (textures.length === 0) {
+            resolve(model);
+            return;
+        }
+
+        let loaded = 0;
+        const check = () => {
+            if (++loaded === textures.length) {
+                textures.forEach(tex => tex.removeEventListener('load', onTextureLoad));
+                resolve(model);
+            }
+        };
+
+        const onTextureLoad = () => check();
+
+        textures.forEach(tex => {
+            if (tex.image?.complete) {
+                check();
+            } else {
+                tex.addEventListener('load', onTextureLoad());
+            }
+        });
+    }
+
+    private setupModel(model: THREE.Object3D, product_data: THREETypes.TObject) {
+        model.userData.PROPS = this.createStartProps(product_data);
+    }
+
+    //========================================================================================================
+
+    /** Создание данных модели */
+    createPerentGroup(product_data: THREETypes.TObject, type: THREETypes.TObject, loadedProps?: THREETypes.TObject, loaded_size?: THREETypes.TObject) {
+        // createPerentGroup(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, type: THREETypes.TObject, loadedProps?: THREETypes.TObject, loaded_size?: THREETypes.TObject) {
 
         let parent_group = new THREE.Object3D();
 
@@ -121,10 +207,8 @@ export class BuildProduct extends BuildersHelper {
         /** Если модель */
 
         if (type.DAE) {
-            console.log('DAE')
-
-            this.models_builder.create({ onLoad, props })
-            return
+            // this.models_builder.create({ props })
+            return parent_group
         }
 
         /** Если json  */ /** Если есть загружаемые размеры */
@@ -324,7 +408,7 @@ export class BuildProduct extends BuildersHelper {
 
         const total = new THREE.Object3D();
         const edgeBody = new THREE.Object3D()
-        
+
         const { PROPS } = parentGroup.userData;
         const { CONFIG } = PROPS;
 
@@ -406,7 +490,7 @@ export class BuildProduct extends BuildersHelper {
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
 
-        /** @Раскоментировать_по_необходимости   */ 
+        /** @Раскоментировать_по_необходимости   */
         // if (tableTop) {
         //     tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
         //     tableTop.userData.positionWithoutTableTopHeight = baseY + bodyHeight * 0.5
@@ -598,7 +682,6 @@ export class BuildProduct extends BuildersHelper {
 
         body.matrixWorldNeedsUpdate = true;
         body.name = "BODY";
-        console.log(body, 'data.json')
 
         body.userData.MATERIAL_TYPE = data.json.material.type;
 
@@ -684,7 +767,6 @@ export class BuildProduct extends BuildersHelper {
         const createShelves = (axis: "X" | "Y", sizeKey: "width" | "height", posKey: "x" | "y", prefix: string) => {
             let width = initWidth;
             shelfs[axis].forEach((shelf, key) => {
-                console.log(shelf, 'shelf')
 
                 if (correction) width += correction;
 

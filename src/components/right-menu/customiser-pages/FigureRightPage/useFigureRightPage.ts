@@ -75,8 +75,6 @@ export const useFigureRightPage = () => {
             const fasadeData = FASADE[COLOR]
             const haveHandles = POSITION_HANDLES[PRODUCT]
 
-            console.log(POSITION_HANDLES[PRODUCT])
-
             if (haveHandles) {
                 tempList.push({
                     label: `Фасад ${parseInt(el) + 1}`,
@@ -87,8 +85,6 @@ export const useFigureRightPage = () => {
             };
 
         }
-
-        console.log(tempList, 'tempList')
 
         return tempList
 

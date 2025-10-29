@@ -342,8 +342,6 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             const milling = mllingKeys[optionKey]
             const plinth = plinthKey[optionKey]
 
-            console.log(key, plinth, 'PP')
-
             try {
                 if (globalOptions.value[optionKey]) {
                     if (globalOptions.value[optionKey].global === false) {

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // @ts-nocheck 31
 
-import { onMounted, ref, watch, useTemplateRef, nextTick } from "vue";
+import { onMounted, ref, watch, useTemplateRef, nextTick, computed } from "vue";
 import { useAppData } from "@/store/appliction/useAppData";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import MainHeader from "@/components/header/MainHeader.vue";
 import OptionsMenu from "@/components/left-menu/OptionsMenu.vue";
@@ -14,6 +15,7 @@ import { useRoute } from "vue-router";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import { useMenuStore } from "@/store/appStore/useMenuStore.ts";
 
+const roomState = useRoomState();
 const route = useRoute();
 const ready = ref<boolean>(false);
 const pageComponentRef = ref(null);
@@ -26,6 +28,7 @@ const pageComponentRef = ref(null);
     <OptionsMenu v-if="route.name === 'Constructor3d'" />
     <OptionsMenu2D v-if="route.name === 'Constructor2d'" />
     <CustomiserMenu v-if="route.name === 'Constructor3d'" />
+
     <RouterView v-slot="{ Component }">
       <component :is="Component" ref="pageComponentRef" />
     </RouterView>
@@ -38,6 +41,7 @@ const pageComponentRef = ref(null);
   height: calc(100% - 91px);
   display: flex;
   flex-wrap: nowrap;
+  position: relative;
 }
 </style>
 

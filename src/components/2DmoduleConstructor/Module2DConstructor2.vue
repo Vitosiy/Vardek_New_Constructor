@@ -302,6 +302,8 @@ const getFasadePosition = (_position) => {
   if (!fasadePosition)
     return {}
 
+    console.log(fasadePosition, 'fasadePosition')
+
   fasadePosition = builder.getExec(
       builder.expressionsReplace(fasadePosition,
           Object.assign(PROPS.CONFIG.EXPRESSIONS,

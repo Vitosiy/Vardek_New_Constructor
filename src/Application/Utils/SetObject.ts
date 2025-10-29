@@ -81,28 +81,12 @@ export class SetObject {
 
         /** Добавляем объект в RoomContant для последующего использования */
         this.roomManager._roomContant = object
-        // if (object.userData.elementType !==
-        //     "element_room") {
-        //     this.roomManager._roomContant = object
-        // }
 
         object.userData.currentWall = wall
         object.userData.targetPosition = point
 
         /** Режим объединения в группы для переходящей текстуры */
         if (this.uniformState.getUniformModeData.uniformMode) return
-
-        // Передаём данные созданного объекта
-
-        // if (trafficManager) {
-
-        //     // object.userData.aabb = new THREE.Box3().setFromObject(this.object);
-        //     // trafficManager._currentObject = object
-
-        //     trafficManager.ruler.drawRulerToObjects(object)
-        // }
-
-
 
         if (!boxHelper) return
 

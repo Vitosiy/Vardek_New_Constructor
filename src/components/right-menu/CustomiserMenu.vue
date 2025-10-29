@@ -158,7 +158,7 @@ onUnmounted(() => {
   max-height: 85vh;
   max-width: 551px;
   position: absolute;
-  top: 106px;
+  top: 10px;
   right: 10px;
   padding: 1rem;
   background: $white;

@@ -233,8 +233,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         const bigTexturePath = rootFasadeData.BIG_PICTURE ?? ''
         this.createTexture.setTexture(bigTexturePath)
 
-        console.log(rootFasadeData, 'rootFasadeData')
-
         this.maxGroupHeight = rootFasadeData.MAX_HEIGHT ?? this.maxGroupHeight
         this.maxGroupWidth = rootFasadeData.MAX_WIDTH ?? this.maxGroupWidth
 

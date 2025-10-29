@@ -92,8 +92,7 @@ export class BuildersHelper extends GlobalsData {
 
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
                 const size = this._FASADESIZE[incomeData.id];
-                console.log(size, 'size')
-
+                // console.log(size, 'size')
                 const suffix = customKey.endsWith("1") ? "1" : "2";
                 expressions[`#FASADESIZEWIDTH${suffix}#`] = incomeData.params.FASADE_WIDTH ?? size.WIDTH;
                 expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
@@ -142,14 +141,10 @@ export class BuildersHelper extends GlobalsData {
 
     getExec(obj) {
         Object.entries(obj).forEach(([key, value]) => {
-            console.log(obj, 'obj')
-
 
             if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color" || key.includes('PROPERTY_FASADE_NUMBER_VALUE_ID')) {
                 obj[key] = value;
             } else {
-                console.log(value, 'value')
-
                 obj[key] = eval(value);
             }
         });
@@ -288,7 +283,6 @@ export class BuildersHelper extends GlobalsData {
             this.resources.startLoading(url, "texture", (file) => {
                 if (!(file instanceof THREE.Texture)) return;
                 child.material = material
-                console.log(child.userData.mergedGeometry, 'ТЕКСТУРА 2')
                 this.applyTexture(child, file, textureSize, type);
             });
         });

@@ -54,6 +54,7 @@ export const useRailsRightPage = () => {
             curMech.active = values;
 
         }
+        eventBus.emit("A:SelectModelOption")
 
         if (!curOpt) return;
 
@@ -67,7 +68,7 @@ export const useRailsRightPage = () => {
 
         curOpt.active = values;
         eventBus.emit("A:SelectModelOption")
-        
+
     };
 
     const checkExeptionOptionForFasade = (options, global) => {
@@ -120,7 +121,6 @@ export const useRailsRightPage = () => {
         return groups.map(group => {
             const contant = group.CONTANT;
 
-            console.log(group, 'group')
             // Проверяем, есть ли в CONTANT хотя бы один элемент с хотя бы одним incomingId в SHOW_ON_FASADE
             const hasMatching = contant.some(item =>
                 item.SHOW_ON_FASADE && idStrs.some(idStr => item.SHOW_ON_FASADE.includes(idStr))

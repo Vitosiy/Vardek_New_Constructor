@@ -289,8 +289,6 @@ export class FasadeBuilder {
         // Перебор фасадов. Сохраняем исходную семантику фильтра по fasadeNdx.
         for (let key = 0; key < FASADE_PROPS.length; key++) {
 
-            console.log('FAS ID')
-
             const fasadeData = FASADE_PROPS[key];
             const haveShowcase = FASADE_POSITIONS[key].SHOWCASE === 1
 
@@ -299,8 +297,6 @@ export class FasadeBuilder {
 
                 const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
                 const includeIncomeFasade = currentProduct.FACADE.includes(color)
-
-                console.log(currentProduct.FACADE.includes(color), 'currentProduct.FASADE')
 
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
@@ -318,8 +314,6 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
-
-                    console.log('HERE')
                     fasadeData.MILLING = milling;
                 }
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE && haveShowcase) {
@@ -385,8 +379,6 @@ export class FasadeBuilder {
 
             // Алюм. профиль
             if (fasadeData.ALUM != null && FASADE_PROPS[key].COLOR != null) {
-
-                console.log('RESET ALUM')
 
                 this.parent.showcase_builder.createShowcase({
                     fasade: result,
@@ -454,8 +446,6 @@ export class FasadeBuilder {
         const currentFasadeColor = FASADE_PROPS[key]?.COLOR;
         const textureCheck = currentFasadeColor && currentFasadeColor != 7397
         const modelName = fasade_position.FASADE_MODEL;
-
-        console.log(fasade_position, '--ION')
 
         if (modelName) {
             const fasadeModel = this._APP.MODELS[modelName];
@@ -749,8 +739,6 @@ export class FasadeBuilder {
             SHOWCASE: replacedExpressions.glass
         };
 
-        console.log(fasadePositionsData, '--replacedExpressions')
-
         // Добавляем фасадную позицию в CONFIG, если ещё не существует
         if (this.parent.addIfNotExists(FASADE_POSITIONS, fasadePositionsData)) {
             if (!FASADE_POSITIONS.length) {
@@ -796,9 +784,6 @@ export class FasadeBuilder {
     private createPositionData = (positionData, startData, type) => {
         const degToRad = THREE.MathUtils.degToRad;
         const isRightModel = type === "right";
-
-        console.log(positionData);
-
         const rotations = {
             left: {
                 x: degToRad(-(positionData?.ROTATE_X ?? 0)),
@@ -833,10 +818,7 @@ export class FasadeBuilder {
             startData.x + (this.parent.calculateFromString(positionData?.FASADE_WIDTH ?? 0) / 2) + pos.x,
             startData.y + (this.parent.calculateFromString(positionData?.FASADE_HEIGHT ?? 0) / 2) + pos.y,
             startData.z + pos.z
-
         );
-
-        console.log(rotations, pos, '--OOO--');
 
         return { rotation, position };
     };

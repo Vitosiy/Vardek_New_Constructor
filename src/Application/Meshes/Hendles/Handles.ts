@@ -84,8 +84,6 @@ export class HandlesBuilder {
             fasade.add(handleModel)
         }
 
-        this.eventBus.emit('A:AddHandle')
-
         return handleModel
     }
 
@@ -168,12 +166,12 @@ export class HandlesBuilder {
     }
 
     public async deliteHandle(fasade: THREE.Object3D) {
+        if(!fasade) return
         fasade.traverse(children => {
             if (children.name === 'HANDLE') {
                 this.dispose.clearObject(children, this.scene)
             }
         })
-        this.eventBus.emit('A:DeliteHandle')
     }
 
     public restoreDefaultHandleData(fasadeData: TFasadeProp) {

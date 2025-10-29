@@ -177,8 +177,6 @@ export class Filters extends GlobalsData {
 
             });
 
-            console.log(ndx, 'ndx')
-
             const convert = this.groupSizers(result[size], product)
             result[size] = convert
         });

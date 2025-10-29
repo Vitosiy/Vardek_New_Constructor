@@ -73,8 +73,6 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   const productId = productData.value.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = data;
 
-  console.log(ID, 'INSURFACE');
-
   modelState.createCurrentFasadeTypesData({ fasadeId: ID, productId });
   modelState.createCurrentPaletteData(ID);
   modelState.createCurrentMillingData({ fasadeId: ID, productId, fasadeNdx });
@@ -83,8 +81,6 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   modelState.createCurrentGlassData({ fasadeId: ID, productId });
 
   const transitionT = checkTransitionTexture(data.ID);
-
-  console.log(data, "fasadeId");
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
   emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE, transitionT });

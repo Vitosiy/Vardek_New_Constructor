@@ -340,8 +340,6 @@ const prepareData = () => {
   const glassData = modelState.getCurrentGlassData;
   const showcaseData = modelState.getCurrentShowcaseData;
 
-  console.log(millingData, "millingData");
-
   // Установка списков и флагов существования
 
   /** @Фрезеровка */
@@ -349,8 +347,6 @@ const prepareData = () => {
     millingList.value = millingData;
     isMillingExist.value = millingData.length > 0;
   }
-
-  console.log(isMillingExist.value, "isMillingExist.value");
 
   /** @Витрины */
   if (
@@ -410,7 +406,7 @@ const prepareData = () => {
     );
   }
   if (PALETTE && paletteData[PALETTE]) {
-    console.log(PALETTE, "PALETTE");
+
     const { NAME, HTML } = paletteData[PALETTE];
     currentPaletteData.value = { name: NAME, hex: HTML };
   }
@@ -441,7 +437,7 @@ const prepareFasadeSizeList = () => {
   try {
     if (sizesParentKey.length == 0) return [];
   } catch (e) {
-    console.log("&dagger Список размера фасадов отсутствует");
+    console.log("Список размера фасадов отсутствует");
   }
 
   const parentKey = parseInt(sizesParentKey[props.tabIndex]);

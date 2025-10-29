@@ -21,8 +21,6 @@ export const useMenuStore = defineStore('menu', () => {
     openMenus.value = [];
     catalogFilterProductsId.value = [];
 
-    console.log(openMenus.value.includes(type), type, 'products')
-
     if (!openMenus.value.includes(type)) {
 
       openMenus.value.push(type);

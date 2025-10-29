@@ -258,9 +258,6 @@ export class MoveManager {
 
     // Выбор Объекта 
     private selectObject() {
-
-        console.log('Select')
-
         this.roomManager._rulerContant = false
 
         this.raycaster.setFromCamera(this.mouse, this.camera);

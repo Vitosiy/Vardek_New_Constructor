@@ -243,7 +243,6 @@ export class Renderer {
         this.eventBus.on('A:Quality', this.onSetQuality)
         this.eventBus.on('A:ToggleRulerVisibility', (value) => {
             this.rulerVisible = value
-            console.log(value, '9899')
         })
 
     }

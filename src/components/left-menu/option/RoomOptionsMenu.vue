@@ -7,6 +7,7 @@ import {
   onBeforeMount,
   onUnmounted,
   defineExpose,
+  nextTick,
 } from "vue";
 import { _URL } from "@/types/constants";
 import type {
@@ -154,12 +155,17 @@ const changeHeightClamp = (value: number | null) => {
   eventBus.emit("A:Height-clamp", value);
 };
 
-const loadRoom = (id: number) => {
-  roomOptions.resetGlobalOptions();
-  eventBus.emit("A:Load", id);
-  eventBus.emit("A:ContantLoaded", false);
-  eventBus.emit("A:DrawingMode", false);
-  eventBus.emit("A:ToggleRulerVisibility", true);
+const loadRoom = async (id: number) => {
+
+  await roomState.setLoad(false);
+  await nextTick(); 
+  setTimeout(() => {
+    roomOptions.resetGlobalOptions();
+    eventBus.emit("A:Load", id);
+    eventBus.emit("A:ContantLoaded", false);
+    eventBus.emit("A:DrawingMode", false);
+    eventBus.emit("A:ToggleRulerVisibility", true);
+  }, 0);
 };
 
 const deliteRoom = (value: number) => {

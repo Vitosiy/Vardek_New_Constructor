@@ -36,8 +36,6 @@ export class JsonBuilder {
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
 
-        console.log(data)
-
         this.material = this.createMaterial(json.material, fasade) as THREE.Material
 
         if(left)

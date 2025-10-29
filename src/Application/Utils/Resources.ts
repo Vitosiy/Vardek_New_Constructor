@@ -1,4 +1,4 @@
-//@ts-check
+//@ts-nocheck
 
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
@@ -20,6 +20,10 @@ export class Resources extends EventEmitter {
 
     get _data() {
         return this.data
+    }
+
+    get _loaders(){
+        return this.loaders
     }
 
     setLoaders() {

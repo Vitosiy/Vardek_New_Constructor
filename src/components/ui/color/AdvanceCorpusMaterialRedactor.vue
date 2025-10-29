@@ -237,12 +237,14 @@ const onSelectGlass = (data) => {
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
   if (type == "surface" && props.isFasade) {
+    
     let { NAME, DETAIL_PICTURE } = _FASADE[7397];
     currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
     isMillingExist.value = false;
     isPalleteExist.value = false;
     isPatinaExist.value = false;
     isGlassExist.value = false;
+    isShowcaseExist.value = false;
 
     callback(_FASADE[7397], "COLOR");
     callback(false, "MILLING");
@@ -319,7 +321,6 @@ const update = () => {
 };
 
 const prepareData = () => {
-  console.log("PREPARE");
 
   const { PROPS } = productData.value;
   const { CONFIG } = PROPS;
@@ -436,7 +437,6 @@ const prepareData = () => {
     );
   }
   if (PALETTE && paletteData[PALETTE]) {
-    console.log(PALETTE, "PALETTE");
     const { NAME, HTML } = paletteData[PALETTE];
     currentPaletteData.value = { name: NAME, hex: HTML };
   }
@@ -457,8 +457,6 @@ const prepareData = () => {
 };
 
 onBeforeMount(() => {
-  console.log("LLL");
-
   materialList.value = modelState.getCurrentModelFasadesData;
   productData.value = modelState.getCurrentModel?.userData;
   productId.value = productData.value.PROPS.PRODUCT;

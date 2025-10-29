@@ -24,7 +24,7 @@ const prepareTabData = ref<IFigureItems[] | []>([]);
 
 const currentFigure = ref<string>("");
 
-const { figureItems, createSurfaceList, createPlinthData, createHandlesList } =
+const { figureItems, createSurfaceList, createPlinthData } =
   useFigureRightPage();
 
 const optionsTabChange = ({ tab }: ITabChangeParams) => {
@@ -35,15 +35,10 @@ onBeforeMount(() => {
   plinthExist.value = createPlinthData().length > 0;
   handlesExist.value = createSurfaceList().length > 0;
 
-  console.log(handlesExist.value, 'handlesExist')
-
-
   const checkExist: TexistItem = {
     Handles: Object.values(createSurfaceList()).length > 0,
     Plinth: Object.values(createPlinthData()).length > 0,
   };
-
-    console.log(checkExist, 'checkExist')
 
   prepareTabData.value = figureItems.filter((el) => {
     if (checkExist[el.name as keyof TexistItem]) {
