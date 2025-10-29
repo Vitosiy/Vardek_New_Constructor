@@ -123,6 +123,7 @@ export class FasadeBuilder {
 
             const haveShowcase = FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
             let curFasade = FASADE[fasadeNdx]
+            const curParent = curFasade.parent
             curFasade.geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
 
             if (remove) {
@@ -175,13 +176,8 @@ export class FasadeBuilder {
             const fasadePositionData = this.getFasadePosition(CONFIG, fasadeNdx, isUMmodule);
 
             if (!fasDepthTocheck) {
-                const clear = this.dispose
-                const parent = curFasade.parent as THREE.Object3D
-                parent.traverse(child => {
-                    clear.clearObject(child, this.parent.scene)
-                })
 
-                curFasade = this.processFasadeCreation({
+                const { result, fasadeEdge } = this.processFasadeCreation({
                     fasadePositionData,
                     startPosition,
                     props,
@@ -190,12 +186,24 @@ export class FasadeBuilder {
                     FASADE_DEFAULT,
                     FASADE_POSITIONS,
                     FASADE_TYPE,
-                    fasadeNdx,
+                    key: fasadeNdx,
                     incomingModel,
                     curBodyExceptions,
-                    parent,
-                    modelType
+                    parent: curParent,
+                    modelType,
                 });
+
+                curFasade.geometry.dispose()
+                curFasade.geometry = null
+                curFasade.geometry = result.geometry.clone()
+                try {
+                    curFasade.userData.trueSize.FASADE_DEPTH = fasadePositionData.FASADE_DEPTH
+                } catch (e) {
+                    console.log(e)
+                }
+
+
+                console.log(curFasade)
 
             }
 
@@ -329,7 +337,7 @@ export class FasadeBuilder {
             // Позиция фасада вычисляется один раз
             const fasadePositionData = this.getFasadePosition(CONFIG, key, isUMmodule);
 
-            const result = this.processFasadeCreation({
+            const { result } = this.processFasadeCreation({
                 fasadePositionData,
                 startPosition,
                 props,
@@ -631,7 +639,8 @@ export class FasadeBuilder {
         incomingModel,
         curBodyExceptions,
         parent,
-        modelType
+        modelType,
+        income = false
     }: {
         fasadePositionData: any,
         startPosition: THREE.Vector3,
@@ -645,7 +654,8 @@ export class FasadeBuilder {
         incomingModel?: number,
         curBodyExceptions?: boolean,
         parent: THREE.Object3D,
-        modelType: string
+        modelType: string,
+        income?: boolean
     }): THREE.Object3D {
         // Создание фасада
         let { fasade, fasadeEdge, defaultEdge } = this.createFasade({
@@ -680,7 +690,9 @@ export class FasadeBuilder {
         const isNewFasade = FASADE_DEFAULT.length < FASADE_PROPS.length;
         result.userData.edgeID = fasadeEdge.id;
 
-        if (isNewFasade) {
+        if (isNewFasade || income) {
+            console.log(isNewFasade, 'isNewFasade')
+
             FASADE.push(result);
             const copy = result.clone();
             FASADE_DEFAULT.push(copy);
@@ -688,7 +700,7 @@ export class FasadeBuilder {
             parent.add(result, fasadeEdge);
         }
 
-        return result;
+        return { result, fasadeEdge }
     }
 
     private checkFasadeDepth = (props, key) => {
@@ -747,6 +759,8 @@ export class FasadeBuilder {
                 FASADE_POSITIONS[key] = fasadePositionsData;
             }
         }
+
+        console.log(FASADE_POSITIONS, 'FASADE_POSITIONS')
 
         return fasadePositionsData;
     }
