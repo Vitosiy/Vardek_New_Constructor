@@ -6,6 +6,7 @@ import {useAppData} from "@/store/appliction/useAppData.ts";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
+import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
 
 const props = defineProps({
   module: {
@@ -138,7 +139,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
           module.value.profilesConfig.COLOR = objectData.value.PROPS.CONFIG['PROFILECOLOR']
           module.value.sections.forEach((section, secIndex) => {
 
-            module.value.sections.cells.forEach((cell, cellIndex) => {
+            module.value.section.cells.forEach((cell, cellIndex) => {
               if(cell.hiTechProfiles) {
                 cell.fillings.forEach(filling => {
                   if(filling.isProfile) {
@@ -195,6 +196,10 @@ const getCurrentRedactor = computed(() => {
   return !["MODULE_COLOR", "BACKWALL"].includes(currentOption.value);
 });
 
+const getSideProfile = computed(() => {
+  return module.value.profilesConfig?.sideProfile || false;
+});
+
 onMounted(() => {
   modelState.createCurrentBackwallData(objectData.value.globalData);
   modelState.createCurrentSidewallData(objectData.value.globalData);
@@ -247,6 +252,11 @@ onMounted(() => {
           :is2Dconstructor="true"
           :material-list="materialList"
           @parent-callback="selectOption"
+      />
+
+      <HiTechSideprofile
+          v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
+          :module="module"
       />
     </div>
   </transition>
@@ -739,6 +749,7 @@ onMounted(() => {
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: 0;
     border-radius: 15px;
+    overflow-y: scroll;
 
     &__container {
       display: flex;

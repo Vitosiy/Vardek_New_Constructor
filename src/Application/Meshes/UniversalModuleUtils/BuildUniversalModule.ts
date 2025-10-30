@@ -361,13 +361,7 @@ export class BuildUniversalModule extends BuildProduct {
         let subGeometriesCSG = subGeometries.map((_subGeometry) => {
             const parentGeometry = _subGeometry.clone()
 
-            if (parentGeometry.geometry){
-                // Клонируем вычитаемую геометрию
-                let childGeometry = parentGeometry.geometry.clone()
-                // Возвращаем BSP-структуру для вычитаемой геометрии
-                return CSG.fromGeometry(childGeometry);
-            }
-            else if(parentGeometry.children[0] && parentGeometry.children[0].geometry) {
+            if(parentGeometry.children[0] && parentGeometry.children[0].geometry) {
                 // Клонируем вычитаемый меш
                 let childMesh = parentGeometry.children[0].clone()
 
@@ -392,6 +386,32 @@ export class BuildUniversalModule extends BuildProduct {
                 // Возвращаем BSP-структуру для вычитаемой геометрии
                 return CSG.fromMesh(childMesh)
             }
+            else {
+                // Клонируем вычитаемый меш
+                let childMesh = parentGeometry.clone()
+
+                const {BODY_WIDTH, BODY_HEIGHT, BODY_DEPTH} = parentGeometry.userData.trueSizes
+
+                let childGeometry = new THREE.BoxGeometry(Math.ceil(BODY_WIDTH), Math.ceil(BODY_HEIGHT), Math.ceil(BODY_DEPTH))
+                childGeometry.computeBoundingBox()
+                childGeometry.computeBoundingSphere()
+
+                childMesh.geometry = childGeometry
+                childMesh.rotation.copy(parentGeometry.rotation)
+                childMesh.position.copy(parentGeometry.position)
+
+                childMesh.updateMatrix()
+                childMesh.geometry.applyMatrix4(childMesh.matrix)
+
+                childMesh.position.set(0, 0, 0);
+                childMesh.rotation.set(0, 0, 0);
+                childMesh.scale.set(1, 1, 1);
+                childMesh.matrix.identity();
+
+                // Возвращаем BSP-структуру для вычитаемой геометрии
+                return CSG.fromMesh(childMesh)
+            }
+
         })
 
         mainMesh.children.forEach(child => {
@@ -573,7 +593,7 @@ export class BuildUniversalModule extends BuildProduct {
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
         body.matrixWorldNeedsUpdate = true
         body.name = "BODY"
-        body.userData.MATERIAL = data.json.material.type
+        body.userData.MATERIAL = data.json?.material.type || null
 
         const box = new THREE.Box3().setFromObject(body);
         const size = box.getSize(new THREE.Vector3());

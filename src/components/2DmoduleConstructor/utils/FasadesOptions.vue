@@ -457,8 +457,28 @@ const changeLoopside = (secIndex, fasade, newSide, doorIndex) => {
   module.value.sections[secIndex].fasades[doorIndex].forEach((item) => item.loopsSide = fasade.loopsSide)
 
   calcLoops(secIndex)
+
+  if(module.value.profilesConfig?.sideProfile)
+    changeProfileSide(LOOPSIDE[fasade.loopsSide]?.includes("left") ? "left" : "right")
+
   visualizationRef.value.renderGrid();
 }
+
+const changeProfileSide = (side: String) => {
+  const profileSidesMap = {
+    "right": new THREE.Vector2( -module.value.profilesConfig.sideProfile.manufacturerOffset - module.value.profilesConfig.sideProfile.size.y / 2, 0),
+    "left": new THREE.Vector2( module.value.width + module.value.profilesConfig.sideProfile.manufacturerOffset + module.value.profilesConfig.sideProfile.size.y / 2, 0),
+  }
+  const profileRotationMap = {
+    "right": Math.PI / 2,
+    "left": -Math.PI / 2,
+  }
+
+  module.value.profilesConfig.sideProfile.position = profileSidesMap[side]
+  module.value.profilesConfig.sideProfile.rotation = new THREE.Vector3(0, 0, profileRotationMap[side]);
+
+  module.value.profilesConfig.sideProfile.side = side;
+};
 
 const getLoopsideList = (secIndex, doorIndex) => {
   const productInfo = APP.CATALOG.PRODUCTS[module.value.productID]
@@ -811,7 +831,7 @@ onMounted(() => {
             >
 
               <div
-                  v-if="section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
+                  v-if="!module.isHiTech && section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
                   :class="'actions-items--container'"
               >
                 <article class="actions-items actions-items--right">
@@ -901,13 +921,13 @@ onMounted(() => {
                                       class="actions-input"
                                       :value="segment.height"
                                       @input="
-                            debounce(() => updateFasadeHeight(
-                              $event.target.value,
-                              secIndex,
-                              doorIndex,
-                              segmentIndex
-                            ), 1000)
-                          "
+                                        debounce(() => updateFasadeHeight(
+                                          $event.target.value,
+                                          secIndex,
+                                          doorIndex,
+                                          segmentIndex
+                                        ), 1000)
+                                      "
                                   />
                                 </div>
                               </div>

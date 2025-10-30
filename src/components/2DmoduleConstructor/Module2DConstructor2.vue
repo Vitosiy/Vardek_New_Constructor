@@ -121,6 +121,9 @@ const module = computed(() => {
         isSlidingDoors,
       }
 
+      if(PROPS.CONFIG.isHiTech)
+        _module.isHiTech = true
+
       PROPS.CONFIG.MODULEGRID = _module
 
       if (isSlidingDoors) {
@@ -170,7 +173,7 @@ const module = computed(() => {
             <FasadeObject>{
               id: 1,
               width: FASADE.FASADE_WIDTH,
-              height: FASADE.FASADE_HEIGHT - FASADE.POSITION_Y,
+              height: FASADE.FASADE_HEIGHT - _module.horizont,
               position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
               material: <FasadeMaterial>{
                 ...FASADE_PROPS
@@ -963,6 +966,7 @@ const initSideProfile = () => {
     if (!module.value.profilesConfig) {
       module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
       module.value.profilesConfig.colorsList = [...product.COLOR]
+      productData.value.PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
     }
 
     profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
@@ -975,11 +979,21 @@ const initSideProfile = () => {
     profileData.TYPE_PROFILE = typeProfile
     profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
     profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
-    profileData.side = "left"
     profileData.size = {x: module.value.height, y: product.height, z: product.depth}
     profileData.product = 6513251
-    profileData.position = new THREE.Vector2( -profileData.manufacturerOffset - product.height / 2, 0);
-    profileData.rotation = new THREE.Vector3(0, 0, Math.PI / 2);
+
+    profileData.side = LOOPSIDE[module.value.sections[0].loopsSides[0]]?.includes("left") ? "left" : "right"
+    const profileSidesMap = {
+      "right": new THREE.Vector2( -profileData.manufacturerOffset - profileData.size.y / 2, 0),
+      "left": new THREE.Vector2( module.value.width + profileData.manufacturerOffset + profileData.size.y / 2, 0),
+    }
+    const profileRotationMap = {
+      "right": Math.PI / 2,
+      "left": -Math.PI / 2,
+    }
+
+    profileData.position = profileSidesMap[profileData.side];
+    profileData.rotation = new THREE.Vector3(0, 0, profileRotationMap[profileData.side]);
 
     module.value.profilesConfig.sideProfile = profileData
     onSideProfile.value = true
@@ -1134,7 +1148,7 @@ onBeforeMount(() => {
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
-
+  onSideProfile.value = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
 });
 
 onMounted(() => {
@@ -1147,6 +1161,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   shapeAdjuster = null;
   module.value = null;
+  onHorizont.value = false
+  onSideProfile.value = false
 });
 
 watch(visualizationRef, () => {
