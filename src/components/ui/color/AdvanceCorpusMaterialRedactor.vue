@@ -29,9 +29,8 @@ import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorR
 import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
 import ColorRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/ColorRedactor.vue";
 
-
 const props = defineProps({
-  elementIndex: [Number , String] /** Индекс выбранного элемента */,
+  elementIndex: [Number, String] /** Индекс выбранного элемента */,
   elementData: Object,
   isFasade: {
     type: Boolean,
@@ -43,13 +42,11 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits([
-  "parent-callback",
-]);
+const emit = defineEmits(["parent-callback"]);
 
 const callback = (material: Object, type: String, palette: Number) => {
   emit("parent-callback", material, type, palette);
-}
+};
 
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
@@ -87,12 +84,16 @@ const isPatinaExist = ref<boolean>(false);
 const glassList = ref<Array>([]);
 const isGlassExist = ref<boolean>(false);
 
+const showcaseList = ref<Array>([]);
+const isShowcaseExist = ref<boolean>(false);
+
 const onSelectMaterial = (data) => {
 
   if (data.ATTACH_MILLINGS?.[0]) {
     modelState.createCurrentMillingData({
       fasadeId: data.ID,
       productId: productId.value,
+    fasadeNdx: props.elementIndex,
     });
 
     modelState.createCurrentPatinaData({
@@ -110,6 +111,7 @@ const onSelectMaterial = (data) => {
     modelState.createCurrentGlassData({
       fasadeId: data.ID,
       productId: productId.value,
+    fasadeNdx: props.elementIndex,
     });
   }
 
@@ -118,83 +120,105 @@ const onSelectMaterial = (data) => {
   isSurfaceSelected.value = true;
 
   millingList.value = modelState.getCurrentMillingData;
-  isMillingExist.value = millingList.value.length > 0// && !product.GLASS[0];
+  isMillingExist.value = millingList.value.length > 0 && !haveShowcase;
 
   paletteList.value = modelState.getCurrentPaletteData;
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
 
   glassList.value = modelState.getCurrentGlassData;
-  isGlassExist.value = glassList.value.length > 0;
 
-  /** Патина */
+  /** @Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value = patinaList.value.length > 0// && !product.GLASS[0];
+  isPatinaExist.value =
+    patinaList.value.length > 0 && !product.type_showcase[0];
 
-  let { NAME, PREVIEW_PICTURE } = data;
-  currentSurfaceData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
-  currentMillingData.value = {};
-  currentPatinaData.value = {};
+  /** @Витрины */
 
-  let palette
+  showcaseList.value = modelState.getCurrentShowcaseData;
+
+  isShowcaseExist.value =
+    showcaseList.value.length > 0 &&
+    haveShowcase &&
+    ALUM == null &&
+    COLOR !== RESET_COLOR;
+
+  /** @Стёкла */
+
+  isGlassExist.value = glassList.value.length > 0 && haveShowcase;
+
+  currentSurfaceData.value = data;
+
+  let palette;
   if (isPalleteExist.value) {
     let { NAME, HTML, ID } =
       paletteList.value[Object.keys(paletteList.value)[0]];
-    currentPaletteData.value = { name: NAME, hex: HTML, ID};
+    currentPaletteData.value = { name: NAME, hex: HTML };
+    palette = ID;
+  } else callback(false, "PALETTE");
 
-    palette = ID
-  }
-  else
-    callback(false, "PALETTE")
+  callback(data, "COLOR", palette);
 
-  callback(data, 'COLOR', palette)
-
-  if(!isPatinaExist.value) {
-    callback(false, "PATINA")
+  if (!isPatinaExist.value) {
+    callback(false, "PATINA");
   }
-  if(!isGlassExist.value) {
-    callback(false, "GLASS")
-  }
-  if(!isMillingExist.value) {
-    callback(false, "MILLING")
+  if (!isGlassExist.value) {
+    callback(false, "GLASS");
+  } else {
+    const { NAME, PREVIEW_PICTURE } = glassList.value[0];
+    currentGlassData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
   }
 
+  if (!isMillingExist.value) {
+    callback(false, "MILLING");
+  } else {
+    const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
+    modelState.setMillingId(props.elementIndex, ID);
+    currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  }
+
+  if (isShowcaseExist.value) {
+    const { NAME, PREVIEW_PICTURE } = showcaseList.value[0];
+    currentShowcaseData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  }
 };
 
 const onSelectMilling = (data) => {
   currentMillingData.value = data;
-  callback(data, "MILLING")
+  callback(data, "MILLING");
 };
 
 const onSelectPalette = (data) => {
   currentPaletteData.value = data;
-  callback(data, "PALETTE")
+  callback(data, "PALETTE");
 };
 
 const onSelectPatina = (data) => {
   currentPatinaData.value = data;
-  callback(data, "PATINA")
+  callback(data, "PATINA");
 };
 
 const onSelectGlass = (data) => {
   currentGlassData.value = data;
-  callback(data, "GLASS")
+  callback(data, "GLASS");
 };
 
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
   if (type == "surface" && props.isFasade) {
+
     let { NAME, DETAIL_PICTURE } = _FASADE[7397];
     currentSurfaceData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
     isMillingExist.value = false;
     isPalleteExist.value = false;
     isPatinaExist.value = false;
     isGlassExist.value = false;
+    isShowcaseExist.value = false;
 
-    callback(_FASADE[7397], 'COLOR')
-    callback(false, "MILLING")
-    callback(false, "PALETTE")
-    callback(false, "PATINA")
-    callback(false, "GLASS")
+    callback(_FASADE[7397], "COLOR");
+    callback(false, "MILLING");
+    callback(false, "PALETTE");
+    callback(false, "PATINA");
+    callback(false, "GLASS");
 
     setCurrentEditableOption("surface");
     return;
@@ -203,23 +227,23 @@ const deleteSelectedOptions = (type: String) => {
   if (type === "milling") {
     currentMillingData.value = { name: "", imgSrc: null };
     currentPatinaData.value = { name: "", imgSrc: null };
-    callback(false, "MILLING")
-    callback(false, "PATINA")
+    callback(false, "MILLING");
+    callback(false, "PATINA");
   }
 
   if (type === "palette") {
     let { ID, NAME, HTML } = Object.values(paletteList.value)[0];
-    callback(Object.values(paletteList.value)[0], "PALETTE")
+    callback(Object.values(paletteList.value)[0], "PALETTE");
     currentPaletteData.value = { name: NAME, hex: HTML };
   }
 
   if (type === "patina") {
-    callback(false, "PATINA")
+    callback(false, "PATINA");
     currentPatinaData.value = { name: "", imgSrc: null };
   }
 
   if (type === "glass") {
-    callback(false, "GLASS")
+    callback(false, "GLASS");
     currentGlassData.value = { name: "", imgSrc: null };
   }
 };
@@ -258,9 +282,18 @@ const update = () => {
 
   glassList.value = [];
   isGlassExist.value = false;
+
+  showcaseList.value = [];
+  isShowcaseExist.value = false;
+
 };
 
 const prepareData = () => {
+
+  const { PROPS } = productData.value;
+  const { CONFIG } = PROPS;
+  const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
+  const fasadeProps = FASADE_PROPS[props.elementIndex];
   const product = _APP.CATALOG.PRODUCTS[productId.value];
   currentElementData.value = props.elementData ? props.elementData :
                               props.isFasade ? productData.value.PROPS.CONFIG.FASADE_PROPS[props.elementIndex] :
@@ -284,7 +317,8 @@ const prepareData = () => {
 
     modelState.createCurrentShowcaseData({
       fasadeId: COLOR,
-      productId: productId.value,
+    productId: pid,
+    fasadeNdx: props.elementIndex,
     });
 
     millingList.value = modelState.getCurrentMillingData;
@@ -307,7 +341,6 @@ const prepareData = () => {
     patinaList.value = modelState.getCurrentPatinaData;
     if (patinaList.value.length > 0) isPatinaExist.value = true;
   }
-  // console.log(dataOfFasadeType.ATTACH_GLASS , 'ATTACH_GLASS', product.GLASS[0])
 
   if (dataOfFasadeType.ATTACH_GLASS?.[0] /*&& product.GLASS[0]*/) {
     modelState.createCurrentGlassData({
@@ -326,36 +359,43 @@ const prepareData = () => {
     isSurfaceSelected.value = true;
   }
 
+  const assignIfFound = (
+    list: any[],
+    id: string | number,
+    target: any,
+    key: string,
+    imageKey = "PREVIEW_PICTURE"
+  ) => {
+    const item = list?.find((i) => i.ID == id);
+
+    if (item) target.value = { name: item.NAME, imgSrc: item[imageKey] };
+  };
+
   if (MILLING) {
-    const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
-        modelState.getCurrentMillingData.find(
-            (milling) => milling.ID === MILLING
-        );
-    currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
-    isMillingExist.value = true;
-  }
-
-  if (PALETTE) {
-    const { NAME, HTML } = modelState.getCurrentPaletteData[PALETTE];
-    currentPaletteData.value = { name: NAME, hex: HTML };
-    isPalleteExist.value = true;
-  }
-
-  if (PATINA) {
-    if (modelState.getCurrentPatinaData) {
-      const { NAME, DETAIL_PICTURE, PREVIEW_PICTURE } =
-          modelState.getCurrentPatinaData.find((patina) => patina.ID === PATINA);
-      currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
-      isPatinaExist.value = true;
-    }
-  }
-
-  if (GLASS) {
-    const { NAME, DETAIL_PICTURE } = modelState.getCurrentGlassData.find(
-        (glass) => glass.ID == GLASS
+    assignIfFound(
+      millingData,
+      MILLING,
+      currentMillingData,
+      "currentMillingData"
     );
-    currentGlassData.value = { name: NAME, imgSrc: DETAIL_PICTURE };
-    isGlassExist.value = true;
+  }
+  if (PALETTE && paletteData[PALETTE]) {
+    const { NAME, HTML } = paletteData[PALETTE];
+    currentPaletteData.value = { name: NAME, hex: HTML };
+  }
+  if (PATINA && !product.type_showcase?.[0]) {
+    assignIfFound(patinaData, PATINA, currentPatinaData, "currentPatinaData");
+  }
+  if (SHOWCASE) {
+    assignIfFound(
+      showcaseData,
+      SHOWCASE,
+      currentShowcaseData,
+      "currentShowcaseData"
+    );
+  }
+  if (GLASS) {
+    assignIfFound(glassData, GLASS, currentGlassData, "currentGlassData");
   }
 };
 
@@ -372,60 +412,64 @@ onMounted(() => {
 onBeforeUnmount(() => {
   update();
 });
-
 </script>
 
 <template>
   <div class="container">
-    <div class="container__title" v-if="props.isFasade && props.elementIndex !== null">Конфигурация фасада {{ props.elementIndex + 1}}</div>
+    <div
+      class="container__title"
+      v-if="props.isFasade && props.elementIndex !== null"
+    >
+      Конфигурация фасада {{ props.elementIndex + 1 }}
+    </div>
     <div class="configuration" v-if="isSurfaceSelected">
       <ConfigurationOption
-          :type="'surface'"
-          :data="currentSurfaceData"
-          @choose-option="setCurrentEditableOption"
-          @delete-choise="deleteSelectedOptions"
+        :type="'surface'"
+        :data="currentSurfaceData"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
-          v-if="isMillingExist"
-          :type="'milling'"
-          :data="currentMillingData"
-          @choose-option="setCurrentEditableOption"
-          @delete-choise="deleteSelectedOptions"
+        v-if="isMillingExist"
+        :type="'milling'"
+        :data="currentMillingData"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
-          v-if="isPalleteExist"
-          :type="'palette'"
-          :data="currentPaletteData"
-          @choose-option="setCurrentEditableOption"
-          @delete-choise="deleteSelectedOptions"
+        v-if="isPalleteExist"
+        :type="'palette'"
+        :data="currentPaletteData"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
-          v-if="isPatinaExist"
-          :type="'patina'"
-          :data="currentPatinaData"
-          :additionalClass="millingStatus"
-          @choose-option="setCurrentEditableOption"
-          @delete-choise="deleteSelectedOptions"
+        v-if="isPatinaExist"
+        :type="'patina'"
+        :data="currentPatinaData"
+        :additionalClass="millingStatus"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
 
       <ConfigurationOption
-          v-if="isGlassExist"
-          :type="'glass'"
-          :data="currentGlassData"
-          @choose-option="setCurrentEditableOption"
-          @delete-choise="deleteSelectedOptions"
+        v-if="isGlassExist"
+        :type="'glass'"
+        :data="currentGlassData"
+        @choose-option="setCurrentEditableOption"
+        @delete-choise="deleteSelectedOptions"
       />
     </div>
 
     <SurfaceRedactor
         v-if="currentEditableOption === 'surface' && materialList[0].FASADES"
-        :materialList="materialList"
-        :elementIndex="props.elementIndex"
-        :temp-work="true"
-        @select_material="onSelectMaterial"
+      :materialList="materialList"
+      :elementIndex="props.elementIndex"
+      :temp-work="true"
+      @select_material="onSelectMaterial"
     />
     <MaterialSelector
         v-if="currentEditableOption === 'surface' && !materialList[0].FASADES"
@@ -434,37 +478,36 @@ onBeforeUnmount(() => {
     />
 
     <MillingRedactor
-        v-if="currentEditableOption === 'milling'"
-        :millingList="millingList"
-        :elementIndex="props.elementIndex"
-        :temp-work="true"
-        @select_milling="onSelectMilling"
+      v-if="currentEditableOption === 'milling'"
+      :millingList="millingList"
+      :elementIndex="props.elementIndex"
+      :temp-work="true"
+      @select_milling="onSelectMilling"
     />
 
     <ColorRedactor
-        v-if="currentEditableOption === 'palette'"
-        :paletteList="paletteList"
-        :elementIndex="props.elementIndex"
-        :temp-work="true"
-        @select_color="onSelectPalette"
+      v-if="currentEditableOption === 'palette'"
+      :paletteList="paletteList"
+      :elementIndex="props.elementIndex"
+      :temp-work="true"
+      @select_color="onSelectPalette"
     />
 
     <PatinaRedactor
-        v-if="currentEditableOption === 'patina'"
-        :patinaList="patinaList"
-        :elementIndex="props.elementIndex"
-        :temp-work="true"
-        @select_patina="onSelectPatina"
+      v-if="currentEditableOption === 'patina'"
+      :patinaList="patinaList"
+      :elementIndex="props.elementIndex"
+      :temp-work="true"
+      @select_patina="onSelectPatina"
     />
 
     <GlassRedactor
-        v-if="currentEditableOption === 'glass'"
-        :glassList="glassList"
-        :elementIndex="props.elementIndex"
-        :temp-work="true"
-        @select_glass="onSelectGlass"
+      v-if="currentEditableOption === 'glass'"
+      :glassList="glassList"
+      :elementIndex="props.elementIndex"
+      :temp-work="true"
+      @select_glass="onSelectGlass"
     />
-
   </div>
 </template>
 

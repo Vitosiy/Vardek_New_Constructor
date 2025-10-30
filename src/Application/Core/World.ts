@@ -10,7 +10,7 @@ import * as THREETypes from "@/types/types"
 
 import { TrafficManager } from "../Movement/TrafficManager"
 
-import { Environment } from "../World/Environment"
+import { Environment } from "../Lights/Environment"
 import { DeepDispose } from "../Utils/DeepDispose"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -18,6 +18,7 @@ import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoo
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState"
+import { useBasketStore } from "@/store/appStore/useBasketStore"
 
 export class World {
 
@@ -33,6 +34,7 @@ export class World {
     uniformState: ReturnType<typeof useUniformState> = useUniformState();
     roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
     modelState: ReturnType<typeof useModelState> = useModelState()
+    basketStore: ReturnType<typeof useBasketStore> = useBasketStore()
 
     trafficManager: THREETypes.TTrafficManager | null;
     room: THREETypes.TRoomManager | null = null;
@@ -62,15 +64,17 @@ export class World {
             this.enviroment = new Environment(root)
         })
         this.vueEvents()
-
+        
 
         if (this.roomState.getRooms.length > 0) {
+            this.roomState.setLoad(false)
             const startRoomId = this.roomState.getRooms[0].id
             this.loadRoom(startRoomId)
         }
         else {
+            
             this.room?.defaultCreate()
-            this.lights.setLight(this.room!._wallsGroupSize, 3)
+            this.lights.setLight(this.room!._wallsGroupSize, 1)
         }
 
         /** @Для_dev */
@@ -94,7 +98,7 @@ export class World {
         this.roomState.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
         await this.setRoom();
-        this.lights.setLight(this.room!._wallsGroupSize, 3)
+        this.lights.setLight(this.room!._wallsGroupSize, 1)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room!)
@@ -105,23 +109,28 @@ export class World {
         this.root.userHistory.clearHistory(toAction as string[])
         this.modelState.setCurrentModel(null)
         this.modelState.setTransformControlsValue(false)
-
+        this.basketStore.clearBasket();
     }
 
     saveRoom(name: string) {
 
-
+        
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
             const contant = this.room!.save() as string[]
-
+                
             this.roomState.addRoom({
                 id: roomId, // Присваиваем id 
                 label: name ?? `Комната N:${this.roomState.rooms.length + 1}`,
                 params: this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes,
-                content: contant
+                content: contant,
+                basket: JSON.stringify({
+                    scene: this.basketStore.mainConstructor,
+                    catalog: this.basketStore.mainCatalog
+                })
             })
+            this.basketStore.clearBasket();
 
             const newrooms = this.roomState.getRooms
             console.log(newrooms, 'NEW')
@@ -137,8 +146,11 @@ export class World {
         const roomId = this.roomState.getRoomId as number
         // const roomParams = this.roomState.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
         const roomParams = this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes
-
-        this.roomState.updateRoom(roomId, contant, roomParams)
+        const basket = JSON.stringify({
+                    scene: this.basketStore.mainConstructor,
+                    catalog: this.basketStore.mainCatalog
+                })
+        this.roomState.updateRoom(roomId, contant, roomParams, basket)
         const rooms = this.roomState.getRooms
         console.log(rooms, 'HAVE')
         // console.log(rooms, 'ROOMS')
@@ -174,8 +186,9 @@ export class World {
         const invValue = this.roomOptions.getRefractionValue
         if (this.enviroment) this.enviroment.toggleRefraction(invValue)
 
-
-        console.log(invValue, 'invValue')
+        const basket = JSON.parse(this.roomState.rooms.find(el=> el.id === roomId).basket);
+        console.log('basket', basket);
+        if (basket) this.basketStore.loadBasket(basket)
 
     }
 
@@ -197,21 +210,12 @@ export class World {
         this.eventsStore.on('A:Save', this.onSaveRoom)
         this.eventsStore.on('A:Load', this.onLoadRoom)
 
-        // this.eventsStore.on("A:ContantLoaded", () => {
-        //     console.log()
-        //     const toAction: string[] = this.room?.save()!
-        //     this.root.userHistory.clearHistory(toAction)
-
-        // });
-
     }
 
     removeVueEvents() {
-        // this.resources.off('cubeTextureLoaded', this.onFirstCreate);
         this.eventsStore.off('A:Create', this.onCreateRoom);
         this.eventsStore.off('A:Save', this.onSaveRoom)
         this.eventsStore.off('A:Load', this.onLoadRoom)
-        // this.meshEvents?.removeVueEvents()
 
         this.room?.removeVueEvents();
         this.trafficManager?.moveManager.dispose();
@@ -221,7 +225,6 @@ export class World {
         this.lights = null
         this.enviroment = null
         this.room = null;
-        // this.meshEvents = null
         this.trafficManager = null
     }
 }

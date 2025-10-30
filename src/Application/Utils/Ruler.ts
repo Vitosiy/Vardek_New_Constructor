@@ -1,7 +1,9 @@
 import * as THREE from 'three';
+import * as THREETypes from "@/types/types"
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { RoomManager } from '../Room/RoomManager';
 import { useMenuStore } from '@/store/appStore/useMenuStore';
+
 
 // Интерфейс для конфигурации линейки
 interface RulerConfig {
@@ -26,7 +28,7 @@ interface DrawLabelParams {
 
 export class Ruler {
   private menuStore = useMenuStore();
-
+  private render: THREETypes.TRenderer
   private rulerLines: THREE.Object3D[] = [];
   private rullerSizeLines: THREE.Object3D[] = [];
   private room: RoomManager | null = null;
@@ -54,11 +56,8 @@ export class Ruler {
     ],
   };
 
-  constructor(scene?: THREE.Scene, room?: RoomManager, rulerLines?: THREE.Object3D[], rullerSizeLines?: THREE.Object3D[]) {
-    this.scene = scene ?? null;
-    this.rulerLines = rulerLines ?? [];
-    this.rullerSizeLines = rullerSizeLines ?? [];
-    this.room = room ?? null;
+  constructor(root: THREETypes.TApplication) {
+    this.render = root._renderClass!
   }
 
   public setParams({ scene, room, rulerLines, rullerSizeLines }: { scene?: THREE.Scene; room?: RoomManager; rulerLines?: THREE.Object3D[]; rullerSizeLines?: THREE.Object3D[] }) {
@@ -126,15 +125,34 @@ export class Ruler {
     if (!this.menuStore.getRulerVisibility) return
 
     const objectBox = object!.userData.aabb as THREE.Box3;
+
     this.drawRulerWalls(objectBox);
     this.calculateAndRenderRulers(objectBox);
   }
 
   // Отрисовка пунктирных линий размеров объекта
-  public drawRullerObjects(object: THREE.Object3D): { arrowPos: THREE.ArrowHelper; arrowNeg: THREE.ArrowHelper; labelDiv: CSS2DObject }[] {
+  public drawRullerObjects(object: THREE.Object3D, group?: THREE.Object3D): { arrowPos: THREE.ArrowHelper; arrowNeg: THREE.ArrowHelper; labelDiv: CSS2DObject }[] {
     const arrows: { arrowPos: THREE.ArrowHelper; arrowNeg: THREE.ArrowHelper; labelDiv: CSS2DObject }[] = [];
     const box = new THREE.Box3().setFromObject(object);
     const size = box.getSize(new THREE.Vector3());
+    const getLableSizes = () => {
+      const obj = {
+        width: size.x,
+        height: size.y,
+        depth: size.z
+      };
+
+      const configSize = group?.userData?.prodSize;
+      if (configSize) {
+        obj.width = configSize.width;
+        obj.height = configSize.height;
+        obj.depth = configSize.depth;
+      }
+
+      return obj;
+    };
+
+    const lableSizes = getLableSizes()
     const percentage = 0.85;
 
     const axes = [
@@ -146,6 +164,7 @@ export class Ruler {
           box.min.z + this.config.OBJECT_ARROW_WIDTH * 0.5
         ),
         length: size.x * percentage,
+        lable: lableSizes.width
       },
       {
         dir: new THREE.Vector3(0, 1, 0),
@@ -155,21 +174,23 @@ export class Ruler {
           box.min.z + this.config.OBJECT_ARROW_WIDTH * 0.5
         ),
         length: size.y * percentage,
+        lable: lableSizes.height
       },
-      {
-        dir: new THREE.Vector3(0, 0, 1),
-        start: new THREE.Vector3(
-          box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
-          box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
-          (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
-        ),
-        length: size.z * percentage,
-      },
+      // {
+      //   dir: new THREE.Vector3(0, 0, 1),
+      //   start: new THREE.Vector3(
+      //     box.max.x - this.config.OBJECT_ARROW_WIDTH * 0.5,
+      //     box.min.y + this.config.OBJECT_ARROW_WIDTH * 0.5,
+      //     (box.min.z + box.max.z) * 0.5 - (size.z * percentage) * 0.5
+      //   ),
+      //   length: size.z * percentage,
+      //   lable: lableSizes.depth
+      // },
     ];
 
-    axes.forEach(({ dir, start, length }) => {
+    axes.forEach(({ dir, start, length, lable }) => {
       if (!this.scene) return;
-      if(length<1) return
+      if (length < 1) return
 
       const arrowPos = new THREE.ArrowHelper(dir, start, length, this.config.LINE_COLOR, this.config.OBJECT_ARROW_HEIGHT, this.config.OBJECT_ARROW_WIDTH);
       const arrowNeg = new THREE.ArrowHelper(dir.clone().negate(), start, 0, this.config.LINE_COLOR, this.config.OBJECT_ARROW_HEIGHT, this.config.OBJECT_ARROW_WIDTH);
@@ -180,10 +201,15 @@ export class Ruler {
 
       const middle = new THREE.Vector3().addVectors(start, dir.clone().multiplyScalar(length / 2));
       middle.add(dir.x || dir.z ? new THREE.Vector3(0, 60, 0) : new THREE.Vector3(-100, 0, 0));
-
-      const labelDiv = this.createLabel({ axis: length / percentage, position: middle, css: 'dimension-label' });
+      //length / percentage
+      const labelDiv = this.createLabel({ axis: lable, position: middle, css: 'dimension-label' });
       this.scene.add(arrowPos, arrowNeg, labelDiv);
+      arrowPos.name = 'SIZE_VISUAL'
+      arrowNeg.name = 'SIZE_VISUAL'
+
       this.rullerSizeLines.push(arrowPos, arrowNeg, labelDiv);
+
+
       arrows.push({ arrowPos, arrowNeg, labelDiv });
     });
 
@@ -192,7 +218,8 @@ export class Ruler {
 
   // Проверка валидности состояния
   private isValidState(): boolean {
-    return !!this.room && !!this.room._roomTotalBounds && !!this.scene && !!this.rulerLines;
+    // return !!this.room && !!this.room._roomTotalBounds && !!this.scene && !!this.rulerLines;
+    return !!this.room && !!this.scene && !!this.rulerLines;
   }
 
   // Получение ближайших боксов
@@ -220,6 +247,7 @@ export class Ruler {
 
   // Расчёт и отрисовка сплошных линий до объектов
   private calculateAndRenderRulers(objectBox: THREE.Box3): void {
+
     const xPoints = this.generatePoints(objectBox.min.x, objectBox.max.x);
     const zPoints = this.generatePoints(objectBox.min.z, objectBox.max.z);
     const yMid = (objectBox.min.y + objectBox.max.y) / 2;
@@ -309,6 +337,8 @@ export class Ruler {
     const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
     const line = new THREE.Line(lineGeometry, lineMaterial);
     line.renderOrder = 1;
+    line.name = 'LINE_VISUAL';
+
 
     this.scene.add(line);
     this.rulerLines.push(line);
@@ -350,17 +380,20 @@ export class Ruler {
     }
 
     arrow.renderOrder = 1;
-    arrow.name = 'ARROW_SIZE';
+    arrow.name = 'ARROW_VISUAL';
   }
 
   // Создание метки
   private createLabel({ axis, position, css }: DrawLabelParams): CSS2DObject {
-    const labelDiv = document.createElement('div');
-    labelDiv.className = css;
-    labelDiv.textContent = `${axis.toFixed(0)}`;
-    const heightLabel = new CSS2DObject(labelDiv);
-    heightLabel.position.copy(position);
-    return heightLabel;
+    // const labelDiv = document.createElement('div');
+    // labelDiv.className = css;
+    // labelDiv.textContent = `${axis.toFixed(0)}`;
+    // const heightLabel = new CSS2DObject(labelDiv);
+    // heightLabel.position.copy(position);
+    // return heightLabel;
+    const label = this.render.getLabelFromPool(`${axis.toFixed(0)}`, position);
+    label.element.className = css;
+    return label;
   }
 
   // Очистка линейки расстояния
@@ -373,18 +406,36 @@ export class Ruler {
   private clear(rulerStorage: THREE.Object3D[]): void {
     if (!this.scene) return;
 
+    // rulerStorage.forEach(line => {
+    //   this.scene!.remove(line);
+    //   line.traverse(child => {
+    //     if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+    //       child.geometry?.dispose();
+    //       if (Array.isArray(child.material)) {
+    //         child.material.forEach(mat => mat.dispose());
+    //       } else {
+    //         child.material?.dispose();
+    //       }
+    //     }
+    //   });
+    // });
+
     rulerStorage.forEach(line => {
-      this.scene!.remove(line);
-      line.traverse(child => {
-        if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
-          child.geometry?.dispose();
-          if (Array.isArray(child.material)) {
-            child.material.forEach(mat => mat.dispose());
-          } else {
-            child.material?.dispose();
+      if (line instanceof CSS2DObject) {
+        this.render.recycleLabel(line);
+      } else {
+        this.scene!.remove(line);
+        line.traverse(child => {
+          if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => mat.dispose());
+            } else {
+              child.material?.dispose();
+            }
           }
-        }
-      });
+        });
+      }
     });
   }
 

@@ -133,7 +133,7 @@ export class Room extends BuildersHelper {
         const floor = this.roomOptions.getGlobalOptions.floor;
 
         if (!roomId) {
-            this.eventBus.emit('A:ContantLoaded', true)
+            this.roomState.setLoad(true)
             params = JSON.parse(JSON.stringify(this.sceneState.getStartRoomData))
             if (wall.global) params.wall = wall.id
             if (floor.global) params.floor = floor.id
@@ -233,8 +233,6 @@ export class Room extends BuildersHelper {
 
     updateWallMaterial(materialId: number | string) {
 
-        console.log(materialId, 'Wall')
-
         const total = this.scene.getObjectsByProperty('elementType', 'element_room')
         total.forEach(el => {
             el.traverse(child => {
@@ -263,11 +261,7 @@ export class Room extends BuildersHelper {
 
     updateFloorMaterial(materialId: number | string) {
 
-        
-        console.log(materialId, 'floor')
-
         this.wallBuilder.updateTexture(this.floor as THREE.Mesh, 'floor', materialId, this.floor?.userData.dimensions);
-
         // Отправляем материал в хранилище
         this.roomState.tempRoomUpdate(materialId, 'floor')
         // this.roomState.setFloorTexture(materialId)

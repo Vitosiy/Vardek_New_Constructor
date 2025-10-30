@@ -2,18 +2,18 @@
 
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
-import {OBB} from 'three/examples/jsm/math/OBB.js';
+import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import {
     GridModule, LOOPSIDE
 } from "@/types/constructor2d/interfaсes.ts";
 
-import {useSceneState} from "@/store/appliction/useSceneState"
-import {useModelState} from '@/store/appliction/useModelState';
+import { useSceneState } from "@/store/appliction/useSceneState"
+import { useModelState } from '@/store/appliction/useModelState';
 
-import {BuildProduct} from "../BuildProduct"
-import {_URL} from "@/types/constants";
+import { BuildProduct } from "../BuildProduct"
+import { _URL } from "@/types/constants";
 import {CSG} from "three-csg-ts";
 import {Brush, Evaluator, SUBTRACTION} from "three-bvh-csg";
 
@@ -32,18 +32,24 @@ export class BuildUniversalModule extends BuildProduct {
         width: number,
         height: number,
         depth: number
-    }, moduleParams?: GridModule)
-    {
+    }, moduleParams?: GridModule) {
+
+        // Режим чертежа
+        const drowMode = this.menuStore.getDrowModeValue
+        //---------------
 
         const total = new THREE.Object3D();
+        const edgeBody = new THREE.Object3D()
+
+        const { PROPS } = perent_group.userData
+        const { CONFIG } = PROPS;
 
         const defaultConfig: THREETypes.TDefaultOptionsConfig = this.getDefaultOptionsConfig();
 
-        const {PROPS} = perent_group.userData
-        const {CONFIG} = PROPS;
-
         const productId = CONFIG.ID
         const productInfo = this._PRODUCTS[productId];
+        const bodyExceptions = this.project.default_overlay_id
+        const legsHeight = this._PRODUCTS[productId]?.leg_length
 
         PROPS.FASADE = []
         PROPS.FASADE_DEFAULT = []
@@ -59,6 +65,8 @@ export class BuildUniversalModule extends BuildProduct {
         } : null
 
         const modelSize = size ?? PROPS.CONFIG.SIZE;
+        total.userData.prodSize = modelSize
+
 
         if (size) {
             CONFIG.SIZE = size
@@ -74,22 +82,27 @@ export class BuildUniversalModule extends BuildProduct {
         if (!modelData) return
 
         const data = this.createModelData(modelData, PROPS, modelSize);
+        const curBodyExceptions = bodyExceptions?.includes(modelData.id)
         // Сборка частей
-        const {body, tempMaterial} = !this.isEmpty(modelData)
+        const { body, tempMaterial, move } = !this.isEmpty(modelData)
             ? this.createBody(data, PROPS, defaultConfig)
-            : {body: null, tempMaterial: null};
+            : { body: null, tempMaterial: null, move: null };
 
         const shelf = this._SHELF_POSITION[productId]
-            ? this.createShelf(total, PROPS, this._SHELF_POSITION[productId], tempMaterial)
+            ? this.createShelf(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
             : null;
 
-        const legs = this._PRODUCTS[productId]?.leg_length
-            ? this.buildLegs(PROPS, data, total, adjustHeight)
+        const legs = legsHeight
+            ? this.buildLegs(PROPS, data, total)
             : null;
 
-        const tableTop = CONFIG.HAVETABLETOP
-            ? this.tabletop_builder.createTableTop({props: PROPS})
+        const plinth = legsHeight > 0
+            ? this.plinth_builder.buildPlinth(PROPS, legsHeight)
             : null;
+
+        // const tableTop = CONFIG.HAVETABLETOP
+        //     ? this.tabletop_builder.createTableTop({ props: PROPS })
+        //     : null;
 
         if (MODULEGRID) {
 
@@ -106,46 +119,77 @@ export class BuildUniversalModule extends BuildProduct {
         /** Добавляем фасад */
         const fasade = Object.keys(CONFIG.FASADE_PROPS).length
             ? this.fasade_builder.getFasade({
-                group: total,
                 props: PROPS,
-                model_data: data,
                 isUMmodule: !!MODULEGRID,
-                defaultConfig
+                defaultConfig,
+                curBodyExceptions
             })
             : null;
 
         /** Добавляем стреки размеров */
-        const arrows = this.addArrowSize({object: body, props: PROPS})
+        const arrows = this.addArrowSize({ object: body, props: PROPS })
 
         // Вычисление высот
-        const legsHeight = legs ? this.calculateHeight(legs) : 0;
+        // const legsHeight = legs ? this.calculateHeight(legs) : 0;
         const bodyHeight = body ? this.calculateHeight(body) : 0;
-        const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
+        // const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
         // Позиционирование
         const baseY = legsHeight * 0.5;
+
         if (legs) legs.position.y = baseY;
-        if (body) body.position.y = baseY;
+        if (plinth) plinth.position.y = 0;
+        if (body) {
+            body.position.set(move.x, move.y, move.z)
+            body.position.y = baseY;
+            body.visible = !curBodyExceptions;
+        }
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
-        if (tableTop) {
-            tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
-        }
+        // if (tableTop) {
+        //     tableTop.position.y = baseY + bodyHeight * 0.5 + tableTopHeight * 0.5;
+        // }
+        arrows.position.copy(body?.position);
         arrows.position.y = baseY;
 
+        const getTotalGroup = () => {
+            if (curBodyExceptions) {
+                return [body, shelf, fasade, arrows]
+            }
+            return [plinth, legs, body, shelf, fasade, arrows]
+        }
+
+        const totalGroup = getTotalGroup()
+
         // Добавление в итоговую группу
-        [tableTop, legs, body, shelf, fasade, arrows]
+        totalGroup
             .filter(Boolean)
-            .forEach((part) => total.add(part as THREE.Object3D));
+            .forEach((part) => {
+                total.add(part as THREE.Object3D)
+            });
+
         //---------------------------
         /** @Для корректной коллизии */
-            //---------------------------
+        //---------------------------
+
         const tempTotal = new THREE.Object3D();
+        const exept = new THREE.Object3D();
+
         [legs?.clone(), body?.clone(), shelf?.clone()]
             .filter(Boolean)
             .forEach(part => tempTotal.add(part));
 
-        this.setBounds(total, tempTotal);
+        [legs?.clone(), body?.clone(), plinth?.clone()].filter(Boolean)
+            .forEach(part => exept.add(part));
+
+        const sourceForBounds = curBodyExceptions ? exept : tempTotal;
+        if (sourceForBounds) {
+            this.setBounds(total, sourceForBounds);
+        }
+
+        if (drowMode) {
+            this.useEdgeBuilder.drawingMode(drowMode, total)
+        }
 
         return total;
     };
@@ -175,11 +219,11 @@ export class BuildUniversalModule extends BuildProduct {
         }
 
         if (product_data.SIDEWALL?.length && product_data.SIDEWALL?.[0]) {
-            CONFIG.LEFTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
-            CONFIG.RIGHTSIDECOLOR = {COLOR: CONFIG["MODULE_COLOR"]}
+            CONFIG.LEFTSIDECOLOR = { COLOR: CONFIG["MODULE_COLOR"] }
+            CONFIG.RIGHTSIDECOLOR = { COLOR: CONFIG["MODULE_COLOR"] }
         }
 
-        CONFIG.TOPFASADECOLOR = {COLOR: 7397, SHOW: false}
+        CONFIG.TOPFASADECOLOR = { COLOR: 7397, SHOW: false }
 
         if (product_data.moduleType.CODE !== "wardrobe")
             CONFIG.LOOPS = {}
@@ -471,7 +515,13 @@ export class BuildUniversalModule extends BuildProduct {
         const subGeometries = []
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
+
+            console.log(section)
+
             if (section.fillings?.length) {
+
+                console.log('ENTRIES')
+
                 section.fillings.map((filling) => {
                     const productInfo = this._PRODUCTS[filling.product]
 
@@ -479,7 +529,7 @@ export class BuildUniversalModule extends BuildProduct {
                         return
 
                     const onLoad = (productFilling, isModel = true) => {
-                        if(filling.isProfile)
+                        if (filling.isProfile)
                             productFilling.userData.isProfile = true
 
                         let sizeModule = PROPS.CONFIG.SIZE
@@ -517,12 +567,15 @@ export class BuildUniversalModule extends BuildProduct {
                             subGeometries.push(productFilling)
                     }
 
-                    const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
+                    const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
                     const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
+                    console.log(data, 'GGGGGGGGG')
+
 
                     let productFilling
                     if (data.DAE) {
-                        this.models_builder.create({onLoad, props: {CONFIG: {MODELID: data.ID}}, sizeRulers: false})
+                        console.log(data.DAE, 'DAE')
+                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID } }, sizeRulers: false })
                     } else {
                         productFilling = this.createSubProductObject(filling, data, PROPS)
                         onLoad(productFilling, false)
@@ -588,7 +641,7 @@ export class BuildUniversalModule extends BuildProduct {
 
     createSubProductObject(filling: Object, data: THREETypes.TObject, props: THREETypes.TObject) {
         let fasade = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']] : this._FASADE[filling.color || props.CONFIG.MODULE_COLOR]
-        let body = this.json_builder.createMesh({data, fasade})
+        let body = this.json_builder.createMesh({ data, fasade })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
         body.matrixWorldNeedsUpdate = true
@@ -721,7 +774,7 @@ export class BuildUniversalModule extends BuildProduct {
             })
         }
 
-        this.models_builder.create({onLoad, props: {CONFIG: {MODELID: model}}, sizeRulers: false})
+        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: model } }, sizeRulers: false })
 
         return allLoopsMesh
     };
@@ -738,11 +791,11 @@ export class BuildUniversalModule extends BuildProduct {
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([sectionNumber, sectionConf]) => {
             if (sectionConf.fillings) {
-                const sectionSize = {width: sectionConf.size.x, height: sectionConf.size.y, depth: sectionConf.size.z}
-                Object.entries(sectionConf.fillings).forEach(([_elementNumber, element])=> {
+                const sectionSize = { width: sectionConf.size.x, height: sectionConf.size.y, depth: sectionConf.size.z }
+                Object.entries(sectionConf.fillings).forEach(([_elementNumber, element]) => {
                     const product = this.getProductInfo(element.product)
                     const elementNumber = +_elementNumber + 1
-                    if(!product)
+                    if (!product)
                         return
 
                     const PRODUCT_TYPE = this._PRODUCTS_TYPES[product.productType]?.CODE || false;

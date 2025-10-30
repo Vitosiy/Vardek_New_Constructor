@@ -13,7 +13,6 @@ import { TAdjustPosition } from "@/types/types"
 export class OBBCollider {
     private defaultMagnetTrashhold = 50
 
-
     getCorrectPosition({ object,
         targetPosition,
         wall,
@@ -508,8 +507,8 @@ export class OBBCollider {
         let lastSafeY = fromPos.y;                // последняя безопасная Y
 
         let collided = false;                           // факт столкновения на трассе
-        let collidedOBB: OBB | null = null;               // с кем столкнулись
-
+        let collidedOBB: OBB | null = null;
+        const defCollided = object.userData.disableRaycast         // с кем столкнулись
 
         //  1. Пошаговый прогон
 
@@ -533,7 +532,7 @@ export class OBBCollider {
             // проверяем пересечения
             let hasCollision = false;
             for (const bound of objectsBoundsStore) {
-                if (testOBB.intersectsOBB(bound)) {
+                if (testOBB.intersectsOBB(bound) && !defCollided) {
                     hasCollision = true;
                     collidedOBB = bound;
                     break;

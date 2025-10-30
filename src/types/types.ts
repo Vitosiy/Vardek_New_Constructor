@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Application } from "@/Application/Core/Application";
+import { Renderer } from "@/Application/Core/Renderer";
 import { TrafficManager } from "@/Application/Movement/TrafficManager";
 import { MoveManager } from "@/Application/Movement/MoveManager";
 import { RoomManager } from "@/Application/Room/RoomManager";
@@ -18,13 +19,13 @@ import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import { DeepDispose } from "@/Application/Utils/DeepDispose";
-import { AppLights } from "@/Application/World/Lights";
+import { AppLights } from "@/Application/Lights/Lights";
 import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
 import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
 import { HandlesBuilder } from "@/Application/Meshes/Hendles/Handles";
-import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder";
+import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder/ModelsBuilder";
 import { PlinthBuilder } from "@/Application/Meshes/PlinthBuilder/PlinthBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -39,6 +40,7 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 export type TApplication = Application
+export type TRenderer = Renderer
 export type TMeshEvents = MeshEvents
 export type TTrafficManager = TrafficManager
 export type TMoveManager = MoveManager
@@ -109,6 +111,19 @@ export type TQuality = {
   value: TQualityValue,
   active?: boolean
 }
+
+export type TFasadeSize = {
+  ID: number;
+  NAME: string;
+  SORT: number;
+  SIZE_EDIT_WIDTH_MIN: number | null;
+  SIZE_EDIT_WIDTH_MAX: number | null;
+  WIDTH: number;
+  DEPTH: number | null;
+  DIFFWIDTH: number | null;
+  DIFFDEPTH: number | null;
+  active?: boolean;
+};
 
 export type TOptionItem = {
   id: number | string;
@@ -263,6 +278,7 @@ export type TDefaultOptionsConfig = {
   defModuleDown: number | string,
   defFasadeUp: number | string,
   defFasadeDown: number | string,
+  deffShowcase: number | string,
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
@@ -316,11 +332,18 @@ export type TModelJSON = {
   position?: TVector3;
 };
 
+type TFasadePropsSizes = {
+  FASADE_WIDTH?: number,
+  min?: number,
+  max?: number
+
+}
+
 export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
-  COLOR: number | null,
-  BODY: number | null,
+  COLOR: number,
+  RESET_COLOR: number | null,
   TYPE: number | null,
   MILLING: number | null,
   PALETTE: number | null,
@@ -332,6 +355,10 @@ export type TFasadeProp = {
     id: number | null,
     position: number | null
     drawer: null | string
+  },
+  SIZES: {
+    id: number,
+    params: TFasadePropsSizes
   }
 }
 

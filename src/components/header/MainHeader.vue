@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/**@ts-nocheck */
+//@ts-nocheck
 import {
   onMounted,
   onBeforeUnmount,
@@ -164,32 +164,42 @@ const lessThenActions = computed(() => {
   return curActionCount.value - 1 < 0;
 });
 
-const prevAction = () => {
+const prevAction = async () => {
   if (historyActions.value && verdekConstructor.value) {
     try {
       /** Активируем preloader */
       contentLoaded.value = false;
-      props.pageComponent.activePreloader = false;
-      eventBus.emit("A:PrevAction");
-      curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
-      props.pageComponent.selected();
-      customiserStore.hideCustomiserPopup();
+      await roomState.setLoad(false);
+      await nextTick();
+      setTimeout(() => {
+        eventBus.emit("A:PrevAction");
+        curActionCount.value =
+          verdekConstructor.value.userHistory._currentIndex;
+        props.pageComponent.selected();
+        customiserStore.hideCustomiserPopup();
+      }, 0);
     } catch (error) {
       console.error("Ошибка при выполнении prevAction:", error);
     }
   }
 };
 
-const nextAction = () => {
+const nextAction = async () => {
   if (historyActions.value && verdekConstructor.value) {
     try {
       /** Активируем preloader */
+
       contentLoaded.value = false;
-      props.pageComponent.activePreloader = false;
-      eventBus.emit("A:NextAction");
-      curActionCount.value = verdekConstructor.value.userHistory._currentIndex;
-      props.pageComponent.selected();
-      customiserStore.hideCustomiserPopup();
+      await roomState.setLoad(false);
+      await nextTick();
+
+      setTimeout(() => {
+        eventBus.emit("A:NextAction");
+        curActionCount.value =
+          verdekConstructor.value.userHistory._currentIndex;
+        props.pageComponent.selected();
+        customiserStore.hideCustomiserPopup();
+      }, 0);
     } catch (error) {
       console.error("Ошибка при выполнении nextAction:", error);
     }
@@ -250,7 +260,8 @@ const addEvents3D = () => {
 
 const getHistoruBtnsState = computed(() => {
   return {
-    disabled: !contentLoaded.value,
+    // disabled: !contentLoaded.value,
+    disabled: !roomState.getLoad,
   };
 });
 

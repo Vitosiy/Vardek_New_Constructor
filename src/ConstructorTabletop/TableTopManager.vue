@@ -19,6 +19,7 @@ import CutServise from "./OptionsMenu/CutServise.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
 import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
+import TableTopInput from "./TableTopInput.vue";
 
 const eventBus = useEventBus();
 const modelState = useModelState();
@@ -369,23 +370,18 @@ const getHoleOptionsActive = computed(() => {
 const convertServisData = (value, item) => {
   const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
-  console.log(USLUGI, item)
 
   if (parseInt(item.separated) === 0) {
-    console.log('EP')
     grid.value.forEach((col) => {
       col.forEach((row) => {
         const cur = row.serviseData.find((el) => el.ID === item.ID);
         cur.value = value;
-        console.log(cur, "row");
       });
     });
     // console.log(item, USLUGI);
 
     const cur = USLUGI.find((el) => el.ID === item.ID);
     cur.value = value;
-
-    console.log(USLUGI, 'cur')
 
     return;
   }
@@ -428,7 +424,51 @@ const updateServiseWidth = (value, type) => {
   visualizationRef.value.renderGrid();
 };
 
-const updateSectionWidth = (value, colIndex, rowIndex) => {
+const handleWidthInput = (
+  value: number,
+  colIndex: number,
+  rowIndex: number
+) => {
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  // Проверяем валидность значения
+  const minWidth = 150;
+  const maxWidth = grid.value[colIndex][0].maxWidth || TOTAL_LENGTH;
+  if (!isNaN(value) && value >= minWidth && value <= maxWidth) {
+    updateSectionWidth(value, colIndex, rowIndex);
+  }
+};
+
+const handleHeightInput = (
+  value: number | null,
+  colIndex: number,
+  rowIndex: number
+) => {
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  // Проверяем валидность значения
+  const minHeight = 150;
+  const maxHeight = grid.value[colIndex][rowIndex].maxHeight || TOTAL_HEIGHT;
+  if (
+    value !== null &&
+    !isNaN(value) &&
+    value >= minHeight &&
+    value <= maxHeight
+  ) {
+    updateSectionHeight(value, colIndex, rowIndex);
+  }
+};
+
+const updateSectionWidth = (
+  value: number,
+  colIndex: number,
+  rowIndex: number
+) => {
+
   const newValue = parseInt(value);
   let adjustedValue;
 
@@ -443,12 +483,14 @@ const updateSectionWidth = (value, colIndex, rowIndex) => {
       col: colIndex,
     });
   }
+
   // Обновляем значение в grid для синхронизации
   const clone = grid.value.map((item) => item);
   if (adjustedValue) {
     clone[colIndex].forEach((row) => (row.width = adjustedValue));
   }
   grid.value = clone;
+
 };
 
 const updateSectionHeight = (value, colIndex, rowIndex) => {
@@ -705,7 +747,6 @@ const handleCellSelect = (colIndex, rowIndex, type) => {
 const createServiseData = () => {
   const { PROPS } = modelState.getCurrentModel.userData;
   const { USLUGI } = PROPS.CONFIG;
-  console.log(PROPS, USLUGI, props.grid, "USLUGI");
 
   const convertParams = USLUGI.reduce((acc, el) => {
     const param = {
@@ -716,7 +757,7 @@ const createServiseData = () => {
       radius: el.radius,
       width: el.width,
       corner: el.corner,
-      separated: el.separated
+      separated: el.separated,
     };
     acc.push(param);
     return acc;
@@ -947,17 +988,29 @@ onBeforeUnmount(() => {
 
                   <div class="actions-items--width" v-if="!row.roundCut.radius">
                     <div class="actions-inputs">
-                      <p class="actions-title">Ширина</p>
+                      <p class="actions-title">Ширина_</p>
                       <div
                         :class="[
                           'actions-input--container',
                           grid.length <= 1 ? 'disable' : '',
                         ]"
                       >
-                        <input
+                        <TableTopInput
+                          :value="column[0].width"
+                          :step="step"
+                          :min="150"
+                          :max="column[0].maxWidth || TOTAL_LENGTH"
+                          :disabled="grid.length < 0"
+                          @input="handleWidthInput($event, colIndex, rowIndex)"
+                          @update:value="
+                            updateSectionWidth($event, colIndex, rowIndex)
+                          "
+                        />
+                        <!-- <input
                           type="number"
                           :step="step"
                           min="150"
+                          :max="column[0].maxWidth"
                           class="actions-input"
                           :value="column[0].width"
                           @input="
@@ -967,7 +1020,7 @@ onBeforeUnmount(() => {
                               rowIndex
                             )
                           "
-                        />
+                        /> -->
                       </div>
                     </div>
                   </div>
@@ -983,7 +1036,7 @@ onBeforeUnmount(() => {
                           column.length <= 1 ? 'disable' : '',
                         ]"
                       >
-                        <input
+                        <!-- <input
                           type="number"
                           :step="step"
                           min="150"
@@ -995,6 +1048,17 @@ onBeforeUnmount(() => {
                               colIndex,
                               rowIndex
                             )
+                          "
+                        /> -->
+                        <TableTopInput
+                          :value="row.height"
+                          :step="step"
+                          :min="150"
+                          :max="row.maxHeight || TOTAL_LENGTH"
+                          :disabled="grid.length < 0"
+                          @input="handleHeightInput($event, colIndex, rowIndex)"
+                          @update:value="
+                            updateSectionHeight($event, colIndex, rowIndex)
                           "
                         />
                       </div>

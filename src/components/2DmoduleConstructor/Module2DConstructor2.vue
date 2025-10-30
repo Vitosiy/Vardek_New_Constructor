@@ -299,11 +299,14 @@ const updateFilling = (value, currentfilling, type, render = false) => {
 
 //#region Фасады
 const getFasadePosition = (_position) => {
+
   const PROPS = productData.value.PROPS;
   let fasadePosition = APP.FASADE_POSITION[_position];
 
   if (!fasadePosition)
     return {}
+
+    console.log(fasadePosition, 'fasadePosition')
 
   fasadePosition = builder.getExec(
       builder.expressionsReplace(fasadePosition,

@@ -73,12 +73,12 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   const productId = productData.value.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = data;
 
-  modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
+  modelState.createCurrentFasadeTypesData({ fasadeId: ID, productId });
   modelState.createCurrentPaletteData(ID);
-  modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
-  modelState.createCurrentMillingData({ fasadeId: ID, productId });
-  modelState.createCurrentShowcaseData({ fasadeId: ID, productId });
-  modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
+  modelState.createCurrentMillingData({ fasadeId: ID, productId, fasadeNdx });
+  modelState.createCurrentShowcaseData({ fasadeId: ID, productId, fasadeNdx });
+  modelState.createCurrentPatinaData({ fasadeId: ID, productId });
+  modelState.createCurrentGlassData({ fasadeId: ID, productId });
 
   const transitionT = checkTransitionTexture(data.ID);
 

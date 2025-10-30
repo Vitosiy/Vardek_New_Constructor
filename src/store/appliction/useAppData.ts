@@ -1,18 +1,25 @@
 // @ts-nocheck
+import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookieUtils'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 export const useAppData = defineStore('AppData', () => {
   const appData = ref<{ [key: string]: any }>({})
+
   const indexedDataBase = ref<IDBDatabase | null>(null)
   const isLoading = ref(false)
   const isLoaded = ref(false)
 
   const fetchRemoteData = async () => {
     isLoading.value = true;
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
     const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
-    const response = await fetch(url, { method: 'GET' })
+    // const url = 'https://dev.vardek.online'
+    // const response = await fetch(`${url}/api/modeller/mainobject/GetData/`, { 
+    const response = await fetch(url, { 
+      method: 'GET'
+    })
     if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
 
     const contentType = response.headers.get('content-type')
@@ -59,13 +66,14 @@ export const useAppData = defineStore('AppData', () => {
     })
   }
 
-  const setAppData = (value: any) => {
-    appData.value = value
+  const setAppData = (newData: any) => {
+    appData.value = { ...appData.value, ...newData }
   }
 
   const initAppData = async () => {
     if (isLoaded.value || isLoading.value) return
     isLoading.value = true
+    document.querySelector('#main-loader').style.display = 'block';
     try {
       indexedDataBase.value = await initIndexedDB()
       let localData = await getFromIndexedDB(indexedDataBase.value)
@@ -85,13 +93,17 @@ export const useAppData = defineStore('AppData', () => {
       console.error('Ошибка инициализации данных:', err)
     } finally {
       isLoading.value = false
-      document.querySelector('#main-loader').style.display = 'none';
+      isLoaded.value = true
+      // document.querySelector('#main-loader').style.display = 'none';
     }
   }
 
-  const getAppData = computed(() => appData.value)
+  const getAppData = computed(() => { 
+    return appData.value 
+  })
 
   return {
+    appData,
     getAppData,
     isLoaded,
     isLoading,

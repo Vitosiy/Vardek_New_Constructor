@@ -1,7 +1,27 @@
 //@ts-nocheck
 import { IBasket, IBasketFacade } from "@/types/basket";
+// export function createFacadeProps(objProps: any): IBasketFacade[] {
+//   return objProps.CONFIG.FASADE_PROPS 
+//     ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => ({
+//         COLOR: fp.COLOR ?? null,
+//         MILLING: fp.MILLING ?? null,
+//         PALETTE: fp.PALETTE ?? null,
+//         SHOWCASE: fp.SHOWCASE ?? null,
+//         ALUM: fp.ALUM ?? null,
+//         GLASS: fp.GLASS ?? null,
+//         PATINA: fp.PATINA ?? null,
+//         TYPE: fp.TYPE ?? null,
+//         SIZE: {
+//           WIDTH: objProps.FASADE[index]?.object?.userData?.trueSize?.WIDTH ?? null,
+//           HEIGHT: objProps.FASADE[index]?.object?.userData?.trueSize?.HEIGHT ?? null,
+//           DEPTH: objProps.FASADE[index]?.object?.userData?.trueSize?.DEPTH ?? null,
+//         },
+//         HEANDLES: [],
+//       }))
+//     : [];
+// }
 
-function createFacadeProps(objProps: any): IBasketFacade[] {
+export function createFacadeProps(objProps: any): IBasketFacade[] {
   return objProps.CONFIG.FASADE_PROPS 
     ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => {
         const facade = objProps.FASADE[index];
@@ -42,7 +62,7 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
     : [];
 }
 
-function createBodyProps(objProps: any) {
+export function createBodyProps(objProps: any) {
   const trueSize = objProps.BODY?.object?.userData?.trueSize;
   
   return {
@@ -54,8 +74,7 @@ function createBodyProps(objProps: any) {
     },
   };
 }
-
-function createOptionsProps(objProps: any) {
+export function createOptionsProps(objProps: any) {
   const options:any[] = [];
   (objProps.CONFIG.OPTIONS || []).map(el =>{
     if(el.active) options.push(el.id);
@@ -63,7 +82,7 @@ function createOptionsProps(objProps: any) {
   return options;
 }
 
-function createRaspilData(objProps: any) {
+export function createRaspilData(objProps: any) {
   if (!objProps.RASPIL?.data) return {};
   
   const raspilData = objProps.RASPIL.data.flat().map((el: any) => ({
@@ -83,7 +102,7 @@ function createRaspilData(objProps: any) {
   };
 }
 
-function createUniformTexture(objProps: any) {
+export function createUniformTexture(objProps: any) {
   const texture = objProps.CONFIG.UNIFORM_TEXTURE;
   
   return {
@@ -119,50 +138,59 @@ function generateDoorsSimple(moduleData) {
     return DOORS;
 }
 
-function transformLoops(sections) {
-  const coordsResult = {};
-  const sidesResult = {};
-  sections.forEach((section, index) => {
-      const key = index + 1
-      const sectionKey = section.number.toString();
 
-      if (section.loops && section.loops.length > 0) {
-          coordsResult[key] = {};
-          sidesResult[key] = {};
-          section.loops.forEach((loopArray, loopKey) => {
-              coordsResult[key][loopKey + 1] = loopArray[0].coords;
-              sidesResult[key][loopKey + 1] = loopArray[0].side;
-
-              // if (loopArray && loopArray.length > 0) {
-              //     const firstLoop = loopArray[0];
-                  
-              //     // Для координат
-              //     if (firstLoop && firstLoop.coords && !coordsResult[sectionKey]) {
-              //         coordsResult[sectionKey] = firstLoop.coords;
-              //     }
-                  
-              //     // Для стороны
-              //     if (firstLoop && firstLoop.side !== undefined && !sidesResult[sectionKey]) {
-              //         // sidesResult[sectionKey] = firstLoop.side;
-              //     }
-              // }
-          });
-      }
-      
-      // Альтернативно: если данные в loopsSides
-      if (section.loopsSides && Object.keys(section.loopsSides).length > 0 && !sidesResult[sectionKey]) {
-          const firstSideValue = Object.values(section.loopsSides)[0];
-          sidesResult[sectionKey] = firstSideValue;
-      }
-  });
+function transformLoops(loopsObj) {
+  const result = {};
   
-  return {
-      coords: coordsResult,
-      sides: sidesResult
-  };
+  for (const [sectionKey, sectionArray] of Object.entries(loopsObj)) {
+    result[sectionKey] = {};
+    
+    sectionArray.forEach((doorArray, doorIndex) => {
+      const doorKey = (doorIndex + 1).toString();
+      
+      // Если в массиве только один объект, сохраняем как массив координат
+      if (doorArray.length === 1) {
+        result[sectionKey][doorKey] = doorArray[0].coords;
+      } else {
+        // Если несколько объектов, создаем под-объект с нумерацией
+        doorArray.forEach((item, itemIndex) => {
+          const itemKey = (itemIndex + 1).toString();
+          result[sectionKey][itemKey] = item.coords;
+        });
+      }
+    });
+  }
+  
+  return result;
 }
 
-function creatSectionFilling(arr: any[] | null | undefined): any[] {
+function transformLoopsSide(loopsObj) {
+  const result = {};
+  
+  for (const [sectionKey, sectionArray] of Object.entries(loopsObj)) {
+    result[sectionKey] = {};
+    
+    sectionArray.forEach((doorArray, doorIndex) => {
+      const doorKey = (doorIndex + 1).toString();
+      
+      // Если в массиве только один объект, сохраняем как массив координат
+      if (doorArray.length === 1) {
+        result[sectionKey][doorKey] = doorArray[0].side;
+      } else {
+        // Если несколько объектов, создаем под-объект с нумерацией
+        doorArray.forEach((item, itemIndex) => {
+          const itemKey = (itemIndex + 1).toString();
+          result[sectionKey][itemKey] = item.side;
+        });
+      }
+    });
+  }
+  
+  return result;
+}
+
+
+export function creatSectionFilling(arr: any[] | null | undefined): any[] {
   if (!arr || !Array.isArray(arr)) {
     return [];
   }
@@ -206,152 +234,136 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
   return item
 }
 
-function convertModuleToLegacyFormat(newModuleObject) {
+
+
+export function convertModuleToLegacyFormat(newModuleObject: any): any {
   if (!newModuleObject?.CONFIG) {
     return {};
   }
 
-  
   const { CONFIG } = newModuleObject;
-  const sectionCount = Object.keys(CONFIG.SECTIONS).length;
-  console.log('CONFIG', CONFIG, sectionCount)
-  
-  const legacyProps = {
+  const legacyProps: any = {
     SIZEEDITWIDTH: CONFIG.SIZE?.width || 0,
     SIZEEDITHEIGHT: CONFIG.SIZE?.height || 0,
     SIZEEDITDEPTH: CONFIG.SIZE?.depth || 0,
     MODULECOLOR: CONFIG.MODULE_COLOR || 0,
     BACKWALL: CONFIG.BACKWALL || {},
-    FILLING: 4619580,
-    HORIZONT: CONFIG.MODULEGRID?.horizont || CONFIG.EXPRESSIONS['#HORIZONT#'],
+    HORIZONT: CONFIG.MODULEGRID?.horizont || 0,
+    LEFTSIDECOLOR: CONFIG.LEFTSIDECOLOR,
+    RIGHTSIDECOLOR: CONFIG.RIGHTSIDECOLOR,
+    TOPFASADECOLOR: CONFIG.TOPFASADECOLOR,
     OPTION: createOptionsProps(newModuleObject),
+    // LOOPS: CONFIG.LOOPS || {},
     // DOORS: CONFIG.FASADE_PROPS || {}
+    LOOPS: transformLoops(CONFIG.LOOPS),
+    LOOPSSIDE: transformLoopsSide(CONFIG.LOOPS),
     DOORS: generateDoorsSimple(CONFIG.MODULEGRID),
 
   };
 
-  if(CONFIG.LEFTSIDECOLOR && CONFIG.LEFTSIDECOLOR.COLOR !== 199683) {
-    legacyProps.LEFTSIDECOLOR = CONFIG.LEFTSIDECOLOR;
-  }
-
-  if(CONFIG.RIGHTSIDECOLOR && CONFIG.RIGHTSIDECOLOR.COLOR !== 199683) {
-    legacyProps.RIGHTSIDECOLOR = CONFIG.RIGHTSIDECOLOR;
-  }
-
-  if(CONFIG.TOPFASADECOLOR && CONFIG.TOPFASADECOLOR.COLOR !== 7397) {
-    legacyProps.TOPFASADECOLOR = CONFIG.TOPFASADECOLOR;
-  }
-
-  if(CONFIG.FASADE_PROPS && !Object.keys(legacyProps.DOORS).length) {
-    CONFIG.FASADE_PROPS.forEach((el, index) => {
-      const count = 1 + index;
-      legacyProps[`FASADE${count}`] = {
-        [index]: el.COLOR
-      }
-    })
+  // Динамически добавляем секции из MODULEGRID
+  if (CONFIG.MODULEGRID?.sections && Array.isArray(CONFIG.MODULEGRID.sections)) {
+    CONFIG.MODULEGRID.sections.forEach((section: any, index: number) => {
+      const sectionNumber = index + 1;
+      legacyProps[`SECTIONS${sectionNumber}`] = section.width || 0;
+    });
   }
 
   // Динамически добавляем заполнения секций
-    if(!Object.keys(CONFIG.MODULEGRID).length) {
-      Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
-        const section = CONFIG.SECTIONS[sectionKey];
-        
-        if(section?.size)  
-          legacyProps[`SECTIONS${sectionKey}`] = section.size.x 
-
-        if (section?.position) 
-          legacyProps[`FASADEHORIZONTALPOSITION${sectionKey}`] = {
-              "0": section?.position.x
-          } 
-
-        legacyProps[`FASADESIZES${sectionKey}`] = [638];
-        legacyProps[`FASADEWIDTH${sectionKey}`] = 596;
-        legacyProps[`LOOPS`] = {
-          "1": [
-              86,
-              520
-          ]
-        };
-        legacyProps[`LOOPSSIDE`] = {
-          "1": 4693746
-        };
-      });
-    } else {    
-      if(sectionCount > 1 ) {
-        const result = {}
-        CONFIG.MODULEGRID.sections.forEach(section => {
-          const sectionNumber = section.number;
-          const sectionKey = `SECTIONS${sectionNumber}`;
-          const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
-          const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
-          const fasadesHorizontlPositionKey = `FASADEHORIZONTALPOSITION${sectionNumber}`;
-
-          result[fasadesSizeKey] = {};
-          result[fasadesWidthKey] = {}; // Добавляем объект для ширины
-
-          section.fasades.forEach(doorGroup => {
-              doorGroup.forEach(fasade => {
-                  const doorNumber = fasade.door;
-                  
-                  if (!result[fasadesSizeKey][doorNumber]) {
-                    result[fasadesSizeKey][doorNumber] = [];
-                  }
-                  
-                  result[fasadesSizeKey][doorNumber].push(fasade.height);
-
-                  if (!result[fasadesWidthKey][doorNumber]) {
-                    result[fasadesWidthKey][doorNumber] = fasade.width;
-                  }
-                  if (!result[fasadesHorizontlPositionKey]) {
-                    result[fasadesHorizontlPositionKey] = {};
-                  }
-                  if (!result[fasadesHorizontlPositionKey][doorNumber]) {
-                    result[fasadesHorizontlPositionKey][doorNumber] = {};
-                  }
-                  result[fasadesHorizontlPositionKey][doorNumber][0] = fasade.position.x;
-            }); 
-          });
-    
-          legacyProps[`${sectionKey}`] = section.width;
-          legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
-          legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
-          legacyProps[`${fasadesHorizontlPositionKey}`] = result[fasadesHorizontlPositionKey]
-        });
-      } else {
-        CONFIG.MODULEGRID?.sections.forEach((section, sectionIndex) => {
-          const sectionNumber = sectionIndex + 1;
-          legacyProps[`FASADESIZES${sectionNumber}`] = [];
-          legacyProps[`SECTIONS${sectionNumber}`] = section.width;
-          legacyProps[`FASADEHORIZONTALPOSITION${sectionNumber}`] = {
-            [sectionIndex]: section.position.x
-          }
-          section.fasades.forEach(fasade => {
-            fasade.forEach(element => {
-              legacyProps[`FASADESIZES${sectionNumber}`].push(element.height);
-              legacyProps[`FASADEWIDTH${sectionNumber}`] = element.width;
-            });
-          });
-        });
+  if (CONFIG.SECTIONS) {
+    Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
+      const section = CONFIG.SECTIONS[sectionKey];
+      if (section?.fillings) {
+        legacyProps[`SECTIONSFILLING${sectionKey}`] = creatSectionFilling(section.fillings);
       }
+    });
+  }
 
-      legacyProps[`LOOPS`] = transformLoops(CONFIG.MODULEGRID?.sections).coords;
-      legacyProps[`LOOPSSIDE`] = transformLoops(CONFIG.MODULEGRID?.sections).sides;
-    }
 
-    // Динамически добавляем заполнения секций
-    if (CONFIG.SECTIONS) {
-      Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
-        const section = CONFIG.SECTIONS[sectionKey];
-        if (section?.fillings && section.fillings.length) {
-          legacyProps[`SECTIONSFILLING${sectionKey}`] = creatSectionFilling(section.fillings);
-        }
-      });
-    }
+
+  // Динамически добавляем фасады
+  if (CONFIG.MODULEGRID.sections) {
+    const result = {};
+    // CONFIG.MODULEGRID.sections.forEach((fasadeKey, index) => {
+    //   const fasadeNumber = index + 1;
+    //   const fasade = CONFIG.FASADES[fasadeKey];
+      
+    //   legacyProps[`FASADESIZES${fasadeNumber}`] = fasade.sizes || {};
+    //   legacyProps[`FASADEWIDTH${fasadeNumber}`] = fasade.width || 0;
+    // });
+    CONFIG.MODULEGRID.sections.forEach(section => {
+        const sectionNumber = section.number;
+        const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
+        const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
+        
+        result[fasadesSizeKey] = {};
+        result[fasadesWidthKey] = {}; // Добавляем объект для ширины
+
+        section.fasades.forEach(doorGroup => {
+            doorGroup.forEach(fasade => {
+                const doorNumber = fasade.door;
+                
+                if (!result[fasadesSizeKey][doorNumber]) {
+                    result[fasadesSizeKey][doorNumber] = [];
+                }
+                
+                result[fasadesSizeKey][doorNumber].push(fasade.height);
+
+                if (!result[fasadesWidthKey][doorNumber]) {
+                  result[fasadesWidthKey][doorNumber] = fasade.width;
+                }
+            });
+        });
+        legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
+        legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
+    });
+  }
 
   return legacyProps;
 }
 
-     
+// Пример использования:
+// const legacyModule = convertModuleToLegacyFormat(newModuleObject);
+
+// export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
+//   // const objProps = obj.object.userData.PROPS;
+//   console.log('createBasketItem', objProps)
+
+//  if(objProps.CONFIG.SECTIONS) {
+//     return {
+//      BASKETID: key,
+//      PRODUCT: objProps.CONFIG.ID,
+//      PROPS: convertModuleToLegacyFormat(objProps.CONFIG),
+//      QUANTITY: 1,
+//      TYPE: "scene",
+//     }
+//  } else {
+//    return {
+//      BASKETID: key,
+//      PRODUCT: objProps.CONFIG.ID,
+//      PROPS: {
+//        FASADE: createFacadeProps(objProps),
+//        BODY: createBodyProps(objProps),
+//        OPTION: createOptionsProps(objProps),
+//        UNIFORM_TEXTURE: createUniformTexture(objProps),
+//        MODULECOLOR: objProps.CONFIG.MODULE_COLOR,
+//        // USLUGI: [
+//        //   98683, 249713, 1467341, 1467342, 4722755, 
+//        //   251698, 251699, 251701, 732170, 1458340, 
+//        //   1920165, 4169375
+//        // ],
+//        USLUGI: [],
+//        // USLUGI: [
+//        //   98683, 249713, 1467341
+//        // ],
+//        // TABLETOP:  (objProps),
+//        TABLETOP:  null,
+//      },
+//      QUANTITY: 1,
+//      TYPE: "scene",
+//    };
+//  }
+// }
 export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
   console.log('createBasketItem', objProps);
 

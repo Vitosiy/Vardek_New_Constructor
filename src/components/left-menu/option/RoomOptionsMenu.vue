@@ -7,6 +7,7 @@ import {
   onBeforeMount,
   onUnmounted,
   defineExpose,
+  nextTick,
 } from "vue";
 import { _URL } from "@/types/constants";
 import type {
@@ -82,7 +83,7 @@ const optionsType = ref<TTextureActionMap>({
   moduleBottom: "A:ChangeModuleTotalTexture",
   fasadsTop: "A:ChangeFasadsTopTexture",
   fasadsBottom: "A:ChangeFasadsBottomTexture",
-  tableTop: "A:ChangeTableTop",
+  // tableTop: "A:ChangeTableTop",
   palitteTotal: "A:ChangePaletteTotal",
   millingTotal: "A:ChangeMillingTotal",
   plinth: "A:ChangePlinthBody",
@@ -115,7 +116,7 @@ const prepareOptions = () => {
   visualData.value = {
     module: roomOptions.getDefaultModuleData(),
     fasade: roomOptions.getDefaultFasadeData(),
-    table: roomOptions.getDefaultTableTopData(),
+    // table: roomOptions.getDefaultTableTopData(),
     walls: roomOptions.getWallsTextures(),
     floor: roomOptions.getFloorTextures(),
     plinth: roomOptions.getDefaultTotalPlinthData(),
@@ -154,12 +155,17 @@ const changeHeightClamp = (value: number | null) => {
   eventBus.emit("A:Height-clamp", value);
 };
 
-const loadRoom = (id: number) => {
-  roomOptions.resetGlobalOptions();
-  eventBus.emit("A:Load", id);
-  eventBus.emit("A:ContantLoaded", false);
-  eventBus.emit("A:DrawingMode", false);
-  eventBus.emit("A:ToggleRulerVisibility", true);
+const loadRoom = async (id: number) => {
+
+  await roomState.setLoad(false);
+  await nextTick(); 
+  setTimeout(() => {
+    roomOptions.resetGlobalOptions();
+    eventBus.emit("A:Load", id);
+    eventBus.emit("A:ContantLoaded", false);
+    eventBus.emit("A:DrawingMode", false);
+    eventBus.emit("A:ToggleRulerVisibility", true);
+  }, 0);
 };
 
 const deliteRoom = (value: number) => {
@@ -214,9 +220,9 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
     case "fasadsBottom":
       optionsData.value = visualData.value.fasade as [];
       break;
-    case "tableTop":
-      optionsData.value = Object.values(visualData.value.table);
-      break;
+    // case "tableTop":
+    //   optionsData.value = Object.values(visualData.value.table);
+    //   break;
   }
   currentOptionLable.value = title;
   extrasSelect.value = false;
@@ -264,7 +270,7 @@ const selectOption = (value: TTextureItem) => {
     case "moduleBottom":
     case "fasadsTop":
     case "fasadsBottom":
-    case "tableTop":
+    // case "tableTop":
     case "plinth":
       data = { data: value, type: currentOption.value };
       break;
@@ -369,13 +375,11 @@ const selectOption = (value: TTextureItem) => {
   if (!isPalitte && isMilling && curOption && checkMillingSelect) {
     if (curOption.milling === null) {
       if (isMilling.length > 0) {
-
         roomOptions.setGlobalMilling(isMilling[0].ID, currentOption.value);
       } else {
         roomOptions.setGlobalMilling(null, currentOption.value);
       }
     } else {
-
       roomOptions.setGlobalMilling(value.ID, currentOption.value);
       eventBus.emit(optionsType.value["millingTotal"], data);
     }
@@ -383,8 +387,6 @@ const selectOption = (value: TTextureItem) => {
     if (startMill === null) {
       roomOptions.updateOption(currentOption.value, value.ID);
       eventBus.emit(optionsType.value[currentOption.value], data);
-
-
     }
 
     return;
@@ -425,7 +427,6 @@ const plinthSelect = (
   key: keyof TOptionsMap,
   plinthgData: TMilling[]
 ) => {
-
   optionsData.value = plinthgData;
   currentOption.value = key;
   currentOptionLable.value = plinthTitle;
@@ -466,9 +467,9 @@ const getOptionImg = computed(() => {
       case "fasadsBottom":
         result = FASADE[id].PREVIEW_PICTURE;
         break;
-      case "tableTop":
-        result = visualData.value.table[id].PREVIEW_PICTURE;
-        break;
+      // case "tableTop":
+      //   result = visualData.value.table[id].PREVIEW_PICTURE;
+      //   break;
       case "plinth":
         result = visualData.value.plinth[id].PREVIEW_PICTURE;
         break;
@@ -591,7 +592,9 @@ watch(shadows, () => toggleShadow(shadows.value));
     gap: 15px;
     position: relative;
     padding: 15px;
-    background: rgba($white, 1);
+    background-color: rgba($white, 1);
+    // backdrop-filter: blur(5px);
+    // background: rgba($white, 1);
     box-shadow: 0px 0px 10px 0px #3030301a;
     z-index: 1;
     border-radius: 15px;

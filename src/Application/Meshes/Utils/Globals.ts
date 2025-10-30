@@ -8,6 +8,8 @@ import * as THREETypes from "@/types/types"
 export class GlobalsData {
 
     _APP: THREETypes.TObject = useAppData().getAppData
+
+
     _COLOR: THREETypes.TObject = this._APP.COLOR
     _FASADE: THREETypes.TObject = this._APP.FASADE;
     _FILLING: THREETypes.TObject = this._APP.FILLING;
@@ -27,7 +29,7 @@ export class GlobalsData {
     _LOOPSIDE: THREETypes.TObject = this._APP.LOOPSIDE
     _OPTION: THREETypes.TObject = this._APP.OPTION
     _OPTIONS_GROUP: THREETypes.TObject = this._APP.OPTIONS_GROUP
-    _PLINTH:THREETypes.TObject = this._APP.PLINTH
+    _PLINTH: THREETypes.TObject = this._APP.PLINTH
     _PALETTE: THREETypes.TObject = this._APP.PALETTE;
     _PRODUCTS_TYPES: THREETypes.TObject = this._APP.PRODUCTS_TYPES
     constructor() {

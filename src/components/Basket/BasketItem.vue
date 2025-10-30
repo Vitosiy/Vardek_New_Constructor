@@ -13,53 +13,20 @@
       </h3> 
       
       <!-- Секция свойств товара тип сцена-->
-      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'scene'">
-        <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-          <div v-if="getPropDefinition(String(propKey))">
-            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
-
-            <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
-              <li v-for="(propVal, index) in propValue" :key="index">
-                <span v-if="shouldShowPropSceneValue(propKey, propVal) && propKey !== 'FASADE'"  
-                  :class="getErrorClass(propVal, item?.error?.props)">
-                  {{ formatPropValue(propKey, propVal) }}
-                  {{ getErrorText(propVal, item.product.props_error, item, propKey) }}
-                </span>
-                <span v-if="shouldShowPropSceneValue(propKey, propVal) && propKey === 'FASADE'"  
-                  :class="getErrorClass(propVal, item?.error?.props)">
-                  <ul class="basket-item__props-list">
-                    <li v-for="value in getFilteredProps(propVal)">{{ getPropLabel(String(value.key)) }} : {{ formatPropValue(value.key, value.value) }}</li>
-                  </ul>
-                  {{ getErrorText(propVal, item.product.props_error, item, propKey) }}
-                </span>
-              </li>
-
-
-            </ul>
-
-            <span  v-else :class="getErrorClass(propValue, item?.error?.props)">
-                {{ getTypeName(getPropDefinition(propKey).type, propValue) }}
-            </span>
-
-          </div>
-        </div>
-      </div> -->
-
-      <!-- Секция свойств товара тип каталог-->
-      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog'"> -->
-      <!-- <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE === 'catalog' || item?.product.TYPE === 'umscene'"> -->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
 
           <div v-if="getPropDefinition(String(propKey))">
-            
-            <span class="basket-item__props-lable">{{ getPropLabel(String(propKey)) }}:</span>
+            <!-- {{ propValue }} -->
+            <span class="basket-item__props-lable" v-if="propValue">{{ getPropLabel(String(propKey)) }}:</span>
             <!-- Обработка массивов -->
             <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
               <li v-for="(propVal, index) in propValue" :key="index">
                 <span v-if="shouldShowPropValue(propKey, propVal)" 
                       :class="getErrorClass(propVal, item?.error?.props)">
-                  {{ formatPropValue(propKey, propVal) }}
+                  <!-- {{ formatPropValue(propKey, propVal , item) }} -->
+                  <span v-html="formatPropValue(propKey, propVal, item, index)"></span>
+                  
                   <span v-if="hasArticle(propKey, propVal)">
                     - артикул {{ getArticleCode(propKey, propVal) }}
                   </span>
@@ -219,6 +186,9 @@ import DeleteBasketButton from "../ui/buttons/basket/DeleteBasketButton.vue";
 import axios from "axios";
 import InfoPopUp from "../popUp/InfoPopUp.vue";
 import { _URL } from "@/types/constants";
+import { propsLabel } from "./helper/basketMapper";
+import { useEventBus } from "@/store/appliction/useEventBus";
+
 const API_URL = ref('https://dev.vardek.online');
 
 interface Props {
@@ -241,307 +211,6 @@ const quantity = ref(props.item.product.quantity);
 
 // Получаем данные из store
 const appData = computed(() => appDataStore.getAppData);
-
-// Определения свойств (перенесено из Angular кода)
-const propsLabel = {
-  COLOR: {type: "COLOR", val: "int", NAME: "Цвет", SORT: 300},
-  MODULECOLOR: {type: "FASADE", val: "int", NAME: "Цвет корпуса", SORT: 300},
-  SIZE: {type: "SIZE", val: "int", NAME: "Размер", SORT: 400},
-  THICKNESS: {type: "THICKNESS", val: "int", NAME: "Толщина", SORT: 500},
-  OPTION: {type: "OPTION", val: "array", NAME: "Опции", SORT: 600},
-  SIZEEDITHEIGHT: {type: false, val: "int", NAME: "Высота", SORT: 800},
-  SIZEEDITDEPTH: {type: false, val: "int", NAME: "Глубина", SORT: 800},
-  SIZEEDITWIDTH: {type: false, val: "int", NAME: "Ширина", SORT: 800},
-  HEM: {type: "HEM", val: "int", NAME: "Кромка", SORT: 900},
-  SHELFQUANT: {type: false, val: "int", NAME: "Количество полок", SORT: 900},
-  SIZEEDITJOINDEPTH: {
-    type: false,
-    val: "int",
-    NAME: "Глубина пристыковочного модуля",
-    SORT: 1000,
-  },
-  BACKWALL: {type: "FASADE", val: "color_obj_list", NAME: "Задняя стенка", SORT: 100},
-  LEFTSIDECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Левая стенка", SORT: 100},
-  RIGHTSIDECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Правая стенка", SORT: 100},
-  TOPFASADECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Накладка на крышку", SORT: 100},
-
-  DOORS: {type: "FASADE", val: "obj_list", NAME: "Двери", SORT: 100},
-  FACADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
-  FASADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
-  FASADE1: {type: "FASADE", val: "int", NAME: "Цвет фасада 1", SORT: 1000},
-  FASADE2: {type: "FASADE", val: "int", NAME: "Цвет фасада 2", SORT: 1100},
-  FASADE3: {type: "FASADE", val: "int", NAME: "Цвет фасада 3", SORT: 1200},
-  FASADE4: {type: "FASADE", val: "int", NAME: "Цвет фасада 4", SORT: 1300},
-  FASADE5: {type: "FASADE", val: "int", NAME: "Цвет фасада 5", SORT: 1300},
-
-  FASADEWIDTH: {type: false, val: "int", NAME: "Ширина фасада", SORT: 1360},
-  FASADESIZE: {type: "FASADESIZE", val: "int", NAME: "Высота фасада", SORT: 1350},
-  FASADESIZE1: {
-    type: "FASADESIZE",
-    val: "int",
-    NAME: "Размер фасада 1",
-    SORT: 1350,
-  },
-  FASADESIZE2: {
-    type: "FASADESIZE",
-    val: "int",
-    NAME: "Размер фасада 2",
-    SORT: 1350,
-  },
-  FASADESIZE3: {
-    type: "FASADESIZE",
-    val: "int",
-    NAME: "Размер фасада 3",
-    SORT: 1350,
-  },
-  FASADESIZE4: {
-    type: "FASADESIZE",
-    val: "int",
-    NAME: "Размер фасада 4",
-    SORT: 1350,
-  },
-  FASADESIZE5: {
-    type: "FASADESIZE",
-    val: "int",
-    NAME: "Размер фасада 5",
-    SORT: 1350,
-  },
-
-  FASADESIZEWIDTH1: {
-    type: false,
-    val: "int",
-    NAME: "Ширина фасада 1",
-    SORT: 1350,
-  },
-  FASADESIZEWIDTH2: {
-    type: false,
-    val: "int",
-    NAME: "Ширина фасада 2",
-    SORT: 1350,
-  },
-  FASADESIZEWIDTH3: {
-    type: false,
-    val: "int",
-    NAME: "Ширина фасада 3",
-    SORT: 1350,
-  },
-  FASADESIZEWIDTH4: {
-    type: false,
-    val: "int",
-    NAME: "Ширина фасада 4",
-    SORT: 1350,
-  },
-  FASADESIZEWIDTH5: {
-    type: false,
-    val: "int",
-    NAME: "Ширина фасада 5",
-    SORT: 1350,
-  },
-
-  GLASS: {type: "GLASS", val: "int", NAME: "Стекло", SORT: 700},
-  GLASS1: {type: "GLASS", val: "int", NAME: "Стекло 1", SORT: 1400},
-  GLASS2: {type: "GLASS", val: "int", NAME: "Стекло 2", SORT: 1500},
-  GLASS3: {type: "GLASS", val: "int", NAME: "Стекло 3", SORT: 1600},
-  GLASS4: {type: "GLASS", val: "int", NAME: "Стекло 4", SORT: 1700},
-  GLASS5: {type: "GLASS", val: "int", NAME: "Стекло 5", SORT: 1700},
-
-  PATINA: {type: "PATINA", val: "int", NAME: "Патина", SORT: 1800},
-  PATINA1: {type: "PATINA", val: "int", NAME: "Патина 1", SORT: 1800},
-  PATINA2: {type: "PATINA", val: "int", NAME: "Патина 2", SORT: 1800},
-  PATINA3: {type: "PATINA", val: "int", NAME: "Патина 3", SORT: 1800},
-  PATINA4: {type: "PATINA", val: "int", NAME: "Патина 4", SORT: 1800},
-  PATINA5: {type: "PATINA", val: "int", NAME: "Патина 5", SORT: 1800},
-
-  SHOWCASE: {type: "SHOWCASE", val: "int", NAME: "Тип витрины", SORT: 1800},
-  SHOWCASE1: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 1", SORT: 1800},
-  SHOWCASE2: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 2", SORT: 1800},
-  SHOWCASE3: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 3", SORT: 1800},
-  SHOWCASE4: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 4", SORT: 1800},
-  SHOWCASE5: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 5", SORT: 1800},
-
-  PALETTE: {type: "PALETTE", val: "int", NAME: "Палитра", SORT: 1800},
-  PALETTE1: {type: "PALETTE", val: "int", NAME: "Палитра 1", SORT: 1800},
-  PALETTE2: {type: "PALETTE", val: "int", NAME: "Палитра 2", SORT: 1800},
-  PALETTE3: {type: "PALETTE", val: "int", NAME: "Палитра 3", SORT: 1800},
-  PALETTE4: {type: "PALETTE", val: "int", NAME: "Палитра 4", SORT: 1800},
-  PALETTE5: {type: "PALETTE", val: "int", NAME: "Палитра 5", SORT: 1800},
-
-  FASADEALIGN: {
-    type: "FASADEALIGN",
-    val: "list",
-    NAME: "Сторона открывания",
-    SORT: 1800,
-    VALUE: {left: "Левая", right: "Правая"},
-  },
-  FASADEALIGN1: {
-    type: "FASADEALIGN",
-    val: "list",
-    NAME: "Сторона открывания 1",
-    SORT: 1800,
-  },
-  FASADEALIGN2: {
-    type: "FASADEALIGN",
-    val: "list",
-    NAME: "Сторона открывания 2",
-    SORT: 1800,
-  },
-  FASADEALIGN3: {
-    type: "FASADEALIGN",
-    val: "list",
-    NAME: "Сторона открывания 3",
-    SORT: 1800,
-  },
-  FASADEALIGN4: {
-    type: "FASADEALIGN",
-    val: "list",
-    NAME: "Сторона открывания 4",
-    SORT: 1800,
-  },
-  FASADEALIGN5: {
-    type: "FASADEALIGN",
-    val: "list",
-    NAME: "Сторона открывания 5",
-    SORT: 1800,
-  },
-
-  FASADEFIRST: {
-    type: "FASADEFIRST",
-    val: "list",
-    NAME: "Передний фасад",
-    SORT: 1800,
-    VALUE: {left: "Левый", right: "Правый"},
-  },
-
-  MILLING: {type: "MILLING", val: "int", NAME: "Фрезеровка", SORT: 200},
-  MILLING1: {type: "MILLING", val: "int", NAME: "Фрезеровка 1", SORT: 1800},
-  MILLING2: {type: "MILLING", val: "int", NAME: "Фрезеровка 2", SORT: 1900},
-  MILLING3: {type: "MILLING", val: "int", NAME: "Фрезеровка 3", SORT: 2000},
-  MILLING4: {type: "MILLING", val: "int", NAME: "Фрезеровка 4", SORT: 2100},
-  MILLING5: {type: "MILLING", val: "int", NAME: "Фрезеровка 5", SORT: 2100},
-
-  USLUGI: {type: "USLUGI", val: "array", NAME: "Услуга", SORT: 2110},
-  USLUGIL: {type: "USLUGI", val: "array", NAME: "Услуга левая часть", SORT: 2120},
-  USLUGIR: {
-    type: "USLUGI",
-    val: "array",
-    NAME: "Услуга правая часть",
-    SORT: 2130,
-  },
-  USLUGI1: {type: "USLUGI", val: "array", NAME: "Услуга 1", SORT: 2201},
-  USLUGI2: {type: "USLUGI", val: "array", NAME: "Услуга 2", SORT: 2202},
-  USLUGI3: {type: "USLUGI", val: "array", NAME: "Услуга 3", SORT: 2203},
-  USLUGI4: {type: "USLUGI", val: "array", NAME: "Услуга 4", SORT: 2204},
-  USLUGI5: {type: "USLUGI", val: "array", NAME: "Услуга 5", SORT: 2205},
-
-  USLUGIraspil: {type: false, val: "str", NAME: "Распил", SORT: 2300},
-
-  PROFILE: {type: "USLUGI", val: "int", NAME: "Тип завала", SORT: 2200},
-  FILLING: {type: "FILLING", val: "int", NAME: "Вариант компоновки", SORT: 2400},
-
-  FASADETYPE: {type: "FASADETYPE", val: "int", NAME: "Тип фасада", SORT: 2500},
-  FASADETYPE1: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 1", SORT: 2510},
-  FASADETYPE2: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 2", SORT: 2520},
-  FASADETYPE3: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 3", SORT: 2530},
-  FASADETYPE4: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 4", SORT: 2540},
-  FASADETYPE5: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 5", SORT: 2550},
-
-  SECTIONS: {type: false, val: "int", NAME: "Размер секции", SORT: 2550},
-  SECTIONS1: {type: false, val: "int", NAME: "Размер секции 1", SORT: 2550},
-  SECTIONS2: {type: false, val: "int", NAME: "Размер секции 2", SORT: 2550},
-  SECTIONS3: {type: false, val: "int", NAME: "Размер секции 3", SORT: 2550},
-  SECTIONS4: {type: false, val: "int", NAME: "Размер секции 4", SORT: 2550},
-  SECTIONS5: {type: false, val: "int", NAME: "Размер секции 5", SORT: 2550},
-
-  SHELFPOSITION: {type: false, val: "int", NAME: "Позиции полок", SORT: 2550},
-  SHELFPOSITION1: {type: false, val: "int", NAME: "Позиции полок 1", SORT: 2550},
-  SHELFPOSITION2: {type: false, val: "int", NAME: "Позиции полок 2", SORT: 2550},
-  SHELFPOSITION3: {type: false, val: "int", NAME: "Позиции полок 3", SORT: 2550},
-  SHELFPOSITION4: {type: false, val: "int", NAME: "Позиции полок 4", SORT: 2550},
-  SHELFPOSITION5: {type: false, val: "int", NAME: "Позиции полок 5", SORT: 2550},
-  SHELFPOSITION6: {type: false, val: "int", NAME: "Позиции полок 6", SORT: 2550},
-  SHELFPOSITION7: {type: false, val: "int", NAME: "Позиции полок 7", SORT: 2550},
-  SHELFPOSITION8: {type: false, val: "int", NAME: "Позиции полок 8", SORT: 2550},
-  SHELFPOSITION9: {type: false, val: "int", NAME: "Позиции полок 9", SORT: 2550},
-  SHELFPOSITION10: {
-    type: false,
-    val: "int",
-    NAME: "Позиции полок 10 ",
-    SORT: 2550,
-  },
-
-  SECTIONSFILLING: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции",
-    SORT: 2550,
-  },
-  SECTIONSFILLING1: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 1",
-    SORT: 2550,
-  },
-  SECTIONSFILLING2: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 2",
-    SORT: 2550,
-  },
-  SECTIONSFILLING3: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 3",
-    SORT: 2550,
-  },
-  SECTIONSFILLING4: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 4",
-    SORT: 2550,
-  },
-  SECTIONSFILLING5: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 5",
-    SORT: 2550,
-  },
-  SECTIONSFILLING6: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 6",
-    SORT: 2550,
-  },
-  SECTIONSFILLING7: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 7",
-    SORT: 2550,
-  },
-  SECTIONSFILLING8: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 8",
-    SORT: 2550,
-  },
-  SECTIONSFILLING9: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 9",
-    SORT: 2550,
-  },
-  SECTIONSFILLING10: {
-    type: "PRODUCTS",
-    val: "int",
-    NAME: "Наполнение секции 10",
-    SORT: 2550,
-  },
-  MECHANISM: {
-    type: "MECHANISM",
-    val: "int",
-    NAME: "Подъемный механизм",
-    SORT: 2560,
-  },
-};
 
 
 const openPopup = async (item) => {
@@ -604,7 +273,43 @@ const shouldShowPropValue = (key: string, propVal: any) => {
   return propDef && propDef.type && propDef.type !== 'PRODUCT';
 };
 
-const formatPropValue = (key: string, propVal: any) => {
+// const formatPropValue = (key: string, propVal: any, item: any) => {
+//   const propDef = getPropDefinition(key);
+//   console.log('propValpropVal', propVal);
+
+//   if (propDef && propDef.type === 'PRODUCTS') {
+//     if (propVal.ID) {
+//       return propVal.VALUE === null 
+//         ? getProductInfo(propVal.ID).NAME 
+//         : `${getProductInfo(propVal.ID).NAME} - поз. ${propVal.VALUE} мм.`;
+//     } else {
+//       return getProductInfo(propVal).NAME;
+//     }
+//   }
+
+//   if(item?.product.TYPE=== 'scene') {
+//     if (typeof propVal === 'object' && propVal !== null) {
+//       let getListValue = '';
+//       Object.entries(propVal).forEach(([key, value]) => {
+//         if (typeof value === 'object' && value !== null) {
+//           value = JSON.stringify(value);
+//         }
+//         getListValue += `<li><strong>${key}:</strong> ${value}</li>`;
+//       });
+      
+//       const ul = document.createElement('ul');
+//       ul.innerHTML = getListValue;
+//       console.log(ul);
+//       return ul; // возвращаем DOM элемент
+//     }
+//     console.log('тип')
+
+//     return getTypeName(propDef?.type, propVal.COLOR);
+//   } 
+//   return getTypeName(propDef?.type, propVal);
+// };
+
+const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
   const propDef = getPropDefinition(key);
   console.log('propValpropVal', propVal);
 
@@ -617,8 +322,25 @@ const formatPropValue = (key: string, propVal: any) => {
       return getProductInfo(propVal).NAME;
     }
   }
-  if(propVal.COLOR) {
-    return getTypeName(propDef?.type, propVal.COLOR);
+
+  if(item?.product.TYPE === 'scene') {
+    if (typeof propVal === 'object' && propVal !== null) {
+      // Вместо создания DOM элемента, возвращаем HTML строку
+      let listValue = '';
+      const count = ++index;
+      Object.entries(propVal).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+          value = JSON.stringify(value);
+        }
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE)) {
+          listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)}</li>`; // ${getTypeName(key, value)}
+        }
+      });
+      
+      // Возвращаем HTML строку, а не DOM элемент
+      return `<ul>${listValue}</ul>`;
+    }
+
   } 
   return getTypeName(propDef?.type, propVal);
 };
@@ -676,16 +398,25 @@ const hasError = (value: any, propsError: any) => {
   return propsError.some(error => error.id && error.id.includes(value));
 };
 
-const getTypeName = (type: any, value: any) => {
+const getTypeName = (type: any, value: any, mainType: any = '') => {
   // Получаем имя из store данных
+  console.log('data', appData.value, type, value);
   if (value && typeof value === 'object' && value.NAME) {
     return value.NAME;
   }
   if (appData.value && appData.value[type] && appData.value[type][value]) {
     return appData.value[type][value].NAME || `[${type}:${value}]`;
   }
+  if (mainType === 'scene' && type === 'COLOR') {     
+    return appData.value['FASADE'][value]?.NAME;  
+  }
+
+  if(mainType === 'scene' && type === 'SIZES') {
+    console.log();  
+    return appData.value['FASADESIZE'][JSON.parse(value).id]?.NAME;  
+  }
   return `[${type}:${value}]`;
-};
+}; 
 
 const getListValue = (key: string, value: any) => {
   const propDef = getPropDefinition(key);
@@ -788,12 +519,16 @@ function decrement(id: string, type: string) {
 }
 
 function updateQuantity(id: string, type: string) {
-  basketStore.updateQuantityFromBaske(id, type, quantity);
+  basketStore.updateQuantity(id, type, quantity);
 }
 
 const deleteProductInBusket = (id: string, type: string) => {
   console.log(id, type)
   basketStore.removeFromBasket(id, type);
+  if (type === 'scene') {
+    useEventBus().emit('A:RemoveModelFromBasket', { product: null, basketId: id });
+  }
+
 }
 
 

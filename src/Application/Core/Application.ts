@@ -9,7 +9,7 @@ import { World } from "./World";
 
 import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { RoomManager } from "../Room/RoomManager"
-import { AppLights } from "../World/Lights"
+import { AppLights } from "../Lights/Lights"
 import { TrafficManager } from "../Movement/TrafficManager"
 import { TransformControlsManager } from "../Utils/TransformControlsManager";
 
@@ -95,7 +95,7 @@ export class Application {
         this.useEdgeBuilder = new UseEdgeBuilder(this)
 
         this.customBoxHelper = new CustomBoxHelper(this);
-        this.ruler = new Ruler();
+        this.ruler = new Ruler(this);
         this.geometryBuilder = new GeometryBuilder(this);
         this.universalGeometryBuilder = new UniversalGeometryBuilder(this);
 
@@ -135,6 +135,10 @@ export class Application {
 
     get _orbitControls() {
         return this.camera!.controls
+    }
+
+    get _renderClass(){
+        return this.renderer
     }
 
     get _renderer() {
