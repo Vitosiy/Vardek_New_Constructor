@@ -1,6 +1,6 @@
 <template>
   <div class="project">
-    <div class="project__title">Открыть проект</div>
+    <div class="project__title">Менеджер проектов</div>
     <ClosePopUpButton class="popup__close" @close="closePopup" />
 
     <div class="project__container">

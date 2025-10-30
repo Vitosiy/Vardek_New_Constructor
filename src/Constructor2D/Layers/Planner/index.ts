@@ -192,6 +192,7 @@ export default class Planner {
 
   }
 
+  private checkAndCreateRoomFromConnectedWalls()
   // добавление новой комнаты
   public addRoom(
     id: string | number | null = null, 
@@ -1490,19 +1491,23 @@ export default class Planner {
           *        - Выполняем удаление исходной комнаты и обновление roomId для всех стен цепочки
           */
           if (dataWall.roomId !== connectWall.roomId) {
-
+            // Сохраняем ID комнаты для удаления ДО изменения roomId
+            const roomToRemove = dataWall.roomId;
+            
+            // Обновляем roomId для всех стен
             this.objectWalls.forEach(wall => {
-              if (wall.roomId === dataWall.roomId) {
-                wall.roomId = connectWall.roomId;
-              }
+                if (wall.roomId === dataWall.roomId) {
+                    wall.roomId = connectWall.roomId;
+                }
             });
-
-            this.removeRoom(dataWall.roomId);
+            
+            // Удаляем комнату только если она ещё существует
+            if (this.roomsMap.has(roomToRemove)) {
+                this.removeRoom(roomToRemove);
+            }
+            
             dataWall.roomId = connectWall.roomId;
-
-            // !!! обновляем пол комнаты
-
-          }
+        } 
 
         } else {
 

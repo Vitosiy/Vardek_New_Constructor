@@ -117,7 +117,7 @@ export default class Constructor2D {
     { 
       id: 3689611,
       name: "door"
-    }
+    },
   ];
 
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {

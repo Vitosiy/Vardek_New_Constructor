@@ -173,7 +173,7 @@ export const useQuickActionsToolbar = () => {
     },
     {
       key: 'newProject',
-      tooltip: 'Новый проект',
+      tooltip: 'Менеджер проектов',
       iconClass: 'icon-add',
       path: 'default',
       action: () => popupStore.openPopup('project'),
