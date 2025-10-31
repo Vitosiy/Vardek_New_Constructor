@@ -97,7 +97,7 @@
                 loading="lazy"
               >
             </div>
-            <div class="product-item__wrapper">!category.hidden
+            <div class="product-item__wrapper">
               <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">{{ product.NAME }}</h4>
               <div class="product-item__price">{{ product.PRICE }}</div>
               <button class="product-item__basket"  @click="callChildMethod(Number(product.ID))" >В корзину</button>
@@ -275,7 +275,7 @@ const handleProductClick = async (id) => {
 };
 
 const filterHiddenCategories = (categories) => {
-  return categories?.filter(category => !category.hidden && !category.UF_TEMPLATE) || [];
+  return categories?.filter(category => !category.hidden  ) || [];
 };
 
 const trimArrayByLevel = (targetLevel) => {

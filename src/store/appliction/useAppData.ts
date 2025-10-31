@@ -15,10 +15,11 @@ export const useAppData = defineStore('AppData', () => {
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
     const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
-    // const url = 'https://dev.vardek.online'
-    // const response = await fetch(`${url}/api/modeller/mainobject/GetData/`, { 
     const response = await fetch(url, { 
-      method: 'GET'
+      method: 'GET',
+      // headers: {
+      // "Authorization": `Bearer ${token}`,
+      // },
     })
     if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
 
