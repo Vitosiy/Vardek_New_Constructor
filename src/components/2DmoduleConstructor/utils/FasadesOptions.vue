@@ -1275,6 +1275,7 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     overflow-y: scroll;
+    overflow-x: hidden;
     padding-right: 0.5rem;
     max-height: 82vh;
 
@@ -1535,6 +1536,8 @@ onMounted(() => {
 }
 
 .accordion {
+  border: unset;
+
   details {
     position: relative;
     margin: 16px 0;

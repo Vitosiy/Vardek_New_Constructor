@@ -131,7 +131,7 @@ watch(
       />
     </div>
 
-    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
+    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
   </div>
 </template>
 

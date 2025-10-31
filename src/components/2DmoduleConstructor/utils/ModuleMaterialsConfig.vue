@@ -115,11 +115,22 @@ const getMaterialsList = () => {
       })
       break;
     default:
+      createFacadeData()
       materialList.value = modelState.getCurrentModelFasadesData
       break;
   }
 
   return materialList.value;
+};
+
+const createFacadeData = (fasadeIndex) => {
+  const productId = modelState.getCurrentModel.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex,
+    productId,
+  });
 };
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
@@ -139,7 +150,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
           module.value.profilesConfig.COLOR = objectData.value.PROPS.CONFIG['PROFILECOLOR']
           module.value.sections.forEach((section, secIndex) => {
 
-            module.value.section.cells.forEach((cell, cellIndex) => {
+            section.cells.forEach((cell, cellIndex) => {
               if(cell.hiTechProfiles) {
                 cell.fillings.forEach(filling => {
                   if(filling.isProfile) {
@@ -240,6 +251,7 @@ onMounted(() => {
       <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
 
       <AdvanceCorpusMaterialRedactor
+          class="color-select-item"
           v-if="getCurrentRedactor"
           :key="currentOption"
           :element-data="objectData.PROPS.CONFIG[currentOption]"
@@ -249,6 +261,7 @@ onMounted(() => {
       />
       <CorpusMaterialRedactor
           v-else
+          class="color-select-item"
           :is2Dconstructor="true"
           :material-list="materialList"
           @parent-callback="selectOption"
@@ -256,6 +269,7 @@ onMounted(() => {
 
       <HiTechSideprofile
           v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
+          class="color-select-item"
           :module="module"
       />
     </div>
@@ -761,9 +775,7 @@ onMounted(() => {
     &-item {
       width: 100%;
       display: flex;
-      align-items: center;
       padding: 10px;
-      background-color: $bg;
       border-radius: 15px;
       gap: 10px;
 

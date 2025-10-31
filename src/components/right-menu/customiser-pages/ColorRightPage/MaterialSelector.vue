@@ -84,7 +84,7 @@ const handleSelect = (material: any) => {
   &__list {
     margin-top: 10px;
     height: 100%;
-    max-height: calc(27vh - 110px);
+    max-height: calc(85vh - 110px);
     box-sizing: border-box;
     overflow-y: scroll;
     box-sizing: border-box;
