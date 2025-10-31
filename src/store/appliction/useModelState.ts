@@ -67,9 +67,11 @@ export const useModelState = defineStore('ModelState', () => {
     const _GLASS = computed(() => _APP.value.GLASS || [])
     const _PATINA = computed(() => _APP.value.PATINA || [])
     const _HANDLES = computed(() => _APP.value.HANDLES || [])
+    const _HEM = computed(() => _APP.value.HEM  || [])
 
 
     const currentModel = ref<THREE.Object3D | null>(null)
+    const currentRaspilParent = ref<THREE.Object3D | null>(null)
 
     const currentModulData = ref<any>(null)
 
@@ -98,6 +100,9 @@ export const useModelState = defineStore('ModelState', () => {
     const setCurrentModel = (object: THREE.Object3D | any) => {
 
         currentModel.value = object
+        if (!object) {
+            currentRaspilParent.value = null
+        }
     }
 
     const getCurrentModel = computed(() => {
@@ -105,6 +110,15 @@ export const useModelState = defineStore('ModelState', () => {
         return currentModel.value
         //return currentModel.value?.userData
     })
+
+    const setCurrentRaspilParent = (object: THREE.Object3D | any) => {
+        currentRaspilParent.value = object
+    }
+
+    const getCurrentRaspilParent = computed(()=>{
+        return currentRaspilParent.value
+    })
+
     const getModels = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
 
     // const getModels = computed(() => {
@@ -543,6 +557,7 @@ export const useModelState = defineStore('ModelState', () => {
         _APP,
         _FASADE,
         _PRODUCTS,
+        _HEM,
         getModels,
 
         setCurrentModel,
@@ -550,6 +565,8 @@ export const useModelState = defineStore('ModelState', () => {
         createCurrentModelFasadesData,
         clearCurrentModelFasadesData,
         getCurrentModelFasadesData,
+        setCurrentRaspilParent,
+        getCurrentRaspilParent,
 
         createCurrentPaletteData,
         getCurrentPaletteData,
