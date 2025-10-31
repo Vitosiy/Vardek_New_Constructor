@@ -142,7 +142,8 @@ export class BuildersHelper extends GlobalsData {
     getExec(obj) {
         Object.entries(obj).forEach(([key, value]) => {
 
-            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color" || key.includes('PROPERTY_FASADE_NUMBER_VALUE_ID')) {
+
+            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color" || key.includes("PROPERTY_FASADE_NUMBER_VALUE_ID")) {
                 obj[key] = value;
             } else {
                 obj[key] = eval(value);
