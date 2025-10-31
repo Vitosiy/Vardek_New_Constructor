@@ -1495,7 +1495,13 @@ const adjustFasadeSize = (
           maxPrev
       );
     } else {
-      calcValue = newValue
+      const minCurrent = MIN_FASADE_WIDTH
+      const maxCurrent = currentSegment.maxX
+
+      if (newValue < minCurrent)
+        calcValue = minCurrent;
+      else if (newValue > maxCurrent)
+        calcValue = maxCurrent;
     }
   } else {
     const section = module.sections[sectionIndex];
@@ -1537,7 +1543,13 @@ const adjustFasadeSize = (
           maxPrev
       );
     } else {
-      calcValue = newValue
+      const minCurrent = MIN_FASADE_HEIGHT
+      const maxCurrent = currentSegment.maxY
+
+      if (newValue < minCurrent)
+        calcValue = minCurrent;
+      else if (newValue > maxCurrent)
+        calcValue = maxCurrent;
     }
   }
 

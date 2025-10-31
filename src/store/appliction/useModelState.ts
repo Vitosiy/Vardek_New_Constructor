@@ -417,7 +417,11 @@ export const useModelState = defineStore('ModelState', () => {
     const setMillingId = (fasadeId, id) => {
 
         const { FASADE_PROPS } = currentModel.value?.userData.PROPS.CONFIG
-        FASADE_PROPS[fasadeId].MILLING = id
+        const modulePart = currentModel.value?.userData.PROPS.CONFIG[fasadeId]
+        if(modulePart)
+            modulePart.MILLING = id
+        else
+            FASADE_PROPS[fasadeId].MILLING = id
     }
 
     /** Витрины */
@@ -427,7 +431,7 @@ export const useModelState = defineStore('ModelState', () => {
         const prodShowcases = product.type_showcase
         const positionId = product.FASADE_POSITION[fasadeNdx]
         const fasadePosData = _FASADE_POSITION.value[positionId]
-        const haveShowCase = fasadePosData.glass == 1
+        const haveShowCase = fasadePosData?.glass == 1
 
         if (!haveShowCase) {
             currentShowcaseData.value = []

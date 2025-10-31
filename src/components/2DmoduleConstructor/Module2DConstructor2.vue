@@ -74,6 +74,7 @@ const totalHeight = ref(0);
 const totalWidth = ref(0);
 const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
+const onSideProfile = ref<boolean>(false);
 
 const module = computed(() => {
 
@@ -119,6 +120,9 @@ const module = computed(() => {
         productID: productData.value.globalData,
         isSlidingDoors,
       }
+
+      if(PROPS.CONFIG.isHiTech)
+        _module.isHiTech = true
 
       PROPS.CONFIG.MODULEGRID = _module
 
@@ -169,7 +173,7 @@ const module = computed(() => {
             <FasadeObject>{
               id: 1,
               width: FASADE.FASADE_WIDTH,
-              height: FASADE.FASADE_HEIGHT - FASADE.POSITION_Y,
+              height: FASADE.FASADE_HEIGHT - _module.horizont,
               position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
               material: <FasadeMaterial>{
                 ...FASADE_PROPS
@@ -333,7 +337,7 @@ const updateFasades = () => {
   const correctFasadeHeight = module.value.height - module.value.horizont - 4;
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-      if (section.fasadesDrawers?.length) {
+      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
         calcDrawersFasades(secIndex)
       } else if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;
@@ -956,6 +960,53 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
   optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item);
 };
 
+const initSideProfile = () => {
+  if (!module.value.profilesConfig?.sideProfile) {
+
+    const product = APP.CATALOG.PRODUCTS[6513251] //C - образный профиль
+    let profileData = {}
+
+    if (!module.value.profilesConfig) {
+      module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+      module.value.profilesConfig.colorsList = [...product.COLOR]
+      productData.value.PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+    }
+
+    profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+
+    let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
+    if (typeProfile !== "c" && typeProfile !== "l")
+      typeProfile = typeProfile.split(",").pop().replace(/\s/g, '')
+
+    profileData.isProfile = true
+    profileData.TYPE_PROFILE = typeProfile
+    profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
+    profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
+    profileData.size = {x: module.value.height, y: product.height, z: product.depth}
+    profileData.product = 6513251
+
+    profileData.side = LOOPSIDE[module.value.sections[0].loopsSides[0]]?.includes("left") ? "left" : "right"
+    const profileSidesMap = {
+      "right": new THREE.Vector2( -profileData.manufacturerOffset - profileData.size.y / 2, 0),
+      "left": new THREE.Vector2( module.value.width + profileData.manufacturerOffset + profileData.size.y / 2, 0),
+    }
+    const profileRotationMap = {
+      "right": Math.PI / 2,
+      "left": -Math.PI / 2,
+    }
+
+    profileData.position = profileSidesMap[profileData.side];
+    profileData.rotation = new THREE.Vector3(0, 0, profileRotationMap[profileData.side]);
+
+    module.value.profilesConfig.sideProfile = profileData
+    onSideProfile.value = true
+  }
+  else {
+    delete module.value.profilesConfig.sideProfile
+    onSideProfile.value = false
+  }
+
+}
 //#endregion
 
 const reset = (reset = false, moduleGrid = false) => {
@@ -1100,7 +1151,7 @@ onBeforeMount(() => {
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
-
+  onSideProfile.value = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
 });
 
 onMounted(() => {
@@ -1113,6 +1164,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   shapeAdjuster = null;
   module.value = null;
+  onHorizont.value = false
+  onSideProfile.value = false
 });
 
 watch(visualizationRef, () => {
@@ -1214,6 +1267,17 @@ watch(onHorizont, () => {
                   :disabled="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
               />
             </div>
+          </div>
+
+          <div
+              v-if="productData.PROPS.CONFIG.isHiTech"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
+            <p class="actions-title">Боковой профиль</p>
+            <Toggle
+                v-model="onSideProfile"
+                @change="initSideProfile"
+            />
           </div>
 
         </div>
@@ -1424,7 +1488,7 @@ watch(onHorizont, () => {
         &--module-size {
           display: flex;
           flex-direction: row;
-          gap: 1rem;
+          gap: 1.5rem;
           flex-wrap: wrap;
           justify-content: flex-start;
           align-items: center;

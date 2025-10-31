@@ -692,6 +692,7 @@ onMounted(() => {
                 >
 
                   <div
+                      v-if="!module.isHiTech"
                       class="actions-sections-items--right-items-input-block"
                   >
                       <CounterInput
