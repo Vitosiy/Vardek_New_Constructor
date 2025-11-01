@@ -221,7 +221,6 @@ export class Filters extends GlobalsData {
         const uslugi = getFilteredData(product_uslugi)
         const profile = getFilteredData(product_data.profile, true)
 
-        console.log(profile, uslugi, 'filteredData')
 
         return { uslugi, profile }
 

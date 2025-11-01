@@ -29,6 +29,7 @@ const modelState = useModelState();
 const kromkaActions = useKromkaActions();
 
 const {
+  checkKromkaActive,
   tempKromkaList,
   getKromkaList,
   getKromkaActive,
@@ -38,6 +39,9 @@ const {
   getKromkaCardSelect,
   getCurretKromkaList,
   hideKromkaList,
+  setCromkaActive,
+  setGridData,
+  clearKromkaData
 } = kromkaActions;
 
 const emit = defineEmits(["save-table-data"]);
@@ -398,7 +402,7 @@ const getHoleOptionsActive = computed(() => {
   };
 });
 
-const checkProfileDisablegroups = async () => {
+const checkProfileDisablegroups = () => {
   const parent = modelState.getCurrentRaspilParent
     ? modelState.getCurrentRaspilParent
     : modelState.getCurrentModel;
@@ -406,37 +410,33 @@ const checkProfileDisablegroups = async () => {
   const { PROPS } = parent.userData;
   const { PROFILE, USLUGI } = PROPS.CONFIG;
   const activeProfile = PROFILE.find((prof) => prof.value);
+
+  if (!activeProfile) return;
+
   const { disablegroups } = activeProfile;
+
   /** @Для_более_быстрой_проверки */
+  
   const disabledSet = new Set(disablegroups);
 
-  // console.log(disabledSet, "disabledSet");
+  const hasActiveKromka = isKromkaActive();
+  const hasKromka = (pos) => pos.includes("kromka");
 
   USLUGI.forEach((usluga) => {
-    if (
-      typeof usluga.group === "string" &&
-      usluga.group.length > 0 
-      &&
-      !usluga.group.includes("left") &&
-      !usluga.group.includes("right")
-    ) {
+    const kromka = hasKromka(usluga.POSITION);
+
+    if (typeof usluga.group === "string" && usluga.group.length > 0) {
       const groups = usluga.group.split("|").map((g) => g.trim());
-
       const hasDisabledGroup = groups.some((group) => disabledSet.has(group));
-
       const shouldShow = !hasDisabledGroup;
 
-      // usluga.value = shouldShow;
       usluga.visible = shouldShow;
-      if (!usluga.visible && usluga.value) {
-        usluga.value = false;
-      }
-      // console.log(hasDisabledGroup, "hasDisabledGroup");
-      // console.log(usluga, "usluga");
+      usluga.value =
+        (!shouldShow && kromka) || (shouldShow && kromka && !hasActiveKromka)
+          ? false
+          : shouldShow;
     }
   });
-
-  console.log(USLUGI, "-USLUGI");
 
   grid.value.forEach((column) =>
     column.forEach((row) => {
@@ -450,10 +450,10 @@ const checkProfileDisablegroups = async () => {
     })
   );
 
+  checkKromkaActive();
   getCurretKromkaList();
-
-  await nextTick();
 };
+
 const convertKromkaData = (value, item) => {
   const parent = modelState.getCurrentRaspilParent
     ? modelState.getCurrentRaspilParent
@@ -521,6 +521,7 @@ const updateGlobalService = (value, item, USLUGI) => {
 /** @Обновляет_локальный_сервис_в_текущей_секции_с_логикой_позиционирования */
 
 const updateLocalService = (value, item, USLUGI) => {
+
   const currentSection = getCurrentSection.value;
   if (!currentSection?.currentRow?.serviseData) return;
 
@@ -556,36 +557,62 @@ const updateLocalService = (value, item, USLUGI) => {
     }
   });
 
-  // Обработка глобальных кромок
-  if (hasKromka(targetPosition)) {
-    const targetId = targetService.ID;
-
-    kromkaMap.value.forEach((code) => {
-      const globalService = USLUGI.find((u) => u.CODE === code);
-      if (!globalService) return;
-
-      const newValue = globalService.ID === targetId ? value : false;
-
-      globalService.value = newValue;
-
-      // Синхронизация со всеми ячейками грида
-      grid.value.forEach((column) =>
-        column.forEach((row) => {
-          const serviceInRow = row.serviseData.find(
-            (s) => s.ID === globalService.ID
-          );
-          if (serviceInRow) {
-            serviceInRow.value = newValue;
-          }
-        })
-      );
-    });
-  }
-
   //  Установка значения для текущего сервиса
   targetService.value = value;
+
+  if (hasProfile()) {
+    const profile = isGugol();
+    const hasActiveKromka = isKromkaActive();
+
+    let chekExept = profile || hasActiveKromka;
+
+    setCromkaActive(chekExept);
+
+    if (chekExept) {
+      getCurretKromkaList();
+    }
+  }
+
   //  Перерисовка
   visualizationRef.value?.renderGrid();
+};
+
+/** @Проверяем_на_наличие_активной_кромки */
+
+const isKromkaActive = () => {
+  const hasActiveKromka = grid.value.some((inner) =>
+    inner.some((item) =>
+      item.serviseData?.some(
+        (servise) =>
+          servise.POSITION.includes("kromka") && servise.value === true
+      )
+    )
+  );
+
+  return hasActiveKromka;
+};
+
+/**@Проверяем_на G-ugol */
+
+const isGugol = () => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROPS } = parent!.userData;
+  const { PROFILE } = PROPS.CONFIG;
+
+  const curProfile = PROFILE.find((el) => el.value);
+  return curProfile.ID == 251701;
+};
+
+/** @Проверяем_на_наличие_профиля */
+
+const hasProfile = () => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROPS } = parent!.userData;
+  const { PROFILE } = PROPS.CONFIG;
+
+  return PROFILE.length > 0;
 };
 
 const updateServiseWidth = (value, type) => {
@@ -930,8 +957,6 @@ const createServiseData = () => {
   const { PROPS } = parent.userData;
   const { USLUGI } = PROPS.CONFIG;
 
-  getCurretKromkaList();
-
   const convertParams = USLUGI.reduce((acc, el) => {
     const checkGlobal = el.POSITION.includes("global") ? el.value : false;
 
@@ -946,7 +971,6 @@ const createServiseData = () => {
       corner: el.corner,
       separated: el.separated,
       visible: el.visible,
-      radiogroups: el.radiogroups,
     };
     acc.push(param);
     return acc;
@@ -1033,25 +1057,23 @@ onBeforeMount(() => {
   totalHeight.value = props.canvasHeight;
   // Делаем клон для реактивности
   grid.value = JSON.parse(JSON.stringify(props.grid));
+  setGridData(grid.value);
 });
 
 onMounted(() => {
   shapeAdjuster = new ShapeAdjuster();
+  checkProfileDisablegroups();
+  createServiseData();
 
-  nextTick()
-    .then(() => {
-      isMounted.value = true;
-    })
-    .then(() => {
-      checkProfileDisablegroups();
-      getCurretKromkaList();
-      createServiseData();
-    });
+  nextTick().then(() => {
+    isMounted.value = true;
+  });
 });
 
 onBeforeUnmount(() => {
   shapeAdjuster = null;
   grid.value = null;
+  clearKromkaData()
 });
 </script>
 

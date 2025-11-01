@@ -760,8 +760,6 @@ export class FasadeBuilder {
             }
         }
 
-        console.log(FASADE_POSITIONS, 'FASADE_POSITIONS')
-
         return fasadePositionsData;
     }
 

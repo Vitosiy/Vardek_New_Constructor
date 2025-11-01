@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed } from "vue";
+
 import { _URL } from "@/types/constants";
 
 interface Props {
@@ -12,9 +12,9 @@ const emit = defineEmits<{
 }>();
 
 const handleSelect = () => {
-  console.log("FFF");
   emit("kromka-kard-select");
 };
+
 </script>
 
 <template>

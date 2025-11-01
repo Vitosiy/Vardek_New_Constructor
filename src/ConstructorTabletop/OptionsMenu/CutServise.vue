@@ -15,7 +15,8 @@ interface Props {
 }
 
 const kromkaActions = useKromkaActions();
-const { getCurretKromkaList,  getKromkaActive } = kromkaActions;
+const { getCurretKromkaList, getKromkaActive, checkKromkaActive } =
+  kromkaActions;
 
 const props = withDefaults(defineProps<Props>(), {
   step: 1,
@@ -52,7 +53,6 @@ const serviseDataParse = ref<any[] | null>(null);
 
 const cutChacked = (event: Event, item: Record<string, string>) => {
   emit("cut-servisData", event.target.checked, item);
-  getCurretKromkaList();
 };
 
 const kromkaChacked = (event: Event, kromka: Record<string, string>) => {

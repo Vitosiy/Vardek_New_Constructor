@@ -561,7 +561,6 @@ export class BuildersHelper extends GlobalsData {
         })
 
         // .filter(el => el.ID !== 98683);
-        console.log(result)
         return result
 
         // .filter(el => parseInt(el.separated) !== 0);
