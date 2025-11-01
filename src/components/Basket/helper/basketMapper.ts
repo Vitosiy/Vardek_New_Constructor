@@ -454,8 +454,8 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
   if(objProps.RASPIL.data) {
     props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value)[0]?.ID;
   }
-  if(objProps.KROMKA) {
-    props.KROMKA = objProps.KROMKA;
+  if(objProps.CONFIG.KROMKA) {
+    props.KROMKA = objProps.CONFIG.KROMKA;
   }
 
   if(objProps.RASPIL.data && objProps.RASPIL.data.length === 1) {
