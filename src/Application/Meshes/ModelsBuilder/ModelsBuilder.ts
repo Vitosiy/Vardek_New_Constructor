@@ -36,15 +36,28 @@ export class ModelsBuilder {
         const modelData = this.parent._MODELS[props.CONFIG.MODELID]
         const path = url ?? modelData.file ?? modelData.DAE
         const PROD = this.parent._PRODUCTS[props.PRODUCT]
-        const { width, height, depth } = props.CONFIG.SIZE
+
+
+
+
 
         let normolized;
 
-        const model = this.parent.expressionsReplace(modelData, {
-            "#X#": width,
-            "#Y#": height,
-            "#Z#": depth,
-        })
+        let model
+
+        if (props.CONFIG.SIZE) {
+            const { width, height, depth } = props.CONFIG.SIZE
+            model = this.parent.expressionsReplace(modelData, {
+                "#X#": width,
+                "#Y#": height,
+                "#Z#": depth,
+            })
+        }
+        else {
+            model = modelData
+        }
+
+
 
         console.log(props, 'props', model)
 
@@ -57,7 +70,7 @@ export class ModelsBuilder {
                 }
 
                 const normolized = this.normalizeUploadedModel(file, model) as THREE.Object3D;
-                console.log(model.model_type.length)
+     
                 if (model.model_type.length === 0) {
                     console.log(model.model_type, 'model_type')
                     console.log(normolized.children)
@@ -91,7 +104,7 @@ export class ModelsBuilder {
                     DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
                 }
 
-                if (model.model_type.length == 0 || 'DAE') {
+                if (model.model_type.length == 0 && props.CONFIG.SIZE) {
                     normolized.userData.trueSizes = {
                         DEPTH: depth * 0.5, HEIGHT: height * 0.5, WIDTH: width * 0.5
                     }
@@ -116,7 +129,7 @@ export class ModelsBuilder {
     private normalizeUploadedModel = function (model, params) {
         const center = new THREE.Vector3()
         const box = this.calculateUnionBoundingBox(model);
-        box.getCenter(center)      
+        box.getCenter(center)
         const translateVector = new THREE.Vector3()
 
         const calculateTranslateVector = () => {
@@ -142,7 +155,7 @@ export class ModelsBuilder {
         model.updateMatrixWorld(true)
 
         box.setFromObject(model);
-        box.getCenter(center)     
+        box.getCenter(center)
 
         if (params.width || params.height || params.depth)
             this.changeModelScale(model, new THREE.Vector3(
