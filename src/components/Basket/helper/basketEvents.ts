@@ -74,8 +74,6 @@ const useBascetEvents = () => {
         const data = actions.value?.save();
         roomContantData.setRoomContantDataForBasket(data)
 
-        console.log("dataIII", JSON.parse(data));
-
         clearTimeout(basketDebounceTimer!);
         basketDebounceTimer = setTimeout(() => {
             basketStore.addFromScene();

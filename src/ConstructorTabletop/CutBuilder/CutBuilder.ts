@@ -113,8 +113,6 @@ class TableTopCreator extends BuildersHelper {
 
         const textureData = this._PRODUCTS[object.userData.globalData].texture
 
-        console.log(object, USLUGI, '---Parent USLUGI_1')
-
         this.addToScene({ meshes, group, object, textureData })
     }
 

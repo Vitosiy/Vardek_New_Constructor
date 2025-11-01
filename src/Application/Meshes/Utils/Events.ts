@@ -416,7 +416,7 @@ export class MeshEvents extends BuildersHelper {
                 const currentProduct = this._PRODUCTS[PRODUCT]
 
                 const includeIncomeFasade = currentProduct.FACADE.includes(data.ID)
-        
+
                 if (FASADE.length > 0) {
                     FASADE.forEach(async (fasade, fasadeNdx) => {
                         // const prevMesh = this._currentMesh
@@ -961,9 +961,14 @@ export class MeshEvents extends BuildersHelper {
         const curAction = this.rotateActions[actionId]
         if (actionId === 4) {
             currentMesh.rotation.y += curAction
+            this.root._customBoxHelper?.updateBoxHelper()
             return
         }
         currentMesh.rotation.y = curAction
+
+        this.root._customBoxHelper?.updateBoxHelper()
+
+
 
     }
 

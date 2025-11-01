@@ -234,6 +234,7 @@ const getContainerType = computed(() => {
             {{ getPlinthName(item?.plinthSurfase, item.plinthData!) }}
           </p>
         </div>
+        
       </div>
 
       <div class="option__checkbox">

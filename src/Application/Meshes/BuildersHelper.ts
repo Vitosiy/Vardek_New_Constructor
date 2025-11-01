@@ -498,40 +498,47 @@ export class BuildersHelper extends GlobalsData {
 
     createCutterParams(uslugi) {
         const SERVISES = CUTTER_PARAMS.CUT_SERVISES
-        return uslugi.map(obj1 => {
+        const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);
             let merged;
             if (obj2) {
                 const extras = Object.fromEntries(
-                    Object.entries(obj2).filter(([key]) => !(key in obj1))
-                );
+                    Object.entries(obj2).filter(([key]) => {
+                        return !(key in obj1) && key != 'pos'
+                    })
+                )
+
                 merged = { ...obj1, ...extras };
-
-                // if ("width" in merged) {
-                //     const w1 = obj1.width;
-                //     const w2 = obj2.width;
-
-                //     // случай: строка + число → число
-                //     if (typeof w1 === "string" && typeof w2 === "number") {
-                //         merged.width = w2;
-                //     }
-
-                //     // случай: строка + отсутствует → удалить
-                //     if (typeof w1 === "string" && w2 === undefined) {
-                //         delete merged.width;
-                //     }
-                // }
-
-                // return merged;
+                merged.POSITION = merged.POSITION.toLowerCase()
+                if (merged.POSITION === 'center') {
+                    let sercher
+                    if (merged.radiogroups.length) {
+                        sercher = merged.radiogroups.join('_');
+                        merged.POSITION = sercher;
+                    }
+                }
             }
 
             else {
                 merged = { ...obj1 };
-                if (!("pos" in merged)) {
-                    merged.pos = "CENTER";
+
+                if (!merged.POSITION) {
+                    let sercher
+                    if (merged.radiogroups.length) {
+                        sercher = merged.radiogroups.join('_');
+                        ['left', 'right'].forEach(el => {
+                            if (sercher.includes(el)) sercher += '_bottom'
+                        })
+                        merged.POSITION = sercher;
+                    }
+                    else {
+                        merged.POSITION = 'global';
+                    }
+
+
                 }
             }
-
+            // if (!merged) return
             if ("width" in merged) {
                 const w1 = obj1.width;
                 const w2 = obj2 ? obj2.width : undefined;
@@ -545,9 +552,16 @@ export class BuildersHelper extends GlobalsData {
                 }
             }
 
+            if(merged.POSITION.includes('kromka')){
+                merged.POSITION = merged.POSITION + '_global'
+            }
+
             return merged;
 
-        }).filter(el => el.ID !== 98683);
+        })
+
+        // .filter(el => el.ID !== 98683);
+        return result
 
         // .filter(el => parseInt(el.separated) !== 0);
     }

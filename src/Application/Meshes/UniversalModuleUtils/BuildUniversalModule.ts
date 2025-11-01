@@ -516,11 +516,7 @@ export class BuildUniversalModule extends BuildProduct {
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
 
-            console.log(section)
-
             if (section.fillings?.length) {
-
-                console.log('ENTRIES')
 
                 section.fillings.map((filling) => {
                     const productInfo = this._PRODUCTS[filling.product]
@@ -569,8 +565,6 @@ export class BuildUniversalModule extends BuildProduct {
 
                     const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
                     const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
-                    console.log(data, 'GGGGGGGGG')
-
 
                     let productFilling
                     if (data.DAE) {

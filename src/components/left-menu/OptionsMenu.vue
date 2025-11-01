@@ -91,8 +91,14 @@ const filterCatalog = (type) => {
 
 onBeforeMount(() => {
   const app = useAppData().getAppData;
-  catalogSectionsType.value = app.CATALOG.SECTIONS_TYPE;
+
+  const prepare = JSON.parse(JSON.stringify(app.CATALOG.SECTIONS_TYPE))
+  delete  prepare.room
+
+  catalogSectionsType.value = prepare;
   catalogSections.value = app.CATALOG.SECTIONS;
+
+  console.log(prepare)
 
   filterCatalog(selectedSectionType.value);
 });

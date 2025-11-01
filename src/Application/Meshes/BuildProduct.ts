@@ -356,6 +356,8 @@ export class BuildProduct extends BuildersHelper {
             },
             OPTIONS: [],
             USLUGI: [],
+            PROFILE: [],
+            KROMKA: null
         };
 
         if (this._PRODUCTS[ID].leg_length) {
@@ -384,7 +386,8 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (USLUGI?.[0] != null) {
-            const uslugi = this.filters.filterUslugi(USLUGI);
+            const { uslugi, profile } = this.filters.filterUslugi(USLUGI, product_data);
+            PARAMS.PROFILE = profile
             PARAMS.USLUGI = this.createCutterParams(uslugi);
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
