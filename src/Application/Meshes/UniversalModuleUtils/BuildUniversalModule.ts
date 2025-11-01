@@ -667,50 +667,6 @@ export class BuildUniversalModule extends BuildProduct {
 
         let size = PROPS.CONFIG.SIZE
         let start_position = this.getStartPosition(size)
-        //const wallThickness = this._FASADE[PROPS.CONFIG.MODULE_COLOR].DEPTH || 18
-
-        //let loopPositionList = [];
-
-        /*if (!loopPosition)
-            return allLoopsMesh
-
-        const loopPropsList = loopPosition.json;
-        const groupHeight = PROPS.CONFIG.SIZE.height;
-
-        // находит позиции петель
-        loopPropsList.forEach( (loop) => {
-            if (
-                (loop.maxHeight ? groupHeight <= loop.maxHeight : true) &&
-                (loop.minHeight ? groupHeight >= loop.minHeight : true)
-            ) {
-                // вычисляет пложение петель
-                loop.array.forEach( (elPos, i) => {
-                    loopPositionList[i] = Math.round(
-                        eval(this.expressionsReplace(elPos, PROPS.CONFIG.EXPRESSIONS || {}))
-                    );
-                });
-            }
-        });
-
-        if (!PROPS.CONFIG.FASADE_SECTIONS.LOOPS)
-            PROPS.CONFIG.FASADE_SECTIONS.LOOPS = {}
-
-        if ((product.moduleType && product.moduleType?.CODE !== "wardrobe") && PROPS.CONFIG.FASADE_SECTIONS.LOOPS?.[section])
-            loopPositionList = PROPS.CONFIG.FASADE_SECTIONS.LOOPS[section];
-        else if (!product.moduleType) {
-            PROPS.CONFIG.FASADE_SECTIONS.LOOPS[section] = loopPositionList
-        }
-
-        obj.LOOP_COORDS = loopPositionList;
-
-        //Проверка на опцию "корпус без присадки под петли"
-        const hasLoops = PROPS.CONFIG.BASKET && PROPS.CONFIG.BASKET.OPTION && PROPS.CONFIG.BASKET.OPTION.map(item => +item).includes(3955910)
-        if (hasLoops) {
-            loopPositionList = []
-        }
-
-        if (!meshRet)
-            return loopPositionList*/
 
         const create = (dae, secIndex, doorKey, loopCoord) => {
             let loopGroup = new THREE.Object3D();
@@ -747,6 +703,8 @@ export class BuildUniversalModule extends BuildProduct {
                         PROPS.CONFIG.SIZE.depth + loopPosition.RIGHT_CORRECTION_Z :
                         PROPS.CONFIG.SIZE.depth + loopPosition.CORRECTION_Z,
                 );
+
+                position.z -= loop_size.z / 2
 
                 loopMesh.rotation.set(rotation.x, rotation.y, rotation.z);
 
