@@ -538,6 +538,56 @@ type TPlinthAction = {
 
 }
 
+export type TTabelTopServiceItem = {
+  ID: number;
+  NAME: string;
+  CODE: string;
+  default: string;
+  model: string;
+  sub_uslugi: boolean;
+  INCITY: string | null;
+  SEPARATE_MAX: string;
+  RASPIL_VIS_HIDE: string;
+  PROPIL: string;
+  isseparate: string;
+  show_props: string[] | boolean;
+  hide_props: string[] | boolean;
+  radiogroups: string[] | boolean;
+  separated: string;
+  TERMS_MULTIPLICITY: string;
+  TERMS_MULTIPLICITY_PRODUCT: string;
+  disablegroups: boolean;
+  group: string;
+  depth: string;
+  delay_date: string;
+  date_build: string;
+  height: string;
+  conditions: string;
+  width_setting: string;
+  WIDTHMOM: string;
+  DOP_PRODUCT: string;
+  QUANTITY_PRODUCT: string;
+  POSITION: string;
+  PATH_MAX_WIDTH: string;
+  PATH_MIN_WIDTH: string;
+  TEST: string;
+  visible: boolean;
+  value: boolean;
+}
+
+export type TKromkaMaterialItem = {
+  ID: number;
+  NAME: string;
+  CODE: string;
+  PREVIEW_PICTURE: string;
+  DETAIL_PICTURE: string;
+  INCITY: number[] | null;
+  CITY: string | null;
+  delay_date: string | null;
+  date_build: string | null;
+  date_shipment: string | null;
+}
+
 
 
 /** Заглушка */

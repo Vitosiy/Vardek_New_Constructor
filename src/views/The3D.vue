@@ -156,7 +156,7 @@ onMounted(async () => {
       VerdekConstructor.value.refreshViewer();
       actions.value = VerdekConstructor.value.getAction();
       curControllerValue.value = controllerValue.value[0].name;
-      testConnect()
+      testConnect();
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);
@@ -652,6 +652,8 @@ const openTableRedactor = () => {
   const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
 
   if (parent) {
+    modelState.setCurrentRaspilParent(parent);
+
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
     APP!.tableTopCreator?.applyMovements(parent);
   }
@@ -675,6 +677,7 @@ const closeTableRedactor = () => {
   if (parent) {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
   }
+  modelState.setCurrentRaspilParent(false);
 };
 
 const deliteTable = () => {
@@ -695,6 +698,7 @@ const deliteTable = () => {
   } else {
     removeModel(null);
   }
+  modelState.setCurrentRaspilParent(false);
 };
 
 defineExpose({
@@ -712,7 +716,7 @@ defineExpose({
 watch(
   () => checkContantLoad.value,
   () => {
-    checkLoadContent()
+    checkLoadContent();
   }
 );
 

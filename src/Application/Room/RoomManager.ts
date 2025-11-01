@@ -519,7 +519,6 @@ export class RoomManager extends Room {
     }
 
     private bindMouseEvent(event: MouseEvent) {
-        console.log(event)
         this.root._trafficManager?.moveManager?.handleInteractionMove(event.clientX, event.clientY)
     }
 
