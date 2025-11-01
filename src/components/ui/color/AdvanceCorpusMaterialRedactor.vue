@@ -192,8 +192,11 @@ const onSelectMaterial = (data) => {
     let { NAME, HTML, ID } =
       paletteList.value[Object.keys(paletteList.value)[0]];
     currentPaletteData.value = { name: NAME, hex: HTML };
+    callback(ID, "PALETTE");
+
     palette = ID;
-  } else callback(false, "PALETTE");
+  }
+  else callback(false, "PALETTE");
 
   callback(data, "COLOR", palette);
 
@@ -203,8 +206,9 @@ const onSelectMaterial = (data) => {
   if (!isGlassExist.value) {
     callback(false, "GLASS");
   } else {
-    const { NAME, PREVIEW_PICTURE } = glassList.value[0];
+    const { NAME, PREVIEW_PICTURE, ID } = glassList.value[0];
     currentGlassData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    callback(ID, "GLASS");
   }
 
   if (!isMillingExist.value) {
@@ -213,11 +217,13 @@ const onSelectMaterial = (data) => {
     const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
     modelState.setMillingId(props.elementIndex, ID);
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    callback(ID, "MILLING");
   }
 
   if (isShowcaseExist.value) {
-    const { NAME, PREVIEW_PICTURE } = showcaseList.value[0];
+    const { NAME, PREVIEW_PICTURE, ID } = showcaseList.value[0];
     currentShowcaseData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    callback(ID, "SHOWCASE");
   }
 };
 
@@ -463,14 +469,20 @@ const prepareData = () => {
         currentMillingData,
         "currentMillingData"
     );
+
+    callback(MILLING, "MILLING");
   }
+
   if (PALETTE && paletteData[PALETTE]) {
     const { NAME, HTML } = paletteData[PALETTE];
     currentPaletteData.value = { name: NAME, hex: HTML };
   }
+
   if (PATINA && !product.type_showcase?.[0]) {
     assignIfFound(patinaData, PATINA, currentPatinaData, "currentPatinaData");
+    callback(PATINA, "PATINA");
   }
+
   if (SHOWCASE) {
     assignIfFound(
         showcaseData,
@@ -478,9 +490,12 @@ const prepareData = () => {
         currentShowcaseData,
         "currentShowcaseData"
     );
+    callback(SHOWCASE, "SWOCASE");
   }
+
   if (GLASS) {
     assignIfFound(glassData, GLASS, currentGlassData, "currentGlassData");
+    callback(GLASS, "GLASS");
   }
 };
 
