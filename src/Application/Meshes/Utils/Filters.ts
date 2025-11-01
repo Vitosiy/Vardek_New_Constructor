@@ -60,7 +60,7 @@ export class Filters extends GlobalsData {
     filterFasadePosition(params: THREETypes.TObject, product: THREETypes.TObject) {
 
 
-        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE } = params
+        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE, FILLING} = params
 
         // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
 
@@ -87,6 +87,18 @@ export class Filters extends GlobalsData {
         else {
             sortFasadePositionList = fasadeSorted
         }
+
+        //Фильтрация фасадов на принадлежность текущей компоновке
+        if(FILLING)
+            sortFasadePositionList = sortFasadePositionList.filter((value, index) => {
+                let fasade = this._FASADE_POSITION[value]
+                if (fasade.filling.length && fasade.filling[0]) {
+                    if(fasade.filling.includes(FILLING))
+                        return value
+                }
+                else
+                    return value
+            })
 
 
         // sortFasadePositionList = FASADE_SIZE.length > 0 && FASADE_SIZE[0] != null ? sizes : fasadeSorted
@@ -146,6 +158,25 @@ export class Filters extends GlobalsData {
         })
 
     }
+
+    filterFilling(items: number[], product: IProductFull) {
+        let tmp = [];
+
+        if (product.ID != undefined) {
+            for (let i in items) {
+                let item = items[i];
+
+                if (
+                    product.ID.indexOf(item.ID) != -1
+                )
+                    tmp.push(item);
+            }
+        }
+        return tmp.sort(function (a, b) {
+            return a.SORT - b.SORT;
+        });
+
+    };
 
     filterFasadeSizer(items: number[], product: IProductFull) {
 

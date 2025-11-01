@@ -1011,7 +1011,6 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
-        overflow: scroll;
 
         &::-webkit-scrollbar {
           width: 5px;
@@ -1066,6 +1065,8 @@ onMounted(() => {
         flex-direction: column;
         color: #a3a9b5;
         margin-right: 10px;
+        overflow-y: scroll;
+        max-height: 72vh;
 
         &__title {
           font-size: 18px;
@@ -1409,6 +1410,9 @@ onMounted(() => {
 }
 
 .accordion {
+  border: unset;
+  overflow-y: scroll;
+  max-height: 85vh;
 
   details {
     position: relative;

@@ -321,6 +321,7 @@ export class BuildProduct extends BuildersHelper {
             FASADE_SIZE: {},
             FASADE_POSITIONS: [],
             FASADE_TYPE: [],
+            FILLING: false,
             HANDLES: {},
             HANDLES_POSITION: {},
             HAVETABLETOP: tabletop != null && this.project.table_top_type_auto,
@@ -359,6 +360,15 @@ export class BuildProduct extends BuildersHelper {
             PROFILE: [],
             KROMKA: null
         };
+
+        if (product_data.FILLING.length && product_data.FILLING[0]) {
+            let filling_list = this.filters.filterFilling(this._FILLING, {
+                PR: PARAMS,
+                ID: product_data.FILLING,
+            });
+
+            PARAMS.FILLING = filling_list[0]?.ID;
+        }
 
         if (this._PRODUCTS[ID].leg_length) {
             PARAMS.PLINTH_ACTIONS = this.createPlinthParams(this._PRODUCTS[ID].models)

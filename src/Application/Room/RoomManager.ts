@@ -21,6 +21,7 @@ import { useUniformState } from "@/store/appliction/useUniformState";
 import { SetObject } from '../Utils/SetObject';
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { Room } from './Room';
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 // import CreateShape from '../2DScene/CreateShape';
 
 
@@ -38,6 +39,7 @@ export class RoomManager extends Room {
     scene: THREE.Scene
     setObject: SetObject | null
     geometryBuilder: GeometryBuilder | null
+    universalGeometryBuilder: UniversalGeometryBuilder | null
     uniformTextureBuilder: THREETypes.TUniformTextureBuilder
     contant: { [key: string]: any } = {};
     heightClamp: number = useSceneState().getStartHeightClamp
@@ -52,6 +54,7 @@ export class RoomManager extends Room {
         this.scene = root.scene!
         this.setObject = root.setObject!
         this.geometryBuilder = root.geometryBuilder
+        this.universalGeometryBuilder = root.universalGeometryBuilder
         this.uniformTextureBuilder = root.geometryBuilder?.buildProduct.uniform_texture_builder!
 
         // this.createShape = new CreateShape(root.canvas, root.camera.instance as THREE.Camera, root.scene, root)
@@ -455,7 +458,9 @@ export class RoomManager extends Room {
 
             /** @Загрузка_модели */
 
-            const object = await this.geometryBuilder!.createModel(
+            let builder = loadData.CONFIG?.MODULEGRID ? this.universalGeometryBuilder : this.geometryBuilder;
+
+            const object = await builder!.createModel(
                 this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
                 loadData,
                 size

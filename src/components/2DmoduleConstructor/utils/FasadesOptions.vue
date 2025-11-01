@@ -15,6 +15,7 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
 import MaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialRedactor.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 const props = defineProps({
   module: {
@@ -35,13 +36,14 @@ const props = defineProps({
   },
 });
 
-const { module, visualizationRef, moduleProps } = toRefs(props);
+const { module, visualizationRef } = toRefs(props);
 const selectedFasade = ref({ sec: 0, cell: null, row: null });
 const APP = useAppData().getAppData;
 const modelState = useModelState();
 
 const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<Object | boolean>(false);
+const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const emit = defineEmits([
   "product-selectCell",
@@ -112,6 +114,22 @@ const showCurrentCol = (secIndex, cellIndex = null) => {
 
 const getFasadePositionMinMax = (fasade) => {
   return emit("product-getFasadePositionMinMax", fasade);
+};
+
+const getFasadePosition = (position) => {
+  let fasadePosition = APP.FASADE_POSITION[position];
+
+  fasadePosition = builder.getExec(
+      builder.expressionsReplace(fasadePosition,
+          Object.assign(props.moduleProps.CONFIG.EXPRESSIONS,
+              {
+                "#X#": module.value.width,
+                "#Y#": module.value.height - (module.value.isRestrictedModule ? 0 : module.value.horizont),
+                "#Z#": module.value.depth,
+              }))
+  )
+
+  return fasadePosition;
 };
 
 const addSlideDoor = (doorIndex) => {
@@ -237,7 +255,7 @@ const addDoor = (secIndex) => {
       firstFasade.position.y
     );
   } else {
-    const PROPS = moduleProps.value;
+    const PROPS = props.moduleProps.value;
     const FASADE = PROPS.CONFIG.FASADE_POSITIONS[0];
     const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
     let startX =
@@ -269,22 +287,27 @@ const addDoor = (secIndex) => {
     position: newDoorPosition,
     material: Object.assign({}, firstFasade.material),
   };
-  newDoor.height = module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
+
+  let fasPos = getFasadePosition(newDoor.material.POSITION);
+  newDoor.height = fasPos.FASADE_HEIGHT //module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length);
 
-  if (!loopsidesList.length) {
-    alert("Нельзя добавить дверь");
-    return;
-  }
+  if(!module.value.isRestrictedModule){
+    if (!loopsidesList.length) {
+      alert("Нельзя добавить дверь");
+      return;
+    }
 
-  newDoor.loopsSide = loopsidesList.pop().ID;
+    newDoor.loopsSide = loopsidesList.pop().ID;
+    section.loopsSides[section.fasades.length] = newDoor.loopsSide;
+
+  }
 
   section.fasades.push([newDoor]);
 
-  section.loopsSides[section.fasades.length - 1] = newDoor.loopsSide;
-
-  if (!module.value.isSlidingDoors) calcLoops(secIndex);
+  if (!module.value.isSlidingDoors)
+    calcLoops(secIndex);
 
   // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -640,15 +663,25 @@ const getLoopsideList = (secIndex, doorIndex) => {
 };
 
 const checkAddDoor = (secIndex, doorIndex) => {
-  let loopsSidesList = getLoopsideList(secIndex, doorIndex);
-  const currSection = module.value.sections[secIndex];
+  if(module.value.isRestrictedModule) {
+    let moduleFasadesCount = 0;
+    module.value.sections.forEach(section => {
+      moduleFasadesCount += section.fasades.length
+    })
 
-  if (currSection.loopsSides?.[doorIndex])
-    loopsSidesList = loopsSidesList.filter(
-      (item) => item.ID !== currSection.loopsSides[doorIndex]
-    );
+    return moduleFasadesCount < 2;
+  }
+  else {
+    let loopsSidesList = getLoopsideList(secIndex, doorIndex);
+    const currSection = module.value.sections[secIndex];
 
-  return loopsSidesList.length > 0;
+    if (currSection.loopsSides?.[doorIndex])
+      loopsSidesList = loopsSidesList.filter(
+          (item) => item.ID !== currSection.loopsSides[doorIndex]
+      );
+
+    return loopsSidesList.length > 0;
+  }
 };
 
 const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
@@ -841,6 +874,7 @@ onMounted(() => {
                       <article class="actions-items actions-items--right">
                         <div class="actions-items--right-items">
                           <button
+                              v-if="!module.isRestrictedModule"
                             :class="['actions-btn actions-btn--default']"
                             @click="splitFasade(null, doorIndex, segmentIndex)"
                           >
@@ -1047,6 +1081,7 @@ onMounted(() => {
                         <article class="actions-items actions-items--right">
                           <div class="actions-items--right-items">
                             <button
+                                v-if="!module.isRestrictedModule"
                               :class="['actions-btn actions-btn--default']"
                               @click="
                                 splitFasade(secIndex, doorIndex, segmentIndex)
