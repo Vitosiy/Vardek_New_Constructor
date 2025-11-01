@@ -30,21 +30,44 @@ export class ModelsBuilder {
     public create(params: CreateParams) {
         const { url, onLoad, props, sizeRulers = true } = params;
 
+
+
         const arrows = new THREE.Object3D()
-        const model = this.parent._MODELS[props.CONFIG.MODELID]
-        const path = url ?? model.file ?? model.DAE
+        const modelData = this.parent._MODELS[props.CONFIG.MODELID]
+        const path = url ?? modelData.file ?? modelData.DAE
         const PROD = this.parent._PRODUCTS[props.PRODUCT]
+        const { width, height, depth } = props.CONFIG.SIZE
+
         let normolized;
+
+        const model = this.parent.expressionsReplace(modelData, {
+            "#X#": width,
+            "#Y#": height,
+            "#Z#": depth,
+        })
+
+        console.log(props, 'props', model)
 
         return new Promise((resolve, reject) => {
 
-            this.resources.startLoading(path, model.model_type, (file: any) => {
+            this.resources.startLoading(path, model.model_type || 'DAE', (file: any) => {
 
                 if (!file) {
                     console.error('Модель не может быть загружена', file)
                 }
 
-                const normolized = this.normalizeUploadedModel(file, model);
+                const normolized = this.normalizeUploadedModel(file, model) as THREE.Object3D;
+                console.log(model.model_type.length)
+                if (model.model_type.length === 0) {
+                    console.log(model.model_type, 'model_type')
+                    console.log(normolized.children)
+
+                    normolized.traverse(child => {
+                        if (child instanceof THREE.Mesh) {
+                            child.rotation.x = -Math.PI * 0.5;
+                        }
+                    })
+                }
 
                 normolized.name = 'MODEL'
                 if (PROD) {
@@ -68,6 +91,11 @@ export class ModelsBuilder {
                     DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
                 }
 
+                if (model.model_type.length == 0 || 'DAE') {
+                    normolized.userData.trueSizes = {
+                        DEPTH: depth * 0.5, HEIGHT: height * 0.5, WIDTH: width * 0.5
+                    }
+                }
 
 
                 if (onLoad) {
@@ -85,120 +113,91 @@ export class ModelsBuilder {
         })
     }
 
-    public normalizeUploadedModel(model, params = {}) {
-        // Проверяем входные параметры
-        if (!model || !model.isObject3D) {
-            throw new Error('Invalid model: Must be a valid THREE.Object3D');
-        }
-
-        if (isNaN(params.width) || isNaN(params.height) || isNaN(params.depth)) {
-            model.scale.set(1000, 1000, 1000);
-            return model
-        }
-
-        // Центрируем модель
+    private normalizeUploadedModel = function (model, params) {
+        const center = new THREE.Vector3()
         const box = this.calculateUnionBoundingBox(model);
-        if (!box) return model; // Возвращаем модель без изменений, если нет bounding box
+        box.getCenter(center)      
+        const translateVector = new THREE.Vector3()
 
-        const center = new THREE.Vector3();
-        box.getCenter(center);
-
-        // Перемещаем геометрию модели
-        const translateVector = center.negate(); // Инвертируем центр для смещения
-        this.translateGeometry(model, translateVector);
-
-        // Обновляем bounding box и матрицу
-        model.unionBoundingBox = this.calculateUnionBoundingBox(model);
-        model.updateMatrixWorld(true);
-
-        // Применяем масштабирование
-        const scale = params.scale || 1;
-
-
-        const targetScale = new THREE.Vector3(
-            params.width || scale,
-            params.height || scale,
-            params.depth || scale
-        );
-
-        if (params.width || params.height || params.depth) {
-            this.changeModelScale(model, targetScale);
-        } else {
-            model.scale.set(scale, scale, scale);
+        const calculateTranslateVector = () => {
+            translateVector.x = center.x !== 0 ? -center.x : 0
+            translateVector.y = center.y !== 0 ? -center.y : 0
+            translateVector.z = center.z !== 0 ? -center.z : 0
         }
 
+        const translateGeometry = (mesh) => {
+            if (mesh.geometry) {
+                mesh.geometry.translate(translateVector.x, translateVector.y, translateVector.z);
+                mesh.geometry.computeVertexNormals();
+            }
+            for (let child of mesh.children) {
+                translateGeometry(child);
+            }
+        }
+
+        calculateTranslateVector()
+        translateGeometry(model);
+
+        model.unionBoundingBox = this.calculateUnionBoundingBox(model);
+        model.updateMatrixWorld(true)
+
+        box.setFromObject(model);
+        box.getCenter(center)     
+
+        if (params.width || params.height || params.depth)
+            this.changeModelScale(model, new THREE.Vector3(
+                params.width || params.scale || 1,
+                params.height || params.scale || 1,
+                params.depth || params.scale || 1))
+        else
+            model.scale.x = model.scale.y = model.scale.z = params.scale;
         return model;
     }
 
-    private changeModelScale(model, scaleVector = new THREE.Vector3(1, 1, 1)) {
-        if (!model || !model.isObject3D) {
-            throw new Error('Invalid model: Must be a valid THREE.Object3D');
+    private changeModelScale = (model, scale_vector = new THREE.Vector3(1, 1, 1)) => {
+        const scaleVector = new THREE.Vector3()
+        const box = model.unionBoundingBox
+        scaleVector.subVectors(box.max, box.min)
+        scaleVector.x = scale_vector.x / Math.abs(scaleVector.x)
+        scaleVector.y = scale_vector.y / Math.abs(scaleVector.y)
+        scaleVector.z = scale_vector.z / Math.abs(scaleVector.z)
+
+        const scaleGeometry = (mesh) => {
+            if (mesh.geometry) {
+                mesh.geometry.scale(scaleVector.x, scaleVector.y, scaleVector.z)
+            }
+            for (let child of mesh.children)
+                scaleGeometry(child)
         }
 
-        const box = this.calculateUnionBoundingBox(model);
-        if (!box) return;
+        scaleGeometry(model)
 
-        const size = new THREE.Vector3();
-        box.getSize(size);
-
-        // Вычисляем коэффициенты масштабирования
-        const scale = new THREE.Vector3(
-            size.x !== 0 ? scaleVector.x / size.x : 1,
-            size.y !== 0 ? scaleVector.y / size.y : 1,
-            size.z !== 0 ? scaleVector.z / size.z : 1
-        );
-
-        // Масштабируем геометрию
-        this.scaleGeometry(model, scale);
-
-        // Обновляем bounding box и матрицу
         model.unionBoundingBox = this.calculateUnionBoundingBox(model);
-        model.updateMatrixWorld(true);
+        model.updateMatrixWorld(true)
     }
 
-    private translateGeometry(model, translateVector) {
-        if (model.geometry) {
-            model.geometry.translate(translateVector.x, translateVector.y, translateVector.z);
-            model.geometry.computeVertexNormals();
-        }
 
-        for (const child of model.children) {
-            this.translateGeometry(child, translateVector);
-        }
-    }
-
-    private scaleGeometry(model, scaleVector) {
-        if (model.geometry) {
-            model.geometry.scale(scaleVector.x, scaleVector.y, scaleVector.z);
-        }
-
-        for (const child of model.children) {
-            this.scaleGeometry(child, scaleVector);
-        }
-    }
-
-    private calculateUnionBoundingBox(group) {
-        const boundingBox = new THREE.Box3();
-
+    private calculateUnionBoundingBox = (group) => {
+        let boundingBox = new THREE.Box3();
         if (group.geometry) {
             group.geometry.computeBoundingBox();
-            const geometryBox = group.geometry.boundingBox;
-            if (geometryBox.isEmpty()) return null; // Проверяем валидность bounding box
-            boundingBox.copy(geometryBox).applyMatrix4(group.matrixWorld);
+            boundingBox = group.geometry.boundingBox.clone();
+            if (boundingBox?.min?.length() === Infinity || boundingBox?.max?.length() === Infinity) {
+                return null;
+            }
         }
 
-        for (const child of group.children) {
-            const childBox = this.calculateUnionBoundingBox(child);
-            if (childBox) boundingBox.union(childBox);
+        for (let child of group.children) {
+            let childBoundingBox = this.calculateUnionBoundingBox(child)
+            if (childBoundingBox)
+                boundingBox.union(childBoundingBox);
         }
 
-        // Сохраняем bounding box только если он валиден
-        if (!boundingBox.isEmpty()) {
-            group.unionBoundingBox = boundingBox;
-            return boundingBox;
-        }
+        if (!group.geometry)
+            group.unionBoudingBox = boundingBox
 
-        return null;
+        return boundingBox;
     }
+
 }
 
