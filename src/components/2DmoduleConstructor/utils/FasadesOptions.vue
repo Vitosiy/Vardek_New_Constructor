@@ -255,7 +255,7 @@ const addDoor = (secIndex) => {
       firstFasade.position.y
     );
   } else {
-    const PROPS = props.moduleProps.value;
+    const PROPS = props.moduleProps;
     const FASADE = PROPS.CONFIG.FASADE_POSITIONS[0];
     const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
     let startX =
