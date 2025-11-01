@@ -129,10 +129,19 @@ const onSelectMaterial = (data) => {
     });
 
     millingList.value = modelState.getCurrentMillingData;
+    patinaList.value = modelState.getCurrentPatinaData;
+
+    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
+      millingList.value = millingList.value.filter(item => {
+        if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
+          return item
+      })
+      patinaList.value = []
+    }
+
     isMillingExist.value = millingList.value.length > 0 && !haveShowcase;
 
     /** @Патина */
-    patinaList.value = modelState.getCurrentPatinaData;
     isPatinaExist.value =
         patinaList.value.length > 0 && !product.type_showcase[0];
   }
@@ -389,11 +398,12 @@ const prepareData = () => {
   if (fasadeData.ATTACH_MILLINGS?.[0] && !haveShowcase) {
     millingList.value = millingData;
 
-    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor'))
+    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
       millingList.value = millingData.filter(item => {
         if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
           return item
       })
+    }
 
     isMillingExist.value = millingData.length > 0;
   }
@@ -412,7 +422,12 @@ const prepareData = () => {
 
   /** @Патина */
   if (fasadeData.PATINA?.[0] && fasadeData.ATTACH_MILLINGS?.[0]) {
-    patinaList.value = patinaData;
+    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
+      patinaList.value = [];
+    }
+    else
+      patinaList.value = patinaData;
+
     isPatinaExist.value = patinaData.length > 0;
   }
 
