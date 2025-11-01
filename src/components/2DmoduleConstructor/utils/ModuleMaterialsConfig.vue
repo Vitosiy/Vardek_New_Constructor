@@ -71,6 +71,10 @@ const getMaterialsParts = computed(() => {
       result['PROFILECOLOR'] = {COLOR: getMaterialInfo("COLOR", module.value.profilesConfig.COLOR)}
     }
 
+    if(module.value.isRestrictedModule) {
+      delete result['TOPFASADECOLOR']
+    }
+
     return result;
   };
 });
