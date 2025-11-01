@@ -99,10 +99,12 @@ const onSelectMaterial = (data) => {
   const product = _APP.CATALOG.PRODUCTS[productId.value];
 
   let haveShowcase
+  let dataOfFasadeType;
+
   if(FASADE_PROPS[props.elementIndex]) {
     const {COLOR, RESET_COLOR, ALUM} = FASADE_PROPS[props.elementIndex];
     haveShowcase = FASADE_POSITIONS[props.elementIndex].SHOWCASE === 1;
-    const dataOfFasadeType = _FASADE[COLOR] || _COLOR[COLOR];
+    dataOfFasadeType = _FASADE[COLOR] || _COLOR[COLOR]
   }
   else {
     haveShowcase = false;
@@ -125,6 +127,28 @@ const onSelectMaterial = (data) => {
       fasadeId: data.ID,
       productId: productId.value,
     });
+
+    millingList.value = modelState.getCurrentMillingData;
+    patinaList.value = modelState.getCurrentPatinaData;
+
+    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
+      millingList.value = millingList.value.filter(item => {
+        if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
+          return item
+      })
+      patinaList.value = []
+    }
+
+    isMillingExist.value = millingList.value.length > 0 && !haveShowcase;
+
+    /** @Патина */
+    isPatinaExist.value =
+        patinaList.value.length > 0 && !product.type_showcase[0];
+  }
+  else {
+    isMillingExist.value = false;
+    isPalleteExist.value = false;
+    isPatinaExist.value = false;
   }
 
   if (data.ATTACH_GLASS?.[0]) {
@@ -134,23 +158,17 @@ const onSelectMaterial = (data) => {
     fasadeNdx: props.elementIndex,
     });
   }
+  else {
+    glassList.value = false
+  }
 
   modelState.createCurrentPaletteData(data.ID);
-
-  isSurfaceSelected.value = true;
-
-  millingList.value = modelState.getCurrentMillingData;
-  isMillingExist.value = millingList.value.length > 0 && !haveShowcase;
-
   paletteList.value = modelState.getCurrentPaletteData;
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
 
-  glassList.value = modelState.getCurrentGlassData;
+  isSurfaceSelected.value = true;
 
-  /** @Патина */
-  patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value =
-    patinaList.value.length > 0 && !product.type_showcase[0];
+  glassList.value = modelState.getCurrentGlassData;
 
   /** @Витрины */
 
@@ -380,11 +398,12 @@ const prepareData = () => {
   if (fasadeData.ATTACH_MILLINGS?.[0] && !haveShowcase) {
     millingList.value = millingData;
 
-    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor'))
+    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
       millingList.value = millingData.filter(item => {
         if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
           return item
       })
+    }
 
     isMillingExist.value = millingData.length > 0;
   }
@@ -403,7 +422,12 @@ const prepareData = () => {
 
   /** @Патина */
   if (fasadeData.PATINA?.[0] && fasadeData.ATTACH_MILLINGS?.[0]) {
-    patinaList.value = patinaData;
+    if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
+      patinaList.value = [];
+    }
+    else
+      patinaList.value = patinaData;
+
     isPatinaExist.value = patinaData.length > 0;
   }
 
