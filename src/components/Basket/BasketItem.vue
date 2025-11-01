@@ -525,7 +525,7 @@ function updateQuantity(id: string, type: string) {
 const deleteProductInBusket = (id: string, type: string) => {
   console.log(id, type)
   basketStore.removeFromBasket(id, type);
-  if (type === 'scene') {
+  if (type === 'scene' || type === 'umscene') {
     useEventBus().emit('A:RemoveModelFromBasket', { product: null, basketId: id });
   }
 

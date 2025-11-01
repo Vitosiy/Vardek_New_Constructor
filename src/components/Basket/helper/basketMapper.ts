@@ -287,10 +287,17 @@ function convertModuleToLegacyFormat(newModuleObject) {
           const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
           const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
           const fasadesHorizontlPositionKey = `FASADEHORIZONTALPOSITION${sectionNumber}`;
+          const fasadesMillingKey = `MILLING${sectionNumber}`;
+          const fasadesPaletteKey = `PALETTE${sectionNumber}`;
+          const fasadesPattinaKey = `PATINA${sectionNumber}`;
+
 
           result[fasadesSizeKey] = {};
-          result[fasadesWidthKey] = {}; // Добавляем объект для ширины
-
+          result[fasadesWidthKey] = {}; 
+          result[fasadesMillingKey] = {}; 
+          result[fasadesPaletteKey] = {}; 
+          result[fasadesPattinaKey] = {}; 
+          
           section.fasades.forEach(doorGroup => {
               doorGroup.forEach(fasade => {
                   const doorNumber = fasade.door;
@@ -311,6 +318,35 @@ function convertModuleToLegacyFormat(newModuleObject) {
                     result[fasadesHorizontlPositionKey][doorNumber] = {};
                   }
                   result[fasadesHorizontlPositionKey][doorNumber][0] = fasade.position.x;
+
+
+                  if(fasade.material.MILLING) {
+                    if (!result[fasadesMillingKey]) {
+                      result[fasadesMillingKey] = {};
+                    }
+                    if (!result[fasadesMillingKey][doorNumber]) {
+                      result[fasadesMillingKey][doorNumber] = {};
+                    }
+                    result[fasadesMillingKey][doorNumber][0] = fasade.material.MILLING;
+                  }
+                  if(fasade.material.PATINA) {
+                    if (!result[fasadesPattinaKey]) {
+                      result[fasadesPattinaKey] = {};
+                    }
+                    if (!result[fasadesPattinaKey][doorNumber]) {
+                      result[fasadesPattinaKey][doorNumber] = {};
+                    }
+                    result[fasadesPattinaKey][doorNumber][0] = fasade.material.PATINA;
+                  }
+                  if(fasade.material.PALETTE) {
+                    if (!result[fasadesPaletteKey]) {
+                      result[fasadesPaletteKey] = {};
+                    }
+                    if (!result[fasadesPaletteKey][doorNumber]) {
+                      result[fasadesPaletteKey][doorNumber] = {};
+                    }
+                    result[fasadesPaletteKey][doorNumber][0] = fasade.material.PALETTE;
+                  }
             }); 
           });
     
@@ -318,12 +354,26 @@ function convertModuleToLegacyFormat(newModuleObject) {
           legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
           legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
           legacyProps[`${fasadesHorizontlPositionKey}`] = result[fasadesHorizontlPositionKey]
+          legacyProps[`${fasadesMillingKey}`] = result[fasadesMillingKey]
+          legacyProps[`${fasadesPattinaKey}`] = result[fasadesPattinaKey]
+          legacyProps[`${fasadesPaletteKey}`] = result[fasadesPaletteKey]
         });
       } else {
         CONFIG.MODULEGRID?.sections.forEach((section, sectionIndex) => {
           const sectionNumber = sectionIndex + 1;
+          console.log('section', section)
           legacyProps[`FASADESIZES${sectionNumber}`] = [];
           legacyProps[`SECTIONS${sectionNumber}`] = section.width;
+          if(section?.fasades[0][0].material.MILLING) {
+            legacyProps[`MILLING${sectionNumber}`] = {'0': section?.fasades[0][0].material.MILLING};
+          }
+          if(section?.fasades[0][0].material.PALETTE) {
+            legacyProps[`PALETTE${sectionNumber}`] = {'0': section?.fasades[0][0].material.PALETTE};
+          }
+          if(section?.fasades[0][0].material.PATINA) {
+            legacyProps[`PATINA${sectionNumber}`] = {'0': section?.fasades[0][0].material.PATINA};
+          }
+
           legacyProps[`FASADEHORIZONTALPOSITION${sectionNumber}`] = {
             [sectionIndex]: section.position.x
           }
@@ -386,17 +436,34 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
   if (objProps.RASPIL && objProps.RASPIL.length !== 0) {
     props.RASPIL = objProps.RASPIL;
-    props.PROFILE = '251698';
+    // props.PROFILE = '251698';
+    props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value === true)[0]?.ID   
+
     
   }
-
+  props.USLUGI = [] 
   if (objProps.RASPIL.data && objProps.RASPIL.data.length > 1) {
-    props.USLUGI = ["98683"]
-    props.PROFILE = '251698';
+    props.USLUGI.push("98683");
+    objProps.CONFIG.USLUGI.forEach(el =>{
+      if(el.value) {
+        props.USLUGI.push(el.ID);
+      }
+    });
+  }
+
+  if(objProps.RASPIL.data) {
+    props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value)[0]?.ID;
+  }
+  if(objProps.KROMKA) {
+    props.KROMKA = objProps.KROMKA;
   }
 
   if(objProps.RASPIL.data && objProps.RASPIL.data.length === 1) {
-    props.USLUGI = []
+    objProps.CONFIG.USLUGI.forEach(el =>{
+      if(el.value === true) {
+        props.USLUGI.push(el.ID);
+      }
+    });
   } 
 
 

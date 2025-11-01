@@ -146,7 +146,7 @@ export const useBasketStore = defineStore('basket', () => {
     const data = currentHandlesData.length > 0 
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value
-
+    console.log('test');
     const result = await syncBasketWithServer(data)
     if (result) {
       basketData.value = result
