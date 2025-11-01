@@ -119,7 +119,7 @@ function generateDoorsSimple(moduleData) {
     return DOORS;
 }
 
-function transformLoops(sections) {
+function transformLoops(sections, horizont, moduleThickness) {
   const coordsResult = {};
   const sidesResult = {};
   sections.forEach((section, index) => {
@@ -130,7 +130,9 @@ function transformLoops(sections) {
           coordsResult[key] = {};
           sidesResult[key] = {};
           section.loops.forEach((loopArray, loopKey) => {
-              coordsResult[key][loopKey + 1] = loopArray[0].coords;
+              coordsResult[key][loopKey + 1] = loopArray[0].coords.map(coord => {
+                return coord - horizont - moduleThickness
+              });
               sidesResult[key][loopKey + 1] = loopArray[0].side;
 
               // if (loopArray && loopArray.length > 0) {
@@ -334,7 +336,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
         });
       }
 
-      legacyProps[`LOOPS`] = transformLoops(CONFIG.MODULEGRID?.sections).coords;
+      legacyProps[`LOOPS`] = transformLoops(CONFIG.MODULEGRID?.sections, CONFIG.MODULEGRID?.horizont, CONFIG.MODULEGRID?.moduleThickness).coords;
       legacyProps[`LOOPSSIDE`] = transformLoops(CONFIG.MODULEGRID?.sections).sides;
     }
 

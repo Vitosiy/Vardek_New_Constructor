@@ -231,6 +231,9 @@ export class BuildUniversalModule extends BuildProduct {
         if (this._APP.CATALOG.SECTIONS[product_data.OPTIONSECTION_ID].TYPE.toLowerCase().includes("hitech"))
             CONFIG.isHiTech = true
 
+        if (product_data.moduleType.CODE === "restricted")
+            CONFIG.isRestrictedModule = true
+
         return CONFIG
     }
 
