@@ -124,6 +124,9 @@ const module = computed(() => {
       if(PROPS.CONFIG.isHiTech)
         _module.isHiTech = true
 
+      if(PROPS.CONFIG.isRestrictedModule)
+        _module.isRestrictedModule = true
+
       PROPS.CONFIG.MODULEGRID = _module
 
       if (isSlidingDoors) {
@@ -167,13 +170,14 @@ const module = computed(() => {
           ]
         ]
         _module.fasades = fasades
-      } else {
+      }
+      else {
         fasades = [
           [
             <FasadeObject>{
               id: 1,
               width: FASADE.FASADE_WIDTH,
-              height: FASADE.FASADE_HEIGHT - _module.horizont,
+              height: FASADE.FASADE_HEIGHT - (_module.isRestrictedModule ? 0 : _module.horizont),
               position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
               material: <FasadeMaterial>{
                 ...FASADE_PROPS
@@ -311,7 +315,7 @@ const getFasadePosition = (_position) => {
           Object.assign(PROPS.CONFIG.EXPRESSIONS,
               {
                 "#X#": totalWidth.value,
-                "#Y#": totalHeight.value - module.value.horizont,
+                "#Y#": totalHeight.value - (module.value.isRestrictedModule ? 0 : module.value.horizont),
                 "#Z#": totalDepth.value,
               }))
   )
@@ -332,7 +336,7 @@ const getFasadePositionMinMax = (fasade) => {
 }
 
 const updateFasades = () => {
-  const correctFasadeHeight = module.value.height - module.value.horizont - 4;
+  const correctFasadeHeight = getFasadePosition(module.value.sections[0].fasades[0][0].material.POSITION).FASADE_HEIGHT;
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
       if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
@@ -1249,7 +1253,10 @@ watch(onHorizont, () => {
             </div>
           </div>
 
-          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
+          <div
+              v-if="!module.isRestrictedModule"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
             <p class="actions-title">Цоколь
               <Toggle v-model="onHorizont"/>
             </p>
@@ -1258,7 +1265,7 @@ watch(onHorizont, () => {
                   @update:modelValue="updateHorizont"
                   :inputClass="'actions-input'"
                   :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                  min="50"
+                  min="78"
                   max="300"
                   :type="'number'"
                   placeholder="0"

@@ -1005,6 +1005,7 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        overflow-y: scroll;
       }
 
       &-data {
@@ -1066,6 +1067,7 @@ onMounted(() => {
         flex-direction: column;
         color: #a3a9b5;
         margin-right: 10px;
+        overflow-y: scroll;
 
         &__title {
           font-size: 18px;

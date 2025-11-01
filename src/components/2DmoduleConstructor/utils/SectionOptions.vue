@@ -692,7 +692,7 @@ onMounted(() => {
                 >
 
                   <div
-                      v-if="!module.isHiTech"
+                      v-if="!module.isHiTech && (!module.isRestrictedModule || (module.isRestrictedModule && module.sections.length < 2))"
                       class="actions-sections-items--right-items-input-block"
                   >
                       <CounterInput
@@ -823,7 +823,7 @@ onMounted(() => {
                         </div>
 
                         <div
-                            v-if="!cell.cellsRows?.length"
+                            v-if="!cell.cellsRows?.length && !module.isRestrictedModule"
                             class="actions-sections-items--right-items-input-block"
                         >
                           <CounterInput
@@ -903,7 +903,10 @@ onMounted(() => {
                             </div>
                           </article>
 
-                          <article class="actions-sections-items actions-sections-items--right">
+                          <article
+                              v-if="!module.isRestrictedModule"
+                              class="actions-sections-items actions-sections-items--right"
+                          >
                             <div class="actions-sections-items--right-items">
 
                               <div
