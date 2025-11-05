@@ -327,7 +327,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
                     if (!result[fasadesMillingKey][doorNumber]) {
                       result[fasadesMillingKey][doorNumber] = {};
                     }
-                    result[fasadesMillingKey][doorNumber][0] = fasade.material.MILLING;
+                    result[fasadesMillingKey][doorNumber][doorNumber][0] = fasade.material.MILLING;
                   }
                   if(fasade.material.PATINA) {
                     if (!result[fasadesPattinaKey]) {
@@ -345,7 +345,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
                     if (!result[fasadesPaletteKey][doorNumber]) {
                       result[fasadesPaletteKey][doorNumber] = {};
                     }
-                    result[fasadesPaletteKey][doorNumber][0] = fasade.material.PALETTE;
+                    result[fasadesPaletteKey][doorNumber][0] =  fasade.material.PALETTE;
                   }
             }); 
           });
@@ -365,13 +365,13 @@ function convertModuleToLegacyFormat(newModuleObject) {
           legacyProps[`FASADESIZES${sectionNumber}`] = [];
           legacyProps[`SECTIONS${sectionNumber}`] = section.width;
           if(section?.fasades[0][0].material.MILLING) {
-            legacyProps[`MILLING${sectionNumber}`] = {'0': section?.fasades[0][0].material.MILLING};
+            legacyProps[`MILLING${sectionNumber}`] = {[`${sectionIndex+1}`]:{'0': section?.fasades[0][0].material.MILLING}};
           }
           if(section?.fasades[0][0].material.PALETTE) {
-            legacyProps[`PALETTE${sectionNumber}`] = {'0': section?.fasades[0][0].material.PALETTE};
+            legacyProps[`PALETTE${sectionNumber}`] =  {[`${sectionIndex+1}`]:{'0': section?.fasades[0][0].material.PALETTE}};
           }
           if(section?.fasades[0][0].material.PATINA) {
-            legacyProps[`PATINA${sectionNumber}`] = {'0': section?.fasades[0][0].material.PATINA};
+            legacyProps[`PATINA${sectionNumber}`] = {[`${sectionIndex+1}`]:{'0': section?.fasades[0][0].material.PATINA}};
           }
 
           legacyProps[`FASADEHORIZONTALPOSITION${sectionNumber}`] = {
