@@ -130,7 +130,7 @@ export class World {
                     catalog: this.basketStore.mainCatalog
                 })
             })
-            this.basketStore.clearBasket();
+            // this.basketStore.clearBasket();
 
             const newrooms = this.roomState.getRooms
             console.log(newrooms, 'NEW')
