@@ -229,8 +229,15 @@ const addFilling = (type, product, oldFillingObject = false) => {
       currentSection.fasadesDrawers = []
 
     let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0].fasades[0][0]
-    let manufacturer_name = product.EN_NAME?.toLowerCase().split(/\s|,/).shift() || product.NAME?.toLowerCase().split(/\s|,/).shift();
-    let manufacturerOffset = MANUFACTURER[manufacturer_name]
+
+    let manufacturerOffset = 0
+    let manufacturer_name = product.EN_NAME?.toLowerCase()|| product.NAME?.toLowerCase()
+    Object.entries(MANUFACTURER).forEach(([key, offset]) => {
+      if(manufacturer_name.includes(key)) {
+        manufacturer_name = key
+        manufacturerOffset = offset
+      }
+    })
 
     fillingObject.type = "drawer"
     fillingObject.fasade = <DrawerFasadeObject>{
@@ -390,8 +397,21 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   visualizationRef.value.renderGrid();
 };
 
+const createFacadeData = (fasadeIndex) => {
+  const productId = modelState.getCurrentModel.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex,
+    productId,
+  });
+};
+
 const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
   isOpenMaterialSelector.value = false;
+
+  /** @Создание_данных_для_выбранного_фасада */
+  createFacadeData();
 
   if (
       currentFasadeMaterial.value &&
@@ -551,24 +571,26 @@ onMounted(() => {
               </h3>
             </summary>
 
-            <div
-                :class="[
+            <div class="item-group-wrapper">
+              <div
+                  :class="[
                           'item-group-color'
                         ]"
-                style
-                v-for="(filling, key) in fillingGroup.items"
-                :key="key + filling.NAME"
-                @click="addFilling(fillingGroup.groupName, filling)"
-            >
-              <div class="item-group-name">
-                <img
-                    class="name__bg"
-                    :src="_URL + filling.PREVIEW_PICTURE"
-                    :alt="filling.NAME"
-                />
-                <p class="name__text">
-                  {{ filling.NAME }}
-                </p>
+                  style
+                  v-for="(filling, key) in fillingGroup.items"
+                  :key="key + filling.NAME"
+                  @click="addFilling(fillingGroup.groupName, filling)"
+              >
+                <div class="item-group-name">
+                  <img
+                      class="name__bg"
+                      :src="_URL + filling.PREVIEW_PICTURE"
+                      :alt="filling.NAME"
+                  />
+                  <p class="name__text">
+                    {{ filling.NAME }}
+                  </p>
+                </div>
               </div>
             </div>
           </details>
@@ -1065,8 +1087,13 @@ onMounted(() => {
         flex-direction: column;
         color: #a3a9b5;
         margin-right: 10px;
-        overflow-y: scroll;
-        max-height: 72vh;
+
+        &-wrapper {
+          overflow-y: scroll;
+          max-height: 72vh;
+          width: 16vw;
+        }
+
 
         &__title {
           font-size: 18px;
@@ -1109,8 +1136,6 @@ onMounted(() => {
           }
         }
       }
-
-
     }
   }
 }
@@ -1437,7 +1462,6 @@ onMounted(() => {
 
   details[open] {
     border-color: #da444c;
-
   }
 
   details summary::-webkit-details-marker {
@@ -1486,7 +1510,6 @@ onMounted(() => {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      overflow: auto;
     }
 
     &-item {

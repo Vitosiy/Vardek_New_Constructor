@@ -769,129 +769,132 @@ onMounted(() => {
 <template>
   <div class="splitter-container--product">
     <div class="splitter-container--product-data" v-if="module">
-      <section class="actions-wrapper">
-        <div v-if="module.fasades">
-          <div :class="'actions-items--container'">
-            <article class="actions-items actions-items--right">
-              <div class="actions-items--right-items">
-                <button
+      <section
+          v-if="module.fasades"
+          class="actions-wrapper"
+      >
+        <div :class="'actions-items--container'">
+          <article class="actions-items actions-items--right">
+            <div class="actions-items--right-items">
+              <button
                   v-if="module.fasades.length < 4"
                   :class="['actions-btn actions-btn--default']"
                   @click="addSlideDoor(module.fasades.length + 1)"
-                >
-                  Добавить дверь
-                </button>
+              >
+                Добавить дверь
+              </button>
 
-                <button
+              <button
                   v-if="module.fasades.length > 2"
                   :class="['actions-btn actions-btn--default']"
                   @click="deleteSlideDoor(module.fasades.length)"
-                >
-                  Удалить дверь
-                </button>
-              </div>
-            </article>
-          </div>
+              >
+                Удалить дверь
+              </button>
+            </div>
+          </article>
+        </div>
 
-          <div class="actions-header">
-            <div
+        <div class="actions-header">
+          <div
               :class="[
                 'actions-header--container',
                 { active: doorIndex === selectedFasade.cell },
               ]"
               v-for="(door, doorIndex) in module.fasades"
               :key="doorIndex"
-            >
-              <p
+          >
+            <p
                 class="actions-title actions-title--part"
                 @click="showCurrentCol(null, doorIndex)"
-              >
-                Дверь №{{ doorIndex + 1 }}
-              </p>
-            </div>
+            >
+              Дверь №{{ doorIndex + 1 }}
+            </p>
           </div>
+        </div>
 
-          <div
+        <div
             v-for="(door, doorIndex) in module.fasades"
             :key="doorIndex"
             :class="'actions-container'"
-          >
-            <div
+        >
+          <div
               class="actions-items--wrapper"
               v-if="selectedFasade.cell === doorIndex"
-            >
-              <div class="accordion">
-                <div
+          >
+            <div class="accordion">
+              <div
                   v-for="(segment, segmentIndex) in door"
                   :key="segmentIndex"
                   :class="'actions-items--container'"
-                >
-                  <details class="item-group">
-                    <summary>
-                      <h3 class="item-group__title">
-                        Сегмент №{{ doorIndex + 1
-                        }}{{ door.length > 1 ? `.${segmentIndex + 1}` : "" }}
-                      </h3>
-                    </summary>
+              >
+                <details class="item-group">
+                  <summary>
+                    <h3 class="item-group__title">
+                      Сегмент №{{ doorIndex + 1
+                      }}{{ door.length > 1 ? `.${segmentIndex + 1}` : "" }}
+                    </h3>
+                  </summary>
 
-                    <div :class="'actions-items--container'">
-                      <article class="actions-items actions-items--left">
-                        <div class="actions-items--left-wrapper">
-                          <div class="actions-items--width">
-                            <div class="actions-inputs">
-                              <p class="actions-title">Ширина</p>
-                              <div :class="['actions-input--container']">
-                                <input
+                  <div :class="'actions-items--container'">
+                    <article class="actions-items actions-items--left">
+                      <div class="actions-items--left-wrapper">
+                        <div class="actions-items--width">
+                          <div class="actions-inputs">
+                            <p class="actions-title">Ширина</p>
+                            <div :class="['actions-input--container']">
+                              <input
                                   type="number"
                                   :step="step"
                                   min="150"
                                   class="actions-input"
                                   :value="segment.width"
                                   disabled
-                                />
-                              </div>
+                              />
                             </div>
                           </div>
+                        </div>
 
-                          <div class="actions-items--height">
-                            <div class="actions-inputs">
-                              <p class="actions-title">Высота</p>
-                              <div :class="['actions-input--container']">
-                                <input
+                        <div class="actions-items--height">
+                          <div class="actions-inputs">
+                            <p class="actions-title">Высота</p>
+                            <div :class="['actions-input--container']">
+                              <input
                                   type="number"
                                   :step="step"
                                   min="150"
                                   class="actions-input"
                                   :value="segment.height"
                                   disabled
-                                />
-                              </div>
+                              />
                             </div>
                           </div>
                         </div>
-                      </article>
+                      </div>
+                    </article>
 
-                      <article class="actions-items actions-items--right">
-                        <div class="actions-items--right-items">
-                          <button
-                              v-if="!module.isRestrictedModule"
+                    <article class="actions-items actions-items--right">
+                      <div class="actions-items--right-items">
+                        <button
+                            v-if="!module.isRestrictedModule"
                             :class="['actions-btn actions-btn--default']"
                             @click="splitFasade(null, doorIndex, segmentIndex)"
-                          >
-                            Разделить фасад
-                          </button>
+                        >
+                          Разделить фасад
+                        </button>
 
-                          <button
+                        <button
                             v-if="door.length > 1"
                             class="actions-btn actions-btn--default"
                             @click="
                               removeFasadeSegment(null, doorIndex, segmentIndex)
                             "
-                          >
-                            Удалить
-                          </button>
+                        >
+                          Удалить
+                        </button>
 
-                          <ConfigurationOption
+                        <ConfigurationOption
+                            v-if="!segment.error"
                             :type="
                               segment.material.PALETTE ? 'palette' : 'surface'
                             "
@@ -907,115 +910,118 @@ onMounted(() => {
                             @click="
                               openFasadeSelector(null, doorIndex, segmentIndex)
                             "
-                          />
-                        </div>
-                      </article>
-                    </div>
-                  </details>
-                </div>
+                        />
+                        <h class="splitter-container--product-error-message" v-else>Фасад меньше допустимой высоты!</h>
+                      </div>
+                    </article>
+                  </div>
+                </details>
               </div>
             </div>
           </div>
         </div>
-
-        <div v-else>
-          <div class="actions-header">
-            <div
+      </section>
+      <section
+          v-else
+          class="actions-wrapper"
+      >
+        <div class="actions-header">
+          <div
               :class="[
                 'actions-header--container',
                 { active: secIndex === selectedFasade.sec },
               ]"
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
-            >
-              <p
+          >
+            <p
                 class="actions-title actions-title--part"
                 @click="showCurrentCol(secIndex)"
-              >
-                {{ secIndex + 1 }}
-              </p>
-            </div>
+            >
+              {{ secIndex + 1 }}
+            </p>
           </div>
+        </div>
 
-          <div v-for="(section, secIndex) in module.sections" :key="secIndex">
-            <div
+        <div v-for="(section, secIndex) in module.sections" :key="secIndex">
+          <div
               class="actions-items--wrapper"
               v-if="selectedFasade.sec === secIndex"
-            >
-              <div
-                  v-if="!module.isHiTech && section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
+          >
+            <div
+                v-if="!module.isHiTech && section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
                 :class="'actions-items--container'"
-              >
-                <article class="actions-items actions-items--right">
-                  <div class="actions-items--right-items">
-                    <button
+            >
+              <article class="actions-items actions-items--right">
+                <div class="actions-items--right-items">
+                  <button
                       :class="['actions-btn actions-btn--default']"
                       @click="addDoor(secIndex)"
-                    >
-                      Добавить дверь
-                    </button>
-                  </div>
-                </article>
-              </div>
+                  >
+                    Добавить дверь
+                  </button>
+                </div>
+              </article>
+            </div>
 
-              <div
+            <div
                 v-for="(door, doorIndex) in section.fasades"
                 :key="doorIndex"
                 :class="'actions-container'"
-              >
-                <div class="actions-header">
-                  <button
+            >
+              <div class="actions-header">
+                <button
                     class="actions-btn actions-icon"
                     @click="deleteDoor(secIndex, doorIndex)"
-                  >
-                    <img
+                >
+                  <img
                       class="actions-icon--delete"
                       src="/icons/delite.svg"
                       alt=""
-                    />
-                  </button>
-                  <p>Дверь №{{ doorIndex + 1 }}</p>
-                </div>
+                  />
+                </button>
+                <p>Дверь №{{ doorIndex + 1 }}</p>
+              </div>
 
-                <div class="accordion">
-                  <div
+              <div class="accordion">
+                <div
                     v-for="(segment, segmentIndex) in door"
                     :key="segmentIndex"
                     :class="'actions-items--container'"
-                  >
-                    <details class="item-group">
-                      <summary>
-                        <h3 class="item-group__title">
-                          Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{
-                            segmentIndex + 1
-                          }}
-                        </h3>
-                      </summary>
+                >
+                  <details class="item-group">
+                    <summary>
+                      <h3 class="item-group__title">
+                        Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{
+                          segmentIndex + 1
+                        }}
+                      </h3>
+                    </summary>
 
-                      <div :class="'actions-items--container'">
-                        <article class="actions-items actions-items--left">
-                          <div class="actions-items--left-wrapper">
-                            <div class="actions-items--width">
-                              <div class="actions-inputs">
-                                <p class="actions-title">Ширина</p>
-                                <div :class="['actions-input--container']">
-                                  <input
+                    <div :class="'actions-items--container'">
+                      <article class="actions-items actions-items--left">
+                        <div class="actions-items--left-wrapper">
+                          <div class="actions-items--width">
+                            <div class="actions-inputs">
+                              <p class="actions-title">Ширина</p>
+                              <div :class="['actions-input--container']">
+                                <input
                                     type="number"
                                     :step="step"
                                     min="150"
                                     class="actions-input"
                                     :value="segment.width"
                                     disabled
-                                  />
-                                </div>
+                                />
                               </div>
                             </div>
+                          </div>
 
-                            <div class="actions-items--height">
-                              <div class="actions-inputs">
-                                <p class="actions-title">Высота</p>
-                                <div :class="['actions-input--container']">
-                                  <input
+                          <div class="actions-items--height">
+                            <div class="actions-inputs">
+                              <p class="actions-title">Высота</p>
+                              <div :class="['actions-input--container']">
+                                <input
                                     type="number"
                                     :step="step"
                                     min="150"
@@ -1033,16 +1039,16 @@ onMounted(() => {
                                         1000
                                       )
                                       "
-                                  />
-                                </div>
+                                />
                               </div>
                             </div>
+                          </div>
 
-                            <div class="actions-items--selector">
-                              <div class="actions-inputs">
-                                <p class="actions-title">Сторона открывания</p>
-                                <div>
-                                  <select
+                          <div class="actions-items--selector">
+                            <div class="actions-inputs">
+                              <p class="actions-title">Сторона открывания</p>
+                              <div>
+                                <select
                                     style
                                     id="loopsSide"
                                     :value="segment.loopsSide"
@@ -1056,41 +1062,41 @@ onMounted(() => {
                                         doorIndex
                                       )
                                     "
-                                  >
-                                    <option
+                                >
+                                  <option
                                       v-for="(side, key) in getLoopsideList(
                                         secIndex,
                                         doorIndex
                                       )"
                                       :key="key"
                                       :value="side.ID"
-                                    >
-                                      <div class="item-group-name">
-                                        <p class="name__text">
-                                          {{ side.NAME }}
-                                        </p>
-                                      </div>
-                                    </option>
-                                  </select>
-                                </div>
+                                  >
+                                    <div class="item-group-name">
+                                      <p class="name__text">
+                                        {{ side.NAME }}
+                                      </p>
+                                    </div>
+                                  </option>
+                                </select>
                               </div>
                             </div>
                           </div>
-                        </article>
+                        </div>
+                      </article>
 
-                        <article class="actions-items actions-items--right">
-                          <div class="actions-items--right-items">
-                            <button
-                                v-if="!module.isRestrictedModule"
+                      <article class="actions-items actions-items--right">
+                        <div class="actions-items--right-items">
+                          <button
+                              v-if="!module.isRestrictedModule"
                               :class="['actions-btn actions-btn--default']"
                               @click="
                                 splitFasade(secIndex, doorIndex, segmentIndex)
                               "
-                            >
-                              Разделить фасад
-                            </button>
+                          >
+                            Разделить фасад
+                          </button>
 
-                            <button
+                          <button
                               v-if="door.length > 1"
                               class="actions-btn actions-btn--default"
                               @click="
@@ -1100,11 +1106,12 @@ onMounted(() => {
                                   segmentIndex
                                 )
                               "
-                            >
-                              Удалить
-                            </button>
+                          >
+                            Удалить
+                          </button>
 
-                            <ConfigurationOption
+                          <ConfigurationOption
+                              v-if="!segment.error"
                               :class="[
                                 {
                                   active:
@@ -1135,12 +1142,12 @@ onMounted(() => {
                                   segmentIndex
                                 )
                               "
-                            />
-                          </div>
-                        </article>
-                      </div>
-                    </details>
-                  </div>
+                          />
+                          <h class="splitter-container--product-error-message" v-else>Фасад меньше допустимой высоты!</h>
+                        </div>
+                      </article>
+                    </div>
+                  </details>
                 </div>
               </div>
             </div>
@@ -1181,11 +1188,21 @@ onMounted(() => {
         gap: 1rem;
       }
 
+      &-error-message {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 600;
+        border: 1px solid #ecebf1;
+        border-radius: 15px;
+        padding: 0.5rem;
+        color: #da444c;
+      }
+
       &-data {
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
-        overflow-y: scroll;
 
         &::-webkit-scrollbar {
           width: 5px;
@@ -1292,6 +1309,7 @@ onMounted(() => {
     flex-direction: column;
     padding-right: 0.5rem;
     overflow-y: scroll;
+    max-height: 90vh;
   }
 
   &-footer {
@@ -1309,8 +1327,6 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-y: scroll;
-    overflow-x: hidden;
     padding-right: 0.5rem;
     max-height: 82vh;
 
@@ -1643,7 +1659,6 @@ onMounted(() => {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      overflow: auto;
     }
 
     &-item {
