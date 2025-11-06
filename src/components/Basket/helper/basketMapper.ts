@@ -279,112 +279,86 @@ function convertModuleToLegacyFormat(newModuleObject) {
         };
       });
     } else {    
-      if(sectionCount > 1 ) {
-        const result = {}
-        CONFIG.MODULEGRID.sections.forEach(section => {
-          const sectionNumber = section.number;
-          const sectionKey = `SECTIONS${sectionNumber}`;
-          const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
-          const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
-          const fasadesHorizontlPositionKey = `FASADEHORIZONTALPOSITION${sectionNumber}`;
-          const fasadesMillingKey = `MILLING${sectionNumber}`;
-          const fasadesPaletteKey = `PALETTE${sectionNumber}`;
-          const fasadesPattinaKey = `PATINA${sectionNumber}`;
+      const result = {}
+      console.log('sections', CONFIG.MODULEGRID.sections)
+      CONFIG.MODULEGRID.sections.forEach((section, number) => {
+        const sectionNumber = number + 1;
+        const sectionKey = `SECTIONS${sectionNumber}`;
+        const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
+        const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
+        const fasadesHorizontlPositionKey = `FASADEHORIZONTALPOSITION${sectionNumber}`;
+        const fasadesMillingKey = `MILLING${sectionNumber}`;
+        const fasadesPaletteKey = `PALETTE${sectionNumber}`;
+        const fasadesPattinaKey = `PATINA${sectionNumber}`;
+
+        console.log('sectionKey', sectionKey);
+        result[fasadesSizeKey] = {};
+        result[fasadesWidthKey] = {}; 
+        result[fasadesMillingKey] = {}; 
+        result[fasadesPaletteKey] = {}; 
+        result[fasadesPattinaKey] = {}; 
+        
+        section.fasades.forEach(doorGroup => {
+            doorGroup.forEach((fasade, index) => {
+                const doorNumber = fasade.door;
+                
+                if (!result[fasadesSizeKey][doorNumber]) {
+                  result[fasadesSizeKey][doorNumber] = [];
+                }
+                
+                result[fasadesSizeKey][doorNumber].push(fasade.height);
+
+                if (!result[fasadesWidthKey][doorNumber]) {
+                  result[fasadesWidthKey][doorNumber] = fasade.width;
+                }
+                if (!result[fasadesHorizontlPositionKey]) {
+                  result[fasadesHorizontlPositionKey] = {};
+                }
+                if (!result[fasadesHorizontlPositionKey][doorNumber]) {
+                  result[fasadesHorizontlPositionKey][doorNumber] = {};
+                }
+                result[fasadesHorizontlPositionKey][doorNumber][0] = fasade.position.x;
 
 
-          result[fasadesSizeKey] = {};
-          result[fasadesWidthKey] = {}; 
-          result[fasadesMillingKey] = {}; 
-          result[fasadesPaletteKey] = {}; 
-          result[fasadesPattinaKey] = {}; 
-          
-          section.fasades.forEach(doorGroup => {
-              doorGroup.forEach(fasade => {
-                  const doorNumber = fasade.door;
-                  
-                  if (!result[fasadesSizeKey][doorNumber]) {
-                    result[fasadesSizeKey][doorNumber] = [];
+                if(fasade.material.MILLING) {
+                  if (!result[fasadesMillingKey]) {
+                    result[fasadesMillingKey] = {};
                   }
-                  
-                  result[fasadesSizeKey][doorNumber].push(fasade.height);
-
-                  if (!result[fasadesWidthKey][doorNumber]) {
-                    result[fasadesWidthKey][doorNumber] = fasade.width;
+                  if (!result[fasadesMillingKey][doorNumber]) {
+                    result[fasadesMillingKey][doorNumber] = {};
                   }
-                  if (!result[fasadesHorizontlPositionKey]) {
-                    result[fasadesHorizontlPositionKey] = {};
+                  result[fasadesMillingKey][doorNumber][index] = fasade.material.MILLING;
+                }
+                if(fasade.material.PATINA) {
+                  if (!result[fasadesPattinaKey]) {
+                    result[fasadesPattinaKey] = {};
                   }
-                  if (!result[fasadesHorizontlPositionKey][doorNumber]) {
-                    result[fasadesHorizontlPositionKey][doorNumber] = {};
+                  if (!result[fasadesPattinaKey][doorNumber]) {
+                    result[fasadesPattinaKey][doorNumber] = {};
                   }
-                  result[fasadesHorizontlPositionKey][doorNumber][0] = fasade.position.x;
-
-
-                  if(fasade.material.MILLING) {
-                    if (!result[fasadesMillingKey]) {
-                      result[fasadesMillingKey] = {};
-                    }
-                    if (!result[fasadesMillingKey][doorNumber]) {
-                      result[fasadesMillingKey][doorNumber] = {};
-                    }
-                    result[fasadesMillingKey][doorNumber][doorNumber][0] = fasade.material.MILLING;
+                  result[fasadesPattinaKey][doorNumber][index] = fasade.material.PATINA;
+                }
+                if(fasade.material.PALETTE) {
+                  if (!result[fasadesPaletteKey]) {
+                    result[fasadesPaletteKey] = {};
                   }
-                  if(fasade.material.PATINA) {
-                    if (!result[fasadesPattinaKey]) {
-                      result[fasadesPattinaKey] = {};
-                    }
-                    if (!result[fasadesPattinaKey][doorNumber]) {
-                      result[fasadesPattinaKey][doorNumber] = {};
-                    }
-                    result[fasadesPattinaKey][doorNumber][0] = fasade.material.PATINA;
+                  if (!result[fasadesPaletteKey][doorNumber]) {
+                    result[fasadesPaletteKey][doorNumber] = {};
                   }
-                  if(fasade.material.PALETTE) {
-                    if (!result[fasadesPaletteKey]) {
-                      result[fasadesPaletteKey] = {};
-                    }
-                    if (!result[fasadesPaletteKey][doorNumber]) {
-                      result[fasadesPaletteKey][doorNumber] = {};
-                    }
-                    result[fasadesPaletteKey][doorNumber][0] =  fasade.material.PALETTE;
-                  }
-            }); 
-          });
-    
-          legacyProps[`${sectionKey}`] = section.width;
-          legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
-          legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
-          legacyProps[`${fasadesHorizontlPositionKey}`] = result[fasadesHorizontlPositionKey]
-          legacyProps[`${fasadesMillingKey}`] = result[fasadesMillingKey]
-          legacyProps[`${fasadesPattinaKey}`] = result[fasadesPattinaKey]
-          legacyProps[`${fasadesPaletteKey}`] = result[fasadesPaletteKey]
+                  result[fasadesPaletteKey][doorNumber][index] =  fasade.material.PALETTE;
+                }
+          }); 
         });
-      } else {
-        CONFIG.MODULEGRID?.sections.forEach((section, sectionIndex) => {
-          const sectionNumber = sectionIndex + 1;
-          console.log('section', section)
-          legacyProps[`FASADESIZES${sectionNumber}`] = [];
-          legacyProps[`SECTIONS${sectionNumber}`] = section.width;
-          if(section?.fasades[0][0].material.MILLING) {
-            legacyProps[`MILLING${sectionNumber}`] = {[`${sectionIndex+1}`]:{'0': section?.fasades[0][0].material.MILLING}};
-          }
-          if(section?.fasades[0][0].material.PALETTE) {
-            legacyProps[`PALETTE${sectionNumber}`] =  {[`${sectionIndex+1}`]:{'0': section?.fasades[0][0].material.PALETTE}};
-          }
-          if(section?.fasades[0][0].material.PATINA) {
-            legacyProps[`PATINA${sectionNumber}`] = {[`${sectionIndex+1}`]:{'0': section?.fasades[0][0].material.PATINA}};
-          }
+  
+        legacyProps[`${sectionKey}`] = section.width;
+        legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
+        legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
+        legacyProps[`${fasadesHorizontlPositionKey}`] = result[fasadesHorizontlPositionKey]
+        legacyProps[`${fasadesMillingKey}`] = result[fasadesMillingKey]
+        legacyProps[`${fasadesPattinaKey}`] = result[fasadesPattinaKey]
+        legacyProps[`${fasadesPaletteKey}`] = result[fasadesPaletteKey]
+      });
 
-          legacyProps[`FASADEHORIZONTALPOSITION${sectionNumber}`] = {
-            [sectionIndex]: section.position.x
-          }
-          section.fasades.forEach(fasade => {
-            fasade.forEach(element => {
-              legacyProps[`FASADESIZES${sectionNumber}`].push(element.height);
-              legacyProps[`FASADEWIDTH${sectionNumber}`] = element.width;
-            });
-          });
-        });
-      }
 
       legacyProps[`LOOPS`] = transformLoops(CONFIG.MODULEGRID?.sections, CONFIG.MODULEGRID?.horizont, CONFIG.MODULEGRID?.moduleThickness).coords;
       legacyProps[`LOOPSSIDE`] = transformLoops(CONFIG.MODULEGRID?.sections).sides;
