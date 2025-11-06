@@ -216,6 +216,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
   if(isHiTechProfile) {
     fillingObject.isProfile = profileData
+    fillingObject.moduleThickness = module.value.moduleThickness
     currentModuleSegment.hiTechProfiles.push(fillingObject)
     currentFillingsArray.push(fillingObject);
 
@@ -240,6 +241,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     })
 
     fillingObject.type = "drawer"
+    fillingObject.moduleThickness = module.value.moduleThickness
     fillingObject.fasade = <DrawerFasadeObject>{
       id: currentSection.fasadesDrawers.length + 1,
       width: baseFasade.width,
@@ -281,9 +283,9 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
   let curItem = curRow.fillings[itemIndex];
   curRow.fillings.forEach((filling, index) => {
     if (index > itemIndex) {
-      if(filling.fasade)
-        filling.fasade.item -= 1;
       filling.id -= 1;
+      if(filling.fasade)
+        filling.fasade.item = filling.id;
     }
   })
 

@@ -560,7 +560,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
   }
 
   const firstBox = sortedBoxesByIncrease[0] //нижний ящик
-  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
+  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > bottomFasadePosition) {
     let firstFasadeSize = Math.abs(firstBox.position.y - (firstBox.isProfile ? 0 : otstup) - bottomFasadePosition)
 
     fasadeList.push({

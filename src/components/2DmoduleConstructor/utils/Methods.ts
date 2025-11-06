@@ -1,6 +1,7 @@
 // @ts-nocheck 31
 import {UI_PARAMS} from "./UMConstructorConst.ts";
 import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "pixi.js";
+import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
 
 type TDashedLine = {
     startX: number;
@@ -438,6 +439,8 @@ class Shape extends Helpers {
     width: number = 0
     height: number = 0
     radius: number = 0
+    paddingTop: number = 0
+    paddingBottom: number = 0
     shapes: Shape[]
     data: THoleData
     sector: Container
@@ -446,8 +449,6 @@ class Shape extends Helpers {
 
     private distanceGraphics: Graphics | null = null; // Для хранения линий расстояний
     private distanceLabels: Text[] = []; // Для хранения текстовых меток
-    private readonly padding: number = this.getPixelWidth(UI_PARAMS.SECTOR_PADDING); // Отступ от краев сектора в пикселях
-
 
     constructor({
                     type,
@@ -538,6 +539,15 @@ class Shape extends Helpers {
         this.highlightGraphics.shapeInstance = this;
         this.highlightGraphics.visible = false;
 
+        if (data.fasade) {
+            this.paddingBottom = this.getPixelHeight(data.fasade.manufacturerOffset - (data.moduleThickness - 2))
+            this.paddingTop = this.getPixelHeight(data.fasade.height - data.fasade.manufacturerOffset - data.height - (data.moduleThickness - 2))
+        }
+
+        if (data.isProfile) {
+            this.paddingTop = this.getPixelHeight(-data.moduleThickness)
+        }
+
         // Настройка перетаскивания
         if (dragActive && (!data.isProfile || !data.isProfile.isBottomHiTechProfile)) {
             // Настройка интерактивности
@@ -582,8 +592,8 @@ class Shape extends Helpers {
 
                 // Ограничения по Y
                 adjustedY = Math.max(
-                    this.sectorBounds.y + this.padding,
-                    Math.min(newY, this.sectorBounds.y + this.sectorBounds.height - self.height - this.padding)
+                    this.sectorBounds.y + this.paddingTop,
+                    Math.min(newY, this.sectorBounds.y + this.sectorBounds.height - self.height - this.paddingBottom)
                 );
 
                 // Сохраняем текущую позицию для восстановления в случае коллизии
@@ -655,10 +665,16 @@ class Shape extends Helpers {
         let otherShapeHeight = otherShape.height
 
         if(otherShape.data.type != 'loop') {
-            thisPosY = this.data.fasade ? this.graphic.position.y - this.getPixelHeight(this.data.fasade.manufacturerOffset + 2) : thisPosY
+            thisPosY = this.data.fasade ? this.graphic.position.y
+                - this.getPixelHeight(this.data.fasade.height - this.data.fasade.manufacturerOffset - this.data.height + 2)
+                : thisPosY
+
             thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
 
-            otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y - this.getPixelHeight(otherShape.data.fasade.manufacturerOffset) : otherShapePosY
+            otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y -
+                this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height)
+                : otherShapePosY
+
             otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
 
             if(!(this.data.isProfile && otherShape.data.isProfile)) {
