@@ -14,6 +14,7 @@ import {useAppData} from "@/store/appliction/useAppData.ts";
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 const props = defineProps({
   fillings: {
@@ -124,7 +125,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
     return;
   }
 
-  if (isBottomHiTechProfile && !PROPS.CONFIG.OPTION?.includes(4722965)) {
+  if (isBottomHiTechProfile && !PROPS.CONFIG.OPTIONS.find((opt, index) => {
+    if (+opt.id === 4722965 && opt.active)
+      return opt;
+  })) {
     alert("Г-образный профиль доступен только для навесного модуля", "error")
     return;
   }
@@ -189,7 +193,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
     if(isBottomHiTechProfile) {
       profileData.isBottomHiTechProfile = true
-      startFillingData.y = module.value.height.value - module.value.horizont - height
+      startFillingData.y = module.value.height - module.value.horizont - height
     }
 
     if(!currentModuleSegment.hiTechProfiles)
@@ -205,7 +209,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     image: product.PREVIEW_PICTURE,
     type: _type,
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
-    size: new THREE.Vector3(width, startFillingData.height, depth),
+    size: new THREE.Vector3(width, height, depth),
     width,
     height,
     color: profileData.COLOR || module.value.moduleColor,
@@ -521,6 +525,10 @@ onMounted(() => {
   if(visualizationRef.value)
     selectCell(0, cellIndex, rowIndex)
 })
+
+const closeMenu = () => {
+  isOpenMaterialSelector.value = false;
+};
 
 </script>
 
@@ -1002,6 +1010,8 @@ onMounted(() => {
 
   <transition name="slide--right" mode="out-in">
     <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+
       <AdvanceCorpusMaterialRedactor
           :is-fasade="true"
           :elementData="currentFasadeMaterial.data"

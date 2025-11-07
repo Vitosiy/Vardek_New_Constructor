@@ -1296,5 +1296,51 @@ class ShapeAdjuster extends Helpers {
 
 }
 
+const saveUMGrid = (module) => {
+    const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
+    const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
+    const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers", "hiTechProfiles"];
 
-export {Shape, ShapeAdjuster, Section}
+    //Рекурсивная очистка сетки от "технических" полей 2D конструктора
+    const removeGarbage = (object) => {
+        if (typeof object === "object" && !Array.isArray(object)) {
+
+            let objectType = object.type || false
+            object = Object.entries(object).map(([key, value]) => {
+
+                if (nesting.includes(key)) {
+                    value = value.map(item => {
+                        if (Array.isArray(item))
+                            return item = item.map(_item => {
+                                return removeGarbage(_item)
+                            })
+                        else {
+                            if(item.fasade)
+                                item.fasade = removeGarbage(item.fasade)
+                            return removeGarbage(item)
+                        }
+                    })
+                }
+
+                return [key, value]
+            })
+
+            if (objectType === "fasade")
+                object = object.filter(([key, value]) => !garbageFasades.includes(key))
+            else
+                object = object.filter(([key, value]) => !garbage.includes(key))
+
+            object = Object.fromEntries(object)
+        }
+
+        return object;
+    }
+
+    let tmpClone = Object.assign({}, module)
+    tmpClone = removeGarbage(tmpClone)
+
+    return tmpClone;
+};
+
+
+export {Shape, ShapeAdjuster, Section, saveUMGrid}
