@@ -16,6 +16,7 @@ import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/Col
 import MaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialRedactor.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 const props = defineProps({
   module: {
@@ -764,6 +765,11 @@ onMounted(() => {
     }
   }
 });
+
+const closeMenu = () => {
+  isOpenMaterialSelector.value = false;
+};
+
 </script>
 
 <template>
@@ -1159,6 +1165,8 @@ onMounted(() => {
 
   <transition name="slide--right" mode="out-in">
     <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+
       <AdvanceCorpusMaterialRedactor
         :is-fasade="true"
         :elementData="currentFasadeMaterial.data"
