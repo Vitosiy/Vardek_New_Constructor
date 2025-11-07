@@ -1,5 +1,9 @@
 <template>
-  <router-link to="/3d" class="light-radial__button">
+  <router-link 
+    to="/3d" 
+    :class="['light-radial__button', { 'disabled': !canNavigateTo3D }]"
+    @click.prevent="handleClick"
+  >
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M4.53198 15.708C3.85465 15.708 3.24665 15.5507 2.70798 15.236C2.17465 14.9213 1.75331 14.5 1.44398 13.972C1.13465 13.444 0.97998 12.8573 0.97998 12.212H2.64398C2.64398 12.548 2.72398 12.8547 2.88398 13.132C3.04398 13.4093 3.26531 13.6307 3.54798 13.796C3.83065 13.9613 4.15865 14.044 4.53198 14.044C4.86798 14.044 5.17998 13.9613 5.46798 13.796C5.75598 13.6307 5.98798 13.4093 6.16398 13.132C6.33998 12.8547 6.42798 12.548 6.42798 12.212C6.42798 11.7853 6.31598 11.428 6.09198 11.14C5.86798 10.852 5.55598 10.6387 5.15598 10.5C4.76131 10.356 4.30531 10.284 3.78798 10.284V8.97198C4.49198 8.97198 5.05465 8.83332 5.47598 8.55598C5.89731 8.27865 6.10798 7.86532 6.10798 7.31598C6.10798 7.02798 6.03065 6.76665 5.87598 6.53198C5.72665 6.29198 5.52665 6.10265 5.27598 5.96398C5.03065 5.81998 4.76665 5.74798 4.48398 5.74798C4.19065 5.74798 3.90798 5.81998 3.63598 5.96398C3.36931 6.10265 3.15065 6.29198 2.97998 6.53198C2.80931 6.76665 2.72398 7.02798 2.72398 7.31598H1.05998C1.05998 6.87332 1.15065 6.45732 1.33198 6.06798C1.51865 5.67332 1.76931 5.32932 2.08398 5.03598C2.40398 4.73732 2.76665 4.50532 3.17198 4.33998C3.58265 4.16932 4.01198 4.08398 4.45998 4.08398C5.04665 4.08398 5.59065 4.23065 6.09198 4.52398C6.59865 4.81198 7.00398 5.20132 7.30798 5.69198C7.61731 6.17732 7.77198 6.71865 7.77198 7.31598C7.77198 7.79065 7.65465 8.24132 7.41998 8.66798C7.19065 9.08932 6.87065 9.38798 6.45998 9.56398C6.81731 9.69198 7.11598 9.89465 7.35598 10.172C7.60131 10.444 7.78531 10.7587 7.90798 11.116C8.03065 11.468 8.09198 11.8333 8.09198 12.212C8.09198 12.852 7.92931 13.4387 7.60398 13.972C7.27865 14.5 6.84398 14.9213 6.29998 15.236C5.76131 15.5507 5.17198 15.708 4.53198 15.708Z"
@@ -13,5 +17,38 @@
   </router-link>
 </template>
 
-<script setup lang="ts"></script>
-<style lang="scss" scoped></style>
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useRoomValidationStore } from '@/store/constructor2d/store/useRoomValidationStore';
+
+const router = useRouter();
+const route = useRoute();
+const roomValidationStore = useRoomValidationStore();
+
+// Разрешаем навигацию, если мы уже на странице 3D или комната валидна
+const canNavigateTo3D = computed(() => {
+  if (route.path === '/3d') return true;
+  return roomValidationStore.getHasValidRoom;
+});
+
+const handleClick = (e: Event) => {
+  if (!canNavigateTo3D.value) {
+    e.preventDefault();
+    return;
+  }
+  router.push('/3d');
+};
+</script>
+
+<style lang="scss" scoped>
+.light-radial__button {
+  transition: opacity 0.3s, cursor 0.3s;
+  
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+</style>

@@ -4,6 +4,8 @@ import { MathUtils } from "three";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
+import { useRoomValidationStore } from '@/store/constructor2d/store/useRoomValidationStore'
+
 import { Vector2 } from '@/types/constructor2d/interfaсes';
 
 import { Events } from '@/store/constructor2d/events';
@@ -123,6 +125,8 @@ export default class Planner {
   private eventRemoveWall: () => void;
 
   private initRoom: () => (0 | 1);
+
+  private roomValidationStore = useRoomValidationStore()
 
   constructor(pixiApp: PIXI.Application, parent: any) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
@@ -1273,6 +1277,8 @@ export default class Planner {
 
     const rooms = this.allRooms;
 
+    let hasRoomWithMoreThan3Points = false
+
     rooms.forEach((room, index) => {
 
       const polygonPoints: Vector2[] = this.getRoomContour(room.id);
@@ -1283,8 +1289,14 @@ export default class Planner {
       if(polygonPoints.length > 2){
         roomsHalf.push(roomData);
       }
+
+      if(polygonPoints.length > 3){
+        hasRoomWithMoreThan3Points = true
+      }
       
     });
+
+    this.roomValidationStore.setHasValidRoom(hasRoomWithMoreThan3Points)
 
     if (roomsHalf.length != 0) {
 
@@ -1292,6 +1304,7 @@ export default class Planner {
 
     } else {
       this.parent.layers.halfRoom.removeHalfRoom();
+      this.roomValidationStore.setHasValidRoom(false)
     }
 
   }
