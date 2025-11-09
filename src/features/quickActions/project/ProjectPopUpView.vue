@@ -52,12 +52,41 @@
         </div>
         <MainButton
           :className="'blue__button'"
-          @click="saveProject"
+          @click="openSaveDialog"
           :disabled="projectState.isSaving"
         >
           {{ projectState.isSaving ? "Сохранение..." : "Сохранить" }}
         </MainButton>
       </div>
+
+      <!-- Модальное окно для названия проекта -->
+      <Modal ref="saveDialogRef">
+        <template #modalBody="{ onModalClose }">
+          <InputDialog
+            label="Назовите проект"
+            placeholder="Введите название"
+            :initialValue="currentProjectName"
+            confirmText="Сохранить"
+            @confirm="handleSaveConfirm"
+            @cancel="onModalClose"
+          >
+            <template #confirmButton="{ onConfirm }">
+              <MainButton
+                @click="
+                  () => {
+                    onConfirm();
+                  }
+                "
+              >
+                Сохранить
+              </MainButton>
+            </template>
+            <template #cancelButton>
+              <MainButton @click="onModalClose">Отменить</MainButton>
+            </template>
+          </InputDialog>
+        </template>
+      </Modal>
 
       <!-- Список проектов -->
       <div class="project-list">
@@ -125,11 +154,13 @@
 <script setup lang="ts">
 // @ts-nocheck
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import Modal from "@/components/ui/modals/Modal.vue";
+import InputDialog from "@/components/ui/inputs/InputDialog.vue";
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -156,6 +187,15 @@ const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 // Инициализируем хуки
 const projectState = useProjectStore();
 const projectAPI = useProjectAPI();
+
+// Реф для модального окна сохранения
+const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);
+
+// Текущее название проекта
+const currentProjectName = computed(() => {
+  const projectData = sceneState.getCurrentProjectParams;
+  return (projectData.project_name as string) || "Новый проект";
+});
 
 // Отслеживаем изменения фильтров
 watch(
@@ -249,14 +289,38 @@ const loadProject = async (id: string | number) => {
   }
 };
 
+// Открытие модального окна для сохранения
+const openSaveDialog = () => {
+  saveDialogRef.value?.openModal();
+};
+
+// Обработка подтверждения сохранения с названием проекта
+const handleSaveConfirm = async (projectName: string) => {
+  if (!projectName.trim()) {
+    toaster.error("Введите название проекта");
+    return;
+  }
+
+  // Вызываем метод сохранения с названием проекта
+  await saveProject(projectName.trim());
+};
+
 // Сохранение проекта
-const saveProject = async () => {
+const saveProject = async (projectName?: string) => {
   projectState.isSaving = true;
 
   try {
+    // Если передан projectName, обновляем его перед сохранением
+    if (projectName) {
+      sceneState.updateProjectParams({ project_name: projectName as any });
+    }
+
     const result = await projectAPI.saveProject(projectState.currentProjectId);
 
     if (result.success) {
+      // Закрываем модальное окно только после успешного сохранения
+      saveDialogRef.value?.closeModal();
+
       if (projectState.currentProjectId) {
         // Обновляем существующий проект
         projectState.updateAfterSave();
@@ -266,15 +330,18 @@ const saveProject = async () => {
         projectState.updateAfterSave();
         await loadProjects(); // Обновляем список проектов
       }
+      toaster.success("Сохранено");
     } else {
       console.error("❌ Ошибка сохранения:", result.error);
+      toaster.error("Ошибка сохранения проекта");
+      // Модальное окно остается открытым при ошибке
     }
   } catch (error) {
     console.error("❌ Исключение при сохранении:", error);
-    alert("Ошибка сохранения проекта");
+    toaster.error("Ошибка сохранения проекта");
+    // Модальное окно остается открытым при ошибке
   } finally {
     projectState.isSaving = false;
-    toaster.success("Сохранено");
   }
 };
 
