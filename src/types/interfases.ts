@@ -51,7 +51,7 @@ export interface IProjectParams {
     default_overlay_id?: number[],
     default_table_model?: number,
     default_handles?: number,
-    project_name?: number | null,
+    project_name?: number | null | string,
     default_plinth_body?: number | null,
     default_plinth_color?: number | null
 

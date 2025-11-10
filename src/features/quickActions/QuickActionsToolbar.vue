@@ -17,16 +17,90 @@
         </button>
       </template>
     </Tooltip>
+
+    <!-- Модальное окно для ввода имени проекта -->
+    <Modal ref="saveDialogRef">
+      <template #modalBody="{ onModalClose }">
+        <InputDialog
+          label="Назовите проект"
+          placeholder="Введите название"
+          :initialValue="currentProjectName"
+          confirmText="Сохранить"
+          @confirm="handleSaveConfirm"
+          @cancel="onModalClose"
+        >
+          <template #confirmButton="{ onConfirm }">
+            <MainButton
+              @click="
+                () => {
+                  onConfirm();
+                }
+              "
+            >
+              Сохранить
+            </MainButton>
+          </template>
+          <template #cancelButton>
+            <MainButton @click="onModalClose">Отменить</MainButton>
+          </template>
+        </InputDialog>
+      </template>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
 import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
+import Modal from "@/components/ui/modals/Modal.vue";
+import InputDialog from "@/components/ui/inputs/InputDialog.vue";
+import MainButton from "@/components/ui/buttons/MainButton.vue";
 import { useQuickActionsToolbar } from "./useQuickActionsToolbar";
 import { useRoute } from "vue-router";
+import { useSceneState } from "@/store/appliction/useSceneState";
+import { useToast } from "@/features/toaster/useToast";
 
-const { actions } = useQuickActionsToolbar();
+const { actions, openSaveDialog, handleSaveConfirm: handleSaveConfirmFromComposable } = useQuickActionsToolbar();
 const route = useRoute();
+const sceneState = useSceneState();
+const toaster = useToast();
+
+// Реф для модального окна сохранения
+const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);
+
+// Текущее название проекта
+const currentProjectName = computed(() => {
+  const projectData = sceneState.getCurrentProjectParams;
+  return (projectData.project_name as string) || "Новый проект";
+});
+
+// Обработка подтверждения сохранения с названием проекта
+const handleSaveConfirm = async (projectName: string) => {
+  if (!projectName.trim()) {
+    toaster.error("Введите название проекта");
+    return;
+  }
+
+  // Вызываем метод сохранения с названием проекта
+  // Передаем callback для закрытия модального окна при успешном сохранении
+  const success = await handleSaveConfirmFromComposable(projectName.trim(), () => {
+    saveDialogRef.value?.closeModal();
+  });
+  
+  // Если сохранение не удалось, модальное окно остается открытым
+};
+
+// Функция открытия модального окна
+const openModal = () => {
+  saveDialogRef.value?.openModal();
+};
+
+// Передаем функцию открытия модального окна в composable после монтирования
+onMounted(() => {
+  if (openSaveDialog) {
+    openSaveDialog.value = openModal;
+  }
+});
 </script>
 
 <style scoped>

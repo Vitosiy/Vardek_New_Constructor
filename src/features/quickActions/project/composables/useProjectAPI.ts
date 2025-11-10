@@ -110,13 +110,18 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
 
       const projectData = sceneState.getCurrentProjectParams
       // console.log(projectData, 'projectData')
+
+      // Если передан projectName, обновляем его перед сохранением
+      if (projectName) {
+        (projectData as any).project_name = projectName
+      }
 
       // Валидируем данные перед отправкой
       if (!validateProjectData(projectData)) {

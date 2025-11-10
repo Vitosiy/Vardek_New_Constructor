@@ -1,8 +1,10 @@
+import { ref } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useRouter } from 'vue-router';
 import { useToast } from "@/features/toaster/useToast";
+import { useSceneState } from '@/store/appliction/useSceneState';
 
 import { useFullscreen } from '@/features/quickActions/composables/useFullscreen';
 import { usePrint } from '@/features/quickActions/composables/usePrint';
@@ -37,6 +39,7 @@ export const useQuickActionsToolbar = () => {
   const menuStore = useMenuStore();
   const router = useRouter();
   const toaster = useToast();
+  const sceneState = useSceneState();
 
   const projectState = useProjectStore();
   const projectAPI = useProjectAPI()
@@ -44,17 +47,31 @@ export const useQuickActionsToolbar = () => {
   const { toggleFullscreen } = useFullscreen();
   const { printPage } = usePrint();
   const { makeScreen } = use2DScreenshot();
-  const { saveProject } = projectAPI
 
-  // Функция сохранения проекта
+  // Реф для функции открытия модального окна
+  const openSaveDialog = ref<(() => void) | null>(null);
+
+  // Функция открытия модального окна для сохранения проекта
   const onSaveProject = async () => {
-    // projectState.isSaving = true;
-    // eventBus.emit("A:Save");
+    if (openSaveDialog.value) {
+      openSaveDialog.value();
+    }
+  }
+
+  // Обработка подтверждения сохранения с названием проекта
+  const handleSaveConfirm = async (projectName: string, onSuccess?: () => void) => {
+    if (!projectName.trim()) {
+      toaster.error("Введите название проекта");
+      return false;
+    }
 
     projectState.isSaving = true;
 
     try {
-      const result = await projectAPI.saveProject(projectState.currentProjectId);
+      // Обновляем название проекта перед сохранением
+      sceneState.updateProjectParams({ project_name: projectName as any });
+
+      const result = await projectAPI.saveProject(projectState.currentProjectId, projectName);
 
       if (result.success) {
         if (projectState.currentProjectId) {
@@ -65,15 +82,24 @@ export const useQuickActionsToolbar = () => {
           projectState.setProjectId(result.data.ID);
           projectState.updateAfterSave();
         }
+        toaster.success("Сохранено");
+        
+        // Вызываем callback при успешном сохранении
+        if (onSuccess) {
+          onSuccess();
+        }
+        return true;
       } else {
         console.error("❌ Ошибка сохранения:", result.error);
+        toaster.error("Ошибка сохранения проекта");
+        return false;
       }
     } catch (error) {
       console.error("❌ Исключение при сохранении:", error);
-      alert("Ошибка сохранения проекта");
+      toaster.error("Ошибка сохранения проекта");
+      return false;
     } finally {
       projectState.isSaving = false;
-      toaster.success("Сохранено");
     }
   }
 
@@ -169,7 +195,12 @@ export const useQuickActionsToolbar = () => {
       tooltip: 'Сохранить',
       iconClass: 'icon-save',
       path: 'default',
-      action: async () => onSaveProject(),
+      action: async () => {
+        if (router.currentRoute.value.path !== '/3d') {
+          await router.push('/3d');
+        }
+        onSaveProject()
+      },
     },
     {
       key: 'newProject',
@@ -180,5 +211,9 @@ export const useQuickActionsToolbar = () => {
     },
   ];
 
-  return { actions };
+  return { 
+    actions,
+    openSaveDialog,
+    handleSaveConfirm
+  };
 }; 
