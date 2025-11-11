@@ -32,7 +32,8 @@ export class BuildUniversalModule extends BuildProduct {
         width: number,
         height: number,
         depth: number
-    }, moduleParams?: GridModule) {
+    }, moduleParams?: GridModule)
+    {
 
         // Режим чертежа
         const drowMode = this.menuStore.getDrowModeValue
@@ -49,7 +50,7 @@ export class BuildUniversalModule extends BuildProduct {
         const productId = CONFIG.ID
         const productInfo = this._PRODUCTS[productId];
         const bodyExceptions = this.project.default_overlay_id
-        const legsHeight = this._PRODUCTS[productId]?.leg_length
+        const activeOptions = [...CONFIG.OPTIONS].filter(opt => opt.active)
 
         PROPS.FASADE = []
         PROPS.FASADE_DEFAULT = []
@@ -83,6 +84,30 @@ export class BuildUniversalModule extends BuildProduct {
 
         const data = this.createModelData(modelData, PROPS, modelSize);
         const curBodyExceptions = bodyExceptions?.includes(modelData.id)
+
+        let optionsLegs = 0
+        for(let i = 0; i < activeOptions.length; i++) {
+            let option = this._OPTION[+activeOptions[i].id]
+
+            switch (+option.ID) {
+                case 7250452:   //Деревянная царга
+                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
+                    break;
+                case 7250589:   //Металлическая царга
+                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
+                    break;
+                case 4621257:   //Опора регулируемая
+                case 4621238:   //Опора 100 мм
+                case 4621240:   //Опора 150 мм
+                    optionsLegs = option.NAME.toLowerCase().includes(150) ? 150 : 100
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        const legsHeight = this._PRODUCTS[productId]?.leg_length || optionsLegs
+
         // Сборка частей
         const { body, tempMaterial, move } = !this.isEmpty(modelData)
             ? this.createBody(data, PROPS, defaultConfig)
@@ -93,7 +118,7 @@ export class BuildUniversalModule extends BuildProduct {
             : null;
 
         const legs = legsHeight
-            ? this.buildLegs(PROPS, data, total)
+            ? this.buildLegs(PROPS, data, total, legsHeight)
             : null;
 
         const plinth = legsHeight > 0
