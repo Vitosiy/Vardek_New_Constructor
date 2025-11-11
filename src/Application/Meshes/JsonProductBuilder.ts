@@ -266,20 +266,19 @@ export class JsonBuilder {
 
             switch ((data.type as THREETypes.TMaterialType)) {
                 case 'MeshBasicMaterial':
-                    material = new THREE.MeshBasicMaterial(data);
+                    material = new THREE.MeshBasicMaterial(data.opt);
                     break;
                 case 'MeshStandardMaterial':
-                    material = new THREE.MeshStandardMaterial(data);
+                    material = new THREE.MeshStandardMaterial(data.opt);
                     break
                 case 'MeshPhongMaterial':
-                    material = new THREE.MeshPhongMaterial(data);
+                    material = new THREE.MeshPhongMaterial(data.opt);
                     break
                 case 'MeshPhysicalMaterial':
-                    material = new THREE.MeshPhysicalMaterial(data);
+                    material = new THREE.MeshPhysicalMaterial(data.opt);
                     break
                 case 'MeshLambertMaterial':
                     material = new THREE.MeshLambertMaterial();
-                    //    material = new THREE.MeshStandardMaterial(data.opt);
                     break
             }
         }
@@ -289,7 +288,5 @@ export class JsonBuilder {
         }
 
         return material
-
     }
-
 }

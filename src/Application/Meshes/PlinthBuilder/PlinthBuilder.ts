@@ -38,10 +38,12 @@ export class PlinthBuilder {
         this.edgeBuilder = parent.edge_builder
     }
 
-    private checkHavePLinth(product: IProductFull) {
-        const model: number[] | null[] = product.models
-        const inProdModel = this.buildProduct._MODELS[model[0]]
+    private checkHavePLinth(props: IProductFull) {
+        const model: number[] | null[] = props.CONFIG.MODELID
+        const inProdModel = this.buildProduct._MODELS[model]
         const jsonPlinth = inProdModel.json.plinth
+
+        console.log(jsonPlinth)
 
         if (model && inProdModel && jsonPlinth) {
             return jsonPlinth
@@ -71,13 +73,16 @@ export class PlinthBuilder {
         const defaultPlinth = id ?? Object.values(this.buildProduct._PLINTH)[0]
         const plinthProd = this.buildProduct._PRODUCTS[defaultPlinth];
         const plinthModel = this.buildProduct._MODELS[plinthProd.models[0]];
+        console.log(plinthModel,plinthProd, 'plinthModel')
 
 
         const startPosition = this.buildProduct.getStartPosition(size);
-        const havePlinth = this.checkHavePLinth(product);
+        const havePlinth = this.checkHavePLinth(props);
         const plinthConfigs = this.getPlinthConfigs(size);
 
         if (havePlinth) {
+            console.log('AU')
+
             Object.values(havePlinth).forEach(el => {
 
                 const position = this.buildProduct.getExec(el.position);

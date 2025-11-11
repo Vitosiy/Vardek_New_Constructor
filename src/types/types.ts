@@ -261,6 +261,25 @@ export type TSize = {
   depth: number;
 }
 
+type TSizeEdit = {
+
+  SIZE_EDIT_WIDTH_MIN: NumStr | null,
+  SIZE_EDIT_WIDTH_MAX: NumStr | null,
+  SIZE_EDIT_HEIGHT_MIN: NumStr | null,
+  SIZE_EDIT_HEIGHT_MAX: NumStr | null,
+  SIZE_EDIT_DEPTH_MIN: NumStr | null,
+  SIZE_EDIT_DEPTH_MAX: NumStr | null
+
+}
+
+type TRotationEuler = {
+  isEuler: boolean,
+  _x: number,
+  _y: number,
+  _z: number,
+  _order: 'XYZ' | string
+}
+
 type TModuleGrid = {
   canvasHeight: number;
   canvasWidth: number;
@@ -359,7 +378,8 @@ export type TFasadeProp = {
   SIZES: {
     id: number,
     params: TFasadePropsSizes
-  }
+  },
+  DRAWER: TDrawer
 }
 
 export type TModelData = {
@@ -385,6 +405,64 @@ export type TModelData = {
   loop_model: any | null;
   wall_thickness: number | null;
 };
+
+export type TConfig = {
+  DISABLE_MOVE: boolean,
+  ELEMENT_TYPE: NumStr | null,
+  ID: NumStr | null,
+  FASADE_PROPS: TFasadeProp[],
+  FASADE_SIZE: Record<NumStr, Record<NumStr, TFasadePositionData>>[] | [],
+  FASADE_POSITIONS: Record<NumStr, TFasadePositionItem>[] ,
+  FASADE_TYPE: number[] | boolean | null,
+  FILLING: number[] | boolean | null,
+  HAVETABLETOP: boolean,
+  TABLETOP_ID: NumStr | null,
+  MODELID: number,
+  MODEL: number[],
+  MODULE_COLOR: number,
+  MECHANIZM: NumStr | null,
+  MECHANIZM_TEMP: TMechanizmData[] | [],
+  SIZE: TSize,
+  SIZE_EDIT: TSizeEdit,
+  SHOWCASE: number[],
+  POSITION: TVector3,
+  PLINTH_ACTIONS: TPlinthActions,
+  PRODUCT_SHOWCASE: NumStr | null,
+  UNIFORM_TEXTURE: TUniformTexture,
+  OPTIONS: TOption[] | [],
+  USLUGI: TUsluga[],
+  PROFILE: TUsluga[],
+  KROMKA: NumStr | null,
+  EXPRESSIONS: TExpressions,
+  ROTATION: TRotationEuler,
+}
+
+export type TTotalProps = {
+  ARROWS: THREE.Object3D[],
+  BODY: THREE.Object3D[],
+  CONFIG: TConfig,
+  DRAWERS: THREE.Object3D[],
+  EXPRESSIONS: {},
+  FASADE: THREE.Object3D[],
+  FASADE_DEFAULT: THREE.Object3D[],
+  GLASS: {},
+  HANDLES: THREE.Object3D[],
+  HIDDENCHILDREN: {},
+  HIDDEN: false,
+  JSON_FILLINGS: THREE.Object3D[],
+  LEG: THREE.Object3D,
+  PRODUCT: number,
+  PLINTH_MESH: null,
+  RASPIL: TCanvasData,
+  RASPIL_LIST: TRaspilPart[],
+  RASPIL_COUNT: number,
+  SHELF: THREE.Object3D,
+  SEPARATED: [],
+  SECTIONSOBJ: [],
+  SECTIONCONTROL: [],
+  TABLETOP: null,
+  NAME: string
+}
 
 
 /** @Product */
@@ -492,7 +570,6 @@ export type IProductFull = {
   FASADE_POSITION: number[];
 }
 
-
 export type TPalitte = {
   ID: number;
   NAME: string;
@@ -535,7 +612,6 @@ type TPlinthAction = {
   value: boolean,
   modelId: number | null,
   surfaceId: number | null,
-
 }
 
 export type TTabelTopServiceItem = {
@@ -587,6 +663,213 @@ export type TKromkaMaterialItem = {
   date_build: string | null;
   date_shipment: string | null;
 }
+
+export type TFasadePositionData = {
+  ID: number;
+  NAME: string;
+  PROPERTY_FASADE_NUMBER_VALUE: string;
+  PROPERTY_FASADE_NUMBER_VALUE_ID: string;
+  FASADE_NUMBER: number;
+  FASADE_HEIGHT: string;
+  FASADE_WIDTH: string;
+  FASADE_DEPTH: string;
+  POSITION_X: string;
+  POSITION_Y: string;
+  POSITION_Z: string;
+  ROTATE_Y: string;
+  ROTATE_X: string | null;
+  ROTATE_Z: string | null;
+  POSITION_2_X: string; // например: "#X#-396 - 2"
+  POSITION_2_Y: string;
+  POSITION_2_Z: string;
+  ROTATE_2_Y: string | null;
+  ROTATE_2_X: string | null;
+  ROTATE_2_Z: string | null;
+  glass: number;
+  is_glass_fasade: number;
+  PRODUCT: number;
+  FASADE_SIZE: number;
+  models: null[];
+  FASADE_MODEL: null;
+  inherit_fasade_number: number[];
+  conditions: null;
+  filling: null[];
+  fasade_type: number[];
+  handle_position: null;
+  animation: null;
+  SITEOFF: number;
+  drawer: null;
+  box_color: null;
+  fasade_color: null;
+  built_in: number;
+  ignore_main_catalog: number;
+};
+
+export type TFasadePositionItem = {
+  FASADE_WIDTH: number | null,
+  FASADE_HEIGHT: number | null,
+  FASADE_DEPTH: number | null,
+  POSITION_X: number | null,
+  POSITION_Y: number | null,
+  POSITION_Z: number | null,
+  POSITION_2_X: number | null,
+  POSITION_2_Y: number | null,
+  POSITION_2_Z: number | null,
+  ROTATE_X: number | null,
+  ROTATE_Y: number | null,
+  ROTATE_Z: number | null,
+  ROTATE_2_X: number | null,
+  ROTATE_2_Y: number | null,
+  ROTATE_2_Z: number | null,
+  FASADE_NUMBER: number | null,
+  FASADE_MODEL: number | null,
+  SHOWCASE: number | null
+}
+
+type TMechanizmData = {
+  ID: number,
+  NAME: string,
+  CLOSE_OTHER_OPTIONS: NumStr,
+  TYPE: string,
+  active: boolean,
+  visible: boolean
+}
+
+type TUniformTexture = {
+  group: NumStr | null,
+  level: NumStr | null,
+  index: NumStr | null,
+  column_index: NumStr | null,
+  backupFasadId: NumStr | null,
+  color: NumStr | null
+}
+
+type TOption = {
+  id: NumStr | null,
+  active: boolean,
+  group: NumStr | null,
+  close: NumStr | null,
+  visible: boolean
+}
+
+type TUsluga = {
+  ID: NumStr;
+  NAME: NumStr;
+  CODE: NumStr;
+  default: NumStr;
+  model: NumStr;
+  sub_uslugi: boolean;
+  INCITY: NumStr | null;
+  SEPARATE_MAX: NumStr;
+  RASPIL_VIS_HIDE: NumStr;
+  PROPIL: NumStr;
+  isseparate: NumStr;
+  show_props: NumStr[] | boolean;
+  hide_props: boolean;
+  radiogroups: NumStr[] | boolean;
+  separated: NumStr;
+  TERMS_MULTIPLICITY: NumStr;
+  TERMS_MULTIPLICITY_PRODUCT: NumStr;
+  disablegroups: boolean;
+  group: NumStr;
+  depth: NumStr;
+  delay_date: NumStr;
+  date_build: NumStr;
+  height: NumStr;
+  conditions: NumStr;
+  width_setting: NumStr;
+  WIDTHMOM: NumStr;
+  DOP_PRODUCT: NumStr;
+  QUANTITY_PRODUCT: NumStr;
+  POSITION: NumStr;
+  PATH_MAX_WIDTH: NumStr;
+  PATH_MIN_WIDTH: NumStr;
+  TEST: NumStr;
+  width?: string;
+  visible: boolean;
+  value: boolean;
+};
+
+export type TExpressions = {
+  "#MWIDTH#": NumStr
+  "#MODUL_MWIDTH#": NumStr
+  "#MODUL_WIDTH#": NumStr
+  "#X#": NumStr
+  "#MHEIGHT#": NumStr
+  "#MODUL_MHEIGHT#": NumStr
+  "#MODUL_HEIGHT#": NumStr
+  "#Y#": NumStr
+  "#MDEPTH#": NumStr
+  "#MODUL_MDEPTH#": NumStr
+  "#MODUL_DEPTH#": NumStr
+  "#Z#": NumStr
+  "#SIZEEDITJOINDEPTH#": NumStr | null;
+  "#MATERIAL_THICKNESS#": NumStr
+  "#HORIZONT#": NumStr,
+  "#DRAWHEIGHT#"?: NumStr,
+  "#DRAWWIDTH#"?: NumStr,
+  "#DRAWDEPTH#"?: NumStr,
+}
+
+type TRaspilPart = {
+  id: NumStr,
+  sectorId: NumStr,
+  position: TVector3,
+  rotation: TRotationEuler
+}
+
+type TDrawer = {
+  drawer: string | null,
+  buildIn: NumStr | null
+
+}
+
+/** @Столешница */
+
+type PathCommand = {
+  action:
+  | "moveTo"
+  | "lineTo"
+  | "closePath";
+  data: number[];
+};
+
+type TServiceItem = {
+  ID: NumStr;
+  NAME: NumStr;
+  POSITION: NumStr;
+  CODE: NumStr;
+  value: boolean;
+  separated: NumStr;
+  visible: boolean;
+  error: boolean;
+
+  corner?: NumStr;
+  radius?: NumStr;
+  width?: NumStr;
+};
+
+type TPanel = {
+  width: NumStr;
+  height: NumStr;
+  roundCut: Record<string, unknown>; // пустой объект
+  holes: unknown[]; // пустой массив
+  aventData: TServiceItem[];
+  xOffset: NumStr;
+  yOffset: NumStr;
+  path: PathCommand[];
+  maxWidth: NumStr;
+  maxHeight: NumStr;
+  sectorId: string;
+  position: TSize;
+  rotation: TRotationEuler;
+};
+
+type TCanvasData = {
+  modelHeight: number;
+  canvasHeight: number;
+  data: TPanel[][];
+};
 
 
 

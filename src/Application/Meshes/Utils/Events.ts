@@ -99,6 +99,7 @@ export class MeshEvents extends BuildersHelper {
 
     private onChangeModelSize: ({ data, mesh, type }: TResizeModel) => void;
     private onCgangeRotation: (data: number) => void
+    private onChangeRootModel: ({ data, mesh }) => void;
 
     private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
@@ -169,7 +170,8 @@ export class MeshEvents extends BuildersHelper {
         this.onChangePlinth = this.changePlinth.bind(root)
 
         this.onChangeModelSize = this.changeModelSize.bind(root);
-        this.onCgangeRotation = this.changeRotation.bind(root)
+        this.onCgangeRotation = this.changeRotation.bind(root);
+        this.onChangeRootModel = this.changeRootModel.bind(root);
 
         this.addVueEvents();
 
@@ -214,7 +216,7 @@ export class MeshEvents extends BuildersHelper {
             this.buildProduct.fasade_builder.getFasade(
                 {
                     props: PROPS,
-                    model_data: CONFIG.MODEL,
+                    model_data: this._MODELS[CONFIG.MODELID],
                     fasadeNdx,
                     incomingModel,
                     defaultConfig,
@@ -950,7 +952,29 @@ export class MeshEvents extends BuildersHelper {
     }
 
     //------------------
-    /** @Позиционирование  */
+    /** @Изменение_позиционирования_модели  */
+    //------------------
+
+    async changeRootModel({ data, mesh }) {
+        if (!this._currentMesh) return
+
+        const currentMesh = mesh ? mesh : this._currentMesh
+        const { PROPS } = currentMesh.userData
+        const { CONFIG } = PROPS
+        const { POSITION, UNIFORM_TEXTURE } = CONFIG
+        const { width, height, depth } = this._PRODUCTS[PROPS.PRODUCT];
+
+
+        console.log(this._MODELS[data], '_MODELS')
+
+        CONFIG.MODELID = data
+
+        this.changeModelSize({ data: { width, height, depth } })
+
+    }
+
+    //------------------
+    /** @Вращение  */
     //------------------
 
     async changeRotation(actionId: number) {
@@ -967,8 +991,6 @@ export class MeshEvents extends BuildersHelper {
         currentMesh.rotation.y = curAction
 
         this.root._customBoxHelper?.updateBoxHelper()
-
-
 
     }
 
@@ -1136,6 +1158,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeRotation(data)
         }
 
+        this.onChangeRootModel =({ data, mesh })=>{
+            this.changeRootModel({ data, mesh })
+        }
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
 
@@ -1176,7 +1202,9 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:ChangeHandlePose', this.onChangeHandlePos)
         this.events.on('A:ChangePlinthColor', this.onChangePlinth)
 
-        this.events.on('A:RotateModel', this.onCgangeRotation)
+        this.events.on('A:RotateModel', this.onCgangeRotation);
+
+        this.events.on('A:ChangeRootModel', this.onChangeRootModel);
 
 
     }

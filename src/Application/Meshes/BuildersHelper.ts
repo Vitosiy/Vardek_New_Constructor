@@ -45,6 +45,8 @@ export class BuildersHelper extends GlobalsData {
             props.CONFIG.EXPRESSIONS
         )
 
+        console.log(model_data)
+
         return model_data
     };
 
@@ -407,45 +409,6 @@ export class BuildersHelper extends GlobalsData {
         }
         geometry.uvsNeedUpdate = true;
     }
-
-    // planarUV(geometry: THREE.BufferGeometry): void {
-    //     console.log('Applying planar UV to geometry...');
-
-    //     geometry.computeBoundingBox();
-    //     const bbox = geometry.boundingBox!;
-    //     if (!bbox) {
-    //         console.warn('No bounding box computed');
-    //         return;
-    //     }
-
-    //     const min = bbox.min;
-    //     const max = bbox.max;
-    //     const offset = new THREE.Vector2(-min.x, -min.y);
-    //     const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
-
-    //     const position = geometry.attributes.position;
-    //     if (!position) {
-    //         console.warn('No position attribute');
-    //         return;
-    //     }
-
-    //     // Создаём/обновляем UV-атрибут (2 компонента на вершину)
-    //     const uvArray = new Float32Array(position.count * 2);
-    //     const uv = new THREE.BufferAttribute(uvArray, 2);
-
-    //     for (let i = 0; i < position.count; i++) {
-    //         const x = position.getX(i);
-    //         const y = position.getY(i);
-    //         // Планарная проекция на XY, нормализация по локальному bbox
-    //         const u = range.x > 0 ? (x + offset.x) / range.x : 0;
-    //         const v = range.y > 0 ? (y + offset.y) / range.y : 0;
-    //         uv.setXY(i, u, v);
-    //     }
-
-    //     geometry.setAttribute('uv', uv);
-    //     geometry.attributes.uv!.needsUpdate = true;
-    //     geometry.computeVertexNormals(); // Фикс нормалей
-    // }
 
     addAdditionalKeys = (obj, additionalKeys) => (
         Object.entries(additionalKeys).forEach(([newKey, existingKey]) =>

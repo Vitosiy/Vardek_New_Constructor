@@ -4,6 +4,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
+import { boolean } from "yup";
 
 
 interface IProductFasades {
@@ -59,6 +60,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_SECTION = computed(() => _APP.value.FASADE_SECTION || [])
     const _FASADE_POSITION = computed(() => _APP.value.FASADE_POSITION || [])
     const _FASADE_GROUPS = computed<IFasadeGroups>(() => _APP.value.FASADE_GROUPS || {})
+    const _FASADE_TYPE = computed(() => _APP.value.FASADETYPE || [])
     const _PRODUCTS = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
     const _PALETTE = computed(() => _APP.value.PALETTE || [])
     const _PLINTH = computed(() => _APP.value.PLINTH || [])
@@ -67,7 +69,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _GLASS = computed(() => _APP.value.GLASS || [])
     const _PATINA = computed(() => _APP.value.PATINA || [])
     const _HANDLES = computed(() => _APP.value.HANDLES || [])
-    const _HEM = computed(() => _APP.value.HEM  || [])
+    const _HEM = computed(() => _APP.value.HEM || [])
 
 
     const currentModel = ref<THREE.Object3D | null>(null)
@@ -115,7 +117,7 @@ export const useModelState = defineStore('ModelState', () => {
         currentRaspilParent.value = object
     }
 
-    const getCurrentRaspilParent = computed(()=>{
+    const getCurrentRaspilParent = computed(() => {
         return currentRaspilParent.value
     })
 
@@ -418,7 +420,7 @@ export const useModelState = defineStore('ModelState', () => {
 
         const { FASADE_PROPS } = currentModel.value?.userData.PROPS.CONFIG
         const modulePart = currentModel.value?.userData.PROPS.CONFIG[fasadeId]
-        if(modulePart)
+        if (modulePart)
             modulePart.MILLING = id
         else
             FASADE_PROPS[fasadeId].MILLING = id
@@ -432,6 +434,8 @@ export const useModelState = defineStore('ModelState', () => {
         const positionId = product.FASADE_POSITION[fasadeNdx]
         const fasadePosData = _FASADE_POSITION.value[positionId]
         const haveShowCase = fasadePosData?.glass == 1
+
+        console.log(haveShowCase, 'haveShowCase')
 
         if (!haveShowCase) {
             currentShowcaseData.value = []
@@ -469,12 +473,16 @@ export const useModelState = defineStore('ModelState', () => {
     /** Типы фасада (интегрированная ручка) */
     const createCurrentFasadeTypesData = ({ fasadeId, productId }) => {
         const incomeTypes = _FASADE.value[fasadeId].fasade_type
-        const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
-        const defaultTypes = productPositions.reduce((acc, index) =>
-            acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
-            []);
+        console.log(incomeTypes)
+        const defaultTypes = incomeTypes.map(item => _FASADE_TYPE.value[item]).filter(Boolean);
+        // const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
+        // const defaultTypes = productPositions.reduce((acc, index) =>
+        //     acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
+        //     []);
 
-        currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
+        // currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
+
+        console.log(defaultTypes, 'currentFasadeTypesData')
 
     }
 

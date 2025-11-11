@@ -54,7 +54,7 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.FASADE = []
         PROPS.FASADE_DEFAULT = []
 
-        const modelData = CONFIG.MODEL
+        const modelData = this._MODELS[CONFIG.MODELID]
 
         const MODULEGRID = moduleParams || Object.keys(PROPS.CONFIG.MODULEGRID)?.length ? PROPS.CONFIG.MODULEGRID : false;
 
@@ -748,7 +748,7 @@ export class BuildUniversalModule extends BuildProduct {
             if (sectionConf.fillings) {
                 const sectionSize = { width: sectionConf.size.x, height: sectionConf.size.y, depth: sectionConf.size.z }
                 Object.entries(sectionConf.fillings).forEach(([_elementNumber, element]) => {
-                    const product = this.getProductInfo(element.product)
+                    const product = this.filters.filterProductInfo(element.product)
                     const elementNumber = +_elementNumber + 1
                     if (!product)
                         return

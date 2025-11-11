@@ -32,6 +32,7 @@ import { BuildersHelper } from "./BuildersHelper"
 import { EdgeBuilder } from './EdgeBuilder/EdgeBuilder.ts';
 import { HandlesBuilder } from './Hendles/Handles.ts';
 import { PlinthBuilder } from './PlinthBuilder/PlinthBuilder.ts';
+import { DrowerBuilder } from './Drowers/DrowerBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -58,6 +59,7 @@ export class BuildProduct extends BuildersHelper {
     alum_builder: AlumBuilder
     edge_builder: EdgeBuilder
     plinth_builder: PlinthBuilder
+    drower_builder: DrowerBuilder
     uniform_texture_builder: UniformTextureBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
 
@@ -83,23 +85,13 @@ export class BuildProduct extends BuildersHelper {
         this.handles_builder = new HandlesBuilder(this)
         this.fasade_builder = new FasadeBuilder(this);
         this.tabletop_builder = new TableTopBuilder(this);
+        this.drower_builder = new DrowerBuilder(this)
         this.plinth_builder = new PlinthBuilder(this)
     }
 
     get _currentProduct() {
         return this
     }
-
-    // _getModel(product_data: THREETypes.TObject, onLoad: (object: THREE.Object3D) => void, loaded_props?: THREETypes.TObject, loaded_size?: THREETypes.TObject): void {
-
-    //     const type = this._MODELS[product_data.models[0]]
-
-    //     let model = this.createPerentGroup(product_data, onLoad, type, loaded_props, loaded_size);
-
-    //     if (!!type.DAE) return;
-
-    //     onLoad(model as THREE.Object3D)
-    // }
 
     //========================================================================================================
 
@@ -251,9 +243,9 @@ export class BuildProduct extends BuildersHelper {
         return parent_group
     }
 
-    createStartProps(product_data: THREETypes.TObject) {
+    createStartProps(product_data: THREEInterfases.IProduct) {
 
-        let props: THREETypes.TObject = {
+        let props: THREETypes.TTotalProps = {
             ARROWS: [],
             BODY: [],
             CONFIG: {},
@@ -287,7 +279,7 @@ export class BuildProduct extends BuildersHelper {
         return props
     }
 
-    private createProductObject(product_data: THREETypes.TObject, props: THREETypes.TObject) {
+    private createProductObject(product_data: THREEInterfases.IProduct, props: THREETypes.TObject): THREETypes.TConfig {
         const {
             element_type,
             ID,
@@ -313,7 +305,7 @@ export class BuildProduct extends BuildersHelper {
             elType = element_type
         }
 
-        const PARAMS: THREETypes.TObject = {
+        const PARAMS: THREETypes.TConfig = {
             DISABLE_MOVE: false,
             ELEMENT_TYPE: elType,
             ID,
@@ -329,7 +321,7 @@ export class BuildProduct extends BuildersHelper {
             HIDE_FASADE: false,
             HIDDEN: false,
             MODELID: models[0],
-            MODEL: this._MODELS[models[0]],
+            MODEL: models,
             MODULE_COLOR: null,
             MECHANIZM: null,
             MECHANIZM_TEMP: [],
@@ -379,7 +371,9 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (FASADE_SIZES?.length) {
+
             PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, this._PRODUCTS[ID]) as any[];
+            console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
         }
 
         if (FACADE?.[0]) {
@@ -404,6 +398,8 @@ export class BuildProduct extends BuildersHelper {
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
         PARAMS.SIZE_EDIT = this.getSizeEdit(product_data, PARAMS);
+
+        console.log(PARAMS.SIZE, 'PARAMS.SIZE')
 
         return PARAMS;
     }
@@ -431,13 +427,15 @@ export class BuildProduct extends BuildersHelper {
         PROPS.FASADE_DEFAULT = [];
 
         const productId = CONFIG.ID;
-        const modelData = CONFIG.MODEL;
+        const modelData = this._MODELS[CONFIG.MODELID];
         const modelSize = size ?? CONFIG.SIZE;
         const bodyExceptions = this.project.default_overlay_id
         const legsHeight = this._PRODUCTS[productId]?.leg_length
+        const fasadeProps = Object.values(CONFIG.FASADE_PROPS)
 
 
         if (size && !fisadeSize) {
+            // PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, size);
             PROPS.CONFIG.SIZE = size;
         }
         if (size && fisadeSize) {
@@ -477,13 +475,19 @@ export class BuildProduct extends BuildersHelper {
         //     ? this.tabletop_builder.createTableTop({ props: PROPS })
         //     : null;
 
-        const fasade = Object.keys(CONFIG.FASADE_PROPS).length
+        const fasade = fasadeProps.length
             ? this.fasade_builder.getFasade({
                 props: PROPS,
                 defaultConfig,
                 curBodyExceptions
             })
             : null;
+
+        const drower = fasadeProps.length > 0 && fasadeProps.some(item => item.DRAWER.drawer) ?
+            this.drower_builder.createDrowers({
+                props: PROPS,
+            }) : null
+
 
         const arrows = this.addArrowSize({ object: body, props: PROPS, group: total });
         // Вычисление высот
@@ -502,6 +506,7 @@ export class BuildProduct extends BuildersHelper {
         }
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
+        if(drower) drower.position.y = baseY
 
         /** @Раскоментировать_по_необходимости   */
         // if (tableTop) {
@@ -515,7 +520,7 @@ export class BuildProduct extends BuildersHelper {
             if (curBodyExceptions) {
                 return [body, shelf, fasade, arrows]
             }
-            return [plinth, legs, body, shelf, fasade, arrows]
+            return [plinth, legs, body, shelf, fasade, drower, arrows]
         }
 
         const totalGroup = getTotalGroup()
@@ -552,29 +557,6 @@ export class BuildProduct extends BuildersHelper {
         }
 
         return total;
-    }
-
-    getProductInfo = function (id) {
-        let info = this._PRODUCTS[id]
-
-        if (!info) {
-            info = this.disabledProducts[id]
-
-            if (info?.ALTERNATIVE_PRODUCT?.[0]) {
-                for (let i = 0; i < info.ALTERNATIVE_PRODUCT.length; i++) {
-                    if (this._PRODUCTS[info.ALTERNATIVE_PRODUCT[i]]) {
-                        info = this._PRODUCTS[info.ALTERNATIVE_PRODUCT[i]]
-                        break;
-                    }
-                }
-            }
-
-        }
-
-        if (info)
-            info = Object.assign({}, info)
-
-        return info;
     }
 
     /** Создание тела модели */

@@ -41,6 +41,8 @@ export const useMechanizm = () => {
             const defMilling = sceneState.getCurrentProjectParams.default_milling as number
 
             const weightData = FASADE_PROPS.map((fasade: TFasadeProp, ndx: number) => {
+                if (fasade.COLOR == 7397) return null
+
                 const { PRODUCT } = PROPS
                 const { FASADE_WIDTH, FASADE_HEIGHT } = FASADE[ndx].userData.trueSize
                 const product = PRODUCTS[PRODUCT]
