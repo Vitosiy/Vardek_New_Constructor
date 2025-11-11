@@ -97,8 +97,8 @@ function createUniformTexture(objProps: any) {
 function generateDoorsSimple(moduleData) {
     const DOORS = {};
     
-    moduleData?.sections?.forEach(section => {
-        const sectionNum = section.number;
+    moduleData?.sections?.forEach((section, number) => {
+        const sectionNum = number + 1;
         DOORS[sectionNum] = {};
         
         section.fasades.forEach(fasadeArray => {
