@@ -27,6 +27,7 @@ const resizeData = ref({
 
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
+const rootModelsList = ref<number[] | null>(null);
 
 const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
@@ -36,8 +37,19 @@ const rotateModel = (id: number) => {
   eventBus.emit("A:RotateModel", id);
 };
 
+const updateRootModel = (id: number) => {
+  eventBus.emit("A:ChangeRootModel", { data: id });
+};
+
 const prepareData = () => {
-  currentModel.value = modelState.getCurrentModel.userData;
+  const { userData } = modelState.getCurrentModel;
+  const { MODEL } = userData.PROPS.CONFIG;
+
+  currentModel.value = userData;
+  rootModelsList.value = MODEL;
+  
+
+  console.log(MODEL);
 
   sizeEditData.value = {
     widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
@@ -139,6 +151,12 @@ watch(
             :max="sizeEditData.depthMax"
             :disabled="!getIsUMproduct"
           />
+        </div>
+      </div>
+      <p class="customiser-section__title">Позиционирование</p>
+      <div v-if="rootModelsList?.length > 1">
+        <div v-for="(model, key) in rootModelsList" :key="key + model">
+          <button @click="updateRootModel(model)">{{ model }}</button>
         </div>
       </div>
 

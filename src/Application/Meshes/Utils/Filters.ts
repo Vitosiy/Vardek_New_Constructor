@@ -60,7 +60,7 @@ export class Filters extends GlobalsData {
     filterFasadePosition(params: THREETypes.TObject, product: THREETypes.TObject) {
 
 
-        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE, FILLING} = params
+        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE, FILLING } = params
 
         // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
 
@@ -89,11 +89,11 @@ export class Filters extends GlobalsData {
         }
 
         //Фильтрация фасадов на принадлежность текущей компоновке
-        if(FILLING)
+        if (FILLING)
             sortFasadePositionList = sortFasadePositionList.filter((value, index) => {
                 let fasade = this._FASADE_POSITION[value]
                 if (fasade.filling.length && fasade.filling[0]) {
-                    if(fasade.filling.includes(FILLING))
+                    if (fasade.filling.includes(FILLING))
                         return value
                 }
                 else
@@ -119,8 +119,8 @@ export class Filters extends GlobalsData {
             }
             const handlerPosition = fasadePosition.drawer ? 4 : handleInDorPosition()
 
-            // console.log(fasadePosition.drawer
-            //     , 'FASADE_POSITION')
+            console.log(fasadePosition.drawer
+                , 'FASADE_POSITION')
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
@@ -151,9 +151,13 @@ export class Filters extends GlobalsData {
                 SIZES: {
                     id: sizes,
                     params: {}
+                },
+                DRAWER: {
+                   drawer: fasadePosition.drawer,
+                   buildIn: fasadePosition.built_in
                 }
             }
-
+            
             FASADE_PROPS.push(fasadeProps)
         })
 
@@ -285,6 +289,29 @@ export class Filters extends GlobalsData {
         }, {});
 
         return result
+    }
+
+    filterProductInfo(id) {
+        let info = this._PRODUCTS[id]
+
+        if (!info) {
+            info = this.disabledProducts[id]
+
+            if (info?.ALTERNATIVE_PRODUCT?.[0]) {
+                for (let i = 0; i < info.ALTERNATIVE_PRODUCT.length; i++) {
+                    if (this._PRODUCTS[info.ALTERNATIVE_PRODUCT[i]]) {
+                        info = this._PRODUCTS[info.ALTERNATIVE_PRODUCT[i]]
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        if (info)
+            info = Object.assign({}, info)
+
+        return info;
     }
 
 } 

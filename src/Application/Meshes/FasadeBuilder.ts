@@ -70,7 +70,8 @@ export class FasadeBuilder {
 
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
-        const modelType = CONFIG.MODEL?.type ?? "left";
+        const modelType = this._APP.MODELS[CONFIG.MODELID]?.type ?? "left";
+        console.log(modelType, 'modelType')
 
         if (remove) {
             CONFIG.UNIFORM_TEXTURE = {
@@ -309,6 +310,7 @@ export class FasadeBuilder {
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
                 fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
+
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -691,14 +693,14 @@ export class FasadeBuilder {
         result.userData.edgeID = fasadeEdge.id;
 
         if (isNewFasade || income) {
-            console.log(isNewFasade, 'isNewFasade')
-
             FASADE.push(result);
             const copy = result.clone();
             FASADE_DEFAULT.push(copy);
             result.visible = result.userData.SHOW = FASADE_PROPS[key].SHOW;
             parent.add(result, fasadeEdge);
         }
+
+        console.log('88')
 
         return { result, fasadeEdge }
     }
@@ -724,6 +726,8 @@ export class FasadeBuilder {
 
         let fasadePosition = this.parent._FASADE_POSITION[fasadeList];
 
+        console.log(fasadePosition, EXPRESSIONS, 'fasadePosition------')
+
         const replacedExpressions = this.parent.expressionsReplace(fasadePosition, {
             ...EXPRESSIONS,
             "#X#": SIZE.width,
@@ -733,13 +737,19 @@ export class FasadeBuilder {
 
         const curFasadeDepth = this.checkFasadeDepth(FASADE_PROPS, key) ?? replacedExpressions.FASADE_DEPTH
 
+        console.log(curFasadeDepth)
+
         const fasadePositionsData = {
             FASADE_WIDTH: this.parent.calculateFromString(replacedExpressions.FASADE_WIDTH),
             FASADE_HEIGHT: this.parent.calculateFromString(replacedExpressions.FASADE_HEIGHT),
-            FASADE_DEPTH: this.parent.calculateFromString(curFasadeDepth),
+            // FASADE_DEPTH: this.parent.calculateFromString(curFasadeDepth),
+            FASADE_DEPTH: 18,
             POSITION_X: this.parent.calculateFromString(replacedExpressions.POSITION_X),
             POSITION_Y: this.parent.calculateFromString(replacedExpressions.POSITION_Y),
             POSITION_Z: this.parent.calculateFromString(replacedExpressions.POSITION_Z),
+            POSITION_2_X: replacedExpressions.POSITION_2_X,
+            POSITION_2_Y: replacedExpressions.POSITION_2_Y,
+            POSITION_2_Z: replacedExpressions.POSITION_2_Z,
             ROTATE_X: replacedExpressions.ROTATE_X,
             ROTATE_Y: replacedExpressions.ROTATE_Y,
             ROTATE_Z: replacedExpressions.ROTATE_Z,
@@ -774,11 +784,14 @@ export class FasadeBuilder {
 
         fasade.rotation.set(rotation.x, rotation.y, rotation.z);
         fasade.position.set(position.x, position.y, position.z);
+
         fasadeEdge.rotation.set(rotation.x, rotation.y, rotation.z);
         fasadeEdge.position.set(position.x, position.y, position.z);
 
         const cloned: THREE.Mesh = fasade.clone()
         const modelName = fasade_position.FASADE_MODEL
+        console.log(modelName, 'modelName')
+
         if (modelName) {
             if (cloned.isObject3D && cloned.children.length == 1) {
                 const copy = cloned.children[0].clone()
@@ -796,6 +809,9 @@ export class FasadeBuilder {
     private createPositionData = (positionData, startData, type) => {
         const degToRad = THREE.MathUtils.degToRad;
         const isRightModel = type === "right";
+
+        console.log(isRightModel, 'isRightModel')
+
         const rotations = {
             left: {
                 x: degToRad(-(positionData?.ROTATE_X ?? 0)),
@@ -826,11 +842,15 @@ export class FasadeBuilder {
             z: this.parent.calculateFromString(isRightModel ? (positionData?.POSITION_2_Z ?? positionData?.POSITION_Z) : positionData?.POSITION_Z ?? 0)
         };
 
+        // console.log(pos, positionData, 'POSITION')
+
         const position = new THREE.Vector3(
             startData.x + (this.parent.calculateFromString(positionData?.FASADE_WIDTH ?? 0) / 2) + pos.x,
             startData.y + (this.parent.calculateFromString(positionData?.FASADE_HEIGHT ?? 0) / 2) + pos.y,
             startData.z + pos.z
         );
+
+        console.log(pos, positionData, position, 'POSITION')
 
         return { rotation, position };
     };
