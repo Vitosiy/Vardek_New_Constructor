@@ -36,7 +36,7 @@ const { is2Dconstructor } = toRefs(props);
 const emit = defineEmits(["parent-callback"]);
 
 const callback = (material) => {
-  emit("parent-callback", material);
+  emit("parent-callback", material, 'COLOR');
 };
 
 onBeforeMount(() => {

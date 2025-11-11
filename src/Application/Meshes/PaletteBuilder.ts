@@ -40,6 +40,16 @@ export class PaletteBuilder {
         fasade.userData.millingMaterial = material;
     }
 
+    getPalette(fasadeId: number, paletteId: number) {
+        const { _APP, _FASADE } = this.parent;
+        const palette = _APP.PALETTE[paletteId];
+        const fasadeName = _FASADE[fasadeId].NAME.toLowerCase();
+
+        const roughnessValue = fasadeName.includes("матовый") ? 0.5 : 0.02;
+
+        return this.createMaterial(palette.HTML, roughnessValue)
+    }
+
     createPaletteColor({
         fasade,
         data,

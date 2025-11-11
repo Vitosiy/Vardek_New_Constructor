@@ -345,11 +345,11 @@ const updateFasades = () => {
                     section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
                 module.value.width - 4;
 
-        const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
+        const correctSectionFasadeWidthDoor = Math.floor(correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2));
 
-        const sumDoorsWidth = section.fasades.reduce(
+        const sumDoorsWidth = Math.floor(section.fasades.reduce(
             (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
-            0) / countDoors - ((countDoors - 1) * 2);
+            0) / countDoors - ((countDoors - 1) * 2));
         const sumDoorsHeight = section.fasades[0].reduce(
             (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
             0);

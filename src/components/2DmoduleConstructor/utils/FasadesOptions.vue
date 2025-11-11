@@ -293,6 +293,7 @@ const addDoor = (secIndex) => {
 
   let fasPos = getFasadePosition(newDoor.material.POSITION);
   newDoor.height = fasPos.FASADE_HEIGHT //module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
+  newDoor.position.y = fasPos.POSITION_Y
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length);
 

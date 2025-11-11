@@ -622,13 +622,12 @@ export class BuildProduct extends BuildersHelper {
                 }
             })
 
-            if (TOPFASADECOLOR.PALETTE)
-                top = this._PALETTE[TOPFASADECOLOR.PALETTE]
+            top = Object.assign({}, TOPFASADECOLOR)
         }
 
         if (TSARGA) {
             let moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor.DEPTH
-            tsarga = this._FASADE[TSARGA.COLOR] || this._COLOR[TSARGA.COLOR]
+            tsarga = Object.assign({}, TSARGA)
 
             let startPos = this.getStartPosition(CONFIG.SIZE);
             if (TSARGA.TYPE === 'metal') {
@@ -692,19 +691,13 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (LEFTSIDECOLOR?.SHOW) {
-            left = this._FASADE[LEFTSIDECOLOR.COLOR]
-            if (LEFTSIDECOLOR.PALETTE)
-                left = this._PALETTE[LEFTSIDECOLOR.PALETTE]
+            left = Object.assign({}, LEFTSIDECOLOR)
         }
         if (RIGHTSIDECOLOR?.SHOW) {
-            right = this._FASADE[RIGHTSIDECOLOR.COLOR]
-            if (RIGHTSIDECOLOR.PALETTE)
-                right = this._PALETTE[RIGHTSIDECOLOR.PALETTE]
+            right = Object.assign({}, RIGHTSIDECOLOR)
         }
         if (BACKWALL?.SHOW) {
-            back = this._FASADE[BACKWALL.COLOR]
-            if (BACKWALL.PALETTE)
-                back = this._PALETTE[BACKWALL.PALETTE]
+            back = Object.assign({}, BACKWALL)
         }
 
         const body = this.json_builder.createMesh({

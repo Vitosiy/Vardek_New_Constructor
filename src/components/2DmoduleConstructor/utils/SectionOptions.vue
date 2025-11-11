@@ -281,18 +281,19 @@ const updateSectionWidth = (value, secIndex) => {
   let curSection = clone.sections[secIndex]
 
   if (adjustedValue) {
-    let nextSection = clone.sections[secIndex + 1] || clone.sections[secIndex - 1]
+    let nextSection = clone.sections[secIndex + 1]
+    let prevSection = clone.sections[secIndex - 1]
     let delta = curSection.width - adjustedValue
 
     curSection.width = adjustedValue
-    curSection.position.x += (-delta) / 2
+    curSection.position.x += nextSection ? (-delta) / 2 : delta / 2
 
     curSection.cells.forEach((cell, cellIndex) => {
 
       if (cell.cellsRows) {
         let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
         lastRow.width += delta;
-        lastRow.position.x += (-delta) / 2
+        lastRow.position.x += nextSection ? (-delta) / 2 : delta / 2
       }
       cell.position.x = curSection.position.x
       cell.width = adjustedValue;
@@ -314,6 +315,23 @@ const updateSectionWidth = (value, secIndex) => {
         cell.width = nextSection.width;
       })
     }
+    else if (prevSection) {
+      prevSection.width += delta
+      prevSection.position.x += delta / 2
+
+      prevSection.cells.forEach((cell, cellIndex) => {
+
+        if (cell.cellsRows) {
+          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+          lastRow.width += delta;
+          lastRow.position.x += delta / 2
+        }
+
+        cell.position.x = prevSection.position.x
+        cell.width = prevSection.width;
+      })
+    }
+
   }
   module.value = clone;
   updateFasades();
