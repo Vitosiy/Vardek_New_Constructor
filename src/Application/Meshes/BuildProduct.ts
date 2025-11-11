@@ -603,9 +603,9 @@ export class BuildProduct extends BuildersHelper {
         CONFIG.MODULE_COLOR = moduleColorId;
 
         const moduleColor = this._FASADE[moduleColorId];
-        let left, right, top, back;
+        let left, right, top, back, tsarga;
 
-        const { BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR } = CONFIG;
+        const { BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR, TSARGA } = CONFIG;
 
         if (TOPFASADECOLOR?.SHOW) {
             let moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor.DEPTH
@@ -643,6 +643,72 @@ export class BuildProduct extends BuildersHelper {
             if (TOPFASADECOLOR.PALETTE)
                 top = this._PALETTE[TOPFASADECOLOR.PALETTE]
         }
+
+        if (TSARGA) {
+            let moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor.DEPTH
+            tsarga = this._FASADE[TSARGA.COLOR] || this._COLOR[TSARGA.COLOR]
+
+            let startPos = this.getStartPosition(CONFIG.SIZE);
+            if (TSARGA.TYPE === 'metal') {
+                data.json.items.push({
+                    "id": "horizontallineback",
+                    "type": "object",
+                    "geometry": {
+                        "type": "BoxGeometry",
+                        "opt": {"x": CONFIG.SIZE.width - moduleThickness * 2, "y": 15, "z": 15}
+                    },
+                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "position": {
+                        "x": 0,
+                        "y": startPos.y + CONFIG.SIZE.height - 15 / 2,
+                        "z": startPos.z + 15 / 2
+                    }
+                }, {
+                    "id": "horizontallinefront",
+                    "type": "link",
+                    "link": "horizontallineback",
+                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "position": {
+                        "x": 0,
+                        "y": startPos.y + CONFIG.SIZE.height - 15 / 2,
+                        "z": startPos.z + CONFIG.SIZE.depth - 15 / 2
+                    }
+                })
+            }
+            else {
+                data.json.items.push({
+                    "id": "horizontallineback",
+                    "type": "object",
+                    "geometry": {
+                        "type": "BoxGeometry",
+                        "opt": {
+                            "x": CONFIG.SIZE.width - moduleThickness * 2,
+                            "y": 30,
+                            "z": moduleThickness
+                        }
+                    },
+                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "position": {
+                        "x": 0,
+                        "y": startPos.y + CONFIG.SIZE.height - 15,
+                        "z": startPos.z +  moduleThickness / 2
+                    }
+                }, {
+                    "id": "horizontallinefront",
+                    "type": "link",
+                    "link": "horizontallineback",
+                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "position": {
+                        "x": 0,
+                        "y": startPos.y + CONFIG.SIZE.height - 15,
+                        "z": startPos.z + CONFIG.SIZE.depth - moduleThickness / 2
+                    }
+                })
+            }
+
+            data.json.items = data.json.items.filter(item => item.id !== 'top')
+        }
+
         if (LEFTSIDECOLOR?.SHOW) {
             left = this._FASADE[LEFTSIDECOLOR.COLOR]
             if (LEFTSIDECOLOR.PALETTE)
@@ -666,6 +732,7 @@ export class BuildProduct extends BuildersHelper {
             right,
             back,
             top,
+            tsarga,
         });
 
         const edge = this.edge_builder.createEdge(body);
@@ -807,10 +874,10 @@ export class BuildProduct extends BuildersHelper {
 
     /** Создание ножек модели */
 
-    private buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D) {
+    private buildLegs(props: THREETypes.TObject, model_data: THREETypes.TObject, group: THREE.Object3D, custom_leg_length: number) {
 
         let size = props.CONFIG.SIZE
-        let leg_length = this.modelState.getModels[props.PRODUCT].leg_length
+        let leg_length = custom_leg_length || this.modelState.getModels[props.PRODUCT].leg_length
         let legs = new THREE.Object3D()
         let model = model_data
         let start_position = this.getStartPosition(size)

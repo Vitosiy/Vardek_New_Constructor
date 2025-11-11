@@ -46,7 +46,7 @@ const openUMRedactor = () => {
 
 const closeUMRedactor = () => {
   if (!gridUMSaved.value) {
-    props.product.userData.PROPS.CONFIG.MODULEGRID = saveGrid(universalModuleCash.value);
+    props.product.userData.PROPS.CONFIG.MODULEGRID = saveUMGrid(universalModuleCash.value);
   }
 
   universalModuleData.value = false;
