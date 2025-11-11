@@ -53,9 +53,29 @@ export const useQuickActionsToolbar = () => {
 
   // Функция открытия модального окна для сохранения проекта
   const onSaveProject = async () => {
-    if (openSaveDialog.value) {
-      openSaveDialog.value();
+    // Если проект уже имеет ID — обновляем без показа модалки
+    if (projectState.currentProjectId) {
+      projectState.isSaving = true;
+      try {
+        const result = await projectAPI.saveProject(projectState.currentProjectId);
+        if (result.success) {
+          projectState.updateAfterSave();
+          toaster.success("Сохранено");
+        } else {
+          console.error("❌ Ошибка сохранения:", result.error);
+          toaster.error("Ошибка сохранения проекта");
+        }
+      } catch (error) {
+        console.error("❌ Исключение при сохранении:", error);
+        toaster.error("Ошибка сохранения проекта");
+      } finally {
+        projectState.isSaving = false;
+      }
+      return;
     }
+
+    // Иначе — это новый проект: открываем модальное окно для ввода имени
+    if (openSaveDialog.value) openSaveDialog.value();
   }
 
   // Обработка подтверждения сохранения с названием проекта
