@@ -14,6 +14,7 @@ export class JsonBuilder {
     leftMaterial: THREE.Material | null = null
     backMaterial: THREE.Material | null = null
     topMaterial: THREE.Material | null = null
+    tsargaMaterial: THREE.Material | null = null
     keys: string[] = ['fasade', 'center', 'front', 'front1', 'front2']
     convert: Function
 
@@ -22,7 +23,7 @@ export class JsonBuilder {
         this.convert = parent.calculateFromString
     }
 
-    createMesh({ data, parent_size, fasade, left, right, back, top }: {
+    createMesh({ data, parent_size, fasade, left, right, back, top, tsarga }: {
         data: THREETypes.TObject,
         parent_size?: THREETypes.TObject,
         fasade?: THREETypes.TObject,
@@ -30,6 +31,7 @@ export class JsonBuilder {
         right?: THREETypes.TObject,
         back?: THREETypes.TObject,
         top?: THREETypes.TObject,
+        tsarga?: THREETypes.TObject,
     }) {
 
         const json = data.json ? data.json : data
@@ -46,7 +48,8 @@ export class JsonBuilder {
             this.backMaterial = this.createMaterial(json.material, back) as THREE.Material
         if(top)
             this.topMaterial = this.createMaterial(json.material, top) as THREE.Material
-
+        if(tsarga)
+            this.tsargaMaterial = this.createMaterial(json.material, tsarga) as THREE.Material
 
         if (Array.isArray(json.items)) {
 
@@ -136,6 +139,9 @@ export class JsonBuilder {
             }
             else if(data.id.includes("top_fasade") && this.topMaterial) {
                 material = this.topMaterial
+            }
+            else if(data.id.includes("horizontalline") && this.tsargaMaterial) {
+                material = this.tsargaMaterial
             }
 
             obj[data.id] = new THREE.Mesh(geometry, material);

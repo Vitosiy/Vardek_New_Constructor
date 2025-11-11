@@ -10,6 +10,7 @@ import CounterInput from "@/components/ui/inputs/CounterInput.vue";
 const {
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  MAX_SECTION_WIDTH,
 } = UI_PARAMS;
 
 const props = defineProps({
@@ -577,6 +578,8 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 
 defineExpose({
   handleCellSelect,
+  addSection,
+  deleteSection
 });
 
 onMounted(() => {
@@ -649,6 +652,7 @@ onMounted(() => {
                             type="number"
                             :step="step"
                             :min="MIN_SECTION_WIDTH"
+                            :max="MAX_SECTION_WIDTH"
                             class="actions-sections-input"
                             :value="section.width"
                             @input="
@@ -785,6 +789,7 @@ onMounted(() => {
                                   type="number"
                                   :step="step"
                                   :min="MIN_SECTION_HEIGHT"
+                                  :max="section.height - MIN_SECTION_HEIGHT"
                                   class="actions-sections-input"
                                   :value="cell.height"
                                   @input="
@@ -885,6 +890,7 @@ onMounted(() => {
                                         type="number"
                                         :step="step"
                                         :min="MIN_SECTION_WIDTH"
+                                        :max="cell.width - MIN_SECTION_WIDTH"
                                         class="actions-sections-input"
                                         :value="row.width"
                                         @input="

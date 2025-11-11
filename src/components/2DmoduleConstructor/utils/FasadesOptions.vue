@@ -16,6 +16,7 @@ import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/Col
 import MaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialRedactor.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 const props = defineProps({
   module: {
@@ -256,8 +257,10 @@ const addDoor = (secIndex) => {
     );
   } else {
     const PROPS = props.moduleProps;
-    const FASADE = PROPS.CONFIG.FASADE_POSITIONS[0];
+
     const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
+    const FASADE = getFasadePosition(FASADE_PROPS.POSITION);
+
     let startX =
       section.position.x -
       section.width / 2 -
@@ -300,6 +303,10 @@ const addDoor = (secIndex) => {
     }
 
     newDoor.loopsSide = loopsidesList.pop().ID;
+
+    if(!section.loopsSides)
+      section.loopsSides = {}
+
     section.loopsSides[section.fasades.length] = newDoor.loopsSide;
 
   }
@@ -380,40 +387,48 @@ const deleteDoor = (secIndex, doorIndex) => {
 
   const combinedWidth = next
     ? current[0].width + next[0].width + 4
-    : current[0].width + prev[0].width + 4;
+    : prev ? current[0].width + prev[0].width + 4 : 0;
 
-  if (next) {
-    current.forEach((segment, index) => {
-      segment.width = combinedWidth;
-
-      if (segment.width < segment.minX || segment.height < segment.minY)
-        segment.error = true;
-      else delete segment.error;
-    });
-  } else {
-    prev.forEach((segment, index) => {
-      segment.width = combinedWidth;
-
-      if (segment.width < segment.minX || segment.height < segment.minY)
-        segment.error = true;
-      else delete segment.error;
-    });
+  if (!combinedWidth) {
+    module.value.sections[secIndex].fasades = [];
+    module.value.sections[secIndex].loops = [];
+    module.value.sections[secIndex].loopsSides = {};
   }
+  else {
+    if (next) {
+      current.forEach((segment, index) => {
+        segment.width = combinedWidth;
 
-  if (next) {
-    module.value.sections[secIndex].fasades.splice(doorIndex + 1, 1);
-    module.value.sections[secIndex].loops.splice(doorIndex + 1, 1);
-    delete module.value.sections[secIndex].loopsSides[doorIndex + 1];
-  } else {
-    module.value.sections[secIndex].fasades.splice(doorIndex, 1);
-    module.value.sections[secIndex].loops.splice(doorIndex, 1);
-    delete module.value.sections[secIndex].loopsSides[doorIndex];
+        if (segment.width < segment.minX || segment.height < segment.minY)
+          segment.error = true;
+        else delete segment.error;
+      });
+    } else {
+      prev.forEach((segment, index) => {
+        segment.width = combinedWidth;
+
+        if (segment.width < segment.minX || segment.height < segment.minY)
+          segment.error = true;
+        else delete segment.error;
+      });
+    }
+
+    if (next) {
+      module.value.sections[secIndex].fasades.splice(doorIndex + 1, 1);
+      module.value.sections[secIndex].loops.splice(doorIndex + 1, 1);
+      delete module.value.sections[secIndex].loopsSides[doorIndex + 1];
+    } else {
+      module.value.sections[secIndex].fasades.splice(doorIndex, 1);
+      module.value.sections[secIndex].loops.splice(doorIndex, 1);
+      delete module.value.sections[secIndex].loopsSides[doorIndex];
+    }
+
+    if (!module.value.isSlidingDoors)
+      calcLoops(secIndex);
   }
 
   selectedFasade.value.cell = 0;
   selectedFasade.value.sec = 0;
-
-  if (!module.value.isSlidingDoors) calcLoops(secIndex);
 
   visualizationRef.value.renderGrid();
 };
@@ -764,6 +779,11 @@ onMounted(() => {
     }
   }
 });
+
+const closeMenu = () => {
+  isOpenMaterialSelector.value = false;
+};
+
 </script>
 
 <template>
@@ -1159,6 +1179,8 @@ onMounted(() => {
 
   <transition name="slide--right" mode="out-in">
     <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+
       <AdvanceCorpusMaterialRedactor
         :is-fasade="true"
         :elementData="currentFasadeMaterial.data"

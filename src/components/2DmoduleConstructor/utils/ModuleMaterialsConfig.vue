@@ -7,6 +7,7 @@ import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/Col
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 const props = defineProps({
   module: {
@@ -90,6 +91,11 @@ const reset = () => {
 const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
   return APP[type]?.[materialID]
 }
+
+const closeMenu = () => {
+  currentOption.value = false;
+  materialList.value = null
+};
 
 const getOption = (part: string) => {
   if (part == currentOption.value) {
@@ -253,6 +259,7 @@ onMounted(() => {
   <transition name="slide--left" mode="out-in">
     <div class="color-select" v-if="currentOption" key="color-select">
       <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
+      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
       <AdvanceCorpusMaterialRedactor
           class="color-select-item"

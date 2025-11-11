@@ -111,6 +111,7 @@ export interface FillingObject {
   cell?: number;
   row?: number;
   error?: boolean;
+  moduleThickness?: number;
 }
 
 export enum LOOPSIDE {

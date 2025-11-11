@@ -118,9 +118,10 @@
                   </div>
                 </ul>
               </template>
-              
+              <!-- // -->
               <template v-else-if="getPropDefinition(propKey).val === 'int' && getPropDefinition(propKey).type">
-                {{ getTypeName(getPropDefinition(propKey).type, propValue) }}
+                {{ getTypeName(getPropDefinition(propKey).type, propValue, item?.product.TYPE) }}
+                
                 <span v-if="hasArticle(propKey, propValue)"> 
                   - артикул {{ getArticleCode(propKey, propValue) }}
                 </span>
@@ -317,7 +318,8 @@ const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
     if (propVal.ID) {
       return propVal.VALUE === null 
         ? getProductInfo(propVal.ID).NAME 
-        : `${getProductInfo(propVal.ID).NAME} - поз. ${propVal.VALUE} мм.`;
+        // : `${getProductInfo(propVal.ID).NAME} - поз. ${propVal.ADDITIVES} мм.`;
+        : `${getProductInfo(propVal.ID).NAME}`;
     } else {
       return getProductInfo(propVal).NAME;
     }
@@ -400,7 +402,7 @@ const hasError = (value: any, propsError: any) => {
 
 const getTypeName = (type: any, value: any, mainType: any = '') => {
   // Получаем имя из store данных
-  console.log('data', appData.value, type, value);
+  console.log('data', appData.value, type, value, mainType);
   if (value && typeof value === 'object' && value.NAME) {
     return value.NAME;
   }
@@ -415,6 +417,13 @@ const getTypeName = (type: any, value: any, mainType: any = '') => {
     console.log();  
     return appData.value['FASADESIZE'][JSON.parse(value).id]?.NAME;  
   }
+
+  if(mainType === 'umscene' && typeof value === 'object') {
+    console.log();  
+    return  appData.value[type][value['1'][0]]?.NAME;   
+  }
+
+
   return `[${type}:${value}]`;
 }; 
 

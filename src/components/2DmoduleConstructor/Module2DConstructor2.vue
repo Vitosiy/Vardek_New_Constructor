@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {computed, defineExpose, h, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
+import {computed, defineExpose, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
@@ -9,12 +9,7 @@ import FillingsProductions from "./utils/FillingsProductions.vue";
 import FasadesOptions from "@/components/2DmoduleConstructor/utils/FasadesOptions.vue";
 
 import {ShapeAdjuster} from "./utils/Methods";
-import {
-  FasadeMaterial,
-  FasadeObject,
-  GridModule,
-  GridSection, LOOPSIDE,
-} from "@/types/constructor2d/interfaсes.ts";
+import {FasadeMaterial, FasadeObject, GridModule, GridSection, LOOPSIDE,} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
@@ -560,7 +555,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
   }
 
   const firstBox = sortedBoxesByIncrease[0] //нижний ящик
-  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
+  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > bottomFasadePosition) {
     let firstFasadeSize = Math.abs(firstBox.position.y - (firstBox.isProfile ? 0 : otstup) - bottomFasadePosition)
 
     fasadeList.push({
@@ -1034,32 +1029,44 @@ const reset = (reset = false, moduleGrid = false) => {
 
     lastSection.width += deltaWidth
 
-    lastSection.cells.forEach((cell, cellIndex) => {
-
-      if (cell.cellsRows) {
-        let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-        lastRow.position.x = lastRow.position.x - lastRow.width / 2 + (lastRow.width + deltaWidth) / 2
-        lastRow.width += deltaWidth;
-        if (lastRow.fillings?.length)
-          lastRow.fillings.forEach((filling, index) => {
-            updateFilling(lastRow.width, filling, 'width')
-          })
+    if (lastSection.width > MAX_SECTION_WIDTH) {
+      let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
+      optionsRef.value.addSection?.(module.value.sections.length - 1, countSections)
+    }
+    else if (lastSection.width < MIN_SECTION_WIDTH) {
+      while (module.value.sections[module.value.sections.length - 1].width < MIN_SECTION_WIDTH) {
+        optionsRef.value.deleteSection?.(module.value.sections.length - 1)
       }
-      cell.width = lastSection.width;
-      cell.position.x += lastSection.position.x
+    }
+    else {
+      lastSection.cells.forEach((cell, cellIndex) => {
 
-      if (cell.fillings?.length)
-        cell.fillings.forEach((filling, index) => {
-          updateFilling(cell.width, filling, 'width')
-        })
-    })
+        if (cell.cellsRows) {
+          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+          lastRow.position.x = lastRow.position.x - lastRow.width / 2 + (lastRow.width + deltaWidth) / 2
+          lastRow.width += deltaWidth;
+          if (lastRow.fillings?.length)
+            lastRow.fillings.forEach((filling, index) => {
+              updateFilling(lastRow.width, filling, 'width')
+            })
+        }
+        cell.width = lastSection.width;
+        cell.position.x += lastSection.position.x
 
-    if (lastSection.fillings?.length)
-      lastSection.fillings.forEach((filling, index) => {
-        updateFilling(lastSection.width, filling, 'width')
+        if (cell.fillings?.length)
+          cell.fillings.forEach((filling, index) => {
+            updateFilling(cell.width, filling, 'width')
+          })
       })
-  }
 
+      if (lastSection.fillings?.length) {
+        lastSection.fillings.forEach((filling, index) => {
+          updateFilling(lastSection.width, filling, 'width')
+        })
+      }
+    }
+
+  }
 
   if (sectionsTotalHeight - module.value.sections[0].height !== 0) {
     let deltaHeight = sectionsTotalHeight - module.value.sections[0].height;
@@ -1097,49 +1104,7 @@ const reset = (reset = false, moduleGrid = false) => {
 };
 
 const saveGrid = () => {
-/*  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
-  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers"];
-
-  //Рекурсивная очистка сетки от "технических" полей 2D конструктора
-  const removeGarbage = (object) => {
-    if (typeof object === "object" && !Array.isArray(object)) {
-
-      let objectType = object.type || false
-      object = Object.entries(object).map(([key, value]) => {
-
-        if (nesting.includes(key)) {
-          value = value.map(item => {
-            if (Array.isArray(item))
-              return item = item.map(_item => {
-                return removeGarbage(_item)
-              })
-            else {
-              if(item.fasade)
-                item.fasade = removeGarbage(item.fasade)
-              return removeGarbage(item)
-            }
-          })
-        }
-
-        return [key, value]
-      })
-
-      if (objectType === "fasade")
-        object = object.filter(([key, value]) => !garbageFasades.includes(key))
-      else
-        object = object.filter(([key, value]) => !garbage.includes(key))
-
-      object = Object.fromEntries(object)
-    }
-
-    return object;
-  }*/
-
-  let tmpClone = Object.assign({}, module.value)
-  //tmpClone = removeGarbage(tmpClone)
-
-  return tmpClone;
+  return Object.assign({}, module.value);
 };
 
 defineExpose({
@@ -1212,9 +1177,10 @@ watch(onHorizont, () => {
         >
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Высота модуля</p>
+            <p class="actions-title">Высота модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalHeight"
                   :inputClass="'actions-input'"
                   :modelValue="totalHeight"
@@ -1226,9 +1192,10 @@ watch(onHorizont, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Ширина модуля</p>
+            <p class="actions-title">Ширина модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalWidth"
                   :inputClass="'actions-input'"
                   :modelValue="totalWidth"
@@ -1240,9 +1207,10 @@ watch(onHorizont, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Глубина модуля</p>
+            <p class="actions-title">Глубина модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalDepth"
                   :inputClass="'actions-input'"
                   :modelValue="totalDepth"
@@ -1258,8 +1226,10 @@ watch(onHorizont, () => {
               class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
           >
             <p class="actions-title">Цоколь
-              <Toggle v-model="onHorizont"/>
+              <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" />
+              <Toggle v-else v-model="onHorizont"/>
             </p>
+
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
@@ -1269,7 +1239,7 @@ watch(onHorizont, () => {
                   max="300"
                   :type="'number'"
                   placeholder="0"
-                  :disabled="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
+                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
               />
             </div>
           </div>

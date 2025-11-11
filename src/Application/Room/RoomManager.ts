@@ -22,6 +22,7 @@ import { SetObject } from '../Utils/SetObject';
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { Room } from './Room';
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import {saveUMGrid} from "@/components/2DmoduleConstructor/utils/Methods.ts";
 // import CreateShape from '../2DScene/CreateShape';
 
 
@@ -401,6 +402,10 @@ export class RoomManager extends Room {
                 result.position = elem.position?.clone?.() ?? null;
                 result.rotation = elem.rotation?.clone?.() ?? null;
             }
+        }
+
+        if(saveData.CONFIG?.MODULEGRID?.sector) {
+            saveData.CONFIG.MODULEGRID = saveUMGrid(saveData.CONFIG.MODULEGRID)
         }
 
         return saveData;
