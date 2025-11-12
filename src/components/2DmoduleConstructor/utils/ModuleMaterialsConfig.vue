@@ -226,6 +226,8 @@ onMounted(() => {
   modelState.createCurrentSidewallData(objectData.value.globalData);
 })
 
+
+
 </script>
 
 <template>
@@ -275,6 +277,7 @@ onMounted(() => {
           class="color-select-item"
           :is2Dconstructor="true"
           :material-list="materialList"
+          :type="currentOption === 'BACKWALL' ? 'backwall' : 'surface'"
           @parent-callback="selectOption"
       />
 

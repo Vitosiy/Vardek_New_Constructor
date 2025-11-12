@@ -17,6 +17,7 @@ import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtil
 import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
 import Toggle from "@vueform/toggle";
 import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -33,6 +34,7 @@ const emit = defineEmits(["save-table-data"]);
 
 let shapeAdjuster = null;
 const APP = useAppData().getAppData;
+const modelState = useModelState()
 
 const productData = ref(false)
 const builder = new UniversalGeometryBuilder({}).buildProduct;
@@ -1013,8 +1015,16 @@ const reset = (reset = false, moduleGrid = false) => {
   module.value.moduleThickness = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18;
   module.value.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
 
+  let NOBOTTOM = false
+  if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
+    if (+opt.id === 5738924 && opt.active)
+      return opt;
+  })) {
+    NOBOTTOM = true
+  }
+
   let sectionsTotalWidth = totalWidth.value - module.value.moduleThickness * 2 - (module.value.sections.length - 1) * module.value.moduleThickness;
-  let sectionsTotalHeight = totalHeight.value - module.value.moduleThickness * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
+  let sectionsTotalHeight = totalHeight.value - module.value.moduleThickness * (NOBOTTOM ? 1 : 2) - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
   let sectionsWidthSum = 0;
 
   module.value.sections.forEach((section, secIndex) => {
@@ -1112,8 +1122,8 @@ defineExpose({
 });
 
 onBeforeMount(() => {
-  productData.value = props.productData //menuStore.catalogFilterProductsId[0]
-
+  //productData.value = props.productData
+  productData.value = modelState.getCurrentModel.userData
   totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
@@ -1155,6 +1165,22 @@ watch(onHorizont, () => {
   else
     updateHorizont(78)
 });
+
+
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
+
+  let newHorizont = modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT
+
+  if (newHorizont > 0) {
+    onHorizont.value = true
+    updateHorizont(newHorizont)
+  }
+  else {
+    onHorizont.value = false
+    updateHorizont(newHorizont)
+  }
+});
+
 </script>
 
 <template>

@@ -101,9 +101,16 @@ export class BuildUniversalModule extends BuildProduct {
                 case 4621240:   //Опора 150 мм
                     optionsLegs = option.NAME.toLowerCase().includes(150) ? 150 : 100
                     break;
+                case 5738924:   //Без дна
+                    data.json.items = data.json.items.filter(item => item.id !== 'bottom')
+                    break;
                 default:
                     break;
             }
+        }
+
+        if (PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0) {
+            data.json.items = data.json.items.filter(item => item.id !== 'plinth')
         }
 
         const legsHeight = this._PRODUCTS[productId]?.leg_length || optionsLegs
@@ -239,7 +246,7 @@ export class BuildUniversalModule extends BuildProduct {
         CONFIG.MODULEGRID = {}
 
         if (product_data.BACKWALL?.length && product_data.BACKWALL?.[0]) {
-            CONFIG.BACKWALL = {}
+            CONFIG.BACKWALL = {SHOW: true}
             CONFIG.BACKWALL.COLOR = this.filters.filterModuleColor(product_data.BACKWALL)[0] || CONFIG["MODULE_COLOR"];
         }
 
