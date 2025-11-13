@@ -76,6 +76,10 @@ const handleSelect = (material: any) => {
 
 <style lang="scss">
 .redactor {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
   &__title {
     margin-bottom: 20px;
     font-size: large;

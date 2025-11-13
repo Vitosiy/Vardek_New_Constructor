@@ -167,18 +167,25 @@ const addFilling = (type, product, oldFillingObject = false) => {
   let height = startFillingData.height;
   let profileData = {}
   if (isHiTechProfile) {
-
-    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section")) {
-      width = startFillingData.width + module.value.moduleThickness * 2
-      startFillingData.x -= module.value.moduleThickness
-    }
-
-    height = product.height || module.value.moduleThickness
-
     if (!module.value.profilesConfig) {
       module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
       module.value.profilesConfig.colorsList = [...product.COLOR]
+      module.value.profilesConfig.onSectionSize = false
+
       PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+    }
+
+    height = product.height || module.value.moduleThickness
+    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section")) {
+      width = module.value.profilesConfig.onSectionSize ? startFillingData.width : startFillingData.width + module.value.moduleThickness * 2
+
+      if(!module.value.profilesConfig.onSectionSize) {
+        width = startFillingData.width + module.value.moduleThickness * 2
+        startFillingData.x -= module.value.moduleThickness
+      }
+      else {
+        width = startFillingData.width
+      }
     }
 
     profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
