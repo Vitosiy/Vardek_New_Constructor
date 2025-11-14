@@ -18,7 +18,7 @@ export function handleKeyDown(this: any, e: KeyboardEvent): void {
     if (this.layers.planner) {
 
       if(this.layers.planner.state.activeWall){
-        this.layers.planner.deleteSelectedObject();
+        //this.layers.planner.deleteSelectedObject();
         this.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
       }
       

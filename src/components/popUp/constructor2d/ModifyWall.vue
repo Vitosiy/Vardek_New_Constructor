@@ -111,9 +111,9 @@ onUnmounted(() => {
     :class="{ 'd-none': !isVisible }"
     :style="{ bottom: position.bottom, left: position.left }"
     >
-    <div class="c2dModifyWall-buttons">
+    <!-- <div class="c2dModifyWall-buttons">
       <div class="remove" @click="handlerRemoveWall">Удалить</div>
-    </div>
+    </div> -->
     <div>
       <input type="number" v-model="wallWidth" min="200" max="100000" id="wall_width">
       <input type="number" v-model="wallHeight" min="200" max="900" id="wall_height">
