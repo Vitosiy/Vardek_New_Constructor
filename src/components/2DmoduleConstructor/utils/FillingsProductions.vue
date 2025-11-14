@@ -116,12 +116,12 @@ const addFilling = (type, product, oldFillingObject = false) => {
   const { PROPS } = userData;
 
   if (row === null && cell === null && sec === null) {
-    alert("Пожалуйста, выберите секцию для добавления наполнения");
+    alert("Пожалуйста, выберите секцию для добавления наполнения", "error");
     return;
   }
 
   if (product.MIN_FASADE_SIZE && row) {
-    alert("Нельзя установить ящик с фасадом в вертикальную перегородку!");
+    alert("Нельзя установить ящик с фасадом в вертикальную перегородку!", "error");
     return;
   }
 
@@ -130,6 +130,11 @@ const addFilling = (type, product, oldFillingObject = false) => {
       return opt;
   })) {
     alert("Г-образный профиль доступен только для навесного модуля", "error")
+    return;
+  }
+
+  if (isHiTechProfile && module.value.profilesConfig?.sideProfile) {
+    alert("Нельзя добавить горизонтальный профиль вместе с боковым!", "error");
     return;
   }
 
@@ -312,7 +317,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
   });
 
   if (needFasadesUpdate || profileUpdate) {
-    if(sec.fasadesDrawers?.length || sec.hiTechProfiles?.length) {
+    if(sec.fasadesDrawers?.length || curRow.hiTechProfiles?.length) {
 
       if(sec.fasadesDrawers?.length && needFasadesUpdate) {
         sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
@@ -328,18 +333,18 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
           delete sec.fasadesDrawers
       }
 
-      if(sec.hiTechProfiles?.length && profileUpdate) {
-        sec.hiTechProfiles = sec.hiTechProfiles.filter((el, index) => {
+      if(curRow.hiTechProfiles?.length && profileUpdate) {
+        curRow.hiTechProfiles = curRow.hiTechProfiles.filter((el, index) => {
           return el.isProfile.id !== curItem.isProfile.id;
         });
 
-        sec.hiTechProfiles.forEach((el, index) => {
+        curRow.hiTechProfiles.forEach((el, index) => {
           if (el.isProfile.id > curItem.isProfile.id)
             el.isProfile.id -= 1;
         })
 
-        if(!sec.hiTechProfiles.length)
-          delete sec.hiTechProfiles
+        if(!curRow.hiTechProfiles.length)
+          delete curRow.hiTechProfiles
       }
 
       calcDrawersFasades(secIndex)

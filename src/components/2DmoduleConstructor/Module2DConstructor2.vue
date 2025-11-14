@@ -1275,7 +1275,9 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
               class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
           >
             <p class="actions-title">Боковой профиль</p>
+            <img v-if="module.sections[0].hiTechProfiles?.length" class="cut-icon" src="/icons/lock.svg" alt="" title="Нельзя добавить боковой профиль вместе с горизонтальными!" />
             <Toggle
+                v-else
                 v-model="onSideProfile"
                 @change="initSideProfile"
             />
@@ -1315,7 +1317,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
         ref="constructor2dContainer"
     >
       <div class="constructor2d-header">
-        <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
+        <div class="constructor2d-header--title"><h1>{{productData.PROPS.NAME}}</h1></div>
       </div>
 
       <div

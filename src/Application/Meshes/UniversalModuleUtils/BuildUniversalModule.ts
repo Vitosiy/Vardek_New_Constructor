@@ -114,6 +114,7 @@ export class BuildUniversalModule extends BuildProduct {
         }
 
         const legsHeight = this._PRODUCTS[productId]?.leg_length || optionsLegs
+        const baseY = legsHeight * 0.5;
 
         // Сборка частей
         const { body, tempMaterial, move } = !this.isEmpty(modelData)
@@ -132,19 +133,14 @@ export class BuildUniversalModule extends BuildProduct {
             ? this.plinth_builder.buildPlinth(PROPS, legsHeight)
             : null;
 
-        // const tableTop = CONFIG.HAVETABLETOP
-        //     ? this.tabletop_builder.createTableTop({ props: PROPS })
-        //     : null;
-
         if (MODULEGRID) {
-
             this.parseModulegrid(MODULEGRID, PROPS)
-            this.buildModulegrid(PROPS, total, body)
+            this.buildModulegrid(PROPS, total, body, baseY)
             this.calcSubElementsAdditives(PROPS)
         }
 
         if (CONFIG.LOOPS && Object.keys(CONFIG.LOOPS)?.length) {
-            let loopsMesh = this.createLoop(productInfo, PROPS, CONFIG.LOOPS)
+            let loopsMesh = this.createLoop(productInfo, PROPS, baseY)
             total.add(loopsMesh)
         }
 
@@ -167,7 +163,6 @@ export class BuildUniversalModule extends BuildProduct {
         // const tableTopHeight = tableTop ? this.calculateHeight(tableTop) : 0;
 
         // Позиционирование
-        const baseY = legsHeight * 0.5;
 
         if (legs) legs.position.y = baseY;
         if (plinth) plinth.position.y = 0;
@@ -543,7 +538,7 @@ export class BuildUniversalModule extends BuildProduct {
         })
     }
 
-    buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D, moduleBody: THREE.Object3D) {
+    buildModulegrid(PROPS: THREETypes.TObject, group: THREE.Object3D, moduleBody: THREE.Object3D, baseOffset: Number = 0) {
 
         PROPS.JSON_FILLINGS = []
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
@@ -585,7 +580,7 @@ export class BuildUniversalModule extends BuildProduct {
                         }
 
                         start_position.add(filling.position)
-                        start_position.y += filling.size.y / 2 + full_horizont_height
+                        start_position.y += filling.size.y / 2 + full_horizont_height + baseOffset
 
                         productFilling.position.copy(start_position)
 
@@ -594,8 +589,11 @@ export class BuildUniversalModule extends BuildProduct {
 
                         group.add(productFilling)
 
-                        if(filling.isProfile)
-                            subGeometries.push(productFilling)
+                        if(filling.isProfile) {
+                            let tmp_clone = productFilling.clone()
+                            tmp_clone.position.y -= baseOffset
+                            subGeometries.push(tmp_clone)
+                        }
                     }
 
                     const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
@@ -646,7 +644,7 @@ export class BuildUniversalModule extends BuildProduct {
                 filling.position.z = sizeModule.depth - filling.size.z / 2;
 
                 start_position.add(filling.position)
-                start_position.y += filling.size.x / 2
+                start_position.y += filling.size.x / 2 + baseOffset
 
                 productFilling.position.copy(start_position)
 
@@ -654,7 +652,9 @@ export class BuildUniversalModule extends BuildProduct {
                 productFilling.updateMatrixWorld()
                 group.add(productFilling)
 
-                subGeometries.push(productFilling)
+                let tmp_clone = productFilling.clone()
+                tmp_clone.position.y -= baseOffset
+                subGeometries.push(tmp_clone)
             }
 
             let productFilling = this.createSubProductObject(filling, data, PROPS)
@@ -689,7 +689,7 @@ export class BuildUniversalModule extends BuildProduct {
         return body
     };
 
-    createLoop(product, PROPS, loops, meshRet = true) {
+    createLoop(product, PROPS, baseOffset: Number = 0) {
         const parentModel = this._MODELS[product.models[0]];
         // const model = this._MODELS[parentModel.loop_model];
         const model = this._MODELS[parentModel.loop_model].id;
@@ -741,6 +741,7 @@ export class BuildUniversalModule extends BuildProduct {
                 loopMesh.rotation.set(rotation.x, rotation.y, rotation.z);
 
                 position.add(start_position);
+                position.y += baseOffset
                 loopMesh.position.copy(position);
 
                 loopMesh.add(dae.clone());
