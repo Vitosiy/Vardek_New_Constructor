@@ -220,11 +220,12 @@ const loadProject = async (id: string | number) => {
 
   const projectData = await projectAPI.loadProject(id.toString());
   if (projectData) {
+    projectState.resetState();
     projectState.setInitialState(projectData);
-
     console.log(projectData, "----PROD");
 
     try {
+      schemeTransition.clearStore();
       // 1. Обновляем данные проекта в sceneState
       await sceneState.loadProjectFromData(projectData);
       sceneState.updateProjectParams({});

@@ -162,8 +162,119 @@ export default class Planner {
     this.init();
   }
 
+  // Очистка всех стен и комнат перед перезагрузкой
+  public clear(): void {
+    // Очищаем графику всех стен
+    this.objectWalls.forEach((drawObject) => {
+      const containers = drawObject.containers;
+
+      if (containers) {
+        for (const key in containers) {
+          if (
+            key === "root" ||
+            key === "containerTextRulerWall" ||
+            key === "textRulerWall"
+          ) continue;
+
+          const graphic = containers[key];
+
+          if (graphic && typeof graphic.destroy === "function") {
+            try {
+              if (key === "eventGraphic" && graphic instanceof PIXI.Graphics) {
+                graphic
+                  .off("mouseover", this.handlerOverEventGraphic)
+                  .off("mouseout", this.handlerOutEventGraphic)
+                  .off("pointerdown", this.handlerDownEventGraphic);
+              }
+
+              if (!graphic.destroyed) {
+                graphic.destroy({
+                  texture: false,
+                  baseTexture: false,
+                });
+              }
+
+              if (containers.root && containers.root.children.includes(graphic)) {
+                containers.root.removeChild(graphic);
+              }
+
+              containers[key as keyof ObjectWallContainers] = null!;
+            } catch (error) {
+              console.warn(`Failed to destroy graphic: ${key}`, error);
+            }
+          }
+        }
+
+        // Удаляем textRulerWall
+        try {
+          if (containers.textRulerWall && typeof containers.textRulerWall.destroy === "function") {
+            containers.textRulerWall.destroy(true);
+          }
+          if (
+            containers.containerTextRulerWall &&
+            containers.containerTextRulerWall.children.includes(containers.textRulerWall)
+          ) {
+            containers.containerTextRulerWall.removeChild(containers.textRulerWall);
+          }
+          containers.textRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy textRulerWall`, error);
+        }
+
+        // Удаляем containerTextRulerWall
+        try {
+          if (containers.containerTextRulerWall && typeof containers.containerTextRulerWall.destroy === "function") {
+            containers.containerTextRulerWall.destroy(true);
+          }
+          if (
+            containers.root &&
+            containers.root.children.includes(containers.containerTextRulerWall)
+          ) {
+            containers.root.removeChild(containers.containerTextRulerWall);
+          }
+          containers.containerTextRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy containerTextRulerWall`, error);
+        }
+
+        // Удаляем root контейнер
+        try {
+          if (containers.root && typeof containers.root.destroy === "function") {
+            containers.root.destroy({
+              children: true,
+              texture: false,
+              baseTexture: false,
+            });
+          }
+          if (
+            this.container &&
+            this.container.children.includes(containers.root)
+          ) {
+            this.container.removeChild(containers.root);
+          }
+          containers.root = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy root`, error);
+        }
+      }
+    });
+
+    // Очищаем массивы и карты
+    this.objectWalls = [];
+    this.roomsMap.clear();
+    this.state.activeWall = null;
+    this.state.activePointWall = null;
+
+    // Очищаем слой пола комнаты (серая область)
+    if (this.parent?.layers?.halfRoom) {
+      this.parent.layers.halfRoom.removeHalfRoom();
+    }
+  }
+
   // инициализация объектов для визуализации при запуске приложения
   public init(publicUpdate: boolean = false): void {
+    // Очищаем существующие данные перед загрузкой новых
+    this.clear();
 
     const result = this.initRoom();
 

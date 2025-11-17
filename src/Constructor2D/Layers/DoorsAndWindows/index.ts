@@ -142,9 +142,25 @@ export default class DoorsAndWindows {
 
   }
 
+  // Очистка всех объектов перед перезагрузкой
+  public clear(): void {
+    // Удаляем все объекты
+    const objectsToRemove = [...this.drawObjects];
+    objectsToRemove.forEach((obj) => {
+      this.removeObject(obj.id, false);
+    });
+
+    // Очищаем массив
+    this.drawObjects = [];
+    this.state.activeObject = null;
+    this.state.activePointObject = null;
+  }
+
   // инициализация слоя
   // вызывается в конструкторе при запуске приложения
   public init(publicUpdate: boolean = false): void {
+    // Очищаем существующие данные перед загрузкой новых
+    this.clear();
 
     const rooms = roomsStore.getAllData(); // получаем комнаты из стора
 
