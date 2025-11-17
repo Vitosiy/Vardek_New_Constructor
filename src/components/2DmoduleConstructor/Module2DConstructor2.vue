@@ -111,6 +111,8 @@ const module = computed(() => {
         depth: totalDepth,
         moduleColor: PROPS.CONFIG.MODULE_COLOR,
         moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
+        leftWallThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
+        rightWallThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
         horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
         sections: [section],
         type: "module",
@@ -334,6 +336,9 @@ const getFasadePositionMinMax = (fasade) => {
 
 const updateFasades = () => {
   const correctFasadeHeight = getFasadePosition(module.value.sections[0].fasades[0][0].material.POSITION).FASADE_HEIGHT;
+  const leftWidth = PROPS.CONFIG.LEFTSIDECOLOR ? APP.FASADE[PROPS.CONFIG.BASKET.LEFTSIDECOLOR.COLOR]?.DEPTH : module.value.moduleThickness;
+  const rightWidth = PROPS.CONFIG.RIGHTSIDECOLOR ? APP.FASADE[PROPS.CONFIG.BASKET.RIGHTSIDECOLOR.COLOR]?.DEPTH : module.value.moduleThickness;
+
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
       if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
@@ -344,7 +349,7 @@ const updateFasades = () => {
         const correctSectionFasadeWidth =
             module.value.sections.length > 1 ?
                 secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
-                    section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
+                    section.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
                 module.value.width - 4;
 
         const correctSectionFasadeWidthDoor = Math.floor(correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2));
@@ -1015,6 +1020,9 @@ const reset = (reset = false, moduleGrid = false) => {
   module.value.moduleThickness = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18;
   module.value.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
 
+  const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+
   let NOBOTTOM = false
   if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
     if (+opt.id === 5738924 && opt.active)
@@ -1023,7 +1031,7 @@ const reset = (reset = false, moduleGrid = false) => {
     NOBOTTOM = true
   }
 
-  let sectionsTotalWidth = totalWidth.value - module.value.moduleThickness * 2 - (module.value.sections.length - 1) * module.value.moduleThickness;
+  let sectionsTotalWidth = totalWidth.value - leftWidth - rightWidth - (module.value.sections.length - 1) * module.value.moduleThickness;
   let sectionsTotalHeight = totalHeight.value - module.value.moduleThickness * (NOBOTTOM ? 1 : 2) - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
   let sectionsWidthSum = 0;
 
@@ -1179,6 +1187,34 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
     onHorizont.value = false
     updateHorizont(newHorizont)
   }
+});
+
+//Изменение толщины левого бока и прилегающей к нему секции
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.LEFTSIDECOLOR, () => {
+
+  const oldLeftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const newLeftWidth = modelState.getCurrentModel.userData.PROPS.CONFIG.LEFTSIDECOLOR
+
+  const delta = oldLeftWidth - newLeftWidth
+
+  if (delta !== 0) {
+
+  }
+
+});
+
+//Изменение толщины левого бока и прилегающей к нему секции
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR, () => {
+
+  const oldRightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+  const newRightWidth = modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR
+
+  const delta = newRightWidth - oldRightWidth
+
+  if (delta !== 0) {
+
+  }
+
 });
 
 </script>

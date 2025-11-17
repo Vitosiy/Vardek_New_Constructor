@@ -194,6 +194,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         }
 
         break;
+
       default:
         if(!objectData.value.PROPS.CONFIG[currentOption.value]){
           objectData.value.PROPS.CONFIG[currentOption.value] = {}

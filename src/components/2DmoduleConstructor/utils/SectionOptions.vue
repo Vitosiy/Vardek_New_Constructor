@@ -615,7 +615,8 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 defineExpose({
   handleCellSelect,
   addSection,
-  deleteSection
+  deleteSection,
+  updateSectionWidth
 });
 
 onMounted(() => {
