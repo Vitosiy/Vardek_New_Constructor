@@ -230,33 +230,38 @@ const init = async () => {
   renderGrid();
 };
 
-const renderGrid = () => {
+const renderGrid = (_moduleGrid) => {
   clearRender();
   let xOffset = 0;
   let yOffset = 0;
-  let ModulepxWidth = getPixelWidth(props.module.width);
-  let ModulepxHeight = getPixelHeight(props.module.height);
-  props.module.xOffset = xOffset;
-  props.module.yOffset = yOffset;
+  const moduleGrid = _moduleGrid || props.module
+
+  let ModulepxWidth = getPixelWidth(moduleGrid.width);
+  let ModulepxHeight = getPixelHeight(moduleGrid.height);
+  moduleGrid.xOffset = xOffset;
+  moduleGrid.yOffset = yOffset;
 
   let moduleSector = createModule({
     x: xOffset,
     y: yOffset,
     width: ModulepxWidth,
     height: ModulepxHeight,
-    moduleData: props.module,
+    moduleData: moduleGrid,
   });
 
-  props.module?.sections.forEach((section, sectionIndex, _sections) => {
+  xOffset = getPixelWidth(moduleGrid.leftWallThickness)
+
+  moduleGrid?.sections.forEach((section, sectionIndex, _sections) => {
     const pxWidth = getPixelWidth(section.width);
 
-    yOffset = getPixelHeight(props.module.moduleThickness);
-    xOffset += getPixelWidth(props.module.moduleThickness)
+    yOffset = getPixelHeight(moduleGrid.moduleThickness);
+    if(sectionIndex > 0)
+      xOffset += getPixelWidth(moduleGrid.moduleThickness)
 
     let tmp_array_sectors = []
 
     if (section.cells.length > 0) {
-      section.cells.forEach((cell, cellIndex, section) => {
+      section.cells.slice().sort((a, b) => b.position.y - a.position.y).forEach((cell, cellIndex, section) => {
         const pxHeight = getPixelHeight(cell.height);
         cell.xOffset = xOffset;
         cell.yOffset = yOffset;
@@ -287,7 +292,7 @@ const renderGrid = () => {
               tmp_array_sectors.push(sector)
 
             //Добавляем отступ по вертикали
-            rowxOffset += RowpxWidth + getPixelWidth(props.module.moduleThickness);
+            rowxOffset += RowpxWidth + getPixelWidth(moduleGrid.moduleThickness);
             const colBond = shapeAdjuster.createColumnBounds(sections, sectionIndex);
 
             // Создаём ограничения для секторов по ширине

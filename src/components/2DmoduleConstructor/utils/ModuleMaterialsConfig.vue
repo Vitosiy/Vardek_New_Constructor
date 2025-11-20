@@ -108,6 +108,26 @@ const getOption = (part: string) => {
   getMaterialsList()
 };
 
+const getCurrentValue = computed(() => {
+  let result = {};
+
+  switch (currentOption.value) {
+    case "RIGHTSIDECOLOR":
+    case "LEFTSIDECOLOR":
+      result = {...objectData.value.PROPS.CONFIG[currentOption.value]}
+
+      if(!result.COLOR)
+        result.COLOR = objectData.value.PROPS.CONFIG.MODULE_COLOR
+
+      break
+    default:
+      result = objectData.value.PROPS.CONFIG[currentOption.value]
+      break;
+  }
+
+  return result;
+});
+
 const getMaterialsList = () => {
   switch (currentOption.value) {
     case "MODULE_COLOR":
@@ -150,6 +170,13 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
         module.value.moduleColor = value.ID;
         module.value.moduleThickness = value.DEPTH;
+
+        if(!objectData.value.PROPS.CONFIG["LEFTSIDECOLOR"]?.COLOR)
+          module.value.leftWallThickness = value.DEPTH;
+
+        if(!objectData.value.PROPS.CONFIG["RIGHTSIDECOLOR"]?.COLOR)
+          module.value.rightWallThickness = value.DEPTH;
+
         break;
       case 'PROFILECOLOR':
         objectData.value.PROPS.CONFIG['PROFILECOLOR'] = value ? value.ID : false;
@@ -194,7 +221,6 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         }
 
         break;
-
       default:
         if(!objectData.value.PROPS.CONFIG[currentOption.value]){
           objectData.value.PROPS.CONFIG[currentOption.value] = {}
@@ -324,7 +350,7 @@ onMounted(() => {
             class="color-select-item"
             v-if="getCurrentRedactor"
             :key="currentOption"
-            :element-data="objectData.PROPS.CONFIG[currentOption]"
+            :element-data="getCurrentValue"
             :element-index="currentOption"
             :material-list="materialList"
             @parent-callback="selectOption"

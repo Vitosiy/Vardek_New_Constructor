@@ -246,8 +246,8 @@ export class BuildUniversalModule extends BuildProduct {
         }
 
         if (product_data.SIDEWALL?.length && product_data.SIDEWALL?.[0]) {
-            CONFIG.LEFTSIDECOLOR = { COLOR: CONFIG["MODULE_COLOR"] }
-            CONFIG.RIGHTSIDECOLOR = { COLOR: CONFIG["MODULE_COLOR"] }
+            CONFIG.LEFTSIDECOLOR = { COLOR: false }
+            CONFIG.RIGHTSIDECOLOR = { COLOR: false }
         }
 
         CONFIG.TOPFASADECOLOR = { COLOR: 7397, SHOW: false }
@@ -291,7 +291,7 @@ export class BuildUniversalModule extends BuildProduct {
             PROPS.CONFIG.SECTIONS[secIndex + 1] = {
                 fillings: [],
                 size: sectionSize,
-                position: new THREE.Vector3((prevSection ? prevSection.position.x + prevSection.size.x / 2 : 0) + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + sectionSize.x / 2,
+                position: new THREE.Vector3((prevSection ? prevSection.position.x + prevSection.size.x / 2 : 0) + (prevSection ? PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] : product_data.leftWallThickness) + sectionSize.x / 2,
                     PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"],
                     PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + sectionSize.z / 2)
             }
