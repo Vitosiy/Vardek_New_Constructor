@@ -40,6 +40,12 @@
               Сохранить
             </MainButton>
           </template>
+          <template #checkBox>
+            <div>
+              <input type="checkbox" />
+              <label>Сохранить КП</label>
+            </div>
+          </template>
           <template #cancelButton>
             <MainButton @click="onModalClose">Отменить</MainButton>
           </template>
