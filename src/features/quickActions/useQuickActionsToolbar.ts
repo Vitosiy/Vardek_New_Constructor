@@ -55,6 +55,7 @@ export const useQuickActionsToolbar = () => {
   const onSaveProject = async () => {
     // Если проект уже имеет ID — обновляем без показа модалки
     if (projectState.currentProjectId) {
+      console.log(projectState.currentProjectId, 'currentProjectId')
       projectState.isSaving = true;
       try {
         const result = await projectAPI.saveProject(projectState.currentProjectId);

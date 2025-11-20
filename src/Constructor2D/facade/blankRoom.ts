@@ -161,8 +161,6 @@ const jsonBlank = `{
 }`
 const projectData = JSON.parse(jsonBlank)
 
-const id = 999999
-
 console.log(projectData)
 
 const ensureLayersReady = async () => {
@@ -180,7 +178,7 @@ export const loadBlankRoom = async () => {
     sceneState.updateProjectParams({})
     schemeTransition.setAppData(projectData.rooms)
 
-    projectState.setProjectId(id.toString())
+    projectState.setProjectId(undefined)
 
     window.C2D.layers.planner.init(true)
     window.C2D.layers.doorsAndWindows.init(true)
