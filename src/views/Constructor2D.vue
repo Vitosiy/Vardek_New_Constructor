@@ -76,7 +76,6 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
 };
 
 onMounted(async () => {
-  
   if (root2d.value && canvas2d.value) {
 
     App2d = new Constructor2D(root2d.value, canvas2d.value);
