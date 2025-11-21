@@ -8,6 +8,7 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import Toggle from "@vueform/toggle";
 
 const props = defineProps({
   module: {
@@ -107,6 +108,26 @@ const getOption = (part: string) => {
   getMaterialsList()
 };
 
+const getCurrentValue = computed(() => {
+  let result = {};
+
+  switch (currentOption.value) {
+    case "RIGHTSIDECOLOR":
+    case "LEFTSIDECOLOR":
+      result = {...objectData.value.PROPS.CONFIG[currentOption.value]}
+
+      if(!result.COLOR)
+        result.COLOR = objectData.value.PROPS.CONFIG.MODULE_COLOR
+
+      break
+    default:
+      result = objectData.value.PROPS.CONFIG[currentOption.value]
+      break;
+  }
+
+  return result;
+});
+
 const getMaterialsList = () => {
   switch (currentOption.value) {
     case "MODULE_COLOR":
@@ -149,6 +170,13 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
         module.value.moduleColor = value.ID;
         module.value.moduleThickness = value.DEPTH;
+
+        if(!objectData.value.PROPS.CONFIG["LEFTSIDECOLOR"]?.COLOR)
+          module.value.leftWallThickness = value.DEPTH;
+
+        if(!objectData.value.PROPS.CONFIG["RIGHTSIDECOLOR"]?.COLOR)
+          module.value.rightWallThickness = value.DEPTH;
+
         break;
       case 'PROFILECOLOR':
         objectData.value.PROPS.CONFIG['PROFILECOLOR'] = value ? value.ID : false;
@@ -221,6 +249,58 @@ const getSideProfile = computed(() => {
   return module.value.profilesConfig?.sideProfile || false;
 });
 
+const changeProfilesWidth = (onSectionSize) => {
+  module.value.sections.forEach((section, secIndex) => {
+
+    let newWidth = onSectionSize ? section.width : section.width + module.value.moduleThickness * 2;
+
+    section.cells.forEach((cell, cellIndex) => {
+      if(cell.hiTechProfiles) {
+        cell.fillings.forEach(filling => {
+          if(filling.isProfile && !filling.isProfile.isBottomHiTechProfile) {
+            let delta = newWidth - filling.width
+            filling.width += delta;
+            filling.size.x = filling.width
+            filling.position.x += (-delta / 2);
+          }
+        })
+
+        cell.hiTechProfiles.forEach(profile => {
+          if(!profile.isProfile.isBottomHiTechProfile) {
+            let delta = newWidth - profile.width
+            profile.width += delta;
+            profile.size.x = profile.width
+            profile.position.x += (-delta / 2);
+          }
+        })
+      }
+    })
+
+    if(section.hiTechProfiles) {
+      section.fillings.forEach(filling => {
+        if(filling.isProfile && !filling.isProfile.isBottomHiTechProfile) {
+          let delta = newWidth - filling.width
+          filling.width += delta;
+          filling.size.x = filling.width
+          filling.position.x += (-delta / 2);
+        }
+      })
+
+      section.hiTechProfiles.forEach(profile => {
+        if(!profile.isProfile.isBottomHiTechProfile) {
+          let delta = newWidth - profile.width
+          profile.width += delta;
+          profile.size.x = profile.width
+          profile.position.x += (-delta / 2);
+        }
+      })
+    }
+  })
+
+  reset()
+
+}
+
 onMounted(() => {
   modelState.createCurrentBackwallData(objectData.value.globalData);
   modelState.createCurrentSidewallData(objectData.value.globalData);
@@ -257,32 +337,39 @@ onMounted(() => {
   </div>
 
   <transition name="slide--left" mode="out-in">
-    <div class="color-select" v-if="currentOption" key="color-select">
-      <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
-      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+    <div class="color" v-if="currentOption" key="color-select">
+      <div class="color-select" key="color-select">
+        <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
+        <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
-      <AdvanceCorpusMaterialRedactor
-          class="color-select-item"
-          v-if="getCurrentRedactor"
-          :key="currentOption"
-          :element-data="objectData.PROPS.CONFIG[currentOption]"
-          :element-index="currentOption"
-          :material-list="materialList"
-          @parent-callback="selectOption"
-      />
-      <CorpusMaterialRedactor
-          v-else
-          class="color-select-item"
-          :is2Dconstructor="true"
-          :material-list="materialList"
-          @parent-callback="selectOption"
-      />
+        <p class="color__title" v-if="currentOption === 'PROFILECOLOR'">Профили в размер секции
+          <Toggle v-model="module.profilesConfig.onSectionSize" @change="changeProfilesWidth(module.profilesConfig.onSectionSize)"/>
+        </p>
 
-      <HiTechSideprofile
-          v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
-          class="color-select-item"
-          :module="module"
-      />
+        <AdvanceCorpusMaterialRedactor
+            class="color-select-item"
+            v-if="getCurrentRedactor"
+            :key="currentOption"
+            :element-data="getCurrentValue"
+            :element-index="currentOption"
+            :material-list="materialList"
+            @parent-callback="selectOption"
+        />
+        <CorpusMaterialRedactor
+            v-else
+            class="color-select-item"
+            :is2Dconstructor="true"
+            :material-list="materialList"
+            :type="currentOption === 'BACKWALL' ? 'backwall' : 'surface'"
+            @parent-callback="selectOption"
+        />
+
+        <HiTechSideprofile
+            v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
+            class="color-select-item"
+            :module="module"
+        />
+      </div>
     </div>
   </transition>
 
@@ -759,22 +846,30 @@ onMounted(() => {
 }
 
 .color {
+  display: flex;
+  position: fixed;
+  left: 20.8vw;
+  top: 0;
+
+  width: 100%;
+  max-width: 373px;
+  max-height: 95vh;
+  overflow: hidden;
+
+  z-index: 0;
+
   &-select {
-    position: fixed;
-    left: 20.8vw;
-    top: 0;
-    width: 100%;
-    max-width: 373px;
-    height: 95vh;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    padding: 15px;
-    background: rgba($white, 1);
-    box-shadow: 0px 0px 10px 0px #3030301a;
-    z-index: 0;
-    border-radius: 15px;
+
+    max-height: 96vh;
     overflow-y: scroll;
+
+    gap: 1rem;
+    padding: 15px;
+    box-shadow: 0px 0px 10px 0px #3030301a;
+    border-radius: 15px;
+    background: rgba($white, 1);
 
     &__container {
       display: flex;
@@ -785,6 +880,7 @@ onMounted(() => {
 
     &-item {
       width: 100%;
+      height: 100%;
       display: flex;
       padding: 10px;
       border-radius: 15px;

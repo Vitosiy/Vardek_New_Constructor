@@ -20,6 +20,7 @@ const emit = defineEmits(["choose-option", "delete-choise"]);
 let title = computed(() => {
   const typeMap = {
     surface: "Тип покрытия",
+    backwall: "Тип покрытия",
     milling: "Тип фрезеровки",
     palette: "Цвет покрытия",
     patina: "Цвет патины",

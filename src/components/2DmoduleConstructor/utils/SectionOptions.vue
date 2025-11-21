@@ -116,6 +116,8 @@ const addSection = (secIndex, _count = 1) => {
       position: new THREE.Vector2(section.position.x + (section.width / 2 + module.value.moduleThickness + halfWidth / 2) * (i + 1), section.position.y),
     }
 
+    delete newColumn.hiTechProfiles
+
     if(section.loops) {
       newColumn.loops = []
       newColumn.loopsSides = {}
@@ -153,8 +155,12 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
     };
 
     if (section.fillings?.length) {
-      cell.fillings = [...section.fillings];
       delete section.fillings
+    }
+
+    if(section.hiTechProfiles) {
+      delete section.hiTechProfiles
+      updateFasades();
     }
 
     section.cells.push(cell);
@@ -178,6 +184,11 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
   if (cell.fillings)
     cell.fillings.length = 0
 
+  if(cell.hiTechProfiles) {
+    delete cell.hiTechProfiles
+    updateFasades();
+  }
+
   // Добавляем новую строку в эту колонку
   for (let i = 0; i < count; i++) {
 
@@ -188,6 +199,8 @@ const addCell = (secIndex, cellIndex = null, _count = 1) => {
       fillings: [],
       //fillings: newFillings,
     }
+
+    delete newCell.hiTechProfiles
 
     if(deltaLastCell && i === count - 1) {
       newCell.height += deltaLastCell;
@@ -224,6 +237,11 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) =>  {
     }
     cell.cellsRows.push(row);
     delete cell.fillings
+
+    if(cell.hiTechProfiles) {
+      delete cell.hiTechProfiles
+      updateFasades();
+    }
   }
 
   const halfWidth = Math.floor((row.width - module.value.moduleThickness * count) / (count + 1));
@@ -281,18 +299,19 @@ const updateSectionWidth = (value, secIndex) => {
   let curSection = clone.sections[secIndex]
 
   if (adjustedValue) {
-    let nextSection = clone.sections[secIndex + 1] || clone.sections[secIndex - 1]
+    let nextSection = clone.sections[secIndex + 1]
+    let prevSection = clone.sections[secIndex - 1]
     let delta = curSection.width - adjustedValue
 
     curSection.width = adjustedValue
-    curSection.position.x += (-delta) / 2
+    curSection.position.x += nextSection ? (-delta) / 2 : delta / 2
 
     curSection.cells.forEach((cell, cellIndex) => {
 
       if (cell.cellsRows) {
         let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
         lastRow.width += delta;
-        lastRow.position.x += (-delta) / 2
+        lastRow.position.x += nextSection ? (-delta) / 2 : delta / 2
       }
       cell.position.x = curSection.position.x
       cell.width = adjustedValue;
@@ -314,6 +333,23 @@ const updateSectionWidth = (value, secIndex) => {
         cell.width = nextSection.width;
       })
     }
+    else if (prevSection) {
+      prevSection.width += delta
+      prevSection.position.x += delta / 2
+
+      prevSection.cells.forEach((cell, cellIndex) => {
+
+        if (cell.cellsRows) {
+          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+          lastRow.width += delta;
+          lastRow.position.x += delta / 2
+        }
+
+        cell.position.x = prevSection.position.x
+        cell.width = prevSection.width;
+      })
+    }
+
   }
   module.value = clone;
   updateFasades();
@@ -579,7 +615,8 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 defineExpose({
   handleCellSelect,
   addSection,
-  deleteSection
+  deleteSection,
+  updateSectionWidth
 });
 
 onMounted(() => {

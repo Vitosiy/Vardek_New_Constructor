@@ -250,7 +250,7 @@ const addDoor = (secIndex) => {
       item.width = width;
     });
 
-    firstFasade = section.fasades[0][0];
+    firstFasade = section.fasades[0][ section.fasades[0].length - 1];
     newDoorPosition = new THREE.Vector2(
       firstFasade.position.x + width + 4,
       firstFasade.position.y
@@ -266,7 +266,7 @@ const addDoor = (secIndex) => {
       section.width / 2 -
       module.value.moduleThickness / 2 +
       2;
-    newDoorPosition = new THREE.Vector2(startX, FASADE.POSITION_Y);
+    newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
     firstFasade = <FasadeObject>{
       id: 1,
       width,
@@ -293,6 +293,7 @@ const addDoor = (secIndex) => {
 
   let fasPos = getFasadePosition(newDoor.material.POSITION);
   newDoor.height = fasPos.FASADE_HEIGHT //module.value.height - module.value.horizont - 4; //TODO: костыль из-за прописанной в БД позиции фасада
+  //newDoor.position.y = fasPos.POSITION_Y
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length);
 
@@ -684,7 +685,7 @@ const checkAddDoor = (secIndex, doorIndex) => {
       moduleFasadesCount += section.fasades.length
     })
 
-    return moduleFasadesCount < 2;
+    return (module.value.sections.length > 1 && module.value.sections[secIndex].fasades.length < 1) || (module.value.sections.length === 1 && module.value.sections[secIndex].fasades.length < 2);
   }
   else {
     let loopsSidesList = getLoopsideList(secIndex, doorIndex);
@@ -969,7 +970,7 @@ const closeMenu = () => {
               v-if="selectedFasade.sec === secIndex"
           >
             <div
-                v-if="!module.isHiTech && section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
+                v-if="(!module.isHiTech || !module.profilesConfig?.sideProfile) && section.fasades.length < 2 && checkAddDoor(secIndex, section.fasades.length - 1)"
                 :class="'actions-items--container'"
             >
               <article class="actions-items actions-items--right">

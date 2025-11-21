@@ -22,6 +22,8 @@ export class BuildersHelper extends GlobalsData {
     createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
+        const leftWidth = props.CONFIG.LEFTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.LEFTSIDECOLOR.COLOR]?.DEPTH : color?.DEPTH || 18;
+        const rightWidth = props.CONFIG.RIGHTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.RIGHTSIDECOLOR.COLOR]?.DEPTH : color?.DEPTH || 18;
 
         // console.log(props.CONFIG.EXPRESSIONS)
 
@@ -32,6 +34,8 @@ export class BuildersHelper extends GlobalsData {
                 "#Y#": size.height,
                 "#Z#": size.depth,
                 "#MATERIAL_THICKNESS#": color?.DEPTH,
+                "#LEFT_THICKNESS#": leftWidth,
+                "#RIGHT_THICKNESS#": rightWidth,
                 "#HORIZONT#": props.CONFIG.NOBOTTOM ? 0 :
                     props.CONFIG.HORIZONT || props.CONFIG.HORIZONT === 0 ? props.CONFIG.HORIZONT :
                         props.EXPRESSIONS["#HORIZONT#"] || 78,  //78 - стандартная высота цоколя на случай отсутствия данных
