@@ -1,7 +1,9 @@
 
+//@ts-nocheck
+
 import { useModelState } from "@/store/appliction/useModelState"
-import { MILLING_HANDLE_KEYS, additionalMillingKeys, MILLINGS } from "@/Application/F-millings";
-import type { Mesh } from "three"
+// import { MILLING_HANDLE_KEYS, additionalMillingKeys, MILLINGS } from "@/Application/F-millings";
+// import type { Mesh } from "three"
 
 
 

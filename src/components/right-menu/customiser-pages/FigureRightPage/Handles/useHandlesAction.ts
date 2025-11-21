@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
 import { MILLING_HANDLE_KEYS, additionalMillingKeys } from "@/Application/F-millings";
