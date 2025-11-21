@@ -22,7 +22,7 @@ import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue
 import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import MainButton from "../ui/buttons/MainButton.vue";
-import DirectionControl from "./option/direction/DirectionControl.vue";
+import DirectionControl from "../ui/direction/DirectionControl.vue"; 
 
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import CatalogSVG from "../ui/svg/CatalogSVG.vue";
@@ -209,7 +209,7 @@ onUnmounted(() => {
     <div class="options__camera">
       <h1 class="options__title">Позиция камеры</h1>
       <div class="options__camera--container">
-        <DirectionControl @changeDirectionPos="changeCameraPos" />
+        <DirectionControl @changeDirectionPos="changeCameraPos"/>
       </div>
     </div>
   </section>

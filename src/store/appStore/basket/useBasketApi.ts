@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { readonly, ref } from 'vue'
 import { BasketService } from '@/services/basketService'
 import type { IBasket, IBasketResponse, BasketRequest } from '@/types/basket'

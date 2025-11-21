@@ -20,6 +20,7 @@ const emit = defineEmits(["choose-option", "delete-choise"]);
 let title = computed(() => {
   const typeMap = {
     surface: "Тип покрытия",
+    backwall: "Тип покрытия",
     milling: "Тип фрезеровки",
     palette: "Цвет покрытия",
     patina: "Цвет патины",
@@ -58,7 +59,9 @@ let chooseOption = () => {
 };
 
 const deleteChoise = (event) => {
-  event.stopPropagation();
+  // event.stopPropagation();
+  console.log(props.type, 'props.type')
+
   emit("delete-choise", props.type);
 };
 </script>

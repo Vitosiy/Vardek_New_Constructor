@@ -3,6 +3,10 @@
 import { defineProps, ref, computed, defineEmits, onMounted } from "vue";
 import { _URL } from "@/types/constants";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useHandlesAction } from "../FigureRightPage/Handles/useHandlesAction";
+import { INTEGRATE_HANDE_EXEPTIONS } from "@/Application/F-millings";
+import { FasadeTextAlignAction } from "@/types/types";
 
 const props = defineProps({
   millingList: Array,
@@ -16,6 +20,9 @@ const props = defineProps({
 const emit = defineEmits(["select_milling"]);
 
 const eventBus = useEventBus();
+const modelState = useModelState();
+const { getIntegratedHandleControllerData } = useHandlesAction();
+
 const selectMilling = ref<any>(null);
 
 let filteredMillingList = ref<Array>([]);
@@ -24,16 +31,29 @@ const isSearch = computed(() => {
 });
 
 const changeMilling = (milling) => {
-  if (!props.tempWork)
+  if (!props.tempWork) {
+    let action = null;
+    /** @Применение_типа_фасадов_с_инегрированной_ручкой */
+    const prepare = getIntegratedHandleControllerData(milling, props.tabIndex);
+    console.log(prepare, 'PREPARE')
+
+    if (prepare.length > 0 && INTEGRATE_HANDE_EXEPTIONS.includes(milling.ID)) {
+
+      action = modelState.getCurrentMillingActionMap(prepare[0].id, milling.ID);
+    }
+
     eventBus.emit("A:ChangeMilling", {
       data: milling.ID,
       fasadeNdx: props.tabIndex,
+      action: action,
     });
+  }
 
   emit("select_milling", {
     name: milling.NAME,
     imgSrc: milling.PREVIEW_PICTURE,
     ID: milling.ID,
+    fasade_type: milling.fasade_type,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
@@ -49,14 +69,13 @@ const onSearchChange = (e) => {
 
 <template>
   <div class="relative__wrapper">
- 
-      <input
-        class="search"
-        type="text"
-        placeholder="Поиск"
-        @input="onSearchChange"
-      />
-   
+    <input
+      class="search"
+      type="text"
+      placeholder="Поиск"
+      @input="onSearchChange"
+    />
+
     <ul class="list">
       <!-- Все виды фрезировок -->
       <li
@@ -79,7 +98,6 @@ const onSearchChange = (e) => {
         <div class="item__name">{{ milling.NAME }}</div>
       </li>
     </ul>
- 
   </div>
 </template>
 

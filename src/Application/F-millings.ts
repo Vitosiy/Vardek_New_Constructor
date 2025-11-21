@@ -1,5 +1,2042 @@
 
 //@ts-nocheck
+
+export const INTEGRATE_HANDE_EXEPTIONS = [
+    2475715, 3716541, 3716547, 1970236, 2839840, 3716540, 3716626, 3716540, 3716629, 3716546
+]
+
+export const MILLING_HANDLE_KEYS = {
+    2475715: {
+        0: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: -3,
+                                y: 16
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_HEIGHT"
+                                },
+                                position: {
+                                    top: true,
+                                    bottom: false,
+                                    front: -15,
+                                    left: false,
+                                    right: true,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: Math.PI * 0.5,
+                                    z: Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        1: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M -6 12 L 5 12 L 5 -10 A 1 1 180 0 0 1 -10 L -2 0 A -1 -1 180 1 1 -5 -0.5 L -6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: -16,
+                                y: 3
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_WIDTH"
+                                },
+                                position: {
+                                    top: true,
+                                    bottom: false,
+                                    front: -15,
+                                    left: false,
+                                    right: true,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: -Math.PI * 0.5,
+                                    z: Math.PI * 0.5,
+                                    y: Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        2: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                              M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: 3,
+                                y: -16
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_HEIGHT"
+                                },
+                                position: {
+                                    top: false,
+                                    bottom: true,
+                                    front: -15,
+                                    left: true,
+                                    right: false,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: -Math.PI * 0.5,
+                                    z: -Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        3: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: -3,
+                                y: 16
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_HEIGHT"
+                                },
+                                position: {
+                                    top: true,
+                                    bottom: false,
+                                    front: -15,
+                                    left: false,
+                                    right: true,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: Math.PI * 0.5,
+                                    z: Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        5: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                              M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: 3,
+                                y: -16
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_HEIGHT"
+                                },
+                                position: {
+                                    top: false,
+                                    bottom: true,
+                                    front: -15,
+                                    left: true,
+                                    right: false,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: -Math.PI * 0.5,
+                                    z: -Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        6: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: -3,
+                                y: 16
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_HEIGHT"
+                                },
+                                position: {
+                                    top: true,
+                                    bottom: false,
+                                    front: -15,
+                                    left: false,
+                                    right: true,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: Math.PI * 0.5,
+                                    z: Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        7: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 149,
+                                max: 2600,
+                            },
+                            height: {
+                                min: 150,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -2,
+                                x: -16,
+                                y: -3
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_WIDTH"
+                                },
+                                position: {
+                                    top: false,
+                                    bottom: true,
+                                    front: -15,
+                                    left: false,
+                                    right: true,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: Math.PI * 0.5,
+                                    z: Math.PI * 0.5,
+                                    y: Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ],
+        8: [
+            {
+                name: "milling_2",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1,
+                    bevelEnabled: true,
+                    bevelThickness: 0,
+                    bevelSize: 0,
+                    bevelOffset: 0,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: 2500,
+                            },
+                            height: {
+                                min: 146,
+                                max: 2500,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                              M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -3,
+                                x: 3,
+                                y: -16
+                            },
+                            boolParams: {
+                                depth: {
+                                    offset: 9,
+                                    size: "FASADE_HEIGHT"
+                                },
+                                position: {
+                                    top: false,
+                                    bottom: true,
+                                    front: -15,
+                                    left: true,
+                                    right: false,
+                                    centerVertical: true
+                                },
+                                rotate: {
+                                    x: -Math.PI * 0.5,
+                                    z: -Math.PI * 0.5
+                                }
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+        ]
+    },
+
+    3716541: {
+        0: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -15,
+                                x: 'inpostLeft',
+                                y: 'inpostTop',
+                                inpostOffsetX: -10,
+                                inpostOffsetY: 15
+                            },
+                            rotation: {
+                                z: -Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        1: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -12,
+                                x: -3,
+                                y: 'inpostTop',
+                                inpostOffset: 0
+                            },
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        2: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -12,
+                                x: 'inpostRight',
+                                y: 'inpostTop',
+                                inpostOffsetX: -10,
+                                inpostOffsetY: 15
+                            },
+                            rotation: {
+                                z: Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        3: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -12,
+                                x: 'inpostLeft',
+                                y: 0,
+                                inpostOffset: -12
+                            },
+                            rotation: {
+                                z: -Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        5: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -12,
+                                x: 'inpostRight',
+                                y: 0,
+                                inpostOffset: -12
+                            },
+                            rotation: {
+                                z: Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        6: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -15,
+                                x: 'inpostLeft',
+                                y: 'inpostBottom',
+                                inpostOffsetX: -15,
+                                inpostOffsetY: 15
+                            },
+                            rotation: {
+                                z: -Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        7: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -16,
+                                x: 0,
+                                y: 'inpostBottom',
+                                inpostOffset: 10
+                            },
+                            rotation: {
+                                z: Math.PI
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        8: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 3,
+                    bevelEnabled: true,
+                    bevelThickness: 6,
+                    bevelSize: 6,
+                    bevelOffset: 3,
+                    bevelSegments: 3,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                                M 60 30 Q 0 -30 -60 29 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            position: {
+                                z: -12,
+                                x: 'inpostRight',
+                                y: 'inpostBottom',
+                                inpostOffsetX: -10,
+                                inpostOffsetY: 15
+                            },
+                            rotation: {
+                                z: Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ]
+    },
+
+    3716547: {
+        0: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 'inpostLeft',
+                                y: 'inpostTop',
+                                inpostOffsetX: 15,
+                                inpostOffsetY: 20
+                            },
+                            rotation: {
+                                z: -Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        1: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 0,
+                                y: 'inpostTop',
+                                inpostOffset: -15
+                            },
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        2: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 'inpostRight',
+                                y: 'inpostTop',
+                                inpostOffsetX: 15,
+                                inpostOffsetY: 20
+                            },
+                            rotation: {
+                                z: Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        3: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 'inpostLeft',
+                                y: 0,
+                                inpostOffset: 15
+                            },
+                            rotation: {
+                                z: -Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        5: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 'inpostRight',
+                                y: 0,
+                                inpostOffset: 15
+                            },
+                            rotation: {
+                                z: Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        6: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 'inpostLeft',
+                                y: 'inpostBottom',
+                                inpostOffsetX: 15,
+                                inpostOffsetY: 20
+                            },
+                            rotation: {
+                                z: -Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        7: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 0,
+                                y: 'inpostBottom',
+                                inpostOffset: -15
+                            },
+                            rotation: {
+                                z: -Math.PI
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ],
+        8: [
+            {
+                name: "milling_1",
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 6,
+                    bevelEnabled: true,
+                    bevelThickness: 3,
+                    bevelSize: 3,
+                    bevelOffset: 3,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 146,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="
+                               M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+                            />`,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                            radius: 0,
+                            position: {
+                                z: -7,
+                                x: 'inpostRight',
+                                y: 'inpostBottom',
+                                inpostOffsetX: 15,
+                                inpostOffsetY: 20
+                            },
+                            rotation: {
+                                z: Math.PI * 0.5
+                            }
+                        },
+                        hole: {
+                            svg: ``,
+                            widthOffset: 0,
+                            heightOffset: 0,
+                        },
+                    },
+                ],
+            },
+            {
+                name: "corner_milling_1",
+                isCorner: true,
+                type: 'svg',
+                extrudeSettings: {
+                    steps: 1,
+                    depth: 1.5,
+                    bevelEnabled: true,
+                    bevelThickness: 4.5,
+                    bevelSize: 7.49,
+                    bevelOffset: -7.49,
+                    bevelSegments: 1,
+                },
+                figureParams: [
+                    {
+                        nameCondition: "default",
+                        condition: {
+                            width: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                            height: {
+                                min: 20,
+                                max: Infinity,
+                            },
+                        },
+                        figure: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: 7.5,
+                            heightOffset: 7.5,
+                            position: {
+                                z: -2
+                            }
+                        },
+                        hole: {
+                            svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                            widthOffset: -7.5,
+                            heightOffset: -7.5,
+                        },
+                    },
+                ],
+            },
+        ]
+    }
+}
+
 export const additionalMillingKeys = {
     // Модерн
     2839850: "566720",
@@ -38,6 +2075,7 @@ export const additionalMillingKeys = {
     // Лидс_2
     5591075: "5591092",
     // Интегрированная ручка R3
+    // 2475715: "2475715",
     1970236: "2475715",
     2839840: "2475715",
     // Интегрированная ручка R3 Тип 2 
@@ -144,58 +2182,63 @@ export const additionalMillingKeys = {
     7381: "797456",
     250094: "797456",
     // Рондо
-    7382: 266921
+    7382: "266921",
+
+    1596264: "1317715"
+
 
 }
 
 //@ts-nocheck
 export const MILLINGS = {
 
+    1317715: [
+        {
+            name: "corner_milling_1",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 0,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 3.5,
+                bevelSize: 3.5,
+                bevelOffset: -7.5,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                        height: {
+                            min: 20,
+                            max: Infinity,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: 7.5,
+                        heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -7.5,
+                        heightOffset: -7.5,
+                    },
+                },
+            ],
+        },
+    ], // Без фрезеровки
+
     566720: [
-        // {
-        //     name: "corner_milling_1",
-        //     isCorner: true,
-        //     type: 'svg',
-        //     extrudeSettings: {
-        //         steps: 1,
-        //         depth: 1,
-        //         bevelEnabled: false,
-        //         bevelThickness: 0,
-        //         bevelSize: 0,
-        //         bevelOffset: 0,
-        //         bevelSegments: 0,
-
-        //     },
-        //     figureParams: [
-        //         {
-        //             nameCondition: "default",
-        //             condition: {
-        //                 width: {
-        //                     min: 20,
-        //                     max: Infinity,
-        //                 },
-        //                 height: {
-        //                     min: 20,
-        //                     max: Infinity,
-        //                 },
-        //             },
-        //             figure: {
-        //                 svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-        //                 widthOffset: 0,
-        //                 heightOffset: 0,
-        //                 position: {
-        //                     z: 8
-        //                 },
-        //             },
-
-        //             hole: {
-        //                 svg: ``,
-        //                 widthOffset: 0,
-        //                 heightOffset: 0,
-        //             },
-        //         },
-        //     ],
-        // },
         {
             name: "corner_milling_1",
             isCorner: true,
@@ -2092,7 +4135,75 @@ export const MILLINGS = {
         },
     ], // Дрезден_2
 
-    2475715: [], // Ручка_1
+    2475715: [
+        {
+            name: "milling_2",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 0,
+                bevelSize: 0,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 146,
+                            max: 2500,
+                        },
+                        height: {
+                            min: 146,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+                        /**   M 5 -12 L -5 -12 L -5 10 A 1 1 0 0 0 -1 10 L 1 -4 A -1 -1 0 1 1 5 -4 Z  
+                         *    M -5 12 L 5 12 L 5 -10 A 1 1 180 0 0 1 -10 L -1 4 A -1 -1 180 1 1 -5 4 Z
+                         * 
+                        */
+                        svg: `<path d="
+                              M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                            "/>`,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            z: -3,
+                            x: 3,
+                            y: -16
+                        },
+                        boolParams: {
+                            depth: {
+                                offset: 9,
+                                size: "FASADE_HEIGHT"
+                            },
+                            position: {
+                                top: false,
+                                bottom: true,
+                                front: -15,
+                                left: true,
+                                right: false,
+                                centerVertical: true
+                            },
+                            rotate: {
+                                x: -Math.PI * 0.5,
+                                z: -Math.PI * 0.5
+                            }
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+            ],
+        },
+    ], // Ручка_1
 
     3716541: [
         {
@@ -2185,11 +4296,11 @@ export const MILLINGS = {
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
-                depth: 0,
+                depth: 6,
                 bevelEnabled: true,
                 bevelThickness: 3,
-                bevelSize: -3,
-                bevelOffset: 4,
+                bevelSize: 3,
+                bevelOffset: 3,
                 bevelSegments: 1,
             },
             figureParams: [
@@ -2211,11 +4322,14 @@ export const MILLINGS = {
                             />`,
                         widthOffset: 0,
                         heightOffset: 0,
-                        topPosition: 5,
+
                         radius: 0,
                         position: {
-                            z: -4
-                        }
+                            z: -7,
+                            x: 0,
+                            y: 'inpostTop',
+                            inpostOffset: -15
+                        },
                     },
                     hole: {
                         svg: ``,
@@ -2233,11 +4347,10 @@ export const MILLINGS = {
                 steps: 1,
                 depth: 1.5,
                 bevelEnabled: true,
-                bevelThickness: 4,
-                bevelSize: 7.5,
-                bevelOffset: -7.5,
+                bevelThickness: 4.5,
+                bevelSize: 7.49,
+                bevelOffset: -7.49,
                 bevelSegments: 1,
-
             },
             figureParams: [
                 {
@@ -2256,6 +4369,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -2661,7 +4777,7 @@ export const MILLINGS = {
                         widthOffset: 7,
                         heightOffset: 7,
                         position: {
-                            z: -4
+                            z: 0
                         }
                     },
                     hole: {

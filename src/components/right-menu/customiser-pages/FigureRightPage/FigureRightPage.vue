@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeMount } from "vue";
 
-import FigureFasade from "./FigureFasade/FigureFasade.vue";
-import FigurePlinth from "./FigurePlinth/FigurePlinth.vue";
+import Handles from "./Handles/Handles.vue";
+import Plinth from "./Plinth/Plinth.vue";
 
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 import { Tab } from "@/components/ui/tabs/defaultTab.vue";
@@ -64,8 +64,8 @@ const filteredFigure = computed(() => {
 <template>
   <div class="figure">
     <defaultTab :tabs="prepareTabData" @tab-change="optionsTabChange" />
-    <FigureFasade :data="filteredFigure" v-if="currentFigure == 'Handles'" />
-    <FigurePlinth :data="filteredFigure" v-if="currentFigure == 'Plinth'" />
+    <Handles :data="filteredFigure" v-if="currentFigure == 'Handles'" />
+    <Plinth :data="filteredFigure" v-if="currentFigure == 'Plinth'" />
   </div>
 </template>
 

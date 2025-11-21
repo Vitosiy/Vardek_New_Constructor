@@ -404,8 +404,14 @@ export class RoomManager extends Room {
             }
         }
 
-        if(saveData.CONFIG?.MODULEGRID?.sector) {
-            saveData.CONFIG.MODULEGRID = saveUMGrid(saveData.CONFIG.MODULEGRID)
+        if(saveData.CONFIG?.MODULEGRID) {
+            let MODULEGRID = Object.assign({}, saveData.CONFIG.MODULEGRID)
+            try {
+                MODULEGRID = JSON.stringify(MODULEGRID)
+            }
+            catch (e) {
+                saveData.CONFIG.MODULEGRID = saveUMGrid(saveData.CONFIG.MODULEGRID)
+            }
         }
 
         return saveData;
