@@ -2,6 +2,7 @@
 
 import { MathUtils } from "three";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import {
   IRoom,
@@ -23,13 +24,43 @@ import {
 } from "@/Constructor2D/utils/Math/index";
 
 function updateRoomStore(this: any): boolean {
-
+  const roomState = useRoomState()
+  console.log('BEFORE: ', roomState.rooms)
   const roomStore = useSchemeTransition();
   roomStore.clearStore(); // очищаем хранилище
+  console.log('AFTER: ', roomState.rooms)
 
   const rooms: IRoom[] = [];
+  
+  // Получаем список ID объектов из 2D (двери и окна) для фильтрации
+  const idObjectsFrom2D = this.IDObjects?.map((item: { id: string | number; name: string }) => item.id) || [];
+  const idToFilter = [166755, ...idObjectsFrom2D]; // перегородки + двери/окна
 
   (this.layers.planner.allRooms).forEach((roomData: IC2DRoom) => {
+    // Находим существующую комнату в roomState для сохранения content и basket
+    const existingRoom = roomState.rooms.find((r: IRoom) => r.id === roomData.id);
+
+    // Сохраняем существующий content из 3D сцены, исключая элементы из 2D (перегородки, двери, окна)
+    let preservedContent: IContentItem[] = [];
+    if (existingRoom?.content) {
+      try {
+        const contentArray = Array.isArray(existingRoom.content) 
+          ? existingRoom.content 
+          : (typeof existingRoom.content === 'string' ? JSON.parse(existingRoom.content) : []);
+        
+        // Фильтруем только предметы из 3D сцены, исключая элементы из 2D
+        // Сравниваем ID с учетом разных типов (string и number)
+        preservedContent = contentArray.filter((item: any) => {
+          if (!item || !item.id) return false;
+          const itemId = item.id;
+          // Проверяем, не входит ли ID в список элементов из 2D
+          return !idToFilter.some(filterId => String(filterId) === String(itemId));
+        });
+      } catch (error) {
+        console.warn('Ошибка при парсинге content комнаты:', error);
+        preservedContent = [];
+      }
+    }
 
     const room: IRoom = {
       id: roomData.id, /** ID комнаты */
@@ -37,11 +68,14 @@ function updateRoomStore(this: any): boolean {
       description: roomData.description, /** Описание */
       params: {
         walls: [],
-        wall: '44144',
-        floor: '44020'
+        // Сохраняем существующие значения wall и floor, если они есть
+        wall: existingRoom?.params?.wall ?? '44144',
+        floor: existingRoom?.params?.floor ?? '44020'
       },
-      content: [
-      ],
+      // Начинаем с сохраненного content из 3D сцены
+      content: preservedContent,
+      // Сохраняем существующий basket из roomState, если он есть
+      basket: existingRoom?.basket
     };
 
     // 1. довляем стены и перегородки
@@ -174,7 +208,8 @@ function updateRoomStore(this: any): boolean {
   roomStore.setAppData(rooms);
   
   // console.log('Data room store:', roomStore.getAllData());
-
+  
+  console.log('AFTER AFTER: ', roomState.rooms)
   return true;
 
 }

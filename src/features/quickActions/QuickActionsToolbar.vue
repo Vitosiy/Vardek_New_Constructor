@@ -41,17 +41,19 @@
             </MainButton>
           </template>
           <template #checkBox>
-            <div>
-              <input type="checkbox" />
-              <label>Сохранить КП</label>
-            </div>
-            <div>
-              <input 
-              type="checkbox"
-              v-model="centeringCheckbox" 
-              @change="changeCamera()"
-              />
-              <label>Отцентровать</label>
+            <div class="checkbox_wrap">
+              <div>
+                <input type="checkbox" />
+                <label class="checkbox_label">Сохранить КП</label>
+              </div>
+              <div>
+                <input 
+                type="checkbox"
+                v-model="centeringCheckbox" 
+                @change="changeCamera()"
+                />
+                <label class="checkbox_label">Отцентровать</label>
+              </div>
             </div>
           </template>
           <template #cancelButton>
@@ -131,5 +133,16 @@ onMounted(() => {
 .quick-actions {
   display: flex;
   gap: 8px;
+}
+
+.checkbox_label {
+  font-size: 16px;
+  padding-left: 10px;
+}
+
+.checkbox_wrap {
+  display: flex;
+  justify-content: space-between;
+
 }
 </style>

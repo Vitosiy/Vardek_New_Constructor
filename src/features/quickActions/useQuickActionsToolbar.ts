@@ -12,6 +12,7 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
+import { useRoomState } from '@/store/appliction/useRoomState';
 
 export type ActionKey =
   | 'fullscreen'
@@ -40,6 +41,7 @@ export const useQuickActionsToolbar = () => {
   const router = useRouter();
   const toaster = useToast();
   const sceneState = useSceneState();
+  const roomState = useRoomState()
 
   const projectState = useProjectStore();
   const projectAPI = useProjectAPI()

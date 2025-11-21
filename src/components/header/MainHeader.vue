@@ -291,6 +291,11 @@ watch(
   () => route.path,
   async (newPath, oldPath) => {
     try {
+      if (oldPath === '/3d' && newPath === '/2d' && verdekConstructor.value) {
+        eventBus.emit("A:Save");
+        await nextTick(); // Ждем сохранения
+      }
+      console.log('Все комнаты:', roomState.rooms);
       roomState.routConvertData(newPath);
 
       menuStore.setRulerVisibility(true);

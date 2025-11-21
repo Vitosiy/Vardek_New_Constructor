@@ -14,7 +14,6 @@ import Constructor2D from '@/Constructor2D';
 import { loadBlankRoom } from "@/Constructor2D/facade/blankRoom";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
-
 let schemeTransition = useSchemeTransition();
 // root container
 let root2d: Ref<HTMLElement | undefined> = ref();
