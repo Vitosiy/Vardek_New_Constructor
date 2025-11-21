@@ -15,12 +15,9 @@ import { useRoute } from "vue-router";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import { useMenuStore } from "@/store/appStore/useMenuStore.ts";
 
-<<<<<<< HEAD
 import { useProjectFromQuery } from '@/features/quickActions/project/composables/useProjectFromQuery'
 
-=======
 const roomState = useRoomState();
->>>>>>> origin/develop
 const route = useRoute();
 const ready = ref<boolean>(false);
 const pageComponentRef = ref(null);

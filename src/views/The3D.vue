@@ -157,6 +157,9 @@ onMounted(async () => {
       actions.value = VerdekConstructor.value.getAction();
       curControllerValue.value = controllerValue.value[0].name;
       testConnect();
+
+      await nextTick(); // Дополнительный nextTick для гарантии готовности
+      eventBus.emit("A:ChangeCameraPos", 4);
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);

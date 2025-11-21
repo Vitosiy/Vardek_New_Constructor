@@ -28,12 +28,11 @@ onMounted(() => {
   loaderQ.accordCheck()
 })
 
-// Отслеживание изменений projectId в query параметрах
-// watch(() => route.query.projectId, (newId, oldId) => {
-//   if (newId !== oldId) {
-//     loaderQ.accordCheck()
-//   }
-// })
+watch(() => route.query.projectId, (newId, oldId) => {
+  if (newId !== oldId) {
+    loaderQ.accordCheck()
+  }
+})
 </script>
 
 <template>

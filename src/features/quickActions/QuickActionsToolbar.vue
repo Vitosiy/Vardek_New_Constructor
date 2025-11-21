@@ -45,6 +45,14 @@
               <input type="checkbox" />
               <label>Сохранить КП</label>
             </div>
+            <div>
+              <input 
+              type="checkbox"
+              v-model="centeringCheckbox" 
+              @change="changeCamera()"
+              />
+              <label>Отцентровать</label>
+            </div>
           </template>
           <template #cancelButton>
             <MainButton @click="onModalClose">Отменить</MainButton>
@@ -65,11 +73,21 @@ import { useQuickActionsToolbar } from "./useQuickActionsToolbar";
 import { useRoute } from "vue-router";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useToast } from "@/features/toaster/useToast";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 const { actions, openSaveDialog, handleSaveConfirm: handleSaveConfirmFromComposable } = useQuickActionsToolbar();
 const route = useRoute();
 const sceneState = useSceneState();
 const toaster = useToast();
+const eventBus = useEventBus()
+
+
+const centeringCheckbox = ref(false)
+const changeCamera = () => {
+  if (centeringCheckbox.value) {
+    eventBus.emit("A:ChangeCameraPos", 4);
+  } 
+}
 
 // Реф для модального окна сохранения
 const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);

@@ -55,14 +55,14 @@ export function useProjectFromQuery() {
         console.log(route)
        
         const id = route?.query?.projectId 
-        console.log(id)
-        // if (id) {
-        //     loadProject(id)
-        // } else {
-        //     router.push({
-        //         path: '/'
-        //     })
-        // }
+        console.log('EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE')
+        if (id) {
+            loadProject(id)
+        } else {
+            router.push({
+                path: '/'
+            })
+        }
     }
     
     return {
