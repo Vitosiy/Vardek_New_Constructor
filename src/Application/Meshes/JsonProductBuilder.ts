@@ -45,7 +45,7 @@ export class JsonBuilder {
                 this.leftMaterial = this.parent.palette_bulider.getPalette(left.COLOR, left.PALETTE)
             }
             else
-                this.leftMaterial = this.createMaterial(json.material, left.COLOR) as THREE.Material
+                this.leftMaterial = this.createMaterial(json.material, this.parent._FASADE[left.COLOR]) as THREE.Material
         }
 
         if(right) {
@@ -53,7 +53,7 @@ export class JsonBuilder {
                 this.rightMaterial = this.parent.palette_bulider.getPalette(right.COLOR, right.PALETTE)
             }
             else
-                this.rightMaterial = this.createMaterial(json.material, right.COLOR) as THREE.Material
+                this.rightMaterial = this.createMaterial(json.material, this.parent._FASADE[right.COLOR]) as THREE.Material
         }
 
         if(back) {
@@ -61,7 +61,7 @@ export class JsonBuilder {
                 this.backMaterial = this.parent.palette_bulider.getPalette(back.COLOR, back.PALETTE)
             }
             else
-                this.backMaterial = this.createMaterial(json.material, back.COLOR) as THREE.Material
+                this.backMaterial = this.createMaterial(json.material, this.parent._FASADE[back.COLOR]) as THREE.Material
         }
 
         if(top) {
@@ -69,7 +69,7 @@ export class JsonBuilder {
                 this.topMaterial = this.parent.palette_bulider.getPalette(top.COLOR, top.PALETTE)
             }
             else
-                this.topMaterial = this.createMaterial(json.material, top.COLOR) as THREE.Material
+                this.topMaterial = this.createMaterial(json.material, this.parent._FASADE[top.COLOR]) as THREE.Material
         }
 
         if(tsarga) {
@@ -77,7 +77,7 @@ export class JsonBuilder {
                 this.tsargaMaterial = this.parent.palette_bulider.getPalette(tsarga.COLOR, tsarga.PALETTE)
             }
             else
-                this.tsargaMaterial = this.createMaterial(json.material, tsarga.COLOR) as THREE.Material
+                this.tsargaMaterial = this.createMaterial(json.material, this.parent._FASADE[tsarga.COLOR]) as THREE.Material
         }
 
         if (Array.isArray(json.items)) {

@@ -691,13 +691,30 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (LEFTSIDECOLOR?.SHOW) {
-            left = Object.assign({}, LEFTSIDECOLOR)
+            if(LEFTSIDECOLOR.SHOW) {
+                left = Object.assign({}, LEFTSIDECOLOR)
+            }
+            else {
+                //data.json.items = data.json.items.filter(item => item.id !== 'left')
+            }
         }
-        if (RIGHTSIDECOLOR?.SHOW) {
-            right = Object.assign({}, RIGHTSIDECOLOR)
+
+        if (RIGHTSIDECOLOR) {
+            if(RIGHTSIDECOLOR.SHOW) {
+                right = Object.assign({}, RIGHTSIDECOLOR)
+            }
+            else {
+                //data.json.items = data.json.items.filter(item => item.id !== 'right')
+            }
         }
-        if (BACKWALL?.SHOW) {
-            back = Object.assign({}, BACKWALL)
+
+        if (BACKWALL) {
+            if(BACKWALL.SHOW) {
+                back = Object.assign({}, BACKWALL)
+            }
+            else {
+                data.json.items = data.json.items.filter(item => item.id !== 'back')
+            }
         }
 
         const body = this.json_builder.createMesh({
