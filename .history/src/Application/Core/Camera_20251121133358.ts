@@ -134,6 +134,9 @@ export class Camera {
     }
 
     setPosition(value): void {
+<<<<<<< HEAD
+
+=======
         console.log('CH')
         
         // Если нажата центральная кнопка (action 4), устанавливаем камеру напротив самой широкой стены
@@ -142,6 +145,7 @@ export class Camera {
             return
         }
         
+>>>>>>> 014cbd64ff13de05d08f49c6a43dfcd1d9024165
         this.instance.position.copy(this.cameraPositions[value].pos)
         this.controls.target.set(...this.cameraPositions[value].target)
         this.controls?.update()

@@ -54,7 +54,7 @@ export function useProjectFromQuery() {
         const route = useRoute()
         console.log(route)
        
-        const id = route?.query?.projectId 
+        const id = route.query.projectId 
         console.log(id)
         // if (id) {
         //     loadProject(id)
