@@ -1514,6 +1514,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             :max-area-width="totalWidth"
             @cell-selected="handleCellSelect"
             @calcDrawersFasades="calcDrawersFasades"
+            @module-reset="reset"
         />
       </div>
 
