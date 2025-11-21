@@ -52,15 +52,17 @@ export function useProjectFromQuery() {
     function accordCheck() {
         const router = useRouter();
         const route = useRoute()
+        console.log(route)
        
         const id = route.query.projectId 
-        if (id) {
-            loadProject(id)
-        } else {
-            router.push({
-                path: '/'
-            })
-        }
+        console.log(id)
+        // if (id) {
+        //     loadProject(id)
+        // } else {
+        //     router.push({
+        //         path: '/'
+        //     })
+        // }
     }
     
     return {
