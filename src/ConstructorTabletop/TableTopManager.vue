@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
+import { useKromkaActions } from "./Kromka/useKromkaActions";
 import {
   onMounted,
   onBeforeMount,
@@ -19,9 +20,29 @@ import CutServise from "./OptionsMenu/CutServise.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
 import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
+import TableTopInput from "./TableTopInput.vue";
+import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
+import KromkaCard from "./Kromka/KromkaCard.vue";
 
 const eventBus = useEventBus();
 const modelState = useModelState();
+const kromkaActions = useKromkaActions();
+
+const {
+  checkKromkaActive,
+  tempKromkaList,
+  getKromkaList,
+  getKromkaActive,
+  kromkaSelect,
+  getKromkaCardData,
+  kromkaCardSelect,
+  getKromkaCardSelect,
+  getCurretKromkaList,
+  hideKromkaList,
+  setCromkaActive,
+  setGridData,
+  clearKromkaData
+} = kromkaActions;
 
 const emit = defineEmits(["save-table-data"]);
 
@@ -51,6 +72,14 @@ const props = defineProps({
     default: 20,
   },
 });
+
+const kromkaMap = ref([
+  "kromka_tri_storony",
+  "kromka_perimetr",
+  "kromka_torec",
+  "kromka_torec_right",
+  "kromka_torec_left",
+]);
 
 const isMounted = ref(false);
 const visualizationRef = ref(null);
@@ -87,6 +116,13 @@ const getCurrentSection = computed(() => {
   const currentColl = grid.value[colNdx];
   const currentRow = currentColl[rowNdx];
   return { currentRow, currentColl };
+});
+
+const getCurrentKromkaData = computed(() => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROFILE } = parent?.userData?.PROPS.CONFIG;
+  return PROFILE || [];
 });
 // Получаем данные услуг секции
 const getCurrentSectionServiseData = computed(() => {
@@ -366,50 +402,217 @@ const getHoleOptionsActive = computed(() => {
   };
 });
 
-const convertServisData = (value, item) => {
-  const { PROPS } = modelState.getCurrentModel.userData;
-  const { USLUGI } = PROPS.CONFIG;
-  console.log(USLUGI, item)
+const checkProfileDisablegroups = () => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
 
-  if (parseInt(item.separated) === 0) {
-    console.log('EP')
-    grid.value.forEach((col) => {
-      col.forEach((row) => {
-        const cur = row.serviseData.find((el) => el.ID === item.ID);
-        cur.value = value;
-        console.log(cur, "row");
+  const { PROPS } = parent.userData;
+  const { PROFILE, USLUGI } = PROPS.CONFIG;
+  const activeProfile = PROFILE.find((prof) => prof.value);
+
+  if (!activeProfile) return;
+
+  const { disablegroups } = activeProfile;
+
+  /** @Для_более_быстрой_проверки */
+  
+  const disabledSet = new Set(disablegroups);
+
+  const hasActiveKromka = isKromkaActive();
+  const hasKromka = (pos) => pos.includes("kromka");
+
+  USLUGI.forEach((usluga) => {
+    const kromka = hasKromka(usluga.POSITION);
+
+    if (typeof usluga.group === "string" && usluga.group.length > 0) {
+      const groups = usluga.group.split("|").map((g) => g.trim());
+      const hasDisabledGroup = groups.some((group) => disabledSet.has(group));
+      const shouldShow = !hasDisabledGroup;
+
+      usluga.visible = shouldShow;
+      usluga.value =
+        (!shouldShow && kromka) || (shouldShow && kromka && !hasActiveKromka)
+          ? false
+          : shouldShow;
+    }
+  });
+
+  grid.value.forEach((column) =>
+    column.forEach((row) => {
+      row.serviseData.forEach((el, key) => {
+        const curUsluga = USLUGI.find((usluga) => usluga.ID === el.ID);
+        if (curUsluga) {
+          el.visible = curUsluga.visible;
+          if (!curUsluga.visible) el.value = false;
+        }
       });
-    });
-    // console.log(item, USLUGI);
+    })
+  );
 
-    const cur = USLUGI.find((el) => el.ID === item.ID);
-    cur.value = value;
+  checkKromkaActive();
+  getCurretKromkaList();
+};
 
-    console.log(USLUGI, 'cur')
+const convertKromkaData = (value, item) => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
 
+  const { PROPS } = parent.userData;
+  const { PROFILE, USLUGI } = PROPS.CONFIG;
+  const curProfile = PROFILE.find((el) => el.ID === item.ID);
+
+  if (curProfile.ID === 251698 && curProfile.value) {
+    checkProfileDisablegroups();
+    return;
+  }
+  // Основное обновление
+  PROFILE.forEach((profile) => {
+    profile.value = profile.ID === item.ID ? value : false;
+  });
+
+  // Если всё выключено — включаем дефолт
+  if (PROFILE.every((p) => !p.value)) {
+    const defaultProfile = PROFILE.find((p) => p.ID === 251698);
+    if (defaultProfile) {
+      defaultProfile.value = true;
+    }
+  }
+
+  checkProfileDisablegroups();
+};
+
+const convertServisData = (value, item) => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
+  const { USLUGI } = PROPS.CONFIG;
+
+  const separetedOption = parseInt(item.separated) === 0;
+
+  if (separetedOption) {
+    updateGlobalService(value, item, USLUGI);
     return;
   }
 
-  const data = getCurrentSection.value.currentRow.serviseData;
+  updateLocalService(value, item, USLUGI);
+};
 
-  const servise = data.find(
-    (el) => el.NAME.toLowerCase() === item.NAME.toLowerCase()
+/** @Обновляет_значение_глобального_сервиса (для всех ячеек и в USLUGI) */
+
+const updateGlobalService = (value, item, USLUGI) => {
+  grid.value.forEach((column) =>
+    column.forEach((row) => {
+      const service = row.serviseData.find((el) => el.ID === item.ID);
+      if (service) service.value = value;
+    })
   );
 
-  data.forEach((el) => {
-    el.pos === servise.pos ? (el.value = false) : "";
-    (el.pos === "LEFT" && servise.pos.includes(el.pos)) ||
-    (servise.pos === "LEFT" && el.pos.includes("LEFT"))
-      ? (el.value = false)
-      : "";
-    (el.pos === "RIGHT" && servise.pos.includes(el.pos)) ||
-    (servise.pos === "RIGHT" && el.pos.includes("RIGHT"))
-      ? (el.value = false)
-      : "";
+  const globalService = USLUGI.find((el) => el.ID === item.ID);
+
+  if (globalService) {
+    globalService.value = value;
+  }
+};
+
+/** @Обновляет_локальный_сервис_в_текущей_секции_с_логикой_позиционирования */
+
+const updateLocalService = (value, item, USLUGI) => {
+
+  const currentSection = getCurrentSection.value;
+  if (!currentSection?.currentRow?.serviseData) return;
+
+  const data = currentSection.currentRow.serviseData;
+  const itemNameLower = item.NAME.toLowerCase();
+
+  // Находим целевой сервис
+  const targetService = data.find(
+    (el) => el.NAME.toLowerCase() === itemNameLower
+  );
+  if (!targetService) return;
+
+  const targetPosition = targetService.POSITION;
+
+  // Деактивация конфликтующих сервисов по позиции
+  const hasLeft = (pos) => pos.includes("left") || pos.includes("kromka_left");
+  const hasRight = (pos) =>
+    pos.includes("right") || pos.includes("kromka_right");
+  const hasKromka = (pos) => pos.includes("kromka");
+
+  data.forEach((service) => {
+    if (service === targetService) return;
+
+    const pos = service.POSITION;
+    const isConflict =
+      pos === targetPosition ||
+      (hasLeft(pos) && hasLeft(targetPosition)) ||
+      (hasRight(pos) && hasRight(targetPosition)) ||
+      (hasKromka(pos) && hasKromka(targetPosition));
+
+    if (isConflict) {
+      service.value = false;
+    }
   });
 
-  servise.value = value;
-  visualizationRef.value.renderGrid();
+  //  Установка значения для текущего сервиса
+  targetService.value = value;
+
+  if (hasProfile()) {
+    const profile = isGugol();
+    const hasActiveKromka = isKromkaActive();
+
+    let chekExept = profile || hasActiveKromka;
+
+    setCromkaActive(chekExept);
+
+    if (chekExept) {
+      getCurretKromkaList();
+    }
+  }
+
+  //  Перерисовка
+  visualizationRef.value?.renderGrid();
+};
+
+/** @Проверяем_на_наличие_активной_кромки */
+
+const isKromkaActive = () => {
+  const hasActiveKromka = grid.value.some((inner) =>
+    inner.some((item) =>
+      item.serviseData?.some(
+        (servise) =>
+          servise.POSITION.includes("kromka") && servise.value === true
+      )
+    )
+  );
+
+  return hasActiveKromka;
+};
+
+/**@Проверяем_на G-ugol */
+
+const isGugol = () => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROPS } = parent!.userData;
+  const { PROFILE } = PROPS.CONFIG;
+
+  const curProfile = PROFILE.find((el) => el.value);
+  return curProfile.ID == 251701;
+};
+
+/** @Проверяем_на_наличие_профиля */
+
+const hasProfile = () => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROPS } = parent!.userData;
+  const { PROFILE } = PROPS.CONFIG;
+
+  return PROFILE.length > 0;
 };
 
 const updateServiseWidth = (value, type) => {
@@ -428,7 +631,50 @@ const updateServiseWidth = (value, type) => {
   visualizationRef.value.renderGrid();
 };
 
-const updateSectionWidth = (value, colIndex, rowIndex) => {
+const handleWidthInput = (
+  value: number,
+  colIndex: number,
+  rowIndex: number
+) => {
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  // Проверяем валидность значения
+  const minWidth = 150;
+  const maxWidth = grid.value[colIndex][0].maxWidth || TOTAL_LENGTH;
+  if (!isNaN(value) && value >= minWidth && value <= maxWidth) {
+    updateSectionWidth(value, colIndex, rowIndex);
+  }
+};
+
+const handleHeightInput = (
+  value: number | null,
+  colIndex: number,
+  rowIndex: number
+) => {
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  // Проверяем валидность значения
+  const minHeight = 150;
+  const maxHeight = grid.value[colIndex][rowIndex].maxHeight || TOTAL_HEIGHT;
+  if (
+    value !== null &&
+    !isNaN(value) &&
+    value >= minHeight &&
+    value <= maxHeight
+  ) {
+    updateSectionHeight(value, colIndex, rowIndex);
+  }
+};
+
+const updateSectionWidth = (
+  value: number,
+  colIndex: number,
+  rowIndex: number
+) => {
   const newValue = parseInt(value);
   let adjustedValue;
 
@@ -443,6 +689,7 @@ const updateSectionWidth = (value, colIndex, rowIndex) => {
       col: colIndex,
     });
   }
+
   // Обновляем значение в grid для синхронизации
   const clone = grid.value.map((item) => item);
   if (adjustedValue) {
@@ -703,38 +950,31 @@ const handleCellSelect = (colIndex, rowIndex, type) => {
 };
 
 const createServiseData = () => {
-  const { PROPS } = modelState.getCurrentModel.userData;
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
   const { USLUGI } = PROPS.CONFIG;
-  console.log(PROPS, USLUGI, props.grid, "USLUGI");
 
   const convertParams = USLUGI.reduce((acc, el) => {
+    const checkGlobal = el.POSITION.includes("global") ? el.value : false;
+
     const param = {
       ID: el.ID,
       NAME: el.NAME,
-      value: false,
-      pos: el.pos,
+      POSITION: el.POSITION,
+      CODE: el.CODE,
+      value: checkGlobal,
       radius: el.radius,
       width: el.width,
       corner: el.corner,
-      separated: el.separated
+      separated: el.separated,
+      visible: el.visible,
     };
     acc.push(param);
     return acc;
   }, []);
-
-  // const convertParams = CUTTER_PARAMS.CUT_SERVISES.reduce((acc, el) => {
-  //   const param = {
-  //     ID: el.ID,
-  //     NAME: el.NAME,
-  //     value: false,
-  //     pos: el.pos,
-  //     radius: el.radius,
-  //     width: el.width,
-  //     corner: el.corner,
-  //   };
-  //   acc.push(param);
-  //   return acc;
-  // }, []);
 
   return convertParams;
 };
@@ -746,7 +986,11 @@ const clearServiseData = (row) => {
 };
 
 const reset = (reset = false) => {
-  const { PROPS } = modelState.getCurrentModel.userData;
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
   const { USLUGI } = PROPS.CONFIG;
 
   grid.value.length = 0;
@@ -813,11 +1057,14 @@ onBeforeMount(() => {
   totalHeight.value = props.canvasHeight;
   // Делаем клон для реактивности
   grid.value = JSON.parse(JSON.stringify(props.grid));
+  setGridData(grid.value);
 });
 
 onMounted(() => {
   shapeAdjuster = new ShapeAdjuster();
+  checkProfileDisablegroups();
   createServiseData();
+
   nextTick().then(() => {
     isMounted.value = true;
   });
@@ -826,6 +1073,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   shapeAdjuster = null;
   grid.value = null;
+  clearKromkaData()
 });
 </script>
 
@@ -834,6 +1082,7 @@ onBeforeUnmount(() => {
     <div
       class="splitter-container splitter-container--left"
       ref="splitterContainer"
+      @click="hideKromkaList"
     >
       <div class="splitter-header">
         <div class="splitter-header--title"><h1>Настройки распила</h1></div>
@@ -947,17 +1196,29 @@ onBeforeUnmount(() => {
 
                   <div class="actions-items--width" v-if="!row.roundCut.radius">
                     <div class="actions-inputs">
-                      <p class="actions-title">Ширина</p>
+                      <p class="actions-title">Ширина_</p>
                       <div
                         :class="[
                           'actions-input--container',
                           grid.length <= 1 ? 'disable' : '',
                         ]"
                       >
-                        <input
+                        <TableTopInput
+                          :value="column[0].width"
+                          :step="step"
+                          :min="150"
+                          :max="column[0].maxWidth || TOTAL_LENGTH"
+                          :disabled="grid.length < 0"
+                          @input="handleWidthInput($event, colIndex, rowIndex)"
+                          @update:value="
+                            updateSectionWidth($event, colIndex, rowIndex)
+                          "
+                        />
+                        <!-- <input
                           type="number"
                           :step="step"
                           min="150"
+                          :max="column[0].maxWidth"
                           class="actions-input"
                           :value="column[0].width"
                           @input="
@@ -967,7 +1228,7 @@ onBeforeUnmount(() => {
                               rowIndex
                             )
                           "
-                        />
+                        /> -->
                       </div>
                     </div>
                   </div>
@@ -983,7 +1244,7 @@ onBeforeUnmount(() => {
                           column.length <= 1 ? 'disable' : '',
                         ]"
                       >
-                        <input
+                        <!-- <input
                           type="number"
                           :step="step"
                           min="150"
@@ -995,6 +1256,17 @@ onBeforeUnmount(() => {
                               colIndex,
                               rowIndex
                             )
+                          "
+                        /> -->
+                        <TableTopInput
+                          :value="row.height"
+                          :step="step"
+                          :min="150"
+                          :max="row.maxHeight || TOTAL_LENGTH"
+                          :disabled="grid.length < 0"
+                          @input="handleHeightInput($event, colIndex, rowIndex)"
+                          @update:value="
+                            updateSectionHeight($event, colIndex, rowIndex)
                           "
                         />
                       </div>
@@ -1116,6 +1388,15 @@ onBeforeUnmount(() => {
         (cutServise.show && !checkRounded && !holeOptions.show)
       "
     >
+      <transition name="slide--right">
+        <div
+          class="kromka__container"
+          v-if="getKromkaActive && getKromkaCardSelect"
+        >
+          <MaterialSelector :materials="getKromkaList" @select="kromkaSelect" />
+        </div>
+      </transition>
+
       <CutOptions
         v-if="holeOptions.show"
         :holes="getHole"
@@ -1130,12 +1411,21 @@ onBeforeUnmount(() => {
 
       <CutServise
         v-if="cutServise.show"
+        :kromka-data="getCurrentKromkaData"
         :servise-data="getCurrentSectionServiseData"
         :current-section="getCurrentSection"
         @cut-toggleCutServise="toggleCutServise"
         @cut-servisData="convertServisData"
         @cut-updateServise="updateServiseWidth"
-      />
+        @cut-kromkaData="convertKromkaData"
+      >
+        <template #kromkaSelect>
+          <KromkaCard
+            :data="getKromkaCardData"
+            @kromka-kard-select="kromkaCardSelect"
+          />
+        </template>
+      </CutServise>
     </div>
   </div>
 </template>
@@ -1172,8 +1462,9 @@ onBeforeUnmount(() => {
 
     &--right {
       max-width: 25vw;
-      max-height: 55vh;
+      max-height: 100%;
       overflow: hidden;
+      // position: relative;
     }
   }
 
@@ -1542,5 +1833,16 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 10px;
   right: 10px;
+}
+
+.kromka {
+  &__container {
+    position: absolute;
+    background-color: $white;
+    border-radius: 15px;
+    max-width: 25vw;
+    z-index: 1;
+    right: 5rem;
+  }
 }
 </style>

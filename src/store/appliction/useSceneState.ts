@@ -181,11 +181,11 @@ export const useSceneState = defineStore('SceneState', () => {
             height_clamp: params.height_clamp ?? current.height_clamp ?? base.height_clamp,
         };
 
-        if (params.rooms) {
-            params.rooms.forEach(room => console.log(room.content));
-        }
+        // if (params.rooms) {
+        //     params.rooms.forEach(room => console.log(room.content));
+        // }
 
-        console.log(merged, 'merged')
+        // console.log(merged, 'merged')
 
         currentProjectParams.value = merged;
     };

@@ -23,7 +23,7 @@ export class BuildersHelper extends GlobalsData {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
 
-        console.log(props.CONFIG.EXPRESSIONS)
+        // console.log(props.CONFIG.EXPRESSIONS)
 
         model_data = this.expressionsReplace(
             model_data,
@@ -38,17 +38,21 @@ export class BuildersHelper extends GlobalsData {
             },
         )
 
-        console.log(model_data, 'model_data')
+        // console.log(model_data, 'model_data')
 
         model_data = this.expressionsReplace(
             model_data,
             props.CONFIG.EXPRESSIONS
         )
 
+        console.log(model_data)
+
         return model_data
     };
 
     getProductSize(PARAMS: any, productData: THREETypes.TObject) {
+        // console.log(productData, 'productData')
+
         const product = this._PRODUCTS[PARAMS.ID];
         const materialThickness = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH ?? 18;
         const horizont =
@@ -79,22 +83,20 @@ export class BuildersHelper extends GlobalsData {
             "#VSECTION_MIN#": filling.VSECTION_MIN,
         };
 
-        console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
+        // console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
 
 
         // Обработка фасадных размеров
-        Object.entries(PARAMS.FASADE_SIZE).forEach(([key, value]) => {
-            const customKey = `FASADESIZE${key}`
+        Object.entries(PARAMS.FASADE_SIZE).forEach(([_, value], ndx) => {
+            const incomeData = FASADE_PROPS[ndx].SIZES
+            const customKey = `FASADESIZE${ndx + 1}`
+            expressions[`#${customKey}#`] = incomeData.id;
 
-
-            console.log(FASADE_PROPS[key - 1], this._FASADESIZE, '{{value')
-
-            expressions[`#${customKey}#`] = FASADE_PROPS[key - 1].SIZES.id;
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
-                const idx = FASADE_PROPS[key - 1].SIZES.id as number;
-                const size = this._FASADESIZE[idx];
+                const size = this._FASADESIZE[incomeData.id];
+                // console.log(size, 'size')
                 const suffix = customKey.endsWith("1") ? "1" : "2";
-                expressions[`#FASADESIZEWIDTH${suffix}#`] = size.WIDTH;
+                expressions[`#FASADESIZEWIDTH${suffix}#`] = incomeData.params.FASADE_WIDTH ?? size.WIDTH;
                 expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
                 expressions[`#FASADESIZEDIFFWIDTH${suffix}#`] = size.DIFFWIDTH;
                 expressions[`#FASADESIZEDIFFDEPTH${suffix}#`] = size.DIFFDEPTH;
@@ -107,20 +109,17 @@ export class BuildersHelper extends GlobalsData {
             ? PARAMS.SIZE.depth
             : productData.depth;
 
-        console.log(depthCalc,productData,'depthCalc')
-
         const size = {
-            width: parseInt(PARAMS.SIZE.width),
-            height: parseInt(PARAMS.SIZE.height),
-            depth: parseInt(depthCalc),
+
+            width: parseFloat(productData.width),
+            height: parseFloat(productData.height),
+            depth: parseFloat(depthCalc),
         };
 
         if (PARAMS.MODELID) {
             const modelData = this._MODELS[PARAMS.MODELID]
-            console.log(modelData, 'modelData')
 
             const model = this.expressionsReplace(modelData, expressions);
-            console.log(model, 'MODEL')
 
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));
@@ -128,9 +127,9 @@ export class BuildersHelper extends GlobalsData {
         }
 
         // Запасные значения
-        size.width ||= parseInt(productData.width);
-        size.height ||= parseInt(productData.height);
-        size.depth ||= parseInt(productData.depth);
+        size.width ||= parseFloat(productData.width);
+        size.height ||= parseFloat(productData.height);
+        size.depth ||= parseFloat(productData.depth);
 
         return size;
     }
@@ -144,10 +143,9 @@ export class BuildersHelper extends GlobalsData {
 
     getExec(obj) {
         Object.entries(obj).forEach(([key, value]) => {
-            console.log(obj, 'obj')
 
 
-            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
+            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color" || key.includes("PROPERTY_FASADE_NUMBER_VALUE_ID")) {
                 obj[key] = value;
             } else {
                 obj[key] = eval(value);
@@ -276,25 +274,18 @@ export class BuildersHelper extends GlobalsData {
         object.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             if (child.userData.type === "glass") return;
-
-            // // Восстановление оригинального материала при наличии
-            // if (child.userData.ORIGINAL_COLOR) {
-            //     child.material = child.userData.ORIGINAL_COLOR;
-            // }
-            // if (child.material.opacity < 1) {
-            //     child.material.opacity = 1
-            //     child.material.color = new THREE.Color('rgb(255,255,255)')
-            // }
+            if (child.userData.mergedGeometry) {
+                child.material = material
+                this.getTexture({
+                    material,
+                    url: url,
+                });
+                return
+            }
 
             this.resources.startLoading(url, "texture", (file) => {
                 if (!(file instanceof THREE.Texture)) return;
                 child.material = material
-                // child.material.needsUpdate = true
-                // Создание материала при необходимости
-                // if (type && ["Palette", "Glass"].includes(type)) {
-                //     child.material = new THREE.MeshStandardMaterial();
-                // }
-
                 this.applyTexture(child, file, textureSize, type);
             });
         });
@@ -383,7 +374,6 @@ export class BuildersHelper extends GlobalsData {
 
     planarUV(geometry) {
 
-        console.log('OO')
 
         geometry.computeBoundingBox();
 
@@ -471,40 +461,47 @@ export class BuildersHelper extends GlobalsData {
 
     createCutterParams(uslugi) {
         const SERVISES = CUTTER_PARAMS.CUT_SERVISES
-        return uslugi.map(obj1 => {
+        const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);
             let merged;
             if (obj2) {
                 const extras = Object.fromEntries(
-                    Object.entries(obj2).filter(([key]) => !(key in obj1))
-                );
+                    Object.entries(obj2).filter(([key]) => {
+                        return !(key in obj1) && key != 'pos'
+                    })
+                )
+
                 merged = { ...obj1, ...extras };
-
-                // if ("width" in merged) {
-                //     const w1 = obj1.width;
-                //     const w2 = obj2.width;
-
-                //     // случай: строка + число → число
-                //     if (typeof w1 === "string" && typeof w2 === "number") {
-                //         merged.width = w2;
-                //     }
-
-                //     // случай: строка + отсутствует → удалить
-                //     if (typeof w1 === "string" && w2 === undefined) {
-                //         delete merged.width;
-                //     }
-                // }
-
-                // return merged;
+                merged.POSITION = merged.POSITION.toLowerCase()
+                if (merged.POSITION === 'center') {
+                    let sercher
+                    if (merged.radiogroups.length) {
+                        sercher = merged.radiogroups.join('_');
+                        merged.POSITION = sercher;
+                    }
+                }
             }
 
             else {
                 merged = { ...obj1 };
-                if (!("pos" in merged)) {
-                    merged.pos = "CENTER";
+
+                if (!merged.POSITION) {
+                    let sercher
+                    if (merged.radiogroups.length) {
+                        sercher = merged.radiogroups.join('_');
+                        ['left', 'right'].forEach(el => {
+                            if (sercher.includes(el)) sercher += '_bottom'
+                        })
+                        merged.POSITION = sercher;
+                    }
+                    else {
+                        merged.POSITION = 'global';
+                    }
+
+
                 }
             }
-
+            // if (!merged) return
             if ("width" in merged) {
                 const w1 = obj1.width;
                 const w2 = obj2 ? obj2.width : undefined;
@@ -518,9 +515,16 @@ export class BuildersHelper extends GlobalsData {
                 }
             }
 
+            if(merged.POSITION.includes('kromka')){
+                merged.POSITION = merged.POSITION + '_global'
+            }
+
             return merged;
 
-        }).filter(el => el.ID !== 98683);
+        })
+
+        // .filter(el => el.ID !== 98683);
+        return result
 
         // .filter(el => parseInt(el.separated) !== 0);
     }
@@ -532,14 +536,14 @@ export class BuildersHelper extends GlobalsData {
 
         if (jsonPlinth) {
             return {
-                front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный плинтус' },
+                front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный цоколь' },
             }
         }
 
         return {
-            front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный плинтус' },
-            left: { value: false, modelId: basePlinth, surfaceId: null, label: 'Левый плинтус' },
-            right: { value: false, modelId: basePlinth, surfaceId: null, label: 'Правый плинтус' }
+            front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный цоколь' },
+            left: { value: false, modelId: basePlinth, surfaceId: null, label: 'Левый цоколь' },
+            right: { value: false, modelId: basePlinth, surfaceId: null, label: 'Правый цоколь' }
         }
     }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {computed, defineExpose, h, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
+import {computed, defineExpose, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
@@ -9,12 +9,7 @@ import FillingsProductions from "./utils/FillingsProductions.vue";
 import FasadesOptions from "@/components/2DmoduleConstructor/utils/FasadesOptions.vue";
 
 import {ShapeAdjuster} from "./utils/Methods";
-import {
-  FasadeMaterial,
-  FasadeObject,
-  GridModule,
-  GridSection, LOOPSIDE,
-} from "@/types/constructor2d/interfaсes.ts";
+import {FasadeMaterial, FasadeObject, GridModule, GridSection, LOOPSIDE,} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
@@ -74,6 +69,7 @@ const totalHeight = ref(0);
 const totalWidth = ref(0);
 const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
+const onSideProfile = ref<boolean>(false);
 
 const module = computed(() => {
 
@@ -120,6 +116,12 @@ const module = computed(() => {
         isSlidingDoors,
       }
 
+      if(PROPS.CONFIG.isHiTech)
+        _module.isHiTech = true
+
+      if(PROPS.CONFIG.isRestrictedModule)
+        _module.isRestrictedModule = true
+
       PROPS.CONFIG.MODULEGRID = _module
 
       if (isSlidingDoors) {
@@ -163,13 +165,14 @@ const module = computed(() => {
           ]
         ]
         _module.fasades = fasades
-      } else {
+      }
+      else {
         fasades = [
           [
             <FasadeObject>{
               id: 1,
               width: FASADE.FASADE_WIDTH,
-              height: FASADE.FASADE_HEIGHT - FASADE.POSITION_Y,
+              height: FASADE.FASADE_HEIGHT - (_module.isRestrictedModule ? 0 : _module.horizont),
               position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
               material: <FasadeMaterial>{
                 ...FASADE_PROPS
@@ -295,6 +298,7 @@ const updateFilling = (value, currentfilling, type, render = false) => {
 
 //#region Фасады
 const getFasadePosition = (_position) => {
+
   const PROPS = productData.value.PROPS;
   let fasadePosition = APP.FASADE_POSITION[_position];
 
@@ -306,7 +310,7 @@ const getFasadePosition = (_position) => {
           Object.assign(PROPS.CONFIG.EXPRESSIONS,
               {
                 "#X#": totalWidth.value,
-                "#Y#": totalHeight.value - module.value.horizont,
+                "#Y#": totalHeight.value - (module.value.isRestrictedModule ? 0 : module.value.horizont),
                 "#Z#": totalDepth.value,
               }))
   )
@@ -327,10 +331,10 @@ const getFasadePositionMinMax = (fasade) => {
 }
 
 const updateFasades = () => {
-  const correctFasadeHeight = module.value.height - module.value.horizont - 4;
+  const correctFasadeHeight = getFasadePosition(module.value.sections[0].fasades[0][0].material.POSITION).FASADE_HEIGHT;
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-      if (section.fasadesDrawers?.length) {
+      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
         calcDrawersFasades(secIndex)
       } else if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;
@@ -341,11 +345,11 @@ const updateFasades = () => {
                     section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
                 module.value.width - 4;
 
-        const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
+        const correctSectionFasadeWidthDoor = Math.floor(correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2));
 
-        const sumDoorsWidth = section.fasades.reduce(
+        const sumDoorsWidth = Math.floor(section.fasades.reduce(
             (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
-            0) / countDoors - ((countDoors - 1) * 2);
+            0) / countDoors - ((countDoors - 1) * 2));
         const sumDoorsHeight = section.fasades[0].reduce(
             (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
             0);
@@ -551,7 +555,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
   }
 
   const firstBox = sortedBoxesByIncrease[0] //нижний ящик
-  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
+  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > bottomFasadePosition) {
     let firstFasadeSize = Math.abs(firstBox.position.y - (firstBox.isProfile ? 0 : otstup) - bottomFasadePosition)
 
     fasadeList.push({
@@ -953,6 +957,53 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
   optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item);
 };
 
+const initSideProfile = () => {
+  if (!module.value.profilesConfig?.sideProfile) {
+
+    const product = APP.CATALOG.PRODUCTS[6513251] //C - образный профиль
+    let profileData = {}
+
+    if (!module.value.profilesConfig) {
+      module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+      module.value.profilesConfig.colorsList = [...product.COLOR]
+      productData.value.PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+    }
+
+    profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+
+    let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
+    if (typeProfile !== "c" && typeProfile !== "l")
+      typeProfile = typeProfile.split(",").pop().replace(/\s/g, '')
+
+    profileData.isProfile = true
+    profileData.TYPE_PROFILE = typeProfile
+    profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
+    profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
+    profileData.size = {x: module.value.height, y: product.height, z: product.depth}
+    profileData.product = 6513251
+
+    profileData.side = LOOPSIDE[module.value.sections[0].loopsSides[0]]?.includes("left") ? "left" : "right"
+    const profileSidesMap = {
+      "right": new THREE.Vector2( -profileData.manufacturerOffset - profileData.size.y / 2, 0),
+      "left": new THREE.Vector2( module.value.width + profileData.manufacturerOffset + profileData.size.y / 2, 0),
+    }
+    const profileRotationMap = {
+      "right": Math.PI / 2,
+      "left": -Math.PI / 2,
+    }
+
+    profileData.position = profileSidesMap[profileData.side];
+    profileData.rotation = new THREE.Vector3(0, 0, profileRotationMap[profileData.side]);
+
+    module.value.profilesConfig.sideProfile = profileData
+    onSideProfile.value = true
+  }
+  else {
+    delete module.value.profilesConfig.sideProfile
+    onSideProfile.value = false
+  }
+
+}
 //#endregion
 
 const reset = (reset = false, moduleGrid = false) => {
@@ -978,32 +1029,44 @@ const reset = (reset = false, moduleGrid = false) => {
 
     lastSection.width += deltaWidth
 
-    lastSection.cells.forEach((cell, cellIndex) => {
-
-      if (cell.cellsRows) {
-        let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-        lastRow.position.x = lastRow.position.x - lastRow.width / 2 + (lastRow.width + deltaWidth) / 2
-        lastRow.width += deltaWidth;
-        if (lastRow.fillings?.length)
-          lastRow.fillings.forEach((filling, index) => {
-            updateFilling(lastRow.width, filling, 'width')
-          })
+    if (lastSection.width > MAX_SECTION_WIDTH) {
+      let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
+      optionsRef.value.addSection?.(module.value.sections.length - 1, countSections)
+    }
+    else if (lastSection.width < MIN_SECTION_WIDTH) {
+      while (module.value.sections[module.value.sections.length - 1].width < MIN_SECTION_WIDTH) {
+        optionsRef.value.deleteSection?.(module.value.sections.length - 1)
       }
-      cell.width = lastSection.width;
-      cell.position.x += lastSection.position.x
+    }
+    else {
+      lastSection.cells.forEach((cell, cellIndex) => {
 
-      if (cell.fillings?.length)
-        cell.fillings.forEach((filling, index) => {
-          updateFilling(cell.width, filling, 'width')
-        })
-    })
+        if (cell.cellsRows) {
+          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+          lastRow.position.x = lastRow.position.x - lastRow.width / 2 + (lastRow.width + deltaWidth) / 2
+          lastRow.width += deltaWidth;
+          if (lastRow.fillings?.length)
+            lastRow.fillings.forEach((filling, index) => {
+              updateFilling(lastRow.width, filling, 'width')
+            })
+        }
+        cell.width = lastSection.width;
+        cell.position.x += lastSection.position.x
 
-    if (lastSection.fillings?.length)
-      lastSection.fillings.forEach((filling, index) => {
-        updateFilling(lastSection.width, filling, 'width')
+        if (cell.fillings?.length)
+          cell.fillings.forEach((filling, index) => {
+            updateFilling(cell.width, filling, 'width')
+          })
       })
-  }
 
+      if (lastSection.fillings?.length) {
+        lastSection.fillings.forEach((filling, index) => {
+          updateFilling(lastSection.width, filling, 'width')
+        })
+      }
+    }
+
+  }
 
   if (sectionsTotalHeight - module.value.sections[0].height !== 0) {
     let deltaHeight = sectionsTotalHeight - module.value.sections[0].height;
@@ -1041,49 +1104,7 @@ const reset = (reset = false, moduleGrid = false) => {
 };
 
 const saveGrid = () => {
-/*  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
-  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers"];
-
-  //Рекурсивная очистка сетки от "технических" полей 2D конструктора
-  const removeGarbage = (object) => {
-    if (typeof object === "object" && !Array.isArray(object)) {
-
-      let objectType = object.type || false
-      object = Object.entries(object).map(([key, value]) => {
-
-        if (nesting.includes(key)) {
-          value = value.map(item => {
-            if (Array.isArray(item))
-              return item = item.map(_item => {
-                return removeGarbage(_item)
-              })
-            else {
-              if(item.fasade)
-                item.fasade = removeGarbage(item.fasade)
-              return removeGarbage(item)
-            }
-          })
-        }
-
-        return [key, value]
-      })
-
-      if (objectType === "fasade")
-        object = object.filter(([key, value]) => !garbageFasades.includes(key))
-      else
-        object = object.filter(([key, value]) => !garbage.includes(key))
-
-      object = Object.fromEntries(object)
-    }
-
-    return object;
-  }*/
-
-  let tmpClone = Object.assign({}, module.value)
-  //tmpClone = removeGarbage(tmpClone)
-
-  return tmpClone;
+  return Object.assign({}, module.value);
 };
 
 defineExpose({
@@ -1097,7 +1118,7 @@ onBeforeMount(() => {
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
-
+  onSideProfile.value = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
 });
 
 onMounted(() => {
@@ -1110,6 +1131,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   shapeAdjuster = null;
   module.value = null;
+  onHorizont.value = false
+  onSideProfile.value = false
 });
 
 watch(visualizationRef, () => {
@@ -1154,9 +1177,10 @@ watch(onHorizont, () => {
         >
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Высота модуля</p>
+            <p class="actions-title">Высота модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalHeight"
                   :inputClass="'actions-input'"
                   :modelValue="totalHeight"
@@ -1168,9 +1192,10 @@ watch(onHorizont, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Ширина модуля</p>
+            <p class="actions-title">Ширина модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalWidth"
                   :inputClass="'actions-input'"
                   :modelValue="totalWidth"
@@ -1182,9 +1207,10 @@ watch(onHorizont, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Глубина модуля</p>
+            <p class="actions-title">Глубина модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalDepth"
                   :inputClass="'actions-input'"
                   :modelValue="totalDepth"
@@ -1195,22 +1221,38 @@ watch(onHorizont, () => {
             </div>
           </div>
 
-          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
+          <div
+              v-if="!module.isRestrictedModule"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
             <p class="actions-title">Цоколь
-              <Toggle v-model="onHorizont"/>
+              <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" />
+              <Toggle v-else v-model="onHorizont"/>
             </p>
+
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
                   :inputClass="'actions-input'"
                   :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                  min="50"
+                  min="78"
                   max="300"
                   :type="'number'"
                   placeholder="0"
-                  :disabled="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
+                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
               />
             </div>
+          </div>
+
+          <div
+              v-if="productData.PROPS.CONFIG.isHiTech"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
+            <p class="actions-title">Боковой профиль</p>
+            <Toggle
+                v-model="onSideProfile"
+                @change="initSideProfile"
+            />
           </div>
 
         </div>
@@ -1421,7 +1463,7 @@ watch(onHorizont, () => {
         &--module-size {
           display: flex;
           flex-direction: row;
-          gap: 1rem;
+          gap: 1.5rem;
           flex-wrap: wrap;
           justify-content: flex-start;
           align-items: center;

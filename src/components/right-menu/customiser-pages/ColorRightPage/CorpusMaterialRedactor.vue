@@ -36,7 +36,7 @@ const { is2Dconstructor } = toRefs(props);
 const emit = defineEmits(["parent-callback"]);
 
 const callback = (material) => {
-  emit("parent-callback", material);
+  emit("parent-callback", material, 'COLOR');
 };
 
 onBeforeMount(() => {
@@ -131,7 +131,7 @@ watch(
       />
     </div>
 
-    <MaterialSelector :materials="materialList" @select="changeModuleTexture" />
+    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
   </div>
 </template>
 

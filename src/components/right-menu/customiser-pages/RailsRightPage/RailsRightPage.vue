@@ -9,6 +9,7 @@ const optionList = ref([]);
 const createList = () => {
   const { data } = createOptionList();
   optionList.value = data;
+
 };
 
 const changeValue = (event: InputEvent, id: number) => {
@@ -20,14 +21,13 @@ const changeValue = (event: InputEvent, id: number) => {
 onBeforeMount(() => {
   createList();
 });
-
 </script>
 <template>
   <div class="rails">
-    <div v-for="(item, key) in optionList" :key="item.NAME + key">
+    <div class="rails__container"  v-for="(item, key) in optionList" :key="item.NAME + key">
       <h3 class="rails__title">{{ item.NAME }}</h3>
       <div class="option__checkbox" v-for="(option, key) in item.CONTANT">
-        <label class="control control-checkbox">
+        <label class="control control-checkbox" v-if="option.visible">
           <input
             type="checkbox"
             :checked="option.active"
@@ -54,6 +54,11 @@ onBeforeMount(() => {
     margin-right: 50px;
     font-size: 18px;
     font-weight: 600;
+  }
+
+  &__container{
+    padding-bottom: 0.5rem ;
+    border-bottom: 1px solid #ecebf1;
   }
 }
 

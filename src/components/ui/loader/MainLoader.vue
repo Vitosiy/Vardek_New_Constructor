@@ -1,5 +1,5 @@
 <template>
-  <div class="main-loader">
+  <div class="loader">
     <div class="main-loader__logo">
       <img src="@/assets/img/logo_vardek_mebel.png" alt="logo">
     </div>
@@ -17,8 +17,8 @@ import LoaderSVG from '@/components/ui/svg/LoaderSVG.vue';
 </script>
 
 <style lang="scss" scoped>
-.main-loader {
-  position: fixed;
+.loader {
+  position: absolute;
   top: 0;
   left: 0;
   background-color: #ffffff;

@@ -1,4 +1,5 @@
 // import { MathUtils } from "three";
+//@ts-nocheck
 import { defineStore } from 'pinia';
 import {
 	computed,

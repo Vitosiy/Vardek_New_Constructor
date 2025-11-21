@@ -92,7 +92,7 @@
           >
             <div class="product-item__img">
               <img 
-                :src="product?.IMG ?`${API_URL}${product.IMG}` : `logo_vardek_mebel.png`" 
+                :src="product?.IMG ?`${API_URL}${product.IMG}` : `/upload/709778d1-2ada-44ff-99a6-ac20e9ea9b03.png`" 
                 :alt="product?.NAME || 'Product image'"
                 loading="lazy"
               >
@@ -275,7 +275,7 @@ const handleProductClick = async (id) => {
 };
 
 const filterHiddenCategories = (categories) => {
-  return categories?.filter(category => !category.hidden) || [];
+  return categories?.filter(category => !category.hidden  ) || [];
 };
 
 const trimArrayByLevel = (targetLevel) => {

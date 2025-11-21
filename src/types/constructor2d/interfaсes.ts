@@ -111,6 +111,7 @@ export interface FillingObject {
   cell?: number;
   row?: number;
   error?: boolean;
+  moduleThickness?: number;
 }
 
 export enum LOOPSIDE {
@@ -146,17 +147,18 @@ export interface FasadeMaterial {
   ALUM?: number;
 }
 
-export enum MANUFACTURER {
-  innotech = 31,
-  иннотех = 31,
-  avantech = 29.25,
-  авантех = 29.25,
-  flowbox = 25,
-  флоубокс = 25,
+export const MANUFACTURER = {
+  "innotech": 31,
+  "иннотех": 31,
+  "avantech": 29.25,
+  "авантех": 29.25,
+  "flowbox": 25,
+  "флоубокс": 25,
+  "квадро": 29,
 }
 
 export interface DrawerFasadeObject extends FasadeObject {
-  manufacturerOffset: MANUFACTURER;
+  manufacturerOffset: Number;
   item: number;
   sec: number | null;
   cell?: number | null;

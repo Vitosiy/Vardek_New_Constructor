@@ -4,6 +4,7 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import { defineExpose, ref } from "vue";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import { useEventBus } from "@/store/appliction/useEventBus.ts";
+import {saveUMGrid} from "@/components/2DmoduleConstructor/utils/Methods.ts";
 
 const props = defineProps({
   product: {
@@ -24,57 +25,11 @@ const selectUMData = (data) => {
   universalModuleData.value = data;
 };
 
-const saveGrid = (module) => {
-  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
-  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers", "hiTechProfiles"];
-
-  //Рекурсивная очистка сетки от "технических" полей 2D конструктора
-  const removeGarbage = (object) => {
-    if (typeof object === "object" && !Array.isArray(object)) {
-
-      let objectType = object.type || false
-      object = Object.entries(object).map(([key, value]) => {
-
-        if (nesting.includes(key)) {
-          value = value.map(item => {
-            if (Array.isArray(item))
-              return item = item.map(_item => {
-                return removeGarbage(_item)
-              })
-            else {
-              if(item.fasade)
-                item.fasade = removeGarbage(item.fasade)
-              return removeGarbage(item)
-            }
-          })
-        }
-
-        return [key, value]
-      })
-
-      if (objectType === "fasade")
-        object = object.filter(([key, value]) => !garbageFasades.includes(key))
-      else
-        object = object.filter(([key, value]) => !garbage.includes(key))
-
-      object = Object.fromEntries(object)
-    }
-
-    return object;
-  }
-
-  let tmpClone = Object.assign({}, module)
-  tmpClone = removeGarbage(tmpClone)
-
-  return tmpClone;
-};
-
 const saveUMData = ({ data, canvasHeight }) => {
   if (!props.product) return;
   if (!props.product.userData) return;
 
-  let tmp_result = saveGrid(universalModule2DConstructor.value.saveGrid())
+  let tmp_result = saveUMGrid(universalModule2DConstructor.value.saveGrid())
 
   universalModuleCash.value = props.product.userData.PROPS.CONFIG.MODULEGRID =
       tmp_result;
@@ -91,7 +46,7 @@ const openUMRedactor = () => {
 
 const closeUMRedactor = () => {
   if (!gridUMSaved.value) {
-    props.product.userData.PROPS.CONFIG.MODULEGRID = saveGrid(universalModuleCash.value);
+    props.product.userData.PROPS.CONFIG.MODULEGRID = saveUMGrid(universalModuleCash.value);
   }
 
   universalModuleData.value = false;

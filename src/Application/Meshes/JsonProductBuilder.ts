@@ -14,6 +14,7 @@ export class JsonBuilder {
     leftMaterial: THREE.Material | null = null
     backMaterial: THREE.Material | null = null
     topMaterial: THREE.Material | null = null
+    tsargaMaterial: THREE.Material | null = null
     keys: string[] = ['fasade', 'center', 'front', 'front1', 'front2']
     convert: Function
 
@@ -22,7 +23,7 @@ export class JsonBuilder {
         this.convert = parent.calculateFromString
     }
 
-    createMesh({ data, parent_size, fasade, left, right, back, top }: {
+    createMesh({ data, parent_size, fasade, left, right, back, top, tsarga }: {
         data: THREETypes.TObject,
         parent_size?: THREETypes.TObject,
         fasade?: THREETypes.TObject,
@@ -30,6 +31,7 @@ export class JsonBuilder {
         right?: THREETypes.TObject,
         back?: THREETypes.TObject,
         top?: THREETypes.TObject,
+        tsarga?: THREETypes.TObject,
     }) {
 
         const json = data.json ? data.json : data
@@ -38,15 +40,45 @@ export class JsonBuilder {
 
         this.material = this.createMaterial(json.material, fasade) as THREE.Material
 
-        if(left)
-            this.leftMaterial = this.createMaterial(json.material, left) as THREE.Material
-        if(right)
-            this.rightMaterial = this.createMaterial(json.material, right) as THREE.Material
-        if(back)
-            this.backMaterial = this.createMaterial(json.material, back) as THREE.Material
-        if(top)
-            this.topMaterial = this.createMaterial(json.material, top) as THREE.Material
+        if(left) {
+            if (left.PALETTE) {
+                this.leftMaterial = this.parent.palette_bulider.getPalette(left.COLOR, left.PALETTE)
+            }
+            else
+                this.leftMaterial = this.createMaterial(json.material, left.COLOR) as THREE.Material
+        }
 
+        if(right) {
+            if (right.PALETTE) {
+                this.rightMaterial = this.parent.palette_bulider.getPalette(right.COLOR, right.PALETTE)
+            }
+            else
+                this.rightMaterial = this.createMaterial(json.material, right.COLOR) as THREE.Material
+        }
+
+        if(back) {
+            if (back.PALETTE) {
+                this.backMaterial = this.parent.palette_bulider.getPalette(back.COLOR, back.PALETTE)
+            }
+            else
+                this.backMaterial = this.createMaterial(json.material, back.COLOR) as THREE.Material
+        }
+
+        if(top) {
+            if (top.PALETTE) {
+                this.topMaterial = this.parent.palette_bulider.getPalette(top.COLOR, top.PALETTE)
+            }
+            else
+                this.topMaterial = this.createMaterial(json.material, top.COLOR) as THREE.Material
+        }
+
+        if(tsarga) {
+            if (tsarga.PALETTE) {
+                this.tsargaMaterial = this.parent.palette_bulider.getPalette(tsarga.COLOR, tsarga.PALETTE)
+            }
+            else
+                this.tsargaMaterial = this.createMaterial(json.material, tsarga.COLOR) as THREE.Material
+        }
 
         if (Array.isArray(json.items)) {
 
@@ -79,10 +111,6 @@ export class JsonBuilder {
                 const type = this.parent.findKeyInObject(clone, this.keys)
                 this.parseDate({ data: clone[type], group, obj, parent_size })
             }
-
-
-
-
 
         }
         else {
@@ -141,6 +169,9 @@ export class JsonBuilder {
             else if(data.id.includes("top_fasade") && this.topMaterial) {
                 material = this.topMaterial
             }
+            else if(data.id.includes("horizontalline") && this.tsargaMaterial) {
+                material = this.tsargaMaterial
+            }
 
             obj[data.id] = new THREE.Mesh(geometry, material);
             obj[data.id].receiveShadow = true;
@@ -162,7 +193,7 @@ export class JsonBuilder {
             // obj[item.id].userData.rotation = item.rotation
         }
         if (data.id === 'back') {
-            obj[data.id].position.y = 0
+            obj[data.id].position.y = this.convert(data.position.y) ?? 0
         }
 
         // const type =
@@ -270,19 +301,19 @@ export class JsonBuilder {
 
             switch ((data.type as THREETypes.TMaterialType)) {
                 case 'MeshBasicMaterial':
-                    material = new THREE.MeshBasicMaterial(data);
+                    material = new THREE.MeshBasicMaterial(data.opt);
                     break;
                 case 'MeshStandardMaterial':
-                    material = new THREE.MeshStandardMaterial(data);
+                    material = new THREE.MeshStandardMaterial(data.opt);
                     break
                 case 'MeshPhongMaterial':
-                    material = new THREE.MeshPhongMaterial(data);
+                    material = new THREE.MeshPhongMaterial(data.opt);
                     break
                 case 'MeshPhysicalMaterial':
-                    material = new THREE.MeshPhysicalMaterial(data);
+                    material = new THREE.MeshPhysicalMaterial(data.opt);
                     break
                 case 'MeshLambertMaterial':
-                    material = new THREE.MeshLambertMaterial(data);
+                    material = new THREE.MeshLambertMaterial();
                     break
             }
         }
@@ -292,7 +323,5 @@ export class JsonBuilder {
         }
 
         return material
-
     }
-
 }

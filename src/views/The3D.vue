@@ -25,6 +25,7 @@ import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { useBascetEvents } from "@/components/Basket/helper/basketEvents";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -42,22 +43,24 @@ import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/Open
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 import Toggle from "@vueform/toggle";
+import Accordion from "@/components/ui/accordion/Accordion.vue";
+import MainLoader from "@/components/ui/loader/MainLoader.vue";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useScreenshotsStore } from "@/features/store/screenshotsStore/screenshotsStore";
 
-const schemeTransitionStore = useSchemeTransition();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
-const screenshotsStore = useScreenshotsStore();
-
-const appData = ref<{ [key: string]: any } | null>(null);
-
 const eventBus = useEventBus();
-
 const modelState = useModelState();
 const uniformState = useUniformState();
+const { testConnect, checkLoadContent, scheduleBasketSync } = useBascetEvents();
+
+const screenshotsStore = useScreenshotsStore();
+const schemeTransitionStore = useSchemeTransition();
+
+const appData = ref<Record<string, any> | null>(null);
 
 const models = ref<any>(null);
 const wallMaterials = ref<number | null>(null);
@@ -74,7 +77,6 @@ const _FASADE = ref({});
 const _MILLING = ref({});
 
 const preloaderRef = ref<HTMLElement | null>(null);
-const activePreloader = ref<boolean>(false);
 
 const sceneContainer = ref<HTMLElement | null>(null);
 const VerdekConstructor = ref<Application | null>(null);
@@ -110,32 +112,15 @@ const isModalOpen = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
 
+//Контроллер
+const controllerValue = ref([
+  { name: "Позиционирование", type: "translate" },
+  { name: "Вращение", type: "rotate" },
+]);
+const curControllerValue = ref(null);
+
 // Список событий
-const priceUpdateEvents  = [
-    // "A:Move",
-    // "A:Selected",
-    // "A:ContantLoaded",
-    // "A:ClearSelected",
-    // "A:ScreenPrint",
-    // "A:Take3DScreenshot"
-    // "U:PositionChanged",
-    // "U:DrawPatina",
-    // "U:DeliteFasad",
-    // 'U:ChangeModule',
-    
-    "U:Drop",
-    "U:Model-resize",
-    "U:ChangePaletteColor",
-    "U:ChangeMilling",
-    'U:ChangeFasade',
-    'A:Disable-Uniform-Mode',
-    'A:UM-update',
-    'A:Duplicate',
-    'A:RemoveModel',
-    'A:close-modal-custom',
-    // 'close-modal'
-    
-];
+// const pricetEventsMap = bascetEvents.getEventsMap;
 
 onMounted(async () => {
   try {
@@ -155,7 +140,7 @@ onMounted(async () => {
       // Подписываемся на события
       eventBus.on("A:Move", getMove);
       eventBus.on("A:Selected", selected);
-      eventBus.on("A:ContantLoaded", checkContantLoad);
+      // eventBus.on("A:ContantLoaded", checkContantLoad);
       eventBus.on("A:ClearSelected", clearSelected);
       eventBus.on("A:ScreenPrint", screenPrint);
       eventBus.on("A:Take3DScreenshot", take3DScreenshot);
@@ -163,20 +148,15 @@ onMounted(async () => {
       eventBus.on("A:Create", setLocalActivateValue);
       eventBus.on("A:NextAction", setLocalActivateValue);
       eventBus.on("A:PrevAction", setLocalActivateValue);
-      // Подписываем все события на один обработчик
-
-      priceUpdateEvents.forEach((event) => {
-        console.log(event, "EV");
-        eventBus.on(event, commonEventHandler);
-      });
-
+      eventBus.on("A:GlobalTransformMode_Off", setLocalActivateValue);
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);
 
       await nextTick();
       VerdekConstructor.value.refreshViewer();
-      actions.value = VerdekConstructor.value.getAction()
-      // console.log( actions.value)
+      actions.value = VerdekConstructor.value.getAction();
+      curControllerValue.value = controllerValue.value[0].name;
+      testConnect();
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);
@@ -188,7 +168,7 @@ onBeforeUnmount(() => {
     // Отключаем все события
     eventBus.off("A:Move", getMove);
     eventBus.off("A:Selected", selected);
-    eventBus.off("A:ContantLoaded", checkContantLoad);
+    // eventBus.off("A:ContantLoaded", checkContantLoad);
     eventBus.off("A:ClearSelected", clearSelected);
     eventBus.off("A:ScreenPrint", screenPrint);
     eventBus.off("A:Take3DScreenshot", take3DScreenshot);
@@ -232,38 +212,39 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
-const commonEventHandler = (data) => {
+// const commonEventHandler = (data) => {
+//   console.log("Обновление корзиный", data);
+//   try {
+//     scheduleBasketSync();
+//   } catch (e) {
+//     console.warn("Basket addFromScene on drop failed", e);
+//   }
+// };
 
-  console.log("Обновление корзиный", data);
-  try {
-    scheduleBasketSync();
-  } catch (e) {
-    console.warn("Basket addFromScene on drop failed", e);
-  }
-};
+// const addBascetListener = () => {
+//   if (!checkContantLoad) {
+//     eventBus.on("A:ContantLoaded", scheduleBasketSync);
+//   } else {
+//   }
+// };
 
-const checkContantLoad = (state: boolean) => {
-  // console.log("checkContantLoad", state);
-  activePreloader.value = state;
-};
+// // Дебоунс пересчёта корзины
+// let basketDebounceTimer: any = null;
+// const scheduleBasketSync = async () => {
+//   console.log('FI')
+//   const data = actions.value.save();
+//   roomContantData.value?.setRoomContantDataForBasket(data);
+//   console.log("data", JSON.parse(data));
 
-// Дебоунс пересчёта корзины
-let basketDebounceTimer: any = null;
-const scheduleBasketSync = async () => {
-  const data = actions.value.save()
-  roomContantData.value?.setRoomContantDataForBasket(data)
-  console.log('data', JSON.parse(data))
-  // await nextTick();
-  // basketStore.addFromScene();
-  clearTimeout(basketDebounceTimer);
-  basketDebounceTimer = setTimeout(() => {
-    try {
-      basketStore.addFromScene();
-    } catch (e) {
-      console.warn("Basket addFromScene debounce failed", e);
-    }
-  }, 500);
-};
+//   clearTimeout(basketDebounceTimer);
+//   basketDebounceTimer = setTimeout(() => {
+//     try {
+//       basketStore.addFromScene();
+//     } catch (e) {
+//       console.warn("Basket addFromScene debounce failed", e);
+//     }
+//   }, 500);
+// };
 
 const getMove = (move: boolean) => {
   if (!product.value) return;
@@ -288,11 +269,17 @@ const controlsActivate = () => {
         controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
       }
     } catch (e) {
-      console.log("Не удалось найти параметр MOUSE_POSITION", e);
+      console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
     }
   }
 
   modelState.setTransformControlsValue(transformControlsValue.value);
+};
+
+const changeControllerType = (data) => {
+  const mode = data.type;
+  curControllerValue.value = data.name;
+  eventBus.emit("A:TransformSetMode", mode);
 };
 
 const selected = async (item: any) => {
@@ -562,7 +549,7 @@ const removeModel = (model) => {
     controller.value = false;
     transformControlsValue.value = false;
   }
-   scheduleBasketSync();
+  scheduleBasketSync();
 };
 
 /** Работа с переходящий рисунок */
@@ -597,7 +584,13 @@ const removeFromUniformGroup = (id) => {
   }
 };
 
+const checkContantLoad = computed(() => {
+  return roomState.getLoad;
+});
+
 const activeController = computed(() => {
+  if (!modelState.getCurrentModel) controller.value = false;
+
   if (uniformState.getUniformModeData.uniformMode) {
     controller.value = false;
   }
@@ -659,6 +652,8 @@ const openTableRedactor = () => {
   const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
 
   if (parent) {
+    modelState.setCurrentRaspilParent(parent);
+
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
     APP!.tableTopCreator?.applyMovements(parent);
   }
@@ -682,6 +677,7 @@ const closeTableRedactor = () => {
   if (parent) {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
   }
+  modelState.setCurrentRaspilParent(false);
 };
 
 const deliteTable = () => {
@@ -702,6 +698,7 @@ const deliteTable = () => {
   } else {
     removeModel(null);
   }
+  modelState.setCurrentRaspilParent(false);
 };
 
 defineExpose({
@@ -709,12 +706,19 @@ defineExpose({
   closeTableRedactor,
   openTableRedactor,
   selected,
-  activePreloader,
+  scheduleBasketSync,
   getScreenshots: () => screenshotsStore.getScreenshots(),
   getScreenshotsByRoom: (roomId: string) =>
     screenshotsStore.getScreenshotsByRoom(roomId),
   clearScreenshots: () => screenshotsStore.clearScreenshots(),
 });
+
+watch(
+  () => checkContantLoad.value,
+  () => {
+    checkLoadContent();
+  }
+);
 
 watch(
   () => transformControlsValue.value,
@@ -725,59 +729,10 @@ watch(
 </script>
 
 <template>
+  <!-- <div ref="preloaderRef" class="preloader" v-show="!roomState.getLoad"></div> -->
+  <MainLoader v-show="!roomState.getLoad" />
+
   <div ref="sceneContainer" class="scene-container"></div>
-  <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
-
-  <!-- Пока что закоментил потом удалим <div
-    class="uniform__container"
-    v-if="
-      uniformState!.getUniformGroups.length > 0 &&
-      uniformState!.getUniformModeData.uniformMode
-    "
-  >
-    <div
-      class="uniform__item"
-      v-for="(item, key) in uniformState!.getUniformGroups as THREETypes.TUniformGroups[]"
-      :key="key + item.id"
-    >
-      <p class="uniform__name" :style="[`background-color: ${item.color}`]">
-        Группа {{ item.id + 1 }}
-      </p>
-      <button class="uniform__btn" @click="deliteUniformGroup(item.id)">
-        УДАЛИТЬ ГРУППУ
-      </button>
-
-      <button class="uniform__btn" @click="addToUniformGroup(item.id)">
-        ДОБАВИТЬ ЭЛЕМЕНТ
-      </button>
-
-      <button class="uniform__btn" @click="removeFromUniformGroup(item.id)">
-        Убрать ЭЛЕМЕНТ
-      </button>
-    </div>
-  </div> -->
-
-  <!-- <div class="ui-panel--right">
-    <button
-      style="margin-top: 2rem"
-      v-show="uniformState!.getUniformModeData.uniformMode"
-      :class="['btn', pregropping]"
-      @click="preCreateUniformGroup"
-    >
-      Создать новую группу
-    </button>
-
-    <button
-      class="btn btn_green"
-      @click="сreateUniformGroup()"
-      v-show="
-        uniformState!.getPreGroup > 0 &&
-        uniformState!.getUniformModeData.uniformMode
-      "
-    >
-      Создать
-    </button>
-  </div> -->
 
   <div
     :class="['model-controller', activeController]"
@@ -885,7 +840,39 @@ watch(
         !uniformState.getUniformModeData.uniformMode
       "
     >
-      <p class="switch__title">Позиционирование</p>
+      <transition name="controller-toggle">
+        <p class="switch__title" v-if="!transformControlsValue">
+          {{ curControllerValue }}
+        </p>
+      </transition>
+
+      <transition name="controller-toggle">
+        <Accordion v-if="transformControlsValue">
+          <template #title>
+            <h4 class="accordion__header">
+              {{ curControllerValue }}
+            </h4>
+          </template>
+          <template #params="{ onToggle }">
+            <ul class="accordion__contant">
+              <li
+                class="accordion__text"
+                v-for="(data, key) in controllerValue"
+                :key="key + data.name"
+                @click="
+                  () => {
+                    changeControllerType(data);
+                    onToggle();
+                  }
+                "
+              >
+                {{ data.name }}
+              </li>
+            </ul>
+          </template>
+        </Accordion>
+      </transition>
+
       <div class="switch__container">
         <Toggle v-model="transformControlsValue" />
       </div>
@@ -921,13 +908,15 @@ watch(
   z-index: 0;
 }
 
-.preloader {
-  position: absolute;
-  width: 100dvw;
-  height: 100dvh;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-}
+// .preloader {
+//   position: absolute;
+//   width: 100dvw;
+//   height: 100dvh;
+
+//   background: rgba(145, 144, 144, 0.5);
+//   backdrop-filter: blur(5px);
+//   z-index: 999;
+// }
 
 .inputs {
   position: absolute;
@@ -1208,8 +1197,43 @@ watch(
 
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-end;
     gap: 5px;
+  }
+  &__title {
+    position: absolute;
+    bottom: 2rem;
+  }
+}
+
+.accordion {
+  padding: 0.5rem 1rem;
+  color: $alter-gray;
+  // background-color: #ffffff;
+  backdrop-filter: blur(5px);
+  &__header {
+    margin-right: 0.5rem;
+  }
+  &__summary {
+    gap: 10rem;
+  }
+
+  &__contant {
+    padding-top: 0.5rem;
+    border-top: 1px solid #a3a9b5;
+  }
+
+  &__text {
+    cursor: pointer;
+    transition-property: color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+    @media (hover: hover) {
+      /* when hover is supported */
+      &:hover {
+        color: $strong-grey;
+      }
+    }
   }
 }
 </style>

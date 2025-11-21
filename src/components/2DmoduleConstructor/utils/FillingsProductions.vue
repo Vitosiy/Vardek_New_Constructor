@@ -14,6 +14,7 @@ import {useAppData} from "@/store/appliction/useAppData.ts";
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 const props = defineProps({
   fillings: {
@@ -111,7 +112,8 @@ const addFilling = (type, product, oldFillingObject = false) => {
   const {sec, cell, row} = selectedFilling.value
   const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
   const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
-  const { PROPS } = modelState.getCurrentModel;
+  const { userData } = modelState.getCurrentModel;
+  const { PROPS } = userData;
 
   if (row === null && cell === null && sec === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения");
@@ -123,7 +125,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
     return;
   }
 
-  if (isBottomHiTechProfile && !PROPS.CONFIG.OPTION?.includes(4722965)) {
+  if (isBottomHiTechProfile && !PROPS.CONFIG.OPTIONS.find((opt, index) => {
+    if (+opt.id === 4722965 && opt.active)
+      return opt;
+  })) {
     alert("Г-образный профиль доступен только для навесного модуля", "error")
     return;
   }
@@ -163,13 +168,18 @@ const addFilling = (type, product, oldFillingObject = false) => {
   let profileData = {}
   if (isHiTechProfile) {
 
-    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section"))
-      width = startFillingData.width + module.value.moduleThickness * 2 || startFillingData.width
+    if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section")) {
+      width = startFillingData.width + module.value.moduleThickness * 2
+      startFillingData.x -= module.value.moduleThickness
+    }
 
     height = product.height || module.value.moduleThickness
 
-    if (!module.value.profilesConfig)
+    if (!module.value.profilesConfig) {
       module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+      module.value.profilesConfig.colorsList = [...product.COLOR]
+      PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+    }
 
     profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
 
@@ -183,7 +193,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
     if(isBottomHiTechProfile) {
       profileData.isBottomHiTechProfile = true
-      startFillingData.y = module.value.height.value - module.value.horizont - height
+      startFillingData.y = module.value.height - module.value.horizont - height
     }
 
     if(!currentModuleSegment.hiTechProfiles)
@@ -199,10 +209,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
     image: product.PREVIEW_PICTURE,
     type: _type,
     position: new THREE.Vector2(startFillingData.x, startFillingData.y),
-    size: new THREE.Vector3(startFillingData.width, startFillingData.height, depth),
+    size: new THREE.Vector3(width, height, depth),
     width,
     height,
-    color: module.value.moduleColor,
+    color: profileData.COLOR || module.value.moduleColor,
     sec,
     cell,
     row,
@@ -210,6 +220,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
   if(isHiTechProfile) {
     fillingObject.isProfile = profileData
+    fillingObject.moduleThickness = module.value.moduleThickness
     currentModuleSegment.hiTechProfiles.push(fillingObject)
     currentFillingsArray.push(fillingObject);
 
@@ -223,10 +234,18 @@ const addFilling = (type, product, oldFillingObject = false) => {
       currentSection.fasadesDrawers = []
 
     let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0].fasades[0][0]
-    let manufacturer_name = product.EN_NAME?.toLowerCase().split(/\s|,/).shift() || product.NAME?.toLowerCase().split(/\s|,/).shift();
-    let manufacturerOffset = MANUFACTURER[manufacturer_name]
+
+    let manufacturerOffset = 0
+    let manufacturer_name = product.EN_NAME?.toLowerCase()|| product.NAME?.toLowerCase()
+    Object.entries(MANUFACTURER).forEach(([key, offset]) => {
+      if(manufacturer_name.includes(key)) {
+        manufacturer_name = key
+        manufacturerOffset = offset
+      }
+    })
 
     fillingObject.type = "drawer"
+    fillingObject.moduleThickness = module.value.moduleThickness
     fillingObject.fasade = <DrawerFasadeObject>{
       id: currentSection.fasadesDrawers.length + 1,
       width: baseFasade.width,
@@ -268,9 +287,9 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) =
   let curItem = curRow.fillings[itemIndex];
   curRow.fillings.forEach((filling, index) => {
     if (index > itemIndex) {
-      if(filling.fasade)
-        filling.fasade.item -= 1;
       filling.id -= 1;
+      if(filling.fasade)
+        filling.fasade.item = filling.id;
     }
   })
 
@@ -384,8 +403,21 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   visualizationRef.value.renderGrid();
 };
 
+const createFacadeData = (fasadeIndex) => {
+  const productId = modelState.getCurrentModel.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex,
+    productId,
+  });
+};
+
 const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
   isOpenMaterialSelector.value = false;
+
+  /** @Создание_данных_для_выбранного_фасада */
+  createFacadeData();
 
   if (
       currentFasadeMaterial.value &&
@@ -494,6 +526,10 @@ onMounted(() => {
     selectCell(0, cellIndex, rowIndex)
 })
 
+const closeMenu = () => {
+  isOpenMaterialSelector.value = false;
+};
+
 </script>
 
 <template>
@@ -545,24 +581,26 @@ onMounted(() => {
               </h3>
             </summary>
 
-            <div
-                :class="[
+            <div class="item-group-wrapper">
+              <div
+                  :class="[
                           'item-group-color'
                         ]"
-                style
-                v-for="(filling, key) in fillingGroup.items"
-                :key="key + filling.NAME"
-                @click="addFilling(fillingGroup.groupName, filling)"
-            >
-              <div class="item-group-name">
-                <img
-                    class="name__bg"
-                    :src="_URL + filling.PREVIEW_PICTURE"
-                    :alt="filling.NAME"
-                />
-                <p class="name__text">
-                  {{ filling.NAME }}
-                </p>
+                  style
+                  v-for="(filling, key) in fillingGroup.items"
+                  :key="key + filling.NAME"
+                  @click="addFilling(fillingGroup.groupName, filling)"
+              >
+                <div class="item-group-name">
+                  <img
+                      class="name__bg"
+                      :src="_URL + filling.PREVIEW_PICTURE"
+                      :alt="filling.NAME"
+                  />
+                  <p class="name__text">
+                    {{ filling.NAME }}
+                  </p>
+                </div>
               </div>
             </div>
           </details>
@@ -972,6 +1010,8 @@ onMounted(() => {
 
   <transition name="slide--right" mode="out-in">
     <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+
       <AdvanceCorpusMaterialRedactor
           :is-fasade="true"
           :elementData="currentFasadeMaterial.data"
@@ -1005,7 +1045,6 @@ onMounted(() => {
         display: flex;
         flex-direction: column;
         gap: 1.25rem;
-        overflow: scroll;
 
         &::-webkit-scrollbar {
           width: 5px;
@@ -1061,6 +1100,13 @@ onMounted(() => {
         color: #a3a9b5;
         margin-right: 10px;
 
+        &-wrapper {
+          overflow-y: scroll;
+          max-height: 72vh;
+          width: 16vw;
+        }
+
+
         &__title {
           font-size: 18px;
           font-weight: 600;
@@ -1102,8 +1148,6 @@ onMounted(() => {
           }
         }
       }
-
-
     }
   }
 }
@@ -1403,6 +1447,9 @@ onMounted(() => {
 }
 
 .accordion {
+  border: unset;
+  overflow-y: scroll;
+  max-height: 85vh;
 
   details {
     position: relative;
@@ -1427,7 +1474,6 @@ onMounted(() => {
 
   details[open] {
     border-color: #da444c;
-
   }
 
   details summary::-webkit-details-marker {
@@ -1476,7 +1522,6 @@ onMounted(() => {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      overflow: auto;
     }
 
     &-item {

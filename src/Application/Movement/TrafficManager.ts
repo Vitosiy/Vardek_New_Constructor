@@ -17,15 +17,18 @@ import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 import { DeepDispose } from '../Utils/DeepDispose';
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
 
 export class TrafficManager {
 
     root: THREETypes.TApplication
     canvas: HTMLElement;
     scene: THREE.Scene;
+    render: THREETypes.TRenderer
 
     events: ReturnType<typeof useEventBus> = useEventBus()
     modelState: ReturnType<typeof useModelState> = useModelState()
+    menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
 
     raycaster: THREE.Raycaster = new THREE.Raycaster()
     mouse: THREE.Vector2 = new THREE.Vector2()
@@ -53,6 +56,7 @@ export class TrafficManager {
     constructor(root: THREETypes.TApplication, room: THREETypes.TRoomManager) {
 
         this.root = root
+        this.render = root._renderClass
         this.controls = root._orbitControls
         this.canvas = root._canvas;
         this.scene = root._scene;
@@ -100,26 +104,23 @@ export class TrafficManager {
             })
 
             console.log('OBJ', object);
-            console.log('OBJ_userData', object.userData);
+            console.log('OBJ_CONFIG', object.userData.PROPS.CONFIG);
 
             // console.log('object.userData.PROPS.PRODUCT', object.userData.PROPS.PRODUCT)
-            console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
+            console.log('PROD', this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT])
             // Обновление корзины при простом выборе/перемещении не требуется
 
-            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT], 'PROD')
-            // console.log(this.root.geometryBuilder?.buildProduct._PRODUCTS[7701849])
-            // console.log(object, 'object')
-            // console.log(this.root.geometryBuilder?.buildProduct._MODELS[618155], 'Model')
-
-            if (object.userData.elementType !== 'raspil') {
+            if (object.userData.elementType !== 'raspil' && !object.userData.disableRaycast) {
                 const product = this.root.geometryBuilder?.buildProduct._PRODUCTS[object.userData.PROPS.PRODUCT];
-                this.modelState.createCurrentModelFasadesData(product.FACADE);
+                // this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
         }
         else {
+
             this.events.emit("A:ClearSelected", { object: null, roomContant: this.room._roomContant });
             this.modelState.clearCurrentModelFasadesData()
+            // this.menuStore.closeAllMenus();
         }
 
     }
@@ -130,6 +131,13 @@ export class TrafficManager {
 
     get _camera() {
         return this.root._camera
+    }
+
+    public checkSelect(value) {
+        if (value == null) {
+            this.modelState.clearCurrentModelFasadesData()
+            this.menuStore.closeAllMenus();
+        }
     }
 
     async update(room: THREETypes.TRoomManager) {
@@ -151,7 +159,6 @@ export class TrafficManager {
     removeFromRoom({ product }: { product?: Event | THREE.Object3D | string | numer } = {}) {
 
         const removeObj = product ?? this._currentObject
-        console.log('product', product, removeObj)
         if (!removeObj) return
 
         if (removeObj instanceof THREE.Object3D) {
@@ -177,12 +184,13 @@ export class TrafficManager {
             // Синхронизируем корзину: удаляем товар, соответствующий удалённому объекту сцены
             try {
                 const basketStore = useBasketStore();
-                basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+                basketStore.removeItem('scene', String((removeObj as any).id));
             } catch (e) {
                 console.warn('Basket sync remove failed', e)
             }
 
             this.modelState.setCurrentModel(null)
+            this.events.emit("U:RemoveModel")
             return
         }
 
@@ -191,10 +199,11 @@ export class TrafficManager {
         this.boxHelper.removeBoxHelper()
         this.ruler.clearRuler();
         this.currentObject = null
+        this.events.emit("U:RemoveModel")
         // Синхронизируем корзину для случая, когда пришёл не Object3D
         try {
             const basketStore = useBasketStore();
-            basketStore.removeItem('mainConstructor', String((removeObj as any).id));
+            basketStore.removeItem('scene', String((removeObj as any).id));
         } catch (e) {
             console.warn('Basket sync remove failed', e)
         }
@@ -205,13 +214,11 @@ export class TrafficManager {
 
         this.onRemoveFromRoom = (model) => {
             this.removeFromRoom(model)
+            this.events.emit("A:RemoveModelSuccses");
         }
-
 
         this.events.on('A:RemoveModel', this.onRemoveFromRoom);
         this.events.on('A:RemoveModelFromBasket', (payload: any) => {
-            console.log(payload, 'payload')
-
             let target = payload?.product;
 
             if (!(target instanceof THREE.Object3D)) {

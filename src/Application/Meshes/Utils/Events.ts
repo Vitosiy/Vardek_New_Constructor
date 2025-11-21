@@ -99,6 +99,7 @@ export class MeshEvents extends BuildersHelper {
 
     private onChangeModelSize: ({ data, mesh, type }: TResizeModel) => void;
     private onCgangeRotation: (data: number) => void
+    private onChangeRootModel: ({ data, mesh }) => void;
 
     private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
@@ -169,7 +170,8 @@ export class MeshEvents extends BuildersHelper {
         this.onChangePlinth = this.changePlinth.bind(root)
 
         this.onChangeModelSize = this.changeModelSize.bind(root);
-        this.onCgangeRotation = this.changeRotation.bind(root)
+        this.onCgangeRotation = this.changeRotation.bind(root);
+        this.onChangeRootModel = this.changeRootModel.bind(root);
 
         this.addVueEvents();
 
@@ -214,7 +216,7 @@ export class MeshEvents extends BuildersHelper {
             this.buildProduct.fasade_builder.getFasade(
                 {
                     props: PROPS,
-                    model_data: CONFIG.MODEL,
+                    model_data: this._MODELS[CONFIG.MODELID],
                     fasadeNdx,
                     incomingModel,
                     defaultConfig,
@@ -235,7 +237,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-            console.log('hhhhhhh')
+
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
             FASADE_PROPS[fasadeNdx].MILLING = globalMilling
@@ -334,12 +336,17 @@ export class MeshEvents extends BuildersHelper {
     }
 
     private handleWindowChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
-        const showcase = CONFIG.SHOWCASE;
+        const { SHOWCASE } = CONFIG;
         const milling = fasadeProp.MILLING
+        const fasadeShowcase = CONFIG.FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
 
-        if (showcase.length > 0 && (fasadeProp.SHOWCASE === null || !incomingModel)) {
-            this.changeShowcase({ data: showcase[0], fasadeNdx });
-        } else {
+        if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
+            this.changeShowcase({ data: SHOWCASE[0], fasadeNdx });
+        }
+        else if (incomingModel) {
+            this.changeShowcase({ data: incomingModel, fasadeNdx });
+        }
+        else {
             Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
         }
     }
@@ -405,13 +412,19 @@ export class MeshEvents extends BuildersHelper {
 
         if (Array.isArray(elementsList) && elementsList[0]) {
             elementsList.forEach((el) => {
-                const fasadeList = el.userData.PROPS.FASADE
-                if (fasadeList.length > 0) {
-                    fasadeList.forEach(async (fasade, fasadeNdx) => {
+                const { PROPS } = el.userData
+                const { CONFIG, FASADE, PRODUCT } = PROPS
+                const { FASADE_PROPS } = CONFIG
+                const currentProduct = this._PRODUCTS[PRODUCT]
+
+                const includeIncomeFasade = currentProduct.FACADE.includes(data.ID)
+
+                if (FASADE.length > 0) {
+                    FASADE.forEach(async (fasade, fasadeNdx) => {
                         // const prevMesh = this._currentMesh
                         this._currentMesh = el;
 
-                        if (data.ID == 7397) {
+                        if (data.ID == 7397 || !includeIncomeFasade) {
                             await this.catchDeliteFasade(fasadeNdx, el)
                         }
                         else {
@@ -639,6 +652,7 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     changeShowcase({ data, fasadeNdx }: TDataWithNdx) {
+
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -683,7 +697,6 @@ export class MeshEvents extends BuildersHelper {
         fasade.SHOWCASE = 1013628
 
     }
-
 
     //------------------
     /** @Переходящий_рисунок  */
@@ -842,12 +855,15 @@ export class MeshEvents extends BuildersHelper {
 
     async changeModelSize({ data, mesh, type }: TResizeModel) {
 
+
+        const extrasYsize = [2050360, 1059832]
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return
         const { PROPS } = currentMesh!.userData
-        const { CONFIG } = PROPS
+        const { CONFIG, PRODUCT } = PROPS
         const { POSITION, UNIFORM_TEXTURE } = CONFIG
+        const fasadeSize = type === 'fasade'
 
         /** Очищаем родительский объект */
         this.dispose.clearParent(currentMesh as THREE.Object3D)
@@ -855,24 +871,26 @@ export class MeshEvents extends BuildersHelper {
         const rebuild = async () => {
 
             /** Пересоздаём по новым параметрам */
-            let body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data);
+            let body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data, fasadeSize);
             /** Добавляем к родителю */
             currentMesh?.add(body as THREE.Object3D);
             currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
             currentMesh?.updateMatrixWorld(true);
 
+            const { SIZE } = currentMesh?.userData.PROPS.CONFIG
 
-            // const aabb = new THREE.Box3().setFromObject(currentMesh);
-            // const aabb = this.buildProduct.computeAABB(currentMesh)
-            // const size = new THREE.Vector3()
-            // aabb.getSize(size);
 
             const height = body.userData.trueSizes.HEIGHT
-
-            /** Для корректного примагничивания к стенам */
-            currentMesh.userData.trueSizes = {
-                DEPTH: data.depth * 0.5, HEIGHT: height, WIDTH: data.width * 0.5
+            const incomeSize = {
+                DEPTH: fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5,
+                HEIGHT: height,
+                WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5
             }
+            /** Для корректного примагничивания к стенам */
+            // currentMesh.userData.trueSizes = {
+            //     DEPTH: data.depth * 0.5, HEIGHT: height, WIDTH: data.width * 0.5
+            // }
+            currentMesh.userData.trueSizes = incomeSize
             /** Пересоздаём UNIFORM_TEXTURE*/
             if (UNIFORM_TEXTURE.group !== null) {
 
@@ -917,11 +935,11 @@ export class MeshEvents extends BuildersHelper {
         currentMesh.userData.aabb.getCenter(center);
         currentMesh.userData.obb.center.copy(center);
         /** @Корректная_коллизия */
-        // console.log(currentMesh)
+        const { SIZE } = currentMesh?.userData.PROPS.CONFIG
 
-        currentMesh.userData.obb.halfSize.x = data.width * 0.5;
+        currentMesh.userData.obb.halfSize.x = fasadeSize ? SIZE.width * 0.5 : data.width * 0.5;
 
-        if (PROPS.FASADE.length === 0) {
+        if (PROPS.FASADE.length === 0 || extrasYsize.includes(PRODUCT)) {
             currentMesh.userData.obb.halfSize.y = data.height * 0.5;
         }
 
@@ -934,7 +952,29 @@ export class MeshEvents extends BuildersHelper {
     }
 
     //------------------
-    /** @Позиционирование  */
+    /** @Изменение_позиционирования_модели  */
+    //------------------
+
+    async changeRootModel({ data, mesh }) {
+        if (!this._currentMesh) return
+
+        const currentMesh = mesh ? mesh : this._currentMesh
+        const { PROPS } = currentMesh.userData
+        const { CONFIG } = PROPS
+        const { POSITION, UNIFORM_TEXTURE } = CONFIG
+        const { width, height, depth } = this._PRODUCTS[PROPS.PRODUCT];
+
+
+        console.log(this._MODELS[data], '_MODELS')
+
+        CONFIG.MODELID = data
+
+        this.changeModelSize({ data: { width, height, depth } })
+
+    }
+
+    //------------------
+    /** @Вращение  */
     //------------------
 
     async changeRotation(actionId: number) {
@@ -945,9 +985,12 @@ export class MeshEvents extends BuildersHelper {
         const curAction = this.rotateActions[actionId]
         if (actionId === 4) {
             currentMesh.rotation.y += curAction
+            this.root._customBoxHelper?.updateBoxHelper()
             return
         }
         currentMesh.rotation.y = curAction
+
+        this.root._customBoxHelper?.updateBoxHelper()
 
     }
 
@@ -970,7 +1013,8 @@ export class MeshEvents extends BuildersHelper {
     }
 
     async deliteHandle({ data, fasadeNdx }: TDataWithNdx) {
-        if (!this._currentMesh) return;
+
+        if (!this._currentMesh || !data) return;
         const product = this._currentMesh;
         const { FASADE, CONFIG } = product.userData.PROPS;
         const { FASADE_PROPS } = CONFIG;
@@ -978,7 +1022,7 @@ export class MeshEvents extends BuildersHelper {
         const curFasad = FASADE_PROPS[fasadeNdx]
 
         await this.handlesBuilder.deliteHandle(curFasadeMesh)
-        curFasad.HANDLES.id = data
+        curFasad.HANDLES.id = data.ID
     }
 
     async changeHandlePos({ data, fasadeNdx }: TDataWithNdx) {
@@ -1114,6 +1158,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeRotation(data)
         }
 
+        this.onChangeRootModel =({ data, mesh })=>{
+            this.changeRootModel({ data, mesh })
+        }
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
 
@@ -1154,7 +1202,9 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:ChangeHandlePose', this.onChangeHandlePos)
         this.events.on('A:ChangePlinthColor', this.onChangePlinth)
 
-        this.events.on('A:RotateModel', this.onCgangeRotation)
+        this.events.on('A:RotateModel', this.onCgangeRotation);
+
+        this.events.on('A:ChangeRootModel', this.onChangeRootModel);
 
 
     }

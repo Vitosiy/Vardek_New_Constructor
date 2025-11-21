@@ -17,9 +17,16 @@ export class UniversalGeometryBuilder extends GeometryBuilder {
         this.buildProduct = new BuildUniversalModule(root)
     }
 
-    createModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any, loaded_size?: any): void {
+    // createModel(data: any, onLoad: (object: THREE.Object3D) => void, loadedProps?: any, loaded_size?: any): void {
 
-        this.buildProduct.getModel(data, onLoad, loadedProps, loaded_size)
+    //     this.buildProduct.getModel(data, onLoad, loadedProps, loaded_size)
 
+    // }
+    async createModel(
+        data: any,
+        loadedProps?: any,
+        loaded_size?: any
+    ): Promise<THREE.Object3D> {
+        return this.buildProduct.getModel(data, loadedProps, loaded_size);
     }
 }

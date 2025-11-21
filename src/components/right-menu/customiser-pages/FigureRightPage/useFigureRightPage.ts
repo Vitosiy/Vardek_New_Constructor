@@ -1,4 +1,4 @@
-//@ts-nocheck
+// @ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { TFasadeProp } from "@/types/types";
@@ -33,7 +33,7 @@ export const useFigureRightPage = () => {
     const modelState = useModelState();
 
     const createHandlesList = () => {
-        const { PROPS } = modelState.getCurrentModel.userData
+        const { PROPS } = modelState.getCurrentModel!.userData
         const ptoductId = PROPS.PRODUCT
 
         const data = appData.getAppData
@@ -61,17 +61,29 @@ export const useFigureRightPage = () => {
     }
 
     const createSurfaceList = () => {
+        const data = appData.getAppData
+        const { FASADE, CATALOG, POSITION_HANDLES } = data
+        const { PRODUCTS } = CATALOG
         const { PROPS } = modelState.getCurrentModel.userData;
+        const { PRODUCT } = PROPS
         const { FASADE_PROPS } = PROPS.CONFIG
         const tempList: IFigureFasade[] = []
 
         for (const el in FASADE_PROPS) {
-            tempList.push({
-                label: `Фасад ${parseInt(el) + 1}`,
-                name: `fasade ${parseInt(el) + 1}`,
-                props: FASADE_PROPS[el],
-                action: () => createHandlesList()
-            })
+
+            const { COLOR } = FASADE_PROPS[el]
+            const fasadeData = FASADE[COLOR]
+            const haveHandles = POSITION_HANDLES[PRODUCT]
+
+            if (haveHandles) {
+                tempList.push({
+                    label: `Фасад ${parseInt(el) + 1}`,
+                    name: `fasade ${parseInt(el) + 1}`,
+                    props: FASADE_PROPS[el],
+                    action: () => createHandlesList()
+                })
+            };
+
         }
 
         return tempList
@@ -80,7 +92,6 @@ export const useFigureRightPage = () => {
 
     const createPlinthData = () => {
         const { PROPS } = modelState.getCurrentModel.userData
-        // console.log(PROPS, 'PROPS')
         return PROPS.CONFIG.PLINTH_ACTIONS
     }
 
@@ -88,10 +99,9 @@ export const useFigureRightPage = () => {
         {
             label: 'Ручки',
             name: 'Handles',
-            // action: () => createSurfaceList()
         },
         {
-            label: 'Плинтус',
+            label: 'Цоколь',
             name: 'Plinth',
         }
     ]

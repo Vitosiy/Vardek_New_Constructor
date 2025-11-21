@@ -68,7 +68,7 @@ export class DragAndDropManager {
         event.preventDefault();
     }
 
-    private handleDrop(event: DragEvent) {
+    private async handleDrop(event: DragEvent) {
 
         event.preventDefault();
 
@@ -86,60 +86,38 @@ export class DragAndDropManager {
                 this.raycaster.setFromCamera(this.mouse, this.camera);
 
                 const intersects = this.raycaster.intersectObjects([...this.roomManager._roomWalls, this.roomManager._roomFloor]);
+                let object: THREE.Object3D;
 
-                if (intersects.length > 0) {
-                    const point = intersects[0].point;
-                    const surface = intersects[0].object;
-                    // this.eventBus.emit('U:Drop')
+                if (intersects.length === 0) return;
 
-                    if (productData.moduleType || productData.ID == 3954672) {
+                const point = intersects[0].point;
+                const surface = intersects[0].object;
+                // this.eventBus.emit('U:Drop')
 
-                        this.universalGeometryBuilder.craeteModel(productData, async (object) => {
-                            await this.setObject.create({
-                                object,
-                                point,
-                                trafficManager: this.trafficManager,
-                                boxHelper: this.boxHelper,
-                                wall: surface
-                            });
-
-
-                            this.trafficManager._currentObject = object
-                            this.trafficManager.ruler.drawRulerToObjects(object)
-
-                            object.userData.MOUSE_POSITION = {
-                                x: point.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
-                                y: point.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
-                            };
-
-
-                            //useModelState().setCurrentModel(object);
-                        });
-                    } else {
-                        this.geometryBuilder.craeteModel(productData, async (object) => {
-
-
-                            await this.setObject.create({
-                                object,
-                                point,
-                                trafficManager: this.trafficManager,
-                                boxHelper: this.boxHelper,
-                                wall: surface
-                            });
-
-
-                            this.trafficManager._currentObject = object
-                            this.trafficManager.ruler.drawRulerToObjects(object)
-
-                            object.userData.MOUSE_POSITION = {
-                                x: object.position.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
-                                y: object.position.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
-                            };
-                        });
-
-                        this.eventBus.emit('U:Drop')
-                    }
+                if (productData.moduleType || productData.ID == 3954672) {
+                    object = await this.universalGeometryBuilder.createModel(productData)
+                } else {
+                    object = await this.geometryBuilder.createModel(productData);
                 }
+
+                await this.setObject.create({
+                    object,
+                    point,
+                    wall: surface,
+                    trafficManager: this.trafficManager,
+                    boxHelper: this.boxHelper
+                });
+
+                this.trafficManager._currentObject = object;
+                this.trafficManager.ruler.drawRulerToObjects(object);
+
+                object.userData.MOUSE_POSITION = {
+                    x: object.position.clone().project(this.camera).x * this.root._sizes!.width * 0.5,
+                    y: object.position.clone().project(this.camera).y * this.root._sizes!.height * -0.5,
+                };
+
+                this.eventBus.emit('U:Drop')
+
             } catch (error) {
                 console.error('Error parsing JSON data:', error);
                 console.log('Received data:', data);

@@ -3,6 +3,16 @@ import * as THREE from 'three'
 import { TJSONBuilder, TBuildProduct, TSize, TDeepDispose, TEdgeBuilder, IProductFull, TModelData, TPlinthActions } from '@/types/types'
 import { IProduct } from '@/types/interfases'
 
+type TPlinthData = {
+    width: number,
+    plinthProd: any,
+    plinthModel: any,
+    material: THREE.Material,
+    startPosition: any,
+    key?: string,
+    legsHeight: number
+}
+
 
 export class PlinthBuilder {
     private buildProduct: TBuildProduct
@@ -28,10 +38,12 @@ export class PlinthBuilder {
         this.edgeBuilder = parent.edge_builder
     }
 
-    private checkHavePLinth(product: IProductFull) {
-        const model: number[] | null[] = product.models
-        const inProdModel = this.buildProduct._MODELS[model[0]]
+    private checkHavePLinth(props: IProductFull) {
+        const model: number[] | null[] = props.CONFIG.MODELID
+        const inProdModel = this.buildProduct._MODELS[model]
         const jsonPlinth = inProdModel.json.plinth
+
+        console.log(jsonPlinth)
 
         if (model && inProdModel && jsonPlinth) {
             return jsonPlinth
@@ -39,18 +51,19 @@ export class PlinthBuilder {
         return false
     }
 
-    public buildPlinth(props: any) {
+    public buildPlinth(props: any, legsHeight: number) {
         // const { PLINTH_MESH } = props
         const plinthParent = new THREE.Object3D()
         const plinthActions = props.CONFIG.PLINTH_ACTIONS
         const sizes: TSize = { ...props.CONFIG.SIZE };
-        this.createPlinthMesh(props, plinthActions, sizes, plinthParent)
+
+        this.createPlinthMesh(props, plinthActions, sizes, plinthParent, legsHeight)
         props.PLINTH_MESH = (plinthParent)
         return plinthParent
 
     }
 
-    private createPlinthMesh(props: any, plinthActions: TPlinthActions, size: TSize, plinthParent: THREE.Object3D) {
+    private createPlinthMesh(props: any, plinthActions: TPlinthActions, size: TSize, plinthParent: THREE.Object3D, legsHeight: number) {
         // const { PLINTH_MESH } = props
         const product: IProductFull = this.buildProduct._PRODUCTS[props.PRODUCT]
         const { id, plinthSurfase } = this.buildProduct.getDefaultOptionsConfig().plinth
@@ -60,24 +73,25 @@ export class PlinthBuilder {
         const defaultPlinth = id ?? Object.values(this.buildProduct._PLINTH)[0]
         const plinthProd = this.buildProduct._PRODUCTS[defaultPlinth];
         const plinthModel = this.buildProduct._MODELS[plinthProd.models[0]];
+        console.log(plinthModel,plinthProd, 'plinthModel')
 
 
         const startPosition = this.buildProduct.getStartPosition(size);
-        const havePlinth = this.checkHavePLinth(product);
+        const havePlinth = this.checkHavePLinth(props);
         const plinthConfigs = this.getPlinthConfigs(size);
 
         if (havePlinth) {
+            console.log('AU')
+
             Object.values(havePlinth).forEach(el => {
-                console.log(el.width, 'el.width')
 
                 const position = this.buildProduct.getExec(el.position);
                 const rotation = this.buildProduct.getExec(el.rotation);
                 const plinthWidth = this.buildProduct.calculateFromString(el.width)
 
-                const model = this.createPlinth(plinthWidth, plinthProd, plinthModel, material, startPosition);
+                const model = this.createPlinth({ width: plinthWidth, plinthProd, plinthModel, material, startPosition, legsHeight });
                 model.position.set(position.x, startPosition.y, position.z);
                 model.rotation.set(rotation.x, rotation.y, rotation.z);
-                // PLINTH_MESH.push(model)
 
                 plinthParent.add(model);
             });
@@ -95,7 +109,7 @@ export class PlinthBuilder {
             const startSize = size[sizeKey];
             const plinthWidth = startSize - config.widthOffset;
 
-            const model = this.createPlinth(plinthWidth, plinthProd, plinthModel, material, startPosition, key);
+            const model = this.createPlinth({ width: plinthWidth, plinthProd, plinthModel, material, startPosition, key, legsHeight });
             model.position.set(config.posX, startPosition.y, config.posZ);
             model.rotation.set(0, config.rotY, 0);
             // PLINTH_MESH.push(model)
@@ -104,14 +118,24 @@ export class PlinthBuilder {
         });
     }
 
-    private createPlinth(width: number, plinthProd: any, plinthModel: any, material: THREE.Material, startPosition: any, key?: string): THREE.Object3D {
+    private createPlinth({
+        width,
+        plinthProd,
+        plinthModel,
+        material,
+        startPosition,
+        key,
+        legsHeight
+    }: TPlinthData): THREE.Object3D {
+
         const expressions = {
             "#X#": width,
-            "#Y#": plinthProd.height,
+            "#Y#": legsHeight ?? plinthProd.height,
             "#Z#": plinthProd.depth,
         };
 
         const convertedData = { ...this.buildProduct.expressionsReplace(plinthModel.json, expressions), material };
+
         const model = this.jsonBuilder.createMesh({ data: convertedData });
         const edgeBody = this.edgeBuilder.createEdge(model)
         model.add(edgeBody)

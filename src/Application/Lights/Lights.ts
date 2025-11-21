@@ -55,47 +55,71 @@ export class AppLights {
 
     addAmbientLight(params: THREEInterfases.IlightData) {
 
-        this.ambientLight = new THREE.AmbientLight(
-            params.color,
-            this.roomOptions.getAmbientLightRange,
-        )
+        // this.ambientLight = new THREE.AmbientLight(
+        //     params.color,
+        //     this.roomOptions.getAmbientLightRange,
+        // )
+        this.ambientLight = new THREE.HemisphereLight(
+            new THREE.Color('rgba(228, 228, 228, 1)'), // Цвет неба
+            new THREE.Color('rgba(89, 89, 89, 1)'), // Цвет земли (можно добавить в params)
+            this.roomOptions.getAmbientLightRange // Интенсивность
+        );
 
         this.scene.add(this.ambientLight)
     }
 
     setLight(position: { [key: string]: number } | any, lightCount: number) {
-        const shadowValue = this.roomOptions.getShadowValue
-        this.lights = []
-        const margin = 250
-        const step = (position.depth - 2 * margin) / (lightCount - 1);
+        // Очистка существующих источников света
+        this.lights.forEach(light => this.scene.remove(light));
+        if (this.ambientLight) {
+            this.scene.remove(this.ambientLight);
+            this.ambientLight = null;
+        }
+        this.lights = [];
 
-        for (let i = 0; i < lightCount; i++) {
+        if (lightCount === 0) {
+            return; // Ничего не добавляем, если lightCount = 0
+        }
+
+        const count = lightCount > 0 ? lightCount : 1;
+        const shadowValue = this.roomOptions.getShadowValue;
+        const margin = 250;
+        let step = 0;
+
+        // Избегаем деления на ноль при count = 1
+        if (count > 1) {
+            step = (position.depth - 2 * margin) / (count - 1);
+        }
+
+        for (let i = 0; i < count; i++) {
             const point = this.addPointLight(this.params.pointLight);
-            // const x = -position.width * 0.5 + 0.15;
             const x = 0;
-            const z = (-position.depth * 0.5) + margin + (i * step);
+            // Если count = 1, размещаем свет в центре по глубине
+            const z = count === 1 ? 0 : (-position.depth * 0.5) + margin + (i * step);
             const y = position.height * 0.8;
             point.position.set(x, y, z);
         }
 
         this.addAmbientLight(this.params.ambientLight);
-        this.toggleShadow(shadowValue)
+        this.toggleShadow(shadowValue);
     }
 
     setLightPosition(position: { [key: string]: number } | any, lightCount: number) {
+        if (lightCount === 0 || this.lights.length === 0) {
+            return;
+        }
 
-        const margin = 250
-        const step = (position.depth - 2 * margin) / (lightCount - 1);
+        const count = Math.min(lightCount > 0 ? lightCount : 1, this.lights.length);
+        const margin = 250;
+        const step = (position.depth - 2 * margin) / (count - 1);
 
-        for (let i = 0; i < lightCount; i++) {
-            // const x = -position.width * 0.5 + 0.15;
+        for (let i = 0; i < count; i++) {
             const x = 0;
             const z = (-position.depth * 0.5) + margin + (i * step);
             const y = position.height * 0.8;
             this.lights[i].position.set(x, y, z);
         }
     }
-
     setQuality(params: string) {
         switch (params) {
             case 'low':

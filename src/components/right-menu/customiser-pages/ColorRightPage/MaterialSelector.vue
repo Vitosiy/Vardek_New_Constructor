@@ -41,6 +41,7 @@ const handleSelect = (material: any) => {
 
 <template>
   <div class="relative__wrapper">
+
     <div class="redactor">
       <input
         class="search"

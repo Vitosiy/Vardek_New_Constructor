@@ -78,7 +78,6 @@ const getContainerWidth = computed(() => {
 const getControlsData = () => {
   const map = diretionMap.value[props.type!];
 
-  console.log(props.type, "map");
   if (map && props.type !== "smallMap") {
     const refactor = controlBtn.value.map((el, ndx) => {
       if (map.includes(ndx)) {
@@ -96,16 +95,13 @@ const getControlsData = () => {
 
     controlsData.value = refactor;
   } else if (map && props.type == "smallMap") {
-    console.log("smallMap----");
 
     controlsData.value = controlBtn.value.filter((el, ndx) => {
       if (map.includes(ndx)) {
         return el;
       }
     });
-    console.log(controlsData.value, ' controlsData.value');
   } else {
-    console.log('5')
     controlsData.value = controlBtn.value;
   }
 };

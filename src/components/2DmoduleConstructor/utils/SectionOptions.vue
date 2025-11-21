@@ -10,6 +10,7 @@ import CounterInput from "@/components/ui/inputs/CounterInput.vue";
 const {
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  MAX_SECTION_WIDTH,
 } = UI_PARAMS;
 
 const props = defineProps({
@@ -280,18 +281,19 @@ const updateSectionWidth = (value, secIndex) => {
   let curSection = clone.sections[secIndex]
 
   if (adjustedValue) {
-    let nextSection = clone.sections[secIndex + 1] || clone.sections[secIndex - 1]
+    let nextSection = clone.sections[secIndex + 1]
+    let prevSection = clone.sections[secIndex - 1]
     let delta = curSection.width - adjustedValue
 
     curSection.width = adjustedValue
-    curSection.position.x += (-delta) / 2
+    curSection.position.x += nextSection ? (-delta) / 2 : delta / 2
 
     curSection.cells.forEach((cell, cellIndex) => {
 
       if (cell.cellsRows) {
         let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
         lastRow.width += delta;
-        lastRow.position.x += (-delta) / 2
+        lastRow.position.x += nextSection ? (-delta) / 2 : delta / 2
       }
       cell.position.x = curSection.position.x
       cell.width = adjustedValue;
@@ -313,6 +315,23 @@ const updateSectionWidth = (value, secIndex) => {
         cell.width = nextSection.width;
       })
     }
+    else if (prevSection) {
+      prevSection.width += delta
+      prevSection.position.x += delta / 2
+
+      prevSection.cells.forEach((cell, cellIndex) => {
+
+        if (cell.cellsRows) {
+          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
+          lastRow.width += delta;
+          lastRow.position.x += delta / 2
+        }
+
+        cell.position.x = prevSection.position.x
+        cell.width = prevSection.width;
+      })
+    }
+
   }
   module.value = clone;
   updateFasades();
@@ -577,6 +596,8 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
 
 defineExpose({
   handleCellSelect,
+  addSection,
+  deleteSection
 });
 
 onMounted(() => {
@@ -649,6 +670,7 @@ onMounted(() => {
                             type="number"
                             :step="step"
                             :min="MIN_SECTION_WIDTH"
+                            :max="MAX_SECTION_WIDTH"
                             class="actions-sections-input"
                             :value="section.width"
                             @input="
@@ -692,6 +714,7 @@ onMounted(() => {
                 >
 
                   <div
+                      v-if="!module.isHiTech && (!module.isRestrictedModule || (module.isRestrictedModule && module.sections.length < 2))"
                       class="actions-sections-items--right-items-input-block"
                   >
                       <CounterInput
@@ -784,6 +807,7 @@ onMounted(() => {
                                   type="number"
                                   :step="step"
                                   :min="MIN_SECTION_HEIGHT"
+                                  :max="section.height - MIN_SECTION_HEIGHT"
                                   class="actions-sections-input"
                                   :value="cell.height"
                                   @input="
@@ -822,7 +846,7 @@ onMounted(() => {
                         </div>
 
                         <div
-                            v-if="!cell.cellsRows?.length"
+                            v-if="!cell.cellsRows?.length && !module.isRestrictedModule"
                             class="actions-sections-items--right-items-input-block"
                         >
                           <CounterInput
@@ -884,6 +908,7 @@ onMounted(() => {
                                         type="number"
                                         :step="step"
                                         :min="MIN_SECTION_WIDTH"
+                                        :max="cell.width - MIN_SECTION_WIDTH"
                                         class="actions-sections-input"
                                         :value="row.width"
                                         @input="
@@ -902,7 +927,10 @@ onMounted(() => {
                             </div>
                           </article>
 
-                          <article class="actions-sections-items actions-sections-items--right">
+                          <article
+                              v-if="!module.isRestrictedModule"
+                              class="actions-sections-items actions-sections-items--right"
+                          >
                             <div class="actions-sections-items--right-items">
 
                               <div

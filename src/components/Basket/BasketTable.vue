@@ -44,7 +44,7 @@ defineProps<Props>()
     padding: 20px;
     border: 1px solid #eee;
     &--height {
-      min-height: 57vh;
+      // min-height: 57vh;
       height: 100%;
       }
     

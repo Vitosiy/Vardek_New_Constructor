@@ -90,4 +90,12 @@ export interface IBasketResponse {
   type: "success" | "error";
 }
 
+export interface BasketItemType {
+  type: "mainConstructor" | "mainCatalog" | "scene" | "catalog";
+}
+
+export interface BasketRequest {
+  BASKET: IBasket[]
+  TYPE_PRICE: number
+}
 
