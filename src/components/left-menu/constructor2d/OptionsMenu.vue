@@ -90,6 +90,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
+
 </script>
 
 <template>

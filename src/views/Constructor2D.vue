@@ -65,6 +65,9 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
           position: pointerPosition,
           type: draggedData
         });
+        // Вызываем updateRoomStore после добавления объекта
+        // roomId теперь правильно определяется в addObject с fallback через roomId стены
+        App2d.updateRoomStore();
       } else {
         console.warn("Неизвестный тип перетаскиваемого объекта:", draggedData);
       }

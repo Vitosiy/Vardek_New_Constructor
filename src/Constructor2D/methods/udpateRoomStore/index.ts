@@ -171,9 +171,8 @@ function updateRoomStore(this: any): boolean {
     // console.log("rooms", rooms);
 
   });
-
   roomStore.setAppData(rooms);
-
+  
   // console.log('Data room store:', roomStore.getAllData());
 
   return true;
