@@ -10,6 +10,7 @@ export interface Tab {
   title?: string;
   type?: string;
   props?: TFasadeProp;
+  disabled?: boolean;
   action?: Function;
 }
 
@@ -60,7 +61,7 @@ defineExpose({
       <button
         v-for="(tab, i) in tabs"
         :key="tab.name"
-        :class="{ active: isTabActive(tab.name) }"
+        :class="[{ active: isTabActive(tab.name) }, { disabled: tab.disabled }]"
         @click="selectTab(tab, i)"
         :aria-label="`Переключить на ${tab.label}`"
         :tabindex="0"
@@ -111,5 +112,8 @@ button.active {
 }
 .tabs-content {
   margin-top: 16px;
+}
+.disabled {
+  display: none;
 }
 </style>

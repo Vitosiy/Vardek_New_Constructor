@@ -424,6 +424,7 @@ export class PatternBuilder {
                 break;
 
         }
+        console.log(geometries, '----geometries')
 
         // Объединяем все геометрии
         const mergedGeometry = mergeGeometries(geometries);

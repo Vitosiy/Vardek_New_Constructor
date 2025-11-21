@@ -3,9 +3,16 @@
 import { ref, onMounted, onBeforeMount, watch, computed } from "vue";
 import Toggle from "@vueform/toggle";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
-import DirectionControl from "@/components/left-menu/option/direction/DirectionControl.vue";
+import DirectionControl from "@/components/ui/direction/DirectionControl.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
+import { label } from "three/webgpu";
+
+type TDirectionModelType = {
+  id: number;
+  label: string;
+  active: boolean;
+};
 
 const modelState = useModelState();
 const eventBus = useEventBus();
@@ -27,29 +34,39 @@ const resizeData = ref({
 
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
-const rootModelsList = ref<number[] | null>(null);
+const rootModelsList = ref<TDirectionModelType[] | null>(null);
 
 const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
 
-const rotateModel = (id: number) => {
+const rotateModel = (id: numbe) => {
   eventBus.emit("A:RotateModel", id);
 };
 
-const updateRootModel = (id: number) => {
-  eventBus.emit("A:ChangeRootModel", { data: id });
+const updateRootModel = (model: TDirectionModelType) => {
+  eventBus.emit("A:ChangeRootModel", { data: model.id });
+  rootModelsList.value?.forEach((el) => {
+     el.active = el.id == model.id;
+
+  });
 };
 
 const prepareData = () => {
   const { userData } = modelState.getCurrentModel;
-  const { MODEL } = userData.PROPS.CONFIG;
+  const { MODEL, MODELID } = userData.PROPS.CONFIG;
 
   currentModel.value = userData;
-  rootModelsList.value = MODEL;
-  
+  rootModelsList.value = MODEL.map((el) => {
+    if (!el) return;
+    return {
+      id: modelState._MODELS[el].id,
+      label: modelState._MODELS[el].type_label,
+      active: modelState._MODELS[el].id === MODELID,
+    };
+  });
 
-  console.log(MODEL);
+  console.log(rootModelsList.value, "rootModelsList.value");
 
   sizeEditData.value = {
     widthMin: currentModel.value.PROPS.CONFIG.SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
@@ -153,10 +170,17 @@ watch(
           />
         </div>
       </div>
-      <p class="customiser-section__title">Позиционирование</p>
-      <div v-if="rootModelsList?.length > 1">
+      <p class="customiser-section__title" v-if="rootModelsList?.length > 1">
+        Позиционирование
+      </p>
+      <div v-if="rootModelsList?.length > 1" class="side-direction">
         <div v-for="(model, key) in rootModelsList" :key="key + model">
-          <button @click="updateRootModel(model)">{{ model }}</button>
+          <button
+            :class="['side-direction_item', { active: model.active }]"
+            @click="updateRootModel(model)"
+          >
+            {{ model.label }}
+          </button>
         </div>
       </div>
 
@@ -213,6 +237,38 @@ watch(
         align-items: center;
         gap: 10px;
       }
+    }
+  }
+}
+
+.side-direction {
+  display: flex;
+  gap: 10px;
+  &_item {
+    border: none;
+    border-radius: 15px;
+    font-size: 16px;
+    padding: 10px 20px;
+    min-width: 60px;
+    font-weight: 600;
+    font-size: small;
+    outline: none;
+    background: $bg;
+    color: $strong-grey;
+    transition: background-color 0.2s, transform 0.1s;
+
+    @media (min-height: 1000px) {
+      font-size: medium;
+      padding: 15px 25px;
+    }
+
+    &:hover {
+      background-color: #e0e0e0;
+    }
+
+    &.active {
+      background: $red;
+      color: $white;
     }
   }
 }

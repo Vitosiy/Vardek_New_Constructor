@@ -7,7 +7,7 @@ import { useSceneState } from "@/store/appliction/useSceneState"
 import { useModelState } from "@/store/appliction/useModelState"
 import { unwatchFile } from "fs"
 
-import { TFasadeProp, IProductFull } from "@/types/types"
+import { TFasadeProp, IProductFull, FasadeTextAlignAction } from "@/types/types"
 
 export class Filters extends GlobalsData {
 
@@ -59,10 +59,7 @@ export class Filters extends GlobalsData {
 
     filterFasadePosition(params: THREETypes.TObject, product: THREETypes.TObject) {
 
-
-        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE, FILLING } = params
-
-        // params.FASADE_TYPE = [...this._FASADE_POSITION[product.FASADE_POSITION].fasade_type]
+        const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE, FILLING, MODELID, MODEL } = params
 
         let sortFasadePositionList = [];
         const fasadePositionList = product.FASADE_POSITION
@@ -75,9 +72,9 @@ export class Filters extends GlobalsData {
             []);
         params.FASADE_TYPE = fasadeTypeSorted
 
-        // const sizes = product.FASADE_SIZES
-
-        // console.log(FASADE_SIZE, 'filterFasadePosition')
+        const hasDrower = fasadeSorted.some(el => {
+            return this._FASADE_POSITION[el].drawer
+        })
 
         if (Object.keys(FASADE_SIZE).length > 0) {
             Object.values(FASADE_SIZE).forEach((el, key) => {
@@ -100,27 +97,39 @@ export class Filters extends GlobalsData {
                     return value
             })
 
-
-        // sortFasadePositionList = FASADE_SIZE.length > 0 && FASADE_SIZE[0] != null ? sizes : fasadeSorted
-
-
         sortFasadePositionList.forEach((fasade: number, key: number) => {
 
             const curFasade = fasade.ID ? fasade.ID : fasade
             const fasadePosition = this._FASADE_POSITION[curFasade]
+            let handlerPosition = null
 
-            const hendleDirection = key % 2
+            const fasTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+
             const handleInDorPosition = () => {
-                if (!ELEMENT_TYPE || sortFasadePositionList.length < 2) return 0
-                if (hendleDirection && ELEMENT_TYPE.includes('up')) { return 6 }
-                if (!hendleDirection && ELEMENT_TYPE.includes('up')) { return 8 }
-                if (hendleDirection && ELEMENT_TYPE.includes('down')) { return 0 }
-                if (!hendleDirection && ELEMENT_TYPE.includes('down')) { return 2 }
-            }
-            const handlerPosition = fasadePosition.drawer ? 4 : handleInDorPosition()
 
-            console.log(fasadePosition.drawer
-                , 'FASADE_POSITION')
+                if (!ELEMENT_TYPE && product.fasade_type.length > 1 && MODEL.length == 1) return 0
+
+                if (sortFasadePositionList.length < 2 || params.FASADE_TYPE.includes(null)) {
+                    return FasadeTextAlignAction[fasTypeData.CODE]
+                }
+
+                if (hasDrower && key % 2 !== 0 && ELEMENT_TYPE.includes('up')) return 8
+                if (hasDrower && key % 2 === 0 && ELEMENT_TYPE.includes('up')) return 6
+
+                if (!hasDrower && key % 2 === 0 && ELEMENT_TYPE.includes('up')) return 8
+                if (!hasDrower && key % 2 !== 0 && ELEMENT_TYPE.includes('up')) return 6
+
+                if (hasDrower && key % 2 !== 0 && ELEMENT_TYPE.includes('down')) return 2
+                if (hasDrower && key % 2 === 0 && ELEMENT_TYPE.includes('down')) return 0
+
+                if (!hasDrower && key % 2 === 0 && ELEMENT_TYPE.includes('down')) return 2
+                if (!hasDrower && key % 2 !== 0 && ELEMENT_TYPE.includes('down')) return 0
+
+            }
+
+            if (fasTypeData && fasTypeData.CODE) {
+                handlerPosition = fasadePosition.drawer ? FasadeTextAlignAction[fasTypeData.CODE] : handleInDorPosition()
+            }
 
             const fasadeNumber = fasadePosition.FASADE_NUMBER - 1
 
@@ -128,15 +137,14 @@ export class Filters extends GlobalsData {
             const handles = this.project.default_handles
             const sizes = fasade.FASADE_SIZE ?? null
 
-
             const fasadeProps: TFasadeProp = {
                 /** --- FASADE_PROPS ---*/
-                // COLOR: params.FASADE_PROPS.length < fasadePositionList.length ? null : this.project.default_fasade_up,
                 COLOR: this.project.default_fasade_color!,
                 SHOW: false,
                 POSITION: fasadePosition.ID,
                 RESET_COLOR: fasad,
                 MILLING: null,
+                MILLING_TYPE: null,
                 PALETTE: null,
                 SHOWCASE: null,
                 ALUM: null,
@@ -153,11 +161,11 @@ export class Filters extends GlobalsData {
                     params: {}
                 },
                 DRAWER: {
-                   drawer: fasadePosition.drawer,
-                   buildIn: fasadePosition.built_in
+                    drawer: fasadePosition.drawer,
+                    buildIn: fasadePosition.built_in
                 }
             }
-            
+
             FASADE_PROPS.push(fasadeProps)
         })
 

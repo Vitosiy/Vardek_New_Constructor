@@ -172,7 +172,7 @@ export class World {
         this.deepDispose.clearScene(this.scene);
 
         await this.setRoom(roomId);
-        this.lights.setLight(this.room!._wallsGroupSize, 2)
+        this.lights.setLight(this.room!._wallsGroupSize, 1)
         await this.trafficManager!.update(this.room!)
 
         // if (this.roomState.getCurrentRoomData(roomId)?.params.wall) {

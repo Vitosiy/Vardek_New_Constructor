@@ -156,6 +156,9 @@ export class JsonBuilder {
         }
 
         if (data.position) {
+            console.log(data, '----data')
+
+
             obj[data.id].position.set(this.convert(data.position.x), this.convert(data.position.y), this.convert(data.position.z));
             // obj[data.id].geometry.translate(this.convert(data.position.x), this.convert(data.position.y), this.convert(data.position.z));
         }

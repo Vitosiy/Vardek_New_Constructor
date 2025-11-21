@@ -61,31 +61,26 @@ const isSearch = computed(() => {
 
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   if (props.tempWork) {
-    // eventBus.emit(`${props.typeChanger.event}`, {
-    //   data: id,
-    //   type: props.typeChanger.type,
-    // });
     emit("select_material", data);
-
     return;
   }
 
   const productId = productData.value.PROPS.PRODUCT;
-  let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = data;
+  let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE, MATERIAL } = data;
 
-  modelState.createCurrentFasadeTypesData({ fasadeId: ID, productId });
   modelState.createCurrentPaletteData(ID);
   modelState.createCurrentMillingData({ fasadeId: ID, productId, fasadeNdx });
   modelState.createCurrentShowcaseData({ fasadeId: ID, productId, fasadeNdx });
   modelState.createCurrentPatinaData({ fasadeId: ID, productId });
   modelState.createCurrentGlassData({ fasadeId: ID, productId });
+  modelState.createCurrentFasadeTypesData({ fasadeId: ID, productId });
 
   const transitionT = checkTransitionTexture(data.ID);
 
-  console.log(data, '_FACADE')
+  console.log(data, "data");
+  emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE, transitionT, material: MATERIAL });
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
-  emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE, transitionT });
 };
 
 const onSearchChange = (e) => {

@@ -66,10 +66,12 @@ export const useFigureRightPage = () => {
         const { PRODUCTS } = CATALOG
         const { PROPS } = modelState.getCurrentModel.userData;
         const { PRODUCT } = PROPS
-        const { FASADE_PROPS } = PROPS.CONFIG
+        const { FASADE_PROPS, FASADE_TYPE } = PROPS.CONFIG
         const tempList: IFigureFasade[] = []
 
         for (const el in FASADE_PROPS) {
+            const disabled = FASADE_TYPE[el] == null
+            // if (FASADE_TYPE[el] == null) continue
 
             const { COLOR } = FASADE_PROPS[el]
             const fasadeData = FASADE[COLOR]
@@ -79,6 +81,7 @@ export const useFigureRightPage = () => {
                 tempList.push({
                     label: `Фасад ${parseInt(el) + 1}`,
                     name: `fasade ${parseInt(el) + 1}`,
+                    disabled: disabled,
                     props: FASADE_PROPS[el],
                     action: () => createHandlesList()
                 })

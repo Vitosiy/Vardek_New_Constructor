@@ -1,14 +1,16 @@
 <script setup lang="ts">
 //@ts-nocheck
-import { ref, onBeforeMount, computed } from "vue";
+import { ref, onBeforeMount, computed, nextTick } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { Tab } from "@/components/ui/tabs/defaultTab.vue";
 import { THandlesItem } from "../useFigureRightPage";
-import { TFasadeProp } from "@/types/types";
+import { TFasadeProp, FasadeTextAlignAction } from "@/types/types";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useHandlesAction } from "./useHandlesAction";
 
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 import ConfigurationOption from "../../ColorRightPage/ConfigurationOption.vue";
-import DirectionControl from "@/components/left-menu/option/direction/DirectionControl.vue";
+import DirectionControl from "@/components/ui/direction/DirectionControl.vue"; 
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 
 interface ITabChangeParams {
@@ -17,11 +19,16 @@ interface ITabChangeParams {
 }
 type TFigureFasad = {
   ndx: number;
+  name: string;
   data: Record<string, string>;
   props: TFasadeProp | Record<string, string>;
 };
 
 const eventBus = useEventBus();
+const modelState = useModelState();
+const handlesAction = useHandlesAction();
+
+const { getControllerData } = handlesAction;
 
 const clearId = 69920;
 const controllerVisible = ref<Boolean>(false);
@@ -39,24 +46,48 @@ const figureFasad = ref<TFigureFasad>({
   props: {},
 });
 
+const handlePos = ref<number[] | []>([]);
+const handleList = ref<THandlesItem[]>();
+
 onBeforeMount(() => {
-  const startProp = props.data[0].props;
+  const model = modelState.getCurrentModel;
+  const { FASADE_TYPE } = model?.userData.PROPS.CONFIG;
+  const index = FASADE_TYPE.findIndex((item) => item !== null);
+
+  const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
   const drawer = startProp.HANDLES.drawer !== null;
-  handleList.value = props.data[0].action();
-  figureFasad.value.ndx = 0;
+  handleList.value = props.data[index].action();
+  figureFasad.value.ndx = index;
   figureFasad.value.props = startProp;
-  controllerVisible.value = curHandleId !== clearId && !drawer;
+  figureFasad.value.name = props.data[index].name;
 
   getCurrendHendleData(figureFasad.value.props);
+  handlePos.value = getControllerData();
+
+  console.log(handlePos.value)
+
+  controllerVisible.value = checkControllerVisible.value;
 });
 
-const handleList = ref<THandlesItem[]>();
+
 
 const handleTabChange = ({ index, tab }: ITabChangeParams) => {
   figureFasad.value.ndx = index;
   figureFasad.value.props = tab.props;
+
+  controllerVisible.value = checkControllerVisible.value;
+
+
   getCurrendHendleData(tab.props);
+  handlePos.value = getControllerData();
+
+  console.log(
+    tab.props.HANDLES.drawer === null,
+    tab.props.HANDLES.id !== clearId,
+    handlePos.value.length > 1,
+    tab.props.HANDLES.id
+  );
 };
 
 const getCurrendHendleData = (prop) => {
@@ -67,13 +98,16 @@ const getCurrendHendleData = (prop) => {
 
 const onHandleSelect = (data) => {
   figureFasad.value.data = data;
-
   controllerVisible.value =
-    data.ID !== clearId && figureFasad.value.props.HANDLES.drawer === null;
+    figureFasad.value.props.HANDLES.drawer === null &&
+    data.ID !== clearId &&
+    handlePos.value.length > 1;
+
   eventBus.emit("A:AddHandle", {
     data: { id: data.ID, model: data.models },
     fasadeNdx: figureFasad.value.ndx,
   });
+
 };
 
 const onChangeHandlePos = (pos) => {
@@ -93,10 +127,22 @@ const onDeleteHandle = () => {
     fasadeNdx: figureFasad.value.ndx,
   });
 };
+
+const checkControllerVisible = computed(() => {
+  return (
+    figureFasad.value.props.HANDLES.id !== clearId &&
+    figureFasad.value.props.HANDLES.drawer === null &&
+    handlePos.value.length > 1
+  );
+});
 </script>
 <template>
   <div class="handles__wraper">
-    <defaultTab :tabs="props.data" @tab-change="handleTabChange" />
+    <defaultTab
+      :tabs="props.data"
+      :initialTab="figureFasad.name"
+      @tab-change="handleTabChange"
+    />
     <div class="handles__container">
       <div class="handles__header">
         <ConfigurationOption
@@ -106,7 +152,7 @@ const onDeleteHandle = () => {
         />
         <DirectionControl
           v-if="controllerVisible"
-          :type="'smallMap'"
+          :handle-pos="handlePos"
           @changeDirectionPos="onChangeHandlePos"
           :container="'card'"
           :scale="1"

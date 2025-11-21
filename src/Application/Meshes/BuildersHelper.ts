@@ -430,6 +430,8 @@ export class BuildersHelper extends GlobalsData {
             const func = new Function("return " + expression);
             return func();
         } catch (error) {
+            console.log(expression,  '---"Недопустимое выражение!"')
+
             return "Недопустимое выражение!";
         }
     }

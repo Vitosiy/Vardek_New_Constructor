@@ -2,9 +2,9 @@
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { useMechanizm } from "./Mechanizm/useMechanizm";
+import { useMechanism } from "./Mechanism/useMechanism"; 
 
-const mechanizm = useMechanizm()
+const mechanism = useMechanism()
 
 
 export const useRailsRightPage = () => {
@@ -12,9 +12,9 @@ export const useRailsRightPage = () => {
     const appData = useAppData();
     const modelState = useModelState();
     const eventBus = useEventBus();
-    const { weightCalculation, createMeckhanizmList } = mechanizm
+    const { weightCalculation, createMeckhanizmList } = mechanism
 
-    const mechanizmList = createMeckhanizmList()
+    const mechanismList = createMeckhanizmList()
 
     const createOptionList = () => {
 
@@ -22,9 +22,9 @@ export const useRailsRightPage = () => {
         const filtered = filterOptions()
         let result = checkExeptionOptionForFasade(filtered, PROPS.CONFIG.OPTIONS)
 
-        if (mechanizmList.length > 0) {
+        if (mechanismList.length > 0) {
 
-            result = [...result, ...mechanizmList]
+            result = [...result, ...mechanismList]
         }
 
         return {
@@ -35,14 +35,14 @@ export const useRailsRightPage = () => {
 
     const checkActive = (id: string | number, values: boolean) => {
         const { PROPS } = modelState.getCurrentModel.userData;
-        const { OPTIONS, MECHANIZM_TEMP } = PROPS.CONFIG;
+        const { OPTIONS, MECHANISM_TEMP } = PROPS.CONFIG;
 
         const curOpt = OPTIONS.find(el => el.id == id);
-        const curMech = MECHANIZM_TEMP.find(el => el.ID == id);
+        const curMech = MECHANISM_TEMP.find(el => el.ID == id);
 
         if (curMech) {
 
-            MECHANIZM_TEMP.forEach(mech => {
+            MECHANISM_TEMP.forEach(mech => {
 
                 if (mech.close === curMech.close && mech.id !== curMech.ID) {
                     mech.active = false;
@@ -50,7 +50,7 @@ export const useRailsRightPage = () => {
 
             });
 
-            PROPS.CONFIG.MECHANIZM = values ? id : null
+            PROPS.CONFIG.MECHANISM = values ? id : null
             curMech.active = values;
 
         }
@@ -213,8 +213,8 @@ export const useRailsRightPage = () => {
         const prepareColorId = FASADE_PROPS.map(el => { return el.COLOR })
         const filtered = filterOptions()
         processVisibility(filtered, prepareColorId, OPTIONS)
-        PROPS.CONFIG.MECHANIZM = null
-        PROPS.CONFIG.MECHANIZM_TEMP = []
+        PROPS.CONFIG.MECHANISM = null
+        PROPS.CONFIG.MECHANISM_TEMP = []
 
     }
 

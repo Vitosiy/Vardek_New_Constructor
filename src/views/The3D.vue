@@ -212,39 +212,6 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
-// const commonEventHandler = (data) => {
-//   console.log("Обновление корзиный", data);
-//   try {
-//     scheduleBasketSync();
-//   } catch (e) {
-//     console.warn("Basket addFromScene on drop failed", e);
-//   }
-// };
-
-// const addBascetListener = () => {
-//   if (!checkContantLoad) {
-//     eventBus.on("A:ContantLoaded", scheduleBasketSync);
-//   } else {
-//   }
-// };
-
-// // Дебоунс пересчёта корзины
-// let basketDebounceTimer: any = null;
-// const scheduleBasketSync = async () => {
-//   console.log('FI')
-//   const data = actions.value.save();
-//   roomContantData.value?.setRoomContantDataForBasket(data);
-//   console.log("data", JSON.parse(data));
-
-//   clearTimeout(basketDebounceTimer);
-//   basketDebounceTimer = setTimeout(() => {
-//     try {
-//       basketStore.addFromScene();
-//     } catch (e) {
-//       console.warn("Basket addFromScene debounce failed", e);
-//     }
-//   }, 500);
-// };
 
 const getMove = (move: boolean) => {
   if (!product.value) return;

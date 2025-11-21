@@ -280,6 +280,7 @@ const selectOption = (value: TTextureItem) => {
   }
 
   const checkMillingSelect = "type_showcase" in value;
+
   if (!currentOption.value) return;
 
   const curOption = globalOptions.value![currentOption.value];
