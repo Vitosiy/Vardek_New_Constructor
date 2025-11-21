@@ -113,7 +113,7 @@ async function loadDependencies() {
 // }
 
 async function bootApp() {
-  await loadDependencies()
+  // await loadDependencies()
 
   const app = createApp(App)
   const pinia = createPinia()

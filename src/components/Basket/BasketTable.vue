@@ -8,7 +8,7 @@
         <span>Количество</span>
         <span>Цена</span>
         <span>Сумма</span>
-        <span>Сумма без скидки</span>
+        <span v-if="!oldPrice">Сумма без скидки</span>
       </div>
   
       <div class="basket-table__body">
@@ -25,7 +25,9 @@
 
 <script setup lang="ts">
 //@ts-nocheck
+import { computed } from "vue";
 import BasketItem from "./BasketItem.vue"
+import { useAppData } from "@/store/appliction/useAppData"
 
 interface Props {
   title?: string;
@@ -34,6 +36,11 @@ interface Props {
 }
 
 defineProps<Props>()
+
+const appDataStore = useAppData();
+
+const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
+// const oldPrice = 1;
 </script>
 
 <style scoped lang="scss">
