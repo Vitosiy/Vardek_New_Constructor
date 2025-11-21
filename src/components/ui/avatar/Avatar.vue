@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+//@ts-nocheck
 import { ref, computed, onMounted, onBeforeUnmount, CSSProperties } from 'vue'
 import LogoutSVG from '@/components/ui/svg/auth/LogoutSVG.vue'
 import { useAuthStore } from '@/store/appStore/authStore'

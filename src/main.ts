@@ -9,30 +9,30 @@ import { COOKIE_NAMES, getCookie } from './components/authorization/utils/cookie
 import { useAppData } from './store/appliction/useAppData'
 
 // Функция для загрузки скриптов
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = src
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`))
-    document.head.appendChild(script)
-  })
-}
+// function loadScript(src: string): Promise<void> {
+//   return new Promise((resolve, reject) => {
+//     const script = document.createElement('script')
+//     script.src = src
+//     script.onload = () => resolve()
+//     script.onerror = () => reject(new Error(`Failed to load script: ${src}`))
+//     document.head.appendChild(script)
+//   })
+// }
 // Загрузки скриптов для детального описание карточки товара общего каталога
-async function loadDependencies() {
-  try {
-    await loadScript('./libold/jquery-3.4.1.min.js')
-    await loadScript('./libold/jquery-migrate-3.1.0.min.js')
-    await loadScript('./libold/jquery-ui.min.js')
-    await loadScript('./libold/jquery.fancybox.pack.js')
-    await loadScript('./libold/toastr.min.js')
-    await loadScript('./libold/bootstrap.min.js')
-    await loadScript('./libold/bootstrap-select.min.js')
-    await loadScript('./libold/custom_slider.js')
-  } catch (error) {
-    console.error('Error loading dependencies:', error)
-  }
-}
+// async function loadDependencies() {
+//   try {
+//     await loadScript('./libold/jquery-3.4.1.min.js')
+//     await loadScript('./libold/jquery-migrate-3.1.0.min.js')
+//     await loadScript('./libold/jquery-ui.min.js')
+//     await loadScript('./libold/jquery.fancybox.pack.js')
+//     await loadScript('./libold/toastr.min.js')
+//     await loadScript('./libold/bootstrap.min.js')
+//     await loadScript('./libold/bootstrap-select.min.js')
+//     await loadScript('./libold/custom_slider.js')
+//   } catch (error) {
+//     console.error('Error loading dependencies:', error)
+//   }
+// }
 
 // async function bootApp() {
 

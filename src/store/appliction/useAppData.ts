@@ -19,9 +19,9 @@ export const useAppData = defineStore('AppData', () => {
     url.searchParams.append('url', currentURL)
     const response = await fetch(url, { 
       method: 'GET',
-      // headers: {
-      // "Authorization": `Bearer ${token}`,
-      // },
+      headers: {
+      "Authorization": `Bearer ${token}`,
+      },
     })
     if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
 
