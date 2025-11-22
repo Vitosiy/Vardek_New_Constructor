@@ -6,65 +6,104 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useToast } from "@/features/toaster/useToast";
 import { useRouter, useRoute } from "vue-router";
+import { ProjectTab } from "../types";
 
 export function useProjectFromQuery() {
-    const loadProject = async (id: string | number) => {
-        const schemeTransition = useSchemeTransition()
-        const projectAPI = useProjectAPI()
-        const projectState = useProjectStore();
-        const sceneState = useSceneState();
-        const eventBus = useEventBus();
-        const toaster = useToast();
-        const router = useRouter();
-        if (!id) return;
-      
-        const projectData = await projectAPI.loadProject(id.toString());
-        if (projectData) {
-          projectState.resetState();
-          projectState.setInitialState(projectData);
-          console.log(projectData, "----PROD");
-      
-          try {
-            schemeTransition.clearStore();
-            // 1. Обновляем данные проекта в sceneState
-            await sceneState.loadProjectFromData(projectData);
-            sceneState.updateProjectParams({});
-            schemeTransition.setAppData(projectData.rooms);
-      
-            // 2. Устанавливаем ID проекта в store
-            projectState.setProjectId(id.toString());
-      
-            // 4. Уведомляем о загрузке контента
-            eventBus.emit("A:ContantLoaded", true);
-      
-            toaster.success("Проект загружен");
-      
-            // 5. Переходим на 2D конструктор
-            // await router.push("/2d");
-            window.C2D.layers.planner.init(true);
-            window.C2D.layers.doorsAndWindows.init(true);
-          } catch (error) {
-            console.error("Ошибка применения данных проекта:", error);
-          }
-        }
-      };
-    
-    function accordCheck() {
-        const router = useRouter();
-        const route = useRoute()
-        console.log(route)
-       
-        const id = route?.query?.projectId 
-        if (id) {
-            loadProject(id)
-        } else {
-            router.push({
-                path: '/'
-            })
-        }
+  const router = useRouter();
+  const route = useRoute();
+
+  const loadProject = async (id: string | number) => {
+    const schemeTransition = useSchemeTransition();
+    const projectAPI = useProjectAPI();
+    const projectState = useProjectStore();
+    const sceneState = useSceneState();
+    const eventBus = useEventBus();
+    const toaster = useToast();
+
+    if (!id) return;
+
+    const projectData = await projectAPI.loadProject(id.toString());
+    if (!projectData) return;
+
+    projectState.resetState();
+    projectState.setInitialState(projectData);
+
+    try {
+      schemeTransition.clearStore();
+      await sceneState.loadProjectFromData(projectData);
+      sceneState.updateProjectParams({});
+      schemeTransition.setAppData(projectData.rooms);
+
+      projectState.setProjectId(id.toString());
+
+      eventBus.emit("A:ContantLoaded", true);
+      toaster.success("Проект загружен");
+
+      window.C2D.layers.planner.init(true);
+      window.C2D.layers.doorsAndWindows.init(true);
+    } catch (error) {
+      console.error("Ошибка применения данных проекта:", error);
     }
-    
-    return {
-        accordCheck
+  };
+
+  const getAllProjectIds = async (
+    tab: ProjectTab = "my",
+    filters: { name?: string; id?: number } = {}
+  ): Promise<(string | number)[]> => {
+    const projectAPI = useProjectAPI();
+
+    try {
+      const projects = await projectAPI.loadProjects(tab, filters);
+      return projects.map(p => p.id);
+    } catch (error) {
+      console.error("Ошибка получения ID проектов:", error);
+      return [];
     }
-} 
+  };
+
+  /**
+   * Основная логика проверки query-параметра
+   */
+  const accordCheck = async () => {
+    const rawId = route.query?.projectId;
+
+    // Если параметр отсутствует — ничего не делаем
+    if (!rawId) return;
+
+    const path = route.path; // нужный путь, куда возвращать
+
+    // 1. Проверяем — является ли значение числом
+    const id = Number(rawId);
+
+    if (Number.isNaN(id)) {
+      alert("Неправильная ссылка");
+      // Очистка query и возврат на path
+      const url = new URL(window.location.href);
+      url.searchParams.delete('projectId');
+      window.history.replaceState({}, '', url.pathname);
+      return;
+    }
+
+    // 2. Получение всех id
+    const projectIds = await getAllProjectIds();
+
+    // 3. Проверка существования id
+    if (!projectIds.includes(rawId)) {
+      alert("Проект не найден или ссылка невалидна");
+
+      router.replace({ path, query: {} });
+      return;
+    }
+
+    // 4. Если id валиден — загружаем проект
+    await loadProject(id);
+
+    // 5. Убираем query, чтобы ссылки были чистыми
+    router.replace({ path, query: {} });
+  };
+
+  return {
+    accordCheck,
+    getAllProjectIds,
+  };
+}
