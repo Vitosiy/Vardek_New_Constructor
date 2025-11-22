@@ -11,6 +11,7 @@ import { ProjectTab } from "../types";
 export function useProjectFromQuery() {
   const router = useRouter();
   const route = useRoute();
+  const toaster = useToast();
 
   const loadProject = async (id: string | number) => {
     const schemeTransition = useSchemeTransition();
@@ -18,7 +19,6 @@ export function useProjectFromQuery() {
     const projectState = useProjectStore();
     const sceneState = useSceneState();
     const eventBus = useEventBus();
-    const toaster = useToast();
 
     if (!id) return;
 
@@ -76,7 +76,7 @@ export function useProjectFromQuery() {
     const id = Number(rawId);
 
     if (Number.isNaN(id)) {
-      alert("Неправильная ссылка");
+      toaster.error("Невалидный ID");
       // Очистка query и возврат на path
       const url = new URL(window.location.href);
       url.searchParams.delete('projectId');
@@ -89,8 +89,7 @@ export function useProjectFromQuery() {
 
     // 3. Проверка существования id
     if (!projectIds.includes(rawId)) {
-      alert("Проект не найден или ссылка невалидна");
-
+      toaster.error("Проект не найден или ссылка невалидна");
       router.replace({ path, query: {} });
       return;
     }

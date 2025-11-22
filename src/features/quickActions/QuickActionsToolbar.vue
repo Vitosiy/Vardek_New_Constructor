@@ -137,12 +137,11 @@ onMounted(() => {
 
 .checkbox_label {
   font-size: 16px;
-  padding-left: 10px;
+  padding-left: 7px;
 }
 
 .checkbox_wrap {
   display: flex;
   justify-content: space-between;
-
 }
 </style>
