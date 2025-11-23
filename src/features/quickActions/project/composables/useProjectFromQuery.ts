@@ -78,6 +78,7 @@ export function useProjectFromQuery() {
     if (Number.isNaN(id)) {
       toaster.error("Невалидный ID");
       // Очистка query и возврат на path
+      //todo 
       const url = new URL(window.location.href);
       url.searchParams.delete('projectId');
       window.history.replaceState({}, '', url.pathname);
