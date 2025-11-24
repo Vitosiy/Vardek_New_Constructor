@@ -15,7 +15,6 @@
       <!-- Секция свойств товара тип сцена-->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-
           <div v-if="getPropDefinition(String(propKey))">
             <!-- {{ propValue }} -->
             <span class="basket-item__props-lable" v-if="propValue">{{ getPropLabel(String(propKey)) }}:</span>
@@ -48,7 +47,7 @@
                 </span>
               </li>
             </ul>
-            
+
             <!-- Обработка одиночных значений -->
             <span  v-else :class="getErrorClass(propValue, item?.error?.props)">
               <template v-if="getPropDefinition(propKey).val === 'obj_list'">
@@ -110,11 +109,11 @@
                       <span v-if="propValue.PALETTE"> - {{ getPaletteName(propValue.PALETTE) }}</span>
                       {{ hasError(colorItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
-                    
-                    <li v-if="String(colorKey) === 'MILLING'">
+                    <!-- TODO -->
+                    <!-- <li v-if="String(colorKey) === 'MILLING'">
                       Фрезеровка: {{ getMillingSectionName(colorItem) }} - {{ getMillingName(colorItem) }}
                       {{ hasError(colorItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
-                    </li>
+                    </li> -->
                   </div>
                 </ul>
               </template>
@@ -138,11 +137,26 @@
               </template>
               
               <template v-else>
+                
                  {{  getUsliguName(propValue) }}  
               </template>
+              
             </span>
 
+            
           </div>
+          <span v-if='propKey === "RASPIL"'>
+              <div v-for="(item, index) in propValue.data" :key="propKey">
+                <span v-if="item.serviseData.length" class="basket-item__props-lable">Услуга {{ ++index }} :</span> 
+                <ul class="basket-item__props-list">
+                  <li v-for="(lisItem, index) in item.serviseData" :key="index">
+                    <!-- {{ item.serviseData.length }} -->
+                    <span>{{ lisItem.NAME  }}</span> <span v-if="lisItem.width">{{ lisItem.width }} мм.</span> 
+                  </li>
+                </ul>
+
+              </div>
+          </span>
 
         </div>
       </div>

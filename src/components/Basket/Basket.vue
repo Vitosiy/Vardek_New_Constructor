@@ -30,9 +30,7 @@
 
       <div v-if="productDelayData && productDelayData.length > 0 && productDelayData[0].type !== 'error'" class="basket-footer__notification">
         <div v-for="productItem in productDelayData">
-          
-          
-          <div>{{ productItem?.data?.title }}</div>
+          <h3 class="">{{ productItem?.data?.title }}</h3>
           <!-- <div>{{ productItem.data.max_delay_date }}</div> -->
           <div v-for="item in productItem?.data?.items">
             {{ item?.text }}

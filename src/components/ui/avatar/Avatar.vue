@@ -133,9 +133,9 @@ const clickOutsideHandler = (event: MouseEvent) => {
 // Хуки жизненного цикла
 onMounted(() => {
   // Загружаем данные пользователя, если они еще не загружены
-  if (!authStore.userData.name && authStore.isAuthenticated) {
-    authStore.fetchUserData()
-  }
+  // if (!authStore.userData.name && authStore.isAuthenticated) {
+  //   authStore.fetchUserData()
+  // }
   document.addEventListener('click', clickOutsideHandler)
 })
 

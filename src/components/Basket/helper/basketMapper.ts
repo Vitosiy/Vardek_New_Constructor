@@ -257,7 +257,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
     })
   }
 
-  // Динамически добавляем заполнения секций
+    // Динамически добавляем заполнения секций
     if(!Object.keys(CONFIG.MODULEGRID).length) {
       Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
         const section = CONFIG.SECTIONS[sectionKey];
@@ -381,6 +381,23 @@ function convertModuleToLegacyFormat(newModuleObject) {
   return legacyProps;
 }
 
+function removeEmptyObjects(obj) {
+  const result = {};
+  
+  for (const [key, value] of Object.entries(obj)) {
+    // Если значение - объект и он не пустой, сохраняем его
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      if (Object.keys(value).length > 0) {
+        result[key] = value;
+      }
+    } else {
+      // Сохраняем все остальные значения (строки, числа, массивы и т.д.)
+      result[key] = value;
+    }
+  }
+  
+  return result;
+}
      
 export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
   console.log('createBasketItem', objProps);
@@ -422,11 +439,13 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
             if(el.width) {
               return {
                 ID: el.ID,
-                width: el.width
+                width: el.width,
+                NAME: el.NAME
               }
             } else {
               return {
                 ID: el.ID,
+                NAME: el.NAME
               }
             }
           })
@@ -451,6 +470,12 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
   if(objProps.RASPIL.data) {
     props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value)[0]?.ID;
     props.RASPIL_COUNT = objProps.RASPIL.data.length
+    
+    function createRaspil(data) {
+      return data.flat().map(el => { console.log(el); return `${el.width}мм`}).join(' x '); 
+    }
+
+    props.USLUGIraspil = createRaspil(objProps.RASPIL.data);
   }
 
   if(objProps.CONFIG.KROMKA) {
@@ -472,10 +497,13 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
   
 
   if(objProps.CONFIG.SECTIONS) {
+    const propsUM = convertModuleToLegacyFormat(objProps);
+    const cleanedData = removeEmptyObjects(propsUM);
+    console.log('cleanedData', cleanedData)
     return {
       BASKETID: key,
       PRODUCT: objProps.CONFIG.ID,
-      PROPS:convertModuleToLegacyFormat(objProps),
+      PROPS:cleanedData,
       QUANTITY: 1,
       TYPE: "umscene",
     };

@@ -2,6 +2,8 @@
 import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookieUtils'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useAuthStore } from '@/store/appStore/authStore'
+
 
 export const useAppData = defineStore('AppData', () => {
   const appData = ref<{ [key: string]: any }>({})
@@ -14,7 +16,8 @@ export const useAppData = defineStore('AppData', () => {
     isLoading.value = true;
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
-    const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
+    const url = new URL('https://dev.vardek.online/api/modellerjwt/auth/getdata/')
+    // const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
     let currentURL = window.location.href;
     url.searchParams.append('url', currentURL)
     const response = await fetch(url, { 
@@ -112,9 +115,13 @@ export const useAppData = defineStore('AppData', () => {
     } catch (err) {
       console.error('Ошибка инициализации данных:', err)
     } finally {
+      const authStore = useAuthStore();
+      await authStore.fetchUserData()
       isLoading.value = false
       isLoaded.value = true
       document.querySelector('#main-loader').style.display = 'none';
+
+      
     }
   }
 

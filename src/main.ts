@@ -142,6 +142,7 @@ async function bootApp() {
   const appDataStore = useAppData()
   try {
     await appDataStore.initAppData()
+   
   } catch (error) {
     console.error('Failed to init app data:', error)
     // Fallback: остаёмся на /auth (или можно push на error-страницу)
