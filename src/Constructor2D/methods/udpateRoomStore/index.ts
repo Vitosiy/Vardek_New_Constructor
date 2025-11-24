@@ -3,6 +3,7 @@
 import { MathUtils } from "three";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useEventBus } from "@/store/appliction/useEventBus";
 
 import {
   IRoom,
@@ -24,6 +25,7 @@ import {
 } from "@/Constructor2D/utils/Math/index";
 
 function updateRoomStore(this: any): boolean {
+  const eventBus = useEventBus()
   const roomState = useRoomState()
   console.log('BEFORE: ', roomState.rooms)
   const roomStore = useSchemeTransition();
@@ -208,8 +210,8 @@ function updateRoomStore(this: any): boolean {
   roomStore.setAppData(rooms);
   
   // console.log('Data room store:', roomStore.getAllData());
-  
   console.log('AFTER AFTER: ', roomState.rooms)
+  console.log("2D CANVAS STORE: ", roomStore.getAllData())
   return true;
 
 }

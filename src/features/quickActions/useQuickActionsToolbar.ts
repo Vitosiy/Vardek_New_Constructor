@@ -219,10 +219,15 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-save',
       path: 'default',
       action: async () => {
+        projectState.isSaving = true
         if (router.currentRoute.value.path !== '/3d') {
           await router.push('/3d');
         }
-        onSaveProject()
+        setTimeout(() => {
+          eventBus.emit('A:Save')
+          onSaveProject()
+        }, 2000)
+        projectState.isSaving = false
       },
     },
     {

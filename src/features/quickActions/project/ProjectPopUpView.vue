@@ -138,6 +138,7 @@ import { useProjectAPI } from "./composables/useProjectAPI";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 const router = useRouter();
 const toaster = useToast();
@@ -243,6 +244,7 @@ const loadProject = async (id: string | number) => {
       await router.push("/2d");
       window.C2D.layers.planner.init(true);
       window.C2D.layers.doorsAndWindows.init(true);
+      useRoomState().routConvertData('/3d')
       closePopup();
     } catch (error) {
       console.error("Ошибка применения данных проекта:", error);

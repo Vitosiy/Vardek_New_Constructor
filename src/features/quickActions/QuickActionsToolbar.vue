@@ -63,6 +63,7 @@
       </template>
     </Modal>
   </div>
+  <GenericLoader v-show="projectStore.isSaving" />
 </template>
 
 <script setup lang="ts">
@@ -71,17 +72,20 @@ import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 import InputDialog from "@/components/ui/inputs/InputDialog.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
+import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import { useQuickActionsToolbar } from "./useQuickActionsToolbar";
 import { useRoute } from "vue-router";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useToast } from "@/features/toaster/useToast";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useProjectStore } from "./project/store/useProjectStore";
 
 const { actions, openSaveDialog, handleSaveConfirm: handleSaveConfirmFromComposable } = useQuickActionsToolbar();
 const route = useRoute();
 const sceneState = useSceneState();
 const toaster = useToast();
 const eventBus = useEventBus()
+const projectStore = useProjectStore()
 
 
 const centeringCheckbox = ref(false)
