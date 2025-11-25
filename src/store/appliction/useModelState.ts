@@ -60,6 +60,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     const appStore = useAppData()
     const _APP = computed(() => appStore.getAppData || {})
+    console.log(_APP)
 
     const _COLOR = computed(() => _APP.value.COLOR || [])
     const _FASADE = computed(() => _APP.value.FASADE || [])
@@ -68,7 +69,9 @@ export const useModelState = defineStore('ModelState', () => {
     const _FASADE_SECTION = computed(() => _APP.value.FASADE_SECTION || [])
     const _FASADE_POSITION = computed(() => _APP.value.FASADE_POSITION || [])
     const _FASADE_GROUPS = computed<IFasadeGroups>(() => _APP.value.FASADE_GROUPS || {})
+    const _FASADE_SIZE_RESTRICT = computed(() => _APP.value.FASADE_SIZE_RESTRICT || {})
     const _FASADE_TYPE = computed(() => _APP.value.FASADETYPE || [])
+    const _FILLING = computed(() => _APP.value.FILLING || [])
     const _PRODUCTS = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
     const _PALETTE = computed(() => _APP.value.PALETTE || [])
     const _PLINTH = computed(() => _APP.value.PLINTH || [])
@@ -262,13 +265,12 @@ export const useModelState = defineStore('ModelState', () => {
 
         const groupedFasades: Record<string, number> = {};
         let exception = !defaultFasade ? 'Без фасада' : ''
-        let haveShowCase = null
-
-        // console.log(fasadeNdx && productId, 'fasadeNdx, productId')
+        let haveShowCase = null;
+        const defaultRestrict = Object.values(_FASADE_SIZE_RESTRICT.value)[0]
 
         if (fasadeNdx !== undefined && productId !== undefined) {
 
-            let fasadePosData = null
+            let fasadePosData = null;
             const product = _PRODUCTS.value[productId]
             const positionId = product.FASADE_POSITION[fasadeNdx]
 
@@ -281,32 +283,56 @@ export const useModelState = defineStore('ModelState', () => {
 
         data.forEach(facadeId => {
             const facade = _FASADE.value[facadeId];
+            // console.log(facade)
 
             if (!facade) return;
             const hasGlass = _FASADE.value[facadeId].GLASS_ONLY == 1
 
             const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+
             if (!section || !section.UF_GROUP) return;
 
             const groupId: string = section.UF_GROUP;
 
             if (!groupedFasades[groupId]) {
-                groupedFasades[groupId] = [];
+
+                const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
+                groupedFasades[groupId] = {
+                    id: [], size: {
+                        MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].HEIGHT : defaultRestrict.PRODUCTS[0].HEIGHT,
+                        MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].WIDTH : defaultRestrict.PRODUCTS[0].WIDTH,
+                        MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_HEIGHT : defaultRestrict.PRODUCTS[0].MIN_HEIGHT,
+                        MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_WIDTH : defaultRestrict.PRODUCTS[0].MIN_WIDTH,
+                    },
+                    restrict: restrict
+
+                    // _FASADE_SIZE_RESTRICT.value[section.ID]
+                };
             }
+
 
             if (!haveShowCase && hasGlass) return
 
-            groupedFasades[groupId].push(facadeId);
+            groupedFasades[groupId]['id'].push(facadeId);
+            // groupedFasades['RESTRICT']=_FASADE_SIZE_RESTRICT[section.ID]
         });
 
-
         // Формирование итогового массива
-        const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => ({
-            NAME: group.NAME,
-            FASADES: groupedFasades[groupId] || [],
-            SORT: group.SORT
-        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
+        const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => {
+            // console.log(groupedFasades[groupId], '==== groupedFasades ====')
+            return {
+                NAME: group.NAME,
+                FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
+                SORT: group.SORT,
+                GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
+                RESTRICT_ID: groupedFasades[groupId] ? groupedFasades[groupId].restrict : null
+            }
+        }
 
+
+        ).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
+
+        // console.log(result)
 
         if (defaultFasade) {
             return result
@@ -420,7 +446,7 @@ export const useModelState = defineStore('ModelState', () => {
     const getCurrentMillingMap = (data) => {
 
         const millingKey = additionalMillingKeys[data];
-        const millingMapData = MILLINGS[millingKey] ?? MILLINGS[data] ?? MILLINGS[1317715];
+        const millingMapData = MILLINGS[millingKey] ?? MILLINGS[data] ?? MILLINGS[2462671];
         return millingMapData;
     }
 
@@ -618,6 +644,45 @@ export const useModelState = defineStore('ModelState', () => {
         return transformControls.value
     })
 
+    //================== helpers ==================
+
+    const expressionsReplace = (obj: any, expressions: THREETypes.TObject) => {
+
+        if (!expressions || !Object.keys(expressions).length) return obj;
+
+        let objStr: THREETypes.TObject | string | number = obj;
+
+        // Преобразуем объект в строку, если это объект
+        if (typeof obj == "object") {
+            objStr = JSON.stringify(obj);
+        }
+
+        // Заменяем выражения
+        Object.entries(expressions).forEach(([k, v]) => {
+            if (typeof objStr != "number") {
+                objStr = objStr.split(k).join(v);
+            }
+        });
+
+        // Возвращаем объект или строку
+        if (typeof obj == "object") {
+            return JSON.parse(objStr as string);
+        } else {
+            return objStr;
+        }
+    };
+
+    const calculateFromString = (expression) => {
+        try {
+            const func = new Function("return " + expression);
+            return func();
+        } catch (error) {
+            console.log(expression, '---"Недопустимое выражение!"')
+
+            return "Недопустимое выражение!";
+        }
+    }
+
     return {
         _APP,
         _FASADE,
@@ -625,6 +690,9 @@ export const useModelState = defineStore('ModelState', () => {
         _HEM,
         _FASADE_TYPE,
         _FASADE_POSITION,
+        _FASADE_SIZE_RESTRICT,
+        _FASADE_SECTION,
+        _FILLING,
         _MILLING,
         _MODELS,
         getModels,
@@ -679,6 +747,10 @@ export const useModelState = defineStore('ModelState', () => {
 
         setTransformControlsValue,
         getTransformControlsValue,
+
+        /** Helpers */
+        expressionsReplace,
+        calculateFromString
     }
 
 });

@@ -121,7 +121,7 @@ export class BuildUniversalModule extends BuildProduct {
             : { body: null, tempMaterial: null, move: null };
 
         const shelf = this._SHELF_POSITION[productId]
-            ? this.createShelf(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
+            ? this.shelf_builder.createShelfs(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
             : null;
 
         const legs = legsHeight

@@ -22,7 +22,7 @@ const plinthExist = ref<boolean>(false);
 const handlesExist = ref<boolean>(false);
 const prepareTabData = ref<IFigureItems[] | []>([]);
 
-const currentFigure = ref<string>("");
+const currentFigure = ref<string | null>("");
 
 const { figureItems, createSurfaceList, createPlinthData } =
   useFigureRightPage();
@@ -46,9 +46,9 @@ onBeforeMount(() => {
     }
   }) as IFigureItems[];
 
-
-
-  currentFigure.value = prepareTabData.value[0].name;
+  currentFigure.value = prepareTabData.value[0]
+    ? prepareTabData.value[0].name
+    : null;
 });
 
 const filteredFigure = computed(() => {
@@ -63,6 +63,7 @@ const filteredFigure = computed(() => {
 
 <template>
   <div class="figure">
+    <h3 v-if="prepareTabData.length ==0">У выбранной компановки фсады отсутствуют</h3>
     <defaultTab :tabs="prepareTabData" @tab-change="optionsTabChange" />
     <Handles :data="filteredFigure" v-if="currentFigure == 'Handles'" />
     <Plinth :data="filteredFigure" v-if="currentFigure == 'Plinth'" />

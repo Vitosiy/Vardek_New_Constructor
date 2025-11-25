@@ -33,6 +33,7 @@ import { EdgeBuilder } from './EdgeBuilder/EdgeBuilder.ts';
 import { HandlesBuilder } from './Handles/Handles.ts';
 import { PlinthBuilder } from './PlinthBuilder/PlinthBuilder.ts';
 import { DrowerBuilder } from './Drowers/DrowerBuilder.ts';
+import { ShelfBuilder } from './Shelf/ShelfBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -60,6 +61,7 @@ export class BuildProduct extends BuildersHelper {
     edge_builder: EdgeBuilder
     plinth_builder: PlinthBuilder
     drower_builder: DrowerBuilder
+    shelf_builder: ShelfBuilder
     uniform_texture_builder: UniformTextureBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
 
@@ -87,6 +89,7 @@ export class BuildProduct extends BuildersHelper {
         this.tabletop_builder = new TableTopBuilder(this);
         this.drower_builder = new DrowerBuilder(this)
         this.plinth_builder = new PlinthBuilder(this)
+        this.shelf_builder = new ShelfBuilder(this)
     }
 
     get _currentProduct() {
@@ -239,6 +242,7 @@ export class BuildProduct extends BuildersHelper {
         parent_group.userData.disableRaycast = product_data.disable_raycast == 1
         parent_group.userData.aabb = product.userData.aabb ?? aabb
         parent_group.userData.obb = product.userData.obb ?? obb
+        parent_group.userData.restrictData = {}
 
         return parent_group
     }
@@ -294,7 +298,8 @@ export class BuildProduct extends BuildersHelper {
             type_showcase,
             USLUGI,
             leg_length,
-            OPTION
+            OPTION,
+            SHELFQUANT
         } = product_data;
 
         let elType: THREETypes.TElementType
@@ -313,7 +318,8 @@ export class BuildProduct extends BuildersHelper {
             FASADE_SIZE: {},
             FASADE_POSITIONS: [],
             FASADE_TYPE: [],
-            FILLING: false,
+            FILLING: null,
+            FILLING_LIST: [],
             HANDLES: {},
             HANDLES_POSITION: {},
             HAVETABLETOP: tabletop != null && this.project.table_top_type_auto,
@@ -332,9 +338,16 @@ export class BuildProduct extends BuildersHelper {
                 SIZE_EDIT_HEIGHT_MIN: null,
                 SIZE_EDIT_HEIGHT_MAX: null,
                 SIZE_EDIT_DEPTH_MIN: null,
-                SIZE_EDIT_DEPTH_MAX: null
+                SIZE_EDIT_DEPTH_MAX: null,
+                SIZE_EDIT_STEP_HEIGHT: null,
+                SIZE_EDIT_STEP_DEPTH: null,
+                SIZE_EDIT_STEP_WIDTH: null,
             },
             SHOWCASE: [],
+            SHELFQUANT: {
+                total: SHELFQUANT ?? null,
+                current: null
+            },
             POSITION: null,
             PLINTH_ACTIONS: {},
             PRODUCT_SHOWCASE: null,
@@ -359,7 +372,8 @@ export class BuildProduct extends BuildersHelper {
                 ID: product_data.FILLING,
             });
 
-            PARAMS.FILLING = filling_list[0]?.ID;
+            PARAMS.FILLING = PARAMS.FILLING ?? filling_list[0]?.ID;
+            PARAMS.FILLING_LIST = product_data.FILLING
         }
 
         if (this._PRODUCTS[ID].leg_length) {
@@ -372,7 +386,7 @@ export class BuildProduct extends BuildersHelper {
 
         if (FASADE_SIZES?.length) {
 
-            PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, this._PRODUCTS[ID]) as any[];
+            PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, product_data) as any[];
             console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
         }
 
@@ -397,7 +411,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
-        PARAMS.SIZE_EDIT = this.getSizeEdit(product_data, PARAMS);
+        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
         console.log(PARAMS.SIZE, 'PARAMS.SIZE')
 
@@ -420,6 +434,8 @@ export class BuildProduct extends BuildersHelper {
 
         const { PROPS } = parentGroup.userData;
         const { CONFIG } = PROPS;
+
+        console.log(CONFIG, parentGroup, '=== CONFIG ===')
 
         const defaultConfig: THREETypes.TDefaultOptionsConfig = this.getDefaultOptionsConfig();
 
@@ -459,7 +475,7 @@ export class BuildProduct extends BuildersHelper {
             : { body: null, tempMaterial: null, move: null };
 
         const shelf = this._SHELF_POSITION[productId]
-            ? this.createShelf(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
+            ? this.shelf_builder.createShelfs(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
             : null;
 
         const legs = legsHeight
@@ -506,7 +522,7 @@ export class BuildProduct extends BuildersHelper {
         }
         if (shelf) shelf.position.y = baseY;
         if (fasade) fasade.position.y = baseY;
-        if(drower) drower.position.y = baseY
+        if (drower) drower.position.y = baseY
 
         /** @Раскоментировать_по_необходимости   */
         // if (tableTop) {
@@ -636,9 +652,9 @@ export class BuildProduct extends BuildersHelper {
                     "type": "object",
                     "geometry": {
                         "type": "BoxGeometry",
-                        "opt": {"x": CONFIG.SIZE.width - moduleThickness * 2, "y": 15, "z": 15}
+                        "opt": { "x": CONFIG.SIZE.width - moduleThickness * 2, "y": 15, "z": 15 }
                     },
-                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "rotation": { "x": 0, "y": 0, "z": 0 },
                     "position": {
                         "x": 0,
                         "y": startPos.y + CONFIG.SIZE.height - 15 / 2,
@@ -648,7 +664,7 @@ export class BuildProduct extends BuildersHelper {
                     "id": "horizontallinefront",
                     "type": "link",
                     "link": "horizontallineback",
-                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "rotation": { "x": 0, "y": 0, "z": 0 },
                     "position": {
                         "x": 0,
                         "y": startPos.y + CONFIG.SIZE.height - 15 / 2,
@@ -668,17 +684,17 @@ export class BuildProduct extends BuildersHelper {
                             "z": moduleThickness
                         }
                     },
-                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "rotation": { "x": 0, "y": 0, "z": 0 },
                     "position": {
                         "x": 0,
                         "y": startPos.y + CONFIG.SIZE.height - 15,
-                        "z": startPos.z +  moduleThickness / 2
+                        "z": startPos.z + moduleThickness / 2
                     }
                 }, {
                     "id": "horizontallinefront",
                     "type": "link",
                     "link": "horizontallineback",
-                    "rotation": {"x": 0, "y": 0, "z": 0},
+                    "rotation": { "x": 0, "y": 0, "z": 0 },
                     "position": {
                         "x": 0,
                         "y": startPos.y + CONFIG.SIZE.height - 15,
@@ -691,7 +707,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (LEFTSIDECOLOR?.SHOW) {
-            if(LEFTSIDECOLOR.SHOW) {
+            if (LEFTSIDECOLOR.SHOW) {
                 left = Object.assign({}, LEFTSIDECOLOR)
             }
             else {
@@ -700,7 +716,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (RIGHTSIDECOLOR) {
-            if(RIGHTSIDECOLOR.SHOW) {
+            if (RIGHTSIDECOLOR.SHOW) {
                 right = Object.assign({}, RIGHTSIDECOLOR)
             }
             else {
@@ -709,7 +725,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (BACKWALL) {
-            if(BACKWALL.SHOW) {
+            if (BACKWALL.SHOW) {
                 back = Object.assign({}, BACKWALL)
             }
             else {
@@ -799,72 +815,6 @@ export class BuildProduct extends BuildersHelper {
         props.BODY_DEFAULT = body.clone();
 
         return { body, tempMaterial: body.children[0]?.material, move };
-    }
-
-    /** Создание полок */
-
-    private createShelf(
-        props: THREETypes.TObject,
-        shelfs: THREEInterfases.IShelfData,
-        material?: Material,
-        move: THREETypes.TVector3
-    ) {
-
-        // console.log(props.CONFIG.SIZE, 'CONFIG')
-
-        const { depth, width: initWidth, height } = props.CONFIG.SIZE;
-        const correction = shelfs.WIDTH_CORRECTION;
-        const startPos = this.getStartPosition(props.CONFIG.SIZE);
-        const parent = new THREE.Object3D();
-
-        const { BODY_DEPTH, BODY_WIDTH, BODY_HEIGHT } = props.BODY.userData.trueSize
-        const correctDepth = depth > BODY_DEPTH ? BODY_DEPTH : depth
-        // const { depth, width, height } = props.CONFIG.SIZE;
-        // const checkCorrect = depth >= BODY_DEPTH
-        // const sizes = checkCorrect ? { depth: BODY_DEPTH, width: BODY_WIDTH, height: BODY_HEIGHT } : props.CONFIG.SIZE
-
-
-        // Выбор материала
-        const materialMap: Record<string, Material> = {
-            MeshBasicMaterial: new THREE.MeshBasicMaterial(),
-            MeshStandardMaterial: new THREE.MeshStandardMaterial(),
-            MeshPhongMaterial: new THREE.MeshPhongMaterial(),
-            MeshPhysicalMaterial: new THREE.MeshPhysicalMaterial(),
-            MeshLambertMaterial: new THREE.MeshLambertMaterial(),
-        };
-        const matType = props.BODY.userData.MATERIAL_TYPE ?? "MeshStandardMaterial";
-        const shelfMaterial = material || materialMap[matType] || materialMap.MeshStandardMaterial;
-
-        // Очищаем массив полок
-        props.SHELF = [];
-
-        // Функция создания полок
-        const createShelves = (axis: "X" | "Y", sizeKey: "width" | "height", posKey: "x" | "y", prefix: string) => {
-            let width = initWidth;
-            shelfs[axis].forEach((shelf, key) => {
-
-                if (correction) width += correction;
-
-                const mesh = new THREE.Mesh(
-                    new THREE.BoxGeometry(width - 32, 16, correctDepth),
-                    shelfMaterial
-                );
-                mesh.receiveShadow = true;
-                mesh.position[posKey] = startPos[posKey] + eval(this.expressionsReplace(shelf, { [`#${axis}#`]: props.CONFIG.SIZE[sizeKey] }));
-                mesh.position.z = move.z
-                mesh.name = `${prefix}_${key}`;
-
-                props.SHELF.push(mesh);
-
-                const edge = this.edge_builder.createEdge(mesh);
-                parent.add(mesh, edge);
-            });
-        };
-
-        createShelves("Y", "height", "y", "SHELF_HORIZONT");
-        createShelves("X", "width", "x", "SHELF_VERTICAL");
-
-        return parent;
     }
 
     /** Создание ножек модели */

@@ -212,7 +212,6 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
-
 const getMove = (move: boolean) => {
   if (!product.value) return;
   controller.value = move;
@@ -593,7 +592,7 @@ const controllerPosition = computed(() => {
 
 /** Работа о столешницами */
 
-const saveTableData = () => {
+const saveTableData = async () => {
   if (!product.value) return;
   const APP = VerdekConstructor.value;
   const { userData, id } = product.value;
@@ -603,9 +602,13 @@ const saveTableData = () => {
   CutCash.value = userData.PROPS.RASPIL = tableTopManager.value.saveGrid();
   CutSave.value = true;
 
-  APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
+  await APP!.tableTopCreator?.create(
+    toRaw(CutCash.value),
+    product.value,
+    groupID
+  );
 
-  // Пересчёт после сохранения распила
+  // // Пересчёт после сохранения распила
   scheduleBasketSync();
 };
 
@@ -645,6 +648,7 @@ const closeTableRedactor = () => {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
   }
   modelState.setCurrentRaspilParent(false);
+
 };
 
 const deliteTable = () => {

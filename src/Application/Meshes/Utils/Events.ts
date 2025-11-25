@@ -23,15 +23,11 @@ import { MILLINGS, additionalMillingKeys } from '@/Application/F-millings';
 // import { VertexNormalsHelper } from "three/examples/jsm/Addons.js";
 import { BuildUniversalModule } from "@/Application/Meshes/UniversalModuleUtils/BuildUniversalModule.ts";
 
-
-// let alumTextures = new URL('@/assets/metall', import.meta.url).href + "/"
 type TRotateActions = Record<number, number>
 export type TDataCreateHandle = { data: TCreateHandleParams; fasadeNdx: number }
 export type TDataWithNdx = { data: number | string, fasadeNdx: number, action?: number } | { data: Record<string, any>, fasadeNdx: number, action?: number };
 export type TDataWithType = { data: { [key: string]: any }, type: string }
 export type TResizeModel = { data: { width: number, height: number, depth: number }, mesh?: THREE.Object3D, type?: string }
-
-
 
 export class MeshEvents extends BuildersHelper {
 
@@ -105,6 +101,7 @@ export class MeshEvents extends BuildersHelper {
     private onChangeModelSize: ({ data, mesh, type }: TResizeModel) => void;
     private onCgangeRotation: (data: number) => void
     private onChangeRootModel: ({ data, mesh }) => void;
+    private onChangeFillingModel: ({ data, mesh }) => void;
 
     private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
@@ -201,7 +198,7 @@ export class MeshEvents extends BuildersHelper {
     }
 
     async resetFasade({ fasadeNdx, incomingModel, totalFasad, remove = false }: { fasadeNdx: number, incomingModel?: any, totalFasad?: THREE.Object3D, remove: boolean }) {
-        console.log('==== ❌ resetFasade ❌ ====')
+
 
         const fTypeMap: Record<string, keyof THREETypes.TOptionsMap> = {
             element_up: 'fasadsTop',
@@ -249,9 +246,13 @@ export class MeshEvents extends BuildersHelper {
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
 
+            console.log('==== ❌ resetFasade ❌ ====', globalMilling)
+
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
-            FASADE_PROPS[fasadeNdx].MILLING = globalMilling
+            if (globalMilling) {
+                FASADE_PROPS[fasadeNdx].MILLING = globalMilling
+            }
             FASADE_PROPS[fasadeNdx].PATINA = null
         }
     }
@@ -595,9 +596,9 @@ export class MeshEvents extends BuildersHelper {
 
         console.log(fasadeNdx)
 
-        await this.changeMilling({ data: 1317715, fasadeNdx })
+        await this.changeMilling({ data: 2462671, fasadeNdx })
         fasade.PATINA = null
-        fasade.MILLING = 1317715
+        fasade.MILLING = 2462671
         fasade.MILLING_TYPE = null
     }
 
@@ -1006,13 +1007,42 @@ export class MeshEvents extends BuildersHelper {
         const currentMesh = mesh ? mesh : this._currentMesh
         const { PROPS } = currentMesh.userData
         const { CONFIG } = PROPS
-        const { POSITION, UNIFORM_TEXTURE } = CONFIG
-        const { width, height, depth } = this._PRODUCTS[PROPS.PRODUCT];
+        const { POSITION, UNIFORM_TEXTURE, OPTIONS, FASADE_PROPS } = CONFIG
+        const product = this._PRODUCTS[PROPS.PRODUCT]
+        const { width, height, depth } = CONFIG.SIZE;
+        const clone = FASADE_PROPS.map(el => el)
 
-
-        // console.log(this._MODELS[data], '_MODELS')
 
         CONFIG.MODELID = data
+        this.buildProduct.filters.filterFasadePosition(CONFIG, product)
+        this.buildProduct.filters.filterFasadeSizer(product.FASADE_SIZES, product)
+
+        CONFIG.FASADE_PROPS = clone
+
+        this.changeModelSize({ data: { width, height, depth } })
+
+    }
+
+    //------------------
+    /** @Изменение_компановки_модели  */
+    //------------------
+
+    async changeFillingModel({ data, mesh }) {
+        if (!this._currentMesh) return
+
+        const currentMesh = mesh ? mesh : this._currentMesh
+        const { PROPS } = currentMesh.userData
+        const { CONFIG } = PROPS
+        const { POSITION, UNIFORM_TEXTURE, OPTIONS, FASADE_PROPS } = CONFIG
+        const product = this._PRODUCTS[PROPS.PRODUCT]
+        const { width, height, depth } = CONFIG.SIZE;
+
+
+
+        CONFIG.FILLING = data
+        CONFIG.OPTIONS = this.buildProduct.filters.filterOption(product.OPTION)
+        this.buildProduct.filters.filterFasadePosition(CONFIG, product)
+
 
         this.changeModelSize({ data: { width, height, depth } })
 
@@ -1207,6 +1237,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeRootModel({ data, mesh })
         }
 
+        this.onChangeFillingModel = ({ data, mesh }) => {
+            this.changeFillingModel({ data, mesh })
+        }
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
 
@@ -1250,7 +1284,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:RotateModel', this.onCgangeRotation);
 
         this.events.on('A:ChangeRootModel', this.onChangeRootModel);
-
+        this.events.on('A:ChangeFilling', this.onChangeFillingModel);
 
     }
 

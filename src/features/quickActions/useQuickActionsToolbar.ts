@@ -50,7 +50,7 @@ export const useQuickActionsToolbar = () => {
   const onSaveProject = async () => {
     // projectState.isSaving = true;
     eventBus.emit("A:Save");
-    return
+    return;
 
     projectState.isSaving = true;
 

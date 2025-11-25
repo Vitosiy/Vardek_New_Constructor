@@ -44,8 +44,7 @@ import { useRailsRightPage } from "../RailsRightPage/useRailsRightPage";
 import { useHandlesAction } from "../FigureRightPage/Handles/useHandlesAction";
 
 const { resetGlobal } = useRailsRightPage();
-const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
-  useHandlesAction();
+const { getIntegratedHandleControllerData, setIntegratedHandleAction } = useHandlesAction();
 
 const props = defineProps({
   tabIndex: Number /** Индекс выбранного фасада в defaultTab.vue */,
@@ -112,17 +111,27 @@ const onSelectMaterial = (data) => {
 
   resetGlobal();
 
-
-  console.log(data, 'MMMAAA')
-
   const { PROPS } = productData.value;
   const { CONFIG } = PROPS;
   const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
-  const product = _APP.CATALOG.PRODUCTS[productId.value];
+  const product = modelState._PRODUCTS[productId.value];
   const { COLOR, RESET_COLOR, ALUM } = FASADE_PROPS[props.tabIndex];
 
   const haveShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
   const dataOfFasadeType = _FASADE[COLOR];
+
+  const section =
+    modelState._FASADE_SECTION[dataOfFasadeType.IBLOCK_SECTION_ID];
+  const groupId = section.UF_GROUP ?? section;
+  const toCheck = modelState._FASADE_SIZE_RESTRICT[section.ID];
+  console.log(toCheck, section.ID, " === toCheck");
+
+  const restrict = toCheck
+    ? modelState._FASADE_SIZE_RESTRICT[section.ID].PRODUCTS[0]
+    : Object.values(modelState._FASADE_SIZE_RESTRICT)[0].PRODUCTS[0];
+  productData.value.restrictData[props.tabIndex] = restrict;
+
+  console.log( productData.value.restrictData, section, "==== ❌ FASADE ❌ ====");
 
   isSurfaceSelected.value = true;
   currentSurfaceData.value = data;
@@ -144,7 +153,10 @@ const onSelectMaterial = (data) => {
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
-  isShowcaseExist.value = !data.material.includes("Alum") && haveShowcase && COLOR !== RESET_COLOR;
+  console.log(data, "==== ❌ DATA ❌ ====")
+
+  isShowcaseExist.value =
+    (!data.material?.includes("Alum")) && haveShowcase && COLOR !== RESET_COLOR;
   // showcaseList.value.length > 0 &&
   //   haveShowcase &&
   //   ALUM == null &&
@@ -208,7 +220,6 @@ const onSelectMaterial = (data) => {
       "integrate"
     );
 
-    console.log(typeList, "==== ❌ typeList ❌ ====");
     FASADE_PROPS[props.tabIndex].TYPE = typeList[0].id;
     fasadeTypesList.value = typeList;
   } else {
@@ -231,8 +242,6 @@ const onSelectMilling = (data) => {
       props.tabIndex,
       "milling"
     );
-
-    console.log(typeList, "----typeList.length");
 
     if (typeList.length > 0) {
       isFasadeHandleExist.value = true;
@@ -305,6 +314,9 @@ const deleteSelectedOptions = (type: String) => {
     FASADE_PROPS[props.tabIndex].TYPE = null;
     FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
 
+    /** @Очищаем данные для отслеживания полотна */
+    productData.value.restrictData = {};
+
     setCurrentEditableOption("surface");
     resetGlobal(); /** @Очищаеи_опции */
     return;
@@ -313,9 +325,7 @@ const deleteSelectedOptions = (type: String) => {
   if (type === "milling") {
     eventBus.emit("A:DeliteMilling", props.tabIndex);
 
-    // const { NAME, PREVIEW_PICTURE } = millingList.value[0];
-    const { NAME, PREVIEW_PICTURE } = modelState._MILLING[1317715];
-
+    const { NAME, PREVIEW_PICTURE } = millingList.value[0];
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
 
     eventBus.emit("A:DelitePatina", props.tabIndex);
@@ -660,8 +670,31 @@ const getFasadesize = computed(() => {
   return current.userData.trueSize;
 });
 
+const checkFasadeConversations = () => {
+  const sceneModel = modelState.getCurrentModel;
+  const { FASADE } = sceneModel?.userData.PROPS;
+  const { FASADE_WIDTH, FASADE_HEIGHT } =
+    FASADE[props.tabIndex].userData.trueSize;
+
+  const tempList = modelState.getCurrentModelFasadesData
+    .map((el) => {
+      const check =
+        FASADE_HEIGHT <= el.GROUP_SIZE.MAX_HEIGHT &&
+        FASADE_HEIGHT >= el.GROUP_SIZE.MIN_HEIGHT &&
+        FASADE_WIDTH <= el.GROUP_SIZE.MAX_WIDTH &&
+        FASADE_WIDTH >= el.GROUP_SIZE.MIN_WIDTH;
+      if (check) return el;
+    })
+    .filter(Boolean);
+
+  console.log(tempList, modelState._FASADE_SIZE_RESTRICT, "----tempList");
+
+  return tempList;
+};
+
 onBeforeMount(() => {
-  materialList.value = modelState.getCurrentModelFasadesData;
+  // materialList.value = modelState.getCurrentModelFasadesData;
+  materialList.value = checkFasadeConversations();
   productData.value = modelState.getCurrentModel.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 
@@ -671,6 +704,7 @@ onBeforeMount(() => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const curFasade = FASADE_PROPS[props.tabIndex];
   const curSize = curFasade.SIZES;
+
   incomeSize.value = {
     width: curSize?.params?.FASADE_WIDTH ?? null,
     min: curSize?.params?.min ?? null,

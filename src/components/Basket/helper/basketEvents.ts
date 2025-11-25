@@ -73,6 +73,7 @@ const useBascetEvents = () => {
         if (!actions.value) return
         // @ts-ignore
         const data = actions.value?.save();
+        
         roomContantData.setRoomContantDataForBasket(data)
 
         clearTimeout(basketDebounceTimer!);

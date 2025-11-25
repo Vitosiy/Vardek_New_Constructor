@@ -15,7 +15,11 @@ export const useAppData = defineStore('AppData', () => {
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
     const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
-    const response = await fetch(url, { 
+    // const url = new URL('  https://dev.vardek.online/api/modellerjwt/auth/getdata/')
+    // const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/?url=http://localhost:5001/dev_modeller/2d')
+
+
+    const response = await fetch(url, {
       method: 'GET',
       // headers: {
       // "Authorization": `Bearer ${token}`,
@@ -99,8 +103,8 @@ export const useAppData = defineStore('AppData', () => {
     }
   }
 
-  const getAppData = computed(() => { 
-    return appData.value 
+  const getAppData = computed(() => {
+    return appData.value
   })
 
   return {

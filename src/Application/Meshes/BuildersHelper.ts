@@ -184,6 +184,17 @@ export class BuildersHelper extends GlobalsData {
         }
     };
 
+    calculateFromString(expression) {
+        try {
+            const func = new Function("return " + expression);
+            return func();
+        } catch (error) {
+            console.log(expression, '---"Недопустимое выражение!"')
+
+            return "Недопустимое выражение!";
+        }
+    }
+
     getStartPosition(size: THREETypes.TObject) {
         return new THREE.Vector3(-size.width * 0.5, -size.height * 0.5, -size.depth * 0.5);
     };
@@ -429,17 +440,6 @@ export class BuildersHelper extends GlobalsData {
         return root;
     }
 
-    calculateFromString(expression) {
-        try {
-            const func = new Function("return " + expression);
-            return func();
-        } catch (error) {
-            console.log(expression,  '---"Недопустимое выражение!"')
-
-            return "Недопустимое выражение!";
-        }
-    }
-
     createStartTopTableCutData(uslugi, product_data) {
 
         const convert = this.createCutterParams(uslugi)
@@ -521,7 +521,7 @@ export class BuildersHelper extends GlobalsData {
                 }
             }
 
-            if(merged.POSITION.includes('kromka')){
+            if (merged.POSITION.includes('kromka')) {
                 merged.POSITION = merged.POSITION + '_global'
             }
 

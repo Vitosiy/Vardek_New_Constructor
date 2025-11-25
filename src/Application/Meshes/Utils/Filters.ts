@@ -61,6 +61,8 @@ export class Filters extends GlobalsData {
 
         const { FASADE_PROPS, ELEMENT_TYPE, FASADE_SIZE, FILLING, MODELID, MODEL } = params
 
+        FASADE_PROPS.length = 0;
+
         let sortFasadePositionList = [];
         const fasadePositionList = product.FASADE_POSITION
 
@@ -88,7 +90,11 @@ export class Filters extends GlobalsData {
         //Фильтрация фасадов на принадлежность текущей компоновке
         if (FILLING)
             sortFasadePositionList = sortFasadePositionList.filter((value, index) => {
+
+
                 let fasade = this._FASADE_POSITION[value]
+
+                console.log(fasade, '=== FILL ===')
                 if (fasade.filling.length && fasade.filling[0]) {
                     if (fasade.filling.includes(FILLING))
                         return value
@@ -98,6 +104,7 @@ export class Filters extends GlobalsData {
             })
 
         sortFasadePositionList.forEach((fasade: number, key: number) => {
+
 
             const curFasade = fasade.ID ? fasade.ID : fasade
             const fasadePosition = this._FASADE_POSITION[curFasade]
@@ -276,10 +283,12 @@ export class Filters extends GlobalsData {
             .filter(Boolean);
 
         const result = curOptionsList.map(el => {
+
             const groupName = el.GROUP ?? ''
-            return { id: el.ID, active: false, group: groupName, close: el.CLOSE_OTHER_OPTIONS, visible: true }
+            return { id: el.ID, active: false, group: groupName, section:el.IBLOCK_SECTION_ID?.[0], close: el.CLOSE_OTHER_OPTIONS, visible: true }
         })
 
+        console.log(  console.log(result,'=== 🔥 ==='))
         return result
     }
 

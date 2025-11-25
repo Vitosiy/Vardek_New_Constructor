@@ -58,6 +58,7 @@ export class MoveManager {
     private onTouchEndBound: (event: TouchEvent) => void;
 
     private onKeyDown: (event) => void;
+    private extention:''
 
 
 
@@ -277,7 +278,7 @@ export class MoveManager {
             // Если это GLTF-модель, выбираем её как цель
             const check = this.getRootObject(firstObject);
 
-            if (check.userData.elementType === "element_room") return
+            // if (check.userData.elementType === "element_room") return
             this.selectedObject = check
 
             this.selectedObject.userData.aabb = this.trafficManager.geometryBuilder.buildProduct.computeAABB(this.selectedObject)
