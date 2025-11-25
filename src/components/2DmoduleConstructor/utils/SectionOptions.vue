@@ -2,7 +2,7 @@
 // @ts-nocheck
 import {defineExpose, onMounted, ref, toRefs} from "vue";
 
-import {GridCell, GridCellsRow, GridSection} from "@/types/constructor2d/interfaсes.ts";
+import {GridCell, GridCellsRow, GridRowExtra, GridSection} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
 import CounterInput from "@/components/ui/inputs/CounterInput.vue";
@@ -280,6 +280,80 @@ const addRowCell = (secIndex, cellIndex, rowIndex = 0, _count = 1) =>  {
   visualizationRef.value.renderGrid();
 };
 
+const addRowExtra = (secIndex, cellIndex, rowIndex, extraIndex = 0, _count = 1) => {
+  const count = parseInt(_count)
+  selectCell(secIndex, cellIndex, rowIndex);
+
+  let section = module.value.sections[secIndex];
+  let cell = section.cells[cellIndex];
+  let row = cell.cellsRows[rowIndex]
+
+  let extra;
+  if (row.extras?.length > 0) {
+    extra = row.extras[extraIndex]
+  } else {
+    row.extras = <GridRowExtra>[];
+    extra = <GridRowExtra>{
+      number: 1,
+      width: row.width,
+      height: row.height,
+      type: "rowExtra",
+      position: new THREE.Vector2(row.position.x, row.position.y),
+    };
+
+    if (row.fillings?.length) {
+      delete row.fillings
+    }
+
+    if(row.hiTechProfiles) {
+      delete row.hiTechProfiles
+      updateFasades();
+    }
+
+    row.extras.push(extra);
+  }
+
+  const halfHeight = Math.floor((extra.height - module.value.moduleThickness * count) / (count + 1));
+
+  if (halfHeight < MIN_SECTION_HEIGHT) {
+    alert("Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!");
+    return;
+  }
+
+  const deltaLastCell = extra.height - halfHeight * (count + 1) - module.value.moduleThickness * count;
+
+  // Обновляем высоту последней строки
+  extra.height = halfHeight;
+
+  if (extra.fillings)
+    extra.fillings.length = 0
+
+  // Добавляем новую строку в эту колонку
+  for (let i = 0; i < count; i++) {
+
+    let newExtra = <GridRowExtra>{
+      ...extra,
+      number: extra.number + 1 + i,
+      position: new THREE.Vector2(extra.position.x, extra.position.y + (halfHeight + module.value.moduleThickness) * (i + 1)),
+      fillings: [],
+      //fillings: newFillings,
+    }
+
+    delete newExtra.hiTechProfiles
+
+    if(deltaLastCell && i === count - 1) {
+      newExtra.height += deltaLastCell;
+    }
+
+    row.extras.splice(cellIndex || 0, 0, newExtra);
+  }
+
+  calcLoops(secIndex);
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
 const updateSectionWidth = (value, secIndex) => {
   const newValue = parseInt(value);
   let adjustedValue;
@@ -489,6 +563,83 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
 
 };
 
+const updateExtraHeight = (value, secIndex, cellIndex, rowIndex, extraIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+  // Обновляем выбранную секцию для визуального отображения
+  selectCell(secIndex, cellIndex, rowIndex, extraIndex);
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "height",
+      value: newValue,
+      sec: secIndex,
+      cell: cellIndex,
+      row: rowIndex,
+      extra: extraIndex,
+    });
+  }
+  // Обновляем значение в module для синхронизации
+  const clone = Object.assign({}, module.value);
+  let curSection = clone.sections[secIndex]
+  let curCell = curSection.sections[cellIndex]
+  let curRow = curCell.sections[rowIndex]
+
+  if (adjustedValue) {
+    let curExtra = curRow.extras[extraIndex]
+    let nextIndex = curRow.extras[extraIndex + 1] ? extraIndex + 1 : extraIndex - 1;
+    let nextExtra = curRow.extras[nextIndex]
+    let delta = curExtra.height - adjustedValue
+
+    curExtra.height = adjustedValue
+
+    if (nextExtra?.position?.y < curExtra.position.y)
+      curExtra.position.y += delta
+
+    if (nextExtra) {
+      nextExtra.height += delta
+
+      if (nextExtra.position.y > curExtra.position.y)
+        nextExtra.position.y -= delta
+
+      nextExtra.fillings?.filter((filling, index) => {
+        if (filling.position.y + filling.height <= nextExtra.position.y - module.value.moduleThickness) {
+          filling.extra = extraIndex
+          curExtra.push(filling);
+          return false
+        } else if (filling.position.y >= nextExtra.position.y + nextExtra.height + module.value.moduleThickness) {
+          filling.extra = extraIndex
+          curExtra.push(filling);
+          return false
+        } else
+          return true
+      })
+    }
+
+    curExtra.fillings?.filter((filling, index) => {
+      if (filling.position.y + filling.height <= curExtra.position.y - module.value.moduleThickness) {
+        if (nextExtra) {
+          filling.extra = nextIndex
+          nextExtra.push(filling);
+        }
+        return false
+      } else if (filling.position.y >= curExtra.position.y + curExtra.height + module.value.moduleThickness) {
+        if (nextExtra) {
+          filling.extra = nextIndex
+          nextExtra.push(filling);
+        }
+        return false
+      } else
+        return true
+    })
+  }
+  module.value = clone;
+
+  calcLoops(secIndex);
+
+  visualizationRef.value.renderGrid();
+};
+
 const deleteSection = (secIndex) => {
   const current = module.value.sections[secIndex];
   const next = module.value.sections[secIndex + 1];
@@ -608,6 +759,42 @@ const deleteRowCell = (cellIndex, secIndex, rowIndex) => {
   selectedCell.value.cell = cellIndex;
   selectedCell.value.sec = secIndex;
   selectedCell.value.row = null;
+
+  visualizationRef.value.renderGrid();
+}
+
+const deleteRowExtra = (cellIndex, secIndex, rowIndex, extraIndex) => {
+  const clone = Object.assign({}, module.value);
+  const currentSection = clone.sections[secIndex];
+  const currentCell = currentSection.cells[cellIndex];
+  const currentRow = currentCell.cellsRows[rowIndex];
+  const currentExtra = currentRow.extras[extraIndex];
+
+  const next = currentRow.extras[extraIndex + 1];
+  const prev = currentRow.extras[extraIndex - 1];
+
+  const combinedHeight = next
+      ? currentExtra.height + next.height + module.value.moduleThickness
+      : currentExtra.height + prev.height + module.value.moduleThickness;
+
+  next ? (next.position.y = next.position.y - next.height / 2 + combinedHeight / 2) : (prev.position.y = prev.position.y - prev.height / 2 + combinedHeight / 2);
+  next ? (next.height = combinedHeight) : (prev.height = combinedHeight);
+
+  if (currentRow.extras.length > 1) {
+    currentRow.extras.splice(extraIndex, 1);
+  }
+
+  next ? (delete next.fillings) : (delete prev.fillings);
+
+  if (currentRow.extras.length <= 1)
+    delete currentRow.extras
+
+  module.value = clone;
+
+  // Обновляем текущий сектор
+  selectedCell.value.cell = cellIndex;
+  selectedCell.value.sec = secIndex;
+  selectedCell.value.row = rowIndex;
 
   visualizationRef.value.renderGrid();
 };

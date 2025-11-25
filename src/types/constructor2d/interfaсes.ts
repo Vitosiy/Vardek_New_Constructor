@@ -110,6 +110,7 @@ export interface FillingObject {
   sec: number;
   cell?: number;
   row?: number;
+  extra?: number;
   error?: boolean;
   moduleThickness?: number;
 }
