@@ -27,18 +27,34 @@
     </div>
 
     <div class="basket-footer">
-      <div class="basket-footer-info">
-        <p class="basket__sum">Общая стоимость: <span>{{ totalPrice }}</span></p>
-        <p class="basket__sum-no">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
-      </div>
-      <div class="basket-footer-buttons">
-        <div class="basket__error" v-if="errorBasket">
-          <p class="error__title"></p>
-          <p class="error__title">Ошибка - {{ errorCount }} шт. </p>
+
+      <div v-if="productDelayData && productDelayData.length > 0 && productDelayData[0].type !== 'error'" class="basket-footer__notification">
+        <div v-for="productItem in productDelayData">
+          <h3 class="">{{ productItem?.data?.title }}</h3>
+          <!-- <div>{{ productItem.data.max_delay_date }}</div> -->
+          <div v-for="item in productItem?.data?.items">
+            {{ item?.text }}
+          </div>
         </div>
-        <button class="basket__close" @click="closePopup">Закрыть</button>
-        <button class="basket__save">Печать</button>
-        <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
+      </div>
+
+      
+
+
+      <div class="basket-footer">
+        <div class="basket-footer-info">
+          <p class="basket__sum">Общая стоимость: <span>{{ !oldPrice ? totalPrice : totalOldPrice }}</span></p>
+          <p class="basket__sum-no" v-if="!oldPrice">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
+        </div>
+        <div class="basket-footer-buttons">
+          <div class="basket__error" v-if="errorBasket">
+            <p class="error__title"></p>
+            <p class="error__title">Ошибка - {{ errorCount }} шт. </p>
+          </div>
+          <button class="basket__close" @click="closePopup">Закрыть</button>
+          <button class="basket__save">Печать</button>
+          <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
+        </div>
       </div>
     </div>
   </div>
@@ -52,14 +68,19 @@ import BasketTable from "./BasketTable.vue"
 import { useBasketStore } from '@/store/appStore/useBasketStore';
 import { computed, onMounted, ref, watch } from 'vue';
 import { IBasketResponse, IProduct } from '@/types/basket';
+import { useAppData } from "@/store/appliction/useAppData"
 
-const { basketData, syncBasket, syncInvoce} = useBasketStore();
+const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncInvoce} = useBasketStore();
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
+const productDelayData = ref([]);
 const loading = ref(true)
 const errorBasket = ref(false);
 const errorCount = ref(0);
+const appDataStore = useAppData();
 
+const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
+// const oldPrice = 1;
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 
@@ -84,6 +105,7 @@ const totalOldPrice = computed(() => {
   return items.value?.basket?.sumFormatOld ?? 0;
 });
 
+
 const setInvoice = () => {
   console.log('basketData', basketData);
   syncInvoce();
@@ -101,11 +123,17 @@ const updateBasketData = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   console.log('basketData', basketData);
   updateBasketData();
+  await syncBasketDelay();
 });
 
+// Следим за изменениями отложенных товаров
+watch(() => useBasketStore().allBasketDelay, (newValue) => {
+  console.log('Отложенные товары изменились:', newValue);
+  productDelayData.value = newValue
+}, { deep: true });
 
 // Следим за изменениями в хранилище корзины
 watch(() => useBasketStore().basketData, (newValue) => {
@@ -161,18 +189,21 @@ watch(() => useBasketStore().basketData, (newValue) => {
         cursor: pointer;
       }
     }
-
+    &__additional-table {
+      margin-top: 2rem;
+    }
     .basket-container {
       width: 100%;
       height: 100%;
       overflow-y: auto;
       &__main-table {
-        margin-bottom: 2rem;
+        // margin-bottom: 2rem;
         .basket-table {
           background-color: #F6F5FA;
           border-radius: 15px;
         }
       }
+
     }
 
     .basket-footer {
@@ -317,6 +348,13 @@ watch(() => useBasketStore().basketData, (newValue) => {
     50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
     75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
     100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+  }
+
+  .basket-footer__notification {
+    background: #cfe2ff;
+    width: 100%;
+    border-radius: 8px;
+    padding: 12px;
   }
 
 </style>

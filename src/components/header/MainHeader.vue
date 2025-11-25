@@ -147,7 +147,6 @@ const createNewRoom = (value: string) => {
   eventBus.emit("A:Create", value);
   restorLength.value = 0;
   curActionCount.value = 0;
-  menuStore.closeAllMenus();
 };
 
 const checkContantLoad = (state: boolean) => {
@@ -401,7 +400,15 @@ onBeforeUnmount(() => {
                 </InputDialog>
               </template>
               <template #modalOpen="{ onModalOpen }">
-                <button class="button__rounded" @click="onModalOpen">
+                <button
+                  class="button__rounded"
+                  @click="
+                    () => {
+                      onModalOpen();
+                      customiserStore.hideCustomiserPopup();
+                    }
+                  "
+                >
                   <span class="icon icon-add"></span>
                 </button>
               </template>

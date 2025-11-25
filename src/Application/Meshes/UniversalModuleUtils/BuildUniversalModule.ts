@@ -3,7 +3,6 @@
 import * as THREE from 'three'
 import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
-import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import {
     GridModule, LOOPSIDE

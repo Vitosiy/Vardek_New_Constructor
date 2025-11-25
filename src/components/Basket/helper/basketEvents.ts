@@ -46,6 +46,7 @@ const eventsMap = [
     "A:ChangeMillingTotal",
     "A:ChangePlinthBody",
     "A:ChangePlinthColor",
+    "U:DrawPatina"
 ]
 
 const useBascetEvents = () => {

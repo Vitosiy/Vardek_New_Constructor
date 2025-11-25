@@ -11,7 +11,7 @@ type TWheightData = {
     weight: number
 }
 
-type TMechanizmData = {
+type TMechanismData = {
     ID: number,
     NAME: string,
     CLOSE_OTHER_OPTIONS: number | string,
@@ -20,11 +20,11 @@ type TMechanizmData = {
     visible: boolean
 }
 
-type TMechanizmListData = {
-    NAME: string, CONTANT: TMechanizmData[]
+type TMechanismListData = {
+    NAME: string, CONTANT: TMechanismData[]
 }
 
-export const useMechanizm = () => {
+export const useMechanism = () => {
 
     const appData = useAppData()
     const modelState = useModelState();
@@ -79,16 +79,16 @@ export const useMechanizm = () => {
 
             })
 
-            console.log(weightData, '✅ IN useMechanizm/weightCalculation -- weightData')
+            console.log(weightData, '✅ IN useMechanism/weightCalculation -- weightData')
             return weightData
 
         } catch (e) {
-            console.log('❌ Ошибка в методе weightCalculation объекта useMechanizm', e)
+            console.log('❌ Ошибка в методе weightCalculation объекта useMechanism', e)
             return []
         }
     }
 
-    const createMeckhanizmList = (): TMechanizmListData | [] => {
+    const createMeckhanizmList = (): TMechanismListData | [] => {
         try {
             const curModel = modelState.getCurrentModel;
             if (!curModel) return [];
@@ -97,15 +97,15 @@ export const useMechanizm = () => {
             const { PRODUCTS } = CATALOG;
             const { PROPS } = curModel.userData;
             const { PRODUCT, CONFIG } = PROPS;
-            const { SIZE, MECHANIZM } = CONFIG;
+            const { SIZE } = CONFIG;
             const prodOptions = PRODUCTS[PRODUCT].OPTION;
             const weightsData = weightCalculation()
 
             if (weightsData.includes(null)) {
 
-                console.log('❌ Результат метода weightCalculation объекта useMechanizm содержит null');
-                CONFIG.MECHANIZM = null
-                CONFIG.MECHANIZM_TEMP = []
+                console.log('❌ Результат метода weightCalculation объекта useMechanism содержит null');
+                CONFIG.MECHANISM = null
+                CONFIG.MECHANISM_TEMP = []
                 return [];
             }
 
@@ -114,13 +114,13 @@ export const useMechanizm = () => {
                 .reduce((sum, item) => sum + item!.weight, 0);
 
             if (!totalWeight) {
-                CONFIG.MECHANIZM = null
-                CONFIG.MECHANIZM_TEMP = []
+                CONFIG.MECHANISM = null
+                CONFIG.MECHANISM_TEMP = []
                 return []
             };
 
             const filtered: Record<string, string> = {};
-            const mechanism: Record<string, Record<string, any>> | TMechanizmData[] = {};
+            const mechanism: Record<string, Record<string, any>> | TMechanismData[] = {};
 
 
             for (const optionKey in prodOptions) {
@@ -152,10 +152,10 @@ export const useMechanizm = () => {
                         ID: mechID,
                         NAME,
 
-                        TYPE: 'mechanizm',
+                        TYPE: 'mechanism',
                         group: GROUP,
                         close: '2',
-                        active: MECHANIZM === parseFloat(mechID),
+                        active: MECHANISM === parseFloat(mechID),
                         visible: true
                     })
 
@@ -179,19 +179,19 @@ export const useMechanizm = () => {
             return result;
 
         } catch (e) {
-            console.log('❌ Ошибка в методе createMeckhanizmList объекта useMechanizm', e);
+            console.log('❌ Ошибка в методе createMeckhanizmList объекта useMechanism', e);
             return [];
         }
     };
 
-    const createMeckhanizmTemp = (data: TMechanizmData[] | []) => {
+    const createMeckhanizmTemp = (data: TMechanismData[] | []) => {
         const curModel = modelState.getCurrentModel;
         const { PROPS } = curModel!.userData;
         const { CONFIG } = PROPS;
 
-        CONFIG.MECHANIZM_TEMP = Object.values(data).flat()
+        CONFIG.MECHANISM_TEMP = Object.values(data).flat()
 
-        console.log(CONFIG.MECHANIZM_TEMP, '_MECHANIZM')
+        console.log(CONFIG.MECHANISM_TEMP, '_MECHANISM')
     }
 
     return { weightCalculation, createMeckhanizmList }

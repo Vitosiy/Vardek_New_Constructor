@@ -21,7 +21,7 @@ import { Filters } from './Utils/Filters'
 import { JsonBuilder } from './JsonProductBuilder'
 import { ModelsBuilder } from './ModelsBuilder/ModelsBuilder.ts'
 import { MillingBuilder } from './MillingBuilder';
-import { ShowcaseBuilder } from './ShowcaseBuilder.ts';
+import { ShowcaseBuilder } from './Showcase/ShowcaseBuilder.ts';
 
 import { FasadeBuilder } from './FasadeBuilder';
 import { TableTopBuilder } from './TableTopBuilder/TableTopBuilder.ts';
@@ -30,7 +30,7 @@ import { AlumBuilder } from './AlumBuilder.ts';
 import { UniformTextureBuilder } from './UniformTextureBuilder.ts';
 import { BuildersHelper } from "./BuildersHelper"
 import { EdgeBuilder } from './EdgeBuilder/EdgeBuilder.ts';
-import { HandlesBuilder } from './Hendles/Handles.ts';
+import { HandlesBuilder } from './Handles/Handles.ts';
 import { PlinthBuilder } from './PlinthBuilder/PlinthBuilder.ts';
 import { DrowerBuilder } from './Drowers/DrowerBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -323,8 +323,8 @@ export class BuildProduct extends BuildersHelper {
             MODELID: models[0],
             MODEL: models,
             MODULE_COLOR: null,
-            MECHANIZM: null,
-            MECHANIZM_TEMP: [],
+            MECHANISM: null,
+            MECHANISM_TEMP: [],
             SIZE: { width, height, depth },
             SIZE_EDIT: {
                 SIZE_EDIT_WIDTH_MIN: null,
@@ -727,6 +727,9 @@ export class BuildProduct extends BuildersHelper {
             tsarga,
         });
 
+        this.scene.add(body)
+        console.log(body)
+
         const edge = this.edge_builder.createEdge(body);
 
         body.add(edge)
@@ -769,9 +772,9 @@ export class BuildProduct extends BuildersHelper {
 
         const size = new THREE.Box3().setFromObject(body).getSize(new THREE.Vector3());
         body.userData.trueSize = {
-            BODY_WIDTH: size.x,
-            BODY_HEIGHT: size.y,
-            BODY_DEPTH: size.z,
+            BODY_WIDTH: size.x ?? 0,
+            BODY_HEIGHT: size.y ?? 0,
+            BODY_DEPTH: size.z ?? 0,
         };
 
         /** @Зеркало */

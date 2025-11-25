@@ -1,10 +1,11 @@
 //@ts-nocheck
 import * as THREE from "three"
+import { FasadeTextAlignAction } from "@/types/types";
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
-import { boolean } from "yup";
+import { MILLINGS, additionalMillingKeys, MILLING_HANDLE_KEYS, INTEGRATE_HANDE_EXEPTIONS } from '@/Application/F-millings';
 
 
 interface IProductFasades {
@@ -48,6 +49,13 @@ interface IMilling {
     DENSITY: null
 }
 
+export type TMillingListItem = {
+    name: string;
+    imgSrc: string;
+    ID: number;
+    fasade_type: number[];
+}
+
 export const useModelState = defineStore('ModelState', () => {
 
     const appStore = useAppData()
@@ -65,6 +73,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _PALETTE = computed(() => _APP.value.PALETTE || [])
     const _PLINTH = computed(() => _APP.value.PLINTH || [])
     const _MILLING = computed(() => _APP.value.MILLING || [])
+    const _MODELS = computed(() => _APP.value.MODELS || [])
     const _SHOWCASE = computed(() => _APP.value.SHOWCASE || [])
     const _GLASS = computed(() => _APP.value.GLASS || [])
     const _PATINA = computed(() => _APP.value.PATINA || [])
@@ -345,7 +354,7 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Фрезеровки */
-    const createCurrentMillingData = ({ fasadeId, productId, fasadeNdx }) => {
+    const createCurrentMillingData = ({ fasadeId, productId, fasadeNdx }): TMillingListItem[] | [] => {
 
         let result = []
         if (fasadeId == 7397) {
@@ -362,10 +371,6 @@ export const useModelState = defineStore('ModelState', () => {
 
 
         if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
-
-            // currentMillingData.value = _FASADE.value[fasadeId].ATTACH_MILLINGS;
-
-
 
             let millings: IMilling[] = []
             let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
@@ -392,7 +397,7 @@ export const useModelState = defineStore('ModelState', () => {
         return result
     }
 
-    const createTotalMillingList = (fasadeId) => {
+    const createTotalMillingList = (fasadeId): TMillingListItem[] | [] => {
 
         if (!_FASADE.value[fasadeId]) return []
 
@@ -412,6 +417,25 @@ export const useModelState = defineStore('ModelState', () => {
 
     }
 
+    const getCurrentMillingMap = (data) => {
+
+        const millingKey = additionalMillingKeys[data];
+        const millingMapData = MILLINGS[millingKey] ?? MILLINGS[data] ?? MILLINGS[1317715];
+        return millingMapData;
+    }
+
+    const getCurrentMillingActionMap = (data, millingId) => {
+
+        if (!data || !INTEGRATE_HANDE_EXEPTIONS.includes(millingId)) return null
+
+        const prepare = _FASADE_TYPE.value[data].CODE
+        const actionKey = FasadeTextAlignAction[prepare]
+        const mapKey = additionalMillingKeys[millingId] ?? millingId
+        const map = MILLING_HANDLE_KEYS[mapKey]
+
+        return map[actionKey]
+    }
+
     const getCurrentMillingData = computed(() => {
         return currentMillingData.value
     })
@@ -425,6 +449,17 @@ export const useModelState = defineStore('ModelState', () => {
         else
             FASADE_PROPS[fasadeId].MILLING = id
     }
+
+    const getFasadDataType = (millingId) => {
+        const data = _MILLING[millingId]
+        const result = data.fasade_type
+            .map((item) => _FASADE_TYPE[item])
+            .filter(Boolean);
+
+        return result;
+    };
+
+
 
     /** Витрины */
     const createCurrentShowcaseData = ({ fasadeId, productId, fasadeNdx }) => {
@@ -470,25 +505,43 @@ export const useModelState = defineStore('ModelState', () => {
         return currentShowcaseData.value
     })
 
-    /** Типы фасада (интегрированная ручка) */
+    /** Типы фасада */
     const createCurrentFasadeTypesData = ({ fasadeId, productId }) => {
         const incomeTypes = _FASADE.value[fasadeId].fasade_type
-        console.log(incomeTypes)
-        const defaultTypes = incomeTypes.map(item => _FASADE_TYPE.value[item]).filter(Boolean);
-        // const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
-        // const defaultTypes = productPositions.reduce((acc, index) =>
-        //     acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
-        //     []);
 
-        // currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
+        const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
 
-        console.log(defaultTypes, 'currentFasadeTypesData')
+        const defaultTypes = productPositions.reduce((acc, index) =>
+            acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
+            []);
+
+
+        const filtered = incomeTypes.filter(item => defaultTypes.includes(item))
+        const result = filtered.map(item => _FASADE_TYPE.value[item]).filter(Boolean);
+
+        console.log(result, '=== result ===')
+
+        currentFasadeTypesData.value = result
+
+        return result
 
     }
 
     const getCurrentFasadeTypesData = computed(() => {
         return currentFasadeTypesData.value
     })
+
+    const getCurrentFasadeTypesAction = (data) => {
+
+
+
+        const prepare = _FASADE_TYPE.value[data]
+        if (!prepare) return null
+        console.log(prepare, '====== 88 ====')
+
+        const actionKey = FasadeTextAlignAction[prepare.CODE]
+        return actionKey
+    }
 
     /** Стёкла */
     const createCurrentGlassData = ({ fasadeId, productId }) => {
@@ -570,6 +623,10 @@ export const useModelState = defineStore('ModelState', () => {
         _FASADE,
         _PRODUCTS,
         _HEM,
+        _FASADE_TYPE,
+        _FASADE_POSITION,
+        _MILLING,
+        _MODELS,
         getModels,
 
         setCurrentModel,
@@ -587,12 +644,15 @@ export const useModelState = defineStore('ModelState', () => {
         createTotalMillingList,
         getCurrentMillingData,
         setMillingId,
+        getCurrentMillingMap,
+        getCurrentMillingActionMap,
 
         createCurrentShowcaseData,
         getCurrentShowcaseData,
 
         createCurrentFasadeTypesData,
         getCurrentFasadeTypesData,
+        getCurrentFasadeTypesAction,
 
         createCurrentGlassData,
         getCurrentGlassData,

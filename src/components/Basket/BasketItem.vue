@@ -6,7 +6,7 @@
         <img src="@/assets/svg/left-menu/question.svg" class="basket-items__picture-question" @click="openPopup(item)">
       </div>
     </div>
-
+   
     <div class="basket-item__product">
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">
         {{ item?.product.NAME }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
@@ -15,7 +15,6 @@
       <!-- Секция свойств товара тип сцена-->
       <div class="basket-item__props" v-if="item?.product.PROPS">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
-
           <div v-if="getPropDefinition(String(propKey))">
             <!-- {{ propValue }} -->
             <span class="basket-item__props-lable" v-if="propValue">{{ getPropLabel(String(propKey)) }}:</span>
@@ -48,7 +47,7 @@
                 </span>
               </li>
             </ul>
-            
+
             <!-- Обработка одиночных значений -->
             <span  v-else :class="getErrorClass(propValue, item?.error?.props)">
               <template v-if="getPropDefinition(propKey).val === 'obj_list'">
@@ -110,11 +109,11 @@
                       <span v-if="propValue.PALETTE"> - {{ getPaletteName(propValue.PALETTE) }}</span>
                       {{ hasError(colorItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
                     </li>
-                    
-                    <li v-if="String(colorKey) === 'MILLING'">
+                    <!-- TODO -->
+                    <!-- <li v-if="String(colorKey) === 'MILLING'">
                       Фрезеровка: {{ getMillingSectionName(colorItem) }} - {{ getMillingName(colorItem) }}
                       {{ hasError(colorItem, item?.error?.props) ? '(НЕДОСТУПНО!)' : '' }};
-                    </li>
+                    </li> -->
                   </div>
                 </ul>
               </template>
@@ -138,11 +137,26 @@
               </template>
               
               <template v-else>
+                
                  {{  getUsliguName(propValue) }}  
               </template>
+              
             </span>
 
+            
           </div>
+          <span v-if='propKey === "RASPIL"'>
+              <div v-for="(item, index) in propValue.data" :key="propKey">
+                <span v-if="item.serviseData.length" class="basket-item__props-lable">Услуга {{ ++index }} :</span> 
+                <ul class="basket-item__props-list">
+                  <li v-for="(lisItem, index) in item.serviseData" :key="index">
+                    <!-- {{ item.serviseData.length }} -->
+                    <span>{{ lisItem.NAME  }}</span> <span v-if="lisItem.width">{{ lisItem.width }} мм.</span> 
+                  </li>
+                </ul>
+
+              </div>
+          </span>
 
         </div>
       </div>
@@ -151,7 +165,6 @@
 
     </div>
     
-    
     <div class="basket-item__quantity">
       <button v-if="item?.product.TYPE === 'catalog'" class="basket-item__quantity-btn" @click="decrement(item.product.BASKETID, item?.product.TYPE)" :disabled="item.error">-</button>
       <input type="text" :disabled="item?.product.TYPE !== 'catalog'" class="basket-item__quantity-input" v-model="item.product.quantity" placeholder="1" @change="() => updateQuantity(item.product.BASKETID, item?.product.TYPE)" />
@@ -159,14 +172,16 @@
     </div>
 
     <div class="basket-item__price">
-      {{ item.product.unitPriceFormat ?? 0 }}
+      <!-- {{ item.product.unitPriceFormat ?? 0 }}  -->
+      {{ !oldPrice ? item.product.unitPriceFormat :  item.product.unitPriceOldFormat }} 
     </div>
 
     <div class="basket-item__price basket-item__total">
-      {{ item.product.allPriceFormat ?? 0}}
+      <!-- {{ item.product.allPriceFormat ?? 0}} -->
+      {{ !oldPrice ? item.product.allPriceFormat : item.product.allPriceOldFormat}}
     </div>
 
-    <div class="basket-item__price basket-item__old-total">
+    <div class="basket-item__price basket-item__old-total" v-if="!oldPrice">
       <span>{{ item.product.allPriceOldFormat ?? 0 }}</span>
     </div>
 
@@ -212,7 +227,7 @@ const quantity = ref(props.item.product.quantity);
 
 // Получаем данные из store
 const appData = computed(() => appDataStore.getAppData);
-
+const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
 
 const openPopup = async (item) => {
   try {
@@ -402,7 +417,7 @@ const hasError = (value: any, propsError: any) => {
 
 const getTypeName = (type: any, value: any, mainType: any = '') => {
   // Получаем имя из store данных
-  console.log('data', appData.value, type, value, mainType);
+  // console.log('data', appData.value, type, value, mainType);
   if (value && typeof value === 'object' && value.NAME) {
     return value.NAME;
   }
@@ -537,7 +552,7 @@ const deleteProductInBusket = (id: string, type: string) => {
   if (type === 'scene' || type === 'umscene') {
     useEventBus().emit('A:RemoveModelFromBasket', { product: null, basketId: id });
   }
-
+  basketStore.syncBasketDelay()
 }
 
 
