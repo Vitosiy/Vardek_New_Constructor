@@ -24,6 +24,11 @@ interface TFillingDataType extends TDirectionModelType {
   extensions: boolean;
 }
 
+type TChelfCount = {
+  max: number | null;
+  current: number | null;
+};
+
 const modelState = useModelState();
 const eventBus = useEventBus();
 const { onRsizeConversations } = useConversationActions();
@@ -46,6 +51,11 @@ const resizeData = ref({
   depth: 0,
 });
 
+const shelfCount = ref<TChelfCount>({
+  max: 0,
+  current: 0,
+});
+
 const currentModel = ref(null);
 const isMounted = ref(false); // флаг готовности для предотвращения автозапуска
 const rootModelsList = ref<TDirectionModelType[] | []>(null);
@@ -55,7 +65,13 @@ const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
 
-const rotateModel = (id: numbe) => {
+const recountShelfs = (value) => {
+  eventBus.emit("A:RecountShelfs", { data: value });
+  // currentModel.value?.PROPS.CONFIG.SHELFQUANT?.current = value
+  console.log(value);
+};
+
+const rotateModel = (id: number) => {
   eventBus.emit("A:RotateModel", id);
 };
 
@@ -75,7 +91,7 @@ const updateFillingModel = (filling: TFillingData) => {
 
 const prepareData = () => {
   const { userData } = modelState.getCurrentModel;
-  const { MODEL, MODELID, FILLING_LIST, FILLING, SIZE, SIZE_EDIT } =
+  const { MODEL, MODELID, FILLING_LIST, FILLING, SIZE, SIZE_EDIT, SHELFQUANT } =
     userData.PROPS.CONFIG;
   const { width, height, depth } = SIZE;
 
@@ -105,6 +121,8 @@ const prepareData = () => {
       extensions,
     };
   });
+
+  shelfCount.value = SHELFQUANT;
 
   sizeEditData.value = {
     widthMin: SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
@@ -261,6 +279,20 @@ watch(
           </button>
         </div>
       </div>
+
+      <p class="item__label text-grey" v-if="shelfCount.max">
+        Количество полок
+      </p>
+      <MainInput
+        v-if="shelfCount.max"
+        class="input__search right-menu"
+        v-model="shelfCount.current"
+        @update:modelValue="recountShelfs"
+        type="number"
+        :min="0"
+        :max="shelfCount.max"
+        :disabled="!getIsUMproduct"
+      />
 
       <p class="customiser-section__title" v-if="rootModelsList?.length > 1">
         Позиционирование

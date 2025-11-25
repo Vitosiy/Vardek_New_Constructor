@@ -6,11 +6,23 @@ import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
 import { MILLINGS, additionalMillingKeys, MILLING_HANDLE_KEYS, INTEGRATE_HANDE_EXEPTIONS } from '@/Application/F-millings';
+import { number } from "yup";
 
+export type TFasadeGroupSize = {
 
-interface IProductFasades {
+    MAX_HEIGHT: number,
+    MAX_WIDTH: number,
+    MIN_HEIGHT: number,
+    MIN_WIDTH: number,
+
+}
+
+export interface IProductFasades {
     NAME: string,
     FASADES: number[],
+    SORT: number,
+    GROUP_SIZE: TFasadeGroupSize
+
 }
 
 interface IFasadeGroups {
@@ -60,7 +72,6 @@ export const useModelState = defineStore('ModelState', () => {
 
     const appStore = useAppData()
     const _APP = computed(() => appStore.getAppData || {})
-    console.log(_APP)
 
     const _COLOR = computed(() => _APP.value.COLOR || [])
     const _FASADE = computed(() => _APP.value.FASADE || [])
@@ -82,6 +93,8 @@ export const useModelState = defineStore('ModelState', () => {
     const _PATINA = computed(() => _APP.value.PATINA || [])
     const _HANDLES = computed(() => _APP.value.HANDLES || [])
     const _HEM = computed(() => _APP.value.HEM || [])
+
+    console.log(_FASADE_SIZE_RESTRICT.value, '=== 🔥 _FASADE_SIZE_RESTRICT 🔥 ===')
 
 
     const currentModel = ref<THREE.Object3D | null>(null)
@@ -266,7 +279,6 @@ export const useModelState = defineStore('ModelState', () => {
         const groupedFasades: Record<string, number> = {};
         let exception = !defaultFasade ? 'Без фасада' : ''
         let haveShowCase = null;
-        const defaultRestrict = Object.values(_FASADE_SIZE_RESTRICT.value)[0]
 
         if (fasadeNdx !== undefined && productId !== undefined) {
 
@@ -298,15 +310,21 @@ export const useModelState = defineStore('ModelState', () => {
 
                 const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
                 groupedFasades[groupId] = {
-                    id: [], size: {
-                        MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].HEIGHT : defaultRestrict.PRODUCTS[0].HEIGHT,
-                        MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].WIDTH : defaultRestrict.PRODUCTS[0].WIDTH,
-                        MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_HEIGHT : defaultRestrict.PRODUCTS[0].MIN_HEIGHT,
-                        MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_WIDTH : defaultRestrict.PRODUCTS[0].MIN_WIDTH,
-                    },
-                    restrict: restrict
+                    // id: [], size: {
+                    //     MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].HEIGHT : defaultRestrict.PRODUCTS[0].HEIGHT,
+                    //     MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].WIDTH : defaultRestrict.PRODUCTS[0].WIDTH,
+                    //     MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_HEIGHT : defaultRestrict.PRODUCTS[0].MIN_HEIGHT,
+                    //     MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_WIDTH : defaultRestrict.PRODUCTS[0].MIN_WIDTH,
+                    // },
+                    // restrict: restrict
 
-                    // _FASADE_SIZE_RESTRICT.value[section.ID]
+                    id: [], size: {
+                        MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
+                        MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
+                        MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : Infinity,
+                        MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : Infinity,
+                    },
+                    // restrict: restrict
                 };
             }
 
@@ -325,7 +343,7 @@ export const useModelState = defineStore('ModelState', () => {
                 FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
                 SORT: group.SORT,
                 GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
-                RESTRICT_ID: groupedFasades[groupId] ? groupedFasades[groupId].restrict : null
+                // RESTRICT_ID: groupedFasades[groupId] ? groupedFasades[groupId].restrict : null
             }
         }
 

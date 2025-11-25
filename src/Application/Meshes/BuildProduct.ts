@@ -345,8 +345,8 @@ export class BuildProduct extends BuildersHelper {
             },
             SHOWCASE: [],
             SHELFQUANT: {
-                total: SHELFQUANT ?? null,
-                current: null
+                max: SHELFQUANT ?? null,
+                current: SHELFQUANT ? 0 : null
             },
             POSITION: null,
             PLINTH_ACTIONS: {},
@@ -435,8 +435,6 @@ export class BuildProduct extends BuildersHelper {
         const { PROPS } = parentGroup.userData;
         const { CONFIG } = PROPS;
 
-        console.log(CONFIG, parentGroup, '=== CONFIG ===')
-
         const defaultConfig: THREETypes.TDefaultOptionsConfig = this.getDefaultOptionsConfig();
 
         PROPS.FASADE = [];
@@ -448,7 +446,9 @@ export class BuildProduct extends BuildersHelper {
         const bodyExceptions = this.project.default_overlay_id
         const legsHeight = this._PRODUCTS[productId]?.leg_length
         const fasadeProps = Object.values(CONFIG.FASADE_PROPS)
+        const shelfCount = CONFIG.SHELFQUANT.max
 
+        let shelf = null
 
         if (size && !fisadeSize) {
             // PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, size);
@@ -474,9 +474,14 @@ export class BuildProduct extends BuildersHelper {
             ? this.createBody(data, PROPS, defaultConfig)
             : { body: null, tempMaterial: null, move: null };
 
-        const shelf = this._SHELF_POSITION[productId]
-            ? this.shelf_builder.createShelfs(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
-            : null;
+        if (shelfCount) {
+            shelf = this.shelf_builder.buildShelves(PROPS, tempMaterial)
+        }
+        else {
+            shelf = this._SHELF_POSITION[productId]
+                ? this.shelf_builder.createShelfs(PROPS, this._SHELF_POSITION[productId], tempMaterial, move)
+                : null;
+        }
 
         const legs = legsHeight
             ? this.buildLegs(PROPS, data, total)
@@ -584,6 +589,8 @@ export class BuildProduct extends BuildersHelper {
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
 
+        console.log(texture, 'texture')
+
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color;
             switch (ELEMENT_TYPE) {
@@ -596,7 +603,8 @@ export class BuildProduct extends BuildersHelper {
             }
         };
 
-        const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
+        // const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
+        const moduleColorId = texture?.src && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
 
         CONFIG.MODULE_COLOR = moduleColorId;
 
@@ -752,7 +760,8 @@ export class BuildProduct extends BuildersHelper {
 
         const { geometryType } = body.userData;
 
-        if ("src" in texture && !moduleColor) {
+        // if ("src" in texture && !moduleColor) {
+           if (texture?.src && !moduleColor) {
 
 
             const textureSize = {

@@ -360,6 +360,12 @@ type TFasadePropsSizes = {
 
 }
 
+export type TFasadeTrueSizes = {
+  FASADE_WIDTH: number,
+  FASADE_DEPTH: number,
+  FASADE_HEIGHT: number
+}
+
 export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
@@ -409,7 +415,7 @@ export type TModelData = {
   wall_thickness: number | null;
 };
 type TShelfcount = {
-  total: number | null,
+  max: number | null,
   current: number | null,
 }
 
@@ -465,7 +471,7 @@ export type TTotalProps = {
   RASPIL: TCanvasData,
   RASPIL_LIST: TRaspilPart[],
   RASPIL_COUNT: number,
-  SHELF: THREE.Object3D[] | [],
+  SHELF: THREE.Object3D[] | THREE.Mesh[] | [],
   SEPARATED: [],
   SECTIONSOBJ: [],
   SECTIONCONTROL: [],

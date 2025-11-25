@@ -42,9 +42,17 @@ import DirectionControl from "@/components/ui/direction/DirectionControl.vue";
 
 import { useRailsRightPage } from "../RailsRightPage/useRailsRightPage";
 import { useHandlesAction } from "../FigureRightPage/Handles/useHandlesAction";
+import { useConversationActions } from "../../actions/useConversationActions";
 
 const { resetGlobal } = useRailsRightPage();
-const { getIntegratedHandleControllerData, setIntegratedHandleAction } = useHandlesAction();
+const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
+  useHandlesAction();
+const {
+  createFasadeConversations,
+  checkConversations,
+  checkFasadeConversations,
+  filterFasadeConversations,
+} = useConversationActions();
 
 const props = defineProps({
   tabIndex: Number /** Индекс выбранного фасада в defaultTab.vue */,
@@ -107,31 +115,29 @@ const fasadeHandleList = ref<Array>([]);
 const isFasadeHandleExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
-  emit("select_material", data);
-
-  resetGlobal();
-
   const { PROPS } = productData.value;
-  const { CONFIG } = PROPS;
+  const { CONFIG, FASADE } = PROPS;
   const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
   const product = modelState._PRODUCTS[productId.value];
   const { COLOR, RESET_COLOR, ALUM } = FASADE_PROPS[props.tabIndex];
 
+  const checkConversation = checkFasadeConversations(
+    data.id,
+    FASADE[props.tabIndex].userData.trueSize
+  );
+
+  if(!checkConversation) return
+
+  emit("select_material", data);
+
+  resetGlobal();
+
   const haveShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
-  const dataOfFasadeType = _FASADE[COLOR];
+  const dataOfFasadeType = _FASADE[data.id];
 
-  const section =
-    modelState._FASADE_SECTION[dataOfFasadeType.IBLOCK_SECTION_ID];
-  const groupId = section.UF_GROUP ?? section;
-  const toCheck = modelState._FASADE_SIZE_RESTRICT[section.ID];
-  console.log(toCheck, section.ID, " === toCheck");
-
-  const restrict = toCheck
-    ? modelState._FASADE_SIZE_RESTRICT[section.ID].PRODUCTS[0]
-    : Object.values(modelState._FASADE_SIZE_RESTRICT)[0].PRODUCTS[0];
-  productData.value.restrictData[props.tabIndex] = restrict;
-
-  console.log( productData.value.restrictData, section, "==== ❌ FASADE ❌ ====");
+  productData.value.restrictData[props.tabIndex] = createFasadeConversations(
+    data.id
+  );
 
   isSurfaceSelected.value = true;
   currentSurfaceData.value = data;
@@ -153,10 +159,10 @@ const onSelectMaterial = (data) => {
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
-  console.log(data, "==== ❌ DATA ❌ ====")
+  console.log(data, "==== ❌ DATA ❌ ====");
 
   isShowcaseExist.value =
-    (!data.material?.includes("Alum")) && haveShowcase && COLOR !== RESET_COLOR;
+    !data.material?.includes("Alum") && haveShowcase && COLOR !== RESET_COLOR;
   // showcaseList.value.length > 0 &&
   //   haveShowcase &&
   //   ALUM == null &&
@@ -670,31 +676,9 @@ const getFasadesize = computed(() => {
   return current.userData.trueSize;
 });
 
-const checkFasadeConversations = () => {
-  const sceneModel = modelState.getCurrentModel;
-  const { FASADE } = sceneModel?.userData.PROPS;
-  const { FASADE_WIDTH, FASADE_HEIGHT } =
-    FASADE[props.tabIndex].userData.trueSize;
-
-  const tempList = modelState.getCurrentModelFasadesData
-    .map((el) => {
-      const check =
-        FASADE_HEIGHT <= el.GROUP_SIZE.MAX_HEIGHT &&
-        FASADE_HEIGHT >= el.GROUP_SIZE.MIN_HEIGHT &&
-        FASADE_WIDTH <= el.GROUP_SIZE.MAX_WIDTH &&
-        FASADE_WIDTH >= el.GROUP_SIZE.MIN_WIDTH;
-      if (check) return el;
-    })
-    .filter(Boolean);
-
-  console.log(tempList, modelState._FASADE_SIZE_RESTRICT, "----tempList");
-
-  return tempList;
-};
-
 onBeforeMount(() => {
   // materialList.value = modelState.getCurrentModelFasadesData;
-  materialList.value = checkFasadeConversations();
+  materialList.value = filterFasadeConversations(props.tabIndex);
   productData.value = modelState.getCurrentModel.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 

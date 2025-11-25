@@ -102,6 +102,7 @@ export class MeshEvents extends BuildersHelper {
     private onCgangeRotation: (data: number) => void
     private onChangeRootModel: ({ data, mesh }) => void;
     private onChangeFillingModel: ({ data, mesh }) => void;
+    private onRecountShelfs: ({ data, mesh }) => void;
 
     private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
@@ -175,6 +176,8 @@ export class MeshEvents extends BuildersHelper {
         this.onChangeModelSize = this.changeModelSize.bind(root);
         this.onCgangeRotation = this.changeRotation.bind(root);
         this.onChangeRootModel = this.changeRootModel.bind(root);
+
+        this.onRecountShelfs = this.recountShelfs.bind(root)
 
         this.addVueEvents();
 
@@ -1049,6 +1052,22 @@ export class MeshEvents extends BuildersHelper {
     }
 
     //------------------
+    /** @Изменение_количества_полок  */
+    //------------------
+
+    async recountShelfs({ data, mesh }) {
+        if (!this._currentMesh) return
+        const currentMesh = mesh ? mesh : this._currentMesh
+        const { PROPS } = currentMesh.userData
+        const { CONFIG } = PROPS
+        const { POSITION, UNIFORM_TEXTURE, OPTIONS, FASADE_PROPS, SHELFQUANT } = CONFIG
+        const { width, height, depth } = CONFIG.SIZE;
+        SHELFQUANT.current = data
+
+        this.changeModelSize({ data: { width, height, depth } })
+
+    }
+    //------------------
     /** @Вращение  */
     //------------------
 
@@ -1241,6 +1260,10 @@ export class MeshEvents extends BuildersHelper {
             this.changeFillingModel({ data, mesh })
         }
 
+        this.onRecountShelfs = ({ data, mesh }) => {
+            this.recountShelfs({ data, mesh })
+        }
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
 
@@ -1285,6 +1308,10 @@ export class MeshEvents extends BuildersHelper {
 
         this.events.on('A:ChangeRootModel', this.onChangeRootModel);
         this.events.on('A:ChangeFilling', this.onChangeFillingModel);
+
+        this.events.on('A:RecountShelfs', this.onRecountShelfs);
+
+
 
     }
 

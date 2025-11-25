@@ -93,7 +93,7 @@ onBeforeMount(() => {
   const app = useAppData().getAppData;
 
   const prepare = JSON.parse(JSON.stringify(app.CATALOG.SECTIONS_TYPE))
-  // delete  prepare.room
+  delete  prepare.room
 
   catalogSectionsType.value = prepare;
   catalogSections.value = app.CATALOG.SECTIONS;

@@ -17,7 +17,7 @@ const { getAppData } = useAppData();
 
 const exeption = ref([1814256, 1516913, 1516914, 6051066, 
  81765, 81768, 2370182, 81772, 
-166757]); //3140746, 971222
+166757, 11451679]); //3140746, 971222
 
 const currentProductInfo = ref({
   title: "",

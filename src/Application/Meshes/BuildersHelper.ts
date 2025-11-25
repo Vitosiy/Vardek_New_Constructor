@@ -467,6 +467,8 @@ export class BuildersHelper extends GlobalsData {
 
     createCutterParams(uslugi) {
         const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        console.log(uslugi, ' ====== uslugi =====', SERVISES)
+
         const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);
             let merged;
@@ -528,6 +530,9 @@ export class BuildersHelper extends GlobalsData {
             return merged;
 
         })
+
+
+        console.log(result, 'result')
 
         // .filter(el => el.ID !== 98683);
         return result
@@ -608,6 +613,9 @@ export class BuildersHelper extends GlobalsData {
     }
 
     mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+
+        console.log('=========  mergeArrays ==========')
+
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);
             let merged;
