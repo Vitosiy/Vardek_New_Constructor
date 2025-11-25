@@ -82,7 +82,10 @@ export const useAuthStore = defineStore('auth', () => {
         // Добавляем дополнительные полезные поля
         id: user.ID,
         email: user.EMAIL,
-        login: user.LOGIN
+        login: user.LOGIN,
+        login: user.LOGIN,
+        date: user.DATE_REGISTER,
+        city: 'region_by_user_name'
       };
       return userData.value;
 

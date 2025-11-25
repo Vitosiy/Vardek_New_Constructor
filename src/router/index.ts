@@ -4,8 +4,8 @@ import { getCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookie
 import { useAppData } from "@/store/appliction/useAppData";
 import { useAuthStore } from "@/store/appStore/authStore";
 
-const baseUrl = '/';
-// const baseUrl = '/dev_modeller/';
+// const baseUrl = '/';
+const baseUrl = '/dev_modeller/';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -66,7 +66,7 @@ router.beforeEach((to, from, next) => {
   const appDataStore = useAppData()
   const authStore = useAuthStore()
 
-  document.querySelector('#main-loader').style.display = 'block';
+    //  document.querySelector('#main-loader').style.display = 'block';
 
   if (token && expirationTime) {
     const expirationTimestamp = parseInt(expirationTime);
@@ -107,7 +107,7 @@ router.beforeEach((to, from, next) => {
 });
 
 router.afterEach((to, from) => {
-      document.querySelector('#main-loader').style.display = 'none';
+      // document.querySelector('#main-loader').style.display = 'none';
   // Здесь выполняется код после завершения навигации.
   // 'to' - новый маршрут, 'from' - старый маршрут.
   console.log(`Переход на страницу ${to.path} завершен.`);

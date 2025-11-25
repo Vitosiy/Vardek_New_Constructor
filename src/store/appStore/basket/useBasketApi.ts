@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { readonly, ref } from 'vue'
 import { BasketService } from '@/services/basketService'
 import type { IBasket, IBasketResponse, BasketRequest } from '@/types/basket'
@@ -20,8 +22,59 @@ export function useBasketApi() {
         TYPE_PRICE: 25,
       }
 
+      // Выполняем оба запроса параллельно для оптимизации
+      // const [basketResponse, productDelayResponse] = await Promise.all([
+      //   BasketService.getBasket(request),
+      //   BasketService.getProductDelay(request)
+      // ])
+
       const response = await BasketService.getBasket(request)
+      // const responsenew = await BasketService.getProductDelay(request)
       return { ...response.DATA }
+      
+      // Объединяем результаты в один объект
+      // return {
+      //   ...basketResponse.DATA,
+      //   productDelay: productDelayResponse.DATA // или другое поле, в зависимости от структуры ответа
+      // }
+    } catch (err: any) {
+      error.value = err.message || 'Ошибка при синхронизации корзины'
+      console.error('Sync basket error:', err)
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const syncBasketProductDelay = async (basketItems: IBasket[]): Promise<IBasketResponse | null> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      // if (basketItems.length === 0) {
+      //   return null
+      // }
+
+      const request: BasketRequest = {
+        BASKET: basketItems,
+        TYPE_PRICE: 25,
+      }
+
+      // Выполняем оба запроса параллельно для оптимизации
+      // const [basketResponse, productDelayResponse] = await Promise.all([
+      //   BasketService.getBasket(request),
+      //   BasketService.getProductDelay(request)
+      // ])
+
+      // const response = await BasketService.getBasket(request)
+      const response = await BasketService.getProductDelay(request)
+      return response.DATA 
+      
+      // Объединяем результаты в один объект
+      // return {
+      //   ...basketResponse.DATA,
+      //   productDelay: productDelayResponse.DATA // или другое поле, в зависимости от структуры ответа
+      // }
     } catch (err: any) {
       error.value = err.message || 'Ошибка при синхронизации корзины'
       console.error('Sync basket error:', err)
@@ -56,10 +109,13 @@ export function useBasketApi() {
     }
   }
 
+
+
   return {
     loading: readonly(loading),
     error: readonly(error),
     syncBasketWithServer,
+    syncBasketProductDelay,
     syncInvoice,
   }
 }

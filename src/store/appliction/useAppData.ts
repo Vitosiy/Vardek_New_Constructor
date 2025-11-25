@@ -2,6 +2,8 @@
 import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookieUtils'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useAuthStore } from '@/store/appStore/authStore'
+
 
 export const useAppData = defineStore('AppData', () => {
   const appData = ref<{ [key: string]: any }>({})
@@ -14,12 +16,15 @@ export const useAppData = defineStore('AppData', () => {
     isLoading.value = true;
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
-    const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
+    const url = new URL('https://dev.vardek.online/api/modellerjwt/auth/getdata/')
+    // const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
+    let currentURL = window.location.href;
+    url.searchParams.append('url', currentURL)
     const response = await fetch(url, { 
       method: 'GET',
-      // headers: {
-      // "Authorization": `Bearer ${token}`,
-      // },
+      headers: {
+      "Authorization": `Bearer ${token}`,
+      },
     })
     if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
 
@@ -71,10 +76,27 @@ export const useAppData = defineStore('AppData', () => {
     appData.value = { ...appData.value, ...newData }
   }
 
+  async function clearIndexedDB() {
+    const databases = await window.indexedDB.databases();
+    
+    for (const dbInfo of databases) {
+      if (dbInfo.name) {
+        const request = indexedDB.deleteDatabase(dbInfo.name);
+        
+        await new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+            request.onblocked = () => console.warn('База заблокирована');
+        });
+      }
+    }
+  }
+
   const initAppData = async () => {
-    if (isLoaded.value || isLoading.value) return
-    isLoading.value = true
     document.querySelector('#main-loader').style.display = 'block';
+    await clearIndexedDB();
+    // if (isLoaded.value || isLoading.value) return
+    isLoading.value = true
     try {
       indexedDataBase.value = await initIndexedDB()
       let localData = await getFromIndexedDB(indexedDataBase.value)
@@ -93,9 +115,13 @@ export const useAppData = defineStore('AppData', () => {
     } catch (err) {
       console.error('Ошибка инициализации данных:', err)
     } finally {
+      const authStore = useAuthStore();
+      await authStore.fetchUserData()
       isLoading.value = false
       isLoaded.value = true
-      // document.querySelector('#main-loader').style.display = 'none';
+      document.querySelector('#main-loader').style.display = 'none';
+
+      
     }
   }
 

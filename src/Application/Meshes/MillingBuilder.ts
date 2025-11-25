@@ -42,9 +42,9 @@ export class MillingBuilder extends MillingsUtils {
    */
   createMillingFasade(object: THREE.Mesh, fasadePosition: any, millingParams: number, defaultGeometry: THREE.Mesh, patina?: any) {
     // Определяем ключ фрезеровки
-    const millingKey = this.additionalMillingKeys[millingParams] ?? millingParams;
-    // Получаем данные фрезеровки
-    const millingData = this.millingsStore[millingKey] ?? this.millingsStore[2462671];
+    // const millingKey = this.additionalMillingKeys[millingParams] ?? millingParams;
+    // // Получаем данные фрезеровки
+    // const millingData = this.millingsStore[millingKey] ?? this.millingsStore[2462671];
 
     // Клонируем базовую геометрию
     let startGeometry = defaultGeometry.clone();
@@ -57,22 +57,15 @@ export class MillingBuilder extends MillingsUtils {
     // Результат булевой операции
     let result: THREE.Mesh | null = null;
 
+    let newGeometry = null
+
     // Размеры фасада
     const { FASADE_DEPTH, FASADE_HEIGHT, FASADE_WIDTH } = fasadePosition;
     // Клон позиции фасада
     const clonedFasadePosition = { ...fasadePosition };
 
-    // Специальный случай для ручек (ID 2475715)
-    if (millingData === 2475715) {
-      // TODO: Fix incomplete handle case - variables back_bsp, csgStartGeometryback_bsp undefined
-      const handle = this.hendlesCreate(clonedFasadePosition, millingData, object);
-      const shapeBsp = CSG.fromMesh(handle);
-      // csgStartGeometryback_bsp = back_bsp.subtract(shapeBsp); // Broken - needs fix
-      return;
-    }
-
     // Основная обработка фигур
-    const shapesArray = (millingData as any[]).flatMap(figure => this.extractShape(clonedFasadePosition, figure)).filter(Boolean);
+    const shapesArray = (millingParams as any[]).flatMap(figure => this.extractShape(clonedFasadePosition, figure)).filter(Boolean);
 
     // Обрабатываем каждую фигуру
     shapesArray.forEach(figureParams => {
@@ -118,7 +111,7 @@ export class MillingBuilder extends MillingsUtils {
     });
 
     // Преобразуем обратно в геометрию
-    let newGeometry = result ? result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
+    newGeometry = result ? result.geometry : CSG.toGeometry(csgStartGeometry, new THREE.Matrix4());
     // Создаём UV-развёртку
     this.planarUV(newGeometry);
 
@@ -189,15 +182,15 @@ export class MillingBuilder extends MillingsUtils {
 
       shapeMesh.position.set(
         position.right ? -FASADE_WIDTH * 0.5 + (size.x * 0.5 + (depth.offset || 0)) :
-        position.left ? FASADE_WIDTH * 0.5 - (size.x * 0.5 + (depth.offset || 0)) :
-        position.centerHorizontal ? -size.z * 0.5 : 0,
+          position.left ? FASADE_WIDTH * 0.5 - (size.x * 0.5 + (depth.offset || 0)) :
+            position.centerHorizontal ? -size.z * 0.5 : 0,
 
         position.bottom ? -FASADE_HEIGHT * 0.5 + (size.x * 0.5 + (depth.offset || 0)) :
-        position.top ? FASADE_HEIGHT * 0.5 - (size.x * 0.5 + (depth.offset || 0)) :
-        position.centerVertical ? -size.z * 0.5 : 0,
+          position.top ? FASADE_HEIGHT * 0.5 - (size.x * 0.5 + (depth.offset || 0)) :
+            position.centerVertical ? -size.z * 0.5 : 0,
 
         position.front ? FASADE_DEPTH * 0.5 + position.front :
-        -FASADE_DEPTH * 0.5 + size.z
+          -FASADE_DEPTH * 0.5 + size.z
       );
 
       if (type !== 'rotate') {
@@ -219,17 +212,7 @@ export class MillingBuilder extends MillingsUtils {
     shapeMesh.userData.fasadePosition = fasadePosition;
     shapeMesh.userData.startSize = size;
 
-    // Дополнительная позиция
-    if (figureParams.position) {
-      const { x, y, z, inpostOffset = 0 } = figureParams.position;
-      if (y === 'inpostTop') shapeMesh.position.y = FASADE_HEIGHT * 0.5 - size.y * 0.5 - inpostOffset;
-      else if (y === 'inpostBottom') shapeMesh.position.y = -FASADE_HEIGHT * 0.5 + size.y * 0.5 + inpostOffset;
-      else if (y) shapeMesh.position.y += y;
-      if (x && typeof x !== 'string') shapeMesh.position.x += x;
-      if (z && typeof z !== 'string') shapeMesh.position.z += z;
-    }
-
-    // Дополнительная ротация
+    // // Дополнительная ротация
     if (figureParams.rotation) {
       const { x, y, z } = figureParams.rotation;
       if (x) shapeMesh.rotation.x = x;
@@ -237,6 +220,27 @@ export class MillingBuilder extends MillingsUtils {
       if (z) shapeMesh.rotation.z = z;
     }
 
+    // Дополнительная позиция
+    if (figureParams.position) {
+
+      const posSize  = new THREE.Vector3();
+      const box = new THREE.Box3().setFromObject(shapeMesh);
+      box.getSize(posSize);
+
+      const { x, y, z, inpostOffsetY = 0, inpostOffsetX = 0, inpostOffsetZ = 0, inpostOffset = 0 } = figureParams.position;
+
+      if (y === 'inpostTop') shapeMesh.position.y = FASADE_HEIGHT * 0.5 - posSize.y * 0.5 - inpostOffset - inpostOffsetY;
+      else if (y === 'inpostBottom') shapeMesh.position.y = -FASADE_HEIGHT * 0.5 + posSize.y * 0.5 + inpostOffset + inpostOffsetY;
+      else if (y) shapeMesh.position.y += y;
+ 
+      if (x === "inpostLeft") shapeMesh.position.x = -FASADE_WIDTH * 0.5 + posSize.x * 0.5 - inpostOffset - inpostOffsetX;
+      else if (x === 'inpostRight') shapeMesh.position.x = FASADE_WIDTH * 0.5 - posSize.x * 0.5 + inpostOffset + inpostOffsetX;
+      else if (x) shapeMesh.position.x += x;
+
+      if (z === "inpostFront") shapeMesh.position.z = FASADE_DEPTH * 0.5 - posSize.z * 0.5 - inpostOffset - inpostOffsetZ
+      else if (z === 'inpostBack') shapeMesh.position.z = -FASADE_DEPTH * 0.5 + posSize.z * 0.5 + inpostOffset + inpostOffsetZ
+      else if (z) shapeMesh.position.z += z;
+    }
     // Корректировка Z
     shapeMesh.position.z += FASADE_DEPTH + 4;
     return shapeMesh;
@@ -319,47 +323,6 @@ export class MillingBuilder extends MillingsUtils {
     capsule.userData.fasadePosition = fasadePosition;
     capsule.userData.startSize = size;
     return capsule;
-  }
-
-  /**
-   * Создаёт ручку (hendle) для специального случая.
-   * @param fasadePosition - Параметры фасада.
-   * @param millingData - Данные фрезеровки.
-   * @param object - Объект фасада.
-   * @returns Mesh ручки.
-   */
-  private hendlesCreate(fasadePosition: any, millingData: any, object: THREE.Mesh) {
-    // Создаём форму ручки
-    const shape = new THREE.Shape();
-    const c = Math.PI / 180;
-    shape.moveTo(7.5, -15);
-    shape.lineTo(-5, -15);
-    shape.absarc(-2, 15, 3, -180 * c, 0 * c, true);
-    shape.absarc(5, 9, 2, -180 * c, 0 * c, false);
-
-    const extrudeSettings = {
-      steps: 2,
-      depth: fasadePosition.FASADE_WIDTH,
-      bevelEnabled: false,
-    };
-
-    // Создаём геометрию и меш
-    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    const shapeMesh = new THREE.Mesh(geometry, material);
-
-    // Ротация
-    shapeMesh.rotation.y = -Math.PI * 0.5;
-    shapeMesh.rotation.z = -Math.PI;
-    // Позиция
-    shapeMesh.position.set(
-      fasadePosition.FASADE_WIDTH / 2,
-      fasadePosition.FASADE_HEIGHT * 0.5 - 10,
-      fasadePosition.FASADE_DEPTH / 2 - 2.5
-    );
-
-    shapeMesh.updateMatrixWorld(true);
-    return shapeMesh;
   }
 
   /**
@@ -457,7 +420,7 @@ export class MillingBuilder extends MillingsUtils {
    */
   private matchesCondition({ FASADE_WIDTH, FASADE_HEIGHT }: any, { width, height }: any) {
     return width.min <= FASADE_WIDTH && FASADE_WIDTH <= width.max &&
-           height.min <= FASADE_HEIGHT && FASADE_HEIGHT <= height.max;
+      height.min <= FASADE_HEIGHT && FASADE_HEIGHT <= height.max;
   }
 
   /**

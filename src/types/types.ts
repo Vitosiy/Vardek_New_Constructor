@@ -10,7 +10,7 @@ import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { BuildProduct } from "@/Application/Meshes/BuildProduct";
 import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
 import { PaletteBuilder } from "@/Application/Meshes/PaletteBuilder";
-import { ShowcaseBuilder } from "@/Application/Meshes/ShowcaseBuilder";
+import { ShowcaseBuilder } from "@/Application/Meshes/Showcase/ShowcaseBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
 import { SetObject } from "@/Application/Utils/SetObject";
 import { AlumBuilder } from "@/Application/Meshes/AlumBuilder";
@@ -24,7 +24,7 @@ import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
 import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
-import { HandlesBuilder } from "@/Application/Meshes/Hendles/Handles";
+import { HandlesBuilder } from "@/Application/Meshes/Handles/Handles";
 import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder/ModelsBuilder";
 import { PlinthBuilder } from "@/Application/Meshes/PlinthBuilder/PlinthBuilder";
 
@@ -365,6 +365,7 @@ export type TFasadeProp = {
   RESET_COLOR: number | null,
   TYPE: number | null,
   MILLING: number | null,
+  MILLING_TYPE: number | null,
   PALETTE: number | null,
   WINDOW: number | null,
   ALUM: number | null,
@@ -412,7 +413,7 @@ export type TConfig = {
   ID: NumStr | null,
   FASADE_PROPS: TFasadeProp[],
   FASADE_SIZE: Record<NumStr, Record<NumStr, TFasadePositionData>>[] | [],
-  FASADE_POSITIONS: Record<NumStr, TFasadePositionItem>[] ,
+  FASADE_POSITIONS: Record<NumStr, TFasadePositionItem>[],
   FASADE_TYPE: number[] | boolean | null,
   FILLING: number[] | boolean | null,
   HAVETABLETOP: boolean,
@@ -420,8 +421,8 @@ export type TConfig = {
   MODELID: number,
   MODEL: number[],
   MODULE_COLOR: number,
-  MECHANIZM: NumStr | null,
-  MECHANIZM_TEMP: TMechanizmData[] | [],
+  MECHANISM: NumStr | null,
+  MECHANISM_TEMP: TMechanismData[] | [],
   SIZE: TSize,
   SIZE_EDIT: TSizeEdit,
   SHOWCASE: number[],
@@ -602,68 +603,6 @@ export type TMilling = {
   DENSITY: number | string | null;
 }
 
-export type TPlinthActions = {
-  front: TPlinthAction,
-  left: TPlinthAction,
-  right: TPlinthAction
-}
-
-type TPlinthAction = {
-  value: boolean,
-  modelId: number | null,
-  surfaceId: number | null,
-}
-
-export type TTabelTopServiceItem = {
-  ID: number;
-  NAME: string;
-  CODE: string;
-  default: string;
-  model: string;
-  sub_uslugi: boolean;
-  INCITY: string | null;
-  SEPARATE_MAX: string;
-  RASPIL_VIS_HIDE: string;
-  PROPIL: string;
-  isseparate: string;
-  show_props: string[] | boolean;
-  hide_props: string[] | boolean;
-  radiogroups: string[] | boolean;
-  separated: string;
-  TERMS_MULTIPLICITY: string;
-  TERMS_MULTIPLICITY_PRODUCT: string;
-  disablegroups: boolean;
-  group: string;
-  depth: string;
-  delay_date: string;
-  date_build: string;
-  height: string;
-  conditions: string;
-  width_setting: string;
-  WIDTHMOM: string;
-  DOP_PRODUCT: string;
-  QUANTITY_PRODUCT: string;
-  POSITION: string;
-  PATH_MAX_WIDTH: string;
-  PATH_MIN_WIDTH: string;
-  TEST: string;
-  visible: boolean;
-  value: boolean;
-}
-
-export type TKromkaMaterialItem = {
-  ID: number;
-  NAME: string;
-  CODE: string;
-  PREVIEW_PICTURE: string;
-  DETAIL_PICTURE: string;
-  INCITY: number[] | null;
-  CITY: string | null;
-  delay_date: string | null;
-  date_build: string | null;
-  date_shipment: string | null;
-}
-
 export type TFasadePositionData = {
   ID: number;
   NAME: string;
@@ -724,9 +663,23 @@ export type TFasadePositionItem = {
   FASADE_NUMBER: number | null,
   FASADE_MODEL: number | null,
   SHOWCASE: number | null
+  FASADE_TYPE: number[] | null[] | null
 }
 
-type TMechanizmData = {
+export type TPlinthActions = {
+  front: TPlinthAction,
+  left: TPlinthAction,
+  right: TPlinthAction
+}
+
+
+type TPlinthAction = {
+  value: boolean,
+  modelId: number | null,
+  surfaceId: number | null,
+}
+
+type TMechanismData = {
   ID: number,
   NAME: string,
   CLOSE_OTHER_OPTIONS: NumStr,
@@ -826,6 +779,57 @@ type TDrawer = {
 
 /** @Столешница */
 
+export type TTabelTopServiceItem = {
+  ID: number;
+  NAME: string;
+  CODE: string;
+  default: string;
+  model: string;
+  sub_uslugi: boolean;
+  INCITY: string | null;
+  SEPARATE_MAX: string;
+  RASPIL_VIS_HIDE: string;
+  PROPIL: string;
+  isseparate: string;
+  show_props: string[] | boolean;
+  hide_props: string[] | boolean;
+  radiogroups: string[] | boolean;
+  separated: string;
+  TERMS_MULTIPLICITY: string;
+  TERMS_MULTIPLICITY_PRODUCT: string;
+  disablegroups: boolean;
+  group: string;
+  depth: string;
+  delay_date: string;
+  date_build: string;
+  height: string;
+  conditions: string;
+  width_setting: string;
+  WIDTHMOM: string;
+  DOP_PRODUCT: string;
+  QUANTITY_PRODUCT: string;
+  POSITION: string;
+  PATH_MAX_WIDTH: string;
+  PATH_MIN_WIDTH: string;
+  TEST: string;
+  visible: boolean;
+  value: boolean;
+}
+
+export type TKromkaMaterialItem = {
+  ID: number;
+  NAME: string;
+  CODE: string;
+  PREVIEW_PICTURE: string;
+  DETAIL_PICTURE: string;
+  INCITY: number[] | null;
+  CITY: string | null;
+  delay_date: string | null;
+  date_build: string | null;
+  date_shipment: string | null;
+}
+
+
 type PathCommand = {
   action:
   | "moveTo"
@@ -870,6 +874,51 @@ type TCanvasData = {
   canvasHeight: number;
   data: TPanel[][];
 };
+
+// ==================================================================
+
+export enum FasadeTextAlignAction {
+  // left_top = 0,
+  // top = 1,
+  // right_top = 2,
+
+  // left = 3,
+  // left_open = 3,
+  // left_side = 3,
+  // left_p = 3,
+
+  // center = 4,
+
+  // right = 5,
+  // right_open = 5,
+  // right_side = 5,
+  // right_p = 5,
+
+  // left_down = 6,
+  // bottom = 7,
+  // right_down = 8,
+
+  right_top = 0,
+  top = 1,
+  left_top = 2,
+
+  right = 3,
+  right_open = 3,
+  right_side = 3,
+  right_p = 3,
+
+  center = 4,
+
+  left = 5,
+  left_open = 5,
+  left_side = 5,
+  left_p = 5,
+
+  right_down = 6,
+  bottom = 7,
+  left_down = 8,
+
+}
 
 
 

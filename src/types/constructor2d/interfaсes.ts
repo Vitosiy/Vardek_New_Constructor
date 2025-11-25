@@ -210,4 +210,6 @@ export interface GridModule {
   horizont?: number;
   fasades?: FasadeObject[];
   isSlidingDoors?: boolean;
+  leftWallThickness?: number;
+  rightWallThickness?: number;
 }

@@ -1,5 +1,6 @@
-<script lang="ts" setup>
 
+<script lang="ts" setup>
+//@ts-nocheck
 import { _URL } from "@/types/constants";
 
 interface Props {

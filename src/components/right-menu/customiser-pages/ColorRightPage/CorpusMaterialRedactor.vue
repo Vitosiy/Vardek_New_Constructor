@@ -18,10 +18,12 @@ const eventBus = useEventBus();
 interface IProps {
   materialList: [];
   is2Dconstructor?: boolean;
+  type?: string;
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   is2Dconstructor: false,
+  type: "surface",
 });
 
 const materialList = ref(null);
@@ -40,12 +42,15 @@ const callback = (material) => {
 };
 
 onBeforeMount(() => {
-  // materialList.value = modelState.getCurrentModuleData;
-  selectedSurfaceID.value =
-    modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+  if(props.type === "backwall")
+    selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
+  else
+    selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
+  materialList.value = props.materialList || modelState.getCurrentModuleData;
+
   const current = props.materialList!.find(
     (m) => m.ID === selectedSurfaceID.value
   );
@@ -53,6 +58,12 @@ onMounted(() => {
     currentSurfaceData.value = {
       name: current.NAME,
       imgSrc: current.DETAIL_PICTURE,
+    };
+  }
+  else {
+    currentSurfaceData.value = {
+      name: "",
+      imgSrc: "",
     };
   }
 });
@@ -68,12 +79,23 @@ const changeModuleTexture = (data: any) => {
 };
 
 const deleteSelectedOptions = (type: string) => {
-  const fallback = materialList.value![0];
-  currentSurfaceData.value = {
-    name: fallback.NAME,
-    imgSrc: fallback.PREVIEW_PICTURE,
-  };
-  eventBus.emit("A:ChangeModuleTexture", fallback);
+
+  if(type === "backwall" && is2Dconstructor.value) {
+    currentSurfaceData.value = {
+      name: "",
+      imgSrc: "",
+    };
+    callback(false)
+  }
+  else {
+    const fallback = materialList.value![0];
+    currentSurfaceData.value = {
+      name: fallback.NAME,
+      imgSrc: fallback.PREVIEW_PICTURE,
+    };
+
+    eventBus.emit("A:ChangeModuleTexture", fallback);
+  }
 };
 
 watch(
@@ -81,8 +103,11 @@ watch(
   () => {
     materialList.value = props.materialList || modelState.getCurrentModuleData;
 
-    selectedSurfaceID.value =
-      modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+    if(props.type === "backwall")
+      selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
+    else
+    selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+
     const current = props.materialList!.find(
       (m) => m.ID === selectedSurfaceID.value
     );
@@ -90,6 +115,12 @@ watch(
       currentSurfaceData.value = {
         name: current.NAME,
         imgSrc: current.DETAIL_PICTURE,
+      };
+    }
+    else {
+      currentSurfaceData.value = {
+        name: "",
+        imgSrc: "",
       };
     }
   }
@@ -119,7 +150,7 @@ watch(
   <div class="container container--2D-constructor" v-else>
     <div class="configuration">
       <ConfigurationOption
-        :type="'surface'"
+        :type="props.type"
         :data="currentSurfaceData"
         @delete-choise="deleteSelectedOptions"
       />

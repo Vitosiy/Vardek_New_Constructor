@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as THREE from 'three'
 import { TBuildProduct, TExpressions, TFasadeProp, TTotalProps, TSize, TFasadePositionItem, TConfig, TEdgeBuilder } from '@/types/types'
 
