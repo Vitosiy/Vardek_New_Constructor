@@ -165,12 +165,22 @@ export interface DrawerFasadeObject extends FasadeObject {
   row?: number | null;
 }
 
+export interface GridRowExtra {
+  number: number;
+  width: number;
+  height: number;
+  position: THREE.Vector2;
+  type: "rowExtra";
+  fillings?: FillingObject[];
+}
+
 export interface GridCellsRow {
   number: number;
   width: number;
   height: number;
   position: THREE.Vector2;
   type: "rowCell";
+  extras?: GridRowExtra[];
   fillings?: FillingObject[];
 }
 

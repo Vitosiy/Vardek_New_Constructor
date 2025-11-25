@@ -13,7 +13,7 @@ import {
   FasadeMaterial,
   FasadeObject, FillingObject,
   GridCell, GridCellsRow,
-  GridModule,
+  GridModule, GridRowExtra,
   GridSection,
   LOOPSIDE,
 } from "@/types/constructor2d/interfaсes.ts";
@@ -1114,6 +1114,30 @@ const reset = (reset = false) => {
 
             newCellsRowArray.push(newRow)
             positionCellsRow.x += newRow.width + moduleGrid.moduleThickness
+
+            if (row.extras?.length) {
+              let newRowExtrasArray = <GridRowExtra>[]
+              let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
+
+              row.extras.forEach((extra, extraIndex) => {
+                let newExtra = <GridRowExtra>{...extra}
+
+                newExtra.position.copy(positionRowExtras.clone())
+                newExtra.width = newRow.width;
+
+                if (newExtra.fillings?.length) {
+                  newExtra.fillings = <FillingObject>[...newExtra.fillings]
+                  newExtra.fillings.forEach((filling, index) => {
+                    updateFilling(newExtra.width, filling, 'width')
+                  })
+                }
+
+                newRowExtrasArray.push(newExtra)
+                positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
+              })
+
+              row.extras = newRowExtrasArray.slice()
+            }
           })
 
           let cellsRowWidthSum = 0;
