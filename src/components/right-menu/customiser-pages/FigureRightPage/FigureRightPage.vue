@@ -57,7 +57,7 @@ const filteredFigure = computed(() => {
     Plinth: createPlinthData,
   };
 
-  return figureTypeMap[currentFigure.value]?.();
+  return figureTypeMap[currentFigure.value!]?.();
 });
 </script>
 

@@ -1,7 +1,6 @@
-import { TTotalProps, TBuildProduct, TDeepDispose, TResources, TEdgeBuilder } from "@/types/types";
+import { TTotalProps, TBuildProduct, TEdgeBuilder } from "@/types/types";
 import { IShelfData } from "@/types/interfases";
 import {
-    Scene,
     Material,
     Vector3,
     MeshBasicMaterial,
@@ -14,20 +13,11 @@ import {
     Object3D
 } from "three";
 
-type TShalvesData = {
-    shelfs: IShelfData,
-    correction: number,
-    axis: "X" | "Y",
-    sizeKey: "width" | "height",
-    posKey: "x" | "y",
-    prefix: string
-}
+
 
 export class ShelfBuilder {
     private parent: TBuildProduct
-    private resources: TResources
-    private dispose: TDeepDispose
-    private scene: Scene
+
     private edgeBuilder: TEdgeBuilder
     materialMap: Record<string, Material> = {
         MeshBasicMaterial: new MeshBasicMaterial(),
@@ -39,9 +29,7 @@ export class ShelfBuilder {
 
     constructor(parent: TBuildProduct) {
         this.parent = parent
-        this.scene = parent.root._scene!;
-        this.resources = parent.root._resources!;
-        this.dispose = parent.root._deepDispose!;
+
         this.edgeBuilder = parent.edge_builder;
         parent.getStartPosition
 

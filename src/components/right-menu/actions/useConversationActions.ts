@@ -1,7 +1,7 @@
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useToast } from "@/features/toaster/useToast";
-import { IProductFasades, TFasadeGroupSize } from "@/store/appliction/useModelState";
+import { TFasadeGroupSize } from "@/store/appliction/useModelState";
 
 import { TTotalProps, TFasadeItem, TFasadeTrueSizes } from "@/types/types";
 
@@ -73,7 +73,7 @@ export const useConversationActions = () => {
     }
 
     const checkFasadeConversations = (fasadeId: number, size: TFasadeTrueSizes) => {
-        const { FASADE_WIDTH, FASADE_HEIGHT, FASADE_DEPTH } = size
+        const { FASADE_WIDTH, FASADE_HEIGHT } = size
         const { MAX_HEIGHT, MIN_HEIGHT, MAX_WIDTH, MIN_WIDTH } = createFasadeConversations(fasadeId)
         const check =
             FASADE_HEIGHT <= MAX_HEIGHT &&
@@ -89,7 +89,7 @@ export const useConversationActions = () => {
 
     }
 
-    const filterFasadeConversations = (fasadeNdx: number): IProductFasades[] => {
+    const filterFasadeConversations = (fasadeNdx: number) => {
         const sceneModel = modelState.getCurrentModel;
         const { FASADE } = sceneModel?.userData.PROPS;
         const { FASADE_WIDTH, FASADE_HEIGHT } =
