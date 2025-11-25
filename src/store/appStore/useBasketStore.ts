@@ -54,11 +54,13 @@ const transformCountHandles = (numbers: number[]) => {
 export const useBasketStore = defineStore('basket', () => {
   // Композиции
   const { mainConstructor, mainCatalog, initializeFromStorage, clearStorage } = useBasketStorage()
-  const { loading, error, syncBasketWithServer, syncInvoice } = useBasketApi()
+  const { loading, error, syncBasketWithServer, syncBasketProductDelay, syncInvoice } = useBasketApi()
   const appDataStore = useAppData();
 
   // State
   const basketData = ref<IBasketResponse | null>(null)
+  const basketDelay = ref<any[]>([]) // Указал тип any[] для лучшей типизации
+
 
   // Инициализация
   // initializeFromStorage()
@@ -68,6 +70,7 @@ export const useBasketStore = defineStore('basket', () => {
   const totalPrice = computed(() => basketData.value?.basket?.sum ?? 0)
   const totalOldPrice = computed(() => basketData.value?.basket?.sumOld ?? 0)
   const allBasketItems = computed(() => [...mainConstructor.value, ...mainCatalog.value])
+  const allBasketDelay = computed(() => basketDelay.value) // Теперь будет реактивно обновляться
 
   // Actions
   const addFromCatalog = (productData: any) => {
@@ -152,6 +155,24 @@ export const useBasketStore = defineStore('basket', () => {
     if (result) {
       basketData.value = result
     }
+    console.log('basketData.value', basketData.value)
+    return result
+  }
+  const syncBasketDelay = async (): Promise<IBasketResponse | null> => {
+    const currentHandlesData = countHandles(mainConstructor.value)
+    const data = currentHandlesData.length > 0 
+        ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
+        : allBasketItems.value
+
+    const result = await syncBasketProductDelay(data)
+    console.log('result', result);
+    // Используем basketDelay.value для реактивного обновления
+    if (result) {
+      basketDelay.value = Array.isArray(result) ? result : [result]
+    } else {
+      basketDelay.value = []
+    }
+    
     return result
   }
 
@@ -171,6 +192,7 @@ export const useBasketStore = defineStore('basket', () => {
   return {
     // State
     basketData: readonly(basketData),
+    basketDelay: readonly(basketDelay),
     loading: readonly(loading),
     error: readonly(error),
 
@@ -181,6 +203,7 @@ export const useBasketStore = defineStore('basket', () => {
     totalPrice,
     totalOldPrice,
     allBasketItems: readonly(allBasketItems),
+    allBasketDelay: readonly(allBasketDelay),
 
     // Actions
     addFromCatalog,
@@ -191,6 +214,7 @@ export const useBasketStore = defineStore('basket', () => {
     clearBasket,
     loadBasket,
     syncBasket,
+    syncBasketDelay,
     syncInvoce,
   }
 })

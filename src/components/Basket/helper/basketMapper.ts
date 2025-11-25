@@ -44,14 +44,18 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
 
 function createBodyProps(objProps: any) {
   const trueSize = objProps.BODY?.object?.userData?.trueSize;
-  
   return {
     COLOR: objProps.CONFIG.MODULE_COLOR ?? null,
     SIZE: {
-      WIDTH: trueSize?.BODY_WIDTH?.toFixed(0) ?? null,
-      HEIGHT: trueSize?.BODY_HEIGHT?.toFixed(0) ?? null,
-      DEPTH: trueSize?.BODY_DEPTH?.toFixed(0) ?? null,
+      WIDTH: objProps.CONFIG.EXPRESSIONS['#MWIDTH#'] !== objProps.CONFIG.SIZE.width ? objProps.CONFIG.SIZE.width : null,
+      HEIGHT: objProps.CONFIG.EXPRESSIONS['#MHEIGHT#'] !== objProps.CONFIG.SIZE.height ? objProps.CONFIG.SIZE.height : null,
+      DEPTH: objProps.CONFIG.EXPRESSIONS['#MDEPTH#'] !== objProps.CONFIG.SIZE.depth ? objProps.CONFIG.SIZE.depth : null,
     },
+    // SIZE: {
+    //   WIDTH: trueSize?.BODY_WIDTH?.toFixed(0) ?? null,
+    //   HEIGHT: trueSize?.BODY_HEIGHT?.toFixed(0) ?? null,
+    //   DEPTH: trueSize?.BODY_DEPTH?.toFixed(0) ?? null,
+    // },
   };
 }
 
@@ -253,7 +257,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
     })
   }
 
-  // Динамически добавляем заполнения секций
+    // Динамически добавляем заполнения секций
     if(!Object.keys(CONFIG.MODULEGRID).length) {
       Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
         const section = CONFIG.SECTIONS[sectionKey];
@@ -377,6 +381,23 @@ function convertModuleToLegacyFormat(newModuleObject) {
   return legacyProps;
 }
 
+function removeEmptyObjects(obj) {
+  const result = {};
+  
+  for (const [key, value] of Object.entries(obj)) {
+    // Если значение - объект и он не пустой, сохраняем его
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      if (Object.keys(value).length > 0) {
+        result[key] = value;
+      }
+    } else {
+      // Сохраняем все остальные значения (строки, числа, массивы и т.д.)
+      result[key] = value;
+    }
+  }
+  
+  return result;
+}
      
 export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
   console.log('createBasketItem', objProps);
@@ -409,12 +430,33 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
   }
 
   if (objProps.RASPIL && objProps.RASPIL.length !== 0) {
-    props.RASPIL = objProps.RASPIL;
+    props.RASPIL = {
+      data: objProps.RASPIL.data.flat().map(el => {
+        return {
+          height: el.height,
+          width: el.width,
+          serviseData: el.serviseData.filter(el => el.value).map(el => {
+            if(el.width) {
+              return {
+                ID: el.ID,
+                width: el.width,
+                NAME: el.NAME
+              }
+            } else {
+              return {
+                ID: el.ID,
+                NAME: el.NAME
+              }
+            }
+          })
+        }
+      })
+    }
+    
     // props.PROFILE = '251698';
     props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value === true)[0]?.ID   
-
-    
   }
+
   props.USLUGI = [] 
   if (objProps.RASPIL.data && objProps.RASPIL.data.length > 1) {
     props.USLUGI.push("98683");
@@ -427,7 +469,15 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
   if(objProps.RASPIL.data) {
     props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value)[0]?.ID;
+    props.RASPIL_COUNT = objProps.RASPIL.data.length
+    
+    function createRaspil(data) {
+      return data.flat().map(el => { console.log(el); return `${el.width}мм`}).join(' x '); 
+    }
+
+    props.USLUGIraspil = createRaspil(objProps.RASPIL.data);
   }
+
   if(objProps.CONFIG.KROMKA) {
     props.KROMKA = objProps.CONFIG.KROMKA;
   }
@@ -440,12 +490,20 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
     });
   } 
 
+  if(objProps.CONFIG.MECHANIZM) {
+    props.MECHANISM = objProps.CONFIG.MECHANIZM;
+  } 
+
+  
 
   if(objProps.CONFIG.SECTIONS) {
+    const propsUM = convertModuleToLegacyFormat(objProps);
+    const cleanedData = removeEmptyObjects(propsUM);
+    console.log('cleanedData', cleanedData)
     return {
       BASKETID: key,
       PRODUCT: objProps.CONFIG.ID,
-      PROPS:convertModuleToLegacyFormat(objProps),
+      PROPS:cleanedData,
       QUANTITY: 1,
       TYPE: "umscene",
     };

@@ -33,6 +33,10 @@
       
       <transition name="fade">
         <div v-if="showDropdown" class="avatar-dropdown">
+          <div class="dropdown-item" >Имя: {{ authStore?.userData?.name }}</div>
+          <div class="dropdown-item" >Город: {{ appData?.SETTINGS?.region_by_user_name }}</div>
+          <div class="dropdown-item" >Почта: {{ authStore?.userData?.email }}</div>
+          <div class="dropdown-item" >Дата регистрации: {{ authStore?.userData?.date }}</div>
           <div class="dropdown-item" @click.stop="handleLogout">
             <LogoutSVG class="dropdown-icon" />
             Выйти
@@ -44,11 +48,16 @@
 </template>
 
 <script setup lang="ts">
+//@ts-nocheck
 import { ref, computed, onMounted, onBeforeUnmount, CSSProperties } from 'vue'
 import LogoutSVG from '@/components/ui/svg/auth/LogoutSVG.vue'
 import { useAuthStore } from '@/store/appStore/authStore'
+import { useAppData } from "@/store/appliction/useAppData"
 
 const authStore = useAuthStore()
+const appDataStore = useAppData();
+
+const appData = computed(() => appDataStore.getAppData);
 
 // Состояние компонента
 const showDropdown = ref(false)
@@ -124,9 +133,9 @@ const clickOutsideHandler = (event: MouseEvent) => {
 // Хуки жизненного цикла
 onMounted(() => {
   // Загружаем данные пользователя, если они еще не загружены
-  if (!authStore.userData.name && authStore.isAuthenticated) {
-    authStore.fetchUserData()
-  }
+  // if (!authStore.userData.name && authStore.isAuthenticated) {
+  //   authStore.fetchUserData()
+  // }
   document.addEventListener('click', clickOutsideHandler)
 })
 
@@ -189,7 +198,7 @@ onBeforeUnmount(() => {
 .avatar-helper {
   position: relative;
   display: inline-block;
-  cursor: pointer;
+  /* cursor: pointer; */
   user-select: none;
   margin-left: 16px;
 }
@@ -266,7 +275,6 @@ onBeforeUnmount(() => {
 
 .dropdown-item {
   padding: 12px 16px;
-  cursor: pointer;
   transition: background 0.2s;
   display: flex;
   align-items: center;
@@ -275,7 +283,12 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-.dropdown-item:hover {
+/* .dropdown-item:hover {
+  background: #f8f9fa;
+  color: #1e293b;
+} */
+.dropdown-item:last-child:hover {
+  cursor: pointer;
   background: #f8f9fa;
   color: #1e293b;
 }
