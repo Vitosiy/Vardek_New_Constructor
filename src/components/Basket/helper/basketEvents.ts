@@ -36,8 +36,10 @@ const eventsMap = [
     "A:Duplicate",
     "A:RemoveModel",
     "A:SelectModelOption",
-    "A:AddHandle",
-    "A:RemoveHandle",
+    // "A:AddHandle",
+    "U:AddHandle",
+    // "A:RemoveHandle",
+    "U:RemoveHandle",
     "A:SelectPlinth",
     "A:SelectHendels",
     "A:ChangeModuleTotalTexture",
@@ -75,13 +77,13 @@ const useBascetEvents = () => {
         if (!actions.value) return
         // @ts-ignore
         const data = actions.value?.save();
-        
+
         roomContantData.setRoomContantDataForBasket(data)
 
         clearTimeout(basketDebounceTimer!);
         basketDebounceTimer = setTimeout(() => {
             basketStore.addFromScene();
-            basketStore.syncBasket(); 
+            basketStore.syncBasket();
         }, 500);
     }
 

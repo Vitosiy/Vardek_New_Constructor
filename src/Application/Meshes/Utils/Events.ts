@@ -1092,7 +1092,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Ручки  */
     //------------------
 
-    async addHandle({ data, fasadeNdx }: TDataCreateHandle) {
+    async createHandle({ data, fasadeNdx }: TDataCreateHandle) {
         if (!this._currentMesh) return;
         const product = this._currentMesh;
 
@@ -1106,7 +1106,14 @@ export class MeshEvents extends BuildersHelper {
 
     }
 
-    async deliteHandle({ data, fasadeNdx }: TDataWithNdx) {
+    async addHandle({ data, fasadeNdx }: TDataCreateHandle) {
+        if (!this._currentMesh) return;
+        await this.createHandle({ data, fasadeNdx })
+        this.events.emit('U:AddHandle')
+
+    }
+
+    async removeHandle({ data, fasadeNdx }: TDataWithNdx) {
 
         if (!this._currentMesh || !data) return;
         const product = this._currentMesh;
@@ -1117,6 +1124,13 @@ export class MeshEvents extends BuildersHelper {
 
         await this.handlesBuilder.deliteHandle(curFasadeMesh)
         curFasad.HANDLES.id = data.ID
+    }
+
+    async deliteHandle({ data, fasadeNdx }: TDataWithNdx) {
+        if (!this._currentMesh || !data) return;
+        await this.removeHandle({ data, fasadeNdx });
+        this.events.emit('U:RemoveHandle')
+
     }
 
     async changeHandlePos({ data, fasadeNdx }: TDataWithNdx) {
