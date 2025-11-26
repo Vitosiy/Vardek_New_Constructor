@@ -25,6 +25,7 @@ import {
 } from "@/Constructor2D/utils/Math/index";
 
 function updateRoomStore(this: any): boolean {
+  const normalizeId = (value: string | number | null | undefined) => value !== undefined && value !== null ? String(value) : '';
   const eventBus = useEventBus()
   const roomState = useRoomState()
   console.log('BEFORE: ', roomState.rooms)
@@ -33,14 +34,15 @@ function updateRoomStore(this: any): boolean {
   console.log('AFTER: ', roomState.rooms)
 
   const rooms: IRoom[] = [];
-  
+
   // Получаем список ID объектов из 2D (двери и окна) для фильтрации
   const idObjectsFrom2D = this.IDObjects?.map((item: { id: string | number; name: string }) => item.id) || [];
   const idToFilter = [166755, ...idObjectsFrom2D]; // перегородки + двери/окна
 
   (this.layers.planner.allRooms).forEach((roomData: IC2DRoom) => {
+    const normalizedRoomId = normalizeId(roomData.id);
     // Находим существующую комнату в roomState для сохранения content и basket
-    const existingRoom = roomState.rooms.find((r: IRoom) => r.id === roomData.id);
+    const existingRoom = roomState.rooms.find((r: IRoom) => normalizeId(r.id) === normalizedRoomId);
 
     // Сохраняем существующий content из 3D сцены, исключая элементы из 2D (перегородки, двери, окна)
     let preservedContent: IContentItem[] = [];
@@ -65,7 +67,7 @@ function updateRoomStore(this: any): boolean {
     }
 
     const room: IRoom = {
-      id: roomData.id, /** ID комнаты */
+      id: normalizedRoomId, /** ID комнаты */
       label: roomData.label, /** Лейбл */
       description: roomData.description, /** Описание */
       params: {
@@ -82,7 +84,7 @@ function updateRoomStore(this: any): boolean {
 
     // 1. довляем стены и перегородки
     this.layers.planner.objectWalls.forEach((wallData: ObjectWall) => {
-      if (wallData.roomId && wallData.roomId === room.id) {
+      if (wallData.roomId && normalizeId(wallData.roomId) === normalizedRoomId) {
 
 
         if (wallData.name === 'dividing_wall') { // если перегородка
@@ -92,6 +94,7 @@ function updateRoomStore(this: any): boolean {
 
           const wData: IContentItem = {
             id: 166755,
+            uuid: String(wallData.id),
             position: {
               x: centerWall.x * 10,
               y: (300 * 10) / 2,
@@ -118,7 +121,7 @@ function updateRoomStore(this: any): boolean {
           const centerWall = getCenterOfPoints([wallData.points[0], wallData.points[1]]);
 
           const wData: IWallData = {
-            id: wallData.id,
+            id: normalizeId(wallData.id),
             width: wallData.width * 10,
             height: 300 * 10,
             depth: wallData.height * 10,
@@ -147,7 +150,7 @@ function updateRoomStore(this: any): boolean {
     // 2. добавляем окна, двери и другие объекты
     this.layers.doorsAndWindows.drawObjects.forEach((objData: IDrawObjects) => {
       if (
-        objData.roomId && objData.roomId === room.id
+        objData.roomId && normalizeId(objData.roomId) === normalizedRoomId
       ) {
 
         const IDObjects: number | string | null = this.IDObjects.find((item: { id: string | number; name: string; }) => item.name === objData.name)?.id ?? null;
@@ -208,6 +211,8 @@ function updateRoomStore(this: any): boolean {
 
   });
   roomStore.setAppData(rooms);
+  // Сразу синхронизируем стор комнат, чтобы 3D получил актуальные id/контент
+  roomState.rooms = rooms;
   
   // console.log('Data room store:', roomStore.getAllData());
   console.log('AFTER AFTER: ', roomState.rooms)

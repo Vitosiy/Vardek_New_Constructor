@@ -730,6 +730,11 @@ export default class Planner {
 
   public isPointInRoom(roomId: number | string, targetPoint: Vector2): boolean {
 
+    const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+      if (a === undefined || a === null || b === undefined || b === null) return false;
+      return String(a) === String(b);
+    };
+
     // Проверка входных параметров
     if (!roomId || !targetPoint) {
       throw new Error(`Invalid parameters: roomId(${roomId}) and targetPoint(${JSON.stringify(targetPoint)}) are required`);
@@ -744,25 +749,40 @@ export default class Planner {
 
   public getRoomContour(roomId: number | string): Vector2[] {
 
+    const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+      if (a === undefined || a === null || b === undefined || b === null) return false;
+      return String(a) === String(b);
+    };
+
     // 2. Настройки точности
     const precision = 2; // Кол-во знаков после запятой
     const uniquePoints = new Map<string, Vector2>();
+    const rawPoints: Vector2[] = [];
 
     // 3. Сбор уникальных точек (индексы 0 и 1)
     for (const wall of this.objectWalls) {
-      if (wall.roomId === roomId && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
+      if (isSameId(wall.roomId, roomId) && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
         // Точка 0
         const key0 = `${wall.points[0].x.toFixed(precision)},${wall.points[0].y.toFixed(precision)}`;
         uniquePoints.set(key0, wall.points[0]);
+        rawPoints.push(wall.points[0]);
 
         // Точка 1
         const key1 = `${wall.points[1].x.toFixed(precision)},${wall.points[1].y.toFixed(precision)}`;
         uniquePoints.set(key1, wall.points[1]);
+        rawPoints.push(wall.points[1]);
       }
     }
 
+    const dedupPoints = Array.from(uniquePoints.values());
+
     // 4. Проверка минимального количества точек
-    return Array.from(uniquePoints.values());
+    if (dedupPoints.length < 3) {
+      // Возвращаем “сырые” точки, чтобы не пропадал пол
+      return rawPoints;
+    }
+
+    return dedupPoints;
 
   }
 
