@@ -11,6 +11,12 @@ import {
 
 import Constructor2D from '@/Constructor2D';
 
+import { loadBlankRoom } from "@/Constructor2D/facade/blankRoom";
+
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useRoomState } from "@/store/appliction/useRoomState";
+
+let schemeTransition = useSchemeTransition();
 // root container
 let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
@@ -60,6 +66,9 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
           position: pointerPosition,
           type: draggedData
         });
+        // Вызываем updateRoomStore после добавления объекта
+        // roomId теперь правильно определяется в addObject с fallback через roomId стены
+        App2d.updateRoomStore();
       } else {
         console.warn("Неизвестный тип перетаскиваемого объекта:", draggedData);
       }
@@ -71,7 +80,6 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
 };
 
 onMounted(async () => {
-  
   if (root2d.value && canvas2d.value) {
 
     App2d = new Constructor2D(root2d.value, canvas2d.value);
@@ -93,6 +101,11 @@ onMounted(async () => {
     // if (loader) {
     //   (loader as HTMLElement).style.display = 'none';
     // }
+
+    const rooms = schemeTransition.getAllData();
+    if (rooms.length === 0) {
+      await loadBlankRoom();
+    }
 });
 
 onUnmounted(() => {

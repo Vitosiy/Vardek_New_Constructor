@@ -58,6 +58,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  console.log('!!!to:', to)
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
   const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
   console.log('COOKIE_NAMES.AUTH_TOKEN', COOKIE_NAMES.AUTH_TOKEN)
@@ -78,7 +79,7 @@ router.beforeEach((to, from, next) => {
       // Удаляем просроченные куки
       document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      next('/auth');
+      next({ path: '/auth', query: to.query, hash: to.hash });
       return;
     } else {
       const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
@@ -89,16 +90,19 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.meta.requiresAuth && !token) {
+
     // Перенаправляем на страницу авторизации, если требуется аутентификация
-    next('/auth');
+
+    next({ path: '/auth', query: to.query, hash: to.hash });
   } else if (to.path === '/auth' && token) {
     // Если пользователь уже авторизован, но пытается попасть на страницу авторизации
-    next('/2d');
-    
+
+    next({ path: '/2d', query: to.query, hash: to.hash });
 
   } else {
     // В остальных случаях разрешаем переход
-    next();
+  console.log('!!!to1:', to)
+    console.log(next())
   }
 });
 

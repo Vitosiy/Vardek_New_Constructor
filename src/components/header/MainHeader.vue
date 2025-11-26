@@ -290,6 +290,19 @@ watch(
   () => route.path,
   async (newPath, oldPath) => {
     try {
+      if (oldPath === '/3d' && newPath === '/2d' && verdekConstructor.value) {
+        eventBus.emit("A:Save");
+        await nextTick(); // Ждем сохранения
+      }
+
+      if (newPath === '/2d' && window.C2D) {
+        await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
+        if (window.C2D.layers?.planner && window.C2D.layers?.doorsAndWindows) {
+          window.C2D.layers.planner.init(true);
+          window.C2D.layers.doorsAndWindows.init(true);
+        }
+      }
+      console.log('Все комнаты:', roomState.rooms);
       roomState.routConvertData(newPath);
 
       menuStore.setRulerVisibility(true);

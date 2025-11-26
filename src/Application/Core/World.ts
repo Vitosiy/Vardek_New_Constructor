@@ -44,7 +44,7 @@ export class World {
 
     private onCreateRoom: () => void;
     private onSaveRoom: () => void;
-    private onLoadRoom: (data: number) => void;
+    private onLoadRoom: (data: number | string) => void;
 
     constructor(root: THREETypes.TApplication) {
 
@@ -68,7 +68,7 @@ export class World {
 
         if (this.roomState.getRooms.length > 0) {
             this.roomState.setLoad(false)
-            const startRoomId = this.roomState.getRooms[0].id
+            const startRoomId = String(this.roomState.getRooms[0].id)
             this.loadRoom(startRoomId)
         }
         else {
@@ -143,7 +143,7 @@ export class World {
         // console.log('Комната уже существует')
 
         const contant = this.room!.save() as string[]
-        const roomId = this.roomState.getRoomId as number
+        const roomId = String(this.roomState.getRoomId)
         // const roomParams = this.roomState.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
         const roomParams = this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes
         const basket = JSON.stringify({
@@ -158,7 +158,7 @@ export class World {
 
     }
 
-    async loadRoom(roomId: number) {
+    async loadRoom(roomId: number | string) {
         this.uniformState.clearUniformGroupMembership();
         this.uniformState.clearUniformGroupsStors()
         this.roomState.clearCurrentRoomId()
@@ -186,9 +186,17 @@ export class World {
         const invValue = this.roomOptions.getRefractionValue
         if (this.enviroment) this.enviroment.toggleRefraction(invValue)
 
-        const basket = JSON.parse(this.roomState.rooms.find(el=> el.id === roomId).basket);
-        console.log('basket', basket);
-        if (basket) this.basketStore.loadBasket(basket)
+        const roomWithBasket = this.roomState.rooms.find(el => String(el.id) === String(roomId));
+        const basketRaw = roomWithBasket?.basket;
+        if (basketRaw) {
+            try {
+                const basket = JSON.parse(basketRaw);
+                console.log('basket', basket);
+                if (basket) this.basketStore.loadBasket(basket)
+            } catch (err) {
+                console.warn('Не удалось распарсить корзину комнаты', err);
+            }
+        }
 
     }
 

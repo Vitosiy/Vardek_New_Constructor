@@ -1,6 +1,6 @@
 <template>
   <div class="project">
-    <div class="project__title">Открыть проект</div>
+    <div class="project__title">Менеджер проектов</div>
     <ClosePopUpButton class="popup__close" @close="closePopup" />
 
     <div class="project__container">
@@ -25,7 +25,7 @@
           />
         </div>
         <div class="project-buttons">
-          <MainButton
+          <!-- <MainButton
             :className="tab === 'ready' ? 'red__button' : 'grey__button'"
             @click="switchTab('ready')"
             :disabled="isLoading"
@@ -38,12 +38,12 @@
             :disabled="isLoading"
           >
             Мои проекты
-          </MainButton>
+          </MainButton> -->
         </div>
       </div>
 
       <!-- Предупреждение -->
-      <div class="project-warning">
+      <!-- <div class="project-warning">
         <div v-if="!projectState.currentProjectId" class="warning-text">
           <p class="warning-text__title">Новый проект</p>
           <p class="warning-text__text">
@@ -57,7 +57,7 @@
         >
           {{ projectState.isSaving ? "Сохранение..." : "Сохранить" }}
         </MainButton>
-      </div>
+      </div> -->
 
       <!-- Список проектов -->
       <div class="project-list">
@@ -84,14 +84,14 @@
         </div>
 
         <!-- Создать новый проект -->
-        <div
+        <!-- <div
           v-if="!isLoading && !loadError"
           class="project-new"
           @click="createNewProject"
         >
           <img src="@/assets/svg/popup/add.svg" alt="" />
           <p class="new__title">Создать новый проект</p>
-        </div>
+        </div> -->
 
         <!-- Карточки проектов -->
         <div
@@ -138,6 +138,7 @@ import { useProjectAPI } from "./composables/useProjectAPI";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 const router = useRouter();
 const toaster = useToast();
@@ -220,11 +221,12 @@ const loadProject = async (id: string | number) => {
 
   const projectData = await projectAPI.loadProject(id.toString());
   if (projectData) {
+    projectState.resetState();
     projectState.setInitialState(projectData);
-
     console.log(projectData, "----PROD");
 
     try {
+      schemeTransition.clearStore();
       // 1. Обновляем данные проекта в sceneState
       await sceneState.loadProjectFromData(projectData);
       sceneState.updateProjectParams({});
@@ -242,6 +244,7 @@ const loadProject = async (id: string | number) => {
       await router.push("/2d");
       window.C2D.layers.planner.init(true);
       window.C2D.layers.doorsAndWindows.init(true);
+      useRoomState().routConvertData('/3d')
       closePopup();
     } catch (error) {
       console.error("Ошибка применения данных проекта:", error);

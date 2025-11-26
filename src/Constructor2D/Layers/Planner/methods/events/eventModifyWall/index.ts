@@ -5,7 +5,6 @@ import {
 } from "@/Constructor2D/utils/Math";
 
 export function eventModifyWall(this: any, data: {width: number, height: number}): void {
-
   // const indexPoint = this.state.activePointWall;
   const indexDataWall = this.objectWalls.findIndex((el: ObjectWall) => el.id === this.state.activeWall);
 
@@ -42,5 +41,4 @@ export function eventModifyWall(this: any, data: {width: number, height: number}
   this.drawListWalls(listRelatedWalls);
 
   this.parent.updateRoomStore();
-  
 }

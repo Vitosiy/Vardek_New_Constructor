@@ -17,10 +17,25 @@ export type TRoutPath = '/3d' | '/2d';
 
 export const useRoomState = defineStore('RoomState', () => {
 
+  const normalizeId = (value: string | number | null | undefined) => value !== null && value !== undefined ? String(value) : '';
+  const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+    if (a === undefined || a === null || b === undefined || b === null) return false;
+    return normalizeId(a) === normalizeId(b);
+  };
+  const normalizeRoom = (room: any) => {
+    const clone = JSON.parse(JSON.stringify(room || {}));
+    clone.id = normalizeId(clone.id);
+    clone.content = typeof clone.content === 'string' ? JSON.parse(clone.content) : (clone.content || []);
+    if (!clone.params) clone.params = { walls: [], wall: '', floor: '' };
+    if (!Array.isArray(clone.params.walls)) clone.params.walls = [];
+    clone.params.walls = clone.params.walls.map((wall: any) => ({ ...wall, id: normalizeId(wall?.id) }));
+    return clone;
+  };
+
   const schemeTransition = useSchemeTransition();
   const sceneState = useSceneState();
-  const roomsData = JSON.parse(JSON.stringify(schemeTransition.getSchemeTransitionData));
-  const rooms = ref<THREEInterfases.IRoom[]>(roomsData || []);
+  const roomsData = JSON.parse(JSON.stringify(schemeTransition.getSchemeTransitionData || []));
+  const rooms = ref<THREEInterfases.IRoom[]>(Array.isArray(roomsData) ? roomsData.map(normalizeRoom) : []);
   const roomLoad = ref<boolean>(false)
 
   const appDataStore = useAppData()
@@ -31,7 +46,7 @@ export const useRoomState = defineStore('RoomState', () => {
   // const APP = useAppData();
   const modelState = useModelState()
 
-  const currentRoomId = ref<number | null>(null);
+  const currentRoomId = ref<string | null>(null);
   const tempRoomSize = ref<THREEInterfases.IWallSizes | null>(null);
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
@@ -55,7 +70,7 @@ export const useRoomState = defineStore('RoomState', () => {
     //   }
     // })
     // rooms.value = parseData
-    rooms.value = data
+    rooms.value = data.map(normalizeRoom)
   }
 
   const convertDataTo2DConstuctor = () => {
@@ -72,7 +87,7 @@ export const useRoomState = defineStore('RoomState', () => {
     // })
     // schemeTransition.setAppData(parseData)
 
-    schemeTransition.setAppData(rooms.value)
+    schemeTransition.setAppData(rooms.value.map(normalizeRoom))
   }
 
   const converActions = {
@@ -85,12 +100,12 @@ export const useRoomState = defineStore('RoomState', () => {
   }
 
   const addRoom = (room: THREEInterfases.IRoom) => {
-    const newValue = [...rooms.value, ...[room]]
+    const newValue = [...rooms.value, ...[normalizeRoom(room)]]
     rooms.value = newValue
   };
 
-  const updateRoom = (id: number, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes, basket: any) => {
-    const room = rooms.value.find(room => room.id === id);
+  const updateRoom = (id: number | string, content: THREEInterfases.IContentItem[], params: THREEInterfases.IWallSizes, basket: any) => {
+    const room = rooms.value.find(room => isSameId(room.id, id));
 
     if (room) {
       room.content = content;
@@ -102,8 +117,8 @@ export const useRoomState = defineStore('RoomState', () => {
 
   };
 
-  const removeRoom = (id: number) => {
-    rooms.value = rooms.value.filter(room => room.id !== id);
+  const removeRoom = (id: number | string) => {
+    rooms.value = rooms.value.filter(room => !isSameId(room.id, id));
     if (rooms.value.length == 0) {
       clearCurrentRoomId()
     }
@@ -113,8 +128,8 @@ export const useRoomState = defineStore('RoomState', () => {
 
   };
 
-  const setCurrentRoomId = (id: number) => {
-    currentRoomId.value = id;
+  const setCurrentRoomId = (id: number | string) => {
+    currentRoomId.value = normalizeId(id);
   };
 
   const clearCurrentRoomId = () => {
@@ -145,14 +160,14 @@ export const useRoomState = defineStore('RoomState', () => {
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
 
-    const currentRoom = rooms.value.find(value => value.id === roomId)
+    const currentRoom = rooms.value.find(value => isSameId(value.id, roomId))
 
     if (centerized) {
       currentRoom.params = centerized?.params ?? currentRoom?.params;
       currentRoom.content = centerized?.content ?? currentRoom?.content;
     }
 
-    return rooms.value.find(value => value.id === roomId)
+    return rooms.value.find(value => isSameId(value.id, roomId))
   }
 
   const getRoomId = computed(() => {
@@ -160,7 +175,7 @@ export const useRoomState = defineStore('RoomState', () => {
   });
 
   const getRoomContent = computed(() => {
-    const room = rooms.value.find(room => room.id === currentRoomId.value);
+    const room = rooms.value.find(room => isSameId(room.id, currentRoomId.value));
     if (room) {
       return room.content
     }

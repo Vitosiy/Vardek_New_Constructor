@@ -8,6 +8,12 @@
       :placeholder="placeholder"
     />
 
+    <div class="input-dialog__checkbox">
+      <slot name="checkBox">
+    
+      </slot>
+    </div>
+
     <div class="input-dialog__actions">
       <slot name="confirmButton" :onConfirm="emitConfirm">
         <button class="btn btn--confirm" @click="emitConfirm">
@@ -81,6 +87,10 @@ const emitCancel = () => {
     font-size: 16px;
     margin-bottom: 16px;
     outline: none;
+  }
+
+  &__checkbox {
+    text-align: center
   }
 
   &__actions {
