@@ -20,10 +20,10 @@ export const useAppData = defineStore('AppData', () => {
     // const url = new URL('https://dev.vardek.online/api/modeller/mainobject/GetData/')
     let currentURL = window.location.href;
     url.searchParams.append('url', currentURL)
-    const response = await fetch(url, { 
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
-      "Authorization": `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
       },
     })
     if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`)
@@ -78,27 +78,32 @@ export const useAppData = defineStore('AppData', () => {
 
   async function clearIndexedDB() {
     const databases = await window.indexedDB.databases();
-    
+
     for (const dbInfo of databases) {
       if (dbInfo.name) {
         const request = indexedDB.deleteDatabase(dbInfo.name);
-        
+
         await new Promise((resolve, reject) => {
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-            request.onblocked = () => console.warn('База заблокирована');
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+          request.onblocked = () => console.warn('База заблокирована');
         });
       }
     }
   }
+  
 
   const initAppData = async () => {
     document.querySelector('#main-loader').style.display = 'block';
-    // await clearIndexedDB();
-    if (!import.meta.env.DEV) {
-        await clearIndexedDB();
+
+    if (import.meta.env.DEV) {
+      if (isLoaded.value || isLoading.value) return
     }
-    // if (isLoaded.value || isLoading.value) return
+    else {
+      console.warn('🧹 [BUILD] Очистка IndexedDB перед инициализацией приложения')
+      await clearIndexedDB();
+    }
+
     isLoading.value = true
     try {
       indexedDataBase.value = await initIndexedDB()
@@ -124,12 +129,12 @@ export const useAppData = defineStore('AppData', () => {
       isLoaded.value = true
       document.querySelector('#main-loader').style.display = 'none';
 
-      
+
     }
   }
 
-  const getAppData = computed(() => { 
-    return appData.value 
+  const getAppData = computed(() => {
+    return appData.value
   })
 
   return {

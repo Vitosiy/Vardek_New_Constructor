@@ -77,7 +77,6 @@ export class FasadeBuilder {
         const startPosition = this.parent.getStartPosition(SIZE);
         const parent = new THREE.Object3D();
         const modelType = this._APP.MODELS[CONFIG.MODELID]?.type ?? "left";
-        console.log(modelType, 'modelType')
 
         if (remove) {
             CONFIG.UNIFORM_TEXTURE = {
@@ -179,7 +178,9 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-                if (fasadeData.SHOW && milling && fasadeData.MILLING === null) {
+                if (fasadeData.SHOW && milling && fasadeData.MILLING === null && !haveShowcase) {
+                    console.log('==== ❌ milling ❌ ====', milling)
+
                     fasadeData.MILLING = milling;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
@@ -189,6 +190,8 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && haveShowcase) {
+                    console.log('==== ❌ haveShowcase ❌ ====', haveShowcase)
+
                     fasadeData.MILLING = null;
                     // if (!fasadeData.MILLING_TYPE) {
                     //     const fType = FASADE_POSITIONS[key].FASADE_TYPE
@@ -253,43 +256,45 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null) {
-                const millingParams = this.modelState.getCurrentMillingMap(fasadeData.MILLING);
+                // const millingParams = this.modelState.getCurrentMillingMap(fasadeData.MILLING);
 
-                this.parent.milling_builder.createMillingFasade(
-                    curFasade,
-                    curFasade.userData.trueSize,
-                    millingParams,
-                    FASADE_DEFAULT[fasadeNdx],
-                    fasadeData.PATINA
-                );
+                // this.parent.milling_builder.createMillingFasade(
+                //     curFasade,
+                //     curFasade.userData.trueSize,
+                //     millingParams,
+                //     FASADE_DEFAULT[fasadeNdx],
+                //     fasadeData.PATINA
+                // );
 
-                // const millingParams = remove ? this.modelState.getCurrentMillingMap(1317715) : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
+                console.log('==== ❌ MILLING ❌ ====', fasadeData.MILLING)
 
-                // if (remove) {
-                //     this.parent.milling_builder.createMillingFasade(
-                //         curFasade,
-                //         curFasade.userData.trueSize,
-                //         millingParams,
-                //         FASADE_DEFAULT[fasadeNdx],
-                //         fasadeData.PATINA
-                //     );
-                //     fasadeData.MILLING = null;
-                // } else {
-                //     this.parent.milling_builder.createMillingFasade(
-                //         curFasade,
-                //         curFasade.userData.trueSize,
-                //         millingParams,
-                //         FASADE_DEFAULT[fasadeNdx],
-                //         fasadeData.PATINA
-                //     );
-                // }
+                const millingParams = remove ? this.modelState.getCurrentMillingMap(1317715) : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
+
+                if (remove) {
+                    this.parent.milling_builder.createMillingFasade(
+                        curFasade,
+                        curFasade.userData.trueSize,
+                        millingParams,
+                        FASADE_DEFAULT[fasadeNdx],
+                        fasadeData.PATINA
+                    );
+                    fasadeData.MILLING = null;
+                } else {
+                    this.parent.milling_builder.createMillingFasade(
+                        curFasade,
+                        curFasade.userData.trueSize,
+                        millingParams,
+                        FASADE_DEFAULT[fasadeNdx],
+                        fasadeData.PATINA
+                    );
+                }
             }
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
-                console.log('==== ❌ action ❌ ====', action)
+                console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING)
 
                 this.parent.showcase_builder.createShowcase({
                     fasade: curFasade,
@@ -426,6 +431,7 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null) {
+                console.log('==== ❌ MILLING NEW ❌ ====')
 
                 const action = this.modelState.getCurrentMillingActionMap(fasadeData.MILLING_TYPE, fasadeData.MILLING) ?? null
                 const millingParams = action ? action : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
@@ -443,6 +449,8 @@ export class FasadeBuilder {
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
+                console.log('==== ❌ SHOWCASE NEW ❌ ====')
+
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
 
                 this.parent.showcase_builder.createShowcase({
@@ -748,21 +756,6 @@ export class FasadeBuilder {
         }) as THREE.Object3D;
 
         // // Истинные размеры фасада и запись в CONFIG.FASADE_POSITIONS[key]
-        // const box = new THREE.Box3().setFromObject(fasade);
-        // const size = box.getSize(new THREE.Vector3());
-        // const sizeRec = {
-        //     FASADE_WIDTH: size.x,
-        //     FASADE_HEIGHT: size.y,
-        //     FASADE_DEPTH: size.z
-        // };
-        // FASADE_POSITIONS[key].FASADE_WIDTH = size.x;
-        // FASADE_POSITIONS[key].FASADE_HEIGHT = size.y;
-        // FASADE_POSITIONS[key].FASADE_DEPTH = size.z;
-
-        // Позиционирование в сцене
-        const result = this.setFasadePosition(fasade, fasadePositionData, modelType, startPosition, fasadeEdge);
-
-        // Истинные размеры фасада и запись в CONFIG.FASADE_POSITIONS[key]
         const box = new THREE.Box3().setFromObject(fasade);
         const size = box.getSize(new THREE.Vector3());
         const sizeRec = {
@@ -770,6 +763,12 @@ export class FasadeBuilder {
             FASADE_HEIGHT: size.y,
             FASADE_DEPTH: size.z
         };
+
+
+        // Позиционирование в сцене
+        const result = this.setFasadePosition(fasade, fasadePositionData, modelType, startPosition, fasadeEdge);
+
+ 
         FASADE_POSITIONS[key].FASADE_WIDTH = size.x;
         FASADE_POSITIONS[key].FASADE_HEIGHT = size.y;
         FASADE_POSITIONS[key].FASADE_DEPTH = size.z;

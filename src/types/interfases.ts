@@ -388,3 +388,36 @@ export interface IProduct {
     PREVIEW_PICTURE: string;
     FILLING_SECTION: false | number;
 }
+
+export interface IFillingConfig {
+    readonly ID: number;
+    readonly NAME: string;
+    readonly IMG: string;
+    readonly SMALL: string;
+    readonly NO_FASADE: boolean | null;
+
+    /** Условие в виде строки, например: "(#X#>=600&&#X#<=1200) && (#Y#>2100)" */
+    readonly CONDITIONS: string;
+
+    readonly VSECTION: number;
+    readonly VSECTION_MIN: number;
+    readonly VSECTION_MAX: number;
+    readonly SHELFQUANT: number;
+    readonly VSECTION_DEPTH: number | null;
+
+    readonly HEIGHT_PLINTH: number;
+    readonly HEIGHT_CORNICE: number;
+
+    readonly PROP_ALIGN: {
+        VALUE: string | null;
+        VALUE_ENUM: string | null;
+        PROPERTY_VALUE_ID: string | null;
+        VALUE_XML_ID: string | null;
+    } | null;
+
+    /** ID связанных 3D-моделей */
+    readonly MODELS: readonly number[];
+
+    readonly GROUP_SECTION: unknown | null;
+    readonly SORT: number;
+}

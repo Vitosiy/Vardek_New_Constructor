@@ -27,6 +27,7 @@ import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder"
 import { HandlesBuilder } from "@/Application/Meshes/Handles/Handles";
 import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder/ModelsBuilder";
 import { PlinthBuilder } from "@/Application/Meshes/PlinthBuilder/PlinthBuilder";
+import { ShelfBuilder } from "@/Application/Meshes/Shelf/ShelfBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -68,6 +69,7 @@ export type TUseEdgeBuilder = UseEdgeBuilder
 export type THandlesBuilder = HandlesBuilder
 export type TModelsBuilder = ModelsBuilder
 export type TPlinthBuilder = PlinthBuilder
+export type TShelfBuilder = ShelfBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
 export type TElementType = "element_down" | "element_up"
@@ -358,6 +360,12 @@ type TFasadePropsSizes = {
 
 }
 
+export type TFasadeTrueSizes = {
+  FASADE_WIDTH: number,
+  FASADE_DEPTH: number,
+  FASADE_HEIGHT: number
+}
+
 export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
@@ -406,6 +414,10 @@ export type TModelData = {
   loop_model: any | null;
   wall_thickness: number | null;
 };
+type TShelfcount = {
+  max: number | null,
+  current: number | null,
+}
 
 export type TConfig = {
   DISABLE_MOVE: boolean,
@@ -416,6 +428,7 @@ export type TConfig = {
   FASADE_POSITIONS: Record<NumStr, TFasadePositionItem>[],
   FASADE_TYPE: number[] | boolean | null,
   FILLING: number[] | boolean | null,
+  FILLING_LIST: number[] | boolean | null,
   HAVETABLETOP: boolean,
   TABLETOP_ID: NumStr | null,
   MODELID: number,
@@ -426,6 +439,7 @@ export type TConfig = {
   SIZE: TSize,
   SIZE_EDIT: TSizeEdit,
   SHOWCASE: number[],
+  SHELFQUANT: TShelfcount,
   POSITION: TVector3,
   PLINTH_ACTIONS: TPlinthActions,
   PRODUCT_SHOWCASE: NumStr | null,
@@ -440,7 +454,7 @@ export type TConfig = {
 
 export type TTotalProps = {
   ARROWS: THREE.Object3D[],
-  BODY: THREE.Object3D[],
+  BODY: THREE.Object3D,
   CONFIG: TConfig,
   DRAWERS: THREE.Object3D[],
   EXPRESSIONS: {},
@@ -457,7 +471,7 @@ export type TTotalProps = {
   RASPIL: TCanvasData,
   RASPIL_LIST: TRaspilPart[],
   RASPIL_COUNT: number,
-  SHELF: THREE.Object3D,
+  SHELF: THREE.Object3D[] | THREE.Mesh[] | [],
   SEPARATED: [],
   SECTIONSOBJ: [],
   SECTIONCONTROL: [],

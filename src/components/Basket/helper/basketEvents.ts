@@ -46,7 +46,8 @@ const eventsMap = [
     "A:ChangeMillingTotal",
     "A:ChangePlinthBody",
     "A:ChangePlinthColor",
-    "U:DrawPatina"
+    "U:DrawPatina",
+    "A:RecountShelfs"
 ]
 
 const useBascetEvents = () => {
@@ -73,6 +74,7 @@ const useBascetEvents = () => {
         if (!actions.value) return
         // @ts-ignore
         const data = actions.value?.save();
+        
         roomContantData.setRoomContantDataForBasket(data)
 
         clearTimeout(basketDebounceTimer!);
