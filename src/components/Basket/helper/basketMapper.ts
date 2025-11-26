@@ -214,7 +214,7 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
   return item
 }
 
-function convertModuleToLegacyFormat(newModuleObject) {
+function convertModuleToLegacyFormat(newModuleObject) { 
   if (!newModuleObject?.CONFIG) {
     return {};
   }
