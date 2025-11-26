@@ -35,8 +35,7 @@ const onSearchChange = (e: Event) => {
 
 const handleSelect = (material: any) => {
   emit("update:modelValue", material);
-  emit("select", material);
-  
+  emit("select", material);  
 };
 </script>
 

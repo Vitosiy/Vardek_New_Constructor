@@ -39,6 +39,7 @@ const eventsMap = [
     "A:AddHandle",
     "A:RemoveHandle",
     "A:SelectPlinth",
+    "A:SelectHendels",
     "A:ChangeModuleTotalTexture",
     "A:ChangeFasadsTopTexture",
     "A:ChangeFasadsBottomTexture",

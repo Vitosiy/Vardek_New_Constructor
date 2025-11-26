@@ -128,8 +128,6 @@ export const useAppData = defineStore('AppData', () => {
       isLoading.value = false
       isLoaded.value = true
       document.querySelector('#main-loader').style.display = 'none';
-
-
     }
   }
 
