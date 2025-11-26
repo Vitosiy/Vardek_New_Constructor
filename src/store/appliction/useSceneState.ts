@@ -1,0 +1,351 @@
+//@ts-nocheck
+
+import { defineStore } from 'pinia';
+import { useSchemeTransition } from '../canvasMerge/schemeTransition';
+import { computed, ref } from 'vue';
+import * as THREEInterfases from "../../types/interfases"
+import { TLightRange, TQuality, TOptionsMap, TOptionItem } from '@/types/types';
+import { IWallSizes, ICameraData, ILightsObjects, IProjectParams } from '@/types/interfases';
+
+import { START_PROJECT_PARAMS } from '@/Application/F-startData';
+import { useRoomState } from './useRoomState';
+
+export const useSceneState = defineStore('SceneState', () => {
+
+    const schemeTransition = useSchemeTransition()
+    const roomState = useRoomState()
+
+    const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
+
+    const startProjectParams = ref(JSON.parse(JSON.stringify(START_PROJECT_PARAMS)))
+
+    const startRoomData = ref<IWallSizes>(startParamsClone.rooms[0].params);
+
+    const startCameraData = ref<ICameraData>(startParamsClone.camera);
+
+    const startLightsDat = ref<ILightsObjects>(startParamsClone.lights);
+
+    const startHeightClamp = ref<number>(startParamsClone.height_clamp)
+
+    const currentProjectParams = ref<IProjectParams>(startParamsClone)
+
+    const keys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
+        moduleTop: 'default_module_color_up',
+        moduleBottom: 'default_module_color_down',
+        fasadsTop: 'default_fasade_up',
+        fasadsBottom: 'default_fasade_down',
+    };
+
+    const externalPalitteKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
+        fasadsTop: 'default_palit_top',
+        fasadsBottom: 'default_palit_bottom'
+    }
+
+    const shadowValue = ref<boolean>(false)
+    const refractionValue = ref<boolean>(false)
+
+    // const updateProjectParams = ({
+    //     rooms,
+    //     camera,
+    //     lights,
+    //     height_clamp,
+    //     default_table_color,
+    //     table_top_type_auto,
+    //     default_fasade_up,
+    //     default_fasade_down,
+    //     default_fasade_color,
+    //     default_floor,
+    //     default_wall,
+    //     default_module_color_down,
+    //     default_module_color_up,
+    //     default_module_color,
+    //     default_milling_down,
+    //     default_milling_up,
+    //     default_palit_down,
+    //     default_palit_up,
+    //     default_table_model,
+    //     default_handles,
+    //     default_plinth_body,
+    //     default_plinth_color,
+    //     default_overlay_id,
+    //     project_name
+
+    // }: IProjectParams) => {
+    //     currentProjectParams.value = {
+    //         rooms: ((rooms) => {
+    //             if (rooms) {
+    //                 rooms.forEach(el => {
+    //                     console.log(el.content)
+    //                 })
+    //                 return rooms
+    //             }
+    //             return currentProjectParams.value.rooms
+
+
+    //         })(rooms),
+    //         camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
+    //         lights: lights ?? startProjectParams.value.lights,
+    //         height_clamp: height_clamp ?? startProjectParams.value.height_clamp,
+    //         table_top_type_auto: table_top_type_auto ?? startProjectParams.value.table_top_type_auto,
+    //         default_table_color: default_table_color ?? startProjectParams.value.default_table_color,
+    //         default_fasade_up: default_fasade_up ?? startProjectParams.value.default_fasade_up,
+    //         default_fasade_down: default_fasade_down ?? startProjectParams.value.default_fasade_down,
+    //         default_fasade_color: default_fasade_color ?? startProjectParams.value.default_fasade_color,
+    //         default_floor: default_floor ?? startProjectParams.value.default_floor,
+    //         default_wall: default_wall ?? startProjectParams.value.default_wall,
+    //         default_module_color_down: default_module_color_down ?? startProjectParams.value.default_module_color_down,
+    //         default_module_color_up: default_module_color_up ?? startProjectParams.value.default_module_color_up,
+    //         default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
+    //         default_milling_down: default_milling_down ?? startProjectParams.value.default_milling_down,
+    //         default_milling_up: default_milling_up ?? startProjectParams.value.default_milling_up,
+    //         default_palit_down: default_palit_down ?? startProjectParams.value.default_palit_down,
+    //         default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
+    //         default_table_model: default_table_model ?? startProjectParams.value.default_table_model,
+    //         default_handles: default_handles ?? startProjectParams.value.default_handles,
+    //         default_plinth_body: default_plinth_body ?? startProjectParams.value.default_plinth_body,
+    //         default_plinth_color: default_plinth_color ?? startProjectParams.value.default_plinth_color,
+    //         default_overlay_id: default_overlay_id ?? startProjectParams.value.default_overlay_id,
+    //         project_name: project_name ?? startProjectParams.value.project_name
+
+    //     } as IProjectParams;
+
+
+    //     // const clone = currentProjectParams.value.rooms?.map(item => {
+    //     //     return item
+    //     // })
+
+    //     // const parseData = clone.map(elem => {
+    //     //     const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
+    //     //     return {
+    //     //         ...elem,
+    //     //         content: content
+    //     //     }
+    //     // })
+
+    //     // console.log(parseData)
+
+
+    //     // const parseData = clone.map(elem => {
+    //     //     return {
+    //     //         ...elem,
+    //     //         content: elem.content.map((el) => {
+    //     //             if (typeof el == 'string') {
+    //     //                 return JSON.parse(el)
+    //     //             }
+    //     //             return el
+    //     //         })
+    //     //     }
+    //     // })
+
+
+
+    //     // console.log(parseData, 'parseData')
+
+    //     // schemeTransition.setAppData(parseData)
+    //     // roomState.mergeRoomsData();
+
+    // };
+
+
+    const mergeRooms = (
+        currentRooms: IRoom[] | undefined,
+        newRooms: IRoom[] | undefined
+    ): IRoom[] | undefined => {
+        if (!newRooms) return currentRooms;
+        if (!currentRooms) return newRooms;
+
+        const mergedRooms = newRooms.map(newRoom => {
+            const existing = currentRooms.find(r => r.id === newRoom.id);
+            return existing ? { ...existing, ...newRoom } : newRoom;
+        });
+
+        // Добавляем старые, которые не пришли в обновлении
+        const missing = currentRooms.filter(
+            oldRoom => !newRooms.some(r => r.id === oldRoom.id) && oldRoom.id !== 1000001
+        );
+
+        return [...mergedRooms, ...missing];
+    };
+
+    const updateProjectParams = (params: Partial<IProjectParams>) => {
+        const base = startProjectParams.value;
+        const current = currentProjectParams.value;
+
+        const merged: IProjectParams = {
+            ...base,
+            ...current,
+            ...params,
+            rooms: mergeRooms(current.rooms, params.rooms) ?? base.rooms,
+            camera: params.camera ?? current.camera ?? base.camera,
+            lights: params.lights ?? current.lights ?? base.lights,
+            height_clamp: params.height_clamp ?? current.height_clamp ?? base.height_clamp,
+        };
+
+        // if (params.rooms) {
+        //     params.rooms.forEach(room => console.log(room.content));
+        // }
+
+        // console.log(merged, 'merged')
+
+        currentProjectParams.value = merged;
+    };
+
+    const setShadowValue = (value: boolean) => {
+        shadowValue.value = value
+    }
+
+    const setRefractionValue = (value: boolean) => {
+        refractionValue.value = value
+    }
+
+    const setLightRange = (type: keyof TLightRange, value: number | string) => {
+        lightRange.value[type] = value
+    }
+
+    const updateStartRoomData = (type: keyof IWallSizes & ("floor" | "wall"), value: string | number) => {
+        startRoomData.value[type] = value
+    }
+
+    const updateDefaultData = <T extends keyof typeof keys>(type: T, value: TOptionItem | null
+    ) => {
+        const curOption = keys[type];
+        const curPalitte = externalPalitteKeys[type];
+
+        // console.log(value, 'curOption')
+        if (curOption) {
+            // console.log(startProjectParams.value, 'startProjectParams_1')
+
+            startProjectParams.value[curOption] = value?.id;
+            currentProjectParams.value[curOption] = value?.id;
+
+            if (value?.palitte) {
+
+                if (curPalitte) {
+
+                    startProjectParams.value[curOption] = value?.palitte;
+                    currentProjectParams.value[curOption] = value?.palitte;
+                }
+
+            }
+        }
+    };
+
+    const createNewProject = () => {
+        const clone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
+
+        startProjectParams.value = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
+
+        startParamsClone.value = clone
+
+        startRoomData.value = clone.rooms[0].params
+
+        startCameraData.value = clone.camera
+
+        startLightsDat.value = clone.lights
+
+        startHeightClamp.value = clone.height_clamp
+
+        currentProjectParams.value = clone
+
+    }
+
+    const loadProjectFromData = async (newProject: IProjectParams) => {
+
+        console.log(newProject, 'loadProjectFromData')
+
+        startProjectParams.value = newProject
+
+        startParamsClone.value = newProject
+
+        startRoomData.value = newProject.rooms[0].params
+
+        // startCameraData.value = newProject.camera
+
+        // startLightsDat.value = newProject.lights
+
+        // startHeightClamp.value = newProject.height_clamp
+
+        // currentProjectParams.value = newProject
+
+
+
+        // const clone = JSON.parse(JSON.stringify(newProject))
+
+        // startProjectParams.value = JSON.parse(JSON.stringify(newProject))
+
+        // startParamsClone.value = clone
+
+        // startRoomData.value = clone.rooms[0].params
+
+        // startCameraData.value = clone.camera
+
+        // startLightsDat.value = clone.lights
+
+        // startHeightClamp.value = clone.height_clamp
+
+        // currentProjectParams.value = clone
+    }
+
+    const getStartProgectParams = computed(() => {
+        return startProjectParams.value
+    })
+
+    const getStartRoomData = computed(() => {
+        return startRoomData.value
+    })
+
+    const getStartCameraData = computed(() => {
+        return startCameraData.value
+    })
+
+    const getStartLightsData = computed(() => {
+        return startLightsDat.value
+    })
+
+    const getStartHeightClamp = computed(() => {
+        return startHeightClamp.value
+    })
+
+    const getCurrentProjectParams = computed(() => {
+        return currentProjectParams.value
+    })
+
+    const getShadowValue = computed(() => {
+        return shadowValue.value
+    })
+
+    const getRefractionValue = computed(() => {
+        return refractionValue.value
+    })
+
+    const getLightRange = computed(() => {
+        return lightRange.value
+    })
+
+    const getQuality = computed(() => {
+        return quality.value
+    })
+
+    return {
+        getStartProgectParams,
+        getStartRoomData,
+        getStartCameraData,
+        getStartLightsData,
+        getStartHeightClamp,
+        getCurrentProjectParams,
+        getRefractionValue,
+        getShadowValue,
+        getLightRange,
+        getQuality,
+
+        updateProjectParams,
+        updateStartRoomData,
+        updateDefaultData,
+        setRefractionValue,
+        setShadowValue,
+        setLightRange,
+        createNewProject,
+        loadProjectFromData
+    };
+
+});

@@ -1,0 +1,28 @@
+.slider-tooltip {
+  display: none;
+}
+
+.distance-label {
+  font-size: 14px;
+  font-weight: 400;
+  color: black;
+  color: black;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+
+  &--wall {
+    font-size: 16px;
+    color: black;
+    font-weight: 600;
+  }
+}
+
+.dimension-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: #444444;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}

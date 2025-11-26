@@ -1,0 +1,114 @@
+// @ts-nocheck
+import { useAppData } from "@/store/appliction/useAppData";
+import { useModelState } from "@/store/appliction/useModelState";
+import { TFasadeProp } from "@/types/types";
+
+
+
+export type TFigureLable = 'Цоколь' | 'Плинтус' | 'Ручки'
+export type TFigureName = 'Base' | 'Plinth' | 'Handles'
+export type THandlesItem = {
+    ID: number,
+    PREVIEW_PICTURE: string,
+    models: number,
+    NAME: string
+}
+
+export interface IFigureItems {
+    label: TFigureLable,
+    name: TFigureName,
+    action?: Function;
+}
+
+export interface IFigureFasade {
+    label: string,
+    name: string,
+    props: TFasadeProp
+    action?: Function;
+}
+
+export const useFigureRightPage = () => {
+
+    const appData = useAppData()
+    const modelState = useModelState();
+
+    const createHandlesList = () => {
+        const { PROPS } = modelState.getCurrentModel!.userData
+        const ptoductId = PROPS.PRODUCT
+
+        const data = appData.getAppData
+        const { PRODUCTS } = data.CATALOG
+        const { HANDLES } = PRODUCTS[ptoductId]
+
+        const handlesTempList = HANDLES[0] != null ? HANDLES : data.HANDLES
+        // const handlesMap: Record<number, THandlesItem> = {};
+        const handlesMap: THandlesItem[] = []
+
+        for (const el in handlesTempList) {
+            const product = PRODUCTS[el];
+            const temp = {
+                ID: product.ID,
+                PREVIEW_PICTURE: product.PREVIEW_PICTURE,
+                models: product.models[0],
+                NAME: product.NAME
+            }
+            // handlesMap[el] = temp
+            handlesMap.push(temp)
+        }
+
+        return handlesMap
+
+    }
+
+    const createSurfaceList = () => {
+        const data = appData.getAppData
+        const { FASADE, CATALOG, POSITION_HANDLES } = data
+        const { PRODUCTS } = CATALOG
+        const { PROPS } = modelState.getCurrentModel.userData;
+        const { PRODUCT } = PROPS
+        const { FASADE_PROPS, FASADE_TYPE } = PROPS.CONFIG
+        const tempList: IFigureFasade[] = []
+
+        for (const el in FASADE_PROPS) {
+            const disabled = FASADE_TYPE[el] == null
+            // if (FASADE_TYPE[el] == null) continue
+
+            const { COLOR } = FASADE_PROPS[el]
+            const fasadeData = FASADE[COLOR]
+            const haveHandles = POSITION_HANDLES[PRODUCT]
+
+            if (haveHandles) {
+                tempList.push({
+                    label: `Фасад ${parseInt(el) + 1}`,
+                    name: `fasade ${parseInt(el) + 1}`,
+                    disabled: disabled,
+                    props: FASADE_PROPS[el],
+                    action: () => createHandlesList()
+                })
+            };
+
+        }
+
+        return tempList
+
+    }
+
+    const createPlinthData = () => {
+        const { PROPS } = modelState.getCurrentModel.userData
+        return PROPS.CONFIG.PLINTH_ACTIONS
+    }
+
+    const figureItems: IFigureItems[] = [
+        {
+            label: 'Ручки',
+            name: 'Handles',
+        },
+        {
+            label: 'Цоколь',
+            name: 'Plinth',
+        }
+    ]
+
+    return { figureItems, createSurfaceList, createHandlesList, createPlinthData }
+
+}

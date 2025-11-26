@@ -1,0 +1,1852 @@
+<script setup lang="ts">
+// @ts-nocheck
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useKromkaActions } from "./Kromka/useKromkaActions";
+import {
+  onMounted,
+  onBeforeMount,
+  onBeforeUnmount,
+  computed,
+  ref,
+  toRaw,
+  watch,
+  defineExpose,
+  nextTick,
+} from "vue";
+import Visualization from "./TableTopVisualization.vue";
+import CutOptions from "./OptionsMenu/CutOptions.vue";
+import CutServise from "./OptionsMenu/CutServise.vue";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
+import { CUTTER_PARAMS } from "./CutterScripts/CutterConst";
+import { ShapeAdjuster } from "./CutterScripts/CutterMethods";
+import TableTopInput from "./TableTopInput.vue";
+import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
+import KromkaCard from "./Kromka/KromkaCard.vue";
+
+const eventBus = useEventBus();
+const modelState = useModelState();
+const kromkaActions = useKromkaActions();
+
+const {
+  checkKromkaActive,
+  tempKromkaList,
+  getKromkaList,
+  getKromkaActive,
+  kromkaSelect,
+  getKromkaCardData,
+  kromkaCardSelect,
+  getKromkaCardSelect,
+  getCurretKromkaList,
+  hideKromkaList,
+  setCromkaActive,
+  setGridData,
+  clearKromkaData
+} = kromkaActions;
+
+const emit = defineEmits(["save-table-data"]);
+
+const {
+  MAX_AREA_WIDTH,
+  TOTAL_LENGTH,
+  TOTAL_HEIGHT,
+  BACKGROUND_COLOR,
+  MIN_SECTION_WIDTH,
+  MIN_SECTION_HEIGHT,
+  SECTOR_PADDING,
+} = CUTTER_PARAMS;
+
+let shapeAdjuster = null;
+
+const props = defineProps({
+  grid: {
+    type: Array,
+    default: CUTTER_PARAMS.DEFAULT,
+  },
+  canvasHeight: {
+    type: Number,
+    default: 600,
+  },
+  modelHeight: {
+    type: Number,
+    default: 20,
+  },
+});
+
+const kromkaMap = ref([
+  "kromka_tri_storony",
+  "kromka_perimetr",
+  "kromka_torec",
+  "kromka_torec_right",
+  "kromka_torec_left",
+]);
+
+const isMounted = ref(false);
+const visualizationRef = ref(null);
+const serviseData = ref([]);
+const grid = ref([]);
+const totalHeight = ref(0);
+
+const tempHole = ref({});
+
+const selectedCell = ref({ col: 0, row: 0 });
+const correct = ref({ change: false });
+const holeOptions = ref({ show: false, section: { col: 0, row: 0 } });
+const cutServise = ref({ show: false, section: { col: 0, row: 0 } });
+const splitterContainer = ref(null);
+const step = ref(1);
+
+const getHole = computed(() => {
+  const colNdx = selectedCell.value.col;
+  const rowNdx = selectedCell.value.row;
+
+  const curRow = grid.value[colNdx][rowNdx];
+
+  if (curRow.holes.length > 0) {
+    return curRow.holes;
+  }
+  return [];
+});
+// Получаем текущую секцию
+const getCurrentSection = computed(() => {
+  if (!isMounted.value) return;
+  const rowNdx = selectedCell.value.row ?? 0;
+  const colNdx = selectedCell.value.col ?? 0;
+
+  const currentColl = grid.value[colNdx];
+  const currentRow = currentColl[rowNdx];
+  return { currentRow, currentColl };
+});
+
+const getCurrentKromkaData = computed(() => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROFILE } = parent?.userData?.PROPS.CONFIG;
+  return PROFILE || [];
+});
+// Получаем данные услуг секции
+const getCurrentSectionServiseData = computed(() => {
+  if (!isMounted.value) return;
+  return getCurrentSection.value.currentRow.serviseData ?? [];
+});
+
+const getRoundSectionValidation = computed(() => {
+  return (col, row) => {
+    if (!isMounted.value) return;
+    try {
+      const currentColl = grid.value[col];
+      const currentRow = currentColl[row];
+
+      if ("radius" in currentRow.roundCut) return true;
+      return false;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+});
+
+const checkRounded = computed(() => {
+  if (!isMounted.value) return;
+  const row = getCurrentSection.value.currentRow;
+  if ("radius" in row.roundCut) return true;
+  return false;
+});
+
+const updateTotalHeight = (value) => {
+  totalHeight.value = parseInt(value);
+
+  visualizationRef.value.updateTotalHeight(value);
+  // visualizationRef.value.renderGrid();
+  reset();
+  visualizationRef.value.selectCell(0, 0);
+};
+
+const getMaxAreaHeight = (value) => {
+  return (value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+};
+
+// const getMaxAreaHeight = computed(() => {
+//   return (totalHeight.value * MAX_AREA_WIDTH) / TOTAL_LENGTH;
+// });
+
+const showCurrentCol = (colIndex) => {
+  selectedCell.value = { col: colIndex, row: 0 };
+  visualizationRef.value.selectCell(colIndex, 0);
+  holeOptions.value.show = false;
+  cutServise.value.show = false;
+};
+
+const addVerticalCut = (colIndex) => {
+  const column = grid.value[colIndex];
+  const halfWidth = column[0].width / 2;
+
+  if (halfWidth < 150 || !((column[0].width / 2) % step.value == 0)) return;
+
+  // Обновляем ширину текущей колонки
+  column.forEach((row) => {
+    row.width = halfWidth;
+    row.holes = [];
+    row.roundCut = {};
+    row.serviseData = createServiseData();
+  });
+
+  // Создаем новую колонку с такими же параметрами
+  const newColumn = column.map((row) => ({
+    ...row,
+    roundCut: {},
+    holes: [],
+    width: halfWidth,
+    serviseData: createServiseData(),
+  }));
+
+  grid.value.splice(colIndex + 1, 0, newColumn);
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const addHorizontalCut = (colIndex, rowIndex) => {
+  selectedCell.value.row = rowIndex;
+  selectedCell.value.col = colIndex;
+  visualizationRef.value.selectCell(colIndex, rowIndex, true);
+
+  const column = grid.value[colIndex];
+
+  column.forEach((row) => {
+    row.holes = [];
+    row.roundCut = {};
+    row.serviseData = createServiseData();
+  });
+
+  const curRow = getCurrentSection.value.currentRow;
+
+  const lastRow = column[column.length - 1];
+  // const halfHeight = Math.floor(lastRow.height / 2);
+
+  const halfHeight = Math.floor(curRow.height / 2);
+
+  if (halfHeight < 150 || !(curRow.height % step.value == 0)) return;
+
+  // Обновляем высоту последней строки
+  curRow.height = halfHeight;
+  // Добавляем новую строку в эту колонку
+  column.splice(rowIndex, 0, {
+    width: curRow.width,
+    height: curRow.height, // Оставшаяся высота
+    roundCut: {},
+    holes: [],
+    serviseData: createServiseData(),
+  });
+
+  // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const addRoundСut = (colIndex) => {
+  const column = grid.value[selectedCell.value.col];
+  const row = column[selectedCell.value.row];
+  row.holes = [];
+
+  let extremum =
+    row.width < row.height
+      ? row.width - SECTOR_PADDING * 2
+      : row.height - SECTOR_PADDING * 2;
+
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.CUT)
+    extremum = CUTTER_PARAMS.EXTREMUMS.CUT;
+
+  if (
+    row.width < 300 + SECTOR_PADDING * 2 ||
+    row.height < 300 + SECTOR_PADDING * 2
+  ) {
+    alert("Высота и ширина секции должны быть не меньше 360 мм.");
+    return;
+  }
+
+  row.roundCut = {
+    radius: extremum,
+  };
+
+  clearServiseData(row);
+
+  visualizationRef.value.renderGrid();
+};
+
+const createHoleDataToCheck = (type, row, col) => {
+  let width, height, radius, tempHole;
+
+  let extremum =
+    row.width < row.height
+      ? row.width - SECTOR_PADDING * 2
+      : row.height - SECTOR_PADDING * 2;
+
+  if (
+    row.width < 300 + SECTOR_PADDING * 2 ||
+    row.height < 300 + SECTOR_PADDING * 2
+  ) {
+    alert("Высота и ширина секции должны быть не меньше 360 мм.");
+    return;
+  }
+
+  if (extremum > CUTTER_PARAMS.EXTREMUMS.HOLES)
+    extremum = CUTTER_PARAMS.EXTREMUMS.HOLES;
+
+  width = extremum;
+  height = extremum;
+  radius = extremum;
+
+  switch (type) {
+    case "rect":
+      tempHole = {
+        type: "rect",
+        width,
+        height,
+      };
+      break;
+
+    case "circle":
+      tempHole = {
+        type: "circle",
+        radius,
+      };
+      break;
+  }
+
+  return visualizationRef.value.checkPositionHoleToCreate(tempHole);
+};
+
+const addHole = (type) => {
+  const col = grid.value[selectedCell.value.col];
+  const row = col[selectedCell.value.row];
+
+  const startHoleData = createHoleDataToCheck(type, row, col);
+
+  if (!startHoleData) {
+    // alert("Позиция не найдена");
+    return;
+  }
+
+  if (selectedCell.value.col === null || selectedCell.value.row === null) {
+    alert("Пожалуйста, выберите секцию для добавления прямоугольного выреза");
+    return;
+  }
+
+  let preperedData;
+
+  switch (type) {
+    case "rect":
+      preperedData = {
+        ...startHoleData,
+        lable: "Прямоугольный разрез",
+        holeId: row.holes.length,
+        Mwidth: 600,
+        Mheight: 600,
+      };
+      break;
+    case "circle":
+      preperedData = {
+        ...startHoleData,
+        lable: "Круглый разрез",
+        holeId: row.holes.length,
+        Mradius: 600,
+      };
+      break;
+  }
+
+  row.holes.push(preperedData);
+
+  // // Обновляем рендер
+  visualizationRef.value.renderGrid();
+};
+
+const showHoleOptions = (colIndex, rowIndex) => {
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  cutServise.value.show = false;
+  holeOptions.value.show = true;
+  holeOptions.value.section.col = colIndex;
+  holeOptions.value.section.row = rowIndex;
+};
+
+const showCutServises = (colIndex, rowIndex) => {
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+  holeOptions.value.show = false;
+  cutServise.value.show = true;
+  cutServise.value.section.col = colIndex;
+  cutServise.value.section.row = rowIndex;
+};
+
+const toggleHoleOptions = (colIndex, rowIndex) => {
+  cutServise.value.show = false;
+  holeOptions.value.show = !holeOptions.value.show;
+};
+
+const toggleCutServise = (colIndex, rowIndex) => {
+  holeOptions.value.show = false;
+  cutServise.value.show = !cutServise.value.show;
+};
+
+const getCutServiseActive = computed(() => {
+  return (col, row) => {
+    if (!isMounted.value) return;
+    const { section, show } = cutServise.value;
+    return { active: col === section.col && row === section.row && show };
+  };
+});
+
+const getHoleOptionsActive = computed(() => {
+  return (col, row) => {
+    if (!isMounted.value) return;
+    const { section, show } = holeOptions.value;
+    return { active: col === section.col && row === section.row && show };
+  };
+});
+
+const checkProfileDisablegroups = () => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
+  const { PROFILE, USLUGI } = PROPS.CONFIG;
+  const activeProfile = PROFILE.find((prof) => prof.value);
+
+  if (!activeProfile) return;
+
+  const { disablegroups } = activeProfile;
+
+  /** @Для_более_быстрой_проверки */
+  
+  const disabledSet = new Set(disablegroups);
+
+  const hasActiveKromka = isKromkaActive();
+  const hasKromka = (pos) => pos.includes("kromka");
+
+  USLUGI.forEach((usluga) => {
+    const kromka = hasKromka(usluga.POSITION);
+
+    if (typeof usluga.group === "string" && usluga.group.length > 0) {
+      const groups = usluga.group.split("|").map((g) => g.trim());
+      const hasDisabledGroup = groups.some((group) => disabledSet.has(group));
+      const shouldShow = !hasDisabledGroup;
+
+      usluga.visible = shouldShow;
+      usluga.value =
+        (!shouldShow && kromka) || (shouldShow && kromka && !hasActiveKromka)
+          ? false
+          : shouldShow;
+    }
+  });
+
+  grid.value.forEach((column) =>
+    column.forEach((row) => {
+      row.serviseData.forEach((el, key) => {
+        const curUsluga = USLUGI.find((usluga) => usluga.ID === el.ID);
+        if (curUsluga) {
+          el.visible = curUsluga.visible;
+          if (!curUsluga.visible) el.value = false;
+        }
+      });
+    })
+  );
+
+  checkKromkaActive();
+  getCurretKromkaList();
+};
+
+const convertKromkaData = (value, item) => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
+  const { PROFILE, USLUGI } = PROPS.CONFIG;
+  const curProfile = PROFILE.find((el) => el.ID === item.ID);
+
+  if (curProfile.ID === 251698 && curProfile.value) {
+    checkProfileDisablegroups();
+    return;
+  }
+  // Основное обновление
+  PROFILE.forEach((profile) => {
+    profile.value = profile.ID === item.ID ? value : false;
+  });
+
+  // Если всё выключено — включаем дефолт
+  if (PROFILE.every((p) => !p.value)) {
+    const defaultProfile = PROFILE.find((p) => p.ID === 251698);
+    if (defaultProfile) {
+      defaultProfile.value = true;
+    }
+  }
+
+  checkProfileDisablegroups();
+};
+
+const convertServisData = (value, item) => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
+  const { USLUGI } = PROPS.CONFIG;
+
+  const separetedOption = parseInt(item.separated) === 0;
+
+  if (separetedOption) {
+    updateGlobalService(value, item, USLUGI);
+    return;
+  }
+
+  updateLocalService(value, item, USLUGI);
+};
+
+/** @Обновляет_значение_глобального_сервиса (для всех ячеек и в USLUGI) */
+
+const updateGlobalService = (value, item, USLUGI) => {
+  grid.value.forEach((column) =>
+    column.forEach((row) => {
+      const service = row.serviseData.find((el) => el.ID === item.ID);
+      if (service) service.value = value;
+    })
+  );
+
+  const globalService = USLUGI.find((el) => el.ID === item.ID);
+
+  if (globalService) {
+    globalService.value = value;
+  }
+};
+
+/** @Обновляет_локальный_сервис_в_текущей_секции_с_логикой_позиционирования */
+
+const updateLocalService = (value, item, USLUGI) => {
+
+  const currentSection = getCurrentSection.value;
+  if (!currentSection?.currentRow?.serviseData) return;
+
+  const data = currentSection.currentRow.serviseData;
+  const itemNameLower = item.NAME.toLowerCase();
+
+  // Находим целевой сервис
+  const targetService = data.find(
+    (el) => el.NAME.toLowerCase() === itemNameLower
+  );
+  if (!targetService) return;
+
+  const targetPosition = targetService.POSITION;
+
+  // Деактивация конфликтующих сервисов по позиции
+  const hasLeft = (pos) => pos.includes("left") || pos.includes("kromka_left");
+  const hasRight = (pos) =>
+    pos.includes("right") || pos.includes("kromka_right");
+  const hasKromka = (pos) => pos.includes("kromka");
+
+  data.forEach((service) => {
+    if (service === targetService) return;
+
+    const pos = service.POSITION;
+    const isConflict =
+      pos === targetPosition ||
+      (hasLeft(pos) && hasLeft(targetPosition)) ||
+      (hasRight(pos) && hasRight(targetPosition)) ||
+      (hasKromka(pos) && hasKromka(targetPosition));
+
+    if (isConflict) {
+      service.value = false;
+    }
+  });
+
+  //  Установка значения для текущего сервиса
+  targetService.value = value;
+
+  if (hasProfile()) {
+    const profile = isGugol();
+    const hasActiveKromka = isKromkaActive();
+
+    let chekExept = profile || hasActiveKromka;
+
+    setCromkaActive(chekExept);
+
+    if (chekExept) {
+      getCurretKromkaList();
+    }
+  }
+
+  //  Перерисовка
+  visualizationRef.value?.renderGrid();
+};
+
+/** @Проверяем_на_наличие_активной_кромки */
+
+const isKromkaActive = () => {
+  const hasActiveKromka = grid.value.some((inner) =>
+    inner.some((item) =>
+      item.serviseData?.some(
+        (servise) =>
+          servise.POSITION.includes("kromka") && servise.value === true
+      )
+    )
+  );
+
+  return hasActiveKromka;
+};
+
+/**@Проверяем_на G-ugol */
+
+const isGugol = () => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROPS } = parent!.userData;
+  const { PROFILE } = PROPS.CONFIG;
+
+  const curProfile = PROFILE.find((el) => el.value);
+  return curProfile.ID == 251701;
+};
+
+/** @Проверяем_на_наличие_профиля */
+
+const hasProfile = () => {
+  const parent =
+    modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+  const { PROPS } = parent!.userData;
+  const { PROFILE } = PROPS.CONFIG;
+
+  return PROFILE.length > 0;
+};
+
+const updateServiseWidth = (value, type) => {
+  const newValue = parseInt(value);
+  const data = getCurrentSection.value.currentRow.serviseData;
+  const row = getCurrentSection.value.currentRow;
+  const servise = data.find((el) => el.NAME.toLowerCase() === type);
+
+  if (newValue >= row.width) {
+    servise.width = row.width;
+  } else {
+    servise.width = newValue;
+  }
+
+  servise.width = newValue;
+  visualizationRef.value.renderGrid();
+};
+
+const handleWidthInput = (
+  value: number,
+  colIndex: number,
+  rowIndex: number
+) => {
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  // Проверяем валидность значения
+  const minWidth = 150;
+  const maxWidth = grid.value[colIndex][0].maxWidth || TOTAL_LENGTH;
+  if (!isNaN(value) && value >= minWidth && value <= maxWidth) {
+    updateSectionWidth(value, colIndex, rowIndex);
+  }
+};
+
+const handleHeightInput = (
+  value: number | null,
+  colIndex: number,
+  rowIndex: number
+) => {
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  // Проверяем валидность значения
+  const minHeight = 150;
+  const maxHeight = grid.value[colIndex][rowIndex].maxHeight || TOTAL_HEIGHT;
+  if (
+    value !== null &&
+    !isNaN(value) &&
+    value >= minHeight &&
+    value <= maxHeight
+  ) {
+    updateSectionHeight(value, colIndex, rowIndex);
+  }
+};
+
+const updateSectionWidth = (
+  value: number,
+  colIndex: number,
+  rowIndex: number
+) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "width",
+      value: newValue,
+      col: colIndex,
+    });
+  }
+
+  // Обновляем значение в grid для синхронизации
+  const clone = grid.value.map((item) => item);
+  if (adjustedValue) {
+    clone[colIndex].forEach((row) => (row.width = adjustedValue));
+  }
+  grid.value = clone;
+};
+
+const updateSectionHeight = (value, colIndex, rowIndex) => {
+  const newValue = parseInt(value);
+  let adjustedValue;
+  // Обновляем выбранную секцию для визуального отображения
+  selectedCell.value = { col: colIndex, row: rowIndex };
+  visualizationRef.value.selectCell(colIndex, rowIndex);
+
+  if (!isNaN(newValue) && visualizationRef.value) {
+    const adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+      dimension: "height",
+      value: newValue,
+      col: colIndex,
+      row: rowIndex,
+    });
+  }
+  // Обновляем значение в grid для синхронизации
+  const clone = grid.value.map((item) => item);
+  if (adjustedValue) {
+    grid.value[colIndex][rowIndex].height = adjustedValue;
+  }
+  grid.value = clone;
+};
+
+const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
+  const gridCopy = grid.value.map((item) => item);
+  const column = gridCopy[colIndex];
+  const row = column[rowIndex];
+  const pixiSector = row.sector;
+
+  const prevValue = row.roundCut.radius;
+  let newValue = parseInt(value);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const shapeData = {
+    radius: newValue,
+    x: row.roundCut.x,
+    y: row.roundCut.y,
+  };
+
+  const check = shapeAdjuster.checkToCollision(
+    pixiSector,
+    "circleSector",
+    shapeData
+  );
+
+  check ? (row.roundCut.radius = newValue) : (row.roundCut.radius = prevValue);
+
+  grid.value = gridCopy;
+  visualizationRef.value.renderGrid();
+};
+
+const updateHole = (event, key, type, holeType) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
+
+  const gridCopy = grid.value.map((item) => item);
+  // const gridCopy = grid.value
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.holes[key];
+
+  const prevValue = currentRow.holes[key][type]; //Предыдущее значение
+
+  // let newValue = parseInt(event.target.value);
+  let newValue = parseInt(event);
+  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData[type] = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  currenthole[`M${type}`] = 600;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole[type] = newValue;
+  } else {
+    currenthole[type] = prevValue;
+    currenthole[`M${type}`] = prevValue;
+  }
+
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const changeHolePositionX = (event, key, type, holeType, value) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
+
+  const gridCopy = grid.value.map((item) => item);
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.holes[key];
+
+  const prevValue = currentRow.holes[key].x; //Предыдущее значение
+
+  const newValue = prevValue + value;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData.x = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole.x = newValue;
+  } else {
+    currenthole.x = prevValue;
+  }
+
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const changeHolePositionY = (event, key, type, holeType, value) => {
+  const rowNdx = selectedCell.value.row;
+  const colNdx = selectedCell.value.col;
+
+  const gridCopy = grid.value.map((item) => item);
+  const currentColl = gridCopy[colNdx];
+  const currentRow = currentColl[rowNdx];
+
+  const currenthole = currentRow.holes[key];
+
+  const prevValue = currentRow.holes[key].y; //Предыдущее значение
+
+  const newValue = prevValue + value;
+
+  const holeData = JSON.parse(JSON.stringify(currenthole));
+  holeData.y = newValue;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = shapeAdjuster.checkToCollision(pixiSector, holeType, holeData);
+
+  if (check) {
+    currenthole.y = newValue;
+  } else {
+    currenthole.y = prevValue;
+  }
+
+  grid.value = gridCopy;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deliteVerticalCut = (colIndex) => {
+  const current = grid.value[colIndex];
+  const next = grid.value[colIndex + 1];
+  const prev = grid.value[colIndex - 1];
+
+  const combinedWidth = next
+    ? current[0].width + next[0].width
+    : current[0].width + prev[0].width;
+
+  if (next) {
+    next.forEach((elem) => {
+      elem.width = combinedWidth;
+    });
+  } else {
+    prev.forEach((elem) => {
+      elem.width = combinedWidth;
+    });
+  }
+
+  if (grid.value.length > 1) {
+    grid.value.splice(colIndex, 1);
+  }
+
+  selectedCell.value.row = 0;
+  selectedCell.value.col = 0;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deliteHorizontalCut = (rowIndex, colIndex) => {
+  // const column = grid.value[colIndex];
+  const clone = grid.value.map((item) => item);
+  const currentCol = clone[colIndex];
+  const currentRow = currentCol[rowIndex];
+
+  const next = currentCol[rowIndex + 1];
+  const prev = currentCol[rowIndex - 1];
+
+  const combinedWidth = next
+    ? currentRow.height + next.height
+    : currentRow.height + prev.height;
+
+  next ? (next.height = combinedWidth) : (prev.height = combinedWidth);
+
+  if (currentCol.length > 1) {
+    currentCol.splice(rowIndex, 1);
+  }
+
+  currentCol.forEach((row) => {
+    row.roundCut = {};
+  });
+
+  grid.value = clone;
+
+  // Обновляем текущий сектор
+  selectedCell.value.row = 0;
+  selectedCell.value.col = colIndex;
+
+  visualizationRef.value.renderGrid();
+};
+
+const deliteRoundCut = (colIndex, rowIndex) => {
+  const col = grid.value[colIndex];
+  const row = col[rowIndex];
+
+  row.roundCut = {};
+  visualizationRef.value.renderGrid();
+};
+
+const deliteHole = (ndx) => {
+  const colNdx = selectedCell.value.col;
+  const rowNdx = selectedCell.value.row;
+  const curRow = grid.value[colNdx][rowNdx];
+
+  curRow.holes = curRow.holes.filter((el, index) => {
+    return index !== ndx;
+  });
+
+  visualizationRef.value.renderGrid();
+};
+
+const handleCellSelect = (colIndex, rowIndex, type) => {
+  selectedCell.value = { col: colIndex, row: rowIndex };
+
+  const roundSector = grid.value[colIndex][rowIndex];
+  if ("radius" in roundSector.roundCut) {
+    holeOptions.value.show = false;
+    cutServise.value.show = false;
+    return;
+  }
+
+  holeOptions.value.section.col = colIndex;
+  holeOptions.value.section.row = rowIndex;
+  cutServise.value.section.col = colIndex;
+  cutServise.value.section.row = rowIndex;
+};
+
+const createServiseData = () => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
+  const { USLUGI } = PROPS.CONFIG;
+
+  const convertParams = USLUGI.reduce((acc, el) => {
+    const checkGlobal = el.POSITION.includes("global") ? el.value : false;
+
+    const param = {
+      ID: el.ID,
+      NAME: el.NAME,
+      POSITION: el.POSITION,
+      CODE: el.CODE,
+      value: checkGlobal,
+      radius: el.radius,
+      width: el.width,
+      corner: el.corner,
+      separated: el.separated,
+      visible: el.visible,
+    };
+    acc.push(param);
+    return acc;
+  }, []);
+
+  return convertParams;
+};
+
+const clearServiseData = (row) => {
+  row.serviseData.forEach((el) => {
+    el.value = false;
+  });
+};
+
+const reset = (reset = false) => {
+  const parent = modelState.getCurrentRaspilParent
+    ? modelState.getCurrentRaspilParent
+    : modelState.getCurrentModel;
+
+  const { PROPS } = parent.userData;
+  const { USLUGI } = PROPS.CONFIG;
+
+  grid.value.length = 0;
+  grid.value.push([
+    {
+      width: TOTAL_LENGTH,
+      height: totalHeight.value,
+      roundCut: {},
+      holes: [],
+      serviseData: USLUGI,
+    },
+  ]);
+  holeOptions.value = { show: false, section: { col: 0, row: 0 } };
+  cutServise.value = { show: false, section: { col: 0, row: 0 } };
+  visualizationRef.value.renderGrid();
+  if (reset) {
+    visualizationRef.value.selectCell(0, 0);
+  }
+};
+
+const saveGrid = () => {
+  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY"];
+  const clone = grid.value.reduce((acc, el) => {
+    const correct = el.reduce((acc, el) => {
+      let clone = {};
+      for (let value in el) {
+        if (!garbage.includes(value)) {
+          if (value === "roundCut") {
+            if ("graphic" in el[value]) {
+              delete el[value].graphic;
+            }
+          }
+          if (value === "xOffset") {
+            clone[value] = shapeAdjuster.getMmWidth(el[value]);
+          } else if (value === "yOffset") {
+            clone[value] = shapeAdjuster.getMmHeight(el[value]);
+          } else {
+            clone[value] = el[value];
+          }
+        }
+      }
+      acc.push(clone);
+      return acc;
+    }, []);
+    acc.push(correct);
+    return acc;
+  }, []);
+
+  const data = {
+    modelHeight: props.modelHeight,
+    canvasHeight: totalHeight.value,
+    data: clone,
+  };
+
+    console.log(modelState.getCurrentRaspilParent, modelState.getCurrentModel, '==== getCurrentRaspilParent ====')
+
+  // emit("save-table-data", data);
+  return data;
+};
+
+defineExpose({
+  saveGrid,
+});
+
+onBeforeMount(() => {
+  totalHeight.value = props.canvasHeight;
+  // Делаем клон для реактивности
+  grid.value = JSON.parse(JSON.stringify(props.grid));
+  setGridData(grid.value);
+});
+
+onMounted(() => {
+  shapeAdjuster = new ShapeAdjuster();
+  checkProfileDisablegroups();
+  createServiseData();
+
+  nextTick().then(() => {
+    isMounted.value = true;
+  });
+});
+
+onBeforeUnmount(() => {
+  console.log(modelState.getCurrentRaspilParent, '==== getCurrentRaspilParent ====')
+
+  shapeAdjuster = null;
+  grid.value = null;
+  clearKromkaData()
+});
+</script>
+
+<template>
+  <div class="splitter-wrapper">
+    <div
+      class="splitter-container splitter-container--left"
+      ref="splitterContainer"
+      @click="hideKromkaList"
+    >
+      <div class="splitter-header">
+        <div class="splitter-header--title"><h1>Настройки распила</h1></div>
+        <div class="actions-inputs">
+          <p class="actions-title">Высота полотна</p>
+          <div class="actions-input--container">
+            <MainInput
+              @update:modelValue="updateTotalHeight"
+              :inputClass="'actions-input'"
+              v-model="totalHeight"
+              :min="200"
+              :max="1200"
+              :type="'number'"
+            />
+            <!-- <input
+              type="number"
+              step="10"
+              min="200"
+              max="1200"
+              class="actions-input"
+              :value="totalHeight"
+              @input="updateTotalHeight($event.target.value)"
+            /> -->
+          </div>
+        </div>
+      </div>
+
+      <div class="splitter-content">
+        <Visualization
+          v-if="isMounted"
+          ref="visualizationRef"
+          :step="step"
+          :grid="grid"
+          :correct="correct"
+          :container="splitterContainer"
+          :max-area-height="props.canvasHeight"
+          :tempHole="tempHole"
+          @cell-selected="handleCellSelect"
+        />
+      </div>
+
+      <section class="actions-wrapper">
+        <div class="actions-header">
+          <div
+            :class="[
+              'actions-header--container',
+              { active: colIndex === selectedCell.col },
+            ]"
+            v-for="(column, colIndex) in grid"
+            :key="colIndex"
+          >
+            <button
+              v-if="grid.length > 1"
+              class="actions-btn actions-icon"
+              @click="deliteVerticalCut(colIndex)"
+            >
+              <img
+                class="actions-icon--delite"
+                src="/icons/delite.svg"
+                alt=""
+              />
+            </button>
+            <p
+              class="actions-title actions-title--part"
+              @click="showCurrentCol(colIndex)"
+            >
+              {{ colIndex + 1 }} группа
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="actions-container"
+          v-for="(column, colIndex) in grid"
+          :key="colIndex"
+        >
+          <div
+            class="actions-items--wrapper"
+            v-if="selectedCell.col === colIndex"
+          >
+            <div
+              v-for="(row, rowIndex) in column"
+              :key="rowIndex"
+              :class="[
+                'actions-items--container',
+                {
+                  active:
+                    rowIndex === selectedCell.row &&
+                    colIndex === selectedCell.col,
+                },
+              ]"
+            >
+              <article class="actions-items actions-items--left">
+                <div class="actions-items--left-wrapper">
+                  <div class="actions-items--title">
+                    <button
+                      v-if="column.length > 1"
+                      class="actions-btn actions-icon"
+                      @click="deliteHorizontalCut(rowIndex, colIndex)"
+                    >
+                      <img
+                        class="actions-icon--delite"
+                        src="/icons/delite.svg"
+                        alt=""
+                      />
+                    </button>
+                    <p class="actions-title actions-title--part">
+                      {{ colIndex + 1 }}.{{ rowIndex + 1 }} часть
+                    </p>
+                  </div>
+
+                  <div class="actions-items--width" v-if="!row.roundCut.radius">
+                    <div class="actions-inputs">
+                      <p class="actions-title">Ширина_</p>
+                      <div
+                        :class="[
+                          'actions-input--container',
+                          grid.length <= 1 ? 'disable' : '',
+                        ]"
+                      >
+                        <TableTopInput
+                          :value="column[0].width"
+                          :step="step"
+                          :min="150"
+                          :max="column[0].maxWidth || TOTAL_LENGTH"
+                          :disabled="grid.length < 0"
+                          @input="handleWidthInput($event, colIndex, rowIndex)"
+                          @update:value="
+                            updateSectionWidth($event, colIndex, rowIndex)
+                          "
+                        />
+                        <!-- <input
+                          type="number"
+                          :step="step"
+                          min="150"
+                          :max="column[0].maxWidth"
+                          class="actions-input"
+                          :value="column[0].width"
+                          @input="
+                            updateSectionWidth(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                        /> -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="actions-items--height">
+                    <div class="actions-inputs">
+                      <p class="actions-title">
+                        Высота {{ colIndex + 1 }}.{{ rowIndex + 1 }}
+                      </p>
+                      <div
+                        :class="[
+                          'actions-input--container',
+                          column.length <= 1 ? 'disable' : '',
+                        ]"
+                      >
+                        <!-- <input
+                          type="number"
+                          :step="step"
+                          min="150"
+                          class="actions-input"
+                          :value="row.height"
+                          @input="
+                            updateSectionHeight(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                        /> -->
+                        <TableTopInput
+                          :value="row.height"
+                          :step="step"
+                          :min="150"
+                          :max="row.maxHeight || TOTAL_LENGTH"
+                          :disabled="grid.length < 0"
+                          @input="handleHeightInput($event, colIndex, rowIndex)"
+                          @update:value="
+                            updateSectionHeight($event, colIndex, rowIndex)
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="actions-items--diametr"
+                    v-if="row.roundCut.radius"
+                  >
+                    <button
+                      v-if="row.roundCut.radius"
+                      @click="deliteRoundCut(colIndex, rowIndex)"
+                      class="actions-btn actions-icon actions-icon--bottom"
+                    >
+                      <img
+                        class="actions-icon--delite actions-icon--delite-center"
+                        src="/icons/delite.svg"
+                        alt=""
+                      />
+                    </button>
+                    <div class="actions-inputs">
+                      <p class="actions-title">
+                        Диаметр {{ colIndex + 1 }}.{{ rowIndex + 1 }}
+                      </p>
+                      <div class="actions-input--container">
+                        <input
+                          type="number"
+                          step="5"
+                          min="300"
+                          max="600"
+                          class="actions-input"
+                          :value="row.roundCut.radius"
+                          @input="
+                            updateRoundCutDiameter(
+                              $event.target.value,
+                              colIndex,
+                              rowIndex
+                            )
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="actions-items actions-items--right">
+                <div class="actions-items--right-items">
+                  <button
+                    class="actions-btn actions-btn--default"
+                    @click="addVerticalCut(colIndex)"
+                  >
+                    Верт.распил
+                  </button>
+
+                  <button
+                    class="actions-btn actions-btn--default"
+                    @click="addHorizontalCut(colIndex, rowIndex)"
+                  >
+                    Горизон.распил
+                  </button>
+
+                  <button
+                    class="actions-btn actions-btn--default"
+                    @click="addRoundСut(colIndex)"
+                    v-if="!getRoundSectionValidation(colIndex, rowIndex)"
+                  >
+                    Круг.распил
+                  </button>
+
+                  <button
+                    :class="[
+                      'actions-btn actions-btn--default',
+                      getHoleOptionsActive(colIndex, rowIndex),
+                    ]"
+                    v-if="!getRoundSectionValidation(colIndex, rowIndex)"
+                    @click="showHoleOptions(colIndex, rowIndex)"
+                  >
+                    Разрез
+                  </button>
+
+                  <button
+                    :class="[
+                      'actions-btn actions-btn--default',
+                      getCutServiseActive(colIndex, rowIndex),
+                    ]"
+                    v-if="!getRoundSectionValidation(colIndex, rowIndex)"
+                    @click="showCutServises(colIndex, rowIndex)"
+                  >
+                    Услуги
+                  </button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="actions-footer">
+        <div class="actions-footer--delite">
+          <button class="actions-btn actions-btn--footer" @click="reset(true)">
+            Сбросить
+          </button>
+          <slot name="delite"></slot>
+        </div>
+        <div class="actions-footer--save">
+          <!-- <button class="actions-btn actions-btn--footer" @click="save">
+            Сохранить
+          </button> -->
+          <slot name="save"></slot>
+          <slot name="close"></slot>
+        </div>
+      </section>
+    </div>
+    <div
+      class="splitter-container splitter-container--right"
+      v-if="
+        (holeOptions.show && !checkRounded && !cutServise.show) ||
+        (cutServise.show && !checkRounded && !holeOptions.show)
+      "
+    >
+      <transition name="slide--right">
+        <div
+          class="kromka__container"
+          v-if="getKromkaActive && getKromkaCardSelect"
+        >
+          <MaterialSelector :materials="getKromkaList" @select="kromkaSelect" />
+        </div>
+      </transition>
+
+      <CutOptions
+        v-if="holeOptions.show"
+        :holes="getHole"
+        :step="step"
+        @cut-addHole="addHole"
+        @cut-deleteHole="deliteHole"
+        @cut-updateHole="updateHole"
+        @cut-toggleHoleOptions="toggleHoleOptions"
+        @cut-changePositionX="changeHolePositionX"
+        @cut-changePositionY="changeHolePositionY"
+      />
+
+      <CutServise
+        v-if="cutServise.show"
+        :kromka-data="getCurrentKromkaData"
+        :servise-data="getCurrentSectionServiseData"
+        :current-section="getCurrentSection"
+        @cut-toggleCutServise="toggleCutServise"
+        @cut-servisData="convertServisData"
+        @cut-updateServise="updateServiseWidth"
+        @cut-kromkaData="convertKromkaData"
+      >
+        <template #kromkaSelect>
+          <KromkaCard
+            :data="getKromkaCardData"
+            @kromka-kard-select="kromkaCardSelect"
+          />
+        </template>
+      </CutServise>
+    </div>
+  </div>
+</template>
+
+<style lang="scss">
+.splitter {
+  &-wrapper {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+    height: 85vh;
+    max-width: 85vw;
+
+    font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
+      sans-serif;
+  }
+
+  &-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    width: 100%;
+
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+
+    &--left {
+      max-width: 60vw;
+    }
+
+    &--right {
+      max-width: 25vw;
+      max-height: 100%;
+      overflow: hidden;
+      // position: relative;
+    }
+  }
+
+  &-content {
+    display: flex;
+    justify-content: center;
+    height: 320px;
+  }
+
+  &-title {
+    font-weight: 400;
+    color: #131313;
+  }
+
+  &-header {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    &--title {
+      display: flex;
+      align-items: end;
+    }
+
+    .actions-inputs {
+      max-width: 150px;
+    }
+  }
+}
+
+.actions {
+  &-wrapper {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-right: 0.5rem;
+  }
+
+  &-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    &--save,
+    &--delite {
+      display: flex;
+      gap: 1rem;
+    }
+  }
+
+  &-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 450px;
+    overflow-y: scroll;
+    padding-right: 0.5rem;
+
+    &::-webkit-scrollbar {
+      width: 5px;
+      /* Ширина скроллбара */
+    }
+
+    &::-webkit-scrollbar-button {
+      display: none;
+      /* Убираем стрелки */
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      /* Цвет ползунка */
+      border-radius: 4px;
+    }
+  }
+
+  &-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem 0;
+    border-bottom: 1px solid #ecebf1;
+    border-top: 1px solid #ecebf1;
+
+    &--container {
+      display: flex;
+      align-items: center;
+      // gap: 0.5rem;
+      padding-right: 0.5rem;
+      border-right: 1px solid #ecebf1;
+      border-bottom: 1px solid transparent;
+      cursor: pointer;
+
+      &.active {
+        border-bottom: 1px solid #da444c;
+      }
+    }
+  }
+
+  &-items {
+    display: flex;
+    flex-wrap: wrap;
+    // gap: 1rem;
+    align-items: center;
+
+    &--wrapper {
+      display: flex;
+      flex-direction: column;
+
+      width: 100%;
+      padding: 0 0 1rem 0;
+    }
+
+    &--container {
+      display: flex;
+      width: 100%;
+      padding: 1rem 0;
+      border-bottom: 1px solid #ecebf1;
+
+      // &:first-child {
+      //   padding-top: 0;
+      // }
+
+      &.active {
+        background-color: #f1f1f5;
+      }
+    }
+
+    &--left,
+    &--right {
+      width: 100%;
+    }
+
+    &--left {
+      align-items: start;
+      max-width: 45%;
+
+      &-wrapper {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-left: 1rem;
+        // max-width: calc(50% - 1rem);
+      }
+    }
+
+    &--right {
+      max-width: calc(65% - 1rem);
+      margin-left: 1rem;
+
+      &-items {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+    }
+
+    &--height,
+    &--diametr,
+    &--width {
+      display: flex;
+      width: fit-content;
+
+      &-item {
+        display: flex;
+        align-items: flex-start;
+        height: fit-content;
+        // gap: 0.5rem;
+      }
+    }
+
+    &--title {
+      display: flex;
+      align-items: center;
+      align-self: end;
+      margin-bottom: 0.5rem;
+    }
+
+    // &--diametr {
+    //   display: flex;
+    //   flex-wrap: wrap;
+    //   gap: 1rem;
+
+    //   &-wrapper {
+    //     max-width: 25%;
+    //   }
+
+    //   &-item {
+    //     display: flex;
+    //     align-items: flex-start;
+    //     width: 100%;
+    //     height: fit-content;
+    //     // gap: 0.5rem;
+    //   }
+    // }
+
+    // &--width {
+    //   display: flex;
+    //   gap: 1rem;
+    //   align-items: start;
+    //   flex-wrap: wrap;
+    //   width: 100%;
+    //   max-width: 20%;
+    //   height: 100%;
+    // }
+
+    // &--diametr,
+    // &--height {
+    //   &-wrapper {
+    //     width: 100%;
+    //     margin-left: 1rem;
+    //     border-right: 1px solid #ecebf1;
+    //   }
+    // }
+  }
+
+  &-title {
+    font-size: 1rem;
+    color: #a3a9b5;
+
+    // &--part {
+    //   margin-bottom: 0.5rem;
+    // }
+  }
+
+  &-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 100px;
+  }
+
+  &-input {
+    padding: 0.5rem 1rem;
+    width: 100%;
+    max-width: 125px;
+    border: none;
+    border-radius: 15px;
+    background-color: #ecebf1;
+    color: #6d6e73;
+    font-size: 1rem;
+    font-weight: 600;
+
+    &:focus {
+      outline: none;
+    }
+
+    &--container {
+      position: relative;
+
+      &::before {
+        content: "mm";
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 60px;
+        transform: translate(0, -50%);
+        pointer-events: none;
+        z-index: 0;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6d6e73;
+      }
+    }
+  }
+
+  &-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ecebf1;
+    border-radius: 15px;
+    background-color: #ffffff;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #5d6069;
+    outline: none;
+
+    &--default,
+    &--footer {
+      transition-property: background-color, color, border;
+      transition-timing-function: ease;
+      transition-duration: 0.25s;
+      @media (hover: hover) {
+        /* when hover is supported */
+        &:hover {
+          color: white;
+          background-color: #da444c;
+          border: 1px solid transparent;
+        }
+      }
+    }
+    &--footer {
+      background-color: #ecebf1;
+    }
+
+    &:focus {
+      outline: none;
+    }
+    &.active {
+      border-color: #da444c;
+      color: #181818;
+      transition-property: background-color, color, border;
+      transition-timing-function: ease;
+      transition-duration: 0.25s;
+
+      @media (hover: hover) {
+        /* when hover is supported */
+        &:hover {
+          color: white;
+          background-color: #da444c;
+        }
+      }
+    }
+  }
+
+  &-icon {
+    border: none;
+    background-color: transparent;
+    padding: 0 5px;
+
+    &--delite,
+    &--close,
+    &--help {
+      width: 18px;
+      height: 18px;
+    }
+
+    &--add {
+      width: 12px;
+      height: 12px;
+    }
+
+    &--delite {
+      &-center {
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    &--bottom {
+      align-self: flex-end;
+      padding: 5px;
+    }
+
+    &--position {
+      width: 25px;
+      height: 25px;
+    }
+  }
+}
+
+.line {
+  &-bottom {
+    width: 100%;
+    padding-bottom: 10px;
+    border-bottom: 1px solid black;
+  }
+}
+
+.disable {
+  pointer-events: none;
+  cursor: auto;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.kromka {
+  &__container {
+    position: absolute;
+    background-color: $white;
+    border-radius: 15px;
+    max-width: 25vw;
+    z-index: 1;
+    right: 5rem;
+  }
+}
+</style>
