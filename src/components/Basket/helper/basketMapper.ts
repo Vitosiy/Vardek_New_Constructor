@@ -20,12 +20,14 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
         if (fp.TYPE != null) result.TYPE = fp.TYPE;
         if (fp.HANDLES != null) result.HANDLES = {ID: fp.HANDLES.id};
         if (fp.SIZES != null) result.SIZES = fp.SIZES;
+        if (fp.TYPE != null || fp.MILLING_TYPE != null) result.FASADETYPE = fp.TYPE ?? fp.MILLING_TYPE;
+        
         
         // Добавляем SIZE только если есть хотя бы одно измерение
         const size: any = {};
         if (trueSize?.WIDTH != null) size.WIDTH = trueSize.WIDTH;
         if (trueSize?.HEIGHT != null) size.HEIGHT = trueSize.HEIGHT;
-        if (trueSize?.DEPTH != null) size.DEPTH = trueSize.DEPTH;
+        if (trueSize?.DEPTH != null) size.DEPTH = trueSize.DEPTH; 
         
         // Если есть хотя бы одно измерение, добавляем объект SIZE
         if (Object.keys(size).length > 0) {

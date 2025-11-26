@@ -94,7 +94,10 @@ export const useAppData = defineStore('AppData', () => {
 
   const initAppData = async () => {
     document.querySelector('#main-loader').style.display = 'block';
-    await clearIndexedDB();
+    // await clearIndexedDB();
+    if (!import.meta.env.DEV) {
+        await clearIndexedDB();
+    }
     // if (isLoaded.value || isLoading.value) return
     isLoading.value = true
     try {

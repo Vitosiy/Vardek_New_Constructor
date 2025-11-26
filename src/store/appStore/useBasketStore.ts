@@ -16,6 +16,7 @@ const generateUniqueId = (): string =>
 
 // Формирования массива ручик фасадов
 const countHandles = (items: any[]): number[] => {
+  console.log('items', items);
   const handles: number[] = []
   
   items.forEach(item => {
@@ -32,7 +33,6 @@ const countHandles = (items: any[]): number[] => {
 // Преобразование данных для получение цены ручик фасадов
 const transformCountHandles = (numbers: number[]) => {
     const countMap = new Map();
-
     // Подсчитываем повторения
     numbers.forEach(num => {
         countMap.set(num, (countMap.get(num) || 0) + 1);
@@ -146,11 +146,11 @@ export const useBasketStore = defineStore('basket', () => {
 
 
   const syncBasket = async (): Promise<IBasketResponse | null> => {
+    console.log('mainConstructor.value', mainConstructor.value)
     const currentHandlesData = countHandles(mainConstructor.value)
     const data = currentHandlesData.length > 0 
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value
-    console.log('test');
     const result = await syncBasketWithServer(data)
     if (result) {
       basketData.value = result
