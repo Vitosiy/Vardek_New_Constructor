@@ -2,7 +2,7 @@
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
-import { useMechanism } from "./Mechanism/useMechanism"; 
+import { useMechanism } from "./Mechanism/useMechanism";
 
 const mechanism = useMechanism()
 
@@ -60,7 +60,10 @@ export const useRailsRightPage = () => {
 
         if (values) {
             OPTIONS.forEach(opt => {
-                if (opt.group === curOpt.group && opt.close === curOpt.close && opt.id !== curOpt.id) {
+                // if (opt.close === curOpt.close && opt.id !== curOpt.id) {
+                //     opt.active = false;
+                // }
+                if (opt.group === curOpt.group && opt.close === curOpt.close && opt.id !== curOpt.id || opt.section === curOpt.section && opt.close === curOpt.close && opt.id !== curOpt.id) {
                     opt.active = false;
                 }
             });
@@ -68,13 +71,13 @@ export const useRailsRightPage = () => {
 
         curOpt.active = values;
 
-        if (+curOpt.id === 5738924) {
+        if (curOpt.id === 5738924) {
             if (curOpt.active) {
-                PROPS.CONFIG.BACKWALL = {COLOR: false, SHOW: false};
+                PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
                 PROPS.CONFIG.HORIZONT = 0
             }
             else {
-                PROPS.CONFIG.BACKWALL = {COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true};
+                PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
                 PROPS.CONFIG.HORIZONT = 78
             }
         }

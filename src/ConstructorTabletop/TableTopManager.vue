@@ -1045,6 +1045,8 @@ const saveGrid = () => {
     data: clone,
   };
 
+    console.log(modelState.getCurrentRaspilParent, modelState.getCurrentModel, '==== getCurrentRaspilParent ====')
+
   // emit("save-table-data", data);
   return data;
 };
@@ -1071,6 +1073,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  console.log(modelState.getCurrentRaspilParent, '==== getCurrentRaspilParent ====')
+
   shapeAdjuster = null;
   grid.value = null;
   clearKromkaData()

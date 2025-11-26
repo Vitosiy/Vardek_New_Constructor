@@ -46,6 +46,8 @@ export class MillingBuilder extends MillingsUtils {
     // // Получаем данные фрезеровки
     // const millingData = this.millingsStore[millingKey] ?? this.millingsStore[2462671];
 
+    // console.log('=== CREATE MILLING ===', millingParams)
+
     // Клонируем базовую геометрию
     let startGeometry = defaultGeometry.clone();
     // Создаём BSP-структуру для базовой геометрии
@@ -92,6 +94,7 @@ export class MillingBuilder extends MillingsUtils {
           fasadePosition,
           type: (figureParams as any).type
         });
+        // object.add(mesh)
       } else {
         boolMesh.updateMatrixWorld(true);
         mesh = boolMesh;
@@ -223,7 +226,7 @@ export class MillingBuilder extends MillingsUtils {
     // Дополнительная позиция
     if (figureParams.position) {
 
-      const posSize  = new THREE.Vector3();
+      const posSize = new THREE.Vector3();
       const box = new THREE.Box3().setFromObject(shapeMesh);
       box.getSize(posSize);
 
@@ -232,7 +235,7 @@ export class MillingBuilder extends MillingsUtils {
       if (y === 'inpostTop') shapeMesh.position.y = FASADE_HEIGHT * 0.5 - posSize.y * 0.5 - inpostOffset - inpostOffsetY;
       else if (y === 'inpostBottom') shapeMesh.position.y = -FASADE_HEIGHT * 0.5 + posSize.y * 0.5 + inpostOffset + inpostOffsetY;
       else if (y) shapeMesh.position.y += y;
- 
+
       if (x === "inpostLeft") shapeMesh.position.x = -FASADE_WIDTH * 0.5 + posSize.x * 0.5 - inpostOffset - inpostOffsetX;
       else if (x === 'inpostRight') shapeMesh.position.x = FASADE_WIDTH * 0.5 - posSize.x * 0.5 + inpostOffset + inpostOffsetX;
       else if (x) shapeMesh.position.x += x;

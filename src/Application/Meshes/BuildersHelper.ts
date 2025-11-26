@@ -184,6 +184,17 @@ export class BuildersHelper extends GlobalsData {
         }
     };
 
+    calculateFromString(expression) {
+        try {
+            const func = new Function("return " + expression);
+            return func();
+        } catch (error) {
+            console.log(expression, '---"Недопустимое выражение!"')
+
+            return "Недопустимое выражение!";
+        }
+    }
+
     getStartPosition(size: THREETypes.TObject) {
         return new THREE.Vector3(-size.width * 0.5, -size.height * 0.5, -size.depth * 0.5);
     };
@@ -429,17 +440,6 @@ export class BuildersHelper extends GlobalsData {
         return root;
     }
 
-    calculateFromString(expression) {
-        try {
-            const func = new Function("return " + expression);
-            return func();
-        } catch (error) {
-            console.log(expression,  '---"Недопустимое выражение!"')
-
-            return "Недопустимое выражение!";
-        }
-    }
-
     createStartTopTableCutData(uslugi, product_data) {
 
         const convert = this.createCutterParams(uslugi)
@@ -467,6 +467,8 @@ export class BuildersHelper extends GlobalsData {
 
     createCutterParams(uslugi) {
         const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        console.log(uslugi, ' ====== uslugi =====', SERVISES)
+
         const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);
             let merged;
@@ -521,13 +523,16 @@ export class BuildersHelper extends GlobalsData {
                 }
             }
 
-            if(merged.POSITION.includes('kromka')){
+            if (merged.POSITION.includes('kromka')) {
                 merged.POSITION = merged.POSITION + '_global'
             }
 
             return merged;
 
         })
+
+
+        console.log(result, 'result')
 
         // .filter(el => el.ID !== 98683);
         return result
@@ -608,6 +613,9 @@ export class BuildersHelper extends GlobalsData {
     }
 
     mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+
+        console.log('=========  mergeArrays ==========')
+
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);
             let merged;

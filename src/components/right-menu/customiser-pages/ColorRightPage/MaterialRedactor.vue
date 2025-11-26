@@ -42,10 +42,17 @@ import DirectionControl from "@/components/ui/direction/DirectionControl.vue";
 
 import { useRailsRightPage } from "../RailsRightPage/useRailsRightPage";
 import { useHandlesAction } from "../FigureRightPage/Handles/useHandlesAction";
+import { useConversationActions } from "../../actions/useConversationActions";
 
 const { resetGlobal } = useRailsRightPage();
 const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
   useHandlesAction();
+const {
+  createFasadeConversations,
+  checkConversations,
+  checkFasadeConversations,
+  filterFasadeConversations,
+} = useConversationActions();
 
 const props = defineProps({
   tabIndex: Number /** Индекс выбранного фасада в defaultTab.vue */,
@@ -108,21 +115,29 @@ const fasadeHandleList = ref<Array>([]);
 const isFasadeHandleExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
+  const { PROPS } = productData.value;
+  const { CONFIG, FASADE } = PROPS;
+  const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
+  const product = modelState._PRODUCTS[productId.value];
+  const { COLOR, RESET_COLOR, ALUM } = FASADE_PROPS[props.tabIndex];
+
+  const checkConversation = checkFasadeConversations(
+    data.id,
+    FASADE[props.tabIndex].userData.trueSize
+  );
+
+  if(!checkConversation) return
+
   emit("select_material", data);
 
   resetGlobal();
 
-
-  console.log(data, 'MMMAAA')
-
-  const { PROPS } = productData.value;
-  const { CONFIG } = PROPS;
-  const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG;
-  const product = _APP.CATALOG.PRODUCTS[productId.value];
-  const { COLOR, RESET_COLOR, ALUM } = FASADE_PROPS[props.tabIndex];
-
   const haveShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
-  const dataOfFasadeType = _FASADE[COLOR];
+  const dataOfFasadeType = _FASADE[data.id];
+
+  productData.value.restrictData[props.tabIndex] = createFasadeConversations(
+    data.id
+  );
 
   isSurfaceSelected.value = true;
   currentSurfaceData.value = data;
@@ -144,7 +159,10 @@ const onSelectMaterial = (data) => {
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
-  isShowcaseExist.value = !data.material.includes("Alum") && haveShowcase && COLOR !== RESET_COLOR;
+  console.log(data, "==== ❌ DATA ❌ ====");
+
+  isShowcaseExist.value =
+    !data.material?.includes("Alum") && haveShowcase && COLOR !== RESET_COLOR;
   // showcaseList.value.length > 0 &&
   //   haveShowcase &&
   //   ALUM == null &&
@@ -208,7 +226,6 @@ const onSelectMaterial = (data) => {
       "integrate"
     );
 
-    console.log(typeList, "==== ❌ typeList ❌ ====");
     FASADE_PROPS[props.tabIndex].TYPE = typeList[0].id;
     fasadeTypesList.value = typeList;
   } else {
@@ -231,8 +248,6 @@ const onSelectMilling = (data) => {
       props.tabIndex,
       "milling"
     );
-
-    console.log(typeList, "----typeList.length");
 
     if (typeList.length > 0) {
       isFasadeHandleExist.value = true;
@@ -305,6 +320,9 @@ const deleteSelectedOptions = (type: String) => {
     FASADE_PROPS[props.tabIndex].TYPE = null;
     FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
 
+    /** @Очищаем данные для отслеживания полотна */
+    productData.value.restrictData = {};
+
     setCurrentEditableOption("surface");
     resetGlobal(); /** @Очищаеи_опции */
     return;
@@ -313,9 +331,7 @@ const deleteSelectedOptions = (type: String) => {
   if (type === "milling") {
     eventBus.emit("A:DeliteMilling", props.tabIndex);
 
-    // const { NAME, PREVIEW_PICTURE } = millingList.value[0];
-    const { NAME, PREVIEW_PICTURE } = modelState._MILLING[1317715];
-
+    const { NAME, PREVIEW_PICTURE } = millingList.value[0];
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
 
     eventBus.emit("A:DelitePatina", props.tabIndex);
@@ -661,7 +677,8 @@ const getFasadesize = computed(() => {
 });
 
 onBeforeMount(() => {
-  materialList.value = modelState.getCurrentModelFasadesData;
+  // materialList.value = modelState.getCurrentModelFasadesData;
+  materialList.value = filterFasadeConversations(props.tabIndex);
   productData.value = modelState.getCurrentModel.userData;
   productId.value = productData.value.PROPS.PRODUCT;
 
@@ -671,6 +688,7 @@ onBeforeMount(() => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const curFasade = FASADE_PROPS[props.tabIndex];
   const curSize = curFasade.SIZES;
+
   incomeSize.value = {
     width: curSize?.params?.FASADE_WIDTH ?? null,
     min: curSize?.params?.min ?? null,

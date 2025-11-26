@@ -78,7 +78,13 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   const transitionT = checkTransitionTexture(data.ID);
 
   console.log(data, "data");
-  emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE, transitionT, material: MATERIAL });
+  emit("select_material", {
+    id: ID,
+    name: NAME,
+    imgSrc: PREVIEW_PICTURE,
+    transitionT,
+    material: MATERIAL,
+  });
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
 };
