@@ -290,19 +290,19 @@ watch(
   () => route.path,
   async (newPath, oldPath) => {
     try {
-      if (oldPath === '/3d' && newPath === '/2d' && verdekConstructor.value) {
+      if (oldPath === "/3d" && newPath === "/2d" && verdekConstructor.value) {
         eventBus.emit("A:Save");
         await nextTick(); // Ждем сохранения
       }
 
-      if (newPath === '/2d' && window.C2D) {
+      if (newPath === "/2d" && window.C2D) {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
         if (window.C2D.layers?.planner && window.C2D.layers?.doorsAndWindows) {
           window.C2D.layers.planner.init(true);
           window.C2D.layers.doorsAndWindows.init(true);
         }
       }
-      console.log('Все комнаты:', roomState.rooms);
+      console.log("Все комнаты:", roomState.rooms);
       roomState.routConvertData(newPath);
 
       menuStore.setRulerVisibility(true);
@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <div class="header-ui-group" v-if="route.path == '/3d'">
+          <!-- <div class="header-ui-group" v-if="route.path == '/3d'">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -426,16 +426,6 @@ onBeforeUnmount(() => {
                 </button>
               </template>
             </Modal>
-          </div>
-          <!-- <div class="header-ui-group" v-if="route.path=='/3d'">
-            <button class="button__rounded" @click="drowMode">
-              <span class="icon icon-show"></span>
-            </button>
-          </div>
-          <div class="header-ui-group" v-if="route.path=='/3d'">
-            <button class="button__rounded" @click="toggleRulerVisibility">
-              <span class="icon icon-ruler"></span>
-            </button>
           </div> -->
         </div>
       </div>
