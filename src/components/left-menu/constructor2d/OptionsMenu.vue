@@ -2,6 +2,7 @@
 //@ts-nocheck
 import { 
   ref,
+  computed,
   onMounted,
   onUnmounted
 } from 'vue'
@@ -22,6 +23,27 @@ const constructor2dMenu = useC2DLeftMenuStore();
 const menuItemActive = ref<string | null>(null);
 const goodItemActive = ref<string | null>(null);
 
+// Получаем секции "Двери" и "Окна"
+const doorSection = computed(() => {
+  return catalogSections.find((el) => el.nameMode === 'door');
+});
+
+const windowSection = computed(() => {
+  return catalogSections.find((el) => el.nameMode === 'window');
+});
+
+// Объединяем товары из обеих секций
+const doorsAndWindowsGoods = computed(() => {
+  const goods = [];
+  if (doorSection.value?.goods) {
+    goods.push(...doorSection.value.goods);
+  }
+  if (windowSection.value?.goods) {
+    goods.push(...windowSection.value.goods);
+  }
+  return goods;
+});
+
 let img = new Image();
 img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
 
@@ -40,20 +62,29 @@ let handleGoodClick = (event: Event) => {
 };
 
 let goodItemDrag = (e: DragEvent): void => {
-  const target = (event.target as HTMLElement).closest('.goods-list-item__icon'); // Ищем ближайший родительский .goods-list-item__icon
+  const target = (e.target as HTMLElement).closest('.goods-list-item__icon'); // Ищем ближайший родительский .goods-list-item__icon
   if(target){
     const id = target.dataset.id;
     
-    // Находим текущую активную секцию каталога по её id, хранимом в menuItemActive.
-    const section = catalogSections.find((el) => el.id === menuItemActive.value);
-    
-    // В найденной секции ищем товар с заданным идентификатором id.
-    const item = section?.goods?.find((el) => el.id === id);
+    // Ищем товар во всех секциях каталога по id
+    let item = null;
+    for (const section of catalogSections) {
+      item = section.goods?.find((el) => el.id === id);
+      if (item) break;
+    }
 
     if (item) {
       // Если товар найден, выполняются следующие действия:
       // Устанавливаем идентификатор текущего активного товара.
       goodItemActive.value = id;
+      
+      // Находим секцию, к которой принадлежит товар
+      const section = catalogSections.find(s => s.goods?.some(g => g.id === id));
+      
+      // Устанавливаем режим взаимодействия для секции
+      if (section) {
+        constructor2dMenu.setInteractionMode(section.nameMode);
+      }
       
       // Вызываем метод `setGoodActive`, чтобы отметить товар активным в меню конструктора.
       constructor2dMenu.setGoodActive(item.nameMode);
@@ -90,12 +121,13 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
+
 </script>
 
 <template>
   <section class="options">
     <div class="options__container">
-
+<!-- 
       <div class="options-design">
         <h1 class="options__title">Проектирование</h1>
         <div class="goods">
@@ -104,7 +136,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
             <S2DAppartSVG class="goods-item__image" />
             <p class="goods-item__title">2D квартира</p>
             <div class="radial-sphere"></div>
-          </div>
+          </div> -->
           
           <!-- <div class="goods-item">
             <RoomPlaneSVG class="goods-item__image" />
@@ -112,41 +144,30 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
             <div class="radial-sphere"></div>
           </div> -->
 
-        </div>
-      </div>
+        <!-- </div>
+      </div> -->
 
       <div class="options-design">
-        <h1 class="options__title">Товары</h1>
+        <!-- <h1 class="options__title">Товары</h1>
         <div class="goods-items" @click="openPopup('catalog')">
           <CatalogSVG class="goods-items__image" />
           <p class="goods-items__title">Общий каталог</p>
           <div class="radial-sphere"></div>
-        </div>
-        <div class="goods">
-          <div v-for="(item, index) in catalogSections">
-            <div :key="index" 
-              class="goods-item" 
-              :class="item.id === menuItemActive ? 'active' : ''" 
-              :data-id="item.id">
-              <div class="goods-item__image">
-                <svg :width="item.icon.width" :height="item.icon.height" :viewBox="item.icon.viewBox" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" clip-rule="evenodd" :d="item.icon.d" fill="#5D6069"/>
-                </svg>
-              </div>
-              <p class="goods-item__title">{{ item.name }}</p>
-              <div class="radial-sphere"></div>
+        </div> -->
+        <!-- Отображаем содержимое вкладок Двери и Окна -->
+        <div class="goods-list">
+          <div 
+            class="goods-list-item" 
+            v-for="(gItem, i) in doorsAndWindowsGoods" 
+            :key="gItem.id || i">
+            <div 
+              class="goods-list-item__icon" 
+              :class="gItem.id === goodItemActive ? 'active' : ''"
+              draggable="true" 
+              :data-id="gItem.id">
+              <img v-if="gItem.icon !== ''" :src="`/images/${gItem.icon}`">
             </div>
-            <div class="goods-list"
-              :class="item.id === menuItemActive ? '' : 'd-none'">
-              <div class="goods-list-item" v-if="item.goods" v-for="(gItem, i) in item.goods" :key="i">
-                <div class="goods-list-item__icon" 
-                  :class="gItem.id === goodItemActive ? 'active' : ''"
-                  draggable="true" :data-id="gItem.id">
-                  <img v-if="gItem.icon !== ''" :src="`/images/${gItem.icon}`">
-                </div>
-                <p>{{ gItem.name }}</p>
-              </div>
-            </div>
+            <p>{{ gItem.name }}</p>
           </div>
         </div>
       </div>
@@ -157,7 +178,7 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
 
 <style lang="scss" scoped>
 .options {
-  width: 315px;
+  width: 160px;
   flex-shrink: 0;
   height: 100%;
   border-right: 1px solid $light-stroke;
@@ -295,50 +316,58 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
           }
           
         }
+      }
 
-        .goods-list {
+      // Стили для .goods-list на уровне .options-design (для прямого размещения вне .goods)
+      .goods-list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding-top: 0px;
+        gap: 8px;
 
+        &-item{
+          margin-right: 4px;
+          margin-bottom: 4px;
           display: flex;
-          flex-direction: row;
-          flex-wrap: wrap;
-          padding-top: 10px;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
 
-          &-item{
+          &__icon{
+            width: 120px;
+            height: 120px;
+            border: 1px solid #A3A9B5;
+            border-radius: 10px;
+            background-color: #ffffff;
+            overflow: hidden;
+            transition: border-color 0.15s;
 
-            margin-right: 4px;
-            margin-bottom: 4px;
-
-            &__icon{
-              width: 83px;
-              height: 83px;
-              border: 1px solid #A3A9B5; //#DA444C;
-              border-radius: 10px;
-              background-color: #ffffff;
-              overflow: hidden;
-
-              img {
-                width: 100%;
-                height: 100%;
-              }
-              
+            img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
             }
-
-            &__icon.active{
-              border: 1px solid #DA444C;
-            }
-
-            &:hover{
-              cursor: pointer;
-            }
- 
           }
 
-          &.d-none {
-            display: none;
+          &__icon.active{
+            border: 1px solid #DA444C;
           }
-          
+
+          &:hover{
+            cursor: pointer;
+          }
+
+          p {
+            font-size: 12px;
+            text-align: center;
+            margin: 0;
+          }
         }
 
+        &.d-none {
+          display: none;
+        }
       }
     }
 

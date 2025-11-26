@@ -61,7 +61,6 @@
 </template>
 
 <script setup lang="ts">
-//@ts-nocheck
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import ClosePopUpButton from '../ui/svg/ClosePopUpButton.vue';
 import BasketTable from "./BasketTable.vue"

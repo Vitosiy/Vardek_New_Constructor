@@ -28,3 +28,5 @@ Ideas
 *.dump.ts
 *.dump.vue
 *__dump
+
+.history

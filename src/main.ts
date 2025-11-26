@@ -126,9 +126,13 @@ async function bootApp() {
 
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
 
+  const initialRoute = router.currentRoute.value
+  const preservedQuery = initialRoute.query
+  const preservedHash = initialRoute.hash ?? ''
+
   // Всегда стартуем с /auth как loading (если не там)
   if (router.currentRoute.value.path !== '/auth') {
-    await router.push('/auth')
+    await router.push({ path: '/auth', query: preservedQuery, hash: preservedHash })
   }
 
   app.mount('#app')  // Монтируем рано — пользователь видит loading сразу
@@ -150,7 +154,7 @@ async function bootApp() {
   }
 
   // Данные загружены — редиректим в /2d
-  await router.push('/2d')
+  await router.push({ path: '/2d', query: preservedQuery, hash: preservedHash })
 }
 
 bootApp()

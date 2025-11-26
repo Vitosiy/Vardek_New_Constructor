@@ -19,6 +19,57 @@ export function useProjectAPI() {
     return true
   }
 
+  // Генерация скриншота 3D сцены в base64 (аналогично take3DScreenshot из The3D.vue)
+  const getProjectScreenshot = async (): Promise<string> => {
+    return new Promise((resolve) => {
+      // Небольшая задержка для обеспечения готовности рендерера
+      setTimeout(() => {
+        // Ищем все canvas элементы и находим тот, который имеет WebGL контекст
+        const canvases = document.querySelectorAll('canvas')
+        let webglCanvas: HTMLCanvasElement | null = null
+        
+        for (const canvas of canvases) {
+          const context = canvas.getContext('webgl') || canvas.getContext('webgl2')
+          // Проверяем что это WebGL canvas и он достаточно большой (3D сцена обычно большая)
+          if (context && canvas.width > 100 && canvas.height > 100) {
+            webglCanvas = canvas
+            break
+          }
+        }
+        
+        if (!webglCanvas) {
+          console.warn('WebGL canvas не найден для скриншота проекта')
+          resolve('data:image/jpeg;base64,')
+          return
+        }
+
+        try {
+          // Используем toBlob как в take3DScreenshot (строки 544-552 из The3D.vue), но преобразуем в base64
+          webglCanvas.toBlob((blob: Blob | null) => {
+            if (blob) {
+              const reader = new FileReader()
+              reader.onloadend = () => {
+                const base64 = reader.result as string
+                resolve(base64 || 'data:image/jpeg;base64,')
+              }
+              reader.onerror = () => {
+                console.error('Ошибка при чтении blob для скриншота')
+                resolve('data:image/jpeg;base64,')
+              }
+              reader.readAsDataURL(blob)
+            } else {
+              console.warn('Не удалось создать blob для скриншота')
+              resolve('data:image/jpeg;base64,')
+            }
+          }, 'image/jpeg', 0.8)
+        } catch (error) {
+          console.error('Ошибка при создании скриншота проекта:', error)
+          resolve('data:image/jpeg;base64,')
+        }
+      }, 100) // Небольшая задержка для готовности рендерера
+    })
+  }
+
   // Загрузка списка проектов с дебаунсом
   const loadProjects = async (tab: ProjectTab, filters: ProjectFilters = {}, delay: number = 300): Promise<Project[]> => {
     // Отменяем предыдущий запрос
@@ -110,7 +161,7 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
@@ -118,12 +169,24 @@ export function useProjectAPI() {
       const projectData = sceneState.getCurrentProjectParams
       // console.log(projectData, 'projectData')
 
+      // Если передан projectName, обновляем его перед сохранением
+      if (projectName) {
+        (projectData as any).project_name = projectName
+      }
+
       // Валидируем данные перед отправкой
       if (!validateProjectData(projectData)) {
         throw new Error(ERROR_MESSAGES.INVALID_PROJECT_DATA)
       }
 
+      // Генерируем скриншот проекта для нового проекта
+      let screenshotBase64 = 'data:image/jpeg;base64,'
       const projectId = incomeProjectId ?? projectData.projectId
+
+      // Если создаем новый проект, генерируем скриншот
+      if (!projectId) {
+        screenshotBase64 = await getProjectScreenshot()
+      }
 
       // Если у нас есть ID проекта - обновляем, иначе создаем новый
       if (projectId) {
@@ -160,7 +223,7 @@ export function useProjectAPI() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             data: {
-              file: 'data:image/jpeg;base64,',
+              file: screenshotBase64,
               provider: REQUEST_CONSTANTS.PROVIDER,
               name: projectData.project_name || 'Новый проект',
               user_hash: REQUEST_CONSTANTS.USER_HASH,

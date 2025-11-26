@@ -44,7 +44,7 @@ import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.v
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 import Toggle from "@vueform/toggle";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
-import MainLoader from "@/components/ui/loader/MainLoader.vue";
+import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -157,6 +157,9 @@ onMounted(async () => {
       actions.value = VerdekConstructor.value.getAction();
       curControllerValue.value = controllerValue.value[0].name;
       testConnect();
+
+      await nextTick(); // Дополнительный nextTick для гарантии готовности
+      eventBus.emit("A:ChangeCameraPos", 4);
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);
@@ -701,7 +704,7 @@ watch(
 
 <template>
   <!-- <div ref="preloaderRef" class="preloader" v-show="!roomState.getLoad"></div> -->
-  <MainLoader v-show="!roomState.getLoad" />
+  <GenericLoader v-show="!roomState.getLoad" />
 
   <div ref="sceneContainer" class="scene-container"></div>
 

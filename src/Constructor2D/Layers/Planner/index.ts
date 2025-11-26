@@ -4,6 +4,8 @@ import { MathUtils } from "three";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
+import { useRoomValidationStore } from '@/store/constructor2d/store/useRoomValidationStore'
+
 import { Vector2 } from '@/types/constructor2d/interfaсes';
 
 import { Events } from '@/store/constructor2d/events';
@@ -124,6 +126,8 @@ export default class Planner {
 
   private initRoom: () => (0 | 1);
 
+  private roomValidationStore = useRoomValidationStore()
+
   constructor(pixiApp: PIXI.Application, parent: any) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
@@ -158,8 +162,119 @@ export default class Planner {
     this.init();
   }
 
+  // Очистка всех стен и комнат перед перезагрузкой
+  public clear(): void {
+    // Очищаем графику всех стен
+    this.objectWalls.forEach((drawObject) => {
+      const containers = drawObject.containers;
+
+      if (containers) {
+        for (const key in containers) {
+          if (
+            key === "root" ||
+            key === "containerTextRulerWall" ||
+            key === "textRulerWall"
+          ) continue;
+
+          const graphic = containers[key];
+
+          if (graphic && typeof graphic.destroy === "function") {
+            try {
+              if (key === "eventGraphic" && graphic instanceof PIXI.Graphics) {
+                graphic
+                  .off("mouseover", this.handlerOverEventGraphic)
+                  .off("mouseout", this.handlerOutEventGraphic)
+                  .off("pointerdown", this.handlerDownEventGraphic);
+              }
+
+              if (!graphic.destroyed) {
+                graphic.destroy({
+                  texture: false,
+                  baseTexture: false,
+                });
+              }
+
+              if (containers.root && containers.root.children.includes(graphic)) {
+                containers.root.removeChild(graphic);
+              }
+
+              containers[key as keyof ObjectWallContainers] = null!;
+            } catch (error) {
+              console.warn(`Failed to destroy graphic: ${key}`, error);
+            }
+          }
+        }
+
+        // Удаляем textRulerWall
+        try {
+          if (containers.textRulerWall && typeof containers.textRulerWall.destroy === "function") {
+            containers.textRulerWall.destroy(true);
+          }
+          if (
+            containers.containerTextRulerWall &&
+            containers.containerTextRulerWall.children.includes(containers.textRulerWall)
+          ) {
+            containers.containerTextRulerWall.removeChild(containers.textRulerWall);
+          }
+          containers.textRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy textRulerWall`, error);
+        }
+
+        // Удаляем containerTextRulerWall
+        try {
+          if (containers.containerTextRulerWall && typeof containers.containerTextRulerWall.destroy === "function") {
+            containers.containerTextRulerWall.destroy(true);
+          }
+          if (
+            containers.root &&
+            containers.root.children.includes(containers.containerTextRulerWall)
+          ) {
+            containers.root.removeChild(containers.containerTextRulerWall);
+          }
+          containers.containerTextRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy containerTextRulerWall`, error);
+        }
+
+        // Удаляем root контейнер
+        try {
+          if (containers.root && typeof containers.root.destroy === "function") {
+            containers.root.destroy({
+              children: true,
+              texture: false,
+              baseTexture: false,
+            });
+          }
+          if (
+            this.container &&
+            this.container.children.includes(containers.root)
+          ) {
+            this.container.removeChild(containers.root);
+          }
+          containers.root = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy root`, error);
+        }
+      }
+    });
+
+    // Очищаем массивы и карты
+    this.objectWalls = [];
+    this.roomsMap.clear();
+    this.state.activeWall = null;
+    this.state.activePointWall = null;
+
+    // Очищаем слой пола комнаты (серая область)
+    if (this.parent?.layers?.halfRoom) {
+      this.parent.layers.halfRoom.removeHalfRoom();
+    }
+  }
+
   // инициализация объектов для визуализации при запуске приложения
   public init(publicUpdate: boolean = false): void {
+    // Очищаем существующие данные перед загрузкой новых
+    this.clear();
 
     const result = this.initRoom();
 
@@ -192,6 +307,7 @@ export default class Planner {
 
   }
 
+  private checkAndCreateRoomFromConnectedWalls()
   // добавление новой комнаты
   public addRoom(
     id: string | number | null = null, 
@@ -614,6 +730,11 @@ export default class Planner {
 
   public isPointInRoom(roomId: number | string, targetPoint: Vector2): boolean {
 
+    const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+      if (a === undefined || a === null || b === undefined || b === null) return false;
+      return String(a) === String(b);
+    };
+
     // Проверка входных параметров
     if (!roomId || !targetPoint) {
       throw new Error(`Invalid parameters: roomId(${roomId}) and targetPoint(${JSON.stringify(targetPoint)}) are required`);
@@ -628,25 +749,40 @@ export default class Planner {
 
   public getRoomContour(roomId: number | string): Vector2[] {
 
+    const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+      if (a === undefined || a === null || b === undefined || b === null) return false;
+      return String(a) === String(b);
+    };
+
     // 2. Настройки точности
     const precision = 2; // Кол-во знаков после запятой
     const uniquePoints = new Map<string, Vector2>();
+    const rawPoints: Vector2[] = [];
 
     // 3. Сбор уникальных точек (индексы 0 и 1)
     for (const wall of this.objectWalls) {
-      if (wall.roomId === roomId && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
+      if (isSameId(wall.roomId, roomId) && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
         // Точка 0
         const key0 = `${wall.points[0].x.toFixed(precision)},${wall.points[0].y.toFixed(precision)}`;
         uniquePoints.set(key0, wall.points[0]);
+        rawPoints.push(wall.points[0]);
 
         // Точка 1
         const key1 = `${wall.points[1].x.toFixed(precision)},${wall.points[1].y.toFixed(precision)}`;
         uniquePoints.set(key1, wall.points[1]);
+        rawPoints.push(wall.points[1]);
       }
     }
 
+    const dedupPoints = Array.from(uniquePoints.values());
+
     // 4. Проверка минимального количества точек
-    return Array.from(uniquePoints.values());
+    if (dedupPoints.length < 3) {
+      // Возвращаем “сырые” точки, чтобы не пропадал пол
+      return rawPoints;
+    }
+
+    return dedupPoints;
 
   }
 
@@ -1272,6 +1408,8 @@ export default class Planner {
 
     const rooms = this.allRooms;
 
+    let hasRoomWithMoreThan3Points = false
+
     rooms.forEach((room, index) => {
 
       const polygonPoints: Vector2[] = this.getRoomContour(room.id);
@@ -1282,8 +1420,14 @@ export default class Planner {
       if(polygonPoints.length > 2){
         roomsHalf.push(roomData);
       }
+
+      if(polygonPoints.length > 3){
+        hasRoomWithMoreThan3Points = true
+      }
       
     });
+
+    this.roomValidationStore.setHasValidRoom(hasRoomWithMoreThan3Points)
 
     if (roomsHalf.length != 0) {
 
@@ -1291,6 +1435,7 @@ export default class Planner {
 
     } else {
       this.parent.layers.halfRoom.removeHalfRoom();
+      this.roomValidationStore.setHasValidRoom(false)
     }
 
   }
@@ -1490,19 +1635,23 @@ export default class Planner {
           *        - Выполняем удаление исходной комнаты и обновление roomId для всех стен цепочки
           */
           if (dataWall.roomId !== connectWall.roomId) {
-
+            // Сохраняем ID комнаты для удаления ДО изменения roomId
+            const roomToRemove = dataWall.roomId;
+            
+            // Обновляем roomId для всех стен
             this.objectWalls.forEach(wall => {
-              if (wall.roomId === dataWall.roomId) {
-                wall.roomId = connectWall.roomId;
-              }
+                if (wall.roomId === dataWall.roomId) {
+                    wall.roomId = connectWall.roomId;
+                }
             });
-
-            this.removeRoom(dataWall.roomId);
+            
+            // Удаляем комнату только если она ещё существует
+            if (this.roomsMap.has(roomToRemove)) {
+                this.removeRoom(roomToRemove);
+            }
+            
             dataWall.roomId = connectWall.roomId;
-
-            // !!! обновляем пол комнаты
-
-          }
+        } 
 
         } else {
 
