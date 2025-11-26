@@ -39,6 +39,7 @@ import {
   roundToPrecision,
   getIntersectVectorLine,
   getAngleBetweenVectors,
+  isPointOnSegment
 } from "./../../utils/Math";
 
 import { handlerDownEventGraphic } from "./methods/events/handlerDown";
@@ -180,11 +181,22 @@ export default class DoorsAndWindows {
         }
 
         // находим стену к которой пренадлежит объект
-        const getBelongsToWall: { id: number | string; point: Vector2 } | null =
-          this.parent.layers.planner.getConnectionPointInPolygon({
-            x: object.position.x / 10,
-            y: object.position.z / 10
-          });
+        const objectPosition: Vector2 = {
+          x: object.position.x / 10,
+          y: object.position.z / 10
+        };
+        
+        let getBelongsToWall: { id: number | string; point: Vector2 } | null =
+          this.parent.layers.planner.getConnectionPointInPolygon(objectPosition);
+        
+        // Если не нашли стену через getConnectionPointInPolygon, ищем ближайшую по расстоянию
+        if (!getBelongsToWall) {
+          getBelongsToWall = this.findNearestWall(objectPosition, 50);
+          if (getBelongsToWall) {
+            console.log(`Wall not found by polygon check, using nearest wall (id: ${getBelongsToWall.id})`);
+          }
+        }
+        
         const dataWall: Pick<ObjectWall, 'id' | 'name' | 'width' | 'height' | 'points' | 'heightDirection' | 'angleDegrees' | 'updateTime'> | null =
           getBelongsToWall
             ? JSON.parse(JSON.stringify((() => {
@@ -446,6 +458,41 @@ export default class DoorsAndWindows {
       this.draw(this.state.activeObject); // Рисуем новый активный объект
     }
 
+  }
+
+  private findNearestWall(position: Vector2, maxDistance: number = 50): { id: number | string; point: Vector2 } | null {
+    let nearestWall: { id: number | string; point: Vector2; distance: number } | null = null;
+
+    const walls = this.parent.layers.planner.objectWalls;
+
+    for (const wall of walls) {
+      if (!wall.points || wall.points.length < 2) continue;
+
+      // Получаем проекцию точки на линию стены
+      const projection = getIntersectVectorLine(
+        [wall.points[0], wall.points[1]],
+        position
+      );
+
+      if (!projection) continue;
+
+      // Проверяем, что проекция находится на сегменте стены
+      if (!isPointOnSegment(wall.points[0], wall.points[1], projection)) continue;
+
+      // Вычисляем расстояние от точки до проекции
+      const distance = getDistanceBetweenVectors(position, projection);
+
+      // Если расстояние в пределах допустимого и меньше текущего минимума
+      if (distance <= maxDistance && (!nearestWall || distance < nearestWall.distance)) {
+        nearestWall = {
+          id: wall.id,
+          point: projection,
+          distance: distance
+        };
+      }
+    }
+
+    return nearestWall ? { id: nearestWall.id, point: nearestWall.point } : null;
   }
 
   // создаем контейнеры для визуализации cтены
