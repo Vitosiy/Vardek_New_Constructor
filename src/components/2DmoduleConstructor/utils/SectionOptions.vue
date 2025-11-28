@@ -29,7 +29,7 @@ const props = defineProps({
 });
 
 const {module, visualizationRef} = toRefs(props);
-const selectedCell = ref({sec: 0, cell: null, row: null});
+const selectedCell = ref({sec: 0, cell: null, row: null, extra: null});
 
 const emit = defineEmits([
   "product-updateFasades",
@@ -50,13 +50,35 @@ const debounce = (callback, wait) => {
   }, wait)
 }
 
-const selectCell = (sec, cell = null, row = null) => {
-  selectedCell.value = {sec, cell, row};
-  visualizationRef.value.selectCell("module", sec, cell, true, row);
+const selectCell = (sec, cell = null, row = null, extra = null) => {
+  selectedCell.value = {sec, cell, row, extra};
+  visualizationRef.value.selectCell("module", sec, cell, true, row, null, extra);
+
 };
 
-const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
-  selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
+const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+  selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex, extra: extraIndex};
+
+  //Задержка нужна для того, чтоб рендер аккордионов обновился
+  setTimeout(() => {
+    let idTag = `module_${secIndex}`
+
+    if(cellIndex !== null)
+      idTag += `_${cellIndex}`;
+
+    if(rowIndex !== null)
+      idTag += `_${rowIndex}`
+
+    if(extraIndex !== null)
+      idTag += `_${extraIndex}`;
+
+    let domElem = document.getElementById(idTag)
+    if(domElem) {
+      domElem.scrollIntoView();
+    }
+    timer.value = false
+  }, 10)
+
 };
 
 const updateFasades = () => {
@@ -345,7 +367,7 @@ const addRowExtra = (secIndex, cellIndex, rowIndex, extraIndex = 0, _count = 1) 
       newExtra.height += deltaLastCell;
     }
 
-    row.extras.splice(cellIndex || 0, 0, newExtra);
+    row.extras.splice(extraIndex || 0, 0, newExtra);
   }
 
   calcLoops(secIndex);
@@ -829,6 +851,7 @@ onMounted(() => {
             ]"
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
+              :id="`module_${secIndex}`"
           >
             <button
                 v-if="module.sections.length > 1"
@@ -859,8 +882,361 @@ onMounted(() => {
               class="actions-sections-items--wrapper"
               v-if="selectedCell.sec === secIndex"
           >
+            <div class="accordion-sections" v-if="section.cells.length">
 
+              <div class="actions-sections-header">
+                <p>Ячейки</p>
+              </div>
+
+              <div
+                  v-for="(cell, cellIndex) in section.cells"
+                  :key="cellIndex"
+                  :class="'actions-sections-items--container'"
+                  :id="`module_${secIndex}_${cellIndex}`"
+              >
+                <details
+                    class="item-group"
+                    :open="cellIndex === selectedCell.cell"
+                >
+
+                  <summary>
+                    <h3 class="item-group__title">
+                      {{ secIndex + 1 }}.{{ cellIndex + 1 }}
+                    </h3>
+                  </summary>
+
+
+                  <div
+                      :class="'actions-sections-items--container'"
+                  >
+                    <article class="actions-sections-items actions-sections-items--left">
+                      <div class="actions-sections-items--left-wrapper">
+                        <div class="actions-sections-items--width">
+                          <div class="actions-sections-inputs">
+                            <p class="actions-sections-title">Ширина</p>
+                            <div
+                                :class="['actions-sections-input--container']"
+                            >
+                              <input
+                                  type="number"
+                                  :step="step"
+                                  :min="MIN_SECTION_WIDTH"
+                                  :max="MAX_SECTION_WIDTH"
+                                  class="actions-sections-input"
+                                  :value="section.width"
+                                  @input="
+                                    debounce(() => updateSectionWidth(
+                                      $event.target.value,
+                                      secIndex
+                                    ), 1000)
+                                  "
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="actions-sections-items--height">
+                          <div class="actions-sections-inputs">
+                            <p class="actions-sections-title">
+                              Высота
+                            </p>
+                            <div
+                                :class="['actions-sections-input--container']"
+                            >
+                              <input
+                                  type="number"
+                                  :step="step"
+                                  :min="MIN_SECTION_HEIGHT"
+                                  :max="section.height - MIN_SECTION_HEIGHT"
+                                  class="actions-sections-input"
+                                  :value="cell.height"
+                                  @input="
+                            debounce(() => updateCellHeight(
+                              $event.target.value,
+                              secIndex,
+                              cellIndex
+                            ), 1000)
+                          "
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </article>
+
+                    <article class="actions-sections-items actions-sections-items--right">
+                      <div class="actions-sections-items--right-items">
+
+                        <div
+                            v-if="!cell.cellsRows?.length"
+                            class="actions-sections-items--right-items-input-block"
+                        >
+                          <CounterInput
+                              button-text="Добавить полку"
+                              model-value="1"
+                              max="10"
+                              min="1"
+                              input-class="actions-sections-items--right-items-input-block-counter"
+                              button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
+                              type="number"
+                              @update:model-value="(count) => {
+                            addCell(secIndex, cellIndex, count)
+                          }"
+                          />
+                        </div>
+
+                        <div
+                            v-if="!cell.cellsRows?.length && !module.isRestrictedModule"
+                            class="actions-sections-items--right-items-input-block"
+                        >
+                          <CounterInput
+                              button-text="Верт. разделитель"
+                              model-value="1"
+                              max="10"
+                              min="1"
+                              input-class="actions-sections-items--right-items-input-block-counter"
+                              button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
+                              type="number"
+                              @update:model-value="(count) => {
+                                addRowCell(secIndex, cellIndex, 0, count)
+                          }"
+                          />
+                        </div>
+
+                        <button
+                            v-if="section.cells.length > 1"
+                            class="actions-sections-btn actions-sections-btn--default"
+                            @click="deleteCell(cellIndex, secIndex)"
+                        >
+                          Удалить
+                        </button>
+
+                      </div>
+                    </article>
+                  </div>
+
+                  <div class="accordion-sections" v-if="cell.cellsRows?.length">
+                    <div class="actions-sections-header">
+                      <p>Вертикальные ячейки</p>
+                    </div>
+
+                    <div
+                        v-for="(row, rowIndex) in cell.cellsRows"
+                        :key="rowIndex"
+                        :class="'actions-sections-items--container'"
+                        :id="`module_${secIndex}_${cellIndex}_${rowIndex}`"
+
+                    >
+                      <details
+                          class="item-group"
+                          :open="rowIndex === selectedCell.row"
+                      >
+                        <summary>
+                          <h3 class="item-group__title">
+                            {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}
+                          </h3>
+                        </summary>
+
+                        <div
+                            :class="'actions-sections-items--container'"
+                        >
+                          <article class="actions-sections-items actions-sections-items--left">
+                            <div class="actions-sections-items--left-wrapper">
+
+                              <div class="actions-sections-items--width">
+                                <div class="actions-sections-inputs">
+                                  <p class="actions-sections-title">Ширина</p>
+                                  <div
+                                      :class="['actions-sections-input--container']"
+                                  >
+                                    <input
+                                        type="number"
+                                        :step="step"
+                                        :min="MIN_SECTION_WIDTH"
+                                        :max="cell.width - MIN_SECTION_WIDTH"
+                                        class="actions-sections-input"
+                                        :value="row.width"
+                                        @input="
+                              debounce(() => updateCellRowWidth(
+                                $event.target.value,
+                                secIndex,
+                                cellIndex,
+                                rowIndex
+                              ), 1000)
+                            "
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          </article>
+
+                          <article
+                              v-if="!module.isRestrictedModule"
+                              class="actions-sections-items actions-sections-items--right"
+                          >
+                            <div class="actions-sections-items--right-items">
+
+                              <div
+                                  class="actions-sections-items--right-items-input-block"
+                              >
+                                <CounterInput
+                                    button-text="Верт. разделитель"
+                                    model-value="1"
+                                    max="10"
+                                    min="1"
+                                    input-class="actions-sections-items--right-items-input-block-counter"
+                                    button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
+                                    type="number"
+                                    @update:model-value="(count) => {
+                                          addRowCell(secIndex, cellIndex, rowIndex, count)
+                                    }"
+                                />
+                              </div>
+
+                              <div
+                                  v-if="!row.extras?.length"
+                                  class="actions-sections-items--right-items-input-block"
+                              >
+                                <CounterInput
+                                    button-text="Полка"
+                                    model-value="1"
+                                    max="10"
+                                    min="1"
+                                    input-class="actions-sections-items--right-items-input-block-counter"
+                                    button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
+                                    type="number"
+                                    @update:model-value="(count) => {
+                                          addRowExtra(secIndex, cellIndex, rowIndex, 0, count)
+                                    }"
+                                />
+                              </div>
+
+                              <button
+                                  v-if="cell.cellsRows.length > 1"
+                                  class="actions-sections-btn actions-sections-btn--default"
+                                  @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
+                              >
+                                Удалить
+                              </button>
+
+                            </div>
+                          </article>
+                        </div>
+
+                        <div class="accordion-sections" v-if="row.extras?.length">
+                          <div class="actions-sections-header">
+                            <p>Горизонтальные ячейки</p>
+                          </div>
+
+                          <div
+                              v-for="(extra, extraIndex) in row.extras"
+                              :key="extraIndex"
+                              :class="'actions-sections-items--container'"
+                              :id="`module_${secIndex}_${cellIndex}_${rowIndex}_${extraIndex}`"
+
+                          >
+                            <details
+                                class="item-group"
+                                :open="extraIndex === selectedCell.extra"
+                            >
+                              <summary>
+                                <h3 class="item-group__title">
+                                  {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}.{{ extraIndex + 1 }}
+                                </h3>
+                              </summary>
+
+                              <div
+                                  :class="'actions-sections-items--container'"
+                              >
+                                <article class="actions-sections-items actions-sections-items--left">
+                                  <div class="actions-sections-items--left-wrapper">
+
+                                    <div class="actions-sections-items--height">
+                                      <div class="actions-sections-inputs">
+                                        <p class="actions-sections-title">
+                                          Высота
+                                        </p>
+                                        <div
+                                            :class="['actions-sections-input--container']"
+                                        >
+                                          <input
+                                              type="number"
+                                              :step="step"
+                                              :min="MIN_SECTION_HEIGHT"
+                                              :max="row.height - MIN_SECTION_HEIGHT"
+                                              class="actions-sections-input"
+                                              :value="extra.height"
+                                              @input="
+                                                debounce(() => updateCellHeight(
+                                                  $event.target.value,
+                                                  secIndex,
+                                                  cellIndex,
+                                                  rowIndex,
+                                                  extraIndex
+                                                ), 1000)
+                                              "
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                  </div>
+                                </article>
+
+                                <article
+                                    v-if="!module.isRestrictedModule"
+                                    class="actions-sections-items actions-sections-items--right"
+                                >
+                                  <div class="actions-sections-items--right-items">
+
+                                    <div
+                                        class="actions-sections-items--right-items-input-block"
+                                    >
+                                      <CounterInput
+                                          button-text="Полка"
+                                          model-value="1"
+                                          max="10"
+                                          min="1"
+                                          input-class="actions-sections-items--right-items-input-block-counter"
+                                          button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
+                                          type="number"
+                                          @update:model-value="(count) => {
+                                          addRowExtra(secIndex, cellIndex, rowIndex, extraIndex, count)
+                                    }"
+                                      />
+                                    </div>
+
+                                    <button
+                                        v-if="cell.cellsRows.length > 1"
+                                        class="actions-sections-btn actions-sections-btn--default"
+                                        @click="deleteRowExtra(cellIndex, secIndex, rowIndex, extraIndex)"
+                                    >
+                                      Удалить
+                                    </button>
+
+                                  </div>
+                                </article>
+                              </div>
+
+
+
+                            </details>
+                          </div>
+                        </div>
+
+
+                      </details>
+                    </div>
+                  </div>
+
+                </details>
+              </div>
+            </div>
             <div
+                v-else
                 :class="'actions-sections-items--container'"
             >
               <article class="actions-sections-items actions-sections-items--left">
@@ -959,221 +1335,6 @@ onMounted(() => {
               </article>
             </div>
 
-            <div class="accordion-sections" v-if="section.cells.length">
-
-              <div class="actions-sections-header">
-                <p>Ячейки</p>
-              </div>
-
-              <div
-                  v-for="(cell, cellIndex) in section.cells"
-                  :key="cellIndex"
-                  :class="'actions-sections-items--container'"
-              >
-                <details class="item-group">
-
-                  <summary>
-                    <h3 class="item-group__title">
-                      {{ secIndex + 1 }}.{{ cellIndex + 1 }}
-                    </h3>
-                  </summary>
-
-                  <div
-                      :class="'actions-sections-items--container'"
-                  >
-                    <article class="actions-sections-items actions-sections-items--left">
-                      <div class="actions-sections-items--left-wrapper">
-                        <div class="actions-sections-items--width">
-                          <div class="actions-sections-inputs">
-                            <p class="actions-sections-title">Ширина</p>
-                            <div
-                                :class="['actions-sections-input--container']"
-                            >
-                              <input
-                                  type="number"
-                                  :step="step"
-                                  :min="MIN_SECTION_WIDTH"
-                                  class="actions-sections-input"
-                                  :value="section.width"
-                                  disabled
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="actions-sections-items--height">
-                          <div class="actions-sections-inputs">
-                            <p class="actions-sections-title">
-                              Высота
-                            </p>
-                            <div
-                                :class="['actions-sections-input--container']"
-                            >
-                              <input
-                                  type="number"
-                                  :step="step"
-                                  :min="MIN_SECTION_HEIGHT"
-                                  :max="section.height - MIN_SECTION_HEIGHT"
-                                  class="actions-sections-input"
-                                  :value="cell.height"
-                                  @input="
-                            debounce(() => updateCellHeight(
-                              $event.target.value,
-                              secIndex,
-                              cellIndex
-                            ), 1000)
-                          "
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                      </div>
-                    </article>
-
-                    <article class="actions-sections-items actions-sections-items--right">
-                      <div class="actions-sections-items--right-items">
-
-                        <div
-                            class="actions-sections-items--right-items-input-block"
-                        >
-                          <CounterInput
-                              button-text="Добавить полку"
-                              model-value="1"
-                              max="10"
-                              min="1"
-                              input-class="actions-sections-items--right-items-input-block-counter"
-                              button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
-                              type="number"
-                              @update:model-value="(count) => {
-                            addCell(secIndex, cellIndex, count)
-                          }"
-                          />
-                        </div>
-
-                        <div
-                            v-if="!cell.cellsRows?.length && !module.isRestrictedModule"
-                            class="actions-sections-items--right-items-input-block"
-                        >
-                          <CounterInput
-                              button-text="Верт. разделитель"
-                              model-value="1"
-                              max="10"
-                              min="1"
-                              input-class="actions-sections-items--right-items-input-block-counter"
-                              button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
-                              type="number"
-                              @update:model-value="(count) => {
-                                addRowCell(secIndex, cellIndex, 0, count)
-                          }"
-                          />
-                        </div>
-
-                        <button
-                            v-if="section.cells.length > 1"
-                            class="actions-sections-btn actions-sections-btn--default"
-                            @click="deleteCell(cellIndex, secIndex)"
-                        >
-                          Удалить
-                        </button>
-
-                      </div>
-                    </article>
-                  </div>
-
-                  <div class="accordion-sections" v-if="cell.cellsRows?.length">
-                    <div class="actions-sections-header">
-                      <p>Вертикальные ячейки</p>
-                    </div>
-
-                    <div
-                        v-for="(row, rowIndex) in cell.cellsRows"
-                        :key="rowIndex"
-                        :class="'actions-sections-items--container'"
-                    >
-                      <details class="item-group">
-                        <summary>
-                          <h3 class="item-group__title">
-                            {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}
-                          </h3>
-                        </summary>
-
-                        <div
-                            :class="'actions-sections-items--container'"
-                        >
-                          <article class="actions-sections-items actions-sections-items--left">
-                            <div class="actions-sections-items--left-wrapper">
-
-                              <div class="actions-sections-items--width">
-                                <div class="actions-sections-inputs">
-                                  <p class="actions-sections-title">Ширина</p>
-                                  <div
-                                      :class="['actions-sections-input--container']"
-                                  >
-                                    <input
-                                        type="number"
-                                        :step="step"
-                                        :min="MIN_SECTION_WIDTH"
-                                        :max="cell.width - MIN_SECTION_WIDTH"
-                                        class="actions-sections-input"
-                                        :value="row.width"
-                                        @input="
-                              debounce(() => updateCellRowWidth(
-                                $event.target.value,
-                                secIndex,
-                                cellIndex,
-                                rowIndex
-                              ), 1000)
-                            "
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                            </div>
-                          </article>
-
-                          <article
-                              v-if="!module.isRestrictedModule"
-                              class="actions-sections-items actions-sections-items--right"
-                          >
-                            <div class="actions-sections-items--right-items">
-
-                              <div
-                                  class="actions-sections-items--right-items-input-block"
-                              >
-                                <CounterInput
-                                    button-text="Верт. разделитель"
-                                    model-value="1"
-                                    max="10"
-                                    min="1"
-                                    input-class="actions-sections-items--right-items-input-block-counter"
-                                    button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
-                                    type="number"
-                                    @update:model-value="(count) => {
-                                          addRowCell(secIndex, cellIndex, rowIndex, count)
-                                    }"
-                                />
-                              </div>
-
-                              <button
-                                  v-if="cell.cellsRows.length > 1"
-                                  class="actions-sections-btn actions-sections-btn--default"
-                                  @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
-                              >
-                                Удалить
-                              </button>
-
-                            </div>
-                          </article>
-                        </div>
-                      </details>
-                    </div>
-                  </div>
-
-                </details>
-              </div>
-            </div>
 
           </div>
 
@@ -1186,6 +1347,7 @@ onMounted(() => {
 
 <style lang="scss">
 .splitter-sections {
+
   &-container {
     &--product {
       display: flex;
@@ -1261,6 +1423,7 @@ onMounted(() => {
         flex-direction: column;
         color: #a3a9b5;
         margin-right: 10px;
+        scroll-behavior: smooth;
 
         &__title {
           font-size: 18px;
@@ -1315,6 +1478,8 @@ onMounted(() => {
     flex-direction: column;
     overflow: hidden;
     padding-right: 0.5rem;
+    scroll-behavior: smooth;
+
   }
 
   &-footer {
@@ -1333,6 +1498,8 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     overflow-y: scroll;
+    scroll-behavior: smooth;
+
     padding-right: 0.5rem;
     max-height: 82vh;
 

@@ -1297,9 +1297,9 @@ class ShapeAdjuster extends Helpers {
 }
 
 const saveUMGrid = (module) => {
-    const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset", "Mwidth", "Mheight"];
+    const garbage = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
     const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset", "Mwidth", "Mheight"];
-    const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops", "fasadesDrawers", "hiTechProfiles"];
+    const nesting = ["cells", "sections", "cellsRows", "extras", "fasades", "fillings", "loops", "fasadesDrawers", "hiTechProfiles"];
 
     //Рекурсивная очистка сетки от "технических" полей 2D конструктора
     const removeGarbage = (object) => {

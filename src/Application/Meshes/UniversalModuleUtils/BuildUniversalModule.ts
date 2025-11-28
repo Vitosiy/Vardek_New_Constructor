@@ -333,6 +333,26 @@ export class BuildUniversalModule extends BuildProduct {
                             type: 'vertical_shelf',
                         })
 
+                    row.extras?.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
+                        if (extraIndex > 0)
+                            curSection.fillings.push({  //Добавляем полку, как товар наполнения
+                                position: new THREE.Vector3(extra.position.x, extra.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
+                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.z),
+                                product: 5820266,
+                                id: curSection.fillings.length + 1,
+                                material: PROPS.CONFIG.MODULE_COLOR,
+                                type: 'shelf',
+                            })
+
+                        extra.fillings?.forEach((filling) => {
+                            curSection.fillings.push({
+                                ...filling,
+                                position: new THREE.Vector3(extra.position.x, extra.position.y + filling.distances.bottom - full_horizont_height, curSection.position.z),
+                                id: curSection.fillings.length + 1,
+                            })
+                        })
+                    })
+
                     row.fillings?.forEach((filling) => {
                         curSection.fillings.push({
                             ...filling,
