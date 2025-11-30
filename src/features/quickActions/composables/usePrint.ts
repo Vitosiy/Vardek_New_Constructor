@@ -81,6 +81,19 @@ export const usePrint = () => {
       // Показываем индикатор загрузки
       console.log('Подготовка к печати...');
 
+      // Удаляем старые элементы печати, если они существуют
+      const existingPrintDiv = document.getElementById('print-content');
+      if (existingPrintDiv) {
+        // Очищаем созданные URL для Blob объектов перед удалением
+        const existingImages = existingPrintDiv.querySelectorAll('img');
+        existingImages.forEach(img => {
+          if (img.src.startsWith('blob:')) {
+            URL.revokeObjectURL(img.src);
+          }
+        });
+        document.body.removeChild(existingPrintDiv);
+      }
+
       // Создаём скрытый div с печатным содержимым
       const printDiv = document.createElement('div');
       printDiv.id = 'print-content';
@@ -193,6 +206,14 @@ export const usePrint = () => {
           `;
 
       // Добавляем стили для печати
+      // Удаляем старые стили печати, если они существуют
+      const existingStyles = Array.from(document.head.querySelectorAll('style')).find(
+        style => style.textContent?.includes('#print-content')
+      );
+      if (existingStyles) {
+        document.head.removeChild(existingStyles);
+      }
+
       const printStyles = document.createElement('style');
       printStyles.textContent = `
         @media print {
