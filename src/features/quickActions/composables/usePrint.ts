@@ -233,9 +233,9 @@ export const usePrint = () => {
         
         .a4-page {
           page-break-after: always;
-          padding: 20px;
-          max-width: 210mm;
-          margin: 0 auto;
+          padding: 0px;
+          margin: 0;
+          max-width: 100%;
         }
         
         .print-title {
@@ -266,7 +266,6 @@ export const usePrint = () => {
         
         .screenshot-item {
           border: 1px solid #ddd;
-          padding: 15px;
           border-radius: 8px;
           background-color: #f9f9f9;
           display: flex;
@@ -283,11 +282,9 @@ export const usePrint = () => {
         }
         
         .screenshot-image {
-          max-width: 500px;
-          max-height: 300px;
-          width: auto;
+          width: 100%;
+          max-height: 36vh;
           height: auto;
-          object-fit: contain;
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
