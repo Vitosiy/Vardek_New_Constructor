@@ -13,6 +13,7 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
+import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
 
 export type ActionKey =
   | 'fullscreen'
@@ -188,7 +189,8 @@ export const useQuickActionsToolbar = () => {
         if (router.currentRoute.value.path !== '/3d') {
           await router.push('/3d');
         }
-
+        eventBus.emit('A:Save')
+        roomState.routConvertData('/2d');
         eventBus.emit("A:ScreenPrint")
 
         const handleComplete = () => {
