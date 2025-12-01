@@ -851,6 +851,7 @@ onMounted(() => {
   left: 20.8vw;
   top: 0;
 
+  height: 100%;
   width: 100%;
   max-width: 373px;
   max-height: 95vh;
@@ -861,6 +862,7 @@ onMounted(() => {
   &-select {
     display: flex;
     flex-direction: column;
+    width: 100%;
 
     max-height: 96vh;
     overflow-y: scroll;
