@@ -184,11 +184,10 @@ export function useProjectAPI() {
       const projectId = incomeProjectId ?? projectData.projectId
 
       // Если создаем новый проект, генерируем скриншот
-      if (!projectId) {
+      if (true) {
         screenshotBase64 = await getProjectScreenshot()
       }
 
-      // Если у нас есть ID проекта - обновляем, иначе создаем новый
       if (projectId) {
         console.log(projectId, 'projectId HAVE')
 
@@ -197,7 +196,8 @@ export function useProjectAPI() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: projectId,
-            project: projectData
+            project: projectData,
+            file: screenshotBase64
           })
         })
 

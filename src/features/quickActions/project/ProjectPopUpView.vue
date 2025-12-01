@@ -1,5 +1,6 @@
 <template>
   <div class="project">
+    <GenericLoader v-show="isProjectLoading" />
     <div class="project__title">Менеджер проектов</div>
     <ClosePopUpButton class="popup__close" @close="closePopup" />
 
@@ -139,6 +140,7 @@ import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -158,6 +160,10 @@ const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 // Инициализируем хуки
 const projectState = useProjectStore();
 const projectAPI = useProjectAPI();
+const roomState = useRoomState();
+
+// Состояние загрузки проекта
+const isProjectLoading = ref(false);
 
 // Отслеживаем изменения фильтров
 watch(
@@ -239,95 +245,129 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
 const loadProject = async (id: string | number) => {
   if (!id) return;
 
-  const projectData = await projectAPI.loadProject(id.toString());
-  if (projectData) {
-    projectState.resetState();
-    projectState.setInitialState(projectData);
-    console.log(projectData, "----PROD");
+  isProjectLoading.value = true;
 
-    try {
-      schemeTransition.clearStore();
-      // 1. Обновляем данные проекта в sceneState
-      await sceneState.loadProjectFromData(projectData);
-      sceneState.updateProjectParams({});
-      
-      // 2. Устанавливаем данные в schemeTransition
-      schemeTransition.setAppData(projectData.rooms);
-      
-      const roomState = useRoomState();
-      const currentPath = route.path;
-      const is3DView = currentPath === '/3d';
+  try {
+    const projectData = await projectAPI.loadProject(id.toString());
+    if (projectData) {
+      projectState.resetState();
+      projectState.setInitialState(projectData);
+      console.log(projectData, "----PROD");
 
-      if (is3DView) {
-        // Если мы на 3D, конвертируем данные только для 3D
-        roomState.routConvertData('/3d');
+      try {
+        schemeTransition.clearStore();
+        // 1. Обновляем данные проекта в sceneState
+        await sceneState.loadProjectFromData(projectData);
+        sceneState.updateProjectParams({});
         
-        // Устанавливаем ID проекта в store
-        projectState.setProjectId(id.toString());
+        // 2. Устанавливаем данные в schemeTransition
+        schemeTransition.setAppData(projectData.rooms);
         
-        // Ждем, чтобы данные успели обновиться
-        await nextTick();
-        
-        // Уведомляем о загрузке контента
-        eventBus.emit("A:ContantLoaded", true);
-        
-        // Загружаем первую комнату в 3D сцену
-        const rooms = roomState.getRooms;
-        if (rooms && rooms.length > 0) {
-          const firstRoomId = rooms[0].id;
-          // Небольшая задержка для гарантии обновления данных
+        const currentPath = route.path;
+        const is3DView = currentPath === '/3d';
+
+        if (is3DView) {
+          // Если мы на 3D, конвертируем данные только для 3D
+          roomState.routConvertData('/3d');
+          
+          // Устанавливаем ID проекта в store
+          projectState.setProjectId(id.toString());
+          
+          // Ждем, чтобы данные успели обновиться
           await nextTick();
-          eventBus.emit("A:Load", firstRoomId);
-        }
-        
-        toaster.success("Проект загружен");
-        
-        // Закрываем попап
-        closePopup();
-      } else {
-        // Если мы на 2D или другом маршруте, конвертируем данные для 2D
-        // 3. Конвертируем данные для 3D (чтобы rooms.value был заполнен)
-        roomState.routConvertData('/3d');
-        
-        // 4. Конвертируем данные для 2D (чтобы данные были в правильном формате)
-        roomState.routConvertData('/2d');
-
-        // 5. Устанавливаем ID проекта в store
-        projectState.setProjectId(id.toString());
-
-        // 6. Уведомляем о загрузке контента
-        eventBus.emit("A:ContantLoaded", true);
-
-        toaster.success("Проект загружен");
-
-        // 7. Переходим на 2D конструктор
-        await router.push("/2d");
-        
-        // 8. Ждем готовности C2D и инициализируем слои
-        await nextTick(); // Ждем, чтобы компонент начал монтироваться
-        const c2d = await waitForC2D();
-        
-        if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
-          // Проверяем, что данные есть перед инициализацией
-          const roomsData = schemeTransition.getAllData();
-          if (roomsData && roomsData.length > 0) {
-            c2d.layers.planner.init(true);
-            c2d.layers.doorsAndWindows.init(true);
-          } else {
-            console.warn("Данные проекта не найдены в schemeTransition");
+          
+          // Уведомляем о загрузке контента
+          eventBus.emit("A:ContantLoaded", true);
+          
+          // Загружаем первую комнату в 3D сцену
+          const rooms = roomState.getRooms;
+          if (rooms && rooms.length > 0) {
+            const firstRoomId = rooms[0].id;
+            // Небольшая задержка для гарантии обновления данных
+            await nextTick();
+            
+            // Устанавливаем состояние загрузки перед загрузкой комнаты
+            await roomState.setLoad(false);
+            eventBus.emit("A:Load", firstRoomId);
+            
+            // Ждем, пока сцена отрендерится
+            await waitForSceneReady();
           }
+          
+          toaster.success("Проект загружен");
+          
+          // Закрываем попап
+          closePopup();
         } else {
-          console.warn("C2D не готов после ожидания");
+          // Если мы на 2D или другом маршруте, конвертируем данные для 2D
+          // 3. Конвертируем данные для 3D (чтобы rooms.value был заполнен)
+          roomState.routConvertData('/3d');
+          
+          // 4. Конвертируем данные для 2D (чтобы данные были в правильном формате)
+          roomState.routConvertData('/2d');
+
+          // 5. Устанавливаем ID проекта в store
+          projectState.setProjectId(id.toString());
+
+          // 6. Уведомляем о загрузке контента
+          eventBus.emit("A:ContantLoaded", true);
+
+          toaster.success("Проект загружен");
+
+          // 7. Переходим на 2D конструктор
+          await router.push("/2d");
+          
+          // 8. Ждем готовности C2D и инициализируем слои
+          await nextTick(); // Ждем, чтобы компонент начал монтироваться
+          const c2d = await waitForC2D();
+          
+          if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+            // Проверяем, что данные есть перед инициализацией
+            const roomsData = schemeTransition.getAllData();
+            if (roomsData && roomsData.length > 0) {
+              c2d.layers.planner.init(true);
+              c2d.layers.doorsAndWindows.init(true);
+            } else {
+              console.warn("Данные проекта не найдены в schemeTransition");
+            }
+          } else {
+            console.warn("C2D не готов после ожидания");
+          }
+          
+          // 9. Закрываем попап только после успешной инициализации
+          closePopup();
         }
-        
-        // 9. Закрываем попап только после успешной инициализации
-        closePopup();
+      } catch (error) {
+        console.error("Ошибка применения данных проекта:", error);
+        toaster.error("Ошибка загрузки проекта");
       }
-    } catch (error) {
-      console.error("Ошибка применения данных проекта:", error);
-      toaster.error("Ошибка загрузки проекта");
     }
+  } catch (error) {
+    console.error("Ошибка загрузки проекта:", error);
+    toaster.error("Ошибка загрузки проекта");
+  } finally {
+    isProjectLoading.value = false;
   }
+};
+
+// Ожидание готовности 3D сцены
+const waitForSceneReady = async (timeout = 30000, interval = 100) => {
+  const start = Date.now();
+  return new Promise<void>((resolve) => {
+    const check = () => {
+      if (roomState.getLoad) {
+        resolve();
+        return;
+      }
+      if (Date.now() - start >= timeout) {
+        console.warn("Таймаут ожидания готовности сцены");
+        resolve();
+        return;
+      }
+      setTimeout(check, interval);
+    };
+    check();
+  });
 };
 
 // Сохранение проекта
