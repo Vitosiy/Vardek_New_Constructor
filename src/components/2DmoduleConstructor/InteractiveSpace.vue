@@ -722,10 +722,13 @@ const createSector = ({
     // /** Создаём нумерацию сектора */
     createSectioNum({x, y, width, height, cell: cellData, sectionIndex, cellIndex, rowIndex, extraIndex});
 
-    // /**Создание вертикального драга */
-    createVerticalCut({width, height, cell: cellData, section, sectionIndex, sector, cellIndex, rowIndex, extraIndex});
-    // /**Создание горизонтального драга */
-    createHorozontalCut({width, height, cell: cellData, section, sectionIndex, sector, cellIndex, rowIndex, extraIndex});
+    if(gridType === "module") {
+      // /**Создание вертикального драга */
+      createVerticalCut({width, height, cell: cellData, section, sectionIndex, sector, cellIndex, rowIndex, extraIndex});
+      // /**Создание горизонтального драга */
+      createHorozontalCut({width, height, cell: cellData, section, sectionIndex, sector, cellIndex, rowIndex, extraIndex});
+    }
+
   }
 
   return sector;
@@ -926,7 +929,7 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
   divider.rect(0, 0, getPixelWidth(module.value.moduleThickness + 4), convertTotalHeight);
 
   divider.fill("#4bef61");
-  divider.alpha = 1;
+  divider.alpha = 0;
 
   divider.eventMode = "static";
   divider.cursor = "section-resize";
@@ -1007,7 +1010,7 @@ const createHorozontalCut = ({
 
   divider.rect(_cell.xOffset, _cell.yOffset + pxHeight - getPixelHeight(2), pxWidth, getPixelHeight(module.value.moduleThickness + 4));
   divider.fill("#c53545");
-  divider.alpha = 1;
+  divider.alpha = 0;
   divider.eventMode = "static";
   divider.cursor = "cell-resize";
   divider.section = sectionIndex;
@@ -1542,7 +1545,7 @@ function dragMove(event) {
                 item.height += divideDelta
               }
 
-              extraSize += item.width
+              extraSize += item.height
             })
 
             row.extras[row.extras.length - 1].height += (newTopHeight - extraSize)
@@ -1569,7 +1572,7 @@ function dragMove(event) {
                 item.position.y += divideDelta;
               }
 
-              extraSize += item.width
+              extraSize += item.height
             })
 
             row.extras[row.extras.length - 1].height += (newBottomHeight - extraSize)

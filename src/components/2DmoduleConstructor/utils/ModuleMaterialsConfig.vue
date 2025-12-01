@@ -265,14 +265,14 @@ const changeProfilesWidth = (onSectionSize) => {
           }
         })
 
-        cell.hiTechProfiles.forEach(profile => {
+        /*cell.hiTechProfiles.forEach(profile => {
           if(!profile.isProfile.isBottomHiTechProfile) {
             let delta = newWidth - profile.width
             profile.width += delta;
             profile.size.x = profile.width
             profile.position.x += (-delta / 2);
           }
-        })
+        })*/
       }
     })
 
@@ -286,14 +286,14 @@ const changeProfilesWidth = (onSectionSize) => {
         }
       })
 
-      section.hiTechProfiles.forEach(profile => {
+      /*section.hiTechProfiles.forEach(profile => {
         if(!profile.isProfile.isBottomHiTechProfile) {
           let delta = newWidth - profile.width
           profile.width += delta;
           profile.size.x = profile.width
           profile.position.x += (-delta / 2);
         }
-      })
+      })*/
     }
   })
 

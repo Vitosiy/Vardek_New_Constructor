@@ -346,7 +346,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                         extra.fillings?.forEach((filling) => {
                             let fillingPos = new THREE.Vector3(
-                                filling.distances.left > 0 ? extra.position.x - extra.width / 2 + filling.distances.left : extra.position.x,
+                                filling.isVerticalItem ? extra.position.x - extra.width / 2 + filling.distances.left : extra.position.x,
                                 extra.position.y + filling.distances.bottom - full_horizont_height,
                                 curSection.position.z
                             )
@@ -361,7 +361,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                     row.fillings?.forEach((filling) => {
                         let fillingPos = new THREE.Vector3(
-                            filling.distances.left > 0 ? row.position.x - row.width / 2 + filling.distances.left : row.position.x,
+                            filling.isVerticalItem ? row.position.x - row.width / 2 + filling.distances.left : row.position.x,
                             row.position.y + filling.distances.bottom - full_horizont_height,
                             curSection.position.z
                         )
@@ -376,7 +376,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                 cell.fillings?.forEach((filling) => {
                     let fillingPos = new THREE.Vector3(
-                        filling.distances.left > 0 ? cell.position.x - cell.width / 2 + filling.distances.left : cell.position.x,
+                        filling.isVerticalItem ? cell.position.x - cell.width / 2 + filling.distances.left : cell.position.x,
                         cell.position.y + filling.distances.bottom - full_horizont_height,
                         curSection.position.z
                     )
@@ -391,7 +391,7 @@ export class BuildUniversalModule extends BuildProduct {
 
             section.fillings?.forEach((filling) => {
                 let fillingPos = new THREE.Vector3(
-                    filling.distances.left > 0 ? curSection.position.x - curSection.width / 2 + filling.distances.left : curSection.position.x,
+                    filling.isVerticalItem ? curSection.position.x - curSection.size.x / 2 + filling.distances.left : curSection.position.x,
                     curSection.position.y + filling.distances.bottom - full_horizont_height,
                     curSection.position.z
                 )
