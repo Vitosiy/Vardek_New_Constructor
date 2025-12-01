@@ -97,6 +97,7 @@ export interface HoverPointObject {
 
 export interface FillingObject {
   product: number;
+  isVerticalItem: boolean;
   id: number;
   name: string;
   image: string;
@@ -110,6 +111,7 @@ export interface FillingObject {
   sec: number;
   cell?: number;
   row?: number;
+  extra?: number;
   error?: boolean;
   moduleThickness?: number;
 }
@@ -165,12 +167,22 @@ export interface DrawerFasadeObject extends FasadeObject {
   row?: number | null;
 }
 
+export interface GridRowExtra {
+  number: number;
+  width: number;
+  height: number;
+  position: THREE.Vector2;
+  type: "rowExtra";
+  fillings?: FillingObject[];
+}
+
 export interface GridCellsRow {
   number: number;
   width: number;
   height: number;
   position: THREE.Vector2;
   type: "rowCell";
+  extras?: GridRowExtra[];
   fillings?: FillingObject[];
 }
 

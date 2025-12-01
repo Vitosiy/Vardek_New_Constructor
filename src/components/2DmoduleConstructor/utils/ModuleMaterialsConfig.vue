@@ -265,14 +265,14 @@ const changeProfilesWidth = (onSectionSize) => {
           }
         })
 
-        cell.hiTechProfiles.forEach(profile => {
+        /*cell.hiTechProfiles.forEach(profile => {
           if(!profile.isProfile.isBottomHiTechProfile) {
             let delta = newWidth - profile.width
             profile.width += delta;
             profile.size.x = profile.width
             profile.position.x += (-delta / 2);
           }
-        })
+        })*/
       }
     })
 
@@ -286,14 +286,14 @@ const changeProfilesWidth = (onSectionSize) => {
         }
       })
 
-      section.hiTechProfiles.forEach(profile => {
+      /*section.hiTechProfiles.forEach(profile => {
         if(!profile.isProfile.isBottomHiTechProfile) {
           let delta = newWidth - profile.width
           profile.width += delta;
           profile.size.x = profile.width
           profile.position.x += (-delta / 2);
         }
-      })
+      })*/
     }
   })
 
@@ -851,6 +851,7 @@ onMounted(() => {
   left: 20.8vw;
   top: 0;
 
+  height: 100%;
   width: 100%;
   max-width: 373px;
   max-height: 95vh;
@@ -861,6 +862,7 @@ onMounted(() => {
   &-select {
     display: flex;
     flex-direction: column;
+    width: 100%;
 
     max-height: 96vh;
     overflow-y: scroll;
