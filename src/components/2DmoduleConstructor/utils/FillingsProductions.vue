@@ -50,7 +50,7 @@ const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
 
-const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0});
+const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0, extra: null});
 const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<Object | boolean>(false);
 type workMode = 'config' | 'add';
@@ -78,30 +78,34 @@ const selectCell = (sec, cell = null, row = null, item = 0) => {
   visualizationRef.value.selectCell("fillings", sec, cell, true, row, item);
 };
 
-const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, item = 0) => {
-  selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
+const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, item = 0, extra = null) => {
+  selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item, extra: extra};
 };
 
 const showCurrentCol = (secIndex) => {
   selectCell(secIndex)
 };
 
-const createFillingDataToCheck = (product, currentSpace) => {
+const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false) => {
 
   let width = product.width
   let height = product.height
 
-  if (height > currentSpace.height || product.ACTUAL_DEPT > module.value.depth) {
+  if (!isVerticalItem && (height > currentSpace.height || product.ACTUAL_DEPT > module.value.depth)) {
     return false
   }
 
-  if (width !== currentSpace.width)
+  if (isVerticalItem) {
+    height = currentSpace.height;
+  }
+  else if (width !== currentSpace.width)
     width = currentSpace.width;
 
   let tempFilling = {
     width,
     height,
     data: product,
+    isVerticalItem
   };
 
   return visualizationRef.value.checkPositionFillingToCreate(tempFilling);
@@ -109,13 +113,19 @@ const createFillingDataToCheck = (product, currentSpace) => {
 
 const addFilling = (type, product, oldFillingObject = false) => {
 
-  const {sec, cell, row} = selectedFilling.value
+  const {sec, cell, row, extra} = selectedFilling.value
   const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
   const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
   const { userData } = modelState.getCurrentModel;
   const { PROPS } = userData;
 
-  if (row === null && cell === null && sec === null) {
+  let name = product.NAME?.toLowerCase()
+  let _type = name.includes('полка') ? 'shelf' : name.includes('разделитель') ? 'vertical_shelf' : 'any';
+  _type = isHiTechProfile ? 'profile' : _type;
+
+  const isVerticalItem = _type === "vertical_shelf"
+
+  if (row === null && cell === null && sec === null && extra === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения", "error");
     return;
   }
@@ -141,11 +151,12 @@ const addFilling = (type, product, oldFillingObject = false) => {
   const currentSection = module.value.sections[sec];
   const currentCell = currentSection.cells?.[cell];
   const currentRow = currentCell?.cellsRows?.[row];
+  const currentExtra = currentRow?.extras?.[extra];
 
-  let currentModuleSegment = currentRow || currentCell || currentSection
+  let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
   let currentFillingsArray = []
 
-  const startFillingData = createFillingDataToCheck(product, currentModuleSegment);
+  const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem);
 
   if (!startFillingData) {
     alert("Позиция не найдена");
@@ -164,9 +175,6 @@ const addFilling = (type, product, oldFillingObject = false) => {
     if (moduleProductInfo?.moduleType?.CODE === "wardrobe")
       depth -= 100;
   }
-
-  let _type = product.NAME?.toLowerCase().includes('полка') ? 'shelf' : 'any';
-  _type = isHiTechProfile ? 'profile' : _type;
 
   let width = startFillingData.width;
   let height = startFillingData.height;
@@ -215,6 +223,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
   }
 
   let fillingObject = <FillingObject>{
+    isVerticalItem,
     product: product.ID,
     id: currentFillingsArray.length + 1,
     name: product.NAME,
@@ -229,6 +238,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     cell,
     row,
   };
+
 
   if(isHiTechProfile) {
     fillingObject.isProfile = profileData
@@ -364,6 +374,55 @@ const calcDrawersFasades = (sec, fillingData = false) => {
 }
 const updateFilling = (value, filling, type, render = false) => {
   emit("product-updateFilling", value, filling, type, render);
+};
+
+const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
+  selectCell(secIndex, cellIndex, rowIndex, key);
+
+  const gridCopy = Object.assign({}, module.value);
+
+  const sec = gridCopy.sections[secIndex];
+  const currentColl = sec.cells?.[cellIndex];
+  const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
+
+  const currentfilling = currentRow.fillings[key];
+
+  if (currentfilling?.isProfile?.isBottomHiTechProfile) {
+    alert("Г-образный профиль нельзя перемещать!");
+    return;
+  }
+
+  const prevValue = currentfilling.position.y; //Предыдущее значение
+
+  let delta = +value - currentfilling.distances.bottom
+  const newValue = prevValue - delta
+
+
+  let tmpSector = currentfilling.sector
+  delete currentfilling.sector
+
+  const fillingData = JSON.parse(JSON.stringify(currentfilling));
+  fillingData.position.y = newValue;
+  fillingData.sector = tmpSector;
+
+  const pixiSector = currentRow.sector;
+
+  // Проверяем коллизию
+  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+
+  if (check) {
+    currentfilling.position.y = fillingData.position.y;
+  } else {
+    currentfilling.position.y = prevValue;
+  }
+
+  currentfilling.sector = tmpSector;
+  module.value = gridCopy;
+
+  if (currentfilling.fasade)
+    calcDrawersFasades(secIndex)
+
+  visualizationRef.value.renderGrid();
 };
 
 const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
@@ -702,6 +761,24 @@ const closeMenu = () => {
                           :class="['actions-input--container']"
                       >
                         <input
+                            v-if="filling.isVerticalItem"
+                            type="number"
+                            :step="1"
+                            :max="section.width - filling.width"
+                            min="0"
+                            class="actions-input"
+                            :value="filling.distances?.left"
+                            @input="debounce((event) => {
+                                changeFillingPositionX(
+                                    $event,
+                                    $event.target.value,
+                                    fillingIndex,
+                                    secIndex,
+                                    )
+                                }, 1000)"
+                        />
+                        <input
+                            v-else
                             type="number"
                             :step="1"
                             :max="section.height - filling.height"
