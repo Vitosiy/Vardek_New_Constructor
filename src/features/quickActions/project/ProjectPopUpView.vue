@@ -125,7 +125,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
@@ -215,6 +215,25 @@ const retryLoad = async () => {
   await loadProjects();
 };
 
+// Функция ожидания готовности C2D
+const waitForC2D = async (timeout = 3000, interval = 50) => {
+  const start = Date.now();
+  return new Promise<typeof window.C2D | null>((resolve) => {
+    const check = () => {
+      if (window.C2D?.layers?.planner && window.C2D?.layers?.doorsAndWindows) {
+        resolve(window.C2D);
+        return;
+      }
+      if (Date.now() - start >= timeout) {
+        resolve(null);
+        return;
+      }
+      setTimeout(check, interval);
+    };
+    check();
+  });
+};
+
 // Загрузка проекта по ID
 const loadProject = async (id: string | number) => {
   if (!id) return;
@@ -230,24 +249,50 @@ const loadProject = async (id: string | number) => {
       // 1. Обновляем данные проекта в sceneState
       await sceneState.loadProjectFromData(projectData);
       sceneState.updateProjectParams({});
+      
+      // 2. Устанавливаем данные в schemeTransition
       schemeTransition.setAppData(projectData.rooms);
+      
+      // 3. Конвертируем данные для 3D (чтобы rooms.value был заполнен)
+      const roomState = useRoomState();
+      roomState.routConvertData('/3d');
+      
+      // 4. Конвертируем данные для 2D (чтобы данные были в правильном формате)
+      roomState.routConvertData('/2d');
 
-      // 2. Устанавливаем ID проекта в store
+      // 5. Устанавливаем ID проекта в store
       projectState.setProjectId(id.toString());
 
-      // 4. Уведомляем о загрузке контента
+      // 6. Уведомляем о загрузке контента
       eventBus.emit("A:ContantLoaded", true);
 
       toaster.success("Проект загружен");
 
-      // 5. Переходим на 2D конструктор
+      // 7. Переходим на 2D конструктор
       await router.push("/2d");
-      window.C2D.layers.planner.init(true);
-      window.C2D.layers.doorsAndWindows.init(true);
-      useRoomState().routConvertData('/3d')
+      
+      // 8. Ждем готовности C2D и инициализируем слои
+      await nextTick(); // Ждем, чтобы компонент начал монтироваться
+      const c2d = await waitForC2D();
+      
+      if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+        // Проверяем, что данные есть перед инициализацией
+        const roomsData = schemeTransition.getAllData();
+        if (roomsData && roomsData.length > 0) {
+          c2d.layers.planner.init(true);
+          c2d.layers.doorsAndWindows.init(true);
+        } else {
+          console.warn("Данные проекта не найдены в schemeTransition");
+        }
+      } else {
+        console.warn("C2D не готов после ожидания");
+      }
+      
+      // 9. Закрываем попап только после успешной инициализации
       closePopup();
     } catch (error) {
       console.error("Ошибка применения данных проекта:", error);
+      toaster.error("Ошибка загрузки проекта");
     }
   }
 };
