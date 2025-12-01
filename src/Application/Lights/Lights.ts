@@ -3,6 +3,7 @@
 import * as THREE from "three"
 import * as THREEInterfases from "@/types/interfases"
 import * as THREETypes from "@/types/types"
+import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
@@ -68,7 +69,15 @@ export class AppLights {
         this.scene.add(this.ambientLight)
     }
 
-    setLight(position: { [key: string]: number } | any, lightCount: number) {
+    setLight(position: { [key: string]: number } | any, lightCount: number, wallsGroup: THREE.Object3D) {
+
+
+        const aabb = new THREE.Box3().setFromObject(wallsGroup);
+        const obb = new OBB().fromBox3(aabb);
+        const productSize = new THREE.Vector3();
+
+        console.log(obb, 'OBB')
+
         // Очистка существующих источников света
         this.lights.forEach(light => this.scene.remove(light));
         if (this.ambientLight) {
@@ -92,12 +101,19 @@ export class AppLights {
         }
 
         for (let i = 0; i < count; i++) {
+            console.log(position.width)
             const point = this.addPointLight(this.params.pointLight);
-            const x = 0;
+            const { x, y, z } = obb.center
+            const posZ = z - obb.halfSize.z * 0.5
+            const posY = y + obb.halfSize.y * 0.5 - 20
+
+
+            // const x = position.width * 0.5;
             // Если count = 1, размещаем свет в центре по глубине
-            const z = count === 1 ? 0 : (-position.depth * 0.5) + margin + (i * step);
-            const y = position.height * 0.8;
-            point.position.set(x, y, z);
+            // const z = count === 1 ? 0 : (-position.depth * 0.5) + margin + (i * step);
+            // const z = position.depth * 0.5;
+            // const y = position.height * 0.8;
+            point.position.set(x, posY, posZ);
         }
 
         this.addAmbientLight(this.params.ambientLight);

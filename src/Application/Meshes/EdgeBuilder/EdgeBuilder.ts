@@ -59,7 +59,7 @@ export class EdgeBuilder {
             if (child instanceof THREE.Mesh) {
                 // линии
                 const edge = this.createSingleEdge({ mesh: child, name: object.name, manualParent, material: this.lineMaterial })
-                edgeBody.add(edge)
+                if (edge) edgeBody.add(edge)
 
                 // плоскости
                 const face = this.createSingleFace(child, object.name, manualParent)
@@ -87,6 +87,21 @@ export class EdgeBuilder {
     }
 
     private createSingleEdge({ mesh, name, manualParent, material }: TEdgeParams) {
+
+
+        if (!mesh.geometry || !mesh.geometry.isBufferGeometry) {
+            console.warn('Not ready или не BufferGeometry', mesh.geometry);
+            return null;
+        }
+
+        const posAttr = mesh.geometry.getAttribute('position');
+
+        if (!posAttr || typeof posAttr.count !== 'number') {
+            console.warn('Geometry без position attribute', mesh.geometry);
+            return null;
+        }
+
+
         const edges = new THREE.EdgesGeometry(mesh.geometry)
 
         const meshEdge = new THREE.LineSegments(

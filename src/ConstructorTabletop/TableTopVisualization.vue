@@ -44,6 +44,7 @@ const props = defineProps({
 const emit = defineEmits(["cell-selected", "position-non"]);
 const canvasContainer = ref();
 const selectedCell = ref({ col: 0, row: 0 });
+const curSection = ref(null);
 
 let app: Application,
   roundSectionsContainer: Container,
@@ -594,6 +595,12 @@ const calculateMaxDimensions = (column, colIndex, row, rowIndex, col) => {
 // Выбор сектора, передача в родительский компонент
 const selectCell = (colIndex, rowIndex, parent = false) => {
   selectedCell.value = { col: colIndex, row: rowIndex };
+  curSection.value = {
+    currentColl: props.grid[colIndex],
+    currentRow: props.grid[colIndex][rowIndex],
+  };
+  console.log(curSection.value, "curSection.value");
+
   toggleSectorColor(colIndex, rowIndex);
   if (!parent) emit("cell-selected", colIndex, rowIndex);
 };
@@ -1017,6 +1024,7 @@ defineExpose({
   createHole,
   createRoundCut,
   selectCell,
+  curSection,
   updateTotalHeight,
   destroy,
 });

@@ -442,7 +442,8 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
-        const convert = this.createCutterParams(uslugi)
+        // const convert = this.createCutterParams(uslugi)
+        console.log(uslugi)
         const { width, depth, height } = product_data
         const startCutData = {
             groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы
@@ -455,7 +456,7 @@ export class BuildersHelper extends GlobalsData {
                         height: depth,
                         roundCut: {},
                         holes: [],
-                        serviseData: convert
+                        serviseData: uslugi
 
                     }
                 ]
@@ -466,8 +467,8 @@ export class BuildersHelper extends GlobalsData {
     }
 
     createCutterParams(uslugi) {
-        const SERVISES = CUTTER_PARAMS.CUT_SERVISES
-        console.log(uslugi, ' ====== uslugi =====', SERVISES)
+        // const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        // console.log(uslugi, ' ====== uslugi =====', SERVISES)
 
         const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);

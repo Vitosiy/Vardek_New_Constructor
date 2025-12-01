@@ -120,14 +120,14 @@ const START_PROJECT_PARAMS = {
     default_table_color: null,
     default_fasade_color: 7397,
     default_module_color: 199675,
-    default_fasade_up: 7397,
-    default_fasade_down: 7397,
+    default_fasade_top: 7397,
+    default_fasade_bottom: 7397,
     default_floor: 44013,
     default_wall: 44128,
-    default_module_color_down: null,
-    default_module_color_up: null,
-    default_milling_bottom: null,
-    default_milling_top: null,
+    default_module_color_bottom: null,
+    default_module_color_top: null,
+    default_milling_bottom: 2462671,
+    default_milling_top: 2462671,
     default_palit_bottom: null,
     default_palit_top: null,
     default_handles: 69920,
@@ -136,7 +136,9 @@ const START_PROJECT_PARAMS = {
     default_plinth_color: null,
     default_showcase: 1013628,
     default_milling: 2462671,
+    default_patina: 475428,
     mirror_type: 10336730
+    // 2462671 - фрезф
 }
 
 Object.freeze(START_PROJECT_PARAMS)

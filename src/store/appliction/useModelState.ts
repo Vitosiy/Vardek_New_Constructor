@@ -86,6 +86,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _PRODUCTS = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
     const _PALETTE = computed(() => _APP.value.PALETTE || [])
     const _PLINTH = computed(() => _APP.value.PLINTH || [])
+    const _PROFILE = computed(() => _APP.value.PROFILE || [])
     const _MILLING = computed(() => _APP.value.MILLING || [])
     const _MODELS = computed(() => _APP.value.MODELS || [])
     const _SHOWCASE = computed(() => _APP.value.SHOWCASE || [])
@@ -94,7 +95,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _HANDLES = computed(() => _APP.value.HANDLES || [])
     const _HEM = computed(() => _APP.value.HEM || [])
 
-    console.log(_FASADE_SIZE_RESTRICT.value, '=== 🔥 _FASADE_SIZE_RESTRICT 🔥 ===')
+    // console.log(_FASADE_SIZE_RESTRICT.value, '=== 🔥 _FASADE_SIZE_RESTRICT 🔥 ===')
 
 
     const currentModel = ref<THREE.Object3D | null>(null)
@@ -310,13 +311,6 @@ export const useModelState = defineStore('ModelState', () => {
 
                 const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
                 groupedFasades[groupId] = {
-                    // id: [], size: {
-                    //     MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].HEIGHT : defaultRestrict.PRODUCTS[0].HEIGHT,
-                    //     MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].WIDTH : defaultRestrict.PRODUCTS[0].WIDTH,
-                    //     MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_HEIGHT : defaultRestrict.PRODUCTS[0].MIN_HEIGHT,
-                    //     MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].PRODUCTS[0].MIN_WIDTH : defaultRestrict.PRODUCTS[0].MIN_WIDTH,
-                    // },
-                    // restrict: restrict
 
                     id: [], size: {
                         MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
@@ -324,7 +318,6 @@ export const useModelState = defineStore('ModelState', () => {
                         MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : Infinity,
                         MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : Infinity,
                     },
-                    // restrict: restrict
                 };
             }
 
@@ -332,18 +325,17 @@ export const useModelState = defineStore('ModelState', () => {
             if (!haveShowCase && hasGlass) return
 
             groupedFasades[groupId]['id'].push(facadeId);
-            // groupedFasades['RESTRICT']=_FASADE_SIZE_RESTRICT[section.ID]
+        
         });
 
         // Формирование итогового массива
         const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => {
-            // console.log(groupedFasades[groupId], '==== groupedFasades ====')
             return {
                 NAME: group.NAME,
                 FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
                 SORT: group.SORT,
                 GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
-                // RESTRICT_ID: groupedFasades[groupId] ? groupedFasades[groupId].restrict : null
+             
             }
         }
 
@@ -705,6 +697,7 @@ export const useModelState = defineStore('ModelState', () => {
         _APP,
         _FASADE,
         _PRODUCTS,
+        _PROFILE,
         _HEM,
         _FASADE_TYPE,
         _FASADE_POSITION,
@@ -713,6 +706,7 @@ export const useModelState = defineStore('ModelState', () => {
         _FILLING,
         _MILLING,
         _MODELS,
+        _PALETTE,
         getModels,
 
         setCurrentModel,

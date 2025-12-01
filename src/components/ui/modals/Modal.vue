@@ -40,6 +40,7 @@ onMounted(() => {
         name="modalBody"
         :onModalClose="closeModal"
         :modalCloseSlot="$slots.modalClose"
+        :modalContainer="dialogBody"
       />
     </dialog>
   <!-- </component> -->

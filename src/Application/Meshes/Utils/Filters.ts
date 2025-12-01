@@ -259,6 +259,7 @@ export class Filters extends GlobalsData {
         const profileExept = 251698 // - U-угол: дефолтное  значение 
         const getFilteredData = (data, profile = false) => {
             const filtered = data.filter(el => this._USLUGI[el])
+            
             return filtered.reduce((acc, el) => {
                 const visible = this._USLUGI[el].ID != 98683 // ID Услуги распил
                 let value = profile && el === profileExept

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 //@ts-nocheck
-import { computed } from "vue";
+import { computed, onBeforeMount, watch } from "vue";
 import { _URL } from "@/types/constants";
 import {
   TOptionsMap,
@@ -10,10 +10,27 @@ import {
   TFasadeItem,
 } from "@/types/types";
 
+import { useModelState } from "@/store/appliction/useModelState";
+import { useRoomOptions } from "./useRoomOptons";
+
+const { _FASADE, _MILLING, _PRODUCTS, _PALETTE } = useModelState();
+const { _WALL, _FLOOR } = useRoomOptions();
+
+enum EGlobalDataMap {
+  moduleTop = _FASADE,
+  moduleBottom = _FASADE,
+  fasadsTop = _FASADE,
+  fasadsBottom = _FASADE,
+  wall = _WALL,
+  floor = _FLOOR,
+  plinth = _PRODUCTS,
+  plinthSurfase = _FASADE,
+  palitte = _PALETTE,
+  milling = _MILLING,
+}
+
 interface Props {
-  // palitte: TPalitte[] | null;
   options: TOptionsMap;
-  getOptionImg: (id: number | string, type: string) => string;
 }
 
 const props = defineProps<Props>();
@@ -74,72 +91,6 @@ const handleToggle = (event: Event, key: keyof TOptionsMap) => {
   emit("toToggle", event, key);
 };
 
-const getPalitteIcon = computed(() => {
-  return (id: number | string, palitteData: TPalitte[]) => {
-    let cur;
-    if (palitteData) {
-      cur = palitteData.find((el) => el.ID === id);
-      return cur?.HTML;
-    }
-    return "";
-  };
-});
-
-const getPaliteName = computed(() => {
-  return (id: number | string, palitteData: TPalitte[]) => {
-    let cur;
-    if (palitteData) {
-      cur = palitteData.find((el) => el.ID == id);
-      return cur?.UNAME;
-    }
-    return "";
-  };
-});
-
-const getMillingIcon = computed(() => {
-  return (id: number | string, millingData: TMilling[]) => {
-    let cur;
-    if (millingData) {
-      cur = millingData.find((el) => el.ID === id);
-      return cur?.PREVIEW_PICTURE;
-    }
-    return "";
-  };
-});
-
-const getMillineName = computed(() => {
-  return (id: number | string, millingData: TMilling[]) => {
-    let cur;
-    if (millingData) {
-      cur = millingData.find((el) => el.ID === id);
-      return cur?.NAME;
-    }
-    return "";
-  };
-});
-
-const getPlinthIcon = computed(() => {
-  return (id: number | string, plinthData: TFasadeItem[]) => {
-    let cur;
-    if (plinthData) {
-      cur = plinthData.find((el) => el.ID === id);
-      return cur?.PREVIEW_PICTURE;
-    }
-    return "";
-  };
-});
-
-const getPlinthName = computed(() => {
-  return (id: number | string, plinthData: TFasadeItem[]) => {
-    let cur;
-    if (plinthData) {
-      cur = plinthData.find((el) => el.ID === id);
-      return cur?.NAME;
-    }
-    return "";
-  };
-});
-
 const getContainerType = computed(() => {
   return (type: string) => {
     if (type.includes("fasad") || type.includes("plinth")) {
@@ -148,6 +99,30 @@ const getContainerType = computed(() => {
     return "option-small";
   };
 });
+
+const getOptionData = computed(() => {
+  return (key) => {
+    const globalData = props.options[key];
+    const curOptionId = globalData?.id;
+    const palliteId = globalData.palitte;
+    const millingId = globalData.milling;
+    const plinthId = globalData.plinthSurfase;
+
+    const optData = curOptionId ? EGlobalDataMap[key][curOptionId] : null;
+    const palData = palliteId ? EGlobalDataMap["palitte"][palliteId] : null;
+    const milData = millingId ? EGlobalDataMap["milling"][millingId] : null;
+    const pliData = plinthId ? EGlobalDataMap["plinthSurfase"][plinthId] : null;
+
+    return {
+      option: optData,
+      palitte: palData,
+      milling: milData,
+      plinth: pliData,
+    };
+  };
+});
+
+onBeforeMount(() => {});
 </script>
 
 <template>
@@ -164,10 +139,11 @@ const getContainerType = computed(() => {
         >
           <img
             class="label__img"
-            :src="_URL + props.getOptionImg(item.id, key as string)"
+            :src="_URL + getOptionData(key).option?.PREVIEW_PICTURE"
             alt=""
           />
-          <p class="label__text">{{ item.title }}</p>
+          <p class="label__title">{{ item.title }}</p>
+          <p class="label__text">{{ getOptionData(key).option.NAME }}</p>
         </div>
 
         <div
@@ -183,16 +159,21 @@ const getContainerType = computed(() => {
         >
           <div
             class="label__color"
-            :style="{ backgroundColor: `#${getPalitteIcon(item.palitte, item.palitteData!)}` }"
+            :style="{
+              backgroundColor: `#${
+                getOptionData(key).palitte.RAL ||
+                getOptionData(key).palitte.HTML
+              }`,
+            }"
           ></div>
 
           <p class="label__text">
-            {{ getPaliteName(item.palitte, item.palitteData!) }}
+            {{ getOptionData(key).palitte.UNAME }}
           </p>
         </div>
 
         <div
-          v-if="item?.milling"
+          v-if="item?.milling && getOptionData(key).option.ID !== 7397"
           class="option-label"
           @click="
             millingSelect(
@@ -204,12 +185,12 @@ const getContainerType = computed(() => {
         >
           <img
             class="label__img"
-            :src="_URL + getMillingIcon(item?.milling, item.millingData!)"
+            :src="_URL + getOptionData(key).milling.PREVIEW_PICTURE"
             alt=""
           />
 
           <p class="label__text">
-            {{ getMillineName(item?.milling, item.millingData!) }}
+            {{ getOptionData(key).milling.NAME }}
           </p>
         </div>
 
@@ -226,15 +207,14 @@ const getContainerType = computed(() => {
         >
           <img
             class="label__img"
-            :src="_URL + getPlinthIcon(item?.plinthSurfase, item.plinthData!)"
+            :src="_URL + getOptionData(key).plinth.PREVIEW_PICTURE"
             alt=""
           />
 
           <p class="label__text">
-            {{ getPlinthName(item?.plinthSurfase, item.plinthData!) }}
+            {{ getOptionData(key).plinth.NAME }}
           </p>
         </div>
-        
       </div>
 
       <div class="option__checkbox">
@@ -273,6 +253,7 @@ const getContainerType = computed(() => {
     padding: 10px;
     border-radius: 15px;
     background-color: $bg;
+    position: relative;
   }
   &-full {
     display: flex;
@@ -282,11 +263,16 @@ const getContainerType = computed(() => {
   &-small {
     flex: 46%;
     padding: 10px;
+
+    .option-label {
+      width: 100%;
+    }
   }
 }
 
 .option-label {
   width: calc(100% / 2 - 15px);
+
   display: flex;
   align-items: center;
   gap: 10px;
@@ -317,8 +303,15 @@ const getContainerType = computed(() => {
   background-color: #ffffff;
 }
 
+.label__title {
+  font-size: 12px;
+  position: absolute;
+  top: 0.2rem;
+  right: 0.5rem;
+}
+
 .label__text {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: $strong-grey;
 }

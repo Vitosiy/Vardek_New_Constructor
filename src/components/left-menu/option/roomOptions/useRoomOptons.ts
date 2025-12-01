@@ -19,6 +19,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
 
     const appStore = useAppData()
     const APP = computed(() => appStore.getAppData || {})
+    const _WALL = computed(() => APP.value.WALL || {})
+    const _FLOOR = computed(() => APP.value.FLOOR || {})
 
     const sceneState = useSceneState();
     const modelState = useModelState()
@@ -98,25 +100,29 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             id: defaultWall,
             global: false,
             title: "Оформление стен",
-            label: 'Для всех комнат'
+            label: 'Для всех комнат',
+            prefix: 'wall',
         },
         floor: {
             id: defaultFloor,
             global: false,
             title: "Оформление пола",
-            label: 'Для всех комнат'
+            label: 'Для всех комнат',
+            prefix: 'floor',
         },
         moduleTop: {
             id: defaultModuleTop,
             global: false,
             title: "Цвет корпуса (верхний)",
-            label: 'Для всех комнат'
+            label: 'Для всех комнат',
+             prefix: 'moduleTop',
         },
         moduleBottom: {
             id: defaultModuleBottom,
             global: false,
             title: "Цвет корпуса (нижний)",
-            label: 'Для всех комнат'
+            label: 'Для всех комнат',
+                   prefix: 'moduleBottom',
         },
         fasadsTop: {
             id: defaultFasadeTop,
@@ -125,7 +131,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             global: false,
             title: "Тип фасада (верхний)",
             label: 'Для всех комнат',
-            prefix: 'Top',
+            prefix: 'fasadsTop',
             palitteTitle: 'Цвет Палитры',
             millingTitle: 'Тип Фрезеровки'
         },
@@ -136,7 +142,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             global: false,
             title: "Тип фасада (нижний)",
             label: 'Для всех комнат',
-            prefix: 'Bottom',
+            prefix: 'fasadsBottom',
             palitteTitle: 'Цвет Палитры',
             millingTitle: 'Тип Фрезеровки'
         },
@@ -152,7 +158,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             global: false,
             title: 'Тип цокольных планок',
             label: 'Для всех комнат',
-            plinthTitle: 'Тип фасада цокольных планок'
+            plinthTitle: 'Тип фасада цокольных планок',
+            prefix: 'plinth',
         }
 
     });
@@ -206,7 +213,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         const PRODUCTS = APP.value.CATALOG.PRODUCTS
         const [key, value] = Object.entries(PRODUCTS)[0]
         const fasade = value.FACADE
-        const defaultFasadData = modelState.createCurrentModelFasadesData({ data:fasade, def: true })
+        const defaultFasadData = modelState.createCurrentModelFasadesData({ data: fasade, def: true })
         return defaultFasadData
     }
 
@@ -332,6 +339,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
                 }
                 break;
         }
+
+        console.log(globalOptions.value, 'GLOBAL')
     };
 
     const resetGlobalOptions = () => {
@@ -402,6 +411,9 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     };
 
     return {
+        _WALL,
+        _FLOOR,
+
         getWallsTextures,
         getFloorTextures,
 

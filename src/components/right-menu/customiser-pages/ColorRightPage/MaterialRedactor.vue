@@ -126,7 +126,7 @@ const onSelectMaterial = (data) => {
     FASADE[props.tabIndex].userData.trueSize
   );
 
-  if(!checkConversation) return
+  if (!checkConversation) return;
 
   emit("select_material", data);
 
@@ -154,19 +154,15 @@ const onSelectMaterial = (data) => {
 
   /** @Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value = patinaList.value.length > 0 && isMillingExist.value;
+  // isPatinaExist.value = patinaList.value.length > 0 && isMillingExist.value;
 
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
-  console.log(data, "==== ❌ DATA ❌ ====");
+  // console.log(data, "==== ❌ Параметры выбранного фасада ❌ ====");
 
   isShowcaseExist.value =
-    !data.material?.includes("Alum") && haveShowcase && COLOR !== RESET_COLOR;
-  // showcaseList.value.length > 0 &&
-  //   haveShowcase &&
-  //   ALUM == null &&
-  //   COLOR !== RESET_COLOR;
+    !data.material?.includes("Alum") && haveShowcase && data.id !== RESET_COLOR;
 
   /** @Стёкла */
   glassList.value = modelState.getCurrentGlassData;
@@ -181,18 +177,27 @@ const onSelectMaterial = (data) => {
 
   // ================================================================================================================
 
-  if (millingList.value.length > 0) {
-    const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
+  if (isMillingExist.value) {
+    const { NAME, PREVIEW_PICTURE, ID, PATINAOFF } = millingList.value[0];
     modelState.setMillingId(props.tabIndex, ID);
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+
+    isPatinaExist.value =
+      patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0;
+
+    console.log(isPatinaExist.value, "+++++  isPatinaExist.value +++++");
   } else {
     currentMillingData.value = {};
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
     FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
+    isPatinaExist.value = false;
   }
 
-  currentPatinaData.value = {};
+  if (isPatinaExist.value) {
+    const { NAME, PREVIEW_PICTURE } = patinaList.value[0];
+    currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  }
 
   if (isPalleteExist.value) {
     let { NAME, HTML, ID } =
@@ -239,6 +244,14 @@ const onSelectMilling = (data) => {
 
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const fasadeProps = FASADE_PROPS[props.tabIndex];
+  isPatinaExist.value = data.patina == 0;
+
+  /** @Если у выбранной фркзы нет патина */
+  if (!isPatinaExist.value) {
+    fasadeProps.PATINA = patinaList.value[0].ID;
+    const { NAME, PREVIEW_PICTURE } = patinaList.value[0];
+    currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  }
 
   /** @Отображение_положения_петель */
 
@@ -336,13 +349,14 @@ const deleteSelectedOptions = (type: String) => {
 
     eventBus.emit("A:DelitePatina", props.tabIndex);
 
-    currentPatinaData.value = { name: "", imgSrc: null };
+    currentPatinaData.value = { name: patinaList.value[0].NAME, imgSrc: patinaList.value[0].PREVIEW_PICTURE };
     // FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
     isFasadeTypesExist.value = false;
     fasadeTypesList.value = {};
 
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
+    isPatinaExist.value = false;
   }
 
   if (type === "palette") {
@@ -356,7 +370,8 @@ const deleteSelectedOptions = (type: String) => {
 
   if (type === "patina") {
     eventBus.emit("A:DelitePatina", props.tabIndex);
-    currentPatinaData.value = { name: "", imgSrc: null };
+    const { NAME, PREVIEW_PICTURE } = patinaList.value[0];
+    currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
   }
 
   if (type === "showcase") {
@@ -517,8 +532,10 @@ const prepareData = () => {
 
   /** @Патина */
   if (fasadeData.PATINA?.[0] && isMillingExist.value) {
+    const curMilling = _APP.MILLING[MILLING];
+
     patinaList.value = patinaData;
-    isPatinaExist.value = patinaData.length > 0;
+    isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0;
   }
 
   /** @Стёкла */
