@@ -569,7 +569,7 @@ class Shape extends Helpers {
 
         const pointerdown = (event, graphic) => {
             graphic.cursor = "grabbing";
-            this.select('fillings', this.sector.secIndex, this.sector.cellIndex, true, this.sector.rowIndex)
+            this.select('fillings', this.sector.secIndex, this.sector.cellIndex, true, this.sector.rowIndex, this.sector.extraIndex)
             dragging = true;
             originalPosition = {
                 x: graphic.position.x,
@@ -586,34 +586,61 @@ class Shape extends Helpers {
             if (dragging) {
                 // Вычисляем новые позиции
                 const newY = event.global.y + dragOffset.y;
+                const newX = event.global.x + dragOffset.x;
 
                 // Ограничиваем позицию границами сектора с учетом отступа
                 let adjustedY = newY;
+                let adjustedX = newX;
 
-                // Ограничения по Y
+                // Ограничения по осям
                 adjustedY = Math.max(
                     this.sectorBounds.y + this.paddingTop,
                     Math.min(newY, this.sectorBounds.y + this.sectorBounds.height - self.height - this.paddingBottom)
                 );
+                adjustedX = Math.max(
+                    this.sectorBounds.x,
+                    Math.min(newX, this.sectorBounds.x + this.sectorBounds.width - self.width)
+                );
 
                 // Сохраняем текущую позицию для восстановления в случае коллизии
                 const currentY = graphic.position.y;
+                const currentX = graphic.position.x;
 
-                // Пробуем движение по Y
-                self.graphic.position.y = adjustedY;
-                self.highlightGraphics.position.y = adjustedY;
-                let hasCollisionY = false;
+                if(self.data.isVerticalItem) {
+                    // Пробуем движение по X
+                    self.graphic.position.x = adjustedX;
+                    self.highlightGraphics.position.x = adjustedX;
+                    let hasCollisionX = false;
 
-                for (const otherShape of this.shapes) {
-                    if (self !== otherShape && self.checkOverlap(otherShape)) {
-                        hasCollisionY = true;
-                        break;
+                    for (const otherShape of this.shapes) {
+                        if (self !== otherShape && self.checkOverlap(otherShape, true)) {
+                            hasCollisionX = true;
+                            break;
+                        }
+                    }
+
+                    if (hasCollisionX) {
+                        self.graphic.position.x = currentX;
+                        self.highlightGraphics.position.x = currentX;
                     }
                 }
+                else {
+                    // Пробуем движение по Y
+                    self.graphic.position.y = adjustedY;
+                    self.highlightGraphics.position.y = adjustedY;
+                    let hasCollisionY = false;
 
-                if (hasCollisionY) {
-                    self.graphic.position.y = currentY;
-                    self.highlightGraphics.position.y = currentY;
+                    for (const otherShape of this.shapes) {
+                        if (self !== otherShape && self.checkOverlap(otherShape)) {
+                            hasCollisionY = true;
+                            break;
+                        }
+                    }
+
+                    if (hasCollisionY) {
+                        self.graphic.position.y = currentY;
+                        self.highlightGraphics.position.y = currentY;
+                    }
                 }
             }
         }
@@ -654,44 +681,77 @@ class Shape extends Helpers {
     }
 
     // Проверка перекрытия с другой фигурой
-    checkOverlap(otherShape: Shape) {
+    checkOverlap(otherShape: Shape, isVerticalItem: boolean = false) {
 
         if (this === otherShape)
             return false;
 
-        let thisPosY = this.graphic.position.y
-        let thisHeight = this.height
-        let otherShapePosY = otherShape.graphic.position.y
-        let otherShapeHeight = otherShape.height
+        if(isVerticalItem) {
+            let thisPosX = this.graphic.position.x
+            let thisWidth = this.width
+            let otherShapePosX = otherShape.graphic.position.x
+            let otherShapeWidth = otherShape.width
 
-        if(otherShape.data.type != 'loop') {
-            thisPosY = this.data.fasade ? this.graphic.position.y
-                - this.getPixelHeight(this.data.fasade.height - this.data.fasade.manufacturerOffset - this.data.height + 2)
-                : thisPosY
+            if(['loop', 'vertical_shelf'].includes(otherShape.data.type)) {
+                // Проверка наложения прямоугольников
+                return (
+                    (
+                        thisPosX + thisWidth <= otherShapePosX + otherShapeWidth &&
+                        thisPosX + thisWidth >= otherShapePosX
+                    ) ||
+                    (
+                        thisPosX <= otherShapePosX + otherShapeWidth &&
+                        thisPosX >= otherShapePosX
+                    )
+                ) ||
+                (
+                    (
+                        otherShapePosX + otherShapeWidth <= thisPosX + thisWidth &&
+                        otherShapePosX + otherShapeWidth >= thisPosX
+                    ) ||
+                    (
+                        otherShapePosX <= thisPosX + thisWidth &&
+                        otherShapePosX >= thisPosX
+                    )
+                );
+            }
+            else
+                return false;
+        }
+        else {
+            let thisPosY = this.graphic.position.y
+            let thisHeight = this.height
+            let otherShapePosY = otherShape.graphic.position.y
+            let otherShapeHeight = otherShape.height
 
-            thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
+            if(otherShape.data.type != 'loop') {
+                thisPosY = this.data.fasade ? this.graphic.position.y
+                    - this.getPixelHeight(this.data.fasade.height - this.data.fasade.manufacturerOffset - this.data.height + 2)
+                    : thisPosY
 
-            otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y -
-                this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height)
-                : otherShapePosY
+                thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
 
-            otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
+                otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y -
+                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height)
+                    : otherShapePosY
 
-            if(!(this.data.isProfile && otherShape.data.isProfile)) {
-                if (this.data.isProfile && otherShape.data.fasade) {
-                    thisPosY = this.graphic.position.y - this.getPixelHeight(this.data.isProfile.TYPE_PROFILE === 'l' ? 0 : this.data.isProfile.manufacturerOffset)
-                    thisHeight = this.getPixelHeight(this.data.isProfile.offsetFasades)
-                }
+                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
 
-                if (otherShape.data.isProfile && this.data.fasade) {
-                    otherShapePosY = otherShape.graphic.position.y - this.getPixelHeight(otherShape.data.isProfile.TYPE_PROFILE === 'l' ? 0 : otherShape.data.isProfile.manufacturerOffset)
-                    otherShapeHeight = this.getPixelHeight(otherShape.data.isProfile.offsetFasades)
+                if(!(this.data.isProfile && otherShape.data.isProfile)) {
+                    if (this.data.isProfile && otherShape.data.fasade) {
+                        thisPosY = this.graphic.position.y - this.getPixelHeight(this.data.isProfile.TYPE_PROFILE === 'l' ? 0 : this.data.isProfile.manufacturerOffset)
+                        thisHeight = this.getPixelHeight(this.data.isProfile.offsetFasades)
+                    }
+
+                    if (otherShape.data.isProfile && this.data.fasade) {
+                        otherShapePosY = otherShape.graphic.position.y - this.getPixelHeight(otherShape.data.isProfile.TYPE_PROFILE === 'l' ? 0 : otherShape.data.isProfile.manufacturerOffset)
+                        otherShapeHeight = this.getPixelHeight(otherShape.data.isProfile.offsetFasades)
+                    }
                 }
             }
-        }
 
-        // Проверка наложения прямоугольников
-        return (
+            // Проверка наложения прямоугольников
+            return (
                 (
                     thisPosY + thisHeight <= otherShapePosY + otherShapeHeight &&
                     thisPosY + thisHeight >= otherShapePosY
@@ -711,16 +771,8 @@ class Shape extends Helpers {
                     otherShapePosY >= thisPosY
                 )
             );
-        /*|| (
-                (
-                    this.graphic.position.x + this.width <= otherShape.graphic.position.x + otherShape.width &&
-                    this.graphic.position.x + this.width >= otherShape.graphic.position.x
-                ) ||
-                (
-                    this.graphic.position.x <= otherShape.graphic.position.x + otherShape.width &&
-                    this.graphic.position.x >= otherShape.graphic.position.x
-                )
-            )*/
+        }
+
     }
 
     // Проверка, находится ли указанная позиция внутри сектора
@@ -1235,30 +1287,57 @@ class ShapeAdjuster extends Helpers {
         const bounds = this.getSectorBounds(sector)
 
         const margin = 0;
-        const width = shape.width;
-        const height = shape.height;
+        const {width, height} = shape;
+        const {isVerticalItem} = shape.data;
 
         const origX = shape.graphic.position.x
         const origY = shape.graphic.position.y
-        const x = bounds.x
 
-        for (let i = 0; i < bounds.height - bounds.y - height; i++) {
+        if(isVerticalItem) {
+            const y = bounds.y
+            let maxX = bounds.x + bounds.width
+
+            for (let i = 0; i < maxX - bounds.x - width; i++) {
+
+                const x = this.convertToTen(bounds.x + (bounds.width - width) - i);
+
+                shape.graphic.position.x = x;
+                shape.graphic.position.y = y;
+
+                if (
+                    !sector.shapes.some(
+                        (other) => other !== shape && shape.checkOverlap(other, isVerticalItem)
+                    )
+                ) {
+                    shape.graphic.position.x = origX;
+                    shape.graphic.position.y = origY;
+                    return {x, y};
+                }
+            }
+        }
+        else {
+            const x = bounds.x
+            let maxY = bounds.y + bounds.height
+
+            for (let i = 0; i < maxY - bounds.y - height; i++) {
 
             const y = this.convertToTen(bounds.y + (bounds.height - height) - i);
 
-            shape.graphic.position.x = x;
-            shape.graphic.position.y = y;
+                shape.graphic.position.x = x;
+                shape.graphic.position.y = y;
 
-            if (
-                !sector.shapes.some(
-                    (other) => other !== shape && shape.checkOverlap(other)
-                )
-            ) {
-                shape.graphic.position.x = origX;
-                shape.graphic.position.y = origY;
-                return {x, y};
+                if (
+                    !sector.shapes.some(
+                        (other) => other !== shape && shape.checkOverlap(other)
+                    )
+                ) {
+                    shape.graphic.position.x = origX;
+                    shape.graphic.position.y = origY;
+                    return {x, y};
+                }
             }
         }
+
 
         shape.graphic.position.x = origX;
         shape.graphic.position.y = origY;

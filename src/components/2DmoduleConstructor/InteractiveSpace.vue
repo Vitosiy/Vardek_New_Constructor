@@ -664,6 +664,7 @@ const createSector = ({
   sector.secIndex = sectionIndex;
   sector.cellIndex = cellIndex;
   sector.rowIndex = rowIndex;
+  sector.extraIndex = extraIndex;
 
   const cell = new Section(cellData, width, height, sector, gridType === mode.value);
   const seleted = gridType === "fasades" ? selectedFasade : gridType === "filling" ? selectedFilling : selectedCell;
@@ -672,6 +673,7 @@ const createSector = ({
       seleted.value.sec === sectionIndex &&
       seleted.value.cell === cellIndex &&
       seleted.value.row === rowIndex &&
+      seleted.value.extra === extraIndex &&
       (seleted.value.item === undefined || seleted.value.item === itemIndex)
   ) {
     cell.highlightGraphics.visible = true;
@@ -825,6 +827,7 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
   const xOffset = cell.xOffset || x;
   const yOffset = cell.yOffset || y;
 
+
   let text
 
   if(sectionIndex === null) {
@@ -838,7 +841,7 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
     text += `.${extraIndex + 1}`
 
   if (itemIndex !== null)
-    text += ` ${itemIndex + 1}`
+    text += ` ${itemIndex}`
 
   const cellNumber = new Text({
     text: text,
@@ -1087,7 +1090,7 @@ const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = nu
       break;
   }
   if (!parent)
-    emit("cell-selected", sectionIndex, cellIndex, type, rowIndex, extraIndex);
+    emit("cell-selected", sectionIndex, cellIndex, type, rowIndex, item, extraIndex);
 };
 
 const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null, extraIndex = null) => {

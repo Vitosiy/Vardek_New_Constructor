@@ -97,6 +97,7 @@ export interface HoverPointObject {
 
 export interface FillingObject {
   product: number;
+  isVerticalItem: boolean;
   id: number;
   name: string;
   image: string;
