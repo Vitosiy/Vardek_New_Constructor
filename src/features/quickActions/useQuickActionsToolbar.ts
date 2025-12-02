@@ -83,7 +83,7 @@ export const useQuickActionsToolbar = () => {
   }
 
   // Обработка подтверждения сохранения с названием проекта
-  const handleSaveConfirm = async (projectName: string, onSuccess?: () => void) => {
+  const handleSaveConfirm = async (projectName: string, onSuccess?: () => void, kpFlag: boolean = false) => {
     if (!projectName.trim()) {
       toaster.error("Введите название проекта");
       return false;
@@ -95,7 +95,7 @@ export const useQuickActionsToolbar = () => {
       // Обновляем название проекта перед сохранением
       sceneState.updateProjectParams({ project_name: projectName as any });
 
-      const result = await projectAPI.saveProject(projectState.currentProjectId, projectName);
+      const result = await projectAPI.saveProject(projectState.currentProjectId, projectName, kpFlag);
 
       if (result.success) {
         if (projectState.currentProjectId) {
