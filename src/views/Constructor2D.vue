@@ -102,7 +102,6 @@ onMounted(async () => {
     // if (loader) {
     //   (loader as HTMLElement).style.display = 'none';
     // }
-    console.log(useBasketStore().syncBasket())
     const rooms = schemeTransition.getAllData();
     if (rooms.length === 0) {
       await loadBlankRoom();
