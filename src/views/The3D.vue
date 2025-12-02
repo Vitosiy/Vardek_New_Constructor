@@ -622,7 +622,13 @@ const openTableRedactor = () => {
 
   isModalOpen.value = true;
 
-  const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
+  console.log(product.value);
+
+  const parent = userData.groupId
+    ? APP!._scene!.getObjectByProperty("id", userData.groupId)
+    : product.value;
+
+  console.log(parent, "parent");
 
   if (parent) {
     modelState.setCurrentRaspilParent(parent);
@@ -651,7 +657,6 @@ const closeTableRedactor = () => {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
   }
   modelState.setCurrentRaspilParent(false);
-
 };
 
 const deliteTable = () => {
@@ -716,12 +721,15 @@ watch(
       <div class="controller-left">
         <img class="left-line" src="@/assets/svg/right-menu/left-line.svg" />
         <ControllerButton
+          v-if="Object.keys(CutData).length == 0 && !universalModuleData"
+        />
+        <!-- <ControllerButton
           v-if="
             Object.keys(CutData).length == 0 &&
             modelState.getCurrentModel?.name != 'MODEL' &&
             !universalModuleData
           "
-        />
+        /> -->
         <ContentControllerButton
           @click="duplicateProduct"
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"

@@ -30,10 +30,10 @@ export const useSceneState = defineStore('SceneState', () => {
     const currentProjectParams = ref<IProjectParams>(startParamsClone)
 
     const keys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
-        moduleTop: 'default_module_color_up',
-        moduleBottom: 'default_module_color_down',
-        fasadsTop: 'default_fasade_up',
-        fasadsBottom: 'default_fasade_down',
+        moduleTop: 'default_module_color_top',
+        moduleBottom: 'default_module_color_bottom',
+        fasadsTop: 'default_fasade_top',
+        fasadsBottom: 'default_fasade_bottom',
     };
 
     const externalPalitteKeys: Partial<Record<keyof TOptionsMap, keyof IProjectParams>> = {
@@ -43,109 +43,6 @@ export const useSceneState = defineStore('SceneState', () => {
 
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
-
-    // const updateProjectParams = ({
-    //     rooms,
-    //     camera,
-    //     lights,
-    //     height_clamp,
-    //     default_table_color,
-    //     table_top_type_auto,
-    //     default_fasade_up,
-    //     default_fasade_down,
-    //     default_fasade_color,
-    //     default_floor,
-    //     default_wall,
-    //     default_module_color_down,
-    //     default_module_color_up,
-    //     default_module_color,
-    //     default_milling_down,
-    //     default_milling_up,
-    //     default_palit_down,
-    //     default_palit_up,
-    //     default_table_model,
-    //     default_handles,
-    //     default_plinth_body,
-    //     default_plinth_color,
-    //     default_overlay_id,
-    //     project_name
-
-    // }: IProjectParams) => {
-    //     currentProjectParams.value = {
-    //         rooms: ((rooms) => {
-    //             if (rooms) {
-    //                 rooms.forEach(el => {
-    //                     console.log(el.content)
-    //                 })
-    //                 return rooms
-    //             }
-    //             return currentProjectParams.value.rooms
-
-
-    //         })(rooms),
-    //         camera: camera ?? startProjectParams.value.camera as THREEInterfases.ICameraData,
-    //         lights: lights ?? startProjectParams.value.lights,
-    //         height_clamp: height_clamp ?? startProjectParams.value.height_clamp,
-    //         table_top_type_auto: table_top_type_auto ?? startProjectParams.value.table_top_type_auto,
-    //         default_table_color: default_table_color ?? startProjectParams.value.default_table_color,
-    //         default_fasade_up: default_fasade_up ?? startProjectParams.value.default_fasade_up,
-    //         default_fasade_down: default_fasade_down ?? startProjectParams.value.default_fasade_down,
-    //         default_fasade_color: default_fasade_color ?? startProjectParams.value.default_fasade_color,
-    //         default_floor: default_floor ?? startProjectParams.value.default_floor,
-    //         default_wall: default_wall ?? startProjectParams.value.default_wall,
-    //         default_module_color_down: default_module_color_down ?? startProjectParams.value.default_module_color_down,
-    //         default_module_color_up: default_module_color_up ?? startProjectParams.value.default_module_color_up,
-    //         default_module_color: default_module_color ?? startProjectParams.value.default_module_color,
-    //         default_milling_down: default_milling_down ?? startProjectParams.value.default_milling_down,
-    //         default_milling_up: default_milling_up ?? startProjectParams.value.default_milling_up,
-    //         default_palit_down: default_palit_down ?? startProjectParams.value.default_palit_down,
-    //         default_palit_up: default_palit_up ?? startProjectParams.value.default_palit_up,
-    //         default_table_model: default_table_model ?? startProjectParams.value.default_table_model,
-    //         default_handles: default_handles ?? startProjectParams.value.default_handles,
-    //         default_plinth_body: default_plinth_body ?? startProjectParams.value.default_plinth_body,
-    //         default_plinth_color: default_plinth_color ?? startProjectParams.value.default_plinth_color,
-    //         default_overlay_id: default_overlay_id ?? startProjectParams.value.default_overlay_id,
-    //         project_name: project_name ?? startProjectParams.value.project_name
-
-    //     } as IProjectParams;
-
-
-    //     // const clone = currentProjectParams.value.rooms?.map(item => {
-    //     //     return item
-    //     // })
-
-    //     // const parseData = clone.map(elem => {
-    //     //     const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
-    //     //     return {
-    //     //         ...elem,
-    //     //         content: content
-    //     //     }
-    //     // })
-
-    //     // console.log(parseData)
-
-
-    //     // const parseData = clone.map(elem => {
-    //     //     return {
-    //     //         ...elem,
-    //     //         content: elem.content.map((el) => {
-    //     //             if (typeof el == 'string') {
-    //     //                 return JSON.parse(el)
-    //     //             }
-    //     //             return el
-    //     //         })
-    //     //     }
-    //     // })
-
-
-
-    //     // console.log(parseData, 'parseData')
-
-    //     // schemeTransition.setAppData(parseData)
-    //     // roomState.mergeRoomsData();
-
-    // };
-
 
     const mergeRooms = (
         currentRooms: IRoom[] | undefined,

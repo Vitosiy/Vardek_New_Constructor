@@ -65,8 +65,6 @@ onBeforeMount(() => {
   getCurrendHendleData(figureFasad.value.props);
   handlePos.value = getControllerData();
 
-  console.log(handlePos.value)
-
   controllerVisible.value = checkControllerVisible.value;
 });
 
@@ -82,12 +80,6 @@ const handleTabChange = ({ index, tab }: ITabChangeParams) => {
   getCurrendHendleData(tab.props);
   handlePos.value = getControllerData();
 
-  console.log(
-    tab.props.HANDLES.drawer === null,
-    tab.props.HANDLES.id !== clearId,
-    handlePos.value.length > 1,
-    tab.props.HANDLES.id
-  );
 };
 
 const getCurrendHendleData = (prop) => {

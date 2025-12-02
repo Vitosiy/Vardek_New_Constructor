@@ -101,7 +101,6 @@ const saveProject = async () => {
       user_id: "14240",
     },
   };
-  console.log(data);
 
   await postRequest(`${_POST_URL}`, data);
 

@@ -49,8 +49,6 @@ export class BuildersHelper extends GlobalsData {
             props.CONFIG.EXPRESSIONS
         )
 
-        console.log(model_data)
-
         return model_data
     };
 
@@ -190,7 +188,6 @@ export class BuildersHelper extends GlobalsData {
             return func();
         } catch (error) {
             console.log(expression, '---"Недопустимое выражение!"')
-
             return "Недопустимое выражение!";
         }
     }
@@ -442,7 +439,7 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
-        const convert = this.createCutterParams(uslugi)
+
         const { width, depth, height } = product_data
         const startCutData = {
             groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы
@@ -455,7 +452,7 @@ export class BuildersHelper extends GlobalsData {
                         height: depth,
                         roundCut: {},
                         holes: [],
-                        serviseData: convert
+                        serviseData: uslugi
 
                     }
                 ]
@@ -466,8 +463,8 @@ export class BuildersHelper extends GlobalsData {
     }
 
     createCutterParams(uslugi) {
-        const SERVISES = CUTTER_PARAMS.CUT_SERVISES
-        console.log(uslugi, ' ====== uslugi =====', SERVISES)
+        // const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        // console.log(uslugi, ' ====== uslugi =====', SERVISES)
 
         const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);

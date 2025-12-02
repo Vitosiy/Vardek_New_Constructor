@@ -151,13 +151,10 @@ const useDerectionAction = () => {
                 return map;
             }, {} as Record<FasadeTextAlignAction, ActionButton>);
 
-            console.log(actionsMap, 'actionsMap')
-            console.log(handlePosition, 'handlePosition')
 
             const refactor = handlePosition
                 .map((key): ActionButton | null => {
                     let actionValue: FasadeTextAlignAction | undefined;
-                    console.log(key, '--key')
                     if (typeof key === 'string') {
 
                         actionValue = FasadeTextAlignAction[key as keyof typeof FasadeTextAlignAction];
@@ -167,7 +164,6 @@ const useDerectionAction = () => {
                         const enumKey = key.action as keyof typeof FasadeTextAlignAction;
                         actionValue = FasadeTextAlignAction[enumKey];
 
-                        console.log(enumKey, actionValue, '--actionValue')
 
                         if (actionValue !== undefined && actionsMap[actionValue]) {
                             actionsMap[actionValue].id = key.id;
@@ -179,7 +175,6 @@ const useDerectionAction = () => {
                 })
                 .filter((item): item is ActionButton => item !== null);
 
-            console.log(refactor, 'refactor');
             return refactor;
         }
 

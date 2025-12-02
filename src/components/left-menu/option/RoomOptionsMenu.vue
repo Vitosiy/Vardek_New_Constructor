@@ -15,6 +15,7 @@ import type {
   TOptionsMap,
   TTextureActionMap,
   TTextureItem,
+  TFasadeItem,
   MenuType,
   TPalitte,
   TOptionItem,
@@ -28,6 +29,7 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useRoomOptions } from "./roomOptions/useRoomOptons";
+import { useModelState } from "@/store/appliction/useModelState";
 
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import RoomList from "./roomOptions/RoomList.vue";
@@ -47,7 +49,44 @@ const sceneState = useSceneState();
 const roomState = useRoomState();
 const menuStore = useMenuStore();
 const appData = useAppData();
-const roomOptions = useRoomOptions();
+
+const { _FASADE, _MILLING } = useModelState();
+
+const {
+  updateOption,
+  apllyProjectWall,
+  getDefaultModuleData,
+  getDefaultFasadeData,
+  getWallsTextures,
+  getFloorTextures,
+  getDefaultTotalPlinthData,
+  getDefaultTableTopData,
+  getGlobalOptions,
+  getDefaultPalitData,
+  getDefaultMillingData,
+  getTotalPlinthColorData,
+
+  getHeightClamp,
+  getQuality,
+  getShadowValue,
+  getRefractionValue,
+  getPointLightRange,
+  getAmbientLightRange,
+
+  setGlobalPalitte,
+  setGlobalMilling,
+  setGlobalPlinth,
+  setQuality,
+
+  setHeightClamp,
+  setLightRange,
+  setRefractionValue,
+  setShadowValue,
+
+  resetGlobalOptions,
+  updateOptionGlobal,
+  apllyProjectFloor,
+} = useRoomOptions();
 
 const clampHeight = ref<number | null | string>(null);
 const quality = ref<TQuality[] | null>(null);
@@ -62,7 +101,7 @@ const refraction = ref<boolean>(false);
 const currentOption = ref<keyof TTextureActionMap | null>(null);
 const currentOptionLable = ref<string | null>(null);
 
-const optionsData = ref<{ [key: string]: any } | null | any[]>(null);
+const optionsData = ref<Record<string, number> | null>(null);
 const extrasSelect = ref<boolean>(false);
 
 const roomRef = ref<HTMLElement | null>(null);
@@ -92,16 +131,18 @@ const optionsType = ref<TTextureActionMap>({
 
 const globalOptions = ref<TOptionsMap | null>(null);
 
+const currentRedactor = ref<boolean>(false);
+
 onBeforeMount(() => {
   prepareOptions();
 });
 
 onUnmounted(() => {
-  roomOptions.setHeightClamp(clampHeight.value);
-  roomOptions.setLightRange("pointLight", pointLight.value);
-  roomOptions.setLightRange("ambientLight", ambientLight.value);
-  roomOptions.setRefractionValue(refraction.value);
-  roomOptions.setShadowValue(shadows.value);
+  setHeightClamp(clampHeight.value);
+  setLightRange("pointLight", pointLight.value);
+  setLightRange("ambientLight", ambientLight.value);
+  setRefractionValue(refraction.value);
+  setShadowValue(shadows.value);
   extrasSelect.value = false;
 });
 
@@ -110,40 +151,55 @@ defineExpose({ roomRef });
 const prepareOptions = () => {
   const { wall, floor } = roomState.getCurrentRoomParams as IWallSizes;
 
-  roomOptions.updateOption("wall", wall as number);
-  roomOptions.updateOption("floor", floor as number);
+  updateOption("wall", wall as number);
+  updateOption("floor", floor as number);
 
   visualData.value = {
-    module: roomOptions.getDefaultModuleData(),
-    fasade: roomOptions.getDefaultFasadeData(),
-    // table: roomOptions.getDefaultTableTopData(),
-    walls: roomOptions.getWallsTextures(),
-    floor: roomOptions.getFloorTextures(),
-    plinth: roomOptions.getDefaultTotalPlinthData(),
+    module: getDefaultModuleData(),
+    fasade: getDefaultFasadeData(),
+    // table: getDefaultTableTopData(),
+    walls: getWallsTextures(),
+    floor: getFloorTextures(),
+    plinth: getDefaultTotalPlinthData(),
   };
 
-  globalOptions.value = roomOptions.getGlobalOptions;
+  globalOptions.value = getGlobalOptions;
   const { fasadsBottom, fasadsTop, plinth } = globalOptions.value;
   prepareExtras([fasadsBottom, fasadsTop, plinth]);
 
-  clampHeight.value = roomOptions.getHeightClamp;
-  quality.value = roomOptions.getQuality;
+  clampHeight.value = getHeightClamp;
+  quality.value = getQuality;
   currentQuality.value = quality.value?.find((el) => el.active) ?? null;
 
-  shadows.value = roomOptions.getShadowValue;
-  refraction.value = roomOptions.getRefractionValue;
-  pointLight.value = roomOptions.getPointLightRange;
-  ambientLight.value = roomOptions.getAmbientLightRange;
+  shadows.value = getShadowValue;
+  refraction.value = getRefractionValue;
+  pointLight.value = getPointLightRange;
+  ambientLight.value = getAmbientLightRange;
 };
 
 const prepareExtras = (arr: TOptionItem[]) => {
   for (const el in arr) {
     const option = arr[el];
-    const { isPalitte } = checkExtras(option.id);
-    if (option.palitte) {
-      option.palitteData = isPalitte;
-    }
   }
+};
+
+const checkExtras = (
+  fasadeId?: number | string,
+  curOption?: string
+): TExtras => {
+  const defaultId = globalOptions.value![curOption];
+
+  const id = curOption?.id ?? fasadeId;
+
+  const palitte = getDefaultPalitData(id!);
+  const milling = getDefaultMillingData(id!);
+  const plinth = getTotalPlinthColorData(id);
+
+  return {
+    isPalitte: palitte.length > 0 ? palitte : null,
+    isMilling: milling.length > 0 ? milling : null,
+    isPlinth: plinth.length > 0 ? plinth : null,
+  };
 };
 
 const closeMenu = (menuType: MenuType) => {
@@ -156,11 +212,10 @@ const changeHeightClamp = (value: number | null) => {
 };
 
 const loadRoom = async (id: number) => {
-
   await roomState.setLoad(false);
-  await nextTick(); 
+  await nextTick();
   setTimeout(() => {
-    roomOptions.resetGlobalOptions();
+    resetGlobalOptions();
     eventBus.emit("A:Load", id);
     eventBus.emit("A:ContantLoaded", false);
     eventBus.emit("A:DrawingMode", false);
@@ -174,7 +229,7 @@ const deliteRoom = (value: number) => {
 
 const changeQuality = (data: TQuality) => {
   currentQuality.value = data;
-  roomOptions.setQuality(data.value);
+  setQuality(data.value);
   eventBus.emit("A:Quality", data.value);
 };
 
@@ -195,30 +250,57 @@ const toggleRefraction = (value: boolean) => {
 };
 
 const getOption = (value: keyof TTextureActionMap, title: string) => {
-  // if (value == currentOption.value) {
-  //   // optionsData.value = null;
-  //   // currentOption.value = null;
-  //   return;
-  // }
   currentOption.value = value;
 
   switch (value) {
     case "plinth":
-      optionsData.value = Object.values(visualData.value.plinth);
+      optionsData.value = {
+        type: "plinth",
+        data: Object.values(visualData.value.plinth),
+      };
+      currentRedactor.value = false;
       break;
     case "wall":
-      optionsData.value = Object.values(visualData.value.walls);
+      optionsData.value = {
+        type: "wall",
+        data: Object.values(visualData.value.walls),
+      };
+      currentRedactor.value = false;
       break;
     case "floor":
-      optionsData.value = Object.values(visualData.value.floor);
+      optionsData.value = {
+        type: "floor",
+        data: Object.values(visualData.value.floor),
+      };
+      currentRedactor.value = false;
       break;
     case "moduleTop":
+      optionsData.value = {
+        type: "moduleTop",
+        data: Object.values(visualData.value.module),
+      };
+      currentRedactor.value = false;
+      break;
     case "moduleBottom":
-      optionsData.value = Object.values(visualData.value.module);
+      optionsData.value = {
+        type: "moduleBottom",
+        data: Object.values(visualData.value.module),
+      };
+      currentRedactor.value = false;
       break;
     case "fasadsTop":
+      optionsData.value = {
+        type: "fasadsTop",
+        data: visualData.value.fasade,
+      };
+      currentRedactor.value = true;
+      break;
     case "fasadsBottom":
-      optionsData.value = visualData.value.fasade as [];
+      optionsData.value = {
+        type: "fasadsBottom",
+        data: visualData.value.fasade,
+      };
+      currentRedactor.value = true;
       break;
     // case "tableTop":
     //   optionsData.value = Object.values(visualData.value.table);
@@ -229,17 +311,14 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
 };
 
 const totalSelect = (event: Event, value: keyof TOptionsMap) => {
-  roomOptions.updateOptionGlobal(
-    value,
-    (event.target as HTMLInputElement).checked
-  );
-  const selectOption = roomOptions.getGlobalOptions[value];
+  updateOptionGlobal(value, (event.target as HTMLInputElement).checked);
+  const selectOption = getGlobalOptions[value];
 
   if (selectOption) {
     switch (value) {
       case "wall":
         if (selectOption.global) {
-          roomOptions.apllyProjectWall(selectOption.id);
+          apllyProjectWall(selectOption.id);
           sceneState.updateStartRoomData(value, selectOption.id);
           return;
         }
@@ -247,7 +326,7 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
         break;
       case "floor":
         if (selectOption.global) {
-          roomOptions.apllyProjectFloor(selectOption.id);
+          apllyProjectFloor(selectOption.id);
           sceneState.updateStartRoomData(value, selectOption.id);
           return;
         }
@@ -263,142 +342,156 @@ const totalSelect = (event: Event, value: keyof TOptionsMap) => {
   }
 };
 
-const selectOption = (value: TTextureItem) => {
-  let data;
-  switch (currentOption.value) {
-    case "moduleTop":
-    case "moduleBottom":
-    case "fasadsTop":
-    case "fasadsBottom":
-    // case "tableTop":
-    case "plinth":
-      data = { data: value, type: currentOption.value };
-      break;
-    default:
-      data = value.ID;
-      break;
+const selectOption = (
+  value: TTextureItem | TFasadeItem,
+  type: string,
+  extras: string | undefined
+) => {
+  const optionMap = [
+    "moduleTop",
+    "moduleBottom",
+    "fasadsTop",
+    "fasadsBottom",
+    "plinth",
+  ];
+
+  const data = optionMap.includes(type)
+    ? { data: value, type: type }
+    : value.ID;
+
+  const curOption = globalOptions.value![type];
+  const curOptionId = extras ? curOption.id : value.ID;
+
+  const { isPalitte, isMilling, isPlinth } = checkExtras(curOptionId, type);
+
+
+  const paramToCheck = extras
+    ? globalOptions.value[type][extras]
+    : curOption.id;
+
+  if (paramToCheck === value.ID) return;
+
+  if (!optionMap.includes(type)) {
+    eventBus.emit(optionsType.value[type], value.ID);
+    updateOption(type, value.ID);
+    return;
   }
 
-  const checkMillingSelect = "type_showcase" in value;
+  if (type.includes("module") && !extras) {
+    updateOption(type, value.ID);
+    eventBus.emit(optionsType.value[type], data);
 
-  if (!currentOption.value) return;
-
-  const curOption = globalOptions.value![currentOption.value];
-
-  if (curOption.id === value.ID) return;
-
-  if (!extrasSelect.value) {
-    if (curOption.id != value.ID) {
-      roomOptions.setGlobalPalitte(null, currentOption.value);
-      roomOptions.setGlobalMilling(null, currentOption.value);
-      roomOptions.setGlobalPlinth(null, currentOption.value);
-    }
-    curOption.id = value.ID;
+    return;
   }
-  const { isPalitte, isMilling, isPlinth } = checkExtras(value.ID);
 
-  if (isPlinth) {
-    curOption.plinthData = isPlinth;
-  } else {
+  if (type.includes("fasad") && !extras) {
+
     curOption.palitteData = isPalitte;
     curOption.millingData = isMilling;
-  }
 
-  const startMill = curOption.milling;
-  const startPlinth = curOption.plinthSurfase;
-  // const startPall = curOption.palitte;
-
-  if (isPlinth && curOption) {
-    if (curOption.plinthSurfase === null) {
-      if (isPlinth.length > 0) {
-        if (isPlinth[0] != null) {
-          roomOptions.setGlobalPlinth(isPlinth[0].ID, currentOption.value);
-          eventBus.emit(optionsType.value["plinthColor"], data);
-        } else {
-          roomOptions.setGlobalPlinth(null, currentOption.value);
-          eventBus.emit(optionsType.value["plinthColor"], data);
-        }
-      } else {
-        roomOptions.setGlobalPlinth(null, currentOption.value);
-        eventBus.emit(optionsType.value["plinthColor"], data);
-      }
+    if (isPalitte?.length > 0) {
+      setGlobalPalitte(isPalitte[0].ID, type);
     } else {
-      roomOptions.setGlobalPlinth(value.ID, currentOption.value);
-      eventBus.emit(optionsType.value["plinthColor"], data);
+      setGlobalPalitte(null, type);
     }
 
-    if (startPlinth === null) {
-      roomOptions.updateOption(currentOption.value, value.ID);
-      eventBus.emit(optionsType.value["plinthColor"], data);
+    if (isMilling?.length > 0) {
+      setGlobalMilling(isMilling[0].ID, type);
+    } else {
+      setGlobalMilling(null, type);
     }
+
+    const dataToEvent = {
+      data: value,
+      palitte: curOption.palitte,
+      milling: _MILLING[curOption.milling],
+      type: type,
+    };
+
+
+    updateOption(type, value.ID);
+    eventBus.emit(optionsType.value[type], dataToEvent);
 
     return;
   }
 
-  // Ветка 1: если есть палитра
-  if (isPalitte && curOption) {
-    if (curOption.palitte === null) {
-      if (isPalitte.length > 0) {
-        roomOptions.setGlobalPalitte(isPalitte[0].ID, currentOption.value);
-      } else {
-        roomOptions.setGlobalPalitte(null, currentOption.value);
-      }
+  if (type.includes("plinth") && !extras) {
+    curOption.plinthData = isPlinth;
+
+    if (isPlinth?.length > 0 && isPlinth[0] != null) {
+      setGlobalPlinth(isPlinth[0].ID, type);
     } else {
-      if (!checkMillingSelect) {
-        roomOptions.setGlobalPalitte(value.ID, currentOption.value);
-        eventBus.emit(optionsType.value["palitteTotal"], data);
-      }
-    }
-    // внутри палитры дополнительно проверяем milling
-    if (isMilling && checkMillingSelect) {
-      if (curOption.milling === null) {
-        if (isMilling.length > 0) {
-          roomOptions.setGlobalMilling(isMilling[0].ID, currentOption.value);
-        } else {
-          roomOptions.setGlobalMilling(null, currentOption.value);
-        }
-      } else {
-        roomOptions.setGlobalMilling(value.ID, currentOption.value);
-        eventBus.emit(optionsType.value["millingTotal"], data);
-      }
+      setGlobalPlinth(null, type);
     }
 
-    if (isPalitte && isMilling && curOption) {
-      if (startMill === null) {
-        roomOptions.updateOption(currentOption.value, value.ID);
-        eventBus.emit(optionsType.value[currentOption.value], data);
-      }
-    }
-    return; // если палитра true, на этом завершаем
-  }
-
-  // Ветка 2: палитры нет, но есть milling
-  if (!isPalitte && isMilling && curOption && checkMillingSelect) {
-    if (curOption.milling === null) {
-      if (isMilling.length > 0) {
-        roomOptions.setGlobalMilling(isMilling[0].ID, currentOption.value);
-      } else {
-        roomOptions.setGlobalMilling(null, currentOption.value);
-      }
-    } else {
-      roomOptions.setGlobalMilling(value.ID, currentOption.value);
-      eventBus.emit(optionsType.value["millingTotal"], data);
-    }
-
-    if (startMill === null) {
-      roomOptions.updateOption(currentOption.value, value.ID);
-      eventBus.emit(optionsType.value[currentOption.value], data);
-    }
+    updateOption(type, value.ID);
+    eventBus.emit(optionsType.value["plinthColor"], value.ID);
 
     return;
   }
 
-  // Ветка 3: ни палитры, ни milling
-  roomOptions.setGlobalPalitte(null, currentOption.value);
-  roomOptions.setGlobalMilling(null, currentOption.value);
-  roomOptions.setGlobalPlinth(null, currentOption.value);
-  eventBus.emit(optionsType.value[currentOption.value], data);
-  roomOptions.updateOption(currentOption.value, value.ID);
+  if (!extras) return;
+
+  if (extras.includes("milling")) {
+
+    curOption.millingData = isMilling;
+    if (isMilling?.length > 0) {
+      if (!curOption.milling) {
+        setGlobalMilling(isMilling[0].ID, type);
+      } else {
+        setGlobalMilling(value.ID, type);
+      }
+    } else {
+      setGlobalPalitte(null, type);
+    }
+
+    const dataToEvent = {
+      data: _FASADE[curOption.id],
+      palitte: curOption.palitte,
+      milling: _MILLING[curOption.milling],
+      type: type,
+    };
+
+    eventBus.emit(optionsType.value[type], dataToEvent);
+    return;
+  }
+
+  if (extras.includes("palitte")) {
+    curOption.palitteData = isPalitte;
+    if (isPalitte?.length > 0) {
+      if (!curOption.palitte) {
+        setGlobalPalitte(isPalitte[0].ID, type);
+      } else {
+        setGlobalPalitte(value.ID, type);
+      }
+    } else {
+      setGlobalPalitte(null, type);
+    }
+    const dataToEvent = {
+      data: _FASADE[curOption.id],
+      palitte: curOption.palitte,
+      milling: _MILLING[curOption.milling],
+      type: type,
+    };
+    eventBus.emit(optionsType.value[type], dataToEvent);
+    return;
+  }
+
+  if (extras.includes("plinthSurfase")) {
+    if (isPlinth?.length > 0) {
+      if (!curOption.plinthSurfase) {
+        setGlobalPlinth(isPlinth[0].ID, "plinth");
+      } else {
+        setGlobalPlinth(value.ID, "plinth");
+      }
+    } else {
+      setGlobalPlinth(null, type);
+    }
+
+    eventBus.emit(optionsType.value["plinthColor"], value.ID);
+
+    return;
+  }
 };
 
 const palitteSelect = (
@@ -406,10 +499,13 @@ const palitteSelect = (
   key: keyof TOptionsMap,
   palitteData: TPalitte[]
 ) => {
-  optionsData.value = palitteData;
-  currentOption.value = key;
+  optionsData.value = {
+    extras: "palitte",
+    type: key,
+    data: palitteData,
+  };
   currentOptionLable.value = palitteTitle;
-  extrasSelect.value = true;
+  currentRedactor.value = false;
 };
 
 const millingSelect = (
@@ -417,74 +513,33 @@ const millingSelect = (
   key: keyof TOptionsMap,
   millingData: TMilling[]
 ) => {
-  optionsData.value = millingData;
-  currentOption.value = key;
+  optionsData.value = {
+    extras: "milling",
+    type: key,
+    data: millingData,
+  };
   currentOptionLable.value = millingTitle;
-  extrasSelect.value = true;
+  currentRedactor.value = false;
 };
 
 const plinthSelect = (
   plinthTitle: string,
   key: keyof TOptionsMap,
-  plinthgData: TMilling[]
+  plinthData: TMilling[]
 ) => {
-  optionsData.value = plinthgData;
-  currentOption.value = key;
+
+  optionsData.value = {
+    extras: "plinthSurfase",
+    type: key,
+    data: plinthData,
+  };
+  // currentOption.value = key;
   currentOptionLable.value = plinthTitle;
-  extrasSelect.value = true;
+  extrasSelect.value = false;
 };
-
-const checkExtras = (fasadeId?: number | string): TExtras => {
-  const curOption = globalOptions.value![currentOption.value!];
-  const id = curOption?.id ?? fasadeId;
-
-  const palitte = roomOptions.getDefaultPalitData(id!);
-  const milling = roomOptions.getDefaultMillingData(id!);
-  const plinth = roomOptions.getTotalPlinthColorData(id);
-
-  return {
-    isPalitte: palitte.length > 0 ? palitte : null,
-    isMilling: milling.length > 0 ? milling : null,
-    isPlinth: plinth.length > 0 ? plinth : null,
-  };
-};
-
-const getOptionImg = computed(() => {
-  return (id: number | string, type: string) => {
-    let result;
-    const FASADE = appData.getAppData.FASADE;
-    switch (type) {
-      case "wall":
-        result = visualData.value.walls[id].PREVIEW_PICTURE;
-        break;
-      case "floor":
-        result = visualData.value.floor[id].PREVIEW_PICTURE;
-        break;
-      case "moduleTop":
-      case "moduleBottom":
-        result = visualData.value.module[id].PREVIEW_PICTURE;
-        break;
-      case "fasadsTop":
-      case "fasadsBottom":
-        result = FASADE[id].PREVIEW_PICTURE;
-        break;
-      // case "tableTop":
-      //   result = visualData.value.table[id].PREVIEW_PICTURE;
-      //   break;
-      case "plinth":
-        result = visualData.value.plinth[id].PREVIEW_PICTURE;
-        break;
-    }
-    return result;
-  };
-});
 
 const roomsList = computed(() => roomState.getRooms);
 const getCurrentRoomId = computed(() => roomState.getRoomId);
-const getCurrentRedactor = computed(
-  () =>
-    (currentOption.value?.includes("fasads") && !extrasSelect.value) ?? false
-);
 
 watch(pointLight, () => changePointLightPower(pointLight.value));
 watch(ambientLight, () => changeAmbientLightPower(ambientLight.value));
@@ -497,7 +552,6 @@ watch(shadows, () => toggleShadow(shadows.value));
     <div class="room-popup">
       <h1 class="popup__title">Параметры помещения</h1>
       <ClosePopUpButton class="menu__close" @close="closeMenu('roomPar')" />
-
       <div class="room-popup__container">
         <RoomList
           :rooms="roomsList"
@@ -505,10 +559,10 @@ watch(shadows, () => toggleShadow(shadows.value));
           @load-room="loadRoom"
           @delete-room="deliteRoom"
         />
+
         <RoomOptions
           v-if="globalOptions"
           :options="globalOptions"
-          :getOptionImg="getOptionImg"
           @toSelect="getOption"
           @toToggle="totalSelect"
           @toPalitteSelect="palitteSelect"
@@ -537,7 +591,7 @@ watch(shadows, () => toggleShadow(shadows.value));
         key="color-select"
         :optionsData="optionsData"
         :currentOptionLabel="currentOptionLable"
-        :getCurrentRedactor="getCurrentRedactor"
+        :getCurrentRedactor="currentRedactor"
         @select="selectOption"
       />
     </transition>

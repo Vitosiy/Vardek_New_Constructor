@@ -74,7 +74,7 @@ export class World {
         else {
             
             this.room?.defaultCreate()
-            this.lights.setLight(this.room!._wallsGroupSize, 1)
+            this.lights.setLight(this.room!._wallsGroupSize, 1, this.room!._roomObject)
         }
 
         /** @Для_dev */
@@ -98,7 +98,7 @@ export class World {
         this.roomState.clearCurrentRoomId();
         this.deepDispose.clearScene(this.scene);
         await this.setRoom();
-        this.lights.setLight(this.room!._wallsGroupSize, 1)
+        this.lights.setLight(this.room!._wallsGroupSize, 1, this.room!._roomObject)
 
         if (this.trafficManager) {
             this.trafficManager.update(this.room!)
@@ -133,8 +133,6 @@ export class World {
             // this.basketStore.clearBasket();
 
             const newrooms = this.roomState.getRooms
-            console.log(newrooms, 'NEW')
-
             this.sceneState.updateProjectParams({ rooms: newrooms })
             this.roomState.setCurrentRoomId(roomId)
             return
@@ -152,8 +150,6 @@ export class World {
                 })
         this.roomState.updateRoom(roomId, contant, roomParams, basket)
         const rooms = this.roomState.getRooms
-        console.log(rooms, 'HAVE')
-        // console.log(rooms, 'ROOMS')
         this.sceneState.updateProjectParams({ rooms: rooms })
 
     }
@@ -172,7 +168,7 @@ export class World {
         this.deepDispose.clearScene(this.scene);
 
         await this.setRoom(roomId);
-        this.lights.setLight(this.room!._wallsGroupSize, 1)
+        this.lights.setLight(this.room!._wallsGroupSize, 1, this.room!._roomObject)
         await this.trafficManager!.update(this.room!)
 
         // if (this.roomState.getCurrentRoomData(roomId)?.params.wall) {

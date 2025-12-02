@@ -38,8 +38,6 @@ class DrowerBuilder {
         const json = config.DRAWER.buildIn === 1 ? buildIn : standartDrawer
         const curExpression = { ...expressions }
 
-        console.log(curExpression["#MATERIAL_THICKNESS#"], fasadePosition.FASADE_WIDTH, 'MATERIAL_THICKNESS')
-
         curExpression["#DRAWHEIGHT#"] = drawer[1];
         curExpression["#DRAWWIDTH#"] = fasadePosition.FASADE_WIDTH - curExpression["#MATERIAL_THICKNESS#"] * 2
         curExpression["#DRAWDEPTH#"] = depth - widthCorection

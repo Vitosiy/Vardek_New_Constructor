@@ -1,22 +1,33 @@
 <script setup lang="ts">
-//@ts-nocheck
+/**@ts-nocheck */
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
+import { useEventBus } from "@/store/appliction/useEventBus";
+
+
+type TData = {
+  extras?: string | undefined;
+  type: string;
+  data: Record<string, any> | any[];
+};
 
 interface Props {
-  optionsData: any[];
+  optionsData: TData;
   currentOptionLabel: string | null;
   getCurrentRedactor: boolean;
 }
-
+const eventBus = useEventBus()
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: "select", value: any): void;
+  (e: "select", value: any, type: string, extras: string | undefined): void;
 }>();
 
-const handleSelect = (value: any) => {
-  emit("select", value);
+const handleSelect = (value: any, type: string, extras: string | undefined) => {
+
+  emit("select", value, type, extras);
+  // eventBus.emit('A:GlobalParapsSelect')
+
 };
 </script>
 
@@ -26,15 +37,21 @@ const handleSelect = (value: any) => {
 
     <SurfaceRedactor
       v-if="props.getCurrentRedactor"
-      :materialList="props.optionsData"
+      :materialList="props.optionsData.data"
       :tempWork="true"
-      @select_material="handleSelect"
+      @select_material="
+        (data) =>
+          handleSelect(data, props.optionsData.type, props.optionsData.extras)
+      "
     />
 
     <MaterialSelector
       v-else
-      :materials="props.optionsData"
-      @select="handleSelect"
+      :materials="props.optionsData.data"
+      @select="
+        (data) =>
+          handleSelect(data, props.optionsData.type, props.optionsData.extras)
+      "
     />
   </div>
 </template>

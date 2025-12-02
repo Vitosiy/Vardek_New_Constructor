@@ -94,8 +94,8 @@ const jsonBlank = `{
                         "side": 0
                     }
                 ],
-                "wall": "44144",
-                "floor": "44020"
+                "wall": "85074",
+                "floor": "44035"
             },
             "content": "[]"
         }
@@ -138,12 +138,12 @@ const jsonBlank = `{
     "default_table_color": null,
     "default_fasade_color": 7397,
     "default_module_color": 199675,
-    "default_fasade_up": 7397,
-    "default_fasade_down": 7397,
+    "default_fasade_top": 7397,
+    "default_fasade_bottom": 7397,
     "default_floor": 44013,
     "default_wall": 44128,
-    "default_module_color_down": null,
-    "default_module_color_up": null,
+    "default_module_color_bottom": null,
+    "default_module_color_top": null,
     "default_milling_bottom": null,
     "default_milling_top": null,
     "default_palit_bottom": null,

@@ -72,8 +72,10 @@ function updateRoomStore(this: any): boolean {
       params: {
         walls: [],
         // Сохраняем существующие значения wall и floor, если они есть
-        wall: existingRoom?.params?.wall ?? "44144",
-        floor: existingRoom?.params?.floor ?? "44020",
+        // wall: existingRoom?.params?.wall ?? "44144",
+        // floor: existingRoom?.params?.floor ?? "44020",
+        wall: existingRoom?.params?.wall ?? "85074",
+        floor: existingRoom?.params?.floor ?? "44035",
       },
       // Начинаем с сохраненного content из 3D сцены
       content: preservedContent,

@@ -168,9 +168,6 @@ export class ShowcaseBuilder extends MillingBuilder {
         })
         const { geometry } = prepare
 
-        console.log(prepare, '==== prepare ====')
-
-
         let handleGeometry: THREE.BufferGeometry
 
         if (type == "path") {

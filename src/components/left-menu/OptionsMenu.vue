@@ -98,8 +98,6 @@ onBeforeMount(() => {
   catalogSectionsType.value = prepare;
   catalogSections.value = app.CATALOG.SECTIONS;
 
-  console.log(prepare)
-
   filterCatalog(selectedSectionType.value);
 });
 
