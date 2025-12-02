@@ -154,6 +154,7 @@ const onSelectMaterial = (data) => {
 
   /** @Патина */
   patinaList.value = modelState.getCurrentPatinaData;
+  console.log(patinaList.value, " patinaList.value");
   // isPatinaExist.value = patinaList.value.length > 0 && isMillingExist.value;
 
   /** @Витрины */
@@ -244,13 +245,28 @@ const onSelectMilling = (data) => {
 
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const fasadeProps = FASADE_PROPS[props.tabIndex];
-  isPatinaExist.value = data.patina == 0;
+  const rootDataPatina = modelState._FASADE[fasadeProps.COLOR].PATINA;
+  console.log(rootDataPatina, "rootDataPatina");
 
-  /** @Если у выбранной фркзы нет патина */
-  if (!isPatinaExist.value) {
-    fasadeProps.PATINA = patinaList.value[0].ID;
-    const { NAME, PREVIEW_PICTURE } = patinaList.value[0];
-    currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  isPatinaExist.value =
+    data.patina == 0 &&
+    rootDataPatina.length > 0 &&
+    rootDataPatina[0] != null &&
+    rootDataPatina[0] != 0;
+  console.log(rootDataPatina.length > 0, "isPatinaExist");
+
+  /** @Если у выбранной фрезы нет патина */
+
+  try {
+    if (!isPatinaExist.value && patinaList.value.length > 0) {
+      console.log("JJJ");
+
+      fasadeProps.PATINA = Object.values(modelState._PATINA)[0].ID;
+      const { NAME, PREVIEW_PICTURE } = Object.values(modelState._PATINA)[0];
+      currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    }
+  } catch (e) {
+    console.warn(e, "в методе onSelectMilling");
   }
 
   /** @Отображение_положения_петель */
@@ -346,10 +362,16 @@ const deleteSelectedOptions = (type: String) => {
 
     const { NAME, PREVIEW_PICTURE } = millingList.value[0];
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    // FASADE_PROPS[props.tabIndex].PATINA = 475428;
+    currentPatinaData.value = {
+      name: Object.values(modelState._PATINA)[0].NAME,
+      imgSrc: Object.values(modelState._PATINA)[0].PREVIEW_PICTURE,
+    };
 
-    eventBus.emit("A:DelitePatina", props.tabIndex);
+    if (!isPatinaExist.value && patinaList.value.length > 0) {
+      eventBus.emit("A:DelitePatina", props.tabIndex);
+    }
 
-    currentPatinaData.value = { name: patinaList.value[0].NAME, imgSrc: patinaList.value[0].PREVIEW_PICTURE };
     // FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
     isFasadeTypesExist.value = false;
     fasadeTypesList.value = {};
@@ -533,6 +555,8 @@ const prepareData = () => {
   /** @Патина */
   if (fasadeData.PATINA?.[0] && isMillingExist.value) {
     const curMilling = _APP.MILLING[MILLING];
+
+    console.log(curMilling, "==== curMilling ====");
 
     patinaList.value = patinaData;
     isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0;

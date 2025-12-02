@@ -186,12 +186,12 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-                console.log(fasadeData.SHOW && milling && firstValueMilling && !haveShowcase, '==== ❌❌ milling  ====')
+                console.log(fasadeData.SHOW && firstValueMilling && !haveShowcase, '==== ❌❌ milling  ====')
 
-                if (fasadeData.SHOW && milling && firstValueMilling && !haveShowcase) {
+                if (fasadeData.SHOW && firstValueMilling && !haveShowcase) {
                     console.log('==== ❌ milling ❌ ====', milling)
 
-                    fasadeData.MILLING = milling;
+                    fasadeData.MILLING = milling ?? firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE
@@ -386,7 +386,7 @@ export class FasadeBuilder {
 
                 if (fasadeData.SHOW && milling && firstValueMilling && fasadeData.MILLING === null) {
 
-                    fasadeData.MILLING = milling;
+                    fasadeData.MILLING = milling ?? firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[key].FASADE_TYPE
@@ -953,6 +953,9 @@ export class FasadeBuilder {
     /** @Интегрированная_ручка */
 
     private getIntegratedHandleTypeList = (data: TMillingListItem, fType: number[]) => {
+        console.log(this._MILLING[data], 'this._MILLING[data]')
+        if (!this._MILLING[data]) return [null]
+
         const prepare = this._MILLING[data].fasade_type.filter(el => {
             return fType.includes(el)
         })

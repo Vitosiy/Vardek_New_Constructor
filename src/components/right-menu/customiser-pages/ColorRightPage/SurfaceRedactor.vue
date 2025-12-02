@@ -69,7 +69,7 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   console.log(data, "==== ❌ Параметры выбранного фасада ❌ ====");
 
   const productId = productData.value.PROPS.PRODUCT;
-  let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE, MATERIAL } = data;
+  let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE, MATERIAL, PATINA } = data;
 
   modelState.createCurrentPaletteData(ID);
   modelState.createCurrentMillingData({ fasadeId: ID, productId, fasadeNdx });
@@ -87,6 +87,7 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
     imgSrc: PREVIEW_PICTURE,
     transitionT,
     material: MATERIAL,
+    patinaList: PATINA
   });
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });

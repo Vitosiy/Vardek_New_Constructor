@@ -707,6 +707,7 @@ export const useModelState = defineStore('ModelState', () => {
         _MILLING,
         _MODELS,
         _PALETTE,
+        _PATINA,
         getModels,
 
         setCurrentModel,

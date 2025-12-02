@@ -437,6 +437,7 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
 
         await this.catchFasadeChange({ data, fasadeNdx })
+        console.log('--- changeFasade ---')
         this.events.emit('U:ChangeFasade')
     }
 
@@ -567,7 +568,7 @@ export class MeshEvents extends BuildersHelper {
         );
 
         // Только здесь — всё гарантированно завершено
-        this.events.emit('A:GlobalParapsSelect');
+        this.events.emit('A:GlobalParamsSelect');
     }
 
     //------------------
@@ -724,15 +725,16 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
         const product = this._currentMesh
         const { PROPS } = product.userData
-        const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
+        const { CONFIG, FASADE, PRODUCT, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE_PROPS[fasadeNdx]
+        const firstMilling = this.modelState.createCurrentMillingData({fasadeId: fasade.COLOR, productId: PRODUCT, fasadeNdx})[0]
 
-        console.log(fasadeNdx)
+        console.log(firstMilling, '===firstMilling===')
 
-        await this.changeMilling({ data: 2462671, fasadeNdx })
-        fasade.PATINA = null
-        fasade.MILLING = 2462671
+        await this.changeMilling({ data: firstMilling.ID, fasadeNdx })
+        fasade.PATINA = Object.values(this.modelState._PATINA)[0].ID
+        fasade.MILLING = firstMilling.ID
         fasade.MILLING_TYPE = null
     }
 
