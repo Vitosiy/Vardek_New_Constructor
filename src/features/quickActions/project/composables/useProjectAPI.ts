@@ -106,12 +106,14 @@ export function useProjectAPI() {
           // if (token) {
           //   headers['Authorization'] = `Bearer ${token}`;
           // }
-
-          const response = await fetch(API_ENDPOINTS.GET_PROJECT_LIST, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await client.POST('/api/modeller/projectq/getprojectlist/', {
             body: JSON.stringify(requestBody)
           })
+          // const response = await fetch(API_ENDPOINTS.GET_PROJECT_LIST, {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify(requestBody)
+          // })
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`)
@@ -142,11 +144,14 @@ export function useProjectAPI() {
     }
 
     try {
-      const response = await fetch(API_ENDPOINTS.GET_PROJECT_BY_ID, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await client.POST('/api/modeller/projectq/getprojectbyid/', {
         body: JSON.stringify({ id })
       })
+      // const response = await fetch(API_ENDPOINTS.GET_PROJECT_BY_ID, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ id })
+      // })
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
