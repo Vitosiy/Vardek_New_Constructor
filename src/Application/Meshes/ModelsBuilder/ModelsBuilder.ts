@@ -58,9 +58,6 @@ export class ModelsBuilder {
         }
 
 
-
-        console.log(props, 'props', model)
-
         return new Promise((resolve, reject) => {
 
             this.resources.startLoading(path, model.model_type || 'DAE', (file: any) => {
@@ -72,8 +69,6 @@ export class ModelsBuilder {
                 const normolized = this.normalizeUploadedModel(file, model) as THREE.Object3D;
      
                 if (model.model_type.length === 0) {
-                    console.log(model.model_type, 'model_type')
-                    console.log(normolized.children)
 
                     normolized.traverse(child => {
                         if (child instanceof THREE.Mesh) {

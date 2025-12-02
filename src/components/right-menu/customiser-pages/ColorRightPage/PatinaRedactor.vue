@@ -25,8 +25,6 @@ const changePatina = (patina) => {
       fasadeNdx: props.tabIndex,
     });
 
-  console.log(patina)
-
   emit("select_patina", {
     name: patina.NAME,
     imgSrc: patina.DETAIL_PICTURE,

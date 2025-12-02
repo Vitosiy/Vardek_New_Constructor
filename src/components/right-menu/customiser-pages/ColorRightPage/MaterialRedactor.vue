@@ -154,7 +154,6 @@ const onSelectMaterial = (data) => {
 
   /** @Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  console.log(patinaList.value, " patinaList.value");
   // isPatinaExist.value = patinaList.value.length > 0 && isMillingExist.value;
 
   /** @Витрины */
@@ -186,7 +185,6 @@ const onSelectMaterial = (data) => {
     isPatinaExist.value =
       patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0;
 
-    console.log(isPatinaExist.value, "+++++  isPatinaExist.value +++++");
   } else {
     currentMillingData.value = {};
     isFasadeHandleExist.value = false;
@@ -246,20 +244,20 @@ const onSelectMilling = (data) => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const fasadeProps = FASADE_PROPS[props.tabIndex];
   const rootDataPatina = modelState._FASADE[fasadeProps.COLOR].PATINA;
-  console.log(rootDataPatina, "rootDataPatina");
+
 
   isPatinaExist.value =
     data.patina == 0 &&
     rootDataPatina.length > 0 &&
     rootDataPatina[0] != null &&
     rootDataPatina[0] != 0;
-  console.log(rootDataPatina.length > 0, "isPatinaExist");
+ 
 
   /** @Если у выбранной фрезы нет патина */
 
   try {
     if (!isPatinaExist.value && patinaList.value.length > 0) {
-      console.log("JJJ");
+
 
       fasadeProps.PATINA = Object.values(modelState._PATINA)[0].ID;
       const { NAME, PREVIEW_PICTURE } = Object.values(modelState._PATINA)[0];
@@ -404,7 +402,6 @@ const deleteSelectedOptions = (type: String) => {
   }
 
   if (type === "glass") {
-    console.log("TTTT");
 
     const { ID, NAME, PREVIEW_PICTURE } = glassList.value[0];
     currentGlassData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
@@ -556,8 +553,6 @@ const prepareData = () => {
   if (fasadeData.PATINA?.[0] && isMillingExist.value) {
     const curMilling = _APP.MILLING[MILLING];
 
-    console.log(curMilling, "==== curMilling ====");
-
     patinaList.value = patinaData;
     isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0;
   }
@@ -588,7 +583,6 @@ const prepareData = () => {
   };
 
   if (MILLING) {
-    console.log(MILLING, millingData, "IN MILLING");
 
     assignIfFound(
       millingData,

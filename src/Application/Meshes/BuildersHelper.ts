@@ -190,7 +190,6 @@ export class BuildersHelper extends GlobalsData {
             return func();
         } catch (error) {
             console.log(expression, '---"Недопустимое выражение!"')
-
             return "Недопустимое выражение!";
         }
     }
@@ -442,8 +441,7 @@ export class BuildersHelper extends GlobalsData {
 
     createStartTopTableCutData(uslugi, product_data) {
 
-        // const convert = this.createCutterParams(uslugi)
-        console.log(uslugi)
+
         const { width, depth, height } = product_data
         const startCutData = {
             groupID: `f${(~~(Math.random() * 1e8)).toString(16)}`, // Идентификатор группы

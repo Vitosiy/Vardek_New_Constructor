@@ -340,7 +340,6 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
                 break;
         }
 
-        console.log(globalOptions.value, 'GLOBAL')
     };
 
     const resetGlobalOptions = () => {

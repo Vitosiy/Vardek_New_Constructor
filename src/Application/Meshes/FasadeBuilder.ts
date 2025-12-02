@@ -133,8 +133,6 @@ export class FasadeBuilder {
             curFasade.geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
 
             if (remove) {
-                console.log(' ==== REMOVE ====')
-
                 fasadeData.COLOR = 7397;
                 fasadeData.PALETTE = null;
                 fasadeData.SHOW = false;
@@ -163,8 +161,6 @@ export class FasadeBuilder {
             }
             else {
 
-                console.log(fasadeData.MILLING, 'START')
-
                 const includeIncomeFasade = currentProduct.FACADE.includes(color)
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
@@ -186,10 +182,9 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-                console.log(fasadeData.SHOW && firstValueMilling && !haveShowcase, '==== ❌❌ milling  ====')
+        
 
                 if (fasadeData.SHOW && firstValueMilling && !haveShowcase) {
-                    console.log('==== ❌ milling ❌ ====', milling)
 
                     fasadeData.MILLING = milling ?? firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
@@ -246,10 +241,6 @@ export class FasadeBuilder {
                 } catch (e) {
                     console.log(e)
                 }
-
-
-                console.log(curFasade)
-
             }
 
             curFasade.userData.SHOW = fasadeData.SHOW;
@@ -440,7 +431,7 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null) {
-                console.log('==== ❌ MILLING NEW ❌ ====')
+                // console.log('==== ❌ MILLING NEW ❌ ====')
 
                 const action = this.modelState.getCurrentMillingActionMap(fasadeData.MILLING_TYPE, fasadeData.MILLING) ?? null
                 const millingParams = action ? action : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
@@ -458,7 +449,7 @@ export class FasadeBuilder {
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
-                console.log('==== ❌ SHOWCASE NEW ❌ ====')
+                // console.log('==== ❌ SHOWCASE NEW ❌ ====')
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
 
@@ -819,7 +810,6 @@ export class FasadeBuilder {
         const fasadeList = FASADE_PROPS[key]?.POSITION ?? FASADE_PROPS[0]?.POSITION;
 
         let fasadePosition = this.parent._FASADE_POSITION[fasadeList];
-        console.log(fasadePosition, ' ===== fasadePosition =====')
 
         const replacedExpressions = this.parent.expressionsReplace(fasadePosition, {
             ...EXPRESSIONS,
@@ -879,7 +869,7 @@ export class FasadeBuilder {
         fasadeEdge: THREE.Mesh,
     ) {
         const { rotation, position } = this.createPositionData(fasade_position, start_position, product_model_type);
-        console.log(rotation, position, 'createPositionData')
+    
 
         fasade.rotation.set(rotation.x, rotation.y, rotation.z);
         fasade.position.set(position.x, position.y, position.z);

@@ -43,8 +43,6 @@ export class PlinthBuilder {
         const inProdModel = this.buildProduct._MODELS[model]
         const jsonPlinth = inProdModel.json.plinth
 
-        console.log(jsonPlinth)
-
         if (model && inProdModel && jsonPlinth) {
             return jsonPlinth
         }
@@ -81,7 +79,6 @@ export class PlinthBuilder {
         const plinthConfigs = this.getPlinthConfigs(size);
 
         if (havePlinth) {
-            console.log('AU')
 
             Object.values(havePlinth).forEach(el => {
 

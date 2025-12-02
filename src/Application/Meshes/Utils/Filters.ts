@@ -272,9 +272,6 @@ export class Filters extends GlobalsData {
         const uslugi = getFilteredData(product_uslugi)
         const profile = getFilteredData(product_data.profile, true)
 
-        console.log(profile, '=== profile ===')
-
-
         return { uslugi, profile }
 
     }
@@ -291,7 +288,6 @@ export class Filters extends GlobalsData {
             return { id: el.ID, active: false, group: groupName, section:el.IBLOCK_SECTION_ID?.[0], close: el.CLOSE_OTHER_OPTIONS, visible: true }
         })
 
-        console.log(  console.log(result,'=== 🔥 ==='))
         return result
     }
 

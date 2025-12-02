@@ -76,8 +76,6 @@ export class AppLights {
         const obb = new OBB().fromBox3(aabb);
         const productSize = new THREE.Vector3();
 
-        console.log(obb, 'OBB')
-
         // Очистка существующих источников света
         this.lights.forEach(light => this.scene.remove(light));
         if (this.ambientLight) {
@@ -101,7 +99,6 @@ export class AppLights {
         }
 
         for (let i = 0; i < count; i++) {
-            console.log(position.width)
             const point = this.addPointLight(this.params.pointLight);
             const { x, y, z } = obb.center
             const posZ = z - obb.halfSize.z * 0.5

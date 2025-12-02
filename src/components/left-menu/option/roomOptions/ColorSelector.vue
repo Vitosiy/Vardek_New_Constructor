@@ -24,7 +24,6 @@ const emit = defineEmits<{
 }>();
 
 const handleSelect = (value: any, type: string, extras: string | undefined) => {
-  console.log(extras, "=== extras in ColorSelector ====");
 
   emit("select", value, type, extras);
   // eventBus.emit('A:GlobalParapsSelect')

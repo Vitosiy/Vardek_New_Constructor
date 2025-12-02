@@ -48,7 +48,6 @@ const changeMilling = (milling) => {
       action = modelState.getCurrentMillingActionMap(prepare[0].id, milling.ID);
     }
 
-    console.log(milling, "==== milling ====");
 
     eventBus.emit("A:ChangeMilling", {
       data: milling.ID,

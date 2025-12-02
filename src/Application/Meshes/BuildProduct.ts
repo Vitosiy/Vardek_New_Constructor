@@ -389,7 +389,6 @@ export class BuildProduct extends BuildersHelper {
         if (FASADE_SIZES?.length) {
 
             PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, product_data) as any[];
-            console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
         }
 
         if (FACADE?.[0]) {
@@ -415,8 +414,6 @@ export class BuildProduct extends BuildersHelper {
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
         PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
-
-        console.log(PARAMS.SIZE, 'PARAMS.SIZE')
 
         return PARAMS;
     }
@@ -591,9 +588,6 @@ export class BuildProduct extends BuildersHelper {
         const { defModuleTop, defModuleBottom, moduleTop, moduleBottom } = defaultConfig
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
-
-        console.log(texture, 'texture')
-
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color;
             switch (ELEMENT_TYPE) {
@@ -754,8 +748,6 @@ export class BuildProduct extends BuildersHelper {
             tsarga,
         });
 
-        // this.scene.add(body)
-        // console.log(body)
 
         const edge = this.edge_builder.createEdge(body);
 

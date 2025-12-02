@@ -188,7 +188,6 @@ const checkExtras = (
   curOption?: string
 ): TExtras => {
   const defaultId = globalOptions.value![curOption];
-  console.log(defaultId);
 
   const id = curOption?.id ?? fasadeId;
 
@@ -251,7 +250,6 @@ const toggleRefraction = (value: boolean) => {
 };
 
 const getOption = (value: keyof TTextureActionMap, title: string) => {
-  console.log(value, "==== value ====");
   currentOption.value = value;
 
   switch (value) {
@@ -366,9 +364,6 @@ const selectOption = (
 
   const { isPalitte, isMilling, isPlinth } = checkExtras(curOptionId, type);
 
-  // console.log(isPlinth, "---- 🔥 isPlinth 🔥 ----");
-  // console.log(value, "---- 🔥 value 🔥 ----");
-  console.log(type, "---- 🔥 type 🔥 ----");
 
   const paramToCheck = extras
     ? globalOptions.value[type][extras]
@@ -390,7 +385,6 @@ const selectOption = (
   }
 
   if (type.includes("fasad") && !extras) {
-    console.log("=== fasad ===");
 
     curOption.palitteData = isPalitte;
     curOption.millingData = isMilling;
@@ -414,7 +408,6 @@ const selectOption = (
       type: type,
     };
 
-    console.log(dataToEvent, data, "=== 🔥 EVENT fasad 🔥 ===");
 
     updateOption(type, value.ID);
     eventBus.emit(optionsType.value[type], dataToEvent);
@@ -440,7 +433,6 @@ const selectOption = (
   if (!extras) return;
 
   if (extras.includes("milling")) {
-    console.log(value, "VALUE");
 
     curOption.millingData = isMilling;
     if (isMilling?.length > 0) {
@@ -460,7 +452,6 @@ const selectOption = (
       type: type,
     };
 
-    console.log(optionsType.value[type], "=== EVENT ===");
     eventBus.emit(optionsType.value[type], dataToEvent);
     return;
   }
@@ -482,7 +473,6 @@ const selectOption = (
       milling: _MILLING[curOption.milling],
       type: type,
     };
-    console.log(dataToEvent, "=== 🔥 EVENT palitte 🔥 ===");
     eventBus.emit(optionsType.value[type], dataToEvent);
     return;
   }
@@ -537,7 +527,6 @@ const plinthSelect = (
   key: keyof TOptionsMap,
   plinthData: TMilling[]
 ) => {
-  console.log(" === plinth key ===", key);
 
   optionsData.value = {
     extras: "plinthSurfase",

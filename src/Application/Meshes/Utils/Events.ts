@@ -210,9 +210,6 @@ export class MeshEvents extends BuildersHelper {
         }
         const product = totalFasad ?? this._currentMesh
 
-        console.log(product)
-
-
         if (!product) return;
 
         const { PROPS } = product.userData
@@ -250,8 +247,6 @@ export class MeshEvents extends BuildersHelper {
         // }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-
-            console.log('==== ❌ resetFasade ❌ ====', globalMilling)
 
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
@@ -301,9 +296,6 @@ export class MeshEvents extends BuildersHelper {
         const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
 
-        console.log(currentType)
-        console.log(elementsList)
-
         if (Array.isArray(elementsList) && elementsList[0]) {
             elementsList.forEach(async (el) => {
                 console.log(el)
@@ -342,8 +334,6 @@ export class MeshEvents extends BuildersHelper {
 
         fasadeProp.COLOR = data.ID
         fasadeProp.ALUM = incomingModel;
-
-        console.log(fasadeProp.MILLING, '==== ❌ catchFasadeChange MILLING ❌ ====')
 
         if (UNIFORM_TEXTURE.group !== null) {
             this.removeFromUniformGroup(meshData);
@@ -510,10 +500,8 @@ export class MeshEvents extends BuildersHelper {
     // }
 
     async changeTotalFasadsTexture({ data, palitte, milling, type }: TDataWithType) {
-        console.log('AUFF', data, type);
 
         const currentType = this.searchElementsByType[type];
-        console.log(currentType, 'currentType');
 
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
@@ -730,8 +718,6 @@ export class MeshEvents extends BuildersHelper {
         const fasade = FASADE_PROPS[fasadeNdx]
         const firstMilling = this.modelState.createCurrentMillingData({fasadeId: fasade.COLOR, productId: PRODUCT, fasadeNdx})[0]
 
-        console.log(firstMilling, '===firstMilling===')
-
         await this.changeMilling({ data: firstMilling.ID, fasadeNdx })
         fasade.PATINA = Object.values(this.modelState._PATINA)[0].ID
         fasade.MILLING = firstMilling.ID
@@ -835,8 +821,6 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     changeShowcase({ data, fasadeNdx, action }: TDataWithNdx) {
-
-        console.log('---changeShowcase')
 
         if (!this._currentMesh) return;
 

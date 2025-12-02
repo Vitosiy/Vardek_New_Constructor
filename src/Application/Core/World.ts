@@ -133,8 +133,6 @@ export class World {
             // this.basketStore.clearBasket();
 
             const newrooms = this.roomState.getRooms
-            console.log(newrooms, 'NEW')
-
             this.sceneState.updateProjectParams({ rooms: newrooms })
             this.roomState.setCurrentRoomId(roomId)
             return
@@ -152,8 +150,6 @@ export class World {
                 })
         this.roomState.updateRoom(roomId, contant, roomParams, basket)
         const rooms = this.roomState.getRooms
-        console.log(rooms, 'HAVE')
-        // console.log(rooms, 'ROOMS')
         this.sceneState.updateProjectParams({ rooms: rooms })
 
     }
