@@ -3,6 +3,7 @@ import { useEventBus } from '@/store/appliction/useEventBus'
 import { useSceneState } from '@/store/appliction/useSceneState'
 import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types'
 import { API_ENDPOINTS, REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
+import { client } from '@/api/api'
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
@@ -98,6 +99,13 @@ export function useProjectAPI() {
             requestBody.hash = false
           }
 
+          // Получаем токен из cookies
+          // const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+          // const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          // if (token) {
+          //   headers['Authorization'] = `Bearer ${token}`;
+          // }
+
           const response = await fetch(API_ENDPOINTS.GET_PROJECT_LIST, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -191,15 +199,23 @@ export function useProjectAPI() {
       if (projectId) {
         console.log(projectId, 'projectId HAVE')
 
-        const response = await fetch(API_ENDPOINTS.UPDATE_PROJECT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const response = await client.POST('/api/modeller/projectq/updateprojectbyid/', {
+            body: JSON.stringify({
             id: projectId,
             project: projectData,
             file: screenshotBase64
           })
         })
+        
+        // const response = await fetch(API_ENDPOINTS.UPDATE_PROJECT, {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     id: projectId,
+        //     project: projectData,
+        //     file: screenshotBase64
+        //   })
+        // })
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -218,23 +234,38 @@ export function useProjectAPI() {
         projectData.projectId = tempProjectId
 
 
-        const response = await fetch(API_ENDPOINTS.SAVE_PROJECT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await client.POST('/api/modeller/projectq/SaveProject/', {
           body: JSON.stringify({
-            data: {
-              file: screenshotBase64,
-              provider: REQUEST_CONSTANTS.PROVIDER,
-              name: projectData.project_name || 'Новый проект',
-              user_hash: REQUEST_CONSTANTS.USER_HASH,
-              city: REQUEST_CONSTANTS.CITY,
-              project: projectData,
-              style: REQUEST_CONSTANTS.STYLE,
-              projectId: Date.now().toString(),
-              user_id: REQUEST_CONSTANTS.USER_ID
-            }
-          })
+                data: {
+                  file: screenshotBase64,
+                  provider: REQUEST_CONSTANTS.PROVIDER,
+                  name: projectData.project_name || 'Новый проект',
+                  user_hash: REQUEST_CONSTANTS.USER_HASH,
+                  city: REQUEST_CONSTANTS.CITY,
+                  project: projectData,
+                  style: REQUEST_CONSTANTS.STYLE,
+                  projectId: Date.now().toString(),
+                  user_id: REQUEST_CONSTANTS.USER_ID
+                }
+              })
         })
+        // await fetch(API_ENDPOINTS.SAVE_PROJECT, {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     data: {
+        //       file: screenshotBase64,
+        //       provider: REQUEST_CONSTANTS.PROVIDER,
+        //       name: projectData.project_name || 'Новый проект',
+        //       user_hash: REQUEST_CONSTANTS.USER_HASH,
+        //       city: REQUEST_CONSTANTS.CITY,
+        //       project: projectData,
+        //       style: REQUEST_CONSTANTS.STYLE,
+        //       projectId: Date.now().toString(),
+        //       user_id: REQUEST_CONSTANTS.USER_ID
+        //     }
+        //   })
+        // })
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
