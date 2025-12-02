@@ -257,7 +257,7 @@ export function useProjectAPI() {
                   projectId: Date.now().toString(),
                   user_id: REQUEST_CONSTANTS.USER_ID,
                   ...(kpFlag && { basket: useBasketStore().syncBasket() }),
-                  ...(kpFlag && { kpCheckbox: kpFlag })
+                  ...(kpFlag && { kp: kpFlag })
                 }
               }
         })
