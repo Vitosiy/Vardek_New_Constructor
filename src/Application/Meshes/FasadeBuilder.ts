@@ -194,12 +194,10 @@ export class FasadeBuilder {
                     }
                 }
                 else {
-                    console.log('==== ❌ delite milling ❌ ====')
                     fasadeData.MILLING = null
                 }
 
                 if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && haveShowcase) {
-                    console.log('==== ❌ haveShowcase ❌ ====', haveShowcase)
                     // fasadeData.MILLING = null;
                 }
 
@@ -266,7 +264,7 @@ export class FasadeBuilder {
                     fasadeData.PATINA
                 );
 
-                console.log('==== ❌ON PATINA ❌ ====', fasadeData.PATINA)
+                // console.log('==== ❌ON PATINA ❌ ====', fasadeData.PATINA)
 
                 // const millingParams = remove ? this.modelState.getCurrentMillingMap(1317715) : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
 
@@ -934,22 +932,19 @@ export class FasadeBuilder {
             startData.y + (this.parent.calculateFromString(positionData?.FASADE_HEIGHT ?? 0) / 2) + pos.y,
             startData.z + pos.z
         );
-        console.log(startData, pos, positionData, position, '==== createPositionData ====')
-
-
+   
         return { rotation, position };
     };
 
     /** @Интегрированная_ручка */
 
     private getIntegratedHandleTypeList = (data: TMillingListItem, fType: number[]) => {
-        console.log(this._MILLING[data], 'this._MILLING[data]')
+
         if (!this._MILLING[data]) return [null]
 
         const prepare = this._MILLING[data].fasade_type.filter(el => {
             return fType.includes(el)
         })
-        console.log(prepare, 'getIntegratedHandleTypeList--')
 
         return prepare;
     }

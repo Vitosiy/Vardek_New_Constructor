@@ -49,8 +49,6 @@ export class BuildersHelper extends GlobalsData {
             props.CONFIG.EXPRESSIONS
         )
 
-        console.log(model_data)
-
         return model_data
     };
 
