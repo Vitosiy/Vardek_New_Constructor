@@ -13,7 +13,7 @@ import {
   FasadeMaterial,
   FasadeObject, FillingObject,
   GridCell, GridCellsRow,
-  GridModule,
+  GridModule, GridRowExtra,
   GridSection,
   LOOPSIDE,
 } from "@/types/constructor2d/interfaсes.ts";
@@ -221,9 +221,9 @@ const getMinMaxModuleSize = (_dimension, _minmax) => {
   return +productData.value.PROPS.CONFIG.SIZE_EDIT[`SIZE_EDIT_` + dimension + `_` + minmax];
 }
 
-const selectedCell = ref({sec: 0, cell: 0, row: null});
+const selectedCell = ref({sec: 0, cell: 0, row: null, extra: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
-const selectedFilling = ref({sec: 0, cell: 0, row: null, item: 0});
+const selectedFilling = ref({sec: 0, cell: 0, row: null, extra: null, item: 0});
 
 const correct = ref({change: false});
 const constructor2dContainer = ref(null);
@@ -959,22 +959,18 @@ const updateTotalDepth = (value) => {
   }, 1000)
 };
 
-const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null) => {
+const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null, extraIndex = null) => {
   switch (type) {
     case "fasades":
       selectedFasade.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
       break;
-    case "fillings":
-      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
-      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
-      break;
     default:
-      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
-      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
+      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, extra: extraIndex, item: item};
+      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex, extra: extraIndex};
       break;
   }
 
-  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item);
+  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item, extraIndex);
 };
 
 const initSideProfile = () => {
@@ -1114,6 +1110,30 @@ const reset = (reset = false) => {
 
             newCellsRowArray.push(newRow)
             positionCellsRow.x += newRow.width + moduleGrid.moduleThickness
+
+            if (row.extras?.length) {
+              let newRowExtrasArray = <GridRowExtra>[]
+              let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
+
+              row.extras.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
+                let newExtra = <GridRowExtra>{...extra}
+
+                newExtra.position.copy(positionRowExtras.clone())
+                newExtra.width = newRow.width;
+
+                if (newExtra.fillings?.length) {
+                  newExtra.fillings = <FillingObject>[...newExtra.fillings]
+                  newExtra.fillings.forEach((filling, index) => {
+                    updateFilling(newExtra.width, filling, 'width')
+                  })
+                }
+
+                newRowExtrasArray.push(newExtra)
+                positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
+              })
+
+              row.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
+            }
           })
 
           let cellsRowWidthSum = 0;
@@ -1151,7 +1171,7 @@ const reset = (reset = false) => {
         newCellsArray.push(newCell)
       }
 
-      newSection.cells = newCellsArray.reverse().slice()
+      newSection.cells = newCellsArray.slice().sort((a, b) => b.position.y - a.position.y)
     }
 
     positionSections.x += newSection.width + moduleGrid.moduleThickness
