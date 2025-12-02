@@ -16,6 +16,7 @@ import { useRoomState } from "@/store/appliction/useRoomState";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useRoomOptions } from "../left-menu/option/roomOptions/useRoomOptons";
+import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { TApplication } from "@/types/types";
 
 import {
@@ -64,6 +65,7 @@ const roomState = useRoomState();
 const modelState = useModelState();
 const roomOptions = useRoomOptions();
 const customiserStore = useCustomiserStore();
+const schemeTransition = useSchemeTransition();
 
 const _saveProject = async () => {
   eventBus.emit("A:Save");
@@ -294,11 +296,25 @@ watch(
         await nextTick(); // Ждем сохранения
       }
 
-      if (newPath === "/2d" && window.C2D) {
+      if (newPath === "/2d") {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
-        if (window.C2D.layers?.planner && window.C2D.layers?.doorsAndWindows) {
-          window.C2D.layers.planner.init(true);
-          window.C2D.layers.doorsAndWindows.init(true);
+        // Ждем готовности C2D, если его еще нет
+        let c2d = window.C2D;
+        if (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) {
+          const start = Date.now();
+          const timeout = 3000;
+          const interval = 50;
+          while (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) {
+            if (Date.now() - start >= timeout) break;
+            await new Promise(resolve => setTimeout(resolve, interval));
+            c2d = window.C2D;
+          }
+        }
+        // Проверяем наличие данных перед инициализацией
+        const roomsData = schemeTransition.getAllData();
+        if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows && roomsData && roomsData.length > 0) {
+          c2d.layers.planner.init(true);
+          c2d.layers.doorsAndWindows.init(true);
         }
       }
       console.log("Все комнаты:", roomState.rooms);

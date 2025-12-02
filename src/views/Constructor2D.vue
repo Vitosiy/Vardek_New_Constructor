@@ -15,6 +15,7 @@ import { loadBlankRoom } from "@/Constructor2D/facade/blankRoom";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 let schemeTransition = useSchemeTransition();
 // root container
@@ -101,7 +102,6 @@ onMounted(async () => {
     // if (loader) {
     //   (loader as HTMLElement).style.display = 'none';
     // }
-
     const rooms = schemeTransition.getAllData();
     if (rooms.length === 0) {
       await loadBlankRoom();

@@ -13,6 +13,7 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
+import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
 
 export type ActionKey =
   | 'fullscreen'
@@ -82,7 +83,7 @@ export const useQuickActionsToolbar = () => {
   }
 
   // Обработка подтверждения сохранения с названием проекта
-  const handleSaveConfirm = async (projectName: string, onSuccess?: () => void) => {
+  const handleSaveConfirm = async (projectName: string, onSuccess?: () => void, kpFlag: boolean = false) => {
     if (!projectName.trim()) {
       toaster.error("Введите название проекта");
       return false;
@@ -94,7 +95,7 @@ export const useQuickActionsToolbar = () => {
       // Обновляем название проекта перед сохранением
       sceneState.updateProjectParams({ project_name: projectName as any });
 
-      const result = await projectAPI.saveProject(projectState.currentProjectId, projectName);
+      const result = await projectAPI.saveProject(projectState.currentProjectId, projectName, kpFlag);
 
       if (result.success) {
         if (projectState.currentProjectId) {
@@ -188,7 +189,8 @@ export const useQuickActionsToolbar = () => {
         if (router.currentRoute.value.path !== '/3d') {
           await router.push('/3d');
         }
-
+        eventBus.emit('A:Save')
+        roomState.routConvertData('/2d');
         eventBus.emit("A:ScreenPrint")
 
         const handleComplete = () => {

@@ -271,10 +271,68 @@ export default class DoorsAndWindows {
 
         points.push(point2, point3);
 
-        dataObject.belongsToWall.distanceFromWallStart = getBelongsToWall 
-          ? getDistanceBetweenVectors(dataWall?.points[0], points[0]) : 0;
+        // Если объект принадлежит стене, проецируем его на стену
+        // (аналогично логике в updateObject), чтобы убрать смещение из 3D
+        if (getBelongsToWall && dataWall) {
+          // Обновляем свойства объекта на основе стены (как в updateObject)
+          dataObject.height = dataWall.height;
+          dataObject.heightDirection = dataWall.heightDirection;
+          dataObject.angleDegrees = dataWall.angleDegrees;
 
-        dataObject.points = points;
+          // Вычисляем расстояние от начала стены до проекции точки[0] на стену
+          const projectedPoint0 = getIntersectVectorLine(
+            [dataWall.points[0], dataWall.points[1]],
+            points[0]
+          );
+
+          if (projectedPoint0) {
+            // Вычисляем distanceFromWallStart от спроецированной точки
+            dataObject.belongsToWall.distanceFromWallStart = getDistanceBetweenVectors(
+              dataWall.points[0],
+              projectedPoint0
+            );
+
+            // Используем ту же логику, что и в updateObject для корректного позиционирования
+            const point_0: Vector2 = offsetVectorBySegment(
+              [dataWall.points[0], dataWall.points[1]],
+              dataWall.points[0],
+              dataObject.belongsToWall.distanceFromWallStart
+            );
+            
+            let point_1: Vector2 = {
+              x: point_0.x + dataObject.width,
+              y: point_0.y
+            };
+            
+            let point_2: Vector2 = JSON.parse(JSON.stringify(point_1));
+            point_2.y -= dataObject.height;
+            
+            let point_3: Vector2 = JSON.parse(JSON.stringify(point_0));
+            point_3.y -= dataObject.height;
+
+            // Поворачиваем точки вокруг point_0 на угол стены
+            const objectPoints: Vector2[] = rotatePointsAroundCenter([
+              point_0,
+              point_1,
+              point_2,
+              point_3
+            ], point_0, dataObject.angleDegrees);
+
+            // Используем корректно позиционированные точки
+            dataObject.points = objectPoints;
+          } else {
+            // Если проекция не удалась, используем исходные точки
+            dataObject.belongsToWall.distanceFromWallStart = getDistanceBetweenVectors(
+              dataWall.points[0],
+              points[0]
+            );
+            dataObject.points = points;
+          }
+        } else {
+          // Если объект не принадлежит стене, используем исходные точки
+          dataObject.belongsToWall.distanceFromWallStart = 0;
+          dataObject.points = points;
+        }
 
         this.drawObjects.push(dataObject);
 
