@@ -4,6 +4,7 @@ import { useSceneState } from '@/store/appliction/useSceneState'
 import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types'
 import { API_ENDPOINTS, REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
 import { client } from '@/api/api'
+import { useBasketStore } from '@/store/appStore/useBasketStore'
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
@@ -169,7 +170,7 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null, projectName?: string): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
@@ -233,7 +234,7 @@ export function useProjectAPI() {
         const tempProjectId = Date.now().toString();
         projectData.projectId = tempProjectId
 
-
+        console.log(kpFlag)
         const response = await client.POST('/api/modeller/projectq/SaveProject/', {
           body: JSON.stringify({
                 data: {
@@ -245,7 +246,8 @@ export function useProjectAPI() {
                   project: projectData,
                   style: REQUEST_CONSTANTS.STYLE,
                   projectId: Date.now().toString(),
-                  user_id: REQUEST_CONSTANTS.USER_ID
+                  user_id: REQUEST_CONSTANTS.USER_ID,
+                  ...(kpFlag && { basket: useBasketStore().syncBasket() })
                 }
               })
         })
