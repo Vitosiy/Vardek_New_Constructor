@@ -187,6 +187,7 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-print',
       path: 'default',
       action: async () => {
+        projectState.isSaving = true;
         if (router.currentRoute.value.path !== '/3d') {
           await router.push('/3d');
         }
@@ -197,6 +198,8 @@ export const useQuickActionsToolbar = () => {
         const handleComplete = () => {
           eventBus.off("A:3DScreenshotCreated", handleComplete);
           printPage();
+          
+        projectState.isSaving = false;
         }
 
         eventBus.on("A:3DScreenshotCreated", handleComplete);
