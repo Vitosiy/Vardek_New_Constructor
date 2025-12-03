@@ -1,4 +1,7 @@
 import { useScreenshotsStore, IScreenshot } from "@/features/store/screenshotsStore/screenshotsStore";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { _URL } from "@/types/constants";
+import { useAppData } from "@/store/appliction/useAppData";
 
 export const usePrint = () => {
   const printPage = async () => {
@@ -6,6 +9,34 @@ export const usePrint = () => {
       // Получаем store скриншотов
       const screenshotsStore = useScreenshotsStore();
       const screenshots: IScreenshot[] = screenshotsStore.getScreenshots();
+
+      const basketStore = useBasketStore();
+      const basketData = basketStore.basketData;
+      
+      // Получаем данные приложения для доступа к названиям цветов
+      const appDataStore = useAppData();
+      const appData = appDataStore.getAppData;
+      
+      // Функция для получения названия цвета корпуса
+      const getBodyColorName = (colorId: any): string => {
+        if (!colorId) return '—';
+        if (appData?.COLOR && appData.COLOR[colorId]) {
+          return appData.COLOR[colorId].NAME || `Цвет ${colorId}`;
+        }
+        if (appData?.FASADE && appData.FASADE[colorId]) {
+          return appData.FASADE[colorId].NAME || `Цвет ${colorId}`;
+        }
+        return `Цвет ${colorId}`;
+      };
+      
+      // Функция для получения названия цвета фасада
+      const getFacadeColorName = (colorId: any): string => {
+        if (!colorId) return 'Без фасада';
+        if (appData?.FASADE && appData.FASADE[colorId]) {
+          return appData.FASADE[colorId].NAME || `Фасад ${colorId}`;
+        }
+        return `Фасад ${colorId}`;
+      };
       
       console.log('Найдено скриншотов для печати:', screenshots.length);
       if (screenshots.length > 0) {
@@ -18,23 +49,50 @@ export const usePrint = () => {
       
       // Данные корзины (можно передавать как параметр)
       const cartData = {
-        items: [
-          {
-            name: 'Пенал низкий с дверью',
-            bodyColor: 'Белый W3341',
-            facadeColor: 'Без фасада',
-            quantity: 1,
-            price: 8855,
-            amount: 8855,
-            amountWithoutDiscount: 11807
-          }
-        ],
-        total: 8855,
-        totalWithoutDiscount: 11807
+        items: basketData?.products?.map((item: any) => {
+          // Парсим форматированные строки в числа для расчетов
+          const parsePrice = (priceStr: string | undefined): number => {
+            if (!priceStr) return 0;
+            // Убираем все символы кроме цифр и запятой/точки
+            const cleaned = priceStr.replace(/[^\d,.-]/g, '').replace(',', '.');
+            return parseFloat(cleaned) || 0;
+          };
+
+          const unitPrice = parsePrice(item.product?.unitPriceFormat);
+          const allPrice = parsePrice(item.product?.allPriceFormat);
+          const allPriceOld = parsePrice(item.product?.allPriceOldFormat);
+          const quantity = item.product?.quantity || 1;
+
+          return {
+            name: item.product?.NAME || 'Неизвестный товар',
+            bodyColor: getBodyColorName(item.product?.PROPS?.BODY?.COLOR),
+            facadeColor: getFacadeColorName(item.product?.PROPS?.FASADE?.[0]?.COLOR),
+            quantity: quantity,
+            price: unitPrice,
+            amount: allPrice,
+            amountWithoutDiscount: allPriceOld,
+            previewPicture: item.product?.PREVIEW_PICTURE || null
+          };
+        }) || [],
+        total: basketData?.basket?.sum || 0,
+        totalWithoutDiscount: basketData?.basket?.sumOld || 0
       };
 
       // Показываем индикатор загрузки
       console.log('Подготовка к печати...');
+
+      // Удаляем старые элементы печати, если они существуют
+      const existingPrintDiv = document.getElementById('print-content');
+      if (existingPrintDiv) {
+        // Очищаем созданные URL для Blob объектов перед удалением
+        const existingImages = existingPrintDiv.querySelectorAll('img');
+        existingImages.forEach(img => {
+          if (img.src.startsWith('blob:')) {
+            URL.revokeObjectURL(img.src);
+          }
+        });
+        document.body.removeChild(existingPrintDiv);
+      }
 
       // Создаём скрытый div с печатным содержимым
       const printDiv = document.createElement('div');
@@ -96,49 +154,66 @@ export const usePrint = () => {
         });
       }
 
-      // Добавляем данные корзины
-      printDiv.innerHTML += `
-        <div class="a4-page">
-          <div class="cart-section">
-            <h2 class="print-title">Данные корзины</h2>
-            <div class="cart-items">
-              ${cartData.items.map(item => `
-                <div class="cart-item">
-                  <div class="item-details">
-                    <h3 class="item-name">${item.name}</h3>
-                    <p class="item-color">Цвет корпуса: ${item.bodyColor}</p>
-                    <p class="item-facade">Цвет фасада: ${item.facadeColor}</p>
-                  </div>
-                  <div class="item-quantity">
-                    <span class="quantity-label">Количество:</span>
-                    <span class="quantity-value">${item.quantity}</span>
-                  </div>
-                  <div class="item-price">
-                    <span class="price-label">Цена:</span>
-                    <span class="price-value">${item.price.toLocaleString()} ₽</span>
-                  </div>
-                  <div class="item-amount">
-                    <span class="amount-label">Сумма:</span>
-                    <span class="amount-value">${item.amount.toLocaleString()} ₽</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            <div class="cart-summary">
-              <div class="summary-row">
-                <span class="summary-label">Итого без скидки:</span>
-                <span class="summary-value total-no-discount">${cartData.totalWithoutDiscount.toLocaleString()} ₽</span>
+            // Добавляем данные корзины
+            printDiv.innerHTML += `
+            <div class="a4-page">
+              <div class="cart-section">
+                <h2 class="print-title">Данные корзины</h2>
+                ${cartData.items.length > 0 ? `
+                <table class="cart-table">
+                  <thead>
+                    <tr>
+                      <th>Фото</th>
+                      <th>Наименование</th>
+                      <th>Количество</th>
+                      <th>Цена</th>
+                      <th>Сумма</th>
+                      <th>Сумма без скидки</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${cartData.items.map(item => `
+                  <tr>
+                    <td class="item-photo">
+                      ${item.previewPicture ? `<img src="${_URL}${item.previewPicture}" alt="${item.name}" class="item-photo-img" />` : '—'}
+                    </td>
+                    <td class="item-name">
+                      ${item.name}<br/>
+                      <small style="color: #666;">Цвет корпуса: ${item.bodyColor}</small><br/>
+                      <small style="color: #666;">Фасад: ${item.facadeColor}</small>
+                    </td>
+                    <td class="item-quantity">${item.quantity}</td>
+                    <td class="item-price">${item.price.toLocaleString('ru-RU')} ₽</td>
+                    <td class="item-amount">${item.amount.toLocaleString('ru-RU')} ₽</td>
+                    <td class="item-amount-no-discount">${item.amountWithoutDiscount.toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                `).join('')}
+                  </tbody>
+                  <tfoot>
+                    <tr class="summary-row">
+                      <td colspan="4" class="summary-label">Итого без скидки:</td>
+                      <td colspan="2" class="summary-value total-no-discount">${cartData.totalWithoutDiscount.toLocaleString('ru-RU')} ₽</td>
+                    </tr>
+                    <tr class="summary-row">
+                      <td colspan="4" class="summary-label">Итого со скидкой:</td>
+                      <td colspan="2" class="summary-value total-price">${cartData.total.toLocaleString('ru-RU')} ₽</td>
+                    </tr>
+                  </tfoot>
+                </table>
+                ` : '<p>Корзина пуста</p>'}
               </div>
-              <div class="summary-row">
-                <span class="summary-label">Итого со скидкой:</span>
-                <span class="summary-value total-price">${cartData.total.toLocaleString()} ₽</span>
-              </div>
             </div>
-          </div>
-        </div>
-      `;
+          `;
 
       // Добавляем стили для печати
+      // Удаляем старые стили печати, если они существуют
+      const existingStyles = Array.from(document.head.querySelectorAll('style')).find(
+        style => style.textContent?.includes('#print-content')
+      );
+      if (existingStyles) {
+        document.head.removeChild(existingStyles);
+      }
+
       const printStyles = document.createElement('style');
       printStyles.textContent = `
         @media print {
@@ -158,9 +233,9 @@ export const usePrint = () => {
         
         .a4-page {
           page-break-after: always;
-          padding: 20px;
-          max-width: 210mm;
-          margin: 0 auto;
+          padding: 0px;
+          margin: 0;
+          max-width: 100%;
         }
         
         .print-title {
@@ -191,9 +266,11 @@ export const usePrint = () => {
         
         .screenshot-item {
           border: 1px solid #ddd;
-          padding: 15px;
           border-radius: 8px;
           background-color: #f9f9f9;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
         
         .screenshot-mode {
@@ -206,9 +283,8 @@ export const usePrint = () => {
         
         .screenshot-image {
           width: 100%;
+          max-height: 36vh;
           height: auto;
-          max-height: 400px;
-          object-fit: contain;
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -224,81 +300,128 @@ export const usePrint = () => {
           margin-top: 30px;
         }
         
-        .cart-items {
-          margin-bottom: 30px;
+        .cart-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+          font-size: 14px;
         }
         
-        .cart-item {
+        .cart-table thead {
+          background-color: #f5f5f5;
+        }
+        
+        .cart-table th {
+          padding: 12px 8px;
+          text-align: left;
           border: 1px solid #ddd;
-          padding: 20px;
-          margin-bottom: 15px;
-          border-radius: 8px;
-          background-color: #f9f9f9;
+          font-weight: 600;
+          font-size: 14px;
+          color: #333;
+          background-color: #f5f5f5;
+        }
+        
+        .cart-table th:first-child {
+          width: 110px;
+          text-align: center;
+        }
+        
+        .cart-table th:nth-child(2) {
+          min-width: 200px;
+        }
+        
+        .cart-table th:nth-child(3),
+        .cart-table th:nth-child(4),
+        .cart-table th:nth-child(5),
+        .cart-table th:nth-child(6) {
+          width: 100px;
+          text-align: right;
+        }
+        
+        .cart-table td {
+          padding: 12px 8px;
+          border: 1px solid #ddd;
+          font-size: 14px;
+          color: #555;
+          vertical-align: top;
+        }
+        
+        .cart-table tbody tr:nth-child(even) {
+          background-color: #fafafa;
+        }
+        
+        .cart-table tbody tr:hover {
+          background-color: #f0f0f0;
+        }
+        
+        .item-photo {
+          text-align: center;
+          color: #999;
+          width: 110px;
+        }
+        
+        .item-photo-img {
+          max-width: 90px;
+          max-height: 90px;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          border-radius: 4px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         .item-name {
-          font-size: 18px;
-          font-weight: 600;
-          margin-bottom: 10px;
-          color: #333;
-        }
-        
-        .item-color, .item-facade {
-          font-size: 14px;
-          color: #666;
-          margin-bottom: 5px;
-        }
-        
-        .item-quantity, .item-price, .item-amount {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 10px;
-          padding: 8px 0;
-          border-top: 1px solid #eee;
-        }
-        
-        .quantity-label, .price-label, .amount-label {
-          font-size: 14px;
-          color: #555;
-          font-weight: 500;
-        }
-        
-        .quantity-value, .price-value, .amount-value {
-          font-size: 16px;
           font-weight: 600;
           color: #333;
         }
         
-        .cart-summary {
+        .item-quantity {
+          text-align: right;
+        }
+        
+        .item-price {
+          text-align: right;
+        }
+        
+        .item-amount {
+          text-align: right;
+          font-weight: 600;
+          color: #333;
+        }
+        
+        .item-amount-no-discount {
+          text-align: right;
+          color: #999;
+          text-decoration: line-through;
+        }
+        
+        .cart-table tfoot {
           border-top: 2px solid #333;
-          padding-top: 20px;
+          background-color: #f9f9f9;
         }
         
-        .summary-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-          padding: 10px 0;
+        .cart-table tfoot .summary-row {
+          font-weight: 600;
         }
         
-        .summary-label {
+        .cart-table tfoot .summary-label {
+          text-align: right;
           font-size: 16px;
           color: #555;
-          font-weight: 500;
+          font-weight: 600;
         }
         
-        .summary-value {
+        .cart-table tfoot .summary-value {
+          text-align: right;
           font-size: 18px;
           font-weight: 600;
         }
         
-        .summary-value.total-price {
-          font-size: 18px;
+        .cart-table tfoot .summary-value.total-price {
+          color: #333;
         }
         
-        .summary-value.total-no-discount {
+        .cart-table tfoot .summary-value.total-no-discount {
           color: #999;
           text-decoration: line-through;
         }

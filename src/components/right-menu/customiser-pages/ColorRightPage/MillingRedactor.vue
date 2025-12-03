@@ -31,16 +31,23 @@ const isSearch = computed(() => {
 });
 
 const changeMilling = (milling) => {
+  emit("select_milling", {
+    name: milling.NAME,
+    imgSrc: milling.PREVIEW_PICTURE,
+    ID: milling.ID,
+    fasade_type: milling.fasade_type,
+    patina: milling.PATINAOFF,
+  }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+
   if (!props.tempWork) {
     let action = null;
     /** @Применение_типа_фасадов_с_инегрированной_ручкой */
     const prepare = getIntegratedHandleControllerData(milling, props.tabIndex);
-    console.log(prepare, 'PREPARE')
 
     if (prepare.length > 0 && INTEGRATE_HANDE_EXEPTIONS.includes(milling.ID)) {
-
       action = modelState.getCurrentMillingActionMap(prepare[0].id, milling.ID);
     }
+
 
     eventBus.emit("A:ChangeMilling", {
       data: milling.ID,
@@ -48,13 +55,6 @@ const changeMilling = (milling) => {
       action: action,
     });
   }
-
-  emit("select_milling", {
-    name: milling.NAME,
-    imgSrc: milling.PREVIEW_PICTURE,
-    ID: milling.ID,
-    fasade_type: milling.fasade_type,
-  }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {

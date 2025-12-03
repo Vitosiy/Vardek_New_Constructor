@@ -78,6 +78,10 @@ export class Room extends BuildersHelper {
 
     }
 
+    get _roomObject(){
+        return this.roomObject
+    }
+
     get _wallsGroupSize() {
         return this.wallsGroupSize
     }

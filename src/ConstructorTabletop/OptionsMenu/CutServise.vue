@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import { computed, ref, toRefs, withDefaults, onBeforeMount } from "vue";
+import { computed, ref, toRefs, withDefaults, onBeforeMount, watch } from "vue";
 import { SERVISE_ERRORS } from "@/ConstructorTabletop/CutterScripts/CutterConst";
 import { useKromkaActions } from "../Kromka/useKromkaActions";
 import KromkaCard from "../Kromka/KromkaCard.vue";
@@ -8,7 +8,7 @@ import MainInput from "@/components/ui/inputs/MainInput.vue";
 import Tooltip from "./Tooltip.vue";
 
 interface Props {
-  kromkaData: any[];
+  profileData: any[];
   serviseData: any[];
   currentSection: Record<string, any>;
   step?: number;
@@ -22,41 +22,25 @@ const props = withDefaults(defineProps<Props>(), {
   step: 1,
 });
 
-// const props = defineProps({
-//   kromkaData: {
-//     type: Array,
-//     required: true,
-//   },
-//   serviseData: {
-//     type: Array,
-//     required: true,
-//   },
-//   currentSection: {
-//     type: Object,
-//     required: true,
-//   },
-//   step: {
-//     type: Number,
-//     default: 1,
-//   },
-// });
 const emit = defineEmits([
-  "cut-kromkaData",
+  "cut-profileData",
   "cut-toggleCutServise",
   "cut-servisData",
   "cut-updateServise",
 ]);
 
 const cutServisShow = ref(false);
-const kromkaDataParse = ref<any[] | null>(null);
+const profileDataParse = ref<any[] | null>(null);
 const serviseDataParse = ref<any[] | null>(null);
 
 const cutChacked = (event: Event, item: Record<string, string>) => {
   emit("cut-servisData", event.target.checked, item);
 };
 
-const kromkaChacked = (event: Event, kromka: Record<string, string>) => {
-  emit("cut-kromkaData", event.target.checked, kromka);
+const profileChacked = (event: Event, profile: Record<string, string>) => {
+  // console.log(profile, ' ==== profile ====')
+
+  emit("cut-profileData", event.target.checked, profile);
 };
 
 const toggleCutServise = () => {
@@ -83,25 +67,34 @@ const updateEuroWidth = (event: Event, type: string) => {
 
 const getContainerHeight = computed(() => {
   return {
-    full: props.kromkaData.length == 0,
+    full: props.profileData.length == 0,
   };
 });
 
 const checkDefaultProfile = computed(() => {
   return (value, id) => {
-    if (id === 251698) return true;
+    // if (id === 251698) return true;
     return value;
   };
 });
 
-const kromkaData = computed(() => {
-  if (props.kromkaData() > 0) return kromkaDataParse.value;
+const profileData = computed(() => {
+  if (props.profileData() > 0) return profileDataParse.value;
 });
 
 onBeforeMount(() => {
+  console.log(props.serviseData, "===== serviseData");
+
   getCurretKromkaList();
-  // kromkaDataParse.value = props.kromkaData();
+  // profileDataParse.value = props.profileData();
 });
+
+watch(
+  () => props,
+  () => {
+    console.log("serviseData");
+  }
+);
 </script>
 
 <template>
@@ -149,12 +142,12 @@ onBeforeMount(() => {
           </Tooltip>
         </div>
 
-        <div class="actions-inputs" v-if="item.width && item.value">
+        <div class="actions-inputs" v-if="item.EURO_WIDTH && item.value">
           <p class="actions-title">Ширина</p>
           <div class="actions-input--container">
             <MainInput
               :inputClass="'actions-input'"
-              v-model="item.width"
+              v-model="item.EURO_WIDTH"
               :min="200"
               :max="getMaxWidth"
               :type="'number'"
@@ -169,7 +162,7 @@ onBeforeMount(() => {
 
     <div
       class="splitter-container--cut-header"
-      v-if="props.kromkaData.length > 0"
+      v-if="props.profileData.length > 0"
     >
       <div class="splitter-container--cut-header">
         <h3 class="splitter-title">Профиль</h3>
@@ -178,24 +171,24 @@ onBeforeMount(() => {
 
     <div
       class="splitter-container--cut-servise"
-      v-if="props.kromkaData.length > 0"
+      v-if="props.profileData.length > 0"
     >
       <div
         class="'cut-servise--item'"
-        v-for="(kromka, key, ndx) in props.kromkaData"
-        :key="kromka.NAME + ndx"
+        v-for="(profile, key, ndx) in props.profileData"
+        :key="profile.NAME + ndx"
       >
         <div :class="['cut-servise--wrapper']">
           <label class="control control-checkbox">
             <input
               type="checkbox"
-              :checked="kromka.value"
-              :disabled="kromka.ID === 251698 && kromka.value"
-              @change="kromkaChacked($event, kromka)"
+              :checked="profile.value"
+              :disabled="profile.ID === 251698 && profile.value"
+              @change="profileChacked($event, profile)"
             />
             <span class="control_indicator"></span>
             <span class="text-lg text-gray-800 font-medium">{{
-              kromka.NAME
+              profile.NAME
             }}</span>
           </label>
         </div>

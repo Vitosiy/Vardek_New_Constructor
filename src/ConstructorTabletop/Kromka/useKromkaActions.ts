@@ -17,18 +17,19 @@ const useKromkaActions = defineStore('KromkaActions', () => {
     const HEMLIST: TKromkaMaterialItem[] = modelState._HEM
 
     const tempKromkaList = ref<TKromkaMaterialItem[] | []>([])
-    const cromkaActive = ref<boolean>(false);
+    const kromkaActive = ref<boolean>(false);
     const cardData = ref<Record<string, any> | null>(null)
     const kromkaListVisible = ref<boolean>(false);
     const tempGridData = ref<any[]>([])
-
+    const tempProfileData = ref<any[]>([])
+    const tempKromkaId = ref<number | null>(null)
 
     const getKromkaList = computed(() => {
         return tempKromkaList
     })
 
     const getKromkaActive = computed(() => {
-        return cromkaActive
+        return kromkaActive
     })
 
     const getKromkaCardData = computed(() => {
@@ -39,49 +40,69 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         return kromkaListVisible
     })
 
-    const setCromkaActive = (value: boolean) => {
-        cromkaActive.value = value
+    const getCurrentKromkaId = () => {
+        return tempKromkaId.value
+    }
+
+    const setKromkaActive = (value: boolean) => {
+        kromkaActive.value = value
     }
 
     const setGridData = (value: any[]) => {
         tempGridData.value = value
     }
 
+    const setProfileData = (value: any[]) => {
+        tempProfileData.value = value
+    }
+
+    const setKromkaId = (value: number | null) => {
+        tempKromkaId.value = value
+    }
+
+
+
     const checkKromkaActive = () => {
 
         const grid = tempGridData.value
-        const hasActiveKromka = grid.some((inner: any[]) =>
-            inner.some((item) =>
-                item.serviseData?.some(
-                    (servise) => servise.POSITION.includes("kromka") && servise.value === true
-                )
-            )
-        );
 
+        let hasActiveKromka = false
 
-        const parent = modelState.getCurrentRaspilParent || modelState.getCurrentModel
+        const parent = modelState.getCurrentRaspilParent
         const { PROPS } = parent!.userData;
-        const { KROMKA, PROFILE } = PROPS.CONFIG;
+        const { PROFILE, KROMKA } = PROPS.CONFIG;
+        const activeProfile = tempProfileData.value.find((prof) => prof.value);
 
-        if (KROMKA) {
-            cromkaActive.value = true
+        if (tempProfileData.value.length > 0) {
+            hasActiveKromka = grid
+                .flatMap(row => row)
+                .flatMap(cell => cell.serviseData || [])
+                .some(serv =>
+                    Array.isArray(serv.show_props) &&
+                    serv.show_props.includes('hem') &&
+                    serv.value === true
+                );
+
+            const hasProfileKromka = activeProfile.show_props && activeProfile.show_props?.includes("hem")
+
+            // console.log(hasActiveKromka, '==== ❌ hasActiveKromka ❌ ====')
+            // console.log(hasProfileKromka, '==== ❌ hasProfileKromka ❌ ====')
+
+            kromkaActive.value = hasActiveKromka ? hasActiveKromka : hasProfileKromka
+            if (!kromkaActive.value) tempKromkaId.value = null
+
             return
-        }
 
-        const curProfile = PROFILE.find(el => el.value)
-        const check = curProfile.ID == 251701 || hasActiveKromka
-
-        if (check) {
-            cromkaActive.value = true
-        } else {
-            cromkaActive.value = false
         }
+        kromkaActive.value = false
+
     }
+
 
     const kromkaSelect = (value) => {
         kromkaListVisible.value = false
 
-        const parent = modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+        const parent = modelState.getCurrentRaspilParent
         const { CONFIG } = parent?.userData.PROPS
 
         let data: Record<string, any> = {}
@@ -89,8 +110,9 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         data.PREVIEW_PICTURE = _URL + value.PREVIEW_PICTURE
         cardData.value = data
 
-        CONFIG.KROMKA = value.ID
-        CONFIG.KROMKA
+        tempKromkaId.value = value.ID
+
+        console.log(tempKromkaId.value)
     }
 
     const kromkaCardSelect = () => {
@@ -102,12 +124,12 @@ const useKromkaActions = defineStore('KromkaActions', () => {
     }
 
     const createKromkaCardData = () => {
-        if (!cromkaActive.value) return
+        if (!kromkaActive.value) return
 
-        const parent = modelState.getCurrentRaspilParent || modelState.getCurrentModel;
+        const parent = modelState.getCurrentRaspilParent
         const { CONFIG } = parent?.userData.PROPS
 
-        const kromkaId = CONFIG?.KROMKA;
+        const kromkaId = tempKromkaId.value;
         const defaultId = 211247;
 
         const target = tempKromkaList.value.find(
@@ -126,9 +148,9 @@ const useKromkaActions = defineStore('KromkaActions', () => {
 
     const getCurretKromkaList = () => {
 
-        if (!cromkaActive.value) return
+        if (!kromkaActive.value) return
 
-        const parent = modelState.getCurrentRaspilParent || modelState.getCurrentModel
+        const parent = modelState.getCurrentRaspilParent
         const { PROPS } = parent!.userData;
         const { PRODUCT } = PROPS
 
@@ -141,12 +163,15 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         createKromkaCardData()
     }
 
+
     const clearKromkaData = () => {
         tempKromkaList.value = []
-        cromkaActive.value = false
+        kromkaActive.value = false
         cardData.value = null
         kromkaListVisible.value = false
         tempGridData.value = []
+        tempProfileData.value = []
+        tempKromkaId.value = null
     }
 
     return {
@@ -158,9 +183,12 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         kromkaCardSelect,
         getKromkaCardData,
         getKromkaCardSelect,
+        getCurrentKromkaId,
         hideKromkaList,
-        setCromkaActive,
-        setGridData, 
+        setKromkaActive,
+        setGridData,
+        setProfileData,
+        setKromkaId,
         clearKromkaData
     }
 })

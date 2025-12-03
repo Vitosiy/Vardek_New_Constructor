@@ -50,7 +50,10 @@ const eventsMap = [
     "A:ChangePlinthBody",
     "A:ChangePlinthColor",
     "U:DrawPatina",
-    "A:RecountShelfs"
+    "A:RecountShelfs",
+    "A:Delite-Fasad",
+    'A:GlobalParamsSelect'
+
 ]
 
 const useBascetEvents = () => {

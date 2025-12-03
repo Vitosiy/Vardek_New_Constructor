@@ -948,61 +948,159 @@ class Section extends Helpers {
     this.createFormSection(data);
   }
 
+  // getServiseData() {
+  //   // console.log(this.data, 'this.data')
+
+  //   // Сбрасываем ошибки
+  //   this.data.serviseData.forEach(el => {
+  //     el.error = false;
+  //   });
+
+  //   const data = this.data.serviseData.filter(elem => elem.value === true);
+
+  //   console.log(this.data.serviseData, 'data')
+
+  //   const handlers: Record<number, (acc: any, el: any) => void> = {
+  //     // bottomLeft
+  //     201640: (acc, el) => acc.bottomLeft = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     247670: (acc, el) => acc.bottomLeft = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     201638: (acc, el) => acc.bottomLeft = { type: 'corner', corner: this.getPixelWidth(el.CORNER), el },
+  //     247672: (acc, el) => acc.bottomLeft = { type: 'inward', radius: this.getPixelWidth(el.RADIUS), width: this.getPixelWidth(el.EURO_WIDTH), el },
+
+  //     // bottomRight
+  //     201641: (acc, el) => acc.bottomRight = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     247669: (acc, el) => acc.bottomRight = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     201639: (acc, el) => acc.bottomRight = { type: 'corner', corner: this.getPixelWidth(el.CORNER), el },
+  //     247671: (acc, el) => acc.bottomRight = { type: 'inward', radius: this.getPixelWidth(el.RADIUS), width: this.getPixelWidth(el.EURO_WIDTH), el },
+
+  //     // topLeft
+  //     201640_2: (acc, el) => acc.topLeft = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     247670_2: (acc, el) => acc.topLeft = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     201638_2: (acc, el) => acc.topLeft = { type: 'corner', corner: this.getPixelWidth(el.CORNER), el },
+  //     247672_2: (acc, el) => acc.topLeft = { type: 'inward', radius: this.getPixelWidth(el.RADIUS), width: this.getPixelWidth(el.EURO_WIDTH), el },
+
+  //     // topRight
+  //     201641_2: (acc, el) => acc.topRight = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     247669_2: (acc, el) => acc.topRight = { type: 'rounded', radius: this.getPixelWidth(el.RADIUS), el },
+  //     201639_2: (acc, el) => acc.topRight = { type: 'corner', corner: this.getPixelWidth(el.CORNER), el },
+  //     247671_2: (acc, el) => acc.topRight = { type: 'inward', radius: this.getPixelWidth(el.RADIUS), width: this.getPixelWidth(el.EURO_WIDTH), el },
+
+  //     // спецкейсы
+  //     616287_2: (acc, el) => {
+  //       const r = this.height * 0.4999;
+  //       acc.topLeft = { type: 'rounded', radius: r, el };
+  //       acc.bottomLeft = { type: 'rounded', radius: r, el };
+  //     },
+  //     616287: (acc, el) => {
+  //       const r = this.height * 0.4999;
+  //       acc.topRight = { type: 'rounded', radius: r, el };
+  //       acc.bottomRight = { type: 'rounded', radius: r, el };
+  //     },
+  //   };
+
+  //   const remaster = data.reduce((acc, el) => {
+  //          console.log(handlers[el.ID], ' === handler ===')
+
+  //     const handler = handlers[el.ID];
+
+
+  //     if (handler) handler(acc, el);
+  //     return acc;
+  //   }, {} as Record<string, any>);
+
+  //   console.log(remaster, 'remaster')
+
+  //   return remaster;
+  // }
+
   getServiseData() {
     // Сбрасываем ошибки
-    this.data.serviseData.forEach(el => {
-      el.error = false;
-    });
+    this.data.serviseData.forEach(el => el.error = false);
 
-    const data = this.data.serviseData.filter(elem => elem.value === true);
-
-    const handlers: Record<number, (acc: any, el: any) => void> = {
-      // bottomLeft
-      201640: (acc, el) => acc.bottomLeft = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      247670: (acc, el) => acc.bottomLeft = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      201638: (acc, el) => acc.bottomLeft = { type: 'corner', corner: this.getPixelWidth(el.corner), el },
-      247672: (acc, el) => acc.bottomLeft = { type: 'inward', radius: this.getPixelWidth(el.radius), width: this.getPixelWidth(el.width), el },
-
-      // bottomRight
-      201641: (acc, el) => acc.bottomRight = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      247669: (acc, el) => acc.bottomRight = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      201639: (acc, el) => acc.bottomRight = { type: 'corner', corner: this.getPixelWidth(el.corner), el },
-      247671: (acc, el) => acc.bottomRight = { type: 'inward', radius: this.getPixelWidth(el.radius), width: this.getPixelWidth(el.width), el },
-
-      // topLeft
-      201640_2: (acc, el) => acc.topLeft = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      247670_2: (acc, el) => acc.topLeft = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      201638_2: (acc, el) => acc.topLeft = { type: 'corner', corner: this.getPixelWidth(el.corner), el },
-      247672_2: (acc, el) => acc.topLeft = { type: 'inward', radius: this.getPixelWidth(el.radius), width: this.getPixelWidth(el.width), el },
-
-      // topRight
-      201641_2: (acc, el) => acc.topRight = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      247669_2: (acc, el) => acc.topRight = { type: 'rounded', radius: this.getPixelWidth(el.radius), el },
-      201639_2: (acc, el) => acc.topRight = { type: 'corner', corner: this.getPixelWidth(el.corner), el },
-      247671_2: (acc, el) => acc.topRight = { type: 'inward', radius: this.getPixelWidth(el.radius), width: this.getPixelWidth(el.width), el },
-
-      // спецкейсы
-      616287_2: (acc, el) => {
-        const r = this.height * 0.4999;
-        acc.topLeft = { type: 'rounded', radius: r, el };
-        acc.bottomLeft = { type: 'rounded', radius: r, el };
-      },
-      616287: (acc, el) => {
-        const r = this.height * 0.4999;
-        acc.topRight = { type: 'rounded', radius: r, el };
-        acc.bottomRight = { type: 'rounded', radius: r, el };
-      },
+    const active = this.data.serviseData.filter(el => el.value === true);
+    const result = {
+      bottomLeft: null,
+      bottomRight: null,
+      topLeft: null,
+      topRight: null,
     };
 
-    const remaster = data.reduce((acc, el) => {
-      const handler = handlers[el.ID];
-      if (handler) handler(acc, el);
-      return acc;
-    }, {} as Record<string, any>);
+    // Разрешённые группы — только эти 6, и ничего больше!
+    const ALLOWED_GROUPS = new Set([
+      'left_bottom',
+      'right_bottom',
+      'left_top',
+      'right_top',
+      'left_full',
+      'right_full'
+    ]);
 
-    return remaster;
+    // Вспомогательная функция — определяет тип обработки
+    const getProcessing = (el: any) => {
+      if (el.RADIUS && el.EURO_WIDTH) {
+        return {
+          type: 'inward',
+          radius: this.getPixelWidth(el.RADIUS),
+          width: this.getPixelWidth(el.EURO_WIDTH)
+        };
+      }
+      if (el.RADIUS) {
+        return { type: 'rounded', radius: this.getPixelWidth(el.RADIUS) };
+      }
+      if (el.CORNER) {
+        return { type: 'corner', corner: this.getPixelWidth(el.CORNER) };
+      }
+      return { type: 'simple' };
+    };
+
+    active.forEach(el => {
+      const group = el.NEW_CONSTRUCTOR_GROUP;
+
+      if (!group || group === false) return;
+
+      const groups = Array.isArray(group) ? group : [group];
+
+      // Ключевое правило:
+      // Если в массиве есть хоть одна НЕразрешённая группа — пропускаем всю услугу целиком
+      const hasForbiddenGroup = groups.some(group => !ALLOWED_GROUPS.has(group));
+      if (hasForbiddenGroup) return;
+
+      // Теперь ищем, есть ли среди разрешённых групп нужная нам
+      const targetGroup = groups.find(group => ALLOWED_GROUPS.has(group));
+      if (!targetGroup) return;
+
+      const isLeft = targetGroup.includes('left');
+      const isRight = targetGroup.includes('right');
+      const isTop = targetGroup.includes('top');
+      const isFull = targetGroup.includes('full');
+
+      const side = isLeft ? 'Left' : isRight ? 'Right' : null;
+      if (!side) return;
+
+      if (isFull) {
+        // Барная стойка — полный торец
+        const radius = this.height * 0.4999;
+        const payload = { type: 'rounded', radius, el };
+
+        if (isLeft) {
+          result.topLeft = payload;
+          result.bottomLeft = payload;
+        } else {
+          result.topRight = payload;
+          result.bottomRight = payload;
+        }
+      } else {
+        // Обычный угол
+        const level = isTop ? 'top' : 'bottom';
+        const key = `${level}${side}` as keyof typeof result;
+
+        const processing = getProcessing(el);
+        result[key] = { ...processing, el };
+      }
+    });
+
+    return result;
   }
-
 
   createFormSection(data) {
     let bottomLeft = data.bottomLeft ?? { type: 'none' };
@@ -1151,6 +1249,8 @@ class Section extends Helpers {
     elems.forEach(item => {
       if (item.el) item.el.error = error;
     });
+
+    console.log(path)
 
     return path;
   }

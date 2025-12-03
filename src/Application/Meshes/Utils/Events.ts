@@ -210,7 +210,6 @@ export class MeshEvents extends BuildersHelper {
         }
         const product = totalFasad ?? this._currentMesh
 
-
         if (!product) return;
 
         const { PROPS } = product.userData
@@ -248,8 +247,6 @@ export class MeshEvents extends BuildersHelper {
         // }
 
         if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-
-            console.log('==== ❌ resetFasade ❌ ====', globalMilling)
 
             FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
             FASADE[fasadeNdx].userData.millingMaterial = null
@@ -301,7 +298,17 @@ export class MeshEvents extends BuildersHelper {
 
         if (Array.isArray(elementsList) && elementsList[0]) {
             elementsList.forEach(async (el) => {
-                await this.catchChangeModuleTexture(data, el)
+                console.log(el)
+
+                const { PROPS } = el.userData
+                const { PRODUCT } = PROPS
+                const currentProduct = this._PRODUCTS[PRODUCT]
+
+                const includeIncomeFasade = currentProduct.MODULECOLOR.includes(data.ID);
+
+                if (includeIncomeFasade) {
+                    await this.catchChangeModuleTexture(data, el)
+                }
             })
         }
     }
@@ -310,13 +317,15 @@ export class MeshEvents extends BuildersHelper {
     /** @Изменение_поверхности_фасада  */
     //------------------
 
-    async catchFasadeChange({ data, fasadeNdx }: TDataWithNdx) {
+    async catchFasadeChange({ data, fasadeNdx, mesh }: TDataWithNdx) {
         console.log('==== ❌ catchFasadeChange ❌ ====')
 
-        const product = this._currentMesh;
+        const meshData = mesh ?? this._currentMesh
+
+        // const product = this._currentMesh;
         const drowMode = this.menuStore.getDrowModeValue
 
-        const { CONFIG, FASADE, FASADE_DEFAULT, ELEMENT_TYPE } = product.userData.PROPS;
+        const { CONFIG, FASADE, FASADE_DEFAULT, ELEMENT_TYPE } = meshData.userData.PROPS;
         const { FASADE_PROPS, UNIFORM_TEXTURE } = CONFIG;
 
         const incomingModel = data.MODEL;
@@ -326,13 +335,11 @@ export class MeshEvents extends BuildersHelper {
         fasadeProp.COLOR = data.ID
         fasadeProp.ALUM = incomingModel;
 
-
-
         if (UNIFORM_TEXTURE.group !== null) {
-            this.removeFromUniformGroup(product);
+            this.removeFromUniformGroup(meshData);
         }
 
-        this.resetFasade({ fasadeNdx, incomingModel });
+        this.resetFasade({ fasadeNdx, incomingModel, totalFasad: meshData });
 
 
         const apply = async () => {
@@ -362,11 +369,12 @@ export class MeshEvents extends BuildersHelper {
         const handleType = CONFIG.FASADE_PROPS[fasadeNdx].TYPE
 
         if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
+             console.log('==== ❌ SHOWCASE CLASSIK❌ ====', )
             this.changeShowcase({ data: SHOWCASE[0], fasadeNdx });
         }
         else if (incomingModel) {
             const action = this.modelState.getCurrentFasadeTypesAction(handleType)
-            console.log('==== ❌ SHOWCASE ❌ ====', action)
+            console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
             this.changeShowcase({ data: incomingModel, fasadeNdx, action });
         }
         else {
@@ -419,49 +427,151 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
 
         await this.catchFasadeChange({ data, fasadeNdx })
+        console.log('--- changeFasade ---')
         this.events.emit('U:ChangeFasade')
     }
 
-    changeTotalFasadsTexture({ data, type }: TDataWithType) {
+    // async changeTotalFasadsTexture({ data, palitte, milling, type }: TDataWithType) {
 
-        const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
+    //     console.log('AUFF', data, type)
 
-        const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
+    //     const currentType = this.searchElementsByType[type] /**@Тип_элемента -- @верхний / @нижний */
+    //     console.log(currentType, 'currentType')
 
-        if (Array.isArray(elementsList) && elementsList[0]) {
-            elementsList.forEach((el) => {
-                const { PROPS } = el.userData
-                const { CONFIG, FASADE, PRODUCT } = PROPS
-                const { FASADE_PROPS } = CONFIG
-                const currentProduct = this._PRODUCTS[PRODUCT]
+    //     const elementsList = this.scene.getObjectsByProperty('elementType', currentType) /** @Находим все элементы выбранного типа */
 
-                const includeIncomeFasade = currentProduct.FACADE.includes(data.ID)
+    //     if (Array.isArray(elementsList) && elementsList[0]) {
+    //         elementsList.forEach(async (el) => {
+    //             const { PROPS } = el.userData
+    //             const { CONFIG, FASADE, PRODUCT } = PROPS
+    //             const { FASADE_PROPS, FASADE_POSITIONS } = CONFIG
+    //             const { SHOWCASE } = FASADE_POSITIONS
+    //             const currentProduct = this._PRODUCTS[PRODUCT]
+    //             const currentFasade = this._FASADE[data.ID]
 
-                if (FASADE.length > 0) {
-                    FASADE.forEach(async (fasade, fasadeNdx) => {
-                        // const prevMesh = this._currentMesh
-                        this._currentMesh = el;
+    //             const includeIncomeFasade = currentProduct.FACADE.includes(data.ID);
+
+    //             const includeIncomMilling = milling ? currentProduct.MILLING.includes(milling.ID) : false;
+
+    //             if (FASADE.length > 0) {
+    //                 FASADE.forEach(async (fasade, fasadeNdx) => {
+    //                     // this._currentMesh = el;
+    //                     let action = null
+    //                     const { SHOWCASE } = FASADE_POSITIONS[fasadeNdx]
+
+    //                     console.log('DELITE', data.ID)
+    //                     if (data.ID == 7397 || !includeIncomeFasade) {
+
+    //                         await this.catchDeliteFasade(fasadeNdx, el)
+    //                     }
+    //                     else {
+    //                         await this.catchFasadeChange({ data, fasadeNdx, mesh: el })
+
+    //                         if (palitte) {
+    //                             console.log('palitte')
+    //                             await this.changePaletteColor({ data: palitte, fasadeNdx, mesh: el });
+    //                         }
+
+    //                         if (milling && SHOWCASE === 0) {
+    //                             console.log(' ТУТТ ')
+
+    //                             if (milling.fasade_type && milling.fasade_type[0] !== null) {
+    //                                 const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE
+    //                                 const prepare = milling.fasade_type.filter(el => {
+    //                                     return fType.includes(el)
+    //                                 })
+    //                                 action = this.modelState.getCurrentMillingActionMap(prepare[0], milling.ID) ?? null
+    //                                 FASADE_PROPS[fasadeNdx].MILLING_TYPE = prepare[0] ?? null
+
+    //                             }
+    //                             // FASADE_PROPS[fasadeNdx].PATINA = 475428
+
+    //                             await this.catchChangeMilling({ data: milling.ID, fasadeNdx, action, mesh: el });
+    //                         }
+
+    //                     }
+    //                     // this._currentMesh = null; // вернуть старое значение
+    //                 })
+    //             }
+    //         })
+
+    //         this.events.emit('A:GlobalParapsSelect')
+    //     }
+    // }
+
+    async changeTotalFasadsTexture({ data, palitte, milling, type }: TDataWithType) {
+
+        const currentType = this.searchElementsByType[type];
+
+        const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
+
+        if (!Array.isArray(elementsList) || elementsList.length === 0) {
+            return;
+        }
+
+        // Ждём обработки ВСЕХ элементов и ВСЕХ их фасадов
+        await Promise.all(
+            elementsList.map(async (el) => {
+                const { PROPS } = el.userData;
+                const { CONFIG, FASADE, PRODUCT } = PROPS;
+                const { FASADE_PROPS, FASADE_POSITIONS } = CONFIG;
+                const currentProduct = this._PRODUCTS[PRODUCT];
+                const currentFasade = this._FASADE[data.ID];
+
+                const includeIncomeFasade = currentProduct.FACADE.includes(data.ID);
+                const includeIncomMilling = milling ? currentProduct.MILLING.includes(milling.ID) : false;
+
+                if (FASADE.length === 0) return;
+
+                // Обрабатываем все фасады последовательно или параллельно — выбирай
+                await Promise.all(
+                    FASADE.map(async (fasade, fasadeNdx) => {
+                        const { SHOWCASE } = FASADE_POSITIONS[fasadeNdx];
 
                         if (data.ID == 7397 || !includeIncomeFasade) {
-                            await this.catchDeliteFasade(fasadeNdx, el)
+                            await this.catchDeliteFasade(fasadeNdx, el);
+                        } else {
+                            await this.catchFasadeChange({ data, fasadeNdx, mesh: el });
+
+                            if (palitte) {
+                                await this.changePaletteColor({ data: palitte, fasadeNdx, mesh: el });
+                            }
+
+                            if (milling && SHOWCASE === 0) {
+                                let action = null;
+
+                                if (milling.fasade_type && milling.fasade_type[0] !== null) {
+                                    const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE;
+                                    const prepare = milling.fasade_type.filter(el => fType.includes(el));
+                                    action = this.modelState.getCurrentMillingActionMap(prepare[0], milling.ID) ?? null;
+                                    FASADE_PROPS[fasadeNdx].MILLING_TYPE = prepare[0] ?? null;
+                                }
+
+                                await this.catchChangeMilling({ data: milling.ID, fasadeNdx, action, mesh: el });
+                            }
                         }
-                        else {
-                            await this.catchFasadeChange({ data, fasadeNdx })
-                        }
-                        this._currentMesh = null; // вернуть старое значение
                     })
-                }
+                );
             })
-        }
+        );
+
+        // Только здесь — всё гарантированно завершено
+        this.events.emit('A:GlobalParamsSelect');
     }
 
     //------------------
+
+
     /** @Цвет_палитры  */
     //------------------
 
-    async catchChangePaletteColor({ data, fasadeNdx }: TDataWithNdx) {
+    async catchChangePaletteColor({ data, fasadeNdx, mesh }: TDataWithNdx) {
 
-        const props = this._currentMesh.userData.PROPS
+        const meshData = mesh ?? this._currentMesh
+
+        if (!meshData) return;
+
+        const props = meshData.userData.PROPS
         const { FASADE, CONFIG } = props
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE[fasadeNdx]
@@ -472,39 +582,47 @@ export class MeshEvents extends BuildersHelper {
         this.buildPalette.createPaletteColor({ fasade, data, fasadeProps })
     }
 
-    async changePaletteColor({ data, fasadeNdx }: TDataWithNdx) {
+    async changePaletteColor({ data, fasadeNdx, mesh }: TDataWithNdx) {
 
-        if (!this._currentMesh) return;
-        const props = this._currentMesh.userData.PROPS
+        const meshData = mesh ?? this._currentMesh
+
+        if (!meshData) return;
+
+        const props = meshData.userData.PROPS
         const { FASADE, CONFIG } = props
         const { FASADE_PROPS } = CONFIG
-        const patina = FASADE_PROPS[fasadeNdx].PATINA
-
+        const patina = FASADE_PROPS[fasadeNdx]?.PATINA
 
         // console.log(data, 'data')
 
-        await this.catchChangePaletteColor({ data, fasadeNdx } as TDataWithNdx)
+        await this.catchChangePaletteColor({ data, fasadeNdx, mesh: meshData } as TDataWithNdx)
         if (patina) {
-            await this.catchDrawPatina({ data: patina, fasadeNdx })
+
+            await this.catchDrawPatina({ data: patina, fasadeNdx, mesh: meshData })
         }
         // console.log(FASADE_PROPS[fasadeNdx].PATINA, 'FASADE')
         this.events.emit("U:ChangePaletteColor")
 
     }
 
-    changePaletteTotal({ data, type }: TDataWithType) {
+    changePaletteTotal({ data, type, fasade }: TDataWithType) {
 
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
 
         if (Array.isArray(elementsList) && elementsList.length > 0) {
             elementsList.forEach((el) => {
-                const fasadeList = el.userData.PROPS.FASADE;
-                if (fasadeList.length > 0) {
-                    fasadeList.forEach(async (_fasade, fasadeNdx) => {
-                        this._currentMesh = el;
-                        await this.catchChangePaletteColor({ data: data.ID, fasadeNdx });
-                        this._currentMesh = null
+
+                const { FASADE, CONFIG } = el.userData.PROPS
+                const { FASADE_PROPS } = CONFIG
+
+                if (FASADE.length > 0) {
+                    FASADE.forEach(async (_fasade, fasadeNdx) => {
+                        // this._currentMesh = el;
+                        await this.changePaletteColor({ data: data.ID, fasadeNdx, mesh: el });
+                        // this._currentMesh = null
+
+                        // FASADE_PROPS[fasadeNdx].PATINA = 475428
                     });
                 }
             });
@@ -549,15 +667,17 @@ export class MeshEvents extends BuildersHelper {
     /** @Фрезеровка  */
     //------------------
 
-    async catchChangeMilling({ data, fasadeNdx, action }: TDataWithNdx) {
+    async catchChangeMilling({ data, fasadeNdx, action, mesh }: TDataWithNdx) {
 
-        const props = this._currentMesh.userData.PROPS
+        const meshData = mesh ?? this._currentMesh
+
+        const props = meshData.userData.PROPS
         const { FASADE, FASADE_DEFAULT, CONFIG } = props
         const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG
 
         const fasade: THREE.Mesh = FASADE[fasadeNdx]
         const defaultGeometry = FASADE_DEFAULT[fasadeNdx]
-        const patina = FASADE_PROPS[fasadeNdx].PATINA
+        const patina = FASADE_PROPS[fasadeNdx]?.PATINA
 
         let millingData;
 
@@ -593,19 +713,18 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
         const product = this._currentMesh
         const { PROPS } = product.userData
-        const { CONFIG, FASADE, FASADE_DEFAULT } = PROPS
+        const { CONFIG, FASADE, PRODUCT, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE_PROPS[fasadeNdx]
+        const firstMilling = this.modelState.createCurrentMillingData({fasadeId: fasade.COLOR, productId: PRODUCT, fasadeNdx})[0]
 
-        console.log(fasadeNdx)
-
-        await this.changeMilling({ data: 2462671, fasadeNdx })
-        fasade.PATINA = null
-        fasade.MILLING = 2462671
+        await this.changeMilling({ data: firstMilling.ID, fasadeNdx })
+        fasade.PATINA = Object.values(this.modelState._PATINA)[0].ID
+        fasade.MILLING = firstMilling.ID
         fasade.MILLING_TYPE = null
     }
 
-    changeMillingTotal({ data, type }: TDataWithType) {
+    changeMillingTotal({ data, type, fasade }: TDataWithType) {
 
         const currentType = this.searchElementsByType[type];
         const elementsList = this.scene.getObjectsByProperty('elementType', currentType);
@@ -630,7 +749,7 @@ export class MeshEvents extends BuildersHelper {
                             FASADE_PROPS[fasadeNdx].MILLING_TYPE = prepare[0] ?? null
 
                         }
-
+                        FASADE_PROPS[fasadeNdx].PATINA = 475428
 
                         await this.catchChangeMilling({ data: data.ID, fasadeNdx, action });
                         this._currentMesh = null
@@ -644,8 +763,14 @@ export class MeshEvents extends BuildersHelper {
     /** @Патина  */
     //------------------
 
-    async catchDrawPatina({ data, fasadeNdx }: TDataWithNdx) {
-        const props = this._currentMesh.userData.PROPS
+    async catchDrawPatina({ data, fasadeNdx, mesh }: TDataWithNdx) {
+
+        const meshData = mesh ?? this._currentMesh
+
+        if (!meshData) return;
+
+        const props = meshData.userData.PROPS
+
         const { FASADE, CONFIG } = props
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE[fasadeNdx]
@@ -666,10 +791,12 @@ export class MeshEvents extends BuildersHelper {
         FASADE_PROPS[fasadeNdx].PATINA = data
     }
 
-    async drawPatina({ data, fasadeNdx }: TDataWithNdx) {
+    async drawPatina({ data, fasadeNdx, mesh }: TDataWithNdx) {
 
-        if (!this._currentMesh) return;
-        await this.catchDrawPatina({ data, fasadeNdx })
+        const meshData = mesh ?? this._currentMesh
+
+        if (!meshData) return;
+        await this.catchDrawPatina({ data, fasadeNdx, mesh: meshData })
         this.events.emit("U:DrawPatina")
 
     }
@@ -694,8 +821,6 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     changeShowcase({ data, fasadeNdx, action }: TDataWithNdx) {
-
-        console.log('---changeShowcase')
 
         if (!this._currentMesh) return;
 
@@ -814,7 +939,7 @@ export class MeshEvents extends BuildersHelper {
             this.buildUniformTexture.removeFromUniformGroup(product)
         }
 
-        await this.resetFasade({ fasadeNdx, remove: true })
+        await this.resetFasade({ fasadeNdx, totalFasad: el, remove: true })
         if (drowMode) {
 
             const edgeMeshID = FASADE[fasadeNdx].userData.edgeID
@@ -1174,8 +1299,8 @@ export class MeshEvents extends BuildersHelper {
             this.changeFasade({ data, fasadeNdx });
         }
 
-        this.onChangeTotalFasadsTexture = ({ data, type }) => {
-            this.changeTotalFasadsTexture({ data, type })
+        this.onChangeTotalFasadsTexture = ({ data, palitte, milling, type }) => {
+            this.changeTotalFasadsTexture({ data, palitte, milling, type })
         }
 
         this.onChangeGlobalTopTable = ({ data, type }) => {

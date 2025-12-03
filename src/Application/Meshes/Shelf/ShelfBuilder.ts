@@ -111,9 +111,7 @@ export class ShelfBuilder {
         const shelfMaterial = material || this.materialMap[matType] || this.materialMap.MeshStandardMaterial;
 
         const startPos = this.parent.getStartPosition(SIZE);
-        console.log(width, height, depth, shelfMaterial)
-
-
+    
         for (let i = 1; current >= i && current <= total; i++) {
             let mesh = new Mesh(
                 new BoxGeometry(width - 32, 16, depth),

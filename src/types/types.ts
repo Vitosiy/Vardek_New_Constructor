@@ -295,11 +295,12 @@ export type TMyObject = {
 };
 
 export type TDefaultOptionsConfig = {
-  defModuleUp: number | string,
-  defModuleDown: number | string,
-  defFasadeUp: number | string,
-  defFasadeDown: number | string,
+  defModuleTop: number | string,
+  defModuleBottom: number | string,
+  defFasadeTop: number | string,
+  defFasadeBottom: number | string,
   deffShowcase: number | string,
+  defPatina:number | string,
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
@@ -892,26 +893,6 @@ type TCanvasData = {
 // ==================================================================
 
 export enum FasadeTextAlignAction {
-  // left_top = 0,
-  // top = 1,
-  // right_top = 2,
-
-  // left = 3,
-  // left_open = 3,
-  // left_side = 3,
-  // left_p = 3,
-
-  // center = 4,
-
-  // right = 5,
-  // right_open = 5,
-  // right_side = 5,
-  // right_p = 5,
-
-  // left_down = 6,
-  // bottom = 7,
-  // right_down = 8,
-
   right_top = 0,
   top = 1,
   left_top = 2,

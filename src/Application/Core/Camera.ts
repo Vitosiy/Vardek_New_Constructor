@@ -134,8 +134,7 @@ export class Camera {
     }
 
     setPosition(value): void {
-        console.log('CH')
-        
+
         // Если нажата центральная кнопка (action 4), устанавливаем камеру напротив самой широкой стены
         if (value === 4) {
             this.alignCameraToWidestWall()

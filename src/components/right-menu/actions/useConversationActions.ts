@@ -26,8 +26,7 @@ export const useConversationActions = () => {
         const { width, height } = size;
 
         if (Object.values(restrictData).length == 0) return;
-        console.log(restrictData, '=== restrictData ===')
-
+       
         FASADE.forEach((_, key) => {
             const { MAX_HEIGHT, MIN_HEIGHT, MAX_WIDTH, MIN_WIDTH } = restrictData[key];
             const check =

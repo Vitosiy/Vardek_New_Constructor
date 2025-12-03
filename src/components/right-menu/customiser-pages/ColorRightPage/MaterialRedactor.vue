@@ -126,7 +126,7 @@ const onSelectMaterial = (data) => {
     FASADE[props.tabIndex].userData.trueSize
   );
 
-  if(!checkConversation) return
+  if (!checkConversation) return;
 
   emit("select_material", data);
 
@@ -154,19 +154,15 @@ const onSelectMaterial = (data) => {
 
   /** @Патина */
   patinaList.value = modelState.getCurrentPatinaData;
-  isPatinaExist.value = patinaList.value.length > 0 && isMillingExist.value;
+  // isPatinaExist.value = patinaList.value.length > 0 && isMillingExist.value;
 
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
-  console.log(data, "==== ❌ DATA ❌ ====");
+  // console.log(data, "==== ❌ Параметры выбранного фасада ❌ ====");
 
   isShowcaseExist.value =
-    !data.material?.includes("Alum") && haveShowcase && COLOR !== RESET_COLOR;
-  // showcaseList.value.length > 0 &&
-  //   haveShowcase &&
-  //   ALUM == null &&
-  //   COLOR !== RESET_COLOR;
+    !data.material?.includes("Alum") && haveShowcase && data.id !== RESET_COLOR;
 
   /** @Стёкла */
   glassList.value = modelState.getCurrentGlassData;
@@ -181,18 +177,26 @@ const onSelectMaterial = (data) => {
 
   // ================================================================================================================
 
-  if (millingList.value.length > 0) {
-    const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
+  if (isMillingExist.value) {
+    const { NAME, PREVIEW_PICTURE, ID, PATINAOFF } = millingList.value[0];
     modelState.setMillingId(props.tabIndex, ID);
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+
+    isPatinaExist.value =
+      patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0;
+
   } else {
     currentMillingData.value = {};
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
     FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
+    isPatinaExist.value = false;
   }
 
-  currentPatinaData.value = {};
+  if (isPatinaExist.value) {
+    const { NAME, PREVIEW_PICTURE } = patinaList.value[0];
+    currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+  }
 
   if (isPalleteExist.value) {
     let { NAME, HTML, ID } =
@@ -239,6 +243,29 @@ const onSelectMilling = (data) => {
 
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const fasadeProps = FASADE_PROPS[props.tabIndex];
+  const rootDataPatina = modelState._FASADE[fasadeProps.COLOR].PATINA;
+
+
+  isPatinaExist.value =
+    data.patina == 0 &&
+    rootDataPatina.length > 0 &&
+    rootDataPatina[0] != null &&
+    rootDataPatina[0] != 0;
+ 
+
+  /** @Если у выбранной фрезы нет патина */
+
+  try {
+    if (!isPatinaExist.value && patinaList.value.length > 0) {
+
+
+      fasadeProps.PATINA = Object.values(modelState._PATINA)[0].ID;
+      const { NAME, PREVIEW_PICTURE } = Object.values(modelState._PATINA)[0];
+      currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    }
+  } catch (e) {
+    console.warn(e, "в методе onSelectMilling");
+  }
 
   /** @Отображение_положения_петель */
 
@@ -333,16 +360,23 @@ const deleteSelectedOptions = (type: String) => {
 
     const { NAME, PREVIEW_PICTURE } = millingList.value[0];
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    // FASADE_PROPS[props.tabIndex].PATINA = 475428;
+    currentPatinaData.value = {
+      name: Object.values(modelState._PATINA)[0].NAME,
+      imgSrc: Object.values(modelState._PATINA)[0].PREVIEW_PICTURE,
+    };
 
-    eventBus.emit("A:DelitePatina", props.tabIndex);
+    if (!isPatinaExist.value && patinaList.value.length > 0) {
+      eventBus.emit("A:DelitePatina", props.tabIndex);
+    }
 
-    currentPatinaData.value = { name: "", imgSrc: null };
     // FASADE_PROPS[props.tabIndex].MILLING_TYPE = null;
     isFasadeTypesExist.value = false;
     fasadeTypesList.value = {};
 
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
+    isPatinaExist.value = false;
   }
 
   if (type === "palette") {
@@ -356,7 +390,8 @@ const deleteSelectedOptions = (type: String) => {
 
   if (type === "patina") {
     eventBus.emit("A:DelitePatina", props.tabIndex);
-    currentPatinaData.value = { name: "", imgSrc: null };
+    const { NAME, PREVIEW_PICTURE } = patinaList.value[0];
+    currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
   }
 
   if (type === "showcase") {
@@ -367,7 +402,6 @@ const deleteSelectedOptions = (type: String) => {
   }
 
   if (type === "glass") {
-    console.log("TTTT");
 
     const { ID, NAME, PREVIEW_PICTURE } = glassList.value[0];
     currentGlassData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
@@ -517,8 +551,10 @@ const prepareData = () => {
 
   /** @Патина */
   if (fasadeData.PATINA?.[0] && isMillingExist.value) {
+    const curMilling = _APP.MILLING[MILLING];
+
     patinaList.value = patinaData;
-    isPatinaExist.value = patinaData.length > 0;
+    isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0;
   }
 
   /** @Стёкла */
@@ -547,7 +583,6 @@ const prepareData = () => {
   };
 
   if (MILLING) {
-    console.log(MILLING, millingData, "IN MILLING");
 
     assignIfFound(
       millingData,

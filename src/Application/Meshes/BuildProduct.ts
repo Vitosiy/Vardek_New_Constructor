@@ -206,14 +206,14 @@ export class BuildProduct extends BuildersHelper {
             return parent_group
         }
 
+        
         /** Если json  */ /** Если есть загружаемые размеры */
 
         let product = loaded_size ? this.createProductBody(parent_group, loaded_size) : this.createProductBody(parent_group)
 
         parent_group.add(product as THREE.Object3D)
 
-
-        product!.name = product_data.NAME
+        // product!.name = product_data.NAME
 
         const aabb = new THREE.Box3().setFromObject(parent_group);
 
@@ -243,6 +243,7 @@ export class BuildProduct extends BuildersHelper {
         parent_group.userData.aabb = product.userData.aabb ?? aabb
         parent_group.userData.obb = product.userData.obb ?? obb
         parent_group.userData.restrictData = {}
+
 
         return parent_group
     }
@@ -388,7 +389,6 @@ export class BuildProduct extends BuildersHelper {
         if (FASADE_SIZES?.length) {
 
             PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, product_data) as any[];
-            console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
         }
 
         if (FACADE?.[0]) {
@@ -407,14 +407,13 @@ export class BuildProduct extends BuildersHelper {
         if (USLUGI?.[0] != null) {
             const { uslugi, profile } = this.filters.filterUslugi(USLUGI, product_data);
             PARAMS.PROFILE = profile
-            PARAMS.USLUGI = this.createCutterParams(uslugi);
+            // PARAMS.USLUGI = this.createCutterParams(uslugi);
+            PARAMS.USLUGI = uslugi;
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
 
         PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
         PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
-
-        console.log(PARAMS.SIZE, 'PARAMS.SIZE')
 
         return PARAMS;
     }
@@ -586,19 +585,16 @@ export class BuildProduct extends BuildersHelper {
     private createBody(data: THREETypes.TObject, props: THREETypes.TObject, defaultConfig: THREETypes.TDefaultOptionsConfig) {
         const { CONFIG } = props;
         const { ELEMENT_TYPE, MODULE_COLOR, ID, SIZE } = CONFIG;
-        const { defModuleUp, defModuleDown, moduleTop, moduleBottom } = defaultConfig
+        const { defModuleTop, defModuleBottom, moduleTop, moduleBottom } = defaultConfig
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
-
-        console.log(texture, 'texture')
-
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color;
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    return (defModuleDown && isDefault) || moduleBottom.global ? defModuleDown : MODULE_COLOR;
+                    return (defModuleBottom && isDefault) || moduleBottom.global ? defModuleBottom : MODULE_COLOR;
                 case "element_up":
-                    return (defModuleUp && isDefault) || moduleTop.global ? defModuleUp : MODULE_COLOR;
+                    return (defModuleTop && isDefault) || moduleTop.global ? defModuleTop : MODULE_COLOR;
                 default:
                     return MODULE_COLOR;
             }
@@ -752,8 +748,6 @@ export class BuildProduct extends BuildersHelper {
             tsarga,
         });
 
-        this.scene.add(body)
-        console.log(body)
 
         const edge = this.edge_builder.createEdge(body);
 
@@ -761,8 +755,7 @@ export class BuildProduct extends BuildersHelper {
 
         const { geometryType } = body.userData;
 
-        // if ("src" in texture && !moduleColor) {
-           if (texture?.src && !moduleColor) {
+        if (texture?.src && !moduleColor) {
 
 
             const textureSize = {
@@ -973,12 +966,13 @@ export class BuildProduct extends BuildersHelper {
     getDefaultOptionsConfig(): THREETypes.TDefaultOptionsConfig {
         const { moduleTop, moduleBottom, fasadsTop, fasadsBottom, tableTop, plinth } = this.roomOptions.getGlobalOptions;
         return {
-            defModuleUp: moduleTop.id ?? this.project.default_module_color_up,
-            defModuleDown: moduleBottom.id ?? this.project.default_module_color_down,
-            defFasadeUp: fasadsTop.id ?? this.project.default_fasade_up,
-            defFasadeDown: fasadsBottom.id ?? this.project.default_fasade_down,
+            defModuleTop: moduleTop.id ?? this.project.default_module_color_top,
+            defModuleBottom: moduleBottom.id ?? this.project.default_module_color_bottom,
+            defFasadeTop: fasadsTop.id ?? this.project.default_fasade_top,
+            defFasadeBottom: fasadsBottom.id ?? this.project.default_fasade_bottom,
             deffShowcase: this.project.default_showcase,
             defMilling: this.project.default_milling,
+            defPatina: this.project.default_patina,
             moduleTop,
             moduleBottom,
             fasadsTop,
