@@ -1,5 +1,11 @@
 //@ts-nocheck
 import { IBasket, IBasketFacade } from "@/types/basket";
+import { useAppData } from "@/store/appliction/useAppData"
+
+
+const appDataStore = useAppData()
+
+console.log('appDataStore.getAppData', appDataStore.getAppData)
 
 function createFacadeProps(objProps: any): IBasketFacade[] {
   return objProps.CONFIG.FASADE_PROPS 
@@ -45,20 +51,45 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
 }
 
 function createBodyProps(objProps: any) {
-  const trueSize = objProps.BODY?.object?.userData?.trueSize;
+  // const trueSize = objProps.BODY?.object?.userData?.trueSize;
+  const sizeObj = {
+    WIDTH: null,
+    HEIGHT: null,
+    DEPTH: null,
+  };
+  const isSizeEdit = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT; 
+  const isSizeEditStepWidth = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT_STEP_WIDTH;
+  const isSizeEditStepHeight = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT_STEP_HEIGHT;
+  const isSizeEditStepDepth = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT_STEP_DEPTH;
+
+  console.log('isSizeEdit', isSizeEdit);
+  console.log('isSizeStepEdit', isSizeEditStepWidth, isSizeEditStepHeight, isSizeEditStepDepth);
+  if(isSizeEdit === "obligatory") {
+    if (isSizeEditStepWidth) {
+      sizeObj.WIDTH = objProps.CONFIG.SIZE.width;
+    }
+    if (isSizeEditStepHeight) {
+      sizeObj.HEIGHT = objProps.CONFIG.SIZE.height;
+    }
+    if (isSizeEditStepDepth) {
+      sizeObj.DEPTH = objProps.CONFIG.SIZE.depth;
+    }
+  } else {    
+    sizeObj.WIDTH = objProps.CONFIG.EXPRESSIONS['#MWIDTH#'] !== objProps.CONFIG.SIZE.width ? objProps.CONFIG.SIZE.width : null;
+    sizeObj.HEIGHT = objProps.CONFIG.EXPRESSIONS['#MHEIGHT#'] !== objProps.CONFIG.SIZE.height ? objProps.CONFIG.SIZE.height : null;
+    sizeObj.DEPTH = objProps.CONFIG.EXPRESSIONS['#MDEPTH#'] !== objProps.CONFIG.SIZE.depth ? objProps.CONFIG.SIZE.depth : null;
+  }
+
   return {
     COLOR: objProps.CONFIG.MODULE_COLOR ?? null,
-    SIZE: {
-      WIDTH: objProps.CONFIG.EXPRESSIONS['#MWIDTH#'] !== objProps.CONFIG.SIZE.width ? objProps.CONFIG.SIZE.width : null,
-      HEIGHT: objProps.CONFIG.EXPRESSIONS['#MHEIGHT#'] !== objProps.CONFIG.SIZE.height ? objProps.CONFIG.SIZE.height : null,
-      DEPTH: objProps.CONFIG.EXPRESSIONS['#MDEPTH#'] !== objProps.CONFIG.SIZE.depth ? objProps.CONFIG.SIZE.depth : null,
-    },
+    SIZE: sizeObj
     // SIZE: {
     //   WIDTH: trueSize?.BODY_WIDTH?.toFixed(0) ?? null,
     //   HEIGHT: trueSize?.BODY_HEIGHT?.toFixed(0) ?? null,
     //   DEPTH: trueSize?.BODY_DEPTH?.toFixed(0) ?? null,
     // },
   };
+    
 }
 
 function createOptionsProps(objProps: any) {
@@ -238,11 +269,11 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
   };
 
-  if(CONFIG.LEFTSIDECOLOR && CONFIG.LEFTSIDECOLOR.COLOR !== 199683) {
+  if(CONFIG.LEFTSIDECOLOR && CONFIG.LEFTSIDECOLOR.COLOR !== 199683 && CONFIG.LEFTSIDECOLOR.COLOR) {
     legacyProps.LEFTSIDECOLOR = CONFIG.LEFTSIDECOLOR;
   }
 
-  if(CONFIG.RIGHTSIDECOLOR && CONFIG.RIGHTSIDECOLOR.COLOR !== 199683) {
+  if(CONFIG.RIGHTSIDECOLOR && CONFIG.RIGHTSIDECOLOR.COLOR !== 199683 && CONFIG.RIGHTSIDECOLOR.COLOR) {
     legacyProps.RIGHTSIDECOLOR = CONFIG.RIGHTSIDECOLOR;
   }
 
@@ -493,8 +524,8 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
     });
   } 
 
-  if(objProps.CONFIG.MECHANIZM) {
-    props.MECHANISM = objProps.CONFIG.MECHANIZM;
+  if(objProps.CONFIG.MECHANISM) {
+    props.MECHANISM = objProps.CONFIG.MECHANISM;
   } 
 
   

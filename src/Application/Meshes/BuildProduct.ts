@@ -363,7 +363,8 @@ export class BuildProduct extends BuildersHelper {
             OPTIONS: [],
             USLUGI: [],
             PROFILE: [],
-            KROMKA: null
+            KROMKA: null,
+            SIZEEDITJOINDEPTH: product_data.SIZE_EDIT_JOINDEPTH_MIN ? 310 : null,
         };
 
         if (product_data.FILLING.length && product_data.FILLING[0]) {
