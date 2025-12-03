@@ -25,6 +25,8 @@ import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/Module
 import Toggle from "@vueform/toggle";
 import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
+import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
+import {TFasadeTrueSizes} from "@/types/types.ts";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -35,6 +37,13 @@ const {
   MIN_SECTION_WIDTH,
   NO_FASADE_ID,
 } = UI_PARAMS;
+
+const {
+  createFasadeConversations,
+  checkConversations,
+  checkFasadeConversations,
+  filterFasadeConversations,
+} = useConversationActions();
 
 type constructorMode = 'module' | 'fasades' | 'fillings';
 
@@ -356,7 +365,8 @@ const updateFasades = () => {
     module.value.sections.forEach((section, secIndex) => {
       if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
         calcDrawersFasades(secIndex)
-      } else if (section.fasades?.[0]) {
+      }
+      else if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;
 
         const correctSectionFasadeWidth =
@@ -394,7 +404,12 @@ const updateFasades = () => {
                 segment.position.x += deltaWidth;
               }
 
-              if (segment.width < segment.minX || segment.height < segment.minY)
+              const checkConversation = checkFasadeConversations(
+                  segment.material.COLOR,
+                  <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+              );
+
+              if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
                 segment.error = true
               else
                 delete segment.error;
@@ -415,7 +430,12 @@ const updateFasades = () => {
             if (!lastSegment.manufacturerOffset) {
               lastSegment.height += deltaHeight;
 
-              if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+              const checkConversation = checkFasadeConversations(
+                  lastSegment.material.COLOR,
+                  <TFasadeTrueSizes>{FASADE_WIDTH: lastSegment.width, FASADE_HEIGHT: lastSegment.height}
+              );
+
+              if (!checkConversation || lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
                 lastSegment.error = true
               else
                 delete lastSegment.error;
@@ -423,9 +443,9 @@ const updateFasades = () => {
           })
         }
 
-        calcLoops(secIndex)
       }
 
+      calcLoops(secIndex)
     })
   else {
     module.value.fasades.forEach((door, doorIndex) => {
@@ -452,7 +472,12 @@ const updateFasades = () => {
           segment.position.x = tmp_fasadePosition.POSITION_X
           segment.position.z = tmp_fasadePosition.POSITION_Z
 
-          if (segment.width < segment.minX || segment.height < segment.minY)
+          const checkConversation = checkFasadeConversations(
+              segment.material.COLOR,
+              <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+          );
+
+          if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
             segment.error = true
           else
             delete segment.error;

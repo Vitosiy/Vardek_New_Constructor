@@ -17,6 +17,8 @@ import MaterialRedactor from "@/components/right-menu/customiser-pages/ColorRigh
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import {TFasadeTrueSizes} from "@/types/types.ts";
+import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
 
 const props = defineProps({
   module: {
@@ -37,6 +39,10 @@ const props = defineProps({
   },
 });
 
+const {
+  checkFasadeConversations,
+} = useConversationActions();
+
 const { module, visualizationRef } = toRefs(props);
 const selectedFasade = ref({ sec: 0, cell: null, row: null });
 const APP = useAppData().getAppData;
@@ -44,6 +50,7 @@ const modelState = useModelState();
 
 const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<Object | boolean>(false);
+const currentFasadeSize = ref<TFasadeTrueSizes | boolean>(false);
 const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const emit = defineEmits([
@@ -167,7 +174,11 @@ const addSlideDoor = (doorIndex) => {
       fasadePosition.POSITION_Z
     );
 
-    if (newFasade.width < newFasade.minX || newFasade.height < newFasade.minY)
+    let checkConversation = checkFasadeConversations(
+        newFasade.material.COLOR,
+        <TFasadeTrueSizes>{FASADE_WIDTH: newFasade.width, FASADE_HEIGHT: newFasade.height}
+    );
+    if (!checkConversation || newFasade.width < newFasade.minX || newFasade.height < newFasade.minY)
       newFasade.error = true;
     else delete newFasade.error;
 
@@ -183,7 +194,11 @@ const addSlideDoor = (doorIndex) => {
               segment.position.x = tmp_fasadePosition.POSITION_X;
               segment.position.z = tmp_fasadePosition.POSITION_Z;
 
-              if (segment.width < segment.minX || segment.height < segment.minY)
+              checkConversation = checkFasadeConversations(
+                  segment.material.COLOR,
+                  <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+              );
+              if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
                 segment.error = true;
               else delete segment.error;
             });
@@ -220,7 +235,12 @@ const deleteSlideDoor = (doorIndex) => {
           segment.position.x = tmp_fasadePosition.POSITION_X;
           segment.position.z = tmp_fasadePosition.POSITION_Z;
 
-          if (segment.width < segment.minX || segment.height < segment.minY)
+          let checkConversation = checkFasadeConversations(
+              segment.material.COLOR,
+              <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+          );
+
+          if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
             segment.error = true;
           else delete segment.error;
         });
@@ -281,7 +301,12 @@ const addDoor = (secIndex) => {
     firstFasade = Object.assign(firstFasade, fasadeMinMax);
   }
 
-  if (width < firstFasade.minX) firstFasade.error = true;
+  let checkConversation = checkFasadeConversations(
+      firstFasade.material.COLOR,
+      <TFasadeTrueSizes>{FASADE_WIDTH: firstFasade.width, FASADE_HEIGHT: firstFasade.height}
+  );
+  if (!checkConversation || width < firstFasade.minX)
+    firstFasade.error = true;
   else delete firstFasade.error;
 
   // Создаем новую колонку с такими же параметрами
@@ -344,7 +369,11 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   );
   // Обновляем высоту последней строки
 
-  if (halfHeight < segment.minY || segment.width < segment.minX)
+  let checkConversation = checkFasadeConversations(
+      segment.material.COLOR,
+      <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+  );
+  if (!checkConversation || halfHeight < segment.minY || segment.width < segment.minX)
     segment.error = true;
   else delete segment.error;
 
@@ -400,7 +429,11 @@ const deleteDoor = (secIndex, doorIndex) => {
       current.forEach((segment, index) => {
         segment.width = combinedWidth;
 
-        if (segment.width < segment.minX || segment.height < segment.minY)
+        let checkConversation = checkFasadeConversations(
+            segment.material.COLOR,
+            <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+        );
+        if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
           segment.error = true;
         else delete segment.error;
       });
@@ -408,7 +441,11 @@ const deleteDoor = (secIndex, doorIndex) => {
       prev.forEach((segment, index) => {
         segment.width = combinedWidth;
 
-        if (segment.width < segment.minX || segment.height < segment.minY)
+        let checkConversation = checkFasadeConversations(
+            segment.material.COLOR,
+            <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+        );
+        if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
           segment.error = true;
         else delete segment.error;
       });
@@ -455,7 +492,12 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   next ? (next.height = combinedHeight) : (prev.height = combinedHeight);
 
   let tmpSegment = next || prev;
-  if (tmpSegment.width < tmpSegment.minX || tmpSegment.height < tmpSegment.minY)
+  let checkConversation = checkFasadeConversations(
+      tmpSegment.material.COLOR,
+      <TFasadeTrueSizes>{FASADE_WIDTH: tmpSegment.width, FASADE_HEIGHT: tmpSegment.height}
+  );
+
+  if (!checkConversation || tmpSegment.width < tmpSegment.minX || tmpSegment.height < tmpSegment.minY)
     tmpSegment.error = true;
   else delete tmpSegment.error;
 
@@ -517,7 +559,12 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 
     curCell.height = adjustedValue;
 
-    if (curCell.width < curCell.minX || curCell.height < curCell.minY)
+    let checkConversation = checkFasadeConversations(
+        curCell.material.COLOR,
+        <TFasadeTrueSizes>{FASADE_WIDTH: curCell.width, FASADE_HEIGHT: curCell.height}
+    );
+
+    if (!checkConversation || curCell.width < curCell.minX || curCell.height < curCell.minY)
       curCell.error = true;
     else delete curCell.error;
 
@@ -530,8 +577,13 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
     }
 
     let tmpSegment = prevCell || nextCell || {};
+    checkConversation = checkFasadeConversations(
+        tmpSegment.material.COLOR,
+        <TFasadeTrueSizes>{FASADE_WIDTH: tmpSegment.width, FASADE_HEIGHT: tmpSegment.height}
+    );
     if (
-      tmpSegment.width < tmpSegment.minX ||
+        !checkConversation ||
+        tmpSegment.width < tmpSegment.minX ||
       tmpSegment.height < tmpSegment.minY
     )
       tmpSegment.error = true;
@@ -713,21 +765,22 @@ const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
     segmentIndex === currentFasadeMaterial.value.segmentIndex
   ) {
     currentFasadeMaterial.value = false;
+    currentFasadeSize.value = false;
     return;
   }
 
   setTimeout(() => {
     let data =
       secIndex === null
-        ? module.value.fasades[doorIndex][segmentIndex].material
-        : module.value.sections[secIndex].fasades[doorIndex][segmentIndex]
-            .material;
+        ? module.value.fasades[doorIndex][segmentIndex]
+        : module.value.sections[secIndex].fasades[doorIndex][segmentIndex];
     currentFasadeMaterial.value = {
       secIndex,
       doorIndex,
       segmentIndex,
-      data,
+      data: data.material,
     };
+    currentFasadeSize.value = <TFasadeTrueSizes>{FASADE_WIDTH: data.width, FASADE_HEIGHT: data.height}
     selectCell(secIndex, doorIndex, segmentIndex);
     isOpenMaterialSelector.value = true;
   }, 10);
@@ -932,7 +985,7 @@ const closeMenu = () => {
                               openFasadeSelector(null, doorIndex, segmentIndex)
                             "
                         />
-                        <h class="splitter-container--product-error-message" v-else>Фасад меньше допустимой высоты!</h>
+                        <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
                       </div>
                     </article>
                   </div>
@@ -1164,7 +1217,7 @@ const closeMenu = () => {
                                 )
                               "
                           />
-                          <h class="splitter-container--product-error-message" v-else>Фасад меньше допустимой высоты!</h>
+                          <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
                         </div>
                       </article>
                     </div>
@@ -1186,6 +1239,7 @@ const closeMenu = () => {
         :is-fasade="true"
         :elementData="currentFasadeMaterial.data"
         :elementIndex="currentFasadeMaterial.segmentIndex"
+        :fasade-size="currentFasadeSize"
         @parent-callback="selectOption"
       />
     </div>
