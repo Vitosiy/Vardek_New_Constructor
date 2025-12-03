@@ -59,7 +59,7 @@ export const useQuickActionsToolbar = () => {
     // Если проект уже имеет ID — обновляем без показа модалки
     if (projectState.currentProjectId) {
       console.log(projectState.currentProjectId, 'currentProjectId')
-      projectState.isSaving = true;
+      // isSaving уже установлен в true в action, не меняем его здесь
       try {
         const result = await projectAPI.saveProject(projectState.currentProjectId);
         if (result.success) {
@@ -78,7 +78,8 @@ export const useQuickActionsToolbar = () => {
       return;
     }
 
-    // Иначе — это новый проект: открываем модальное окно для ввода имени
+    // Иначе — это новый проект: скрываем лоадер и открываем модальное окно для ввода имени
+    projectState.isSaving = false;
     if (openSaveDialog.value) openSaveDialog.value();
   }
 
@@ -186,6 +187,7 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-print',
       path: 'default',
       action: async () => {
+        projectState.isSaving = true;
         if (router.currentRoute.value.path !== '/3d') {
           await router.push('/3d');
         }
@@ -196,6 +198,8 @@ export const useQuickActionsToolbar = () => {
         const handleComplete = () => {
           eventBus.off("A:3DScreenshotCreated", handleComplete);
           printPage();
+          
+        projectState.isSaving = false;
         }
 
         eventBus.on("A:3DScreenshotCreated", handleComplete);
@@ -229,7 +233,6 @@ export const useQuickActionsToolbar = () => {
           eventBus.emit('A:Save')
           onSaveProject()
         }, 2000)
-        projectState.isSaving = false
       },
     },
     {
