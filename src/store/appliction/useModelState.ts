@@ -325,7 +325,7 @@ export const useModelState = defineStore('ModelState', () => {
             if (!haveShowCase && hasGlass) return
 
             groupedFasades[groupId]['id'].push(facadeId);
-        
+
         });
 
         // Формирование итогового массива
@@ -335,7 +335,7 @@ export const useModelState = defineStore('ModelState', () => {
                 FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
                 SORT: group.SORT,
                 GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
-             
+
             }
         }
 
@@ -406,7 +406,8 @@ export const useModelState = defineStore('ModelState', () => {
         const haveShowCase = fasadePosData?.glass == 1
 
 
-        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
+        // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null) {
 
             let millings: IMilling[] = []
             let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
@@ -505,36 +506,48 @@ export const useModelState = defineStore('ModelState', () => {
         const positionId = product.FASADE_POSITION[fasadeNdx]
         const fasadePosData = _FASADE_POSITION.value[positionId]
         const haveShowCase = fasadePosData?.glass == 1
+        let prepare = [];
 
-        console.log(haveShowCase, 'haveShowCase')
+        console.log(_PRODUCTS.value[productId], 'haveShowCase')
 
         if (!haveShowCase) {
             currentShowcaseData.value = []
             return
         }
 
-        const defaultShowcase = prodShowcases[0]
+        const defaultShowcase = prodShowcases[0] ?? 1013628
+        console.log(_FASADE.value[fasadeId])
 
-
-        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && defaultShowcase) {
-
-            const prepare = [..._PRODUCTS.value[productId].type_showcase].map(el => {
+        if (prodShowcases.length > 0 && prodShowcases[0] !== null) {
+            prepare = prodShowcases.map(el => {
                 return _SHOWCASE.value[el]
             }).filter(Boolean)
 
             currentShowcaseData.value = prepare
             return
+        } else {
+            prepare = [1013628]
         }
 
-        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] == null) {
+        // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && defaultShowcase) {
 
-            const prepare = prodShowcases.map(el => {
-                return _SHOWCASE.value[el]
-            }).filter(Boolean)
+        //     const prepare = prodShowcases.map(el => {
+        //         return _SHOWCASE.value[el]
+        //     }).filter(Boolean)
 
-            currentShowcaseData.value = prepare
-            return
-        }
+        //     currentShowcaseData.value = prepare
+        //     return
+        // }
+
+        // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] == null) {
+
+        //     const prepare = prodShowcases.map(el => {
+        //         return _SHOWCASE.value[el]
+        //     }).filter(Boolean)
+
+        //     currentShowcaseData.value = prepare
+        //     return
+        // }
     }
 
     const getCurrentShowcaseData = computed(() => {
@@ -591,7 +604,7 @@ export const useModelState = defineStore('ModelState', () => {
             []);
 
         currentGlassData.value = currentClass;
-        return []
+        return currentClass
     }
 
     const getCurrentGlassData = computed(() => {

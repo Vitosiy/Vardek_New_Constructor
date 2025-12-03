@@ -238,23 +238,18 @@ export class MeshEvents extends BuildersHelper {
 
         if (incomingModel) return
 
-        // if (incomingModel) {
-        //     FASADE_PROPS[fasadeNdx].ALUM = incomingModel
-        //     this.deliteFasade(fasadeNdx)
-        //     rebuild(fasadeNdx, incomingModel)
 
-        //     return
+        // if (FASADE_PROPS[fasadeNdx].MILLING != null) {
+
+        //     FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
+        //     FASADE[fasadeNdx].userData.millingMaterial = null
+        //     if (globalMilling) {
+        //         console.log(globalMilling, 'globalMilling')
+
+        //         FASADE_PROPS[fasadeNdx].MILLING = globalMilling
+        //     }
+        //     FASADE_PROPS[fasadeNdx].PATINA = null
         // }
-
-        if (FASADE_PROPS[fasadeNdx].MILLING != null) {
-
-            FASADE[fasadeNdx].geometry = FASADE_DEFAULT[fasadeNdx].geometry.clone()
-            FASADE[fasadeNdx].userData.millingMaterial = null
-            if (globalMilling) {
-                FASADE_PROPS[fasadeNdx].MILLING = globalMilling
-            }
-            FASADE_PROPS[fasadeNdx].PATINA = null
-        }
     }
 
     //------------------
@@ -343,7 +338,7 @@ export class MeshEvents extends BuildersHelper {
 
 
         const apply = async () => {
-            this.handleShowcaseChange(CONFIG, fasadeProp, fasadeNdx, incomingModel);
+            this.handleShowcaseChange(CONFIG, fasadeProp, fasadeNdx, incomingModel, meshData);
             if (this.tryApplyPalette(data, fasadeNdx, fasadeProp)) return
             if (this.tryApplyTexture(data, fasade, fasadeProp)) return
             this.applyAlumColor(data, fasade, fasadeProp, fasadeNdx);
@@ -362,24 +357,25 @@ export class MeshEvents extends BuildersHelper {
         this.buildUniformTexture.removeFromUniformGroup(product);
     }
 
-    private handleShowcaseChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any) {
+    private handleShowcaseChange(CONFIG: any, fasadeProp: any, fasadeNdx: number, incomingModel: any, mesh: THREE.Object3D) {
         const { SHOWCASE } = CONFIG;
         const milling = fasadeProp.MILLING
         const fasadeShowcase = CONFIG.FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
         const handleType = CONFIG.FASADE_PROPS[fasadeNdx].TYPE
 
         if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
-             console.log('==== ❌ SHOWCASE CLASSIK❌ ====', )
-            this.changeShowcase({ data: SHOWCASE[0], fasadeNdx });
+            console.log('==== ❌ SHOWCASE CLASSIK❌ ====', milling)
+            this.changeShowcase({ data: SHOWCASE[0], fasadeNdx, mesh: mesh });
         }
         else if (incomingModel) {
             const action = this.modelState.getCurrentFasadeTypesAction(handleType)
             console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
-            this.changeShowcase({ data: incomingModel, fasadeNdx, action });
+            this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
         }
-        else {
-            Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
-        }
+        // else {
+        //     console.log('==== ❌NON SHOWCASE  ====', milling)
+        //     Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
+        // }
     }
 
     private tryApplyPalette(data: any, fasadeNdx: number, fasadeProp: any): boolean {
@@ -427,7 +423,6 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh) return;
 
         await this.catchFasadeChange({ data, fasadeNdx })
-        console.log('--- changeFasade ---')
         this.events.emit('U:ChangeFasade')
     }
 
@@ -648,8 +643,7 @@ export class MeshEvents extends BuildersHelper {
     /** @Стекло_витринн  */
     //------------------
 
-    changeGlassColor({ data, fasadeNdx }: TDataWithNdx) {
-
+    async catchChangeGlassColor({ data, fasadeNdx }: TDataWithNdx) {
         if (!this._currentMesh) return;
 
         const props = this._currentMesh.userData.PROPS
@@ -660,6 +654,15 @@ export class MeshEvents extends BuildersHelper {
         this.buildShowcase.changeGlassColor({ fasade, glassId: data })
 
         FASADE_PROPS[fasadeNdx].GLASS = data
+    }
+
+
+    async changeGlassColor({ data, fasadeNdx }: TDataWithNdx) {
+
+        if (!this._currentMesh) return;
+
+        await this.catchChangeGlassColor({ data, fasadeNdx })
+        this.events.emit("U:ChangeGlassColor")
 
     }
 
@@ -716,7 +719,7 @@ export class MeshEvents extends BuildersHelper {
         const { CONFIG, FASADE, PRODUCT, FASADE_DEFAULT } = PROPS
         const { FASADE_PROPS } = CONFIG
         const fasade = FASADE_PROPS[fasadeNdx]
-        const firstMilling = this.modelState.createCurrentMillingData({fasadeId: fasade.COLOR, productId: PRODUCT, fasadeNdx})[0]
+        const firstMilling = this.modelState.createCurrentMillingData({ fasadeId: fasade.COLOR, productId: PRODUCT, fasadeNdx })[0]
 
         await this.changeMilling({ data: firstMilling.ID, fasadeNdx })
         fasade.PATINA = Object.values(this.modelState._PATINA)[0].ID
@@ -820,11 +823,12 @@ export class MeshEvents extends BuildersHelper {
     /** @Витрина  */
     //------------------
 
-    changeShowcase({ data, fasadeNdx, action }: TDataWithNdx) {
+    changeShowcase({ data, fasadeNdx, action, mesh }: TDataWithNdx) {
 
-        if (!this._currentMesh) return;
+        const meshData = mesh ?? this._currentMesh
+        if (!meshData) return;
 
-        const props = this._currentMesh.userData.PROPS
+        const props = meshData.userData.PROPS
         const { FASADE, FASADE_DEFAULT, CONFIG } = props
         const { FASADE_POSITIONS, FASADE_PROPS } = CONFIG
 

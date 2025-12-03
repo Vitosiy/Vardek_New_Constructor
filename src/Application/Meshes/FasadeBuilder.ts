@@ -170,6 +170,8 @@ export class FasadeBuilder {
                 const firstValueGlass = this.parent.modelState.getCurrentGlassData[0] as any;
                 const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx })[0] as any;
 
+                console.log(typeof firstValueMilling == 'object' && milling, '==== ❌ firstValueMilling ❌ ====')
+
 
                 if (fasadeData.SHOW && pallite && firstValuePall && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -182,26 +184,24 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-        
+                // if (fasadeData.SHOW && firstValueMilling && !haveShowcase) {
+                if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
 
-                if (fasadeData.SHOW && firstValueMilling && !haveShowcase) {
+                    // console.log(firstValueMilling.ID, 'firstValueMilling.ID')
 
-                    fasadeData.MILLING = milling ?? firstValueMilling.ID;
+                    fasadeData.MILLING = firstValueMilling.ID ? firstValueMilling.ID : milling;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE
-                        fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(milling, fType)[0] ?? null
+                        fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(fasadeData.MILLING, fType)[0] ?? null
                     }
                 }
                 else {
                     fasadeData.MILLING = null
                 }
 
-                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && haveShowcase) {
-                    // fasadeData.MILLING = null;
-                }
 
-                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
+                if (fasadeData.SHOW && typeof firstValueGlass == 'object' && haveShowcase) {
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
             }
@@ -264,35 +264,13 @@ export class FasadeBuilder {
                     fasadeData.PATINA
                 );
 
-                // console.log('==== ❌ON PATINA ❌ ====', fasadeData.PATINA)
-
-                // const millingParams = remove ? this.modelState.getCurrentMillingMap(1317715) : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
-
-                // if (remove) {
-                //     this.parent.milling_builder.createMillingFasade(
-                //         curFasade,
-                //         curFasade.userData.trueSize,
-                //         millingParams,
-                //         FASADE_DEFAULT[fasadeNdx],
-                //         fasadeData.PATINA
-                //     );
-                //     fasadeData.MILLING = null;
-                // } else {
-                //     this.parent.milling_builder.createMillingFasade(
-                //         curFasade,
-                //         curFasade.userData.trueSize,
-                //         millingParams,
-                //         FASADE_DEFAULT[fasadeNdx],
-                //         fasadeData.PATINA
-                //     );
-                // }
             }
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
-                // console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING)
+                console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING)
 
                 this.parent.showcase_builder.createShowcase({
                     fasade: curFasade,
@@ -373,26 +351,28 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-                if (fasadeData.SHOW && milling && firstValueMilling && fasadeData.MILLING === null) {
-
-                    fasadeData.MILLING = milling ?? firstValueMilling.ID;
+                if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
+                    fasadeData.MILLING = firstValueMilling.ID ? firstValueMilling.ID : milling;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[key].FASADE_TYPE
                         fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(milling, fType)[0] ?? null
                     }
                 }
-                if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE && haveShowcase) {
-                    fasadeData.MILLING = null;
-                    fasadeData.MILLING_TYPE = null;
-                    /** @Позиционирование_интегрированной_ручки */
-                    // if (!fasadeData.MILLING_TYPE) {
-                    //     const fType = FASADE_POSITIONS[key].FASADE_TYPE
-                    //     fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(milling, fType)[0]
-                    // }
-                }
+                // if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE && haveShowcase) {
+                //     fasadeData.MILLING = null;
+                //     fasadeData.MILLING_TYPE = null;
+                //     /** @Позиционирование_интегрированной_ручки */
+                //     // if (!fasadeData.MILLING_TYPE) {
+                //     //     const fType = FASADE_POSITIONS[key].FASADE_TYPE
+                //     //     fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(milling, fType)[0]
+                //     // }
+                // }
+                console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING, firstValueGlass, haveShowcase)
+                // if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
+                if (fasadeData.SHOW && typeof firstValueGlass == 'object' && haveShowcase) {
 
-                if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
+
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
 
@@ -428,8 +408,8 @@ export class FasadeBuilder {
             }
 
             // Фрезеровка
-            if (fasadeData.MILLING != null) {
-                // console.log('==== ❌ MILLING NEW ❌ ====')
+            if (fasadeData.MILLING != null && !haveShowcase) {
+                console.log('==== ❌ MILLING NEW ❌ ====')
 
                 const action = this.modelState.getCurrentMillingActionMap(fasadeData.MILLING_TYPE, fasadeData.MILLING) ?? null
                 const millingParams = action ? action : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
@@ -447,7 +427,7 @@ export class FasadeBuilder {
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
-                // console.log('==== ❌ SHOWCASE NEW ❌ ====')
+                console.log('==== ❌ SHOWCASE NEW ❌ ====')
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
 
@@ -464,17 +444,6 @@ export class FasadeBuilder {
 
             // Алюм. профиль
             if (fasadeData.ALUM != null && FASADE_PROPS[key].COLOR != null) {
-
-                // const action = runInThisContext.modelState.getCurrentFasadeTypesData
-                // console.log()
-
-                // this.parent.showcase_builder.createShowcase({
-                //     fasade: result,
-                //     fasadePosition: result.userData.trueSize,
-                //     defaultGeometry: FASADE_DEFAULT[key],
-                //     alum: FASADE_PROPS[key].ALUM,
-                //     curFasadeData: FASADE_PROPS[fasadeNdx]
-                // });
 
                 const alumData = this.parent._FASADE[FASADE_PROPS[key].COLOR];
                 this.parent.alum_builder.createAlum({ fasade: result, data: alumData });
@@ -867,7 +836,7 @@ export class FasadeBuilder {
         fasadeEdge: THREE.Mesh,
     ) {
         const { rotation, position } = this.createPositionData(fasade_position, start_position, product_model_type);
-    
+
 
         fasade.rotation.set(rotation.x, rotation.y, rotation.z);
         fasade.position.set(position.x, position.y, position.z);
@@ -932,7 +901,7 @@ export class FasadeBuilder {
             startData.y + (this.parent.calculateFromString(positionData?.FASADE_HEIGHT ?? 0) / 2) + pos.y,
             startData.z + pos.z
         );
-   
+
         return { rotation, position };
     };
 
