@@ -1038,6 +1038,21 @@ export class MeshEvents extends BuildersHelper {
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return
+
+        if (currentMesh.name === 'MODEL') {
+
+            await this.buildProduct.models_builder.refillModelFromSource(currentMesh, {
+                width: data.width,
+                height: data.height,
+                depth: data.depth
+            }, type);
+
+            this.root._customBoxHelper!.updateBoxHelper();
+
+            return
+        }
+
+
         const { PROPS } = currentMesh!.userData
         const { CONFIG, PRODUCT } = PROPS
         const { POSITION, UNIFORM_TEXTURE } = CONFIG
@@ -1065,9 +1080,6 @@ export class MeshEvents extends BuildersHelper {
                 WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5
             }
             /** Для корректного примагничивания к стенам */
-            // currentMesh.userData.trueSizes = {
-            //     DEPTH: data.depth * 0.5, HEIGHT: height, WIDTH: data.width * 0.5
-            // }
             currentMesh.userData.trueSizes = incomeSize
             /** Пересоздаём UNIFORM_TEXTURE*/
             if (UNIFORM_TEXTURE.group !== null) {

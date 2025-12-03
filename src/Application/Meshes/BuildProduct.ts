@@ -107,7 +107,7 @@ export class BuildProduct extends BuildersHelper {
             const type = this._MODELS[product_data.models[0]];
             if (type.DAE) {
                 return this.models_builder.create({
-                    props: this.createStartProps(product_data),
+                    props: this.createStartProps(product_data, loaded_props),
                     size: loaded_size
                 }).then(model => {
                     return this.finalizeModel(model, resolve, type);
@@ -206,7 +206,7 @@ export class BuildProduct extends BuildersHelper {
             return parent_group
         }
 
-        
+
         /** Если json  */ /** Если есть загружаемые размеры */
 
         let product = loaded_size ? this.createProductBody(parent_group, loaded_size) : this.createProductBody(parent_group)
@@ -248,7 +248,7 @@ export class BuildProduct extends BuildersHelper {
         return parent_group
     }
 
-    createStartProps(product_data: THREEInterfases.IProduct) {
+    createStartProps(product_data: THREEInterfases.IProduct, loadedProps?: THREETypes.TObject) {
 
         let props: THREETypes.TTotalProps = {
             ARROWS: [],
@@ -278,13 +278,13 @@ export class BuildProduct extends BuildersHelper {
             NAME: product_data.NAME
         }
 
-        let params = this.createProductObject(product_data, props)
+        let params = this.createProductObject(product_data, props, loadedProps)
         props.CONFIG = params
 
         return props
     }
 
-    private createProductObject(product_data: THREEInterfases.IProduct, props: THREETypes.TObject): THREETypes.TConfig {
+    private createProductObject(product_data: THREEInterfases.IProduct, props: THREETypes.TObject, loadedProps?: THREETypes.TObject): THREETypes.TConfig {
         const {
             element_type,
             ID,
@@ -412,7 +412,13 @@ export class BuildProduct extends BuildersHelper {
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
 
-        PARAMS.SIZE = this.getProductSize(PARAMS, product_data);
+        if (loadedProps) {
+            console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
+        }
+
+
+
+        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
         PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
         return PARAMS;

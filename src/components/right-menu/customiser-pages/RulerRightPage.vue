@@ -147,6 +147,8 @@ const resizeModel = (value: object) => {
   if (!isMounted.value) return; // игнорируем вызов до готовности
   eventBus.emit("A:Model-resize", { data: { ...resizeData.value, ...value } });
 
+  if (modelState.getCurrentModel?.name === "MODEL") return;
+
   /** @Проверка_FILLING */
   if (fillingList.value?.length > 0) {
     fillingList.value.forEach((el, key) => {
