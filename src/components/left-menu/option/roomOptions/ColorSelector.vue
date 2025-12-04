@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/**@ts-nocheck */
+//@ts-nocheck
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";

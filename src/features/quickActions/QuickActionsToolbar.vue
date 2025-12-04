@@ -67,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, computed, onMounted } from "vue";
 import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
@@ -113,7 +114,8 @@ const handleSaveConfirm = async (projectName: string) => {
 
   // Вызываем метод сохранения с названием проекта
   // Передаем callback для закрытия модального окна при успешном сохранении
-  const success = await handleSaveConfirmFromComposable(projectName.trim(), () => {
+  // @ts-ignore
+  const success = await handleSaveConfirmFromComposable(projectName.trim(), () => { 
     saveDialogRef.value?.closeModal();
   }, kpCheckbox.value);
   

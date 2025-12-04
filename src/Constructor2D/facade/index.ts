@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+// import { defineStore } from 'pinia'
+// import { ref } from 'vue'
 
 export abstract class AbstractRoomConnector {
     protected abstract dataWall: any[]

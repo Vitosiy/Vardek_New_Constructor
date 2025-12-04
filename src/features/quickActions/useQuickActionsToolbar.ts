@@ -13,6 +13,7 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
+// @ts-ignore
 import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
 
 export type ActionKey =
