@@ -170,7 +170,7 @@ export class FasadeBuilder {
                 const firstValueGlass = this.parent.modelState.getCurrentGlassData[0] as any;
                 const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx })[0] as any;
 
-                console.log(typeof firstValueMilling == 'object' && milling, '==== ❌ firstValueMilling ❌ ====')
+                // console.log(typeof firstValueMilling == 'object' && milling, '==== ❌ firstValueMilling ❌ ====')
 
 
                 if (fasadeData.SHOW && pallite && firstValuePall && fasadeData.PALETTE === null) {
@@ -270,7 +270,7 @@ export class FasadeBuilder {
             if (fasadeData.SHOWCASE != null) {
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
-                console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING)
+                // console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING)
 
                 this.parent.showcase_builder.createShowcase({
                     fasade: curFasade,
@@ -359,20 +359,9 @@ export class FasadeBuilder {
                         fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(milling, fType)[0] ?? null
                     }
                 }
-                // if (fasadeData.SHOW && !firstValueMilling && fasadeData.MILLING != null && PRODUCT_SHOWCASE && haveShowcase) {
-                //     fasadeData.MILLING = null;
-                //     fasadeData.MILLING_TYPE = null;
-                //     /** @Позиционирование_интегрированной_ручки */
-                //     // if (!fasadeData.MILLING_TYPE) {
-                //     //     const fType = FASADE_POSITIONS[key].FASADE_TYPE
-                //     //     fasadeData.MILLING_TYPE = this.getIntegratedHandleTypeList(milling, fType)[0]
-                //     // }
-                // }
-                console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING, firstValueGlass, haveShowcase)
-                // if (fasadeData.SHOW && firstValueGlass && fasadeData.GLASS === null) {
+
+                // console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING, firstValueGlass, haveShowcase)
                 if (fasadeData.SHOW && typeof firstValueGlass == 'object' && haveShowcase) {
-
-
                     fasadeData.GLASS = firstValueGlass.ID;
                 }
 
@@ -409,7 +398,7 @@ export class FasadeBuilder {
 
             // Фрезеровка
             if (fasadeData.MILLING != null && !haveShowcase) {
-                console.log('==== ❌ MILLING NEW ❌ ====')
+                // console.log('==== ❌ MILLING NEW ❌ ====')
 
                 const action = this.modelState.getCurrentMillingActionMap(fasadeData.MILLING_TYPE, fasadeData.MILLING) ?? null
                 const millingParams = action ? action : this.modelState.getCurrentMillingMap(fasadeData.MILLING);
@@ -427,7 +416,7 @@ export class FasadeBuilder {
 
             // Окно
             if (fasadeData.SHOWCASE != null) {
-                console.log('==== ❌ SHOWCASE NEW ❌ ====')
+                // console.log('==== ❌ SHOWCASE NEW ❌ ====')
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
 

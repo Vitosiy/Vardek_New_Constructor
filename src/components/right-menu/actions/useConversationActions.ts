@@ -105,8 +105,6 @@ export const useConversationActions = () => {
             })
             .filter(Boolean);
 
-        console.log(tempList, 'tempList')
-
 
         return tempList;
     };
