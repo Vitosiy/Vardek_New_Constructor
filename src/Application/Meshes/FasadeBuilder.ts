@@ -185,9 +185,11 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
+
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
 
-                    fasadeData.MILLING = this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
+                    // fasadeData.MILLING = this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
+                    fasadeData.MILLING = firstValueMilling.ID ? firstValueMilling.ID : milling
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE
@@ -196,6 +198,7 @@ export class FasadeBuilder {
                 }
                 else {
                     fasadeData.MILLING = null
+                    fasadeData.PATINA = null
                 }
 
 
