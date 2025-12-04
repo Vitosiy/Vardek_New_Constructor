@@ -168,7 +168,8 @@ export class FasadeBuilder {
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.getCurrentGlassData[0] as any;
-                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx })[0] as any;
+                const millingList = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx: fasadeNdx })
+                const firstValueMilling = millingList[0] as any;
 
                 // console.log(typeof firstValueMilling == 'object' && milling, '==== ❌ firstValueMilling ❌ ====')
 
@@ -189,7 +190,7 @@ export class FasadeBuilder {
 
                     // console.log(firstValueMilling.ID, 'firstValueMilling.ID')
 
-                    fasadeData.MILLING = firstValueMilling.ID ? firstValueMilling.ID : milling;
+                    fasadeData.MILLING = this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE
@@ -342,7 +343,12 @@ export class FasadeBuilder {
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
-                const firstValueMilling = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx: key })[0] as any;
+                const millingList = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx: key })
+                const firstValueMilling = millingList[0] as any;
+
+
+                console.log(this.containsValue(millingList, milling), 'millingList')
+                console.log(millingList.includes(el => el.ID === milling))
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -352,7 +358,7 @@ export class FasadeBuilder {
                 }
 
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
-                    fasadeData.MILLING = firstValueMilling.ID ? firstValueMilling.ID : milling;
+                    fasadeData.MILLING = this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[key].FASADE_TYPE
@@ -905,6 +911,14 @@ export class FasadeBuilder {
         })
 
         return prepare;
+    }
+
+    private containsValue = (array, searchValue) => {
+        return array.some(item =>
+            Object.values(item).some(value =>
+                String(value).includes(String(searchValue))
+            )
+        );
     }
 
 
