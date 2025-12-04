@@ -185,10 +185,7 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-                // if (fasadeData.SHOW && firstValueMilling && !haveShowcase) {
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
-
-                    // console.log(firstValueMilling.ID, 'firstValueMilling.ID')
 
                     fasadeData.MILLING = this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
