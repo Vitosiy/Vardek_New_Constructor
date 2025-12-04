@@ -33,8 +33,7 @@ const isSearch = computed(() => {
 const changeMilling = (milling) => {
   const { FASADE_POSITIONS } =
     modelState.getCurrentModel?.userData.PROPS.CONFIG;
-  const isShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE;
-  console.log(isShowcase, "======= isShowcase ======");
+  const isShowcase = FASADE_POSITIONS[props.tabIndex]?.SHOWCASE;
 
   emit("select_milling", {
     name: milling.NAME,
