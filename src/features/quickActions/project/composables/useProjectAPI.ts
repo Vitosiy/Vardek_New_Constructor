@@ -2,7 +2,9 @@ import { ref } from 'vue'
 import { useEventBus } from '@/store/appliction/useEventBus'
 import { useSceneState } from '@/store/appliction/useSceneState'
 import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types'
-import { API_ENDPOINTS, REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
+import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
+import { client } from '@/api/api'
+import { useBasketStore } from '@/store/appStore/useBasketStore'
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
@@ -11,6 +13,40 @@ export function useProjectAPI() {
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
+
+  // Нормалайзер ответа от API клиента
+  const normalizeApiResponse = <T = any>(response: { data?: any; error?: any; response?: Response }): { success: boolean; data?: T; error?: string } => {
+    // Проверяем наличие ошибки
+    if (response.error) {
+      return {
+        success: false,
+        error: response.error instanceof Error ? response.error.message : 'Unknown error'
+      }
+    }
+
+    // Проверяем наличие данных
+    if (!response.data) {
+      return {
+        success: false,
+        error: 'No data in response'
+      }
+    }
+
+    // Проверяем структуру ответа API
+    const apiData = response.data
+    if (apiData.CODE !== 200) {
+      return {
+        success: false,
+        error: apiData.MESSAGE || 'Unknown API error'
+      }
+    }
+
+    // Возвращаем успешный результат с данными
+    return {
+      success: true,
+      data: apiData.DATA
+    }
+  }
 
   // Валидация данных проекта
   const validateProjectData = (data: any): boolean => {
@@ -98,20 +134,20 @@ export function useProjectAPI() {
             requestBody.hash = false
           }
 
-          const response = await fetch(API_ENDPOINTS.GET_PROJECT_LIST, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
+          // Получаем токен из cookies
+          // const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+          // const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          // if (token) {
+          //   headers['Authorization'] = `Bearer ${token}`;
+          // }
+          const response = await client.POST('/api/modeller/projectq/getprojectlist/', {
+            body: requestBody
           })
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
-          }
+          const normalized = normalizeApiResponse<{ data?: { items?: Project[] } }>(response)
 
-          const data = await response.json()
-
-          if (data.CODE === 200 && data.DATA?.data?.items) {
-            resolve(data.DATA.data.items)
+          if (normalized.success && normalized.data?.data?.items) {
+            resolve(normalized.data.data.items)
           } else {
             resolve([])
           }
@@ -133,19 +169,14 @@ export function useProjectAPI() {
     }
 
     try {
-      const response = await fetch(API_ENDPOINTS.GET_PROJECT_BY_ID, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+      const response = await client.POST('/api/modeller/projectq/getprojectbyid/', {
+        body: { id }
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      const normalized = normalizeApiResponse<{ data?: any }>(response)
 
-      const data = await response.json()
-      if (data.CODE === 200 && data.DATA?.data) {
-        const projectData = data.DATA.data
+      if (normalized.success && normalized.data?.data) {
+        const projectData = normalized.data.data
         if (validateProjectData(projectData)) {
           return projectData
         } else {
@@ -161,7 +192,7 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null, projectName?: string): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
@@ -184,32 +215,27 @@ export function useProjectAPI() {
       const projectId = incomeProjectId ?? projectData.projectId
 
       // Если создаем новый проект, генерируем скриншот
-      if (!projectId) {
+      if (true) {
         screenshotBase64 = await getProjectScreenshot()
       }
 
-      // Если у нас есть ID проекта - обновляем, иначе создаем новый
       if (projectId) {
         console.log(projectId, 'projectId HAVE')
 
-        const response = await fetch(API_ENDPOINTS.UPDATE_PROJECT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const response = await client.POST('/api/modeller/projectq/updateprojectbyid/', {
+            body: {
             id: projectId,
-            project: projectData
-          })
+            project: projectData,
+            file: screenshotBase64
+          }
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
+        const normalized = normalizeApiResponse(response)
 
-        const data = await response.json()
-        if (data.CODE === 200) {
-          return { success: true, data: data.DATA }
+        if (normalized.success) {
+          return { success: true, data: normalized.data }
         } else {
-          throw new Error(`API error: ${data.MESSAGE || 'Unknown error'}`)
+          throw new Error(normalized.error || 'Unknown error')
         }
       } else {
         console.log(projectId, 'projectId No')
@@ -217,34 +243,31 @@ export function useProjectAPI() {
         const tempProjectId = Date.now().toString();
         projectData.projectId = tempProjectId
 
-
-        const response = await fetch(API_ENDPOINTS.SAVE_PROJECT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: {
-              file: screenshotBase64,
-              provider: REQUEST_CONSTANTS.PROVIDER,
-              name: projectData.project_name || 'Новый проект',
-              user_hash: REQUEST_CONSTANTS.USER_HASH,
-              city: REQUEST_CONSTANTS.CITY,
-              project: projectData,
-              style: REQUEST_CONSTANTS.STYLE,
-              projectId: Date.now().toString(),
-              user_id: REQUEST_CONSTANTS.USER_ID
-            }
-          })
+        console.log(kpFlag)
+        const response = await client.POST('/api/modeller/projectq/SaveProject/', {
+          body: {
+                data: {
+                  file: screenshotBase64,
+                  provider: REQUEST_CONSTANTS.PROVIDER,
+                  name: projectData.project_name || 'Новый проект',
+                  user_hash: REQUEST_CONSTANTS.USER_HASH,
+                  city: REQUEST_CONSTANTS.CITY,
+                  project: projectData,
+                  style: REQUEST_CONSTANTS.STYLE,
+                  projectId: Date.now().toString(),
+                  user_id: REQUEST_CONSTANTS.USER_ID,
+                  ...(kpFlag && { basket: useBasketStore().syncBasket() }),
+                  ...(kpFlag && { kp: kpFlag })
+                }
+              }
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
+        const normalized = normalizeApiResponse<{ data?: any }>(response)
 
-        const data = await response.json()
-        if (data.CODE === 200) {
-          return { success: true, data: data.DATA.data }
+        if (normalized.success) {
+          return { success: true, data: normalized.data?.data || normalized.data }
         } else {
-          throw new Error(`API error: ${data.MESSAGE || 'Unknown error'}`)
+          throw new Error(normalized.error || 'Unknown error')
         }
       }
     } catch (error) {

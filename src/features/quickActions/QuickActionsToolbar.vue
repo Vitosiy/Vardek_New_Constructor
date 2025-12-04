@@ -43,7 +43,7 @@
           <template #checkBox>
             <div class="checkbox_wrap">
               <div>
-                <input type="checkbox" />
+                <input type="checkbox" v-model="kpCheckbox"/>
                 <label class="checkbox_label">Сохранить КП</label>
               </div>
               <div>
@@ -87,7 +87,7 @@ const toaster = useToast();
 const eventBus = useEventBus()
 const projectStore = useProjectStore()
 
-
+const kpCheckbox = ref(false)
 const centeringCheckbox = ref(false)
 const changeCamera = () => {
   if (centeringCheckbox.value) {
@@ -115,7 +115,7 @@ const handleSaveConfirm = async (projectName: string) => {
   // Передаем callback для закрытия модального окна при успешном сохранении
   const success = await handleSaveConfirmFromComposable(projectName.trim(), () => {
     saveDialogRef.value?.closeModal();
-  });
+  }, kpCheckbox.value);
   
   // Если сохранение не удалось, модальное окно остается открытым
 };
