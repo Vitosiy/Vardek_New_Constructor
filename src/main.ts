@@ -127,6 +127,7 @@ async function bootApp() {
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
 
   const initialRoute = router.currentRoute.value
+  console.log('initialRoute', initialRoute)
   const preservedQuery = initialRoute.query
   const preservedHash = initialRoute.hash ?? ''
 

@@ -5,7 +5,21 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useAuthStore } from "@/store/appStore/authStore";
 
 // const baseUrl = '/';
-const baseUrl = '/dev_modeller/';
+// const baseUrl = '/dev_modeller/petrovich';
+
+function getBaseFromSubdomain() {
+  const pathname = window.location.pathname;
+  console.log(pathname)
+  const parts = pathname.split('/');
+  const filtered = parts.filter(item => item !== '');
+  console.log(filtered);
+  if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
+    return `/dev_modeller/${parts[2]}/`;
+  } else {
+    return '/dev_modeller';
+  }
+}
+
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -53,7 +67,8 @@ if (import.meta.env.DEV) {
 }
 
 const router = createRouter({
-  history: createWebHistory(baseUrl),
+  // history: createWebHistory(baseUrl),
+  history: createWebHistory(getBaseFromSubdomain()),
   routes,
 });
 
@@ -107,7 +122,9 @@ router.beforeEach((to, from, next) => {
 });
 
 router.afterEach((to, from) => {
-      // document.querySelector('#main-loader').style.display = 'none';
+  console.log('to', to)
+  console.log('from', from)
+  // document.querySelector('#main-loader').style.display = 'none';
   // Здесь выполняется код после завершения навигации.
   // 'to' - новый маршрут, 'from' - старый маршрут.
   console.log(`Переход на страницу ${to.path} завершен.`);
