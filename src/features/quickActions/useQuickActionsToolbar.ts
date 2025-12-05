@@ -13,7 +13,6 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
-import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
 
 export type ActionKey =
   | 'fullscreen'
@@ -21,16 +20,18 @@ export type ActionKey =
   | 'study'
   | 'print'
   | 'screenshot'
-  | 'newProject'
+  | 'managerProject'
   | 'saveProject'
   | 'drowmod'
   | 'ruller'
-  | 'screenshot3d';
+  | 'screenshot3d'
+  | 'newProject';
 
 export interface QuickActionItem {
   key: ActionKey;
   tooltip: string;
   iconClass: string;
+  iconSrc?: string;
   path?: string
   action: () => void | Promise<void>;
 }
@@ -236,11 +237,19 @@ export const useQuickActionsToolbar = () => {
       },
     },
     {
-      key: 'newProject',
+      key: 'managerProject',
       tooltip: 'Менеджер проектов',
-      iconClass: 'icon-add',
+      iconClass: 'icon-folder',
+      iconSrc: 'folder',
       path: 'default',
       action: () => popupStore.openPopup('project'),
+    },
+    {
+      key: 'newProject',
+      tooltip: 'Новый проект',
+      iconClass: 'icon-add',
+      path: 'default',
+      action: () => window.location.reload(),
     },
   ];
 
