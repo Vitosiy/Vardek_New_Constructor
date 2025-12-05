@@ -28,6 +28,7 @@ const eventsMap = [
     'U:ChangeModule',
     "U:Drop",
     "U:Model-resize",
+    "U:ChangeGlassColor",
     "U:ChangePaletteColor",
     "U:ChangeMilling",
     "U:ChangeFasade",

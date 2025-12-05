@@ -11,9 +11,8 @@
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">
         {{ item?.product.NAME }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
       </h3> 
-      
-      <!-- Секция свойств товара тип сцена-->
-      <div class="basket-item__props" v-if="item?.product.PROPS">
+      <!-- Секция свойств товаров общяя -->
+      <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE !== 'umscene'">
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
           <div v-if="getPropDefinition(String(propKey))">
             <!-- {{ propValue }} -->
@@ -158,6 +157,13 @@
               </div>
           </span>
 
+        </div>
+      </div>
+
+      <!-- Секция свойств товара тип УМ-->
+      <div class="basket-item__props"  v-else>
+        <div  style="list-style: none;" v-for="item in renderDescription(item?.product.PROPS)" :key="propKey">
+          <div><span class="basket-item__props-lable">{{ item.key }}:</span><span>{{ item.value }}</span></div> 
         </div>
       </div>
 
@@ -439,7 +445,7 @@ const getTypeName = (type: any, value: any, mainType: any = '') => {
   }
 
 
-  return `[${type}:${value}]`;
+  return [`${type}:${value}`];
 }; 
 
 const getListValue = (key: string, value: any) => {
@@ -596,6 +602,95 @@ const getFilteredProps = (item) => {
     
     return filteredProps;
   }
+
+
+
+const renderDescription = (props) => {
+  const result = [];
+  // console.log('props', props)
+
+  const textValue = (value) => {
+    const color = appData.value['FASADE'][value.COLOR]?.NAME;
+    const pallette = appData.value['PALETTE'][value.PALETTE]?.NAME;
+    const patina = appData.value['PATINA'][value.PATINA]?.NAME;
+    const glass = appData.value['GLASS'][value.GLASS]?.NAME;
+    const milling = appData.value['MILLING'][value.MILLING]?.NAME;
+    
+    return `${color ?? ''} ${pallette ?? ''} ${patina ?? '' } ${milling ?? ''}`
+  }
+
+  console.log(appData.value)
+  // Перебираем все двери
+  for (const [doorNumber, doorData] of Object.entries(props.DOORS)) {
+      // Для каждой двери перебираем её части (обычно только часть "1")
+      for (const [partNumber, partData] of Object.entries(doorData)) {
+        // Каждая часть может содержать несколько элементов (0, 1 и т.д.)
+        for (const [elementNumber, materialId] of Object.entries(partData)) {
+          const description = appData.value['FASADE'][materialId].NAME || `Неизвестный материал (ID: ${materialId})`;
+          result.push({key: `Цвет фасада ${doorNumber}`, value: ` дверь ${partNumber} часть ${+elementNumber + 1} : ${description}`});
+        }
+      }
+  }
+
+ for  (const [key, value] of Object.entries(props)) {
+  // console.log(getPropDefinition(key)?.NAME);
+  // console.log(value);
+    if(getPropDefinition(key)?.NAME && !isObject(value) && !Array.isArray(value) && key !== 'MODULECOLOR') {
+      result.push({key: getPropDefinition(key)?.NAME, value: Array.isArray(getTypeName(key, value)) ? value : getTypeName(key, value) });
+    }
+
+    if(key === 'MODULECOLOR') {
+       result.push({key: 'Цвет корпуса', value: appData.value['FASADE'][value].NAME})
+    }
+    if(key === 'HORIZONT') {
+       result.push({key: 'Горизонт', value: value})
+    }
+    if(getPropDefinition(key)?.NAME && Array.isArray(value)) {
+      if(key === 'OPTION') {
+        value.forEach(el => {
+          result.push({key: 'Опции', value: appData.value['OPTION'][el].NAME})
+        })
+      }
+      if(getPropDefinition(key)?.NAME && key !== 'OPTION') {
+        value.forEach(el => {
+          result.push({key: getPropDefinition(key)?.NAME, value: appData.value['CATALOG']['PRODUCTS'][el.ID].NAME})
+        })
+      }
+    }
+
+    if( getPropDefinition(key)?.NAME && isObject(value) ) {
+      if(getPropDefinition(key)?.NAME &&
+        key !== 'LEFTSIDECOLOR' && 
+        key !== 'RIGHTSIDECOLOR' && 
+        key !== 'TOPFASADECOLOR' && 
+        key !== 'BACKWALL' &&
+        key !== 'DOORS'
+      ) {
+      for (const [doorNumber, doorData] of Object.entries(value)) {
+        console.log('1 уровень ',doorNumber, doorData)
+        // Для каждой двери перебираем её части (обычно только часть "1")
+        for (const [partNumber, partData] of Object.entries(doorData)) {
+          // Каждая часть может содержать несколько элементов (0, 1 и т.д.)
+          console.log('2 уровень ',partNumber, partData)
+
+          const description = appData.value[getPropDefinition(key)?.type][partData].NAME || `Неизвестный материал (ID: ${materialId})`;
+          result.push({key: getPropDefinition(key)?.NAME, value: `дверь ${doorNumber} часть ${+partNumber + 1} : ${description}`});
+        }
+      }
+
+        //  result.push({key: getPropDefinition(key)?.NAME, value: `обхект ${value}`})
+      }
+
+      if(key === 'LEFTSIDECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
+      if(key === 'RIGHTSIDECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
+      if(key === 'TOPFASADECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
+      if(key === 'BACKWALL') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
+    }
+ }
+
+
+  return result;
+}
 </script>
 
 <style scoped lang="scss">
@@ -678,6 +773,7 @@ const getFilteredProps = (item) => {
     ul {
       margin: 0;
       padding-left: 20px;
+      list-style: none;
     }
 
     li {
@@ -687,6 +783,7 @@ const getFilteredProps = (item) => {
       font-weight: 600;
       line-height: 100%;
       letter-spacing: 0%;
+      list-style: none;
       &::after {
         content: "";
         display: block;

@@ -179,7 +179,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
 
         break;
       case 'PROFILECOLOR':
-        objectData.value.PROPS.CONFIG['PROFILECOLOR'] = value ? value.ID : false;
+        objectData.value.PROPS.CONFIG['PROFILECOLOR'] = value ? value.ID || value : false;
 
         if(!objectData.value.PROPS.CONFIG['PROFILECOLOR']) {
           delete objectData.value.PROPS.CONFIG['PROFILECOLOR'];
@@ -233,7 +233,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
             objectData.value.PROPS.CONFIG[currentOption.value]['SHOW'] = true
         }
 
-        objectData.value.PROPS.CONFIG[currentOption.value][type] = value ? value.ID : false;
+        objectData.value.PROPS.CONFIG[currentOption.value][type] = value ? value.ID || value : false;
         if(palette)
           objectData.value.PROPS.CONFIG[currentOption.value]['PALETTE'] = palette
         break;

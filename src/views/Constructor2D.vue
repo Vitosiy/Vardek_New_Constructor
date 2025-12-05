@@ -14,7 +14,9 @@ import Constructor2D from '@/Constructor2D';
 import { loadBlankRoom } from "@/Constructor2D/facade/blankRoom";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+// @ts-ignore
 import { useRoomState } from "@/store/appliction/useRoomState";
+// @ts-ignore
 import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 let schemeTransition = useSchemeTransition();

@@ -88,11 +88,10 @@ export const useConversationActions = () => {
 
     }
 
-    const filterFasadeConversations = (fasadeNdx: number) => {
+    const filterFasadeConversations = (fasadeNdx: number, fasadeSize: TFasadeTrueSizes) => {
         const sceneModel = modelState.getCurrentModel;
         const { FASADE } = sceneModel?.userData.PROPS;
-        const { FASADE_WIDTH, FASADE_HEIGHT } =
-            FASADE[fasadeNdx].userData.trueSize;
+        const { FASADE_WIDTH, FASADE_HEIGHT } = fasadeSize || FASADE[fasadeNdx].userData.trueSize;
 
         const tempList = modelState.getCurrentModelFasadesData
             .map((el) => {
@@ -104,8 +103,6 @@ export const useConversationActions = () => {
                 if (check) return el;
             })
             .filter(Boolean);
-
-        console.log(tempList, 'tempList')
 
 
         return tempList;

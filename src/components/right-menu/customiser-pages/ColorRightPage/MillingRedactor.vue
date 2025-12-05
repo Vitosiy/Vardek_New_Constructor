@@ -31,6 +31,10 @@ const isSearch = computed(() => {
 });
 
 const changeMilling = (milling) => {
+  const { FASADE_POSITIONS } =
+    modelState.getCurrentModel?.userData.PROPS.CONFIG;
+  const isShowcase = FASADE_POSITIONS[props.tabIndex]?.SHOWCASE;
+
   emit("select_milling", {
     name: milling.NAME,
     imgSrc: milling.PREVIEW_PICTURE,
@@ -48,6 +52,7 @@ const changeMilling = (milling) => {
       action = modelState.getCurrentMillingActionMap(prepare[0].id, milling.ID);
     }
 
+    if (isShowcase === 1) return; // Если витрина пропускаем отрисовку фрезеровки
 
     eventBus.emit("A:ChangeMilling", {
       data: milling.ID,

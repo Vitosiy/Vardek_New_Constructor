@@ -71,8 +71,6 @@ export class PlinthBuilder {
         const defaultPlinth = id ?? Object.values(this.buildProduct._PLINTH)[0]
         const plinthProd = this.buildProduct._PRODUCTS[defaultPlinth];
         const plinthModel = this.buildProduct._MODELS[plinthProd.models[0]];
-        console.log(plinthModel,plinthProd, 'plinthModel')
-
 
         const startPosition = this.buildProduct.getStartPosition(size);
         const havePlinth = this.checkHavePLinth(props);

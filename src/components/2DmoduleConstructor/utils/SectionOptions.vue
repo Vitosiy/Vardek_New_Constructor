@@ -671,6 +671,11 @@ const deleteSection = (secIndex) => {
       ? current.width + next.width + module.value.moduleThickness
       : current.width + prev.width + module.value.moduleThickness;
 
+  if (combinedWidth > MAX_SECTION_WIDTH) {
+    alert("Суммарная ширина превышает допустимый предел! Уменьшите ширину!")
+    return;
+  }
+
   if (next) {
     next.position.x = current.position.x - current.width / 2 + combinedWidth / 2
     next.width = combinedWidth;
