@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } 
 import { getCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookieUtils';
 import { useAppData } from "@/store/appliction/useAppData";
 import { useAuthStore } from "@/store/appStore/authStore";
+import { AuthService } from "@/services/authService";
 
 // const baseUrl = '/';
 // const baseUrl = '/dev_modeller/petrovich';
@@ -12,7 +13,8 @@ function getBaseFromSubdomain() {
   console.log(pathname)
   const parts = pathname.split('/');
   const filtered = parts.filter(item => item !== '');
-  console.log(filtered);
+  AuthService.getCheckURL(parts[2]);
+  console.log(parts[2]);
   if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
     return `/dev_modeller/${parts[2]}/`;
   } else {
