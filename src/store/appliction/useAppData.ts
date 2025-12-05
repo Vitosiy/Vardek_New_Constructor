@@ -103,6 +103,7 @@ export const useAppData = defineStore('AppData', () => {
       console.warn('🧹 [BUILD] Очистка IndexedDB перед инициализацией приложения')
       await clearIndexedDB();
     }
+    await clearIndexedDB();
 
     isLoading.value = true
     try {

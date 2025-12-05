@@ -10,11 +10,9 @@ import { AuthService } from "@/services/authService";
 
 function getBaseFromSubdomain() {
   const pathname = window.location.pathname;
-  console.log(pathname)
   const parts = pathname.split('/');
   const filtered = parts.filter(item => item !== '');
   AuthService.getCheckURL(parts[2]);
-  console.log(parts[2]);
   if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
     return `/dev_modeller/${parts[2]}/`;
   } else {
