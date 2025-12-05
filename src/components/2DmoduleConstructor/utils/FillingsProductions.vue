@@ -17,6 +17,7 @@ import {useModelState} from "@/store/appliction/useModelState.ts";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 const props = defineProps({
   fillings: {
@@ -54,6 +55,7 @@ const { figureItems, createSurfaceList } =
 const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
+const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0, extra: null});
 const isOpenMaterialSelector = ref<boolean>(false);
@@ -120,6 +122,28 @@ const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false)
   return visualizationRef.value.checkPositionFillingToCreate(tempFilling);
 };
 
+const getFasadePosition = (_position) => {
+
+  const { userData } = modelState.getCurrentModel;
+  const { PROPS } = userData;
+  let fasadePosition = APP.FASADE_POSITION[_position];
+
+  if (!fasadePosition)
+    return {}
+
+  fasadePosition = builder.getExec(
+      builder.expressionsReplace(fasadePosition,
+          Object.assign(PROPS.CONFIG.EXPRESSIONS,
+              {
+                "#X#": module.value.width,
+                "#Y#": module.value.height - (module.value.isRestrictedModule ? 0 : module.value.horizont),
+                "#Z#": module.value.depth,
+              }))
+  )
+
+  return fasadePosition
+}
+
 const addFilling = (type, product, oldFillingObject = false) => {
 
   const {sec, cell, row, extra} = selectedFilling.value
@@ -134,14 +158,28 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
   const isVerticalItem = _type === "vertical_shelf"
 
+  const currentSection = module.value.sections[sec];
+  const currentCell = currentSection.cells?.[cell];
+  const currentRow = currentCell?.cellsRows?.[row];
+  const currentExtra = currentRow?.extras?.[extra];
+
+  let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
+
   if (row === null && cell === null && sec === null && extra === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения", "error");
     return;
   }
 
-  if (product.MIN_FASADE_SIZE && row) {
-    alert("Нельзя установить ящик с фасадом в вертикальную разделитель!", "error");
-    return;
+  if (product.MIN_FASADE_SIZE) {
+    if(row || extra){
+      alert("Нельзя установить ящик с фасадом в вертикальную разделитель!", "error");
+      return;
+    }
+
+    if(!currentSection?.fasades?.[0]?.[0]){
+      alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!", "error");
+      return;
+    }
   }
 
   if (isBottomHiTechProfile && !PROPS.CONFIG.OPTIONS.find((opt, index) => {
@@ -157,14 +195,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     return;
   }
 
-  const currentSection = module.value.sections[sec];
-  const currentCell = currentSection.cells?.[cell];
-  const currentRow = currentCell?.cellsRows?.[row];
-  const currentExtra = currentRow?.extras?.[extra];
-
-  let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
   let currentFillingsArray = []
-
   const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem);
 
   if (!startFillingData) {
@@ -264,7 +295,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
     if(!currentSection.fasadesDrawers)
       currentSection.fasadesDrawers = []
 
-    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0].fasades[0][0]
+    const {PRODUCT} = PROPS
+    let productInfo = APP.CATALOG.PRODUCTS[PRODUCT];
+
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0] || getFasadePosition(productInfo.FASADE_POSITION[0])
 
     let manufacturerOffset = 0
     let manufacturer_name = product.EN_NAME?.toLowerCase()|| product.NAME?.toLowerCase()
