@@ -814,11 +814,11 @@ onBeforeMount(() => {
     fasadeSizeListExist.value = fasadeSizeList.value.length > 0;
 
     const {FASADE_PROPS} = productData.value.PROPS.CONFIG;
-    const curFasade = FASADE_PROPS[props.elementIndex];
-    const curSize = curFasade.SIZES;
+    const curFasade = props.elementData || FASADE_PROPS[props.elementIndex];
+    const curSize = curFasade?.SIZES;
 
     incomeSize.value = {
-      width: curSize?.params?.FASADE_WIDTH ?? null,
+      width: curSize?.params?.FASADE_WIDTH ? curSize.params.FASADE_WIDTH : props.fasadeSize.FASADE_WIDTH || null,
       min: curSize?.params?.min ?? null,
       max: curSize?.params?.max ?? null,
     };
