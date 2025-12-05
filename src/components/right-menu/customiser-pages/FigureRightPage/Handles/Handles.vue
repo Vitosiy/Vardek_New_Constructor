@@ -38,7 +38,20 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  index: {
+    type: Number,
+  },
+  is2Dconstructor: {
+    type: Boolean,
+    default: false,
+  }
 });
+
+const emit = defineEmits(["parent-callback"]);
+
+const callback = (data: Number|Boolean, type: String) => {
+  emit("parent-callback", data, type);
+};
 
 const figureFasad = ref<TFigureFasad>({
   ndx: 0,
@@ -52,7 +65,7 @@ const handleList = ref<THandlesItem[]>();
 onBeforeMount(() => {
   const model = modelState.getCurrentModel;
   const { FASADE_TYPE } = model?.userData.PROPS.CONFIG;
-  const index = FASADE_TYPE.findIndex((item) => item !== null);
+  const index = props.index || FASADE_TYPE.findIndex((item) => item !== null);
 
   const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
@@ -95,18 +108,28 @@ const onHandleSelect = (data) => {
     data.ID !== clearId &&
     handlePos.value.length > 1;
 
-  eventBus.emit("A:AddHandle", {
-    data: { id: data.ID, model: data.models },
-    fasadeNdx: figureFasad.value.ndx,
-  });
+  if(props.is2Dconstructor) {
+    callback(data.ID, "handle")
+  }
+  else {
+    eventBus.emit("A:AddHandle", {
+      data: {id: data.ID, model: data.models},
+      fasadeNdx: figureFasad.value.ndx,
+    });
+  }
 
 };
 
 const onChangeHandlePos = (pos) => {
-  eventBus.emit("A:ChangeHandlePose", {
-    data: pos,
-    fasadeNdx: figureFasad.value.ndx,
-  });
+  if(props.is2Dconstructor) {
+    callback(pos, "position")
+  }
+  else {
+    eventBus.emit("A:ChangeHandlePose", {
+      data: pos,
+      fasadeNdx: figureFasad.value.ndx,
+    });
+  }
 };
 
 const onDeleteHandle = () => {
@@ -114,10 +137,16 @@ const onDeleteHandle = () => {
 
   figureFasad.value.data = curHandleData;
   controllerVisible.value = false;
-  eventBus.emit("A:DeliteHandle", {
-    data: curHandleData,
-    fasadeNdx: figureFasad.value.ndx,
-  });
+
+  if(props.is2Dconstructor) {
+    callback(false, "handle")
+  }
+  else {
+    eventBus.emit("A:DeliteHandle", {
+      data: curHandleData,
+      fasadeNdx: figureFasad.value.ndx,
+    });
+  }
 };
 
 const checkControllerVisible = computed(() => {
@@ -158,6 +187,7 @@ const checkControllerVisible = computed(() => {
     </div>
   </div>
 </template>
+
 <style lang="scss">
 .handles {
   &__wraper {

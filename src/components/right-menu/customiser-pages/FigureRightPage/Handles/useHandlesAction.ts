@@ -16,14 +16,14 @@ const useHandlesAction = () => {
         let result = [];
         const model = modelState.getCurrentModel;
 
-        const { FASADE_TYPE, ELEMENT_TYPE } = model?.userData.PROPS.CONFIG;
+        const { FASADE_TYPE, ELEMENT_TYPE, MODULEGRID } = model?.userData.PROPS.CONFIG;
         const prepare = FASADE_TYPE.map((el: number) => modelState._FASADE_TYPE[el]).filter(
             Boolean
         );
 
         const textList = prepare.map((el) => el.CODE);
 
-        if (!ELEMENT_TYPE) {
+        if (!ELEMENT_TYPE || MODULEGRID) {
             return textList;
         }
 

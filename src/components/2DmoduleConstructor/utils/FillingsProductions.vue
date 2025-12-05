@@ -15,6 +15,8 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
+import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
 
 const props = defineProps({
   fillings: {
@@ -46,6 +48,9 @@ const emit = defineEmits([
 
 ]);
 
+const { figureItems, createSurfaceList } =
+    useFigureRightPage();
+
 const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
@@ -53,6 +58,10 @@ const modelState = useModelState();
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0, extra: null});
 const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<Object | boolean>(false);
+
+const isOpenHandleSelector = ref<boolean>(false);
+const currentHandle = ref<Object | boolean>(false);
+
 type workMode = 'config' | 'add';
 const mode = ref<workMode>('add');
 const changeConstructorMode = (_mode: workMode) => {
@@ -131,7 +140,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
   }
 
   if (product.MIN_FASADE_SIZE && row) {
-    alert("Нельзя установить ящик с фасадом в вертикальную перегородку!", "error");
+    alert("Нельзя установить ящик с фасадом в вертикальную разделитель!", "error");
     return;
   }
 
@@ -278,6 +287,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
       position: new THREE.Vector2(baseFasade.position.x, module.value.height - (startFillingData.y + startFillingData.height + manufacturerOffset)),
       material: <FasadeMaterial>{
         ...baseFasade.material,
+        HANDLES: {...baseFasade.material.HANDLES}
       },
       type: "fasade",
       manufacturerOffset,
@@ -523,6 +533,55 @@ const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
   }, 10)
 }
 
+const openHandleSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
+  isOpenHandleSelector.value = false;
+  isOpenMaterialSelector.value = false;
+
+  if(isOpenMaterialSelector.value)
+    closeMenu()
+
+  if (
+      currentHandle.value &&
+      secIndex === currentHandle.value.secIndex &&
+      cellIndex === currentHandle.value.cellIndex &&
+      rowIndex === currentHandle.value.rowIndex &&
+      itemIndex === currentHandle.value.itemIndex
+  ) {
+    closeMenu()
+    return;
+  }
+
+  setTimeout(() => {
+    const curSection = module.value.sections[secIndex]
+    const curCell = curSection?.cells?.[cellIndex]
+    const curRow = curCell?.cellsRows?.[rowIndex]
+
+    const curModuleSegment = curRow || curCell || curSection
+    let data = curModuleSegment.fillings[itemIndex].fasade.material
+
+    currentHandle.value = {
+      secIndex,
+      cellIndex,
+      rowIndex,
+      itemIndex,
+      data,
+    };
+    selectCell(secIndex, cellIndex, rowIndex, itemIndex);
+    isOpenHandleSelector.value = true;
+  }, 10);
+};
+
+const selectHandle = (data, type) => {
+  switch (type) {
+    case "handle":
+      currentHandle.value.data.HANDLES.id = data;
+      break;
+    case "position":
+      currentHandle.value.data.HANDLES.position = data;
+      break;
+  }
+}
+
 const selectOption = (value: Object, type: string, palette: Object = false) => {
 
   currentFasadeMaterial.value.data[type] = value ? value.ID : null;
@@ -599,6 +658,10 @@ onMounted(() => {
 
 const closeMenu = () => {
   isOpenMaterialSelector.value = false;
+  isOpenHandleSelector.value = false;
+
+  currentHandle.value = false;
+  currentFasadeMaterial.value = false;
 };
 
 </script>
@@ -836,6 +899,26 @@ const closeMenu = () => {
                       @click="openFasadeSelector(secIndex, null, null, fillingIndex)"
                   />
 
+                  <ConfigurationOption
+                      v-if="filling.fasade"
+                      :class="[
+                                {
+                                  active:
+                                    currentHandle.secIndex ===
+                                      secIndex &&
+                                    currentHandle.doorIndex ===
+                                      doorIndex &&
+                                    currentHandle.segmentIndex ===
+                                      segmentIndex,
+                                },
+                              ]"
+                      :type="'Handles'"
+                      :data="filling.fasade.material.HANDLES ? {...APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
+                      @click="
+                              openHandleSelector(secIndex, null, null, fillingIndex)
+                            "
+                  />
+
                 </div>
               </article>
 
@@ -945,9 +1028,44 @@ const closeMenu = () => {
 
                         <ConfigurationOption
                             v-if="filling.fasade"
+                            :class="[
+                                {
+                                  active:
+                                    currentFasadeMaterial.secIndex ===
+                                      secIndex &&
+                                    currentFasadeMaterial.cellIndex ===
+                                      cellIndex &&
+                                    currentFasadeMaterial.rowIndex ===
+                                      null &&
+                                    currentFasadeMaterial.fillingIndex ===
+                                      fillingIndex,
+                                },
+                            ]"
                             :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
                             :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
                             @click="openFasadeSelector(secIndex, cellIndex, null, fillingIndex)"
+                        />
+
+                        <ConfigurationOption
+                            v-if="filling.fasade"
+                            :class="[
+                                {
+                                  active:
+                                    currentHandle.secIndex ===
+                                      secIndex &&
+                                    currentHandle.cellIndex ===
+                                      cellIndex &&
+                                    currentHandle.rowIndex ===
+                                      null &&
+                                    currentHandle.fillingIndex ===
+                                      fillingIndex,
+                                },
+                              ]"
+                            :type="'Handles'"
+                            :data="filling.fasade.material.HANDLES ? {...APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
+                            @click="
+                              openHandleSelector(secIndex, cellIndex, null, fillingIndex)
+                            "
                         />
                       </div>
                     </article>
@@ -1073,9 +1191,44 @@ const closeMenu = () => {
 
                             <ConfigurationOption
                                 v-if="filling.fasade"
+                                :class="[
+                                {
+                                  active:
+                                    currentFasadeMaterial.secIndex ===
+                                      secIndex &&
+                                    currentFasadeMaterial.cellIndex ===
+                                      cellIndex &&
+                                    currentFasadeMaterial.rowIndex ===
+                                      rowIndex &&
+                                    currentFasadeMaterial.fillingIndex ===
+                                      fillingIndex,
+                                },
+                                ]"
                                 :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
                                 :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
                                 @click="openFasadeSelector(secIndex, cellIndex, rowIndex, fillingIndex)"
+                            />
+
+                            <ConfigurationOption
+                                v-if="filling.fasade"
+                                :class="[
+                                {
+                                  active:
+                                    currentHandle.secIndex ===
+                                      secIndex &&
+                                    currentHandle.cellIndex ===
+                                      cellIndex &&
+                                    currentHandle.rowIndex ===
+                                      rowIndex &&
+                                    currentHandle.fillingIndex ===
+                                      fillingIndex,
+                                },
+                              ]"
+                                :type="'Handles'"
+                                :data="filling.fasade.material.HANDLES ? {...APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
+                                @click="
+                              openHandleSelector(secIndex, cellIndex, rowIndex, fillingIndex)
+                            "
                             />
 
                           </div>
@@ -1098,13 +1251,21 @@ const closeMenu = () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+    <div class="color-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color-select">
       <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
       <AdvanceCorpusMaterialRedactor
+          v-if="isOpenMaterialSelector"
           :is-fasade="true"
           :elementData="currentFasadeMaterial.data"
           @parent-callback="selectOption"
+      />
+      <Handles
+          v-else
+          :is2-dconstructor="true"
+          :data="createSurfaceList(currentHandle)"
+          :index="0"
+          @parent-callback="selectHandle"
       />
     </div>
   </transition>
