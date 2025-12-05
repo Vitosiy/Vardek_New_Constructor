@@ -946,7 +946,10 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
   divider.toColideCheck = dashVert;
 
   divider.on("pointerdown", onVerticalDragStart, divider);
-  divider.on("pointerup", resetModule, divider);
+  divider.on("pointerup", () => {
+    resetModule()
+    setTimeout(()=>{renderGrid()}, 10)
+  }, divider);
 
   deviders.push(dashVert, divider);
 };
@@ -1022,7 +1025,10 @@ const createHorozontalCut = ({
   dashHor.stroke({width: 1, color: "#5D6069"});
 
   divider.on("pointerdown", onHorizontalDragStart, divider);
-  divider.on("pointerup", resetModule, divider);
+  divider.on("pointerup", () => {
+    resetModule()
+    setTimeout(()=>{renderGrid()}, 10)
+  }, divider);
 
   deviders.push(dashHor, divider);
 };
