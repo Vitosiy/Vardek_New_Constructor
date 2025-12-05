@@ -686,45 +686,47 @@ class Shape extends Helpers {
         if (this === otherShape)
             return false;
 
-        if(isVerticalItem) {
+        let verticalCheck = false;
+        let horizontalCheck = false;
+
+        if (isVerticalItem) {
             let thisPosX = this.graphic.position.x
             let thisWidth = this.width
             let otherShapePosX = otherShape.graphic.position.x
             let otherShapeWidth = otherShape.width
 
-            if(['loop', 'vertical_shelf'].includes(otherShape.data.type)) {
+            if (['loop', 'vertical_shelf'].includes(otherShape.data.type)) {
                 // Проверка наложения прямоугольников
-                return (
-                    (
-                        thisPosX + thisWidth <= otherShapePosX + otherShapeWidth &&
-                        thisPosX + thisWidth >= otherShapePosX
+                verticalCheck = (
+                        (
+                            thisPosX + thisWidth <= otherShapePosX + otherShapeWidth &&
+                            thisPosX + thisWidth >= otherShapePosX
+                        ) ||
+                        (
+                            thisPosX <= otherShapePosX + otherShapeWidth &&
+                            thisPosX >= otherShapePosX
+                        )
                     ) ||
                     (
-                        thisPosX <= otherShapePosX + otherShapeWidth &&
-                        thisPosX >= otherShapePosX
-                    )
-                ) ||
-                (
-                    (
-                        otherShapePosX + otherShapeWidth <= thisPosX + thisWidth &&
-                        otherShapePosX + otherShapeWidth >= thisPosX
-                    ) ||
-                    (
-                        otherShapePosX <= thisPosX + thisWidth &&
-                        otherShapePosX >= thisPosX
-                    )
-                );
-            }
-            else
-                return false;
-        }
-        else {
+                        (
+                            otherShapePosX + otherShapeWidth <= thisPosX + thisWidth &&
+                            otherShapePosX + otherShapeWidth >= thisPosX
+                        ) ||
+                        (
+                            otherShapePosX <= thisPosX + thisWidth &&
+                            otherShapePosX >= thisPosX
+                        )
+                    );
+            } else
+                verticalCheck = true;
+
+        } else {
             let thisPosY = this.graphic.position.y
             let thisHeight = this.height
             let otherShapePosY = otherShape.graphic.position.y
             let otherShapeHeight = otherShape.height
 
-            if(otherShape.data.type != 'loop') {
+            if (!['loop', 'vertical_shelf'].includes(otherShape.data.type)) {
                 thisPosY = this.data.fasade ? this.graphic.position.y
                     - this.getPixelHeight(this.data.fasade.height - this.data.fasade.manufacturerOffset - this.data.height + 2)
                     : thisPosY
@@ -737,7 +739,7 @@ class Shape extends Helpers {
 
                 otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
 
-                if(!(this.data.isProfile && otherShape.data.isProfile)) {
+                if (!(this.data.isProfile && otherShape.data.isProfile)) {
                     if (this.data.isProfile && otherShape.data.fasade) {
                         thisPosY = this.graphic.position.y - this.getPixelHeight(this.data.isProfile.TYPE_PROFILE === 'l' ? 0 : this.data.isProfile.manufacturerOffset)
                         thisHeight = this.getPixelHeight(this.data.isProfile.offsetFasades)
@@ -751,28 +753,30 @@ class Shape extends Helpers {
             }
 
             // Проверка наложения прямоугольников
-            return (
-                (
-                    thisPosY + thisHeight <= otherShapePosY + otherShapeHeight &&
-                    thisPosY + thisHeight >= otherShapePosY
+            horizontalCheck = (
+                    (
+                        thisPosY + thisHeight <= otherShapePosY + otherShapeHeight &&
+                        thisPosY + thisHeight >= otherShapePosY
+                    ) ||
+                    (
+                        thisPosY <= otherShapePosY + otherShapeHeight &&
+                        thisPosY >= otherShapePosY
+                    )
                 ) ||
                 (
-                    thisPosY <= otherShapePosY + otherShapeHeight &&
-                    thisPosY >= otherShapePosY
-                )
-            ) ||
-            (
-                (
-                    otherShapePosY + otherShapeHeight <= thisPosY + thisHeight &&
-                    otherShapePosY + otherShapeHeight >= thisPosY
-                ) ||
-                (
-                    otherShapePosY <= thisPosY + thisHeight &&
-                    otherShapePosY >= thisPosY
-                )
-            );
+                    (
+                        otherShapePosY + otherShapeHeight <= thisPosY + thisHeight &&
+                        otherShapePosY + otherShapeHeight >= thisPosY
+                    ) ||
+                    (
+                        otherShapePosY <= thisPosY + thisHeight &&
+                        otherShapePosY >= thisPosY
+                    )
+                );
+
         }
 
+        return horizontalCheck || verticalCheck
     }
 
     // Проверка, находится ли указанная позиция внутри сектора
