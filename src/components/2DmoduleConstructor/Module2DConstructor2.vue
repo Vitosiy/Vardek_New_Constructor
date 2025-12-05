@@ -357,7 +357,13 @@ const getFasadePositionMinMax = (fasade) => {
 }
 
 const updateFasades = () => {
-  const correctFasadeHeight = getFasadePosition(module.value.sections[0].fasades[0][0].material.POSITION).FASADE_HEIGHT;
+  const {PROPS} = modelState.getCurrentModel.userData;
+  const {PRODUCT} = PROPS
+
+  let productInfo = APP.CATALOG.PRODUCTS[PRODUCT];
+  let fasadePosition = getFasadePosition(productInfo.FASADE_POSITION[0]);
+
+  const correctFasadeHeight = fasadePosition.FASADE_HEIGHT;
   const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
   const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
 
