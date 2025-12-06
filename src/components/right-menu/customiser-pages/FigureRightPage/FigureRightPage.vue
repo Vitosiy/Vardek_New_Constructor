@@ -35,6 +35,10 @@ onBeforeMount(() => {
   plinthExist.value = createPlinthData().length > 0;
   handlesExist.value = createSurfaceList().length > 0;
 
+  console.log(handlesExist.value, "=== HANDLES");
+
+  console.log(plinthExist.value, "=== PLINTH");
+
   const checkExist: TexistItem = {
     Handles: Object.values(createSurfaceList()).length > 0,
     Plinth: Object.values(createPlinthData()).length > 0,
@@ -63,7 +67,9 @@ const filteredFigure = computed(() => {
 
 <template>
   <div class="figure">
-    <h3 v-if="prepareTabData.length ==0">У выбранной компановки фсады отсутствуют</h3>
+    <h3 v-if="prepareTabData.length == 0">
+      У выбранной компановки фсады отсутствуют
+    </h3>
     <defaultTab :tabs="prepareTabData" @tab-change="optionsTabChange" />
     <Handles :data="filteredFigure" v-if="currentFigure == 'Handles'" />
     <Plinth :data="filteredFigure" v-if="currentFigure == 'Plinth'" />

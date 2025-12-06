@@ -108,15 +108,17 @@ export class Filters extends GlobalsData {
 
             const curFasade = fasade.ID ? fasade.ID : fasade
             const fasadePosition = this._FASADE_POSITION[curFasade]
+            const fasadePositionType = fasadePosition.fasade_type
             let handlerPosition = null
 
-            const fasTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+            // const fasTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+            const fasTypeData = this._FASADETYPE[fasadePositionType[0]]
 
             const handleInDorPosition = () => {
 
                 if (!ELEMENT_TYPE && product.fasade_type.length > 1 && MODEL.length == 1) return 0
 
-                if (sortFasadePositionList.length < 2 || params.FASADE_TYPE.includes(null)) {
+                if (sortFasadePositionList.length < 2 || fasadePositionType.includes(null)) {
                     return FasadeTextAlignAction[fasTypeData.CODE]
                 }
 
@@ -259,7 +261,7 @@ export class Filters extends GlobalsData {
         const profileExept = 251698 // - U-угол: дефолтное  значение 
         const getFilteredData = (data, profile = false) => {
             const filtered = data.filter(el => this._USLUGI[el])
-            
+
             return filtered.reduce((acc, el) => {
                 const visible = this._USLUGI[el].ID != 98683 // ID Услуги распил
                 let value = profile && el === profileExept
@@ -285,7 +287,7 @@ export class Filters extends GlobalsData {
         const result = curOptionsList.map(el => {
 
             const groupName = el.GROUP ?? ''
-            return { id: el.ID, active: false, group: groupName, section:el.IBLOCK_SECTION_ID?.[0], close: el.CLOSE_OTHER_OPTIONS, visible: true }
+            return { id: el.ID, active: false, group: groupName, section: el.IBLOCK_SECTION_ID?.[0], close: el.CLOSE_OTHER_OPTIONS, visible: true }
         })
 
         return result

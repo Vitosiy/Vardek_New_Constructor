@@ -10,7 +10,7 @@ import { useHandlesAction } from "./useHandlesAction";
 
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 import ConfigurationOption from "../../ColorRightPage/ConfigurationOption.vue";
-import DirectionControl from "@/components/ui/direction/DirectionControl.vue"; 
+import DirectionControl from "@/components/ui/direction/DirectionControl.vue";
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 
 interface ITabChangeParams {
@@ -51,8 +51,10 @@ const handleList = ref<THandlesItem[]>();
 
 onBeforeMount(() => {
   const model = modelState.getCurrentModel;
-  const { FASADE_TYPE } = model?.userData.PROPS.CONFIG;
-  const index = FASADE_TYPE.findIndex((item) => item !== null);
+  const { FASADE_TYPE, FASADE_POSITIONS } = model?.userData.PROPS.CONFIG;
+
+  const filtered = FASADE_TYPE.filter((el) => el !== null);
+  const index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
 
   const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
@@ -63,12 +65,12 @@ onBeforeMount(() => {
   figureFasad.value.name = props.data[index].name;
 
   getCurrendHendleData(figureFasad.value.props);
-  handlePos.value = getControllerData();
+  handlePos.value = getControllerData(index);
+
+  console.log(handlePos.value, 'handlePos.value')
 
   controllerVisible.value = checkControllerVisible.value;
 });
-
-
 
 const handleTabChange = ({ index, tab }: ITabChangeParams) => {
   figureFasad.value.ndx = index;
@@ -76,10 +78,8 @@ const handleTabChange = ({ index, tab }: ITabChangeParams) => {
 
   controllerVisible.value = checkControllerVisible.value;
 
-
   getCurrendHendleData(tab.props);
-  handlePos.value = getControllerData();
-
+  handlePos.value = getControllerData(index);
 };
 
 const getCurrendHendleData = (prop) => {
@@ -92,14 +92,13 @@ const onHandleSelect = (data) => {
   figureFasad.value.data = data;
   controllerVisible.value =
     figureFasad.value.props.HANDLES.drawer === null &&
-    data.ID !== clearId &&
-    handlePos.value.length > 1;
+    data.ID !== clearId
+    // handlePos.value.length > 1;
 
   eventBus.emit("A:AddHandle", {
     data: { id: data.ID, model: data.models },
     fasadeNdx: figureFasad.value.ndx,
   });
-
 };
 
 const onChangeHandlePos = (pos) => {
@@ -123,8 +122,8 @@ const onDeleteHandle = () => {
 const checkControllerVisible = computed(() => {
   return (
     figureFasad.value.props.HANDLES.id !== clearId &&
-    figureFasad.value.props.HANDLES.drawer === null &&
-    handlePos.value.length > 1
+    figureFasad.value.props.HANDLES.drawer === null 
+    // handlePos.value.length > 1
   );
 });
 </script>

@@ -785,20 +785,16 @@ export class FasadeBuilder {
             "#Z#": SIZE.depth,
         });
 
-        // console.log(replacedExpressions, 'replacedExpressions')
+        console.log(replacedExpressions, 'replacedExpressions')
 
         const curFasadeDepth = this.checkFasadeDepth(FASADE_PROPS, key) ?? replacedExpressions.FASADE_DEPTH
 
         // console.log(curFasadeDepth)
 
         const fasadePositionsData: THREETypes.TFasadePositionItem = {
-            FASADE_WIDTH: this.parent.calculateFromString(replacedExpressions.FASADE_WIDTH),
-            FASADE_HEIGHT: this.parent.calculateFromString(replacedExpressions.FASADE_HEIGHT),
+
             // FASADE_DEPTH: this.parent.calculateFromString(curFasadeDepth),
-            FASADE_DEPTH: 16,
-            POSITION_X: this.parent.calculateFromString(replacedExpressions.POSITION_X),
-            POSITION_Y: this.parent.calculateFromString(replacedExpressions.POSITION_Y),
-            POSITION_Z: this.parent.calculateFromString(replacedExpressions.POSITION_Z),
+
             POSITION_2_X: replacedExpressions.POSITION_2_X,
             POSITION_2_Y: replacedExpressions.POSITION_2_Y,
             POSITION_2_Z: replacedExpressions.POSITION_2_Z,
@@ -808,13 +804,22 @@ export class FasadeBuilder {
             ROTATE_2_X: replacedExpressions.ROTATE_2_X,
             ROTATE_2_Y: replacedExpressions.ROTATE_2_Y,
             ROTATE_2_Z: replacedExpressions.ROTATE_2_Z,
-            FASADE_NUMBER: replacedExpressions.FASADE_NUMBER - 1, // массив начинается с 0
             FASADE_MODEL: replacedExpressions.FASADE_MODEL,
+
+            FASADE_WIDTH: this.parent.calculateFromString(replacedExpressions.FASADE_WIDTH),
+            FASADE_HEIGHT: this.parent.calculateFromString(replacedExpressions.FASADE_HEIGHT),
+            POSITION_X: this.parent.calculateFromString(replacedExpressions.POSITION_X),
+            POSITION_Y: this.parent.calculateFromString(replacedExpressions.POSITION_Y),
+            POSITION_Z: this.parent.calculateFromString(replacedExpressions.POSITION_Z),
+            FASADE_NUMBER: replacedExpressions.FASADE_NUMBER - 1, // массив начинается с 0
+            FASADE_DEPTH: 16,
+            FILLING: replacedExpressions.filling,
             SHOWCASE: replacedExpressions.glass,
             FASADE_TYPE: replacedExpressions.fasade_type
+
         };
 
-        // console.log(fasadePositionsData, 'fasadePositionsData')
+        console.log(fasadePositionsData, 'fasadePositionsData')
 
         // Добавляем фасадную позицию в CONFIG, если ещё не существует
         if (this.parent.addIfNotExists(FASADE_POSITIONS, fasadePositionsData)) {

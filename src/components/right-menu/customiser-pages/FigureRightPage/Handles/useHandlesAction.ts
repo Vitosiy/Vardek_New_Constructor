@@ -12,16 +12,18 @@ const useHandlesAction = () => {
     const modelState = useModelState()
     const eventBus = useEventBus()
 
-    const getControllerData = () => {
+    const getControllerData = (fasadeNdx:number) => {
         let result = [];
         const model = modelState.getCurrentModel;
 
-        const { FASADE_TYPE, ELEMENT_TYPE } = model?.userData.PROPS.CONFIG;
-        const prepare = FASADE_TYPE.map((el: number) => modelState._FASADE_TYPE[el]).filter(
+        const { FASADE_TYPE, FASADE_POSITIONS, ELEMENT_TYPE } = model?.userData.PROPS.CONFIG;
+        const prepare = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE.map((el: number) => modelState._FASADE_TYPE[el]).filter(
             Boolean
         );
 
         const textList = prepare.map((el) => el.CODE);
+
+        console.log(textList, 'textList', ELEMENT_TYPE)
 
         if (!ELEMENT_TYPE) {
             return textList;

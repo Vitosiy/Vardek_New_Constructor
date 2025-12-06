@@ -1186,7 +1186,7 @@ export class MeshEvents extends BuildersHelper {
         CONFIG.FILLING = data
         CONFIG.OPTIONS = this.buildProduct.filters.filterOption(product.OPTION)
         this.buildProduct.filters.filterFasadePosition(CONFIG, product)
-
+        // this.buildProduct.filters.filterFasadeSizer(product.FASADE_SIZES, product)
 
         this.changeModelSize({ data: { width, height, depth } })
 

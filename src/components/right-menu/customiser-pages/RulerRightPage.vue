@@ -119,8 +119,11 @@ const prepareData = () => {
       active: modelState._FILLING[el].ID === FILLING,
       img: modelState._FILLING[el].SMALL,
       extensions,
+      sort: modelState._FILLING[el].SORT
     };
-  });
+  }).sort((a, b) => a.SORT - b.SORT);
+
+  console.log(fillingList.value)
 
   shelfCount.value = SHELFQUANT;
 
