@@ -269,6 +269,9 @@ const renderGrid = (_moduleGrid) => {
 
     let tmp_array_sectors = []
 
+    section.xOffset = xOffset;
+    section.yOffset = yOffset;
+
     if (section.cells.length > 0) {
       section.cells.slice().sort((a, b) => b.position.y - a.position.y).forEach((cell, cellIndex, section) => {
         const pxHeight = getPixelHeight(cell.height);
@@ -279,6 +282,8 @@ const renderGrid = (_moduleGrid) => {
           let rowxOffset = xOffset;
           cell.cellsRows.forEach((cellRow, cellRowIndex, _cell) => {
             const RowpxWidth = getPixelWidth(cellRow.width);
+            cellRow.xOffset = rowxOffset;
+            cellRow.yOffset = yOffset;
 
             if (cellRow.extras?.length > 0) {
               let rowyOffset = yOffset;
@@ -318,9 +323,6 @@ const renderGrid = (_moduleGrid) => {
               });
             }
             else {
-              cellRow.xOffset = rowxOffset;
-              cellRow.yOffset = yOffset;
-
               let sector = createSector({
                 x: rowxOffset,
                 y: yOffset,
@@ -380,9 +382,6 @@ const renderGrid = (_moduleGrid) => {
     }
     else {
       const pxHeight = getPixelHeight(section.height);
-      section.xOffset = xOffset;
-      section.yOffset = yOffset;
-
       // Отрисовываем секцию
 
       let sector = createSector({
@@ -894,7 +893,7 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
         return;
       break
     case "section":
-      if (!(sectionIndex < module.value.sections.length - 1))
+      if (!(sectionIndex < section.length - 1))
         return;
       break;
     case "rowExtra":
@@ -905,7 +904,7 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
         return;
       break
     case "cell":
-      if((_cellIndex === curSec.cells?.length - 1) && (sectionIndex < module.value.sections.length - 1)) {
+      if(sectionIndex < module.value.sections.length - 1) {
         _cellIndex = null
         _rowIndex =null
         _extraIndex = null
@@ -929,7 +928,7 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
   divider.rect(0, 0, getPixelWidth(module.value.moduleThickness + 4), convertTotalHeight);
 
   divider.fill("#4bef61");
-  divider.alpha = 0;
+  divider.alpha = 1;
 
   divider.eventMode = "static";
   divider.cursor = "section-resize";
@@ -949,12 +948,12 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
   divider.on("pointerup", () => {
     setTimeout(()=>{
       renderGrid()
-    }, 10)
+    }, 100)
   });
   divider.on("pointerupoutside", () => {
     setTimeout(()=>{
       renderGrid()
-    }, 10)
+    }, 100)
   });
 
   deviders.push(dashVert, divider);
@@ -989,6 +988,11 @@ const createHorozontalCut = ({
         return;
       }
       if (_extraIndex !== null && !(_extraIndex < curRow.extras?.length - 1)) {
+
+        if(!(_cellIndex < curSec.cells.length - 1)){
+          return;
+        }
+
         _extraIndex = null
         _rowIndex = null
 
@@ -1001,6 +1005,10 @@ const createHorozontalCut = ({
       break;
     default:
       if(_rowIndex !== null && !(_rowIndex <  curCell.cellsRows?.length - 1)) {
+        if(!(_cellIndex < curSec.cells.length - 1)){
+          return;
+        }
+
         _rowIndex = null
         _extraIndex = null
 
@@ -1019,7 +1027,7 @@ const createHorozontalCut = ({
 
   divider.rect(_cell.xOffset, _cell.yOffset + pxHeight - getPixelHeight(2), pxWidth, getPixelHeight(module.value.moduleThickness + 4));
   divider.fill("#c53545");
-  divider.alpha = 0;
+  divider.alpha = 1;
   divider.eventMode = "static";
   divider.cursor = "cell-resize";
   divider.section = sectionIndex;
@@ -1034,12 +1042,12 @@ const createHorozontalCut = ({
   divider.on("pointerup", () => {
     setTimeout(()=>{
       renderGrid()
-    }, 10)
+    }, 100)
   });
   divider.on("pointerupoutside", () => {
     setTimeout(()=>{
       renderGrid()
-    }, 10)
+    }, 100)
   });
 
   deviders.push(dashHor, divider);
@@ -1188,8 +1196,64 @@ function onVerticalDragStart(event) {
   const extra = row?.extras?.[extraIndex];
 
   const cur = row || cell || column
-  const next = row ? cell.cellsRows[rowIndex + 1] || module.sections[sectionIndex + 1] :
-      module.sections[sectionIndex + 1];
+
+  let next = {}
+  let nextSector, curSector;
+  switch (cur.type){
+    case "section":
+      if (!cur.sector){
+        curSector = cur.cells[0].sector || cur.cells[0].cellsRows[cur.cells[0].cellsRows.length - 1].sector
+      }
+      else
+        curSector = cur.sector
+
+      next = module.sections[sectionIndex + 1]
+      if (!next.sector){
+        nextSector = next.cells[0].sector || next.cells[0].cellsRows[0].sector
+      }
+      else
+        nextSector = next.sector
+      break;
+    case "cell":
+      if (!cur.sector){
+        curSector = cur.cells[0].cellsRows[cur.cells[0].cellsRows.length - 1].sector
+      }
+      else
+        curSector = cur.sector
+
+      next = module.sections[sectionIndex + 1]
+      if (!next.sector){
+        nextSector = next.cells[0].sector || next.cells[0].cellsRows[0].sector
+      }
+      else
+        nextSector = next.sector
+      break;
+    case "rowCell":
+      if (!cur.sector){
+        curSector = cur.extras[0].sector
+      }
+      else
+        curSector = cur.sector
+
+      next = cell.cellsRows[rowIndex + 1]
+
+      if (!next.sector){
+        nextSector = next.extras[0].sector
+      }
+      else
+        nextSector = next.sector
+      break;
+    case "rowExtra":
+      curSector = cur.sector
+
+      next = cell.cellsRows[rowIndex + 1]
+      if (!next.sector){
+        nextSector = next.extras[0].sector
+      }
+      else
+        nextSector = next.sector
+      break;
+  }
 
   dragState.isDragging = true;
   dragState.type = "vertical";
@@ -1204,12 +1268,12 @@ function onVerticalDragStart(event) {
   dragState.startRightWidth = next.width;
 
   dragState.minXleft = shapeAdjuster.getLeftSectionWidth(
-      cur.sector,
+      curSector,
       cur.maxX
   );
 
   dragState.minXRight = shapeAdjuster.getRightSectionWidth(
-      next.sector || cell?.sector || row?.sector || extra?.sector,
+      nextSector,
       next.minX
   );
 
@@ -1238,8 +1302,45 @@ function onHorizontalDragStart(event) {
   const extra = row?.extras?.[extraIndex];
 
   const cur = extra || row || cell
-  const next = extra ? row.extras[extraIndex + 1] : row ? cell.cellsRows[rowIndex + 1] :
-      column.cells[cellIndex + 1]
+
+  let next = {}
+  let nextSector, curSector;
+  switch (cur.type){
+    case "cell":
+      if (!cur.sector){
+        curSector = cur.cellsRows[0].sector || cur.cellsRows[0].extras[cur.cellsRows[0].extras.length - 1].sector
+      }
+      else
+        curSector = cur.sector
+
+      next = column.cells[cellIndex + 1]
+      if (!next.sector){
+        nextSector = next.cellsRows[0].sector || next.cellsRows[0].extras[0].sector
+      }
+      else
+        nextSector = next.sector
+      break;
+    case "rowCell":
+      if (!cur.sector){
+        curSector = cur.extras[cur.extras.length - 1].sector
+      }
+      else
+        curSector = cur.sector
+
+      next = cell.cellsRows[rowIndex + 1]
+
+      if (!next.sector){
+        nextSector = next.extras[0].sector
+      }
+      else
+        nextSector = next.sector
+      break;
+    case "rowExtra":
+      curSector = cur.sector
+      next = row.extras[extraIndex + 1]
+      nextSector = next.sector
+      break;
+  }
 
   // event.currentTarget.alpha = 0.5;
   dragState.element = this;
@@ -1255,8 +1356,8 @@ function onHorizontalDragStart(event) {
   dragState.startTopHeight = cur.height;
   dragState.startBottomHeight = next.height;
 
-  dragState.minTop = shapeAdjuster.getSectionTop(cur.sector, cur.maxY);
-  dragState.minBottom = shapeAdjuster.getSectionBottom(next.sector, next.minY);
+  dragState.minTop = shapeAdjuster.getSectionTop(curSector, cur.maxY);
+  dragState.minBottom = shapeAdjuster.getSectionBottom(nextSector, next.minY);
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
@@ -1650,6 +1751,7 @@ const adjustSectionSize = (
     sectionIndex,
     cellIndex,
     rowIndex,
+    extraIndex,
     newValue,
     dimension = "width"
 ) => {
@@ -1660,32 +1762,73 @@ const adjustSectionSize = (
 
   const module = props.module;
   if (!sectionIndex && sectionIndex !== 0) {
-    module[dimension] = newValue
-
+    //module[dimension] = newValue
     calcValue = newValue
-  } else {
-    if (dimension === "width") {
-      const column = module.sections[sectionIndex];
-      const cell = column.cells?.[cellIndex];
-      const row = cell?.cellsRows?.[rowIndex];
-      const currentRow = row || cell || column
+  }
+  else {
+    const section = module.sections[sectionIndex];
+    const cell = section.cells?.[cellIndex];
+    const row = cell?.cellsRows?.[rowIndex];
+    const extra = row?.extras?.[extraIndex];
+    const currentRow = extra || row || cell || section
 
-      if (sectionIndex < module.sections.length - 1) {
+    const minWidth = MIN_SECTION_WIDTH
+    const minHeight = MIN_SECTION_HEIGHT
+
+    let nextRow, prevRow;
+    switch (currentRow.type) {
+      case "rowExtra":
+        prevRow = row.extras[extraIndex - 1];
+        nextRow = row.extras[extraIndex + 1];
+        break;
+      case "rowCell":
+        prevRow = cell.cellsRows[rowIndex - 1];
+        nextRow = cell.cellsRows[rowIndex + 1];
+        break;
+      case "cell":
+        prevRow = section.cells[cellIndex - 1];
+        nextRow = section.cells[cellIndex + 1];
+        break;
+      case "section":
+        prevRow = module.sections[sectionIndex - 1];
+        nextRow = module.sections[sectionIndex + 1];
+        break;
+    }
+
+    nextRow = nextRow || prevRow
+
+    if (dimension === "width") {
+      if (nextRow) {
+        const totalWidth = currentRow.width + nextRow.width;
+        calcValue = updateSizes(
+            newValue,
+            dimension,
+            currentRow,
+            nextRow,
+            totalWidth,
+            minWidth,
+            minWidth
+        );
+      }
+      else {
+        calcValue = newValue
+      }
+      /*if (sectionIndex < module.sections.length - 1) {
         const nextRow = rowIndex !== null ? cell.cellsRows[rowIndex + 1] :
-            cellIndex !== null ? column.cells[cellIndex + 1] :
+            cellIndex !== null ? section.cells[cellIndex + 1] :
                 module.sections[sectionIndex + 1];
 
         const totalWidth = currentRow.width + nextRow.width;
 
-        const minCurrent = MIN_SECTION_WIDTH /*Math.max(
+        const minCurrent = MIN_SECTION_WIDTH /!*Math.max(
             MIN_SECTION_WIDTH,
             shapeAdjuster.getLeftSectionWidth(currentRow.sector, currentRow.maxX)
-        );*/
+        );*!/
 
-        const minNext = MIN_SECTION_WIDTH /*Math.max(
+        const minNext = MIN_SECTION_WIDTH /!*Math.max(
             MIN_SECTION_WIDTH,
             shapeAdjuster.getRightSectionWidth(nextRow.sector, nextRow.minX)
-        );*/
+        );*!/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1695,80 +1838,121 @@ const adjustSectionSize = (
             minCurrent,
             minNext
         );
-      } else if (sectionIndex > 0) {
-        const prevRow = rowIndex !== null ? cell.cellsRows[rowIndex - 1] :
-            cellIndex !== null ? column.cells[cellIndex - 1] :
-                module.sections[sectionIndex - 1];
-        const totalWidth = column.width + prevRow.width;
+      }
+      else if (sectionIndex > 0) {
 
-        const minCurrent = MIN_SECTION_WIDTH/* Math.max(
-            MIN_SECTION_WIDTH,
-            shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
-        );*/
-
-        const minPrev = MIN_SECTION_WIDTH /*Math.max(
-            MIN_SECTION_WIDTH,
-            shapeAdjuster.getLeftSectionWidth(prevRow.sector, prevRow.maxX)
-        );
-*/
-        calcValue = updateSizes(
-            newValue,
-            dimension,
-            column,
-            prevRow,
-            totalWidth,
-            minCurrent,
-            minPrev
-        );
-      } else {
         if (row) {
           const nextRow = cell.cellsRows[rowIndex + 1] || cell.cellsRows[rowIndex - 1]
-          const totalWidth = column.width + nextRow.width;
+          const totalWidth = section.width + nextRow.width;
 
-          const minCurrent = MIN_SECTION_WIDTH /*Math.max(
+          const minCurrent = MIN_SECTION_WIDTH /!*Math.max(
               MIN_SECTION_WIDTH,
-              shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
-          );*/
+              shapeAdjuster.getRightSectionWidth(section.sector, section.minX)
+          );*!/
 
-          const minPrev = MIN_SECTION_WIDTH /*Math.max(
+          const minPrev = MIN_SECTION_WIDTH /!*Math.max(
               MIN_SECTION_WIDTH,
               shapeAdjuster.getLeftSectionWidth(nextRow.sector, nextRow.maxX)
-          );*/
+          );*!/
 
           calcValue = updateSizes(
               newValue,
               dimension,
-              column,
+              section,
+              nextRow,
+              totalWidth,
+              minCurrent,
+              minPrev
+          );
+        }
+        else {
+          const prevRow = cellIndex !== null ? section.cells[cellIndex - 1] :
+                  module.sections[sectionIndex - 1];
+          const totalWidth = section.width + prevRow.width;
+
+          const minCurrent = MIN_SECTION_WIDTH/!* Math.max(
+            MIN_SECTION_WIDTH,
+            shapeAdjuster.getRightSectionWidth(section.sector, section.minX)
+        );*!/
+
+          const minPrev = MIN_SECTION_WIDTH /!*Math.max(
+            MIN_SECTION_WIDTH,
+            shapeAdjuster.getLeftSectionWidth(prevRow.sector, prevRow.maxX)
+        );
+*!/
+          calcValue = updateSizes(
+              newValue,
+              dimension,
+              section,
+              prevRow,
+              totalWidth,
+              minCurrent,
+              minPrev
+          );
+        }
+
+      }
+      else {
+        if (row) {
+          const nextRow = cell.cellsRows[rowIndex + 1] || cell.cellsRows[rowIndex - 1]
+          const totalWidth = section.width + nextRow.width;
+
+          const minCurrent = MIN_SECTION_WIDTH /!*Math.max(
+              MIN_SECTION_WIDTH,
+              shapeAdjuster.getRightSectionWidth(section.sector, section.minX)
+          );*!/
+
+          const minPrev = MIN_SECTION_WIDTH /!*Math.max(
+              MIN_SECTION_WIDTH,
+              shapeAdjuster.getLeftSectionWidth(nextRow.sector, nextRow.maxX)
+          );*!/
+
+          calcValue = updateSizes(
+              newValue,
+              dimension,
+              section,
               nextRow,
               totalWidth,
               minCurrent,
               minPrev
           );
         } else {
-          column.cells.forEach((cell) => (cell.width = newValue));
-          column.width = newValue
+          section.cells.forEach((cell) => (cell.width = newValue));
+          section.width = newValue
         }
-      }
-    } else {
-      const column = module.sections[sectionIndex];
-      const cell = column.cells?.[cellIndex];
-      const row = cell?.cellsRows?.[rowIndex];
-      const currentRow = row || cell || column
+      }*/
+    }
+    else {
+      if (nextRow) {
+        const totalHeight = currentRow.height + nextRow.height;
 
-      if (cellIndex < column.cells?.length - 1) {
+        calcValue = updateSizes(
+            newValue,
+            dimension,
+            currentRow,
+            nextRow,
+            totalHeight,
+            minHeight,
+            minHeight
+        );
+      }
+      else {
+        calcValue = newValue;
+      }
+      /*if (cellIndex < section.cells?.length - 1) {
         const nextRow = rowIndex !== null ? cell.cellsRows[rowIndex + 1] :
-            cellIndex !== null ? column.cells[cellIndex + 1] :
+            cellIndex !== null ? section.cells[cellIndex + 1] :
                 module.sections[sectionIndex + 1];
 
         const totalHeight = currentRow.height + nextRow.height;
-        const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
+        const minCurrent = MIN_SECTION_HEIGHT /!*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionTop(currentRow.sector, currentRow.maxY)
-        );*/
-        const minNext = MIN_SECTION_HEIGHT /*Math.max(
+        );*!/
+        const minNext = MIN_SECTION_HEIGHT /!*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionBottom(nextRow.sector, nextRow.minY)
-        );*/
+        );*!/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1778,19 +1962,20 @@ const adjustSectionSize = (
             minCurrent,
             minNext
         );
-      } else if (cellIndex > 0) {
+      }
+      else if (cellIndex > 0) {
         const prevRow = rowIndex !== null ? cell.cellsRows[rowIndex - 1] :
-            cellIndex !== null ? column.cells[cellIndex - 1] :
+            cellIndex !== null ? section.cells[cellIndex - 1] :
                 module.sections[sectionIndex - 1];
         const totalHeight = currentRow.height + prevRow.height;
-        const minCurrent = MIN_SECTION_HEIGHT /*Math.max(
+        const minCurrent = MIN_SECTION_HEIGHT /!*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionBottom(currentRow.sector, currentRow.minY)
-        );*/
-        const minPrev = MIN_SECTION_HEIGHT /*Math.max(
+        );*!/
+        const minPrev = MIN_SECTION_HEIGHT /!*Math.max(
             MIN_SECTION_HEIGHT,
             shapeAdjuster.getSectionTop(prevRow.sector, prevRow.maxY)
-        );*/
+        );*!/
         calcValue = updateSizes(
             newValue,
             dimension,
@@ -1800,12 +1985,14 @@ const adjustSectionSize = (
             minCurrent,
             minPrev
         );
-      } else {
-        currentRow.height = newValue;
       }
+      else {
+        currentRow.height = newValue;
+      }*/
     }
   }
-  renderGrid();
+
+  //renderGrid();
   return calcValue;
 };
 
@@ -1813,6 +2000,7 @@ const adjustFasadeSize = (
     sectionIndex,
     doorIndex,
     segmentIndex,
+    extraIndex,
     newValue,
     dimension = "height"
 ) => {
@@ -1863,18 +2051,10 @@ const adjustFasadeSize = (
 
       const minCurrent = MIN_FASADE_WIDTH
       const maxCurrent = currentSegment.maxX
-      /* Math.max(
-          MIN_SECTION_WIDTH,
-          shapeAdjuster.getRightSectionWidth(column.sector, column.minX)
-      );*/
 
       const minPrev = MIN_FASADE_WIDTH
       const maxPrev = prevRow.maxX
-      /*Math.max(
-          MIN_SECTION_WIDTH,
-          shapeAdjuster.getLeftSectionWidth(prevRow.sector, prevRow.maxX)
-      );
-*/
+
       calcValue = updateSizesFasades(
           newValue,
           totalWidth,
@@ -2004,6 +2184,7 @@ const adjustSizeFromExternal = ({
                                   sec = null,
                                   cell = null,
                                   row = null,
+                                  extra = null,
                                   type = 'module',
                                 }: {
   dimension: string;
@@ -2011,6 +2192,7 @@ const adjustSizeFromExternal = ({
   sec?: number;
   cell?: number;
   row?: number;
+  extra?: number;
   type?: string;
 }) => {
   if (sec === null) {
@@ -2020,9 +2202,9 @@ const adjustSizeFromExternal = ({
 
   switch (type) {
     case 'fasades':
-      return adjustFasadeSize(sec, cell, row, value, dimension);
+      return adjustFasadeSize(sec, cell, row, extra, value, dimension);
     default:
-      return adjustSectionSize(sec, cell, row, value, dimension);
+      return adjustSectionSize(sec, cell, row, extra, value, dimension);
   }
 };
 

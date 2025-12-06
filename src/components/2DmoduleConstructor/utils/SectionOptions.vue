@@ -33,7 +33,7 @@ const selectedCell = ref({sec: 0, cell: null, row: null, extra: null});
 
 const emit = defineEmits([
   "product-updateFasades",
-  "product-updateFilling",
+  "product-reset",
   "product-calcLoops",
   "product-checkLoopsCollision",
 ]);
@@ -93,8 +93,8 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null) => {
   emit("product-checkLoopsCollision", secIndex, cellIndex, rowIndex);
 }
 
-const updateFilling = (value, filling, type, render = false) => {
-  emit("product-updateFilling", value, filling, type, render);
+const reset = () => {
+  emit("product-reset");
 };
 
 const showCurrentCol = (secIndex) => {
@@ -151,11 +151,12 @@ const addSection = (secIndex, _count = 1) => {
 
     module.value.sections.splice(secIndex + 1 + i, 0, newColumn);
   }
-  updateFasades();
-  calcLoops(secIndex);
+  reset()
 
+  //updateFasades();
+  //calcLoops(secIndex);
   // Обновляем рендер
-  visualizationRef.value.renderGrid();
+  //visualizationRef.value.renderGrid();
 };
 
 const addCell = (secIndex, cellIndex = null, _count = 1) => {
@@ -403,14 +404,22 @@ const updateSectionWidth = (value, secIndex) => {
     curSection.position.x += nextSection ? (-delta) / 2 : delta / 2
 
     curSection.cells.forEach((cell, cellIndex) => {
-
-      if (cell.cellsRows) {
-        let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-        lastRow.width += delta;
-        lastRow.position.x += nextSection ? (-delta) / 2 : delta / 2
-      }
       cell.position.x = curSection.position.x
       cell.width = adjustedValue;
+
+      if (cell.cellsRows) {
+        let lastRow = nextSection ? cell.cellsRows[cell.cellsRows.length - 1] : cell.cellsRows[0]
+        lastRow.width += delta;
+        lastRow.position.x += nextSection ? (-delta) / 2 : delta / 2
+
+        if (lastRow.extras?.length) {
+          lastRow.extras.forEach(extra => {
+            extra.width = lastRow.width
+            extra.position.x = lastRow.position.x
+          })
+        }
+      }
+
     })
 
     if (nextSection) {
@@ -418,15 +427,21 @@ const updateSectionWidth = (value, secIndex) => {
       nextSection.position.x += (-delta) / 2
 
       nextSection.cells.forEach((cell, cellIndex) => {
-
-        if (cell.cellsRows) {
-          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-          lastRow.width += delta;
-          lastRow.position.x += (-delta) / 2
-        }
-
         cell.position.x = nextSection.position.x
         cell.width = nextSection.width;
+
+        if (cell.cellsRows) {
+          let lastRow = cell.cellsRows[0]
+          lastRow.width += delta;
+          lastRow.position.x += (-delta) / 2
+
+          if (lastRow.extras?.length) {
+            lastRow.extras.forEach(extra => {
+              extra.width = lastRow.width
+              extra.position.x = lastRow.position.x
+            })
+          }
+        }
       })
     }
     else if (prevSection) {
@@ -434,25 +449,32 @@ const updateSectionWidth = (value, secIndex) => {
       prevSection.position.x += delta / 2
 
       prevSection.cells.forEach((cell, cellIndex) => {
+        cell.position.x = prevSection.position.x
+        cell.width = prevSection.width;
 
         if (cell.cellsRows) {
           let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
           lastRow.width += delta;
           lastRow.position.x += delta / 2
-        }
 
-        cell.position.x = prevSection.position.x
-        cell.width = prevSection.width;
+          if (lastRow.extras?.length) {
+            lastRow.extras.forEach(extra => {
+              extra.width = lastRow.width
+              extra.position.x = lastRow.position.x
+            })
+          }
+        }
       })
     }
 
   }
   module.value = clone;
-  updateFasades();
-  calcLoops(secIndex);
+  reset()
 
-  visualizationRef.value.renderGrid();
+  //updateFasades();
+  //calcLoops(secIndex);
 
+  //visualizationRef.value.renderGrid();
 };
 
 const updateCellHeight = (value, secIndex, cellIndex) => {
@@ -486,8 +508,16 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
 
     curCell.cellsRows?.forEach((row, rowIndex) => {
       row.height = adjustedValue;
-      if (row.position.y < curCell.position.y)
+
+      if (row.position.y < curCell.position.y) {
         row.position.y += delta
+
+        if (row.extras?.length) {
+          row.extras.forEach(extra => {
+            extra.position.y += delta
+          })
+        }
+      }
 
       row.fillings?.filter((filling, index) => {
         return filling.position.y + filling.height <= row.position.y + row.height;
@@ -502,8 +532,15 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
 
       nextCell.cellsRows?.forEach((row, rowIndex) => {
         row.height = adjustedValue;
-        if (row.position.y > curCell.position.y)
+        if (row.position.y > curCell.position.y) {
           row.position.y += delta
+
+          if (row.extras?.length) {
+            row.extras.forEach(extra => {
+              extra.position.y += delta
+            })
+          }
+        }
 
         row.fillings?.filter((filling, index) => {
           return filling.position.y + filling.height <= row.position.y + row.height;
@@ -542,10 +579,11 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
     })
   }
   module.value = clone;
+  reset()
 
-  calcLoops(secIndex);
+  //calcLoops(secIndex);
 
-  visualizationRef.value.renderGrid();
+  //visualizationRef.value.renderGrid();
 };
 
 const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
@@ -568,20 +606,47 @@ const updateCellRowWidth = (value, secIndex, cellIndex, rowIndex) => {
   const clone = Object.assign({}, module.value);
   if (adjustedValue) {
     let curRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex]
-    let nextRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex + 1] ||
-        clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex - 1]
+    let prevRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex - 1];
+    let nextRow = clone.sections[secIndex].cells[cellIndex].cellsRows[rowIndex + 1];
     let delta = curRow.width - adjustedValue
 
     curRow.width = adjustedValue
     curRow.position.x -= delta / 2
 
+    if (curRow.extras?.length) {
+      curRow.extras.forEach(extra => {
+        extra.width = curRow.width
+        extra.position.x = curRow.position.x
+      })
+    }
+
     if (nextRow) {
       nextRow.width += delta
-      nextRow.position.x += delta / 2
+      nextRow.position.x -= delta / 2
+
+      if (nextRow.extras?.length) {
+        nextRow.extras.forEach(extra => {
+          extra.width = nextRow.width
+          extra.position.x = nextRow.position.x
+        })
+      }
+    }
+    else if(prevRow) {
+      prevRow.width += delta
+      prevRow.position.x += delta / 2
+
+      if (prevRow.extras?.length) {
+        prevRow.extras.forEach(extra => {
+          extra.width = prevRow.width
+          extra.position.x = prevRow.position.x
+        })
+      }
     }
   }
   module.value = clone;
-  visualizationRef.value.renderGrid();
+  reset()
+
+  //visualizationRef.value.renderGrid();
 
 };
 
@@ -604,8 +669,8 @@ const updateExtraHeight = (value, secIndex, cellIndex, rowIndex, extraIndex) => 
   // Обновляем значение в module для синхронизации
   const clone = Object.assign({}, module.value);
   let curSection = clone.sections[secIndex]
-  let curCell = curSection.sections[cellIndex]
-  let curRow = curCell.sections[rowIndex]
+  let curCell = curSection.cells[cellIndex]
+  let curRow = curCell.cellsRows[rowIndex]
 
   if (adjustedValue) {
     let curExtra = curRow.extras[extraIndex]
@@ -656,10 +721,10 @@ const updateExtraHeight = (value, secIndex, cellIndex, rowIndex, extraIndex) => 
     })
   }
   module.value = clone;
+  reset()
 
-  calcLoops(secIndex);
-
-  visualizationRef.value.renderGrid();
+  //calcLoops(secIndex);
+  //visualizationRef.value.renderGrid();
 };
 
 const deleteSection = (secIndex) => {
@@ -703,9 +768,10 @@ const deleteSection = (secIndex) => {
 
   selectedCell.value.cell = 0;
   selectedCell.value.sec = 0;
-  updateFasades();
 
-  visualizationRef.value.renderGrid();
+  reset()
+  //updateFasades();
+  //visualizationRef.value.renderGrid();
 };
 
 const deleteCell = (cellIndex, secIndex) => {
@@ -1175,7 +1241,7 @@ onMounted(() => {
                                               class="actions-sections-input"
                                               :value="extra.height"
                                               @input="
-                                                debounce(() => updateCellHeight(
+                                                debounce(() => updateExtraHeight(
                                                   $event.target.value,
                                                   secIndex,
                                                   cellIndex,

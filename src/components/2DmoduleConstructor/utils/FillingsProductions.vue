@@ -80,7 +80,7 @@ const selectCell = (sec, cell = null, row = null, item = 0) => {
   visualizationRef.value.selectCell("fillings", sec, cell, true, row, item);
 };
 
-const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, item = 0, extra = null) => {
+const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, extra = null, item = 0) => {
   selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item, extra: extra};
 };
 

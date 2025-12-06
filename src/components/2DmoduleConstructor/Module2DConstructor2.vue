@@ -1001,7 +1001,7 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
       break;
   }
 
-  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item, extraIndex);
+  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, extraIndex, item);
 };
 
 const initSideProfile = () => {
@@ -1053,7 +1053,12 @@ const initSideProfile = () => {
 }
 //#endregion
 
+const timerReset = ref(false);
 const reset = (reset = false) => {
+  if (timerReset.value) {
+    clearTimeout(timerReset.value)
+  }
+
   const {PROPS} = modelState.getCurrentModel.userData;
   let moduleGrid = Object.assign({}, module.value)
 
@@ -1085,8 +1090,7 @@ const reset = (reset = false) => {
 
   const recalcSection = (section, positionSections) => {
 
-    let newSection = <GridSection>{...section}
-
+    let newSection = <GridSection>{...section, position: new THREE.Vector2(section.position.x, section.position.y)}
     newSection.position.copy(positionSections.clone())
     newSection.position.x += newSection.width / 2
 
@@ -1098,7 +1102,7 @@ const reset = (reset = false) => {
 
       newSection.cells.reverse()
       for (let i = 0; i < newSection.cells.length; i++) {
-        let newCell = <GridCell>{...newSection.cells[i]}
+        let newCell = <GridCell>{...newSection.cells[i], position: new THREE.Vector2(newSection.cells[i].position.x, newSection.cells[i].position.y)}
 
         newCell.width = newSection.width;
         newCell.position.copy(positionCells.clone())
@@ -1126,7 +1130,7 @@ const reset = (reset = false) => {
           let positionCellsRow = new THREE.Vector2(newCell.position.x - newCell.width / 2, newCell.position.y)
 
           newCell.cellsRows.forEach((row, rowIndex) => {
-            let newRow = <GridCellsRow>{...row}
+            let newRow = <GridCellsRow>{...row, position: new THREE.Vector2(row.position.x, row.position.y)}
 
             newRow.position.copy(positionCellsRow.clone())
             newRow.position.x += newRow.width / 2
@@ -1147,7 +1151,7 @@ const reset = (reset = false) => {
               let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
 
               row.extras.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
-                let newExtra = <GridRowExtra>{...extra}
+                let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
 
                 newExtra.position.copy(positionRowExtras.clone())
                 newExtra.width = newRow.width;
@@ -1256,10 +1260,11 @@ const reset = (reset = false) => {
     }
   }
 
-  visualizationRef.value.renderGrid(module.value);
-  if (reset) {
-    visualizationRef.value.selectCell("module", 0, null);
-  }
+  timerReset.value = setTimeout(()=>{
+    timerReset.value = false;
+    visualizationRef.value.renderGrid(/*module.value*/);
+  }, 100)
+
 };
 
 const saveGrid = () => {
@@ -1595,7 +1600,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
             @product-checkLoopsCollision="checkLoopsCollision"
-            @product-updateFilling="updateFilling"
+            @product-reset="reset"
         />
       </div>
 
