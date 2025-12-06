@@ -13,8 +13,8 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
-// @ts-ignore
 import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
+import { loadBlankRoom } from '@/Constructor2D/facade/blankRoom';
 
 export type ActionKey =
   | 'fullscreen'
@@ -22,16 +22,18 @@ export type ActionKey =
   | 'study'
   | 'print'
   | 'screenshot'
-  | 'newProject'
+  | 'managerProject'
   | 'saveProject'
   | 'drowmod'
   | 'ruller'
-  | 'screenshot3d';
+  | 'screenshot3d'
+  | 'newProject';
 
 export interface QuickActionItem {
   key: ActionKey;
   tooltip: string;
   iconClass: string;
+  iconSrc?: string;
   path?: string
   action: () => void | Promise<void>;
 }
@@ -44,6 +46,7 @@ export const useQuickActionsToolbar = () => {
   const toaster = useToast();
   const sceneState = useSceneState();
   const roomState = useRoomState()
+  const schemeTransition = useSchemeTransition();
 
   const projectState = useProjectStore();
   const projectAPI = useProjectAPI()
@@ -60,7 +63,7 @@ export const useQuickActionsToolbar = () => {
     // Если проект уже имеет ID — обновляем без показа модалки
     if (projectState.currentProjectId) {
       console.log(projectState.currentProjectId, 'currentProjectId')
-      projectState.isSaving = true;
+      // isSaving уже установлен в true в action, не меняем его здесь
       try {
         const result = await projectAPI.saveProject(projectState.currentProjectId);
         if (result.success) {
@@ -79,7 +82,8 @@ export const useQuickActionsToolbar = () => {
       return;
     }
 
-    // Иначе — это новый проект: открываем модальное окно для ввода имени
+    // Иначе — это новый проект: скрываем лоадер и открываем модальное окно для ввода имени
+    projectState.isSaving = false;
     if (openSaveDialog.value) openSaveDialog.value();
   }
 
@@ -187,6 +191,7 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-print',
       path: 'default',
       action: async () => {
+        projectState.isSaving = true;
         if (router.currentRoute.value.path !== '/3d') {
           await router.push('/3d');
         }
@@ -197,6 +202,8 @@ export const useQuickActionsToolbar = () => {
         const handleComplete = () => {
           eventBus.off("A:3DScreenshotCreated", handleComplete);
           printPage();
+          
+        projectState.isSaving = false;
         }
 
         eventBus.on("A:3DScreenshotCreated", handleComplete);
@@ -230,15 +237,44 @@ export const useQuickActionsToolbar = () => {
           eventBus.emit('A:Save')
           onSaveProject()
         }, 2000)
-        projectState.isSaving = false
       },
     },
     {
-      key: 'newProject',
+      key: 'managerProject',
       tooltip: 'Менеджер проектов',
-      iconClass: 'icon-add',
+      iconClass: 'icon-folder',
+      iconSrc: 'folder',
       path: 'default',
       action: () => popupStore.openPopup('project'),
+    },
+    {
+      key: 'newProject',
+      tooltip: 'Новый проект',
+      iconClass: 'icon-add',
+      path: 'default',
+      action: async () => {
+        if (router.currentRoute.value.path !== '/2d') {
+          await router.push('/2d');
+        }
+        schemeTransition.clearStore();
+        sceneState.createNewProject();
+        roomState.rooms = [];
+        roomState.clearCurrentRoomId();
+        projectState.resetState();
+        try {
+          const c2d = (window as any).C2D;
+          if (c2d?.layers) {
+            c2d.layers.planner.clear();
+            c2d.layers.doorsAndWindows.clear();
+            c2d.layers.dimensionDisplay.clearAll();
+            c2d.layers.arrowRulerActiveObject.clearGraphic();
+            c2d.layers.startPointActiveObject.activate(false);
+          }
+        } catch (error) {
+          console.warn('Ошибка при очистке слоев C2D:', error);
+        }
+        await loadBlankRoom();
+      },
     },
   ];
 
