@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // @ts-nocheck
 import Modal from "@/components/ui/modals/Modal.vue";
-import { defineExpose, ref } from "vue";
+import {defineExpose, onBeforeMount, onBeforeUnmount, ref} from "vue";
 import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import { useEventBus } from "@/store/appliction/useEventBus.ts";
 import {saveUMGrid} from "@/components/2DmoduleConstructor/utils/Methods.ts";
@@ -20,6 +20,7 @@ const universalModuleData = ref({});
 const isUMModalOpen = ref(false);
 const gridUMSaved = ref(false);
 const universalModuleCash = ref({});
+const universalModuleConfigCash = ref({});
 
 const selectUMData = (data) => {
   universalModuleData.value = data;
@@ -39,20 +40,74 @@ const saveUMData = ({ data, canvasHeight }) => {
 };
 
 const openUMRedactor = () => {
+  const {PROPS} = props.product.userData
+  const {CONFIG} = PROPS
+  const {
+    MODULEGRID,
+    BACKWALL,
+    RIGHTSIDECOLOR,
+    LEFTSIDECOLOR,
+    HORIZONT,
+    MODULE_COLOR,
+    TSARGA,
+    TOPFASADECOLOR,
+    OPTIONS
+  } = CONFIG
+
+  if(MODULEGRID)
+    universalModuleCash.value = saveUMGrid(MODULEGRID);
+
+  universalModuleConfigCash.value = {
+    HORIZONT,
+    MODULE_COLOR
+  };
+
+  if(BACKWALL)
+    universalModuleConfigCash.value.BACKWALL = {...CONFIG.BACKWALL};
+
+  if(RIGHTSIDECOLOR)
+    universalModuleConfigCash.value.RIGHTSIDECOLOR = {...CONFIG.RIGHTSIDECOLOR};
+
+  if(LEFTSIDECOLOR)
+    universalModuleConfigCash.value.LEFTSIDECOLOR = {...CONFIG.LEFTSIDECOLOR};
+
+  if(TSARGA)
+    universalModuleConfigCash.value.TSARGA = {...CONFIG.TSARGA};
+
+  if(TOPFASADECOLOR)
+    universalModuleConfigCash.value.TOPFASADECOLOR = {...CONFIG.TOPFASADECOLOR};
+
+  if(OPTIONS?.length) {
+    universalModuleConfigCash.value.OPTIONS = [...CONFIG.OPTIONS.map(opt => {
+      return {...opt}
+    })];
+  }
+
   isUMModalOpen.value = true;
-  /*const menuStore = useMenuStore();
-  menuStore.openMenu('2dModuleConstructor', universalModuleData.value.object.globalData, [universalModuleData.value.object])*/
 };
 
 const closeUMRedactor = () => {
   if (!gridUMSaved.value) {
     props.product.userData.PROPS.CONFIG.MODULEGRID = saveUMGrid(universalModuleCash.value);
+    props.product.userData.PROPS.CONFIG = Object.assign(props.product.userData.PROPS.CONFIG, universalModuleConfigCash.value)
   }
 
   universalModuleData.value = false;
   isUMModalOpen.value = false;
   gridUMSaved.value = false;
+
+  universalModuleCash.value = {}
+  universalModuleConfigCash.value = {}
 };
+
+onBeforeUnmount(()=>{
+  universalModuleData.value = false;
+  isUMModalOpen.value = false;
+  gridUMSaved.value = false;
+
+  universalModuleCash.value = {}
+  universalModuleConfigCash.value = {}
+})
 
 defineExpose({
   selectUMData,
