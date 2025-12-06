@@ -945,11 +945,17 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
   dashVert.position.set(_cell.xOffset + pxWidth - getPixelWidth(2), _cell.yOffset);
   divider.toColideCheck = dashVert;
 
-  divider.on("pointerdown", onVerticalDragStart, divider);
+  divider.on("pointerdown", onVerticalDragStart);
   divider.on("pointerup", () => {
-    resetModule()
-    setTimeout(()=>{renderGrid()}, 10)
-  }, divider);
+    setTimeout(()=>{
+      renderGrid()
+    }, 10)
+  });
+  divider.on("pointerupoutside", () => {
+    setTimeout(()=>{
+      renderGrid()
+    }, 10)
+  });
 
   deviders.push(dashVert, divider);
 };
@@ -1024,11 +1030,17 @@ const createHorozontalCut = ({
   dashHor.rect(_cell.xOffset, _cell.yOffset + pxHeight - getPixelHeight(2), pxWidth, 0);
   dashHor.stroke({width: 1, color: "#5D6069"});
 
-  divider.on("pointerdown", onHorizontalDragStart, divider);
+  divider.on("pointerdown", onHorizontalDragStart);
   divider.on("pointerup", () => {
-    resetModule()
-    setTimeout(()=>{renderGrid()}, 10)
-  }, divider);
+    setTimeout(()=>{
+      renderGrid()
+    }, 10)
+  });
+  divider.on("pointerupoutside", () => {
+    setTimeout(()=>{
+      renderGrid()
+    }, 10)
+  });
 
   deviders.push(dashHor, divider);
 };
@@ -1205,6 +1217,7 @@ function onVerticalDragStart(event) {
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
+  app.stage.on("pointerupoutside", onDragEnd);
 }
 
 // Обработчик для горизонтального перетаскивания (между строками)
@@ -1247,6 +1260,8 @@ function onHorizontalDragStart(event) {
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
+  app.stage.on("pointerupoutside", onDragEnd);
+
 }
 
 function onDragMove(event) {
@@ -1606,9 +1621,10 @@ const onDragEnd = () => {
 
   app.stage.off("pointermove", onDragMove);
   app.stage.off("pointerup", onDragEnd);
+  app.stage.off("pointerupoutside", onDragEnd);
   cursorCheck = false;
 
-  renderGrid();
+  resetModule();
 };
 
 const handleGlobalPointerMove = (event) => {
