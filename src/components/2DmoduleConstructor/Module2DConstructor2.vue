@@ -279,17 +279,19 @@ const getFillings = computed(() => {
 });
 
 const updateFilling = (value, currentfilling, type, render = false) => {
-  const {sec, cell, row} = currentfilling
+  const {sec, cell, row, extra, item} = currentfilling
 
   const gridCopy = Object.assign({}, module.value);
 
   const section = gridCopy.sections[sec];
-  const currentColl = section.cells?.[cell];
-  const currentRow = currentColl?.cellsRows?.[row] || currentColl || section;
+  const currentCell = section.cells?.[cell];
+  const currentRow = currentCell?.cellsRows?.[row];
+  const currentExtra =  currentRow?.extras?.[extra];
 
+  const current = currentExtra || currentRow || currentCell || section;
   const prevValue = currentfilling[type]; //Предыдущее значение
-
   let newValue = parseInt(value);
+  const delta = prevValue - newValue
 
   let tmpSector = currentfilling.sector
   delete currentfilling.sector
@@ -298,21 +300,23 @@ const updateFilling = (value, currentfilling, type, render = false) => {
   fillingData[type] = newValue;
   fillingData.sector = tmpSector;
 
-  const pixiSector = currentRow.sector;
+  const pixiSector = current.sector;
 
   const check = shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData);
-  currentfilling[type] = newValue;
 
-  if (check) {
+  if (check && (newValue < MAX_SECTION_WIDTH || newValue > MIN_SECTION_WIDTH)) {
     delete currentfilling.error
+    currentfilling[type] = newValue;
+
+    if(type === "width") {
+      currentfilling.size.x = newValue
+      currentfilling.position.x = current.position.x - newValue / 2;
+    }
+
   } else {
     currentfilling.error = true
+    currentfilling[type] = prevValue;
   }
-
-  if (newValue > MAX_SECTION_WIDTH || newValue < MIN_SECTION_WIDTH)
-    currentfilling.error = true
-  else
-    delete currentfilling.error
 
   currentfilling.sector = tmpSector;
   module.value = gridCopy;
@@ -369,10 +373,8 @@ const updateFasades = () => {
 
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
-        calcDrawersFasades(secIndex)
-      }
-      else if (section.fasades?.[0]) {
+
+      if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;
 
         const correctSectionFasadeWidth =
@@ -451,6 +453,10 @@ const updateFasades = () => {
 
       }
 
+      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
+        calcDrawersFasades(secIndex)
+      }
+
       calcLoops(secIndex)
     })
   else {
@@ -494,9 +500,28 @@ const updateFasades = () => {
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
 
-  if (fillingData?.fasade) {
+  if (fillingData) {
+    if(fillingData.fasade) {
       fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+
+      let drawerInfoId = module.value.sections[secIndex].fasadesDrawers.findIndex(item => item.item == fillingData.id)
+      module.value.sections[secIndex].fasadesDrawers[drawerInfoId] = fillingData.fasade
+    }
+
+    if(fillingData.isProfile){
+      let profileInfoId = module.value.sections[secIndex].hiTechProfiles.findIndex(item => item.id == fillingData.id)
+      module.value.sections[secIndex].hiTechProfiles[profileInfoId] = fillingData
+    }
   }
+
+  const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+  const currentSection = module.value.sections[secIndex];
+  const correctSectionFasadeWidth =
+      module.value.sections.length > 1 ?
+          secIndex > 0 && secIndex < module.value.sections.length - 1 ? currentSection.width + module.value.moduleThickness - 4 :
+              currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
+          module.value.width - 4;
 
   let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
@@ -517,6 +542,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
     switch (item.type) {
       case "drawer":
         fasadesDrawers[drawerIndex].id = index + 1
+        fasadesDrawers[drawerIndex].width = correctSectionFasadeWidth
         drawerIndex += 1
         break;
       case "fasade":
@@ -538,6 +564,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
           let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
           fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
           fasadeClone2.material = {...fasadeClone.material}
+          fasadeClone2.loopsSide = baseFasade2.loopsSide
 
           module.value.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))
         }
@@ -1139,7 +1166,11 @@ const reset = (reset = false) => {
             if (newRow.fillings?.length) {
               newRow.fillings = <FillingObject>[...newRow.fillings]
               newRow.fillings.forEach((filling, index) => {
-                updateFilling(newRow.width, filling, 'width')
+                if(filling.isProfile) {
+                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                }
+                else
+                  updateFilling(newRow.width, filling, 'width')
               })
             }
 
@@ -1159,7 +1190,11 @@ const reset = (reset = false) => {
                 if (newExtra.fillings?.length) {
                   newExtra.fillings = <FillingObject>[...newExtra.fillings]
                   newExtra.fillings.forEach((filling, index) => {
-                    updateFilling(newExtra.width, filling, 'width')
+                    if(filling.isProfile) {
+                      updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                    }
+                    else
+                      updateFilling(newExtra.width, filling, 'width')
                   })
                 }
 
@@ -1186,7 +1221,11 @@ const reset = (reset = false) => {
             if (lastRow.fillings?.length) {
               lastRow.fillings = <FillingObject>[...lastRow.fillings]
               lastRow.fillings.forEach((filling, index) => {
-                updateFilling(lastRow.width, filling, 'width')
+                if(filling.isProfile) {
+                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                }
+                else
+                  updateFilling(lastRow.width, filling, 'width')
               })
             }
           }
@@ -1199,7 +1238,11 @@ const reset = (reset = false) => {
         if (newCell.fillings?.length) {
           newCell.fillings = <FillingObject>[...newCell.fillings]
           newCell.fillings.forEach((filling, index) => {
-            updateFilling(newCell.width, filling, 'width')
+            if(filling.isProfile) {
+              updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+            }
+            else
+              updateFilling(newCell.width, filling, 'width')
           })
         }
 
@@ -1210,6 +1253,17 @@ const reset = (reset = false) => {
     }
 
     positionSections.x += newSection.width + moduleGrid.moduleThickness
+
+    if (newSection.fillings?.length) {
+      newSection.fillings = <FillingObject>[...newSection.fillings]
+      newSection.fillings.forEach((filling, index) => {
+        if(filling.isProfile) {
+          updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+        }
+        else
+          updateFilling(newSection.width, filling, 'width')
+      })
+    }
 
     return newSection
   }
@@ -1230,8 +1284,6 @@ const reset = (reset = false) => {
     depth: totalDepth,
   }
   module.value = _module;
-
-  updateFasades()
 
   let sectionsWidthSum = 0;
   module.value.sections.forEach((section, secIndex) => {
@@ -1259,6 +1311,8 @@ const reset = (reset = false) => {
       module.value.sections[module.value.sections.length - 1] = recalcSection(lastSection, startPositionSections)
     }
   }
+
+  updateFasades()
 
   timerReset.value = setTimeout(()=>{
     timerReset.value = false;
