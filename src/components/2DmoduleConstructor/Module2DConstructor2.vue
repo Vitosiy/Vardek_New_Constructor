@@ -1181,7 +1181,8 @@ const reset = (reset = false) => {
               let newRowExtrasArray = <GridRowExtra>[]
               let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
 
-              row.extras.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
+              let extras = row.extras.slice().sort((a, b) => a.position.y - b.position.y)
+              extras.forEach((extra, extraIndex) => {
                 let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
 
                 newExtra.position.copy(positionRowExtras.clone())
@@ -1202,7 +1203,7 @@ const reset = (reset = false) => {
                 positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
               })
 
-              row.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
+              newRow.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
             }
           })
 

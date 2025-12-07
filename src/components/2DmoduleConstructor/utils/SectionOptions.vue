@@ -30,6 +30,7 @@ const props = defineProps({
 
 const {module, visualizationRef} = toRefs(props);
 const selectedCell = ref({sec: 0, cell: null, row: null, extra: null});
+const timerReset = ref(false);
 
 const emit = defineEmits([
   "product-updateFasades",
@@ -378,6 +379,10 @@ const addRowExtra = (secIndex, cellIndex, rowIndex, extraIndex = 0, _count = 1) 
 };
 
 const updateSectionWidth = (value, secIndex) => {
+  if (timerReset.value) {
+    clearTimeout(timerReset.value)
+  }
+
   const newValue = parseInt(value);
   let adjustedValue;
 
@@ -392,86 +397,166 @@ const updateSectionWidth = (value, secIndex) => {
     });
   }
   // Обновляем значение в module для синхронизации
-  const clone = Object.assign({}, module.value);
-  let curSection = clone.sections[secIndex]
+  //const clone = Object.assign({}, module.value);
+  let section = module.value.sections[secIndex]
 
   if (adjustedValue) {
-    let nextSection = clone.sections[secIndex + 1]
-    let prevSection = clone.sections[secIndex - 1]
-    let delta = adjustedValue - curSection.width
-    let deltaPos = nextSection ? delta / 2 : -delta / 2
+    let next = module.value.sections[secIndex + 1]
+    let prev = module.value.sections[secIndex - 1]
 
-    curSection.width = adjustedValue
-    curSection.position.x += deltaPos
+    let nextSection = next || prev
 
-    curSection.cells.forEach((cell, cellIndex) => {
-      cell.position.x = curSection.position.x
-      cell.width = curSection.width;
+    let delta1 = section.width - adjustedValue
+    let deltaPos1 = next ? -delta1 / 2 : delta1 / 2
+    section.width = adjustedValue;
+    section.position.x += deltaPos1
 
-      if (cell.cellsRows) {
-        let lastRow = nextSection ? cell.cellsRows[cell.cellsRows.length - 1] : cell.cellsRows[0]
-        lastRow.width += delta;
-        lastRow.position.x += deltaPos;
+    section.cells.forEach((cell) => {
+      cell.width = adjustedValue;
+      cell.position.x = section.position.x
 
-        if (lastRow.extras?.length) {
-          lastRow.extras.forEach(extra => {
-            extra.width = lastRow.width
-            extra.position.x = lastRow.position.x
-          })
-        }
+      if (cell.cellsRows?.length) {
+        let divideDelta = Math.floor(-delta1 / cell.cellsRows.length)
+        let divideDeltaPos1 = next ? divideDelta / 2 : -divideDelta / 2
+        let extraSize = (cell.cellsRows.length - 1) * module.value.moduleThickness
+
+        cell.cellsRows.forEach(item => {
+          if(item.width + divideDelta >= MIN_SECTION_WIDTH) {
+            item.width += divideDelta
+            item.position.x += divideDeltaPos1
+
+            item.extras?.forEach(extra => {
+              extra.width = item.width
+              extra.position.x = item.position.x
+
+              if(extra.fillings?.length) {
+                extra.fillings.forEach((filling) => {
+                  filling.width = extra.width;
+                  filling.size.x = extra.width;
+                  filling.position.x += divideDeltaPos1
+                })
+              }
+            })
+
+            if(item.fillings?.length) {
+              item.fillings.forEach((filling) => {
+                filling.width = item.width;
+                filling.size.x = filling.width;
+                filling.position.x += divideDeltaPos1
+              })
+            }
+          }
+
+          extraSize += item.width
+
+        } )
+
+        let lastRow = next ? cell.cellsRows[cell.cellsRows.length - 1] : cell.cellsRows[0]
+        lastRow.width += (adjustedValue - extraSize)
+        lastRow.position.x += (adjustedValue - extraSize) / 2
+        lastRow.extras?.forEach(extra => {
+          extra.width = lastRow.width
+          extra.position.x = lastRow.position.x
+        })
       }
 
+      if(cell.fillings?.length) {
+        cell.fillings.forEach((filling) => {
+          filling.width = cell.width;
+          filling.size.x = filling.width;
+          filling.position.x += deltaPos1
+        })
+      }
     })
 
-    if (nextSection) {
-      nextSection.width += -delta
-      nextSection.position.x += deltaPos
-
-      nextSection.cells.forEach((cell, cellIndex) => {
-        cell.position.x = nextSection.position.x
-        cell.width = nextSection.width;
-
-        if (cell.cellsRows) {
-          let lastRow = cell.cellsRows[0]
-          lastRow.width += -delta;
-          lastRow.position.x += deltaPos
-
-          if (lastRow.extras?.length) {
-            lastRow.extras.forEach(extra => {
-              extra.width = lastRow.width
-              extra.position.x = lastRow.position.x
-            })
-          }
-        }
-      })
-    }
-    else if (prevSection) {
-      prevSection.width += -delta
-      prevSection.position.x += deltaPos
-
-      prevSection.cells.forEach((cell, cellIndex) => {
-        cell.position.x = prevSection.position.x
-        cell.width = prevSection.width;
-
-        if (cell.cellsRows) {
-          let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-          lastRow.width += -delta;
-          lastRow.position.x += deltaPos
-
-          if (lastRow.extras?.length) {
-            lastRow.extras.forEach(extra => {
-              extra.width = lastRow.width
-              extra.position.x = lastRow.position.x
-            })
-          }
-        }
+    if(section.fillings?.length) {
+      section.fillings.forEach((filling) => {
+        filling.width = section.width;
+        filling.size.x = filling.width;
+        filling.position.x += deltaPos1
       })
     }
 
+    let newRightWidth = nextSection.width - (-delta1)
+    let delta2 = nextSection.width - newRightWidth
+
+    nextSection.width = newRightWidth;
+    nextSection.position.x += deltaPos1;
+
+    nextSection.cells.forEach((cell) => {
+      cell.width = nextSection.width;
+      cell.position.x = nextSection.position.x;
+
+      if (cell.cellsRows?.length) {
+        let divideDelta = Math.floor(-delta2 / cell.cellsRows.length)
+        let divideDeltaPos = next ? -divideDelta / 2 : divideDelta / 2
+        let extraSize = (cell.cellsRows.length - 1) * module.value.moduleThickness
+
+        cell.cellsRows.forEach(item => {
+          if(item.width + divideDelta >= MIN_SECTION_WIDTH) {
+            item.width += divideDelta
+            item.position.x += divideDeltaPos
+
+            item.extras?.forEach(extra => {
+              extra.width = item.width
+              extra.position.x = item.position.x
+
+              if(extra.fillings?.length) {
+                extra.fillings.forEach((filling) => {
+                  filling.width = extra.width;
+                  filling.size.x = extra.width;
+                  filling.position.x += divideDeltaPos;
+                })
+              }
+
+            })
+
+            if(item.fillings?.length) {
+              item.fillings.forEach((filling) => {
+                filling.width = item.width;
+                filling.size.x = filling.width;
+                filling.position.x += divideDeltaPos;
+              })
+            }
+          }
+
+          extraSize += item.width
+
+        })
+
+        let lastRow = next ? cell.cellsRows[0] : cell.cellsRows[cell.cellsRows.length - 1]
+        lastRow.width += (newRightWidth - extraSize)
+        lastRow.position.x += (newRightWidth - extraSize) / 2
+        lastRow.extras?.forEach(extra => {
+          extra.width = lastRow.width
+          extra.position.x = lastRow.position.x
+        })
+      }
+
+      if(cell.fillings?.length) {
+        cell.fillings.forEach((filling) => {
+          filling.width = cell.width;
+          filling.size.x = filling.width;
+          filling.position.x += deltaPos1;
+        })
+      }
+    })
+
+
+    if(nextSection.fillings?.length) {
+      nextSection.fillings.forEach((filling) => {
+        filling.width = nextSection.width;
+        filling.size.x = filling.width;
+        filling.position.x += deltaPos1;
+      })
+    }
   }
-  module.value = clone;
-  reset()
+  //module.value = clone;
 
+  timerReset.value = setTimeout(()=>{
+    timerReset.value = false;
+    reset()
+  }, 100)
   //updateFasades();
   //calcLoops(secIndex);
 
