@@ -80,7 +80,7 @@ const selectCell = (sec, cell = null, row = null, item = 0) => {
   visualizationRef.value.selectCell("fillings", sec, cell, true, row, item);
 };
 
-const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, item = 0, extra = null) => {
+const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, extra = null, item = 0) => {
   selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item, extra: extra};
 };
 
@@ -289,7 +289,16 @@ const addFilling = (type, product, oldFillingObject = false) => {
     const {PRODUCT} = PROPS
     let productInfo = APP.CATALOG.PRODUCTS[PRODUCT];
 
-    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0] || getFasadePosition(productInfo.FASADE_POSITION[0])
+    const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+    const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+
+    const correctSectionFasadeWidth =
+        module.value.sections.length > 1 ?
+            sec > 0 && sec < module.value.sections.length - 1 ? currentSection.width + module.value.moduleThickness - 4 :
+                currentSection.width + ((sec == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
+            module.value.width - 4;
+
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0]
 
     let manufacturerOffset = 0
     let manufacturer_name = product.EN_NAME?.toLowerCase()|| product.NAME?.toLowerCase()
@@ -304,7 +313,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     fillingObject.moduleThickness = module.value.moduleThickness
     fillingObject.fasade = <DrawerFasadeObject>{
       id: currentSection.fasadesDrawers.length + 1,
-      width: baseFasade.width,
+      width: correctSectionFasadeWidth,
       height: product.MIN_FASADE_SIZE,
       minY: product.MIN_FASADE_SIZE,
       maxY: product.MAX_FASADE_SIZE,
@@ -315,7 +324,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
       },
       type: "fasade",
       manufacturerOffset,
-      item: currentFillingsArray.length - 1,
+      item: fillingObject.id,
       sec,
       cell,
       row,

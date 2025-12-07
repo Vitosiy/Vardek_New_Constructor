@@ -112,8 +112,8 @@ const checkLoopsCollision = (
   );
 };
 
-const calcDrawersFasades = () => {
-  emit("calcDrawersFasades");
+const calcDrawersFasades = (secIndex) => {
+  emit("product-calcDrawersFasades", secIndex);
 };
 
 const showCurrentCol = (secIndex, cellIndex = null) => {
@@ -270,7 +270,7 @@ const addDoor = (secIndex) => {
       item.width = width;
     });
 
-    firstFasade = section.fasades[0][ section.fasades[0].length - 1];
+    firstFasade = section.fasades[0][0];
     newDoorPosition = new THREE.Vector2(
       firstFasade.position.x + width + 4,
       firstFasade.position.y
@@ -338,6 +338,10 @@ const addDoor = (secIndex) => {
   }
 
   section.fasades.push([newDoor]);
+
+  if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
+    calcDrawersFasades(secIndex)
+  }
 
   if (!module.value.isSlidingDoors)
     calcLoops(secIndex);

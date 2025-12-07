@@ -279,17 +279,19 @@ const getFillings = computed(() => {
 });
 
 const updateFilling = (value, currentfilling, type, render = false) => {
-  const {sec, cell, row} = currentfilling
+  const {sec, cell, row, extra, item} = currentfilling
 
   const gridCopy = Object.assign({}, module.value);
 
   const section = gridCopy.sections[sec];
-  const currentColl = section.cells?.[cell];
-  const currentRow = currentColl?.cellsRows?.[row] || currentColl || section;
+  const currentCell = section.cells?.[cell];
+  const currentRow = currentCell?.cellsRows?.[row];
+  const currentExtra =  currentRow?.extras?.[extra];
 
+  const current = currentExtra || currentRow || currentCell || section;
   const prevValue = currentfilling[type]; //Предыдущее значение
-
   let newValue = parseInt(value);
+  const delta = prevValue - newValue
 
   let tmpSector = currentfilling.sector
   delete currentfilling.sector
@@ -298,21 +300,23 @@ const updateFilling = (value, currentfilling, type, render = false) => {
   fillingData[type] = newValue;
   fillingData.sector = tmpSector;
 
-  const pixiSector = currentRow.sector;
+  const pixiSector = current.sector;
 
   const check = shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData);
-  currentfilling[type] = newValue;
 
-  if (check) {
+  if (check && (newValue < MAX_SECTION_WIDTH || newValue > MIN_SECTION_WIDTH)) {
     delete currentfilling.error
+    currentfilling[type] = newValue;
+
+    if(type === "width") {
+      currentfilling.size.x = newValue
+      currentfilling.position.x = current.position.x - newValue / 2;
+    }
+
   } else {
     currentfilling.error = true
+    currentfilling[type] = prevValue;
   }
-
-  if (newValue > MAX_SECTION_WIDTH || newValue < MIN_SECTION_WIDTH)
-    currentfilling.error = true
-  else
-    delete currentfilling.error
 
   currentfilling.sector = tmpSector;
   module.value = gridCopy;
@@ -369,10 +373,8 @@ const updateFasades = () => {
 
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
-        calcDrawersFasades(secIndex)
-      }
-      else if (section.fasades?.[0]) {
+
+      if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;
 
         const correctSectionFasadeWidth =
@@ -451,6 +453,10 @@ const updateFasades = () => {
 
       }
 
+      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
+        calcDrawersFasades(secIndex)
+      }
+
       calcLoops(secIndex)
     })
   else {
@@ -494,9 +500,28 @@ const updateFasades = () => {
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
 
-  if (fillingData?.fasade) {
+  if (fillingData) {
+    if(fillingData.fasade) {
       fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+
+      let drawerInfoId = module.value.sections[secIndex].fasadesDrawers.findIndex(item => item.item == fillingData.id)
+      module.value.sections[secIndex].fasadesDrawers[drawerInfoId] = fillingData.fasade
+    }
+
+    if(fillingData.isProfile){
+      let profileInfoId = module.value.sections[secIndex].hiTechProfiles.findIndex(item => item.id == fillingData.id)
+      module.value.sections[secIndex].hiTechProfiles[profileInfoId] = fillingData
+    }
   }
+
+  const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+  const currentSection = module.value.sections[secIndex];
+  const correctSectionFasadeWidth =
+      module.value.sections.length > 1 ?
+          secIndex > 0 && secIndex < module.value.sections.length - 1 ? currentSection.width + module.value.moduleThickness - 4 :
+              currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
+          module.value.width - 4;
 
   let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
@@ -517,6 +542,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
     switch (item.type) {
       case "drawer":
         fasadesDrawers[drawerIndex].id = index + 1
+        fasadesDrawers[drawerIndex].width = correctSectionFasadeWidth
         drawerIndex += 1
         break;
       case "fasade":
@@ -538,6 +564,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
           let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
           fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
           fasadeClone2.material = {...fasadeClone.material}
+          fasadeClone2.loopsSide = baseFasade2.loopsSide
 
           module.value.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))
         }
@@ -1001,7 +1028,7 @@ const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = nul
       break;
   }
 
-  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item, extraIndex);
+  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, extraIndex, item);
 };
 
 const initSideProfile = () => {
@@ -1053,7 +1080,12 @@ const initSideProfile = () => {
 }
 //#endregion
 
+const timerReset = ref(false);
 const reset = (reset = false) => {
+  if (timerReset.value) {
+    clearTimeout(timerReset.value)
+  }
+
   const {PROPS} = modelState.getCurrentModel.userData;
   let moduleGrid = Object.assign({}, module.value)
 
@@ -1085,8 +1117,7 @@ const reset = (reset = false) => {
 
   const recalcSection = (section, positionSections) => {
 
-    let newSection = <GridSection>{...section}
-
+    let newSection = <GridSection>{...section, position: new THREE.Vector2(section.position.x, section.position.y)}
     newSection.position.copy(positionSections.clone())
     newSection.position.x += newSection.width / 2
 
@@ -1098,7 +1129,7 @@ const reset = (reset = false) => {
 
       newSection.cells.reverse()
       for (let i = 0; i < newSection.cells.length; i++) {
-        let newCell = <GridCell>{...newSection.cells[i]}
+        let newCell = <GridCell>{...newSection.cells[i], position: new THREE.Vector2(newSection.cells[i].position.x, newSection.cells[i].position.y)}
 
         newCell.width = newSection.width;
         newCell.position.copy(positionCells.clone())
@@ -1126,7 +1157,7 @@ const reset = (reset = false) => {
           let positionCellsRow = new THREE.Vector2(newCell.position.x - newCell.width / 2, newCell.position.y)
 
           newCell.cellsRows.forEach((row, rowIndex) => {
-            let newRow = <GridCellsRow>{...row}
+            let newRow = <GridCellsRow>{...row, position: new THREE.Vector2(row.position.x, row.position.y)}
 
             newRow.position.copy(positionCellsRow.clone())
             newRow.position.x += newRow.width / 2
@@ -1135,7 +1166,11 @@ const reset = (reset = false) => {
             if (newRow.fillings?.length) {
               newRow.fillings = <FillingObject>[...newRow.fillings]
               newRow.fillings.forEach((filling, index) => {
-                updateFilling(newRow.width, filling, 'width')
+                if(filling.isProfile) {
+                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                }
+                else
+                  updateFilling(newRow.width, filling, 'width')
               })
             }
 
@@ -1146,8 +1181,9 @@ const reset = (reset = false) => {
               let newRowExtrasArray = <GridRowExtra>[]
               let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
 
-              row.extras.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
-                let newExtra = <GridRowExtra>{...extra}
+              let extras = row.extras.slice().sort((a, b) => a.position.y - b.position.y)
+              extras.forEach((extra, extraIndex) => {
+                let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
 
                 newExtra.position.copy(positionRowExtras.clone())
                 newExtra.width = newRow.width;
@@ -1155,7 +1191,11 @@ const reset = (reset = false) => {
                 if (newExtra.fillings?.length) {
                   newExtra.fillings = <FillingObject>[...newExtra.fillings]
                   newExtra.fillings.forEach((filling, index) => {
-                    updateFilling(newExtra.width, filling, 'width')
+                    if(filling.isProfile) {
+                      updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                    }
+                    else
+                      updateFilling(newExtra.width, filling, 'width')
                   })
                 }
 
@@ -1163,7 +1203,7 @@ const reset = (reset = false) => {
                 positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
               })
 
-              row.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
+              newRow.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
             }
           })
 
@@ -1182,7 +1222,11 @@ const reset = (reset = false) => {
             if (lastRow.fillings?.length) {
               lastRow.fillings = <FillingObject>[...lastRow.fillings]
               lastRow.fillings.forEach((filling, index) => {
-                updateFilling(lastRow.width, filling, 'width')
+                if(filling.isProfile) {
+                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                }
+                else
+                  updateFilling(lastRow.width, filling, 'width')
               })
             }
           }
@@ -1195,7 +1239,11 @@ const reset = (reset = false) => {
         if (newCell.fillings?.length) {
           newCell.fillings = <FillingObject>[...newCell.fillings]
           newCell.fillings.forEach((filling, index) => {
-            updateFilling(newCell.width, filling, 'width')
+            if(filling.isProfile) {
+              updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+            }
+            else
+              updateFilling(newCell.width, filling, 'width')
           })
         }
 
@@ -1206,6 +1254,17 @@ const reset = (reset = false) => {
     }
 
     positionSections.x += newSection.width + moduleGrid.moduleThickness
+
+    if (newSection.fillings?.length) {
+      newSection.fillings = <FillingObject>[...newSection.fillings]
+      newSection.fillings.forEach((filling, index) => {
+        if(filling.isProfile) {
+          updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+        }
+        else
+          updateFilling(newSection.width, filling, 'width')
+      })
+    }
 
     return newSection
   }
@@ -1226,8 +1285,6 @@ const reset = (reset = false) => {
     depth: totalDepth,
   }
   module.value = _module;
-
-  updateFasades()
 
   let sectionsWidthSum = 0;
   module.value.sections.forEach((section, secIndex) => {
@@ -1256,10 +1313,13 @@ const reset = (reset = false) => {
     }
   }
 
-  visualizationRef.value.renderGrid(module.value);
-  if (reset) {
-    visualizationRef.value.selectCell("module", 0, null);
-  }
+  updateFasades()
+
+  timerReset.value = setTimeout(()=>{
+    timerReset.value = false;
+    visualizationRef.value.renderGrid(/*module.value*/);
+  }, 100)
+
 };
 
 const saveGrid = () => {
@@ -1595,7 +1655,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
             @product-checkLoopsCollision="checkLoopsCollision"
-            @product-updateFilling="updateFilling"
+            @product-reset="reset"
         />
       </div>
 
