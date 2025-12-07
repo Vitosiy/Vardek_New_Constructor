@@ -889,6 +889,15 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
 
   switch (_cell.type) {
     case "rowCell":
+      if((_rowIndex == curCell.cellsRows?.length - 1) && (sectionIndex < module.value.sections.length - 1)) {
+        _cellIndex = null
+        _rowIndex =null
+        _extraIndex = null
+
+        _cell = curSec
+        break
+      }
+
       if (!(_rowIndex < curCell.cellsRows?.length - 1))
         return;
       break
@@ -897,6 +906,15 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
         return;
       break;
     case "rowExtra":
+      if((_rowIndex == curCell.cellsRows?.length - 1) && (sectionIndex < module.value.sections.length - 1)) {
+        _cellIndex = null
+        _rowIndex =null
+        _extraIndex = null
+
+        _cell = curSec
+        break
+      }
+
       if(_rowIndex < curCell.cellsRows?.length - 1) {
         _extraIndex = null
       }
