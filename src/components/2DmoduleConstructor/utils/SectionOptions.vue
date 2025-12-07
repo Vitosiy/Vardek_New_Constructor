@@ -398,19 +398,20 @@ const updateSectionWidth = (value, secIndex) => {
   if (adjustedValue) {
     let nextSection = clone.sections[secIndex + 1]
     let prevSection = clone.sections[secIndex - 1]
-    let delta = curSection.width - adjustedValue
+    let delta = adjustedValue - curSection.width
+    let deltaPos = nextSection ? delta / 2 : -delta / 2
 
     curSection.width = adjustedValue
-    curSection.position.x += nextSection ? (-delta) / 2 : delta / 2
+    curSection.position.x += deltaPos
 
     curSection.cells.forEach((cell, cellIndex) => {
       cell.position.x = curSection.position.x
-      cell.width = adjustedValue;
+      cell.width = curSection.width;
 
       if (cell.cellsRows) {
         let lastRow = nextSection ? cell.cellsRows[cell.cellsRows.length - 1] : cell.cellsRows[0]
         lastRow.width += delta;
-        lastRow.position.x += nextSection ? (-delta) / 2 : delta / 2
+        lastRow.position.x += deltaPos;
 
         if (lastRow.extras?.length) {
           lastRow.extras.forEach(extra => {
@@ -423,8 +424,8 @@ const updateSectionWidth = (value, secIndex) => {
     })
 
     if (nextSection) {
-      nextSection.width += delta
-      nextSection.position.x += (-delta) / 2
+      nextSection.width += -delta
+      nextSection.position.x += deltaPos
 
       nextSection.cells.forEach((cell, cellIndex) => {
         cell.position.x = nextSection.position.x
@@ -432,8 +433,8 @@ const updateSectionWidth = (value, secIndex) => {
 
         if (cell.cellsRows) {
           let lastRow = cell.cellsRows[0]
-          lastRow.width += delta;
-          lastRow.position.x += (-delta) / 2
+          lastRow.width += -delta;
+          lastRow.position.x += deltaPos
 
           if (lastRow.extras?.length) {
             lastRow.extras.forEach(extra => {
@@ -445,8 +446,8 @@ const updateSectionWidth = (value, secIndex) => {
       })
     }
     else if (prevSection) {
-      prevSection.width += delta
-      prevSection.position.x += delta / 2
+      prevSection.width += -delta
+      prevSection.position.x += deltaPos
 
       prevSection.cells.forEach((cell, cellIndex) => {
         cell.position.x = prevSection.position.x
@@ -454,8 +455,8 @@ const updateSectionWidth = (value, secIndex) => {
 
         if (cell.cellsRows) {
           let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-          lastRow.width += delta;
-          lastRow.position.x += delta / 2
+          lastRow.width += -delta;
+          lastRow.position.x += deltaPos
 
           if (lastRow.extras?.length) {
             lastRow.extras.forEach(extra => {
