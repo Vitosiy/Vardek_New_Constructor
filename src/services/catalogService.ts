@@ -67,7 +67,6 @@ export const CatalogService = {
       throw error
     }
   },
-
   async getProductPrice(formData: ProductRequestData): Promise<ProductPriceResponse> {
     try {
       const url = `https://vardek.ru/local/templates/constructor/API/catalog.element.getprice.php`
