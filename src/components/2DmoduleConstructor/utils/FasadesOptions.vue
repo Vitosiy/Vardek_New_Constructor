@@ -274,13 +274,10 @@ const deleteSlideDoor = (doorIndex) => {
 
 const addDoor = (secIndex) => {
   const section = module.value.sections[secIndex];
-  const width = section.fasades[0]?.[0]
-    ? Math.floor(section.fasades[0][0].width / 2 - 2)
-    : secIndex > 0 && secIndex < module.value.sections.length - 1
-    ? section.width + module.value.moduleThickness - 4
-    : section.width +
-      (module.value.moduleThickness - 2) +
-      (module.value.moduleThickness / 2 - 2);
+  const width = section.fasades[0]?.[0] ? Math.floor(section.fasades[0][0].width / 2 - 2) :
+      module.value.sections.length === 1 ? module.value.width - 4 :
+       (secIndex > 0 && secIndex < module.value.sections.length - 1) ? section.width + module.value.moduleThickness - 4 :
+        section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
 
   let firstFasade, newDoorPosition;
   if (section.fasades[0]) {
@@ -299,11 +296,8 @@ const addDoor = (secIndex) => {
     const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
     const FASADE = getFasadePosition(FASADE_PROPS.POSITION);
 
-    let startX =
-      section.position.x -
-      section.width / 2 -
-      module.value.moduleThickness / 2 +
-      2;
+    let startX = module.value.sections.length === 1 ? FASADE.POSITION_X : section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
+
     newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
     firstFasade = <FasadeObject>{
       id: 1,
