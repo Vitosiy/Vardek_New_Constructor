@@ -28,12 +28,12 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   // Actions
   // Вызов 
-  const fetchInitialCatalog = async () => {
+  const fetchInitialCatalog = async (idSection, page, query, config, style) => {
     try {
       isLoading.value = true
       error.value = null
       
-      const response = await CatalogService.getCatalogList()
+      const response = await CatalogService.getCatalogList(idSection, page, query,config, style)
       
       if (!response?.sections) {
         throw new Error('Invalid server response: missing sections')
@@ -88,12 +88,12 @@ export const useCatalogStore = defineStore('catalog', () => {
     return filteredSections;
   }
 
-  const fetchSubCatalogData = async ({ idSection, page, query = false }: CatalogListParams) => {
+  const fetchSubCatalogData = async ({ idSection, page, query = false, config, style }: CatalogListParams) => {
     try {
       isLoading.value = true;
       error.value = null;
 
-      const response = await CatalogService.getCatalogList({ idSection, page, query });
+      const response = await CatalogService.getCatalogList({ idSection, page, query, config, style });
       
       if (!response) {
         throw new Error('Invalid server response');

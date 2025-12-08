@@ -9,7 +9,7 @@
    
     <div class="basket-item__product">
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">
-        {{ item?.product.NAME }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
+        {{ item?.product.NAME }} - {{appData.article[appData.CATALOG.PRODUCTS[item?.product.ID].DATA_PETROVICH].PROPERTIES.ARTICLE.VALUE }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
       </h3> 
       <!-- Секция свойств товаров общяя -->
       <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE !== 'umscene'">

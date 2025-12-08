@@ -152,11 +152,13 @@ import { useCatalogStore } from '@/store/appStore/catalogStore';
 // Icons
 import SearchSVG from "@/components/ui/svg/SearchSVG.vue";
 import ProductDetails from "@/components/product-details/ProductDetails.vue";
+import { useAppData } from "@/store/appliction/useAppData";
 
 const API_URL = 'https://dev.vardek.online'
 
 const popupStore = usePopupStore();
 const catalogStore = useCatalogStore();
+const appData = useAppData();
 
 // Создаем ref для дочернего компонента
 const productDetailsRef = ref(null);
@@ -211,7 +213,9 @@ const hasMoreSubCategories = computed(() => filteredSubCategories.value.length >
 const priceProduct = computed(() => catalogStore.updateProductPrice(productPrice.value));
 
 onMounted(async () => {
-  await catalogStore.fetchInitialCatalog();
+  console.log(appData.appData.CITY.config)
+  console.log(appData.appData.CITY.style)
+  await catalogStore.fetchInitialCatalog({idSection: false, page: '1', query: false, config: appData.appData.CITY.config, style:appData.appData.CITY.style});
 });
 
 watch(
@@ -228,20 +232,20 @@ const handleCategoriesListClick = async (data) => {
   showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   catalogStore.resetCatalogData()
   catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
-  await catalogStore.fetchSubCatalogData({ idSection: data.ID });
+  await catalogStore.fetchSubCatalogData({ idSection: data.ID, config: appData.appData.CITY.config, style:appData.appData.CITY.style });
 };
 
 const handleSubCategoriesListClick = async (data) => {
   showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
-  await catalogStore.fetchSubCatalogData({ idSection: data.ID });
+  await catalogStore.fetchSubCatalogData({ idSection: data.ID, config: appData.appData.CITY.config, style:appData.appData.CITY.style });
   catalogStore.searchQuery = "";
 };
 
 const handleBreadcrumbClick = async (data) => {
   showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   trimArrayByLevel(data.level)
-  await catalogStore.fetchSubCatalogData({ idSection: data.id });
+  await catalogStore.fetchSubCatalogData({ idSection: data.id, config: appData.appData.CITY.config, style:appData.appData.CITY.style });
   catalogStore.searchQuery = "";
 };
 
