@@ -13,6 +13,20 @@ import Toggle from "@vueform/toggle";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import DirectionControl from "@/components/ui/direction/DirectionControl.vue";
 
+type TSizeEditData = {
+  widthMin: number;
+  widthMax: number;
+  heightMin: number;
+  heightMax: number;
+  depthMin: number;
+  depthMax: number;
+  joinDepthMin?: number;
+  joinDepthMax?: number;
+  stepW: number;
+  stepH: number;
+  stepD: number;
+};
+
 interface TDirectionModelType {
   id: number;
   label: string;
@@ -33,7 +47,11 @@ const modelState = useModelState();
 const eventBus = useEventBus();
 const { onRsizeConversations } = useConversationActions();
 
-const sizeEditData = ref({
+const joinDepthResizeData = ref({
+  width: 0,
+});
+
+const sizeEditData = ref<TSizeEditData>({
   widthMin: 0,
   widthMax: 0,
   heightMin: 0,
@@ -65,6 +83,11 @@ const getIsUMproduct = computed(() => {
   return !currentModel.value?.PROPS.CONFIG.MODULEGRID;
 });
 
+const resizeJoinDepth = (value: number) => {
+  console.log(value, "value");
+  eventBus.emit("A:ResizeJoinDepth", { data: value });
+};
+
 const recountShelfs = (value) => {
   eventBus.emit("A:RecountShelfs", { data: value });
   // currentModel.value?.PROPS.CONFIG.SHELFQUANT?.current = value
@@ -91,8 +114,16 @@ const updateFillingModel = (filling: TFillingData) => {
 
 const prepareData = () => {
   const { userData } = modelState.getCurrentModel;
-  const { MODEL, MODELID, FILLING_LIST, FILLING, SIZE, SIZE_EDIT, SHELFQUANT } =
-    userData.PROPS.CONFIG;
+  const {
+    MODEL,
+    MODELID,
+    FILLING_LIST,
+    FILLING,
+    SIZE,
+    SIZE_EDIT,
+    SHELFQUANT,
+    SIZEEDITJOINDEPTH,
+  } = userData.PROPS.CONFIG;
   const { width, height, depth } = SIZE;
 
   currentModel.value = userData;
@@ -119,14 +150,12 @@ const prepareData = () => {
       active: modelState._FILLING[el].ID === FILLING,
       img: modelState._FILLING[el].SMALL,
       extensions,
-      sort: modelState._FILLING[el].SORT
+      sort: modelState._FILLING[el].SORT,
     };
   }).sort((a, b) => a.SORT - b.SORT);
 
-  console.log(fillingList.value)
-
   shelfCount.value = SHELFQUANT;
-
+  joinDepthResizeData.value.width = SIZEEDITJOINDEPTH;
   sizeEditData.value = {
     widthMin: SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
     widthMax: SIZE_EDIT.SIZE_EDIT_WIDTH_MAX,
@@ -134,6 +163,9 @@ const prepareData = () => {
     heightMax: SIZE_EDIT.SIZE_EDIT_HEIGHT_MAX,
     depthMin: SIZE_EDIT.SIZE_EDIT_DEPTH_MIN,
     depthMax: SIZE_EDIT.SIZE_EDIT_DEPTH_MAX,
+    joinDepthMin: SIZE_EDIT.SIZE_EDIT_JOINDEPTH_MIN,
+    joinDepthMax: SIZE_EDIT.SIZE_EDIT_JOINDEPTH_MAX,
+
     stepW: SIZE_EDIT.SIZE_EDIT_STEP_WIDTH ?? 1,
     stepH: SIZE_EDIT.SIZE_EDIT_STEP_HEIGHT ?? 1,
     stepD: SIZE_EDIT.SIZE_EDIT_STEP_DEPTH ?? 1,
@@ -269,6 +301,7 @@ watch(
           />
         </div>
       </div>
+
       <p class="customiser-section__title" v-if="fillingList?.length > 1">
         Настройка компоновки
       </p>
@@ -285,19 +318,39 @@ watch(
         </div>
       </div>
 
-      <p class="item__label text-grey" v-if="shelfCount.max">
-        Количество полок
-      </p>
-      <MainInput
-        v-if="shelfCount.max"
-        class="input__search right-menu"
-        v-model="shelfCount.current"
-        @update:modelValue="recountShelfs"
-        type="number"
-        :min="0"
-        :max="shelfCount.max"
-        :disabled="!getIsUMproduct"
-      />
+      <div class="customiser-section__refactor">
+        <div class="customiser-section__refactor-item">
+          <p class="customiser-section__refactor-title item__label text-grey" v-if="shelfCount.max">
+            Количество полок
+          </p>
+          <MainInput
+            v-if="shelfCount.max"
+            class="input__search right-menu"
+            v-model="shelfCount.current"
+            @update:modelValue="recountShelfs"
+            type="number"
+            :min="0"
+            :max="shelfCount.max"
+            :disabled="!getIsUMproduct"
+          />
+        </div>
+
+        <div class="customiser-section__refactor-item">
+          <p class="customiser-section__refactor-title item__label text-grey " v-if="sizeEditData.joinDepthMin">
+            Глубина пристыковочного модуля
+          </p>
+          <MainInput
+            v-if="sizeEditData.joinDepthMin"
+            class="input__search right-menu"
+            v-model="joinDepthResizeData.width"
+            @update:modelValue="resizeJoinDepth"
+            type="number"
+            :min="sizeEditData.joinDepthMin"
+            :max="sizeEditData.joinDepthMax"
+            :disabled="!getIsUMproduct"
+          />
+        </div>
+      </div>
 
       <p class="customiser-section__title" v-if="rootModelsList?.length > 1">
         Позиционирование
@@ -316,14 +369,14 @@ watch(
         </div>
       </div>
 
-      <p class="customiser-section__title">Вращение</p>
+      <!-- <p class="customiser-section__title">Вращение</p>
       <DirectionControl
         @changeDirectionPos="rotateModel"
         :type="'rotateMap'"
         :scale="0.8"
         :max-width="140"
         :gap="2"
-      />
+      />  -->
 
       <!-- <p class="customiser-section__title">Произвольное позиционирование</p>
       <div class="switch__container">
@@ -338,38 +391,56 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 10px;
-  .customiser-section {
+}
+
+.customiser-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid $stroke;
+  border-radius: 15px;
+  &__title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  &__refactor {
     display: flex;
-    flex-direction: column;
     gap: 10px;
-    padding: 15px;
-    border: 1px solid $stroke;
-    border-radius: 15px;
-    &__title {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    .settings-size {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      .size-item {
-        width: 33%;
-      }
-      .item__label {
-        margin-bottom: 2px;
-      }
-    }
-    .settings-walls {
+    height: 100%;
+    &-item {
+      width: 50%;
+      // height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      .walls-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+      justify-content: space-between;
     }
+    &-title{
+      margin-bottom: auto;
+    }
+  }
+}
+
+.settings-size {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  .size-item {
+    width: 33%;
+  }
+  .item__label {
+    margin-bottom: 2px;
+  }
+}
+
+.settings-walls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  .walls-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 }
 

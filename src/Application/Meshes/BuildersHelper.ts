@@ -62,7 +62,9 @@ export class BuildersHelper extends GlobalsData {
                 PARAMS.HORIZONT ?? 78;
 
         const filling = this._FILLING[product.FILLING[0]] || {};
-        const { FASADE_PROPS } = PARAMS
+        const { FASADE_PROPS, SIZEEDITJOINDEPTH } = PARAMS
+
+        console.log(productData)
 
         // Базовые подстановки
         const expressions: Record<string, any> = {
@@ -78,7 +80,7 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_MDEPTH#": productData.depth,
             "#MODUL_DEPTH#": productData.depth,
             "#Z#": productData.depth,
-            "#SIZEEDITJOINDEPTH#": productData.SIZE_EDIT_JOINDEPTH_MIN,
+            "#SIZEEDITJOINDEPTH#": SIZEEDITJOINDEPTH ?? productData.SIZE_EDIT_JOINDEPTH_MIN,
             "#MATERIAL_THICKNESS#": materialThickness,
             "#HORIZONT#": horizont,
             "#VSECTION_MAX#": filling.VSECTION_MAX,

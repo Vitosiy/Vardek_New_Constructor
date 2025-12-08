@@ -681,7 +681,7 @@ const changeFasadeSize = async (data: TFasadeSize) => {
 
   eventBus.emit("A:Model-resize", {
     data: { width, height, depth },
-    type: "fasade",
+    type: "resize",
   });
 };
 
@@ -695,7 +695,7 @@ const updateFasadeSize = async (data) => {
 
   eventBus.emit("A:Model-resize", {
     data: { width, height, depth },
-    type: "fasade",
+    type: "resize",
   });
 };
 
