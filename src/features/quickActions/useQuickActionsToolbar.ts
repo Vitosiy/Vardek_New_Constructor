@@ -15,6 +15,7 @@ import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
 import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
 import { loadBlankRoom } from '@/Constructor2D/facade/blankRoom';
+import { useBasketStore } from '@/store/appStore/useBasketStore';
 
 export type ActionKey =
   | 'fullscreen'
@@ -261,6 +262,7 @@ export const useQuickActionsToolbar = () => {
         roomState.rooms = [];
         roomState.clearCurrentRoomId();
         projectState.resetState();
+        useBasketStore().clearBasket()
         try {
           const c2d = (window as any).C2D;
           if (c2d?.layers) {
