@@ -13,7 +13,10 @@
           class="grey-radial__button"
           @click="action.action"
         >
-          <span class="icon" :class="action.iconClass"></span>
+          <span v-if="action.iconSrc === 'folder'" class="icon">
+            <img :src="folderIcon" alt="" class="icon-svg" />
+          </span>
+          <span v-else class="icon" :class="action.iconClass"></span>
         </button>
       </template>
     </Tooltip>
@@ -80,6 +83,7 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useToast } from "@/features/toaster/useToast";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useProjectStore } from "./project/store/useProjectStore";
+import folderIcon from "@/assets/svg/folder.svg";
 
 const { actions, openSaveDialog, handleSaveConfirm: handleSaveConfirmFromComposable } = useQuickActionsToolbar();
 const route = useRoute();
@@ -114,8 +118,7 @@ const handleSaveConfirm = async (projectName: string) => {
 
   // Вызываем метод сохранения с названием проекта
   // Передаем callback для закрытия модального окна при успешном сохранении
-  // @ts-ignore
-  const success = await handleSaveConfirmFromComposable(projectName.trim(), () => { 
+  await handleSaveConfirmFromComposable(projectName.trim(), () => {
     saveDialogRef.value?.closeModal();
   }, kpCheckbox.value);
   
@@ -139,6 +142,12 @@ onMounted(() => {
 .quick-actions {
   display: flex;
   gap: 8px;
+}
+
+.icon-svg {
+  width: 40%;
+  height: 40%;
+  object-fit: contain;
 }
 
 .checkbox_label {

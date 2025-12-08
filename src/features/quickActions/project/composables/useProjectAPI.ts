@@ -213,7 +213,6 @@ export function useProjectAPI() {
       // Генерируем скриншот проекта для нового проекта
       let screenshotBase64 = 'data:image/jpeg;base64,'
       const projectId = incomeProjectId ?? projectData.projectId
-
       // Если создаем новый проект, генерируем скриншот
       if (true) {
         screenshotBase64 = await getProjectScreenshot()
@@ -244,6 +243,7 @@ export function useProjectAPI() {
         projectData.projectId = tempProjectId
 
         console.log(kpFlag)
+        const basketData = kpFlag ? await useBasketStore().syncBasket() : null
         const response = await client.POST('/api/modeller/projectq/SaveProject/', {
           body: {
                 data: {
@@ -256,7 +256,7 @@ export function useProjectAPI() {
                   style: REQUEST_CONSTANTS.STYLE,
                   projectId: Date.now().toString(),
                   user_id: REQUEST_CONSTANTS.USER_ID,
-                  ...(kpFlag && { basket: useBasketStore().syncBasket() }),
+                  ...(kpFlag && basketData && { basket: basketData }),
                   ...(kpFlag && { kp: kpFlag })
                 }
               }
