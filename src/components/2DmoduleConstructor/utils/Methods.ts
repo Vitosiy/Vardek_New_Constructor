@@ -2,6 +2,7 @@
 import {UI_PARAMS} from "./UMConstructorConst.ts";
 import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "pixi.js";
 import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
+import * as THREE from "three";
 
 type TDashedLine = {
     startX: number;
@@ -1392,9 +1393,9 @@ const saveUMGrid = (module) => {
             object = Object.entries(object).map(([key, value]) => {
 
                 if (nesting.includes(key)) {
-                    value = value.map(item => {
+                    value = value.slice().map(item => {
                         if (Array.isArray(item))
-                            return item = item.map(_item => {
+                            return item = item.slice().map(_item => {
                                 return removeGarbage(_item)
                             })
                         else {
@@ -1412,6 +1413,15 @@ const saveUMGrid = (module) => {
                 object = object.filter(([key, value]) => !garbageFasades.includes(key))
             else
                 object = object.filter(([key, value]) => !garbage.includes(key))
+
+            object.forEach(([key, value], index) => {
+                if (key === "position") {
+                    object[index] = [key, new THREE.Vector2(value.x, value.y)];
+                }
+                if (key === "size") {
+                    object[index] = [key, {...value}];
+                }
+            })
 
             object = Object.fromEntries(object)
         }

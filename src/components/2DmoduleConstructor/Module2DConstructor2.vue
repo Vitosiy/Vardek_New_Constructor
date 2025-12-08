@@ -537,6 +537,10 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
   module.value.sections[secIndex].fasadesDrawers = fasadesDrawers.sort((a, b) => a.position.y - b.position.y)
 
   let drawerIndex = 0
+  fasadesList = fasadesList.filter((item) => {
+    return item.type != "profile"
+  })
+
   fasadesList.forEach((item, index) => {
 
     switch (item.type) {
