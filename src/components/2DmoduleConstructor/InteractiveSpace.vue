@@ -611,8 +611,6 @@ const createModule = ({
 
   const cell = new Section(moduleData, width, height, sector, false);
   cell.highlightGraphics.visible = false;
-  cell.cellGraphics.eventMode = "static";
-  cell.cellGraphics.cursor = "pointer";
 
   sector.addChild(cell.cellGraphics);
 
@@ -946,7 +944,7 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
   divider.rect(0, 0, getPixelWidth(module.value.moduleThickness + 4), convertTotalHeight);
 
   divider.fill("#4bef61");
-  divider.alpha = 1;
+  divider.alpha = 0;
 
   divider.eventMode = "static";
   divider.cursor = "section-resize";
@@ -974,7 +972,7 @@ const createVerticalCut = ({width, height, cell, section, sectionIndex, sector, 
     }, 100)
   });
 
-  deviders.push(dashVert, divider);
+  deviders.push(divider);
 };
 
 // Отрисовываем горизонтальный драг
@@ -1045,7 +1043,7 @@ const createHorozontalCut = ({
 
   divider.rect(_cell.xOffset, _cell.yOffset + pxHeight - getPixelHeight(2), pxWidth, getPixelHeight(module.value.moduleThickness + 4));
   divider.fill("#c53545");
-  divider.alpha = 1;
+  divider.alpha = 0;
   divider.eventMode = "static";
   divider.cursor = "cell-resize";
   divider.section = sectionIndex;
@@ -1068,7 +1066,7 @@ const createHorozontalCut = ({
     }, 100)
   });
 
-  deviders.push(dashHor, divider);
+  deviders.push(divider);
 };
 
 const checkPositionFillingToCreate = (data) => {
@@ -1291,17 +1289,44 @@ function onVerticalDragStart(event) {
   dragState.startLeftWidth = cur.width;
   dragState.startRightWidth = next.width;
 
-  dragState.minXleft = shapeAdjuster.getLeftSectionWidth(
-      curSector,
-      cur.maxX
-  );
+  let curMin = cur.maxX;
+  if(cur.cells?.length){
+    let count = 1;
+    cur.cells.forEach((elem) => {
+      if (elem.cellsRows?.length > count){
+        count = elem.cellsRows.length;
+      }
+    })
 
-  dragState.minXRight = shapeAdjuster.getRightSectionWidth(
-      nextSector,
-      next.minX
-  );
+    curMin = MIN_SECTION_WIDTH * count + module.moduleThickness * (count - 1);
+    dragState.minXleft = curMin
+  }
+  else
+    dragState.minXleft = shapeAdjuster.getLeftSectionWidth(
+        curSector,
+        curMin
+    );
+
+  let nextMin = next.minX;
+  if(next.cells?.length){
+    let count = 1;
+    next.cells.forEach((elem) => {
+      if (elem.cellsRows?.length > count){
+        count = elem.cellsRows.length;
+      }
+    })
+
+    nextMin = MIN_SECTION_WIDTH * count + module.moduleThickness * (count - 1);
+    dragState.minXRight = nextMin
+  }
+  else
+    dragState.minXRight = shapeAdjuster.getRightSectionWidth(
+        nextSector,
+        nextMin
+    );
 
   dragState.element = this;
+  this.onDrag = true
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
@@ -1368,6 +1393,7 @@ function onHorizontalDragStart(event) {
 
   // event.currentTarget.alpha = 0.5;
   dragState.element = this;
+  this.onDrag = true
   dragState.isDragging = true;
   dragState.type = "horizontal";
 
@@ -1380,8 +1406,36 @@ function onHorizontalDragStart(event) {
   dragState.startTopHeight = cur.height;
   dragState.startBottomHeight = next.height;
 
-  dragState.minTop = shapeAdjuster.getSectionTop(curSector, cur.maxY);
-  dragState.minBottom = shapeAdjuster.getSectionBottom(nextSector, next.minY);
+  let curMin = cur.maxY;
+  if(cur.cellsRows?.length){
+    let count = 1;
+    cur.cellsRows.forEach((elem) => {
+      if (elem.extras?.length > count){
+        count = elem.extras.length;
+      }
+    })
+
+    curMin = MIN_SECTION_HEIGHT * count + module.moduleThickness * (count - 1);
+    dragState.minTop = curMin
+  }
+  else
+    dragState.minTop = shapeAdjuster.getSectionTop(curSector, curMin);
+
+  let nextMin = next.minY;
+  if(next.cellsRows?.length){
+    let count = 1;
+    next.cellsRows.forEach((elem) => {
+      if (elem.extras?.length > count){
+        count = elem.extras.length;
+      }
+    })
+
+    nextMin = MIN_SECTION_HEIGHT * count + module.moduleThickness * (count - 1);
+    dragState.minBottom = nextMin
+  }
+  else
+    dragState.minBottom = shapeAdjuster.getSectionBottom(nextSector, nextMin);
+
 
   app.stage.on("pointermove", onDragMove);
   app.stage.on("pointerup", onDragEnd);
@@ -1522,7 +1576,7 @@ function dragMove(event) {
           let extraSize = (cell.cellsRows.length - 1) * module.value.moduleThickness
 
           cell.cellsRows.forEach(item => {
-            if(item.width + divideDelta >= curMin) {
+            if(item.width + divideDelta >= MIN_SECTION_WIDTH) {
               item.width += divideDelta
               item.position.x += divideDeltaPos1
 
@@ -1547,18 +1601,38 @@ function dragMove(event) {
                 })
               }
             }
+            else {
+              item.width = MIN_SECTION_WIDTH
+            }
 
             extraSize += item.width
 
           } )
 
           let lastRow = next ? cell.cellsRows[cell.cellsRows.length - 1] : cell.cellsRows[0]
-          lastRow.width += (newLeftWidth - extraSize)
-          lastRow.position.x += (newLeftWidth - extraSize) / 2
-          lastRow.extras?.forEach(extra => {
-            extra.width = lastRow.width
-            extra.position.x = lastRow.position.x
-          })
+          if(lastRow.width + (newLeftWidth - extraSize) >= MIN_SECTION_WIDTH) {
+            lastRow.width += (newLeftWidth - extraSize)
+            lastRow.position.x += (newLeftWidth - extraSize) / 2
+            lastRow.extras?.forEach(extra => {
+              extra.width = lastRow.width
+              extra.position.x = lastRow.position.x
+            })
+          }
+          else {
+            lastRow = cell.cellsRows.find((item) => {
+              return item.width + (newLeftWidth - extraSize) >= MIN_SECTION_WIDTH
+            })
+
+            if(lastRow) {
+              lastRow.width += (newLeftWidth - extraSize)
+              lastRow.position.x += (newLeftWidth - extraSize) / 2
+              lastRow.extras?.forEach(extra => {
+                extra.width = lastRow.width
+                extra.position.x = lastRow.position.x
+              })
+            }
+
+          }
         }
 
         if(cell.fillings?.length) {
@@ -1592,7 +1666,7 @@ function dragMove(event) {
           let extraSize = (cell.cellsRows.length - 1) * module.value.moduleThickness
 
           cell.cellsRows.forEach(item => {
-            if(item.width + divideDelta >= nextMin) {
+            if(item.width + divideDelta >= MIN_SECTION_WIDTH) {
               item.width += divideDelta
               item.position.x += divideDeltaPos
 
@@ -1618,18 +1692,39 @@ function dragMove(event) {
                 })
               }
             }
+            else {
+              item.width = MIN_SECTION_WIDTH
+            }
 
             extraSize += item.width
 
           })
 
           let lastRow = next ? cell.cellsRows[0] : cell.cellsRows[cell.cellsRows.length - 1]
-          lastRow.width += (newRightWidth - extraSize)
-          lastRow.position.x += (newRightWidth - extraSize) / 2
-          lastRow.extras?.forEach(extra => {
-            extra.width = lastRow.width
-            extra.position.x = lastRow.position.x
-          })
+
+          if(lastRow.width + (newRightWidth - extraSize) >= MIN_SECTION_WIDTH) {
+            lastRow.width += (newRightWidth - extraSize)
+            lastRow.position.x += (newRightWidth - extraSize) / 2
+            lastRow.extras?.forEach(extra => {
+              extra.width = lastRow.width
+              extra.position.x = lastRow.position.x
+            })
+          }
+          else {
+            lastRow = cell.cellsRows.find((item) => {
+              return item.width + (newRightWidth - extraSize) >= MIN_SECTION_WIDTH
+            })
+
+            if(lastRow) {
+              lastRow.width += (newRightWidth - extraSize)
+              lastRow.position.x += (newRightWidth - extraSize) / 2
+              lastRow.extras?.forEach(extra => {
+                extra.width = lastRow.width
+                extra.position.x = lastRow.position.x
+              })
+            }
+
+          }
         }
 
         if(cell.fillings?.length) {
@@ -1704,14 +1799,32 @@ function dragMove(event) {
             let extraSize = (row.extras.length - 1) * module.value.moduleThickness
 
             row.extras.forEach(item => {
-              if (item.height + divideDelta >= curMin) {
+              if (item.height + divideDelta >= MIN_SECTION_HEIGHT) {
                 item.height += divideDelta
+              }
+              else {
+                item.height = MIN_SECTION_HEIGHT
               }
 
               extraSize += item.height
             })
 
-            row.extras[row.extras.length - 1].height += (newTopHeight - extraSize)
+            let lastRow = row.extras[row.extras.length - 1]
+            if(lastRow.height + (newTopHeight - extraSize) >= MIN_SECTION_HEIGHT) {
+              lastRow.height += (newTopHeight - extraSize)
+              lastRow.position.y += (newTopHeight - extraSize) / 2
+            }
+            else {
+              lastRow = row.extras.find((item) => {
+                return item.height + (newTopHeight - extraSize) >= MIN_SECTION_HEIGHT
+              })
+
+              if(lastRow) {
+                lastRow.height += (newTopHeight - extraSize)
+                lastRow.position.y += (newTopHeight - extraSize) / 2
+              }
+
+            }
           }
         })
       }
@@ -1730,15 +1843,33 @@ function dragMove(event) {
             let extraSize = (row.extras.length - 1) * module.value.moduleThickness
 
             row.extras.forEach(item => {
-              if (item.height + divideDelta >= curMin) {
+              if (item.height + divideDelta >= MIN_SECTION_HEIGHT) {
                 item.height += divideDelta
                 item.position.y += divideDelta;
+              }
+              else {
+                item.height = MIN_SECTION_HEIGHT
               }
 
               extraSize += item.height
             })
 
-            row.extras[row.extras.length - 1].height += (newBottomHeight - extraSize)
+            let lastRow = row.extras[0]
+            if(lastRow.height + (newBottomHeight - extraSize) >= MIN_SECTION_HEIGHT) {
+              lastRow.height += (newBottomHeight - extraSize)
+              lastRow.position.y += (newBottomHeight - extraSize) / 2
+            }
+            else {
+              lastRow = row.extras.find((item) => {
+                return item.height + (newBottomHeight - extraSize) >= MIN_SECTION_HEIGHT
+              })
+
+              if(lastRow) {
+                lastRow.height += (newBottomHeight - extraSize)
+                lastRow.position.y += (newBottomHeight - extraSize) / 2
+              }
+
+            }
           }
         })
       }
@@ -1751,7 +1882,15 @@ function dragMove(event) {
   renderGrid();
 }
 
-const onDragEnd = () => {
+const onDragEnd = (event) => {
+  delete dragState.element.onDrag
+  if (dragState.element.parent) {
+    dragState.element.removeFromParent();
+  }
+
+  dragState.element.destroy()
+
+  dragState.element = null
   dragState.isDragging = false;
   dragState.type = null;
   dragState.secIndex = null;
@@ -1813,9 +1952,6 @@ const adjustSectionSize = (
     const extra = row?.extras?.[extraIndex];
     const currentRow = extra || row || cell || section
 
-    const minWidth = MIN_SECTION_WIDTH
-    const minHeight = MIN_SECTION_HEIGHT
-
     let nextRow, prevRow;
     switch (currentRow.type) {
       case "rowExtra":
@@ -1840,6 +1976,30 @@ const adjustSectionSize = (
 
     if (dimension === "width") {
       if (nextRow) {
+        let curMin = MIN_SECTION_WIDTH;
+        if(currentRow.cells?.length){
+          let count = 1;
+          currentRow.cells.forEach((elem) => {
+            if (elem.cellsRows?.length > count){
+              count = elem.cellsRows.length;
+            }
+          })
+
+          curMin = MIN_SECTION_WIDTH * count + module.moduleThickness * (count - 1);
+        }
+
+        let nextMin = MIN_SECTION_WIDTH;
+        if(nextRow.cells?.length){
+          let count = 1;
+          nextRow.cells.forEach((elem) => {
+            if (elem.cellsRows?.length > count){
+              count = elem.cellsRows.length;
+            }
+          })
+
+          nextMin = MIN_SECTION_WIDTH * count + module.moduleThickness * (count - 1);
+        }
+
         const totalWidth = currentRow.width + nextRow.width;
         calcValue = updateSizes(
             newValue,
@@ -1847,8 +2007,8 @@ const adjustSectionSize = (
             currentRow,
             nextRow,
             totalWidth,
-            minWidth,
-            minWidth
+            curMin,
+            nextMin
         );
       }
       else {
@@ -1965,16 +2125,41 @@ const adjustSectionSize = (
     }
     else {
       if (nextRow) {
-        const totalHeight = currentRow.height + nextRow.height;
 
+        let curMin = MIN_SECTION_HEIGHT;
+        if(currentRow.cellsRows?.length){
+          let count = 1;
+          currentRow.cellsRows.forEach((elem) => {
+            if (elem.extras?.length > count){
+              count = elem.extras.length;
+            }
+          })
+
+          curMin = MIN_SECTION_HEIGHT * count + module.moduleThickness * (count - 1);
+        }
+
+        let nextMin = MIN_SECTION_HEIGHT;
+        if(nextRow.cells?.length){
+          let count = 1;
+          nextRow.cellsRows.forEach((elem) => {
+            if (elem.extras?.length > count){
+              count = elem.extras.length;
+            }
+          })
+
+          nextMin = MIN_SECTION_HEIGHT * count + module.moduleThickness * (count - 1);
+        }
+
+
+        const totalHeight = currentRow.height + nextRow.height;
         calcValue = updateSizes(
             newValue,
             dimension,
             currentRow,
             nextRow,
             totalHeight,
-            minHeight,
-            minHeight
+            curMin,
+            nextMin
         );
       }
       else {
@@ -2253,6 +2438,16 @@ const clearRender = () => {
   sections.forEach((elem) => {
     app.stage.removeChild(elem);
     elem.destroy();
+  });
+
+  deviders.forEach((elem) => {
+    if(!elem.onDrag) {
+      if (elem.parent) {
+        elem.removeFromParent();
+      }
+
+      elem.destroy();
+    }
   });
 
   sections.length = 0;
