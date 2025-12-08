@@ -678,9 +678,6 @@ const createSector = ({
     cell.highlightGraphics.visible = false;
   }
 
-  cell.cellGraphics.eventMode = "static";
-  cell.cellGraphics.cursor = "pointer";
-
   sector.addChild(cell.cellGraphics);
   sector.addChild(cell.highlightGraphics);
 
@@ -695,9 +692,25 @@ const createSector = ({
     createFilling(data, sector);
   });
 
-  cell.cellGraphics.on("pointerdown", () => {
-    selectCell(gridType, sectionIndex, cellIndex, false, rowIndex, null, extraIndex);
-  });
+  if (gridType === "fasades") {
+    if(!cellData.manufacturerOffset) {
+      let tmpRowIndex = section.findIndex(item => item.id === cellData.id);
+      cell.cellGraphics.on("pointerdown", () => {
+        selectCell(gridType, sectionIndex, cellIndex, false, tmpRowIndex, null, extraIndex);
+      });
+
+      cell.cellGraphics.eventMode = "static";
+      cell.cellGraphics.cursor = "pointer";
+    }
+  }
+  else {
+    cell.cellGraphics.on("pointerdown", () => {
+      selectCell(gridType, sectionIndex, cellIndex, false, rowIndex, null, extraIndex);
+    });
+
+    cell.cellGraphics.eventMode = "static";
+    cell.cellGraphics.cursor = "pointer";
+  }
 
   // Создаём ограничения для секторов по высоте
   if (gridType !== "fasades") {
