@@ -148,7 +148,6 @@ const onSelectMaterial = (data) => {
   millingList.value = modelState.getCurrentMillingData;
   // isMillingExist.value = millingList.value.length > 0 && !product.GLASS[0];
   isMillingExist.value = millingList.value.length > 0;
-  console.log(isMillingExist.value);
 
   /** @Палитра */
   paletteList.value = modelState.getCurrentPaletteData;

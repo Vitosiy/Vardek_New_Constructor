@@ -191,7 +191,7 @@ export class MeshEvents extends BuildersHelper {
         this.handlesBuilder = this.buildProduct.handles_builder;
         this.plinthBuilder = this.buildProduct.plinth_builder
 
-        this.millingActions = useMillingAction(this.buildProduct.milling_builder)
+        // this.millingActions = useMillingAction(this.buildProduct.milling_builder)
     }
 
     get _currentMesh() {
@@ -315,7 +315,7 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     async catchFasadeChange({ data, fasadeNdx, mesh }: TDataWithNdx) {
-        console.log('==== ❌ catchFasadeChange ❌ ====')
+        // console.log('==== ❌ catchFasadeChange ❌ ====')
 
         const meshData = mesh ?? this._currentMesh
 
@@ -366,12 +366,12 @@ export class MeshEvents extends BuildersHelper {
         const handleType = CONFIG.FASADE_PROPS[fasadeNdx].TYPE
 
         if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
-            console.log('==== ❌ SHOWCASE CLASSIK❌ ====', milling)
+            // console.log('==== ❌ SHOWCASE CLASSIK❌ ====', milling)
             this.changeShowcase({ data: SHOWCASE[0], fasadeNdx, mesh: mesh });
         }
         else if (incomingModel) {
             const action = this.modelState.getCurrentFasadeTypesAction(handleType)
-            console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
+            // console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
             this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
         }
         // else {
@@ -932,7 +932,7 @@ export class MeshEvents extends BuildersHelper {
 
     async catchDeliteFasade(fasadeNdx: number, el: THREE.Object3D) {
 
-        console.log('==== ❌ catchDeliteFasade ❌ ====')
+        // console.log('==== ❌ catchDeliteFasade ❌ ====')
 
         const drowMode = this.menuStore.getDrowModeValue
         const product = el ?? this._currentMesh
@@ -1219,7 +1219,6 @@ export class MeshEvents extends BuildersHelper {
     async resizeJoinDepth({ data, mesh }) {
 
         const currentMesh = mesh ? mesh : this._currentMesh
-        console.log(data, 'data')
         if (!currentMesh) return
 
         const { PROPS } = currentMesh.userData

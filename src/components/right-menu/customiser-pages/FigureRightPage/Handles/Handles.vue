@@ -61,13 +61,10 @@ onBeforeMount(() => {
   ) {
     const tempIndex = FASADE_TYPE.findIndex((item) => item !== null);
     index = FASADE_TYPE.findIndex((item) => item !== null);
-    console.log(FASADE_POSITIONS[tempIndex], index)
 
   } else {
     index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
   }
-
-  console.log(index, props.data,"=== index ===");
 
   const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
@@ -79,8 +76,6 @@ onBeforeMount(() => {
 
   getCurrendHendleData(figureFasad.value.props);
   handlePos.value = getControllerData(index);
-
-  console.log(handlePos.value, "handlePos.value");
 
   controllerVisible.value = checkControllerVisible.value;
 });

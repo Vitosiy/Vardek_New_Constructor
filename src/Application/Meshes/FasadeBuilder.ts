@@ -347,9 +347,6 @@ export class FasadeBuilder {
                 const firstValueMilling = millingList[0] as any;
 
 
-                console.log(this.containsValue(millingList, milling), 'millingList')
-                console.log(millingList.includes(el => el.ID === milling))
-
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
                 }
@@ -357,11 +354,9 @@ export class FasadeBuilder {
                     fasadeData.PALETTE = null;
                 }
 
-                console.log(fasadeData.MILLING)
-
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
 
-                    console.log('==== ❌ MILLING ❌ ====', milling, firstValueMilling.ID)
+                    // console.log('==== ❌ MILLING ❌ ====', milling, firstValueMilling.ID)
 
                     fasadeData.MILLING = fasadeData.MILLING ? fasadeData.MILLING : this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */
@@ -785,8 +780,6 @@ export class FasadeBuilder {
             "#Z#": SIZE.depth,
         });
 
-        console.log(replacedExpressions, 'replacedExpressions')
-
         const curFasadeDepth = this.checkFasadeDepth(FASADE_PROPS, key) ?? replacedExpressions.FASADE_DEPTH
 
         // console.log(curFasadeDepth)
@@ -818,8 +811,6 @@ export class FasadeBuilder {
             FASADE_TYPE: replacedExpressions.fasade_type
 
         };
-
-        console.log(fasadePositionsData, 'fasadePositionsData')
 
         // Добавляем фасадную позицию в CONFIG, если ещё не существует
         if (this.parent.addIfNotExists(FASADE_POSITIONS, fasadePositionsData)) {

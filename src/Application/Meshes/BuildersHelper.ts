@@ -65,8 +65,6 @@ export class BuildersHelper extends GlobalsData {
         const filling = this._FILLING[product.FILLING[0]] || {};
         const { FASADE_PROPS, SIZEEDITJOINDEPTH } = PARAMS
 
-        console.log(productData)
-
         // Базовые подстановки
         const expressions: Record<string, any> = {
             "#MWIDTH#": productData.width,
@@ -531,9 +529,6 @@ export class BuildersHelper extends GlobalsData {
 
         })
 
-
-        console.log(result, 'result')
-
         // .filter(el => el.ID !== 98683);
         return result
 
@@ -613,8 +608,6 @@ export class BuildersHelper extends GlobalsData {
     }
 
     mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
-
-        console.log('=========  mergeArrays ==========')
 
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);

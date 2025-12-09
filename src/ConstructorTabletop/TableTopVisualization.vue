@@ -599,7 +599,6 @@ const selectCell = (colIndex, rowIndex, parent = false) => {
     currentColl: props.grid[colIndex],
     currentRow: props.grid[colIndex][rowIndex],
   };
-  console.log(curSection.value, "curSection.value");
 
   toggleSectorColor(colIndex, rowIndex);
   if (!parent) emit("cell-selected", colIndex, rowIndex);

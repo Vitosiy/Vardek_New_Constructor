@@ -120,7 +120,7 @@ export class DragAndDropManager {
 
             } catch (error) {
                 console.error('Error parsing JSON data:', error);
-                console.log('Received data:', data);
+                // console.log('Received data:', data);
             }
         }
     }

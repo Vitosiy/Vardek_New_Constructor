@@ -35,10 +35,6 @@ onBeforeMount(() => {
   plinthExist.value = createPlinthData().length > 0;
   handlesExist.value = createSurfaceList().length > 0;
 
-  console.log(handlesExist.value, "=== HANDLES");
-
-  console.log(plinthExist.value, "=== PLINTH");
-
   const checkExist: TexistItem = {
     Handles: Object.values(createSurfaceList()).length > 0,
     Plinth: Object.values(createPlinthData()).length > 0,

@@ -23,8 +23,6 @@ const useHandlesAction = () => {
 
         const textList = prepare.map((el) => el.CODE);
 
-        console.log(textList, 'textList', ELEMENT_TYPE)
-
         if (!ELEMENT_TYPE) {
             return textList;
         }
@@ -61,16 +59,12 @@ const useHandlesAction = () => {
         else if (type === "milling") id = curMillinType;
         else id = 0
 
-        console.log(id, 'FASADE_PROPS')
-
         const textList = typeList.map((el, ndx) => {
 
             if (!curType && !curMillinType && ndx == 0) id = el.ID
 
             return { action: el.CODE, id: el.ID, active: el.ID === id }
         });
-
-        console.log(textList)
 
         return textList
     }
@@ -109,8 +103,6 @@ const useHandlesAction = () => {
 
             return result;
         }
-
-        console.log(data, 'getDataType');
 
         return data
     };

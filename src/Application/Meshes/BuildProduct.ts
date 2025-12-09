@@ -415,7 +415,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (loadedProps) {
-            console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
+            // console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
         }
 
 

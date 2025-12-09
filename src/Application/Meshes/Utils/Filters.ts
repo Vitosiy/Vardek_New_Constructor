@@ -111,8 +111,6 @@ export class Filters extends GlobalsData {
             let handlerPosition = null
 
             const prodTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
-            console.log(prodTypeData, 'prodTypeData')
-
             const fasTypeData = this._FASADETYPE[fasadePositionType[0]]
 
             const handleInDorPosition = () => {

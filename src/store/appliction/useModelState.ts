@@ -511,16 +511,13 @@ export const useModelState = defineStore('ModelState', () => {
         const haveShowCase = fasadePosData?.glass == 1
         let prepare = [];
 
-        console.log(_PRODUCTS.value[productId], 'haveShowCase')
-
         if (!haveShowCase) {
             currentShowcaseData.value = []
             return
         }
 
         const defaultShowcase = prodShowcases[0] ?? 1013628
-        console.log(_FASADE.value[fasadeId])
-
+  
         if (prodShowcases.length > 0 && prodShowcases[0] !== null) {
             prepare = prodShowcases.map(el => {
                 return _SHOWCASE.value[el]
@@ -532,25 +529,6 @@ export const useModelState = defineStore('ModelState', () => {
             prepare = [1013628]
         }
 
-        // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && defaultShowcase) {
-
-        //     const prepare = prodShowcases.map(el => {
-        //         return _SHOWCASE.value[el]
-        //     }).filter(Boolean)
-
-        //     currentShowcaseData.value = prepare
-        //     return
-        // }
-
-        // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] == null) {
-
-        //     const prepare = prodShowcases.map(el => {
-        //         return _SHOWCASE.value[el]
-        //     }).filter(Boolean)
-
-        //     currentShowcaseData.value = prepare
-        //     return
-        // }
     }
 
     const getCurrentShowcaseData = computed(() => {
@@ -571,8 +549,6 @@ export const useModelState = defineStore('ModelState', () => {
         const filtered = incomeTypes.filter(item => defaultTypes.includes(item))
         const result = filtered.map(item => _FASADE_TYPE.value[item]).filter(Boolean);
 
-        console.log(result, '=== result ===')
-
         currentFasadeTypesData.value = result
 
         return result
@@ -585,11 +561,8 @@ export const useModelState = defineStore('ModelState', () => {
 
     const getCurrentFasadeTypesAction = (data) => {
 
-
-
         const prepare = _FASADE_TYPE.value[data]
         if (!prepare) return null
-        console.log(prepare, '====== 88 ====')
 
         const actionKey = FasadeTextAlignAction[prepare.CODE]
         return actionKey

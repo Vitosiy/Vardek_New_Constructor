@@ -83,8 +83,6 @@ const profileData = computed(() => {
 });
 
 onBeforeMount(() => {
-  console.log(props.serviseData, "===== serviseData");
-
   getCurretKromkaList();
   // profileDataParse.value = props.profileData();
 });
@@ -92,7 +90,7 @@ onBeforeMount(() => {
 watch(
   () => props,
   () => {
-    console.log("serviseData");
+    // console.log("serviseData");
   }
 );
 </script>

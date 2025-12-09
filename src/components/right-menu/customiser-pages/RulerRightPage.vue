@@ -84,14 +84,12 @@ const getIsUMproduct = computed(() => {
 });
 
 const resizeJoinDepth = (value: number) => {
-  console.log(value, "value");
   eventBus.emit("A:ResizeJoinDepth", { data: value });
 };
 
 const recountShelfs = (value) => {
   eventBus.emit("A:RecountShelfs", { data: value });
   // currentModel.value?.PROPS.CONFIG.SHELFQUANT?.current = value
-  console.log(value);
 };
 
 const rotateModel = (id: number) => {
@@ -154,8 +152,6 @@ const prepareData = () => {
     };
   }).sort((a, b) => a.sort - b.sort);
 
-  console.log(fillingList.value, 'fillingList.value')
-
   shelfCount.value = SHELFQUANT;
   joinDepthResizeData.value.width = SIZEEDITJOINDEPTH;
   sizeEditData.value = {
@@ -198,9 +194,6 @@ const resizeModel = (value: object) => {
       (el) => el.active && el.extensions
     );
     if (!curFilling) {
-
-      console.log('GGGG')
-
       updateFillingModel(fillingList.value[0]);
       fillingList.value[0].active = true;
     }
