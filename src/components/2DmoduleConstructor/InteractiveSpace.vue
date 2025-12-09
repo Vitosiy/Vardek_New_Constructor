@@ -49,10 +49,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-    "cell-selected",
-    "position-non",
-    "calcDrawersFasades",
-    "module-reset",
+  "cell-selected",
+  "position-non",
+  "calcDrawersFasades",
+  "module-reset",
 ]);
 const canvasContainer = ref();
 
@@ -745,12 +745,12 @@ const createSector = ({
 };
 
 const createLoop = ({
-                        x,
-                        y,
-                        width,
-                        height,
-                        loopData,
-                      }) => {
+                      x,
+                      y,
+                      width,
+                      height,
+                      loopData,
+                    }) => {
   const sector = new Container();
 
   sector.position.set(x, y);
@@ -1599,18 +1599,28 @@ function dragMove(event) {
 
                 if(extra.fillings?.length) {
                   extra.fillings.forEach((filling) => {
-                    filling.width = extra.width;
-                    filling.size.x = extra.width;
-                    filling.position.x += divideDeltaPos1
+                    if(filling.isVerticalItem) {
+                      filling.position.x += divideDeltaPos1;
+                    }
+                    else {
+                      filling.width = extra.width;
+                      filling.size.x = filling.width;
+                      filling.position.x += item.position.x - item.width / 2;
+                    }
                   })
                 }
               })
 
               if(item.fillings?.length) {
                 item.fillings.forEach((filling) => {
-                  filling.width = item.width;
-                  filling.size.x = filling.width;
-                  filling.position.x += divideDeltaPos1
+                  if(filling.isVerticalItem) {
+                    filling.position.x += divideDeltaPos1;
+                  }
+                  else {
+                    filling.width = item.width;
+                    filling.size.x = filling.width;
+                    filling.position.x = item.position.x - item.width / 2;
+                  }
                 })
               }
             }
@@ -1626,9 +1636,32 @@ function dragMove(event) {
           if(lastRow.width + (newLeftWidth - extraSize) >= MIN_SECTION_WIDTH) {
             lastRow.width += (newLeftWidth - extraSize)
             lastRow.position.x += (newLeftWidth - extraSize) / 2
+
+            lastRow.fillings?.forEach((filling) => {
+              if(filling.isVerticalItem) {
+                filling.position.x += (newLeftWidth - extraSize) / 2;
+              }
+              else {
+                filling.width = lastRow.width;
+                filling.size.x = filling.width;
+                filling.position.x = lastRow.position.x - lastRow.width / 2;
+              }
+            })
+
             lastRow.extras?.forEach(extra => {
               extra.width = lastRow.width
               extra.position.x = lastRow.position.x
+
+              extra.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (newLeftWidth - extraSize) / 2;
+                }
+                else {
+                  filling.width = extra.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = extra.position.x - extra.width / 2;
+                }
+              })
             })
           }
           else {
@@ -1639,9 +1672,32 @@ function dragMove(event) {
             if(lastRow) {
               lastRow.width += (newLeftWidth - extraSize)
               lastRow.position.x += (newLeftWidth - extraSize) / 2
+
+              lastRow.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (newLeftWidth - extraSize) / 2;
+                }
+                else {
+                  filling.width = lastRow.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = lastRow.position.x - lastRow.width / 2;
+                }
+              })
+
               lastRow.extras?.forEach(extra => {
                 extra.width = lastRow.width
                 extra.position.x = lastRow.position.x
+
+                extra.fillings?.forEach((filling) => {
+                  if(filling.isVerticalItem) {
+                    filling.position.x += (newLeftWidth - extraSize) / 2;
+                  }
+                  else {
+                    filling.width = extra.width;
+                    filling.size.x = filling.width;
+                    filling.position.x = extra.position.x - extra.width / 2;
+                  }
+                })
               })
             }
 
@@ -1650,18 +1706,28 @@ function dragMove(event) {
 
         if(cell.fillings?.length) {
           cell.fillings.forEach((filling) => {
-            filling.width = cell.width;
-            filling.size.x = filling.width;
-            filling.position.x += deltaPos1
+            if(filling.isVerticalItem) {
+              filling.position.x += deltaPos1;
+            }
+            else {
+              filling.width = cell.width;
+              filling.size.x = filling.width;
+              filling.position.x = cell.position.x - cell.width / 2;
+            }
           })
         }
       })
 
       if(section.fillings?.length) {
         section.fillings.forEach((filling) => {
-          filling.width = section.width;
-          filling.size.x = filling.width;
-          filling.position.x += deltaPos1
+          if(filling.isVerticalItem) {
+            filling.position.x += deltaPos1;
+          }
+          else {
+            filling.width = section.width;
+            filling.size.x = filling.width;
+            filling.position.x = section.position.x - section.width / 2;
+          }
         })
       }
 
@@ -1689,9 +1755,14 @@ function dragMove(event) {
 
                 if(extra.fillings?.length) {
                   extra.fillings.forEach((filling) => {
-                    filling.width = extra.width;
-                    filling.size.x = extra.width;
-                    filling.position.x += divideDeltaPos;
+                    if(filling.isVerticalItem) {
+                      filling.position.x += divideDeltaPos;
+                    }
+                    else {
+                      filling.width = extra.width;
+                      filling.size.x = filling.width;
+                      filling.position.x += deltaPos1;
+                    }
                   })
                 }
 
@@ -1699,9 +1770,14 @@ function dragMove(event) {
 
               if(item.fillings?.length) {
                 item.fillings.forEach((filling) => {
-                  filling.width = item.width;
-                  filling.size.x = filling.width;
-                  filling.position.x += divideDeltaPos;
+                  if(filling.isVerticalItem) {
+                    filling.position.x += divideDeltaPos;
+                  }
+                  else {
+                    filling.width = item.width;
+                    filling.size.x = filling.width;
+                    filling.position.x = deltaPos1;
+                  }
                 })
               }
             }
@@ -1718,9 +1794,32 @@ function dragMove(event) {
           if(lastRow.width + (newRightWidth - extraSize) >= MIN_SECTION_WIDTH) {
             lastRow.width += (newRightWidth - extraSize)
             lastRow.position.x += (newRightWidth - extraSize) / 2
+
+            lastRow.fillings?.forEach((filling) => {
+              if(filling.isVerticalItem) {
+                filling.position.x += (newLeftWidth - extraSize) / 2;
+              }
+              else {
+                filling.width = lastRow.width;
+                filling.size.x = filling.width;
+                filling.position.x = lastRow.position.x - lastRow.width / 2;
+              }
+            })
+
             lastRow.extras?.forEach(extra => {
               extra.width = lastRow.width
               extra.position.x = lastRow.position.x
+
+              extra.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (newLeftWidth - extraSize) / 2;
+                }
+                else {
+                  filling.width = extra.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = extra.position.x - extra.width / 2;
+                }
+              })
             })
           }
           else {
@@ -1731,9 +1830,32 @@ function dragMove(event) {
             if(lastRow) {
               lastRow.width += (newRightWidth - extraSize)
               lastRow.position.x += (newRightWidth - extraSize) / 2
+
+              lastRow.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (newLeftWidth - extraSize) / 2;
+                }
+                else {
+                  filling.width = lastRow.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = lastRow.position.x - lastRow.width / 2;
+                }
+              })
+
               lastRow.extras?.forEach(extra => {
                 extra.width = lastRow.width
                 extra.position.x = lastRow.position.x
+
+                extra.fillings?.forEach((filling) => {
+                  if(filling.isVerticalItem) {
+                    filling.position.x += (newLeftWidth - extraSize) / 2;
+                  }
+                  else {
+                    filling.width = extra.width;
+                    filling.size.x = filling.width;
+                    filling.position.x = extra.position.x - extra.width / 2;
+                  }
+                })
               })
             }
 
@@ -1742,9 +1864,14 @@ function dragMove(event) {
 
         if(cell.fillings?.length) {
           cell.fillings.forEach((filling) => {
-            filling.width = cell.width;
-            filling.size.x = filling.width;
-            filling.position.x += deltaPos1;
+            if(filling.isVerticalItem) {
+              filling.position.x += deltaPos1;
+            }
+            else {
+              filling.width = cell.width;
+              filling.size.x = filling.width;
+              filling.position.x = cell.position.x - cell.width / 2;
+            }
           })
         }
       })
@@ -1752,9 +1879,14 @@ function dragMove(event) {
 
       if(nextSection.fillings?.length) {
         nextSection.fillings.forEach((filling) => {
-          filling.width = nextSection.width;
-          filling.size.x = filling.width;
-          filling.position.x += deltaPos1;
+          if(filling.isVerticalItem) {
+            filling.position.x += deltaPos1;
+          }
+          else {
+            filling.width = nextSection.width;
+            filling.size.x = filling.width;
+            filling.position.x = nextSection.position.x - nextSection.width / 2;
+          }
         })
       }
     }
