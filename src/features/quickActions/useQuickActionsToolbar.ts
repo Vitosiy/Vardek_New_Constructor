@@ -13,6 +13,9 @@ import { use2DScreenshot } from './composables/use2DScreenshot';
 import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
+import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
+import { loadBlankRoom } from '@/Constructor2D/facade/blankRoom';
+import { useBasketStore } from '@/store/appStore/useBasketStore';
 
 export type ActionKey =
   | 'fullscreen'
@@ -44,6 +47,7 @@ export const useQuickActionsToolbar = () => {
   const toaster = useToast();
   const sceneState = useSceneState();
   const roomState = useRoomState()
+  const schemeTransition = useSchemeTransition();
 
   const projectState = useProjectStore();
   const projectAPI = useProjectAPI()
@@ -249,7 +253,30 @@ export const useQuickActionsToolbar = () => {
       tooltip: 'Новый проект',
       iconClass: 'icon-add',
       path: 'default',
-      action: () => window.location.reload(),
+      action: async () => {
+        if (router.currentRoute.value.path !== '/2d') {
+          await router.push('/2d');
+        }
+        schemeTransition.clearStore();
+        sceneState.createNewProject();
+        roomState.rooms = [];
+        roomState.clearCurrentRoomId();
+        projectState.resetState();
+        useBasketStore().clearBasket()
+        try {
+          const c2d = (window as any).C2D;
+          if (c2d?.layers) {
+            c2d.layers.planner.clear();
+            c2d.layers.doorsAndWindows.clear();
+            c2d.layers.dimensionDisplay.clearAll();
+            c2d.layers.arrowRulerActiveObject.clearGraphic();
+            c2d.layers.startPointActiveObject.activate(false);
+          }
+        } catch (error) {
+          console.warn('Ошибка при очистке слоев C2D:', error);
+        }
+        await loadBlankRoom();
+      },
     },
   ];
 

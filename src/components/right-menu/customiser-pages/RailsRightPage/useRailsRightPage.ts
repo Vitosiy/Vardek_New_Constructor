@@ -71,7 +71,7 @@ export const useRailsRightPage = () => {
 
         curOpt.active = values;
 
-        if (curOpt.id === 5738924) {
+        if (+curOpt.id == 5738924) {
             if (curOpt.active) {
                 PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
                 PROPS.CONFIG.HORIZONT = 0

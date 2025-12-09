@@ -217,8 +217,8 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
           height: el.size?.y || 0,
           depth: el.size?.z || 0
         },
-        UP_POSITION: el.ADDITIVES.top.additive_position,
-        DOWN_POSITION: el.ADDITIVES.bottom.additive_position,
+        UP_POSITION: el.ADDITIVES?.top?.additive_position,
+        DOWN_POSITION: el.ADDITIVES?.bottom?.additive_position,
         MATERIAL_ID: el.material, // Материал полки
         ADDITIVES: el.ADDITIVES || {},
         ID:el.product,

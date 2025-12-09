@@ -83,6 +83,24 @@ const selectCell = (sec, cell = null, row = null) => {
 
 const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
   selectedFasade.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
+
+  //Задержка нужна для того, чтоб рендер аккордионов обновился
+  setTimeout(() => {
+    let idTag = `fasade_${secIndex}`
+
+    if(cellIndex !== null)
+      idTag += `_${cellIndex}`;
+
+    if(rowIndex !== null)
+      idTag += `_${rowIndex}`
+
+    let domElem = document.getElementById(idTag)
+    if(domElem) {
+      domElem.scrollIntoView();
+    }
+    timer.value = false
+  }, 10)
+
 };
 
 const updateFasades = () => {
@@ -112,8 +130,8 @@ const checkLoopsCollision = (
   );
 };
 
-const calcDrawersFasades = () => {
-  emit("calcDrawersFasades");
+const calcDrawersFasades = (secIndex) => {
+  emit("product-calcDrawersFasades", secIndex);
 };
 
 const showCurrentCol = (secIndex, cellIndex = null) => {
@@ -256,13 +274,10 @@ const deleteSlideDoor = (doorIndex) => {
 
 const addDoor = (secIndex) => {
   const section = module.value.sections[secIndex];
-  const width = section.fasades[0]?.[0]
-    ? Math.floor(section.fasades[0][0].width / 2 - 2)
-    : secIndex > 0 && secIndex < module.value.sections.length - 1
-    ? section.width + module.value.moduleThickness - 4
-    : section.width +
-      (module.value.moduleThickness - 2) +
-      (module.value.moduleThickness / 2 - 2);
+  const width = section.fasades[0]?.[0] ? Math.floor(section.fasades[0][0].width / 2 - 2) :
+      module.value.sections.length === 1 ? module.value.width - 4 :
+       (secIndex > 0 && secIndex < module.value.sections.length - 1) ? section.width + module.value.moduleThickness - 4 :
+        section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
 
   let firstFasade, newDoorPosition;
   if (section.fasades[0]) {
@@ -270,7 +285,7 @@ const addDoor = (secIndex) => {
       item.width = width;
     });
 
-    firstFasade = section.fasades[0][ section.fasades[0].length - 1];
+    firstFasade = section.fasades[0][0];
     newDoorPosition = new THREE.Vector2(
       firstFasade.position.x + width + 4,
       firstFasade.position.y
@@ -281,11 +296,8 @@ const addDoor = (secIndex) => {
     const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
     const FASADE = getFasadePosition(FASADE_PROPS.POSITION);
 
-    let startX =
-      section.position.x -
-      section.width / 2 -
-      module.value.moduleThickness / 2 +
-      2;
+    let startX = module.value.sections.length === 1 ? FASADE.POSITION_X : section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
+
     newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
     firstFasade = <FasadeObject>{
       id: 1,
@@ -339,6 +351,10 @@ const addDoor = (secIndex) => {
 
   section.fasades.push([newDoor]);
 
+  if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
+    calcDrawersFasades(secIndex)
+  }
+
   if (!module.value.isSlidingDoors)
     calcLoops(secIndex);
 
@@ -383,20 +399,22 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  fasades[doorIndex].splice(segmentIndex, 0, <FasadeObject>{
+  let newFasade = <FasadeObject>{
     ...segment,
     position: module.value.isSlidingDoors
-      ? new THREE.Vector3(
-          segment.position.x,
-          segment.position.y + segment.height + delta,
-          segment.position.z
+        ? new THREE.Vector3(
+            segment.position.x,
+            segment.position.y + segment.height + delta,
+            segment.position.z
         )
-      : new THREE.Vector2(
-          segment.position.x,
-          segment.position.y + 4 + segment.height + delta
+        : new THREE.Vector2(
+            segment.position.x,
+            segment.position.y + 4 + segment.height + delta
         ),
     material: Object.assign({}, segment.material),
-  });
+  }
+
+  fasades[doorIndex].splice(segmentIndex + 1, 0, newFasade);
 
   segment.height += delta;
 
@@ -471,6 +489,29 @@ const deleteDoor = (secIndex, doorIndex) => {
   visualizationRef.value.renderGrid();
 };
 
+const checkRemoveFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
+  const fasades =
+      secIndex === null ? module.value.fasades : module.value.sections[secIndex].fasades;
+  const currentSection = fasades[doorIndex];
+  const currentSegment = currentSection[segmentIndex];
+
+  let next = currentSection[segmentIndex + 1];
+  if (next) {
+    let segmentsDistants = next.position.y - (currentSegment.position.y + currentSegment.height);
+    if(segmentsDistants > 4)
+      next = undefined;
+  }
+
+  let prev = currentSection[segmentIndex - 1];
+  if (prev) {
+    let segmentsDistants = currentSegment.position.y - (prev.position.y + prev.height);
+    if(segmentsDistants > 4)
+      prev = undefined;
+  }
+
+  return !!(next || prev);
+}
+
 const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   const clone = Object.assign({}, module.value);
   const fasades =
@@ -478,8 +519,19 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   const currentSection = fasades[doorIndex];
   const currentSegment = currentSection[segmentIndex];
 
-  const next = currentSection[segmentIndex + 1];
-  const prev = currentSection[segmentIndex - 1];
+  let next = currentSection[segmentIndex + 1];
+  if (next) {
+    let segmentsDistants = next.position.y - (currentSegment.position.y + currentSegment.height);
+    if(segmentsDistants > 4)
+      next = undefined;
+  }
+
+  let prev = currentSection[segmentIndex - 1];
+  if (prev) {
+    let segmentsDistants = currentSegment.position.y - (prev.position.y + prev.height);
+    if(segmentsDistants > 4)
+      prev = undefined;
+  }
 
   const combinedHeight = next
     ? currentSegment.height +
@@ -502,8 +554,8 @@ const removeFasadeSegment = (secIndex, doorIndex, segmentIndex) => {
   else delete tmpSegment.error;
 
   next
-    ? (next.position.y = next.position.y)
-    : (prev.position.y = currentSegment.position.y);
+    ? (next.position.y = currentSegment.position.y)
+    : (prev.position.y = prev.position.y);
 
   for (let i = 0; i < fasades[doorIndex].length; i++) {
     if (i > segmentIndex) fasades[doorIndex][i].id -= 1;
@@ -555,6 +607,19 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
       clone.sections[secIndex].fasades[doorIndex][segmentIndex - 1];
     let nextCell =
       clone.sections[secIndex].fasades[doorIndex][segmentIndex + 1];
+
+    if (nextCell) {
+      let segmentsDistants = nextCell.position.y - (curCell.position.y + curCell.height);
+      if(segmentsDistants > 4)
+        nextCell = undefined;
+    }
+
+    if (prevCell) {
+      let segmentsDistants = curCell.position.y - (prevCell.position.y + prevCell.height);
+      if(segmentsDistants > 4)
+        prevCell = undefined;
+    }
+
     let delta = curCell.height - adjustedValue;
 
     curCell.height = adjustedValue;
@@ -570,10 +635,10 @@ const updateFasadeHeight = (value, secIndex, doorIndex, segmentIndex) => {
 
     if (prevCell) {
       prevCell.height += delta;
-      prevCell.position.y += -delta;
+      curCell.position.y += delta;
     } else if (nextCell) {
       nextCell.height += delta;
-      curCell.position.y += delta;
+      nextCell.position.y += -delta;
     }
 
     let tmpSegment = prevCell || nextCell || {};
@@ -891,6 +956,7 @@ const closeMenu = () => {
             v-for="(door, doorIndex) in module.fasades"
             :key="doorIndex"
             :class="'actions-container'"
+            :id="`fasade_${doorIndex}_${doorIndex}`"
         >
           <div
               class="actions-items--wrapper"
@@ -901,12 +967,16 @@ const closeMenu = () => {
                   v-for="(segment, segmentIndex) in door"
                   :key="segmentIndex"
                   :class="'actions-items--container'"
+                  :id="`fasade_${doorIndex}_${segmentIndex}`"
               >
-                <details class="item-group">
+                <details
+                    class="item-group"
+                    :open="doorIndex === selectedFasade.cell && segmentIndex === selectedFasade.row"
+                >
                   <summary>
                     <h3 class="item-group__title">
                       Сегмент №{{ doorIndex + 1
-                      }}{{ door.length > 1 ? `.${segmentIndex + 1}` : "" }}
+                      }}{{ door.length > 1 ? `.${segment.id/*segmentIndex + 1*/}` : "" }}
                     </h3>
                   </summary>
 
@@ -958,7 +1028,7 @@ const closeMenu = () => {
                         </button>
 
                         <button
-                            v-if="door.length > 1"
+                            v-if="door.length > 1 && checkRemoveFasadeSegment(null, doorIndex, segmentIndex)"
                             class="actions-btn actions-btn--default"
                             @click="
                               removeFasadeSegment(null, doorIndex, segmentIndex)
@@ -1042,6 +1112,7 @@ const closeMenu = () => {
                 v-for="(door, doorIndex) in section.fasades"
                 :key="doorIndex"
                 :class="'actions-container'"
+                :id="`fasade_${secIndex}_${doorIndex}`"
             >
               <div class="actions-header">
                 <button
@@ -1062,12 +1133,16 @@ const closeMenu = () => {
                     v-for="(segment, segmentIndex) in door"
                     :key="segmentIndex"
                     :class="'actions-items--container'"
+                    :id="`fasade_${secIndex}_${doorIndex}_${segmentIndex}`"
                 >
-                  <details class="item-group">
+                  <details
+                      class="item-group"
+                      :open="doorIndex === selectedFasade.cell && segmentIndex === selectedFasade.row"
+                  >
                     <summary>
                       <h3 class="item-group__title">
                         Сегмент №{{ secIndex + 1 }}.{{ doorIndex + 1 }}.{{
-                          segmentIndex + 1
+                          segment.id/*segmentIndex + 1*/
                         }}
                       </h3>
                     </summary>
@@ -1101,6 +1176,7 @@ const closeMenu = () => {
                                     min="150"
                                     class="actions-input"
                                     :value="segment.height"
+                                    :disabled="!checkRemoveFasadeSegment(secIndex,doorIndex,segmentIndex)"
                                     @input="
                                       debounce(
                                         () =>
@@ -1171,7 +1247,7 @@ const closeMenu = () => {
                           </button>
 
                           <button
-                              v-if="door.length > 1"
+                              v-if="door.length > 1 && checkRemoveFasadeSegment(secIndex, doorIndex, segmentIndex)"
                               class="actions-btn actions-btn--default"
                               @click="
                                 removeFasadeSegment(
@@ -1386,7 +1462,9 @@ const closeMenu = () => {
     flex-direction: column;
     padding-right: 0.5rem;
     overflow-y: scroll;
+    overflow-x: hidden;
     max-height: 90vh;
+    scroll-behavior: smooth;
   }
 
   &-footer {
