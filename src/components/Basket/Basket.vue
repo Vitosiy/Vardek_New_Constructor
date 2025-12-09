@@ -54,7 +54,6 @@
           <button class="basket__close" @click="closePopup">Закрыть</button>
           <button class="basket__save">Печать</button>
           <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
-          <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
         </div>
       </div>
     </div>
@@ -70,8 +69,11 @@ import { useBasketStore } from '@/store/appStore/useBasketStore';
 import { computed, onMounted, ref, watch } from 'vue';
 import { IBasketResponse, IProduct } from '@/types/basket';
 import { useAppData } from "@/store/appliction/useAppData"
+import { useConfigStore } from "@/store/appStore/useConfigStore";
 
 const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncInvoce} = useBasketStore();
+const { oldPrice, isFeedbackProject } = useConfigStore();
+
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
 const productDelayData = ref([]);
@@ -80,13 +82,14 @@ const errorBasket = ref(false);
 const errorCount = ref(0);
 const appDataStore = useAppData();
 
-const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
-// const oldPrice = 1;
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 
 const closePopup = () => {
   popupStore.closePopup('basket');
+};
+const openPopupFormBasket = () => {
+  popupStore.openPopup('formbasket');
 };
 
 // Вычисляемые свойства для данных корзины
@@ -108,8 +111,14 @@ const totalOldPrice = computed(() => {
 
 
 const setInvoice = () => {
+
   console.log('basketData', basketData);
-  syncInvoce();
+  if(isFeedbackProject) {
+    closePopup();
+    openPopupFormBasket();
+  } else {
+    syncInvoce();
+  }
 };
 
 // Функция для обновления данных корзины

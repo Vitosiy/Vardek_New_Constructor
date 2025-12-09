@@ -9,7 +9,7 @@
    
     <div class="basket-item__product">
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">
-        {{ item?.product.NAME }} - {{appData?.article[appData?.CATALOG?.PRODUCTS[item?.product.ID]?.DATA_PETROVICH]?.PROPERTIES?.ARTICLE?.VALUE }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
+        {{ item?.product.NAME }} <span v-if="isFeedbackProject">{{getArticleByProductId(item?.product.ID)}}</span> <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
       </h3> 
       <!-- Секция свойств товаров общяя -->
       <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE !== 'umscene'">
@@ -210,6 +210,7 @@ import InfoPopUp from "../popUp/InfoPopUp.vue";
 import { _URL } from "@/types/constants";
 import { propsLabel } from "./helper/basketMapper";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useConfigStore } from "@/store/appStore/useConfigStore";
 
 const API_URL = ref('https://dev.vardek.online');
 
@@ -230,10 +231,10 @@ const props = defineProps<Props>();
 const basketStore = useBasketStore();
 const appDataStore = useAppData();
 const quantity = ref(props.item.product.quantity);
+const { oldPrice, isFeedbackProject, getArticleByProductId } = useConfigStore();
 
 // Получаем данные из store
 const appData = computed(() => appDataStore.getAppData);
-const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
 
 const openPopup = async (item) => {
   try {
