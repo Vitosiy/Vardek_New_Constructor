@@ -343,6 +343,8 @@ export class BuildProduct extends BuildersHelper {
                 SIZE_EDIT_STEP_HEIGHT: null,
                 SIZE_EDIT_STEP_DEPTH: null,
                 SIZE_EDIT_STEP_WIDTH: null,
+                SIZE_EDIT_JOINDEPTH_MIN: null,
+                SIZE_EDIT_JOINDEPTH_MAX: null
             },
             SHOWCASE: [],
             SHELFQUANT: {
@@ -413,7 +415,7 @@ export class BuildProduct extends BuildersHelper {
         }
 
         if (loadedProps) {
-            console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
+            // console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
         }
 
 
@@ -429,7 +431,7 @@ export class BuildProduct extends BuildersHelper {
     public createProductBody(
         parentGroup: THREE.Object3D,
         size?: { width: number; height: number; depth: number } | null,
-        fisadeSize?: boolean = false
+        resize?: boolean = false
     ) {
         // Режим чертежа
         const drowMode = this.menuStore.getDrowModeValue
@@ -456,11 +458,11 @@ export class BuildProduct extends BuildersHelper {
 
         let shelf = null
 
-        if (size && !fisadeSize) {
+        if (size && !resize) {
             // PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, size);
             PROPS.CONFIG.SIZE = size;
         }
-        if (size && fisadeSize) {
+        if (size && resize) {
             PROPS.CONFIG.SIZE = this.getProductSize(CONFIG, size);
         }
         /** @Раскоментировать_по_необходимости   */

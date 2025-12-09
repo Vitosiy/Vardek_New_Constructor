@@ -66,11 +66,11 @@ export const useFigureRightPage = () => {
         const { PRODUCTS } = CATALOG
         const { PROPS } = modelState.getCurrentModel.userData;
         const { PRODUCT } = PROPS
-        const { FASADE_PROPS, FASADE_TYPE } = PROPS.CONFIG
+        const { FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE } = PROPS.CONFIG
         const tempList: IFigureFasade[] = []
 
         for (const el in FASADE_PROPS) {
-            const disabled = FASADE_TYPE[el] == null
+            const disabled = FASADE_POSITIONS[el].FASADE_TYPE[0] == null
             // if (FASADE_TYPE[el] == null) continue
 
             const { COLOR } = FASADE_PROPS[el]

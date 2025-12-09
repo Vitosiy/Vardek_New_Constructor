@@ -63,7 +63,7 @@ export class BuildersHelper extends GlobalsData {
                 PARAMS.HORIZONT ?? 78;
 
         const filling = this._FILLING[product.FILLING[0]] || {};
-        const { FASADE_PROPS } = PARAMS
+        const { FASADE_PROPS, SIZEEDITJOINDEPTH } = PARAMS
 
         // Базовые подстановки
         const expressions: Record<string, any> = {
@@ -79,7 +79,7 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_MDEPTH#": productData.depth,
             "#MODUL_DEPTH#": productData.depth,
             "#Z#": productData.depth,
-            "#SIZEEDITJOINDEPTH#": productData.SIZE_EDIT_JOINDEPTH_MIN,
+            "#SIZEEDITJOINDEPTH#": SIZEEDITJOINDEPTH ?? productData.SIZE_EDIT_JOINDEPTH_MIN,
             "#MATERIAL_THICKNESS#": materialThickness,
             "#HORIZONT#": horizont,
             "#VSECTION_MAX#": filling.VSECTION_MAX,
@@ -529,9 +529,6 @@ export class BuildersHelper extends GlobalsData {
 
         })
 
-
-        console.log(result, 'result')
-
         // .filter(el => el.ID !== 98683);
         return result
 
@@ -611,8 +608,6 @@ export class BuildersHelper extends GlobalsData {
     }
 
     mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
-
-        console.log('=========  mergeArrays ==========')
 
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);

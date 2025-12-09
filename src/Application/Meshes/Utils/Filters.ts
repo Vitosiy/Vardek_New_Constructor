@@ -94,7 +94,6 @@ export class Filters extends GlobalsData {
 
                 let fasade = this._FASADE_POSITION[value]
 
-                console.log(fasade, '=== FILL ===')
                 if (fasade.filling.length && fasade.filling[0]) {
                     if (fasade.filling.includes(FILLING))
                         return value
@@ -108,9 +107,11 @@ export class Filters extends GlobalsData {
 
             const curFasade = fasade.ID ? fasade.ID : fasade
             const fasadePosition = this._FASADE_POSITION[curFasade]
+            const fasadePositionType = fasadePosition.fasade_type
             let handlerPosition = null
 
-            const fasTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+            const prodTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+            const fasTypeData = this._FASADETYPE[fasadePositionType[0]]
 
             const handleInDorPosition = () => {
 
@@ -259,7 +260,7 @@ export class Filters extends GlobalsData {
         const profileExept = 251698 // - U-угол: дефолтное  значение 
         const getFilteredData = (data, profile = false) => {
             const filtered = data.filter(el => this._USLUGI[el])
-            
+
             return filtered.reduce((acc, el) => {
                 const visible = this._USLUGI[el].ID != 98683 // ID Услуги распил
                 let value = profile && el === profileExept
@@ -285,7 +286,7 @@ export class Filters extends GlobalsData {
         const result = curOptionsList.map(el => {
 
             const groupName = el.GROUP ?? ''
-            return { id: el.ID, active: false, group: groupName, section:el.IBLOCK_SECTION_ID?.[0], close: el.CLOSE_OTHER_OPTIONS, visible: true }
+            return { id: el.ID, active: false, group: groupName, section: el.IBLOCK_SECTION_ID?.[0], close: el.CLOSE_OTHER_OPTIONS, visible: true }
         })
 
         return result

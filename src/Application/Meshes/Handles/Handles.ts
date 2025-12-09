@@ -52,6 +52,8 @@ export class HandlesBuilder {
     public async createHandle(params: TCreateHandleParams, fasade: THREE.Object3D, fasadeData: TFasadeProp): Promise<THREE.Object3D | null> {
         const { id, model } = params;
 
+        // console.log(fasadeData.HANDLES)
+
         const startAction = fasadeData.HANDLES.position ?? 4
         const handleData: TModelData = this.parent._MODELS[model]
         const { file, scale } = handleData
@@ -166,7 +168,7 @@ export class HandlesBuilder {
     }
 
     public async deliteHandle(fasade: THREE.Object3D) {
-        if(!fasade) return
+        if (!fasade) return
         fasade.traverse(children => {
             if (children.name === 'HANDLE') {
                 this.dispose.clearObject(children, this.scene)

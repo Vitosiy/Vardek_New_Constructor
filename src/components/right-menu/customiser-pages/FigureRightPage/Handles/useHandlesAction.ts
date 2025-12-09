@@ -12,12 +12,12 @@ const useHandlesAction = () => {
     const modelState = useModelState()
     const eventBus = useEventBus()
 
-    const getControllerData = () => {
+    const getControllerData = (fasadeNdx:number) => {
         let result = [];
         const model = modelState.getCurrentModel;
 
-        const { FASADE_TYPE, ELEMENT_TYPE } = model?.userData.PROPS.CONFIG;
-        const prepare = FASADE_TYPE.map((el: number) => modelState._FASADE_TYPE[el]).filter(
+        const { FASADE_TYPE, FASADE_POSITIONS, ELEMENT_TYPE } = model?.userData.PROPS.CONFIG;
+        const prepare = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE.map((el: number) => modelState._FASADE_TYPE[el]).filter(
             Boolean
         );
 
@@ -59,16 +59,12 @@ const useHandlesAction = () => {
         else if (type === "milling") id = curMillinType;
         else id = 0
 
-        console.log(id, 'FASADE_PROPS')
-
         const textList = typeList.map((el, ndx) => {
 
             if (!curType && !curMillinType && ndx == 0) id = el.ID
 
             return { action: el.CODE, id: el.ID, active: el.ID === id }
         });
-
-        console.log(textList)
 
         return textList
     }
@@ -107,8 +103,6 @@ const useHandlesAction = () => {
 
             return result;
         }
-
-        console.log(data, 'getDataType');
 
         return data
     };

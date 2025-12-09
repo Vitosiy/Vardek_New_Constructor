@@ -38,7 +38,7 @@ export class ShowcaseBuilder extends MillingBuilder {
         if (curFasadeData) {
             const haveHandle = this._FASADE[curFasadeData.COLOR].TYPE_HANDLE
 
-            console.log(haveHandle, action, '==== ❌ haveHandle ❌ ====')
+            // console.log(haveHandle, action, '==== ❌ haveHandle ❌ ====')
 
             if (typeof haveHandle == 'string' && typeof action === 'number') {
                 this.createHeandless({

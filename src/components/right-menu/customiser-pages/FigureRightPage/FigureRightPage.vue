@@ -63,7 +63,9 @@ const filteredFigure = computed(() => {
 
 <template>
   <div class="figure">
-    <h3 v-if="prepareTabData.length ==0">У выбранной компановки фсады отсутствуют</h3>
+    <h3 v-if="prepareTabData.length == 0">
+      У выбранной компановки фсады отсутствуют
+    </h3>
     <defaultTab :tabs="prepareTabData" @tab-change="optionsTabChange" />
     <Handles :data="filteredFigure" v-if="currentFigure == 'Handles'" />
     <Plinth :data="filteredFigure" v-if="currentFigure == 'Plinth'" />
