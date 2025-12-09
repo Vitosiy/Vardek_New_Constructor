@@ -61,10 +61,11 @@
                   id="client_phone"
                   name="client_phone"
                   placeholder="+7 (___) ___-____"
-                  v-mask="'#(###) ###-####'"
+                  v-mask="'+7 (###) ###-####'"
                   required
                 />
               </div>
+
 
               <!-- Комментарий -->
               <div class="form-field">
@@ -125,6 +126,8 @@ import { useProjectAPI } from '@/features/quickActions/project/composables/usePr
 import { useSceneState } from '@/store/appliction/useSceneState'
 import { useConfigStore } from '@/store/appStore/useConfigStore'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
+
+// import { InputPhone } from '@/components/ui/inputs/InputPhone.vue'
 
 const { getProjectScreenshot } = useProjectAPI();
 const { creatDataBasket } = useBasketStore();
