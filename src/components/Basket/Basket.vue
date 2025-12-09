@@ -54,6 +54,7 @@
           <button class="basket__close" @click="closePopup">Закрыть</button>
           <button class="basket__save">Печать</button>
           <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
+          <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
         </div>
       </div>
     </div>

@@ -134,7 +134,7 @@ const closeInfoPopup = () => {
             class="popup-items__image"
           />
         </div>
-        <p class="popup-items__title">{{ item.NAME }}</p>
+        <p class="popup-items__title">{{ item.NAME }} <span v-if='getAppData.SETTINGS.type.VALUE_XML_ID === "feadback_project"'> - {{ getAppData?.article[getAppData?.CATALOG?.PRODUCTS[item?.ID]?.DATA_PETROVICH]?.PROPERTIES?.ARTICLE?.VALUE }}</span></p>
       </div>
     </div>
     <div v-else class="options-popup-isempty">

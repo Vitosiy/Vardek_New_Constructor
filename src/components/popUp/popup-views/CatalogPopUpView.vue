@@ -98,8 +98,12 @@
               >
             </div>
             <div class="product-item__wrapper">
-              <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">{{ product.NAME }}</h4>
-              <div class="product-item__price">{{ product.PRICE }}</div>
+              <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">
+                {{ product.NAME }}
+                <!-- {{ appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH }} -->
+                <span>- {{appData.appData?.article[appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH]?.PROPERTIES?.ARTICLE?.VALUE }} </span>
+              </h4>
+              <!-- <div class="product-item__price">{{ product.PRICE }}</div> -->
               <button class="product-item__basket"  @click="callChildMethod(Number(product.ID))" >В корзину</button>
               <!-- <button class="product-item__basket" @click="handleProductClick(Number(product.ID))">В корзину</button> -->
             </div>
