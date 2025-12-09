@@ -18,7 +18,6 @@ const {
   setTransformControlsName
 } = useTransformController();
 
-// === Локальное состояние (полностью независимо от родителя) ===
 const transformControlsValue = ref<boolean>(false);
 const curControllerValue = ref<string>("Позиционирование");
 const curAngleParam = ref<number>(1);
@@ -59,9 +58,9 @@ const toggleTransformMode = (value: boolean) => {
   setTransformControlsValue(value);
 };
 
-// === Синхронизация с глобальным состоянием при монтировании и изменениях ===
+
 onMounted(() => {
-  // Подтягиваем текущее значение из стора, если компонент монтируется позже
+
   transformControlsValue.value = getTransformControlsValue ?? false;
   curAngleParam.value = getControlSnapAngle;
   curControllerValue.value = getTransformControlsName
@@ -80,7 +79,7 @@ onMounted(() => {
 
 <template>
   <div class="switch__wrapper">
-    <!-- Заголовок текущего режима (когда toggle выключен) -->
+
     <transition name="controller-toggle">
       <p v-if="!transformControlsValue" class="switch__title">
         {{ curControllerValue }}
@@ -143,7 +142,6 @@ onMounted(() => {
       </transition>
     </div>
 
-    <!-- Сам переключатель -->
     <div class="switch__container">
       <Toggle
         :model-value="transformControlsValue"
