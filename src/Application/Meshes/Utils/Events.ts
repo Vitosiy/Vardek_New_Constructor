@@ -1036,7 +1036,7 @@ export class MeshEvents extends BuildersHelper {
     async changeModelSize({ data, mesh, type }: TResizeModel) {
 
 
-        const extrasYsize = [2050360, 1059832]
+        const extrasYsize = [2050360, 1059832, 971222, 3140746]
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return
@@ -1053,7 +1053,6 @@ export class MeshEvents extends BuildersHelper {
 
             return
         }
-
 
         const { PROPS } = currentMesh!.userData
         const { CONFIG, PRODUCT } = PROPS

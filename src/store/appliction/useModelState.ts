@@ -124,6 +124,9 @@ export const useModelState = defineStore('ModelState', () => {
     const currentPatinaData = ref<number[]>([])
 
     const transformControls = ref<boolean>(false)
+    const transformControlsName = ref<string>("Позиционирование")
+    const transformControlSnapAngles = ref<number[]>([1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]);
+    const currentControlSnapAngle = ref<number>(1)
 
     const setCurrentModel = (object: THREE.Object3D | any) => {
 
@@ -611,6 +614,7 @@ export const useModelState = defineStore('ModelState', () => {
         return currentGlassData.value
     })
 
+
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
@@ -654,18 +658,6 @@ export const useModelState = defineStore('ModelState', () => {
 
     }
 
-    /** @Контроллер */
-    const setTransformControlsValue = (value) => {
-        transformControls.value = value
-    }
-
-    const turnOffTransformControlsValue = () => {
-        transformControls.value = false
-    }
-
-    const getTransformControlsValue = computed(() => {
-        return transformControls.value
-    })
 
     //================== helpers ==================
 
@@ -771,8 +763,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         getOptions,
 
-        setTransformControlsValue,
-        getTransformControlsValue,
 
         /** Helpers */
         expressionsReplace,

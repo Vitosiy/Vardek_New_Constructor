@@ -26,6 +26,7 @@ import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
 import { useBascetEvents } from "@/components/Basket/helper/basketEvents";
+import { useTransformController } from "@/components/ui/transformController/useTransformController";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -45,6 +46,7 @@ import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dcons
 import Toggle from "@vueform/toggle";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import TransformController from "@/components/ui/transformController/TransformController.vue";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -55,6 +57,7 @@ const roomState = useRoomState();
 const eventBus = useEventBus();
 const modelState = useModelState();
 const uniformState = useUniformState();
+const { setTransformControlsValue } = useTransformController();
 const { testConnect, checkLoadContent, scheduleBasketSync } = useBascetEvents();
 
 const screenshotsStore = useScreenshotsStore();
@@ -199,7 +202,7 @@ onBeforeUnmount(() => {
     objectData.value = null;
     roomContantData.value = null;
     transformControlsValue.value = false;
-    modelState.setTransformControlsValue(false);
+    setTransformControlsValue(false);
 
     // Уничтожаем приложение
     if (VerdekConstructor.value) {
@@ -226,30 +229,39 @@ const setLocalActivateValue = () => {
   transformControlsValue.value = false;
 };
 
-const controlsActivate = () => {
-  const curModel = modelState.getCurrentModel;
-
-  if (transformControlsValue.value) {
-    eventBus.emit("A:TransformMode_On");
-  } else {
-    eventBus.emit("A:TransformMode_Off");
-    try {
-      if (product.value?.userData.MOUSE_POSITION) {
-        controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
-      }
-    } catch (e) {
-      console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
+const controlsActivate = (value) => {
+  console.log(value, "value");
+  transformControlsValue.value = value;
+  try {
+    if (product.value?.userData.MOUSE_POSITION) {
+      controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
     }
+  } catch (e) {
+    console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
   }
+  // const curModel = modelState.getCurrentModel;
 
-  modelState.setTransformControlsValue(transformControlsValue.value);
+  // if (transformControlsValue.value) {
+  //   eventBus.emit("A:TransformMode_On");
+  // } else {
+  //   eventBus.emit("A:TransformMode_Off");
+  //   try {
+  //     if (product.value?.userData.MOUSE_POSITION) {
+  //       controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+  //     }
+  //   } catch (e) {
+  //     console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
+  //   }
+  // }
+
+  // modelState.setTransformControlsValue(transformControlsValue.value);
 };
 
-const changeControllerType = (data) => {
-  const mode = data.type;
-  curControllerValue.value = data.name;
-  eventBus.emit("A:TransformSetMode", mode);
-};
+// const changeControllerType = (data) => {
+//   const mode = data.type;
+//   curControllerValue.value = data.name;
+//   eventBus.emit("A:TransformSetMode", mode);
+// };
 
 const selected = async (item: any) => {
   if (!item || !item.object) {
@@ -699,12 +711,12 @@ watch(
   }
 );
 
-watch(
-  () => transformControlsValue.value,
-  () => {
-    controlsActivate();
-  }
-);
+// watch(
+//   () => transformControlsValue.value,
+//   () => {
+//     controlsActivate();
+//   }
+// );
 </script>
 
 <template>
@@ -815,14 +827,21 @@ watch(
     </div>
   </div>
   <transition name="controller-toggle">
-    <div
+    <!-- <div
       class="switch__wrapper"
       v-if="
         modelState.getCurrentModel &&
         !uniformState.getUniformModeData.uniformMode
       "
-    >
-      <transition name="controller-toggle">
+    > -->
+    <TransformController
+      v-if="
+        modelState.getCurrentModel &&
+        !uniformState.getUniformModeData.uniformMode
+      "
+      @TransformMode="controlsActivate"
+    />
+    <!-- <transition name="controller-toggle">
         <p class="switch__title" v-if="!transformControlsValue">
           {{ curControllerValue }}
         </p>
@@ -857,8 +876,8 @@ watch(
 
       <div class="switch__container">
         <Toggle v-model="transformControlsValue" />
-      </div>
-    </div>
+      </div> -->
+    <!-- </div> -->
   </transition>
 </template>
 

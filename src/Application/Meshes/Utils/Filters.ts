@@ -94,7 +94,6 @@ export class Filters extends GlobalsData {
 
                 let fasade = this._FASADE_POSITION[value]
 
-                console.log(fasade, '=== FILL ===')
                 if (fasade.filling.length && fasade.filling[0]) {
                     if (fasade.filling.includes(FILLING))
                         return value
@@ -111,14 +110,16 @@ export class Filters extends GlobalsData {
             const fasadePositionType = fasadePosition.fasade_type
             let handlerPosition = null
 
-            // const fasTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+            const prodTypeData = this._FASADETYPE[params.FASADE_TYPE[key]]
+            console.log(prodTypeData, 'prodTypeData')
+
             const fasTypeData = this._FASADETYPE[fasadePositionType[0]]
 
             const handleInDorPosition = () => {
 
                 if (!ELEMENT_TYPE && product.fasade_type.length > 1 && MODEL.length == 1) return 0
 
-                if (sortFasadePositionList.length < 2 || fasadePositionType.includes(null)) {
+                if (sortFasadePositionList.length < 2 || params.FASADE_TYPE.includes(null)) {
                     return FasadeTextAlignAction[fasTypeData.CODE]
                 }
 

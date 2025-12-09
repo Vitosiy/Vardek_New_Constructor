@@ -152,7 +152,9 @@ const prepareData = () => {
       extensions,
       sort: modelState._FILLING[el].SORT,
     };
-  }).sort((a, b) => a.SORT - b.SORT);
+  }).sort((a, b) => a.sort - b.sort);
+
+  console.log(fillingList.value, 'fillingList.value')
 
   shelfCount.value = SHELFQUANT;
   joinDepthResizeData.value.width = SIZEEDITJOINDEPTH;
@@ -196,7 +198,10 @@ const resizeModel = (value: object) => {
       (el) => el.active && el.extensions
     );
     if (!curFilling) {
-      updateFillingModel(fillingList.value[0].id);
+
+      console.log('GGGG')
+
+      updateFillingModel(fillingList.value[0]);
       fillingList.value[0].active = true;
     }
   }

@@ -54,7 +54,20 @@ onBeforeMount(() => {
   const { FASADE_TYPE, FASADE_POSITIONS } = model?.userData.PROPS.CONFIG;
 
   const filtered = FASADE_TYPE.filter((el) => el !== null);
-  const index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
+  let index;
+
+  if (
+    FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null) == -1
+  ) {
+    const tempIndex = FASADE_TYPE.findIndex((item) => item !== null);
+    index = FASADE_TYPE.findIndex((item) => item !== null);
+    console.log(FASADE_POSITIONS[tempIndex], index)
+
+  } else {
+    index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
+  }
+
+  console.log(index, props.data,"=== index ===");
 
   const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
@@ -67,7 +80,7 @@ onBeforeMount(() => {
   getCurrendHendleData(figureFasad.value.props);
   handlePos.value = getControllerData(index);
 
-  console.log(handlePos.value, 'handlePos.value')
+  console.log(handlePos.value, "handlePos.value");
 
   controllerVisible.value = checkControllerVisible.value;
 });
@@ -91,9 +104,8 @@ const getCurrendHendleData = (prop) => {
 const onHandleSelect = (data) => {
   figureFasad.value.data = data;
   controllerVisible.value =
-    figureFasad.value.props.HANDLES.drawer === null &&
-    data.ID !== clearId
-    // handlePos.value.length > 1;
+    figureFasad.value.props.HANDLES.drawer === null && data.ID !== clearId;
+  // handlePos.value.length > 1;
 
   eventBus.emit("A:AddHandle", {
     data: { id: data.ID, model: data.models },
@@ -122,7 +134,7 @@ const onDeleteHandle = () => {
 const checkControllerVisible = computed(() => {
   return (
     figureFasad.value.props.HANDLES.id !== clearId &&
-    figureFasad.value.props.HANDLES.drawer === null 
+    figureFasad.value.props.HANDLES.drawer === null
     // handlePos.value.length > 1
   );
 });
