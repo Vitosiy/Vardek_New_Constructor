@@ -1,10 +1,9 @@
 <!-- src/components/ui/transform/TransformModeSwitcher.vue -->
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import Toggle from "@vueform/toggle";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 
-import { useModelState } from "@/store/appliction/useModelState";
 import { useTransformController } from "./useTransformController";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
