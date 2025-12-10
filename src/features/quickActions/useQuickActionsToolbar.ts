@@ -106,6 +106,7 @@ export const useQuickActionsToolbar = () => {
       if (result.success) {
         if (projectState.currentProjectId) {
           // Обновляем существующий проект
+          console.log(result.data.kp)
           projectState.updateAfterSave();
         } else {
           // Создаем новый проект
@@ -118,16 +119,16 @@ export const useQuickActionsToolbar = () => {
         if (onSuccess) {
           onSuccess();
         }
-        return true;
+        return { success: true, kp: result.data.kp || null };
       } else {
         console.error("❌ Ошибка сохранения:", result.error);
         toaster.error("Ошибка сохранения проекта");
-        return false;
+        return { success: false, kp: null };
       }
     } catch (error) {
       console.error("❌ Исключение при сохранении:", error);
       toaster.error("Ошибка сохранения проекта");
-      return false;
+      return { success: false, kp: null };
     } finally {
       projectState.isSaving = false;
     }
