@@ -65,16 +65,21 @@
         </InputDialog>
       </template>
     </Modal>
-    <Modal ref="kpDialogRef">
-      <template #modalBody="{ onModalClose }">
-        <div class="kp-modal">
-          <p><strong>Ссылка:</strong> {{ kpData?.link }}</p>
-          <p><strong>Текст:</strong> {{ kpData?.text }}</p>
-
-          <MainButton @click="onModalClose">Закрыть</MainButton>
-        </div>
-      </template>
-    </Modal>
+      
+      <Modal ref="kpDialogRef">
+        <template #modalBody="{ onModalClose }">
+          <Notification 
+            :label="'Коммерческое предложение'"
+            :description="kpData?.text"
+            :link="kpData?.link"
+            @cancel="onModalClose"
+          >
+          <template #cancelButton>
+            <MainButton @click="onModalClose">Закрыть</MainButton>
+          </template>
+          </Notification>
+        </template>
+      </Modal>
   </div>
   <GenericLoader v-show="projectStore.isSaving" />
 </template>
@@ -87,6 +92,8 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import InputDialog from "@/components/ui/inputs/InputDialog.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import Notification from "@/components/ui/inputs/Notification.vue";
+
 import { useQuickActionsToolbar } from "./useQuickActionsToolbar";
 import { useRoute } from "vue-router";
 import { useSceneState } from "@/store/appliction/useSceneState";
