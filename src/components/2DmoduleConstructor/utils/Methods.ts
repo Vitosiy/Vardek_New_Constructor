@@ -57,7 +57,7 @@ class Helpers {
     step: number = 1
 
     constructor() {
-        this.maxAreaHeight = UI_PARAMS.TOTAL_HEIGHT * CONST_MAX_AREA_WIDTH / UI_PARAMS.TOTAL_LENGTH
+        this.maxAreaHeight = UI_PARAMS.TOTAL_HEIGHT * CONST_MAX_AREA_HEIGHT / UI_PARAMS.TOTAL_LENGTH
     }
 
     setStep(value: number) {
@@ -117,11 +117,13 @@ class Helpers {
         let minY = Infinity;
 
         for (const shape of shapes) {
-            const bounds = shape.graphic.getBounds();
-            maxX = Math.max(maxX, bounds.maxX);
-            maxY = Math.max(maxY, bounds.maxY);
-            minX = Math.min(minX, bounds.minX);
-            minY = Math.min(minY, bounds.minY);
+            if(!shape.data.isVerticalItem) {
+                const bounds = shape.graphic.getBounds();
+                maxX = Math.max(maxX, bounds.maxX);
+                maxY = Math.max(maxY, bounds.maxY);
+                minX = Math.min(minX, bounds.minX);
+                minY = Math.min(minY, bounds.minY);
+            }
         }
 
         return {maxX, maxY, minX, minY};
@@ -487,6 +489,14 @@ class Shape extends Helpers {
 
         this.type = type;
         this.sectorBounds = this.getSectorBounds(sector);
+
+        let tmpSectorBounds = {
+            width: this.getMmWidth(this.sectorBounds.width),
+            height: this.getMmHeight(this.sectorBounds.height),
+            x: this.getMmWidth(this.sectorBounds.x),
+            y: this.getMmHeight(this.sectorBounds.y),
+        }
+
         this.graphic = new Graphics();
         this.highlightGraphics = new Graphics();
         this.shapes = sector.shapes
@@ -881,6 +891,21 @@ class Shape extends Helpers {
         distances.left = this.graphic.position.x - this.sectorBounds.x;
         distances.right = this.sectorBounds.x + this.sectorBounds.width - (this.graphic.position.x + this.width);
         distances.top = this.graphic.position.y - this.sectorBounds.y;
+
+        let tmpSectorBounds = {
+            width: this.getMmWidth(this.sectorBounds.width),
+            height: this.getMmHeight(this.sectorBounds.height),
+            x: this.getMmWidth(this.sectorBounds.x),
+            y: this.getMmHeight(this.sectorBounds.y),
+        }
+        let tmpThis = {
+            width: this.getMmWidth(this.width),
+            height: this.getMmHeight(this.height),
+            x: this.getMmWidth(this.graphic.position.x),
+            y: this.getMmHeight(this.graphic.position.y),
+        }
+
+
         distances.bottom = this.sectorBounds.y + this.sectorBounds.height - (this.graphic.position.y + this.height);
 
         // Отрисовка для левой границы
@@ -1263,23 +1288,23 @@ class ShapeAdjuster extends Helpers {
             this.getPixelHeight = getPixelHeight
     }
 
-    createColumnBounds(sections, colNdx) {
+    createColumnBounds(list) {
 
-        const totalCol = sections.filter(el => el.colNdx == colNdx)
+        const colBounds = list.reduce((acc: TExtremum, cur: TExtremum) => {
 
-        const colBounds = totalCol.reduce((acc: TExtremum, cur: TExtremum) => {
+            let bound = cur.shapesBond || cur.sector?.bound || cur.bound
+            if (bound) {
+                acc.maxX = Math.max(acc.maxX, bound.maxX)
 
-            if (cur.bound) {
-                acc.maxX = Math.max(acc.maxX, cur.bound.maxX)
-
-                if (cur.bound.minX > 0) {
-                    acc.minX = Math.min(acc.minX, cur.bound.minX);
+                if (bound.minX > 0) {
+                    acc.minX = Math.min(acc.minX, bound.minX);
                 }
 
-                acc.maxY = Math.max(acc.maxY, cur.bound.maxY)
-                acc.minY = acc.minY <= 0 ? cur.bound.minY : Math.min(acc.minY, cur.bound.minY)
-                return acc
+                acc.maxY = Math.max(acc.maxY, bound.maxY)
+                acc.minY = acc.minY <= 0 ? bound.minY : bound.minY <= 0 ? Math.max(acc.minY, bound.minY) : Math.min(acc.minY, bound.minY)
             }
+
+            return acc
 
         }, {maxX: -Infinity, maxY: -Infinity, minX: Infinity, minY: Infinity})
 

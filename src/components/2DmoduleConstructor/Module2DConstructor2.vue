@@ -302,7 +302,7 @@ const updateFilling = (value, currentfilling, type, render = false) => {
 
   const pixiSector = current.sector;
 
-  const check = shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData);
+  const check = pixiSector ? shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData) : true;
 
   if (check && (newValue < MAX_SECTION_WIDTH || newValue > MIN_SECTION_WIDTH)) {
     delete currentfilling.error
@@ -311,6 +311,12 @@ const updateFilling = (value, currentfilling, type, render = false) => {
     if(type === "width") {
       currentfilling.size.x = newValue
       currentfilling.position.x = current.position.x - newValue / 2;
+    }
+    if(type === "height") {
+      currentfilling.size.y = newValue
+      currentfilling.position.y = current.position.y;
+      currentfilling.distances.bottom = 0;
+      currentfilling.distances.top = 0;
     }
 
   } else {
@@ -1131,9 +1137,9 @@ const reset = (reset = false) => {
 
       let lastCellHeight = newSection.height
 
-      newSection.cells.reverse()
-      for (let i = 0; i < newSection.cells.length; i++) {
-        let newCell = <GridCell>{...newSection.cells[i], position: new THREE.Vector2(newSection.cells[i].position.x, newSection.cells[i].position.y)}
+      let tmpCells = newSection.cells.slice().reverse()
+      for (let i = 0; i < tmpCells.length; i++) {
+        let newCell = <GridCell>{...tmpCells[i], position: new THREE.Vector2(tmpCells[i].position.x, tmpCells[i].position.y)}
 
         newCell.width = newSection.width;
         newCell.position.copy(positionCells.clone())
@@ -1144,7 +1150,7 @@ const reset = (reset = false) => {
 
         lastCellHeight -= newCell.height
 
-        if (i === newSection.cells.length - 1 || lastCellHeight <= 0) {
+        if (i === tmpCells.length - 1 || lastCellHeight <= 0) {
           newCell.height += lastCellHeight
 
           if(newCell.height < MIN_SECTION_HEIGHT){
@@ -1170,11 +1176,17 @@ const reset = (reset = false) => {
             if (newRow.fillings?.length) {
               newRow.fillings = <FillingObject>[...newRow.fillings]
               newRow.fillings.forEach((filling, index) => {
-                if(filling.isProfile) {
-                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                if(filling.isVerticalItem){
+                  updateFilling(newRow.height, filling, 'height')
                 }
-                else
-                  updateFilling(newRow.width, filling, 'width')
+                else {
+                  if(filling.isProfile) {
+                    updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                  }
+                  else
+                    updateFilling(newRow.width, filling, 'width')
+                }
+
               })
             }
 
@@ -1195,11 +1207,16 @@ const reset = (reset = false) => {
                 if (newExtra.fillings?.length) {
                   newExtra.fillings = <FillingObject>[...newExtra.fillings]
                   newExtra.fillings.forEach((filling, index) => {
-                    if(filling.isProfile) {
-                      updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                    if(filling.isVerticalItem) {
+                      updateFilling(newExtra.height, filling, 'height')
                     }
-                    else
-                      updateFilling(newExtra.width, filling, 'width')
+                    else {
+                      if(filling.isProfile) {
+                        updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                      }
+                      else
+                        updateFilling(newExtra.width, filling, 'width')
+                    }
                   })
                 }
 
@@ -1226,11 +1243,15 @@ const reset = (reset = false) => {
             if (lastRow.fillings?.length) {
               lastRow.fillings = <FillingObject>[...lastRow.fillings]
               lastRow.fillings.forEach((filling, index) => {
-                if(filling.isProfile) {
-                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                if(filling.isVerticalItem) {
+                  updateFilling(lastRow.height, filling, 'height')
                 }
-                else
-                  updateFilling(lastRow.width, filling, 'width')
+                else {
+                  if (filling.isProfile) {
+                    updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                  } else
+                    updateFilling(lastRow.width, filling, 'width')
+                }
               })
             }
           }
@@ -1243,11 +1264,15 @@ const reset = (reset = false) => {
         if (newCell.fillings?.length) {
           newCell.fillings = <FillingObject>[...newCell.fillings]
           newCell.fillings.forEach((filling, index) => {
-            if(filling.isProfile) {
-              updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+            if(filling.isVerticalItem) {
+              updateFilling(newCell.height, filling, 'height')
             }
-            else
-              updateFilling(newCell.width, filling, 'width')
+            else {
+              if (filling.isProfile) {
+                updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+              } else
+                updateFilling(newCell.width, filling, 'width')
+            }
           })
         }
 
@@ -1262,11 +1287,15 @@ const reset = (reset = false) => {
     if (newSection.fillings?.length) {
       newSection.fillings = <FillingObject>[...newSection.fillings]
       newSection.fillings.forEach((filling, index) => {
-        if(filling.isProfile) {
-          updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+        if(filling.isVerticalItem) {
+          updateFilling(newSection.height, filling, 'height')
         }
-        else
-          updateFilling(newSection.width, filling, 'width')
+        else {
+          if (filling.isProfile) {
+            updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+          } else
+            updateFilling(newSection.width, filling, 'width')
+        }
       })
     }
 

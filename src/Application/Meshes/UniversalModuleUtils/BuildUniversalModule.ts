@@ -645,7 +645,7 @@ export class BuildUniversalModule extends BuildProduct {
                     let productFilling
                     if (data.DAE) {
                         console.log(data.DAE, 'DAE')
-                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID } }, sizeRulers: false })
+                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID || data.id, SIZE: filling_size} }, sizeRulers: false })
                     } else {
                         productFilling = this.createSubProductObject(filling, data, PROPS)
                         onLoad(productFilling, false)

@@ -431,18 +431,28 @@ const updateSectionWidth = (value, secIndex) => {
 
               if(extra.fillings?.length) {
                 extra.fillings.forEach((filling) => {
-                  filling.width = extra.width;
-                  filling.size.x = extra.width;
-                  filling.position.x += divideDeltaPos1
+                  if(filling.isVerticalItem) {
+                    filling.position.x += divideDeltaPos1;
+                  }
+                  {
+                    filling.width = extra.width;
+                    filling.size.x = filling.width;
+                    filling.position.x += item.position.x - item.width / 2;
+                  }
                 })
               }
             })
 
             if(item.fillings?.length) {
               item.fillings.forEach((filling) => {
-                filling.width = item.width;
-                filling.size.x = filling.width;
-                filling.position.x += divideDeltaPos1
+                if(filling.isVerticalItem) {
+                  filling.position.x += divideDeltaPos1;
+                }
+                else {
+                  filling.width = item.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = item.position.x - item.width / 2;
+                }
               })
             }
           }
@@ -457,9 +467,32 @@ const updateSectionWidth = (value, secIndex) => {
         if(lastRow.width + (adjustedValue - extraSize) >= MIN_SECTION_WIDTH) {
           lastRow.width += (adjustedValue - extraSize)
           lastRow.position.x += (adjustedValue - extraSize) / 2
+
+          lastRow.fillings?.forEach((filling) => {
+            if(filling.isVerticalItem) {
+              filling.position.x += (adjustedValue - extraSize) / 2;
+            }
+            else {
+              filling.width = lastRow.width;
+              filling.size.x = filling.width;
+              filling.position.x = lastRow.position.x - lastRow.width / 2;
+            }
+          })
+
           lastRow.extras?.forEach(extra => {
             extra.width = lastRow.width
             extra.position.x = lastRow.position.x
+
+            extra.fillings?.forEach((filling) => {
+              if(filling.isVerticalItem) {
+                filling.position.x += (adjustedValue - extraSize) / 2;
+              }
+              else {
+                filling.width = extra.width;
+                filling.size.x = filling.width;
+                filling.position.x = extra.position.x - extra.width / 2;
+              }
+            })
           })
         }
         else {
@@ -470,9 +503,32 @@ const updateSectionWidth = (value, secIndex) => {
           if(lastRow) {
             lastRow.width += (adjustedValue - extraSize)
             lastRow.position.x += (adjustedValue - extraSize) / 2
+
+            lastRow.fillings?.forEach((filling) => {
+              if(filling.isVerticalItem) {
+                filling.position.x += (adjustedValue - extraSize) / 2;
+              }
+              else {
+                filling.width = lastRow.width;
+                filling.size.x = filling.width;
+                filling.position.x = lastRow.position.x - lastRow.width / 2;
+              }
+            })
+
             lastRow.extras?.forEach(extra => {
               extra.width = lastRow.width
               extra.position.x = lastRow.position.x
+
+              extra.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (adjustedValue - extraSize) / 2;
+                }
+                else {
+                  filling.width = extra.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = extra.position.x - extra.width / 2;
+                }
+              })
             })
           }
 
@@ -481,18 +537,28 @@ const updateSectionWidth = (value, secIndex) => {
 
       if(cell.fillings?.length) {
         cell.fillings.forEach((filling) => {
-          filling.width = cell.width;
-          filling.size.x = filling.width;
-          filling.position.x += deltaPos1
+          if(filling.isVerticalItem) {
+            filling.position.x += deltaPos1;
+          }
+          else {
+            filling.width = cell.width;
+            filling.size.x = filling.width;
+            filling.position.x = cell.position.x - cell.width / 2;
+          }
         })
       }
     })
 
     if(section.fillings?.length) {
       section.fillings.forEach((filling) => {
-        filling.width = section.width;
-        filling.size.x = filling.width;
-        filling.position.x += deltaPos1
+        if(filling.isVerticalItem) {
+          filling.position.x += deltaPos1;
+        }
+        else {
+          filling.width = section.width;
+          filling.size.x = filling.width;
+          filling.position.x = section.position.x - section.width / 2;
+        }
       })
     }
 
@@ -522,9 +588,14 @@ const updateSectionWidth = (value, secIndex) => {
 
               if(extra.fillings?.length) {
                 extra.fillings.forEach((filling) => {
-                  filling.width = extra.width;
-                  filling.size.x = extra.width;
-                  filling.position.x += divideDeltaPos;
+                  if(filling.isVerticalItem) {
+                    filling.position.x += divideDeltaPos;
+                  }
+                  else {
+                    filling.width = extra.width;
+                    filling.size.x = filling.width;
+                    filling.position.x += deltaPos1;
+                  }
                 })
               }
 
@@ -532,9 +603,14 @@ const updateSectionWidth = (value, secIndex) => {
 
             if(item.fillings?.length) {
               item.fillings.forEach((filling) => {
-                filling.width = item.width;
-                filling.size.x = filling.width;
-                filling.position.x += divideDeltaPos;
+                if(filling.isVerticalItem) {
+                  filling.position.x += divideDeltaPos;
+                }
+                else {
+                  filling.width = item.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = deltaPos1;
+                }
               })
             }
           }
@@ -551,9 +627,32 @@ const updateSectionWidth = (value, secIndex) => {
         if(lastRow.width + (newRightWidth - extraSize) >= MIN_SECTION_WIDTH) {
           lastRow.width += (newRightWidth - extraSize)
           lastRow.position.x += (newRightWidth - extraSize) / 2
+
+          lastRow.fillings?.forEach((filling) => {
+            if(filling.isVerticalItem) {
+              filling.position.x += (newRightWidth - extraSize) / 2;
+            }
+            else {
+              filling.width = lastRow.width;
+              filling.size.x = filling.width;
+              filling.position.x = lastRow.position.x - lastRow.width / 2;
+            }
+          })
+
           lastRow.extras?.forEach(extra => {
             extra.width = lastRow.width
             extra.position.x = lastRow.position.x
+
+            extra.fillings?.forEach((filling) => {
+              if(filling.isVerticalItem) {
+                filling.position.x += (newRightWidth - extraSize) / 2;
+              }
+              else {
+                filling.width = extra.width;
+                filling.size.x = filling.width;
+                filling.position.x = extra.position.x - extra.width / 2;
+              }
+            })
           })
         }
         else {
@@ -567,6 +666,28 @@ const updateSectionWidth = (value, secIndex) => {
             lastRow.extras?.forEach(extra => {
               extra.width = lastRow.width
               extra.position.x = lastRow.position.x
+
+              lastRow.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (newRightWidth - extraSize) / 2;
+                }
+                else {
+                  filling.width = lastRow.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = lastRow.position.x - lastRow.width / 2;
+                }
+              })
+
+              extra.fillings?.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.x += (newRightWidth - extraSize) / 2;
+                }
+                else {
+                  filling.width = extra.width;
+                  filling.size.x = filling.width;
+                  filling.position.x = extra.position.x - extra.width / 2;
+                }
+              })
             })
           }
 
@@ -575,9 +696,14 @@ const updateSectionWidth = (value, secIndex) => {
 
       if(cell.fillings?.length) {
         cell.fillings.forEach((filling) => {
-          filling.width = cell.width;
-          filling.size.x = filling.width;
-          filling.position.x += deltaPos1;
+          if(filling.isVerticalItem) {
+            filling.position.x += deltaPos1;
+          }
+          else {
+            filling.width = cell.width;
+            filling.size.x = filling.width;
+            filling.position.x = cell.position.x - cell.width / 2;
+          }
         })
       }
     })
@@ -585,9 +711,14 @@ const updateSectionWidth = (value, secIndex) => {
 
     if(nextSection.fillings?.length) {
       nextSection.fillings.forEach((filling) => {
-        filling.width = nextSection.width;
-        filling.size.x = filling.width;
-        filling.position.x += deltaPos1;
+        if(filling.isVerticalItem) {
+          filling.position.x += deltaPos1;
+        }
+        else {
+          filling.width = nextSection.width;
+          filling.size.x = filling.width;
+          filling.position.x = nextSection.position.x - nextSection.width / 2;
+        }
       })
     }
   }
@@ -631,18 +762,51 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
 
     let delta1 = cell.height - adjustedValue
     cell.height = adjustedValue
+    cell.position.y += delta1;
 
     if (cell.cellsRows?.length) {
       cell.cellsRows.forEach((row) => {
         row.height = cell.height;
+        row.position.y = cell.position.y;
+
+        if(row.fillings?.length) {
+          row.fillings.forEach((filling) => {
+            if(filling.isVerticalItem) {
+              filling.position.y = row.position.y;
+              filling.height = row.height;
+              filling.size.y = filling.height;
+              filling.distances.bottom = 0;
+              filling.distances.top = 0;
+            }
+            else {
+              filling.position.y += delta1;
+            }
+          })
+        }
 
         if (row.extras?.length) {
           let divideDelta = Math.floor(-delta1 / row.extras.length)
+          let divideDeltaPos1 = divideDelta
           let extraSize = (row.extras.length - 1) * module.value.moduleThickness
 
           row.extras.forEach(item => {
             if (item.height + divideDelta >= MIN_SECTION_HEIGHT) {
               item.height += divideDelta
+
+              if(item.fillings?.length) {
+                item.fillings.forEach((filling) => {
+                  if(filling.isVerticalItem) {
+                    filling.position.y = item.position.y;
+                    filling.height = item.height;
+                    filling.size.y = filling.height;
+                    filling.distances.bottom = 0;
+                    filling.distances.top = 0;
+                  }
+                  else {
+                    filling.position.y += divideDeltaPos1;
+                  }
+                })
+              }
             }
             else {
               item.height = MIN_SECTION_HEIGHT
@@ -660,6 +824,21 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
           if(lastRow.height + (adjustedValue - extraSize) >= MIN_SECTION_HEIGHT) {
             lastRow.height += (adjustedValue - extraSize)
             lastRow.position.y += (adjustedValue - extraSize) / 2
+
+            if(lastRow.fillings?.length) {
+              lastRow.fillings.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.y = lastRow.position.y;
+                  filling.height = lastRow.height;
+                  filling.size.y = filling.height;
+                  filling.distances.bottom = 0;
+                  filling.distances.top = 0;
+                }
+                else {
+                  filling.position.y += (newTopHeight - extraSize) / 2;
+                }
+              })
+            }
           }
           else {
             lastRow = row.extras.find((item) => {
@@ -669,6 +848,21 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
             if(lastRow) {
               lastRow.height += (adjustedValue - extraSize)
               lastRow.position.y += (adjustedValue - extraSize) / 2
+
+              if(lastRow.fillings?.length) {
+                lastRow.fillings.forEach((filling) => {
+                  if(filling.isVerticalItem) {
+                    filling.position.y = lastRow.position.y;
+                    filling.height = lastRow.height;
+                    filling.size.y = filling.height;
+                    filling.distances.bottom = 0;
+                    filling.distances.top = 0;
+                  }
+                  else {
+                    filling.position.y += (newTopHeight - extraSize) / 2;
+                  }
+                })
+              }
             }
 
           }
@@ -680,7 +874,19 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
       })
     }
 
-    cell.fillings?.filter((filling, index) => {
+    if(cell.fillings?.length) {
+      cell.fillings.forEach((filling) => {
+        if(filling.isVerticalItem) {
+          filling.position.y = cell.position.y;
+          filling.height = cell.height;
+          filling.size.y = filling.height;
+          filling.distances.bottom = 0;
+          filling.distances.top = 0;
+        }
+      })
+    }
+
+    /*cell.fillings?.filter((filling, index) => {
       if (filling.position.y + filling.height <= cell.position.y - module.value.moduleThickness) {
         if (nextCell) {
           filling.cell = nextIndex
@@ -695,7 +901,7 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
         return false
       } else
         return true
-    })
+    })*/
 
     let newBottomHeight = nextCell.height - (-delta1)
     let delta2 = nextCell.height - newBottomHeight
@@ -704,15 +910,47 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
     if (nextCell.cellsRows) {
       nextCell.cellsRows.forEach((row) => {
         row.height = nextCell.height;
+        row.position.y = nextCell.position.y;
+
+        if(row.fillings?.length) {
+          row.fillings.forEach((filling) => {
+            if(filling.isVerticalItem) {
+              filling.position.y = row.position.y;
+              filling.height = row.height;
+              filling.size.y = filling.height;
+              filling.distances.bottom = 0;
+              filling.distances.top = 0;
+            }
+            else {
+              filling.position.y += delta1;
+            }
+          })
+        }
 
         if (row.extras?.length) {
           let divideDelta = Math.floor(-delta2 / row.extras.length)
+          let divideDeltaPos2 = -divideDelta
           let extraSize = (row.extras.length - 1) * module.value.moduleThickness
 
           row.extras.forEach(item => {
             if (item.height + divideDelta >= MIN_SECTION_HEIGHT) {
               item.height += divideDelta
               item.position.y += divideDelta;
+
+              if(item.fillings?.length) {
+                item.fillings.forEach((filling) => {
+                  if(filling.isVerticalItem) {
+                    filling.position.y = item.position.y;
+                    filling.height = item.height;
+                    filling.size.y = filling.height;
+                    filling.distances.bottom = 0;
+                    filling.distances.top = 0;
+                  }
+                  else {
+                    filling.position.y += divideDeltaPos2;
+                  }
+                })
+              }
             }
             else {
               item.height = MIN_SECTION_HEIGHT
@@ -729,6 +967,21 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
           if(lastRow.height + (newBottomHeight - extraSize) >= MIN_SECTION_HEIGHT) {
             lastRow.height += (newBottomHeight - extraSize)
             lastRow.position.y += (newBottomHeight - extraSize) / 2
+
+            if(lastRow.fillings?.length) {
+              lastRow.fillings.forEach((filling) => {
+                if(filling.isVerticalItem) {
+                  filling.position.y = lastRow.position.y;
+                  filling.height = lastRow.height;
+                  filling.size.y = filling.height;
+                  filling.distances.bottom = 0;
+                  filling.distances.top = 0;
+                }
+                else {
+                  filling.position.y += (newBottomHeight - extraSize) / 2;
+                }
+              })
+            }
           }
           else {
             lastRow = row.extras.find((item) => {
@@ -738,6 +991,21 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
             if(lastRow) {
               lastRow.height += (newBottomHeight - extraSize)
               lastRow.position.y += (newBottomHeight - extraSize) / 2
+
+              if(lastRow.fillings?.length) {
+                lastRow.fillings.forEach((filling) => {
+                  if(filling.isVerticalItem) {
+                    filling.position.y = lastRow.position.y;
+                    filling.height = lastRow.height;
+                    filling.size.y = filling.height;
+                    filling.distances.bottom = 0;
+                    filling.distances.top = 0;
+                  }
+                  else {
+                    filling.position.y += (newBottomHeight - extraSize) / 2;
+                  }
+                })
+              }
             }
 
           }
@@ -749,7 +1017,19 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
       })
     }
 
-    nextCell.fillings?.filter((filling, index) => {
+    if(nextCell.fillings?.length) {
+      nextCell.fillings.forEach((filling) => {
+        if(filling.isVerticalItem) {
+          filling.position.y = nextCell.position.y;
+          filling.height = nextCell.height;
+          filling.size.y = filling.height;
+          filling.distances.bottom = 0;
+          filling.distances.top = 0;
+        }
+      })
+    }
+
+    /*nextCell.fillings?.filter((filling, index) => {
       if (filling.position.y + filling.height <= nextCell.position.y - module.value.moduleThickness) {
         filling.cell = cellIndex
         cell.push(filling);
@@ -760,7 +1040,7 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
         return false
       } else
         return true
-    })
+    })*/
   }
   module.value = clone;
   reset()
