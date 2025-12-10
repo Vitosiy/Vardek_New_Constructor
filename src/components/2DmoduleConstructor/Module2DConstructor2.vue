@@ -10,6 +10,7 @@ import FasadesOptions from "@/components/2DmoduleConstructor/utils/FasadesOption
 
 import {ShapeAdjuster} from "./utils/Methods";
 import {
+  ErrorItem, ErrorsMessage, ErrorsType,
   FasadeMaterial,
   FasadeObject, FillingObject,
   GridCell, GridCellsRow,
@@ -932,6 +933,12 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
   if (!loops)
     return
 
+  const errorItem = <ErrorItem>{
+    type: ErrorsType['loops'],
+    message: ErrorsMessage['loops'],
+    list: []
+  }
+
   let loopsSectors = {}
   Object.entries(loops).forEach(([doorKey, doorLoops]) => {
     loopsSectors[doorKey] = {}
@@ -947,33 +954,62 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         })
       })
     })
-    /*
-        loopsSectors[doorKey] = loopsSectors[doorKey].sort((a, b) => {
-          return a.minY - b.minY
-        })*/
   })
+
+  const checkLoop = (_loops, cell) => {
+    let result = []
+    _loops.forEach(loop => {
+      if (
+          (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
+          (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
+      ) {
+        result.push(loop.id)
+      }
+    })
+
+    return result;
+  }
 
   if (currentSector.cells?.length) {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
+
         currentSector.cells.forEach((cell, cellKey) => {
-          _loops.forEach(loop => {
-            if (
-                (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
-                (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
-            ) {
-              if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
-                loops[doorKey][fasadeKey].errors.push(loop.id)
-            }
+
+          let check = checkLoop(_loops, cell)
+          check.forEach((id) => {
+            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+              loops[doorKey][fasadeKey].errors.push(id)
           })
+
+          cell.cellsRows?.forEach((cellRow) => {
+
+            if(cellRow.extras?.length) {
+              cellRow.extras.forEach((extraRow) => {
+                let check = checkLoop(_loops, extraRow)
+                check.forEach((id) => {
+                  if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+                    loops[doorKey][fasadeKey].errors.push(id)
+                })
+              })
+            }
+
+          })
+
         })
+
+        if(loops[doorKey][fasadeKey].errors.length) {
+          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+        }
       })
     })
-  } else {
+  }
+  else {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
+
         _loops.forEach(loop => {
           if (
               (loop.minY <= (currentSector.position.y - moduleThickness) && loop.maxY >= (currentSector.position.y - moduleThickness)) ||
@@ -983,12 +1019,25 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
               loops[doorKey][fasadeKey].errors.push(loop.id)
           }
         })
+
+        if(loops[doorKey][fasadeKey].errors.length) {
+          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+        }
+
       })
     })
   }
 
-  return loops;
+  if (errorItem.list.length) {
+    if(!module.value.errors)
+      module.value.errors = {}
 
+    module.value.errors[ErrorsType['loops']] = errorItem
+  }
+  else
+    delete module.value.errors?.[ErrorsType['loops']]
+
+  return loops;
 }
 
 //#endregion
@@ -1121,6 +1170,7 @@ const reset = (reset = false) => {
   moduleGrid.moduleColor = PROPS.CONFIG.MODULE_COLOR;
   moduleGrid.moduleThickness =  APP.FASADE[moduleGrid.moduleColor]?.DEPTH || 18;
   moduleGrid.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
+  delete moduleGrid.errors
 
   const leftWidth = APP.FASADE[PROPS.CONFIG.LEFTSIDECOLOR?.COLOR]?.DEPTH || moduleGrid.moduleThickness;
   const rightWidth = APP.FASADE[PROPS.CONFIG.RIGHTSIDECOLOR?.COLOR]?.DEPTH || moduleGrid.moduleThickness;
@@ -1369,7 +1419,15 @@ const reset = (reset = false) => {
 };
 
 const saveGrid = () => {
-  return Object.assign({}, module.value);
+  if(module.value.errors && Object.keys(module.value.errors).length > 0) {
+    Object.values(module.value.errors).forEach(item => {
+      alert(item.message)
+    })
+
+    return false
+  }
+  else
+    return Object.assign({}, module.value);
 };
 
 defineExpose({

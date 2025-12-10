@@ -30,7 +30,12 @@ const saveUMData = ({ data, canvasHeight }) => {
   if (!props.product) return;
   if (!props.product.userData) return;
 
-  let tmp_result = saveUMGrid(universalModule2DConstructor.value.saveGrid())
+  let saveData = universalModule2DConstructor.value.saveGrid()
+
+  if(!saveData)
+    return;
+
+  let tmp_result = saveUMGrid(saveData)
 
   universalModuleCash.value = props.product.userData.PROPS.CONFIG.MODULEGRID =
       tmp_result;

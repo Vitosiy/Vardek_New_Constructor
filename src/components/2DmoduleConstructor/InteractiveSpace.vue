@@ -2009,9 +2009,6 @@ function dragMove(event) {
                 filling.distances.bottom = 0;
                 filling.distances.top = 0;
               }
-              else {
-                filling.position.y += delta1;
-              }
             })
           }
 
@@ -2126,9 +2123,6 @@ function dragMove(event) {
                 filling.size.y = filling.height;
                 filling.distances.bottom = 0;
                 filling.distances.top = 0;
-              }
-              else {
-                filling.position.y += delta1;
               }
             })
           }

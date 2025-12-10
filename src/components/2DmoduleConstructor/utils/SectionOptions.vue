@@ -778,9 +778,6 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
               filling.distances.bottom = 0;
               filling.distances.top = 0;
             }
-            else {
-              filling.position.y += delta1;
-            }
           })
         }
 
@@ -920,9 +917,6 @@ const updateCellHeight = (value, secIndex, cellIndex) => {
               filling.size.y = filling.height;
               filling.distances.bottom = 0;
               filling.distances.top = 0;
-            }
-            else {
-              filling.position.y += delta1;
             }
           })
         }
