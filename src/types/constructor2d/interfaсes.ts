@@ -224,4 +224,5 @@ export interface GridModule {
   isSlidingDoors?: boolean;
   leftWallThickness?: number;
   rightWallThickness?: number;
+  noBottom?: boolean;
 }

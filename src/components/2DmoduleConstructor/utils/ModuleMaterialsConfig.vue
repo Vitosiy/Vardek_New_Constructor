@@ -77,6 +77,10 @@ const getMaterialsParts = computed(() => {
       delete result['TOPFASADECOLOR']
     }
 
+    if(module.value.noBottom) {
+      delete result['BACKWALL']
+    }
+
     return result;
   };
 });

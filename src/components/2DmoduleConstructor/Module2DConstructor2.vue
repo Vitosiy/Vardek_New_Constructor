@@ -89,6 +89,7 @@ const totalWidth = ref(0);
 const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
+const noBottom = ref<boolean>(false);
 
 const module = ref(false);
 const computeModule = () => {
@@ -222,6 +223,24 @@ const computeModule = () => {
 const getModule = computed(() => {
   return module
 })
+
+const checkOptionWithoutBottom = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
+    if (+opt.id === 5738924 && opt.active)
+      return opt;
+  })) {
+    noBottom.value = true
+    module.value.noBottom = true
+  }
+  else {
+    noBottom.value = false
+    delete module.value.noBottom
+  }
+
+  return noBottom.value
+}
 
 const getMinMaxModuleSize = (_dimension, _minmax) => {
   const dimension = _dimension.toUpperCase()
@@ -1109,13 +1128,7 @@ const reset = (reset = false) => {
   moduleGrid.leftWallThickness = leftWidth
   moduleGrid.rightWallThickness = rightWidth
 
-  let NOBOTTOM = false
-  if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
-    if (+opt.id === 5738924 && opt.active)
-      return opt;
-  })) {
-    NOBOTTOM = true
-  }
+  let NOBOTTOM = checkOptionWithoutBottom()
 
   let sectionsTotalWidth = totalWidth.value - leftWidth - rightWidth - (moduleGrid.sections.length - 1) * moduleGrid.moduleThickness;
   let sectionsTotalHeight = totalHeight.value - moduleGrid.moduleThickness * (NOBOTTOM ? 1 : 2) - moduleGrid.horizont;
@@ -1371,6 +1384,7 @@ onBeforeMount(() => {
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
   onSideProfile.value = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
   computeModule()
+  checkOptionWithoutBottom()
 });
 
 onMounted(() => {
@@ -1412,6 +1426,7 @@ watch(onHorizont, () => {
 watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
 
   let newHorizont = modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT
+  checkOptionWithoutBottom()
 
   if (newHorizont > 0) {
     onHorizont.value = true
@@ -1536,7 +1551,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
               class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
           >
             <p class="actions-title">Цоколь
-              <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" />
+              <img v-if="mode !== 'module' || noBottom" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
               <Toggle v-else v-model="onHorizont"/>
             </p>
 
@@ -1549,7 +1564,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
                   max="300"
                   :type="'number'"
                   placeholder="0"
-                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
+                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0 || noBottom"
               />
             </div>
           </div>
