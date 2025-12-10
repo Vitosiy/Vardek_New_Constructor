@@ -156,7 +156,20 @@
 
               </div>
           </span>
-
+          
+          <span v-if='propKey === "BODY"'>
+            <div class="basket-item__props-list">
+              <div v-if="propValue.SIZE.DEPTH">
+                <span class="basket-item__props-lable">Глубина:</span> <span>{{ propValue.SIZE.DEPTH }}</span> 
+              </div>
+              <div v-if="propValue.SIZE.HEIGHT">
+                <span class="basket-item__props-lable">Высота:</span> <span>{{ propValue.SIZE.HEIGHT }}</span> 
+              </div>
+              <div v-if="propValue.SIZE.WIDTH">
+                <span class="basket-item__props-lable">Ширина:</span> <span>{{ propValue.SIZE.WIDTH }}</span> 
+              </div>
+            </div>
+          </span>
         </div>
       </div>
 
