@@ -386,9 +386,9 @@ const getErrorClass = (propVal: any, propsError: any) => {
   // Это упрощенная версия, нужно адаптировать под вашу логику
   if (!propsError || !Array.isArray(propsError)) return false;
 
-  if (propsError.some(error => error.id && error.id.includes(propVal))) {
-    return 'error-background';
-  }
+  // if (propsError.some(error => error.id && error?.id?.includes(propVal))) {
+  //   return 'error-background';
+  // }
   return '';
 };
 
@@ -431,7 +431,7 @@ const hasError = (value: any, propsError: any) => {
   // return propsError && propsError.includes(value);
   if (!propsError || !Array.isArray(propsError)) return false;
   
-  return propsError.some(error => error.id && error.id.includes(value));
+  // return propsError.some(error => error.id && error.id.includes(value));
 };
 
 const getTypeName = (type: any, value: any, mainType: any = '') => {
