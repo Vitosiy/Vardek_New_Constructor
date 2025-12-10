@@ -10,6 +10,7 @@ import FasadesOptions from "@/components/2DmoduleConstructor/utils/FasadesOption
 
 import {ShapeAdjuster} from "./utils/Methods";
 import {
+  ErrorItem, ErrorsMessage, ErrorsType,
   FasadeMaterial,
   FasadeObject, FillingObject,
   GridCell, GridCellsRow,
@@ -89,6 +90,7 @@ const totalWidth = ref(0);
 const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
+const noBottom = ref<boolean>(false);
 
 const module = ref(false);
 const computeModule = () => {
@@ -223,6 +225,24 @@ const getModule = computed(() => {
   return module
 })
 
+const checkOptionWithoutBottom = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
+    if (+opt.id === 5738924 && opt.active)
+      return opt;
+  })) {
+    noBottom.value = true
+    module.value.noBottom = true
+  }
+  else {
+    noBottom.value = false
+    delete module.value.noBottom
+  }
+
+  return noBottom.value
+}
+
 const getMinMaxModuleSize = (_dimension, _minmax) => {
   const dimension = _dimension.toUpperCase()
   const minmax = _minmax.toUpperCase()
@@ -302,7 +322,7 @@ const updateFilling = (value, currentfilling, type, render = false) => {
 
   const pixiSector = current.sector;
 
-  const check = shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData);
+  const check = pixiSector ? shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData) : true;
 
   if (check && (newValue < MAX_SECTION_WIDTH || newValue > MIN_SECTION_WIDTH)) {
     delete currentfilling.error
@@ -311,6 +331,12 @@ const updateFilling = (value, currentfilling, type, render = false) => {
     if(type === "width") {
       currentfilling.size.x = newValue
       currentfilling.position.x = current.position.x - newValue / 2;
+    }
+    if(type === "height") {
+      currentfilling.size.y = newValue
+      currentfilling.position.y = current.position.y;
+      currentfilling.distances.bottom = 0;
+      currentfilling.distances.top = 0;
     }
 
   } else {
@@ -907,6 +933,12 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
   if (!loops)
     return
 
+  const errorItem = <ErrorItem>{
+    type: ErrorsType['loops'],
+    message: ErrorsMessage['loops'],
+    list: []
+  }
+
   let loopsSectors = {}
   Object.entries(loops).forEach(([doorKey, doorLoops]) => {
     loopsSectors[doorKey] = {}
@@ -922,33 +954,62 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         })
       })
     })
-    /*
-        loopsSectors[doorKey] = loopsSectors[doorKey].sort((a, b) => {
-          return a.minY - b.minY
-        })*/
   })
+
+  const checkLoop = (_loops, cell) => {
+    let result = []
+    _loops.forEach(loop => {
+      if (
+          (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
+          (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
+      ) {
+        result.push(loop.id)
+      }
+    })
+
+    return result;
+  }
 
   if (currentSector.cells?.length) {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
+
         currentSector.cells.forEach((cell, cellKey) => {
-          _loops.forEach(loop => {
-            if (
-                (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
-                (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
-            ) {
-              if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
-                loops[doorKey][fasadeKey].errors.push(loop.id)
-            }
+
+          let check = checkLoop(_loops, cell)
+          check.forEach((id) => {
+            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+              loops[doorKey][fasadeKey].errors.push(id)
           })
+
+          cell.cellsRows?.forEach((cellRow) => {
+
+            if(cellRow.extras?.length) {
+              cellRow.extras.forEach((extraRow) => {
+                let check = checkLoop(_loops, extraRow)
+                check.forEach((id) => {
+                  if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+                    loops[doorKey][fasadeKey].errors.push(id)
+                })
+              })
+            }
+
+          })
+
         })
+
+        if(loops[doorKey][fasadeKey].errors.length) {
+          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+        }
       })
     })
-  } else {
+  }
+  else {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
+
         _loops.forEach(loop => {
           if (
               (loop.minY <= (currentSector.position.y - moduleThickness) && loop.maxY >= (currentSector.position.y - moduleThickness)) ||
@@ -958,12 +1019,25 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
               loops[doorKey][fasadeKey].errors.push(loop.id)
           }
         })
+
+        if(loops[doorKey][fasadeKey].errors.length) {
+          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+        }
+
       })
     })
   }
 
-  return loops;
+  if (errorItem.list.length) {
+    if(!module.value.errors)
+      module.value.errors = {}
 
+    module.value.errors[ErrorsType['loops']] = errorItem
+  }
+  else
+    delete module.value.errors?.[ErrorsType['loops']]
+
+  return loops;
 }
 
 //#endregion
@@ -1096,6 +1170,7 @@ const reset = (reset = false) => {
   moduleGrid.moduleColor = PROPS.CONFIG.MODULE_COLOR;
   moduleGrid.moduleThickness =  APP.FASADE[moduleGrid.moduleColor]?.DEPTH || 18;
   moduleGrid.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
+  delete moduleGrid.errors
 
   const leftWidth = APP.FASADE[PROPS.CONFIG.LEFTSIDECOLOR?.COLOR]?.DEPTH || moduleGrid.moduleThickness;
   const rightWidth = APP.FASADE[PROPS.CONFIG.RIGHTSIDECOLOR?.COLOR]?.DEPTH || moduleGrid.moduleThickness;
@@ -1103,13 +1178,7 @@ const reset = (reset = false) => {
   moduleGrid.leftWallThickness = leftWidth
   moduleGrid.rightWallThickness = rightWidth
 
-  let NOBOTTOM = false
-  if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
-    if (+opt.id === 5738924 && opt.active)
-      return opt;
-  })) {
-    NOBOTTOM = true
-  }
+  let NOBOTTOM = checkOptionWithoutBottom()
 
   let sectionsTotalWidth = totalWidth.value - leftWidth - rightWidth - (moduleGrid.sections.length - 1) * moduleGrid.moduleThickness;
   let sectionsTotalHeight = totalHeight.value - moduleGrid.moduleThickness * (NOBOTTOM ? 1 : 2) - moduleGrid.horizont;
@@ -1131,9 +1200,9 @@ const reset = (reset = false) => {
 
       let lastCellHeight = newSection.height
 
-      newSection.cells.reverse()
-      for (let i = 0; i < newSection.cells.length; i++) {
-        let newCell = <GridCell>{...newSection.cells[i], position: new THREE.Vector2(newSection.cells[i].position.x, newSection.cells[i].position.y)}
+      let tmpCells = newSection.cells.slice().reverse()
+      for (let i = 0; i < tmpCells.length; i++) {
+        let newCell = <GridCell>{...tmpCells[i], position: new THREE.Vector2(tmpCells[i].position.x, tmpCells[i].position.y)}
 
         newCell.width = newSection.width;
         newCell.position.copy(positionCells.clone())
@@ -1144,7 +1213,7 @@ const reset = (reset = false) => {
 
         lastCellHeight -= newCell.height
 
-        if (i === newSection.cells.length - 1 || lastCellHeight <= 0) {
+        if (i === tmpCells.length - 1 || lastCellHeight <= 0) {
           newCell.height += lastCellHeight
 
           if(newCell.height < MIN_SECTION_HEIGHT){
@@ -1170,11 +1239,17 @@ const reset = (reset = false) => {
             if (newRow.fillings?.length) {
               newRow.fillings = <FillingObject>[...newRow.fillings]
               newRow.fillings.forEach((filling, index) => {
-                if(filling.isProfile) {
-                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                if(filling.isVerticalItem){
+                  updateFilling(newRow.height, filling, 'height')
                 }
-                else
-                  updateFilling(newRow.width, filling, 'width')
+                else {
+                  if(filling.isProfile) {
+                    updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                  }
+                  else
+                    updateFilling(newRow.width, filling, 'width')
+                }
+
               })
             }
 
@@ -1195,11 +1270,16 @@ const reset = (reset = false) => {
                 if (newExtra.fillings?.length) {
                   newExtra.fillings = <FillingObject>[...newExtra.fillings]
                   newExtra.fillings.forEach((filling, index) => {
-                    if(filling.isProfile) {
-                      updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                    if(filling.isVerticalItem) {
+                      updateFilling(newExtra.height, filling, 'height')
                     }
-                    else
-                      updateFilling(newExtra.width, filling, 'width')
+                    else {
+                      if(filling.isProfile) {
+                        updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                      }
+                      else
+                        updateFilling(newExtra.width, filling, 'width')
+                    }
                   })
                 }
 
@@ -1226,11 +1306,15 @@ const reset = (reset = false) => {
             if (lastRow.fillings?.length) {
               lastRow.fillings = <FillingObject>[...lastRow.fillings]
               lastRow.fillings.forEach((filling, index) => {
-                if(filling.isProfile) {
-                  updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                if(filling.isVerticalItem) {
+                  updateFilling(lastRow.height, filling, 'height')
                 }
-                else
-                  updateFilling(lastRow.width, filling, 'width')
+                else {
+                  if (filling.isProfile) {
+                    updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                  } else
+                    updateFilling(lastRow.width, filling, 'width')
+                }
               })
             }
           }
@@ -1243,11 +1327,15 @@ const reset = (reset = false) => {
         if (newCell.fillings?.length) {
           newCell.fillings = <FillingObject>[...newCell.fillings]
           newCell.fillings.forEach((filling, index) => {
-            if(filling.isProfile) {
-              updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+            if(filling.isVerticalItem) {
+              updateFilling(newCell.height, filling, 'height')
             }
-            else
-              updateFilling(newCell.width, filling, 'width')
+            else {
+              if (filling.isProfile) {
+                updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+              } else
+                updateFilling(newCell.width, filling, 'width')
+            }
           })
         }
 
@@ -1262,11 +1350,15 @@ const reset = (reset = false) => {
     if (newSection.fillings?.length) {
       newSection.fillings = <FillingObject>[...newSection.fillings]
       newSection.fillings.forEach((filling, index) => {
-        if(filling.isProfile) {
-          updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+        if(filling.isVerticalItem) {
+          updateFilling(newSection.height, filling, 'height')
         }
-        else
-          updateFilling(newSection.width, filling, 'width')
+        else {
+          if (filling.isProfile) {
+            updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+          } else
+            updateFilling(newSection.width, filling, 'width')
+        }
       })
     }
 
@@ -1327,7 +1419,15 @@ const reset = (reset = false) => {
 };
 
 const saveGrid = () => {
-  return Object.assign({}, module.value);
+  if(module.value.errors && Object.keys(module.value.errors).length > 0) {
+    Object.values(module.value.errors).forEach(item => {
+      alert(item.message)
+    })
+
+    return false
+  }
+  else
+    return Object.assign({}, module.value);
 };
 
 defineExpose({
@@ -1342,6 +1442,7 @@ onBeforeMount(() => {
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
   onSideProfile.value = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
   computeModule()
+  checkOptionWithoutBottom()
 });
 
 onMounted(() => {
@@ -1383,6 +1484,7 @@ watch(onHorizont, () => {
 watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
 
   let newHorizont = modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT
+  checkOptionWithoutBottom()
 
   if (newHorizont > 0) {
     onHorizont.value = true
@@ -1507,7 +1609,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
               class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
           >
             <p class="actions-title">Цоколь
-              <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" />
+              <img v-if="mode !== 'module' || noBottom" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
               <Toggle v-else v-model="onHorizont"/>
             </p>
 
@@ -1520,7 +1622,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
                   max="300"
                   :type="'number'"
                   placeholder="0"
-                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
+                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0 || noBottom"
               />
             </div>
           </div>

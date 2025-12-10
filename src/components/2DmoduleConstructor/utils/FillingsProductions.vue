@@ -264,10 +264,11 @@ const addFilling = (type, product, oldFillingObject = false) => {
     size: new THREE.Vector3(width, height, depth),
     width,
     height,
-    color: profileData.COLOR || module.value.moduleColor,
+    color: profileData.COLOR || false,
     sec,
     cell,
     row,
+    extra,
   };
 
 

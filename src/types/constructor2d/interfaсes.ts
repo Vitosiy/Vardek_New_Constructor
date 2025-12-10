@@ -210,6 +210,24 @@ export interface GridSection {
   profiles?: FillingObject[];
 }
 
+export const ErrorsType = {
+  "loops": 'LOOPS',
+  'fasades': 'FASADES',
+  'fillings': 'FILLINGS',
+}
+
+export const ErrorsMessage = {
+  "loops": 'Ошибка! Петли фасадов пересекаются с наполнением!',
+  'fasades': 'Ошибка размера фасадов!',
+  'fillings': 'Ошибка установки наполнения!',
+}
+
+export interface ErrorItem {
+  type: typeof ErrorsType;
+  message: typeof ErrorsMessage;
+  list: [];
+}
+
 export interface GridModule {
   width: number;
   height: number;
@@ -224,4 +242,6 @@ export interface GridModule {
   isSlidingDoors?: boolean;
   leftWallThickness?: number;
   rightWallThickness?: number;
+  noBottom?: boolean;
+  errors?: Object;
 }
