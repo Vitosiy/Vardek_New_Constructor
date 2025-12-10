@@ -16,7 +16,7 @@
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
           <div v-if="getPropDefinition(String(propKey))">
             <!-- {{ propValue }} -->
-            <span class="basket-item__props-lable" v-if="propValue">{{ getPropLabel(String(propKey)) }}:</span>
+            <span class="basket-item__props-lable" v-if="propValue && propValue.length !== 0">{{ getPropLabel(String(propKey)) }}:</span>
             <!-- Обработка массивов -->
             <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
               <li v-for="(propVal, index) in propValue" :key="index">
@@ -368,7 +368,7 @@ const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
         if (typeof value === 'object' && value !== null) {
           value = JSON.stringify(value);
         }
-        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE)) {
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key)) {
           listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)}</li>`; // ${getTypeName(key, value)}
         }
       });
@@ -458,7 +458,8 @@ const getTypeName = (type: any, value: any, mainType: any = '') => {
   }
 
 
-  return [`${type}:${value}`];
+  // return [`${type}:${value}`];
+  return false;
 }; 
 
 const getListValue = (key: string, value: any) => {
