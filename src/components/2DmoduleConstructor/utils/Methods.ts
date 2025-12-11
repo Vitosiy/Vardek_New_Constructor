@@ -91,8 +91,10 @@ class Helpers {
 
     getSectorBounds(sector: Container) {
 
-
+        //let tmpChildren = [...sector.children];
+        //sector.children = sector.children.filter(item => !item.dimensions);
         const bounds = sector.getBounds()
+        //sector.children = tmpChildren;
         return {
             x: sector.x,
             y: sector.y,
@@ -111,10 +113,10 @@ class Helpers {
         }
 
 
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-        let minX = Infinity;
-        let minY = Infinity;
+        let maxX = -0;
+        let maxY = -0;
+        let minX = 0;
+        let minY = 0;
 
         for (const shape of shapes) {
             if(!shape.data.isVerticalItem) {
@@ -489,13 +491,6 @@ class Shape extends Helpers {
 
         this.type = type;
         this.sectorBounds = this.getSectorBounds(sector);
-
-        let tmpSectorBounds = {
-            width: this.getMmWidth(this.sectorBounds.width),
-            height: this.getMmHeight(this.sectorBounds.height),
-            x: this.getMmWidth(this.sectorBounds.x),
-            y: this.getMmHeight(this.sectorBounds.y),
-        }
 
         this.graphic = new Graphics();
         this.highlightGraphics = new Graphics();
@@ -1245,12 +1240,23 @@ class Section extends Helpers {
             fill: '#1a1a1e',
         });
 
+        let textOfDimensions = new Graphics();
+        textOfDimensions.dimensions = true
+
         // Метка ширины (по центру сверху)
         const widthText = new Text({text: `${this.data.width} мм`, style: textStyle});
         widthText.anchor.set(0.5, 0); // Центрируем по горизонтали, привязка к верхнему краю
         widthText.x = x + this.width / 2;
         widthText.y = y + 5; // Смещаем вниз на 10 пикселей от верхней границы
-        graphics.addChild(widthText);
+
+        let widthSize = widthText.getSize()
+        if(widthSize.width > this.width){
+            widthText.scale.x = (this.width - 2) / widthSize.width
+            widthSize = widthText.getSize()
+            widthText.x = x + this.width / 2// - widthSize.width / 2;
+        }
+
+        textOfDimensions.addChild(widthText);
 
         // Метка высоты (по центру справа)
         const heightText = new Text({text: `${this.data.height} мм`, style: textStyle});
@@ -1258,7 +1264,17 @@ class Section extends Helpers {
         heightText.rotation = -Math.PI / 2; // Поворот на 90 градусов против часовой
         heightText.x = x + this.width - 10; // Смещаем влево на 10 пикселей от правой границы
         heightText.y = y + this.height / 2 - 20;
-        graphics.addChild(heightText);
+
+        let heightSize = heightText.getSize()
+        if(heightSize.width > this.height){
+            heightText.scale.x = (this.height - 2) / heightSize.width
+            heightSize = heightText.getSize()
+            heightText.y = y + this.height / 2 - heightSize.width / 2;
+        }
+
+        textOfDimensions.addChild(heightText);
+
+        graphics.addChild(textOfDimensions);
 
         // Дополнительные метки для углов (если нужно)
         // Например, радиусы или углы для topLeft и topRight
@@ -1306,7 +1322,7 @@ class ShapeAdjuster extends Helpers {
 
             return acc
 
-        }, {maxX: -Infinity, maxY: -Infinity, minX: Infinity, minY: Infinity})
+        }, {maxX: -0, maxY: -0, minX: 0, minY: 0})
 
         return colBounds
     }
