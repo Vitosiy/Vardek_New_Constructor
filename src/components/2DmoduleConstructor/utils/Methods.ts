@@ -111,10 +111,10 @@ class Helpers {
         }
 
 
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-        let minX = Infinity;
-        let minY = Infinity;
+        let maxX = -0;
+        let maxY = -0;
+        let minX = 0;
+        let minY = 0;
 
         for (const shape of shapes) {
             if(!shape.data.isVerticalItem) {
@@ -1306,7 +1306,7 @@ class ShapeAdjuster extends Helpers {
 
             return acc
 
-        }, {maxX: -Infinity, maxY: -Infinity, minX: Infinity, minY: Infinity})
+        }, {maxX: -0, maxY: -0, minX: 0, minY: 0})
 
         return colBounds
     }
