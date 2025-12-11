@@ -15,6 +15,7 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 
 const props = defineProps({
   fillings: {
@@ -49,6 +50,7 @@ const emit = defineEmits([
 const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
+const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0, extra: null});
 const isOpenMaterialSelector = ref<boolean>(false);
@@ -73,12 +75,12 @@ const debounce = (callback, wait) => {
   }, wait)
 }
 
-const selectCell = (sec, cell = null, row = null, item = 0) => {
+const selectCell = (sec, cell = null, row = null, extra = null, item = 0) => {
   selectedFilling.value = {sec, cell, row, item};
   visualizationRef.value.selectCell("fillings", sec, cell, true, row, item);
 };
 
-const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, item = 0, extra = null) => {
+const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null, extra = null, item = 0) => {
   selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item, extra: extra};
 };
 
@@ -111,6 +113,28 @@ const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false)
   return visualizationRef.value.checkPositionFillingToCreate(tempFilling);
 };
 
+const getFasadePosition = (_position) => {
+
+  const { userData } = modelState.getCurrentModel;
+  const { PROPS } = userData;
+  let fasadePosition = APP.FASADE_POSITION[_position];
+
+  if (!fasadePosition)
+    return {}
+
+  fasadePosition = builder.getExec(
+      builder.expressionsReplace(fasadePosition,
+          Object.assign(PROPS.CONFIG.EXPRESSIONS,
+              {
+                "#X#": module.value.width,
+                "#Y#": module.value.height - (module.value.isRestrictedModule ? 0 : module.value.horizont),
+                "#Z#": module.value.depth,
+              }))
+  )
+
+  return fasadePosition
+}
+
 const addFilling = (type, product, oldFillingObject = false) => {
 
   const {sec, cell, row, extra} = selectedFilling.value
@@ -125,14 +149,28 @@ const addFilling = (type, product, oldFillingObject = false) => {
 
   const isVerticalItem = _type === "vertical_shelf"
 
+  const currentSection = module.value.sections[sec];
+  const currentCell = currentSection.cells?.[cell];
+  const currentRow = currentCell?.cellsRows?.[row];
+  const currentExtra = currentRow?.extras?.[extra];
+
+  let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
+
   if (row === null && cell === null && sec === null && extra === null) {
     alert("Пожалуйста, выберите секцию для добавления наполнения", "error");
     return;
   }
 
-  if (product.MIN_FASADE_SIZE && row) {
-    alert("Нельзя установить ящик с фасадом в вертикальную перегородку!", "error");
-    return;
+  if (product.MIN_FASADE_SIZE) {
+    if(row || extra){
+      alert("Нельзя установить ящик с фасадом в вертикальную разделитель!", "error");
+      return;
+    }
+
+    if(!currentSection?.fasades?.[0]?.[0]){
+      alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!", "error");
+      return;
+    }
   }
 
   if (isBottomHiTechProfile && !PROPS.CONFIG.OPTIONS.find((opt, index) => {
@@ -148,14 +186,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     return;
   }
 
-  const currentSection = module.value.sections[sec];
-  const currentCell = currentSection.cells?.[cell];
-  const currentRow = currentCell?.cellsRows?.[row];
-  const currentExtra = currentRow?.extras?.[extra];
-
-  let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
   let currentFillingsArray = []
-
   const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem);
 
   if (!startFillingData) {
@@ -233,10 +264,11 @@ const addFilling = (type, product, oldFillingObject = false) => {
     size: new THREE.Vector3(width, height, depth),
     width,
     height,
-    color: profileData.COLOR || module.value.moduleColor,
+    color: profileData.COLOR || false,
     sec,
     cell,
     row,
+    extra,
   };
 
 
@@ -255,7 +287,19 @@ const addFilling = (type, product, oldFillingObject = false) => {
     if(!currentSection.fasadesDrawers)
       currentSection.fasadesDrawers = []
 
-    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0].fasades[0][0]
+    const {PRODUCT} = PROPS
+    let productInfo = APP.CATALOG.PRODUCTS[PRODUCT];
+
+    const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+    const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+
+    const correctSectionFasadeWidth =
+        module.value.sections.length > 1 ?
+            sec > 0 && sec < module.value.sections.length - 1 ? currentSection.width + module.value.moduleThickness - 4 :
+                currentSection.width + ((sec == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
+            module.value.width - 4;
+
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0]
 
     let manufacturerOffset = 0
     let manufacturer_name = product.EN_NAME?.toLowerCase()|| product.NAME?.toLowerCase()
@@ -270,7 +314,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
     fillingObject.moduleThickness = module.value.moduleThickness
     fillingObject.fasade = <DrawerFasadeObject>{
       id: currentSection.fasadesDrawers.length + 1,
-      width: baseFasade.width,
+      width: correctSectionFasadeWidth,
       height: product.MIN_FASADE_SIZE,
       minY: product.MIN_FASADE_SIZE,
       maxY: product.MAX_FASADE_SIZE,
@@ -281,7 +325,7 @@ const addFilling = (type, product, oldFillingObject = false) => {
       },
       type: "fasade",
       manufacturerOffset,
-      item: currentFillingsArray.length - 1,
+      item: fillingObject.id,
       sec,
       cell,
       row,
@@ -292,16 +336,17 @@ const addFilling = (type, product, oldFillingObject = false) => {
     calcDrawersFasades(sec )
   }
 
-  selectCell(sec, cell, row, currentFillingsArray.length - 1);
+  selectCell(sec, cell, row, extra,currentFillingsArray.length - 1);
 
   // // Обновляем рендер
   visualizationRef.value.renderGrid();
 };
 
-const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null) => {
+const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
   const sec = module.value.sections[secIndex];
   const cell = sec.cells?.[cellIndex];
   const row = cell?.cellsRows?.[rowIndex];
+  const extra = row?.extras?.[extraIndex];
 
   const curRow = row || cell || sec;
   let needFasadesUpdate = false
@@ -376,16 +421,19 @@ const updateFilling = (value, filling, type, render = false) => {
   emit("product-updateFilling", value, filling, type, render);
 };
 
-const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
-  selectCell(secIndex, cellIndex, rowIndex, key);
+const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+  selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
   const gridCopy = Object.assign({}, module.value);
 
   const sec = gridCopy.sections[secIndex];
   const currentColl = sec.cells?.[cellIndex];
-  const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
+  const currentRow = currentColl?.cellsRows?.[rowIndex];
+  const currentExtra = currentRow?.extras?.[extraIndex];
 
-  const currentfilling = currentRow.fillings[key];
+  const current = currentExtra || currentRow || currentColl || sec;
+
+  const currentfilling = current.fillings[key];
 
   if (currentfilling?.isProfile?.isBottomHiTechProfile) {
     alert("Г-образный профиль нельзя перемещать!");
@@ -405,7 +453,7 @@ const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, r
   fillingData.position.y = newValue;
   fillingData.sector = tmpSector;
 
-  const pixiSector = currentRow.sector;
+  const pixiSector = current.sector;
 
   // Проверяем коллизию
   const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
@@ -425,16 +473,19 @@ const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, r
   visualizationRef.value.renderGrid();
 };
 
-const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
-  selectCell(secIndex, cellIndex, rowIndex, key);
+const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+  selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
   const gridCopy = Object.assign({}, module.value);
 
   const sec = gridCopy.sections[secIndex];
   const currentColl = sec.cells?.[cellIndex];
-  const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
+  const currentRow = currentColl?.cellsRows?.[rowIndex];
+  const currentExtra = currentRow?.extras?.[extraIndex];
 
-  const currentfilling = currentRow.fillings[key];
+  const current = currentExtra || currentRow || currentColl || sec;
+
+  const currentfilling = current.fillings[key];
 
   if (currentfilling?.isProfile?.isBottomHiTechProfile) {
     alert("Г-образный профиль нельзя перемещать!");
@@ -454,7 +505,7 @@ const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, r
   fillingData.position.y = newValue;
   fillingData.sector = tmpSector;
 
-  const pixiSector = currentRow.sector;
+  const pixiSector = current.sector;
 
   // Проверяем коллизию
   const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
@@ -518,7 +569,7 @@ const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
       itemIndex,
       data
     }
-    selectCell(secIndex, cellIndex, rowIndex, itemIndex)
+    selectCell(secIndex, cellIndex, rowIndex, null, itemIndex)
     isOpenMaterialSelector.value = true
   }, 10)
 }
@@ -540,7 +591,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
 };
 
 const changeDrawerFasade = (event, value, key, secIndex, cellIndex = null, rowIndex = null) => {
-  selectCell(secIndex, cellIndex, rowIndex, key);
+  selectCell(secIndex, cellIndex, rowIndex, null, key);
 
   const gridCopy = Object.assign({}, module.value);
 
@@ -719,6 +770,7 @@ const closeMenu = () => {
           >
 
             <div
+                v-if="section.fillings?.length"
                 v-for="(filling, fillingIndex) in section.fillings"
                 :key="fillingIndex"
                 :class="[
@@ -893,7 +945,7 @@ const closeMenu = () => {
                               <input
                                   type="number"
                                   :step="1"
-                                  :max="section.height - filling.height"
+                                  :max="cell.height - filling.height"
                                   min="0"
                                   class="actions-input"
                                   :value="filling.distances?.bottom"
@@ -1019,7 +1071,7 @@ const closeMenu = () => {
                                   <input
                                       type="number"
                                       :step="1"
-                                      :max="section.height - filling.height"
+                                      :max="row.height - filling.height"
                                       min="0"
                                       class="actions-input"
                                       :value="filling.distances?.bottom"
@@ -1083,6 +1135,99 @@ const closeMenu = () => {
 
                       </div>
                     </details>
+
+                    <div class="accordion" v-if="row.extras?.length">
+                      <div
+                          v-for="(extra, extraIndex) in row.extras"
+                          :key="extraIndex"
+                          :class="'actions-items--container'"
+                      >
+                        <details class="item-group" v-if="extra.fillings?.length">
+
+                          <summary>
+                            <h3 class="item-group__title">
+                              {{ secIndex + 1 }}.{{ cellIndex + 1 }}.{{ rowIndex + 1 }}.{{ extraIndex + 1 }}
+                            </h3>
+                          </summary>
+
+                          <div
+                              v-for="(filling, fillingIndex) in extra.fillings"
+                              :key="fillingIndex"
+                              :class="[
+                              'actions-items--container',
+                              {
+                                active:
+                                  secIndex === selectedFilling.sec &&
+                                  cellIndex === selectedFilling.cell &&
+                                  rowIndex === selectedFilling.row &&
+                                  extraIndex === selectedFilling.extra &&
+                                  fillingIndex === selectedFilling.item
+                              },
+                            ]"
+                          >
+
+                            <article class="actions-items actions-items--left">
+                              <div class="actions-items--left-wrapper">
+
+                                <div class="actions-items--title">
+                                  <button
+                                      class="actions-btn actions-icon"
+                                      @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex, extraIndex)"
+                                  >
+                                    <img
+                                        class="actions-icon--delete"
+                                        src="/icons/delite.svg"
+                                        alt=""
+                                    />
+                                  </button>
+                                  <p class="actions-title actions-title--part">
+                                    {{ filling.name }} №{{ filling.id }}
+                                  </p>
+                                </div>
+
+                              </div>
+                            </article>
+
+                            <article class="actions-items actions-items--right">
+                              <div class="actions-items--right-items">
+
+                                <div class="actions-items--width">
+                                  <div class="actions-inputs">
+                                    <p class="actions-title">Позиция</p>
+                                    <div
+                                        :class="['actions-input--container']"
+                                    >
+                                      <input
+                                          type="number"
+                                          :step="1"
+                                          :max="extra.height - filling.height"
+                                          min="0"
+                                          class="actions-input"
+                                          :value="filling.distances?.bottom"
+                                          @input="debounce((event) => {
+                                changeFillingPositionY(
+                                    $event,
+                                    $event.target.value,
+                                    fillingIndex,
+                                    secIndex,
+                                    cellIndex,
+                                    rowIndex,
+                                    extraIndex
+                                    )
+                                }, 1000)"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                              </div>
+                            </article>
+
+                          </div>
+                        </details>
+
+                      </div>
+                    </div>
 
                   </div>
                 </div>

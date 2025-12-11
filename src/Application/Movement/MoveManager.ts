@@ -11,6 +11,7 @@ import { CustomBoxHelper } from "../Utils/BoxHelperCustom";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useModelState } from "@/store/appliction/useModelState";
+import { useTransformController } from "@/components/ui/transformController/useTransformController";
 import { useUniformState } from "@/store/appliction/useUniformState";
 
 import { createOBBFromObject, OBBHelper } from "../Utils/CalculateBoundingBox";
@@ -19,7 +20,8 @@ import { UniformModeHandler } from "../Utils/UniformModeHandler";
 export class MoveManager {
 
     eventBus: ReturnType<typeof useEventBus> = useEventBus();
-    modelState: ReturnType<typeof useModelState> = useModelState();
+    // modelState: ReturnType<typeof useModelState> = useModelState();
+    private transformController: ReturnType<typeof useTransformController> = useTransformController();
     uniformState: ReturnType<typeof useUniformState> = useUniformState();
     uniformEvents: THREETypes.TUniformTextureEvents
 
@@ -58,7 +60,7 @@ export class MoveManager {
     private onTouchEndBound: (event: TouchEvent) => void;
 
     private onKeyDown: (event) => void;
-    private extention:''
+    private extention: ''
 
 
 
@@ -136,7 +138,7 @@ export class MoveManager {
     }
 
     private onMouseDown(event: MouseEvent) {
-        if (this.modelState.getTransformControlsValue) {
+        if (this.transformController.getTransformControlsValue) {
             return
         }
 
@@ -178,7 +180,7 @@ export class MoveManager {
     }
 
     private onWheel(event: WheelEvent) {
-        if (this.modelState.getTransformControlsValue) {
+        if (this.transformController.getTransformControlsValue) {
 
             return
         }

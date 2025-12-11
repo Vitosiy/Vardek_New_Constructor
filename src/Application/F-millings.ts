@@ -7,6 +7,71 @@ export const INTEGRATE_HANDE_EXEPTIONS = [
 
 export const MILLING_HANDLE_KEYS = {
     2475715: {
+        // 0: [
+        //     {
+        //         name: "milling_2",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1,
+        //             bevelEnabled: true,
+        //             bevelThickness: 0,
+        //             bevelSize: 0,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+        //                     "/>`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -3,
+        //                         x: -3,
+        //                         y: 16
+        //                     },
+        //                     boolParams: {
+        //                         depth: {
+        //                             offset: 9,
+        //                             size: "FASADE_HEIGHT"
+        //                         },
+        //                         position: {
+        //                             top: true,
+        //                             bottom: false,
+        //                             front: -15,
+        //                             left: false,
+        //                             right: true,
+        //                             centerVertical: true
+        //                         },
+        //                         rotate: {
+        //                             x: Math.PI * 0.5,
+        //                             z: Math.PI * 0.5
+        //                         }
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         0: [
             {
                 name: "milling_2",
@@ -35,19 +100,19 @@ export const MILLING_HANDLE_KEYS = {
                         },
                         figure: {
                             svg: `<path d="
-                                M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                               M -6 12 L 5 12 L 5 -10 A 1 1 180 0 0 1 -10 L -2 0 A -1 -1 180 1 1 -5 -0.5 L -6 -0.5 Z
                             "/>`,
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
                                 z: -3,
-                                x: -3,
-                                y: 16
+                                x: -16,
+                                y: 3
                             },
                             boolParams: {
                                 depth: {
                                     offset: 9,
-                                    size: "FASADE_HEIGHT"
+                                    size: "FASADE_WIDTH"
                                 },
                                 position: {
                                     top: true,
@@ -58,8 +123,9 @@ export const MILLING_HANDLE_KEYS = {
                                     centerVertical: true
                                 },
                                 rotate: {
-                                    x: Math.PI * 0.5,
-                                    z: Math.PI * 0.5
+                                    x: -Math.PI * 0.5,
+                                    z: Math.PI * 0.5,
+                                    y: Math.PI * 0.5
                                 }
                             }
                         },
@@ -72,6 +138,7 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+
         1: [
             {
                 name: "milling_2",
@@ -138,6 +205,71 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 2: [
+        //     {
+        //         name: "milling_2",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1,
+        //             bevelEnabled: true,
+        //             bevelThickness: 0,
+        //             bevelSize: 0,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                       M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+        //                     "/>`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -3,
+        //                         x: 3,
+        //                         y: -16
+        //                     },
+        //                     boolParams: {
+        //                         depth: {
+        //                             offset: 9,
+        //                             size: "FASADE_HEIGHT"
+        //                         },
+        //                         position: {
+        //                             top: false,
+        //                             bottom: true,
+        //                             front: -15,
+        //                             left: true,
+        //                             right: false,
+        //                             centerVertical: true
+        //                         },
+        //                         rotate: {
+        //                             x: -Math.PI * 0.5,
+        //                             z: -Math.PI * 0.5
+        //                         }
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         2: [
             {
                 name: "milling_2",
@@ -166,31 +298,32 @@ export const MILLING_HANDLE_KEYS = {
                         },
                         figure: {
                             svg: `<path d="
-                              M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                               M -6 12 L 5 12 L 5 -10 A 1 1 180 0 0 1 -10 L -2 0 A -1 -1 180 1 1 -5 -0.5 L -6 -0.5 Z
                             "/>`,
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
                                 z: -3,
-                                x: 3,
-                                y: -16
+                                x: -16,
+                                y: 3
                             },
                             boolParams: {
                                 depth: {
                                     offset: 9,
-                                    size: "FASADE_HEIGHT"
+                                    size: "FASADE_WIDTH"
                                 },
                                 position: {
-                                    top: false,
-                                    bottom: true,
+                                    top: true,
+                                    bottom: false,
                                     front: -15,
-                                    left: true,
-                                    right: false,
+                                    left: false,
+                                    right: true,
                                     centerVertical: true
                                 },
                                 rotate: {
                                     x: -Math.PI * 0.5,
-                                    z: -Math.PI * 0.5
+                                    z: Math.PI * 0.5,
+                                    y: Math.PI * 0.5
                                 }
                             }
                         },
@@ -333,6 +466,71 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 6: [
+        //     {
+        //         name: "milling_2",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1,
+        //             bevelEnabled: true,
+        //             bevelThickness: 0,
+        //             bevelSize: 0,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+        //                     "/>`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -3,
+        //                         x: -3,
+        //                         y: 16
+        //                     },
+        //                     boolParams: {
+        //                         depth: {
+        //                             offset: 9,
+        //                             size: "FASADE_HEIGHT"
+        //                         },
+        //                         position: {
+        //                             top: true,
+        //                             bottom: false,
+        //                             front: -15,
+        //                             left: false,
+        //                             right: true,
+        //                             centerVertical: true
+        //                         },
+        //                         rotate: {
+        //                             x: Math.PI * 0.5,
+        //                             z: Math.PI * 0.5
+        //                         }
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         6: [
             {
                 name: "milling_2",
@@ -351,11 +549,11 @@ export const MILLING_HANDLE_KEYS = {
                         nameCondition: "default",
                         condition: {
                             width: {
-                                min: 146,
-                                max: 2500,
+                                min: 149,
+                                max: 2600,
                             },
                             height: {
-                                min: 146,
+                                min: 150,
                                 max: 2500,
                             },
                         },
@@ -366,18 +564,18 @@ export const MILLING_HANDLE_KEYS = {
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
-                                z: -3,
-                                x: -3,
-                                y: 16
+                                z: -2,
+                                x: -16,
+                                y: -3
                             },
                             boolParams: {
                                 depth: {
                                     offset: 9,
-                                    size: "FASADE_HEIGHT"
+                                    size: "FASADE_WIDTH"
                                 },
                                 position: {
-                                    top: true,
-                                    bottom: false,
+                                    top: false,
+                                    bottom: true,
                                     front: -15,
                                     left: false,
                                     right: true,
@@ -385,7 +583,8 @@ export const MILLING_HANDLE_KEYS = {
                                 },
                                 rotate: {
                                     x: Math.PI * 0.5,
-                                    z: Math.PI * 0.5
+                                    z: Math.PI * 0.5,
+                                    y: Math.PI * 0.5
                                 }
                             }
                         },
@@ -398,6 +597,7 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+
         7: [
             {
                 name: "milling_2",
@@ -482,41 +682,42 @@ export const MILLING_HANDLE_KEYS = {
                         nameCondition: "default",
                         condition: {
                             width: {
-                                min: 146,
-                                max: 2500,
+                                min: 149,
+                                max: 2600,
                             },
                             height: {
-                                min: 146,
+                                min: 150,
                                 max: 2500,
                             },
                         },
                         figure: {
                             svg: `<path d="
-                              M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+                                M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
                             "/>`,
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
-                                z: -3,
-                                x: 3,
-                                y: -16
+                                z: -2,
+                                x: -16,
+                                y: -3
                             },
                             boolParams: {
                                 depth: {
                                     offset: 9,
-                                    size: "FASADE_HEIGHT"
+                                    size: "FASADE_WIDTH"
                                 },
                                 position: {
                                     top: false,
                                     bottom: true,
                                     front: -15,
-                                    left: true,
-                                    right: false,
+                                    left: false,
+                                    right: true,
                                     centerVertical: true
                                 },
                                 rotate: {
-                                    x: -Math.PI * 0.5,
-                                    z: -Math.PI * 0.5
+                                    x: Math.PI * 0.5,
+                                    z: Math.PI * 0.5,
+                                    y: Math.PI * 0.5
                                 }
                             }
                         },
@@ -528,7 +729,72 @@ export const MILLING_HANDLE_KEYS = {
                     },
                 ],
             },
-        ]
+        ],
+        // 8: [
+        //     {
+        //         name: "milling_2",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1,
+        //             bevelEnabled: true,
+        //             bevelThickness: 0,
+        //             bevelSize: 0,
+        //             bevelOffset: 0,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: 2500,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                       M 6 12 L -5 12 L -5 -10 A 1 1 0 0 1 -1 -10 L 1.75 0 A 1 1 0 0 0 5 -0.5 L 6 -0.5 Z
+        //                     "/>`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -3,
+        //                         x: 3,
+        //                         y: -16
+        //                     },
+        //                     boolParams: {
+        //                         depth: {
+        //                             offset: 9,
+        //                             size: "FASADE_HEIGHT"
+        //                         },
+        //                         position: {
+        //                             top: false,
+        //                             bottom: true,
+        //                             front: -15,
+        //                             left: true,
+        //                             right: false,
+        //                             centerVertical: true
+        //                         },
+        //                         rotate: {
+        //                             x: -Math.PI * 0.5,
+        //                             z: -Math.PI * 0.5
+        //                         }
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ]
     },
 
     3716541: {

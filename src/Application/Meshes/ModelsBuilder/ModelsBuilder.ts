@@ -41,8 +41,6 @@ export class ModelsBuilder {
 
         if (props.CONFIG.SIZE) {
 
-            console.log("TYT", props.CONFIG.SIZE)
-
             const { width, height, depth } = props.CONFIG.SIZE
             model = this.parent.expressionsReplace(modelData, {
                 "#X#": width,
@@ -145,8 +143,6 @@ export class ModelsBuilder {
         box.setFromObject(model);
         box.getCenter(center)
 
-        console.log(params, 'in normalizeUploadedModel')
-
         if (params.width || params.height || params.depth)
             this.changeModelScale(model, new THREE.Vector3(
                 params.width || params.scale || 1,
@@ -248,8 +244,6 @@ export class ModelsBuilder {
             props,
             sizeRulers: false
         }) as THREE.Object3D;
-
-        console.log(tempModel, 'tempModel')
 
         // 4. Копируем ВСЕХ детей из tempModel → в targetGroup
         while (tempModel.children.length > 0) {

@@ -22,8 +22,9 @@ export class BuildersHelper extends GlobalsData {
     createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
-        const leftWidth = props.CONFIG.LEFTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.LEFTSIDECOLOR.COLOR]?.DEPTH : color?.DEPTH || 18;
-        const rightWidth = props.CONFIG.RIGHTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.RIGHTSIDECOLOR.COLOR]?.DEPTH : color?.DEPTH || 18;
+        const colorWidth = color?.DEPTH || 18;
+        const leftWidth = props.CONFIG.LEFTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.LEFTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
+        const rightWidth = props.CONFIG.RIGHTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.RIGHTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
 
         // console.log(props.CONFIG.EXPRESSIONS)
 
@@ -33,7 +34,7 @@ export class BuildersHelper extends GlobalsData {
                 "#X#": size.width,
                 "#Y#": size.height,
                 "#Z#": size.depth,
-                "#MATERIAL_THICKNESS#": color?.DEPTH,
+                "#MATERIAL_THICKNESS#": colorWidth,
                 "#LEFT_THICKNESS#": leftWidth,
                 "#RIGHT_THICKNESS#": rightWidth,
                 "#HORIZONT#": props.CONFIG.NOBOTTOM ? 0 :
@@ -62,7 +63,7 @@ export class BuildersHelper extends GlobalsData {
                 PARAMS.HORIZONT ?? 78;
 
         const filling = this._FILLING[product.FILLING[0]] || {};
-        const { FASADE_PROPS } = PARAMS
+        const { FASADE_PROPS, SIZEEDITJOINDEPTH } = PARAMS
 
         // Базовые подстановки
         const expressions: Record<string, any> = {
@@ -78,7 +79,7 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_MDEPTH#": productData.depth,
             "#MODUL_DEPTH#": productData.depth,
             "#Z#": productData.depth,
-            "#SIZEEDITJOINDEPTH#": productData.SIZE_EDIT_JOINDEPTH_MIN,
+            "#SIZEEDITJOINDEPTH#": SIZEEDITJOINDEPTH ?? productData.SIZE_EDIT_JOINDEPTH_MIN,
             "#MATERIAL_THICKNESS#": materialThickness,
             "#HORIZONT#": horizont,
             "#VSECTION_MAX#": filling.VSECTION_MAX,
@@ -528,9 +529,6 @@ export class BuildersHelper extends GlobalsData {
 
         })
 
-
-        console.log(result, 'result')
-
         // .filter(el => el.ID !== 98683);
         return result
 
@@ -610,8 +608,6 @@ export class BuildersHelper extends GlobalsData {
     }
 
     mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
-
-        console.log('=========  mergeArrays ==========')
 
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);

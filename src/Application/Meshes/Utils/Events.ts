@@ -103,6 +103,7 @@ export class MeshEvents extends BuildersHelper {
     private onChangeRootModel: ({ data, mesh }) => void;
     private onChangeFillingModel: ({ data, mesh }) => void;
     private onRecountShelfs: ({ data, mesh }) => void;
+    private onResizeJoinDepth: ({ data, mesh }) => void;
 
     private searchElementsByType: Record<string, string> = {
         moduleTop: "element_up",
@@ -178,6 +179,7 @@ export class MeshEvents extends BuildersHelper {
         this.onChangeRootModel = this.changeRootModel.bind(root);
 
         this.onRecountShelfs = this.recountShelfs.bind(root)
+        this.onResizeJoinDepth = this.resizeJoinDepth.bind(root)
 
         this.addVueEvents();
 
@@ -189,7 +191,7 @@ export class MeshEvents extends BuildersHelper {
         this.handlesBuilder = this.buildProduct.handles_builder;
         this.plinthBuilder = this.buildProduct.plinth_builder
 
-        this.millingActions = useMillingAction(this.buildProduct.milling_builder)
+        // this.millingActions = useMillingAction(this.buildProduct.milling_builder)
     }
 
     get _currentMesh() {
@@ -313,7 +315,7 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     async catchFasadeChange({ data, fasadeNdx, mesh }: TDataWithNdx) {
-        console.log('==== ❌ catchFasadeChange ❌ ====')
+        // console.log('==== ❌ catchFasadeChange ❌ ====')
 
         const meshData = mesh ?? this._currentMesh
 
@@ -364,12 +366,12 @@ export class MeshEvents extends BuildersHelper {
         const handleType = CONFIG.FASADE_PROPS[fasadeNdx].TYPE
 
         if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
-            console.log('==== ❌ SHOWCASE CLASSIK❌ ====', milling)
+            // console.log('==== ❌ SHOWCASE CLASSIK❌ ====', milling)
             this.changeShowcase({ data: SHOWCASE[0], fasadeNdx, mesh: mesh });
         }
         else if (incomingModel) {
             const action = this.modelState.getCurrentFasadeTypesAction(handleType)
-            console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
+            // console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
             this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
         }
         // else {
@@ -930,7 +932,7 @@ export class MeshEvents extends BuildersHelper {
 
     async catchDeliteFasade(fasadeNdx: number, el: THREE.Object3D) {
 
-        console.log('==== ❌ catchDeliteFasade ❌ ====')
+        // console.log('==== ❌ catchDeliteFasade ❌ ====')
 
         const drowMode = this.menuStore.getDrowModeValue
         const product = el ?? this._currentMesh
@@ -1034,7 +1036,7 @@ export class MeshEvents extends BuildersHelper {
     async changeModelSize({ data, mesh, type }: TResizeModel) {
 
 
-        const extrasYsize = [2050360, 1059832]
+        const extrasYsize = [2050360, 1059832, 971222, 3140746]
         const currentMesh = mesh ? mesh : this._currentMesh
 
         if (!currentMesh) return
@@ -1052,11 +1054,10 @@ export class MeshEvents extends BuildersHelper {
             return
         }
 
-
         const { PROPS } = currentMesh!.userData
         const { CONFIG, PRODUCT } = PROPS
         const { POSITION, UNIFORM_TEXTURE } = CONFIG
-        const fasadeSize = type === 'fasade'
+        const fasadeSize = type === 'resize'
 
         /** Очищаем родительский объект */
         this.dispose.clearParent(currentMesh as THREE.Object3D)
@@ -1186,7 +1187,7 @@ export class MeshEvents extends BuildersHelper {
         CONFIG.FILLING = data
         CONFIG.OPTIONS = this.buildProduct.filters.filterOption(product.OPTION)
         this.buildProduct.filters.filterFasadePosition(CONFIG, product)
-
+        // this.buildProduct.filters.filterFasadeSizer(product.FASADE_SIZES, product)
 
         this.changeModelSize({ data: { width, height, depth } })
 
@@ -1197,8 +1198,10 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     async recountShelfs({ data, mesh }) {
-        if (!this._currentMesh) return
+
         const currentMesh = mesh ? mesh : this._currentMesh
+        if (!currentMesh) return
+
         const { PROPS } = currentMesh.userData
         const { CONFIG } = PROPS
         const { POSITION, UNIFORM_TEXTURE, OPTIONS, FASADE_PROPS, SHELFQUANT } = CONFIG
@@ -1208,6 +1211,25 @@ export class MeshEvents extends BuildersHelper {
         this.changeModelSize({ data: { width, height, depth } })
 
     }
+
+    //------------------
+    /** @Изменение_размера  */
+    //------------------
+
+    async resizeJoinDepth({ data, mesh }) {
+
+        const currentMesh = mesh ? mesh : this._currentMesh
+        if (!currentMesh) return
+
+        const { PROPS } = currentMesh.userData
+        const { CONFIG } = PROPS
+        const { POSITION, UNIFORM_TEXTURE, OPTIONS, FASADE_PROPS, SHELFQUANT } = CONFIG
+        const { width, height, depth } = CONFIG.SIZE;
+
+        CONFIG.SIZEEDITJOINDEPTH = data
+        this.changeModelSize({ data: { width, height, depth }, type: "resize" })
+    }
+
     //------------------
     /** @Вращение  */
     //------------------
@@ -1419,6 +1441,10 @@ export class MeshEvents extends BuildersHelper {
             this.recountShelfs({ data, mesh })
         }
 
+        this.onResizeJoinDepth = ({ data, mesh }) => {
+            this.resizeJoinDepth({ data, mesh })
+        }
+
         this.events.on('A:ChangeModuleTexture', this.onChangeModuleTexture);
         this.events.on('A:ChangeModuleTotalTexture', this.onChangeTotalModuleTexture);
 
@@ -1465,6 +1491,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:ChangeFilling', this.onChangeFillingModel);
 
         this.events.on('A:RecountShelfs', this.onRecountShelfs);
+        this.events.on('A:ResizeJoinDepth', this.onResizeJoinDepth);
 
 
 

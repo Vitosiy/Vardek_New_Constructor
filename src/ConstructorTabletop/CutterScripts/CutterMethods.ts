@@ -1250,8 +1250,6 @@ class Section extends Helpers {
       if (item.el) item.el.error = error;
     });
 
-    console.log(path)
-
     return path;
   }
 

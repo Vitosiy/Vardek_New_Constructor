@@ -18,6 +18,7 @@ import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoo
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState"
+import { useTransformController } from "@/components/ui/transformController/useTransformController"
 import { useBasketStore } from "@/store/appStore/useBasketStore"
 
 export class World {
@@ -34,6 +35,7 @@ export class World {
     uniformState: ReturnType<typeof useUniformState> = useUniformState();
     roomOptions: ReturnType<typeof useRoomOptions> = useRoomOptions();
     modelState: ReturnType<typeof useModelState> = useModelState()
+    transformController: ReturnType<typeof useTransformController> = useTransformController();
     basketStore: ReturnType<typeof useBasketStore> = useBasketStore()
 
     trafficManager: THREETypes.TTrafficManager | null;
@@ -64,7 +66,7 @@ export class World {
             this.enviroment = new Environment(root)
         })
         this.vueEvents()
-        
+
 
         if (this.roomState.getRooms.length > 0) {
             this.roomState.setLoad(false)
@@ -72,7 +74,7 @@ export class World {
             this.loadRoom(startRoomId)
         }
         else {
-            
+
             this.room?.defaultCreate()
             this.lights.setLight(this.room!._wallsGroupSize, 1, this.room!._roomObject)
         }
@@ -108,18 +110,18 @@ export class World {
         const toAction: string[] = this.room?.save()
         this.root.userHistory.clearHistory(toAction as string[])
         this.modelState.setCurrentModel(null)
-        this.modelState.setTransformControlsValue(false)
+        this.transformController.setTransformControlsValue(false)
         this.basketStore.clearBasket();
     }
 
     saveRoom(name: string) {
 
-        
+
         if (!this.roomState.getRoomId) {
             const roomId = Date.now().toString()
             // console.log('Комнаты ещё нет')
             const contant = this.room!.save() as string[]
-                
+
             this.roomState.addRoom({
                 id: roomId, // Присваиваем id 
                 label: name ?? `Комната N:${this.roomState.rooms.length + 1}`,
@@ -145,9 +147,9 @@ export class World {
         // const roomParams = this.roomState.getCurrentRoomData(roomId)?.size as THREEInterfases.IWallSizes
         const roomParams = this.roomState.getCurrentRoomParams as THREEInterfases.IWallSizes
         const basket = JSON.stringify({
-                    scene: this.basketStore.mainConstructor,
-                    catalog: this.basketStore.mainCatalog
-                })
+            scene: this.basketStore.mainConstructor,
+            catalog: this.basketStore.mainCatalog
+        })
         this.roomState.updateRoom(roomId, contant, roomParams, basket)
         const rooms = this.roomState.getRooms
         this.sceneState.updateProjectParams({ rooms: rooms })
@@ -160,7 +162,7 @@ export class World {
         this.roomState.clearCurrentRoomId()
         this.roomState.clearTempRoomSize()
         this.modelState.setCurrentModel(null)
-        this.modelState.setTransformControlsValue(false)
+        this.transformController.setTransformControlsValue(false)
 
         /** Добавляем ID комнаты в хранилище */
         this.roomState.setCurrentRoomId(roomId);

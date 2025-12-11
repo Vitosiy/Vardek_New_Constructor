@@ -365,6 +365,8 @@ watch(() => useBasketStore().basketData, (newValue) => {
     width: 100%;
     border-radius: 8px;
     padding: 12px;
+    max-height: 114px;
+    overflow-y: auto;
   }
 
 </style>

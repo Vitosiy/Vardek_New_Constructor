@@ -6,6 +6,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { TApplication, TMoveManager } from '@/types/types';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useModelState } from '@/store/appliction/useModelState';
+import { useTransformController } from '@/components/ui/transformController/useTransformController';
 // Интерфейс для callbacks (хуков)
 interface TransformControlsCallbacks {
     onAttach?: (object: THREE.Object3D) => void;
@@ -18,6 +19,7 @@ interface TransformControlsCallbacks {
 export class TransformControlsManager {
     private eventBus: ReturnType<typeof useEventBus> = useEventBus()
     private modelState: ReturnType<typeof useModelState> = useModelState();
+    private transformController: ReturnType<typeof useTransformController> = useTransformController();
     private orbitControls: OrbitControls
     private moveManager: TMoveManager
     private root: TApplication
@@ -31,6 +33,9 @@ export class TransformControlsManager {
     private currentTarget: THREE.Object3D | null = null;
     private disposed: boolean = false; // Флаг для предотвращения использования после dispose
 
+    private rotationSnapDegrees: number
+    private rotationSnapRadians: number
+
     constructor(
         root: TApplication,
         callbacks: TransformControlsCallbacks = {}
@@ -42,6 +47,8 @@ export class TransformControlsManager {
         this.canvas = root._canvas!
         this.moveManager = root._trafficManager?.moveManager!
         this.orbitControls = root._orbitControls!
+
+        this.rotationSnapRadians = THREE.MathUtils.degToRad(this.transformController.getControlSnapAngle)
 
 
         // Опциональные callbacks (хуки) с дефолтными пустыми функциями (теперь Required гарантирует тип)
@@ -61,6 +68,7 @@ export class TransformControlsManager {
         // this.controls.showX = false
 
         this.scene.add(this.controls.getHelper()); // Добавляем в сцену (включая helper)
+        this.applyRotationSnap();
         this.addEvents()
         // Подписываемся на встроенные события TransformControls
         this.controls.addEventListener('dragging-changed', (event) => {
@@ -75,6 +83,19 @@ export class TransformControlsManager {
         if (this.disposed) {
             throw new Error('TransformControlsManager is disposed and cannot be used.');
         }
+    }
+
+    private applyRotationSnap(): void {
+        this.controls.setRotationSnap(this.rotationSnapRadians);
+    }
+
+    public setRotationSnap(degrees: number): void {
+        this.rotationSnapDegrees = degrees;
+        this.rotationSnapRadians = THREE.MathUtils.degToRad(degrees);
+        this.applyRotationSnap();
+
+        // Опционально: можно отправить событие отправить
+        this.eventBus.emit('A:TransformRotationSnapChanged', degrees);
     }
 
     // Прикрепление к объекту
@@ -170,6 +191,11 @@ export class TransformControlsManager {
         // this.checkDisposed();
         if (this.isEnabled && this.currentTarget) {
             this.controls.setMode(mode);
+            if (mode === 'rotate') {
+                this.applyRotationSnap();
+            } else {
+                this.controls.setRotationSnap(null);
+            }
             // this.callbacks.onModeChange(mode);
         }
     }
@@ -219,6 +245,10 @@ export class TransformControlsManager {
             this.setMode(value)
         }
 
+        const onSetRotationSnap = (degrees: number) => {
+            this.setRotationSnap(degrees);
+        };
+
 
         this.eventBus.on("A:TransformSetMode", onSetMode)
         this.eventBus.on("A:TransformMode_On", onAttach)
@@ -227,6 +257,7 @@ export class TransformControlsManager {
         this.eventBus.on("A:Create", onTotalDetach)
         this.eventBus.on("A:NextAction", onTotalDetach)
         this.eventBus.on("A:PrevAction", onTotalDetach)
+        this.eventBus.on("A:TransformSetRotationSnap", onSetRotationSnap);
 
     }
 }

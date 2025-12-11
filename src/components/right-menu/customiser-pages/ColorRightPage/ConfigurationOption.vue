@@ -60,8 +60,6 @@ let chooseOption = () => {
 
 const deleteChoise = (event) => {
   // event.stopPropagation();
-  console.log(props.type, 'props.type')
-
   emit("delete-choise", props.type);
 };
 </script>
