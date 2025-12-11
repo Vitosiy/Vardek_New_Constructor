@@ -18,6 +18,7 @@ export class GlobalsData {
     _FASADE_SECTION: THREETypes.TObject = this._APP.FASADE_SECTION;
     _FASADE_POSITION: THREETypes.TObject = this._APP.FASADE_POSITION;
     _FASADE_GROUPS: THREETypes.TObject = this._APP.FASADE_GROUPS
+    _FASADE_SIZE_RESTRICT: THREETypes.TObject = this._APP.FASADE_SIZE_RESTRICT
     _FASADETYPE: THREETypes.TObject = this._APP.FASADETYPE
     _MILLING: THREETypes.TObject = this._APP.MILLING
     _MODELS: THREETypes.TObject = this._APP.MODELS

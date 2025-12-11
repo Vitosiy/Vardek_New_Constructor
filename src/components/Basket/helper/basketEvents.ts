@@ -53,7 +53,8 @@ const eventsMap = [
     "U:DrawPatina",
     "A:RecountShelfs",
     "A:Delite-Fasad",
-    'A:GlobalParamsSelect'
+    'A:GlobalParamsSelect',
+    "A:ChangeShowcaseMilling"
 
 ]
 

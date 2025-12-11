@@ -65,8 +65,7 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
     return;
   }
 
-
-  // console.log(data, "==== ❌ Параметры выбранного фасада ❌ ====");
+  console.log(data, "==== ❌ Параметры выбранного фасада ❌ ====");
 
   const productId = productData.value.PROPS.PRODUCT;
   let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE, MATERIAL, PATINA } = data;
@@ -86,19 +85,19 @@ const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
     imgSrc: PREVIEW_PICTURE,
     transitionT,
     material: MATERIAL,
-    patinaList: PATINA
+    patinaList: PATINA,
   });
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
 };
 
 const onSearchChange = (e) => {
-  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "gm");
-  let filtered = totalMaterialList.value.filter((id) =>
+  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "g");
+  let filteredData = totalMaterialList.value.filter((id) =>
     reg.test(_FASADE[id].NAME.toLowerCase())
   );
-  filteredMaterialList.value = filtered;
 
+  filteredMaterialList.value = filteredData;
   if (e.target.value === "") filteredMaterialList.value = [];
 };
 
