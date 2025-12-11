@@ -9,12 +9,7 @@
     </div>
 
     <div class="form-order__content">
-      <!-- Ошибка (раскомментировать при необходимости) -->
-      <!-- <div 
-        v-if="app.errors.saveproject" 
-        class="form-order__error alert alert-danger"
-        v-text="app.errors.saveproject"
-      ></div> -->
+
 
       <form class="form-order__form" @submit.prevent="handleSubmit">
 
@@ -22,13 +17,13 @@
           <div class="form-order__form-col">
             <!-- Название проекта -->
             <div class="form-field">
-              <label class="form-field__label">Название проекта</label>
+              <label class="form-field__label">Название проекта <span>*</span></label>
               <input
                 v-model="form.projectName"
                 type="text"
                 class="form-field__input"
                 name="project_name"
-                required
+                
               />
             </div>
 
@@ -37,7 +32,7 @@
               <!-- Имя клиента -->
               <div class="form-field">
                 <label for="client_name" class="form-field__label">
-                  Имя клиента
+                  Имя клиента <span>*</span>
                 </label>
                 <input
                   v-model="form.clientName"
@@ -45,14 +40,14 @@
                   class="form-field__input"
                   id="client_name"
                   name="client_name"
-                  required
+                  
                 />
               </div>
 
               <!-- Контактный телефон -->
               <div class="form-field">
                 <label for="client_phone" class="form-field__label">
-                  Контактный телефон
+                  Контактный телефон <span>*</span>
                 </label>
                 <input
                   v-model="form.clientPhone"
@@ -61,8 +56,7 @@
                   id="client_phone"
                   name="client_phone"
                   placeholder="+7 (___) ___-____"
-                  v-mask="'+7 (###) ###-####'"
-                  required
+                  @input="handlePhoneInput"
                 />
               </div>
 
@@ -93,6 +87,14 @@
                 class="form-order__screenshot-image"
               />
             </div>
+            <!-- Ошибка (раскомментировать при необходимости) -->
+            <div 
+              v-if="errorForm" 
+              class="form-order__error alert alert-danger"
+            >
+              <div v-if="errorFormInput">- Необходимо заполнить обязательные поля</div>
+              <div v-if="errorFormPhone">- Номер телефона невалиден</div>
+            </div>
           </div>
         </div>
 
@@ -120,7 +122,7 @@
 
 <script lang="ts" setup>
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useProjectAPI } from '@/features/quickActions/project/composables/useProjectAPI';
 import { useSceneState } from '@/store/appliction/useSceneState'
@@ -138,9 +140,11 @@ const basket = ref({});
 const sceneState = useSceneState()
 
 const projectData = sceneState.getCurrentProjectParams;
-
+const errorForm = ref(false)
+const errorFormInput = ref(false)
+const errorFormPhone = ref(false)
 interface FormData {
-  projectName: string;
+  projectName: any;
   clientName: string;
   clientPhone: string;
   comment: string;
@@ -158,9 +162,29 @@ const closePopup = () => {
 };
 
 const handleSubmit = () => {
+
+  if(!form.projectName.length || !form.clientName.length || !form.clientPhone.length) {
+    errorForm.value = true
+    errorFormInput.value = true 
+  } else {
+    errorForm.value = false
+    errorFormInput.value = false 
+  }
+
+  if(!validPhone(form.clientPhone)) {
+    errorForm.value = true
+    errorFormPhone.value = true
+  } else {
+    errorForm.value = false
+    errorFormPhone.value = false
+  }
+
+  
+
+
   console.log('Отправка данных:', {
-    // project_img: screenshot.value,
-    project_img: '',
+    project_img: screenshot.value,
+    // project_img: '',
     project_name: form.projectName,
     project:projectData,
     config: configData,
@@ -168,12 +192,89 @@ const handleSubmit = () => {
     fio: form.clientName,
     phone: form.clientPhone,
     comment: form.comment,
-    basket: basket.value
+    basket: basket.value,
+    cityID: ''
   });
 
   // Здесь будет логика отправки формы
   // await sendFormData(form);
 };
+
+const createNameProject = () => {
+  const now = new Date();
+  
+  // Форматирование даты: ДД.ММ.ГГГГ
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // месяц начинается с 0
+  const year = now.getFullYear();
+  const dateStr = `${day}-${month}-${year}`;
+  
+  // Форматирование времени: ЧЧ-ММ
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
+  
+  return `Проект ${dateStr} ${timeStr}`;
+};
+
+
+const handlePhoneInput = (event) => {
+  let value = event.target.value.replace(/\D/g, '');
+  
+  // Ограничиваем ввод только цифрами и максимум 11 символов
+  if (value.length > 11) {
+    value = value.substring(0, 11);
+  }
+  
+  // Автоматически добавляем +7 если номер начинается с 7 или 8
+  if (value.length === 11 && (value.startsWith('7') || value.startsWith('8'))) {
+    value = value.startsWith('8') ? '7' + value.substring(1) : value;
+  }
+  
+  // Форматируем по маске
+  let formatted = '';
+  if (value.length > 0) {
+    formatted = '+7';
+    if (value.length > 1) {
+      formatted += ` (${value.substring(1, 4)}`;
+    }
+    if (value.length > 4) {
+      formatted += `) ${value.substring(4, 7)}`;
+    }
+    if (value.length > 7) {
+      formatted += `-${value.substring(7, 9)}`;
+    }
+    if (value.length > 9) {
+      formatted += `-${value.substring(9)}`;
+    }
+  }
+  
+  form.clientPhone = formatted;
+};
+
+const validPhone = (phone) => {
+  // Удаляем все нецифровые символы
+  const digits = phone.replace(/\D/g, '');
+  
+  // Проверяем основные условия
+  const isValid = digits.length === 11 && 
+                  (digits.startsWith('7') || digits.startsWith('8')) &&
+                  /^[0-9]{11}$/.test(digits);
+  
+  if (isValid) {
+    console.log('Номер валиден');
+    // Автоматически форматируем в правильный вид
+    const formatted = `+7 (${digits.substring(1, 4)}) ${digits.substring(4, 7)}-${digits.substring(7, 9)}-${digits.substring(9)}`;
+    console.log('Отформатированный номер:', formatted);
+    return true;
+  } else {
+    console.log('Номер невалиден');
+    return false;
+  }
+};
+
+// В шаблоне:
+// <input v-model="form.clientPhone" @input="handlePhoneInput" placeholder="+7 (___) ___-__-__">
 
 onMounted(async () => {
   try {
@@ -182,8 +283,12 @@ onMounted(async () => {
     console.error('Ошибка при загрузке скриншота:', error);
   }
   basket.value = creatDataBasket();
+  form.projectName = createNameProject();
+});
 
-  console.log('projectData', projectData)
+
+watch(() => form.clientPhone, (newPhone) => {
+  validPhone(newPhone)
 });
 </script>
 
@@ -312,6 +417,11 @@ onMounted(async () => {
     font-size: 14px;
     font-weight: 500;
     color: $dark-grey;
+    span { 
+      color: #da444c;
+      font-size: 18px;
+      display: inline-block;
+    }
   }
 
   &__input,

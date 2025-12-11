@@ -77,19 +77,31 @@ export const useAppData = defineStore('AppData', () => {
   }
 
   async function clearIndexedDB() {
-    const databases = await window.indexedDB.databases();
+    const request = indexedDB.open('storage');
+    console.log('request', request);
+    request.onsuccess = function(event) {
+        const db = event.target.result;
+        const storeNames = Array.from(db.objectStoreNames);
+        console.log('Список object stores:', storeNames);
+        const transaction = db.transaction('data', 'readwrite');
+        const store = transaction.objectStore('data');
+        const clearRequest = store.clear();
+        
+        clearRequest.onsuccess = function() {
+            console.log(`Object store  очищен`);
+        };
+        
+        clearRequest.onerror = function(event) {
+            console.error('Ошибка очистки:', event);
+        };
+    };
+    // const request = indexedDB.deleteDatabase('storage');
 
-    for (const dbInfo of databases) {
-      if (dbInfo.name) {
-        const request = indexedDB.deleteDatabase(dbInfo.name);
-
-        await new Promise((resolve, reject) => {
-          request.onsuccess = () => resolve();
-          request.onerror = () => reject(request.error);
-          request.onblocked = () => console.warn('База заблокирована');
-        });
-      }
-    }
+    // await new Promise((resolve, reject) => {
+    //   request.onsuccess = () => resolve();
+    //   request.onerror = () => reject(request.error);
+    //   request.onblocked = () => console.warn('База заблокирована');
+    // });
   }
   
 

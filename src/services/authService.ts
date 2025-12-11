@@ -58,7 +58,7 @@ export const AuthService = {
       const { data } = await axios.post<ApiResponse>(
         `${API_URL}/api/modellerjwt/auth/checkurl/`,
         {
-          code : name.trim(),
+          code : name,
         },
         {
           timeout: REQUEST_TIMEOUT

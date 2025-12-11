@@ -3,7 +3,7 @@ import '@vueform/slider/themes/default.css'
 import '@vueform/toggle/themes/default.css'
 import '@/style.scss'
 import App from './App.vue'
-import router from './router'
+import createAppRouter from './router'
 import { createPinia, setActivePinia } from 'pinia'
 import { COOKIE_NAMES, getCookie } from './components/authorization/utils/cookieUtils'
 import { useAppData } from './store/appliction/useAppData'
@@ -120,6 +120,8 @@ async function bootApp() {
   setActivePinia(pinia)  // Активируем Pinia для глобального доступа к stores
 
   app.use(pinia)
+
+  const router = await createAppRouter()
   app.use(router)
 
   await router.isReady()

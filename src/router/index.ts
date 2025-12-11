@@ -8,12 +8,14 @@ import { AuthService } from "@/services/authService";
 // const baseUrl = '/';
 // const baseUrl = '/dev_modeller/petrovich';
 
-function getBaseFromSubdomain() {
+const getBaseFromSubdomain = async () =>  {
   const pathname = window.location.pathname;
   const parts = pathname.split('/');
-  const filtered = parts.filter(item => item !== '');
-  AuthService.getCheckURL(parts[2]);
-  if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
+  const isURL = await AuthService.getCheckURL(parts[2]);
+  console.log('parts', parts)
+  console.log('isURL', isURL.DATA)
+  if (parts && parts.length > 2 && isURL.DATA) {
+  // if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
     return `/dev_modeller/${parts[2]}/`;
   } else {
     return '/dev_modeller';
@@ -66,71 +68,82 @@ if (import.meta.env.DEV) {
   });
 }
 
-const router = createRouter({
-  // history: createWebHistory(baseUrl),
-  history: createWebHistory(getBaseFromSubdomain()),
-  routes,
-});
+// const router = createRouter({
+//   // history: createWebHistory(baseUrl),
+//   history: createWebHistory(getBaseFromSubdomain()),
+//   routes,
+// });
 
-router.beforeEach((to, from, next) => {
-  console.log('!!!to:', to)
-  const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
-  const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
-  console.log('COOKIE_NAMES.AUTH_TOKEN', COOKIE_NAMES.AUTH_TOKEN)
-  console.log('COOKIE_NAMES.TOKEN_EXPIRATION', COOKIE_NAMES.TOKEN_EXPIRATION)
-  const appDataStore = useAppData()
-  const authStore = useAuthStore()
-
-    //  document.querySelector('#main-loader').style.display = 'block';
-
-  if (token && expirationTime) {
-    const expirationTimestamp = parseInt(expirationTime);
-    if (Date.now() > expirationTimestamp) {
-      console.log('Токен просрочен! Удаляю...', {
-        currentTime: new Date().toLocaleString(),
-        expirationTime: new Date(expirationTimestamp).toLocaleString(),
-        timeDiff: Math.round((Date.now() - expirationTimestamp) / 1000 / 60) + ' минут'
-      });
-      // Удаляем просроченные куки
-      document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      next({ path: '/auth', query: to.query, hash: to.hash });
-      return;
-    } else {
-      const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
-      const hoursLeft = Math.round(secondsLeft / 3600);
-      console.log(`Токен действителен еще ${secondsLeft} сек. (${hoursLeft} часов)`);
-      // next('/2d');
+async function createAppRouter() {
+  const base = await getBaseFromSubdomain()
+  
+  const router = createRouter({
+    history: createWebHistory(base),
+    routes,
+  })
+  
+  router.beforeEach((to, from, next) => {
+    console.log('!!!to:', to)
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+    const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
+    console.log('COOKIE_NAMES.AUTH_TOKEN', COOKIE_NAMES.AUTH_TOKEN)
+    console.log('COOKIE_NAMES.TOKEN_EXPIRATION', COOKIE_NAMES.TOKEN_EXPIRATION)
+    const appDataStore = useAppData()
+    const authStore = useAuthStore()
+  
+      //  document.querySelector('#main-loader').style.display = 'block';
+  
+    if (token && expirationTime) {
+      const expirationTimestamp = parseInt(expirationTime);
+      if (Date.now() > expirationTimestamp) {
+        console.log('Токен просрочен! Удаляю...', {
+          currentTime: new Date().toLocaleString(),
+          expirationTime: new Date(expirationTimestamp).toLocaleString(),
+          timeDiff: Math.round((Date.now() - expirationTimestamp) / 1000 / 60) + ' минут'
+        });
+        // Удаляем просроченные куки
+        document.cookie = `${COOKIE_NAMES.AUTH_TOKEN}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        document.cookie = `${COOKIE_NAMES.TOKEN_EXPIRATION}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        next({ path: '/auth', query: to.query, hash: to.hash });
+        return;
+      } else {
+        const secondsLeft = Math.round((expirationTimestamp - Date.now()) / 1000);
+        const hoursLeft = Math.round(secondsLeft / 3600);
+        console.log(`Токен действителен еще ${secondsLeft} сек. (${hoursLeft} часов)`);
+        // next('/2d');
+      }
     }
-  }
+  
+    if (to.meta.requiresAuth && !token) {
+  
+      // Перенаправляем на страницу авторизации, если требуется аутентификация
+  
+      next({ path: '/auth', query: to.query, hash: to.hash });
+    } else if (to.path === '/auth' && token) {
+      // Если пользователь уже авторизован, но пытается попасть на страницу авторизации
+  
+      next({ path: '/2d', query: to.query, hash: to.hash });
+  
+    } else {
+      // В остальных случаях разрешаем переход
+    console.log('!!!to1:', to)
+      console.log(next())
+    }
+  });
+  
+  router.afterEach((to, from) => {
+    console.log('to', to)
+    console.log('from', from)
+    // document.querySelector('#main-loader').style.display = 'none';
+    // Здесь выполняется код после завершения навигации.
+    // 'to' - новый маршрут, 'from' - старый маршрут.
+    console.log(`Переход на страницу ${to.path} завершен.`);
+  });
+  return router
+}
 
-  if (to.meta.requiresAuth && !token) {
 
-    // Перенаправляем на страницу авторизации, если требуется аутентификация
-
-    next({ path: '/auth', query: to.query, hash: to.hash });
-  } else if (to.path === '/auth' && token) {
-    // Если пользователь уже авторизован, но пытается попасть на страницу авторизации
-
-    next({ path: '/2d', query: to.query, hash: to.hash });
-
-  } else {
-    // В остальных случаях разрешаем переход
-  console.log('!!!to1:', to)
-    console.log(next())
-  }
-});
-
-router.afterEach((to, from) => {
-  console.log('to', to)
-  console.log('from', from)
-  // document.querySelector('#main-loader').style.display = 'none';
-  // Здесь выполняется код после завершения навигации.
-  // 'to' - новый маршрут, 'from' - старый маршрут.
-  console.log(`Переход на страницу ${to.path} завершен.`);
-});
-
-export default router;
+export default createAppRouter;
 
 
 
