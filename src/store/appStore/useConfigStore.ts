@@ -40,7 +40,14 @@ export const useConfigStore = defineStore('config', () => {
     const dataPetrovich = catalog?.PRODUCTS?.[item?.ID]?.DATA_PETROVICH
     const articleData = appDataStore.getAppData?.article?.[dataPetrovich]
     
-    return articleData?.PROPERTIES?.ARTICLE?.VALUE ? `- ${articleData?.PROPERTIES?.ARTICLE?.VALUE}` : ''
+    return articleData?.PROPERTIES?.ARTICLE?.VALUE ? `- артикул ${articleData?.PROPERTIES?.ARTICLE?.VALUE}` : ''
+  }
+
+  const getArticleByFasadId = (productId: string | number) => {
+    if (!appDataStore.getAppData || !productId) return ''
+
+    const articleData = appDataStore.getAppData?.article?.[productId]    
+    return articleData?.PROPERTIES?.ARTICLE?.VALUE ? `- артикул ${articleData?.PROPERTIES?.ARTICLE?.VALUE}` : ''
   }
 
 
@@ -54,6 +61,7 @@ export const useConfigStore = defineStore('config', () => {
     configData,
     
     // Методы
-    getArticleByProductId
+    getArticleByProductId,
+    getArticleByFasadId
   }
 })

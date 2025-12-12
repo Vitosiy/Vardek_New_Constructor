@@ -23,6 +23,7 @@
                 <span v-if="shouldShowPropValue(propKey, propVal)" 
                       :class="getErrorClass(propVal, item?.error?.props)">
                   <!-- {{ formatPropValue(propKey, propVal , item) }} -->
+
                   <span v-html="formatPropValue(propKey, propVal, item, index)"></span>
                   
                   <span v-if="hasArticle(propKey, propVal)">
@@ -244,7 +245,7 @@ const props = defineProps<Props>();
 const basketStore = useBasketStore();
 const appDataStore = useAppData();
 const quantity = ref(props.item.product.quantity);
-const { oldPrice, isFeedbackProject, getArticleByProductId } = useConfigStore();
+const { oldPrice, isFeedbackProject, getArticleByProductId, getArticleByFasadId } = useConfigStore();
 
 // Получаем данные из store
 const appData = computed(() => appDataStore.getAppData);
@@ -369,8 +370,11 @@ const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
         if (typeof value === 'object' && value !== null) {
           value = JSON.stringify(value);
         }
-        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key)) {
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key) && !isFeedbackProject) {
           listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)}</li>`; // ${getTypeName(key, value)}
+        }
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key) && isFeedbackProject) {
+          listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)} ${getArticleByFasadId(propVal?.article)}</li>`; // ${getTypeName(key, value)}
         }
       });
       
@@ -387,9 +391,9 @@ const getErrorClass = (propVal: any, propsError: any) => {
   // Это упрощенная версия, нужно адаптировать под вашу логику
   if (!propsError || !Array.isArray(propsError)) return false;
 
-  if (propsError.some(error => error.id && error.id.includes(propVal))) {
-    return 'error-background';
-  }
+  // if (propsError.some(error => error.id && error.id.includes(propVal))) {
+  //   return 'error-background';
+  // }
   return '';
 };
 
@@ -432,7 +436,7 @@ const hasError = (value: any, propsError: any) => {
   // return propsError && propsError.includes(value);
   if (!propsError || !Array.isArray(propsError)) return false;
   
-  return propsError.some(error => error.id && error.id.includes(value));
+  // return propsError.some(error => error.id && error.id.includes(value));
 };
 
 const getTypeName = (type: any, value: any, mainType: any = '') => {

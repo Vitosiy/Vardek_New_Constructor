@@ -5,15 +5,10 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useAuthStore } from "@/store/appStore/authStore";
 import { AuthService } from "@/services/authService";
 
-// const baseUrl = '/';
-// const baseUrl = '/dev_modeller/petrovich';
-
 const getBaseFromSubdomain = async () =>  {
   const pathname = window.location.pathname;
   const parts = pathname.split('/');
   const isURL = await AuthService.getCheckURL(parts[2]);
-  console.log('parts', parts)
-  console.log('isURL', isURL.DATA)
   if (parts && parts.length > 2 && isURL.DATA) {
   // if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
     return `/dev_modeller/${parts[2]}/`;
@@ -68,19 +63,13 @@ if (import.meta.env.DEV) {
   });
 }
 
-// const router = createRouter({
-//   // history: createWebHistory(baseUrl),
-//   history: createWebHistory(getBaseFromSubdomain()),
-//   routes,
-// });
-
 async function createAppRouter() {
   const base = await getBaseFromSubdomain()
   
   const router = createRouter({
     history: createWebHistory(base),
     routes,
-  })
+  });
   
   router.beforeEach((to, from, next) => {
     console.log('!!!to:', to)
@@ -139,6 +128,7 @@ async function createAppRouter() {
     // 'to' - новый маршрут, 'from' - старый маршрут.
     console.log(`Переход на страницу ${to.path} завершен.`);
   });
+
   return router
 }
 
