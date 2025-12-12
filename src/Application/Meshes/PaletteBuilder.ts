@@ -67,8 +67,6 @@ export class PaletteBuilder {
         const fasadeId = fasadeProps.COLOR ?? 567323;
         const fasadeName = _FASADE[fasadeId].NAME.toLowerCase();
 
-        console.log(palette, '==== PALITTE ===')
-
         fasade.visible = true;
 
         // return

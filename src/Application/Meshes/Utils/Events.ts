@@ -315,7 +315,6 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     async catchFasadeChange({ data, fasadeNdx, mesh }: TDataWithNdx) {
-        console.log(data, '==== ❌ catchFasadeChange ❌ ====')
 
         const meshData = mesh ?? this._currentMesh
 
@@ -331,8 +330,6 @@ export class MeshEvents extends BuildersHelper {
 
         fasadeProp.COLOR = data.ID
         fasadeProp.ALUM = incomingModel;
-
-        console.log('==== ❌ incomingModel ❌ ====', incomingModel)
 
         if (UNIFORM_TEXTURE.group !== null) {
             this.removeFromUniformGroup(meshData);
@@ -367,14 +364,12 @@ export class MeshEvents extends BuildersHelper {
         const fasadeShowcase = CONFIG.FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
         const handleType = CONFIG.FASADE_PROPS[fasadeNdx].TYPE
 
-        console.log('==== ❌ SHOWCASE Change❌ ====', SHOWCASE.length > 0, fasadeShowcase, fasadeProp.SHOWCASE === null, !incomingModel)
-
         if (incomingModel) {
             const action = this.modelState.getCurrentFasadeTypesAction(handleType)
-            console.log('==== ❌ SHOWCASE ALUM ❌ ====')
+            // console.log('==== ❌ SHOWCASE ALUM ❌ ====')
             this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
         } else if (SHOWCASE.length > 0 && fasadeShowcase) {
-            console.log('==== ❌ SHOWCASE CLASSIK❌ ====')
+            // console.log('==== ❌ SHOWCASE CLASSIK❌ ====')
             this.changeShowcase({ data: SHOWCASE[0], fasadeNdx, mesh: mesh });
         }
 

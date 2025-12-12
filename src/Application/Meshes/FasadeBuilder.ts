@@ -164,11 +164,8 @@ export class FasadeBuilder {
             else {
 
                 // const includeIncomeFasade = currentProduct.FACADE.includes(color)
-                const curFasadeList = this.parent.modelState.constCreateFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
+                const curFasadeList = this.parent.modelState.createFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
                 const includeIncomeFasade = curFasadeList.includes(color)
-
-                console.log(includeIncomeFasade, '===== includeIncomeFasade =====')
-                console.log(this._FASADE_SIZE_RESTRICT)
 
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
@@ -183,7 +180,7 @@ export class FasadeBuilder {
                     fasadeData.SHOWCASE = null
                 }
 
-                console.log(fasadeData.SHOWCASE, '==== ❌ fasadeData.SHOWCASE ❌ ====')
+                // console.log(fasadeData.SHOWCASE, '==== ❌ fasadeData.SHOWCASE ❌ ====')
 
                 // fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase && !fasadeData.ALUM ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
 
@@ -356,11 +353,9 @@ export class FasadeBuilder {
             if (!remove && !fasadeNdx) {
 
                 const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
-                const curFasadeList = this.parent.modelState.constCreateFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
+                const curFasadeList = this.parent.modelState.createFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
 
                 const includeIncomeFasade = curFasadeList.includes(color)
-
-                console.log(includeIncomeFasade, '===== includeIncomeFasade =====')
 
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;

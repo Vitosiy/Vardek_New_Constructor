@@ -158,7 +158,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** ------- Работа с Модулем -------- */
 
-    const createCurrentModuleData = (value: number[]) => {
+    const createCurrentModuleData = (value: number[], def: boolean = false) => {
 
         const colorMap = new Set();
         const groupedFasades: Record<string, number> = {};
@@ -167,11 +167,11 @@ export const useModelState = defineStore('ModelState', () => {
             return _FASADE.value[colorId]
         });
 
-        colorsList.forEach(color => {
-            if (_FASADE.value[color] !== undefined) {
-                colorMap.add(_FASADE.value[color]);
-            }
-        });
+        // colorsList.forEach(color => {
+        //     if (_FASADE.value[color] !== undefined) {
+        //         colorMap.add(_FASADE.value[color]);
+        //     }
+        // });
 
         colorsList.forEach((facadeId) => {
             const facade = _FASADE.value[facadeId];
@@ -200,9 +200,13 @@ export const useModelState = defineStore('ModelState', () => {
         }
         ).filter(group => group.FASADES.length > 0).sort((a, b) => a.SORT - b.SORT);
 
-        console.log(result, 'createCurrentModuleData')
+        // console.log(result, 'createCurrentModuleData')
 
-        currentModulData.value = Array.from(colorMap)
+        if (def) return result
+        // currentModulData.value = Array.from(colorMap)
+        currentModulData.value = result
+
+
     }
 
     const getCurrentModuleData = computed(() => {
@@ -376,8 +380,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         ).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
 
-        console.log(result)
-
         if (defaultFasade) {
             return result
         }
@@ -385,10 +387,9 @@ export const useModelState = defineStore('ModelState', () => {
         currentModelFasadesData.value = result
     }
 
-    const constCreateFlatFasadeData = ({ data, def, fasadeNdx }) => {
+    const createFlatFasadeData = ({ data, def, fasadeNdx }) => {
         const list = createCurrentModelFasadesData({ data, def, fasadeNdx })
         const flated = list?.map(el => el.FASADES).flat()
-        console.log(flated, 'flated')
         return flated
 
     }
@@ -728,7 +729,7 @@ export const useModelState = defineStore('ModelState', () => {
         setCurrentModel,
         getCurrentModel,
         createCurrentModelFasadesData,
-        constCreateFlatFasadeData,
+        createFlatFasadeData,
         clearCurrentModelFasadesData,
         getCurrentModelFasadesData,
         setCurrentRaspilParent,

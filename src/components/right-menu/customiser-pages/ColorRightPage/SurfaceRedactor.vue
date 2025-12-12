@@ -8,6 +8,7 @@ import {
   ref,
   onMounted,
   onBeforeMount,
+  withDefaults,
 } from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
@@ -15,18 +16,31 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { _URL } from "@/types/constants";
 
 import Accordion from "@/components/ui/accordion/Accordion.vue";
+type TSurface = "fasade" | "module";
 
-const props = defineProps({
-  tabIndex: {
-    type: Number,
-    required: false,
-  },
-  materialList: Array,
-  tempWork: {
-    type: Boolean,
-    default: false,
-  },
+interface IProps {
+  tabIndex?: number;
+  materialList: number[];
+  tempWork?: boolean;
+  type?: TSurface;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  tempWork: false,
+  type: "fasade",
 });
+
+// const props = defineProps({
+//   tabIndex: {
+//     type: Number,
+//     required: false,
+//   },
+//   materialList: Array,
+//   tempWork: {
+//     type: Boolean,
+//     default: false,
+//   },
+// });
 
 onBeforeMount(() => {
   if (modelState.getCurrentModel) {
@@ -34,7 +48,13 @@ onBeforeMount(() => {
   }
 });
 
-const emit = defineEmits(["select_material", "select"]);
+// const emit = defineEmits(["select_material", "select"]);
+const emit = defineEmits<{
+  (e: "update:modelValue", value: any): void;
+  (e: "select", value: any): void;
+  (e: "select_material", value: any): void;
+}>();
+
 const modelState = useModelState();
 const eventBus = useEventBus();
 
@@ -62,6 +82,12 @@ const isSearch = computed(() => {
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
   if (props.tempWork) {
     emit("select_material", data);
+    return;
+  }
+
+  if (props.type == "module") {
+    emit("select", data);
+    console.log('jjj', data)
     return;
   }
 
@@ -173,10 +199,6 @@ const checkTransitionTexture = (id: number) => {
           </div>
         </li>
       </ul>
-
-      <!--
-      
-      -->
     </ul>
   </div>
 </template>

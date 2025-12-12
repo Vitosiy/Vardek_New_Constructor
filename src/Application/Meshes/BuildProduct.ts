@@ -597,12 +597,16 @@ export class BuildProduct extends BuildersHelper {
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
         const resolveColorId = () => {
-            const isDefault = MODULE_COLOR === this.project.default_module_color;
+            const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === product.MODULECOLOR[0]
+            let checked: boolean
+
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    return (defModuleBottom && isDefault) || moduleBottom.global ? defModuleBottom : MODULE_COLOR;
+                    checked = product.MODULECOLOR.includes(defModuleBottom)
+                    return (defModuleBottom && isDefault && checked) || (moduleBottom.global && checked) ? defModuleBottom : MODULE_COLOR;
                 case "element_up":
-                    return (defModuleTop && isDefault) || moduleTop.global ? defModuleTop : MODULE_COLOR;
+                    checked = product.MODULECOLOR.includes(moduleTop.global)
+                    return (defModuleTop && isDefault && checked) || (moduleTop.global && checked) ? defModuleTop : MODULE_COLOR;
                 default:
                     return MODULE_COLOR;
             }
@@ -764,8 +768,6 @@ export class BuildProduct extends BuildersHelper {
         const { geometryType } = body.userData;
 
         if (texture?.src && !moduleColor) {
-
-
             const textureSize = {
                 width: geometryType === "ExtrudeGeometry" ? texture.width : 1,
                 height: geometryType === "ExtrudeGeometry" ? texture.height : 1,

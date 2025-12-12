@@ -40,7 +40,7 @@ export class JsonBuilder {
 
         this.material = this.createMaterial(json.material, fasade) as THREE.Material
 
-        if(left) {
+        if (left) {
             if (left.PALETTE) {
                 this.leftMaterial = this.parent.palette_bulider.getPalette(left.COLOR, left.PALETTE)
             }
@@ -48,7 +48,7 @@ export class JsonBuilder {
                 this.leftMaterial = this.createMaterial(json.material, this.parent._FASADE[left.COLOR]) as THREE.Material
         }
 
-        if(right) {
+        if (right) {
             if (right.PALETTE) {
                 this.rightMaterial = this.parent.palette_bulider.getPalette(right.COLOR, right.PALETTE)
             }
@@ -56,7 +56,7 @@ export class JsonBuilder {
                 this.rightMaterial = this.createMaterial(json.material, this.parent._FASADE[right.COLOR]) as THREE.Material
         }
 
-        if(back) {
+        if (back) {
             if (back.PALETTE) {
                 this.backMaterial = this.parent.palette_bulider.getPalette(back.COLOR, back.PALETTE)
             }
@@ -64,7 +64,7 @@ export class JsonBuilder {
                 this.backMaterial = this.createMaterial(json.material, this.parent._FASADE[back.COLOR]) as THREE.Material
         }
 
-        if(top) {
+        if (top) {
             if (top.PALETTE) {
                 this.topMaterial = this.parent.palette_bulider.getPalette(top.COLOR, top.PALETTE)
             }
@@ -72,13 +72,14 @@ export class JsonBuilder {
                 this.topMaterial = this.createMaterial(json.material, this.parent._FASADE[top.COLOR]) as THREE.Material
         }
 
-        if(tsarga) {
+        if (tsarga) {
             if (tsarga.PALETTE) {
                 this.tsargaMaterial = this.parent.palette_bulider.getPalette(tsarga.COLOR, tsarga.PALETTE)
             }
             else
                 this.tsargaMaterial = this.createMaterial(json.material, this.parent._COLOR[tsarga.COLOR] || this.parent._FASADE[tsarga.COLOR]) as THREE.Material
         }
+
 
         if (Array.isArray(json.items)) {
 
@@ -88,7 +89,6 @@ export class JsonBuilder {
             })
 
         } else if (typeof json.items === 'object' && json.items !== null && !(json.items instanceof Date)) {
-
 
             let clone = JSON.parse(JSON.stringify(json.items))
 
@@ -113,9 +113,7 @@ export class JsonBuilder {
             }
 
         }
-        else {
-            // console.log('other')
-        }
+
 
         return group
     }
@@ -145,6 +143,7 @@ export class JsonBuilder {
             }
 
             let material = this.material
+
             if (data.glass) {
                 const materialConf = {
                     color: "#" + 939393,
@@ -157,25 +156,26 @@ export class JsonBuilder {
                 material.color.convertSRGBToLinear();
             }
 
-            if(data.id.includes("left") && this.leftMaterial) {
+            if (data.id.includes("left") && this.leftMaterial) {
                 material = this.leftMaterial
             }
-            else if(data.id.includes("right") && this.rightMaterial) {
+            else if (data.id.includes("right") && this.rightMaterial) {
                 material = this.rightMaterial
             }
-            else if(data.id.includes("back") && this.backMaterial) {
+            else if (data.id.includes("back") && this.backMaterial) {
                 material = this.backMaterial
             }
-            else if(data.id.includes("top_fasade") && this.topMaterial) {
+            else if (data.id.includes("top_fasade") && this.topMaterial) {
                 material = this.topMaterial
             }
-            else if(data.id.includes("horizontalline") && this.tsargaMaterial) {
+            else if (data.id.includes("horizontalline") && this.tsargaMaterial) {
                 material = this.tsargaMaterial
             }
 
             obj[data.id] = new THREE.Mesh(geometry, material);
             obj[data.id].receiveShadow = true;
             obj[data.id].castShadow = true;
+            obj[data.id].userData.geomType = data.geometry.type
         }
 
 
@@ -226,7 +226,7 @@ export class JsonBuilder {
             this.convert(geometry_data.opt.z)
         )
 
-        // geometry.computeBoundingBox()
+        geometry.computeBoundingBox()
         return geometry
     }
 
@@ -278,6 +278,8 @@ export class JsonBuilder {
         }
 
         geometry!.computeBoundingBox();
+
+        this.parent.normalizeUVsTo01(geometry);
         return geometry
     }
 
@@ -285,18 +287,17 @@ export class JsonBuilder {
         this.parent = parent
     }
 
-    createMaterial(data, fasade) {
+    createMaterial(data, fasade, type) {
 
         if (!data) return
 
-        let material, textureUrl
+        let material
 
         if (data instanceof THREE.Material) {
             material = data
             return material
         }
 
-        fasade ? textureUrl = fasade.TEXTURE : textureUrl = ''
 
         if (data.type) {
 
@@ -320,9 +321,11 @@ export class JsonBuilder {
         }
 
         if (fasade) {
-            this.parent.getTexture({ material, url: textureUrl })
+            this.parent.getTexture({ material, url: fasade.TEXTURE })
         }
 
         return material
     }
+
+
 }

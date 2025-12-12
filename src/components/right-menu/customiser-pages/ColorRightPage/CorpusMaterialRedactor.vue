@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 //@ts-nocheck
-import MaterialSelector from "./MaterialSelector.vue";
-import ConfigurationOption from "./ConfigurationOption.vue";
+
 import {
   ref,
   onMounted,
@@ -12,6 +11,11 @@ import {
 } from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
+
+import Accordion from "@/components/ui/accordion/Accordion.vue";
+import MaterialSelector from "./MaterialSelector.vue";
+import SurfaceRedactor from "./SurfaceRedactor.vue";
+import ConfigurationOption from "./ConfigurationOption.vue";
 
 const modelState = useModelState();
 const eventBus = useEventBus();
@@ -31,41 +35,40 @@ const selectedSurfaceID = ref(null);
 
 const currentSurfaceData = ref<any>({});
 const isMillingExist = ref(false);
-const currentMillingData = ref(null);
+// const currentMillingData = ref(null);
 
 const { is2Dconstructor } = toRefs(props);
 
 const emit = defineEmits(["parent-callback"]);
 
 const callback = (material) => {
-  emit("parent-callback", material, 'COLOR');
+  emit("parent-callback", material, "COLOR");
 };
 
 onBeforeMount(() => {
-  if(props.type === "backwall")
-    selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
+  if (props.type === "backwall")
+    selectedSurfaceID.value =
+      modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
   else
-    selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+    selectedSurfaceID.value =
+      modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
-  materialList.value = props.materialList || modelState.getCurrentModuleData;
+  const curModel = modelState.getCurrentModel;
+  const { MODULE_COLOR } = curModel?.userData.PROPS.CONFIG;
+  const { NAME, DETAIL_PICTURE } = modelState._FASADE[MODULE_COLOR];
+  console.log(NAME, DETAIL_PICTURE, "NAME, DETAIL_PICTURE ");
+  materialList.value = modelState.getCurrentModuleData;
 
   const current = props.materialList!.find(
     (m) => m.ID === selectedSurfaceID.value
   );
-  if (current) {
-    currentSurfaceData.value = {
-      name: current.NAME,
-      imgSrc: current.DETAIL_PICTURE,
-    };
-  }
-  else {
-    currentSurfaceData.value = {
-      name: "",
-      imgSrc: "",
-    };
-  }
+
+  currentSurfaceData.value = {
+    name: NAME,
+    imgSrc: DETAIL_PICTURE,
+  };
 });
 
 const changeModuleTexture = (data: any) => {
@@ -74,21 +77,23 @@ const changeModuleTexture = (data: any) => {
     imgSrc: data.DETAIL_PICTURE,
   };
 
-  if (!is2Dconstructor.value) eventBus.emit("A:ChangeModuleTexture", data);
-  else callback(data);
+  if (!is2Dconstructor.value) {
+    eventBus.emit("A:ChangeModuleTexture", data);
+  } else {
+    console.log(data);
+    callback(data);
+  }
 };
 
 const deleteSelectedOptions = (type: string) => {
-
-  if(type === "backwall" && is2Dconstructor.value) {
+  if (type === "backwall" && is2Dconstructor.value) {
     currentSurfaceData.value = {
       name: "",
       imgSrc: "",
     };
-    callback(false)
-  }
-  else {
-    const fallback = materialList.value![0];
+    callback(false);
+  } else {
+    const fallback = modelState._FASADE[materialList.value![0].FASADES[0]];
     currentSurfaceData.value = {
       name: fallback.NAME,
       imgSrc: fallback.PREVIEW_PICTURE,
@@ -98,34 +103,35 @@ const deleteSelectedOptions = (type: string) => {
   }
 };
 
-watch(
-  () => props.materialList,
-  () => {
-    materialList.value = props.materialList || modelState.getCurrentModuleData;
+// watch(
+//   () => props.materialList,
+//   () => {
+//     materialList.value = props.materialList || modelState.getCurrentModuleData;
 
-    if(props.type === "backwall")
-      selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
-    else
-    selectedSurfaceID.value = modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+//     if (props.type === "backwall")
+//       selectedSurfaceID.value =
+//         modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
+//     else
+//       selectedSurfaceID.value =
+//         modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
 
-    const current = props.materialList!.find(
-      (m) => m.ID === selectedSurfaceID.value
-    );
-    if (current) {
-      currentSurfaceData.value = {
-        name: current.NAME,
-        imgSrc: current.DETAIL_PICTURE,
-      };
-    }
-    else {
-      currentSurfaceData.value = {
-        name: "",
-        imgSrc: "",
-      };
-    }
-  }
-  // { flush: "post", immediate: true }
-);
+//     const current = props.materialList!.find(
+//       (m) => m.ID === selectedSurfaceID.value
+//     );
+//     if (current) {
+//       currentSurfaceData.value = {
+//         name: current.NAME,
+//         imgSrc: current.DETAIL_PICTURE,
+//       };
+//     } else {
+//       currentSurfaceData.value = {
+//         name: "",
+//         imgSrc: "",
+//       };
+//     }
+//   }
+//   // { flush: "post", immediate: true }
+// );
 </script>
 
 <template>
@@ -137,15 +143,19 @@ watch(
         :data="currentSurfaceData"
         @delete-choise="deleteSelectedOptions"
       />
-      <ConfigurationOption
+      <!-- <ConfigurationOption
         v-if="isMillingExist"
         :type="'milling'"
         :data="currentMillingData"
         @delete-choise="deleteSelectedOptions"
-      />
+      /> -->
     </div>
-
-    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
+    <SurfaceRedactor
+      :materialList="props.materialList"
+      :type="'module'"
+      @select="changeModuleTexture"
+    />
+    <!-- <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" /> -->
   </div>
   <div class="container container--2D-constructor" v-else>
     <div class="configuration">
@@ -154,15 +164,26 @@ watch(
         :data="currentSurfaceData"
         @delete-choise="deleteSelectedOptions"
       />
-      <ConfigurationOption
+      <!-- <ConfigurationOption
         v-if="isMillingExist"
         :type="'milling'"
         :data="currentMillingData"
         @delete-choise="deleteSelectedOptions"
-      />
+      /> -->
     </div>
 
-    <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" />
+    <SurfaceRedactor
+      v-if="props.type === 'surface'"
+      :materialList="props.materialList"
+      :type="'module'"
+      @select="changeModuleTexture"
+    />
+
+    <MaterialSelector
+      v-else
+      :materials="props.materialList"
+      @select="changeModuleTexture"
+    />
   </div>
 </template>
 
