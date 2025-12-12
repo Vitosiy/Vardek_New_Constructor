@@ -156,6 +156,10 @@
 
               </div>
           </span>
+          <span v-if='propKey === "KROMKA"'>
+            <span class="basket-item__props-lable">Кромка:</span> 
+            <span>{{ getTypeName('HEM', propValue, item?.product.TYPE)  }}</span>
+          </span>
           
           <span v-if='propKey === "BODY"'>
             <div class="basket-item__props-list">
@@ -455,6 +459,10 @@ const getTypeName = (type: any, value: any, mainType: any = '') => {
   if(mainType === 'umscene' && typeof value === 'object') {
     console.log();  
     return  appData.value[type][value['1'][0]]?.NAME;   
+  }
+
+  if(type === 'HEM' && mainType === 'scene') {
+    return  appData.value['HEM'][value].NAME;   
   }
 
 
