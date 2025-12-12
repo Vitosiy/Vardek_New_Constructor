@@ -160,53 +160,59 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createCurrentModuleData = (value: number[], def: boolean = false) => {
 
-        const colorMap = new Set();
-        const groupedFasades: Record<string, number> = {};
 
-        const colorsList = value.filter((colorId: number) => {
-            return _FASADE.value[colorId]
-        });
+        const validFacadeIds = value.filter(id => _FASADE.value[id]);
 
-        // colorsList.forEach(color => {
-        //     if (_FASADE.value[color] !== undefined) {
-        //         colorMap.add(_FASADE.value[color]);
-        //     }
-        // });
+        const groupedFasades = validFacadeIds.reduce((acc, facadeId) => {
+            const facade = _FASADE.value[facadeId];
+            if (!facade) return acc;
 
-        colorsList.forEach((facadeId) => {
+            const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+            if (!section?.UF_GROUP) return acc;
+
+            const groupId = section.UF_GROUP;
+            if (!acc[groupId]) acc[groupId] = [];
+            acc[groupId].push(facadeId);
+
+            return acc;
+        }, {} as Record<string, number[]>);
+
+
+        const result = Object.values(_FASADE_GROUPS.value)
+            .map(group => ({
+                NAME: group.NAME,
+                FASADES: groupedFasades[group.ID] || [],
+                SORT: group.SORT,
+            }))
+            .filter(group => group.FASADES.length > 0)
+            .sort((a, b) => a.SORT - b.SORT);
+
+        if (def) return result;
+        currentModulData.value = result;
+
+
+    }
+
+    const createFlatModuleData = (value: number[]) => {
+
+        const validIds = value.filter(id => _FASADE.value[id]);
+
+        const sortCache = new Map<number, number>();
+
+        validIds.forEach(facadeId => {
             const facade = _FASADE.value[facadeId];
             if (!facade) return;
+
             const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
-            if (!section || !section.UF_GROUP) return;
-            const groupId: string = section.UF_GROUP;
+            const groupId = section?.UF_GROUP;
+            const group = groupId ? _FASADE_GROUPS.value[groupId] : null;
 
-            if (!groupedFasades[groupId]) {
+            sortCache.set(facadeId, group?.SORT ?? 99999);
+        });
 
-                const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
-                groupedFasades[groupId] = {
-                    id: []
-                };
-            }
-
-            groupedFasades[groupId]['id'].push(facadeId);
-        })
-
-        const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => {
-            return {
-                NAME: group.NAME,
-                FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
-                SORT: group.SORT,
-            }
-        }
-        ).filter(group => group.FASADES.length > 0).sort((a, b) => a.SORT - b.SORT);
-
-        // console.log(result, 'createCurrentModuleData')
-
-        if (def) return result
-        // currentModulData.value = Array.from(colorMap)
-        currentModulData.value = result
-
-
+        return validIds.sort((a, b) => {
+            return (sortCache.get(a) ?? 99999) - (sortCache.get(b) ?? 99999);
+        });
     }
 
     const getCurrentModuleData = computed(() => {
@@ -759,6 +765,7 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPatinaData,
 
         createCurrentModuleData,
+        createFlatModuleData,
         getCurrentModuleData,
 
         createCurrentBackwallData,

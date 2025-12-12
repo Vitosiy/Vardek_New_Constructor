@@ -60,8 +60,6 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         tempKromkaId.value = value
     }
 
-
-
     const checkKromkaActive = () => {
 
         const grid = tempGridData.value
@@ -92,14 +90,14 @@ const useKromkaActions = defineStore('KromkaActions', () => {
             if (!kromkaActive.value) tempKromkaId.value = null
 
             return
-
         }
+
         kromkaActive.value = false
 
     }
 
-
     const kromkaSelect = (value) => {
+
         kromkaListVisible.value = false
 
         const parent = modelState.getCurrentRaspilParent
@@ -130,7 +128,8 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         const { CONFIG } = parent?.userData.PROPS
 
         const kromkaId = tempKromkaId.value;
-        const defaultId = 211247;
+        // const defaultId = 211247;
+        const defaultId = tempKromkaList.value[0].ID;
 
         const target = tempKromkaList.value.find(
             el => el.ID === (kromkaId || defaultId)
@@ -153,7 +152,6 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         const parent = modelState.getCurrentRaspilParent
         const { PROPS } = parent!.userData;
         const { PRODUCT } = PROPS
-
         const { HEM } = PRODUCTS[PRODUCT]
         const hemList = HEM.map((el: number) => {
             return HEMLIST[el]
