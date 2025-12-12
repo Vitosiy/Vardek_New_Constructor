@@ -526,6 +526,7 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
   if(objProps.CONFIG.MECHANISM) {
     props.MECHANISM = objProps.CONFIG.MECHANISM;
+    props.MECHANISMNAME = objProps.CONFIG.MECHANISM_TEMP.find(el => el.active).NAME;
   } 
 
   
