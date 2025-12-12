@@ -58,7 +58,6 @@ onMounted(() => {
   const curModel = modelState.getCurrentModel;
   const { MODULE_COLOR } = curModel?.userData.PROPS.CONFIG;
   const { NAME, DETAIL_PICTURE } = modelState._FASADE[MODULE_COLOR];
-  console.log(NAME, DETAIL_PICTURE, "NAME, DETAIL_PICTURE ");
   materialList.value = modelState.getCurrentModuleData;
 
   const current = props.materialList!.find(
@@ -80,7 +79,6 @@ const changeModuleTexture = (data: any) => {
   if (!is2Dconstructor.value) {
     eventBus.emit("A:ChangeModuleTexture", data);
   } else {
-    console.log(data);
     callback(data);
   }
 };
