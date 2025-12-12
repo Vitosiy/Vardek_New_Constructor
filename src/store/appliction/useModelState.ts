@@ -158,20 +158,55 @@ export const useModelState = defineStore('ModelState', () => {
 
     /** ------- Работа с Модулем -------- */
 
-    const createCurrentModuleData = (value: number[]) => {
+    const createCurrentModuleData = (value: number[], def: boolean = false) => {
 
         const colorMap = new Set();
+        const groupedFasades: Record<string, number> = {};
+
         const colorsList = value.filter((colorId: number) => {
             return _FASADE.value[colorId]
         });
 
-        colorsList.forEach(color => {
-            if (_FASADE.value[color] !== undefined) {
-                colorMap.add(_FASADE.value[color]);
-            }
-        });
+        // colorsList.forEach(color => {
+        //     if (_FASADE.value[color] !== undefined) {
+        //         colorMap.add(_FASADE.value[color]);
+        //     }
+        // });
 
-        currentModulData.value = Array.from(colorMap)
+        colorsList.forEach((facadeId) => {
+            const facade = _FASADE.value[facadeId];
+            if (!facade) return;
+            const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+            if (!section || !section.UF_GROUP) return;
+            const groupId: string = section.UF_GROUP;
+
+            if (!groupedFasades[groupId]) {
+
+                const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
+                groupedFasades[groupId] = {
+                    id: []
+                };
+            }
+
+            groupedFasades[groupId]['id'].push(facadeId);
+        })
+
+        const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => {
+            return {
+                NAME: group.NAME,
+                FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
+                SORT: group.SORT,
+            }
+        }
+        ).filter(group => group.FASADES.length > 0).sort((a, b) => a.SORT - b.SORT);
+
+        // console.log(result, 'createCurrentModuleData')
+
+        if (def) return result
+        // currentModulData.value = Array.from(colorMap)
+        currentModulData.value = result
+
+
     }
 
     const getCurrentModuleData = computed(() => {
@@ -318,8 +353,8 @@ export const useModelState = defineStore('ModelState', () => {
                     id: [], size: {
                         MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
                         MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
-                        MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : Infinity,
-                        MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : Infinity,
+                        MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : -Infinity,
+                        MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : -Infinity,
                     },
                 };
             }
@@ -345,13 +380,18 @@ export const useModelState = defineStore('ModelState', () => {
 
         ).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
 
-        // console.log(result)
-
         if (defaultFasade) {
             return result
         }
 
         currentModelFasadesData.value = result
+    }
+
+    const createFlatFasadeData = ({ data, def, fasadeNdx }) => {
+        const list = createCurrentModelFasadesData({ data, def, fasadeNdx })
+        const flated = list?.map(el => el.FASADES).flat()
+        return flated
+
     }
 
     const clearCurrentModelFasadesData = () => {
@@ -499,8 +539,6 @@ export const useModelState = defineStore('ModelState', () => {
         return result;
     };
 
-
-
     /** Витрины */
     const createCurrentShowcaseData = ({ fasadeId, productId, fasadeNdx }) => {
 
@@ -517,7 +555,7 @@ export const useModelState = defineStore('ModelState', () => {
         }
 
         const defaultShowcase = prodShowcases[0] ?? 1013628
-  
+
         if (prodShowcases.length > 0 && prodShowcases[0] !== null) {
             prepare = prodShowcases.map(el => {
                 return _SHOWCASE.value[el]
@@ -691,6 +729,7 @@ export const useModelState = defineStore('ModelState', () => {
         setCurrentModel,
         getCurrentModel,
         createCurrentModelFasadesData,
+        createFlatFasadeData,
         clearCurrentModelFasadesData,
         getCurrentModelFasadesData,
         setCurrentRaspilParent,

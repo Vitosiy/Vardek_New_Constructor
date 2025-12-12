@@ -115,14 +115,14 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             global: false,
             title: "Цвет корпуса (верхний)",
             label: 'Для всех комнат',
-             prefix: 'moduleTop',
+            prefix: 'moduleTop',
         },
         moduleBottom: {
             id: defaultModuleBottom,
             global: false,
             title: "Цвет корпуса (нижний)",
             label: 'Для всех комнат',
-                   prefix: 'moduleBottom',
+            prefix: 'moduleBottom',
         },
         fasadsTop: {
             id: defaultFasadeTop,
@@ -191,22 +191,25 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     }
 
     const getDefaultModuleData = () => {
-        const colorMap: Record<number, TFasadeItem> = {};
-        const PRODUCTS = APP.value.CATALOG.PRODUCTS
-        const FASADE = APP.value.FASADE;
+        const colorMap: number[] = []
+        const [key, value] = Object.entries(modelState._PRODUCTS)[0]
+        const fasade = value.MODULECOLOR
 
-        for (const el in PRODUCTS) {
-            const product = PRODUCTS[el];
+        for (const el in modelState._PRODUCTS) {
+            const product = modelState._PRODUCTS[el];
 
             if (Array.isArray(product.MODULECOLOR) && product.MODULECOLOR[0] != null) {
                 product.MODULECOLOR.forEach((color: number) => {
-                    if (FASADE[color] !== undefined && colorMap[color] === undefined) {
-                        colorMap[color] = FASADE[color] as TFasadeItem;
+                    if (modelState._FASADE[color] !== undefined && !colorMap.includes(color)) {
+                        colorMap.push(color)
                     }
                 });
             }
         }
-        return colorMap
+
+        const defaultModuleData = modelState.createCurrentModuleData(colorMap, true)
+
+        return defaultModuleData
     }
 
     const getDefaultFasadeData = () => {

@@ -249,24 +249,26 @@ const onSelectMilling = (data) => {
   const isShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
   const rootDataPatina = modelState._FASADE[fasadeProps.COLOR].PATINA;
 
-  if (isShowcase) return;
+  // if (isShowcase) return;
 
-  isPatinaExist.value =
-    data.patina == 0 &&
-    rootDataPatina.length > 0 &&
-    rootDataPatina[0] != null &&
-    rootDataPatina[0] != 0;
+  if (!isShowcase) {
+    isPatinaExist.value =
+      data.patina == 0 &&
+      rootDataPatina.length > 0 &&
+      rootDataPatina[0] != null &&
+      rootDataPatina[0] != 0;
 
-  /** @Если у выбранной фрезы нет патина */
+    /** @Если у выбранной фрезы нет патина */
 
-  try {
-    if (!isPatinaExist.value && patinaList.value.length > 0) {
-      fasadeProps.PATINA = Object.values(modelState._PATINA)[0].ID;
-      const { NAME, PREVIEW_PICTURE } = Object.values(modelState._PATINA)[0];
-      currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+    try {
+      if (!isPatinaExist.value && patinaList.value.length > 0) {
+        fasadeProps.PATINA = Object.values(modelState._PATINA)[0].ID;
+        const { NAME, PREVIEW_PICTURE } = Object.values(modelState._PATINA)[0];
+        currentPatinaData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
+      }
+    } catch (e) {
+      console.warn(e, "в методе onSelectMilling");
     }
-  } catch (e) {
-    console.warn(e, "в методе onSelectMilling");
   }
 
   /** @Отображение_положения_петель */
@@ -311,10 +313,15 @@ const onSelectShowcase = (data) => {
 };
 
 const onChangeMillingHandlePos = (action, id) => {
-  const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
+  const { FASADE_PROPS, FASADE_POSITIONS } = productData.value.PROPS.CONFIG;
   const fasadeProps = FASADE_PROPS[props.tabIndex];
+  const isShowcase = FASADE_POSITIONS[props.tabIndex].SHOWCASE === 1;
   fasadeProps.MILLING_TYPE = id ?? null;
 
+  if (isShowcase) {
+    eventBus.emit("A:ChangeShowcaseMilling");
+    return;
+  }
   setIntegratedHandleAction(action, props.tabIndex, "milling");
 };
 
@@ -359,9 +366,7 @@ const deleteSelectedOptions = (type: String) => {
   }
 
   if (type === "milling") {
-    eventBus.emit("A:DeliteMilling", props.tabIndex);
-
-    const { NAME, PREVIEW_PICTURE } = millingList.value[0];
+    const { NAME, PREVIEW_PICTURE, ID } = millingList.value[0];
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
     // FASADE_PROPS[props.tabIndex].PATINA = 475428;
     currentPatinaData.value = {
@@ -380,6 +385,14 @@ const deleteSelectedOptions = (type: String) => {
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
     isPatinaExist.value = false;
+
+    FASADE_PROPS[props.tabIndex].MILLING = ID;
+
+    if (isShowcase) {
+      eventBus.emit("A:ChangeShowcaseMilling");
+      return;
+    }
+    eventBus.emit("A:DeliteMilling", props.tabIndex);
   }
 
   if (type === "palette") {

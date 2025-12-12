@@ -1,11 +1,11 @@
 <script setup lang="ts" xmlns="http://www.w3.org/1999/html">
 // @ts-nocheck
-import {computed, defineExpose, onMounted, ref, toRefs} from "vue";
+import { computed, defineExpose, onMounted, ref, toRefs } from "vue";
 
-import {useAppData} from "@/store/appliction/useAppData.ts";
+import { useAppData } from "@/store/appliction/useAppData.ts";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
 import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
-import {useModelState} from "@/store/appliction/useModelState.ts";
+import { useModelState } from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Toggle from "@vueform/toggle";
@@ -23,58 +23,70 @@ const props = defineProps({
   },
   visualizationRef: {
     type: [ref, Object],
-  }
+  },
 });
 
-type CATALOG_TYPE = 'FASADE' | 'PALETTE' | 'MILLING' | 'FASADETYPE' | 'GLASS' | 'PATINA';
+type CATALOG_TYPE =
+  | "FASADE"
+  | "PALETTE"
+  | "MILLING"
+  | "FASADETYPE"
+  | "GLASS"
+  | "PATINA";
 
 const moduleParts = [
-  'MODULE_COLOR', 'BACKWALL', 'LEFTSIDECOLOR', 'RIGHTSIDECOLOR', 'TOPFASADECOLOR', 'PROFILECOLOR'
-]
+  "MODULE_COLOR",
+  "BACKWALL",
+  "LEFTSIDECOLOR",
+  "RIGHTSIDECOLOR",
+  "TOPFASADECOLOR",
+  "PROFILECOLOR",
+];
 
 enum partsNames {
-  MODULE_COLOR = 'Цвет корпуса',
-  BACKWALL = 'Задняя стенка',
-  LEFTSIDECOLOR = 'Левая стенка',
-  RIGHTSIDECOLOR = 'Правая стенка',
-  TOPFASADECOLOR = 'Накладка на крышку',
-  PROFILECOLOR = 'Профили'
+  MODULE_COLOR = "Цвет корпуса",
+  BACKWALL = "Задняя стенка",
+  LEFTSIDECOLOR = "Левая стенка",
+  RIGHTSIDECOLOR = "Правая стенка",
+  TOPFASADECOLOR = "Накладка на крышку",
+  PROFILECOLOR = "Профили",
 }
 
-const {module, objectData, visualizationRef} = toRefs(props);
+const { module, objectData, visualizationRef } = toRefs(props);
 const APP = useAppData().getAppData;
-const modelState = useModelState()
+const modelState = useModelState();
 
 const currentOption = ref<string | boolean>(false);
 const materialList = ref(null);
 const getMaterialsParts = computed(() => {
   return (_module: Object) => {
-    let result = {}
+    let result = {};
 
     moduleParts.forEach((item) => {
       if (_module.PROPS.CONFIG[item]) {
-
         if (typeof _module.PROPS.CONFIG[item] === "object") {
-          let tmpObj = {}
+          let tmpObj = {};
           Object.entries(_module.PROPS.CONFIG[item]).forEach(([key, value]) => {
             let name = key === "COLOR" ? "FASADE" : key;
-            tmpObj[key] = getMaterialInfo(name, value)
-          })
+            tmpObj[key] = getMaterialInfo(name, value);
+          });
 
-          if(Object.keys(tmpObj).length > 0)
-            result[item] = tmpObj
-
+          if (Object.keys(tmpObj).length > 0) result[item] = tmpObj;
         } else
-          result[item] = {COLOR: getMaterialInfo("FASADE", _module.PROPS.CONFIG[item])}
+          result[item] = {
+            COLOR: getMaterialInfo("FASADE", _module.PROPS.CONFIG[item]),
+          };
       }
-    })
+    });
 
-    if(module.value.profilesConfig) {
-      result['PROFILECOLOR'] = {COLOR: getMaterialInfo("COLOR", module.value.profilesConfig.COLOR)}
+    if (module.value.profilesConfig) {
+      result["PROFILECOLOR"] = {
+        COLOR: getMaterialInfo("COLOR", module.value.profilesConfig.COLOR),
+      };
     }
 
-    if(module.value.isRestrictedModule) {
-      delete result['TOPFASADECOLOR']
+    if (module.value.isRestrictedModule) {
+      delete result["TOPFASADECOLOR"];
     }
 
     if(module.value.noBottom) {
@@ -85,31 +97,29 @@ const getMaterialsParts = computed(() => {
   };
 });
 
-const emit = defineEmits([
-  "product-reset",
-]);
+const emit = defineEmits(["product-reset"]);
 
 const reset = () => {
   emit("product-reset");
-}
+};
 
 const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
-  return APP[type]?.[materialID]
-}
+  return APP[type]?.[materialID];
+};
 
 const closeMenu = () => {
   currentOption.value = false;
-  materialList.value = null
+  materialList.value = null;
 };
 
 const getOption = (part: string) => {
   if (part == currentOption.value) {
     currentOption.value = false;
-    materialList.value = null
+    materialList.value = null;
     return;
   }
   currentOption.value = part;
-  getMaterialsList()
+  getMaterialsList();
 };
 
 const getCurrentValue = computed(() => {
@@ -118,14 +128,14 @@ const getCurrentValue = computed(() => {
   switch (currentOption.value) {
     case "RIGHTSIDECOLOR":
     case "LEFTSIDECOLOR":
-      result = {...objectData.value.PROPS.CONFIG[currentOption.value]}
+      result = { ...objectData.value.PROPS.CONFIG[currentOption.value] };
 
-      if(!result.COLOR)
-        result.COLOR = objectData.value.PROPS.CONFIG.MODULE_COLOR
+      if (!result.COLOR)
+        result.COLOR = objectData.value.PROPS.CONFIG.MODULE_COLOR;
 
-      break
+      break;
     default:
-      result = objectData.value.PROPS.CONFIG[currentOption.value]
+      result = objectData.value.PROPS.CONFIG[currentOption.value];
       break;
   }
 
@@ -135,23 +145,25 @@ const getCurrentValue = computed(() => {
 const getMaterialsList = () => {
   switch (currentOption.value) {
     case "MODULE_COLOR":
-      materialList.value = modelState.getCurrentModuleData
+      materialList.value = modelState.getCurrentModuleData;
       break;
     case "BACKWALL":
-      materialList.value = modelState.getCurrentBackwallData
+      materialList.value = modelState.getCurrentBackwallData;
       break;
     case "RIGHTSIDECOLOR":
     case "LEFTSIDECOLOR":
-      materialList.value = modelState.getCurrentSidewallData
-      break
-    case 'PROFILECOLOR':
-      materialList.value = module.value.profilesConfig.colorsList.map(colorID => {
-        return getMaterialInfo("COLOR", colorID)
-      })
+      materialList.value = modelState.getCurrentSidewallData;
+      break;
+    case "PROFILECOLOR":
+      materialList.value = module.value.profilesConfig.colorsList.map(
+        (colorID) => {
+          return getMaterialInfo("COLOR", colorID);
+        }
+      );
       break;
     default:
-      createFacadeData()
-      materialList.value = modelState.getCurrentModelFasadesData
+      createFacadeData();
+      materialList.value = modelState.getCurrentModelFasadesData;
       break;
   }
 
@@ -169,80 +181,84 @@ const createFacadeData = (fasadeIndex) => {
 };
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
-    switch (currentOption.value) {
-      case "MODULE_COLOR":
-        objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
-        module.value.moduleColor = value.ID;
-        module.value.moduleThickness = value.DEPTH;
+  console.log(value, "value", currentOption.value);
 
-        if(!objectData.value.PROPS.CONFIG["LEFTSIDECOLOR"]?.COLOR)
-          module.value.leftWallThickness = value.DEPTH;
+  switch (currentOption.value) {
+    case "MODULE_COLOR":
+      objectData.value.PROPS.CONFIG[currentOption.value] = value.ID;
+      module.value.moduleColor = value.ID;
+      module.value.moduleThickness = value.DEPTH;
 
-        if(!objectData.value.PROPS.CONFIG["RIGHTSIDECOLOR"]?.COLOR)
-          module.value.rightWallThickness = value.DEPTH;
+      if (!objectData.value.PROPS.CONFIG["LEFTSIDECOLOR"]?.COLOR)
+        module.value.leftWallThickness = value.DEPTH;
 
-        break;
-      case 'PROFILECOLOR':
-        objectData.value.PROPS.CONFIG['PROFILECOLOR'] = value ? value.ID || value : false;
+      if (!objectData.value.PROPS.CONFIG["RIGHTSIDECOLOR"]?.COLOR)
+        module.value.rightWallThickness = value.DEPTH;
 
-        if(!objectData.value.PROPS.CONFIG['PROFILECOLOR']) {
-          delete objectData.value.PROPS.CONFIG['PROFILECOLOR'];
-        }
-        else {
-          module.value.profilesConfig.COLOR = objectData.value.PROPS.CONFIG['PROFILECOLOR']
-          module.value.sections.forEach((section, secIndex) => {
+      break;
+    case "PROFILECOLOR":
+      objectData.value.PROPS.CONFIG["PROFILECOLOR"] = value
+        ? value.ID || value
+        : false;
 
-            section.cells.forEach((cell, cellIndex) => {
-              if(cell.hiTechProfiles) {
-                cell.fillings.forEach(filling => {
-                  if(filling.isProfile) {
-                    filling.color = module.value.profilesConfig.COLOR
-                    filling.isProfile.COLOR = module.value.profilesConfig.COLOR
-                  }
-                })
-
-                cell.hiTechProfiles.forEach(profile => {
-                  profile.color = module.value.profilesConfig.COLOR
-                  profile.isProfile.COLOR = module.value.profilesConfig.COLOR
-                })
-              }
-            })
-
-            if(section.hiTechProfiles) {
-              section.fillings.forEach(filling => {
-                if(filling.isProfile) {
-                  filling.color = module.value.profilesConfig.COLOR
-                  filling.isProfile.COLOR = module.value.profilesConfig.COLOR
+      if (!objectData.value.PROPS.CONFIG["PROFILECOLOR"]) {
+        delete objectData.value.PROPS.CONFIG["PROFILECOLOR"];
+      } else {
+        module.value.profilesConfig.COLOR =
+          objectData.value.PROPS.CONFIG["PROFILECOLOR"];
+        module.value.sections.forEach((section, secIndex) => {
+          section.cells.forEach((cell, cellIndex) => {
+            if (cell.hiTechProfiles) {
+              cell.fillings.forEach((filling) => {
+                if (filling.isProfile) {
+                  filling.color = module.value.profilesConfig.COLOR;
+                  filling.isProfile.COLOR = module.value.profilesConfig.COLOR;
                 }
-              })
+              });
 
-              section.hiTechProfiles.forEach(profile => {
-                profile.color = module.value.profilesConfig.COLOR
-                profile.isProfile.COLOR = module.value.profilesConfig.COLOR
-              })
+              cell.hiTechProfiles.forEach((profile) => {
+                profile.color = module.value.profilesConfig.COLOR;
+                profile.isProfile.COLOR = module.value.profilesConfig.COLOR;
+              });
             }
-          })
-        }
+          });
 
-        break;
-      default:
-        if(!objectData.value.PROPS.CONFIG[currentOption.value]){
-          objectData.value.PROPS.CONFIG[currentOption.value] = {}
-        }
+          if (section.hiTechProfiles) {
+            section.fillings.forEach((filling) => {
+              if (filling.isProfile) {
+                filling.color = module.value.profilesConfig.COLOR;
+                filling.isProfile.COLOR = module.value.profilesConfig.COLOR;
+              }
+            });
 
-        if (type === "COLOR") {
-          if (!value || value.ID === 7397)
-            objectData.value.PROPS.CONFIG[currentOption.value]['SHOW'] = false
-          else
-            objectData.value.PROPS.CONFIG[currentOption.value]['SHOW'] = true
-        }
+            section.hiTechProfiles.forEach((profile) => {
+              profile.color = module.value.profilesConfig.COLOR;
+              profile.isProfile.COLOR = module.value.profilesConfig.COLOR;
+            });
+          }
+        });
+      }
 
-        objectData.value.PROPS.CONFIG[currentOption.value][type] = value ? value.ID || value : false;
-        if(palette)
-          objectData.value.PROPS.CONFIG[currentOption.value]['PALETTE'] = palette
-        break;
-    }
-    reset()
+      break;
+    default:
+      if (!objectData.value.PROPS.CONFIG[currentOption.value]) {
+        objectData.value.PROPS.CONFIG[currentOption.value] = {};
+      }
+
+      if (type === "COLOR") {
+        if (!value || value.ID === 7397)
+          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = false;
+        else objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
+      }
+
+      objectData.value.PROPS.CONFIG[currentOption.value][type] = value
+        ? value.ID || value
+        : false;
+      if (palette)
+        objectData.value.PROPS.CONFIG[currentOption.value]["PALETTE"] = palette;
+      break;
+  }
+  reset();
 };
 
 const getCurrentRedactor = computed(() => {
@@ -255,19 +271,20 @@ const getSideProfile = computed(() => {
 
 const changeProfilesWidth = (onSectionSize) => {
   module.value.sections.forEach((section, secIndex) => {
-
-    let newWidth = onSectionSize ? section.width : section.width + module.value.moduleThickness * 2;
+    let newWidth = onSectionSize
+      ? section.width
+      : section.width + module.value.moduleThickness * 2;
 
     section.cells.forEach((cell, cellIndex) => {
-      if(cell.hiTechProfiles) {
-        cell.fillings.forEach(filling => {
-          if(filling.isProfile && !filling.isProfile.isBottomHiTechProfile) {
-            let delta = newWidth - filling.width
+      if (cell.hiTechProfiles) {
+        cell.fillings.forEach((filling) => {
+          if (filling.isProfile && !filling.isProfile.isBottomHiTechProfile) {
+            let delta = newWidth - filling.width;
             filling.width += delta;
-            filling.size.x = filling.width
-            filling.position.x += (-delta / 2);
+            filling.size.x = filling.width;
+            filling.position.x += -delta / 2;
           }
-        })
+        });
 
         /*cell.hiTechProfiles.forEach(profile => {
           if(!profile.isProfile.isBottomHiTechProfile) {
@@ -278,17 +295,17 @@ const changeProfilesWidth = (onSectionSize) => {
           }
         })*/
       }
-    })
+    });
 
-    if(section.hiTechProfiles) {
-      section.fillings.forEach(filling => {
-        if(filling.isProfile && !filling.isProfile.isBottomHiTechProfile) {
-          let delta = newWidth - filling.width
+    if (section.hiTechProfiles) {
+      section.fillings.forEach((filling) => {
+        if (filling.isProfile && !filling.isProfile.isBottomHiTechProfile) {
+          let delta = newWidth - filling.width;
           filling.width += delta;
-          filling.size.x = filling.width
-          filling.position.x += (-delta / 2);
+          filling.size.x = filling.width;
+          filling.position.x += -delta / 2;
         }
-      })
+      });
 
       /*section.hiTechProfiles.forEach(profile => {
         if(!profile.isProfile.isBottomHiTechProfile) {
@@ -299,42 +316,41 @@ const changeProfilesWidth = (onSectionSize) => {
         }
       })*/
     }
-  })
+  });
 
-  reset()
-
-}
+  reset();
+};
 
 onMounted(() => {
   modelState.createCurrentBackwallData(objectData.value.globalData);
   modelState.createCurrentSidewallData(objectData.value.globalData);
-})
-
+});
 </script>
 
 <template>
   <div class="actions-materials-wrapper">
-    <div
-        :class="'actions-materials-items--container'"
-    >
+    <div :class="'actions-materials-items--container'">
       <div class="config-options">
         <div
-            v-for="(value, part) in getMaterialsParts(objectData)"
-            :key="part"
-            class="option-small"
+          v-for="(value, part) in getMaterialsParts(objectData)"
+          :key="part"
+          class="option-small"
         >
           <div
-              :class="['option-small-item', {active: currentOption === part}]"
-              @click="getOption(part)"
+            :class="['option-small-item', { active: currentOption === part }]"
+            @click="getOption(part)"
           >
-              {{partsNames[part]}}
+            {{ partsNames[part] }}
 
-            <div :class="['option-small-item-chevron', {active: currentOption === part}]">
+            <div
+              :class="[
+                'option-small-item-chevron',
+                { active: currentOption === part },
+              ]"
+            >
               ❯
             </div>
-
           </div>
-
         </div>
       </div>
     </div>
@@ -346,37 +362,40 @@ onMounted(() => {
         <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
         <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
-        <p class="color__title" v-if="currentOption === 'PROFILECOLOR'">Профили в размер секции
-          <Toggle v-model="module.profilesConfig.onSectionSize" @change="changeProfilesWidth(module.profilesConfig.onSectionSize)"/>
+        <p class="color__title" v-if="currentOption === 'PROFILECOLOR'">
+          Профили в размер секции
+          <Toggle
+            v-model="module.profilesConfig.onSectionSize"
+            @change="changeProfilesWidth(module.profilesConfig.onSectionSize)"
+          />
         </p>
 
         <AdvanceCorpusMaterialRedactor
-            class="color-select-item"
-            v-if="getCurrentRedactor"
-            :key="currentOption"
-            :element-data="getCurrentValue"
-            :element-index="currentOption"
-            :material-list="materialList"
-            @parent-callback="selectOption"
+          class="color-select-item"
+          v-if="getCurrentRedactor"
+          :key="currentOption"
+          :element-data="getCurrentValue"
+          :element-index="currentOption"
+          :material-list="materialList"
+          @parent-callback="selectOption"
         />
         <CorpusMaterialRedactor
-            v-else
-            class="color-select-item"
-            :is2Dconstructor="true"
-            :material-list="materialList"
-            :type="currentOption === 'BACKWALL' ? 'backwall' : 'surface'"
-            @parent-callback="selectOption"
+          v-else
+          class="color-select-item"
+          :is2Dconstructor="true"
+          :material-list="materialList"
+          :type="currentOption === 'BACKWALL' ? 'backwall' : 'surface'"
+          @parent-callback="selectOption"
         />
 
         <HiTechSideprofile
-            v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
-            class="color-select-item"
-            :module="module"
+          v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
+          class="color-select-item"
+          :module="module"
         />
       </div>
     </div>
   </transition>
-
 </template>
 
 <style scoped lang="scss">
@@ -523,13 +542,11 @@ onMounted(() => {
             margin-left: 5px;
           }
 
-          &-counter{
+          &-counter {
             width: 45px;
             padding-left: 10px;
           }
-
         }
-
       }
     }
 
@@ -827,7 +844,7 @@ onMounted(() => {
         }
       }
 
-      &.active{
+      &.active {
         color: #da444c;
         border-color: #da444c;
       }
@@ -899,5 +916,4 @@ onMounted(() => {
     }
   }
 }
-
 </style>

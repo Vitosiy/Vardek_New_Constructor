@@ -277,16 +277,18 @@ const getOption = (value: keyof TTextureActionMap, title: string) => {
     case "moduleTop":
       optionsData.value = {
         type: "moduleTop",
-        data: Object.values(visualData.value.module),
+        // data: Object.values(visualData.value.module),
+        data: visualData.value.module,
       };
-      currentRedactor.value = false;
+      currentRedactor.value = true;
       break;
     case "moduleBottom":
       optionsData.value = {
         type: "moduleBottom",
-        data: Object.values(visualData.value.module),
+        // data: Object.values(visualData.value.module),
+        data: visualData.value.module,
       };
-      currentRedactor.value = false;
+      currentRedactor.value = true;
       break;
     case "fasadsTop":
       optionsData.value = {
@@ -364,7 +366,6 @@ const selectOption = (
 
   const { isPalitte, isMilling, isPlinth } = checkExtras(curOptionId, type);
 
-
   const paramToCheck = extras
     ? globalOptions.value[type][extras]
     : curOption.id;
@@ -385,7 +386,6 @@ const selectOption = (
   }
 
   if (type.includes("fasad") && !extras) {
-
     curOption.palitteData = isPalitte;
     curOption.millingData = isMilling;
 
@@ -407,7 +407,6 @@ const selectOption = (
       milling: _MILLING[curOption.milling],
       type: type,
     };
-
 
     updateOption(type, value.ID);
     eventBus.emit(optionsType.value[type], dataToEvent);
@@ -433,7 +432,6 @@ const selectOption = (
   if (!extras) return;
 
   if (extras.includes("milling")) {
-
     curOption.millingData = isMilling;
     if (isMilling?.length > 0) {
       if (!curOption.milling) {
@@ -527,7 +525,6 @@ const plinthSelect = (
   key: keyof TOptionsMap,
   plinthData: TMilling[]
 ) => {
-
   optionsData.value = {
     extras: "plinthSurfase",
     type: key,
