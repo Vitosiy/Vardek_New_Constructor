@@ -16,6 +16,7 @@ import { useRoomState } from '@/store/appliction/useRoomState';
 import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
 import { loadBlankRoom } from '@/Constructor2D/facade/blankRoom';
 import { useBasketStore } from '@/store/appStore/useBasketStore';
+import { useRoomContantData } from '@/store/appliction/useRoomContantData';
 
 export type ActionKey =
   | 'fullscreen'
@@ -106,6 +107,7 @@ export const useQuickActionsToolbar = () => {
       if (result.success) {
         if (projectState.currentProjectId) {
           // Обновляем существующий проект
+          console.log(result.data.kp)
           projectState.updateAfterSave();
         } else {
           // Создаем новый проект
@@ -118,16 +120,16 @@ export const useQuickActionsToolbar = () => {
         if (onSuccess) {
           onSuccess();
         }
-        return true;
+        return { success: true, kp: result.data.kp || null };
       } else {
         console.error("❌ Ошибка сохранения:", result.error);
         toaster.error("Ошибка сохранения проекта");
-        return false;
+        return { success: false, kp: null };
       }
     } catch (error) {
       console.error("❌ Исключение при сохранении:", error);
       toaster.error("Ошибка сохранения проекта");
-      return false;
+      return { success: false, kp: null };
     } finally {
       projectState.isSaving = false;
     }
@@ -154,7 +156,10 @@ export const useQuickActionsToolbar = () => {
       tooltip: 'На весь экран',
       iconClass: 'icon-centered',
       path: 'default',
-      action: () => toggleFullscreen(),
+      action: () => {
+        toggleFullscreen()
+        console.log('SCHEME TRANSITION', schemeTransition.getSchemeTransitionData);
+      }
     },
     {
       key: 'drowmod',
@@ -257,25 +262,29 @@ export const useQuickActionsToolbar = () => {
         if (router.currentRoute.value.path !== '/2d') {
           await router.push('/2d');
         }
+        // Ждем, пока роутер завершит переход и компонент начнет монтироваться
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         schemeTransition.clearStore();
         sceneState.createNewProject();
         roomState.rooms = [];
         roomState.clearCurrentRoomId();
         projectState.resetState();
         useBasketStore().clearBasket()
+        useRoomContantData().setRoomContantDataForBasket({})
         try {
           const c2d = (window as any).C2D;
           if (c2d?.layers) {
-            c2d.layers.planner.clear();
-            c2d.layers.doorsAndWindows.clear();
-            c2d.layers.dimensionDisplay.clearAll();
-            c2d.layers.arrowRulerActiveObject.clearGraphic();
-            c2d.layers.startPointActiveObject.activate(false);
+            c2d.layers.planner?.clear();
+            c2d.layers.doorsAndWindows?.clear();
+            c2d.layers.dimensionDisplay?.clearAll();
+            c2d.layers.arrowRulerActiveObject?.clearGraphic();
+            c2d.layers.startPointActiveObject?.activate(false);
           }
         } catch (error) {
           console.warn('Ошибка при очистке слоев C2D:', error);
         }
-        await loadBlankRoom();
+        await loadBlankRoom()
       },
     },
   ];

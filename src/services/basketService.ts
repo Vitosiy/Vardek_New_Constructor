@@ -31,6 +31,8 @@ export const BasketService = {
    * @returns Promise<BasketResponse>
    */
   async getBasket(newBasket: NewBasketRequest): Promise<BasketResponse> {
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+    
     try {
       const { data } = await axios.post<BasketResponse>(
         `${BASE_API_URL}/GetBasket/`,
@@ -39,6 +41,8 @@ export const BasketService = {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
+            "Authorization": `Bearer ${token}`,
+
           },
           timeout: REQUEST_TIMEOUT,
         }
@@ -57,7 +61,8 @@ export const BasketService = {
     }
   },
   async getProductDelay(newBasket: NewBasketRequest): Promise<BasketResponse> {
-
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+    
     try {
       const { data } = await axios.post<BasketResponse>(
         `${BASE_API_URL}/GetProductDelay/`,
@@ -65,7 +70,8 @@ export const BasketService = {
         {
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json',
+            'Accept': 'application/json',
+            "Authorization": `Bearer ${token}`,
           },
           timeout: REQUEST_TIMEOUT,
         }

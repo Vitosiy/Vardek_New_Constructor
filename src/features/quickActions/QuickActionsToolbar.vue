@@ -65,6 +65,21 @@
         </InputDialog>
       </template>
     </Modal>
+      
+      <Modal ref="kpDialogRef">
+        <template #modalBody="{ onModalClose }">
+          <Notification 
+            :label="'Коммерческое предложение'"
+            :description="kpData?.text"
+            :link="kpData?.link"
+            @cancel="onModalClose"
+          >
+          <template #cancelButton>
+            <MainButton @click="onModalClose">Закрыть</MainButton>
+          </template>
+          </Notification>
+        </template>
+      </Modal>
   </div>
   <GenericLoader v-show="projectStore.isSaving" />
 </template>
@@ -77,6 +92,8 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import InputDialog from "@/components/ui/inputs/InputDialog.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import Notification from "@/components/ui/inputs/Notification.vue";
+
 import { useQuickActionsToolbar } from "./useQuickActionsToolbar";
 import { useRoute } from "vue-router";
 import { useSceneState } from "@/store/appliction/useSceneState";
@@ -102,6 +119,14 @@ const changeCamera = () => {
 
 // Реф для модального окна сохранения
 const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);
+const kpDialogRef = ref<InstanceType<typeof Modal> | null>(null);
+  
+const kpData = ref<{ link: string; text: string } | null>(null);
+
+const openKpModal = (kp: { link: string; text: string }) => {
+  kpData.value = kp;
+  kpDialogRef.value?.openModal();
+};
 
 // Текущее название проекта
 const currentProjectName = computed(() => {
@@ -116,14 +141,27 @@ const handleSaveConfirm = async (projectName: string) => {
     return;
   }
 
-  // Вызываем метод сохранения с названием проекта
-  // Передаем callback для закрытия модального окна при успешном сохранении
-  await handleSaveConfirmFromComposable(projectName.trim(), () => {
-    saveDialogRef.value?.closeModal();
-  }, kpCheckbox.value);
-  
-  // Если сохранение не удалось, модальное окно остается открытым
+  // Вызываем композицию сохранения
+  const result = await handleSaveConfirmFromComposable(
+    projectName.trim(),
+    () => {
+      saveDialogRef.value?.closeModal();
+    },
+    kpCheckbox.value
+  );
+
+  // Если сохранение провалилось — просто выходим
+  //@ts-ignore
+  if (!result?.success) return;
+
+  // Если пользователь ставил галочку "Сохранить КП" и сервер вернул kp
+  //@ts-ignore
+  if (kpCheckbox.value && result.kp) {
+    //@ts-ignore
+    openKpModal(result.kp); 
+  }
 };
+
 
 // Функция открытия модального окна
 const openModal = () => {
