@@ -60,12 +60,16 @@ export class PaletteBuilder {
         fasadeProps: { [key: string]: any };
     }) {
 
+
+
         const { _APP, _FASADE } = this.parent;
         const palette = _APP.PALETTE[data];
         const fasadeId = fasadeProps.COLOR ?? 567323;
         const fasadeName = _FASADE[fasadeId].NAME.toLowerCase();
 
         fasade.visible = true;
+
+        // return
 
         const useTexture = Boolean(palette.DETAIL_PICTURE);
         const fasadeSize = useTexture

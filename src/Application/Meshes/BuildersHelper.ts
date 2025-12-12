@@ -423,6 +423,35 @@ export class BuildersHelper extends GlobalsData {
         geometry.uvsNeedUpdate = true;
     }
 
+    normalizeUVsTo01(geometry: THREE.BufferGeometry) {
+        const uv = geometry.attributes.uv;
+        if (!uv) return;
+
+        // Находим bounding box геометрии в локальных координатах
+        geometry.computeBoundingBox();
+        const bbox = geometry.boundingBox!;
+
+        const sizeX = bbox.max.x - bbox.min.x;
+        const sizeY = bbox.max.y - bbox.min.y;
+
+        // Если размеры нулевые или почти нулевые — ничего не делаем
+        if (sizeX < 0.001 || sizeY < 0.001) return;
+
+        // Нормализуем UV: приводим к диапазону [0..1] по реальным размерам
+        for (let i = 0; i < uv.count; i++) {
+            const u = uv.getX(i);
+            const v = uv.getY(i);
+
+            // Предполагаем, что UV изначально в миллиметрах (от 0 до width/height)
+            const normalizedU = (u - bbox.min.x) / sizeX;
+            const normalizedV = (v - bbox.min.y) / sizeY;
+
+            uv.setXY(i, normalizedU, normalizedV);
+        }
+
+        uv.needsUpdate = true;
+    }
+
     addAdditionalKeys = (obj, additionalKeys) => (
         Object.entries(additionalKeys).forEach(([newKey, existingKey]) =>
             obj[newKey] = obj[existingKey] ?? console.warn(`Ключ "${existingKey}" не найден в объекте.`)

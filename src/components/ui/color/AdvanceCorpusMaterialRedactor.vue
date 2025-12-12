@@ -134,6 +134,9 @@ const fasadeHandleList = ref<Array>([]);
 const isFasadeHandleExist = ref<boolean>(false);
 
 const onSelectMaterial = (data) => {
+
+  console.log(data, 'data')
+
   const {PROPS} = productData.value;
   const { CONFIG, FASADE } = PROPS;
   const {FASADE_POSITIONS, FASADE_PROPS} = CONFIG;

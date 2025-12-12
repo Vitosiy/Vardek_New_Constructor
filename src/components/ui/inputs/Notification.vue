@@ -15,6 +15,7 @@
   </template>
   
   <script setup lang="ts">
+    //@ts-nocheck
   
   const props = defineProps<{
     label?: string;

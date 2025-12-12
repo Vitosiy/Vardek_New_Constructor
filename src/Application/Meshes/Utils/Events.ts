@@ -315,7 +315,6 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     async catchFasadeChange({ data, fasadeNdx, mesh }: TDataWithNdx) {
-        // console.log('==== ❌ catchFasadeChange ❌ ====')
 
         const meshData = mesh ?? this._currentMesh
 
@@ -365,15 +364,21 @@ export class MeshEvents extends BuildersHelper {
         const fasadeShowcase = CONFIG.FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
         const handleType = CONFIG.FASADE_PROPS[fasadeNdx].TYPE
 
-        if (SHOWCASE.length > 0 && fasadeShowcase && (fasadeProp.SHOWCASE === null || !incomingModel)) {
-            // console.log('==== ❌ SHOWCASE CLASSIK❌ ====', milling)
+        if (incomingModel) {
+            const action = this.modelState.getCurrentFasadeTypesAction(handleType)
+            // console.log('==== ❌ SHOWCASE ALUM ❌ ====')
+            this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
+        } else if (SHOWCASE.length > 0 && fasadeShowcase) {
+            // console.log('==== ❌ SHOWCASE CLASSIK❌ ====')
             this.changeShowcase({ data: SHOWCASE[0], fasadeNdx, mesh: mesh });
         }
-        else if (incomingModel) {
-            const action = this.modelState.getCurrentFasadeTypesAction(handleType)
-            // console.log('==== ❌ SHOWCASE ALUM ❌ ====', action)
-            this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
-        }
+
+        return
+        // else if (incomingModel) {
+        //     const action = this.modelState.getCurrentFasadeTypesAction(handleType)
+        //     console.log('==== ❌ SHOWCASE ALUM ❌ ====')
+        //     this.changeShowcase({ data: incomingModel, fasadeNdx, action, mesh: mesh });
+        // }
         // else {
         //     console.log('==== ❌NON SHOWCASE  ====', milling)
         //     Object.assign(fasadeProp, { MILLING: milling, PATINA: null });
@@ -553,12 +558,12 @@ export class MeshEvents extends BuildersHelper {
         );
 
         // Только здесь — всё гарантированно завершено
-        this.events.emit('A:GlobalParamsSelect');
+        setTimeout(() => {
+            this.events.emit('A:GlobalParamsSelect');
+        }, 10)
     }
 
     //------------------
-
-
     /** @Цвет_палитры  */
     //------------------
 
@@ -725,7 +730,7 @@ export class MeshEvents extends BuildersHelper {
 
         await this.changeMilling({ data: firstMilling.ID, fasadeNdx })
         fasade.PATINA = Object.values(this.modelState._PATINA)[0].ID
-        fasade.MILLING = firstMilling.ID
+        // fasade.MILLING = firstMilling.ID
         fasade.MILLING_TYPE = null
     }
 
@@ -855,9 +860,6 @@ export class MeshEvents extends BuildersHelper {
             action
         });
 
-        // console.log(this.modelState.getCurrentGlassData, '-----GLAAS')
-
-        FASADE_PROPS[fasadeNdx].SHOWCASE = data
         FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
         FASADE_PROPS[fasadeNdx].GLASS = FASADE_PROPS[fasadeNdx].GLASS ?? '76033'
 

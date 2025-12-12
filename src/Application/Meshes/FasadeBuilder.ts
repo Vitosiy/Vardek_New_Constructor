@@ -25,7 +25,8 @@ export class FasadeBuilder {
     _FASADE: Record<string | number, THREETypes.TFasadeItem>
     _FASADE_POSITION: Record<string | number, THREETypes.TFasadePositionData>
     _MILLING: Record<string | number, THREETypes.TMilling>
-    _FASADE_TYPE: Record<string | number, THREETypes.TFa>
+    _FASADE_TYPE: Record<string | number, THREETypes.TFasadeItem>
+    _FASADE_SIZE_RESTRICT:any
     jsonBuilder: THREETypes.TJSONBuilder
     edgeBuilder: THREETypes.TEdgeBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
@@ -39,6 +40,7 @@ export class FasadeBuilder {
         this._APP = parent._APP
         this._FASADE = parent._FASADE
         this._FASADE_POSITION = parent._FASADE_POSITION
+        this._FASADE_SIZE_RESTRICT = parent._FASADE_SIZE_RESTRICT
         this._MILLING = parent._MILLING
         this._FASADETYPE = parent._FASADETYPE
         this.jsonBuilder = parent.json_builder
@@ -161,10 +163,26 @@ export class FasadeBuilder {
             }
             else {
 
-                const includeIncomeFasade = currentProduct.FACADE.includes(color)
+                // const includeIncomeFasade = currentProduct.FACADE.includes(color)
+                const curFasadeList = this.parent.modelState.createFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
+                const includeIncomeFasade = curFasadeList.includes(color)
+
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
-                fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
+
+                if (fasadeData.SHOW && haveShowcase && !fasadeData.ALUM) {
+                    fasadeData.SHOWCASE = fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase
+                }
+                else {
+                    fasadeData.SHOWCASE = null
+                }
+                if (fasadeData.ALUM) {
+                    fasadeData.SHOWCASE = null
+                }
+
+                // console.log(fasadeData.SHOWCASE, '==== ❌ fasadeData.SHOWCASE ❌ ====')
+
+                // fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase && !fasadeData.ALUM ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.getCurrentGlassData[0] as any;
@@ -189,7 +207,7 @@ export class FasadeBuilder {
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
 
                     // fasadeData.MILLING = this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
-                    fasadeData.MILLING = firstValueMilling.ID ? firstValueMilling.ID : milling
+                    fasadeData.MILLING = fasadeData.MILLING ? fasadeData.MILLING : firstValueMilling.ID ? firstValueMilling.ID : milling
                     /** @Позиционирование_интегрированной_ручки */
                     if (!fasadeData.MILLING_TYPE) {
                         const fType = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE
@@ -271,7 +289,7 @@ export class FasadeBuilder {
             if (fasadeData.SHOWCASE != null) {
 
                 const action = this.modelState.getCurrentFasadeTypesAction(fasadeData.TYPE)
-                // console.log('==== ❌ SHOWCASE ❌ ====', fasadeData.MILLING)
+                console.log('==== ❌ SHOWCASE ❌ ====')
 
                 this.parent.showcase_builder.createShowcase({
                     fasade: curFasade,
@@ -286,6 +304,7 @@ export class FasadeBuilder {
 
             // Алюм. профиль
             if (fasadeData.ALUM != null && FASADE_PROPS[fasadeNdx].COLOR != null) {
+                console.log('==== ❌ ALUM ❌ ====')
 
                 const alumData = this.parent._FASADE[FASADE_PROPS[fasadeNdx].COLOR];
                 this.parent.alum_builder.createAlum({ fasade: curFasade, data: alumData });
@@ -334,12 +353,13 @@ export class FasadeBuilder {
             if (!remove && !fasadeNdx) {
 
                 const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
-                const includeIncomeFasade = currentProduct.FACADE.includes(color)
+                const curFasadeList = this.parent.modelState.createFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
+
+                const includeIncomeFasade = curFasadeList.includes(color)
 
                 fasadeData.COLOR = includeIncomeFasade ? color : 7397;
                 fasadeData.SHOW = curBodyExceptions ? true : fasadeData.COLOR !== 7397;
                 fasadeData.SHOWCASE = fasadeData.SHOW && haveShowcase ? fasadeData.SHOWCASE ?? SHOWCASE[0] ?? deffShowcase : null
-
 
                 const firstValuePall = Object.values(this.parent.modelState.createCurrentPaletteData(fasadeData.COLOR))[0] as any;
                 const firstValueGlass = this.parent.modelState.createCurrentGlassData({ fasadeId: fasadeData.COLOR, productId: PRODUCT })[0] as any;
@@ -356,7 +376,7 @@ export class FasadeBuilder {
 
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
 
-                    // console.log('==== ❌ MILLING ❌ ====', milling, firstValueMilling.ID)
+                    // console.log('==== ❌ MILLING ❌ ====', this.containsValue(millingList, milling))
 
                     fasadeData.MILLING = fasadeData.MILLING ? fasadeData.MILLING : this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */

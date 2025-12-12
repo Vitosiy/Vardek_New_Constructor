@@ -61,7 +61,10 @@ export class ModelsBuilder {
                     console.error('Модель не может быть загружена', file)
                 }
 
-                const normolized = this.normalizeUploadedModel(file, model, props.CONFIG.SIZE) as THREE.Object3D;
+                const checkResizes = props.CONFIG.SIZE_EDIT ? Object.values(props.CONFIG.SIZE_EDIT).some(value => value !== null) : false
+
+                const editSize = checkResizes ? props.CONFIG.SIZE : null
+                const normolized = this.normalizeUploadedModel(file, model, editSize) as THREE.Object3D;
 
                 if (model.model_type.length === 0) {
 
@@ -94,9 +97,10 @@ export class ModelsBuilder {
                     DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
                 }
 
-                if (model.model_type.length == 0 && props.CONFIG.SIZE) {
+                // if (model.model_type.length == 0 && props.CONFIG.SIZE) {
+                if (editSize) {
                     normolized.userData.trueSizes = {
-                        DEPTH: depth * 0.5, HEIGHT: height * 0.5, WIDTH: width * 0.5
+                        DEPTH: props.CONFIG.SIZE.depth * 0.5, HEIGHT: props.CONFIG.SIZE.height * 0.5, WIDTH: props.CONFIG.SIZE.width * 0.5
                     }
                 }
 
@@ -265,9 +269,9 @@ export class ModelsBuilder {
         const sizeVec = aabb.getSize(new THREE.Vector3());
 
         targetGroup.userData.trueSizes = {
-            WIDTH:  newSizes.width * 0.5,
+            WIDTH: newSizes.width * 0.5,
             HEIGHT: newSizes.height * 0.5,
-            DEPTH:  newSizes.depth * 0.5,
+            DEPTH: newSizes.depth * 0.5,
         };
 
         // // OBB и AABB

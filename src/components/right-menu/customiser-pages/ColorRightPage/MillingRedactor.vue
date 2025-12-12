@@ -31,9 +31,10 @@ const isSearch = computed(() => {
 });
 
 const changeMilling = (milling) => {
-  const { FASADE_POSITIONS } =
+  const { FASADE_POSITIONS, FASADE_PROPS } =
     modelState.getCurrentModel?.userData.PROPS.CONFIG;
   const isShowcase = FASADE_POSITIONS[props.tabIndex]?.SHOWCASE;
+  const currentMilling = FASADE_PROPS[props.tabIndex]?.MILLING;
 
   emit("select_milling", {
     name: milling.NAME,
@@ -52,7 +53,12 @@ const changeMilling = (milling) => {
       action = modelState.getCurrentMillingActionMap(prepare[0].id, milling.ID);
     }
 
-    if (isShowcase === 1) return; // Если витрина пропускаем отрисовку фрезеровки
+    FASADE_PROPS[props.tabIndex].MILLING = milling.ID;
+
+    if (isShowcase === 1) {
+      eventBus.emit("A:ChangeShowcaseMilling");
+      return;
+    } // Если витрина пропускаем отрисовку фрезеровки
 
     eventBus.emit("A:ChangeMilling", {
       data: milling.ID,
@@ -63,11 +69,12 @@ const changeMilling = (milling) => {
 };
 
 const onSearchChange = (e) => {
-  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "gm");
-  let filtered = props.millingList.filter((milling) =>
-    reg.test(milling.NAME.toLowerCase())
+  const query = e.target.value.toLowerCase();
+  const filteredData = props.millingList.filter(
+    (item) => item.NAME.toLowerCase().includes(query) // Проверяем, содержит ли имя запрос
   );
-  filteredMillingList.value = filtered;
+
+  filteredMillingList.value = filteredData;
   if (e.target.value === "") filteredMillingList.value = [];
 };
 </script>

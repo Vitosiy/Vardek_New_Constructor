@@ -106,6 +106,8 @@ export class BuildProduct extends BuildersHelper {
         return new Promise((resolve) => {
             const type = this._MODELS[product_data.models[0]];
             if (type.DAE) {
+                console.log('== DAE ==')
+
                 return this.models_builder.create({
                     props: this.createStartProps(product_data, loaded_props),
                     size: loaded_size
@@ -285,6 +287,10 @@ export class BuildProduct extends BuildersHelper {
     }
 
     private createProductObject(product_data: THREEInterfases.IProduct, props: THREETypes.TObject, loadedProps?: THREETypes.TObject): THREETypes.TConfig {
+        const isDae = this._MODELS[product_data.models[0]].DAE;
+
+        console.log(isDae)
+
         const {
             element_type,
             ID,
@@ -370,6 +376,11 @@ export class BuildProduct extends BuildersHelper {
             SIZEEDITJOINDEPTH: product_data.SIZE_EDIT_JOINDEPTH_MIN ? 310 : null,
         };
 
+        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
+        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
+
+        if (isDae) return PARAMS
+
         if (product_data.FILLING.length && product_data.FILLING[0]) {
             let filling_list = this.filters.filterFilling(this._FILLING, {
                 PR: PARAMS,
@@ -413,15 +424,6 @@ export class BuildProduct extends BuildersHelper {
             PARAMS.USLUGI = uslugi;
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
-
-        if (loadedProps) {
-            // console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
-        }
-
-
-
-        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
-        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
         return PARAMS;
     }
@@ -597,12 +599,16 @@ export class BuildProduct extends BuildersHelper {
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
         const resolveColorId = () => {
-            const isDefault = MODULE_COLOR === this.project.default_module_color;
+            const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === product.MODULECOLOR[0]
+            let checked: boolean
+
             switch (ELEMENT_TYPE) {
                 case "element_down":
-                    return (defModuleBottom && isDefault) || moduleBottom.global ? defModuleBottom : MODULE_COLOR;
+                    checked = product.MODULECOLOR.includes(defModuleBottom)
+                    return (defModuleBottom && isDefault && checked) || (moduleBottom.global && checked) ? defModuleBottom : MODULE_COLOR;
                 case "element_up":
-                    return (defModuleTop && isDefault) || moduleTop.global ? defModuleTop : MODULE_COLOR;
+                    checked = product.MODULECOLOR.includes(moduleTop.global)
+                    return (defModuleTop && isDefault && checked) || (moduleTop.global && checked) ? defModuleTop : MODULE_COLOR;
                 default:
                     return MODULE_COLOR;
             }
@@ -764,8 +770,6 @@ export class BuildProduct extends BuildersHelper {
         const { geometryType } = body.userData;
 
         if (texture?.src && !moduleColor) {
-
-
             const textureSize = {
                 width: geometryType === "ExtrudeGeometry" ? texture.width : 1,
                 height: geometryType === "ExtrudeGeometry" ? texture.height : 1,

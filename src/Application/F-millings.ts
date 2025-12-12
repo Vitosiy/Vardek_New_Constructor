@@ -138,7 +138,6 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
-
         1: [
             {
                 name: "milling_2",
@@ -798,6 +797,100 @@ export const MILLING_HANDLE_KEYS = {
     },
 
     3716541: {
+        // 0: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 6,
+        //             bevelSize: 6,
+        //             bevelOffset: 3,
+        //             bevelSegments: 3,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 60 30 Q 0 -30 -60 29 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -15,
+        //                         x: 'inpostLeft',
+        //                         y: 'inpostTop',
+        //                         inpostOffsetX: -10,
+        //                         inpostOffsetY: 15
+        //                     },
+        //                     rotation: {
+        //                         z: -Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         0: [
             {
                 name: "milling_1",
@@ -831,15 +924,11 @@ export const MILLING_HANDLE_KEYS = {
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
-                                z: -15,
-                                x: 'inpostLeft',
+                                z: -12,
+                                x: -3,
                                 y: 'inpostTop',
-                                inpostOffsetX: -10,
-                                inpostOffsetY: 15
+                                inpostOffset: 0
                             },
-                            rotation: {
-                                z: -Math.PI * 0.5
-                            }
                         },
                         hole: {
                             svg: ``,
@@ -982,6 +1071,100 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 2: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 6,
+        //             bevelSize: 6,
+        //             bevelOffset: 3,
+        //             bevelSegments: 3,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 60 30 Q 0 -30 -60 29 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -12,
+        //                         x: 'inpostRight',
+        //                         y: 'inpostTop',
+        //                         inpostOffsetX: -10,
+        //                         inpostOffsetY: 15
+        //                     },
+        //                     rotation: {
+        //                         z: Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         2: [
             {
                 name: "milling_1",
@@ -1016,14 +1199,10 @@ export const MILLING_HANDLE_KEYS = {
                             heightOffset: 0,
                             position: {
                                 z: -12,
-                                x: 'inpostRight',
+                                x: -3,
                                 y: 'inpostTop',
-                                inpostOffsetX: -10,
-                                inpostOffsetY: 15
+                                inpostOffset: 0
                             },
-                            rotation: {
-                                z: Math.PI * 0.5
-                            }
                         },
                         hole: {
                             svg: ``,
@@ -1262,6 +1441,100 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 6: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 6,
+        //             bevelSize: 6,
+        //             bevelOffset: 3,
+        //             bevelSegments: 3,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 60 30 Q 0 -30 -60 29 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -15,
+        //                         x: 'inpostLeft',
+        //                         y: 'inpostBottom',
+        //                         inpostOffsetX: -15,
+        //                         inpostOffsetY: 15
+        //                     },
+        //                     rotation: {
+        //                         z: -Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         6: [
             {
                 name: "milling_1",
@@ -1290,19 +1563,18 @@ export const MILLING_HANDLE_KEYS = {
                         },
                         figure: {
                             svg: `<path d="
-                                M 60 30 Q 0 -30 -60 29 Z" 
+                               M 60 30 Q 0 -30 -60 29 Z" 
                             />`,
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
-                                z: -15,
-                                x: 'inpostLeft',
+                                z: -16,
+                                x: 0,
                                 y: 'inpostBottom',
-                                inpostOffsetX: -15,
-                                inpostOffsetY: 15
+                                inpostOffset: 10
                             },
                             rotation: {
-                                z: -Math.PI * 0.5
+                                z: Math.PI
                             }
                         },
                         hole: {
@@ -1449,6 +1721,100 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 8: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 3,
+        //             bevelEnabled: true,
+        //             bevelThickness: 6,
+        //             bevelSize: 6,
+        //             bevelOffset: 3,
+        //             bevelSegments: 3,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                         M 60 30 Q 0 -30 -60 29 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     position: {
+        //                         z: -12,
+        //                         x: 'inpostRight',
+        //                         y: 'inpostBottom',
+        //                         inpostOffsetX: -10,
+        //                         inpostOffsetY: 15
+        //                     },
+        //                     rotation: {
+        //                         z: Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ]
         8: [
             {
                 name: "milling_1",
@@ -1477,19 +1843,18 @@ export const MILLING_HANDLE_KEYS = {
                         },
                         figure: {
                             svg: `<path d="
-                                M 60 30 Q 0 -30 -60 29 Z" 
+                               M 60 30 Q 0 -30 -60 29 Z" 
                             />`,
                             widthOffset: 0,
                             heightOffset: 0,
                             position: {
-                                z: -12,
-                                x: 'inpostRight',
+                                z: -16,
+                                x: 0,
                                 y: 'inpostBottom',
-                                inpostOffsetX: -10,
-                                inpostOffsetY: 15
+                                inpostOffset: 10
                             },
                             rotation: {
-                                z: Math.PI * 0.5
+                                z: Math.PI
                             }
                         },
                         hole: {
@@ -1542,10 +1907,105 @@ export const MILLING_HANDLE_KEYS = {
                     },
                 ],
             },
-        ]
+        ],
     },
 
     3716547: {
+        // 0: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 6,
+        //             bevelEnabled: true,
+        //             bevelThickness: 3,
+        //             bevelSize: 3,
+        //             bevelOffset: 3,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                        M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     radius: 0,
+        //                     position: {
+        //                         z: -7,
+        //                         x: 'inpostLeft',
+        //                         y: 'inpostTop',
+        //                         inpostOffsetX: 15,
+        //                         inpostOffsetY: 20
+        //                     },
+        //                     rotation: {
+        //                         z: -Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         0: [
             {
                 name: "milling_1",
@@ -1578,17 +2038,14 @@ export const MILLING_HANDLE_KEYS = {
                             />`,
                             widthOffset: 0,
                             heightOffset: 0,
+
                             radius: 0,
                             position: {
                                 z: -7,
-                                x: 'inpostLeft',
+                                x: 0,
                                 y: 'inpostTop',
-                                inpostOffsetX: 15,
-                                inpostOffsetY: 20
+                                inpostOffset: -15
                             },
-                            rotation: {
-                                z: -Math.PI * 0.5
-                            }
                         },
                         hole: {
                             svg: ``,
@@ -1733,6 +2190,101 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 2: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 6,
+        //             bevelEnabled: true,
+        //             bevelThickness: 3,
+        //             bevelSize: 3,
+        //             bevelOffset: 3,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                        M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     radius: 0,
+        //                     position: {
+        //                         z: -7,
+        //                         x: 'inpostRight',
+        //                         y: 'inpostTop',
+        //                         inpostOffsetX: 15,
+        //                         inpostOffsetY: 20
+        //                     },
+        //                     rotation: {
+        //                         z: Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         2: [
             {
                 name: "milling_1",
@@ -1765,17 +2317,14 @@ export const MILLING_HANDLE_KEYS = {
                             />`,
                             widthOffset: 0,
                             heightOffset: 0,
+
                             radius: 0,
                             position: {
                                 z: -7,
-                                x: 'inpostRight',
+                                x: 0,
                                 y: 'inpostTop',
-                                inpostOffsetX: 15,
-                                inpostOffsetY: 20
+                                inpostOffset: -15
                             },
-                            rotation: {
-                                z: Math.PI * 0.5
-                            }
                         },
                         hole: {
                             svg: ``,
@@ -2016,6 +2565,101 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 6: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 6,
+        //             bevelEnabled: true,
+        //             bevelThickness: 3,
+        //             bevelSize: 3,
+        //             bevelOffset: 3,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                        M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     radius: 0,
+        //                     position: {
+        //                         z: -7,
+        //                         x: 'inpostLeft',
+        //                         y: 'inpostBottom',
+        //                         inpostOffsetX: 15,
+        //                         inpostOffsetY: 20
+        //                     },
+        //                     rotation: {
+        //                         z: -Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ],
         6: [
             {
                 name: "milling_1",
@@ -2051,13 +2695,12 @@ export const MILLING_HANDLE_KEYS = {
                             radius: 0,
                             position: {
                                 z: -7,
-                                x: 'inpostLeft',
+                                x: 0,
                                 y: 'inpostBottom',
-                                inpostOffsetX: 15,
-                                inpostOffsetY: 20
+                                inpostOffset: -15
                             },
                             rotation: {
-                                z: -Math.PI * 0.5
+                                z: -Math.PI
                             }
                         },
                         hole: {
@@ -2205,6 +2848,101 @@ export const MILLING_HANDLE_KEYS = {
                 ],
             },
         ],
+        // 8: [
+        //     {
+        //         name: "milling_1",
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 6,
+        //             bevelEnabled: true,
+        //             bevelThickness: 3,
+        //             bevelSize: 3,
+        //             bevelOffset: 3,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 146,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="
+        //                        M 0 0 L -85 0 L -85 0 A -20 -20 0 0 1 -70 -22 L 70 -22 A -20 -20 0 0 1 85 0 Z" 
+        //                     />`,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                     radius: 0,
+        //                     position: {
+        //                         z: -7,
+        //                         x: 'inpostRight',
+        //                         y: 'inpostBottom',
+        //                         inpostOffsetX: 15,
+        //                         inpostOffsetY: 20
+        //                     },
+        //                     rotation: {
+        //                         z: Math.PI * 0.5
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: ``,
+        //                     widthOffset: 0,
+        //                     heightOffset: 0,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        //     {
+        //         name: "corner_milling_1",
+        //         isCorner: true,
+        //         type: 'svg',
+        //         extrudeSettings: {
+        //             steps: 1,
+        //             depth: 1.5,
+        //             bevelEnabled: true,
+        //             bevelThickness: 4.5,
+        //             bevelSize: 7.49,
+        //             bevelOffset: -7.49,
+        //             bevelSegments: 1,
+        //         },
+        //         figureParams: [
+        //             {
+        //                 nameCondition: "default",
+        //                 condition: {
+        //                     width: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                     height: {
+        //                         min: 20,
+        //                         max: Infinity,
+        //                     },
+        //                 },
+        //                 figure: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: 7.5,
+        //                     heightOffset: 7.5,
+        //                     position: {
+        //                         z: -2
+        //                     }
+        //                 },
+        //                 hole: {
+        //                     svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+        //                     widthOffset: -7.5,
+        //                     heightOffset: -7.5,
+        //                 },
+        //             },
+        //         ],
+        //     },
+        // ]
         8: [
             {
                 name: "milling_1",
@@ -2240,13 +2978,12 @@ export const MILLING_HANDLE_KEYS = {
                             radius: 0,
                             position: {
                                 z: -7,
-                                x: 'inpostRight',
+                                x: 0,
                                 y: 'inpostBottom',
-                                inpostOffsetX: 15,
-                                inpostOffsetY: 20
+                                inpostOffset: -15
                             },
                             rotation: {
-                                z: Math.PI * 0.5
+                                z: -Math.PI
                             }
                         },
                         hole: {
@@ -2299,7 +3036,7 @@ export const MILLING_HANDLE_KEYS = {
                     },
                 ],
             },
-        ]
+        ],
     }
 }
 
@@ -8296,7 +9033,7 @@ export const MILLINGS = {
         },
     ], // Челси
 
-    4657049: [
+    4657050: [
         {
             name: "Line",
             type: 'capsule',
@@ -8430,7 +9167,7 @@ export const MILLINGS = {
         },
     ], // Шеврон Тип 1
 
-    4657050: [
+    4657049: [
         {
             name: "Line",
             type: 'capsule',
@@ -9403,7 +10140,7 @@ export const MILLINGS = {
         },
     ], // Абстракция
 
-    2051528: [
+    2051530: [
         {
             name: "Pattern",
             type: 'capsule',
@@ -9491,7 +10228,7 @@ export const MILLINGS = {
         },
     ], // Вуд тип_1
 
-    2051530: [
+    2051528: [
         {
             name: "Pattern",
             type: 'capsule',

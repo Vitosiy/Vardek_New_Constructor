@@ -734,6 +734,10 @@ const createSector = ({
   else
     _sector.addChild(sector);
 
+  cellData.fillings?.forEach((data) => {
+    createFilling(data, sector);
+  });
+
   if (gridType === "fasades") {
     if(!cellData.manufacturerOffset) {
       let tmpRowIndex = section.findIndex(item => item.id === cellData.id);
@@ -754,10 +758,6 @@ const createSector = ({
     cell.cellGraphics.cursor = "pointer";
   }
 
-  cellData.fillings?.forEach((data) => {
-    createFilling(data, sector);
-  });
-
   // Создаём ограничения для секторов по высоте
   if (gridType !== "fasades") {
     const sectorBounds = shapeAdjuster.getTotalBounds(sector, cellData);
@@ -770,8 +770,16 @@ const createSector = ({
   cellData.sector = sector;
 
   // Рендер линейки расстояний до границ сектора
+  let tmpSectorBounds = shapeAdjuster.getSectorBounds(sector)
+  let mmSectorBounds = {
+    width: getMmWidth(tmpSectorBounds.width),
+    height: getMmHeight(tmpSectorBounds.height),
+    x: getMmWidth(tmpSectorBounds.x),
+    y: getMmHeight(tmpSectorBounds.y),
+  }
+
   sector.shapes.forEach((el) => {
-    el.sectorBounds = shapeAdjuster.getSectorBounds(sector)
+    el.sectorBounds = tmpSectorBounds
     el.drawBoundaryDistances();
   });
 
@@ -831,7 +839,6 @@ const createFilling = (data, sector) => {
     data.position.x = sectorXMMPos;
   }
   else if (data.isVerticalItem && data.position.y !== sectorYMMPos) {
-    //let reverseFillingPos = module.value.height - data.position.y - data.height
     data.position.y = sectorYMMPos;
   }
 
