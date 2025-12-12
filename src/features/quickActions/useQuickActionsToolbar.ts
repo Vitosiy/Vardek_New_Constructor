@@ -259,32 +259,58 @@ export const useQuickActionsToolbar = () => {
       iconClass: 'icon-add',
       path: 'default',
       action: async () => {
+        // if (router.currentRoute.value.path !== '/2d') {
+        //   await router.push('/2d');
+        // }
+        new Promise((res) => {
         if (router.currentRoute.value.path !== '/2d') {
-          await router.push('/2d');
+          router.push('/2d');
         }
-        // Ждем, пока роутер завершит переход и компонент начнет монтироваться
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        schemeTransition.clearStore();
-        sceneState.createNewProject();
-        roomState.rooms = [];
-        roomState.clearCurrentRoomId();
-        projectState.resetState();
-        useBasketStore().clearBasket()
-        useRoomContantData().setRoomContantDataForBasket({})
-        try {
-          const c2d = (window as any).C2D;
-          if (c2d?.layers) {
-            c2d.layers.planner?.clear();
-            c2d.layers.doorsAndWindows?.clear();
-            c2d.layers.dimensionDisplay?.clearAll();
-            c2d.layers.arrowRulerActiveObject?.clearGraphic();
-            c2d.layers.startPointActiveObject?.activate(false);
+        res(true)
+        }).then((r) => {
+          schemeTransition.clearStore();
+          sceneState.createNewProject();
+          roomState.rooms = [];
+          roomState.clearCurrentRoomId();
+          projectState.resetState();
+          useBasketStore().clearBasket()
+          useRoomContantData().setRoomContantDataForBasket({})
+          try {
+            const c2d = (window as any).C2D;
+            if (c2d?.layers) {
+              c2d.layers.planner?.clear();
+              c2d.layers.doorsAndWindows?.clear();
+              c2d.layers.dimensionDisplay?.clearAll();
+              c2d.layers.arrowRulerActiveObject?.clearGraphic();
+              c2d.layers.startPointActiveObject?.activate(false);
+            }
+          } catch (error) {
+            console.warn('Ошибка при очистке слоев C2D:', error);
           }
-        } catch (error) {
-          console.warn('Ошибка при очистке слоев C2D:', error);
-        }
-        await loadBlankRoom()
+          loadBlankRoom()
+        })
+        // Ждем, пока роутер завершит переход и компонент начнет монтироваться
+        // await new Promise(resolve => setTimeout(resolve, 100));
+        // schemeTransition.clearStore();
+        // sceneState.createNewProject();
+        // roomState.rooms = [];
+        // roomState.clearCurrentRoomId();
+        // projectState.resetState();
+        // useBasketStore().clearBasket()
+        // useRoomContantData().setRoomContantDataForBasket({})
+        // try {
+        //   const c2d = (window as any).C2D;
+        //   if (c2d?.layers) {
+        //     c2d.layers.planner?.clear();
+        //     c2d.layers.doorsAndWindows?.clear();
+        //     c2d.layers.dimensionDisplay?.clearAll();
+        //     c2d.layers.arrowRulerActiveObject?.clearGraphic();
+        //     c2d.layers.startPointActiveObject?.activate(false);
+        //   }
+        // } catch (error) {
+        //   console.warn('Ошибка при очистке слоев C2D:', error);
+        // }
+        // await loadBlankRoom()
       },
     },
   ];
