@@ -366,8 +366,6 @@ export class FasadeBuilder {
                 const millingList = this.parent.modelState.createCurrentMillingData({ fasadeId: fasadeData.COLOR, productId: PRODUCT, fasadeNdx: key })
                 const firstValueMilling = millingList[0] as any;
 
-                console.log(millingList, 'millingList')
-
 
                 if (fasadeData.SHOW && pallite && fasadeData.PALETTE === null) {
                     fasadeData.PALETTE = pallite;
@@ -378,7 +376,7 @@ export class FasadeBuilder {
 
                 if (fasadeData.SHOW && typeof firstValueMilling == 'object') {
 
-                    console.log('==== ❌ MILLING ❌ ====', this.containsValue(millingList, milling))
+                    // console.log('==== ❌ MILLING ❌ ====', this.containsValue(millingList, milling))
 
                     fasadeData.MILLING = fasadeData.MILLING ? fasadeData.MILLING : this.containsValue(millingList, milling) ? milling : firstValueMilling.ID;
                     /** @Позиционирование_интегрированной_ручки */

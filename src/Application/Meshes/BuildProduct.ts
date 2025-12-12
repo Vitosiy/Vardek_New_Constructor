@@ -106,6 +106,8 @@ export class BuildProduct extends BuildersHelper {
         return new Promise((resolve) => {
             const type = this._MODELS[product_data.models[0]];
             if (type.DAE) {
+                console.log('== DAE ==')
+
                 return this.models_builder.create({
                     props: this.createStartProps(product_data, loaded_props),
                     size: loaded_size
@@ -285,6 +287,10 @@ export class BuildProduct extends BuildersHelper {
     }
 
     private createProductObject(product_data: THREEInterfases.IProduct, props: THREETypes.TObject, loadedProps?: THREETypes.TObject): THREETypes.TConfig {
+        const isDae = this._MODELS[product_data.models[0]].DAE;
+
+        console.log(isDae)
+
         const {
             element_type,
             ID,
@@ -370,6 +376,11 @@ export class BuildProduct extends BuildersHelper {
             SIZEEDITJOINDEPTH: product_data.SIZE_EDIT_JOINDEPTH_MIN ? 310 : null,
         };
 
+        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
+        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
+
+        if (isDae) return PARAMS
+
         if (product_data.FILLING.length && product_data.FILLING[0]) {
             let filling_list = this.filters.filterFilling(this._FILLING, {
                 PR: PARAMS,
@@ -413,15 +424,6 @@ export class BuildProduct extends BuildersHelper {
             PARAMS.USLUGI = uslugi;
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
-
-        if (loadedProps) {
-            // console.log(loadedProps.CONFIG.SIZE, 'loadedProps')
-        }
-
-
-
-        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
-        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
         return PARAMS;
     }
