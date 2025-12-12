@@ -1184,8 +1184,6 @@ export class MeshEvents extends BuildersHelper {
         const product = this._PRODUCTS[PROPS.PRODUCT]
         const { width, height, depth } = CONFIG.SIZE;
 
-
-
         CONFIG.FILLING = data
         CONFIG.OPTIONS = this.buildProduct.filters.filterOption(product.OPTION)
         this.buildProduct.filters.filterFasadePosition(CONFIG, product)

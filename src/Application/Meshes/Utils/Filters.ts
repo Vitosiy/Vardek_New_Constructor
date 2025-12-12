@@ -252,7 +252,28 @@ export class Filters extends GlobalsData {
     }
 
     filterModuleColor(items: THREETypes.TObject) {
-        return items.filter((colorId: number) => this._FASADE[colorId]);
+        // return items.filter((colorId: number) => this._FASADE[colorId]);
+
+        const validIds = items.filter((id: number) => this._FASADE[id]);
+
+        // Один раз проходим по всем фасадам и сохраняем их SORT группы
+        const sortCache = new Map<number, number>();
+
+        validIds.forEach(facadeId => {
+            const facade = this._FASADE[facadeId];
+            if (!facade) return;
+
+            const section = this._FASADE_SECTION[facade.IBLOCK_SECTION_ID];
+            const groupId = section?.UF_GROUP;
+            const group = groupId ? this._FASADE_GROUPS[groupId] : null;
+
+            sortCache.set(facadeId, group?.SORT ?? 99999);
+        });
+
+        // Теперь сортировка — просто чтение из Map (O(1))
+        return validIds.sort((a, b) => {
+            return (sortCache.get(a) ?? 99999) - (sortCache.get(b) ?? 99999);
+        });
     }
 
     filterUslugi(product_uslugi: number[], product_data: IProductFull) {

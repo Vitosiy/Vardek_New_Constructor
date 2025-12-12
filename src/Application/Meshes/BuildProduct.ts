@@ -379,7 +379,10 @@ export class BuildProduct extends BuildersHelper {
         PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
         PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
-        if (isDae) return PARAMS
+        if (isDae) {
+            PARAMS.DAE = true
+            return PARAMS
+        }
 
         if (product_data.FILLING.length && product_data.FILLING[0]) {
             let filling_list = this.filters.filterFilling(this._FILLING, {
@@ -424,6 +427,8 @@ export class BuildProduct extends BuildersHelper {
             PARAMS.USLUGI = uslugi;
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
+
+        PARAMS.DAE = false
 
         return PARAMS;
     }
@@ -598,8 +603,9 @@ export class BuildProduct extends BuildersHelper {
         const { defModuleTop, defModuleBottom, moduleTop, moduleBottom } = defaultConfig
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
+        console.log(this.modelState.createFlatModuleData(product.MODULECOLOR)[0])
         const resolveColorId = () => {
-            const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === product.MODULECOLOR[0]
+            const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === this.modelState.createFlatModuleData(product.MODULECOLOR)[0]
             let checked: boolean
 
             switch (ELEMENT_TYPE) {
@@ -607,7 +613,9 @@ export class BuildProduct extends BuildersHelper {
                     checked = product.MODULECOLOR.includes(defModuleBottom)
                     return (defModuleBottom && isDefault && checked) || (moduleBottom.global && checked) ? defModuleBottom : MODULE_COLOR;
                 case "element_up":
-                    checked = product.MODULECOLOR.includes(moduleTop.global)
+                    checked = product.MODULECOLOR.includes(defModuleTop)
+                    console.log(isDefault)
+
                     return (defModuleTop && isDefault && checked) || (moduleTop.global && checked) ? defModuleTop : MODULE_COLOR;
                 default:
                     return MODULE_COLOR;
@@ -616,6 +624,7 @@ export class BuildProduct extends BuildersHelper {
 
         // const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
         const moduleColorId = texture?.src && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
+        console.log(moduleColorId, MODULE_COLOR, 'moduleColorId')
 
         CONFIG.MODULE_COLOR = moduleColorId;
 
