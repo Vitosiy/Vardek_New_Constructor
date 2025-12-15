@@ -65,21 +65,51 @@
         </InputDialog>
       </template>
     </Modal>
-      
-      <Modal ref="kpDialogRef">
-        <template #modalBody="{ onModalClose }">
-          <Notification 
-            :label="'Коммерческое предложение'"
-            :description="kpData?.text"
-            :link="kpData?.link"
-            @cancel="onModalClose"
-          >
-          <template #cancelButton>
-            <MainButton @click="onModalClose">Закрыть</MainButton>
+
+    <!-- Модальное окно выбора действия для существующего проекта (обновить / сохранить как новый) -->
+    <Modal ref="updateDialogRef">
+      <template #modalBody="{ onModalClose }">
+        <Update
+          label="Сохранение проекта"
+          optionOneLabel="Обновить текущий проект"
+          optionTwoLabel="Сохранить как новый проект"
+          optionOneValue="update"
+          optionTwoValue="saveAsNew"
+          @confirm="handleUpdateChoice"
+          @cancel="onModalClose"
+        >
+          <template #confirmButton="{ onConfirm }">
+            <MainButton
+              @click="
+                () => {
+                  onConfirm();
+                }
+              "
+            >
+              Продолжить
+            </MainButton>
           </template>
-          </Notification>
+          <template #cancelButton="{ onCancel }">
+            <MainButton @click="onCancel">Отменить</MainButton>
+          </template>
+        </Update>
+      </template>
+    </Modal>
+
+    <Modal ref="kpDialogRef">
+      <template #modalBody="{ onModalClose }">
+        <Notification 
+          :label="'Коммерческое предложение'"
+          :description="kpData?.text"
+          :link="kpData?.link"
+          @cancel="onModalClose"
+        >
+        <template #cancelButton>
+          <MainButton @click="onModalClose">Закрыть</MainButton>
         </template>
-      </Modal>
+        </Notification>
+      </template>
+    </Modal>
   </div>
   <GenericLoader v-show="projectStore.isSaving" />
 </template>
@@ -90,6 +120,7 @@ import { ref, computed, onMounted } from "vue";
 import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 import InputDialog from "@/components/ui/inputs/InputDialog.vue";
+import Update from "@/components/ui/inputs/Update.vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import Notification from "@/components/ui/inputs/Notification.vue";
@@ -102,13 +133,21 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useProjectStore } from "./project/store/useProjectStore";
 import folderIcon from "@/assets/svg/folder.svg";
 
-const { actions, openSaveDialog, handleSaveConfirm: handleSaveConfirmFromComposable } = useQuickActionsToolbar();
+const {
+  actions,
+  openSaveDialog,
+  openUpdateDialog,
+  handleSaveConfirm: handleSaveConfirmFromComposable,
+  updateExistingProject
+} = useQuickActionsToolbar();
+
 const route = useRoute();
 const sceneState = useSceneState();
 const toaster = useToast();
 const eventBus = useEventBus()
 const projectStore = useProjectStore()
 
+const saveAsNewMode = ref(false)
 const kpCheckbox = ref(false)
 const centeringCheckbox = ref(false)
 const changeCamera = () => {
@@ -117,8 +156,9 @@ const changeCamera = () => {
   } 
 }
 
-// Реф для модального окна сохранения
+// Рефы для модальных окон
 const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);
+const updateDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 const kpDialogRef = ref<InstanceType<typeof Modal> | null>(null);
   
 const kpData = ref<{ link: string; text: string } | null>(null);
@@ -139,6 +179,10 @@ const handleSaveConfirm = async (projectName: string) => {
   if (!projectName.trim()) {
     toaster.error("Введите название проекта");
     return;
+  }
+  if (saveAsNewMode.value && projectStore.currentProjectId) {
+    // @ts-ignore
+    projectStore.currentProjectId = null;
   }
 
   // Вызываем композицию сохранения
@@ -163,15 +207,40 @@ const handleSaveConfirm = async (projectName: string) => {
 };
 
 
-// Функция открытия модального окна
+// Обработка выбора действия в модалке Update
+const handleUpdateChoice = async (choice: string) => {
+  if (choice === "update") {
+    // Обновить существующий проект
+    updateDialogRef.value?.closeModal();
+    await updateExistingProject();
+    return;
+  }
+
+  if (choice === "saveAsNew") {
+    // Сохранить как новый — открываем стандартную модалку ввода имени проекта
+    saveAsNewMode.value = true;
+    updateDialogRef.value?.closeModal();
+    saveDialogRef.value?.openModal();
+  }
+};
+
+// Функция открытия модального окна сохранения
 const openModal = () => {
   saveDialogRef.value?.openModal();
 };
 
-// Передаем функцию открытия модального окна в composable после монтирования
+// Функция открытия модального окна выбора действия для существующего проекта
+const openUpdateModal = () => {
+  updateDialogRef.value?.openModal();
+};
+
+// Передаем функции открытия модальных окон в composable после монтирования
 onMounted(() => {
   if (openSaveDialog) {
     openSaveDialog.value = openModal;
+  }
+  if (openUpdateDialog) {
+    openUpdateDialog.value = openUpdateModal;
   }
 });
 </script>
