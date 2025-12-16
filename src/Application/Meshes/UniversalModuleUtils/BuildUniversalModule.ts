@@ -89,12 +89,12 @@ export class BuildUniversalModule extends BuildProduct {
             let option = this._OPTION[+activeOptions[i].id]
 
             switch (+option.ID) {
-                case 7250452:   //Деревянная царга
+/*                case 7250452:   //Деревянная царга
                     PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
                     break;
                 case 7250589:   //Металлическая царга
                     PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
-                    break;
+                    break;*/
                 case 4621257:   //Опора регулируемая
                 case 4621238:   //Опора 100 мм
                 case 4621240:   //Опора 150 мм

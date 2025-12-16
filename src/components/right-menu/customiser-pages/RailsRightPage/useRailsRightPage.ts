@@ -71,15 +71,33 @@ export const useRailsRightPage = () => {
 
         curOpt.active = values;
 
-        if (+curOpt.id == 5738924) {
-            if (curOpt.active) {
-                PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
-                PROPS.CONFIG.HORIZONT = 0
-            }
-            else {
-                PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
-                PROPS.CONFIG.HORIZONT = 78
-            }
+        switch (+curOpt.id) {
+            case 7250452:   //Деревянная царга
+                if (curOpt.active) {
+                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
+                }
+                else
+                    delete PROPS.CONFIG.TSARGA
+                break;
+            case 7250589:   //Металлическая царга
+                if (curOpt.active) {
+                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
+                }
+                else
+                    delete PROPS.CONFIG.TSARGA
+                break;
+            case 5738924:   //Без дна
+                if (curOpt.active) {
+                    PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
+                    PROPS.CONFIG.HORIZONT = 0
+                }
+                else {
+                    PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
+                    PROPS.CONFIG.HORIZONT = 78
+                }
+                break;
+            default:
+                break;
         }
 
         eventBus.emit("A:SelectModelOption")
