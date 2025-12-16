@@ -348,7 +348,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
   const row = cell?.cellsRows?.[rowIndex];
   const extra = row?.extras?.[extraIndex];
 
-  const curRow = row || cell || sec;
+  const curRow = extra || row || cell || sec;
   let needFasadesUpdate = false
   let profileUpdate = false
   let curItem = curRow.fillings[itemIndex];
