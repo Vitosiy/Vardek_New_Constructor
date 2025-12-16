@@ -473,7 +473,7 @@ const renderGrid = (_moduleGrid) => {
           tmpLoopData.xOffset = loopXOffset;
 
           loop.coords.forEach((pos, posIndex, ) => {
-            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height);
+            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height / 2 - (module.value.horizont > 0 ? 0 : module.value.moduleThickness));
             // Отрисовываем секцию
 
             let loopSector = createLoop({
