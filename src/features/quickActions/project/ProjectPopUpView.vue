@@ -117,6 +117,7 @@
             </div>
             <p class="info__date text-grey">{{ project.date }}</p>
           </div>
+          <TechnologistFormButton project="project"/>
         </div>
       </div>
     </div>
@@ -141,6 +142,7 @@ import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import TechnologistFormButton from "@/components/Technologist/TechnologistFormButton.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -575,7 +577,8 @@ onMounted(async () => {
 
       .project-item {
         width: 323px;
-        height: 269px;
+        height: 100%;
+        max-height: 350px;
         display: flex;
         align-items: center;
         justify-content: space-between;
