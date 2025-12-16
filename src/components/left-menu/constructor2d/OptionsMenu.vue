@@ -12,11 +12,19 @@ import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 
 import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
+import RoomManager from '../roomManager/RoomManager.vue';
 
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import CatalogSVG from '@/components/ui/svg/CatalogSVG.vue';
   
 const popupStore = usePopupStore();
+
+// Локальное состояние для открытия/закрытия меню "Параметры помещения" в 2D
+const isRoomParamsOpen = ref(false);
+
+const toggleRoomParams = () => {
+  isRoomParamsOpen.value = !isRoomParamsOpen.value;
+};
 
 const constructor2dMenu = useC2DLeftMenuStore();
 
@@ -127,25 +135,20 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
 <template>
   <section class="options">
     <div class="options__container">
-<!-- 
       <div class="options-design">
         <h1 class="options__title">Проектирование</h1>
         <div class="goods">
-          
-          <div class="goods-item active">
+          <div
+            class="goods-item"
+            :class="{ active: isRoomParamsOpen }"
+            @click="toggleRoomParams"
+          >
             <S2DAppartSVG class="goods-item__image" />
-            <p class="goods-item__title">2D квартира</p>
+            <p class="goods-item__title">Параметры помещения</p>
             <div class="radial-sphere"></div>
-          </div> -->
-          
-          <!-- <div class="goods-item">
-            <RoomPlaneSVG class="goods-item__image" />
-            <p class="goods-item__title">Шаблоны комнат</p>
-            <div class="radial-sphere"></div>
-          </div> -->
-
-        <!-- </div>
-      </div> -->
+          </div>
+        </div>
+      </div>
 
       <div class="options-design">
         <!-- <h1 class="options__title">Товары</h1>
@@ -172,13 +175,25 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
         </div>
       </div>
 
+      <transition name="slide--left">
+        <div class="room" v-if="isRoomParamsOpen">
+          <div class="room-popup">
+            <h1 class="popup__title">Параметры помещения</h1>
+            <ul>
+              <li v-for="n in 20" :key="n">
+                {{ n }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </transition>
     </div>
   </section>
 </template>
 
 <style lang="scss" scoped>
 .options {
-  width: 160px;
+  width: 300px;
   flex-shrink: 0;
   height: 100%;
   border-right: 1px solid $light-stroke;
@@ -378,9 +393,9 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       gap: 15px;
       position: absolute;
       top: 15px;
-      left: -840px;
-      transform: translateZ(-10px);
-      transition: 0.5s ease-in-out;
+      left: 310px; // стартовая позиция, как в 3D-меню
+      // transform: translateZ(-10px);
+      // transition: 0.5s ease-in-out; // анимация теперь через <transition>
 
       .room-popup {
         width: 570px;
@@ -389,150 +404,10 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
         gap: 15px;
         position: relative;
         padding: 15px;
-        background: $white;
+        background: $red;
         box-shadow: 0px 0px 10px 0px #3030301a;
         z-index: 1;
         border-radius: 15px;
-
-
-
-        &__container {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-
-          .room-select {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px 0;
-            border-top: 1px solid $stroke;
-            border-bottom: 1px solid $stroke;
-          }
-
-          .room-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-
-            .option-small {
-              flex: 46%;
-              padding: 10px;
-              border-radius: 15px;
-              background-color: $bg;
-
-              .option-label {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 10px;
-
-                .label__image {
-                  display: flex;
-                }
-
-                .label__text {
-                  font-size: 15px;
-                  font-weight: 600;
-                  color: $strong-grey;
-                }
-              }
-
-              .option__checkbox {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-              }
-            }
-
-            .option-standart {
-              width: 100%;
-              padding: 10px;
-              border-radius: 15px;
-              background-color: $bg;
-
-              .select-group {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-
-                .option-label {
-                  width: 100%;
-                  max-width: 262.5px;
-                  display: flex;
-                  align-items: center;
-                  gap: 10px;
-                  margin-bottom: 10px;
-
-                  .label__image {
-                    display: flex;
-                  }
-
-                  .label__text {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: $strong-grey;
-                  }
-                }
-              }
-
-              .option__checkbox {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-              }
-            }
-          }
-        }
-
-        &.active {
-          left: 330px;
-        }
-      }
-
-      .color-select {
-        width: 373px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px;
-        background: $white;
-        box-shadow: 0px 0px 10px 0px #3030301a;
-        z-index: 1;
-        border-radius: 15px;
-        transition: 0.5s ease-in-out;
-
-        .menu__close {
-          position: absolute;
-          right: 15px;
-          top: 15px;
-          cursor: pointer;
-        }
-
-        &__container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 5px;
-
-          .color-item {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: $bg;
-            border-radius: 15px;
-            gap: 10px;
-
-            &__title {
-              font-size: 15px;
-              font-weight: 500;
-            }
-          }
-        }
-      }
-
-      &.active {
-        left: 330px;
       }
     }
   }
