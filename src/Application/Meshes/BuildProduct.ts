@@ -603,7 +603,7 @@ export class BuildProduct extends BuildersHelper {
         const { defModuleTop, defModuleBottom, moduleTop, moduleBottom } = defaultConfig
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
-        console.log(this.modelState.createFlatModuleData(product.MODULECOLOR)[0])
+
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === this.modelState.createFlatModuleData(product.MODULECOLOR)[0]
             let checked: boolean
@@ -614,8 +614,6 @@ export class BuildProduct extends BuildersHelper {
                     return (defModuleBottom && isDefault && checked) || (moduleBottom.global && checked) ? defModuleBottom : MODULE_COLOR;
                 case "element_up":
                     checked = product.MODULECOLOR.includes(defModuleTop)
-                    console.log(isDefault)
-
                     return (defModuleTop && isDefault && checked) || (moduleTop.global && checked) ? defModuleTop : MODULE_COLOR;
                 default:
                     return MODULE_COLOR;

@@ -38,7 +38,7 @@ export class JsonBuilder {
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
 
-        this.material = this.createMaterial(json.material, fasade) as THREE.Material
+        this.material = this.createMaterial(json.material, fasade, group) as THREE.Material
 
         if (left) {
             if (left.PALETTE) {
@@ -114,6 +114,7 @@ export class JsonBuilder {
 
         }
 
+        
 
         return group
     }
@@ -287,7 +288,7 @@ export class JsonBuilder {
         this.parent = parent
     }
 
-    createMaterial(data, fasade, type) {
+    createMaterial(data, fasade, group) {
 
         if (!data) return
 

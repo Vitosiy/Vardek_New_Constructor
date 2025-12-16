@@ -103,6 +103,7 @@ export class TrafficManager {
                 roomContant: this.room._roomContant
             })
 
+            console.log('OBJ_', object);
             console.log('OBJ_PROPS', object.userData.PROPS);
             console.log('OBJ_CONFIG', object.userData.PROPS.CONFIG);
 

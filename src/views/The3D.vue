@@ -619,7 +619,7 @@ const saveTableData = async () => {
 
   await APP!.tableTopCreator?.create(
     toRaw(CutCash.value),
-    product.value,
+    toRaw(product.value),
     groupID
   );
 
@@ -827,13 +827,6 @@ watch(
     </div>
   </div>
   <transition name="controller-toggle">
-    <!-- <div
-      class="switch__wrapper"
-      v-if="
-        modelState.getCurrentModel &&
-        !uniformState.getUniformModeData.uniformMode
-      "
-    > -->
     <TransformController
       v-if="
         modelState.getCurrentModel &&
@@ -841,43 +834,6 @@ watch(
       "
       @TransformMode="controlsActivate"
     />
-    <!-- <transition name="controller-toggle">
-        <p class="switch__title" v-if="!transformControlsValue">
-          {{ curControllerValue }}
-        </p>
-      </transition>
-
-      <transition name="controller-toggle">
-        <Accordion v-if="transformControlsValue">
-          <template #title>
-            <h4 class="accordion__header">
-              {{ curControllerValue }}
-            </h4>
-          </template>
-          <template #params="{ onToggle }">
-            <ul class="accordion__contant">
-              <li
-                class="accordion__text"
-                v-for="(data, key) in controllerValue"
-                :key="key + data.name"
-                @click="
-                  () => {
-                    changeControllerType(data);
-                    onToggle();
-                  }
-                "
-              >
-                {{ data.name }}
-              </li>
-            </ul>
-          </template>
-        </Accordion>
-      </transition>
-
-      <div class="switch__container">
-        <Toggle v-model="transformControlsValue" />
-      </div> -->
-    <!-- </div> -->
   </transition>
 </template>
 

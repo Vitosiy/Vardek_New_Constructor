@@ -6,7 +6,7 @@ import { useAppData } from "@/store/appliction/useAppData"
 
 import { GlobalsData } from './Utils/Globals'
 import { CUTTER_PARAMS } from "@/ConstructorTabletop/CutterScripts/CutterConst"
-import { label } from 'three/webgpu'
+import { label, userData } from 'three/webgpu'
 export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
@@ -19,7 +19,7 @@ export class BuildersHelper extends GlobalsData {
         this.scene = root._scene
     }
 
-    createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
+    public createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
         const colorWidth = color?.DEPTH || 18;
@@ -53,7 +53,7 @@ export class BuildersHelper extends GlobalsData {
         return model_data
     };
 
-    getProductSize(PARAMS: any, productData: THREETypes.TObject) {
+    public getProductSize(PARAMS: any, productData: THREETypes.TObject) {
         // console.log(productData, 'productData')
 
         const product = this._PRODUCTS[PARAMS.ID];
@@ -137,14 +137,14 @@ export class BuildersHelper extends GlobalsData {
         return size;
     }
 
-    getSizeEdit(product_data: THREETypes.TObject, props: THREETypes.TObject) {
+    public getSizeEdit(product_data: THREETypes.TObject, props: THREETypes.TObject) {
 
         let sizeEdit = Object.keys(props.SIZE_EDIT)
         let productArr = this.filterObjectByKeys(product_data, sizeEdit)
         return productArr
     }
 
-    getExec(obj) {
+    public getExec(obj) {
         Object.entries(obj).forEach(([key, value]) => {
 
 
@@ -157,7 +157,7 @@ export class BuildersHelper extends GlobalsData {
         return obj;
     };
 
-    expressionsReplace(obj: any, expressions: THREETypes.TObject) {
+    public expressionsReplace(obj: any, expressions: THREETypes.TObject) {
 
         if (!expressions || !Object.keys(expressions).length) return obj;
 
@@ -183,7 +183,7 @@ export class BuildersHelper extends GlobalsData {
         }
     };
 
-    calculateFromString(expression) {
+    public calculateFromString(expression) {
         try {
             const func = new Function("return " + expression);
             return func();
@@ -193,11 +193,11 @@ export class BuildersHelper extends GlobalsData {
         }
     }
 
-    getStartPosition(size: THREETypes.TObject) {
+    public getStartPosition(size: THREETypes.TObject) {
         return new THREE.Vector3(-size.width * 0.5, -size.height * 0.5, -size.depth * 0.5);
     };
 
-    checkColor(product: THREETypes.TObject) {
+    public checkColor(product: THREETypes.TObject) {
         const { PRODUCT, CONFIG, texture } = product;
         const { BASKET } = CONFIG;
         const curProduct = this._PRODUCTS[PRODUCT];
@@ -227,7 +227,7 @@ export class BuildersHelper extends GlobalsData {
         return false;
     }
 
-    calculateHeight(object: THREE.Object3D) {
+    public calculateHeight(object: THREE.Object3D) {
 
         let box = new THREE.Box3().setFromObject(object)
         const forTableSize = new THREE.Vector3()
@@ -235,17 +235,17 @@ export class BuildersHelper extends GlobalsData {
         return tableSize.y
     }
 
-    isEmpty(obj: {}) {
+    public isEmpty(obj: {}) {
         return Object.keys(obj).length === 0
     };
 
-    filterObjectByKeys(obj: THREETypes.TObject, keys: string[]) {
+    public filterObjectByKeys(obj: THREETypes.TObject, keys: string[]) {
         return Object.fromEntries(
             Object.entries(obj).filter(([key]) => keys.includes(key))
         );
     }
 
-    getTexture({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
+    public getTexture({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
 
         this.resources.startLoading(url, 'texture', (file) => {
             if (file instanceof THREE.Texture) {
@@ -266,10 +266,30 @@ export class BuildersHelper extends GlobalsData {
         });
     }
 
+    public async getMaterial({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
+        const loadedMaterial = await this.resources.startLoading(url, 'texture', (file) => {
+            if (file instanceof THREE.Texture) {
+                file.colorSpace = THREE.SRGBColorSpace
+                material.map = file
+                if (texture_size) {
+                    material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+                    material.map.repeat.set(
+                        1 / texture_size.width,
+                        1 / texture_size.height
+                    );
+                    material.map.offset.set(0.5, 0.5);
+                }
+                material.needsUpdate = true;
+
+            }
+        });
+        return loadedMaterial
+    }
+
     //----------------------------------------------------------
     /** @Настройка материала */
     //----------------------------------------------------------
-    changeColor({
+    public changeColor({
         object,
         url,
         textureSize,
@@ -307,7 +327,7 @@ export class BuildersHelper extends GlobalsData {
     //----------------------------------------------------------
     /** @Настройка текстуры и параметров материала */
     //----------------------------------------------------------
-    private applyTexture(
+    public private applyTexture(
         child: THREE.Mesh,
         texture: THREE.Texture,
         textureSize?: THREE.Vector3,
@@ -336,7 +356,7 @@ export class BuildersHelper extends GlobalsData {
         child.material.needsUpdate = true;
     }
 
-    createExtrudeBoxGeometry(options: THREETypes.TObject) {
+    public createExtrudeBoxGeometry(options: THREETypes.TObject) {
         let extrusionSettings = Object.assign({
             depth: 16,
             curveSegments: 1,
@@ -368,7 +388,7 @@ export class BuildersHelper extends GlobalsData {
         return geometry;
     }
 
-    addIfNotExists(array, obj) {
+    public addIfNotExists(array, obj) {
         const exists = array.some(item =>
             Object.keys(obj).every(key => item[key] === obj[key])
         );
@@ -379,13 +399,13 @@ export class BuildersHelper extends GlobalsData {
         return false
     }
 
-    getRandomInt(min: number, max: number) {
+    public getRandomInt(min: number, max: number) {
         const minCeiled = Math.ceil(min);
         const maxFloored = Math.floor(max);
         return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
     }
 
-    planarUV(geometry) {
+    public planarUV(geometry) {
 
 
         geometry.computeBoundingBox();
@@ -423,7 +443,7 @@ export class BuildersHelper extends GlobalsData {
         geometry.uvsNeedUpdate = true;
     }
 
-    normalizeUVsTo01(geometry: THREE.BufferGeometry) {
+    public normalizeUVsTo01(geometry: THREE.BufferGeometry) {
         const uv = geometry.attributes.uv;
         if (!uv) return;
 
@@ -452,13 +472,13 @@ export class BuildersHelper extends GlobalsData {
         uv.needsUpdate = true;
     }
 
-    addAdditionalKeys = (obj, additionalKeys) => (
+    public addAdditionalKeys = (obj, additionalKeys) => (
         Object.entries(additionalKeys).forEach(([newKey, existingKey]) =>
             obj[newKey] = obj[existingKey] ?? console.warn(`Ключ "${existingKey}" не найден в объекте.`)
         ), obj
     );
 
-    getRootObject(object: THREE.Object3D): THREE.Object3D {
+    public getRootObject(object: THREE.Object3D): THREE.Object3D {
         let root = object;
         while (root.parent && root.parent.type !== 'Scene') {
             root = root.parent;
@@ -467,7 +487,7 @@ export class BuildersHelper extends GlobalsData {
         return root;
     }
 
-    createStartTopTableCutData(uslugi, product_data) {
+    public createStartTopTableCutData(uslugi, product_data) {
 
 
         const { width, depth, height } = product_data
@@ -492,7 +512,7 @@ export class BuildersHelper extends GlobalsData {
         return startCutData
     }
 
-    createCutterParams(uslugi) {
+    public createCutterParams(uslugi) {
         // const SERVISES = CUTTER_PARAMS.CUT_SERVISES
         // console.log(uslugi, ' ====== uslugi =====', SERVISES)
 
@@ -564,7 +584,7 @@ export class BuildersHelper extends GlobalsData {
         // .filter(el => parseInt(el.separated) !== 0);
     }
 
-    createPlinthParams(models) {
+    public createPlinthParams(models) {
         const basePlinth = Object.values(this._PLINTH)[0]
         const inProdModel = this._MODELS[models[0]]
         const jsonPlinth = inProdModel.json.plinth
@@ -582,7 +602,7 @@ export class BuildersHelper extends GlobalsData {
         }
     }
 
-    findElementsBySectorId(data, sectorId) {
+    public findElementsBySectorId(data, sectorId) {
         let result = null;
 
         // Рекурсивная функция для обхода массива
@@ -603,7 +623,7 @@ export class BuildersHelper extends GlobalsData {
         return result;
     }
 
-    findKeyInObject(obj, keys) {
+    public findKeyInObject(obj, keys) {
         for (const key of keys) {
             if (obj.hasOwnProperty(key)) {
                 return key;
@@ -612,7 +632,7 @@ export class BuildersHelper extends GlobalsData {
         return null;
     }
 
-    computeAABB(object: THREE.Object3D): THREE.Box3 {
+    public computeAABB(object: THREE.Object3D): THREE.Box3 {
         const box = new THREE.Box3();
         const size = new THREE.Vector3()
 
@@ -636,7 +656,7 @@ export class BuildersHelper extends GlobalsData {
         return box;
     }
 
-    mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+    public mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
 
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);
