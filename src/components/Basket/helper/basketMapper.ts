@@ -95,7 +95,7 @@ function createBodyProps(objProps: any) {
 function createOptionsProps(objProps: any) {
   const options:any[] = [];
   (objProps.CONFIG.OPTIONS || []).map(el =>{
-    if(el.active) options.push(el.id);
+    if(el.active) options.push(+el.id);
   });
   return options;
 }
@@ -231,6 +231,7 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
         PATH: false,
         MATERIAL_ID: el.material, // Материал полки
         PRODUCT_TYPE: el.type,
+        VALUE: el.VALUE,
         SIZE: { // Размеры
           width: el.size?.x || 0,
           height: el.size?.y || 0,
