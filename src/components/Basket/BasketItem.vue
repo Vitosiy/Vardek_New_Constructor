@@ -720,7 +720,12 @@ const renderDescription = (props) => {
       if(key === 'LEFTSIDECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
       if(key === 'RIGHTSIDECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
       if(key === 'TOPFASADECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
-      if(key === 'BACKWALL') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value) === '' ? textValue(value) : 'Выключена' })}
+      if(key === 'BACKWALL' && value.COLOR) {
+        result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})
+      }
+      if(key === 'BACKWALL' && !value.COLOR) {
+        result.push({key: getPropDefinition(key)?.NAME, value: 'Выключена' })
+      }
     }
  }
 
