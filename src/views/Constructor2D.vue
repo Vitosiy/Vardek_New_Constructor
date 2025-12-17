@@ -105,6 +105,7 @@ onMounted(async () => {
     //   (loader as HTMLElement).style.display = 'none';
     // }
     const rooms = schemeTransition.getAllData();
+    console.log
     if (rooms.length === 0) {
       await loadBlankRoom();
     }

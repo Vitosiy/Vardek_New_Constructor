@@ -20,6 +20,14 @@ function updateRoomStore(this: any): boolean {
   const roomState = useRoomState();
   console.log("BEFORE: ", roomState.rooms);
   const roomStore = useSchemeTransition();
+  
+  // Сохраняем все существующие комнаты из roomState
+  const existingRoomsMap = new Map<string | number, IRoom>();
+  roomState.rooms.forEach((room: IRoom) => {
+    const normalizedId = normalizeId(room.id);
+    existingRoomsMap.set(normalizedId, JSON.parse(JSON.stringify(room)));
+  });
+
   roomStore.clearStore(); // очищаем хранилище
   console.log("AFTER: ", roomState.rooms);
 
@@ -31,6 +39,9 @@ function updateRoomStore(this: any): boolean {
       (item: { id: string | number; name: string }) => item.id
     ) || [];
   const idToFilter = [166755, ...idObjectsFrom2D]; // перегородки + двери/окна
+
+  // Создаем Set для отслеживания комнат, которые обновляются из 2D
+  const updatedRoomIds = new Set<string>();
 
   this.layers.planner.allRooms.forEach((roomData: IC2DRoom) => {
     const normalizedRoomId = normalizeId(roomData.id);
@@ -250,16 +261,24 @@ function updateRoomStore(this: any): boolean {
     });
 
     rooms.push(room);
+    updatedRoomIds.add(normalizedRoomId);
 
     // console.log("rooms", rooms);
   });
+
+  // Добавляем все комнаты, которые не представлены в 2D редакторе
+  existingRoomsMap.forEach((existingRoom, roomId) => {
+    if (!updatedRoomIds.has(roomId)) {
+      // Комната не была обновлена из 2D, сохраняем её как есть
+      rooms.push(existingRoom);
+    }
+  });
+
   roomStore.setAppData(rooms);
   // Сразу синхронизируем стор комнат, чтобы 3D получил актуальные id/контент
   roomState.rooms = rooms;
 
-  // console.log('Data room store:', roomStore.getAllData());
   console.log("AFTER AFTER: ", roomState.rooms);
-  console.log("2D CANVAS STORE: ", roomStore.getAllData());
   return true;
 }
 

@@ -298,6 +298,17 @@ watch(
 
       if (newPath === "/2d") {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
+        
+        // Устанавливаем текущую активную комнату (первую, если нет текущей)
+        const rooms = roomState.getRooms;
+        if (rooms && rooms.length > 0) {
+          const currentRoomId = roomState.getRoomId;
+          if (!currentRoomId) {
+            // Если текущей комнаты нет, устанавливаем первую комнату
+            roomState.setCurrentRoomId(rooms[0].id);
+          }
+        }
+        
         // Ждем готовности C2D, если его еще нет
         let c2d = window.C2D;
         if (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) {
@@ -400,7 +411,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <!-- <div class="header-ui-group" v-if="route.path == '/3d'">
+          <div class="header-ui-group">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -441,7 +452,7 @@ onBeforeUnmount(() => {
                 </button>
               </template>
             </Modal>
-          </div> -->
+          </div>
         </div>
       </div>
       <div class="header-utilitys">

@@ -3,6 +3,7 @@ import { useProjectAPI } from "./useProjectAPI";
 import { useProjectStore } from "../store/useProjectStore";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useSceneState } from "@/store/appliction/useSceneState";
+import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useToast } from "@/features/toaster/useToast";
 import { useRouter, useRoute } from "vue-router";
@@ -18,6 +19,7 @@ export function useProjectFromQuery() {
     const projectAPI = useProjectAPI();
     const projectState = useProjectStore();
     const sceneState = useSceneState();
+    const roomState = useRoomState();
     const eventBus = useEventBus();
 
     if (!id) return;
@@ -30,11 +32,23 @@ export function useProjectFromQuery() {
 
     try {
       schemeTransition.clearStore();
+      // Очищаем текущую комнату перед загрузкой нового проекта
+      roomState.clearCurrentRoomId();
+      
       await sceneState.loadProjectFromData(projectData);
       sceneState.updateProjectParams({});
       schemeTransition.setAppData(projectData.rooms);
 
       projectState.setProjectId(id.toString());
+
+      // Устанавливаем первую комнату как текущую активную
+      // Ждем, чтобы комнаты успели загрузиться
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const rooms = roomState.getRooms;
+      if (rooms && rooms.length > 0) {
+        // Всегда устанавливаем первую комнату из загруженного проекта
+        roomState.setCurrentRoomId(rooms[0].id);
+      }
 
       eventBus.emit("A:ContantLoaded", true);
       toaster.success("Проект загружен");

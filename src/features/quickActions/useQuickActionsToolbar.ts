@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -170,7 +170,6 @@ export const useQuickActionsToolbar = () => {
       path: 'default',
       action: () => {
         toggleFullscreen()
-        console.log('SCHEME TRANSITION', schemeTransition.getSchemeTransitionData);
       }
     },
     {
