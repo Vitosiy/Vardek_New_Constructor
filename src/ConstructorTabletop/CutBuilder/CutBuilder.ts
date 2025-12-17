@@ -413,12 +413,8 @@ class TableTopCreator extends BuildersHelper {
 
         if (!indices) {
             //  просто возвращаем с одним материалом
-
-            console.log('ИСКЛЮЧ')
             return new THREE.Mesh(preGeometry, material_1);
         }
-
-
 
         if (normals && indices) {
             let horizontalStart: number | null = null;

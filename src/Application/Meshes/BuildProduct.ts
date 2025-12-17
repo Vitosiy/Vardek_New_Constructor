@@ -376,15 +376,15 @@ export class BuildProduct extends BuildersHelper {
             SIZEEDITJOINDEPTH: product_data.SIZE_EDIT_JOINDEPTH_MIN ? 310 : null,
         };
 
-        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
-        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
+        // PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
+        // PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
-        if (isDae) {
-            PARAMS.DAE = true
-            return PARAMS
-        }
+        // if (isDae) {
+        //     PARAMS.DAE = true
+        //     return PARAMS
+        // }
 
-        if (product_data.FILLING.length && product_data.FILLING[0]) {
+        if (product_data.FILLING.length && product_data.FILLING[0] && !isDae) {
             let filling_list = this.filters.filterFilling(this._FILLING, {
                 PR: PARAMS,
                 ID: product_data.FILLING,
@@ -394,33 +394,33 @@ export class BuildProduct extends BuildersHelper {
             PARAMS.FILLING_LIST = product_data.FILLING
         }
 
-        if (this._PRODUCTS[ID].leg_length) {
+        if (this._PRODUCTS[ID].leg_length && !isDae) {
             PARAMS.PLINTH_ACTIONS = this.createPlinthParams(this._PRODUCTS[ID].models)
         }
 
-        if (OPTION.length && OPTION[0] !== null) {
+        if (OPTION.length && OPTION[0] !== null && !isDae) {
             PARAMS.OPTIONS = this.filters.filterOption(OPTION)
         }
 
-        if (FASADE_SIZES?.length) {
+        if (FASADE_SIZES?.length && !isDae) {
 
             PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, product_data) as any[];
         }
 
-        if (FACADE?.[0]) {
+        if (FACADE?.[0] && !isDae) {
             this.filters.filterFasadePosition(PARAMS, product_data);
         }
 
-        if (MODULECOLOR?.[0] != null) {
+        if (MODULECOLOR?.[0] != null && !isDae) {
             PARAMS.MODULE_COLOR = this.filters.filterModuleColor(MODULECOLOR)[0];
         }
 
-        if (type_showcase?.[0] != null) {
+        if (type_showcase?.[0] != null && !isDae) {
             PARAMS.SHOWCASE = [...type_showcase];
             PARAMS.PRODUCT_SHOWCASE = type_showcase[0]
         }
 
-        if (USLUGI?.[0] != null) {
+        if (USLUGI?.[0] != null && !isDae) {
             const { uslugi, profile } = this.filters.filterUslugi(USLUGI, product_data);
             PARAMS.PROFILE = profile
             // PARAMS.USLUGI = this.createCutterParams(uslugi);
@@ -428,7 +428,12 @@ export class BuildProduct extends BuildersHelper {
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
 
-        PARAMS.DAE = false
+        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
+        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
+
+        // PARAMS.DAE = false
+
+        PARAMS.DAE = isDae
 
         return PARAMS;
     }

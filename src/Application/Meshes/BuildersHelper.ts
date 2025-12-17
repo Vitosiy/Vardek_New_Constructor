@@ -96,8 +96,11 @@ export class BuildersHelper extends GlobalsData {
             expressions[`#${customKey}#`] = incomeData.id;
 
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
+
+                // console.log(size.WIDTH, ' == WIDTH ==')
+                // console.log(size, ' == size ==')
+
                 const size = this._FASADESIZE[incomeData.id];
-                // console.log(size, 'size')
                 const suffix = customKey.endsWith("1") ? "1" : "2";
                 expressions[`#FASADESIZEWIDTH${suffix}#`] = incomeData.params.FASADE_WIDTH ?? size.WIDTH;
                 expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
@@ -121,8 +124,9 @@ export class BuildersHelper extends GlobalsData {
 
         if (PARAMS.MODELID) {
             const modelData = this._MODELS[PARAMS.MODELID]
-
             const model = this.expressionsReplace(modelData, expressions);
+
+            console.log(model, 'modelData')
 
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));

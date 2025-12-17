@@ -66,6 +66,8 @@ export class Filters extends GlobalsData {
         let sortFasadePositionList = [];
         const fasadePositionList = product.FASADE_POSITION
 
+        console.log(FASADE_SIZE, 'product')
+
         if (!fasadePositionList) return
 
         const fasadeSorted = fasadePositionList.sort((a, b) => this._FASADE_POSITION[a].FASADE_NUMBER - this._FASADE_POSITION[b].FASADE_NUMBER);
