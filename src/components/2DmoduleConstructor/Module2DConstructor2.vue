@@ -363,6 +363,16 @@ const updateFilling = (value, currentfilling, type, render = false) => {
     currentfilling[type] = prevValue;
   }
 
+  if(currentfilling.type === 'vertical_shelf') {
+    currentfilling.width = module.value.moduleThickness
+    currentfilling.size.x = module.value.moduleThickness
+  }
+
+  if(currentfilling.type === 'shelf') {
+    currentfilling.height = module.value.moduleThickness
+    currentfilling.size.y = module.value.moduleThickness
+  }
+
   currentfilling.sector = tmpSector;
   module.value = gridCopy;
 
