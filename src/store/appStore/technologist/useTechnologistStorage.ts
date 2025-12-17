@@ -1,11 +1,19 @@
 import { ref } from 'vue'
 import {TechnologistFormError} from "@/types/technologist.ts";
+import {defineStore} from "pinia";
 
 const STORAGE_KEY = 'technologist-data'
+const defaultDeal = {
+  'dealId': false,
+  'dealStatus': false,
+  'techProjectId': false,
+  'techProject': false,
+}
 
-export function useTechnologistStorage() {
+export const useTechnologistStorage = defineStore('technologist-data', () => {
   const currentProjectID = ref<number|boolean>(false)
   const techFormError = ref<TechnologistFormError>(<TechnologistFormError>{})
+  const deal = ref(Object.assign({}, defaultDeal))
 
   const setCurrentProjectID = (id: number) => {
     if(id && currentProjectID.value !== id) {
@@ -43,4 +51,4 @@ export function useTechnologistStorage() {
     clearStorage,
     clearError
   }
-}
+})

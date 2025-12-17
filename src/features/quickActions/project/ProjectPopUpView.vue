@@ -101,23 +101,24 @@
           class="project-item"
           @click="loadProject(project.id)"
         >
-          <img
-            :src="
+            <img
+                :src="
               project.img
                 ? `https://dev.vardek.online${project.img}`
                 : '/src/assets/img/proj.png'
             "
-            class="item__image"
-            :alt="project.name || 'Проект'"
-          />
-          <div class="item-info">
-            <div class="info-id">
-              <p class="id__name">{{ project.name || "Название" }}</p>
-              <p class="id__number text-grey">ID {{ project.id }}</p>
+                class="item__image"
+                :alt="project.name || 'Проект'"
+            />
+            <div class="item-info">
+              <div class="info-id">
+                <p class="id__name">{{ project.name || "Название" }}</p>
+                <p class="id__number text-grey">ID {{ project.id }}</p>
+              </div>
+              <p class="info__date text-grey">{{ project.date }}</p>
             </div>
-            <p class="info__date text-grey">{{ project.date }}</p>
-          </div>
-          <TechnologistFormButton project="project"/>
+
+          <TechnologistFormButton :project="project" @click="closePopup"/>
         </div>
       </div>
     </div>

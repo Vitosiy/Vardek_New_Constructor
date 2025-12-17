@@ -6,6 +6,9 @@ import {usePopupStore} from "@/store/appStore/popUpsStore.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import {TechnologistFormItem} from "@/types/technologist.ts";
+import MainButton from "@/components/ui/buttons/MainButton.vue";
+import MainInput from "@/components/ui/inputs/MainInput.vue";
+import {varying} from "three/src/nodes/core/VaryingNode";
 
 const popupStore = usePopupStore();
 const technologistStorage = useTechnologistStorage();
@@ -30,22 +33,31 @@ const submitTechForm = () => {
 
   technologistStorage.clearError()
   let fileUpDrop = {}
+  /*
+    for (var i in self.scope.arrIdInputFile) {
+      if (i == 'comments') continue;
+      fileUpDrop[i] = fileUp.get(self.scope.arrIdInputFile[i]);
 
-  for (var i in self.scope.arrIdInputFile) {
-    if (i == 'comments') continue;
-    fileUpDrop[i] = fileUp.get(self.scope.arrIdInputFile[i]);
+      for (var f in fileUpDrop[i].getFiles()) {
+        formData.append(i + '[]', fileUpDrop[i].getFiles()[f]['_file']);
+      }
 
-    for (var f in fileUpDrop[i].getFiles()) {
-      formData.append(i + '[]', fileUpDrop[i].getFiles()[f]['_file']);
-    }
-
-  }
+    }*/
 
   technologistAPI.submitTechForm(formData)
 }
 
+const addInputTechnique = () => {
+  if (!currentForm.value.technique)
+    currentForm.value.technique = []
+
+  currentForm.value.technique.push("")
+}
+
 onBeforeMount(() => {
-  currentForm.value = <TechnologistFormItem>{}
+  currentForm.value = <TechnologistFormItem>{
+    technique: [""]
+  }
 })
 
 onMounted(() => {
@@ -54,131 +66,149 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="technologist-form-content">
+  <div
+      class="technologist-form"
+  >
+    <div class="technologist-form-container">
 
-    <div class="technologist-form-header">
-      <h4 class="technologist-form-title">Форма отправки на проверку технологу</h4>
-      <ClosePopUpButton
-          class="technologist-header__close-btn"
-          @click="closeForm"
-      />
-    </div>
-
-    <div class="technologist-form-body">
-      <div>
-        <label style="width: 100px;">* ID проекта</label>
-        <input 
-            :class="{'errorForm': techFormError['id']}"
-            autocomplete="off" 
-            type="str"
-             name="projectId" 
-            id="projectId" 
-            value="currentForm.id" 
-            readonly
-        >
+      <div class="technologist-form-header">
+        <h4 class="technologist-form-header__title">Форма отправки на проверку технологу</h4>
+        <ClosePopUpButton
+            class="technologist-form-header__close-btn"
+            @click="closeForm"
+        />
       </div>
 
-      <div>
-        <label style="width: 100px;">* Телефон</label>
-        <input 
-            :class="{'errorForm': techFormError['phone']}"
-            ui-mask="+9(999) 999-9999" 
-            type="phone"
-            data-mask="true" 
-            autocomplete="off" 
-            data-validate-type="phone" 
-            name="phone"
-            value="currentForm.phone"
-        >
-      </div>
+      <div class="technologist-form-footer">
 
-      <div style="margin-bottom: 30px;">
-        <label style="width: 100px;">* Почта</label>
-        <input
-            :class="{'errorForm': techFormError['email']}"
-            autocomplete="off" 
-            type="str"
-            name="email" 
-            value="currentForm.email" 
-            data-validate-type="email"
-        >
-      </div>
+        <div class="technologist-form-footer-info">
+          <div class="technologist-form-footer-info-item">
+            <label>* ID проекта</label>
+            <MainInput
+                :input-class="'technologist-form-footer-info-item__input'"
+                :model-value="currentForm.id"
+                id="projectId"
+                disabled
+            />
+          </div>
 
-      <div style="margin-bottom: 30px;">
-        <label>Список техники с указанием модели</label>
-        <ul>
-          <li ng-repeat="(techniqueKey, techniqueVal) in currentForm.technique">
+          <div class="technologist-form-footer-info-item">
+            <label>* Дизайнер Ф.И.О.</label>
             <input
-                autocomplete="off"
-                type="str"
-                name="technique[]"
-                value="currentForm.technique[techniqueKey]"
+                :class="['technologist-form-footer-info-item__input', {'errorForm': techFormError['name']}]"
+                type="text"
+                required
+                name="name"
+                v-model="currentForm.name"
             >
-          </li>
-        </ul>
-
-        <div ng-click="addInputTechnique();" class="calculation-form__file-button"
-             style="margin-left: 40px;">Добавить
-        </div>
-
-      </div>
-
-      <div
-          :class="{'errorForm': techFormError['sketch']}"
-           class="calculation-form__item calculation-form__item--wide projectSketch"
-      >
-        <p class="calculation-form__label">* Техническое задание с размерами</p>
-        <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
-
-        <div class="calculation-form__upload-button">
-          <input type="file" id="sketch" multiple style="display: none">
-
-          <div id="sketch-dropzone"
-               class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
-            <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
-            <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
           </div>
 
-          <div id="sketch-queue"></div>
-        </div>
-      </div>
-
-      <div class="calculation-form__item calculation-form__item--wide photoRoom">
-        <p class="calculation-form__label">Фото помещения со всех ракурсов</p>
-        <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
-
-        <div class="calculation-form__upload-button">
-          <input type="file" id="photoRoom" multiple style="display: none">
-
-          <div id="photoRoom-dropzone"
-               class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
-            <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
-            <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
+          <div class="technologist-form-footer-info-item">
+            <label>* Телефон</label>
+            <input
+                :class="['technologist-form-footer-info-item__input', {'errorForm': techFormError['phone']}]"
+                pattern="(\s*)?(\+)?([- _():=+]?\d[- _():=+]?){10,14}(\s*)?"
+                mask="'+7 (000)-000-0000'"
+                type="tel"
+                required
+                name="phone"
+                v-model="currentForm.phone"
+            >
           </div>
 
-          <div id="photoRoom-queue"></div>
-        </div>
-      </div>
-
-      <div class="calculation-form__item calculation-form__item--wide metering">
-        <p class="calculation-form__label">Замер помещения</p>
-        <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
-
-        <div class="calculation-form__upload-button">
-          <input type="file" id="metering" multiple style="display: none">
-
-          <div id="metering-dropzone"
-               class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
-            <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
-            <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
+          <div class="technologist-form-footer-info-item">
+            <label>* Почта</label>
+            <input
+                :class="['technologist-form-footer-info-item__input', {'errorForm': techFormError['email']}]"
+                type="text"
+                name="email"
+                v-model="currentForm.email"
+                data-validate-type="email"
+                required
+            >
           </div>
 
-          <div id="metering-queue"></div>
-        </div>
-      </div>
-      <div class="message" style="display: none"></div>
-      <div class="btn btn-primary" @click="submitTechForm">Отправить заявку</div>
+          <div class="technologist-form-footer-info-technique">
+            <label>* Список техники с указанием модели:</label>
+            <ul class="technologist-form-footer-info-technique__list">
+              <li
+                  v-for="(techniqueVal, techniqueKey) in currentForm.technique"
+                  :key="techniqueKey"
+              >
+                <input
+                    class="technologist-form-footer-info-technique__input"
+                    autocomplete="off"
+                    type="text"
+                    :id="`technique_${techniqueKey}`"
+                    v-model="currentForm.technique[techniqueKey]"
+                >
+              </li>
+            </ul>
 
+            <MainButton @click="addInputTechnique">
+              Добавить
+            </MainButton>
+          </div>
+        </div>
+
+        <div
+            :class="['technologist-form-footer-filedrop', 'projectSketch', {'errorForm': techFormError['sketch']}]"
+        >
+          <p class="technologist-form-footer-filedrop__label">* Техническое задание с размерами</p>
+          <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
+
+          <div class="technologist-form-footer-filedrop__upload-button">
+            <input type="file" id="sketch" multiple style="display: none">
+
+            <div id="sketch-dropzone"
+                 class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
+              <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
+              <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
+            </div>
+
+            <div id="sketch-queue"></div>
+          </div>
+        </div>
+
+        <div class="technologist-form-footer-filedrop photoRoom">
+          <p class="technologist-form-footer-filedrop__label">* Фото помещения со всех ракурсов</p>
+          <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
+
+          <div class="technologist-form-footer-filedrop__upload-button">
+            <input type="file" id="photoRoom" multiple style="display: none">
+
+            <div id="photoRoom-dropzone"
+                 class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
+              <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
+              <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
+            </div>
+
+            <div id="photoRoom-queue"></div>
+          </div>
+        </div>
+
+        <div class="technologist-form-footer-filedrop metering">
+          <p class="technologist-form-footer-filedrop__label">* Замер помещения</p>
+          <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
+
+          <div class="technologist-form-footer-filedrop__upload-button">
+            <input type="file" id="metering" multiple style="display: none">
+
+            <div id="metering-dropzone"
+                 class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
+              <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
+              <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
+            </div>
+
+            <div id="metering-queue"></div>
+          </div>
+        </div>
+
+        <MainButton @click="submitTechForm">
+          Отправить заявку
+        </MainButton>
+
+      </div>
     </div>
   </div>
 </template>
@@ -200,7 +230,21 @@ onMounted(() => {
   max-width: 1447px;
   width: 90vw;
 
-  .technologist-header {
+  &-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+
+    &__main-table {
+      // margin-bottom: 2rem;
+      .technologist-table {
+        background-color: #F6F5FA;
+        border-radius: 15px;
+      }
+    }
+  }
+
+  &-header {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -209,9 +253,8 @@ onMounted(() => {
 
     &__title {
       font-weight: 600;
-      font-size: 32px;
+      font-size: 30px;
       line-height: 100%;
-      letter-spacing: 0%;
       text-align: center;
     }
 
@@ -224,32 +267,13 @@ onMounted(() => {
     }
   }
 
-  &__additional-table {
-    margin-top: 2rem;
-  }
-
-  .technologist-container {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-
-    &__main-table {
-      // margin-bottom: 2rem;
-      .technologist-table {
-        background-color: #F6F5FA;
-        border-radius: 15px;
-      }
-    }
-
-  }
-
-  .technologist-footer {
-    width: 100%;
+  &-footer {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: space-around;
     flex-wrap: wrap;
     gap: 20px;
+    width: 100%;
+    flex-direction: column;
 
     @media (max-width: 768px) {
       flex-direction: column-reverse;
@@ -260,7 +284,69 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
       gap: 5px;
+      margin: 1rem;
+
+      &-item {
+        width: 17vw;
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        justify-content: space-between;
+        align-content: center;
+        align-items: flex-start;
+
+
+        &__input {
+          padding-left: 10px;
+          border: $dark-grey solid 1px;
+        }
+      }
+
+      &-technique {
+        width: 15vw;
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        justify-content: space-between;
+        align-content: center;
+        align-items: flex-start;
+        gap: 0.5rem;
+
+        &__list {
+          gap: 3px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        &__input {
+          padding-left: 10px;
+          border: $dark-grey solid 1px;
+        }
+      }
     }
+
+    &-filedrop {
+      padding: 20px;
+      margin-bottom: 22px;
+      border: 1px solid #dce5e7;
+      box-sizing: border-box;
+      width: 95%;
+      min-height: 102px;
+
+      &__label {
+        display: block;
+        font-family: "Open Sans", "Arial", sans-serif;
+        font-size: 14px;
+        line-height: 19px;
+        letter-spacing: 0.04em;
+        color: #8C8C8C;
+      }
+
+      &__upload-button {
+
+      }
+    }
+
 
     &-buttons {
       display: flex;
@@ -336,45 +422,50 @@ onMounted(() => {
     }
   }
 
-  &__loader {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    position: absolute;
-    top: 1px;
-    left: 0;
-    animation: rotate 1s linear infinite
+  &__additional-table {
+    margin-top: 2rem;
   }
 
-  &__loader::before, &__loader::after {
-    content: "";
-    box-sizing: border-box;
-    position: absolute;
-    inset: 0px;
-    border-radius: 50%;
-    border: 5px solid #da444c73;
-    animation: prixClipFix 2s linear infinite;
-  }
 
-  &__loader::after {
-    border-color: #DA444C;
-    animation: prixClipFix 2s linear infinite, rotate 0.5s linear infinite reverse;
-    inset: 6px;
-  }
-
-  &__sum {
-    font-weight: 600;
-    line-height: 100%;
-    letter-spacing: 0%;
-
-  }
-
-  &__sum-no {
-    // font-weight: 600;
-    line-height: 100%;
-    letter-spacing: 0%;
-
-  }
+&__loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 0;
+  animation: rotate 1s linear infinite
 }
 
+&__loader::before, &__loader::after {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0px;
+  border-radius: 50%;
+  border: 5px solid #da444c73;
+  animation: prixClipFix 2s linear infinite;
+}
+
+&__loader::after {
+  border-color: #DA444C;
+  animation: prixClipFix 2s linear infinite, rotate 0.5s linear infinite reverse;
+  inset: 6px;
+}
+
+&__sum {
+  font-weight: 600;
+  line-height: 100%;
+  letter-spacing: 0%;
+
+}
+
+&__sum-no {
+  // font-weight: 600;
+  line-height: 100%;
+  letter-spacing: 0%;
+
+}
+
+}
 </style>
