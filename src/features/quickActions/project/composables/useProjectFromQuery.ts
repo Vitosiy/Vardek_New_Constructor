@@ -14,7 +14,7 @@ export function useProjectFromQuery() {
   const route = useRoute();
   const toaster = useToast();
 
-  const loadProject = async (id: string | number) => {
+  const loadProject = async (id: string | number): Promise<boolean> => {
     const schemeTransition = useSchemeTransition();
     const projectAPI = useProjectAPI();
     const projectState = useProjectStore();
@@ -22,10 +22,10 @@ export function useProjectFromQuery() {
     const roomState = useRoomState();
     const eventBus = useEventBus();
 
-    if (!id) return;
+    if (!id) return false;
 
     const projectData = await projectAPI.loadProject(id.toString());
-    if (!projectData) return;
+    if (!projectData) return false;
 
     projectState.resetState();
     projectState.setInitialState(projectData);
@@ -38,6 +38,8 @@ export function useProjectFromQuery() {
       await sceneState.loadProjectFromData(projectData);
       sceneState.updateProjectParams({});
       schemeTransition.setAppData(projectData.rooms);
+      
+      roomState.routConvertData('/3d')
 
       projectState.setProjectId(id.toString());
 
@@ -55,8 +57,10 @@ export function useProjectFromQuery() {
 
       window.C2D.layers.planner.init(true);
       window.C2D.layers.doorsAndWindows.init(true);
+      return true;
     } catch (error) {
       console.error("Ошибка применения данных проекта:", error);
+      return false;
     }
   };
 
@@ -99,20 +103,15 @@ export function useProjectFromQuery() {
       return;
     }
 
-    // 2. Получение всех id
-    const projectIds = await getAllProjectIds();
-
-    // 3. Проверка существования id
-    if (!projectIds.includes(rawId)) {
+    // 2. Пытаемся загрузить проект по конкретному id
+    const isLoaded = await loadProject(id);
+    if (!isLoaded) {
       toaster.error("Проект не найден или ссылка невалидна");
       router.replace({ path, query: {} });
       return;
     }
 
-    // 4. Если id валиден — загружаем проект
-    await loadProject(id);
-
-    // 5. Убираем query, чтобы ссылки были чистыми
+    // 3. Убираем query, чтобы ссылки были чистыми
     router.replace({ path, query: {} });
   };
 

@@ -182,6 +182,8 @@ export const loadBlankRoom = async () => {
     await sceneState.loadProjectFromData(projectData)
     sceneState.updateProjectParams({})
     schemeTransition.setAppData(projectData.rooms)
+    
+    roomState.routConvertData('/3d')
 
     projectState.setProjectId(undefined)
 

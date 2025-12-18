@@ -265,6 +265,8 @@ const loadProject = async (id: string | number) => {
         
         // 2. Устанавливаем данные в schemeTransition
         schemeTransition.setAppData(projectData.rooms);
+        roomState.routConvertData('/3d')
+
         
         const currentPath = route.path;
         const is3DView = currentPath === '/3d';

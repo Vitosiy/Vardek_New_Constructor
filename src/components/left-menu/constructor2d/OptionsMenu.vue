@@ -34,8 +34,15 @@ const popupStore = usePopupStore();
 // Локальное состояние для открытия/закрытия меню "Параметры помещения" в 2D
 const isRoomParamsOpen = ref(false);
 
+const deleteRoom = (value: number) => {
+  roomState.removeRoom(value);
+  console.log('11111111111111111111111111111111111111111')
+};
+
 const toggleRoomParams = () => {
   isRoomParamsOpen.value = !isRoomParamsOpen.value;
+  
+  console.log('11111111111111111111111111111111111111111')
 };
 
 const constructor2dMenu = useC2DLeftMenuStore();
@@ -231,6 +238,11 @@ const switchRoom = async (roomId: string | number) => {
                   <p class="id__name">
                     {{ room.label || room.description || (`Комната ${room.id}`) }}
                   </p>
+                  <ClosePopUpButton
+                    class="room-action-btn"
+                    @close="deleteRoom(room.id)"
+                    @click.stop
+                  />
                 </div>
               </div>
             </div>
@@ -454,7 +466,7 @@ const switchRoom = async (roomId: string | number) => {
         gap: 15px;
         position: relative;
         padding: 15px;
-        background: $red;
+        background: $white;
         box-shadow: 0px 0px 10px 0px #3030301a;
         z-index: 1;
         border-radius: 15px;
@@ -510,7 +522,7 @@ const switchRoom = async (roomId: string | number) => {
 }
 
 .project-item {
-        width: 323px;
+        width: 250px;
         height: 230px;
         display: flex;
         align-items: center;
@@ -529,7 +541,7 @@ const switchRoom = async (roomId: string | number) => {
         }
 
         &.active {
-          border-color: $red;
+          border-color: $white;
           box-shadow: 0 4px 12px rgba(218, 68, 76, 0.3);
         }
 
@@ -543,11 +555,32 @@ const switchRoom = async (roomId: string | number) => {
         .item-info {
           width: 100%;
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: space-between;
           padding: 3px 10px;
           box-sizing: border-box;
         }
       }
+
+.info-id {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.id__name {
+  margin: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-action-btn {
+  flex-shrink: 0;
+  cursor: pointer;
+}
 
 </style>
