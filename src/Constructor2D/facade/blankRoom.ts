@@ -163,6 +163,11 @@ const projectData = JSON.parse(jsonBlank)
 
 console.log(projectData)
 
+// Возвращает глубокую копию первой комнаты из blankroom
+export const getBlankRoomTemplate = () => {
+  return JSON.parse(JSON.stringify(projectData.rooms[0]))
+}
+
 const ensureLayersReady = async () => {
   while (!window.C2D?.layers?.planner || !window.C2D?.layers?.doorsAndWindows) {
     await new Promise(resolve => requestAnimationFrame(resolve))
