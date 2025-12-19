@@ -54,7 +54,8 @@ const eventsMap = [
     "A:RecountShelfs",
     "A:Delite-Fasad",
     'A:GlobalParamsSelect',
-    "A:ChangeShowcaseMilling"
+    "A:ChangeShowcaseMilling",
+    "A:ChangeShowcase"
 
 ]
 

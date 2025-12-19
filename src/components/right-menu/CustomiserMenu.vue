@@ -83,16 +83,15 @@ const checkSelect = (el) => {
 const checkData = (object) => {
   const products = modelState.getModels;
   const { PRODUCT, CONFIG } = object.userData.PROPS;
-  const { FASADE_PROPS, DAE } = CONFIG;
+  const { FASADE_PROPS, DAE, MODULE_COLOR } = CONFIG;
   const prodData = products[PRODUCT];
 
   const haveHandles = app.getAppData.POSITION_HANDLES[PRODUCT];
   const havePlinth = prodData.leg_length > 0;
 
   const checkColor =
-    prodData.FACADE.length > 0 &&
-    prodData.FACADE[0] !== null &&
-    !DAE;
+    (prodData.FACADE.length > 0 && prodData.FACADE[0] !== null && !DAE) ||
+    (MODULE_COLOR != null && !DAE);
   const checkOptions =
     prodData.OPTION.length > 0 && prodData.OPTION[0] !== null;
 

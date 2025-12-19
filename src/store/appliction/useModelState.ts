@@ -325,12 +325,22 @@ export const useModelState = defineStore('ModelState', () => {
         let exception = !defaultFasade ? 'Без фасада' : ''
         let haveShowCase = null;
 
+
+
         if (fasadeNdx !== undefined && productId !== undefined) {
 
             let fasadePosData = null;
             const product = _PRODUCTS.value[productId]
-            const positionId = product.FASADE_POSITION[fasadeNdx]
 
+            console.log(product, 'product')
+            
+            if (!product.FASADE_POSITION || product.FASADE_POSITION.length == 0) {
+                return []
+            }
+
+
+            const positionId = product.FASADE_POSITION[fasadeNdx]
+ 
             if (positionId) {
                 fasadePosData = _FASADE_POSITION.value[positionId]
                 haveShowCase = fasadePosData.glass == 1

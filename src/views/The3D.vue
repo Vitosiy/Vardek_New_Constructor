@@ -86,6 +86,7 @@ const VerdekConstructor = ref<Application | null>(null);
 
 const controller = ref(false);
 const transformControlsValue = ref<boolean>(false);
+const hideFasadeValue = ref<boolean>(false);
 
 const productColor = ref<{ [key: string]: any }>({});
 const currentFasadeId = ref<{ [key: string]: any }>({});
@@ -239,22 +240,6 @@ const controlsActivate = (value) => {
   } catch (e) {
     console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
   }
-  // const curModel = modelState.getCurrentModel;
-
-  // if (transformControlsValue.value) {
-  //   eventBus.emit("A:TransformMode_On");
-  // } else {
-  //   eventBus.emit("A:TransformMode_Off");
-  //   try {
-  //     if (product.value?.userData.MOUSE_POSITION) {
-  //       controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
-  //     }
-  //   } catch (e) {
-  //     console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
-  //   }
-  // }
-
-  // modelState.setTransformControlsValue(transformControlsValue.value);
 };
 
 // const changeControllerType = (data) => {
@@ -289,6 +274,19 @@ const selected = async (item: any) => {
   roomContantData.value!.setRoomContantData(totalContent.value);
   product.value = object;
   controller.value = true;
+
+  /** Для скрытия отображения фасадов */
+  if (
+    !RASPIL.data &&
+    modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS.some(
+      (el) => el.COLOR !== 7397
+    )
+  ) {
+    hideFasadeValue.value =
+      !modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS[0]?.SHOW;
+  } else {
+    hideFasadeValue.value = false;
+  }
 
   productData.value = { ...PROPS };
 
@@ -533,6 +531,23 @@ const removeModel = (model) => {
   scheduleBasketSync();
 };
 
+const toggleFasade = () => {
+  if (
+    modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS.some(
+      (el) => el.COLOR !== 7397
+    )
+  ) {
+    const curVisible =
+      modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS[0].SHOW;
+
+    hideFasadeValue.value = curVisible;
+
+    eventBus.emit("A:Toggle-Fasad", !curVisible);
+    return;
+  }
+  hideFasadeValue.value = false;
+};
+
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
@@ -602,6 +617,16 @@ const controllerPosition = computed(() => {
   }
   return {
     transform: `translate(${curX}px, ${curY}px) scale(0)`,
+  };
+});
+
+const getU = computed(() => {
+  return hideFasadeValue.value;
+});
+
+const activeHideFasadeButton = computed(() => {
+  return {
+    active: hideFasadeValue.value,
   };
 });
 
@@ -759,6 +784,8 @@ watch(
             Object.keys(CutData).length == 0 &&
             modelState.getCurrentModel?.name != 'MODEL'
           "
+          :class="activeHideFasadeButton"
+          @click="toggleFasade"
         />
 
         <Modal
@@ -1016,7 +1043,7 @@ watch(
   @media (hover: hover) {
     &:hover {
       background-color: #131313;
-      border-color: #131313;
+      border-color: $white;
     }
   }
 }

@@ -3,6 +3,7 @@
 import { defineProps, ref, computed, defineEmits } from "vue";
 import { _URL } from "@/types/constants";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
 
 const props = defineProps({
   showcaseList: Array,
@@ -16,20 +17,24 @@ const props = defineProps({
 const emit = defineEmits(["select_showcase"]);
 
 const eventBus = useEventBus();
+const modelState = useModelState();
 const selectPatina = ref<any>(null);
 
 const changeShowcase = (showcase) => {
-  if (!props.tempWork)
-    eventBus.emit('A:ChangeShowcase', {
-      data: showcase.ID,
-      fasadeNdx: props.tabIndex,
-    });
+  const { FASADE_PROPS } = modelState.getCurrentModel?.userData.PROPS.CONFIG;
 
   emit("select_showcase", {
     name: showcase.NAME,
     imgSrc: showcase.PREVIEW_PICTURE,
     ID: showcase.ID,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+
+  if (!props.tempWork) FASADE_PROPS[props.tabIndex].SHOWCASE = showcase.ID;
+
+  eventBus.emit("A:ChangeShowcase", {
+    data: showcase.ID,
+    fasadeNdx: props.tabIndex,
+  });
 };
 </script>
 

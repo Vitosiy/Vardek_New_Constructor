@@ -1,5 +1,5 @@
 
-import { Scene, Mesh, Object3D, LineSegments } from "three";
+import { Scene, Mesh, Object3D, LineSegments, Material } from "three";
 import { TAppLights, TApplication } from "@/types/types";
 import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 
@@ -26,7 +26,7 @@ export class UseEdgeBuilder {
             // if (child instanceof Mesh || child instanceof LineSegments) {
             //     child.visible = !value
             // }
-            
+
             // объекты EdgeBuilder
             if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) {
 
@@ -72,9 +72,15 @@ export class UseEdgeBuilder {
 
             if (child.parent?.name == 'raspilPart') {
 
+                console.log('5555', child.parent)
+
                 if (child.parent instanceof Mesh) {
                     child.parent.visible = true
-                    child.parent.material.visible = !value
+                    child.parent.material.forEach(el => {
+                        if (el instanceof Material) {
+                            el.visible = !value
+                        }
+                    })
                     child.parent.traverse(el => {
                         if (el.userData.edge) {
                             el.visible = value

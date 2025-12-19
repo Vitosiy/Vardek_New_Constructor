@@ -34,6 +34,7 @@ import { HandlesBuilder } from './Handles/Handles.ts';
 import { PlinthBuilder } from './PlinthBuilder/PlinthBuilder.ts';
 import { DrowerBuilder } from './Drowers/DrowerBuilder.ts';
 import { ShelfBuilder } from './Shelf/ShelfBuilder.ts';
+import { MirrorBuilder } from './MirrorBuilder/MirrorBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -62,6 +63,7 @@ export class BuildProduct extends BuildersHelper {
     plinth_builder: PlinthBuilder
     drower_builder: DrowerBuilder
     shelf_builder: ShelfBuilder
+    mirror_builder: MirrorBuilder
     uniform_texture_builder: UniformTextureBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
 
@@ -90,6 +92,7 @@ export class BuildProduct extends BuildersHelper {
         this.drower_builder = new DrowerBuilder(this)
         this.plinth_builder = new PlinthBuilder(this)
         this.shelf_builder = new ShelfBuilder(this)
+        this.mirror_builder = new MirrorBuilder(this)
     }
 
     get _currentProduct() {
@@ -609,6 +612,7 @@ export class BuildProduct extends BuildersHelper {
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
 
+
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === this.modelState.createFlatModuleData(product.MODULECOLOR)[0]
             let checked: boolean
@@ -627,11 +631,13 @@ export class BuildProduct extends BuildersHelper {
 
         // const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
         const moduleColorId = texture?.src && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
-        console.log(moduleColorId, MODULE_COLOR, 'moduleColorId')
 
         CONFIG.MODULE_COLOR = moduleColorId;
 
         const moduleColor = this._FASADE[moduleColorId];
+        
+        const isTopTable = texture?.src && !moduleColor
+
         let left, right, top, back, tsarga;
 
         const { BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR, TSARGA } = CONFIG;
@@ -772,8 +778,8 @@ export class BuildProduct extends BuildersHelper {
             back,
             top,
             tsarga,
+            isTopTable
         });
-
 
         const edge = this.edge_builder.createEdge(body);
 
@@ -781,7 +787,8 @@ export class BuildProduct extends BuildersHelper {
 
         const { geometryType } = body.userData;
 
-        if (texture?.src && !moduleColor) {
+        if (isTopTable) {
+
             const textureSize = {
                 width: geometryType === "ExtrudeGeometry" ? texture.width : 1,
                 height: geometryType === "ExtrudeGeometry" ? texture.height : 1,
@@ -796,6 +803,16 @@ export class BuildProduct extends BuildersHelper {
                 this.getTexture(params);
                 body.userData.MATERIAL = child.material;
             });
+        }
+
+        /** @Зеркало */
+        if (product.productType == this.project.mirror_type) {
+
+            body.traverse(el => {
+                if (el instanceof THREE.Mesh && !el.userData.edge) {
+                    this.mirror_builder.createMirrorMaterial(el, moduleColor)
+                }
+            })
         }
 
         body.matrixWorldNeedsUpdate = true;
@@ -819,25 +836,6 @@ export class BuildProduct extends BuildersHelper {
             BODY_HEIGHT: size.y ?? 0,
             BODY_DEPTH: size.z ?? 0,
         };
-
-        /** @Зеркало */
-        if (product.productType == this.project.mirror_type) {
-
-            body.traverse(el => {
-                if (el instanceof THREE.Mesh && !el.userData.edge) {
-                    const mirrorMat = new THREE.MeshPhysicalMaterial({
-                        color: new THREE.Color(`#ffffff`),
-                        metalness: 0.85,
-                        roughness: 0,
-                        clearcoat: 1,
-                        clearcoatRoughness: 0.0,
-                    })
-
-                    el.material = mirrorMat
-                    el.material.needsUpdate = true;
-                }
-            })
-        }
 
         props.BODY_DEFAULT = body.clone();
 

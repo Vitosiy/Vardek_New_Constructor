@@ -198,9 +198,6 @@ class TableTopCreator extends BuildersHelper {
             material2.needsUpdate = true;
         }
 
-
-
-
         raspil.data.forEach((col, colNdx) => {
             col.forEach((row, ndx) => {
 
@@ -268,7 +265,7 @@ class TableTopCreator extends BuildersHelper {
                             originalPosition.z
                         );
                     }
-
+           
                     // mesh.material = material
 
                 }
@@ -310,50 +307,50 @@ class TableTopCreator extends BuildersHelper {
 
     }
 
-    private _createShape(row, parent, material_1, material_2) {
-        const { xOffset, yOffset, width, height, holes } = row;
-        console.log(parent, 'SHAPE parent')
+    // private _createShape(row, parent, material_1, material_2) {
+    //     const { xOffset, yOffset, width, height, holes } = row;
+    //     console.log(parent, 'SHAPE parent')
 
-        let startGeometry = CSG.fromMesh(parent);
-        let material = new THREE.MeshPhongMaterial({
-            color: this.getRandomHexColor(),
-            side: THREE.DoubleSide,
-            wireframe: true
-        });
+    //     let startGeometry = CSG.fromMesh(parent);
+    //     let material = new THREE.MeshPhongMaterial({
+    //         color: this.getRandomHexColor(),
+    //         side: THREE.DoubleSide,
+    //         wireframe: true
+    //     });
 
-        holes.forEach(hole => {
-            if (hole) {
-                let geometry, mesh
+    //     holes.forEach(hole => {
+    //         if (hole) {
+    //             let geometry, mesh
 
-                switch (hole.type) {
-                    case 'circle':
-                        geometry = new THREE.CylinderGeometry(hole.radius * 0.5, hole.radius * 0.5, this.boolHeight, this.quality)
-                        break
-                    case 'rect':
-                        geometry = new THREE.BoxGeometry(hole.width, this.boolHeight, hole.height)
-                        break
-                }
+    //             switch (hole.type) {
+    //                 case 'circle':
+    //                     geometry = new THREE.CylinderGeometry(hole.radius * 0.5, hole.radius * 0.5, this.boolHeight, this.quality)
+    //                     break
+    //                 case 'rect':
+    //                     geometry = new THREE.BoxGeometry(hole.width, this.boolHeight, hole.height)
+    //                     break
+    //             }
 
-                mesh = new THREE.Mesh(geometry);
-                this.holePositioning(mesh, width, height, xOffset, yOffset, hole)
-                startGeometry = startGeometry.subtract(CSG.fromMesh(mesh));
-            }
-        })
+    //             mesh = new THREE.Mesh(geometry);
+    //             this.holePositioning(mesh, width, height, xOffset, yOffset, hole)
+    //             startGeometry = startGeometry.subtract(CSG.fromMesh(mesh));
+    //         }
+    //     })
 
 
-        if ('radius' in row.roundCut) {
+    //     if ('radius' in row.roundCut) {
 
-            let geometry, mesh;
-            const { x, y, radius } = row.roundCut
+    //         let geometry, mesh;
+    //         const { x, y, radius } = row.roundCut
 
-            geometry = new THREE.CylinderGeometry(radius * 0.5, radius * 0.5, this.boolHeight, this.quality)
-            mesh = new THREE.Mesh(geometry, material);
-            this.holePositioning(mesh, width, height, xOffset, yOffset, { x, y })
-            startGeometry = startGeometry.intersect(CSG.fromMesh(mesh));
-        }
-        // return startBrush
-        return CSG.toMesh(startGeometry, new THREE.Matrix4())
-    }
+    //         geometry = new THREE.CylinderGeometry(radius * 0.5, radius * 0.5, this.boolHeight, this.quality)
+    //         mesh = new THREE.Mesh(geometry, material);
+    //         this.holePositioning(mesh, width, height, xOffset, yOffset, { x, y })
+    //         startGeometry = startGeometry.intersect(CSG.fromMesh(mesh));
+    //     }
+    //     // return startBrush
+    //     return CSG.toMesh(startGeometry, new THREE.Matrix4())
+    // }
 
     private createShape(row: any, parent: THREE.Mesh, material_1: THREE.Material, material_2: THREE.Material): THREE.Mesh {
         const { xOffset, yOffset, width, height, holes } = row;

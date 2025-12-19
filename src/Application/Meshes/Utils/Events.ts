@@ -88,7 +88,7 @@ export class MeshEvents extends BuildersHelper {
     private onDelitePatina: (fasadeNdx: number) => void;
 
     private onUpdateUMModel: (data: Object) => void;
-    private onToggleFasade: (fasad_ndx: number) => void;
+    private onToggleFasade: (value: boolean) => void;
     private onDeliteFasade: (fasad_ndx: number) => void;
     private onCreateUniformGroup: () => void
     private onDeliteUniformGroup: (id: number) => void
@@ -262,14 +262,24 @@ export class MeshEvents extends BuildersHelper {
 
         const product = currentMesh ?? this._currentMesh;
         const { CONFIG, SHELF, BODY, JSON_FILLINGS } = product.userData.PROPS;
+        const { ID } = CONFIG;
+        const productData = this._PRODUCTS[ID]
 
+        console.log(ID, 'ID');
         [BODY, ...(SHELF ?? []), ...(JSON_FILLINGS ?? [])].forEach((obj) => {
             if (obj instanceof THREE.Object3D) {
                 obj?.traverse((child: THREE.Object3D) => {
                     // Пропускаем меш чертежа
                     if ((child.userData && child.userData.edge) || child.parent?.userData?.edge) return
 
+
                     if (child instanceof THREE.Mesh) {
+
+                        if (productData.productType === this.buildProduct.project.mirror_type) {
+                            this.buildProduct.mirror_builder.createMirrorMaterial(child, data)
+                            return;
+                        }
+
                         this.changeColor({ object: child, url: data.TEXTURE });
                     }
                 })
@@ -915,18 +925,33 @@ export class MeshEvents extends BuildersHelper {
     //------------------
 
     // Скрыть фасад
-    toggleFasade(fasadeNdx: number) {
+    toggleFasade(value: number) {
 
         if (!this._currentMesh) return;
 
         const product = this._currentMesh
-        const props = product.userData.PROPS
-        const fasade = props.FASADE[fasadeNdx]
 
-        if (fasade === null) return
-        if (props.CONFIG.FASADE_PROPS[fasadeNdx].COLOR === 7397) return
-        fasade.visible = !fasade.visible
-        props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
+        const { FASADE, CONFIG } = product.userData.PROPS
+        const { FASADE_PROPS } = CONFIG
+        if (FASADE.length === 0) return
+
+        FASADE.forEach((el, key) => {
+
+            if (FASADE_PROPS[key].COLOR === 7397) return
+            el.visible = !el.visible
+            FASADE_PROPS[key].SHOW = el.visible
+
+        })
+
+        // const fasade = FASADE[fasadeNdx]
+
+        // if (fasade === null) return
+
+        // if (props.CONFIG.FASADE_PROPS[fasadeNdx].COLOR === 7397) return
+
+        // fasade.visible = !fasade.visible
+
+        // props.CONFIG.FASADE_PROPS[fasadeNdx].SHOW = fasade.visible
 
     }
 
@@ -1397,8 +1422,8 @@ export class MeshEvents extends BuildersHelper {
             this.changeModelSize(data)
         }
 
-        this.onToggleFasade = (fasad_ndx) => {
-            this.toggleFasade(fasad_ndx);
+        this.onToggleFasade = (value) => {
+            this.toggleFasade(value);
         }
 
         this.onDeliteFasade = (fasad_ndx) => {

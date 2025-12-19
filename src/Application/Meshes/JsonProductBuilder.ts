@@ -23,7 +23,7 @@ export class JsonBuilder {
         this.convert = parent.calculateFromString
     }
 
-    createMesh({ data, parent_size, fasade, left, right, back, top, tsarga }: {
+    createMesh({ data, parent_size, fasade, left, right, back, top, tsarga, isTopTable }: {
         data: THREETypes.TObject,
         parent_size?: THREETypes.TObject,
         fasade?: THREETypes.TObject,
@@ -32,11 +32,15 @@ export class JsonBuilder {
         back?: THREETypes.TObject,
         top?: THREETypes.TObject,
         tsarga?: THREETypes.TObject,
+        isTopTable?: boolean
     }) {
 
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
         const obj: THREETypes.TObject = {};
+
+
+        console.log(data, 'data ----- ')
 
         this.material = this.createMaterial(json.material, fasade, group) as THREE.Material
 
@@ -85,7 +89,7 @@ export class JsonBuilder {
 
             json.items.forEach((item: THREETypes.TObject, _: number, array: []) => {
 
-                this.parseDate({ data: item, group, obj, array })
+                this.parseDate({ data: item, group, obj, array, isTopTable })
             })
 
         } else if (typeof json.items === 'object' && json.items !== null && !(json.items instanceof Date)) {
@@ -105,21 +109,21 @@ export class JsonBuilder {
 
             if (Object.values(clone).length > 1) {
                 Object.values(clone).forEach(el => {
-                    this.parseDate({ data: el, group, obj, parent_size })
+                    this.parseDate({ data: el, group, obj, parent_size, isTopTable })
                 })
             } else {
                 const type = this.parent.findKeyInObject(clone, this.keys)
-                this.parseDate({ data: clone[type], group, obj, parent_size })
+                this.parseDate({ data: clone[type], group, obj, parent_size, isTopTable })
             }
 
         }
 
-        
+
 
         return group
     }
 
-    parseDate({ data, group, obj, parent_size, array }: { data: THREETypes.TObject, group: THREE.Object3D, obj, parent_size?, array?: [] }) {
+    parseDate({ data, group, obj, parent_size, array, isTopTable }: { data: THREETypes.TObject, group: THREE.Object3D, obj, parent_size?, array?: [], isTopTable: boolean }) {
 
         let geometry
 
@@ -134,7 +138,7 @@ export class JsonBuilder {
             const geometryMap: Record<string, Function> = {
                 'BoxGeometry': () => this.createGeometry(data.geometry, parent_size),
                 'ExtrudeBoxGeometry': () => this.createGeometry(data.geometry, parent_size),
-                'ExtrudeGeometry': () => this.createShapeGeometry(data.geometry, parent_size),
+                'ExtrudeGeometry': () => this.createShapeGeometry(data.geometry, parent_size, isTopTable),
                 'PlaneGeometry': () => this.createPlaneGeometry(data.geometry, parent_size)
             };
 
@@ -238,7 +242,7 @@ export class JsonBuilder {
         return geometry
     }
 
-    createShapeGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject) {
+    createShapeGeometry(geometry_data: THREETypes.TObject, parent_size?: THREETypes.TObject, isTopTable: boolean) {
 
         for (let i in geometry_data.opt) {
 
@@ -279,8 +283,9 @@ export class JsonBuilder {
         }
 
         geometry!.computeBoundingBox();
-
-        this.parent.normalizeUVsTo01(geometry);
+        if (!isTopTable) {
+            this.parent.normalizeUVsTo01(geometry);
+        }
         return geometry
     }
 

@@ -255,7 +255,7 @@ export class BuildersHelper extends GlobalsData {
             if (file instanceof THREE.Texture) {
                 file.colorSpace = THREE.SRGBColorSpace
                 material.map = file
-                material.needsUpdate = true;
+                // material.needsUpdate = true;
                 if (texture_size) {
                     material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
                     material.map.repeat.set(
@@ -306,7 +306,7 @@ export class BuildersHelper extends GlobalsData {
     }) {
         const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color('#ffffff'),
-            opacity: 1
+            // opacity: 1
         });
         object.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
