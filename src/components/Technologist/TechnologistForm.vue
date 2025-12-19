@@ -1,11 +1,13 @@
 <script setup lang="ts">
+//@ts-nocheck
+
 import {onBeforeMount, onMounted, ref} from "vue";
 
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import {usePopupStore} from "@/store/appStore/popUpsStore.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
-import {TechnologistFormItem} from "@/types/technologist.ts";
+import {TechnologistFormError, TechnologistFormItem} from "@/types/technologist.ts";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import DragAndDropFiles from "@/components/ui/drag&drop/DragAndDropFiles.vue";
@@ -15,7 +17,7 @@ const technologistStorage = useTechnologistStorage();
 const technologistAPI = useTechnologistApi();
 const currentProjectID = ref<number | boolean>(false);
 const currentForm = ref<TechnologistFormItem>(<TechnologistFormItem>{});
-const techFormError = technologistStorage.getTechFormError();
+const techFormError = ref<TechnologistFormError | {}>(technologistStorage.getTechFormError()) ;
 
 const init = () => {
   currentProjectID.value = technologistStorage.getCurrentProjectID();
@@ -46,6 +48,16 @@ const submitTechForm = () => {
     }
     else
       formData.append(key, value);
+  })
+
+  technologistAPI.submitTechForm(formData).then((result) => {
+    if(result) {
+      let data = result.DATA
+      if(!data?.error)
+        closeForm();
+      else
+        techFormError.value = technologistStorage.getTechFormError()
+    }
   })
 }
 

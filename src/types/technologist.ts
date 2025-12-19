@@ -36,9 +36,8 @@ export interface TechnologistTechList {
 }
 
 export interface TechnologistResponse {
-  success: boolean;
-  data: TechnologistFormError | boolean;
-  message?: string;
+  CODE: number;
+  DATA: TechnologistFormError | boolean;
 }
 
 export interface TechnologistRequest {

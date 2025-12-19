@@ -2,7 +2,7 @@
 
 import { readonly, ref } from 'vue'
 import { TechnologistService} from "@/services/technologistService.ts";
-import {TechnologistFormItem, TechnologistResponse, TechnologistRequest} from "@/types/technologist.ts";
+import {TechnologistResponse} from "@/types/technologist.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 
 export const useTechnologistApi = () => {
@@ -15,9 +15,6 @@ export const useTechnologistApi = () => {
     error.value = null
 
     try {
-      /*const request: TechnologistRequest = {
-        ...formItem
-      }*/
       const response = await TechnologistService.submitTechForm(formItem)
 
       if (response.DATA.error) {
@@ -26,7 +23,7 @@ export const useTechnologistApi = () => {
         technologistStorage.setTechFormError({})
       }
 
-      return { ...response.DATA }
+      return <TechnologistResponse>{ ...response }
     }
     catch (err: any) {
       error.value = err.message || 'Ошибка при отправке заявки'
