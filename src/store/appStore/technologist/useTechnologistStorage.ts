@@ -32,7 +32,7 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
   }
 
   const getTechFormError = () => {
-    return techFormError.value;
+    return techFormError.value?.error || {};
   }
 
   const clearStorage = () => {

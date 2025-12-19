@@ -8,7 +8,7 @@ import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnolog
 import {TechnologistFormItem} from "@/types/technologist.ts";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
-import {varying} from "three/src/nodes/core/VaryingNode";
+import DragAndDropFiles from "@/components/ui/drag&drop/DragAndDropFiles.vue";
 
 const popupStore = usePopupStore();
 const technologistStorage = useTechnologistStorage();
@@ -19,7 +19,7 @@ const techFormError = technologistStorage.getTechFormError();
 
 const init = () => {
   currentProjectID.value = technologistStorage.getCurrentProjectID();
-  currentForm.value.id = `${currentProjectID.value}`;
+  currentForm.value.projectId = `${currentProjectID.value}`;
 }
 
 const closeForm = () => {
@@ -29,22 +29,24 @@ const closeForm = () => {
 
 const submitTechForm = () => {
 
-  let formData = currentForm.value;
+  if(!currentForm.value)
+    return
 
+  let formData = new FormData();
   technologistStorage.clearError()
-  let fileUpDrop = {}
-  /*
-    for (var i in self.scope.arrIdInputFile) {
-      if (i == 'comments') continue;
-      fileUpDrop[i] = fileUp.get(self.scope.arrIdInputFile[i]);
 
-      for (var f in fileUpDrop[i].getFiles()) {
-        formData.append(i + '[]', fileUpDrop[i].getFiles()[f]['_file']);
-      }
+  Object.entries(currentForm.value).forEach(([key, value]) => {
+    if (key == 'comments') return;
 
-    }*/
+    if(Array.isArray(value)) {
+      value.forEach((item, index) => {
+        formData.append(`${key}[${index}]`, item);
 
-  technologistAPI.submitTechForm(formData)
+      })
+    }
+    else
+      formData.append(key, value);
+  })
 }
 
 const addInputTechnique = () => {
@@ -52,6 +54,25 @@ const addInputTechnique = () => {
     currentForm.value.technique = []
 
   currentForm.value.technique.push("")
+}
+
+const normalizeEmail = (email: string) => {
+  const s = (email ?? "").trim();
+  const at = s.indexOf("@");
+  if (at === -1) return s;
+  return s.slice(0, at) + "@" + s.slice(at + 1).toLowerCase();
+}
+
+const changeSketchFiles = (files: File[]) => {
+  currentForm.value.sketch = files;
+}
+
+const changePhotoRoomFiles = (files: File[]) => {
+  currentForm.value.photoRoom = files;
+}
+
+const changeMeteringFiles = (files: File[]) => {
+  currentForm.value.metering = files;
 }
 
 onBeforeMount(() => {
@@ -86,7 +107,7 @@ onMounted(() => {
             <label>* ID проекта</label>
             <MainInput
                 :input-class="'technologist-form-footer-info-item__input'"
-                :model-value="currentForm.id"
+                :model-value="currentForm.projectId"
                 id="projectId"
                 disabled
             />
@@ -95,7 +116,7 @@ onMounted(() => {
           <div class="technologist-form-footer-info-item">
             <label>* Дизайнер Ф.И.О.</label>
             <input
-                :class="['technologist-form-footer-info-item__input', {'errorForm': techFormError['name']}]"
+                :class="['technologist-form-footer-info-item__input', {'technologist-form-errorForm': techFormError['name']}]"
                 type="text"
                 required
                 name="name"
@@ -106,25 +127,30 @@ onMounted(() => {
           <div class="technologist-form-footer-info-item">
             <label>* Телефон</label>
             <input
-                :class="['technologist-form-footer-info-item__input', {'errorForm': techFormError['phone']}]"
-                pattern="(\s*)?(\+)?([- _():=+]?\d[- _():=+]?){10,14}(\s*)?"
-                mask="'+7 (000)-000-0000'"
+                v-mask="'+7 (###)-###-####'"
+                :class="['technologist-form-footer-info-item__input', {'technologist-form-errorForm': techFormError['phone']}]"
                 type="tel"
                 required
                 name="phone"
                 v-model="currentForm.phone"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="+7 (XXX)-XXX-XXXX"
             >
           </div>
 
           <div class="technologist-form-footer-info-item">
             <label>* Почта</label>
             <input
-                :class="['technologist-form-footer-info-item__input', {'errorForm': techFormError['email']}]"
-                type="text"
-                name="email"
-                v-model="currentForm.email"
-                data-validate-type="email"
                 required
+                :class="['technologist-form-footer-info-item__input', {'technologist-form-errorForm': techFormError['email']}]"
+                placeholder="username@example.com"
+                v-model.trim="currentForm.email"
+                name="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                @blur="currentForm.email = normalizeEmail(currentForm.email)"
             >
           </div>
 
@@ -151,58 +177,45 @@ onMounted(() => {
           </div>
         </div>
 
+
         <div
-            :class="['technologist-form-footer-filedrop', 'projectSketch', {'errorForm': techFormError['sketch']}]"
+            :class="['technologist-form-footer-filedrop', {'technologist-form-errorForm': techFormError['sketch']}]"
         >
           <p class="technologist-form-footer-filedrop__label">* Техническое задание с размерами</p>
-          <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
 
-          <div class="technologist-form-footer-filedrop__upload-button">
-            <input type="file" id="sketch" multiple style="display: none">
-
-            <div id="sketch-dropzone"
-                 class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
-              <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
-              <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
-            </div>
-
-            <div id="sketch-queue"></div>
-          </div>
+          <DragAndDropFiles
+              accept=".pdf, .txt, .docx, .doc, .rtf, .jpg, .jpeg, .bmp, .png"
+              @update:files="changeSketchFiles"
+          />
         </div>
 
-        <div class="technologist-form-footer-filedrop photoRoom">
+        <div class="technologist-form-footer-filedrop">
           <p class="technologist-form-footer-filedrop__label">* Фото помещения со всех ракурсов</p>
-          <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
 
-          <div class="technologist-form-footer-filedrop__upload-button">
-            <input type="file" id="photoRoom" multiple style="display: none">
-
-            <div id="photoRoom-dropzone"
-                 class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
-              <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
-              <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
-            </div>
-
-            <div id="photoRoom-queue"></div>
-          </div>
+          <DragAndDropFiles
+              accept=".pdf, .txt, .docx, .doc, .rtf, .jpg, .jpeg, .bmp, .png"
+              @update:files="changePhotoRoomFiles"
+          />
         </div>
 
-        <div class="technologist-form-footer-filedrop metering">
+        <div class="technologist-form-footer-filedrop">
           <p class="technologist-form-footer-filedrop__label">* Замер помещения</p>
-          <p>Доступные форматы: pdf, txt, docx, doc, rtf, jpg, jpeg, bmp, png.</p>
 
-          <div class="technologist-form-footer-filedrop__upload-button">
-            <input type="file" id="metering" multiple style="display: none">
-
-            <div id="metering-dropzone"
-                 class="fileup-dropzone p-4 d-inline-block text-primary-emphasis fs-5 rounded-4 text-center">
-              <i class="bi bi-folder2-open"></i> Перетащите сюда ваши файли или кликните
-              <div class="fs-6 mt-2">Максимальный размер 20Mb</div>
-            </div>
-
-            <div id="metering-queue"></div>
-          </div>
+          <DragAndDropFiles
+              accept=".pdf, .txt, .docx, .doc, .rtf, .jpg, .jpeg, .bmp, .png"
+              @update:files="changeMeteringFiles"
+          />
         </div>
+
+        <div v-if="Object.entries(techFormError).length" class="technologist-form-errorMessages">
+          <li
+              v-for="(error, errorKey) in techFormError"
+              :key="errorKey"
+          >
+            <p>{{error.text}}</p>
+          </li>
+        </div>
+
 
         <MainButton @click="submitTechForm">
           Отправить заявку
@@ -223,7 +236,6 @@ onMounted(() => {
   background: white;
   border-radius: 15px;
   padding: 15px;
-  width: 100%;
   box-sizing: border-box;
   max-height: 80vh;
   height: 100%;
@@ -298,6 +310,7 @@ onMounted(() => {
 
         &__input {
           padding-left: 10px;
+          width: 10vw;
           border: $dark-grey solid 1px;
         }
       }
@@ -341,14 +354,11 @@ onMounted(() => {
         letter-spacing: 0.04em;
         color: #8C8C8C;
       }
-
-      &__upload-button {
-
-      }
     }
 
-
     &-buttons {
+      border: 1px solid #bbb;
+
       display: flex;
       align-items: center;
       gap: 10px;
@@ -456,16 +466,21 @@ onMounted(() => {
 &__sum {
   font-weight: 600;
   line-height: 100%;
-  letter-spacing: 0%;
-
 }
 
 &__sum-no {
   // font-weight: 600;
   line-height: 100%;
-  letter-spacing: 0%;
-
 }
+
+  &-errorForm {
+    border: #DA444C solid 1px;
+  }
+
+  &-errorMessages {
+    border: #DA444C solid 1px;
+    color: #DA444C ;
+  }
 
 }
 </style>

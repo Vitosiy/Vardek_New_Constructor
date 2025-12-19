@@ -99,26 +99,30 @@
           v-for="project in projects"
           :key="project.id"
           class="project-item"
-          @click="loadProject(project.id)"
         >
+          <div class="project-item__main" @click="loadProject(project.id)">
             <img
-                :src="
-              project.img
-                ? `https://dev.vardek.online${project.img}`
-                : '/src/assets/img/proj.png'
-            "
-                class="item__image"
-                :alt="project.name || 'Проект'"
+              :src="
+                project.img
+                  ? `https://dev.vardek.online${project.img}`
+                  : '/src/assets/img/proj.png'
+              "
+              class="item__image"
+              :alt="project.name || 'Проект'"
             />
             <div class="item-info">
               <div class="info-id">
-                <p class="id__name">{{ project.name || "Название" }}</p>
+                <p class="id__name">{{ project.name || 'Название' }}</p>
                 <p class="id__number text-grey">ID {{ project.id }}</p>
               </div>
               <p class="info__date text-grey">{{ project.date }}</p>
             </div>
+          </div>
 
-          <TechnologistFormButton :project="project" @click="closePopup"/>
+          <TechnologistFormButton
+            :project="project"
+            @click="closePopup"
+          />
         </div>
       </div>
     </div>
@@ -581,9 +585,8 @@ onMounted(async () => {
         height: 100%;
         max-height: 350px;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
         flex-direction: column;
+        align-items: stretch;
         border-radius: 16px;
         background-color: $bg;
         overflow: hidden;
@@ -593,6 +596,12 @@ onMounted(async () => {
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        &__main {
+          display: flex;
+          flex-direction: column;
+          cursor: pointer;
         }
 
         .item__image {
