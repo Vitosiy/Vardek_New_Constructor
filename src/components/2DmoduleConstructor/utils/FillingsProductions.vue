@@ -135,8 +135,9 @@ const getFasadePosition = (_position) => {
   return fasadePosition
 }
 
-const addFilling = (type, product, oldFillingObject = false) => {
+const addFilling = (type, _product, oldFillingObject = false) => {
 
+  const product = Object.assign({}, _product);
   const {sec, cell, row, extra} = selectedFilling.value
   const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
   const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
@@ -146,6 +147,10 @@ const addFilling = (type, product, oldFillingObject = false) => {
   let name = product.NAME?.toLowerCase()
   let _type = name.includes('полка') ? 'shelf' : name.includes('разделитель') ? 'vertical_shelf' : 'any';
   _type = isHiTechProfile ? 'profile' : _type;
+
+  if(_type === 'shelf' && name.includes('стеклянная')){
+    _type = "glass_shelf"
+  }
 
   const isVerticalItem = _type === "vertical_shelf"
 
@@ -187,6 +192,15 @@ const addFilling = (type, product, oldFillingObject = false) => {
   }
 
   let currentFillingsArray = []
+
+  if(_type === 'shelf') {
+    product.height = module.value.moduleThickness
+  }
+
+  if(_type === 'vertical_shelf') {
+    product.width = module.value.moduleThickness
+  }
+
   const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem);
 
   if (!startFillingData) {
@@ -348,7 +362,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
   const row = cell?.cellsRows?.[rowIndex];
   const extra = row?.extras?.[extraIndex];
 
-  const curRow = row || cell || sec;
+  const curRow = extra || row || cell || sec;
   let needFasadesUpdate = false
   let profileUpdate = false
   let curItem = curRow.fillings[itemIndex];
@@ -421,7 +435,11 @@ const updateFilling = (value, filling, type, render = false) => {
   emit("product-updateFilling", value, filling, type, render);
 };
 
-const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+const changeFillingPositionX = (event, _value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+
+  let value = Math.min(+_value, +event.target.max);
+  value = Math.max(+value, +event.target.min);
+
   selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
   const gridCopy = Object.assign({}, module.value);
@@ -440,17 +458,16 @@ const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, r
     return;
   }
 
-  const prevValue = currentfilling.position.y; //Предыдущее значение
+  const prevValue = currentfilling.position.x; //Предыдущее значение
 
-  let delta = +value - currentfilling.distances.bottom
-  const newValue = prevValue - delta
-
+  let delta = +value - currentfilling.distances.left
+  const newValue = prevValue + delta
 
   let tmpSector = currentfilling.sector
   delete currentfilling.sector
 
   const fillingData = JSON.parse(JSON.stringify(currentfilling));
-  fillingData.position.y = newValue;
+  fillingData.position.x = newValue;
   fillingData.sector = tmpSector;
 
   const pixiSector = current.sector;
@@ -459,9 +476,9 @@ const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, r
   const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
 
   if (check) {
-    currentfilling.position.y = fillingData.position.y;
+    currentfilling.position.x = fillingData.position.x;
   } else {
-    currentfilling.position.y = prevValue;
+    currentfilling.position.x = prevValue;
   }
 
   currentfilling.sector = tmpSector;
@@ -473,7 +490,10 @@ const changeFillingPositionX = (event, value, key, secIndex, cellIndex = null, r
   visualizationRef.value.renderGrid();
 };
 
-const changeFillingPositionY = (event, value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+const changeFillingPositionY = (event, _value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) => {
+  let value = Math.min(+_value, +event.target.max);
+  value = Math.max(+value, +event.target.min);
+
   selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
   const gridCopy = Object.assign({}, module.value);
@@ -943,6 +963,25 @@ const closeMenu = () => {
                                 :class="['actions-input--container']"
                             >
                               <input
+                                  v-if="filling.isVerticalItem"
+                                  type="number"
+                                  :step="1"
+                                  :max="cell.width - filling.width"
+                                  min="0"
+                                  class="actions-input"
+                                  :value="filling.distances?.left"
+                                  @input="debounce((event) => {
+                                changeFillingPositionX(
+                                    $event,
+                                    $event.target.value,
+                                    fillingIndex,
+                                    secIndex,
+                                    cellIndex
+                                    )
+                                }, 1000)"
+                              />
+                              <input
+                                  v-else
                                   type="number"
                                   :step="1"
                                   :max="cell.height - filling.height"
@@ -1069,6 +1108,26 @@ const closeMenu = () => {
                                     :class="['actions-input--container']"
                                 >
                                   <input
+                                      v-if="filling.isVerticalItem"
+                                      type="number"
+                                      :step="1"
+                                      :max="row.width - filling.width"
+                                      min="0"
+                                      class="actions-input"
+                                      :value="filling.distances?.left"
+                                      @input="debounce((event) => {
+                                        changeFillingPositionX(
+                                            $event,
+                                            $event.target.value,
+                                            fillingIndex,
+                                            secIndex,
+                                            cellIndex,
+                                            rowIndex
+                                            )
+                                        }, 1000)"
+                                  />
+                                  <input
+                                      v-else
                                       type="number"
                                       :step="1"
                                       :max="row.height - filling.height"
@@ -1198,6 +1257,27 @@ const closeMenu = () => {
                                         :class="['actions-input--container']"
                                     >
                                       <input
+                                          v-if="filling.isVerticalItem"
+                                          type="number"
+                                          :step="1"
+                                          :max="extra.width - filling.width"
+                                          min="0"
+                                          class="actions-input"
+                                          :value="filling.distances?.left"
+                                          @input="debounce((event) => {
+                                        changeFillingPositionX(
+                                            $event,
+                                            $event.target.value,
+                                            fillingIndex,
+                                            secIndex,
+                                            cellIndex,
+                                            rowIndex,
+                                            extraIndex
+                                            )
+                                        }, 1000)"
+                                      />
+                                      <input
+                                          v-else
                                           type="number"
                                           :step="1"
                                           :max="extra.height - filling.height"
@@ -1205,16 +1285,16 @@ const closeMenu = () => {
                                           class="actions-input"
                                           :value="filling.distances?.bottom"
                                           @input="debounce((event) => {
-                                changeFillingPositionY(
-                                    $event,
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
-                                    cellIndex,
-                                    rowIndex,
-                                    extraIndex
-                                    )
-                                }, 1000)"
+                                            changeFillingPositionY(
+                                                $event,
+                                                $event.target.value,
+                                                fillingIndex,
+                                                secIndex,
+                                                cellIndex,
+                                                rowIndex,
+                                                extraIndex
+                                                )
+                                            }, 1000)"
                                       />
                                     </div>
                                   </div>

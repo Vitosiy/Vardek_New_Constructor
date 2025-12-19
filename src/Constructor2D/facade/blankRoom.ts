@@ -163,6 +163,11 @@ const projectData = JSON.parse(jsonBlank)
 
 console.log(projectData)
 
+// Возвращает глубокую копию первой комнаты из blankroom
+export const getBlankRoomTemplate = () => {
+  return JSON.parse(JSON.stringify(projectData.rooms[0]))
+}
+
 const ensureLayersReady = async () => {
   while (!window.C2D?.layers?.planner || !window.C2D?.layers?.doorsAndWindows) {
     await new Promise(resolve => requestAnimationFrame(resolve))
@@ -177,12 +182,14 @@ export const loadBlankRoom = async () => {
     await sceneState.loadProjectFromData(projectData)
     sceneState.updateProjectParams({})
     schemeTransition.setAppData(projectData.rooms)
+    
+    roomState.routConvertData('/3d')
 
     projectState.setProjectId(undefined)
 
     window.C2D.layers.planner.init(true)
     window.C2D.layers.doorsAndWindows.init(true)
-    console.log('READY')
+    console.log('BLANKROOM LOADED')
   } catch (error) {
     console.error('Ошибка предварительной инициализации комнаты', error)
   }

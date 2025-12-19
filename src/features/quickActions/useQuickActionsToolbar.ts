@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useEventBus } from '@/store/appliction/useEventBus';
 import { useMenuStore } from "@/store/appStore/useMenuStore";
@@ -57,36 +57,48 @@ export const useQuickActionsToolbar = () => {
   const { printPage } = usePrint();
   const { makeScreen } = use2DScreenshot();
 
-  // Реф для функции открытия модального окна
+  // Реф для функции открытия модального окна ввода имени проекта
   const openSaveDialog = ref<(() => void) | null>(null);
+  // Реф для функции открытия модального окна выбора действия при сохранении существующего проекта
+  const openUpdateDialog = ref<(() => void) | null>(null);
 
   // Функция открытия модального окна для сохранения проекта
   const onSaveProject = async () => {
-    // Если проект уже имеет ID — обновляем без показа модалки
+    // Если проект уже имеет ID — сначала спрашиваем, как сохранить
     if (projectState.currentProjectId) {
-      console.log(projectState.currentProjectId, 'currentProjectId')
-      // isSaving уже установлен в true в action, не меняем его здесь
-      try {
-        const result = await projectAPI.saveProject(projectState.currentProjectId);
-        if (result.success) {
-          projectState.updateAfterSave();
-          toaster.success("Сохранено");
-        } else {
-          console.error("❌ Ошибка сохранения:", result.error);
-          toaster.error("Ошибка сохранения проекта");
-        }
-      } catch (error) {
-        console.error("❌ Исключение при сохранении:", error);
-        toaster.error("Ошибка сохранения проекта");
-      } finally {
-        projectState.isSaving = false;
-      }
+      // Пользователь будет выбирать действие в модалке Update
+      projectState.isSaving = false;
+      if (openUpdateDialog.value) openUpdateDialog.value();
       return;
     }
 
     // Иначе — это новый проект: скрываем лоадер и открываем модальное окно для ввода имени
     projectState.isSaving = false;
     if (openSaveDialog.value) openSaveDialog.value();
+  }
+
+  // Обновление уже существующего проекта (прежняя логика сохранения по ID)
+  const updateExistingProject = async () => {
+    if (!projectState.currentProjectId) return;
+
+    console.log(projectState.currentProjectId, 'currentProjectId');
+    projectState.isSaving = true;
+
+    try {
+      const result = await projectAPI.saveProject(projectState.currentProjectId);
+      if (result.success) {
+        projectState.updateAfterSave();
+        toaster.success("Сохранено");
+      } else {
+        console.error("❌ Ошибка сохранения:", result.error);
+        toaster.error("Ошибка сохранения проекта");
+      }
+    } catch (error) {
+      console.error("❌ Исключение при сохранении:", error);
+      toaster.error("Ошибка сохранения проекта");
+    } finally {
+      projectState.isSaving = false;
+    }
   }
 
   // Обработка подтверждения сохранения с названием проекта
@@ -158,7 +170,6 @@ export const useQuickActionsToolbar = () => {
       path: 'default',
       action: () => {
         toggleFullscreen()
-        console.log('SCHEME TRANSITION', schemeTransition.getSchemeTransitionData);
       }
     },
     {
@@ -262,9 +273,35 @@ export const useQuickActionsToolbar = () => {
         if (router.currentRoute.value.path !== '/2d') {
           await router.push('/2d');
         }
+        // new Promise((res) => {
+        // if (router.currentRoute.value.path !== '/2d') {
+        //   router.push('/2d');
+        // }
+        // res(true)
+        // }).then((r) => {
+        //   schemeTransition.clearStore();
+        //   sceneState.createNewProject();
+        //   roomState.rooms = [];
+        //   roomState.clearCurrentRoomId();
+        //   projectState.resetState();
+        //   useBasketStore().clearBasket()
+        //   useRoomContantData().setRoomContantDataForBasket({})
+        //   try {
+        //     const c2d = (window as any).C2D;
+        //     if (c2d?.layers) {
+        //       c2d.layers.planner?.clear();
+        //       c2d.layers.doorsAndWindows?.clear();
+        //       c2d.layers.dimensionDisplay?.clearAll();
+        //       c2d.layers.arrowRulerActiveObject?.clearGraphic();
+        //       c2d.layers.startPointActiveObject?.activate(false);
+        //     }
+        //   } catch (error) {
+        //     console.warn('Ошибка при очистке слоев C2D:', error);
+        //   }
+        //   loadBlankRoom()
+        // })
         // Ждем, пока роутер завершит переход и компонент начнет монтироваться
         await new Promise(resolve => setTimeout(resolve, 100));
-        
         schemeTransition.clearStore();
         sceneState.createNewProject();
         roomState.rooms = [];
@@ -292,6 +329,8 @@ export const useQuickActionsToolbar = () => {
   return { 
     actions,
     openSaveDialog,
-    handleSaveConfirm
+    openUpdateDialog,
+    handleSaveConfirm,
+    updateExistingProject
   };
 }; 

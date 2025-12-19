@@ -91,6 +91,7 @@ const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
 const noBottom = ref<boolean>(false);
+const noBackwall = ref<boolean>(false);
 
 const module = ref(false);
 const computeModule = () => {
@@ -225,6 +226,21 @@ const getModule = computed(() => {
   return module
 })
 
+const checkNoBackwall = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  if(!PROPS.CONFIG.BACKWALL?.COLOR){
+    noBackwall.value = true
+    module.value.noBackwall = true
+  }
+  else {
+    noBackwall.value = false
+    module.value.noBackwall = false
+  }
+
+  return noBackwall.value
+}
+
 const checkOptionWithoutBottom = () => {
   const {PROPS} = modelState.getCurrentModel.userData;
 
@@ -234,11 +250,14 @@ const checkOptionWithoutBottom = () => {
   })) {
     noBottom.value = true
     module.value.noBottom = true
+    module.value.horizont = PROPS.CONFIG.HORIZONT = 0
   }
   else {
     noBottom.value = false
     delete module.value.noBottom
   }
+
+  checkNoBackwall()
 
   return noBottom.value
 }
@@ -342,6 +361,16 @@ const updateFilling = (value, currentfilling, type, render = false) => {
   } else {
     currentfilling.error = true
     currentfilling[type] = prevValue;
+  }
+
+  if(currentfilling.type === 'vertical_shelf') {
+    currentfilling.width = module.value.moduleThickness
+    currentfilling.size.x = module.value.moduleThickness
+  }
+
+  if(currentfilling.type === 'shelf') {
+    currentfilling.height = module.value.moduleThickness
+    currentfilling.size.y = module.value.moduleThickness
   }
 
   currentfilling.sector = tmpSector;
@@ -942,15 +971,15 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
   let loopsSectors = {}
   Object.entries(loops).forEach(([doorKey, doorLoops]) => {
     loopsSectors[doorKey] = {}
-    doorLoops.forEach((fasade, fasadeKey) => {
+    doorLoops.forEach((_loops, fasadeKey) => {
       loopsSectors[doorKey][fasadeKey] = []
-      fasade.coords.forEach((coord, key) => {
+      _loops.coords.forEach((coord, key) => {
         loopsSectors[doorKey][fasadeKey].push({
           id: key,
-          minY: coord,
-          maxY: coord + fasade.height,
-          minX: fasade.positionX,
-          maxX: fasade.positionX + fasade.width,
+          minY: coord - _loops.height / 2,
+          maxY: coord + _loops.height / 2,
+          minX: _loops.positionX,
+          maxX: _loops.positionX + _loops.width,
         })
       })
     })
@@ -960,8 +989,11 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
     let result = []
     _loops.forEach(loop => {
       if (
-          (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
-          (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
+          ((loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
+          (loop.minY <= cell.position.y && loop.maxY >= cell.position.y))
+          &&
+          ((loop.minX <= (cell.position.x - cell.width / 2) && loop.maxX >= (cell.position.x - cell.width / 2)) ||
+          (loop.minX <= (cell.position.x + cell.width / 2) && loop.maxX >= (cell.position.x + cell.width / 2)))
       ) {
         result.push(loop.id)
       }
@@ -1010,14 +1042,10 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
 
-        _loops.forEach(loop => {
-          if (
-              (loop.minY <= (currentSector.position.y - moduleThickness) && loop.maxY >= (currentSector.position.y - moduleThickness)) ||
-              (loop.minY <= currentSector.position.y && loop.maxY >= currentSector.position.y)
-          ) {
-            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
-              loops[doorKey][fasadeKey].errors.push(loop.id)
-          }
+        let check = checkLoop(_loops, currentSector)
+        check.forEach((id) => {
+          if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+            loops[doorKey][fasadeKey].errors.push(id)
         })
 
         if(loops[doorKey][fasadeKey].errors.length) {
@@ -1259,13 +1287,30 @@ const reset = (reset = false) => {
             if (row.extras?.length) {
               let newRowExtrasArray = <GridRowExtra>[]
               let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
+              let lastExtraHeight = newRow.height
 
               let extras = row.extras.slice().sort((a, b) => a.position.y - b.position.y)
-              extras.forEach((extra, extraIndex) => {
+              for (let j = 0; j < extras.length; j++) {
+                let extra = extras[j]
+
                 let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
 
                 newExtra.position.copy(positionRowExtras.clone())
                 newExtra.width = newRow.width;
+
+                lastExtraHeight -= newExtra.height
+
+                if (j === extras.length - 1 || lastExtraHeight <= 0) {
+                  newExtra.height += lastExtraHeight
+
+                  if(newExtra.height < MIN_SECTION_HEIGHT){
+                    newRowExtrasArray[newRowExtrasArray.length - 1].height += newExtra.height + moduleGrid.moduleThickness
+                    break;
+                  }
+                }
+                else {
+                  lastExtraHeight -= moduleGrid.moduleThickness
+                }
 
                 if (newExtra.fillings?.length) {
                   newExtra.fillings = <FillingObject>[...newExtra.fillings]
@@ -1285,7 +1330,7 @@ const reset = (reset = false) => {
 
                 newRowExtrasArray.push(newExtra)
                 positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
-              })
+              }
 
               newRow.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
             }
@@ -1521,6 +1566,17 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR, () 
   if (delta !== 0) {
     reset()
   }
+
+});
+
+//Изменение толщины левого бока и прилегающей к нему секции
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL, () => {
+
+  let tmp = noBackwall.value
+  checkNoBackwall()
+
+  if(tmp !== noBackwall.value)
+    reset()
 
 });
 

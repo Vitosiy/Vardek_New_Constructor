@@ -243,5 +243,6 @@ export interface GridModule {
   leftWallThickness?: number;
   rightWallThickness?: number;
   noBottom?: boolean;
+  noBackwall?: boolean;
   errors?: Object;
 }

@@ -1,8 +1,8 @@
 //@ts-nocheck
-import { useAppData } from "@/store/appliction/useAppData";
-import { useModelState } from "@/store/appliction/useModelState";
-import { useEventBus } from "@/store/appliction/useEventBus";
-import { useMechanism } from "./Mechanism/useMechanism";
+import {useAppData} from "@/store/appliction/useAppData";
+import {useModelState} from "@/store/appliction/useModelState";
+import {useEventBus} from "@/store/appliction/useEventBus";
+import {useMechanism} from "./Mechanism/useMechanism";
 
 const mechanism = useMechanism()
 
@@ -12,13 +12,13 @@ export const useRailsRightPage = () => {
     const appData = useAppData();
     const modelState = useModelState();
     const eventBus = useEventBus();
-    const { weightCalculation, createMeckhanizmList } = mechanism
+    const {weightCalculation, createMeckhanizmList} = mechanism
 
     const mechanismList = createMeckhanizmList()
 
     const createOptionList = () => {
 
-        const { PROPS } = modelState.getCurrentModel.userData;
+        const {PROPS} = modelState.getCurrentModel.userData;
         const filtered = filterOptions()
         let result = checkExeptionOptionForFasade(filtered, PROPS.CONFIG.OPTIONS)
 
@@ -34,8 +34,8 @@ export const useRailsRightPage = () => {
     }
 
     const checkActive = (id: string | number, values: boolean) => {
-        const { PROPS } = modelState.getCurrentModel.userData;
-        const { OPTIONS, MECHANISM_TEMP } = PROPS.CONFIG;
+        const {PROPS} = modelState.getCurrentModel.userData;
+        const {OPTIONS, MECHANISM_TEMP} = PROPS.CONFIG;
 
         const curOpt = OPTIONS.find(el => el.id == id);
         const curMech = MECHANISM_TEMP.find(el => el.ID == id);
@@ -71,15 +71,30 @@ export const useRailsRightPage = () => {
 
         curOpt.active = values;
 
-        if (curOpt.id == 5738924) {
-            if (curOpt.active) {
-                PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
-                PROPS.CONFIG.HORIZONT = 0
-            }
-            else {
-                PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
-                PROPS.CONFIG.HORIZONT = 78
-            }
+        switch (+curOpt.id) {
+            case 7250452:   //Деревянная царга
+                if (curOpt.active) {
+                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
+                } else
+                    delete PROPS.CONFIG.TSARGA
+                break;
+            case 7250589:   //Металлическая царга
+                if (curOpt.active) {
+                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
+                } else
+                    delete PROPS.CONFIG.TSARGA
+                break;
+            case 5738924:   //Без дна
+                if (curOpt.active) {
+                    PROPS.CONFIG.BACKWALL = {COLOR: false, SHOW: false};
+                    PROPS.CONFIG.HORIZONT = 0
+                } else {
+                    PROPS.CONFIG.BACKWALL = {COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true};
+                    PROPS.CONFIG.HORIZONT = 78
+                }
+                break;
+            default:
+                break;
         }
 
         eventBus.emit("A:SelectModelOption")
@@ -87,9 +102,11 @@ export const useRailsRightPage = () => {
     };
 
     const checkExeptionOptionForFasade = (options, global) => {
-        const { PROPS } = modelState.getCurrentModel.userData;
-        const { FASADE_PROPS } = PROPS.CONFIG
-        const prepareColorId = FASADE_PROPS.map(el => { return el.COLOR })
+        const {PROPS} = modelState.getCurrentModel.userData;
+        const {FASADE_PROPS} = PROPS.CONFIG
+        const prepareColorId = FASADE_PROPS.map(el => {
+            return el.COLOR
+        })
         const result = filterGroups(options, prepareColorId, global)
 
         return result
@@ -99,13 +116,13 @@ export const useRailsRightPage = () => {
         const data = appData.getAppData
         const options = data.OPTION
         const optGroup = data.OPTIONS_GROUP
-        const { PROPS } = modelState.getCurrentModel.userData;
+        const {PROPS} = modelState.getCurrentModel.userData;
         const curOptions = PROPS.CONFIG.OPTIONS
 
         let filtered = []
         const curOptionsList = curOptions
             .map(el => {
-                return { ...options[el.id], active: el.active, visible: el.visible }
+                return {...options[el.id], active: el.active, visible: el.visible}
             })
             .filter(Boolean);
 
@@ -142,7 +159,7 @@ export const useRailsRightPage = () => {
             );
 
             // Маппим CONTANT, создавая новые объекты с обновленным visible
-            const modifiedContant = contant.map(item => {
+            const modifiedContant = contant.filter(item => item.ID).map(item => {
 
                 let shouldBeVisible;
                 if (!hasMatching) {
@@ -164,9 +181,15 @@ export const useRailsRightPage = () => {
 
                 if (global) {
                     const curOptionInConfig = global.find(el => el.id === item.ID)
-                    curOptionInConfig.visible = shouldBeVisible
-                    if (!shouldBeVisible) {
-                        curOptionInConfig.active = false
+
+                    if (curOptionInConfig) {
+                        curOptionInConfig.visible = shouldBeVisible
+                        if (!shouldBeVisible) {
+                            curOptionInConfig.active = false
+                        }
+                    }
+                    else {
+                        return
                     }
                 }
 
@@ -223,9 +246,11 @@ export const useRailsRightPage = () => {
     };
 
     const resetGlobal = () => {
-        const { PROPS } = modelState.getCurrentModel.userData;
-        const { FASADE_PROPS, OPTIONS } = PROPS.CONFIG
-        const prepareColorId = FASADE_PROPS.map(el => { return el.COLOR })
+        const {PROPS} = modelState.getCurrentModel.userData;
+        const {FASADE_PROPS, OPTIONS} = PROPS.CONFIG
+        const prepareColorId = FASADE_PROPS.map(el => {
+            return el.COLOR
+        })
         const filtered = filterOptions()
         processVisibility(filtered, prepareColorId, OPTIONS)
         PROPS.CONFIG.MECHANISM = null
@@ -233,5 +258,5 @@ export const useRailsRightPage = () => {
 
     }
 
-    return { createOptionList, checkActive, resetGlobal }
+    return {createOptionList, checkActive, resetGlobal}
 }

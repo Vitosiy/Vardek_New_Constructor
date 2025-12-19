@@ -16,7 +16,7 @@
         <div v-for="(propValue, propKey) in item.product.PROPS" :key="propKey">
           <div v-if="getPropDefinition(String(propKey))">
             <!-- {{ propValue }} -->
-            <span class="basket-item__props-lable" v-if="propValue && propValue.length !== 0">{{ getPropLabel(String(propKey)) }}:</span>
+            <span class="basket-item__props-lable" v-if="propValue && propValue.length !== 0 && propKey !== 'MECHANISM'">{{ getPropLabel(String(propKey)) }}:</span>
             <!-- Обработка массивов -->
             <ul v-if="Array.isArray(propValue)" class="basket-item__props-list">
               <li v-for="(propVal, index) in propValue" :key="index">
@@ -155,6 +155,15 @@
                 </ul>
 
               </div>
+          </span>
+          <span v-if='propKey === "KROMKA"'>
+            <span class="basket-item__props-lable">Кромка:</span> 
+            <span>{{ getTypeName('HEM', propValue, item?.product.TYPE)  }}</span>
+          </span>
+          
+          <span v-if='propKey === "MECHANISM"'>
+            <span class="basket-item__props-lable">Подъемный механизм:</span> 
+            <span>{{ item?.product.PROPS.MECHANISMNAME }}</span>
           </span>
           
           <span v-if='propKey === "BODY"'>
@@ -386,9 +395,9 @@ const getErrorClass = (propVal: any, propsError: any) => {
   // Это упрощенная версия, нужно адаптировать под вашу логику
   if (!propsError || !Array.isArray(propsError)) return false;
 
-  if (propsError.some(error => error.id && error.id.includes(propVal))) {
-    return 'error-background';
-  }
+  // if (propsError.some(error => error.id && error?.id?.includes(propVal))) {
+  //   return 'error-background';
+  // }
   return '';
 };
 
@@ -431,16 +440,18 @@ const hasError = (value: any, propsError: any) => {
   // return propsError && propsError.includes(value);
   if (!propsError || !Array.isArray(propsError)) return false;
   
-  return propsError.some(error => error.id && error.id.includes(value));
+  // return propsError.some(error => error.id && error.id.includes(value));
 };
 
 const getTypeName = (type: any, value: any, mainType: any = '') => {
   // Получаем имя из store данных
   // console.log('data', appData.value, type, value, mainType);
+    console.log(type, mainType)
+
   if (value && typeof value === 'object' && value.NAME) {
     return value.NAME;
   }
-  if (appData.value && appData.value[type] && appData.value[type][value]) {
+  if (appData.value && appData.value[type] && appData.value[type][value] && type !== 'MECHANISM') {
     return appData.value[type][value].NAME || `[${type}:${value}]`;
   }
   if (mainType === 'scene' && type === 'COLOR') {     
@@ -457,9 +468,18 @@ const getTypeName = (type: any, value: any, mainType: any = '') => {
     return  appData.value[type][value['1'][0]]?.NAME;   
   }
 
+  if(type === 'HEM' && mainType === 'scene') {
+    return  appData.value['HEM'][value].NAME;   
+  }
+  if(type === 'MECHANISM' && mainType === 'scene') {
+    return  appData.value['MECHANISM'][value].NAME;   
+  }
 
-  // return [`${type}:${value}`];
-  return false;
+  if(mainType === 'scene') {
+    return false;
+  } else {
+    return [`${type}:${value}`];
+  }
 }; 
 
 const getListValue = (key: string, value: any) => {
@@ -634,16 +654,18 @@ const renderDescription = (props) => {
   }
 
   console.log(appData.value)
-  // Перебираем все двери
-  for (const [doorNumber, doorData] of Object.entries(props.DOORS)) {
-      // Для каждой двери перебираем её части (обычно только часть "1")
-      for (const [partNumber, partData] of Object.entries(doorData)) {
-        // Каждая часть может содержать несколько элементов (0, 1 и т.д.)
-        for (const [elementNumber, materialId] of Object.entries(partData)) {
-          const description = appData.value['FASADE'][materialId].NAME || `Неизвестный материал (ID: ${materialId})`;
-          result.push({key: `Цвет фасада ${doorNumber}`, value: ` дверь ${partNumber} часть ${+elementNumber + 1} : ${description}`});
+  if(props.DOORS) {
+    // Перебираем все двери
+    for (const [doorNumber, doorData] of Object.entries(props.DOORS)) {
+        // Для каждой двери перебираем её части (обычно только часть "1")
+        for (const [partNumber, partData] of Object.entries(doorData)) {
+          // Каждая часть может содержать несколько элементов (0, 1 и т.д.)
+          for (const [elementNumber, materialId] of Object.entries(partData)) {
+            const description = appData.value['FASADE'][materialId].NAME || `Неизвестный материал (ID: ${materialId})`;
+            result.push({key: `Цвет фасада ${doorNumber}`, value: ` дверь ${partNumber} часть ${+elementNumber + 1} : ${description}`});
+          }
         }
-      }
+    }
   }
 
  for  (const [key, value] of Object.entries(props)) {
@@ -654,20 +676,20 @@ const renderDescription = (props) => {
     }
 
     if(key === 'MODULECOLOR') {
-       result.push({key: 'Цвет корпуса', value: appData.value['FASADE'][value].NAME})
+       result.push({key: 'Цвет корпуса', value: appData.value['FASADE'][value]?.NAME})
     }
     if(key === 'HORIZONT') {
        result.push({key: 'Горизонт', value: value})
     }
     if(getPropDefinition(key)?.NAME && Array.isArray(value)) {
-      if(key === 'OPTION') {
+      if(key === 'OPTION' && value.length) {
         value.forEach(el => {
-          result.push({key: 'Опции', value: appData.value['OPTION'][el].NAME})
+          result.push({key: 'Опции', value: appData.value['OPTION'][el]?.NAME})
         })
       }
-      if(getPropDefinition(key)?.NAME && key !== 'OPTION') {
+      if(value.length && getPropDefinition(key)?.NAME && key !== 'OPTION') {
         value.forEach(el => {
-          result.push({key: getPropDefinition(key)?.NAME, value: appData.value['CATALOG']['PRODUCTS'][el.ID].NAME})
+          result.push({key: getPropDefinition(key)?.NAME, value: appData.value['CATALOG']['PRODUCTS'][el.ID]?.NAME ?? ''})
         })
       }
     }
@@ -698,7 +720,12 @@ const renderDescription = (props) => {
       if(key === 'LEFTSIDECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
       if(key === 'RIGHTSIDECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
       if(key === 'TOPFASADECOLOR') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
-      if(key === 'BACKWALL') {result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})}
+      if(key === 'BACKWALL' && value.COLOR) {
+        result.push({key: getPropDefinition(key)?.NAME, value: textValue(value)})
+      }
+      if(key === 'BACKWALL' && !value.COLOR) {
+        result.push({key: getPropDefinition(key)?.NAME, value: 'Выключена' })
+      }
     }
  }
 

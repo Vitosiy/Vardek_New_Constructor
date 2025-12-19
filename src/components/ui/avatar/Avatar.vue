@@ -33,13 +33,25 @@
       
       <transition name="fade">
         <div v-if="showDropdown" class="avatar-dropdown">
-          <div class="dropdown-item" >Имя: {{ authStore?.userData?.name }}</div>
-          <div class="dropdown-item" >Город: {{ appData?.SETTINGS?.region_by_user_name }}</div>
-          <div class="dropdown-item" >Почта: {{ authStore?.userData?.email }}</div>
-          <div class="dropdown-item" >Дата регистрации: {{ authStore?.userData?.date }}</div>
+          <div class="dropdown-item" >
+            <div class="dropdown-item__label">Имя:</div>
+            <div class="dropdown-item__value">{{ authStore?.userData?.name }}</div>
+          </div>
+          <div class="dropdown-item" >
+            <div class="dropdown-item__label">Город: </div>
+            <div class="dropdown-item__value">{{ appData?.SETTINGS?.region_by_user_name }}</div>
+          </div>
+          <div class="dropdown-item" >
+            <div class="dropdown-item__label">Почта:</div>
+            <div class="dropdown-item__value">{{ authStore?.userData?.email }}</div>
+          </div>
+          <div class="dropdown-item" >
+            <div class="dropdown-item__label"> Дата регистрации:</div>
+            <div class="dropdown-item__value">{{ authStore?.userData?.date }}</div>
+          </div>
           <div class="dropdown-item" @click.stop="handleLogout">
             <LogoutSVG class="dropdown-icon" />
-            Выйти
+            <span>Выйти</span> 
           </div>
         </div>
       </transition>
@@ -144,7 +156,7 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .avatar-container {
   position: relative;
   display: inline-block;
@@ -267,30 +279,54 @@ onBeforeUnmount(() => {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
+  min-width: 350px;
   z-index: 1000;
   overflow: hidden;
   border: 1px solid #e2e8f0;
 }
 
 .dropdown-item {
-  padding: 12px 16px;
+  padding: 4px;
+  padding-left: 16px;
   transition: background 0.2s;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 0;
   color: #334155;
   font-weight: 500;
+  &__label {
+    font-weight: bold;
+  }
+  &__value {
+
+  }
+  
 }
 
 /* .dropdown-item:hover {
   background: #f8f9fa;
   color: #1e293b;
 } */
+.dropdown-item:last-child {
+  flex-direction: row;
+  align-items: center;
+  span {
+    margin-left: 4px;
+  }
+}
+
+.dropdown-item:first-child,
+.dropdown-item:last-child {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
 .dropdown-item:last-child:hover {
   cursor: pointer;
   background: #f8f9fa;
   color: #1e293b;
+  flex-direction: row;
+
 }
 
 .dropdown-icon {
@@ -316,6 +352,7 @@ onBeforeUnmount(() => {
 /* Анимация появления инициалов */
 .avatar-initials {
   animation: fadeIn 0.3s ease;
+  cursor: pointer;
 }
 
 @keyframes fadeIn {

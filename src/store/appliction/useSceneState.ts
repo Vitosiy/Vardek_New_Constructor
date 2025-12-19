@@ -44,26 +44,6 @@ export const useSceneState = defineStore('SceneState', () => {
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
 
-    const mergeRooms = (
-        currentRooms: IRoom[] | undefined,
-        newRooms: IRoom[] | undefined
-    ): IRoom[] | undefined => {
-        if (!newRooms) return currentRooms;
-        if (!currentRooms) return newRooms;
-
-        const mergedRooms = newRooms.map(newRoom => {
-            const existing = currentRooms.find(r => r.id === newRoom.id);
-            return existing ? { ...existing, ...newRoom } : newRoom;
-        });
-
-        // Добавляем старые, которые не пришли в обновлении
-        const missing = currentRooms.filter(
-            oldRoom => !newRooms.some(r => r.id === oldRoom.id) && oldRoom.id !== 1000001
-        );
-
-        return [...mergedRooms, ...missing];
-    };
-
     const updateProjectParams = (params: Partial<IProjectParams>) => {
         const base = startProjectParams.value;
         const current = currentProjectParams.value;
@@ -72,7 +52,10 @@ export const useSceneState = defineStore('SceneState', () => {
             ...base,
             ...current,
             ...params,
-            rooms: mergeRooms(current.rooms, params.rooms) ?? base.rooms,
+            // Если пришёл новый список комнат, считаем его источником истины.
+            // Это важно для операций удаления: комнаты, отсутствующие в params.rooms,
+            // не должны «добавляться обратно» из текущего состояния.
+            rooms: params.rooms ?? current.rooms ?? base.rooms,
             camera: params.camera ?? current.camera ?? base.camera,
             lights: params.lights ?? current.lights ?? base.lights,
             height_clamp: params.height_clamp ?? current.height_clamp ?? base.height_clamp,

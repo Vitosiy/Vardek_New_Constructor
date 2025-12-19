@@ -13,16 +13,46 @@ import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
 
+import RoomManager from '../roomManager/RoomManager.vue';
+import RoomList from '../option/roomOptions/RoomList.vue';
+
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import CatalogSVG from '@/components/ui/svg/CatalogSVG.vue';
+
+import ClosePopUpButton from '@/components/ui/svg/ClosePopUpButton.vue';
+
+import { useRoomState } from '@/store/appliction/useRoomState';
+import { nextTick } from 'vue';
+
+import { storeToRefs } from 'pinia';
+
+const roomState = useRoomState();
+const { getRooms, getRoomId } = storeToRefs(roomState);
   
 const popupStore = usePopupStore();
+
+// Локальное состояние для открытия/закрытия меню "Параметры помещения" в 2D
+const isRoomParamsOpen = ref(false);
+
+const deleteRoom = (value: number) => {
+  roomState.removeRoom(value);
+  console.log('11111111111111111111111111111111111111111')
+};
+
+const toggleRoomParams = () => {
+  isRoomParamsOpen.value = !isRoomParamsOpen.value;
+  
+  console.log('11111111111111111111111111111111111111111')
+};
 
 const constructor2dMenu = useC2DLeftMenuStore();
 
 const menuItemActive = ref<string | null>(null);
 const goodItemActive = ref<string | null>(null);
 
+// Список комнат и текущая активная комната
+const roomsList = computed(() => getRooms.value || []);
+const currentRoomId = computed(() => getRoomId.value);
 // Получаем секции "Двери" и "Окна"
 const doorSection = computed(() => {
   return catalogSections.find((el) => el.nameMode === 'door');
@@ -121,31 +151,45 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
+// Функция для переключения комнаты
+const switchRoom = async (roomId: string | number) => {
+  // Устанавливаем выбранную комнату как текущую активную
+  roomState.setCurrentRoomId(roomId);
+  
+  // Ждем обновления состояния
+  await nextTick();
+  
+  // Переинициализируем Planner и DoorsAndWindows с новой комнатой
+  const c2d = window.C2D;
+  if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+    c2d.layers.planner.init(true);
+    c2d.layers.doorsAndWindows.init(true);
+  }
+  
+  // Закрываем меню параметров помещения
+  isRoomParamsOpen.value = false;
+};
+
 
 </script>
 
 <template>
   <section class="options">
     <div class="options__container">
-<!-- 
       <div class="options-design">
         <h1 class="options__title">Проектирование</h1>
         <div class="goods">
-          
-          <div class="goods-item active">
+          <div
+            class="goods-item"
+            :class="{ active: isRoomParamsOpen }"
+            @click="toggleRoomParams"
+          >
             <S2DAppartSVG class="goods-item__image" />
-            <p class="goods-item__title">2D квартира</p>
+            <p class="goods-item__title">Параметры помещения</p>
             <div class="radial-sphere"></div>
-          </div> -->
-          
-          <!-- <div class="goods-item">
-            <RoomPlaneSVG class="goods-item__image" />
-            <p class="goods-item__title">Шаблоны комнат</p>
-            <div class="radial-sphere"></div>
-          </div> -->
-
-        <!-- </div>
-      </div> -->
+          </div>
+        </div>
+      </div>
 
       <div class="options-design">
         <!-- <h1 class="options__title">Товары</h1>
@@ -172,13 +216,46 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
         </div>
       </div>
 
+      <transition name="slide--left">
+        <div class="room" v-if="isRoomParamsOpen">
+          <div class="room-popup">
+            <h1 class="popup__title">Параметры помещения</h1>
+            <ClosePopUpButton class="menu__close" @close="toggleRoomParams" />
+            <div
+              v-for="room in roomsList"
+              :key="room.id"
+              class="project-item"
+              :class="{ active: String(room.id) === String(currentRoomId) }"
+              @click="switchRoom(room.id)"
+            >
+              <img
+                :src="'/src/assets/img/proj.png'"
+                class="item__image"
+                :alt="room.label || room.description || 'Комната'"
+              />
+              <div class="item-info">
+                <div class="info-id">
+                  <p class="id__name">
+                    {{ room.label || room.description || (`Комната ${room.id}`) }}
+                  </p>
+                  <ClosePopUpButton
+                    class="room-action-btn"
+                    @close="deleteRoom(room.id)"
+                    @click.stop
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
     </div>
   </section>
 </template>
 
 <style lang="scss" scoped>
 .options {
-  width: 160px;
+  width: 300px;
   flex-shrink: 0;
   height: 100%;
   border-right: 1px solid $light-stroke;
@@ -378,12 +455,12 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       gap: 15px;
       position: absolute;
       top: 15px;
-      left: -840px;
-      transform: translateZ(-10px);
-      transition: 0.5s ease-in-out;
+      left: 310px; // стартовая позиция, как в 3D-меню
+      // transform: translateZ(-10px);
+      // transition: 0.5s ease-in-out; // анимация теперь через <transition>
 
       .room-popup {
-        width: 570px;
+        width: 710px;
         display: flex;
         flex-direction: column;
         gap: 15px;
@@ -393,146 +470,6 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
         box-shadow: 0px 0px 10px 0px #3030301a;
         z-index: 1;
         border-radius: 15px;
-
-
-
-        &__container {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-
-          .room-select {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px 0;
-            border-top: 1px solid $stroke;
-            border-bottom: 1px solid $stroke;
-          }
-
-          .room-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-
-            .option-small {
-              flex: 46%;
-              padding: 10px;
-              border-radius: 15px;
-              background-color: $bg;
-
-              .option-label {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 10px;
-
-                .label__image {
-                  display: flex;
-                }
-
-                .label__text {
-                  font-size: 15px;
-                  font-weight: 600;
-                  color: $strong-grey;
-                }
-              }
-
-              .option__checkbox {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-              }
-            }
-
-            .option-standart {
-              width: 100%;
-              padding: 10px;
-              border-radius: 15px;
-              background-color: $bg;
-
-              .select-group {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-
-                .option-label {
-                  width: 100%;
-                  max-width: 262.5px;
-                  display: flex;
-                  align-items: center;
-                  gap: 10px;
-                  margin-bottom: 10px;
-
-                  .label__image {
-                    display: flex;
-                  }
-
-                  .label__text {
-                    font-size: 15px;
-                    font-weight: 600;
-                    color: $strong-grey;
-                  }
-                }
-              }
-
-              .option__checkbox {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-              }
-            }
-          }
-        }
-
-        &.active {
-          left: 330px;
-        }
-      }
-
-      .color-select {
-        width: 373px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        padding: 15px;
-        background: $white;
-        box-shadow: 0px 0px 10px 0px #3030301a;
-        z-index: 1;
-        border-radius: 15px;
-        transition: 0.5s ease-in-out;
-
-        .menu__close {
-          position: absolute;
-          right: 15px;
-          top: 15px;
-          cursor: pointer;
-        }
-
-        &__container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 5px;
-
-          .color-item {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: $bg;
-            border-radius: 15px;
-            gap: 10px;
-
-            &__title {
-              font-size: 15px;
-              font-weight: 500;
-            }
-          }
-        }
-      }
-
-      &.active {
-        left: 330px;
       }
     }
   }
@@ -582,6 +519,68 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       background: $red;
     }
   }
+}
+
+.project-item {
+        width: 250px;
+        height: 230px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: column;
+        border-radius: 16px;
+        background-color: $bg;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        &.active {
+          border-color: $white;
+          box-shadow: 0 4px 12px rgba(218, 68, 76, 0.3);
+        }
+
+        .item__image {
+          margin: 0;
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+        }
+
+        .item-info {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 3px 10px;
+          box-sizing: border-box;
+        }
+      }
+
+.info-id {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.id__name {
+  margin: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-action-btn {
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 </style>

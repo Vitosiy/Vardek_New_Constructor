@@ -89,12 +89,12 @@ export class BuildUniversalModule extends BuildProduct {
             let option = this._OPTION[+activeOptions[i].id]
 
             switch (+option.ID) {
-                case 7250452:   //Деревянная царга
+/*                case 7250452:   //Деревянная царга
                     PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
                     break;
                 case 7250589:   //Металлическая царга
                     PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
-                    break;
+                    break;*/
                 case 4621257:   //Опора регулируемая
                 case 4621238:   //Опора 100 мм
                 case 4621240:   //Опора 150 мм
@@ -301,7 +301,7 @@ export class BuildUniversalModule extends BuildProduct {
                 curSection.fillings.push({  //Добавляем разделитель секций, как товар наполнения
                     position: new THREE.Vector3(curSection.position.x + curSection.size.x / 2 + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
                         curSection.position.y - full_horizont_height, curSection.position.z),
-                    size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, curSection.size.z),
+                    size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, product_data.depth), // curSection.size.z
                     product: 5820274,
                     material: PROPS.CONFIG.MODULE_COLOR,
                     id: curSection.fillings.length + 1,
@@ -314,7 +314,7 @@ export class BuildUniversalModule extends BuildProduct {
                 if (cellIndex > 0)
                     curSection.fillings.push({  //Добавляем полку, как товар наполнения
                         position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
-                        size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.z),
+                        size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth), // curSection.size.z
                         product: 4263392,
                         id: curSection.fillings.length + 1,
                         material: PROPS.CONFIG.MODULE_COLOR,
@@ -326,7 +326,7 @@ export class BuildUniversalModule extends BuildProduct {
                     if (rowIndex > 0)
                         curSection.fillings.push({  //Добавляем верт. полку, как товар наполнения
                             position: new THREE.Vector3(row.position.x - row.width / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2, row.position.y - full_horizont_height, curSection.position.z),
-                            size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, curSection.size.z),
+                            size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, product_data.depth), // curSection.size.z
                             product: 5820266,
                             id: curSection.fillings.length + 1,
                             material: PROPS.CONFIG.MODULE_COLOR,
@@ -337,7 +337,7 @@ export class BuildUniversalModule extends BuildProduct {
                         if (extraIndex > 0)
                             curSection.fillings.push({  //Добавляем полку, как товар наполнения
                                 position: new THREE.Vector3(extra.position.x, extra.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
-                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.z),
+                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth), // curSection.size.z
                                 product: 5820266,
                                 id: curSection.fillings.length + 1,
                                 material: PROPS.CONFIG.MODULE_COLOR,
@@ -346,7 +346,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                         extra.fillings?.forEach((filling) => {
                             let fillingPos = new THREE.Vector3(
-                                filling.isVerticalItem ? extra.position.x - extra.width / 2 + filling.distances.left : extra.position.x,
+                                filling.isVerticalItem ? extra.position.x - extra.width / 2 + filling.distances.left + filling.width / 2 : extra.position.x,
                                 extra.position.y + filling.distances.bottom - full_horizont_height,
                                 curSection.position.z
                             )
@@ -361,7 +361,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                     row.fillings?.forEach((filling) => {
                         let fillingPos = new THREE.Vector3(
-                            filling.isVerticalItem ? row.position.x - row.width / 2 + filling.distances.left : row.position.x,
+                            filling.isVerticalItem ? row.position.x - row.width / 2 + filling.distances.left + filling.width / 2 : row.position.x,
                             row.position.y + filling.distances.bottom - full_horizont_height,
                             curSection.position.z
                         )
@@ -376,7 +376,7 @@ export class BuildUniversalModule extends BuildProduct {
 
                 cell.fillings?.forEach((filling) => {
                     let fillingPos = new THREE.Vector3(
-                        filling.isVerticalItem ? cell.position.x - cell.width / 2 + filling.distances.left : cell.position.x,
+                        filling.isVerticalItem ? cell.position.x - cell.width / 2 + filling.distances.left + filling.width / 2 : cell.position.x,
                         cell.position.y + filling.distances.bottom - full_horizont_height,
                         curSection.position.z
                     )
@@ -391,7 +391,7 @@ export class BuildUniversalModule extends BuildProduct {
 
             section.fillings?.forEach((filling) => {
                 let fillingPos = new THREE.Vector3(
-                    filling.isVerticalItem ? curSection.position.x - curSection.size.x / 2 + filling.distances.left : curSection.position.x,
+                    filling.isVerticalItem ? curSection.position.x - curSection.size.x / 2 + filling.distances.left + filling.width / 2 : curSection.position.x,
                     curSection.position.y + filling.distances.bottom - full_horizont_height,
                     curSection.position.z
                 )
@@ -962,6 +962,9 @@ export class BuildUniversalModule extends BuildProduct {
                                         orientation: "right"
                                     }
                             }
+
+                            element.VALUE = positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2)
+
                         }
                         else {
 
@@ -1042,6 +1045,8 @@ export class BuildUniversalModule extends BuildProduct {
                                     orientation: "top"
                                 }
                             }
+
+                            element.VALUE = positionX
                         }
 
                     }
