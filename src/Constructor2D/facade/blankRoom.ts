@@ -1,11 +1,13 @@
 // @ts-nocheck
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition"
+import { useRoomState } from "@/store/appliction/useRoomState"
 import { useProjectStore } from "@/features/quickActions/project/store/useProjectStore"
 
 const sceneState = useSceneState()
 const schemeTransition = useSchemeTransition()
 const projectState = useProjectStore()
+const roomState = useRoomState()
 
 const jsonBlank = `{
     "projectId": "1762946168561",
