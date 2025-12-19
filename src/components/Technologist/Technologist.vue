@@ -3,7 +3,7 @@
 
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import {usePopupStore} from "@/store/appStore/popUpsStore.ts";
-import {nextTick, ref} from "vue";
+import {nextTick, onMounted, ref, watch} from "vue";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
@@ -16,6 +16,8 @@ import {useEventBus} from "@/store/appliction/useEventBus.ts";
 import {useSchemeTransition} from "@/store/canvasMerge/schemeTransition.ts";
 import {useRoute, useRouter} from "vue-router";
 import {useRoomState} from "@/store/appliction/useRoomState.ts";
+import MainButton from "@/components/ui/buttons/MainButton.vue";
+import Pagination from "@/components/ui/pagination/Pagination.vue";
 
 // Загрузка проекта
 const router = useRouter();
@@ -35,54 +37,49 @@ const technologistStorage = useTechnologistStorage();
 const technologistAPI = useTechnologistApi();
 
 const loading = ref(false)
-const techList = ref(<TechnologistTechList>{})
+const techList = technologistStorage.techList
 const arrIdInputFile = ref({})
 const formReview = ref({})
-const fileUpDropArr = ref({});
 
 const closePopup = () => {
   popupStore.closePopup('technologist');
 };
 
 const getTechList = function () {
-  
-  techList.value.loader = true;
+
+  techList.loader = true;
 
   let formData = new FormData();
 
-  formData.append("filter", techList.value.filter);
-  formData.append("pager", techList.value.pager);
+  formData.append("filter", techList.filter);
+  formData.append("pager", techList.pager);
 
-  $.ajax({
-    url: '/api/technologist/main/GetList/',
-    method: 'post',
-    processData: false,
-    contentType: false,
-    data: formData,
-    success: function (data) {
-
-      techList.value.elements = data.DATA.items;
-      techList.value.loader = false;
-      //techList.nav = data.DATA.nav;
+  technologistAPI.getList(formData).then((result) => {
+    if (result) {
+      techList.elements = result.DATA.items;
+      if (result.DATA.nav) {
+        techList.nav = result.DATA.nav;
+      }
     }
-  });
-
+    techList.loader = false;
+  })
 }
 
 const setStatus = function (id, statusId, projectTechId = false, message = false, comments = false) {
-  let formData
-  if (comments) {
-     let f = document.querySelector("#commentsForm");
-     formData = new FormData(f);
+  let formData = new FormData()
 
-     let fileUpDrop = fileUp.get(arrIdInputFile['comments']);
+  /*  if (comments) {
+      let f = document.querySelector("#commentsForm");
+      formData = new FormData(f);
 
-    for ( let f in fileUpDrop.getFiles()) {
-      formData.append('comments[]', fileUpDrop.getFiles()[f]['_file']);
-    }
-  } else {
-     formData = new FormData();
-  }
+      let fileUpDrop = fileUp.get(arrIdInputFile['comments']);
+
+      for (let f in fileUpDrop.getFiles()) {
+        formData.append('comments[]', fileUpDrop.getFiles()[f]['_file']);
+      }
+    } else {
+      formData = new FormData();
+    }*/
 
   formData.append("id", id);
   formData.append("statusId", statusId);
@@ -93,27 +90,24 @@ const setStatus = function (id, statusId, projectTechId = false, message = false
   if (message != false)
     formData.append("message", message);
 
-  $.ajax({
-    url: '/api/technologist/main/SetStatus/',
-    method: 'post',
-    processData: false,
-    contentType: false,
-    data: formData,
-    success: function (data) {
+  technologistAPI.setStatus(formData).then((result) => {
+    if (result) {
       if (statusId == 'C10:PREPAYMENT_INVOIC' || statusId == 'C10:1') {
-        formReview.value['result'] = data.DATA;
+        formReview.value['result'] = result.DATA;
 
         if (formReview.value.result.success) {
-           alert("Успешно отправлено на проверку", "success");
-          $('#review').modal("hide");
+          alert("Успешно отправлено на проверку", "success");
+          //$('#review').modal("hide");
         }
 
-        if (formReview.value.result.success) getTechList();
+        if (formReview.value.result.success)
+          getTechList();
       } else {
         getTechList();
       }
     }
-  });
+    techList.loader = false;
+  })
 }
 
 const openModalSTD = function (elem, statusId) {
@@ -123,7 +117,7 @@ const openModalSTD = function (elem, statusId) {
   formReview.value.id = elem.id;
   formReview.value.statusId = statusId;
   if (arrIdInputFile['comments'] === undefined) {
-     let fileUpDrop = fileUp.create({
+    let fileUpDrop = fileUp.create({
       url: '/upload/tmp',
       input: 'comments',
       queue: 'comments-queue',
@@ -133,7 +127,7 @@ const openModalSTD = function (elem, statusId) {
       lang: 'ru',
       onSelect: function (file) {
 
-         let format = [
+        let format = [
           'application/pdf',
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'text/plain',
@@ -166,7 +160,7 @@ const openModalComments = function (id) {
       $("body").addClass("modal-open")
     }, 1000);
   })
-   let formData = new FormData();
+  let formData = new FormData();
   formData.append("id", id);
 
   $.ajax({
@@ -347,145 +341,234 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
   closePopup();
 }*/
 
+onMounted(() => {
+
+  if (!techList.filter)
+    techList.filter = 0
+  if (!techList.pager)
+    techList.pager = 1
+
+  getTechList()
+})
+
+watch(() => techList.filter, () => {
+  getTechList()
+})
+
+watch(() => techList.pager, () => {
+  getTechList()
+})
+
+const handlePageChange = (page: number) => {
+  techList.pager = page;
+}
+
+// Адаптация данных навигации для компонента пагинации
+const getNavData = () => {
+  if (!techList.nav) return null;
+
+  const nav = techList.nav;
+  const currentPage = Number(nav.NavPageNomer) || 1;
+  const totalPages = Number(nav.NavPageCount) || 1;
+  const maxSize = 5; // максимальное количество видимых страниц
+
+  // Вычисляем окно страниц, если не задано
+  let nStartPage = nav.nStartPage ? Number(nav.nStartPage) : null;
+  let nEndPage = nav.nEndPage ? Number(nav.nEndPage) : null;
+
+  if (!nStartPage || !nEndPage) {
+    // Вычисляем окно страниц вокруг текущей страницы
+    const halfWindow = Math.floor(maxSize / 2);
+    nStartPage = Math.max(1, currentPage - halfWindow);
+    nEndPage = Math.min(totalPages, currentPage + halfWindow);
+
+    // Корректируем границы, если окно слишком маленькое
+    if (nEndPage - nStartPage < maxSize - 1) {
+      if (nStartPage === 1) {
+        nEndPage = Math.min(totalPages, maxSize);
+      } else if (nEndPage === totalPages) {
+        nStartPage = Math.max(1, totalPages - maxSize + 1);
+      }
+    }
+  }
+
+  return {
+    ...nav,
+    NavPageNomer: currentPage,
+    NavPageCount: totalPages,
+    nStartPage,
+    nEndPage,
+    nPageWindow: maxSize
+  };
+}
+
 </script>
 
 <template>
   <div class="technologist">
-    <div class="technologist-header">
-      <div v-if="loading" class="technologist__loader"></div>
 
+    <div class="technologist-header">
       <div class="technologist-header__title">Список заявок</div>
 
       <ClosePopUpButton
           class="technologist-header__close-btn"
           @click="closePopup"
       />
+    </div>
 
-      <div class="modal-body">
-        <div class="row">
-          <div class="mainCont">
-            <div class="filterList">
-              <label class="filterItem" for="filterItem_1" :class="{'active': '0' == techList.filter}">
-                <input
-                    type="radio"
-                    name="filterItem"
-                    value="0"
-                    id="filterItem_1"
-                    style="display: none;"
-                    v-model="techList.filter"
-                >
-                <span>Все</span>
-              </label>
-              <label
-                  class="filterItem"
-                  for="filterItem_{{status.ID}}"
-                  :class="{'active': status.STATUS_ID == techList.filter}"
-                  v-for="status in APP.STATUS_TECH"
-                  :style="`color:${status.EXTRA.COLOR}`"
-              >
-                <input
-                    type="radio"
-                    name="filterItem"
-                    value="{{status.STATUS_ID}}"
-                    id="filterItem_{{status.ID}}"
-                    style="display: none;"
-                    v-model="techList.filter"
-                >
-                <span>{{ status.NAME }}</span>
-              </label>
-            </div>
+    <div class="technologist-container">
 
-            <div v-show="techList.nav" class="pagination_wrap">
-<!--              <div
-                  uib-pagination previous-text="<?= GetMessage('CON_TPL_70') ?>"
-                   next-text="<?= GetMessage('CON_TPL_73') ?>"
-                   items-per-page="techList.nav.NavPageSize"
-                   total-items="techList.nav.NavRecordCount"
-                   v-model="techList.pager"
-                   max-size="5"
-                   class="pagination-sm pull-left" boundary-link-numbers="true"></div>-->
-              <div class="badge">{{ techList.nav.NavPageNomer }}/{{ techList.nav.NavPageCount }}</div>
-            </div>
+      <div class="filterList">
+        <label
+            :class="['filterItem', {'active': '0' == techList.filter}]"
+        >
+          <input
+              type="radio"
+              name="filterItem"
+              :value="0"
+              id="filterItem_1"
+              style="display: none;"
+              v-model="techList.filter"
+          >
+          <span>Все</span>
+        </label>
+        <label
+            :class="['filterItem', {'active': status.STATUS_ID == techList.filter}]"
+            v-for="status in APP.STATUS_TECH"
+            :style="`color:${status.EXTRA.COLOR}`"
+        >
+          <input
+              type="radio"
+              name="filterItem"
+              :value="status.STATUS_ID"
+              :id="`filterItem_${status.ID}`"
+              style="display: none;"
+              v-model="techList.filter"
+          >
+          <span>{{ status.NAME }}</span>
+        </label>
+      </div>
 
-            <div id="progressModal" ng-include data-src="'progressModal'" v-show="techList.loader"></div>
+      <div v-if="techList.nav" class="pagination_wrap">
+        <Pagination
+            v-if="getNavData()"
+            :nav-data="getNavData()"
+            @page-changed="handlePageChange"
+        />
+        <div class="badge">{{ techList.nav?.NavPageNomer }}/{{ techList.nav?.NavPageCount }}</div>
+      </div>
 
-            <div class="appList">
-              <div v-for="elem in techList.elements" class="appItem">
-                <div class="propText">{{ elem.name }}</div>
-                <div class="propText">{{ elem.projectId }}</div>
-                <div class="propText">{{ APP.STATUS_TECH[elem.statusId].NAME }}</div>
-                <div
-                    v-show="APP.userGroup[56]"
-                    @click="setStatus(elem.id, 'C10:LOSE');"
-                    class="btn btn-primary">Отказать
-                </div>
-                <div
-                    v-show="APP.userGroup[56]"
-                    class="btn btn-primary"
-                    @click="openModalSTD(elem, 'C10:1');"
-                >Отправить проект на доработку
-                </div>
-                <div
-                    v-show="APP.userGroup[56] && elem.projectId"
-                    @click="uploadProjectTech(elem.projectId);"
-                    class="btn btn-primary">Загрузить проект дизайнера
-                </div>
-                <div
-                    v-show="elem.projectTechId"
-                    @click="uploadProjectTech(elem.projectTechId);"
-                    class="btn btn-primary">Загрузить проект технолога
-                </div>
-                <div
-                    v-show="elem.statusId == 'C10:NEW' && APP.userGroup[56]"
-                    @click="setStatus(elem.id, 'C10:PREPARATION');"
-                    class="btn btn-default">Взять в работу
-                </div>
-                <div
-                    v-show="APP.userGroup[56] && (elem.statusId == 'C10:PREPARATION' || elem.statusId == 'C10:1')"
-                    class="btn btn-default"
-                    @click="openModalSTD(elem, 'C10:PREPAYMENT_INVOIC');">Отправить проект на
-                  проверку
-                </div>
-                <div
-                    @click="openModalComments(elem.id);"
-                    class="btn btn-default">Комментарии
-                </div>
-                <div
-                    v-show="((APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC')"
-                    class="btn btn-default"
-                    @click="openModalSTD(elem, 'C10:1');"
-                >Отправить проект на доработку
-                </div>
-                <div
-                    v-show="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC'"
-                    class="btn btn-default"
-                    @click="setStatus(elem.id, 'C10:2');"
-                >Принять работу
-                </div>
-                <div
-                    v-show="APP.userGroup[56] && elem.statusId == 'C10:2'"
-                    class="btn btn-default"
-                    @click="setStatus(elem.id, 'C10:3');"
-                >Принять работу
-                </div>
-                <div
-                    v-show="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:3'"
-                    class="btn btn-default"
-                    @click="openModalOrder(elem.projectTechId);"
-                >Оформить заказ
-                </div>
-              </div>
-            </div>
+      <div v-if="techList.loader" class="technologist__loader"></div>
+
+      <div v-if="!techList.loader" class="appList">
+        <div v-for="elem in techList.elements" class="appItem">
+          <div class="appItem-propText">{{ elem.name }}</div>
+          <div class="appItem-propText">Проект №{{ elem.projectId }}</div>
+          <div class="appItem-propText">
+            Статус:
+            <h :style="`color:${APP.STATUS_TECH[elem.statusId].EXTRA.COLOR}`">{{
+                APP.STATUS_TECH[elem.statusId].NAME
+              }}
+            </h>
           </div>
+
+          <MainButton
+              v-if="APP.userGroup[56]"
+              @click="openModalSTD(elem, 'C10:1');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:1'].EXTRA.COLOR}`"
+          >
+            Отправить проект на доработку
+          </MainButton>
+
+          <MainButton
+              v-if="((APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC')"
+              @click="openModalSTD(elem, 'C10:1');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:1'].EXTRA.COLOR}`"
+          >
+            Отправить проект на доработку
+          </MainButton>
+
+          <MainButton
+              v-if="APP.userGroup[56] && (elem.statusId == 'C10:PREPARATION' || elem.statusId == 'C10:1')"
+              @click="openModalSTD(elem, 'C10:PREPAYMENT_INVOIC')"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:PREPAYMENT_INVOIC'].EXTRA.COLOR}`"
+          >
+            Отправить проект на проверку
+          </MainButton>
+
+          <MainButton
+              v-if="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC'"
+              @click="setStatus(elem.id, 'C10:2');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:2'].EXTRA.COLOR}`"
+          >
+            Принять работу
+          </MainButton>
+
+          <MainButton
+              v-if="APP.userGroup[56] && elem.statusId == 'C10:2'"
+              @click="setStatus(elem.id, 'C10:3');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:3'].EXTRA.COLOR}`"
+          >
+            Принять работу
+          </MainButton>
+
+          <MainButton
+              v-if="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:3'"
+              @click="openModalOrder(elem.projectTechId);"
+              :class-name="'appItem-btn'"
+          >
+            Оформить заказ
+          </MainButton>
+
+          <MainButton
+              v-if="elem.statusId == 'C10:NEW' && APP.userGroup[56]"
+              @click="setStatus(elem.id, 'C10:PREPARATION');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:PREPARATION'].EXTRA.COLOR}`"
+          >
+            Взять в работу
+          </MainButton>
+
+          <MainButton
+              v-if="APP.userGroup[56]"
+              @click="setStatus(elem.id, 'C10:LOSE');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:LOSE'].EXTRA.COLOR}`"
+          >
+            Отказать
+          </MainButton>
+
+          <MainButton
+              v-if="APP.userGroup[56] && elem.projectId"
+              @click="uploadProjectTech(elem.projectId);"
+              :class-name="'appItem-btn'"
+          >
+            Загрузить проект дизайнера
+          </MainButton>
+
+          <MainButton
+              v-if="elem.projectTechId"
+              @click="uploadProjectTech(elem.projectTechId);"
+              :class-name="'appItem-btn'"
+          >
+            Загрузить проект технолога
+          </MainButton>
+
+          <MainButton
+              @click="openModalComments(elem.id)"
+              :class-name="'appItem-btn'"
+          >
+            Комментарии
+          </MainButton>
         </div>
       </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default"
-                data-dismiss="modal"></button>
-      </div>
-
     </div>
+
   </div>
 
 </template>
@@ -500,19 +583,20 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
   background: white;
   border-radius: 15px;
   padding: 15px;
-  width: 100%;
   box-sizing: border-box;
-  max-height: 80vh;
-  height: 100%;
-  max-width: 1447px;
   width: 90vw;
+  height: 85vh;
+  overflow: hidden;
 
-  .technologist-header {
+  &-header {
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     width: 100%;
+    align-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
 
     &__title {
       font-weight: 600;
@@ -525,120 +609,91 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
       fill: #A3A9B5;
       position: absolute;
       right: 0;
-      top: 10px;
       cursor: pointer;
     }
   }
 
-  &__additional-table {
-    margin-top: 2rem;
-  }
-
-  .technologist-container {
-    width: 100%;
+  &-container {
+    padding: 0 50px;
     height: 100%;
-    overflow-y: auto;
+    width: 100%;
 
-    &__main-table {
-      // margin-bottom: 2rem;
-      .technologist-table {
-        background-color: #F6F5FA;
-        border-radius: 15px;
+    .filterList {
+      display: flex;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      align-content: center;
+
+      .filterItem {
+        margin-right: 10px;
+        border: 2px solid;
+        padding: 5px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+
+        &.active {
+          background: #333333;
+          color: #fff;
+        }
       }
     }
 
-  }
-
-  .technologist-footer {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-
-    @media (max-width: 768px) {
-      flex-direction: column-reverse;
-      align-items: stretch;
-    }
-
-    &-info {
+    .appList {
       display: flex;
-      flex-direction: column;
-      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      margin-top: 1rem;
+
+      .appItem {
+        display: flex;
+        flex-direction: column;
+        border: 2px solid;
+        border-radius: 15px;
+        width: 20vw;
+        height: 50vh;
+        padding: 10px;
+        align-items: center;
+        margin-bottom: 1rem;
+        margin-right: 1rem;
+        justify-content: space-evenly;
+
+        &-propText {
+          width: 100%;
+          border-bottom: 1px solid;
+          text-align: center;
+          padding-bottom: 5px;
+          margin-bottom: 5px;
+        }
+
+        &-btn {
+          margin-bottom: 10px;
+          background: white;
+          border: $strong-grey 1px solid;
+
+          &:hover {
+            background-color: $red;
+            color: $white;
+          }
+        }
+
+        &-status-btn {
+          margin-bottom: 10px;
+          border: $strong-grey 1px solid;
+        }
+      }
     }
 
-    &-buttons {
+    .pagination_wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+    }
 
-      @media (max-width: 768px) {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .technologist__error {
-        display: flex;
-        align-items: center;
-        margin-right: 30px;
-        color: $red;
-
-        @media (max-width: 768px) {
-          width: 100%;
-          margin-right: 0;
-          margin-bottom: 10px;
-          justify-content: center;
-        }
-      }
-
-      button {
-        width: 114px;
-        height: 50px;
-        background: $stroke;
-        border-radius: 15px;
-        border: none;
-
-        @media (max-width: 768px) {
-          flex: 1;
-          min-width: 100px;
-        }
-      }
-
-      .technologist__close {
-        color: $strong-grey;
-        font-weight: 600;
-      }
-
-      .technologist__save {
-        width: 132px;
-        color: $white;
-        font-weight: 600;
-        background-color: $black;
-
-        @media (max-width: 768px) {
-          width: auto;
-          flex: 1;
-        }
-      }
-
-      .technologist__order {
-        width: 174px;
-        color: $white;
-        font-weight: 600;
-        background-color: $red;
-
-        @media (max-width: 768px) {
-          width: auto;
-          flex: 2;
-        }
-
-        &:disabled {
-          background-color: #A3A9B5;
-          cursor: not-allowed;
-        }
-      }
+    .badge {
+      height: 20px;
     }
   }
 
@@ -704,15 +759,6 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
   100% {
     clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0)
   }
-}
-
-.technologist-footer__notification {
-  background: #cfe2ff;
-  width: 100%;
-  border-radius: 8px;
-  padding: 12px;
-  max-height: 114px;
-  overflow-y: auto;
 }
 
 </style>

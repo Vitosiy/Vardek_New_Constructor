@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import {TechnologistFormError} from "@/types/technologist.ts";
+import {TechnologistFormError, TechnologistTechList} from "@/types/technologist.ts";
 import {defineStore} from "pinia";
 
 /*const STORAGE_KEY = 'technologist-data'
@@ -13,6 +13,7 @@ const defaultDeal = {
 export const useTechnologistStorage = defineStore('technologist-data', () => {
   const currentProjectID = ref<number|boolean>(false)
   const techFormError = ref<TechnologistFormError>(<TechnologistFormError>{})
+  const techList = ref<TechnologistTechList>(<TechnologistTechList>{filter: 0})
   //const deal = ref(Object.assign({}, defaultDeal))
 
   const setCurrentProjectID = (id: number) => {
@@ -35,6 +36,13 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
     return techFormError.value?.error || {};
   }
 
+  const getTechList = () => {
+    return techList.value;
+  }
+  const clearTechList = () => {
+    techList.value = <TechnologistTechList>{filter: 0};
+  }
+
   const clearStorage = () => {
     currentProjectID.value = false
     clearError()
@@ -45,11 +53,14 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
   }
 
   return {
+    techList,
     setTechFormError,
     getTechFormError,
     getCurrentProjectID,
     setCurrentProjectID,
     clearStorage,
-    clearError
+    clearError,
+    getTechList,
+    clearTechList
   }
 })

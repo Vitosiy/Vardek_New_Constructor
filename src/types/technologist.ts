@@ -1,4 +1,4 @@
-
+//#region Интерфейсы для формы заявки
 export interface TechnologistFormItem {
   projectId: string;
   phone: string;
@@ -27,29 +27,36 @@ export interface TechnologistFormError {
   };
 }
 
+export interface TechnologistFormResponse {
+  CODE: number;
+  DATA: TechnologistFormError | boolean;
+}
+
+//#endregion
+
+export interface TechnologistResponse {
+  CODE: number;
+  DATA: TechnologistResponseData | boolean;
+}
+
 export interface TechnologistTechList {
-  filter: string;
-  pager: string;
+  filter: number | string;
+  pager: number | string;
   loader: boolean;
   elements: [];
   nav: {};
 }
 
-export interface TechnologistResponse {
-  CODE: number;
-  DATA: TechnologistFormError | boolean;
+export interface TechnologistResponseData {
+  items: {} | null;
+  nav?: {
+    NavPageNomer?: string | number;
+    NavPageCount?: number;
+    NavPageSize?: number;
+    NavRecordCount?: string | number;
+    nStartPage?: number;
+    nEndPage?: number;
+    nPageWindow?: number;
+    [key: string]: any;
+  };
 }
-
-export interface TechnologistRequest {
-  login: string;
-  password: string;
-  projectId: string;
-  phone: string;
-  email: string;
-  name: string;
-  technique: string[];
-  sketch: File[];
-  photoRoom?: File[];
-  metering?: File[];
-}
-
