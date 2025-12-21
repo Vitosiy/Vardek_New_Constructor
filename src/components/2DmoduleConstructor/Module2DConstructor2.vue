@@ -1272,7 +1272,7 @@ const reset = (reset = false) => {
                 }
                 else {
                   if(filling.isProfile) {
-                    updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                    updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
                   }
                   else
                     updateFilling(newRow.width, filling, 'width')
@@ -1320,7 +1320,7 @@ const reset = (reset = false) => {
                     }
                     else {
                       if(filling.isProfile) {
-                        updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                        updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
                       }
                       else
                         updateFilling(newExtra.width, filling, 'width')
@@ -1356,7 +1356,7 @@ const reset = (reset = false) => {
                 }
                 else {
                   if (filling.isProfile) {
-                    updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                    updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
                   } else
                     updateFilling(lastRow.width, filling, 'width')
                 }
@@ -1377,7 +1377,7 @@ const reset = (reset = false) => {
             }
             else {
               if (filling.isProfile) {
-                updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+                updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
               } else
                 updateFilling(newCell.width, filling, 'width')
             }
@@ -1400,7 +1400,7 @@ const reset = (reset = false) => {
         }
         else {
           if (filling.isProfile) {
-            updateFilling(module.value.profilesConfig.onSectionSize ? newSection.width : totalWidth.value, filling, 'width')
+            updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
           } else
             updateFilling(newSection.width, filling, 'width')
         }
