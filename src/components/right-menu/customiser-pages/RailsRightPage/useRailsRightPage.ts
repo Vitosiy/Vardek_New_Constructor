@@ -64,6 +64,24 @@ export const useRailsRightPage = () => {
                 //     opt.active = false;
                 // }
                 if (opt.group === curOpt.group && opt.close === curOpt.close && opt.id !== curOpt.id || opt.section === curOpt.section && opt.close === curOpt.close && opt.id !== curOpt.id) {
+
+                    if (opt.active) {
+                        switch (+opt.id) {
+                            case 7250452:   //Деревянная царга
+                                delete PROPS.CONFIG.TSARGA
+                                break;
+                            case 7250589:   //Металлическая царга
+                                delete PROPS.CONFIG.TSARGA
+                                break;
+                            case 5738924:   //Без дна
+                                PROPS.CONFIG.BACKWALL = {COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true};
+                                PROPS.CONFIG.HORIZONT = 78
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
                     opt.active = false;
                 }
             });
@@ -187,8 +205,7 @@ export const useRailsRightPage = () => {
                         if (!shouldBeVisible) {
                             curOptionInConfig.active = false
                         }
-                    }
-                    else {
+                    } else {
                         return
                     }
                 }
