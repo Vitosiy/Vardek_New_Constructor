@@ -1,11 +1,13 @@
 // @ts-nocheck
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition"
+import { useRoomState } from "@/store/appliction/useRoomState"
 import { useProjectStore } from "@/features/quickActions/project/store/useProjectStore"
 
 const sceneState = useSceneState()
 const schemeTransition = useSchemeTransition()
 const projectState = useProjectStore()
+const roomState = useRoomState()
 
 const jsonBlank = `{
     "projectId": "1762946168561",
@@ -163,6 +165,11 @@ const projectData = JSON.parse(jsonBlank)
 
 console.log(projectData)
 
+// Возвращает глубокую копию первой комнаты из blankroom
+export const getBlankRoomTemplate = () => {
+  return JSON.parse(JSON.stringify(projectData.rooms[0]))
+}
+
 const ensureLayersReady = async () => {
   while (!window.C2D?.layers?.planner || !window.C2D?.layers?.doorsAndWindows) {
     await new Promise(resolve => requestAnimationFrame(resolve))
@@ -177,6 +184,8 @@ export const loadBlankRoom = async () => {
     await sceneState.loadProjectFromData(projectData)
     sceneState.updateProjectParams({})
     schemeTransition.setAppData(projectData.rooms)
+    
+    roomState.routConvertData('/3d')
 
     projectState.setProjectId(undefined)
 

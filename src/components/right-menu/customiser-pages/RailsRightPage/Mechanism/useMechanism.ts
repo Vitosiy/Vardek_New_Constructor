@@ -147,6 +147,7 @@ export const useMechanism = () => {
                     if (filtered[SECTION] && filtered[SECTION] !== PROPERTY_TYPE_MECHANISM_VALUE) continue;
                     filtered[SECTION] = PROPERTY_TYPE_MECHANISM_VALUE;
 
+
                     mechanism[GROUP] ??= [];
                     mechanism[GROUP].push({
                         ID: mechID,
@@ -155,23 +156,25 @@ export const useMechanism = () => {
                         TYPE: 'mechanism',
                         group: GROUP,
                         close: '2',
-                        active: MECHANISM === parseFloat(mechID),
+                        active: CONFIG.MECHANISM == parseInt(mechID),
                         visible: true
                     })
-
-                    // MINHEIGHT: minH,
-                    // MAXHEIGHT: maxH,
-                    // ALLWEIGHT: totalWeight,
-                    // MINWEIGHT: minW,
-                    // MAXWEIGHT: maxW,
                 }
             }
+
+            console.log()
             const result = Object.entries(mechanism).map(([key, value]) => {
 
-                if (OPTIONS_GROUP[key]) {
-                    return { NAME: OPTIONS_GROUP[key].NAME, CONTANT: value }
-                }
+                const prepare = Object.values(value).flat().reduce((acc, meck) => {
+                    const exist = acc.find(el => el.ID === meck.ID)
+                    if (!exist) acc.push(meck)
+                    return acc
+                }, [])
 
+
+                if (OPTIONS_GROUP[key]) {
+                    return { NAME: OPTIONS_GROUP[key].NAME, CONTANT: prepare }
+                }
             })
 
             createMeckhanizmTemp(mechanism)
@@ -185,13 +188,19 @@ export const useMechanism = () => {
     };
 
     const createMeckhanizmTemp = (data: TMechanismData[] | []) => {
+        const result = Object.values(data).flat().reduce((acc, meck) => {
+            const exist = acc.find(el => el.ID === meck.ID)
+            if (!exist) acc.push(meck)
+            return acc
+        }, [])
+
+
         const curModel = modelState.getCurrentModel;
         const { PROPS } = curModel!.userData;
         const { CONFIG } = PROPS;
 
-        CONFIG.MECHANISM_TEMP = Object.values(data).flat()
+        CONFIG.MECHANISM_TEMP = result
 
-        console.log(CONFIG.MECHANISM_TEMP, '_MECHANISM')
     }
 
     return { weightCalculation, createMeckhanizmList }

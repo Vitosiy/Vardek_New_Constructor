@@ -125,7 +125,7 @@ export class EdgeBuilder {
     private createSingleFace(mesh: THREE.Mesh, name?: string, manualParent?: THREE.Object3D) {
         const material = name === 'fasade' ? this.fasadeMaterial : this.defaultMaterial
 
-        const faceMesh = new THREE.Mesh(mesh.geometry, material)
+        let faceMesh = new THREE.Mesh(mesh.geometry, material)
         if (name === 'fasade') faceMesh.renderOrder = 1;
 
 

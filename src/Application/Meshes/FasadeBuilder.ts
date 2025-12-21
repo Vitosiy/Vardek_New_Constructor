@@ -549,14 +549,14 @@ export class FasadeBuilder {
                         clone.applyMatrix4(el.matrixWorld); // Запекаем мировую трансформацию
 
                         // КЛЮЧЕВОЕ: Локальная UV для каждой части перед merge — это фиксит размазывание
-                        this.parent.planarUV(clone);
+                        this.parent.normalizeUVsTo01(clone);
 
                         geometries.push(clone);
                     });
 
                     const material = new THREE.MeshPhongMaterial();
                     const merged = BufferGeometry.mergeGeometries(geometries, true);
-                    this.parent.planarUV(merged);
+                    this.parent.normalizeUVsTo01(merged);
 
                     if (textureCheck) {
                         const fasadeInfo = this.parent._FASADE[currentFasadeColor];
@@ -643,8 +643,8 @@ export class FasadeBuilder {
             z: this.parent.calculateFromString(fasade_position.FASADE_DEPTH),
         };
         const geometry = this.parent.createExtrudeBoxGeometry(geometryConfig);
-        const material = new THREE.MeshPhongMaterial();
-        const curExceptionsMaterial = new THREE.MeshPhongMaterial({
+        const material = new THREE.MeshStandardMaterial();
+        const curExceptionsMaterial = new THREE.MeshStandardMaterial({
             transparent: true,
             opacity: 0.5,
             color: new THREE.Color('rgb(255, 0, 0)')

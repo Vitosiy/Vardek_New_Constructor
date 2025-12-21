@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import * as THREETypes from "@/types/types";
+import * as BufferGeometry from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export class PaletteBuilder {
     parent: THREETypes.TBuildProduct;
@@ -10,7 +11,7 @@ export class PaletteBuilder {
         this.parent = parent;
     }
 
-    private createMaterial(colorHex: string, roughness: number): THREE.MeshStandardMaterial {
+    private createMaterial(colorHex: string, roughness: number = 0): THREE.MeshStandardMaterial {
         const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(`#${colorHex}`),
             metalness: 0.7,
@@ -25,19 +26,71 @@ export class PaletteBuilder {
         return material;
     }
 
-    private applyTexture(child: THREE.Mesh, palette: any, fasadeSize: THREE.Vector3) {
-        this.parent.changeColor({
+    private async applyTexture(child: THREE.Mesh, url: any, fasadeSize: THREE.Vector3) {
+        await this.parent.changeColor({
             object: child,
-            url: palette.DETAIL_PICTURE,
+            url,
             type: "Palette",
             textureSize: fasadeSize
         });
     }
 
-    private applyMaterial(child: THREE.Mesh, fasade: THREE.Object3D, palette: any, roughness: number) {
+    private applyMaterial(child: THREE.Mesh, palette: any, roughness: number) {
         const material = this.createMaterial(palette.HTML, roughness);
         child.material = material;
-        fasade.userData.millingMaterial = material;
+        child.userData.millingMaterial = material;
+    }
+
+    private async applyKant(paletteData, fasadeMesh: THREE.Mesh, fasadeTexture:string) {
+
+        const rootMaterial = new THREE.MeshStandardMaterial()
+        await this.parent.getTexture({material:rootMaterial, url:fasadeTexture, texture_size: {width:1024, height:1024}})
+        const kantMaterial = this.createMaterial(paletteData.HTML, 0.5)
+
+        const geometry = fasadeMesh.geometry;
+
+        // Важно: гарантируем наличие нормалей
+        if (!geometry.attributes.normal) {
+            geometry.computeVertexNormals();
+        }
+
+        geometry.clearGroups();
+
+        const positions = geometry.attributes.position.array;
+        const normals = geometry.attributes.normal.array;
+
+        const vertexCount = positions.length / 3;
+        const hasIndex = geometry.index !== null;
+        const indexArray = hasIndex ? geometry.index.array : null;
+
+        let currentStart = 0;
+        let currentIsCap = null;
+
+        for (let i = 0; i < vertexCount; i += 3) {
+            // Индекс первой вершины треугольника
+            const vIdx = hasIndex ? indexArray[i] : i;
+            const nz = normals[vIdx * 3 + 2]; 
+
+            const isCap = Math.abs(Math.abs(nz) - 1) < 0.001;
+
+            if (currentIsCap === null) {
+                currentIsCap = isCap;
+            }
+
+            if (isCap !== currentIsCap) {
+                geometry.addGroup(currentStart, i - currentStart, currentIsCap ? 0 : 1);
+                currentStart = i;
+                currentIsCap = isCap;
+            }
+        }
+
+        if (currentStart < vertexCount) {
+            geometry.addGroup(currentStart, vertexCount - currentStart, currentIsCap ? 0 : 1);
+        }
+
+        fasadeMesh.material = [rootMaterial, kantMaterial];
+        geometry.groupsNeedUpdate = true;
+
     }
 
     getPalette(fasadeId: number, paletteId: number) {
@@ -50,7 +103,7 @@ export class PaletteBuilder {
         return this.createMaterial(palette.HTML, roughnessValue)
     }
 
-    createPaletteColor({
+    async createPaletteColor({
         fasade,
         data,
         fasadeProps,
@@ -61,63 +114,26 @@ export class PaletteBuilder {
     }) {
 
 
-
         const { _APP, _FASADE } = this.parent;
         const palette = _APP.PALETTE[data];
         const fasadeId = fasadeProps.COLOR ?? 567323;
         const fasadeName = _FASADE[fasadeId].NAME.toLowerCase();
+        const fasadeTexture = _FASADE[fasadeId].TEXTURE
+
+        console.log(fasadeTexture, palette, '==== fasadeData =====')
 
         fasade.visible = true;
 
-        // return
-
-        const useTexture = Boolean(palette.DETAIL_PICTURE);
-        const fasadeSize = useTexture
-            ? new THREE.Box3().setFromObject(fasade).getSize(new THREE.Vector3())
-            : undefined;
+        const useTexture = palette.TYPE === "KANT"
 
         const roughnessValue = !useTexture && fasadeName.includes("матовый") ? 0.5 : 0.02;
 
-        if (useTexture && fasadeSize) {
-            this.applyTexture(fasade, palette, fasadeSize);
+        if (useTexture && fasadeTexture) {
+            this.applyKant(palette, fasade, fasadeTexture)
         } else {
-            this.applyMaterial(fasade, fasade, palette, roughnessValue);
+            this.applyMaterial(fasade, palette, roughnessValue);
         }
 
-        // fasade.traverse((child) => {
-        //     // Проверяем, является ли объект THREE.Mesh
-        //     if (!(child instanceof THREE.Mesh)) {
-        //         return;
-        //     }
-
-        //     // Пропускаем объекты с именем "HANDLE"
-        //     if (child.name === "HANDLE") {
-        //         console.log(child, 'HANDLE')
-        //         return;
-        //     }
-
-        //     // Пропускаем объекты с userData.edge или у которых родитель имеет userData.edge
-        //     if (child.userData?.edge || child.parent?.userData?.edge) {
-        //         return;
-        //     }
-
-        //     // Пропускаем объекты с типом "glass", если не используется текстура
-        //     if (!useTexture && child.userData?.type === "glass") {
-        //         return;
-        //     }
-
-        //     // Сохраняем оригинальный материал, если он ещё не сохранён
-        //     if (!child.userData.ORIGINAL_COLOR) {
-        //         child.userData.ORIGINAL_COLOR = child.material;
-        //     }
-
-        //     // Применяем текстуру или материал
-        //     if (useTexture && fasadeSize) {
-        //         this.applyTexture(child, palette, fasadeSize);
-        //     } else {
-        //         this.applyMaterial(child, fasade, palette, roughnessValue);
-        //     }
-        // });
 
         fasadeProps.SHOW = true;
         fasadeProps.PALETTE = palette.ID;

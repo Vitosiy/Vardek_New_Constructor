@@ -256,12 +256,17 @@ const loadProject = async (id: string | number) => {
 
       try {
         schemeTransition.clearStore();
+        // Очищаем текущую комнату перед загрузкой нового проекта
+        roomState.clearCurrentRoomId();
+        
         // 1. Обновляем данные проекта в sceneState
         await sceneState.loadProjectFromData(projectData);
         sceneState.updateProjectParams({});
         
         // 2. Устанавливаем данные в schemeTransition
         schemeTransition.setAppData(projectData.rooms);
+        roomState.routConvertData('/3d')
+
         
         const currentPath = route.path;
         const is3DView = currentPath === '/3d';
@@ -303,21 +308,29 @@ const loadProject = async (id: string | number) => {
           // 3. Конвертируем данные для 3D (чтобы rooms.value был заполнен)
           roomState.routConvertData('/3d');
           
-          // 4. Конвертируем данные для 2D (чтобы данные были в правильном формате)
+          // 4. Устанавливаем первую комнату как текущую активную сразу после загрузки комнат
+          await nextTick(); // Ждем, чтобы комнаты успели загрузиться
+          const rooms = roomState.getRooms;
+          if (rooms && rooms.length > 0) {
+            // Всегда устанавливаем первую комнату из загруженного проекта
+            roomState.setCurrentRoomId(rooms[0].id);
+          }
+          
+          // 5. Конвертируем данные для 2D (чтобы данные были в правильном формате)
           roomState.routConvertData('/2d');
 
-          // 5. Устанавливаем ID проекта в store
+          // 6. Устанавливаем ID проекта в store
           projectState.setProjectId(id.toString());
 
-          // 6. Уведомляем о загрузке контента
+          // 7. Уведомляем о загрузке контента
           eventBus.emit("A:ContantLoaded", true);
 
           toaster.success("Проект загружен");
 
-          // 7. Переходим на 2D конструктор
+          // 8. Переходим на 2D конструктор
           await router.push("/2d");
-          
-          // 8. Ждем готовности C2D и инициализируем слои
+
+          // 9. Ждем готовности C2D и инициализируем слои
           await nextTick(); // Ждем, чтобы компонент начал монтироваться
           const c2d = await waitForC2D();
           
@@ -334,7 +347,7 @@ const loadProject = async (id: string | number) => {
             console.warn("C2D не готов после ожидания");
           }
           
-          // 9. Закрываем попап только после успешной инициализации
+          // 10. Закрываем попап только после успешной инициализации
           closePopup();
         }
       } catch (error) {

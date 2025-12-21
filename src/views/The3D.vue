@@ -86,6 +86,7 @@ const VerdekConstructor = ref<Application | null>(null);
 
 const controller = ref(false);
 const transformControlsValue = ref<boolean>(false);
+const hideFasadeValue = ref<boolean>(false);
 
 const productColor = ref<{ [key: string]: any }>({});
 const currentFasadeId = ref<{ [key: string]: any }>({});
@@ -239,22 +240,6 @@ const controlsActivate = (value) => {
   } catch (e) {
     console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
   }
-  // const curModel = modelState.getCurrentModel;
-
-  // if (transformControlsValue.value) {
-  //   eventBus.emit("A:TransformMode_On");
-  // } else {
-  //   eventBus.emit("A:TransformMode_Off");
-  //   try {
-  //     if (product.value?.userData.MOUSE_POSITION) {
-  //       controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
-  //     }
-  //   } catch (e) {
-  //     console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
-  //   }
-  // }
-
-  // modelState.setTransformControlsValue(transformControlsValue.value);
 };
 
 // const changeControllerType = (data) => {
@@ -289,6 +274,19 @@ const selected = async (item: any) => {
   roomContantData.value!.setRoomContantData(totalContent.value);
   product.value = object;
   controller.value = true;
+
+  /** Для скрытия отображения фасадов */
+  if (
+    !RASPIL.data &&
+    modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS.some(
+      (el) => el.COLOR !== 7397
+    )
+  ) {
+    hideFasadeValue.value =
+      !modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS[0]?.SHOW;
+  } else {
+    hideFasadeValue.value = false;
+  }
 
   productData.value = { ...PROPS };
 
@@ -533,6 +531,23 @@ const removeModel = (model) => {
   scheduleBasketSync();
 };
 
+const toggleFasade = () => {
+  if (
+    modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS.some(
+      (el) => el.COLOR !== 7397
+    )
+  ) {
+    const curVisible =
+      modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS[0].SHOW;
+
+    hideFasadeValue.value = curVisible;
+
+    eventBus.emit("A:Toggle-Fasad", !curVisible);
+    return;
+  }
+  hideFasadeValue.value = false;
+};
+
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
@@ -605,6 +620,16 @@ const controllerPosition = computed(() => {
   };
 });
 
+const getU = computed(() => {
+  return hideFasadeValue.value;
+});
+
+const activeHideFasadeButton = computed(() => {
+  return {
+    active: hideFasadeValue.value,
+  };
+});
+
 /** Работа о столешницами */
 
 const saveTableData = async () => {
@@ -619,7 +644,7 @@ const saveTableData = async () => {
 
   await APP!.tableTopCreator?.create(
     toRaw(CutCash.value),
-    product.value,
+    toRaw(product.value),
     groupID
   );
 
@@ -759,6 +784,8 @@ watch(
             Object.keys(CutData).length == 0 &&
             modelState.getCurrentModel?.name != 'MODEL'
           "
+          :class="activeHideFasadeButton"
+          @click="toggleFasade"
         />
 
         <Modal
@@ -827,13 +854,6 @@ watch(
     </div>
   </div>
   <transition name="controller-toggle">
-    <!-- <div
-      class="switch__wrapper"
-      v-if="
-        modelState.getCurrentModel &&
-        !uniformState.getUniformModeData.uniformMode
-      "
-    > -->
     <TransformController
       v-if="
         modelState.getCurrentModel &&
@@ -841,43 +861,6 @@ watch(
       "
       @TransformMode="controlsActivate"
     />
-    <!-- <transition name="controller-toggle">
-        <p class="switch__title" v-if="!transformControlsValue">
-          {{ curControllerValue }}
-        </p>
-      </transition>
-
-      <transition name="controller-toggle">
-        <Accordion v-if="transformControlsValue">
-          <template #title>
-            <h4 class="accordion__header">
-              {{ curControllerValue }}
-            </h4>
-          </template>
-          <template #params="{ onToggle }">
-            <ul class="accordion__contant">
-              <li
-                class="accordion__text"
-                v-for="(data, key) in controllerValue"
-                :key="key + data.name"
-                @click="
-                  () => {
-                    changeControllerType(data);
-                    onToggle();
-                  }
-                "
-              >
-                {{ data.name }}
-              </li>
-            </ul>
-          </template>
-        </Accordion>
-      </transition>
-
-      <div class="switch__container">
-        <Toggle v-model="transformControlsValue" />
-      </div> -->
-    <!-- </div> -->
   </transition>
 </template>
 
@@ -1060,7 +1043,7 @@ watch(
   @media (hover: hover) {
     &:hover {
       background-color: #131313;
-      border-color: #131313;
+      border-color: $white;
     }
   }
 }

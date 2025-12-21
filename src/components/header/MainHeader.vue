@@ -18,6 +18,7 @@ import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useRoomOptions } from "../left-menu/option/roomOptions/useRoomOptons";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { TApplication } from "@/types/types";
+import { getBlankRoomTemplate } from "@/Constructor2D/facade/blankRoom";
 
 import {
   postRequest,
@@ -138,8 +139,44 @@ const updateProject = async () => {
 };
 
 const createNewRoom = (value: string) => {
+  // 2D: создаем новую комнату на основе шаблона blankroom
+  if (route.path === "/2d") {
+    const roomId = Date.now().toString();
+    const template = getBlankRoomTemplate();
+    const label = value || template.label || `Комната ${roomState.getRooms.length + 1}`;
+
+    roomState.addRoom({
+      id: roomId,
+      label,
+      description: template.description || "",
+      params: template.params,
+      content: template.content,
+      basket: JSON.stringify({
+        scene: [],
+        catalog: [],
+      }),
+    });
+
+    roomState.setCurrentRoomId(roomId);
+
+    // Обновляем данные для 2D‑конструктора
+    roomState.routConvertData("/2d");
+
+    // Переинициализируем C2D, если он уже загружен
+    const c2d = window.C2D;
+    if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+      c2d.layers.planner.init(true);
+      c2d.layers.doorsAndWindows.init(true);
+    }
+
+    return;
+  }
+
+  // 3D: старая логика
   if (!verdekConstructor.value) return;
-  props.pageComponent.selected();
+  if (props.pageComponent?.selected) {
+    props.pageComponent.selected();
+  }
   roomOptions.resetGlobalOptions();
 
   menuStore.setRulerVisibility(true);
@@ -298,6 +335,17 @@ watch(
 
       if (newPath === "/2d") {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
+        
+        // Устанавливаем текущую активную комнату (первую, если нет текущей)
+        const rooms = roomState.getRooms;
+        if (rooms && rooms.length > 0) {
+          const currentRoomId = roomState.getRoomId;
+          if (!currentRoomId) {
+            // Если текущей комнаты нет, устанавливаем первую комнату
+            roomState.setCurrentRoomId(rooms[0].id);
+          }
+        }
+        
         // Ждем готовности C2D, если его еще нет
         let c2d = window.C2D;
         if (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) {
@@ -400,7 +448,7 @@ onBeforeUnmount(() => {
             <S2DLightHeaderButton />
             <S3DLightHeaderButton />
           </div>
-          <!-- <div class="header-ui-group" v-if="route.path == '/3d'">
+          <div class="header-ui-group">
             <Modal ref="inputDialogRef">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
@@ -441,7 +489,7 @@ onBeforeUnmount(() => {
                 </button>
               </template>
             </Modal>
-          </div> -->
+          </div>
         </div>
       </div>
       <div class="header-utilitys">

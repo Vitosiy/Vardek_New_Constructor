@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 import { MathUtils } from "three";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import {
   rotatePointsAroundCenter,
@@ -22,14 +23,46 @@ import {
 import { Vector2 } from "@/types/constructor2d/interfaсes";
 
 const roomsStore = useSchemeTransition();
+const roomState = useRoomState();
 
 export function initRoom(this: any): (0 | 1) {
 
   const rooms = roomsStore.getAllData();
-    // console.log(rooms,"--RR")
-  for (let i = 0, len = rooms.length; i < len; i++) {
+  
+  if (!rooms || rooms.length === 0) {
+    return 0;
+  }
 
-    const room = rooms[i];
+  // Получаем текущую активную комнату
+  let currentRoomId = roomState.getRoomId;
+  
+  // Если текущей комнаты нет, устанавливаем первую комнату как текущую
+  if (!currentRoomId && rooms.length > 0) {
+    currentRoomId = rooms[0].id;
+    roomState.setCurrentRoomId(currentRoomId);
+  }
+
+  // Нормализуем ID для сравнения
+  const normalizeId = (value: string | number | null | undefined) => {
+    return value !== null && value !== undefined ? String(value) : '';
+  };
+  const currentRoomIdNormalized = normalizeId(currentRoomId);
+
+  // Фильтруем комнаты - обрабатываем только текущую активную комнату
+  const roomsToProcess = rooms.filter(room => {
+    const roomIdNormalized = normalizeId(room.id);
+    return roomIdNormalized === currentRoomIdNormalized;
+  });
+
+  if (roomsToProcess.length === 0) {
+    console.warn('Текущая активная комната не найдена в данных');
+    return 0;
+  }
+
+  // Обрабатываем только текущую активную комнату
+  for (let i = 0, len = roomsToProcess.length; i < len; i++) {
+
+    const room = roomsToProcess[i];
 
     this.addRoom(room.id, room.label, room.description);
 

@@ -34,6 +34,7 @@ import { HandlesBuilder } from './Handles/Handles.ts';
 import { PlinthBuilder } from './PlinthBuilder/PlinthBuilder.ts';
 import { DrowerBuilder } from './Drowers/DrowerBuilder.ts';
 import { ShelfBuilder } from './Shelf/ShelfBuilder.ts';
+import { MirrorBuilder } from './MirrorBuilder/MirrorBuilder.ts';
 // import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 // import { group } from 'console';
 
@@ -62,6 +63,7 @@ export class BuildProduct extends BuildersHelper {
     plinth_builder: PlinthBuilder
     drower_builder: DrowerBuilder
     shelf_builder: ShelfBuilder
+    mirror_builder: MirrorBuilder
     uniform_texture_builder: UniformTextureBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
 
@@ -90,6 +92,7 @@ export class BuildProduct extends BuildersHelper {
         this.drower_builder = new DrowerBuilder(this)
         this.plinth_builder = new PlinthBuilder(this)
         this.shelf_builder = new ShelfBuilder(this)
+        this.mirror_builder = new MirrorBuilder(this)
     }
 
     get _currentProduct() {
@@ -376,15 +379,15 @@ export class BuildProduct extends BuildersHelper {
             SIZEEDITJOINDEPTH: product_data.SIZE_EDIT_JOINDEPTH_MIN ? 310 : null,
         };
 
-        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
-        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
+        // PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
+        // PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
 
-        if (isDae) {
-            PARAMS.DAE = true
-            return PARAMS
-        }
+        // if (isDae) {
+        //     PARAMS.DAE = true
+        //     return PARAMS
+        // }
 
-        if (product_data.FILLING.length && product_data.FILLING[0]) {
+        if (product_data.FILLING.length && product_data.FILLING[0] && !isDae) {
             let filling_list = this.filters.filterFilling(this._FILLING, {
                 PR: PARAMS,
                 ID: product_data.FILLING,
@@ -394,33 +397,33 @@ export class BuildProduct extends BuildersHelper {
             PARAMS.FILLING_LIST = product_data.FILLING
         }
 
-        if (this._PRODUCTS[ID].leg_length) {
+        if (this._PRODUCTS[ID].leg_length && !isDae) {
             PARAMS.PLINTH_ACTIONS = this.createPlinthParams(this._PRODUCTS[ID].models)
         }
 
-        if (OPTION.length && OPTION[0] !== null) {
+        if (OPTION.length && OPTION[0] !== null && !isDae) {
             PARAMS.OPTIONS = this.filters.filterOption(OPTION)
         }
 
-        if (FASADE_SIZES?.length) {
+        if (FASADE_SIZES?.length && !isDae) {
 
             PARAMS.FASADE_SIZE = this.filters.filterFasadeSizer(FASADE_SIZES, product_data) as any[];
         }
 
-        if (FACADE?.[0]) {
+        if (FACADE?.[0] && !isDae) {
             this.filters.filterFasadePosition(PARAMS, product_data);
         }
 
-        if (MODULECOLOR?.[0] != null) {
+        if (MODULECOLOR?.[0] != null && !isDae) {
             PARAMS.MODULE_COLOR = this.filters.filterModuleColor(MODULECOLOR)[0];
         }
 
-        if (type_showcase?.[0] != null) {
+        if (type_showcase?.[0] != null && !isDae) {
             PARAMS.SHOWCASE = [...type_showcase];
             PARAMS.PRODUCT_SHOWCASE = type_showcase[0]
         }
 
-        if (USLUGI?.[0] != null) {
+        if (USLUGI?.[0] != null && !isDae) {
             const { uslugi, profile } = this.filters.filterUslugi(USLUGI, product_data);
             PARAMS.PROFILE = profile
             // PARAMS.USLUGI = this.createCutterParams(uslugi);
@@ -428,7 +431,12 @@ export class BuildProduct extends BuildersHelper {
             props.RASPIL = this.createStartTopTableCutData(uslugi, product_data);
         }
 
-        PARAMS.DAE = false
+        PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
+        PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) }
+
+        // PARAMS.DAE = false
+
+        PARAMS.DAE = isDae
 
         return PARAMS;
     }
@@ -603,7 +611,8 @@ export class BuildProduct extends BuildersHelper {
         const { defModuleTop, defModuleBottom, moduleTop, moduleBottom } = defaultConfig
         const product = this._PRODUCTS[ID]
         const texture = product.texture;
-        console.log(this.modelState.createFlatModuleData(product.MODULECOLOR)[0])
+
+
         const resolveColorId = () => {
             const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === this.modelState.createFlatModuleData(product.MODULECOLOR)[0]
             let checked: boolean
@@ -614,8 +623,6 @@ export class BuildProduct extends BuildersHelper {
                     return (defModuleBottom && isDefault && checked) || (moduleBottom.global && checked) ? defModuleBottom : MODULE_COLOR;
                 case "element_up":
                     checked = product.MODULECOLOR.includes(defModuleTop)
-                    console.log(isDefault)
-
                     return (defModuleTop && isDefault && checked) || (moduleTop.global && checked) ? defModuleTop : MODULE_COLOR;
                 default:
                     return MODULE_COLOR;
@@ -624,11 +631,13 @@ export class BuildProduct extends BuildersHelper {
 
         // const moduleColorId = "src" in texture && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
         const moduleColorId = texture?.src && !this._FASADE[MODULE_COLOR] ? MODULE_COLOR : resolveColorId();
-        console.log(moduleColorId, MODULE_COLOR, 'moduleColorId')
 
         CONFIG.MODULE_COLOR = moduleColorId;
 
         const moduleColor = this._FASADE[moduleColorId];
+        
+        const isTopTable = texture?.src && !moduleColor
+
         let left, right, top, back, tsarga;
 
         const { BACKWALL, LEFTSIDECOLOR, RIGHTSIDECOLOR, TOPFASADECOLOR, TSARGA } = CONFIG;
@@ -769,8 +778,8 @@ export class BuildProduct extends BuildersHelper {
             back,
             top,
             tsarga,
+            isTopTable
         });
-
 
         const edge = this.edge_builder.createEdge(body);
 
@@ -778,7 +787,8 @@ export class BuildProduct extends BuildersHelper {
 
         const { geometryType } = body.userData;
 
-        if (texture?.src && !moduleColor) {
+        if (isTopTable) {
+
             const textureSize = {
                 width: geometryType === "ExtrudeGeometry" ? texture.width : 1,
                 height: geometryType === "ExtrudeGeometry" ? texture.height : 1,
@@ -793,6 +803,16 @@ export class BuildProduct extends BuildersHelper {
                 this.getTexture(params);
                 body.userData.MATERIAL = child.material;
             });
+        }
+
+        /** @Зеркало */
+        if (product.productType == this.project.mirror_type) {
+
+            body.traverse(el => {
+                if (el instanceof THREE.Mesh && !el.userData.edge) {
+                    this.mirror_builder.createMirrorMaterial(el, moduleColor)
+                }
+            })
         }
 
         body.matrixWorldNeedsUpdate = true;
@@ -816,25 +836,6 @@ export class BuildProduct extends BuildersHelper {
             BODY_HEIGHT: size.y ?? 0,
             BODY_DEPTH: size.z ?? 0,
         };
-
-        /** @Зеркало */
-        if (product.productType == this.project.mirror_type) {
-
-            body.traverse(el => {
-                if (el instanceof THREE.Mesh && !el.userData.edge) {
-                    const mirrorMat = new THREE.MeshPhysicalMaterial({
-                        color: new THREE.Color(`#ffffff`),
-                        metalness: 0.85,
-                        roughness: 0,
-                        clearcoat: 1,
-                        clearcoatRoughness: 0.0,
-                    })
-
-                    el.material = mirrorMat
-                    el.material.needsUpdate = true;
-                }
-            })
-        }
 
         props.BODY_DEFAULT = body.clone();
 

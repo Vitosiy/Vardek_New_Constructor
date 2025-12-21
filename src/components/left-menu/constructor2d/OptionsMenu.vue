@@ -12,18 +12,37 @@ import RoomPlaneSVG from "@/components/ui/svg/left-menu/RoomPlaneSVG.vue";
 
 import { useC2DLeftMenuStore } from "@/store/constructor2d/store/useLeftMenuStore";
 import { catalogSections } from '@/store/constructor2d/data/useCatalogSectionsData';
+
 import RoomManager from '../roomManager/RoomManager.vue';
+import RoomList from '../option/roomOptions/RoomList.vue';
 
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import CatalogSVG from '@/components/ui/svg/CatalogSVG.vue';
+
+import ClosePopUpButton from '@/components/ui/svg/ClosePopUpButton.vue';
+
+import { useRoomState } from '@/store/appliction/useRoomState';
+import { nextTick } from 'vue';
+
+import { storeToRefs } from 'pinia';
+
+const roomState = useRoomState();
+const { getRooms, getRoomId } = storeToRefs(roomState);
   
 const popupStore = usePopupStore();
 
 // Локальное состояние для открытия/закрытия меню "Параметры помещения" в 2D
 const isRoomParamsOpen = ref(false);
 
+const deleteRoom = (value: number) => {
+  roomState.removeRoom(value);
+  console.log('11111111111111111111111111111111111111111')
+};
+
 const toggleRoomParams = () => {
   isRoomParamsOpen.value = !isRoomParamsOpen.value;
+  
+  console.log('11111111111111111111111111111111111111111')
 };
 
 const constructor2dMenu = useC2DLeftMenuStore();
@@ -31,6 +50,9 @@ const constructor2dMenu = useC2DLeftMenuStore();
 const menuItemActive = ref<string | null>(null);
 const goodItemActive = ref<string | null>(null);
 
+// Список комнат и текущая активная комната
+const roomsList = computed(() => getRooms.value || []);
+const currentRoomId = computed(() => getRoomId.value);
 // Получаем секции "Двери" и "Окна"
 const doorSection = computed(() => {
   return catalogSections.find((el) => el.nameMode === 'door');
@@ -129,6 +151,25 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
   popupStore.openPopup(popupName);
 };
 
+// Функция для переключения комнаты
+const switchRoom = async (roomId: string | number) => {
+  // Устанавливаем выбранную комнату как текущую активную
+  roomState.setCurrentRoomId(roomId);
+  
+  // Ждем обновления состояния
+  await nextTick();
+  
+  // Переинициализируем Planner и DoorsAndWindows с новой комнатой
+  const c2d = window.C2D;
+  if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+    c2d.layers.planner.init(true);
+    c2d.layers.doorsAndWindows.init(true);
+  }
+  
+  // Закрываем меню параметров помещения
+  isRoomParamsOpen.value = false;
+};
+
 
 </script>
 
@@ -179,11 +220,32 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
         <div class="room" v-if="isRoomParamsOpen">
           <div class="room-popup">
             <h1 class="popup__title">Параметры помещения</h1>
-            <ul>
-              <li v-for="n in 20" :key="n">
-                {{ n }}
-              </li>
-            </ul>
+            <ClosePopUpButton class="menu__close" @close="toggleRoomParams" />
+            <div
+              v-for="room in roomsList"
+              :key="room.id"
+              class="project-item"
+              :class="{ active: String(room.id) === String(currentRoomId) }"
+              @click="switchRoom(room.id)"
+            >
+              <img
+                :src="'/src/assets/img/proj.png'"
+                class="item__image"
+                :alt="room.label || room.description || 'Комната'"
+              />
+              <div class="item-info">
+                <div class="info-id">
+                  <p class="id__name">
+                    {{ room.label || room.description || (`Комната ${room.id}`) }}
+                  </p>
+                  <ClosePopUpButton
+                    class="room-action-btn"
+                    @close="deleteRoom(room.id)"
+                    @click.stop
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </transition>
@@ -398,13 +460,13 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       // transition: 0.5s ease-in-out; // анимация теперь через <transition>
 
       .room-popup {
-        width: 570px;
+        width: 710px;
         display: flex;
         flex-direction: column;
         gap: 15px;
         position: relative;
         padding: 15px;
-        background: $red;
+        background: $white;
         box-shadow: 0px 0px 10px 0px #3030301a;
         z-index: 1;
         border-radius: 15px;
@@ -457,6 +519,68 @@ const openPopup = (popupName: keyof typeof popupStore.popups) => {
       background: $red;
     }
   }
+}
+
+.project-item {
+        width: 250px;
+        height: 230px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: column;
+        border-radius: 16px;
+        background-color: $bg;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        &.active {
+          border-color: $white;
+          box-shadow: 0 4px 12px rgba(218, 68, 76, 0.3);
+        }
+
+        .item__image {
+          margin: 0;
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+        }
+
+        .item-info {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 3px 10px;
+          box-sizing: border-box;
+        }
+      }
+
+.info-id {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.id__name {
+  margin: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-action-btn {
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 </style>

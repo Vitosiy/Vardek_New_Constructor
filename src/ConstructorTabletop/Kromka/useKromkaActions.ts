@@ -68,8 +68,10 @@ const useKromkaActions = defineStore('KromkaActions', () => {
 
         const parent = modelState.getCurrentRaspilParent
         const { PROPS } = parent!.userData;
-        const { PROFILE, KROMKA } = PROPS.CONFIG;
+        const { PRODUCT, CONFIG } = PROPS
+        const { PROFILE, KROMKA } = CONFIG;
         const activeProfile = tempProfileData.value.find((prof) => prof.value);
+        const { HEM } = PRODUCTS[PRODUCT]
 
         if (tempProfileData.value.length > 0) {
             hasActiveKromka = grid
@@ -82,6 +84,12 @@ const useKromkaActions = defineStore('KromkaActions', () => {
                 );
 
             const hasProfileKromka = activeProfile.show_props && activeProfile.show_props?.includes("hem")
+            if (hasProfileKromka && tempKromkaId.value == null) {
+                const hemList = HEM.map((el: number) => {
+                    return HEMLIST[el]
+                }).filter(Boolean)
+                tempKromkaId.value = hemList[0].ID;
+            }
 
             // console.log(hasActiveKromka, '==== ❌ hasActiveKromka ❌ ====')
             // console.log(hasProfileKromka, '==== ❌ hasProfileKromka ❌ ====')
@@ -110,7 +118,6 @@ const useKromkaActions = defineStore('KromkaActions', () => {
 
         tempKromkaId.value = value.ID
 
-        console.log(tempKromkaId.value)
     }
 
     const kromkaCardSelect = () => {
