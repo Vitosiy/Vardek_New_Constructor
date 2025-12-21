@@ -1,4 +1,6 @@
 
+
+// @ts-nocheck
 import { Scene, Mesh, Object3D, LineSegments, Material } from "three";
 import { TAppLights, TApplication } from "@/types/types";
 import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";

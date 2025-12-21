@@ -252,6 +252,8 @@ const toggleRefraction = (value: boolean) => {
 const getOption = (value: keyof TTextureActionMap, title: string) => {
   currentOption.value = value;
 
+  console.log(value, "value");
+
   switch (value) {
     case "plinth":
       optionsData.value = {
@@ -530,7 +532,6 @@ const plinthSelect = (
     type: key,
     data: plinthData,
   };
-  // currentOption.value = key;
   currentOptionLable.value = plinthTitle;
   extrasSelect.value = false;
 };

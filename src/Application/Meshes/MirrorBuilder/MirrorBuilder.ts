@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Mesh, Color, MeshPhysicalMaterial, MeshStandardMaterial } from "three";
 import { TBuildProduct, TFasadeItem } from "@/types/types";
 

@@ -291,7 +291,7 @@ export const useModelState = defineStore('ModelState', () => {
         let percept = {}
         const result = Object.entries(_PLINTH.value).map(([key, el]) => {
             return percept[key] = _PRODUCTS.value[el]
-        })
+        }).filter(Boolean)
 
         // console.log(percept)
 
@@ -309,7 +309,7 @@ export const useModelState = defineStore('ModelState', () => {
         const { FACADE } = _PRODUCTS.value[plinthId]
         const filter = FACADE.map(el => {
             return _FASADE.value[el] ?? null
-        })
+        }).filter(Boolean)
 
         return filter
 

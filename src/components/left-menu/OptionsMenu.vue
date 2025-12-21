@@ -22,7 +22,7 @@ import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue
 import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
 import S2DAppartSVG from "@/components/ui/svg/left-menu/S2DAppartSVG.vue";
 import MainButton from "../ui/buttons/MainButton.vue";
-import DirectionControl from "../ui/direction/DirectionControl.vue"; 
+import DirectionControl from "../ui/direction/DirectionControl.vue";
 
 import MainSelect from "@/components/ui/selects/MainSelect.vue";
 import CatalogSVG from "../ui/svg/CatalogSVG.vue";
@@ -38,15 +38,18 @@ const popupStore = usePopupStore();
 
 const catalogSectionsType = ref(null);
 const catalogSections = ref(null);
+const { _PRODUCTS } = modelState;
 
 const selectedSectionType = ref<string>("standart");
 const cameraBtn = ref<InstanceType<typeof MainButton>[]>([]);
 const roomOptionsRef = ref<HTMLElement | null>(null);
-
+const productSerch = ref(null);
+const filteredProductList = ref<any[]>([]);
 const filteredCatalogSections = ref(null);
 
 const selectCatalog = (value: string) => {
   selectedSectionType.value = value;
+
   filterCatalog(value);
 };
 
@@ -59,6 +62,8 @@ const closeAllMenus = () => {
 };
 
 const showTechMenu = (id: string, products: []) => {
+  clearSearch();
+
   menuStore.openMenu("tech", id, products);
   customiserStore.hideCustomiserPopup();
 };
@@ -89,11 +94,42 @@ const filterCatalog = (type) => {
     .sort((a, b) => a.SORT - b.SORT);
 };
 
+let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const onSearchChange = (e: Event) => {
+  const value = e.target.value.trim();
+
+  clearTimeout(debounceTimeout);
+
+  if (!value) {
+    filteredProductList.value = [];
+    return;
+  }
+
+  if (menuStore.openMenus.length === 0) {
+    menuStore.openMenu("tech");
+    customiserStore.hideCustomiserPopup();
+  }
+
+  debounceTimeout = setTimeout(() => {
+    const reg = new RegExp(value.toLowerCase(), "g");
+    const filteredData = Object.values(_PRODUCTS).filter((prod) =>
+      reg.test(prod.NAME.toLowerCase())
+    );
+    filteredProductList.value = filteredData;
+  }, 400);
+};
+
+const clearSearch = () => {
+  filteredProductList.value = [];
+  productSerch.value.value = null;
+};
+
 onBeforeMount(() => {
   const app = useAppData().getAppData;
 
-  const prepare = JSON.parse(JSON.stringify(app.CATALOG.SECTIONS_TYPE))
-  delete  prepare.room
+  const prepare = JSON.parse(JSON.stringify(app.CATALOG.SECTIONS_TYPE));
+  delete prepare.room;
 
   catalogSectionsType.value = prepare;
   catalogSections.value = app.CATALOG.SECTIONS;
@@ -145,6 +181,14 @@ onUnmounted(() => {
           <p class="goods-items__title">Общий каталог</p>
           <div class="radial-sphere"></div>
         </div>
+
+        <input
+          ref="productSerch"
+          class="search"
+          type="text"
+          placeholder="Поиск"
+          @input="onSearchChange"
+        />
         <!-- <MainSelect
           v-model="selectedSectionType"
           :options="catalogSectionsType"
@@ -195,7 +239,11 @@ onUnmounted(() => {
       </div>
     </div>
     <transition name="slide--left">
-      <PopUpOptionsMenu v-if="menuStore.openMenus == 'tech'" />
+      <PopUpOptionsMenu
+        :filteredData="filteredProductList"
+        v-if="menuStore.openMenus == 'tech'"
+        @close-menu="clearSearch"
+      />
     </transition>
     <transition name="slide--left">
       <RoomOptionsMenu
@@ -207,7 +255,7 @@ onUnmounted(() => {
     <div class="options__camera">
       <h1 class="options__title">Позиция камеры</h1>
       <div class="options__camera--container">
-        <DirectionControl @changeDirectionPos="changeCameraPos"/>
+        <DirectionControl @changeDirectionPos="changeCameraPos" />
       </div>
     </div>
   </section>
@@ -595,5 +643,12 @@ onUnmounted(() => {
   background: $stroke;
   z-index: 1;
   transition: 0.15s;
+}
+
+.search {
+  width: 95%;
+  border-radius: 15px;
+  padding: 10px 15px;
+  background-color: $stroke;
 }
 </style>

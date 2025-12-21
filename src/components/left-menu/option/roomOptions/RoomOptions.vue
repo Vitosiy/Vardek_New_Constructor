@@ -84,6 +84,8 @@ const plinthSelect = (
   key: keyof TOptionsMap,
   plinthData: TFasadeItem[]
 ) => {
+  console.log(plinthTitle, key, plinthData, "--- PLINT ---");
+
   emit("toPlinthSelect", plinthTitle, key, plinthData);
 };
 
@@ -225,9 +227,7 @@ onBeforeMount(() => {});
             @change="handleToggle($event, key as keyof TOptionsMap)"
           />
           <span class="control_indicator"></span>
-          <span class="text-lg text-gray-800 font-medium">{{
-            item.label
-          }}</span>
+          <span class="control_lable">{{ item.label }}</span>
         </label>
       </div>
     </div>
@@ -276,7 +276,7 @@ onBeforeMount(() => {});
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   border-radius: 15px;
   transition: background-color 0.25s ease;
   cursor: pointer;
@@ -291,8 +291,11 @@ onBeforeMount(() => {});
 }
 
 .option__checkbox {
+  position: absolute;
   display: flex;
   align-items: center;
+  top: 0.2rem;
+  right: 0.5rem;
 }
 
 .label__img {
@@ -304,10 +307,10 @@ onBeforeMount(() => {});
 }
 
 .label__title {
-  font-size: 12px;
+  font-size: 16px;
   position: absolute;
-  top: 0.2rem;
-  right: 0.5rem;
+  bottom: 0.2rem;
+  left: 0.5rem;
 }
 
 .label__text {
@@ -320,5 +323,20 @@ onBeforeMount(() => {});
   width: 60px;
   border-radius: 12px;
   cursor: pointer;
+}
+
+.control {
+  &-checkbox {
+    padding-left: 0;
+    padding-right: 30px;
+  }
+  &_indicator {
+    right: 0;
+    left: auto;
+  }
+
+  &_lable{
+    font-size: 12px;
+  }
 }
 </style>

@@ -4,7 +4,6 @@ import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRigh
 import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
 
-
 type TData = {
   extras?: string | undefined;
   type: string;
@@ -16,7 +15,7 @@ interface Props {
   currentOptionLabel: string | null;
   getCurrentRedactor: boolean;
 }
-const eventBus = useEventBus()
+const eventBus = useEventBus();
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
@@ -24,10 +23,9 @@ const emit = defineEmits<{
 }>();
 
 const handleSelect = (value: any, type: string, extras: string | undefined) => {
-
+  console.log(value, type, extras, "---- ПЛИНТУС ----");
   emit("select", value, type, extras);
   // eventBus.emit('A:GlobalParapsSelect')
-
 };
 </script>
 

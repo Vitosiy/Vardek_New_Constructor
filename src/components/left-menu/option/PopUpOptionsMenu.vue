@@ -6,7 +6,7 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
-import { computed, ref } from "vue";
+import { computed, ref, onBeforeMount } from "vue";
 
 import { _URL } from "@/types/constants";
 import axios from "axios";
@@ -15,10 +15,25 @@ const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
 const { getAppData } = useAppData();
 
-const exeption = ref([ 1516913, 1516914, 6051066, 
-, 81768, 2370182, 81772, 
-166757, 11451679,  
+const exeption = ref([
+  1516913,
+  1516914,
+  6051066,
+  ,
+  81768,
+  2370182,
+  81772,
+  166757,
+  11451679,
 ]); //3140746, 971222, 1814256
+
+const props = defineProps<{
+  filteredData: Array<any>;
+}>();
+
+const emit = defineEmits([
+  "close-menu",
+]);
 
 const currentProductInfo = ref({
   title: "",
@@ -26,7 +41,12 @@ const currentProductInfo = ref({
   image: "",
 });
 const isShowInfoPopup = ref(false);
+
 const filteredData = computed(() => {
+  if (props.filteredData.length > 0) {
+    return props.filteredData;
+  }
+
   if (menuStore.catalogFilterProductsId) {
     return Object.values(catalogProducts)
       .filter((item) => {
@@ -61,6 +81,7 @@ const onDrag = (event: any, model: { [key: string]: any } | string) => {
 
 const closeMenu = (menuType: MenuType) => {
   menuStore.closeMenu(menuType);
+  emit('close-menu')
 };
 
 const openPopup = async (item) => {
@@ -106,6 +127,10 @@ const closeInfoPopup = () => {
     image: "",
   };
 };
+
+onBeforeMount(()=>{
+  console.log(props.filteredData)
+})
 </script>
 
 <template>
@@ -113,7 +138,7 @@ const closeInfoPopup = () => {
     <h1 class="popup__title">Основное</h1>
     <ClosePopUpButton class="menu__close" @close="closeMenu('tech')" />
     <div
-      v-if="menuStore.catalogFilterProductsId"
+      v-if="menuStore.catalogFilterProductsId || props.filteredData.length>0"
       class="options-popup__container"
     >
       <div
