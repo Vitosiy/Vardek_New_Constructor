@@ -478,6 +478,7 @@ const changeFillingPositionX = (event, _value, key, secIndex, cellIndex = null, 
   if (check) {
     currentfilling.position.x = fillingData.position.x;
   } else {
+    alert(`Нельзя изменить позицию на ${+_value}`)
     currentfilling.position.x = prevValue;
   }
 
@@ -533,6 +534,7 @@ const changeFillingPositionY = (event, _value, key, secIndex, cellIndex = null, 
   if (check) {
     currentfilling.position.y = fillingData.position.y;
   } else {
+    alert(`Нельзя изменить позицию на ${+_value}`)
     currentfilling.position.y = prevValue;
   }
 
@@ -584,10 +586,11 @@ const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
     let data = curModuleSegment.fillings[itemIndex].fasade.material
     currentFasadeMaterial.value = {
       secIndex,
-      curCell,
-      curRow,
+      cellIndex,
+      rowIndex,
       itemIndex,
-      data
+      data,
+      fasadeSize: {FASADE_WIDTH: curModuleSegment.fillings[itemIndex].fasade.width, FASADE_HEIGHT: curModuleSegment.fillings[itemIndex].fasade.height, isDrawer: true},
     }
     selectCell(secIndex, cellIndex, rowIndex, null, itemIndex)
     isOpenMaterialSelector.value = true
@@ -1329,6 +1332,7 @@ const closeMenu = () => {
       <AdvanceCorpusMaterialRedactor
           :is-fasade="true"
           :elementData="currentFasadeMaterial.data"
+          :fasade-size="currentFasadeMaterial.fasadeSize"
           @parent-callback="selectOption"
       />
     </div>

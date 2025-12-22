@@ -473,7 +473,7 @@ const renderGrid = (_moduleGrid) => {
           tmpLoopData.xOffset = loopXOffset;
 
           loop.coords.forEach((pos, posIndex, ) => {
-            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height / 2 - (module.value.horizont > 0 ? 0 : module.value.moduleThickness));
+            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height / 2 - (!module.value.noBottom ? 0 : module.value.moduleThickness));
             // Отрисовываем секцию
 
             let loopSector = createLoop({
@@ -484,7 +484,7 @@ const renderGrid = (_moduleGrid) => {
               loopData: {
                 ...tmpLoopData,
                 error: loop.errors?.includes(posIndex),
-                position: {x: tmpLoopData.xOffset, y: tmpLoopData.yOffset}
+                position: {x: getMmWidth(tmpLoopData.xOffset), y: getMmHeight(tmpLoopData.yOffset)}
               },
             });
 
@@ -496,7 +496,7 @@ const renderGrid = (_moduleGrid) => {
                   type: "loop",
                   sector,
                   data: tmpLoopData,
-                  position: {x: getMmHeight(loopSector.sectorData.position.x), y: getMmHeight(loopSector.sectorData.position.y)},
+                  position: {x: loopSector.sectorData.position.x, y: loopSector.sectorData.position.y},
                   getMmWidth,
                   getMmHeight,
                   getPixelHeight,

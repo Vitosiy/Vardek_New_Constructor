@@ -1398,6 +1398,7 @@ class ShapeAdjuster extends Helpers {
             type: shapeType,
             sector: sector,
             data: shapeData,
+            position: {...shapeData.position},
             getMmWidth: this.getMmWidth,
             getMmHeight: this.getMmHeight,
             getPixelWidth: this.getPixelWidth,
@@ -1413,7 +1414,7 @@ class ShapeAdjuster extends Helpers {
         const overLap = shapes.some(
             (otherShape) =>
                 otherShape.graphic.holeId !== tempShape.graphic.holeId &&
-                tempShape.checkOverlap(otherShape)
+                tempShape.checkOverlap(otherShape, tempShape.data.isVerticalItem)
         );
 
         return insideSector && !overLap;

@@ -1573,7 +1573,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR, () 
 watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL, () => {
 
   let tmp = noBackwall.value
-  checkNoBackwall()
+  checkOptionWithoutBottom()
 
   if(tmp !== noBackwall.value)
     reset()
