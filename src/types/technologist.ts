@@ -47,6 +47,22 @@ export interface TechnologistTechList {
   nav: {};
 }
 
+export interface TechnologistFormReview {
+  projectId: number;
+  projectTechId: number,
+  statusId: string;
+  message: string;
+  result: {
+    success?: boolean;
+    error?: String[];
+  };
+  commentsFiles?: File[];
+  comments?: {
+    COMMENT: string;
+    fileBx: File[];
+  }
+}
+
 export interface TechnologistResponseData {
   items: {} | null;
   nav?: {

@@ -67,11 +67,30 @@ export const useTechnologistApi = () => {
       loading.value = false
     }
   }
+
+  const getComments = async (formItem: FormData): Promise<TechnologistResponse | null> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await TechnologistService.getComments(formItem)
+      return <TechnologistResponse>{ ...response }
+    }
+    catch (err: any) {
+      error.value = err.message || 'Ошибка получения списка комментариев'
+      return null
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading: readonly(loading),
     error: readonly(error),
     submitTechForm,
     getList,
     setStatus,
+    getComments,
   }
 }

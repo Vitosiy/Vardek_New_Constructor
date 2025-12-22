@@ -38,10 +38,18 @@ const technologistAPI = useTechnologistApi();
 
 const loading = ref(false)
 const techList = technologistStorage.techList
-const arrIdInputFile = ref({})
-const formReview = ref({})
+const formReview = technologistStorage.formReview
 
-const closePopup = () => {
+const closePopup = (clear: boolean = false) => {
+
+  if(clear) {
+    technologistStorage.clearStorage()
+  }
+  else {
+    technologistStorage.setFormReview(formReview);
+    technologistStorage.setTechList(techList);
+  }
+
   popupStore.closePopup('technologist');
 };
 
@@ -67,20 +75,6 @@ const getTechList = function () {
 
 const setStatus = function (id, statusId, projectTechId = false, message = false, comments = false) {
   let formData = new FormData()
-
-  /*  if (comments) {
-      let f = document.querySelector("#commentsForm");
-      formData = new FormData(f);
-
-      let fileUpDrop = fileUp.get(arrIdInputFile['comments']);
-
-      for (let f in fileUpDrop.getFiles()) {
-        formData.append('comments[]', fileUpDrop.getFiles()[f]['_file']);
-      }
-    } else {
-      formData = new FormData();
-    }*/
-
   formData.append("id", id);
   formData.append("statusId", statusId);
 
@@ -93,14 +87,14 @@ const setStatus = function (id, statusId, projectTechId = false, message = false
   technologistAPI.setStatus(formData).then((result) => {
     if (result) {
       if (statusId == 'C10:PREPAYMENT_INVOIC' || statusId == 'C10:1') {
-        formReview.value['result'] = result.DATA;
+        formReview.result = result.DATA;
 
-        if (formReview.value.result.success) {
+        if (formReview.result.success) {
           alert("Успешно отправлено на проверку", "success");
           //$('#review').modal("hide");
         }
 
-        if (formReview.value.result.success)
+        if (formReview.result.success)
           getTechList();
       } else {
         getTechList();
@@ -111,11 +105,10 @@ const setStatus = function (id, statusId, projectTechId = false, message = false
 }
 
 const openModalSTD = function (elem, statusId) {
+  /*
+   formReview.projectId = elem.id;
+  formReview.statusId = statusId;
 
-  $("#review").modal();
-  formReview.value = {}
-  formReview.value.id = elem.id;
-  formReview.value.statusId = statusId;
   if (arrIdInputFile['comments'] === undefined) {
     let fileUpDrop = fileUp.create({
       url: '/upload/tmp',
@@ -150,29 +143,29 @@ const openModalSTD = function (elem, statusId) {
     let fileUpDrop = fileUp.get(arrIdInputFile['comments']);
     fileUpDrop.removeAll();
   }
+
+  popupStore.openPopup('technologist-comments');*/
+
+  openModalComments(elem.id, statusId)
 }
 
-const openModalComments = function (id) {
-  $('#commentsList').modal();
+const openModalComments = function (id, statusId) {
+  technologistStorage.clearFormReview()
 
-  $('#commentsList').on('hide.bs.modal', function (e) {
-    setTimeout(() => {
-      $("body").addClass("modal-open")
-    }, 1000);
-  })
+  formReview.projectId = id;
+
+  if(statusId)
+    formReview.statusId = statusId;
+
   let formData = new FormData();
   formData.append("id", id);
 
-  $.ajax({
-    url: '/api/technologist/main/GetComments/',
-    method: 'post',
-    processData: false,
-    contentType: false,
-    data: formData,
-    success: function (data) {
-      formComments = {}
-      formComments['comments'] = data.DATA;
-      $applyAsync();
+  technologistAPI.getComments(formData).then((data) => {
+    if (data?.DATA) {
+      formReview.comments = {}
+      formReview.comments = data.DATA;
+      closePopup()
+      popupStore.openPopup('technologist-comments');
     }
   });
 }
@@ -412,7 +405,7 @@ const getNavData = () => {
 
       <ClosePopUpButton
           class="technologist-header__close-btn"
-          @click="closePopup"
+          @click="closePopup(true)"
       />
     </div>
 

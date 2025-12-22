@@ -6,9 +6,18 @@ import { Component } from 'vue';
 import CatalogPopUpView from './popup-views/CatalogPopUpView.vue';
 import TechnologistPopUpView from "@/components/popUp/popup-views/TechnologistPopUpView.vue";
 import TechnologistForm from "@/components/Technologist/TechnologistForm.vue";
+import TechnologistComments from "@/components/Technologist/TechnologistComments.vue";
 
 
-export type PopupKey = 'basket' | 'study' | 'error' | 'project' | 'catalog' | 'technologist' | 'technologist-form'
+export type PopupKey =
+    'basket' |
+    'study' |
+    'error' |
+    'project' |
+    'catalog' |
+    'technologist' |
+    'technologist-form' |
+    'technologist-comments'
 
 export type Popup = {
   title?: string,
@@ -43,7 +52,11 @@ export const POPUP_CONFIG: PopupsConfig = {
     component: TechnologistPopUpView
   },
   "technologist-form": {
-    title: 'Технолог',
+    title: 'Заявка технолог',
     component: TechnologistForm
+  },
+  "technologist-comments": {
+    title: 'Комментарии технолог',
+    component: TechnologistComments
   }
 } as const;

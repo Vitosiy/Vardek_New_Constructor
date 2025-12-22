@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import {TechnologistFormError, TechnologistTechList} from "@/types/technologist.ts";
+import {TechnologistFormError, TechnologistFormReview, TechnologistTechList} from "@/types/technologist.ts";
 import {defineStore} from "pinia";
 
 /*const STORAGE_KEY = 'technologist-data'
@@ -14,6 +14,7 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
   const currentProjectID = ref<number|boolean>(false)
   const techFormError = ref<TechnologistFormError>(<TechnologistFormError>{})
   const techList = ref<TechnologistTechList>(<TechnologistTechList>{filter: 0})
+  const formReview = ref<TechnologistFormReview>(<TechnologistFormReview>{result: {}})
   //const deal = ref(Object.assign({}, defaultDeal))
 
   const setCurrentProjectID = (id: number) => {
@@ -39,6 +40,19 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
   const getTechList = () => {
     return techList.value;
   }
+
+  const setTechList = (value: TechnologistTechList) => {
+    techList.value = value;
+  }
+
+  const getFormReview = () => {
+    return formReview.value;
+  }
+
+  const setFormReview = (value: TechnologistFormReview) => {
+    formReview.value = value;
+  }
+
   const clearTechList = () => {
     techList.value = <TechnologistTechList>{filter: 0};
   }
@@ -46,14 +60,20 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
   const clearStorage = () => {
     currentProjectID.value = false
     clearError()
+    clearFormReview()
   }
 
   const clearError = () => {
     techFormError.value = <TechnologistFormError>{}
   }
 
+  const clearFormReview = () => {
+    formReview.value = <TechnologistFormReview>{result: {}}
+  }
+
   return {
     techList,
+    formReview,
     setTechFormError,
     getTechFormError,
     getCurrentProjectID,
@@ -61,6 +81,10 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
     clearStorage,
     clearError,
     getTechList,
-    clearTechList
+    setTechList,
+    clearTechList,
+    clearFormReview,
+    setFormReview,
+    getFormReview,
   }
 })
