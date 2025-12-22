@@ -364,7 +364,8 @@ type TFasadePropsSizes = {
 export type TFasadeTrueSizes = {
   FASADE_WIDTH: number,
   FASADE_DEPTH: number,
-  FASADE_HEIGHT: number
+  FASADE_HEIGHT: number,
+  isDrawer?: boolean,
 }
 
 export type TFasadeProp = {
