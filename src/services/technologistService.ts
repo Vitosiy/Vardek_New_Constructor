@@ -1,10 +1,11 @@
 //@ts-nocheck
 import { COOKIE_NAMES, getCookie, setCookie } from '@/components/authorization/utils/cookieUtils';
 import axios, { AxiosError } from 'axios';
-import {TechnologistResponse, TechnologistFormResponse} from "@/types/technologist.ts";
+import {TechnologistResponse, TechnologistFormResponse, TechnologistCommentsResponse} from "@/types/technologist.ts";
+import {_URL} from "@/types/constants.ts";
 
-const FORM_API_URL = 'https://dev.vardek.online/api/modellerjwt/formtech';
-const BASE_API_URL = 'https://dev.vardek.online/api/Modellerjwt/Technologist';
+const FORM_API_URL = _URL + '/api/modellerjwt/formtech';
+const BASE_API_URL = _URL + '/api/Modellerjwt/Technologist';
 const REQUEST_TIMEOUT = 10000; // 10 секунд
 
 export const TechnologistService = {
@@ -97,12 +98,12 @@ export const TechnologistService = {
     }
   },
 
-  async getComments(techForm: FormData): Promise<TechnologistResponse> {
+  async getComments(techForm: FormData): Promise<TechnologistCommentsResponse> {
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
 
     try {
-      const { data } = await axios.post<TechnologistResponse>(
-          `${BASE_API_URL}/GetComments/`,
+      const { data } = await axios.post<TechnologistCommentsResponse>(
+          `${_URL}/api/modellerjwt/technologist/GetComments/`,
           techForm,
           {
             headers: {
@@ -115,7 +116,7 @@ export const TechnologistService = {
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<TechnologistResponse>;
+        const axiosError = error as AxiosError<TechnologistCommentsResponse>;
         const message =
             axiosError.response?.data?.message ||
             'Ошибка получения списка комментариев';

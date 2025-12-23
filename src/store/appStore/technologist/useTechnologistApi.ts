@@ -2,7 +2,7 @@
 
 import { readonly, ref } from 'vue'
 import { TechnologistService} from "@/services/technologistService.ts";
-import {TechnologistFormResponse, TechnologistResponse} from "@/types/technologist.ts";
+import {TechnologistCommentsResponse, TechnologistFormResponse, TechnologistResponse} from "@/types/technologist.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 
 export const useTechnologistApi = () => {
@@ -68,13 +68,13 @@ export const useTechnologistApi = () => {
     }
   }
 
-  const getComments = async (formItem: FormData): Promise<TechnologistResponse | null> => {
+  const getComments = async (formItem: FormData): Promise<TechnologistCommentsResponse | null> => {
     loading.value = true
     error.value = null
 
     try {
       const response = await TechnologistService.getComments(formItem)
-      return <TechnologistResponse>{ ...response }
+      return <TechnologistCommentsResponse>{ ...response }
     }
     catch (err: any) {
       error.value = err.message || 'Ошибка получения списка комментариев'

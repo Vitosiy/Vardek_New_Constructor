@@ -9,7 +9,8 @@ import {usePopupStore} from "@/store/appStore/popUpsStore.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
 import {onMounted, ref} from "vue";
-import {TechnologistFormReview} from "@/types/technologist.ts";
+import {TechnologistCommentsItem, TechnologistFormReview} from "@/types/technologist.ts";
+import {_URL} from "@/types/constants.ts";
 
 const APP = useAppData().getAppData;
 const popupStore = usePopupStore();
@@ -49,8 +50,20 @@ const sendToDesigner = () => {
   })
 
   technologistAPI.setStatus(formData).then((res) => {
-    if (res?.DATA.success) {
-      closePopup();
+    getCommentsList()
+  });
+}
+
+const getCommentsList = () => {
+
+  let formData = new FormData();
+  formData.append("id", formReview.value.id);
+
+  technologistAPI.getComments(formData).then((data) => {
+    formReview.value.comments = <TechnologistCommentsItem>[]
+
+    if (data?.DATA) {
+      formReview.value.comments = data.DATA;
     }
   });
 }
@@ -62,6 +75,7 @@ onMounted(() => {
     reviewStatus.value = true;
   }
 
+  getCommentsList()
 })
 
 </script>
@@ -84,25 +98,25 @@ onMounted(() => {
         <div class="commentsItem" v-for="comment in formReview.comments">
           <span>{{ comment.COMMENT }}</span>
           <div>
-            <div v-for="file in comment.fileBx">
+            <div v-for="(file, fileKey) in comment.FILES">
               <a
-                  :href="file.path"
+                  :href="`${_URL + file.customLink}`"
                   v-if="file.previewUrl"
                   class="preview"
                   rel="gallery1"
               >
                 <img
-                    :src="file.previewUrl"
-                    :alt="file.file.name"
+                    :src="`${_URL + file.customLink}`"
+                    :alt="file.name"
                     class="preview__image"
                 />
               </a>
 
               <a
                   v-if="file.type == 'docs'"
-                  :href="file.path"
+                  :href="`${_URL + file.customLink}`"
               >
-                Ссылка на документ
+                <span>{{ file.name }}</span>
               </a>
             </div>
           </div>

@@ -152,22 +152,13 @@ const openModalSTD = function (elem, statusId) {
 const openModalComments = function (id, statusId) {
   technologistStorage.clearFormReview()
 
-  formReview.projectId = id;
+  formReview.id = id;
 
   if(statusId)
     formReview.statusId = statusId;
 
-  let formData = new FormData();
-  formData.append("id", id);
-
-  technologistAPI.getComments(formData).then((data) => {
-    if (data?.DATA) {
-      formReview.comments = {}
-      formReview.comments = data.DATA;
-      closePopup()
-      popupStore.openPopup('technologist-comments');
-    }
-  });
+  closePopup()
+  popupStore.openPopup('technologist-comments');
 }
 
 const openModalOrder = function (id) {
