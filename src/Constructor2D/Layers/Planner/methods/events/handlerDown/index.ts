@@ -8,15 +8,38 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
   const target = e.currentTarget as PIXI.Graphics & { wallId?: string | number };
   const id = target.wallId;
 
-  // Правый клик по стене — разделение стены на две
+  // Правый клик по стене — показываем контекстное меню
   if (e.button === 2) {
     if (id != null) {
-      // вызываем метод Planner для разделения стены
-      if (typeof this.splitWallIntoTwo === 'function') {
-        this.splitWallIntoTwo(id);
-      } else {
-        console.warn('Wallsplitter is not defined on Planner');
-      }
+      // Сначала скрываем старое меню, если оно открыто
+      this.parent.eventBus.emit(Events.C2D_HIDE_WALL_CONTEXT_MENU);
+      
+      // Получаем DOM координаты курсора
+      // Преобразуем координаты PIXI в DOM координаты
+      const canvas = this.app.canvas as HTMLCanvasElement;
+      const rect = canvas.getBoundingClientRect();
+      
+      // При autoDensity: true, e.global.x/y уже в логических CSS пикселях
+      // Просто добавляем позицию canvas на странице
+      const domX = rect.left + e.global.x;
+      const domY = rect.top + e.global.y;
+      
+      // Небольшая задержка для предотвращения конфликтов
+      setTimeout(() => {
+        // Эмитим событие для показа контекстного меню
+        this.parent.eventBus.emit(Events.C2D_SHOW_WALL_CONTEXT_MENU, {
+          x: domX,
+          y: domY,
+          wallId: id,
+          onSplitWall: (wallId: string | number) => {
+            if (typeof this.splitWallIntoTwo === 'function') {
+              this.splitWallIntoTwo(wallId);
+            } else {
+              console.warn('Wallsplitter is not defined on Planner');
+            }
+          }
+        });
+      }, 0);
     }
     e.stopPropagation();
     return;
