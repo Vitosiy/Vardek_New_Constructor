@@ -28,6 +28,7 @@ import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightP
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
 import {TFasadeTrueSizes} from "@/types/types.ts";
+import {useEventBus} from "@/store/appliction/useEventBus.ts";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -53,6 +54,7 @@ const emit = defineEmits(["save-table-data"]);
 let shapeAdjuster = null;
 const APP = useAppData().getAppData;
 const modelState = useModelState()
+const eventBus = useEventBus()
 
 const productData = ref(false)
 const builder = new UniversalGeometryBuilder({}).buildProduct;
@@ -92,6 +94,7 @@ const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
 const noBottom = ref<boolean>(false);
 const noBackwall = ref<boolean>(false);
+const noLoops = ref<boolean>(false);
 
 const module = ref(false);
 const computeModule = () => {
@@ -225,6 +228,42 @@ const computeModule = () => {
 const getModule = computed(() => {
   return module
 })
+
+const checkOptionsChanged = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  PROPS.CONFIG.OPTIONS.forEach(option => {
+    switch (+option.id) {
+      case 5738924:
+        if(option.active) {
+          noBottom.value = true
+          module.value.noBottom = true
+          module.value.horizont = PROPS.CONFIG.HORIZONT = 0
+        }
+        else {
+          noBottom.value = false
+          delete module.value.noBottom
+        }
+        break;
+      case 1795067: //Опция без петель
+        if(option.active) {
+          noLoops.value = true
+          module.value.noLoops = true
+        }
+        else {
+          noLoops.value = false
+          delete module.value.noLoops
+        }
+        break;
+      default:
+        break;
+    }
+  })
+
+  checkNoBackwall()
+  reset()
+}
+
 
 const checkNoBackwall = () => {
   const {PROPS} = modelState.getCurrentModel.userData;
@@ -846,11 +885,19 @@ const calcSlideDoor = (fasadePositionID, doorNumber, callback) => {
 //#region Петли
 const calcLoops = (secIndex, grid = false) => {
   const CONFIG = productData.value.PROPS.CONFIG
+  const curGrid = grid || module.value
 
   if (!CONFIG.LOOPS)
     return
 
-  const curSection = grid ? grid.sections[secIndex] : module.value.sections[secIndex]
+  const curSection = curGrid.sections[secIndex]
+
+  if(curGrid.noLoops){
+    delete curSection.loops
+    delete curSection.loopsSides
+    return;
+  }
+
   const FASADES = curSection.fasades || []
   curSection.loops = []
 
@@ -1495,6 +1542,8 @@ onMounted(() => {
   nextTick().then(() => {
     isMounted.value = true;
   });
+
+  eventBus.on("A:SelectModelOption", checkOptionsChanged)
 });
 
 onBeforeUnmount(() => {
@@ -1502,6 +1551,7 @@ onBeforeUnmount(() => {
   module.value = false;
   onHorizont.value = false
   onSideProfile.value = false
+  eventBus.off("A:SelectModelOption", checkOptionsChanged)
 });
 
 watch(visualizationRef, () => {

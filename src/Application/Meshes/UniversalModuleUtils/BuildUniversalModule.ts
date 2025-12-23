@@ -269,6 +269,10 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.CONFIG.FASADE_POSITIONS = []
         PROPS.CONFIG.FASADE_PROPS = []
         PROPS.CONFIG.SECTIONS = {}
+
+        if(PROPS.CONFIG.LOOPS)
+            PROPS.CONFIG.LOOPS = {}
+
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
         if(product_data.profilesConfig) {
