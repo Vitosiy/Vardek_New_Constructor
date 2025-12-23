@@ -8,6 +8,20 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
   const target = e.currentTarget as PIXI.Graphics & { wallId?: string | number };
   const id = target.wallId;
 
+  // Правый клик по стене — разделение стены на две
+  if (e.button === 2) {
+    if (id != null) {
+      // вызываем метод Planner для разделения стены
+      if (typeof this.splitWallIntoTwo === 'function') {
+        this.splitWallIntoTwo(id);
+      } else {
+        console.warn('Wallsplitter is not defined on Planner');
+      }
+    }
+    e.stopPropagation();
+    return;
+  }
+
   if (e.button == 0){
 
     // снимает активность с окна или двери
