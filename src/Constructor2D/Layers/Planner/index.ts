@@ -754,12 +754,12 @@ export default class Planner {
       return String(a) === String(b);
     };
 
-    // 2. Настройки точности
+    // Настройки точности
     const precision = 2; // Кол-во знаков после запятой
     const uniquePoints = new Map<string, Vector2>();
     const rawPoints: Vector2[] = [];
 
-    // 3. Сбор уникальных точек (индексы 0 и 1)
+    // Сбор уникальных точек (индексы 0 и 1)
     for (const wall of this.objectWalls) {
       if (isSameId(wall.roomId, roomId) && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
         // Точка 0
@@ -776,13 +776,44 @@ export default class Planner {
 
     const dedupPoints = Array.from(uniquePoints.values());
 
-    // 4. Проверка минимального количества точек
+    // Если точек меньше трёх — возвращаем как раньше
     if (dedupPoints.length < 3) {
-      // Возвращаем “сырые” точки, чтобы не пропадал пол
       return rawPoints;
     }
 
-    return dedupPoints;
+    // Строим выпуклую оболочку (convex hull), чтобы получить корректный контур комнаты
+    const points = dedupPoints.slice().sort((a, b) => {
+      if (a.x === b.x) return a.y - b.y;
+      return a.x - b.x;
+    });
+
+    const cross = (o: Vector2, a: Vector2, b: Vector2): number =>
+      (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+
+    const lower: Vector2[] = [];
+    for (const p of points) {
+      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+        lower.pop();
+      }
+      lower.push(p);
+    }
+
+    const upper: Vector2[] = [];
+    for (let i = points.length - 1; i >= 0; i--) {
+      const p = points[i];
+      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+        upper.pop();
+      }
+      upper.push(p);
+    }
+
+    // Последние точки нижней и верхней оболочки дублируют начало другой — убираем
+    lower.pop();
+    upper.pop();
+
+    const hull = lower.concat(upper);
+
+    return hull;
 
   }
 
@@ -1836,6 +1867,170 @@ export default class Planner {
 
     this.redrawAllObjects();
 
+  }
+
+  /**
+   * Разделяет стену на две новые.
+   * Логика:
+   * - берём исходную стену (W), её точки points[0] и points[1] и roomId
+   * - находим соседние стены по mergeWalls.wallPoint0 и wallPoint1 (если есть)
+   * - создаём новую точку splitPoint в середине сегмента [p0, p1]
+   * - создаём две новые стены W1 и W2, каждая в той же комнате, что и исходная
+   *   W1: [p0, splitPoint], W2: [splitPoint, p1]
+   * - перевычисляем их points (четырёхугольник) через calculatePositionPointsWall
+   * - настраиваем mergeWalls:
+   *   - если был сосед слева (old.mergeWalls.wallPoint1), привязываем его к W1
+   *   - если был сосед справа (old.mergeWalls.wallPoint0), привязываем его к W2
+   *   - W1 и W2 соединяем друг с другом в средней точке
+   * - удаляем старую стену и её контейнеры, добавляем контейнеры и отрисовываем новые
+   * - обновляем roomStore
+   */
+  public splitWallIntoTwo(id: string | number): void {
+
+    const indexWall = this.objectWalls.findIndex(el => el.id === id);
+    if (indexWall === -1) return;
+
+    const oldWall = this.objectWalls[indexWall];
+    if (!oldWall || !oldWall.points || oldWall.points.length < 2) return;
+
+    const p0 = oldWall.points[0];
+    const p1 = oldWall.points[1];
+
+    // середина старой стены
+    const splitPoint: Vector2 = {
+      x: (p0.x + p1.x) / 2,
+      y: (p0.y + p1.y) / 2,
+    };
+
+    // создаём две новые прямые (по 2 точки), затем расширим до 4 через calculatePositionPointsWall
+    const firstLineP0: Vector2 = { ...p0 };
+    const firstLineP1: Vector2 = { ...splitPoint };
+    const secondLineP0: Vector2 = { ...splitPoint };
+    const secondLineP1: Vector2 = { ...p1 };
+
+    const firstPoints = this.calculatePositionPointsWall(
+      firstLineP0,
+      firstLineP1,
+      oldWall.height,
+      oldWall.heightDirection
+    );
+
+    const secondPoints = this.calculatePositionPointsWall(
+      secondLineP0,
+      secondLineP1,
+      oldWall.height,
+      oldWall.heightDirection
+    );
+
+    const firstId: string = String(oldWall.name || 'wall') + '__split1__' + MathUtils.generateUUID();
+    const secondId: string = String(oldWall.name || 'wall') + '__split2__' + MathUtils.generateUUID();
+
+    // исходные связи
+    const leftNeighborId = oldWall.mergeWalls.wallPoint1;
+    const rightNeighborId = oldWall.mergeWalls.wallPoint0;
+
+    // mergeWalls для новых стен
+    const firstMergeWalls: MergeWalls = {
+      wallPoint0: null,
+      wallPoint1: null,
+    };
+
+    const secondMergeWalls: MergeWalls = {
+      wallPoint0: null,
+      wallPoint1: null,
+    };
+
+    // Привязываем левого соседа к первой новой стене
+    if (leftNeighborId != null) {
+      const leftNeighbor = this.objectWalls.find(w => w.id === leftNeighborId);
+      if (leftNeighbor) {
+        // старая стена была отмерджена как wallPoint1 -> значит у соседа она в wallPoint0
+        firstMergeWalls.wallPoint1 = leftNeighbor.id;
+        // у соседа заменяем ссылку на старую стену id на первую новую
+        if (leftNeighbor.mergeWalls.wallPoint0 === id) {
+          leftNeighbor.mergeWalls.wallPoint0 = firstId;
+        }
+        if (leftNeighbor.mergeWalls.wallPoint1 === id) {
+          leftNeighbor.mergeWalls.wallPoint1 = firstId;
+        }
+      }
+    }
+
+    // Привязываем правого соседа ко второй новой стене
+    if (rightNeighborId != null) {
+      const rightNeighbor = this.objectWalls.find(w => w.id === rightNeighborId);
+      if (rightNeighbor) {
+        secondMergeWalls.wallPoint0 = rightNeighbor.id;
+        if (rightNeighbor.mergeWalls.wallPoint0 === id) {
+          rightNeighbor.mergeWalls.wallPoint0 = secondId;
+        }
+        if (rightNeighbor.mergeWalls.wallPoint1 === id) {
+          rightNeighbor.mergeWalls.wallPoint1 = secondId;
+        }
+      }
+    }
+
+    // Соединяем две новые стены между собой:
+    // для простоты: W1.wallPoint0 <-> W2.id и W2.wallPoint1 <-> W1.id
+    firstMergeWalls.wallPoint0 = secondId;
+    secondMergeWalls.wallPoint1 = firstId;
+
+    // создаём объекты новых стен
+    const firstWall: ObjectWall = {
+      id: firstId,
+      name: oldWall.name,
+      width: getDistanceBetweenVectors(firstPoints[0], firstPoints[1]),
+      height: oldWall.height,
+      heightDirection: oldWall.heightDirection,
+      angleDegrees: getAngleBetweenVectors(
+        firstPoints[0],
+        { x: firstPoints[0].x + 300, y: firstPoints[0].y },
+        firstPoints[1]
+      ),
+      updateTime: Date.now(),
+      mergeWalls: firstMergeWalls,
+      points: firstPoints,
+      roomId: oldWall.roomId,
+      containers: undefined,
+    };
+
+    const secondWall: ObjectWall = {
+      id: secondId,
+      name: oldWall.name,
+      width: getDistanceBetweenVectors(secondPoints[0], secondPoints[1]),
+      height: oldWall.height,
+      heightDirection: oldWall.heightDirection,
+      angleDegrees: getAngleBetweenVectors(
+        secondPoints[0],
+        { x: secondPoints[0].x + 300, y: secondPoints[0].y },
+        secondPoints[1]
+      ),
+      updateTime: Date.now(),
+      mergeWalls: secondMergeWalls,
+      points: secondPoints,
+      roomId: oldWall.roomId,
+      containers: undefined,
+    };
+
+    // Удаляем старую стену с холста и из массива
+    this.state.activeWall = oldWall.id;
+    this.deleteSelectedObject();
+
+    // Добавляем новые стены рядом с позицией старой
+    // (после deleteSelectedObject() this.objectWalls уже без старой)
+    const insertIndex = Math.min(indexWall, this.objectWalls.length);
+    this.objectWalls.splice(insertIndex, 0, firstWall, secondWall);
+
+    // создаём контейнеры и рисуем новые стены (локально, до пересборки)
+    this.createDrawContainers(firstWall.id);
+    this.createDrawContainers(secondWall.id);
+    this.drawWall(firstWall.id);
+    this.drawWall(secondWall.id);
+
+    // Обновляем данные комнаты и полностью пересобираем planner
+    // (init -> clear + initRoom), тем самым заново пересчитывая mergeWalls, как при старте
+    this.parent.updateRoomStore();
+    this.init(true);
   }
 
   public updateScenePosition(): void {

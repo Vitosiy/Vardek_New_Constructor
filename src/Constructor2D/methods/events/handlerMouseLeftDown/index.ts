@@ -16,6 +16,7 @@ export function handlerMouseLeftDown(this: any, e: PIXI.FederatedPointerEvent): 
       this.layers.arrowRulerActiveObject?.clearGraphic();
       this.layers.dimensionDisplay.hide();
       this.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+      this.eventBus.emit(Events.C2D_HIDE_WALL_CONTEXT_MENU);
     }
 
     if(this.layers.doorsAndWindows && this.layers.doorsAndWindows.state.activeObject) {

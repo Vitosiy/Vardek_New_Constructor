@@ -14,6 +14,9 @@ export const Events = {
   C2D_SHOW_FORM_ROOM_LABEL: 'C2D:show-form-room-label',
   C2D_HIDE_FORM_ROOM_LABEL: 'C2D:hide-form-room-label',
 
+  C2D_SHOW_WALL_CONTEXT_MENU: 'C2D:show-wall-context-menu',
+  C2D_HIDE_WALL_CONTEXT_MENU: 'C2D:hide-wall-context-menu',
+
 } as const;
 
 export type EventsType = keyof typeof Events;
