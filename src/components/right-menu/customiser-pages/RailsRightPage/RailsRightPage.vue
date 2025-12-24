@@ -32,6 +32,7 @@ onBeforeMount(() => {
             type="checkbox"
             :checked="option.active"
             @change="changeValue($event, option.ID)"
+            :disabled="option.disabled"
           />
           <span class="control_indicator"></span>
           <span class="text-lg text-gray-800 font-medium">{{

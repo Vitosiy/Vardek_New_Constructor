@@ -152,6 +152,14 @@ const addSection = (secIndex, _count = 1) => {
 
     module.value.sections.splice(secIndex + 1 + i, 0, newColumn);
   }
+
+  if(module.value.isRestrictedModule && section.fasades.length > 1) {
+    let lastDoor = section.fasades.pop()
+    lastDoor.id = 1;
+    module.value.sections[secIndex + 1].fasades.push(lastDoor);
+  }
+
+
   reset()
 
   //updateFasades();

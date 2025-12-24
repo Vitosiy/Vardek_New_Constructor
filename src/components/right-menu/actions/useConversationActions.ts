@@ -91,15 +91,17 @@ export const useConversationActions = () => {
     const filterFasadeConversations = (fasadeNdx: number, fasadeSize: TFasadeTrueSizes) => {
         const sceneModel = modelState.getCurrentModel;
         const { FASADE } = sceneModel?.userData.PROPS;
-        const { FASADE_WIDTH, FASADE_HEIGHT } = fasadeSize || FASADE[fasadeNdx].userData.trueSize;
+        const { FASADE_WIDTH, FASADE_HEIGHT, isDrawer } = fasadeSize || FASADE[fasadeNdx]?.userData?.trueSize;
 
         const tempList = modelState.getCurrentModelFasadesData
             .map((el) => {
                 const check =
-                    FASADE_HEIGHT <= el.GROUP_SIZE.MAX_HEIGHT &&
-                    FASADE_HEIGHT >= el.GROUP_SIZE.MIN_HEIGHT &&
-                    FASADE_WIDTH <= el.GROUP_SIZE.MAX_WIDTH &&
-                    FASADE_WIDTH >= el.GROUP_SIZE.MIN_WIDTH;
+                    isDrawer || (
+                        FASADE_HEIGHT <= el.GROUP_SIZE.MAX_HEIGHT &&
+                        FASADE_HEIGHT >= el.GROUP_SIZE.MIN_HEIGHT &&
+                        FASADE_WIDTH <= el.GROUP_SIZE.MAX_WIDTH &&
+                        FASADE_WIDTH >= el.GROUP_SIZE.MIN_WIDTH
+                    );
                 if (check) return el;
             })
             .filter(Boolean);

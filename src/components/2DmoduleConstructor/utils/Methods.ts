@@ -695,6 +695,9 @@ class Shape extends Helpers {
         let verticalCheck = false;
         let horizontalCheck = false;
 
+        if((this.data.isDrawer || this.data.fasade) && otherShape.data.type === 'loop')
+            return false
+
         if (isVerticalItem) {
             let thisPosX = this.graphic.position.x
             let thisWidth = this.width
@@ -726,7 +729,8 @@ class Shape extends Helpers {
             } else
                 verticalCheck = true;
 
-        } else {
+        }
+        else {
             let thisPosY = this.graphic.position.y
             let thisHeight = this.height
             let otherShapePosY = otherShape.graphic.position.y
@@ -1398,6 +1402,7 @@ class ShapeAdjuster extends Helpers {
             type: shapeType,
             sector: sector,
             data: shapeData,
+            position: {...shapeData.position},
             getMmWidth: this.getMmWidth,
             getMmHeight: this.getMmHeight,
             getPixelWidth: this.getPixelWidth,
@@ -1413,7 +1418,7 @@ class ShapeAdjuster extends Helpers {
         const overLap = shapes.some(
             (otherShape) =>
                 otherShape.graphic.holeId !== tempShape.graphic.holeId &&
-                tempShape.checkOverlap(otherShape)
+                tempShape.checkOverlap(otherShape, tempShape.data.isVerticalItem)
         );
 
         return insideSector && !overLap;
@@ -1457,7 +1462,10 @@ const saveUMGrid = (module) => {
 
             object.forEach(([key, value], index) => {
                 if (key === "position") {
-                    object[index] = [key, new THREE.Vector2(value.x, value.y)];
+                    if(value.z)
+                        object[index] = [key, new THREE.Vector3(value.x, value.y, value.z)];
+                    else
+                        object[index] = [key, new THREE.Vector2(value.x, value.y)];
                 }
                 if (key === "size") {
                     object[index] = [key, {...value}];

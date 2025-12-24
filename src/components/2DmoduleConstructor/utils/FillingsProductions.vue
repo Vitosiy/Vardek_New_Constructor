@@ -88,12 +88,13 @@ const showCurrentCol = (secIndex) => {
   selectCell(secIndex)
 };
 
-const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false) => {
+const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false, isDrawer = false) => {
 
   let width = product.width
   let height = product.height
+  let isSlidingDoors = module.value.fasades ? 100 : 0
 
-  if (!isVerticalItem && (height > currentSpace.height || product.ACTUAL_DEPT > module.value.depth)) {
+  if (!isVerticalItem && (height > currentSpace.height || product.ACTUAL_DEPT > module.value.depth - isSlidingDoors)) {
     return false
   }
 
@@ -107,7 +108,8 @@ const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false)
     width,
     height,
     data: product,
-    isVerticalItem
+    isVerticalItem,
+    isDrawer,
   };
 
   return visualizationRef.value.checkPositionFillingToCreate(tempFilling);
@@ -201,7 +203,7 @@ const addFilling = (type, _product, oldFillingObject = false) => {
     product.width = module.value.moduleThickness
   }
 
-  const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem);
+  const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem, !!product.MIN_FASADE_SIZE);
 
   if (!startFillingData) {
     alert("Позиция не найдена");
@@ -478,6 +480,7 @@ const changeFillingPositionX = (event, _value, key, secIndex, cellIndex = null, 
   if (check) {
     currentfilling.position.x = fillingData.position.x;
   } else {
+    alert(`Нельзя изменить позицию на ${+_value}`)
     currentfilling.position.x = prevValue;
   }
 
@@ -533,6 +536,7 @@ const changeFillingPositionY = (event, _value, key, secIndex, cellIndex = null, 
   if (check) {
     currentfilling.position.y = fillingData.position.y;
   } else {
+    alert(`Нельзя изменить позицию на ${+_value}`)
     currentfilling.position.y = prevValue;
   }
 
@@ -584,10 +588,11 @@ const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
     let data = curModuleSegment.fillings[itemIndex].fasade.material
     currentFasadeMaterial.value = {
       secIndex,
-      curCell,
-      curRow,
+      cellIndex,
+      rowIndex,
       itemIndex,
-      data
+      data,
+      fasadeSize: {FASADE_WIDTH: curModuleSegment.fillings[itemIndex].fasade.width, FASADE_HEIGHT: curModuleSegment.fillings[itemIndex].fasade.height, isDrawer: true},
     }
     selectCell(secIndex, cellIndex, rowIndex, null, itemIndex)
     isOpenMaterialSelector.value = true
@@ -1329,6 +1334,7 @@ const closeMenu = () => {
       <AdvanceCorpusMaterialRedactor
           :is-fasade="true"
           :elementData="currentFasadeMaterial.data"
+          :fasade-size="currentFasadeMaterial.fasadeSize"
           @parent-callback="selectOption"
       />
     </div>
