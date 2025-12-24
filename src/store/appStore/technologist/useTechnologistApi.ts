@@ -68,6 +68,40 @@ export const useTechnologistApi = () => {
     }
   }
 
+  const setProjectForDeal = async (formItem: FormData): Promise<TechnologistResponse | null> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await TechnologistService.setProjectForDeal(formItem)
+      return <TechnologistResponse>{ ...response }
+    }
+    catch (err: any) {
+      error.value = err.message || 'Ошибка при смене ID проекта заявки'
+      return null
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
+  const setComments = async (formItem: FormData): Promise<TechnologistResponse | null> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await TechnologistService.setComments(formItem)
+      return <TechnologistResponse>{ ...response }
+    }
+    catch (err: any) {
+      error.value = err.message || 'Ошибка при отправке комментариев'
+      return null
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   const getComments = async (formItem: FormData): Promise<TechnologistCommentsResponse | null> => {
     loading.value = true
     error.value = null
@@ -85,12 +119,32 @@ export const useTechnologistApi = () => {
     }
   }
 
+  const getImgById = async (formItem: FormData): Promise<TechnologistResponse | null> => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await TechnologistService.getImgById(formItem)
+      return <TechnologistResponse>{ ...response }
+    }
+    catch (err: any) {
+      error.value = err.message || 'Ошибка получения превью файла'
+      return null
+    }
+    finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading: readonly(loading),
     error: readonly(error),
     submitTechForm,
     getList,
     setStatus,
+    setProjectForDeal,
+    setComments,
     getComments,
+    getImgById,
   }
 }

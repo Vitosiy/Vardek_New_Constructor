@@ -81,9 +81,6 @@ const setStatus = function (id, statusId, projectTechId = false, message = false
   if (projectTechId != false)
     formData.append("projectId", projectTechId);
 
-  if (message != false)
-    formData.append("message", message);
-
   technologistAPI.setStatus(formData).then((result) => {
     if (result) {
       if (statusId == 'C10:PREPAYMENT_INVOIC' || statusId == 'C10:1') {
@@ -145,7 +142,6 @@ const openModalSTD = function (elem, statusId) {
   }
 
   popupStore.openPopup('technologist-comments');*/
-
   openModalComments(elem.id, statusId)
 }
 

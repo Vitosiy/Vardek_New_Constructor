@@ -23,7 +23,7 @@ const formReview = <TechnologistFormReview>ref(technologistStorage.formReview)
 
 const closePopup = () => {
   technologistStorage.clearFormReview();
-  reviewStatus.false = false;
+  reviewStatus.value = false;
 
   popupStore.closePopup('technologist-comments');
   popupStore.openPopup('technologist');
@@ -33,23 +33,35 @@ const changeCommentsFiles = (files: File[]) => {
   formReview.value.commentsFiles = files;
 }
 
-const sendToDesigner = () => {
+const sendComments = async () => {
 
   let formData = new FormData();
 
-  formData.append("id", +formReview.value.projectId);
 
-  if(formReview.value.statusId)
+  if(formReview.value.statusId){
+    formData.append("id", +formReview.value.id);
     formData.append("statusId", formReview.value.statusId);
-  if(formReview.value.projectTechId)
-    formData.append("projectTechId", +formReview.value.projectTechId);
 
+    await technologistAPI.setStatus(formData);
+  }
+
+  if (reviewStatus.value) {
+    formData = new FormData();
+    formData.append("id", +formReview.value.id);
+    if (formReview.value.projectId)
+      formData.append("projectId", formReview.value.projectId);
+
+    await technologistAPI.setProjectForDeal(formData);
+  }
+
+  formData = new FormData();
+  formData.append("id", +formReview.value.id);
   formData.append("message", formReview.value.message);
   formReview.value.commentsFiles?.forEach((item, index) => {
     formData.append(`comments[${index}]`, item);
   })
 
-  technologistAPI.setStatus(formData).then((res) => {
+  technologistAPI.setComments(formData).then((res) => {
     getCommentsList()
   });
 }
@@ -63,9 +75,62 @@ const getCommentsList = () => {
     formReview.value.comments = <TechnologistCommentsItem>[]
 
     if (data?.DATA) {
-      formReview.value.comments = data.DATA;
+      let comments = data.DATA.slice()
+      comments.reverse()
+      formReview.value.comments = comments;
     }
   });
+}
+
+const createDateLabel = (date: string) => {
+  const commentDate = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - commentDate.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  // Проверяем, в тот же ли день
+  const isSameDay = 
+    commentDate.getDate() === now.getDate() &&
+    commentDate.getMonth() === now.getMonth() &&
+    commentDate.getFullYear() === now.getFullYear();
+
+  // 1) Если время было менее 1 часа назад
+  if (diffMinutes < 60) {
+    const minutes = diffMinutes || 1; // Минимум 1 минута
+    const lastDigit = minutes % 10;
+    const lastTwoDigits = minutes % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return `${minutes} мин. назад`;
+    }
+    if (lastDigit === 1) {
+      return `${minutes} мин. назад`;
+    }
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return `${minutes} мин. назад`;
+    }
+    return `${minutes} мин. назад`;
+  }
+
+  // 2) Если время от 1 до 3 часов назад
+  if (diffHours >= 1 && diffHours < 3) {
+    if (diffHours === 1) return '1 час назад';
+    return `${diffHours} часа назад`;
+  }
+
+  // 3) Если более 3 часов назад, но в текущий день
+  if (isSameDay && diffHours >= 3) {
+    const hours = commentDate.getHours().toString().padStart(2, '0');
+    const minutes = commentDate.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // 4) Если время было не в текущий день
+  const day = commentDate.getDate().toString().padStart(2, '0');
+  const month = (commentDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = commentDate.getFullYear();
+  return `${day}.${month}.${year}`;
 }
 
 onMounted(() => {
@@ -95,31 +160,43 @@ onMounted(() => {
 
       <label>История сообщений:</label>
       <div class="commentsList">
-        <div class="commentsItem" v-for="comment in formReview.comments">
-          <span>{{ comment.COMMENT }}</span>
-          <div>
-            <div v-for="(file, fileKey) in comment.FILES">
-              <a
-                  :href="`${_URL + file.customLink}`"
-                  v-if="file.previewUrl"
-                  class="preview"
-                  rel="gallery1"
-              >
-                <img
-                    :src="`${_URL + file.customLink}`"
-                    :alt="file.name"
-                    class="preview__image"
-                />
-              </a>
+        <div class="commentsList-commentsItem" v-for="comment in formReview.comments">
 
-              <a
-                  v-if="file.type == 'docs'"
-                  :href="`${_URL + file.customLink}`"
+          <div class="commentsList-commentsItem-time">{{ createDateLabel(comment.CREATED)}}</div>
+
+          <div class="commentsList-commentsItem-comment">
+            <span>{{ comment.COMMENT }}</span>
+
+            <ul v-if="comment.FILES && Object.keys(comment.FILES).length" class="list">
+              <li
+                  v-for="(file, fileKey) in comment.FILES"
+                  :key="fileKey"
+                  class="list-item"
+                  :title="file.name"
               >
-                <span>{{ file.name }}</span>
-              </a>
-            </div>
+                <a
+                    :href="`${file.urlDownload}`"
+                    v-if="file.urlPreview"
+                    class="preview"
+                >
+                  <img
+                      :src="`${_URL + file.customLink}`"
+                      :alt="file.name"
+                      class="preview__image"
+                  />
+                </a>
+
+                <a
+                    :href="`${file.urlDownload}`"
+                    class="file-info"
+                >
+                  <div class="file-name">{{ file.name }}</div>
+                  <div class="file-size">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</div>
+                </a>
+              </li>
+            </ul>
           </div>
+
         </div>
       </div>
 
@@ -143,8 +220,6 @@ onMounted(() => {
             v-model="formReview.message"></textarea>
 
         <div class="technologist-filedrop">
-          <p class="technologist-filedrop__label">* Прикрепите файлы</p>
-
           <DragAndDropFiles
               accept=".pdf, .txt, .docx, .doc, .rtf, .jpg, .jpeg, .bmp, .png"
               @update:files="changeCommentsFiles"
@@ -152,7 +227,7 @@ onMounted(() => {
         </div>
 
         <MainButton
-            @click="sendToDesigner()"
+            @click="sendComments"
             :class-name="'btn'"
         >
           Отправить
@@ -212,41 +287,99 @@ onMounted(() => {
   }
 
   .commentsList {
-    padding: 30px;
+    display: flex;
+    padding: 1.2rem;
     border: 1px solid;
-    margin-top: 1rem;
+    margin-top: 0.2rem;
     margin-bottom: 1rem;
+    min-height: 30vh;
+    max-height: 50vh;
+    overflow-y: scroll;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: flex-start;
+    align-content: flex-start;
 
     &-commentsItem {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
       font-size: 18px;
       border-bottom: 2px solid;
       padding-bottom: 10px;
       margin-bottom: 10px;
+      min-width: 30vw;
 
       &-span {
         word-wrap: break-word;
       }
 
-      .preview {
-        width: 48px;
-        height: 48px;
-        border-radius: 6px;
-        overflow: hidden;
-        flex-shrink: 0;
-        border: 1px solid #e0e0e0;
-        background: #fafafa;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &__image {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: cover;
-        }
+      &-time {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-top: 2px;
       }
+
+      &-comment {
+        display: flex;
+        flex-direction: column;
+      }
+
     }
 
+  }
+
+  .list {
+    margin-top: 12px;
+
+    &-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+  }
+
+  .file {
+
+    &-info {
+      flex: 1 1 auto;
+      min-width: auto;
+      max-width: 15vw;
+    }
+
+    &-name {
+      font-size: 14px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &-size {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+  }
+
+  .preview {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &__image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
+    }
   }
 
   &-review {
@@ -264,9 +397,12 @@ onMounted(() => {
 
     &__textarea {
       margin-bottom: 10px;
-      width: 600px;
-      height: 200px;
       padding: 15px;
+      min-width: 50vw;
+      max-width: 90vw;
+      min-height: 10vh;
+      max-height: 20vh;
+      overflow-y: scroll;
     }
 
     .adm-fileinput-wrapper {
@@ -274,21 +410,18 @@ onMounted(() => {
     }
   }
 
-
   &-container {
     padding: 0 50px;
     height: 100%;
     width: 100%;
+    overflow-y: scroll;
 
   }
 
   &-filedrop {
-    padding: 20px;
-    margin-bottom: 22px;
-    border: 1px solid #dce5e7;
-    box-sizing: border-box;
-    width: 95%;
-    min-height: 102px;
+    max-width: 24vw;
+    max-height: 20vh;
+    margin-bottom: 2rem;
 
     &__label {
       display: block;
