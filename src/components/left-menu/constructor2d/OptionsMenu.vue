@@ -161,9 +161,17 @@ const switchRoom = async (roomId: string | number) => {
   
   // Переинициализируем Planner и DoorsAndWindows с новой комнатой
   const c2d = window.C2D;
-  if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
-    c2d.layers.planner.init(true);
-    c2d.layers.doorsAndWindows.init(true);
+  if (c2d?.layers) {
+    // Очищаем разметку размеров стен перед переключением комнаты
+    c2d.layers.dimensionDisplay?.hide();
+    // Очищаем активные точки стен (синие точки с углом)
+    c2d.layers.startPointActiveObject?.activate(false);
+    c2d.layers.arrowRulerActiveObject?.clearGraphic();
+    
+    if (c2d.layers.planner && c2d.layers.doorsAndWindows) {
+      c2d.layers.planner.init(true);
+      c2d.layers.doorsAndWindows.init(true);
+    }
   }
   
   // Закрываем меню параметров помещения
