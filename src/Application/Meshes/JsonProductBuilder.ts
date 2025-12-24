@@ -33,7 +33,8 @@ export class JsonBuilder {
         top?: THREETypes.TObject,
         tsarga?: THREETypes.TObject,
         isTopTable?: boolean
-    }) {
+    })
+    {
 
         const json = data.json ? data.json : data
         const group = new THREE.Object3D();
@@ -119,7 +120,7 @@ export class JsonBuilder {
         }
 
 
-
+        this.clearMaterials()
         return group
     }
 
@@ -333,5 +334,12 @@ export class JsonBuilder {
         return material
     }
 
-
+    clearMaterials = () => {
+        this.material = null
+        this.rightMaterial = null
+        this.leftMaterial = null
+        this.backMaterial = null
+        this.topMaterial = null
+        this.tsargaMaterial = null
+    }
 }

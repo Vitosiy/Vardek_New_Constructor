@@ -29,12 +29,14 @@ const changeShowcase = (showcase) => {
     ID: showcase.ID,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 
-  if (!props.tempWork) FASADE_PROPS[props.tabIndex].SHOWCASE = showcase.ID;
+  if (!props.tempWork) {
+    FASADE_PROPS[props.tabIndex].SHOWCASE = showcase.ID;
 
-  eventBus.emit("A:ChangeShowcase", {
-    data: showcase.ID,
-    fasadeNdx: props.tabIndex,
-  });
+    eventBus.emit("A:ChangeShowcase", {
+      data: showcase.ID,
+      fasadeNdx: props.tabIndex,
+    });
+  }
 };
 </script>
 

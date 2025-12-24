@@ -85,7 +85,7 @@ const getMaterialsParts = computed(() => {
       };
     }
 
-    if (module.value.isRestrictedModule) {
+    if (module.value.isRestrictedModule || module.value.fasades) {
       delete result["TOPFASADECOLOR"];
     }
 

@@ -33,9 +33,9 @@ const changePaletteColor = (color) => {
     ID: color.ID,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 
-  FASADE_PROPS[props.tabIndex].PALETTE = color.ID;
 
   if (!props.tempWork) {
+    FASADE_PROPS[props.tabIndex].PALETTE = color.ID;
     eventBus.emit("A:ChangePaletteColor", {
       data: color.ID,
       fasadeNdx: props.tabIndex,

@@ -133,26 +133,42 @@ function createUniformTexture(objProps: any) {
 
 function generateDoorsSimple(moduleData) {
     const DOORS = {};
-    
-    moduleData?.sections?.forEach((section, number) => {
+
+    //Двери-купе
+    if(moduleData?.fasades) {
+      moduleData.fasades?.forEach((fasadeArray, index) => {
+        const doorNum = index + 1;
+        DOORS[doorNum] = {};
+
+        fasadeArray.forEach((fasade, index) => {
+          const segmentNum = index; // номер сегмента = индекс в массиве
+          const color = fasade.material.COLOR;
+
+          DOORS[doorNum][segmentNum] = color;
+        });
+      });
+    }
+    else {
+      moduleData?.sections?.forEach((section, number) => {
         const sectionNum = number + 1;
         DOORS[sectionNum] = {};
-        
-        section.fasades.forEach(fasadeArray => {
-            fasadeArray.forEach((fasade, index) => {
-                const doorNum = fasade.door || 1;
-                const segmentNum = index; // номер сегмента = индекс в массиве
-                const color = fasade.material.COLOR;
-                
-                if (!DOORS[sectionNum][doorNum]) {
-                    DOORS[sectionNum][doorNum] = {};
-                }
-                
-                DOORS[sectionNum][doorNum][segmentNum] = color;
-            });
+
+        section.fasades?.forEach(fasadeArray => {
+          fasadeArray.forEach((fasade, index) => {
+            const doorNum = fasade.door || 1;
+            const segmentNum = index; // номер сегмента = индекс в массиве
+            const color = fasade.material.COLOR;
+
+            if (!DOORS[sectionNum][doorNum]) {
+              DOORS[sectionNum][doorNum] = {};
+            }
+
+            DOORS[sectionNum][doorNum][segmentNum] = color;
+          });
         });
-    });
-    
+      });
+    }
+
     return DOORS;
 }
 
@@ -336,8 +352,9 @@ function convertModuleToLegacyFormat(newModuleObject) {
       result[fasadesMillingKey] = {}; 
       result[fasadesPaletteKey] = {}; 
       result[fasadesPattinaKey] = {}; 
-      
-      section.fasades.forEach(doorGroup => {
+
+
+      section.fasades?.forEach(doorGroup => {
           doorGroup.forEach((fasade, index) => {
               const doorNumber = fasade.door;
               
@@ -398,6 +415,70 @@ function convertModuleToLegacyFormat(newModuleObject) {
       legacyProps[`${fasadesPaletteKey}`] = result[fasadesPaletteKey]
     });
 
+
+    //Двери-купе
+    CONFIG.MODULEGRID.fasades?.forEach((doorGroup, doorId) => {
+      const sectionNumber = doorId + 1;
+
+      const fasadesSizeKey = `FASADESIZES${sectionNumber}`;
+      const fasadesWidthKey = `FASADEWIDTH${sectionNumber}`;
+      const fasadesHorizontlPositionKey = `FASADEHORIZONTALPOSITION${sectionNumber}`;
+      const fasadesMillingKey = `MILLING${sectionNumber}`;
+      const fasadesPaletteKey = `PALETTE${sectionNumber}`;
+      const fasadesPattinaKey = `PATINA${sectionNumber}`;
+
+      result[fasadesSizeKey] = {};
+      result[fasadesWidthKey] = {};
+      result[fasadesMillingKey] = {};
+      result[fasadesPaletteKey] = {};
+      result[fasadesPattinaKey] = {};
+
+      doorGroup.forEach((fasade, index) => {
+
+        result[fasadesSizeKey][index] = fasade.height;
+
+        if (!result[fasadesWidthKey][index]) {
+          result[fasadesWidthKey][index] = fasade.width;
+        }
+
+        if (!result[fasadesHorizontlPositionKey]) {
+          result[fasadesHorizontlPositionKey] = {};
+        }
+
+        result[fasadesHorizontlPositionKey][index] = fasade.position.x;
+
+
+        if(fasade.material.MILLING) {
+          if (!result[fasadesMillingKey]) {
+            result[fasadesMillingKey] = {};
+          }
+          result[fasadesMillingKey][index] = fasade.material.MILLING;
+        }
+
+        if(fasade.material.PATINA) {
+          if (!result[fasadesPattinaKey]) {
+            result[fasadesPattinaKey] = {};
+          }
+
+          result[fasadesPattinaKey][index] = fasade.material.PATINA;
+        }
+
+        if(fasade.material.PALETTE) {
+          if (!result[fasadesPaletteKey]) {
+            result[fasadesPaletteKey] = {};
+          }
+
+          result[fasadesPaletteKey][index] =  fasade.material.PALETTE;
+        }
+
+      });
+
+      legacyProps[`${fasadesSizeKey}`] = result[fasadesSizeKey]
+      legacyProps[`${fasadesWidthKey}`] = result[fasadesWidthKey]
+      legacyProps[`${fasadesMillingKey}`] = result[fasadesMillingKey]
+      legacyProps[`${fasadesPattinaKey}`] = result[fasadesPattinaKey]
+      legacyProps[`${fasadesPaletteKey}`] = result[fasadesPaletteKey]
+    });
 
     legacyProps[`LOOPS`] = transformLoops(CONFIG.MODULEGRID?.sections, CONFIG.MODULEGRID?.horizont, CONFIG.MODULEGRID?.moduleThickness).coords;
     legacyProps[`LOOPSSIDE`] = transformLoops(CONFIG.MODULEGRID?.sections).sides;

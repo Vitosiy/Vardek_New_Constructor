@@ -12,6 +12,7 @@ interface CreateParams {
     onLoad: (object: THREE.Object3D) => void;
     props: THREETypes.TObject;
     sizeRulers?: boolean; // Опциональный параметр, так как есть значение по умолчанию
+    UMFillinig?: boolean; // Явное определение модели, как объекта наполнения УМ - им НУЖЕН ПЕРЕДАННЫЙ РАЗМЕР!
 }
 
 export class ModelsBuilder {
@@ -28,7 +29,7 @@ export class ModelsBuilder {
     }
 
     public create(params: CreateParams) {
-        const { url, onLoad, props, sizeRulers = true } = params;
+        const { url, onLoad, props, sizeRulers = true, UMFillinig = false } = params;
 
         const arrows = new THREE.Object3D()
         const modelData = this.parent._MODELS[props.CONFIG.MODELID]
@@ -63,7 +64,7 @@ export class ModelsBuilder {
 
                 const checkResizes = props.CONFIG.SIZE_EDIT ? Object.values(props.CONFIG.SIZE_EDIT).some(value => value !== null) : false
 
-                const editSize = checkResizes ? props.CONFIG.SIZE : null
+                const editSize = checkResizes || UMFillinig ? props.CONFIG.SIZE : null
                 const normolized = this.normalizeUploadedModel(file, model, editSize) as THREE.Object3D;
 
                 if (model.model_type.length === 0) {

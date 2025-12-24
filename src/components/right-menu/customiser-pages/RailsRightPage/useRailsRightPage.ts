@@ -90,6 +90,24 @@ export const useRailsRightPage = () => {
         curOpt.active = values;
 
         switch (+curOpt.id) {
+            case 3955910: //Опция без присадки под петли
+                if(curOpt.active) {
+                    checkActive(1795067, true)
+                    let noLoopsOption = OPTIONS.find((opt, index) => {
+                        if (+opt.id === 1795067)
+                            return opt;
+                    })
+                    noLoopsOption.disabled = true
+                }
+                else {
+                    let noLoopsOption = OPTIONS.find((opt, index) => {
+                        if (+opt.id === 1795067)
+                            return opt;
+                    })
+                    delete noLoopsOption.disabled
+                }
+
+                break;
             case 7250452:   //Деревянная царга
                 if (curOpt.active) {
                     PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
