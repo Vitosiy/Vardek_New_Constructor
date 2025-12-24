@@ -63,6 +63,21 @@ const changeConstructorMode = (_mode: workMode) => {
   }
 }
 
+const FILLING_TYPES = new Map(
+    Object.entries({
+      2166308: 'drawer', //Встраиваемые ящики
+      2166309: 'drawer', //Секции
+      5718462: 'drawer', //Секции купе
+      5726092: 'drawer', //Внешние ящики
+      6560591: 'drawer', //Внешние ящики Hi-Tech
+      5726093: 'shelf',  //Полки
+      12102124: 'shelf', //Полки Hi-Tech
+      6311723: 'shelf',  //Полки купе
+      6174300: 'any',    //Аксессуары для шкафов
+      6513322: 'profile',//Профиль Hi-Tech
+    })
+)
+
 const timer = ref(false);
 const debounce = (callback, wait) => {
   if (timer.value) {
@@ -100,8 +115,7 @@ const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false,
 
   if (isVerticalItem) {
     height = currentSpace.height;
-  }
-  else if (width !== currentSpace.width)
+  } else if (width !== currentSpace.width)
     width = currentSpace.width;
 
   let tempFilling = {
@@ -117,8 +131,8 @@ const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false,
 
 const getFasadePosition = (_position) => {
 
-  const { userData } = modelState.getCurrentModel;
-  const { PROPS } = userData;
+  const {userData} = modelState.getCurrentModel;
+  const {PROPS} = userData;
   let fasadePosition = APP.FASADE_POSITION[_position];
 
   if (!fasadePosition)
@@ -137,20 +151,18 @@ const getFasadePosition = (_position) => {
   return fasadePosition
 }
 
-const addFilling = (type, _product, oldFillingObject = false) => {
+const addFilling = (_product, productGroupID) => {
 
   const product = Object.assign({}, _product);
   const {sec, cell, row, extra} = selectedFilling.value
   const isHiTechProfile = APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
   const isBottomHiTechProfile = isHiTechProfile && APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
-  const { userData } = modelState.getCurrentModel;
-  const { PROPS } = userData;
+  const {userData} = modelState.getCurrentModel;
+  const {PROPS} = userData;
 
   let name = product.NAME?.toLowerCase()
-  let _type = name.includes('полка') ? 'shelf' : name.includes('разделитель') ? 'vertical_shelf' : 'any';
-  _type = isHiTechProfile ? 'profile' : _type;
-
-  if(_type === 'shelf' && name.includes('стеклянная')){
+  let _type = name.includes('разделитель') ? 'vertical_shelf' : FILLING_TYPES.get(`${productGroupID}`) || 'any';
+  if (_type === 'shelf' && name.includes('стеклянная')) {
     _type = "glass_shelf"
   }
 
@@ -169,12 +181,12 @@ const addFilling = (type, _product, oldFillingObject = false) => {
   }
 
   if (product.MIN_FASADE_SIZE) {
-    if(row || extra){
+    if (row || extra) {
       alert("Нельзя установить ящик с фасадом в вертикальную разделитель!", "error");
       return;
     }
 
-    if(!currentSection?.fasades?.[0]?.[0]){
+    if (!currentSection?.fasades?.[0]?.[0]) {
       alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!", "error");
       return;
     }
@@ -195,11 +207,11 @@ const addFilling = (type, _product, oldFillingObject = false) => {
 
   let currentFillingsArray = []
 
-  if(_type === 'shelf') {
+  if (_type === 'shelf') {
     product.height = module.value.moduleThickness
   }
 
-  if(_type === 'vertical_shelf') {
+  if (_type === 'vertical_shelf') {
     product.width = module.value.moduleThickness
   }
 
@@ -239,11 +251,10 @@ const addFilling = (type, _product, oldFillingObject = false) => {
     if (!isBottomHiTechProfile && !APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("section")) {
       width = module.value.profilesConfig.onSectionSize ? startFillingData.width : startFillingData.width + module.value.moduleThickness * 2
 
-      if(!module.value.profilesConfig.onSectionSize) {
+      if (!module.value.profilesConfig.onSectionSize) {
         width = startFillingData.width + module.value.moduleThickness * 2
         startFillingData.x -= module.value.moduleThickness
-      }
-      else {
+      } else {
         width = startFillingData.width
       }
     }
@@ -258,12 +269,12 @@ const addFilling = (type, _product, oldFillingObject = false) => {
     profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
     profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
 
-    if(isBottomHiTechProfile) {
+    if (isBottomHiTechProfile) {
       profileData.isBottomHiTechProfile = true
       startFillingData.y = module.value.height - module.value.horizont - height
     }
 
-    if(!currentModuleSegment.hiTechProfiles)
+    if (!currentModuleSegment.hiTechProfiles)
       currentModuleSegment.hiTechProfiles = []
 
     profileData.id = currentModuleSegment.hiTechProfiles.length + 1
@@ -288,19 +299,18 @@ const addFilling = (type, _product, oldFillingObject = false) => {
   };
 
 
-  if(isHiTechProfile) {
+  if (isHiTechProfile) {
     fillingObject.isProfile = profileData
     fillingObject.moduleThickness = module.value.moduleThickness
     currentModuleSegment.hiTechProfiles.push(fillingObject)
     currentFillingsArray.push(fillingObject);
 
     calcDrawersFasades(sec)
-  }
-  else
+  } else
     currentFillingsArray.push(fillingObject);
 
   if (product.MIN_FASADE_SIZE) {
-    if(!currentSection.fasadesDrawers)
+    if (!currentSection.fasadesDrawers)
       currentSection.fasadesDrawers = []
 
     const {PRODUCT} = PROPS
@@ -318,9 +328,9 @@ const addFilling = (type, _product, oldFillingObject = false) => {
     let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0]
 
     let manufacturerOffset = 0
-    let manufacturer_name = product.EN_NAME?.toLowerCase()|| product.NAME?.toLowerCase()
+    let manufacturer_name = product.EN_NAME?.toLowerCase() || product.NAME?.toLowerCase()
     Object.entries(MANUFACTURER).forEach(([key, offset]) => {
-      if(manufacturer_name.includes(key)) {
+      if (manufacturer_name.includes(key)) {
         manufacturer_name = key
         manufacturerOffset = offset
       }
@@ -349,10 +359,10 @@ const addFilling = (type, _product, oldFillingObject = false) => {
 
 
     currentSection.fasadesDrawers.push(fillingObject.fasade);
-    calcDrawersFasades(sec )
+    calcDrawersFasades(sec)
   }
 
-  selectCell(sec, cell, row, extra,currentFillingsArray.length - 1);
+  selectCell(sec, cell, row, extra, currentFillingsArray.length - 1);
 
   // // Обновляем рендер
   visualizationRef.value.renderGrid();
@@ -371,7 +381,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
   curRow.fillings.forEach((filling, index) => {
     if (index > itemIndex) {
       filling.id -= 1;
-      if(filling.fasade)
+      if (filling.fasade)
         filling.fasade.item = filling.id;
     }
   })
@@ -380,7 +390,7 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
     if (index === itemIndex) {
       if (el.fasade)
         needFasadesUpdate = true
-      if(el.isProfile)
+      if (el.isProfile)
         profileUpdate = true
     }
 
@@ -388,9 +398,9 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
   });
 
   if (needFasadesUpdate || profileUpdate) {
-    if(sec.fasadesDrawers?.length || curRow.hiTechProfiles?.length) {
+    if (sec.fasadesDrawers?.length || curRow.hiTechProfiles?.length) {
 
-      if(sec.fasadesDrawers?.length && needFasadesUpdate) {
+      if (sec.fasadesDrawers?.length && needFasadesUpdate) {
         sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
           return el.id !== curItem.fasade.id;
         });
@@ -400,11 +410,11 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
             el.id -= 1;
         })
 
-        if(!sec.fasadesDrawers.length)
+        if (!sec.fasadesDrawers.length)
           delete sec.fasadesDrawers
       }
 
-      if(curRow.hiTechProfiles?.length && profileUpdate) {
+      if (curRow.hiTechProfiles?.length && profileUpdate) {
         curRow.hiTechProfiles = curRow.hiTechProfiles.filter((el, index) => {
           return el.isProfile.id !== curItem.isProfile.id;
         });
@@ -414,13 +424,12 @@ const deleteFilling = (secIndex, itemIndex, cellIndex = null, rowIndex = null, e
             el.isProfile.id -= 1;
         })
 
-        if(!curRow.hiTechProfiles.length)
+        if (!curRow.hiTechProfiles.length)
           delete curRow.hiTechProfiles
       }
 
       calcDrawersFasades(secIndex)
-    }
-    else
+    } else
       updateFasades()
   }
 
@@ -551,7 +560,7 @@ const changeFillingPositionY = (event, _value, key, secIndex, cellIndex = null, 
 
 const createFacadeData = (fasadeIndex) => {
   const productId = modelState.getCurrentModel.userData.PROPS.PRODUCT;
-  const { FACADE } = modelState._PRODUCTS[productId];
+  const {FACADE} = modelState._PRODUCTS[productId];
   modelState.createCurrentModelFasadesData({
     data: FACADE,
     fasadeNdx: fasadeIndex,
@@ -592,7 +601,11 @@ const openFasadeSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
       rowIndex,
       itemIndex,
       data,
-      fasadeSize: {FASADE_WIDTH: curModuleSegment.fillings[itemIndex].fasade.width, FASADE_HEIGHT: curModuleSegment.fillings[itemIndex].fasade.height, isDrawer: true},
+      fasadeSize: {
+        FASADE_WIDTH: curModuleSegment.fillings[itemIndex].fasade.width,
+        FASADE_HEIGHT: curModuleSegment.fillings[itemIndex].fasade.height,
+        isDrawer: true
+      },
     }
     selectCell(secIndex, cellIndex, rowIndex, null, itemIndex)
     isOpenMaterialSelector.value = true
@@ -626,32 +639,32 @@ const changeDrawerFasade = (event, value, key, secIndex, cellIndex = null, rowIn
 
   const currentfilling = currentRow.fillings[key];
 
-  if (!currentfilling?.fasade){
+  if (!currentfilling?.fasade) {
     alert("У элемента нет фасада!");
     return
   }
 
   const prevValue = currentfilling.fasade.height; //Предыдущее значение
   const newValue = parseInt(value)
-/*
-  let tmpSector = currentfilling.sector
-  delete currentfilling.sector
+  /*
+    let tmpSector = currentfilling.sector
+    delete currentfilling.sector
 
-  const fillingData = JSON.parse(JSON.stringify(currentfilling));
-  fillingData.fasade.height = newValue;
-  fillingData.sector = tmpSector;
+    const fillingData = JSON.parse(JSON.stringify(currentfilling));
+    fillingData.fasade.height = newValue;
+    fillingData.sector = tmpSector;
 
-  const pixiSector = currentRow.sector;
+    const pixiSector = currentRow.sector;
 
-  // Проверяем коллизию
-  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+    // Проверяем коллизию
+    const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
 
-  if (check) {
-    currentfilling.fasade.height = fillingData.fasade.height;
-  } else {
-    currentfilling.fasade.height = prevValue;
-  }
-  currentfilling.sector = tmpSector;*/
+    if (check) {
+      currentfilling.fasade.height = fillingData.fasade.height;
+    } else {
+      currentfilling.fasade.height = prevValue;
+    }
+    currentfilling.sector = tmpSector;*/
 
   currentfilling.fasade.height = newValue;
   module.value = gridCopy;
@@ -669,7 +682,7 @@ onMounted(() => {
   let cellIndex = module.value.sections[0].cell?.[0] ? 0 : null
   let rowIndex = module.value.sections[0].cell?.[0]?.cellsRows?.[0] ? 0 : null
 
-  if(visualizationRef.value)
+  if (visualizationRef.value)
     selectCell(0, cellIndex, rowIndex)
 })
 
@@ -736,7 +749,7 @@ const closeMenu = () => {
                   style
                   v-for="(filling, key) in fillingGroup.items"
                   :key="key + filling.NAME"
-                  @click="addFilling(fillingGroup.groupName, filling)"
+                  @click="addFilling(filling, fillingGroup.groupID)"
               >
                 <div class="item-group-name">
                   <img
@@ -1329,7 +1342,7 @@ const closeMenu = () => {
 
   <transition name="slide--right" mode="out-in">
     <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
-      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+      <ClosePopUpButton class="menu__close" @close="closeMenu()"/>
 
       <AdvanceCorpusMaterialRedactor
           :is-fasade="true"

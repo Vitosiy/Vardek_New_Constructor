@@ -389,6 +389,7 @@ const getFillings = computed(() => {
 
     objectsMatrix.push({
       groupName: fillingsGroup.NAME,
+      groupID: fillingsGroup.ID,
       items: fillingsGroup.PRODUCTS.map(item => {
         return APP.CATALOG.PRODUCTS[item]
       }).filter(item => item)
