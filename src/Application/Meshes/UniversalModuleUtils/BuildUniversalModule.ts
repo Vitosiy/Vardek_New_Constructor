@@ -879,8 +879,9 @@ export class BuildUniversalModule extends BuildProduct {
                                     }
                                 })
 
+                            let relative_posY = positionY + (element.type !== 'drawer' ? element.size.y / 2 : 0) - (element.fasade?.manufacturerOffset || 0)
                             if (leftObj) {
-                                let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - relative_posY)
 
                                 leftObj.ADDITIVES[elementNumber || element.id || element.product] = {
                                     id_subelement: element.product,
@@ -902,7 +903,7 @@ export class BuildUniversalModule extends BuildProduct {
                             else {
                                 if (PROPS.CONFIG.SECTIONS[+sectionNumber - 1]?.fillings?.[0] && PROPS.CONFIG.SECTIONS[+sectionNumber - 1].fillings[0].type === "section_partition") {
                                     leftObj = PROPS.CONFIG.SECTIONS[+sectionNumber - 1].fillings[0]
-                                    let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                    let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - relative_posY)
 
                                     element.ADDITIVES[`${+sectionNumber - 1}_${leftObj.id || leftObj.product}`] = {
                                         id_subelement: leftObj.product,
@@ -921,13 +922,13 @@ export class BuildUniversalModule extends BuildProduct {
                                 } else
                                     element.ADDITIVES["left"] = {
                                         id_subelement: false,
-                                        additive_position: positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2),
+                                        additive_position: relative_posY,
                                         orientation: "left"
                                     }
                             }
 
                             if (rightObj) {
-                                let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - relative_posY)
 
                                 let righAdditiveName = elementNumber || element.id || element.product;
                                 rightObj.ADDITIVES[righAdditiveName] = {
@@ -950,7 +951,7 @@ export class BuildUniversalModule extends BuildProduct {
                             else {
                                 if (PROPS.CONFIG.SECTIONS[+sectionNumber + 1] && PROPS.CONFIG.SECTIONS[+sectionNumber].fillings[0].type === "section_partition") {
                                     rightObj = PROPS.CONFIG.SECTIONS[+sectionNumber].fillings[0]
-                                    let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                    let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - relative_posY)
 
                                     element.ADDITIVES[`${sectionNumber}_${rightObj.id || rightObj.product}`] = {
                                         id_subelement: rightObj.product,
@@ -969,17 +970,17 @@ export class BuildUniversalModule extends BuildProduct {
                                 } else
                                     element.ADDITIVES["right"] = {
                                         id_subelement: false,
-                                        additive_position: positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2),
+                                        additive_position: relative_posY,
                                         orientation: "right"
                                     }
                             }
 
-                            element.VALUE = positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2)
+                            element.VALUE = relative_posY
 
                         }
                         else {
 
-                            Object.entries(PROPS.CONFIG.SECTIONS[sectionNumber].fillings)?.filter(([key, item]) => item.type === "shelf" || item.MANUFACTURER)
+                            Object.entries(PROPS.CONFIG.SECTIONS[sectionNumber].fillings)?.filter(([key, item]) => item.type === "shelf")
                                 .sort(([key1, item1], [key2, item2]) => {
                                     return item1.POSITION - item2.POSITION
                                 })
@@ -987,7 +988,7 @@ export class BuildUniversalModule extends BuildProduct {
                                     let objRelPos = object.position.x - fasadeThickness
                                     let objHeight = object.fasade?.size?.y || object.size.y
                                     if (elementNumber != object.id && (positionX < objRelPos + object.size.x / 2 && positionX > objRelPos - object.size.x / 2)) {
-                                        let objPos = object.position.y - (object.MANUFACTURER_OFFSET || 0)
+                                        let objPos = object.position.y - (object.fasade?.manufacturerOffset || 0)
                                         if (objPos + objHeight <= positionY && objPos + objHeight >= bottomPos) {
                                             bottomObj = object
                                             bottomPos = objPos + objHeight
