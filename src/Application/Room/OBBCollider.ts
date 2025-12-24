@@ -113,7 +113,6 @@ export class OBBCollider {
             }
         }
 
-
         // console.log(object)
 
         /** Проверка на положение объекта только на полу */

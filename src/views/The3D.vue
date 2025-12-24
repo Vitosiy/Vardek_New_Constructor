@@ -41,8 +41,10 @@ import ContentControllerButton from "@/components/ui/buttons/right-menu/controll
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
 import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
+import CollisionButton from "@/components/ui/buttons/right-menu/controller/CollisionButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
 import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+
 import Toggle from "@vueform/toggle";
 import Accordion from "@/components/ui/accordion/Accordion.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
@@ -787,6 +789,7 @@ watch(
           :class="activeHideFasadeButton"
           @click="toggleFasade"
         />
+        <CollisionButton/>
 
         <Modal
           v-if="Object.keys(CutData).length > 0"

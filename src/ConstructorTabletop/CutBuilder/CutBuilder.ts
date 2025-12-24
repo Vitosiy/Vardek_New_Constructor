@@ -126,6 +126,9 @@ class TableTopCreator extends BuildersHelper {
 
     private createSections(path, xOffset = 0, yOffset = 0) {
         const shape = new THREE.Shape();
+
+        console.log(path, 'PATH')
+
         // let lastPoint = new THREE.Vector2();
 
         path.forEach(({ action, data }) => {

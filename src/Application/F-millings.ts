@@ -3918,6 +3918,49 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Drower",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 2,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 3,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 250,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 147,
+                            max: 176,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -62,
+                        heightOffset: -62,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -65,
+                        heightOffset: -65,
+                    },
+                },
+            ],
+        },
+
         {
             name: "corner_milling_1",
             isCorner: true,
@@ -4373,11 +4416,11 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
+                            min: 176,
                             max: Infinity,
                         },
                         height: {
-                            min: 146,
+                            min: 250,
                             max: Infinity,
                         },
                     },
@@ -4397,6 +4440,51 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Laer_1-small",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 5,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 146,
+                            max: 175,
+                        },
+                        height: {
+                            min: 396,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -19,
+                        heightOffset: -19,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        // svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        svg: ``,
+                        widthOffset: -70,
+                        heightOffset: -70,
+                    },
+                },
+            ],
+        },
+
+
         {
             name: "Laer_2",
             type: 'svg',
@@ -4474,6 +4562,48 @@ export const MILLINGS = {
                     },
                     hole: {
                         svg: `path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -70,
+                        heightOffset: -70,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Drower",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 5,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 250,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 176,
+                            max: 279,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -19,
+                        heightOffset: -19,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -70,
                         heightOffset: -70,
                     },
@@ -7761,7 +7891,7 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 296,
+                            min: 70,
                             max: 1250,
                         },
                         height: {
@@ -7777,7 +7907,7 @@ export const MILLINGS = {
                         pattern: {
                             offsetX: 0.01,
                             multiply: 2,
-                            count: 3
+                            count: 5
                         },
                         boolParams: {
                             depth: {
@@ -8395,7 +8525,7 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 296,
+                            min: 70,
                             max: 1250,
                         },
                         height: {
@@ -8411,7 +8541,7 @@ export const MILLINGS = {
                         pattern: {
                             offsetX: 31.4,
                             multiply: 2,
-                            count: 3
+                            count: 5
                         },
                         boolParams: {
                             depth: {
@@ -8445,7 +8575,7 @@ export const MILLINGS = {
                             max: 900,
                         },
                         height: {
-                            min: 176,
+                            min: 56,
                             max: 600,
                         },
                     },
@@ -9121,6 +9251,45 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Drawers_Small",
+            type: 'capsule',
+            capsuleParams: {
+                radius: 5,
+                length: 'FASADE_HEIGHT',
+                capSegments: 3,
+                radialSegments: 3,
+                percent: 2,
+                padding: 5,
+
+                condition: {
+                    width: {
+                        min: 100,
+                        max: 1250,
+                    },
+                    height: {
+                        min: 56,
+                        max: 535,
+                    },
+                },
+
+                pattern: {
+                    offsetX: 10,
+                    count: 1,
+                    rotation: {
+                        y: Math.PI * 0.33
+                    },
+                },
+
+                position: {
+                    x: 'right',
+                    z: -4
+                }
+
+            }
+        },
+
         {
 
             name: "corner_milling_1",
@@ -9254,6 +9423,45 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Drawers_Small",
+            type: 'capsule',
+            capsuleParams: {
+                radius: 5,
+                length: 'FASADE_HEIGHT',
+                capSegments: 3,
+                radialSegments: 3,
+                percent: 2,
+                padding: 5,
+
+                condition: {
+                    width: {
+                        min: 100,
+                        max: 1250,
+                    },
+                    height: {
+                        min: 56,
+                        max: 535,
+                    },
+                },
+
+                pattern: {
+                    offsetX: 10,
+                    count: 1,
+                    rotation: {
+                        y: Math.PI * 0.33
+                    },
+                },
+
+                position: {
+                    x: 'right',
+                    z: -4
+                }
+
+            }
+        },
+
         {
 
             name: "corner_milling_1",
@@ -9318,12 +9526,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 296,
+                            min: 175,
                             max: Infinity,
                         },
                         height: {
                             min: 296,
-                            max: Infinity,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -9353,7 +9561,7 @@ export const MILLINGS = {
             ],
         },
         {
-            name: "Box",
+            name: "Drower",
             type: 'svg',
             extrudeSettings: {
                 steps: 1,
@@ -9370,7 +9578,7 @@ export const MILLINGS = {
                     condition: {
                         width: {
                             min: 396,
-                            max: 950,
+                            max: 1250,
                         },
                         height: {
                             min: 175,
@@ -9458,11 +9666,11 @@ export const MILLINGS = {
             isCorner: true,
             type: 'svg',
             extrudeSettings: {
-                steps: 1,
-                depth: 1.5,
+                steps: 0,
+                depth: 0,
                 bevelEnabled: true,
-                bevelThickness: 4,
-                bevelSize: 7.5,
+                bevelThickness: 3.5,
+                bevelSize: 3.5,
                 bevelOffset: -7.5,
                 bevelSegments: 1,
 
@@ -9484,6 +9692,9 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: 7.5,
                         heightOffset: 7.5,
+                        position: {
+                            z: -2
+                        }
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
@@ -9875,12 +10086,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 20,
-                            max: Infinity,
+                            min: 296,
+                            max: 1250,
                         },
                         height: {
-                            min: 20,
-                            max: Infinity,
+                            min: 296,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -9941,12 +10152,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 20,
-                            max: Infinity,
+                            min: 296,
+                            max: 1250,
                         },
                         height: {
-                            min: 20,
-                            max: Infinity,
+                            min: 296,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -9972,6 +10183,244 @@ export const MILLINGS = {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
                         widthOffset: -80,
                         heightOffset: -80,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Small_Laer_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 175,
+                            max: 295,
+                        },
+                        height: {
+                            min: 396,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                            M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z" 
+                        />`,
+                        // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
+                        widthOffset: -37,
+                        heightOffset: -47,
+                        radius: 10,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d=" 
+                        M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z"/>`,
+                        widthOffset: -37,
+                        heightOffset: -47,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Small_Laer_2",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 8,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 175,
+                            max: 295,
+                        },
+                        height: {
+                            min: 396,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="                         
+                             M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z"/>`,
+                        widthOffset: -45,
+                        heightOffset: -55,
+                        radius: 6,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -47,
+                        heightOffset: -57,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Drower_Laer_1",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 4,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 396,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 175,
+                            max: 295,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                            M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z" 
+                        />`,
+                        // svg: `<path d="M -wth -hgh L wth -hgh Ar L wth hgh Ad L -wth hgh Al L -wth -hgh Au Z"/>`,
+                        widthOffset: -37,
+                        heightOffset: -30,
+                        radius: 10,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d=" 
+                        M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z"/>`,
+                        widthOffset: -37,
+                        heightOffset: -30,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Drower_Laer_2",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 8,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 396,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 175,
+                            max: 295,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="                         
+                             M 0 -hgh 
+                            L (wth - radius) -hgh 
+                            A radius radius 0 0 1 wth -(hgh - radius) 
+                            L wth (hgh - radius) 
+                            A radius radius 0 0 1 (wth - radius) hgh 
+                            L -(wth - radius) hgh 
+                            A radius radius 0 0 1 -wth (hgh - radius) 
+                            L -wth -(hgh - radius) 
+                            A radius radius 0 0 1 -(wth - radius) -hgh 
+                            Z"/>`,
+                        widthOffset: -45,
+                        heightOffset: -35,
+                        radius: 6,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -47,
+                        heightOffset: -37,
                     },
                 },
             ],
@@ -13047,8 +13496,51 @@ export const MILLINGS = {
                     nameCondition: "Laer_1",
                     condition: {
                         width: {
-                            min: 176,
+                            min: 296,
                             max: 2500,
+                        },
+                        height: {
+                            min: 250,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -40,
+                        heightOffset: -40,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -85,
+                        heightOffset: -85,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Laer_1-small",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 3,
+                bevelOffset: 0,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "Laer_1",
+                    condition: {
+                        width: {
+                            min: 176,
+                            max: 295,
                         },
                         height: {
                             min: 396,
@@ -13065,8 +13557,51 @@ export const MILLINGS = {
                     },
                     hole: {
                         svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
-                        widthOffset: -85,
-                        heightOffset: -85,
+                        widthOffset: -55,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+        {
+            name: "Laer_2-small",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 2,
+                bevelSize: 7,
+                bevelOffset: 3,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "Laer_2",
+                    condition: {
+                        width: {
+                            min: 176,
+                            max: 295,
+                        },
+                        height: {
+                            min: 250,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -45,
+                        heightOffset: -45,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -50,
+                        heightOffset: -50,
                     },
                 },
             ],
@@ -13090,11 +13625,11 @@ export const MILLINGS = {
                     nameCondition: "Laer_2",
                     condition: {
                         width: {
-                            min: 176,
+                            min: 295,
                             max: 2500,
                         },
                         height: {
-                            min: 396,
+                            min: 250,
                             max: 2500,
                         },
                     },
@@ -13114,6 +13649,7 @@ export const MILLINGS = {
                 },
             ],
         },
+
         {
             name: "Center",
             type: 'svg',
@@ -13131,11 +13667,11 @@ export const MILLINGS = {
                     nameCondition: "Left",
                     condition: {
                         width: {
-                            min: 176,
+                            min: 295,
                             max: 2500,
                         },
                         height: {
-                            min: 396,
+                            min: 250,
                             max: 2500,
                         },
                     },
@@ -13163,11 +13699,11 @@ export const MILLINGS = {
                     nameCondition: "Left",
                     condition: {
                         width: {
-                            min: 176,
+                            min: 295,
                             max: 2500,
                         },
                         height: {
-                            min: 396,
+                            min: 250,
                             max: 2500,
                         },
                     },
@@ -13193,6 +13729,175 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Drower",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 3,
+                bevelSize: 3,
+                bevelOffset: 0,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "Drower_Laer_1",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: 950,
+                        },
+                        height: {
+                            min: 175,
+                            max: 249,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -40,
+                        heightOffset: -40,
+                        position: {
+                            z: -2
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -65,
+                        heightOffset: -65,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Drower_Laer_2",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 1,
+                bevelEnabled: true,
+                bevelThickness: 2,
+                bevelSize: 9,
+                bevelOffset: 0,
+                bevelSegments: 1,
+
+            },
+            figureParams: [
+                {
+                    nameCondition: "Laer_2",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: 950,
+                        },
+                        height: {
+                            min: 175,
+                            max: 249,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -50,
+                        heightOffset: -50,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="M -wth -hgh L wth -hgh L wth hgh L -wth hgh L -wth -hgh Z"/>`,
+                        widthOffset: -56,
+                        heightOffset: -56,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Drower_Center",
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 2,
+                bevelEnabled: true,
+                bevelThickness: 1,
+                bevelSize: 2,
+                bevelOffset: 0,
+                bevelSegments: 1,
+            },
+            figureParams: [
+                {
+                    nameCondition: "Left",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: 950,
+                        },
+                        height: {
+                            min: 175,
+                            max: 249,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                        M -((wth - 60) / 3) -(hgh - 55) 
+                        L -((wth - 60) / 3 )  (hgh - 55) 
+                        L -(((wth - 60) / 3) + 3) (hgh - 55)
+                        L -(((wth - 60) / 3) + 3) -(hgh - 55) 
+                        Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            z: 0
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+                {
+                    nameCondition: "Left",
+                    condition: {
+                        width: {
+                            min: 296,
+                            max: 950,
+                        },
+                        height: {
+                            min: 175,
+                            max: 249,
+                        },
+                    },
+                    figure: {
+                        svg: `<path d="
+                        M ((wth - 60) / 3) -(hgh - 55) 
+                        L ((wth - 60) / 3 )  (hgh - 55) 
+                        L (((wth - 60) / 3) + 3) (hgh - 55) 
+                        L (((wth - 60) / 3) + 3) -(hgh - 55) 
+                        Z"/>
+                            `,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                        position: {
+                            z: 0
+                        }
+                    },
+                    hole: {
+                        svg: ``,
+                        widthOffset: 0,
+                        heightOffset: 0,
+                    },
+                },
+            ],
+        },
+
         {
             name: "corner_milling_1",
             isCorner: true,
@@ -14274,12 +14979,12 @@ export const MILLINGS = {
                     nameCondition: "default",
                     condition: {
                         width: {
-                            min: 146,
-                            max: Infinity,
+                            min: 296,
+                            max: 1250,
                         },
                         height: {
-                            min: 146,
-                            max: Infinity,
+                            min: 296,
+                            max: 2500,
                         },
                     },
                     figure: {
@@ -14339,6 +15044,130 @@ export const MILLINGS = {
                 },
             ],
         },
+
+        {
+            name: "Small_Laer",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 12,
+                bevelOffset: 0,
+                bevelSegments: 3,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 175,
+                            max: 295,
+                        },
+                        height: {
+                            min: 396,
+                            max: 2500,
+                        },
+                    },
+                    figure: {
+
+                        svg: `<path d="                         
+                                M -(wth) 0 
+                                L -(wth) -(hgh - wth) 
+                                A 1 1 0 0 1 (wth) -(hgh - wth)  
+                                L wth (hgh - wth) 
+                                A 10 10 0 0 1 -(wth) (hgh - wth) 
+                                Z
+                            "/>`,
+                        widthOffset: -45,
+                        heightOffset: -55,
+                        radius: 6,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `<path d="                               
+                                M -(wth) 0 
+                                L -(wth) -(hgh - wth) 
+                                A 1 1 0 0 1 (wth) -(hgh - wth)  
+                                L wth (hgh - wth) 
+                                A 10 10 0 0 1 -(wth) (hgh - wth) 
+                                Z
+                                "/>`,
+
+                        widthOffset: -45,
+                        heightOffset: -55,
+                    },
+                },
+            ],
+        },
+
+        {
+            name: "Drower",
+            isCorner: true,
+            type: 'svg',
+            extrudeSettings: {
+                steps: 1,
+                depth: 0,
+                bevelEnabled: true,
+                bevelThickness: 4,
+                bevelSize: 10,
+                bevelOffset: 0,
+                bevelSegments: 3,
+            },
+            figureParams: [
+                {
+                    nameCondition: "default",
+                    condition: {
+                        width: {
+                            min: 396,
+                            max: 1250,
+                        },
+                        height: {
+                            min: 175,
+                            max: 295,
+                        },
+                    },
+                    figure: {
+                        svg:
+                            `
+                              <path d=" 
+                               M 0 -(hgh) 
+                               L (wth - hgh) -(hgh) 
+                               A 1 1 0 0 1 (wth - hgh) hgh 
+                               L -(wth - hgh) hgh 
+                               A 10 10 0 0 1 -(wth - hgh) -hgh 
+                               Z 
+                               "/>
+                            `,
+                        widthOffset: -45,
+                        heightOffset: -35,
+                        radius: 6,
+                        position: {
+                            z: -4
+                        }
+                    },
+                    hole: {
+                        svg: `
+                              <path d=" 
+                               M 0 -(hgh) 
+                               L (wth - hgh) -(hgh) 
+                               A 1 1 0 0 1 (wth - hgh) hgh 
+                               L -(wth - hgh) hgh 
+                               A 10 10 0 0 1 -(wth - hgh) -hgh 
+                               Z 
+                               "/>`
+                        ,
+                        widthOffset: -45,
+                        heightOffset: -35,
+                    },
+                },
+            ],
+        },
+
         {
             name: "corner_milling_1",
             isCorner: true,

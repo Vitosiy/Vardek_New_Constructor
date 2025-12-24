@@ -26,15 +26,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-save:before {
-  content: "\e91b";
-}
-.icon-total-menu:before {
-  content: "\e918";
-}
-.icon-add:before {
-  content: "\e919";
-}
 .icon-centered:before {
   content: "\e900";
 }
@@ -107,6 +98,22 @@
 .icon-zoom:before {
   content: "\e917";
 }
+.icon-total-menu:before {
+  content: "\e918";
+}
+.icon-add:before {
+  content: "\e919";
+}
 .icon-ruler:before {
   content: "\e91a";
 }
+.icon-save:before {
+  content: "\e91b";
+}
+.icon-cut:before {
+  content: "\e91c";
+}
+.icon-moving:before {
+  content: "\e91d";
+}
+

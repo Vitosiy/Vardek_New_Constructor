@@ -42,7 +42,7 @@ export const AuthService = {
           headers: {
               "Authorization": `Bearer ${token}`,
           },
-          timeout: REQUEST_TIMEOUT
+          timeout: 10000
         }
       )
       return data
