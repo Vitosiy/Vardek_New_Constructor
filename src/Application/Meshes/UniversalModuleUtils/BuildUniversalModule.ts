@@ -284,6 +284,8 @@ export class BuildUniversalModule extends BuildProduct {
                 delete PROPS.CONFIG['SIDEPROFILE']
         }
 
+        const isSlidingDoors = product_data.fasades ? 100 : 0
+
         product_data.sections.forEach((section, secIndex) => {
 
             let sectionSize = new THREE.Vector3(section.width, section.height,
@@ -304,8 +306,8 @@ export class BuildUniversalModule extends BuildProduct {
             if (nextSection)
                 curSection.fillings.push({  //Добавляем разделитель секций, как товар наполнения
                     position: new THREE.Vector3(curSection.position.x + curSection.size.x / 2 + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
-                        curSection.position.y - full_horizont_height, curSection.position.z),
-                    size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, product_data.depth), // curSection.size.z
+                        curSection.position.y - full_horizont_height, curSection.position.z - (isSlidingDoors / 2 || 0)),
+                    size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, product_data.depth - isSlidingDoors), // curSection.size.z
                     product: 5820274,
                     material: PROPS.CONFIG.MODULE_COLOR,
                     id: curSection.fillings.length + 1,
@@ -317,8 +319,9 @@ export class BuildUniversalModule extends BuildProduct {
 
                 if (cellIndex > 0)
                     curSection.fillings.push({  //Добавляем полку, как товар наполнения
-                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
-                        size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth), // curSection.size.z
+                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height,
+                            curSection.position.z - (isSlidingDoors / 2 || 0)),
+                        size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth - isSlidingDoors), // curSection.size.z
                         product: 4263392,
                         id: curSection.fillings.length + 1,
                         material: PROPS.CONFIG.MODULE_COLOR,
@@ -329,8 +332,10 @@ export class BuildUniversalModule extends BuildProduct {
 
                     if (rowIndex > 0)
                         curSection.fillings.push({  //Добавляем верт. полку, как товар наполнения
-                            position: new THREE.Vector3(row.position.x - row.width / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2, row.position.y - full_horizont_height, curSection.position.z),
-                            size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, product_data.depth), // curSection.size.z
+                            position: new THREE.Vector3(row.position.x - row.width / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
+                                row.position.y - full_horizont_height,
+                                curSection.position.z - (isSlidingDoors / 2 || 0)),
+                            size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, product_data.depth - isSlidingDoors), // curSection.size.z
                             product: 5820266,
                             id: curSection.fillings.length + 1,
                             material: PROPS.CONFIG.MODULE_COLOR,
@@ -340,8 +345,9 @@ export class BuildUniversalModule extends BuildProduct {
                     row.extras?.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
                         if (extraIndex > 0)
                             curSection.fillings.push({  //Добавляем полку, как товар наполнения
-                                position: new THREE.Vector3(extra.position.x, extra.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
-                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth), // curSection.size.z
+                                position: new THREE.Vector3(extra.position.x, extra.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height,
+                                    curSection.position.z - (isSlidingDoors / 2 || 0)),
+                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth - isSlidingDoors), // curSection.size.z
                                 product: 5820266,
                                 id: curSection.fillings.length + 1,
                                 material: PROPS.CONFIG.MODULE_COLOR,
@@ -352,7 +358,7 @@ export class BuildUniversalModule extends BuildProduct {
                             let fillingPos = new THREE.Vector3(
                                 filling.isVerticalItem ? extra.position.x - extra.width / 2 + filling.distances.left + filling.width / 2 : extra.position.x,
                                 extra.position.y + filling.distances.bottom - full_horizont_height,
-                                curSection.position.z
+                                curSection.position.z - (isSlidingDoors / 2 || 0)
                             )
 
                             curSection.fillings.push({
@@ -367,7 +373,7 @@ export class BuildUniversalModule extends BuildProduct {
                         let fillingPos = new THREE.Vector3(
                             filling.isVerticalItem ? row.position.x - row.width / 2 + filling.distances.left + filling.width / 2 : row.position.x,
                             row.position.y + filling.distances.bottom - full_horizont_height,
-                            curSection.position.z
+                            curSection.position.z - (isSlidingDoors / 2 || 0)
                         )
 
                         curSection.fillings.push({
@@ -382,7 +388,7 @@ export class BuildUniversalModule extends BuildProduct {
                     let fillingPos = new THREE.Vector3(
                         filling.isVerticalItem ? cell.position.x - cell.width / 2 + filling.distances.left + filling.width / 2 : cell.position.x,
                         cell.position.y + filling.distances.bottom - full_horizont_height,
-                        curSection.position.z
+                        curSection.position.z - (isSlidingDoors / 2 || 0)
                     )
 
                     curSection.fillings.push({
@@ -397,7 +403,7 @@ export class BuildUniversalModule extends BuildProduct {
                 let fillingPos = new THREE.Vector3(
                     filling.isVerticalItem ? curSection.position.x - curSection.size.x / 2 + filling.distances.left + filling.width / 2 : curSection.position.x,
                     curSection.position.y + filling.distances.bottom - full_horizont_height,
-                    curSection.position.z
+                    curSection.position.z - (isSlidingDoors / 2 || 0)
                 )
 
                 curSection.fillings.push({
@@ -590,6 +596,7 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.JSON_FILLINGS = []
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
         const subGeometries = []
+        const isSlidingDoors = PROPS.CONFIG.MODULEGRID?.fasades ? 100 : 0
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
 
@@ -623,7 +630,8 @@ export class BuildUniversalModule extends BuildProduct {
                             productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.BODY_DEPTH
                         }
                         else {
-                            filling.position.z = sizeModule.depth - filling.size.z / 2;
+                            if(!filling.position.z)
+                                filling.position.z = sizeModule.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0);
                         }
 
                         start_position.add(filling.position)
@@ -657,7 +665,6 @@ export class BuildUniversalModule extends BuildProduct {
                 })
             }
         })
-
 
         if (PROPS.CONFIG['SIDEPROFILE']) {
             const filling = PROPS.CONFIG['SIDEPROFILE']

@@ -334,20 +334,20 @@ const addDoor = (secIndex) => {
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length);
 
-  if(!module.value.isRestrictedModule){
+  if(!module.value.isRestrictedModule) {
     if (!loopsidesList.length) {
       alert("Нельзя добавить дверь");
       return;
     }
-
-    newDoor.loopsSide = loopsidesList.pop().ID;
-
-    if(!section.loopsSides)
-      section.loopsSides = {}
-
-    section.loopsSides[section.fasades.length] = newDoor.loopsSide;
-
   }
+
+  newDoor.loopsSide = loopsidesList.pop().ID;
+
+  if(!section.loopsSides)
+    section.loopsSides = {}
+
+  section.loopsSides[section.fasades.length] = newDoor.loopsSide;
+
 
   section.fasades.push([newDoor]);
 
@@ -697,11 +697,18 @@ const getLoopsideList = (secIndex, doorIndex) => {
 
   let list = [];
   let tmp = {};
-  productInfo.LOOPSIDE.forEach((type) => {
-    if (APP.LOOPSIDE[type] != undefined) {
-      tmp[type] = APP.LOOPSIDE[type];
-    }
-  });
+
+  if(module.value.isRestrictedModule){
+    tmp[LOOPSIDE["left"]] = APP.LOOPSIDE[LOOPSIDE["left"]];
+    tmp[LOOPSIDE["right"]] = APP.LOOPSIDE[LOOPSIDE["right"]];
+  }
+  else {
+    productInfo.LOOPSIDE.forEach((type) => {
+      if (APP.LOOPSIDE[type] != undefined) {
+        tmp[type] = APP.LOOPSIDE[type];
+      }
+    });
+  }
 
   const currSection = module.value.sections[secIndex];
   const sectionLeft = module.value.sections[secIndex - 1] || false;
@@ -717,16 +724,21 @@ const getLoopsideList = (secIndex, doorIndex) => {
 
       if (sectionLeft) {
         const sectionLeftLoops = sectionLeft.loopsSides || {};
-        if (
-          sectionLeftLoops[1] ||
-          [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(
-            sectionLeftLoops[0]
+
+        if(!module.value.isRestrictedModule) {
+          if (
+              sectionLeftLoops[1] ||
+              [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(
+                  sectionLeftLoops[0]
+              )
           )
-        ) {
-          delete tmp[LOOPSIDE["left_on_partition"]];
-        } else {
-          tmp[LOOPSIDE["left_on_partition"]] =
-            APP.LOOPSIDE[LOOPSIDE["left_on_partition"]];
+          {
+            delete tmp[LOOPSIDE["left_on_partition"]];
+          }
+          else {
+            tmp[LOOPSIDE["left_on_partition"]] =
+                APP.LOOPSIDE[LOOPSIDE["left_on_partition"]];
+          }
         }
 
         delete tmp[LOOPSIDE["left"]];
@@ -734,16 +746,19 @@ const getLoopsideList = (secIndex, doorIndex) => {
 
       if (sectionRight) {
         const sectionRightLoops = sectionRight.loopsSides || {};
-        if (
-          sectionRightLoops[1] ||
-          [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(
-            sectionRightLoops[0]
-          )
-        ) {
-          delete tmp[LOOPSIDE["right_on_partition"]];
-        } else {
-          tmp[LOOPSIDE["right_on_partition"]] =
-            APP.LOOPSIDE[LOOPSIDE["right_on_partition"]];
+
+        if(!module.value.isRestrictedModule) {
+          if (
+              sectionRightLoops[1] ||
+              [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(
+                  sectionRightLoops[0]
+              )
+          ) {
+            delete tmp[LOOPSIDE["right_on_partition"]];
+          } else {
+            tmp[LOOPSIDE["right_on_partition"]] =
+                APP.LOOPSIDE[LOOPSIDE["right_on_partition"]];
+          }
         }
 
         delete tmp[LOOPSIDE["right"]];
@@ -753,16 +768,19 @@ const getLoopsideList = (secIndex, doorIndex) => {
     case 1:
       if (sectionLeft) {
         const sectionLeftLoops = sectionLeft.loopsSides || {};
-        if (
-          sectionLeftLoops[1] ||
-          [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(
-            sectionLeftLoops[0]
-          )
-        ) {
-          delete tmp[LOOPSIDE["left_on_partition"]];
-        } else {
-          tmp[LOOPSIDE["left_on_partition"]] =
-            APP.LOOPSIDE[LOOPSIDE["left_on_partition"]];
+
+        if(!module.value.isRestrictedModule) {
+          if (
+              sectionLeftLoops[1] ||
+              [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(
+                  sectionLeftLoops[0]
+              )
+          ) {
+            delete tmp[LOOPSIDE["left_on_partition"]];
+          } else {
+            tmp[LOOPSIDE["left_on_partition"]] =
+                APP.LOOPSIDE[LOOPSIDE["left_on_partition"]];
+          }
         }
 
         delete tmp[LOOPSIDE["left"]];
@@ -770,16 +788,19 @@ const getLoopsideList = (secIndex, doorIndex) => {
 
       if (sectionRight) {
         const sectionRightLoops = sectionRight.loopsSides || {};
-        if (
-          sectionRightLoops[1] ||
-          [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(
-            sectionRightLoops[0]
-          )
-        ) {
-          delete tmp[LOOPSIDE["right_on_partition"]];
-        } else {
-          tmp[LOOPSIDE["right_on_partition"]] =
-            APP.LOOPSIDE[LOOPSIDE["right_on_partition"]];
+
+        if(!module.value.isRestrictedModule) {
+          if (
+              sectionRightLoops[1] ||
+              [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(
+                  sectionRightLoops[0]
+              )
+          ) {
+            delete tmp[LOOPSIDE["right_on_partition"]];
+          } else {
+            tmp[LOOPSIDE["right_on_partition"]] =
+                APP.LOOPSIDE[LOOPSIDE["right_on_partition"]];
+          }
         }
 
         delete tmp[LOOPSIDE["right"]];
@@ -1019,13 +1040,13 @@ const closeMenu = () => {
 
                     <article class="actions-items actions-items--right">
                       <div class="actions-items--right-items">
-                        <button
+<!--                        <button
                             v-if="!module.isRestrictedModule"
-                            :class="['actions-btn actions-btn--default']"
+                            :class="['actions-btn actions-btn&#45;&#45;default']"
                             @click="splitFasade(null, doorIndex, segmentIndex)"
                         >
                           Разделить фасад
-                        </button>
+                        </button>-->
 
                         <button
                             v-if="door.length > 1 && checkRemoveFasadeSegment(null, doorIndex, segmentIndex)"
@@ -1116,6 +1137,7 @@ const closeMenu = () => {
             >
               <div class="actions-header">
                 <button
+                    v-if="!module.isRestrictedModule || (module.isRestrictedModule && section.fasades.length > 1)"
                     class="actions-btn actions-icon"
                     @click="deleteDoor(secIndex, doorIndex)"
                 >
@@ -1194,7 +1216,7 @@ const closeMenu = () => {
                             </div>
                           </div>
 
-                          <div class="actions-items--selector">
+                          <div class="actions-items--selector" v-if="!module.isRestrictedModule">
                             <div class="actions-inputs">
                               <p class="actions-title">Сторона открывания</p>
                               <div>

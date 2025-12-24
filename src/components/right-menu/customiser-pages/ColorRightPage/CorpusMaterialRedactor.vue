@@ -171,7 +171,7 @@ const deleteSelectedOptions = (type: string) => {
     </div>
 
     <SurfaceRedactor
-      v-if="props.type === 'surface'"
+      v-if="props.type === 'surface' || props.type === 'backwall'"
       :materialList="props.materialList"
       :type="'module'"
       @select="changeModuleTexture"

@@ -88,12 +88,13 @@ const showCurrentCol = (secIndex) => {
   selectCell(secIndex)
 };
 
-const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false) => {
+const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false, isDrawer = false) => {
 
   let width = product.width
   let height = product.height
+  let isSlidingDoors = module.value.fasades ? 100 : 0
 
-  if (!isVerticalItem && (height > currentSpace.height || product.ACTUAL_DEPT > module.value.depth)) {
+  if (!isVerticalItem && (height > currentSpace.height || product.ACTUAL_DEPT > module.value.depth - isSlidingDoors)) {
     return false
   }
 
@@ -107,7 +108,8 @@ const createFillingDataToCheck = (product, currentSpace, isVerticalItem = false)
     width,
     height,
     data: product,
-    isVerticalItem
+    isVerticalItem,
+    isDrawer,
   };
 
   return visualizationRef.value.checkPositionFillingToCreate(tempFilling);
@@ -201,7 +203,7 @@ const addFilling = (type, _product, oldFillingObject = false) => {
     product.width = module.value.moduleThickness
   }
 
-  const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem);
+  const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem, !!product.MIN_FASADE_SIZE);
 
   if (!startFillingData) {
     alert("Позиция не найдена");
