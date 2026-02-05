@@ -98,6 +98,7 @@ export const useModelState = defineStore('ModelState', () => {
     // console.log(_FASADE_SIZE_RESTRICT.value, '=== 🔥 _FASADE_SIZE_RESTRICT 🔥 ===')
 
 
+
     const currentModel = ref<THREE.Object3D | null>(null)
     const currentRaspilParent = ref<THREE.Object3D | null>(null)
 
@@ -333,14 +334,14 @@ export const useModelState = defineStore('ModelState', () => {
             const product = _PRODUCTS.value[productId]
 
             console.log(product, 'product')
-            
+
             if (!product.FASADE_POSITION || product.FASADE_POSITION.length == 0) {
                 return []
             }
 
 
             const positionId = product.FASADE_POSITION[fasadeNdx]
- 
+
             if (positionId) {
                 fasadePosData = _FASADE_POSITION.value[positionId]
                 haveShowCase = fasadePosData.glass == 1
@@ -364,6 +365,7 @@ export const useModelState = defineStore('ModelState', () => {
             if (!groupedFasades[groupId]) {
 
                 const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
+
                 groupedFasades[groupId] = {
 
                     id: [], size: {
@@ -503,7 +505,7 @@ export const useModelState = defineStore('ModelState', () => {
             let percept = {}
             const result = fasadeMilling.filter(mill => _MILLING.value[mill] != undefined).map((mill) => {
                 return percept[mill] = _MILLING.value[mill]
-            })
+            }).filter(Boolean)
 
             result.sort((a, b) => a.SORT - b.SORT)
 

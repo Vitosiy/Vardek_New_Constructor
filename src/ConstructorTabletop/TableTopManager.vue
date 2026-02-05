@@ -424,6 +424,11 @@ const getHoleOptionsActive = computed(() => {
 /** =================== @Опции_Услуги =================== */
 
 const createProfileServices = () => {
+  /** ОТтладка */
+
+  console.log(modelState._PROFILE, "---Profile");
+
+  /*---------------*/
   const parent = modelState.getCurrentRaspilParent;
 
   const { PROPS } = parent.userData;
@@ -433,13 +438,19 @@ const createProfileServices = () => {
   const activeProfile = tempProfile.value.find((prof) => prof.value);
 
   const curProfileData = Object.values(modelState._PROFILE).find(
-    (el) => el.PROFILE == activeProfile.ID
+    (el) => el.PROFILE == activeProfile.ID,
   );
 
   const { SERVICE } = curProfileData;
-  const curProfileServise = USLUGI.filter((el) =>
-    SERVICE.includes(el.ID.toString())
-  );
+
+  // console.log(SERVICE, "----SERVICE---", USLUGI, "--USLUGI");
+
+  const curProfileServise = USLUGI.filter((el) => {
+    console.log(el.ID);
+    return SERVICE.includes(el.ID);
+  });
+
+  console.log(curProfileServise, 'curProfileServise')
 
   if (activeProfile.show_props && activeProfile.show_props?.includes("hem")) {
     getCurretKromkaList();
@@ -482,7 +493,7 @@ const checkProfileDisablegroups = () => {
       });
 
       row.serviseData = temp;
-    })
+    }),
   );
 
   checkKromkaActive();
@@ -541,12 +552,11 @@ const convertServisData = (value, item) => {
 /** @Обновляет_значение_глобального_сервиса (для всех ячеек и в USLUGI) */
 
 const updateGlobalService = (value, item, USLUGI) => {
-
   grid.value.forEach((column) =>
     column.forEach((row) => {
       const service = row.serviseData.find((el) => el.ID === item.ID);
       if (service) service.value = value;
-    })
+    }),
   );
 
   const globalService = USLUGI.find((el) => el.ID === item.ID);
@@ -555,7 +565,7 @@ const updateGlobalService = (value, item, USLUGI) => {
     globalService.value = value;
   }
 
-  console.log(tempUslugi.value, 'tempUslugi.value')
+  console.log(tempUslugi.value, "tempUslugi.value");
 };
 
 /** @Обновляет_локальный_сервис_в_текущей_секции_с_логикой_позиционирования */
@@ -570,7 +580,7 @@ const updateLocalService = (value, item, USLUGI) => {
   // Находим целевой сервис
   const targetService = data.find(
     // (el) => el.NAME.toLowerCase() === itemNameLower
-    (el) => el.ID === item.ID
+    (el) => el.ID === item.ID,
   );
 
   if (!targetService) return;
@@ -625,7 +635,7 @@ const updateServiseWidth = (value, type) => {
 const handleWidthInput = (
   value: number,
   colIndex: number,
-  rowIndex: number
+  rowIndex: number,
 ) => {
   // Обновляем выбранную секцию для визуального отображения
   selectedCell.value = { col: colIndex, row: rowIndex };
@@ -642,7 +652,7 @@ const handleWidthInput = (
 const handleHeightInput = (
   value: number | null,
   colIndex: number,
-  rowIndex: number
+  rowIndex: number,
 ) => {
   // Обновляем выбранную секцию для визуального отображения
   selectedCell.value = { col: colIndex, row: rowIndex };
@@ -664,7 +674,7 @@ const handleHeightInput = (
 const updateSectionWidth = (
   value: number,
   colIndex: number,
-  rowIndex: number
+  rowIndex: number,
 ) => {
   const newValue = parseInt(value);
   let adjustedValue;
@@ -731,7 +741,7 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
   const check = shapeAdjuster.checkToCollision(
     pixiSector,
     "circleSector",
-    shapeData
+    shapeData,
   );
 
   check ? (row.roundCut.radius = newValue) : (row.roundCut.radius = prevValue);
@@ -1011,7 +1021,7 @@ const saveProfile = () => {
 
   const parent = modelState.getCurrentRaspilParent;
   const { PROPS } = parent.userData;
-  PROPS.CONFIG.USLUGI = tempUslugi.value
+  PROPS.CONFIG.USLUGI = tempUslugi.value;
   PROPS.CONFIG.PROFILE = tempProfile.value;
   PROPS.CONFIG.KROMKA = getCurrentKromkaId();
 };
@@ -1064,7 +1074,7 @@ defineExpose({
 onBeforeMount(() => {
   console.log(
     modelState.getCurrentRaspilParent,
-    "==== getCurrentRaspilParent ===="
+    "==== getCurrentRaspilParent ====",
   );
 
   const parent = modelState.getCurrentRaspilParent;
@@ -1081,7 +1091,6 @@ onBeforeMount(() => {
   setKromkaId(KROMKA);
 });
 
-
 onMounted(() => {
   shapeAdjuster = new ShapeAdjuster();
   createServiseData();
@@ -1095,14 +1104,13 @@ onMounted(() => {
 onBeforeUnmount(() => {
   console.log(
     modelState.getCurrentRaspilParent,
-    "==== getCurrentRaspilParent ===="
+    "==== getCurrentRaspilParent ====",
   );
 
   shapeAdjuster = null;
   grid.value = null;
   clearKromkaData();
 });
-
 </script>
 
 <template>
@@ -1233,7 +1241,6 @@ onBeforeUnmount(() => {
                             updateSectionWidth($event, colIndex, rowIndex)
                           "
                         />
-
                       </div>
                     </div>
                   </div>
@@ -1295,7 +1302,7 @@ onBeforeUnmount(() => {
                             updateRoundCutDiameter(
                               $event.target.value,
                               colIndex,
-                              rowIndex
+                              rowIndex,
                             )
                           "
                         />
@@ -1431,8 +1438,8 @@ onBeforeUnmount(() => {
     height: 85vh;
     max-width: 85vw;
 
-    font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
-      sans-serif;
+    font-family:
+      "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
   }
 
   &-container {
