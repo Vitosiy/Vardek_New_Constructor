@@ -530,9 +530,9 @@ onUnmounted(() => {
   gap: 10px;
   overflow-y: auto;
 
-  @media screen and (min-width: 1329px) {
-    max-height: 30vh;
-  }
+  // @media screen and (min-width: 1329px) {
+  //   max-height: 30vh;
+  // }
 
   &-items {
     min-height: 48px;
