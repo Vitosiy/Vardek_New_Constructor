@@ -267,7 +267,7 @@ const switchRoom = async (roomId: string | number) => {
   flex-shrink: 0;
   height: 100%;
   border-right: 1px solid $light-stroke;
-  background: #f6f5fa;
+  background: #2d1882;
   transform-style: preserve-3d;
   z-index: 1;
   -webkit-user-select: none; /* Safari и старые версии Chrome */
@@ -281,9 +281,23 @@ const switchRoom = async (roomId: string | number) => {
     gap: 30px;
     padding: 20px;
     position: relative;
+    min-height: 100%; // чтобы ::before перекрыл всю колонку по высоте
     // transform-style: preserve-3d;
 
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 300px;
+      height: 100%;
+      background: #f6f5fa;
+      z-index: 1;
+      pointer-events: none;
+    }
+
     .options-design {
+      position: relative;
       z-index: 10;
 
       .options__title {
@@ -464,8 +478,6 @@ const switchRoom = async (roomId: string | number) => {
       position: absolute;
       top: 15px;
       left: 310px; // стартовая позиция, как в 3D-меню
-      // transform: translateZ(-10px);
-      // transition: 0.5s ease-in-out; // анимация теперь через <transition>
 
       .room-popup {
         width: 710px;
@@ -476,7 +488,6 @@ const switchRoom = async (roomId: string | number) => {
         padding: 15px;
         background: $white;
         box-shadow: 0px 0px 10px 0px #3030301a;
-        z-index: 1;
         border-radius: 15px;
       }
     }
