@@ -269,6 +269,10 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.CONFIG.FASADE_POSITIONS = []
         PROPS.CONFIG.FASADE_PROPS = []
         PROPS.CONFIG.SECTIONS = {}
+
+        if(PROPS.CONFIG.LOOPS)
+            PROPS.CONFIG.LOOPS = {}
+
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
         if(product_data.profilesConfig) {
@@ -279,6 +283,8 @@ export class BuildUniversalModule extends BuildProduct {
             else
                 delete PROPS.CONFIG['SIDEPROFILE']
         }
+
+        const isSlidingDoors = product_data.fasades ? 100 : 0
 
         product_data.sections.forEach((section, secIndex) => {
 
@@ -300,8 +306,8 @@ export class BuildUniversalModule extends BuildProduct {
             if (nextSection)
                 curSection.fillings.push({  //Добавляем разделитель секций, как товар наполнения
                     position: new THREE.Vector3(curSection.position.x + curSection.size.x / 2 + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
-                        curSection.position.y - full_horizont_height, curSection.position.z),
-                    size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, product_data.depth), // curSection.size.z
+                        curSection.position.y - full_horizont_height, curSection.position.z - (isSlidingDoors / 2 || 0)),
+                    size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], curSection.size.y, product_data.depth - isSlidingDoors), // curSection.size.z
                     product: 5820274,
                     material: PROPS.CONFIG.MODULE_COLOR,
                     id: curSection.fillings.length + 1,
@@ -313,8 +319,9 @@ export class BuildUniversalModule extends BuildProduct {
 
                 if (cellIndex > 0)
                     curSection.fillings.push({  //Добавляем полку, как товар наполнения
-                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
-                        size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth), // curSection.size.z
+                        position: new THREE.Vector3(cell.position.x, cell.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height,
+                            curSection.position.z - (isSlidingDoors / 2 || 0)),
+                        size: new THREE.Vector3(cell.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth - isSlidingDoors), // curSection.size.z
                         product: 4263392,
                         id: curSection.fillings.length + 1,
                         material: PROPS.CONFIG.MODULE_COLOR,
@@ -325,8 +332,10 @@ export class BuildUniversalModule extends BuildProduct {
 
                     if (rowIndex > 0)
                         curSection.fillings.push({  //Добавляем верт. полку, как товар наполнения
-                            position: new THREE.Vector3(row.position.x - row.width / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2, row.position.y - full_horizont_height, curSection.position.z),
-                            size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, product_data.depth), // curSection.size.z
+                            position: new THREE.Vector3(row.position.x - row.width / 2 - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] / 2,
+                                row.position.y - full_horizont_height,
+                                curSection.position.z - (isSlidingDoors / 2 || 0)),
+                            size: new THREE.Vector3(PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], cell.height, product_data.depth - isSlidingDoors), // curSection.size.z
                             product: 5820266,
                             id: curSection.fillings.length + 1,
                             material: PROPS.CONFIG.MODULE_COLOR,
@@ -336,8 +345,9 @@ export class BuildUniversalModule extends BuildProduct {
                     row.extras?.slice().sort((a, b) => a.position.y - b.position.y).forEach((extra, extraIndex) => {
                         if (extraIndex > 0)
                             curSection.fillings.push({  //Добавляем полку, как товар наполнения
-                                position: new THREE.Vector3(extra.position.x, extra.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height, curSection.position.z),
-                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth), // curSection.size.z
+                                position: new THREE.Vector3(extra.position.x, extra.position.y - PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] - full_horizont_height,
+                                    curSection.position.z - (isSlidingDoors / 2 || 0)),
+                                size: new THREE.Vector3(row.width, PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"], product_data.depth - isSlidingDoors), // curSection.size.z
                                 product: 5820266,
                                 id: curSection.fillings.length + 1,
                                 material: PROPS.CONFIG.MODULE_COLOR,
@@ -348,7 +358,7 @@ export class BuildUniversalModule extends BuildProduct {
                             let fillingPos = new THREE.Vector3(
                                 filling.isVerticalItem ? extra.position.x - extra.width / 2 + filling.distances.left + filling.width / 2 : extra.position.x,
                                 extra.position.y + filling.distances.bottom - full_horizont_height,
-                                curSection.position.z
+                                curSection.position.z - (isSlidingDoors / 2 || 0)
                             )
 
                             curSection.fillings.push({
@@ -363,7 +373,7 @@ export class BuildUniversalModule extends BuildProduct {
                         let fillingPos = new THREE.Vector3(
                             filling.isVerticalItem ? row.position.x - row.width / 2 + filling.distances.left + filling.width / 2 : row.position.x,
                             row.position.y + filling.distances.bottom - full_horizont_height,
-                            curSection.position.z
+                            curSection.position.z - (isSlidingDoors / 2 || 0)
                         )
 
                         curSection.fillings.push({
@@ -378,7 +388,7 @@ export class BuildUniversalModule extends BuildProduct {
                     let fillingPos = new THREE.Vector3(
                         filling.isVerticalItem ? cell.position.x - cell.width / 2 + filling.distances.left + filling.width / 2 : cell.position.x,
                         cell.position.y + filling.distances.bottom - full_horizont_height,
-                        curSection.position.z
+                        curSection.position.z - (isSlidingDoors / 2 || 0)
                     )
 
                     curSection.fillings.push({
@@ -393,7 +403,7 @@ export class BuildUniversalModule extends BuildProduct {
                 let fillingPos = new THREE.Vector3(
                     filling.isVerticalItem ? curSection.position.x - curSection.size.x / 2 + filling.distances.left + filling.width / 2 : curSection.position.x,
                     curSection.position.y + filling.distances.bottom - full_horizont_height,
-                    curSection.position.z
+                    curSection.position.z - (isSlidingDoors / 2 || 0)
                 )
 
                 curSection.fillings.push({
@@ -586,6 +596,7 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.JSON_FILLINGS = []
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
         const subGeometries = []
+        const isSlidingDoors = PROPS.CONFIG.MODULEGRID?.fasades ? 100 : 0
 
         Object.entries(PROPS.CONFIG.SECTIONS).forEach(([secIndex, section]) => {
 
@@ -619,7 +630,8 @@ export class BuildUniversalModule extends BuildProduct {
                             productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.BODY_DEPTH
                         }
                         else {
-                            filling.position.z = sizeModule.depth - filling.size.z / 2;
+                            if(!filling.position.z)
+                                filling.position.z = sizeModule.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0);
                         }
 
                         start_position.add(filling.position)
@@ -645,7 +657,7 @@ export class BuildUniversalModule extends BuildProduct {
                     let productFilling
                     if (data.DAE) {
                         // console.log(data.DAE, 'DAE')
-                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID || data.id, SIZE: filling_size} }, sizeRulers: false })
+                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID || data.id, SIZE: filling_size} }, sizeRulers: false, UMFillinig: true })
                     } else {
                         productFilling = this.createSubProductObject(filling, data, PROPS)
                         onLoad(productFilling, false)
@@ -653,7 +665,6 @@ export class BuildUniversalModule extends BuildProduct {
                 })
             }
         })
-
 
         if (PROPS.CONFIG['SIDEPROFILE']) {
             const filling = PROPS.CONFIG['SIDEPROFILE']
@@ -868,8 +879,9 @@ export class BuildUniversalModule extends BuildProduct {
                                     }
                                 })
 
+                            let relative_posY = positionY + (element.type !== 'drawer' ? element.size.y / 2 : 0) - (element.fasade?.manufacturerOffset || 0)
                             if (leftObj) {
-                                let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - relative_posY)
 
                                 leftObj.ADDITIVES[elementNumber || element.id || element.product] = {
                                     id_subelement: element.product,
@@ -891,7 +903,7 @@ export class BuildUniversalModule extends BuildProduct {
                             else {
                                 if (PROPS.CONFIG.SECTIONS[+sectionNumber - 1]?.fillings?.[0] && PROPS.CONFIG.SECTIONS[+sectionNumber - 1].fillings[0].type === "section_partition") {
                                     leftObj = PROPS.CONFIG.SECTIONS[+sectionNumber - 1].fillings[0]
-                                    let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                    let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - relative_posY)
 
                                     element.ADDITIVES[`${+sectionNumber - 1}_${leftObj.id || leftObj.product}`] = {
                                         id_subelement: leftObj.product,
@@ -910,13 +922,13 @@ export class BuildUniversalModule extends BuildProduct {
                                 } else
                                     element.ADDITIVES["left"] = {
                                         id_subelement: false,
-                                        additive_position: positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2),
+                                        additive_position: relative_posY,
                                         orientation: "left"
                                     }
                             }
 
                             if (rightObj) {
-                                let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - relative_posY)
 
                                 let righAdditiveName = elementNumber || element.id || element.product;
                                 rightObj.ADDITIVES[righAdditiveName] = {
@@ -939,7 +951,7 @@ export class BuildUniversalModule extends BuildProduct {
                             else {
                                 if (PROPS.CONFIG.SECTIONS[+sectionNumber + 1] && PROPS.CONFIG.SECTIONS[+sectionNumber].fillings[0].type === "section_partition") {
                                     rightObj = PROPS.CONFIG.SECTIONS[+sectionNumber].fillings[0]
-                                    let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - (positionY - (element.MANUFACTURER_OFFSET || 0)))
+                                    let relative_pos = rightObj.size.y - ((rightObj.position.y + rightObj.size.y) - relative_posY)
 
                                     element.ADDITIVES[`${sectionNumber}_${rightObj.id || rightObj.product}`] = {
                                         id_subelement: rightObj.product,
@@ -958,17 +970,17 @@ export class BuildUniversalModule extends BuildProduct {
                                 } else
                                     element.ADDITIVES["right"] = {
                                         id_subelement: false,
-                                        additive_position: positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2),
+                                        additive_position: relative_posY,
                                         orientation: "right"
                                     }
                             }
 
-                            element.VALUE = positionY - (element.MANUFACTURER_OFFSET || -element.size.y / 2)
+                            element.VALUE = relative_posY
 
                         }
                         else {
 
-                            Object.entries(PROPS.CONFIG.SECTIONS[sectionNumber].fillings)?.filter(([key, item]) => item.type === "shelf" || item.MANUFACTURER)
+                            Object.entries(PROPS.CONFIG.SECTIONS[sectionNumber].fillings)?.filter(([key, item]) => item.type === "shelf")
                                 .sort(([key1, item1], [key2, item2]) => {
                                     return item1.POSITION - item2.POSITION
                                 })
@@ -976,7 +988,7 @@ export class BuildUniversalModule extends BuildProduct {
                                     let objRelPos = object.position.x - fasadeThickness
                                     let objHeight = object.fasade?.size?.y || object.size.y
                                     if (elementNumber != object.id && (positionX < objRelPos + object.size.x / 2 && positionX > objRelPos - object.size.x / 2)) {
-                                        let objPos = object.position.y - (object.MANUFACTURER_OFFSET || 0)
+                                        let objPos = object.position.y - (object.fasade?.manufacturerOffset || 0)
                                         if (objPos + objHeight <= positionY && objPos + objHeight >= bottomPos) {
                                             bottomObj = object
                                             bottomPos = objPos + objHeight

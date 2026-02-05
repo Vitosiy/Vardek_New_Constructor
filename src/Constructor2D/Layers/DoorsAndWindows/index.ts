@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 import { MathUtils } from "three";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import {
   Vector2,
@@ -49,6 +50,7 @@ import { handlerStageMouseUp } from "./methods/events/handlerStageMouseUp";
 import { handlerStageMouseMove } from "./methods/events/handlerStageMouseMove";
 
 const roomsStore = useSchemeTransition();
+const roomState = useRoomState();
 
 export default class DoorsAndWindows {
 
@@ -165,7 +167,34 @@ export default class DoorsAndWindows {
 
     const rooms = roomsStore.getAllData(); // получаем комнаты из стора
 
-    rooms.forEach((room: any) => {
+    // Получаем текущую активную комнату
+    let currentRoomId = roomState.getRoomId;
+    
+    // Если текущей комнаты нет, устанавливаем первую комнату как текущую
+    if (!currentRoomId && rooms.length > 0) {
+      currentRoomId = rooms[0].id;
+      roomState.setCurrentRoomId(currentRoomId);
+    }
+
+    // Нормализуем ID для сравнения
+    const normalizeId = (value: string | number | null | undefined) => {
+      return value !== null && value !== undefined ? String(value) : '';
+    };
+    const currentRoomIdNormalized = normalizeId(currentRoomId);
+
+    // Фильтруем комнаты - обрабатываем только текущую активную комнату
+    const roomsToProcess = rooms.filter((room: any) => {
+      const roomIdNormalized = normalizeId(room.id);
+      return roomIdNormalized === currentRoomIdNormalized;
+    });
+
+    if (roomsToProcess.length === 0) {
+      console.warn('Текущая активная комната не найдена в данных для DoorsAndWindows');
+      return;
+    }
+
+    // Обрабатываем только текущую активную комнату
+    roomsToProcess.forEach((room: any) => {
 
       // получаем объекты комнат, в том числе двери и окна, исключая перегородки (166755)
       const dataObjsects = room.content.filter((item: any) => item.id !== 166755);

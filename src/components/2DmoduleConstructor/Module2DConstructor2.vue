@@ -28,6 +28,7 @@ import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightP
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
 import {TFasadeTrueSizes} from "@/types/types.ts";
+import {useEventBus} from "@/store/appliction/useEventBus.ts";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -53,6 +54,7 @@ const emit = defineEmits(["save-table-data"]);
 let shapeAdjuster = null;
 const APP = useAppData().getAppData;
 const modelState = useModelState()
+const eventBus = useEventBus()
 
 const productData = ref(false)
 const builder = new UniversalGeometryBuilder({}).buildProduct;
@@ -92,6 +94,7 @@ const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
 const noBottom = ref<boolean>(false);
 const noBackwall = ref<boolean>(false);
+const noLoops = ref<boolean>(false);
 
 const module = ref(false);
 const computeModule = () => {
@@ -191,25 +194,67 @@ const computeModule = () => {
         _module.fasades = fasades
       }
       else {
-        fasades = [
-          [
-            <FasadeObject>{
-              id: 1,
-              width: FASADE.FASADE_WIDTH,
-              height: FASADE.FASADE_HEIGHT - (_module.isRestrictedModule ? 0 : _module.horizont),
-              position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
-              material: <FasadeMaterial>{
-                ...FASADE_PROPS
-              },
-              loopsSide: LOOPSIDE["left"],
-              type: "fasade",
-              minY: MIN_FASADE_HEIGHT,
-              maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
-              maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
-              minX: MIN_FASADE_WIDTH
-            }
-          ]
-        ];
+
+        if(_module.isRestrictedModule) {
+          let fasade_width = (FASADE.FASADE_WIDTH / 2) - 2
+          fasades = [
+            [
+              <FasadeObject>{
+                id: 1,
+                width: fasade_width,
+                height: FASADE.FASADE_HEIGHT,
+                position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+                material: <FasadeMaterial>{
+                  ...FASADE_PROPS
+                },
+                loopsSide: LOOPSIDE["left"],
+                type: "fasade",
+                minY: MIN_FASADE_HEIGHT,
+                maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                minX: MIN_FASADE_WIDTH
+              }
+            ],
+            [
+              <FasadeObject>{
+                id: 1,
+                width: fasade_width,
+                height: FASADE.FASADE_HEIGHT,
+                position: new THREE.Vector2(FASADE.POSITION_X + fasade_width + 4 , FASADE.POSITION_Y),
+                material: <FasadeMaterial>{
+                  ...FASADE_PROPS
+                },
+                loopsSide: LOOPSIDE["right"],
+                type: "fasade",
+                minY: MIN_FASADE_HEIGHT,
+                maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                minX: MIN_FASADE_WIDTH
+              }
+            ]
+          ];
+        }
+        else
+          fasades = [
+            [
+              <FasadeObject>{
+                id: 1,
+                width: FASADE.FASADE_WIDTH,
+                height: FASADE.FASADE_HEIGHT - _module.horizont,
+                position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+                material: <FasadeMaterial>{
+                  ...FASADE_PROPS
+                },
+                loopsSide: LOOPSIDE["left"],
+                type: "fasade",
+                minY: MIN_FASADE_HEIGHT,
+                maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                minX: MIN_FASADE_WIDTH
+              }
+            ]
+          ];
+
         section.fasades = fasades
         calcLoops(0, _module)
         section.loopsSides = {0: LOOPSIDE["left"]}
@@ -225,6 +270,42 @@ const computeModule = () => {
 const getModule = computed(() => {
   return module
 })
+
+const checkOptionsChanged = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  PROPS.CONFIG.OPTIONS.forEach(option => {
+    switch (+option.id) {
+      case 5738924:
+        if(option.active) {
+          noBottom.value = true
+          module.value.noBottom = true
+          module.value.horizont = PROPS.CONFIG.HORIZONT = 0
+        }
+        else {
+          noBottom.value = false
+          delete module.value.noBottom
+        }
+        break;
+      case 1795067: //Опция без петель
+        if(option.active) {
+          noLoops.value = true
+          module.value.noLoops = true
+        }
+        else {
+          noLoops.value = false
+          delete module.value.noLoops
+        }
+        break;
+      default:
+        break;
+    }
+  })
+
+  checkNoBackwall()
+  reset()
+}
+
 
 const checkNoBackwall = () => {
   const {PROPS} = modelState.getCurrentModel.userData;
@@ -308,6 +389,7 @@ const getFillings = computed(() => {
 
     objectsMatrix.push({
       groupName: fillingsGroup.NAME,
+      groupID: fillingsGroup.ID,
       items: fillingsGroup.PRODUCTS.map(item => {
         return APP.CATALOG.PRODUCTS[item]
       }).filter(item => item)
@@ -578,7 +660,38 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
               currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
           module.value.width - 4;
 
+
+  let fasadePosition = getFasadePosition()
   let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
+
+  if(!baseFasade) {
+    const PROPS = productData.value.PROPS;
+
+    const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
+    const FASADE = getFasadePosition(FASADE_PROPS.POSITION);
+
+    const width = currentSection.fasades[0]?.[0] ? Math.floor(currentSection.fasades[0][0].width / 2 - 2) :
+        module.value.sections.length === 1 ? module.value.width - 4 :
+            (secIndex > 0 && secIndex < module.value.sections.length - 1) ? currentSection.width + module.value.moduleThickness - 4 :
+                currentSection.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
+
+    let startX = module.value.sections.length === 1 ? FASADE.POSITION_X : currentSection.position.x - currentSection.width / 2 - module.value.moduleThickness / 2 + 2;
+
+    let newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
+    baseFasade = <FasadeObject>{
+      id: 1,
+      width,
+      height: module.value.height - module.value.horizont - 4,
+      position: newDoorPosition,
+      type: "fasade",
+      material: <FasadeMaterial>{
+        ...FASADE_PROPS,
+      },
+    };
+    let fasadeMinMax = getFasadePositionMinMax(baseFasade);
+    baseFasade = Object.assign(baseFasade, fasadeMinMax);
+  }
+
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
   let fasadesDrawers = module.value.sections[secIndex].fasadesDrawers || []
 
@@ -846,11 +959,19 @@ const calcSlideDoor = (fasadePositionID, doorNumber, callback) => {
 //#region Петли
 const calcLoops = (secIndex, grid = false) => {
   const CONFIG = productData.value.PROPS.CONFIG
+  const curGrid = grid || module.value
 
   if (!CONFIG.LOOPS)
     return
 
-  const curSection = grid ? grid.sections[secIndex] : module.value.sections[secIndex]
+  const curSection = curGrid.sections[secIndex]
+
+  if(curGrid.noLoops){
+    delete curSection.loops
+    delete curSection.loopsSides
+    return;
+  }
+
   const FASADES = curSection.fasades || []
   curSection.loops = []
 
@@ -989,8 +1110,8 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
     let result = []
     _loops.forEach(loop => {
       if (
-          ((loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
-          (loop.minY <= cell.position.y && loop.maxY >= cell.position.y))
+          ((loop.minY < (cell.position.y - moduleThickness) && loop.maxY > (cell.position.y - moduleThickness)) ||
+          (loop.minY < cell.position.y && loop.maxY > cell.position.y))
           &&
           ((loop.minX <= (cell.position.x - cell.width / 2) && loop.maxX >= (cell.position.x - cell.width / 2)) ||
           (loop.minX <= (cell.position.x + cell.width / 2) && loop.maxX >= (cell.position.x + cell.width / 2)))
@@ -1037,7 +1158,7 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
       })
     })
   }
-  else {
+  /*else {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
@@ -1054,7 +1175,7 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
 
       })
     })
-  }
+  }*/
 
   if (errorItem.list.length) {
     if(!module.value.errors)
@@ -1495,6 +1616,8 @@ onMounted(() => {
   nextTick().then(() => {
     isMounted.value = true;
   });
+
+  eventBus.on("A:SelectModelOption", checkOptionsChanged)
 });
 
 onBeforeUnmount(() => {
@@ -1502,6 +1625,7 @@ onBeforeUnmount(() => {
   module.value = false;
   onHorizont.value = false
   onSideProfile.value = false
+  eventBus.off("A:SelectModelOption", checkOptionsChanged)
 });
 
 watch(visualizationRef, () => {
@@ -1573,7 +1697,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR, () 
 watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL, () => {
 
   let tmp = noBackwall.value
-  checkNoBackwall()
+  checkOptionWithoutBottom()
 
   if(tmp !== noBackwall.value)
     reset()
@@ -1616,7 +1740,13 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
         >
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Высота модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="actions-title">Высота <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="item__label text-grey">
+              Мин: {{ getMinMaxModuleSize('height', 'min') ?? "н/о" }}
+            </p>
+            <p class="item__label text-grey">
+              Макс: {{ getMinMaxModuleSize('height', 'max') ?? "н/о" }}
+            </p>
             <div class="actions-input--container">
               <MainInput
                   :disabled="mode !== 'module'"
@@ -1631,7 +1761,13 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Ширина модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
+            <p class="actions-title">Ширина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
+            <p class="item__label text-grey">
+              Мин: {{ getMinMaxModuleSize('width', 'min') ?? "н/о" }}
+            </p>
+            <p class="item__label text-grey">
+              Макс: {{ getMinMaxModuleSize('width', 'max') ?? "н/о" }}
+            </p>
             <div class="actions-input--container">
               <MainInput
                   :disabled="mode !== 'module'"
@@ -1646,7 +1782,13 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Глубина модуля <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="actions-title">Глубина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="item__label text-grey">
+              Мин: {{ getMinMaxModuleSize('depth', 'min') ?? "н/о" }}
+            </p>
+            <p class="item__label text-grey">
+              Макс: {{ getMinMaxModuleSize('depth', 'max') ?? "н/о" }}
+            </p>
             <div class="actions-input--container">
               <MainInput
                   :disabled="mode !== 'module'"
@@ -1669,12 +1811,19 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
               <Toggle v-else v-model="onHorizont"/>
             </p>
 
+            <p v-if="!noBottom" class="item__label text-grey">
+              Мин: 50
+            </p>
+            <p v-if="!noBottom" class="item__label text-grey">
+              Макс: 300
+            </p>
+
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
                   :inputClass="'actions-input'"
                   :modelValue="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']"
-                  min="78"
+                  min="50"
                   max="300"
                   :type="'number'"
                   placeholder="0"

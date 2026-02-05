@@ -164,6 +164,12 @@ export default class Planner {
 
   // Очистка всех стен и комнат перед перезагрузкой
   public clear(): void {
+    // Очищаем разметку размеров стен
+    this.parent?.layers?.dimensionDisplay?.hide();
+    // Очищаем активные точки стен (синие точки с углом)
+    this.parent?.layers?.startPointActiveObject?.activate(false);
+    this.parent?.layers?.arrowRulerActiveObject?.clearGraphic();
+    
     // Очищаем графику всех стен
     this.objectWalls.forEach((drawObject) => {
       const containers = drawObject.containers;
@@ -755,65 +761,330 @@ export default class Planner {
     };
 
     // Настройки точности
-    const precision = 2; // Кол-во знаков после запятой
-    const uniquePoints = new Map<string, Vector2>();
-    const rawPoints: Vector2[] = [];
+    const precision = 2;
+    const pointKey = (p: Vector2): string => `${p.x.toFixed(precision)},${p.y.toFixed(precision)}`;
 
-    // Сбор уникальных точек (индексы 0 и 1)
-    for (const wall of this.objectWalls) {
-      if (isSameId(wall.roomId, roomId) && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
-        // Точка 0
-        const key0 = `${wall.points[0].x.toFixed(precision)},${wall.points[0].y.toFixed(precision)}`;
-        uniquePoints.set(key0, wall.points[0]);
-        rawPoints.push(wall.points[0]);
+    // Сбор стен комнаты
+    const roomWalls = this.objectWalls.filter(
+      (wall) => isSameId(wall.roomId, roomId) && wall.name !== 'dividing_wall' && wall.points?.length >= 4
+    );
 
-        // Точка 1
-        const key1 = `${wall.points[1].x.toFixed(precision)},${wall.points[1].y.toFixed(precision)}`;
-        uniquePoints.set(key1, wall.points[1]);
-        rawPoints.push(wall.points[1]);
+    if (roomWalls.length === 0) {
+      return [];
+    }
+    
+    // Если стен меньше двух, возвращаем точки как есть
+    if (roomWalls.length < 2) {
+      const wall = roomWalls[0];
+      if (!wall.points || wall.points.length < 2) return [];
+      return [wall.points[0], wall.points[1]];
+    }
+
+    const wallMap = new Map<string | number, ObjectWall>();
+    roomWalls.forEach(wall => wallMap.set(wall.id, wall));
+
+    // Функция для получения внутренней границы стены (контур комнаты проходит по внутренней стороне стен)
+    // Используем точки 2 и 3, которые находятся на внутренней стороне стены относительно heightDirection
+    const getInnerEdge = (wall: ObjectWall): [Vector2, Vector2] => {
+      // Стена имеет 4 точки:
+      // points[0], points[1] - основные точки стены (начало и конец)
+      // points[2], points[3] - точки на противоположной стороне от основной линии
+      // Внутренняя сторона стены - это сторона, обращенная внутрь комнаты
+      // Для heightDirection = 1: внутренняя сторона - points[3] -> points[2]
+      // Для heightDirection = -1: внутренняя сторона - points[0] -> points[1]
+      // Но на практике, для правильного построения контура нужно использовать points[3] -> points[2]
+      // так как они всегда находятся на внутренней стороне относительно основной линии
+      if (wall.heightDirection === 1) {
+        return [wall.points[3], wall.points[2]];
+      } else {
+        // Для heightDirection = -1 внутренняя сторона - это основная линия
+        return [wall.points[0], wall.points[1]];
+      }
+    };
+
+    // Функция для получения продолжения линии (для поиска пересечений при вогнутых углах)
+    const extendLine = (edge: [Vector2, Vector2], extendBy: number = 10000): [Vector2, Vector2] => {
+      const [p1, p2] = edge;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len === 0) return edge;
+      
+      const unitX = dx / len;
+      const unitY = dy / len;
+      
+      return [
+        { x: p1.x - unitX * extendBy, y: p1.y - unitY * extendBy },
+        { x: p2.x + unitX * extendBy, y: p2.y + unitY * extendBy }
+      ];
+    };
+
+    // Собираем все углы комнаты: для каждой пары соединенных стен находим точку пересечения их внутренних границ
+    const wallCorners = new Map<string | number, Vector2[]>(); // wallId -> [corner1, corner2]
+    
+    for (const wall of roomWalls) {
+      const [wallStart, wallEnd] = getInnerEdge(wall);
+      const wallEdge = [wallStart, wallEnd] as [Vector2, Vector2];
+      const extendedWallEdge = extendLine(wallEdge);
+      const corners: Vector2[] = [];
+      
+      // Проверяем соединение через wallPoint0 (точка 0 стены соединена с другой стеной)
+      if (wall.mergeWalls.wallPoint0) {
+        const connectedWall = wallMap.get(wall.mergeWalls.wallPoint0);
+        if (connectedWall) {
+          const [connStart, connEnd] = getInnerEdge(connectedWall);
+          const connEdge = [connStart, connEnd] as [Vector2, Vector2];
+          const extendedConnEdge = extendLine(connEdge);
+          
+          const intersection = getIntersectionPoint(extendedWallEdge, extendedConnEdge);
+          if (intersection) {
+            corners.push(intersection);
+          }
+        }
+      }
+      
+      // Проверяем соединение через wallPoint1 (точка 1 стены соединена с другой стеной)
+      if (wall.mergeWalls.wallPoint1) {
+        const connectedWall = wallMap.get(wall.mergeWalls.wallPoint1);
+        if (connectedWall) {
+          const [connStart, connEnd] = getInnerEdge(connectedWall);
+          const connEdge = [connStart, connEnd] as [Vector2, Vector2];
+          const extendedConnEdge = extendLine(connEdge);
+          
+          const intersection = getIntersectionPoint(extendedWallEdge, extendedConnEdge);
+          if (intersection) {
+            const key = pointKey(intersection);
+            // Проверяем, не добавили ли мы уже этот угол
+            const exists = corners.some(c => pointKey(c) === key);
+            if (!exists) {
+              corners.push(intersection);
+            }
+          }
+        }
+      }
+      
+      // Если не нашли углы через соединения, используем конечные точки стены
+      if (corners.length === 0) {
+        corners.push(wallStart, wallEnd);
+      }
+      
+      wallCorners.set(wall.id, corners);
+    }
+
+    // Строим контур, обходя стены и используя найденные углы
+    const visitedWalls = new Set<string | number>();
+    const contour: Vector2[] = [];
+    
+    // Начинаем с первой стены
+    let currentWall = roomWalls[0];
+    let [innerStart, innerEnd] = getInnerEdge(currentWall);
+    let currentPoint: Vector2 = innerStart;
+    const startPoint: Vector2 = innerStart;
+
+    while (currentWall && !visitedWalls.has(currentWall.id)) {
+      visitedWalls.add(currentWall.id);
+      
+      // Добавляем текущую точку в контур
+      const currentKey = pointKey(currentPoint);
+      const lastKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+      if (currentKey !== lastKey) {
+        contour.push({ ...currentPoint });
+      }
+
+      // Проверяем, не вернулись ли мы к начальной точке
+      if (contour.length > 2 && currentKey === pointKey(startPoint)) {
+        break;
+      }
+
+      // Определяем следующую стену
+      const currentPointKey = pointKey(currentPoint);
+      const innerStartKey = pointKey(innerStart);
+      const innerEndKey = pointKey(innerEnd);
+      
+      const connectedWallId = currentPointKey === innerStartKey 
+        ? currentWall.mergeWalls.wallPoint1 
+        : currentWall.mergeWalls.wallPoint0;
+
+      let nextWall: ObjectWall | undefined;
+
+      if (connectedWallId) {
+        nextWall = wallMap.get(connectedWallId);
+        if (nextWall) {
+          // Ищем угол между этими стенами (пересечение продолжений внутренних границ)
+          const [nextStart, nextEnd] = getInnerEdge(nextWall);
+          const currentEdge = [innerStart, innerEnd] as [Vector2, Vector2];
+          const nextEdge = [nextStart, nextEnd] as [Vector2, Vector2];
+          const extendedCurrent = extendLine(currentEdge);
+          const extendedNext = extendLine(nextEdge);
+          
+          // Ищем пересечение продолжений - это может быть угол комнаты
+          const intersection = getIntersectionPoint(extendedCurrent, extendedNext);
+          if (intersection) {
+            // Проверяем, находится ли точка пересечения в разумных пределах от стен
+            // Вычисляем минимальное расстояние от точки пересечения до текущей и следующей стены
+            const distToCurrentStart = getDistanceBetweenVectors(intersection, innerStart);
+            const distToCurrentEnd = getDistanceBetweenVectors(intersection, innerEnd);
+            const distToNextStart = getDistanceBetweenVectors(intersection, nextStart);
+            const distToNextEnd = getDistanceBetweenVectors(intersection, nextEnd);
+            
+            // Находим минимальное расстояние до любой точки стен
+            const minDistToCurrent = Math.min(distToCurrentStart, distToCurrentEnd);
+            const minDistToNext = Math.min(distToNextStart, distToNextEnd);
+            const minDist = Math.min(minDistToCurrent, minDistToNext);
+            
+            // Используем точку пересечения только если она находится близко к стенам
+            // (в пределах 2-3 длин стен, чтобы учесть вогнутые углы, но не слишком далекие точки)
+            const maxWallLength = Math.max(
+              getDistanceBetweenVectors(innerStart, innerEnd),
+              getDistanceBetweenVectors(nextStart, nextEnd)
+            );
+            const maxAllowedDist = maxWallLength * 3; // Максимальное допустимое расстояние
+            
+            if (minDist <= maxAllowedDist) {
+              // Точка пересечения находится в разумных пределах - используем её как угол
+              const cornerKey = pointKey(intersection);
+              const lastKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+              
+              if (cornerKey !== lastKey) {
+                contour.push({ ...intersection });
+              }
+              currentPoint = intersection;
+              
+              // Определяем следующую точку на следующей стене
+              if (distToNextStart > distToNextEnd) {
+                currentPoint = nextStart;
+              } else {
+                currentPoint = nextEnd;
+              }
+            } else {
+              // Точка пересечения слишком далеко - используем реальную точку соединения
+              const currentEndPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+              const distToNextStart2 = getDistanceBetweenVectors(currentEndPoint, nextStart);
+              const distToNextEnd2 = getDistanceBetweenVectors(currentEndPoint, nextEnd);
+              
+              if (distToNextStart2 < distToNextEnd2) {
+                currentPoint = nextEnd;
+              } else {
+                currentPoint = nextStart;
+              }
+            }
+          } else {
+            // Если нет пересечения, используем конечную точку текущей стены
+            const currentEndPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+            const distToNextStart = getDistanceBetweenVectors(currentEndPoint, nextStart);
+            const distToNextEnd = getDistanceBetweenVectors(currentEndPoint, nextEnd);
+            
+            if (distToNextStart < distToNextEnd) {
+              currentPoint = nextEnd;
+            } else {
+              currentPoint = nextStart;
+            }
+          }
+        }
+      }
+
+      // Если не нашли через mergeWalls, ищем по совпадению координат
+      if (!nextWall) {
+        const currentEndPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+        
+        for (const wall of roomWalls) {
+          if (wall.id === currentWall.id || visitedWalls.has(wall.id)) continue;
+          
+          const [wallStart, wallEnd] = getInnerEdge(wall);
+          const wallStartKey = pointKey(wallStart);
+          const wallEndKey = pointKey(wallEnd);
+          
+          if (pointKey(currentEndPoint) === wallStartKey || pointKey(currentEndPoint) === wallEndKey) {
+            nextWall = wall;
+            
+            // Ищем угол между стенами
+            const currentEdge = [innerStart, innerEnd] as [Vector2, Vector2];
+            const nextEdge = [wallStart, wallEnd] as [Vector2, Vector2];
+            const extendedCurrent = extendLine(currentEdge);
+            const extendedNext = extendLine(nextEdge);
+            
+            const intersection = getIntersectionPoint(extendedCurrent, extendedNext);
+            if (intersection) {
+              // Проверяем, находится ли точка пересечения в разумных пределах от стен
+              const distToCurrentStart = getDistanceBetweenVectors(intersection, innerStart);
+              const distToCurrentEnd = getDistanceBetweenVectors(intersection, innerEnd);
+              const distToNextStart = getDistanceBetweenVectors(intersection, wallStart);
+              const distToNextEnd = getDistanceBetweenVectors(intersection, wallEnd);
+              
+              const minDistToCurrent = Math.min(distToCurrentStart, distToCurrentEnd);
+              const minDistToNext = Math.min(distToNextStart, distToNextEnd);
+              const minDist = Math.min(minDistToCurrent, minDistToNext);
+              
+              const maxWallLength = Math.max(
+                getDistanceBetweenVectors(innerStart, innerEnd),
+                getDistanceBetweenVectors(wallStart, wallEnd)
+              );
+              const maxAllowedDist = maxWallLength * 3;
+              
+              if (minDist <= maxAllowedDist) {
+                const cornerKey = pointKey(intersection);
+                const lastKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+                
+                if (cornerKey !== lastKey) {
+                  contour.push({ ...intersection });
+                }
+                currentPoint = intersection;
+              }
+            }
+            
+            // Определяем следующую точку
+            if (pointKey(currentEndPoint) === wallStartKey) {
+              currentPoint = wallEnd;
+            } else {
+              currentPoint = wallStart;
+            }
+            break;
+          }
+        }
+      }
+
+      if (nextWall) {
+        currentWall = nextWall;
+        [innerStart, innerEnd] = getInnerEdge(currentWall);
+      } else {
+        // Если не нашли следующую стену, добавляем конечную точку
+        const endPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+        const endKey = pointKey(endPoint);
+        const lastPointKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+        
+        if (endKey !== lastPointKey) {
+          contour.push({ ...endPoint });
+        }
+        break;
       }
     }
 
-    const dedupPoints = Array.from(uniquePoints.values());
-
-    // Если точек меньше трёх — возвращаем как раньше
-    if (dedupPoints.length < 3) {
-      return rawPoints;
+    // Убираем дубликат начальной точки
+    if (contour.length > 2 && pointKey(contour[0]) === pointKey(contour[contour.length - 1])) {
+      contour.pop();
     }
 
-    // Строим выпуклую оболочку (convex hull), чтобы получить корректный контур комнаты
-    const points = dedupPoints.slice().sort((a, b) => {
-      if (a.x === b.x) return a.y - b.y;
-      return a.x - b.x;
-    });
-
-    const cross = (o: Vector2, a: Vector2, b: Vector2): number =>
-      (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-
-    const lower: Vector2[] = [];
-    for (const p of points) {
-      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
-        lower.pop();
-      }
-      lower.push(p);
+    // Если контур получился слишком коротким, возвращаем все уникальные точки
+    if (contour.length < 3) {
+      const allPoints: Vector2[] = [];
+      const uniquePoints = new Map<string, Vector2>();
+      roomWalls.forEach(wall => {
+        const [wallStart, wallEnd] = getInnerEdge(wall);
+        const key0 = pointKey(wallStart);
+        const key1 = pointKey(wallEnd);
+        if (!uniquePoints.has(key0)) {
+          uniquePoints.set(key0, wallStart);
+          allPoints.push(wallStart);
+        }
+        if (!uniquePoints.has(key1)) {
+          uniquePoints.set(key1, wallEnd);
+          allPoints.push(wallEnd);
+        }
+      });
+      return allPoints;
     }
 
-    const upper: Vector2[] = [];
-    for (let i = points.length - 1; i >= 0; i--) {
-      const p = points[i];
-      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
-        upper.pop();
-      }
-      upper.push(p);
-    }
-
-    // Последние точки нижней и верхней оболочки дублируют начало другой — убираем
-    lower.pop();
-    upper.pop();
-
-    const hull = lower.concat(upper);
-
-    return hull;
+    return contour;
 
   }
 

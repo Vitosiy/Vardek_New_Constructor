@@ -226,15 +226,33 @@ export const useModelState = defineStore('ModelState', () => {
         const productInfo = _PRODUCTS.value[productId]
 
         if (productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
-            const colorMap = new Set();
-            const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE.value[colorId]);
+            const validFacadeIds = productInfo.BACKWALL.filter(id => _FASADE.value[id]);
 
-            colorsList.forEach(color => {
-                if (_FASADE.value[color] !== undefined) {
-                    colorMap.add(_FASADE.value[color]);
-                }
-            });
-            currentBackwallData.value = Array.from(colorMap)
+            const groupedFasades = validFacadeIds.reduce((acc, facadeId) => {
+                const facade = _FASADE.value[facadeId];
+                if (!facade) return acc;
+
+                const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+                if (!section?.UF_GROUP) return acc;
+
+                const groupId = section.UF_GROUP;
+                if (!acc[groupId]) acc[groupId] = [];
+                acc[groupId].push(facadeId);
+
+                return acc;
+            }, {} as Record<string, number[]>);
+
+
+            const result = Object.values(_FASADE_GROUPS.value)
+                .map(group => ({
+                    NAME: group.NAME,
+                    FASADES: groupedFasades[group.ID] || [],
+                    SORT: group.SORT,
+                }))
+                .filter(group => group.FASADES.length > 0)
+                .sort((a, b) => a.SORT - b.SORT);
+
+            currentBackwallData.value = result;
         }
     }
 
@@ -249,15 +267,31 @@ export const useModelState = defineStore('ModelState', () => {
         const productInfo = _PRODUCTS.value[productId]
 
         if (productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
-            const colorMap = new Set();
-            const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE.value[colorId]);
+            const groupedFasades = productInfo.SIDEWALL.reduce((acc, facadeId) => {
+                const facade = _FASADE.value[facadeId];
+                if (!facade) return acc;
 
-            colorsList.forEach(color => {
-                if (_FASADE.value[color] !== undefined) {
-                    colorMap.add(_FASADE.value[color]);
-                }
-            });
-            currentSidewallData.value = Array.from(colorMap)
+                const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+                if (!section?.UF_GROUP) return acc;
+
+                const groupId = section.UF_GROUP;
+                if (!acc[groupId]) acc[groupId] = [];
+                acc[groupId].push(facadeId);
+
+                return acc;
+            }, {} as Record<string, number[]>);
+
+
+            const result = Object.values(_FASADE_GROUPS.value)
+                .map(group => ({
+                    NAME: group.NAME,
+                    FASADES: groupedFasades[group.ID] || [],
+                    SORT: group.SORT,
+                }))
+                .filter(group => group.FASADES.length > 0)
+                .sort((a, b) => a.SORT - b.SORT);
+
+            currentSidewallData.value = result;
         }
     }
 

@@ -56,7 +56,8 @@ const openUMRedactor = () => {
     MODULE_COLOR,
     TSARGA,
     TOPFASADECOLOR,
-    OPTIONS
+    OPTIONS,
+    EXPRESSIONS
   } = CONFIG
 
   if(MODULEGRID)
@@ -64,7 +65,8 @@ const openUMRedactor = () => {
 
   universalModuleConfigCash.value = {
     HORIZONT,
-    MODULE_COLOR
+    MODULE_COLOR,
+    EXPRESSIONS : {...EXPRESSIONS}
   };
 
   if(BACKWALL)
