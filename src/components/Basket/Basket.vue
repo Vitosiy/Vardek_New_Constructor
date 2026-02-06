@@ -168,6 +168,7 @@ const updateBasketData = async () => {
 
 
 const selectRoom = async (id) => {
+  selectedRoomId.value = id;
   if(id !== "all") {
     loadRoom(id)
   } else {
