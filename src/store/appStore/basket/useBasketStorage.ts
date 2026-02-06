@@ -39,10 +39,16 @@ export function useBasketStorage() {
     mainCatalog.value = []
   }
 
+  const allBasket = (data:any) => {
+    mainConstructor.value = data.scene;
+    mainCatalog.value = data.catalog;
+  };
+
   return {
     mainConstructor,
     mainCatalog,
     initializeFromStorage,
-    clearStorage
+    clearStorage,
+    allBasket
   }
 }

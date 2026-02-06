@@ -187,6 +187,9 @@ export const useBasketStore = defineStore('basket', () => {
     return result
   }
 
+  const updateBasket = (newData: IBasketResponse | null) => {
+    basketData.value = newData
+  }
 
 
   return {
@@ -213,6 +216,7 @@ export const useBasketStore = defineStore('basket', () => {
     updateQuantity,
     clearBasket,
     loadBasket,
+    updateBasket,
     syncBasket,
     syncBasketDelay,
     syncInvoce,
