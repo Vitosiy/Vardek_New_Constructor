@@ -134,6 +134,7 @@ const globalOptions = ref<TOptionsMap | null>(null);
 const currentRedactor = ref<boolean>(false);
 
 onBeforeMount(() => {
+  console.log(roomState.getRooms)
   prepareOptions();
 });
 
@@ -213,6 +214,7 @@ const changeHeightClamp = (value: number | null) => {
 
 const loadRoom = async (id: number) => {
   await roomState.setLoad(false);
+  eventBus.emit("A:Save"); // Сохраняем локальное сотояние комнаты
   await nextTick();
   setTimeout(() => {
     resetGlobalOptions();
@@ -220,7 +222,7 @@ const loadRoom = async (id: number) => {
     eventBus.emit("A:ContantLoaded", false);
     eventBus.emit("A:DrawingMode", false);
     eventBus.emit("A:ToggleRulerVisibility", true);
-  }, 0);
+  }, 10);
 };
 
 const deliteRoom = (value: number) => {
