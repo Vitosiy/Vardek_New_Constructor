@@ -96,8 +96,7 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomOptions } from '../left-menu/option/roomOptions/useRoomOptons';
 import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
 
-const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, updateBasket, syncInvoce} = useBasketStore();
-const { allBasket } = useBasketStorage();
+const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
 const productDelayData = ref([]);
@@ -172,19 +171,19 @@ const selectRoom = async (id) => {
   if(id !== "all") {
     loadRoom(id)
   } else {
-    // Используем reduce для объединения всех корзин
-    roomsBasketData.value = rooms.value.reduce((combined, el) => {
+    roomsBasketData.value = rooms.value.flatMap(el => {
       const roomBasket = JSON.parse(el.basket);
       console.log('el', roomBasket);
       
-      return {
-        scene: [...combined.scene, ...(roomBasket.scene || [])],
-        catalog: [...combined.catalog, ...(roomBasket.catalog || [])]
-      };
-    }, { scene: [], catalog: [] });
+      return [
+        ...(roomBasket.scene || []),
+        ...(roomBasket.catalog || [])
+      ];
+    });
     
     console.log('Объединенная корзина:', roomsBasketData.value);
-    allBasket(roomsBasketData.value);
+    // allBasket(roomsBasketData.value);
+    syncBasketMulti(roomsBasketData.value)
   }
 }
 
