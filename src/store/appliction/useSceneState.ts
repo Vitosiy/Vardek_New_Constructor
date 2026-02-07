@@ -12,8 +12,8 @@ import { useRoomState } from './useRoomState';
 
 export const useSceneState = defineStore('SceneState', () => {
 
-    const schemeTransition = useSchemeTransition()
-    const roomState = useRoomState()
+    // const schemeTransition = useSchemeTransition()
+    // const roomState = useRoomState()
 
     const startParamsClone = JSON.parse(JSON.stringify(START_PROJECT_PARAMS))
 
