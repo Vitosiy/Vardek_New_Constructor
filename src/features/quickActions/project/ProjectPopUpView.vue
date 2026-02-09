@@ -29,7 +29,8 @@
             class="search-input backend-ids-select"
             @change="onBackendIdSelect"
           >
-            <option value="" disabled>ID из профиля</option>
+            <option value="all">Все проекты</option>
+            <option value="my">Мои проекты</option>
             <option
               v-for="id in backendIdsList"
               :key="id"
@@ -175,18 +176,25 @@ const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 
 // Список ID из данных пользователя 
 const backendIdsList = computed(() => {
-  const userData = authStore.userData as { id?: string | number };
+  const userData = authStore.userData;
   const id = userData?.id;
   if (id != null && id !== "") {
     return [String(id)];
   }
   return [];
 });
-const selectedBackendId = ref<string>("");
+const selectedBackendId = ref<string>("all");
 
-const onBackendIdSelect = () => {
-  if (selectedBackendId.value) {
-    console.log("BACKEND DATA");
+const onBackendIdSelect = async () => {
+  if (selectedBackendId.value === "all") {
+    tab.value = "ready";
+    await loadProjects();
+  } else if (selectedBackendId.value === "my") {
+    tab.value = "my";
+    await loadProjects();
+  } else {
+    tab.value = "my";
+    await loadProjects();
   }
 };
 
@@ -236,7 +244,11 @@ const loadProjects = async () => {
       }
     }
 
-    const items = await projectAPI.loadProjects(tab.value, serverFilters);
+    const sel = selectedBackendId.value;
+    const designer =
+      sel === "all" ? "all" : sel === "my" ? undefined : sel;
+
+    const items = await projectAPI.loadProjects(tab.value, serverFilters, 300, designer);
     projects.value = items;
 
     if (items.length === 0 && Object.keys(serverFilters).length === 0) {

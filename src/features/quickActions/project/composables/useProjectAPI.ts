@@ -6,10 +6,14 @@ import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
 import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
 
+import { useAuthStore } from '@/store/appStore/authStore'
+
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
   const isLoading = ref(false)
+  
+  const authStore = useAuthStore()
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
@@ -107,7 +111,7 @@ export function useProjectAPI() {
   }
 
   // Загрузка списка проектов с дебаунсом
-  const loadProjects = async (tab: ProjectTab, filters: ProjectFilters = {}, delay: number = 300): Promise<Project[]> => {
+  const loadProjects = async (tab: ProjectTab, filters: ProjectFilters = {}, delay: number = 300, designer?: string): Promise<Project[]> => {
     // Отменяем предыдущий запрос
     if (loadTimeout) {
       clearTimeout(loadTimeout)
@@ -118,9 +122,13 @@ export function useProjectAPI() {
         isLoading.value = true
 
         try {
+          const designerValue = designer !== undefined
+            ? String(designer)
+            : (authStore.userData?.id != null ? String(authStore.userData.id) : REQUEST_CONSTANTS.DESIGNER)
+
           const requestBody: any = {
             city: REQUEST_CONSTANTS.CITY,
-            designer: REQUEST_CONSTANTS.DESIGNER,
+            designer: designerValue,
             page: 1,
             config: REQUEST_CONSTANTS.CONFIG,
             type: "user",

@@ -44,7 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       const response = await AuthService.getUserData(token);
-
+      
       
       console.log('BACKEND USER DATA', response?.DATA?.data ?? response);
 

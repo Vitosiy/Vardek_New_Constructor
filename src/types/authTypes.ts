@@ -2,6 +2,7 @@ export interface UserData {
   avatar: string | null
   name: string
   status: 'online' | 'offline' | 'busy'
+  id: string | number
 }
 
 export interface LoginData {
