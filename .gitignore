@@ -14,7 +14,7 @@ dist.*
 *.local
 package-lock.json
 Ideas
-
+.cursor/rules/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
