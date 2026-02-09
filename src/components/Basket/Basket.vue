@@ -11,7 +11,7 @@
     </div>
 
     <!-- Кнопки переключения между комнатами -->
-    <div class="room-tabs">
+    <div class="room-tabs" v-if="rooms.length > 1">
       <button 
         class="room-tab" 
         :class="{ 'room-tab--active': selectedRoomId === 'all' }"
@@ -114,11 +114,11 @@ const {
 
 // Реактивные переменные
 const rooms = computed(() => roomState.getRooms || []);
+const roomsID = computed(() => roomState.getRoomId);
 const selectedRoomId = ref<string>('all'); // 'all' для всех комнат или ID конкретной комнаты
 const selectedRoomLabel = ref<string>('');
 const roomsBasketData = ref<IRoomBasketData[]>([]); // Данные корзин всех комнат
 
-const roomsList = computed(() => roomState.getRooms);
 const eventBus = useEventBus();
 
 
@@ -172,24 +172,29 @@ const selectRoom = async (id) => {
   if(id !== "all") {
     loadRoom(id)
   } else {
-    roomsBasketData.value = rooms.value.flatMap(el => {
-      const roomBasket = JSON.parse(el.basket);
-      console.log('el', roomBasket);
-      
-      return [
-        ...(roomBasket.scene || []),
-        ...(roomBasket.catalog || [])
-      ];
-    });
-    
-    console.log('Объединенная корзина:', roomsBasketData.value);
-    // allBasket(roomsBasketData.value);
-    syncBasketMulti(roomsBasketData.value)
+    getBasket()
   }
+}
+
+const getBasket = () => {
+  roomsBasketData.value = rooms.value.flatMap(el => {
+    const roomBasket = JSON.parse(el.basket);
+    console.log('el', roomBasket);
+    
+    return [
+      ...(roomBasket.scene || []),
+      ...(roomBasket.catalog || [])
+    ];
+  });
+  
+  console.log('Объединенная корзина:', roomsBasketData.value);
+  // allBasket(roomsBasketData.value);
+  syncBasketMulti(roomsBasketData.value)
 }
 
 const loadRoom = async (id: number) => {
   await roomState.setLoad(false);
+  eventBus.emit("A:Save"); // Сохраняем локальное сотояние комнаты
   await nextTick();
   setTimeout(() => {
     resetGlobalOptions();
@@ -197,13 +202,19 @@ const loadRoom = async (id: number) => {
     eventBus.emit("A:ContantLoaded", false);
     eventBus.emit("A:DrawingMode", false);
     eventBus.emit("A:ToggleRulerVisibility", true);
-  }, 0);
+  }, 10);
 };
 
 
 onMounted(async () => {
   console.log('basketData', basketData);
   console.log('rooms', rooms);
+  console.log('roomsID', roomState.getRoomId);
+  selectedRoomId.value = roomState.getRoomId || 'all';
+  // if(rooms.length > 1) {
+  //   getBasket();
+  // } else {
+  // }
   updateBasketData();
   await syncBasketDelay();
 });
