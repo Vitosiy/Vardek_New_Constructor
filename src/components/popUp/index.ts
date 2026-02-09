@@ -7,7 +7,7 @@ import CatalogPopUpView from './popup-views/CatalogPopUpView.vue';
 import TechnologistPopUpView from "@/components/popUp/popup-views/TechnologistPopUpView.vue";
 import TechnologistForm from "@/components/Technologist/TechnologistForm.vue";
 import TechnologistComments from "@/components/Technologist/TechnologistComments.vue";
-
+import FilePopUpView from "@/components/popUp/popup-views/FilePopUpView.vue";
 
 export type PopupKey =
     'basket' |
@@ -17,7 +17,8 @@ export type PopupKey =
     'catalog' |
     'technologist' |
     'technologist-form' |
-    'technologist-comments'
+    'technologist-comments' |
+    'file'
 
 export type Popup = {
   title?: string,
@@ -58,5 +59,8 @@ export const POPUP_CONFIG: PopupsConfig = {
   "technologist-comments": {
     title: 'Комментарии технолог',
     component: TechnologistComments
+  },
+  file:{
+    component: FilePopUpView
   }
 } as const;

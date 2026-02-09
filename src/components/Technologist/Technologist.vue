@@ -7,7 +7,6 @@ import {nextTick, onMounted, ref, watch} from "vue";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
-import {TechnologistTechList} from "@/types/technologist.ts";
 import {useToast} from "@/features/toaster/useToast.ts";
 import {useProjectAPI} from "@/features/quickActions/project/composables/useProjectAPI.ts";
 import {useProjectStore} from "@/features/quickActions/project/store/useProjectStore.ts";
@@ -225,7 +224,8 @@ const uploadProjectTech = async (id: string | number) => {
 
           // Закрываем попап
           closePopup();
-        } else {
+        }
+        else {
           // Если мы на 2D или другом маршруте, конвертируем данные для 2D
           // 3. Конвертируем данные для 3D (чтобы rooms.value был заполнен)
           roomState.routConvertData('/3d');

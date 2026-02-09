@@ -11,19 +11,24 @@ import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistA
 import {onMounted, ref} from "vue";
 import {TechnologistCommentsItem, TechnologistFormReview} from "@/types/technologist.ts";
 import {_URL} from "@/types/constants.ts";
+import {useFilePopUpStorage} from "@/store/appStore/FilePopUpStorage.ts";
 
 const APP = useAppData().getAppData;
 const popupStore = usePopupStore();
 const technologistStorage = useTechnologistStorage();
 const technologistAPI = useTechnologistApi();
+const fileStorage = useFilePopUpStorage();
+
 
 const loading = <boolean>ref(false)
 const reviewStatus = <boolean>ref(false)
 const formReview = <TechnologistFormReview>ref(technologistStorage.formReview)
+const filesCash = ref({})
 
 const closePopup = () => {
   technologistStorage.clearFormReview();
   reviewStatus.value = false;
+  filesCash.value = {};
 
   popupStore.closePopup('technologist-comments');
   popupStore.openPopup('technologist');
@@ -133,6 +138,43 @@ const createDateLabel = (date: string) => {
   return `${day}.${month}.${year}`;
 }
 
+const openFileFromComment = async (file) => {
+  try {
+
+    let fetchedFile
+    if(filesCash.value[file.id]) {
+      fetchedFile = filesCash.value[file.id]
+    }
+    else {
+      const url = file.customLink || file.customDownload;
+
+      if (!url) {
+        alert("Ссылка на файл недоступна");
+        return;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Ошибка загрузки файла");
+      }
+
+      const blob = await response.blob();
+      const fileName = file.name || url.split("/").pop() || "file";
+      const fileType = blob.type || file.type || "application/octet-stream";
+
+      fetchedFile = new File([blob], fileName, { type: fileType });
+      filesCash.value[file.id] = fetchedFile;
+    }
+
+    fileStorage.setFile(fetchedFile);
+    popupStore.openPopup("file");
+  }
+  catch (e) {
+    console.error(e);
+    alert("Не удалось открыть файл");
+  }
+}
+
 onMounted(() => {
   formReview.value = technologistStorage.getFormReview();
 
@@ -175,9 +217,9 @@ onMounted(() => {
                   :title="file.name"
               >
                 <a
-                    :href="`${file.urlDownload}`"
                     v-if="file.urlPreview"
                     class="preview"
+                    @click="() => openFileFromComment(file)"
                 >
                   <img
                       :src="`${_URL + file.customLink}`"
@@ -187,7 +229,7 @@ onMounted(() => {
                 </a>
 
                 <a
-                    :href="`${file.urlDownload}`"
+                    :href="`${file.customDownload}`"
                     class="file-info"
                 >
                   <div class="file-name">{{ file.name }}</div>

@@ -5,11 +5,13 @@ import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types
 import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
 import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
+import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
   const isLoading = ref(false)
+  const technologistStorage = useTechnologistStorage();
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
@@ -177,16 +179,31 @@ export function useProjectAPI() {
 
       if (normalized.success && normalized.data?.data) {
         const projectData = normalized.data.data
+
         if (validateProjectData(projectData)) {
+          if(projectData.deal)
+            technologistStorage.setDeal(projectData.deal)
+          else
+            technologistStorage.setDeal()
+
+          if (projectData.technologist === undefined)
+            technologistStorage.setTechnologistProject(false)
+          else
+            technologistStorage.setTechnologistProject(true)
+
           return projectData
         } else {
           console.error(ERROR_MESSAGES.INVALID_PROJECT_DATA)
+          technologistStorage.setTechnologistProject(false)
+          technologistStorage.setDeal()
           return null
         }
       }
       return null
     } catch (error) {
       console.error(ERROR_MESSAGES.LOAD_PROJECT, error)
+      technologistStorage.setTechnologistProject(false)
+      technologistStorage.setDeal()
       return null
     }
   }
