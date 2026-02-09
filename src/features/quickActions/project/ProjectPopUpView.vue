@@ -24,6 +24,20 @@
             :max="99999999"
             class="search-input"
           />
+          <select
+            v-model="selectedBackendId"
+            class="search-input backend-ids-select"
+            @change="onBackendIdSelect"
+          >
+            <option value="" disabled>ID из профиля</option>
+            <option
+              v-for="id in backendIdsList"
+              :key="id"
+              :value="id"
+            >
+              {{ id }}
+            </option>
+          </select>
         </div>
         <div class="project-buttons">
           <!-- <MainButton
@@ -126,12 +140,13 @@
 <script setup lang="ts">
 // @ts-nocheck
 
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch, nextTick, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import { usePopupStore } from "@/store/appStore/popUpsStore";
+import { useAuthStore } from "@/store/appStore/authStore";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useProjectStore } from "./store/useProjectStore";
@@ -146,6 +161,7 @@ const router = useRouter();
 const route = useRoute();
 const toaster = useToast();
 const popupStore = usePopupStore();
+const authStore = useAuthStore();
 const sceneState = useSceneState();
 const eventBus = useEventBus();
 const schemeTransition = useSchemeTransition();
@@ -156,6 +172,23 @@ const tab = ref<ProjectTab>("my");
 const loadError = ref<string | null>(null);
 const isLoading = ref(false);
 const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
+
+// Список ID из данных пользователя 
+const backendIdsList = computed(() => {
+  const userData = authStore.userData as { id?: string | number };
+  const id = userData?.id;
+  if (id != null && id !== "") {
+    return [String(id)];
+  }
+  return [];
+});
+const selectedBackendId = ref<string>("");
+
+const onBackendIdSelect = () => {
+  if (selectedBackendId.value) {
+    console.log("BACKEND DATA");
+  }
+};
 
 // Инициализируем хуки
 const projectState = useProjectStore();
@@ -483,6 +516,10 @@ onMounted(async () => {
           min-width: 150px;
           width: 200px;
           padding: 12px;
+        }
+
+        .backend-ids-select {
+          cursor: pointer;
         }
       }
 

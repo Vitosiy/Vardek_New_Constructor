@@ -229,13 +229,14 @@ const switchRoom = async (roomId: string | number) => {
           <div class="room-popup">
             <h1 class="popup__title">Параметры помещения</h1>
             <ClosePopUpButton class="menu__close" @close="toggleRoomParams" />
-            <div
-              v-for="room in roomsList"
-              :key="room.id"
-              class="project-item"
-              :class="{ active: String(room.id) === String(currentRoomId) }"
-              @click="switchRoom(room.id)"
-            >
+            <div class="room-cards-grid">
+              <div
+                v-for="room in roomsList"
+                :key="room.id"
+                class="project-item"
+                :class="{ active: String(room.id) === String(currentRoomId) }"
+                @click="switchRoom(room.id)"
+              >
               <img
                 :src="'/src/assets/img/proj.png'"
                 class="item__image"
@@ -253,6 +254,7 @@ const switchRoom = async (roomId: string | number) => {
                   />
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -489,6 +491,12 @@ const switchRoom = async (roomId: string | number) => {
         background: $white;
         box-shadow: 0px 0px 10px 0px #3030301a;
         border-radius: 15px;
+
+        .room-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 15px;
+        }
       }
     }
   }
@@ -541,8 +549,9 @@ const switchRoom = async (roomId: string | number) => {
 }
 
 .project-item {
-        width: 250px;
-        height: 230px;
+        width: 100%;
+        max-width: 200px;
+        height: 200px;
         display: flex;
         align-items: center;
         justify-content: space-between;

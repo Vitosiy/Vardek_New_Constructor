@@ -44,7 +44,10 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       const response = await AuthService.getUserData(token);
+
       
+      console.log('BACKEND USER DATA', response?.DATA?.data ?? response);
+
       // Логируем ответ только в development режиме
       if (process.env.NODE_ENV === 'development') {
         console.log('Ответ сервера:', response);
