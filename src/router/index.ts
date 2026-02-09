@@ -9,6 +9,7 @@ const getBaseFromSubdomain = async () =>  {
   const pathname = window.location.pathname;
   const parts = pathname.split('/');
   const isURL = await AuthService.getCheckURL(parts[2]);
+  console.log('parts', parts)
   if (parts && parts.length > 2 && isURL.DATA) {
   // if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
     return `/dev_modeller/${parts[2]}/`;

@@ -128,7 +128,7 @@ import { useProjectAPI } from '@/features/quickActions/project/composables/usePr
 import { useSceneState } from '@/store/appliction/useSceneState'
 import { useConfigStore } from '@/store/appStore/useConfigStore'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
-
+import { BasketService } from "@/services/basketService";
 // import { InputPhone } from '@/components/ui/inputs/InputPhone.vue'
 
 const { getProjectScreenshot } = useProjectAPI();
@@ -138,6 +138,7 @@ const popupStore = usePopupStore();
 const screenshot = ref('');
 const basket = ref({});
 const sceneState = useSceneState()
+
 
 const projectData = sceneState.getCurrentProjectParams;
 const errorForm = ref(false)
@@ -161,7 +162,7 @@ const closePopup = () => {
   popupStore.closePopup('formbasket');
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
 
   if(!form.projectName.length || !form.clientName.length || !form.clientPhone.length) {
     errorForm.value = true
@@ -179,7 +180,19 @@ const handleSubmit = () => {
     errorFormPhone.value = false
   }
 
-  
+  await BasketService.getSendorder({ 
+    project_img: screenshot.value,
+    // project_img: '',
+    project_name: form.projectName,
+    project:projectData,
+    config: configData,
+    style: styleData,
+    fio: form.clientName,
+    phone: form.clientPhone,
+    comment: form.comment,
+    basket: basket.value,
+    cityID: ''
+  })
 
 
   console.log('Отправка данных:', {
