@@ -23,6 +23,8 @@ export const useRoomState = defineStore('RoomState', () => {
     return normalizeId(a) === normalizeId(b);
   };
   const normalizeRoom = (room: any) => {
+    console.log('NORM', room)
+
     const clone = JSON.parse(JSON.stringify(room || {}));
     clone.id = normalizeId(clone.id);
     clone.content = typeof clone.content === 'string' ? JSON.parse(clone.content) : (clone.content || []);
@@ -112,6 +114,9 @@ export const useRoomState = defineStore('RoomState', () => {
       room.params = params;
       room.basket = basket;
 
+      convertDataTo2DConstuctor()
+      // console.log(schemeTransition.getSchemeTransitionData, '== rooms ==')
+
       return
     }
 
@@ -159,6 +164,8 @@ export const useRoomState = defineStore('RoomState', () => {
   /** Возвращаем с использованием ID комнаты */
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
+
+    console.log(centerized, 'centerized')
 
     const currentRoom = rooms.value.find(value => isSameId(value.id, roomId))
 

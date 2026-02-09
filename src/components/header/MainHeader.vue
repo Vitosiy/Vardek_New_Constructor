@@ -68,45 +68,45 @@ const roomOptions = useRoomOptions();
 const customiserStore = useCustomiserStore();
 const schemeTransition = useSchemeTransition();
 
-const _saveProject = async () => {
-  eventBus.emit("A:Save");
-  const project = sceneState.getCurrentProjectParams;
-  const data = {
-    user_hash: "08a57654db94bdcfe44a9ee10b2f0778",
-    city: 17281,
-    designer: "14240",
-    page: 1,
-    config: 43830,
-    type: "user",
-  };
+// const _saveProject = async () => {
+//   eventBus.emit("A:Save");
+//   const project = sceneState.getCurrentProjectParams;
+//   const data = {
+//     user_hash: "08a57654db94bdcfe44a9ee10b2f0778",
+//     city: 17281,
+//     designer: "14240",
+//     page: 1,
+//     config: 43830,
+//     type: "user",
+//   };
 
-  await postRequest(`${_GET_URL}`, data);
+//   await postRequest(`${_GET_URL}`, data);
 
-  // if (historyActions.value) eventBus.emit("A:Save");
-};
+//   // if (historyActions.value) eventBus.emit("A:Save");
+// };
 
-const saveProject = async () => {
-  eventBus.emit("A:Save");
-  return;
-  const project = sceneState.getCurrentProjectParams;
-  const data = {
-    data: {
-      file: "data:image/jpeg;base64,",
-      provider: "vardek",
-      name: "test_new_constructor",
-      user_hash: "08a57654db94bdcfe44a9ee10b2f0778",
-      city: 17281,
-      project: project,
-      style: "689680",
-      projectId: Date.now().toString(),
-      user_id: "14240",
-    },
-  };
+// const saveProject = async () => {
+//   eventBus.emit("A:Save");
+//   return;
+//   const project = sceneState.getCurrentProjectParams;
+//   const data = {
+//     data: {
+//       file: "data:image/jpeg;base64,",
+//       provider: "vardek",
+//       name: "test_new_constructor",
+//       user_hash: "08a57654db94bdcfe44a9ee10b2f0778",
+//       city: 17281,
+//       project: project,
+//       style: "689680",
+//       projectId: Date.now().toString(),
+//       user_id: "14240",
+//     },
+//   };
 
-  await postRequest(`${_POST_URL}`, data);
+//   await postRequest(`${_POST_URL}`, data);
 
-  // if (historyActions.value) eventBus.emit("A:Save");
-};
+//   // if (historyActions.value) eventBus.emit("A:Save");
+// };
 
 // const drowMode = async () => {
 //   drowModeValue.value = !drowModeValue.value;
@@ -120,30 +120,31 @@ const saveProject = async () => {
 //   eventBus.emit("A:ToggleRulerVisibility", rulerVisibility.value);
 // };
 
-const loadProject = async () => {
-  // return;
-  const data = {
-    id: "11487677",
-  };
-  await postRequest(`${_GET_PROJECT}`, data);
-};
+// const loadProject = async () => {
+//   // return;
+//   const data = {
+//     id: "11487677",
+//   };
+//   await postRequest(`${_GET_PROJECT}`, data);
+// };
 
-const updateProject = async () => {
-  const project = sceneState.getCurrentProjectParams;
-  const data = {
-    id: "11323197",
-    project: project,
-  };
+// const updateProject = async () => {
+//   const project = sceneState.getCurrentProjectParams;
+//   const data = {
+//     id: "11323197",
+//     project: project,
+//   };
 
-  const resp = await postRequest(`${_UPDATE_PROJECT}`, data);
-};
+//   const resp = await postRequest(`${_UPDATE_PROJECT}`, data);
+// };
 
 const createNewRoom = (value: string) => {
   // 2D: создаем новую комнату на основе шаблона blankroom
   if (route.path === "/2d") {
     const roomId = Date.now().toString();
     const template = getBlankRoomTemplate();
-    const label = value || template.label || `Комната ${roomState.getRooms.length + 1}`;
+    const label =
+      value || template.label || `Комната ${roomState.getRooms.length + 1}`;
 
     roomState.addRoom({
       id: roomId,
@@ -335,7 +336,7 @@ watch(
 
       if (newPath === "/2d") {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
-        
+
         // Устанавливаем текущую активную комнату (первую, если нет текущей)
         const rooms = roomState.getRooms;
         if (rooms && rooms.length > 0) {
@@ -345,7 +346,7 @@ watch(
             roomState.setCurrentRoomId(rooms[0].id);
           }
         }
-        
+
         // Ждем готовности C2D, если его еще нет
         let c2d = window.C2D;
         if (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) {
@@ -354,13 +355,18 @@ watch(
           const interval = 50;
           while (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) {
             if (Date.now() - start >= timeout) break;
-            await new Promise(resolve => setTimeout(resolve, interval));
+            await new Promise((resolve) => setTimeout(resolve, interval));
             c2d = window.C2D;
           }
         }
         // Проверяем наличие данных перед инициализацией
         const roomsData = schemeTransition.getAllData();
-        if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows && roomsData && roomsData.length > 0) {
+        if (
+          c2d?.layers?.planner &&
+          c2d?.layers?.doorsAndWindows &&
+          roomsData &&
+          roomsData.length > 0
+        ) {
           c2d.layers.planner.init(true);
           c2d.layers.doorsAndWindows.init(true);
         }
@@ -388,7 +394,7 @@ watch(
     } catch (error) {
       console.error("Ошибка при изменении маршрута в MainHeader:", error);
     }
-  }
+  },
   // { flush: "post", immediate: true }
 );
 
@@ -449,7 +455,7 @@ onBeforeUnmount(() => {
             <S3DLightHeaderButton />
           </div>
           <div class="header-ui-group">
-            <Modal ref="inputDialogRef">
+            <Modal ref="inputDialogRef" v-if="route.path !== '/3d'">
               <template #modalBody="{ onModalClose }">
                 <InputDialog
                   label="Назовите комнату"
