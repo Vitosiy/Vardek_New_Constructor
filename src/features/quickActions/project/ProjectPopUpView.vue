@@ -109,9 +109,9 @@
           <p class="new__title">Создать новый проект</p>
         </div> -->
 
-        <!-- Карточки проектов -->
+        <!-- Карточки проектов (12 на страницу) -->
         <div
-          v-for="project in projects"
+          v-for="project in paginatedProjects"
           :key="project.id"
           class="project-item"
           @click="loadProject(project.id)"
@@ -133,8 +133,17 @@
             <p class="info__date text-grey">{{ project.date }}</p>
           </div>
         </div>
+
       </div>
     </div>
+        <!-- Пагинация под блоком карточек -->
+        <div v-if="!isLoading && !loadError && projects.length > 0" class="project-list__pagination">
+          <ProjectPagination
+            :total-items="projects.length"
+            :page-size="PAGE_SIZE"
+            v-model:current-page="currentPage"
+          />
+        </div>
   </div>
 </template>
 
@@ -157,6 +166,7 @@ import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import ProjectPagination from "./components/ProjectPagination.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -167,8 +177,11 @@ const sceneState = useSceneState();
 const eventBus = useEventBus();
 const schemeTransition = useSchemeTransition();
 
+const PAGE_SIZE = 12;
+
 // Простое состояние
 const projects = ref<Project[]>([]);
+const currentPage = ref(1);
 const tab = ref<ProjectTab>("my");
 const loadError = ref<string | null>(null);
 const isLoading = ref(false);
@@ -185,17 +198,23 @@ const backendIdsList = computed(() => {
 });
 const selectedBackendId = ref<string>("all");
 
+// Пагинация: только карточки текущей страницы (12 на страницу)
+const paginatedProjects = computed(() => {
+  const list = projects.value;
+  const total = list.length;
+  if (total === 0) return [];
+  const start = (currentPage.value - 1) * PAGE_SIZE;
+  return list.slice(start, start + PAGE_SIZE);
+});
+
 const onBackendIdSelect = async () => {
   if (selectedBackendId.value === "all") {
     tab.value = "ready";
-    await loadProjects();
-  } else if (selectedBackendId.value === "my") {
-    tab.value = "my";
-    await loadProjects();
   } else {
     tab.value = "my";
-    await loadProjects();
   }
+  currentPage.value = 1;
+  await loadProjects(0);
 };
 
 // Инициализируем хуки
@@ -206,14 +225,22 @@ const roomState = useRoomState();
 // Состояние загрузки проекта
 const isProjectLoading = ref(false);
 
-// Отслеживаем изменения фильтров
+// Отслеживаем изменения фильтров — запрос с дебаунсом
 watch(
   filters,
   () => {
-    loadProjects();
+    currentPage.value = 1;
+    loadProjects(300);
   },
   { deep: true }
 );
+
+// Отслеживаем смену страницы — запрос сразу с новым currentPage
+watch(currentPage, (newPage, oldPage) => {
+  if (oldPage != null && newPage !== oldPage) {
+    loadProjects(0);
+  }
+});
 
 // Закрыть попап
 const closePopup = () => {
@@ -224,34 +251,46 @@ const closePopup = () => {
 const switchTab = async (newTab: ProjectTab) => {
   tab.value = newTab;
   loadError.value = null;
-  await loadProjects();
+  await loadProjects(0);
 };
 
-// Загрузка списка проектов
-const loadProjects = async () => {
+// Загрузка списка проектов (delay — дебаунс в мс, 0 = сразу)
+const loadProjects = async (delay: number = 300) => {
   isLoading.value = true;
   loadError.value = null;
 
   try {
-    const serverFilters: { name?: string; id?: number } = {};
-    if (filters.value.name?.trim()) {
-      serverFilters.name = filters.value.name.trim();
-    }
-    if (filters.value.id?.toString().trim()) {
-      const idValue = parseInt(filters.value.id.toString().trim());
-      if (!isNaN(idValue) && idValue > 0) {
-        serverFilters.id = idValue;
-      }
-    }
-
     const sel = selectedBackendId.value;
-    const designer =
-      sel === "all" ? "all" : sel === "my" ? undefined : sel;
+    const designerValue =
+      sel === "all"
+        ? "all"
+        : sel === "my"
+          ? (authStore.userData?.id != null ? String(authStore.userData.id) : "all")
+          : String(sel);
 
-    const items = await projectAPI.loadProjects(tab.value, serverFilters, 300, designer);
+    const nameTrim = filters.value.name?.trim();
+    const name = nameTrim !== "" ? nameTrim : undefined;
+
+    let id: number | undefined;
+    const idStr = filters.value.id?.toString().trim();
+    if (idStr) {
+      const idValue = parseInt(idStr, 10);
+      if (!isNaN(idValue) && idValue > 0) id = idValue;
+    }
+
+    const items = await projectAPI.loadProjects(
+      {
+        designerValue,
+        name,
+        id,
+        elementsOnPage: PAGE_SIZE,
+        currentPage: currentPage.value,
+      },
+      delay
+    );
     projects.value = items;
 
-    if (items.length === 0 && Object.keys(serverFilters).length === 0) {
+    if (items.length === 0 && !name && id == null) {
       loadError.value = "Не удалось загрузить проекты";
     }
   } catch (error) {
@@ -264,7 +303,7 @@ const loadProjects = async () => {
 
 // Повторная попытка загрузки
 const retryLoad = async () => {
-  await loadProjects();
+  await loadProjects(0);
 };
 
 // Функция ожидания готовности C2D
@@ -443,7 +482,7 @@ const saveProject = async () => {
         // Создаем новый проект
         projectState.setProjectId(result.data.ID);
         projectState.updateAfterSave();
-        await loadProjects(); // Обновляем список проектов
+        await loadProjects(0); // Обновляем список проектов
       }
     } else {
       console.error("❌ Ошибка сохранения:", result.error);
@@ -486,7 +525,7 @@ const initializeState = () => {
 
 // Загружаем проекты при монтировании
 onMounted(async () => {
-  await loadProjects();
+  await loadProjects(0);
   initializeState();
 });
 </script>
@@ -563,6 +602,12 @@ onMounted(async () => {
       flex-wrap: wrap;
       overflow-y: auto;
       gap: 15px;
+      align-content: flex-start;
+
+      &__pagination {
+        width: 100%;
+        flex-basis: 100%;
+      }
 
       .project-loader {
         width: 100%;

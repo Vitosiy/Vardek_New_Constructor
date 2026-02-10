@@ -7,12 +7,14 @@ import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useToast } from "@/features/toaster/useToast";
 import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "@/store/appStore/authStore";
 import { ProjectTab } from "../types";
 
 export function useProjectFromQuery() {
   const router = useRouter();
   const route = useRoute();
   const toaster = useToast();
+  const authStore = useAuthStore();
 
   const loadProject = async (id: string | number): Promise<boolean> => {
     const schemeTransition = useSchemeTransition();
@@ -69,9 +71,24 @@ export function useProjectFromQuery() {
     filters: { name?: string; id?: number } = {}
   ): Promise<(string | number)[]> => {
     const projectAPI = useProjectAPI();
+    const designerValue =
+      tab === "my" && authStore.userData?.id != null
+        ? String(authStore.userData.id)
+        : "all";
+    const name = filters.name?.trim() || undefined;
+    const id = filters.id != null && filters.id > 0 ? filters.id : undefined;
 
     try {
-      const projects = await projectAPI.loadProjects(tab, filters);
+      const projects = await projectAPI.loadProjects(
+        {
+          designerValue,
+          name,
+          id,
+          elementsOnPage: 9999,
+          currentPage: 1,
+        },
+        0
+      );
       return projects.map(p => p.id);
     } catch (error) {
       console.error("Ошибка получения ID проектов:", error);

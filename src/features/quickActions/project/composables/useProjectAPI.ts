@@ -1,19 +1,23 @@
 import { ref } from 'vue'
 import { useEventBus } from '@/store/appliction/useEventBus'
 import { useSceneState } from '@/store/appliction/useSceneState'
-import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types'
+import { Project, SaveProjectResult } from '../types'
 import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
 import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
 
-import { useAuthStore } from '@/store/appStore/authStore'
+export interface LoadProjectsParams {
+  designerValue: string
+  name?: string
+  id?: number
+  elementsOnPage: number
+  currentPage: number
+}
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
   const isLoading = ref(false)
-  
-  const authStore = useAuthStore()
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
@@ -111,8 +115,7 @@ export function useProjectAPI() {
   }
 
   // Загрузка списка проектов с дебаунсом
-  const loadProjects = async (tab: ProjectTab, filters: ProjectFilters = {}, delay: number = 300, designer?: string): Promise<Project[]> => {
-    // Отменяем предыдущий запрос
+  const loadProjects = async (params: LoadProjectsParams, delay: number = 300): Promise<Project[]> => {
     if (loadTimeout) {
       clearTimeout(loadTimeout)
     }
@@ -122,32 +125,24 @@ export function useProjectAPI() {
         isLoading.value = true
 
         try {
-          const designerValue = designer !== undefined
-            ? String(designer)
-            : (authStore.userData?.id != null ? String(authStore.userData.id) : REQUEST_CONSTANTS.DESIGNER)
-
-          const requestBody: any = {
-            city: REQUEST_CONSTANTS.CITY,
-            designer: designerValue,
-            page: 1,
-            config: REQUEST_CONSTANTS.CONFIG,
-            type: "user",
-            ...filters
+          const filter: Record<string, string | number> = {
+            designer: params.designerValue
+          }
+          if (params.id != null && !isNaN(params.id) && params.id > 0) {
+            filter.id = params.id
+          }
+          if (params.name != null && params.name !== '') {
+            filter.name = params.name
           }
 
-          // Для своих проектов добавляем user_hash, для общих - hash: false
-          if (tab === 'my') {
-            requestBody.user_hash = REQUEST_CONSTANTS.USER_HASH
-          } else {
-            requestBody.hash = false
+          const requestBody = {
+            filter,
+            pager: {
+              elementsOnPage: params.elementsOnPage,
+              currentPage: params.currentPage
+            }
           }
 
-          // Получаем токен из cookies
-          // const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
-          // const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-          // if (token) {
-          //   headers['Authorization'] = `Bearer ${token}`;
-          // }
           const response = await client.POST('/api/modeller/projectq/getprojectlist/', {
             body: requestBody
           })
