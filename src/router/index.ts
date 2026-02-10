@@ -8,11 +8,12 @@ import { AuthService } from "@/services/authService";
 const getBaseFromSubdomain = async () =>  {
   const pathname = window.location.pathname;
   const parts = pathname.split('/');
+  console.log('parts', parts)
   const isURL = await AuthService.getCheckURL(parts[2]);
   console.log('parts', parts)
   if (parts && parts.length > 2 && isURL.DATA) {
   // if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
-    return `/dev_modeller/${parts[2]}/`;
+    return `/dev_modeller/${parts[2]}`;
   } else {
     return '/dev_modeller';
   }
@@ -73,6 +74,7 @@ async function createAppRouter() {
   });
   
   router.beforeEach((to, from, next) => {
+    
     console.log('!!!to:', to)
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     const expirationTime = getCookie(COOKIE_NAMES.TOKEN_EXPIRATION);
@@ -116,8 +118,9 @@ async function createAppRouter() {
   
     } else {
       // В остальных случаях разрешаем переход
-    console.log('!!!to1:', to)
-      console.log(next())
+      console.log('!!!to1:', to)
+      // console.log(next())
+      next()
     }
   });
   

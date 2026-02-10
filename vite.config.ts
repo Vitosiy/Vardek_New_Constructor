@@ -33,24 +33,38 @@ export default defineConfig({
       }
     }
   },
-  build: {
-    emptyOutDir: true,
-    sourcemap: false,
-    declaration: false,
-    declarationMap: false,
-    minify: true,
-    rollupOptions: {
-      output: {
-        entryFileNames: "[name].js",
-        chunkFileNames: "[name].js",
-        assetFileNames: ({ name, extname }) => {
+  // build: {
+  //   emptyOutDir: true,
+  //   sourcemap: false,
+  //   declaration: false,
+  //   declarationMap: false,
+  //   minify: true,
+  //   rollupOptions: {
+  //     output: {
+  //       entryFileNames: "[name].js",
+  //       chunkFileNames: "[name].js",
+  //       assetFileNames: ({ name, extname }) => {
 
+  //         if (/\.css$/.test(name ?? '')) {
+  //           return 'assets/style[extname]';
+  //         }
+  //         return 'assets/[name][extname]';
+  //       },
+  //     },
+  //   },
+  // },
+  build: {
+  rollupOptions: {
+    output: {
+      entryFileNames: "assets/js/[name]-[hash].js",
+      chunkFileNames: "assets/js/[name]-[hash].js",
+      assetFileNames: ({ name, extname }) => {
           if (/\.css$/.test(name ?? '')) {
             return 'assets/style[extname]';
           }
           return 'assets/[name][extname]';
-        },
       },
     },
   },
+}
 })
