@@ -26,6 +26,9 @@ export const useAuthStore = defineStore('auth', () => {
     status: 'offline'
   })
 
+  /** Список владельцев салонов из getSalonOwner (ID, NAME, LAST_NAME) */
+  const salonOwnerList = ref<Array<{ ID: string; NAME: string; LAST_NAME: string }>>([])
+
   // Вычисляемые свойства
   const userInitials = computed(() => {
     if (!userData.value.name) return '?'
@@ -44,8 +47,11 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       const response = await AuthService.getUserData(token);
-      
-      
+
+      const salonOwner = await AuthService.getSalonOwner(token);
+      const rawList = (salonOwner as any)?.DATA?.data ?? (Array.isArray((salonOwner as any)?.DATA) ? (salonOwner as any).DATA : []);
+      salonOwnerList.value = Array.isArray(rawList) ? rawList : [];
+
       console.log('BACKEND USER DATA', response?.DATA?.data ?? response);
 
       // Логируем ответ только в development режиме
@@ -228,6 +234,7 @@ export const useAuthStore = defineStore('auth', () => {
     isSubmitting,
     error,
     userData,
+    salonOwnerList,
     userInitials,
     fetchUserData,
     login,

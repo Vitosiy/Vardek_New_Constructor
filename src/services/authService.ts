@@ -53,4 +53,24 @@ export const AuthService = {
       throw error
     }
   },
+
+  async getSalonOwner(token: string): Promise<ApiResponse> {
+    try {
+      const { data } = await axios.get<ApiResponse>(
+        `${API_URL}/api/Modellerjwt/user/getsalonowner`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+          timeout: REQUEST_TIMEOUT
+        }
+      )
+      return data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Ошибка при подключении к серверу')
+      }
+      throw error
+    }
+  },
 }

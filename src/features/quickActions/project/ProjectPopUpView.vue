@@ -32,11 +32,11 @@
             <option value="all">Все проекты</option>
             <option value="my">Мои проекты</option>
             <option
-              v-for="id in backendIdsList"
-              :key="id"
-              :value="id"
+              v-for="owner in backendIdsList"
+              :key="owner.ID"
+              :value="owner.ID"
             >
-              {{ id }}
+              {{ [owner.NAME, owner.LAST_NAME].filter(Boolean).join(' ') || owner.ID }}
             </option>
           </select>
         </div>
@@ -187,15 +187,8 @@ const loadError = ref<string | null>(null);
 const isLoading = ref(false);
 const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 
-// Список ID из данных пользователя 
-const backendIdsList = computed(() => {
-  const userData = authStore.userData;
-  const id = userData?.id;
-  if (id != null && id !== "") {
-    return [String(id)];
-  }
-  return [];
-});
+// Список владельцев салонов (из getSalonOwner) — в селекте показываем имена, value = ID для getprojectlist
+const backendIdsList = computed(() => authStore.salonOwnerList ?? []);
 const selectedBackendId = ref<string>("all");
 
 // Пагинация: только карточки текущей страницы (12 на страницу)
