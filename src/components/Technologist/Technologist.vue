@@ -39,6 +39,13 @@ const loading = ref(false)
 const techList = technologistStorage.techList
 const formReview = technologistStorage.formReview
 
+// ID заявки, для которой сейчас открыт хинт со знаком "?"
+const openedHintId = ref<string | number | null>(null)
+
+const handleRootClick = () => {
+  openedHintId.value = null;
+}
+
 const closePopup = (clear: boolean = false) => {
 
   if(clear) {
@@ -395,7 +402,7 @@ const getNavData = () => {
 </script>
 
 <template>
-  <div class="technologist">
+  <div class="technologist" @click="handleRootClick">
 
     <div class="technologist-header">
       <div class="technologist-header__title">Список заявок</div>
@@ -450,9 +457,29 @@ const getNavData = () => {
 
       <div v-if="techList.loader" class="technologist__loader"></div>
 
-      <div v-if="!techList.loader" class="appList">
+        <div v-if="!techList.loader" class="appList">
         <div v-for="elem in techList.elements" class="appItem">
-          <div class="appItem-propText">{{ elem.name }}</div>
+          <div class="appItem-propText appItem-propText--with-hint">
+            <span class="appItem-propText__name">
+              {{ elem.name }}
+            </span>
+            <button
+                type="button"
+                class="appItem-propText__hint-btn"
+                @click.stop="openedHintId === elem.id ? openedHintId = null : openedHintId = elem.id"
+            >
+              ?
+            </button>
+
+             <div
+                 v-if="openedHintId === elem.id"
+                 class="appItem-propText__hint-popup"
+                 @click.stop
+             >
+              <!-- Содержание облачка подсказки: заполни сам -->
+              <p>Здесь будет дополнительная информация о заявке.</p>
+            </div>
+          </div>
           <div class="appItem-propText">Проект №{{ elem.projectId }}</div>
           <div class="appItem-propText">
             Статус:
@@ -665,9 +692,59 @@ const getNavData = () => {
         &-propText {
           width: 100%;
           border-bottom: 1px solid;
-          text-align: center;
           padding-bottom: 5px;
           margin-bottom: 5px;
+          text-align: center;
+
+          &--with-hint {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            flex-wrap: wrap;
+          }
+
+          &__name {
+            flex: 1 1 auto;
+            min-width: 0;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            text-align: center;
+          }
+
+          &__hint-btn {
+            flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+            font-size: 11px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+          }
+
+          &__hint-popup {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            max-width: 240px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 12px;
+            text-align: left;
+            z-index: 5;
+          }
         }
 
         &-btn {
