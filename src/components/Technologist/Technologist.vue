@@ -17,18 +17,21 @@ import {useRoute, useRouter} from "vue-router";
 import {useRoomState} from "@/store/appliction/useRoomState.ts";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import Pagination from "@/components/ui/pagination/Pagination.vue";
+import {_URL} from "@/types/constants.ts";
+import {useFilePopUpStorage} from "@/store/appStore/FilePopUpStorage.ts";
 
 // Загрузка проекта
 const router = useRouter();
 const route = useRoute();
 const isProjectLoading = ref(false);
-const toaster = useToast();
 const projectAPI = useProjectAPI();
 const projectState = useProjectStore();
 const sceneState = useSceneState();
 const eventBus = useEventBus();
 const schemeTransition = useSchemeTransition();
 const roomState = useRoomState();
+const toaster = useToast();
+const fileStorage = useFilePopUpStorage();
 
 const APP = useAppData().getAppData;
 const popupStore = usePopupStore();
@@ -50,6 +53,7 @@ const closePopup = (clear: boolean = false) => {
 
   if(clear) {
     technologistStorage.clearStorage()
+    fileStorage.clearCash()
   }
   else {
     technologistStorage.setFormReview(formReview);
@@ -91,11 +95,6 @@ const setStatus = function (id, statusId, projectTechId = false, message = false
     if (result) {
       if (statusId == 'C10:PREPAYMENT_INVOIC' || statusId == 'C10:1') {
         formReview.result = result.DATA;
-
-        if (formReview.result.success) {
-          alert("Успешно отправлено на проверку", "success");
-          //$('#review').modal("hide");
-        }
 
         if (formReview.result.success)
           getTechList();
@@ -476,9 +475,103 @@ const getNavData = () => {
                  class="appItem-propText__hint-popup"
                  @click.stop
              >
-              <!-- Содержание облачка подсказки: заполни сам -->
-              <p>Здесь будет дополнительная информация о заявке.</p>
-            </div>
+               <p class="appItem-propText__hint-popup__row">Номер сделки: {{elem.id || "-"}}</p>
+               <p class="appItem-propText__hint-popup__row">Дизайнер: {{elem.fio || "-"}}</p>
+               <p class="appItem-propText__hint-popup__row">Телефон: {{elem.phone || "-"}}</p>
+               <p class="appItem-propText__hint-popup__row">E-mail: {{elem.mail || "-"}}</p>
+               <p class="appItem-propText__hint-popup__row">Проект дизайнера: {{elem.projectId || "-"}}</p>
+               <p class="appItem-propText__hint-popup__row">Проект технолога: {{elem.projectTechId || "-"}}</p>
+               <div
+                   class="appItem-propText__hint-popup__array_rows"
+                   v-if="elem.technique?.length"
+               >
+                 <label class="appItem-propText__hint-popup__row">Список техники:</label>
+                 <div v-for="tech in elem.technique">
+                   <p class="appItem-propText__hint-popup__row">* {{tech}}</p>
+                 </div>
+               </div>
+               <div
+                   class="appItem-propText__hint-popup__array_rows"
+                   v-if="elem.sketch?.length"
+               >
+                 <p>* Техническое задание:</p>
+                 <div v-for="file in elem.sketch">
+                   <a
+                       v-if="file.urlPreview"
+                       class="preview"
+                       @click="() => fileStorage.openFileFromComment(file)"
+                   >
+                     <img
+                         :src="`${_URL + file.customLink}`"
+                         :alt="file.name"
+                         class="preview__image"
+                     />
+                   </a>
+
+                   <a
+                       :href="`${file.customDownload}`"
+                       class="file-info"
+                   >
+                     <div class="file-name">{{ file.name }}</div>
+                     <div class="file-size">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</div>
+                   </a>
+                 </div>
+               </div>
+               <div
+                   class="appItem-propText__hint-popup__array_rows"
+                   v-if="elem.photoRoom?.length"
+               >
+                 <p>Фото помещения:</p>
+                 <div v-for="file in elem.photoRoom">
+                   <a
+                       v-if="file.urlPreview"
+                       class="preview"
+                       @click="() => fileStorage.openFileFromComment(file)"
+                   >
+                     <img
+                         :src="`${_URL + file.customLink}`"
+                         :alt="file.name"
+                         class="preview__image"
+                     />
+                   </a>
+
+                   <a
+                       :href="`${file.customDownload}`"
+                       class="file-info"
+                   >
+                     <div class="file-name">{{ file.name }}</div>
+                     <div class="file-size">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</div>
+                   </a>
+                 </div>
+               </div>
+               <div
+                   class="appItem-propText__hint-popup__array_rows"
+                   v-if="elem.metering?.length"
+               >
+                 <p>Замеры помещения:</p>
+                 <div v-for="file in elem.metering">
+                   <a
+                       v-if="file.urlPreview"
+                       class="preview"
+                       @click="() => fileStorage.openFileFromComment(file)"
+                   >
+                     <img
+                         :src="`${_URL + file.customLink}`"
+                         :alt="file.name"
+                         class="preview__image"
+                     />
+                   </a>
+
+                   <a
+                       :href="`${file.customDownload}`"
+                       class="file-info"
+                   >
+                     <div class="file-name">{{ file.name }}</div>
+                     <div class="file-size">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</div>
+                   </a>
+                 </div>
+               </div>
+             </div>
           </div>
           <div class="appItem-propText">Проект №{{ elem.projectId }}</div>
           <div class="appItem-propText">
@@ -608,11 +701,12 @@ const getNavData = () => {
   gap: 30px;
   background: white;
   border-radius: 15px;
-  padding: 15px;
+  padding-top: 3vh;
   box-sizing: border-box;
   width: 90vw;
   height: 85vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   &-header {
     display: flex;
@@ -673,6 +767,7 @@ const getNavData = () => {
       overflow-y: scroll;
       overflow-x: hidden;
       margin-top: 1rem;
+      max-height: 64vh;
 
       .appItem {
         display: flex;
@@ -703,7 +798,6 @@ const getNavData = () => {
             justify-content: center;
             gap: 6px;
             position: relative;
-            flex-wrap: wrap;
           }
 
           &__name {
@@ -735,15 +829,35 @@ const getNavData = () => {
             position: absolute;
             top: 100%;
             right: 0;
-            margin-top: 4px;
-            max-width: 240px;
             padding: 8px 10px;
+            gap: 0.5rem;
+            margin-top: 4px;
+
+            max-width: 240px;
+            max-height: 350px;
+
             border-radius: 6px;
             background: #ffffff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             font-size: 12px;
             text-align: left;
+
             z-index: 5;
+            display: flex;
+            flex-direction: column;
+            overflow-y: scroll;
+            overflow-x: hidden;
+
+            &__row{
+              color: black;
+            }
+
+            &__array_rows{
+              border-radius: 10px;
+              border: $dark-stroke 1px solid;
+              color: black;
+              padding: 5px;
+            }
           }
         }
 
@@ -809,6 +923,48 @@ const getNavData = () => {
   &__sum-no {
     // font-weight: 600;
     line-height: 100%;
+  }
+}
+
+.file {
+
+  &-info {
+    flex: 1 1 auto;
+    min-width: auto;
+    max-width: 15vw;
+  }
+
+  &-name {
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &-size {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+}
+
+.preview {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid #e0e0e0;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &__image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
   }
 }
 

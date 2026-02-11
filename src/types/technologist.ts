@@ -3,11 +3,12 @@ export interface TechnologistFormItem {
   projectId: string;
   phone: string;
   email: string;
-  name: string;
+  fio: string;
   technique: string[];
   sketch: File[];
   photoRoom?: File[];
   metering?: File[];
+  comments?: string;
 }
 
 interface TechnologistFormErrorItem {
@@ -21,7 +22,7 @@ export interface TechnologistFormError {
     phone: TechnologistFormErrorItem;
     email: TechnologistFormErrorItem;
     sketch: TechnologistFormErrorItem;
-    name: TechnologistFormErrorItem;
+    fio: TechnologistFormErrorItem;
     technique: TechnologistFormErrorItem;
     projectId: TechnologistFormErrorItem;
   };

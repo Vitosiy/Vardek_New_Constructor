@@ -12,15 +12,22 @@ import {computed, onMounted, ref} from "vue";
 import {TechnologistCommentsItem, TechnologistFormReview} from "@/types/technologist.ts";
 import {_URL} from "@/types/constants.ts";
 import {useFilePopUpStorage} from "@/store/appStore/FilePopUpStorage.ts";
+import {useProjectStore} from "@/features/quickActions/project/store/useProjectStore.ts";
+import {useProjectAPI} from "@/features/quickActions/project/composables/useProjectAPI.ts";
+import {useToast} from "@/features/toaster/useToast.ts";
 
 const APP = useAppData().getAppData;
 const popupStore = usePopupStore();
 const technologistStorage = useTechnologistStorage();
 const technologistAPI = useTechnologistApi();
 const fileStorage = useFilePopUpStorage();
+const projectState = useProjectStore();
+const projectAPI = useProjectAPI()
+const toaster = useToast();
 
-
+const currentProjectID = <string|null>ref(null)
 const loading = <boolean>ref(false)
+const autoSaveNeedUpdate = <boolean>ref(false)
 const reviewStatus = <boolean>ref(false)
 const formReview = <TechnologistFormReview>ref(technologistStorage.getFormReview())
 const deal = computed(() => {
@@ -29,13 +36,32 @@ const deal = computed(() => {
 const filesCash = ref({})
 const errors = ref({})
 
+const statusNames = {
+  'C10:PREPARATION': "<Отправлен в работу>",
+  'C10:1': '<Отправлен на доработку>',
+  'C10:PREPAYMENT_INVOIC': '<Передан дизайнеру>',
+  'C10:2': '<Принят дизайнером>',
+  'C10:3': '<Принят технологом>',
+  'C10:WON': '<Предан в производство>',
+  'C10:LOSE': '<Отказ>',
+  'C10:4': '<Отправлен на доработку дизайнеру>',
+  'C10:5': '<Отправлен на доработку технологу>',
+}
+
 const closePopup = () => {
+
   technologistStorage.clearFormReview();
   reviewStatus.value = false;
   filesCash.value = {};
   technologistStorage.setDealOfSelectedApplication()
-
+  fileStorage.c
   popupStore.closePopup('technologist-comments');
+
+  if(autoSaveNeedUpdate.value) {
+    projectState.updateAfterSave();
+    toaster.success("Текущий проект был сохранен");
+  }
+
   popupStore.openPopup('technologist');
 };
 
@@ -68,8 +94,8 @@ const sendComments = async () => {
   if (reviewStatus.value) {
     formData = new FormData();
     formData.append("id", +formReview.value.id);
-    if (formReview.value.projectId)
-      formData.append("projectId", formReview.value.projectId);
+    if (formReview.value.projectTechId)
+      formData.append("projectId", formReview.value.projectTechId);
 
     await technologistAPI.setProjectForDeal(formData).then((result) => {
       if(result) {
@@ -85,7 +111,7 @@ const sendComments = async () => {
 
   formData = new FormData();
   formData.append("id", +formReview.value.id);
-  formData.append("message", formReview.value.message || `<Без текста>`);
+  formData.append("message", formReview.value.message || statusNames[formReview.value.statusId] || `<Без текста>`);
   formReview.value.commentsFiles?.forEach((item, index) => {
     formData.append(`comments[${index}]`, item);
   })
@@ -105,8 +131,7 @@ const sendComments = async () => {
         }
         else
           getCommentsList()
-
-        alert("Отправлено успешно!")
+        toaster.success("Отправлено успешно!");
       }
       else {
         getCommentsList()
@@ -129,6 +154,11 @@ const getCommentsList = () => {
       let comments = data.DATA.slice()
       comments.reverse()
       formReview.value.comments = comments;
+
+      let domElem = document.getElementById('commentsList')
+      if(domElem) {
+        domElem.scrollTop = domElem.scrollHeight - domElem.clientHeight;
+      }
     }
   });
 }
@@ -195,7 +225,8 @@ const openFileFromComment = async (file) => {
       const url = file.customLink || file.customDownload;
 
       if (!url) {
-        alert("Ссылка на файл недоступна");
+        //alert("Ссылка на файл недоступна");
+        toaster.error("Ссылка на файл недоступна")
         return;
       }
 
@@ -217,7 +248,26 @@ const openFileFromComment = async (file) => {
   }
   catch (e) {
     console.error(e);
-    alert("Не удалось открыть файл");
+    //alert("Не удалось открыть файл");
+    toaster.error("Не удалось открыть файл")
+  }
+}
+
+const setProjectTechId = async (isCurrentProjectID = true) => {
+  if(isCurrentProjectID) {
+    if(!currentProjectID.value || !technologistStorage.getTechnologistProject()) {
+      let now = new Date();
+      let projectName = `Проект для сделки №${deal.value.dealId} от ${now.getDate()}.${now.getUTCMonth()+1}.${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
+      const result = await projectAPI.saveProject(null, projectName, false, true);
+      projectState.setProjectId(result.data.ID);
+      currentProjectID.value = projectState.getProjectId()
+      autoSaveNeedUpdate.value = true;
+    }
+
+    formReview.value.projectTechId = currentProjectID.value
+  }
+  else {
+    formReview.value.projectTechId = false
   }
 }
 
@@ -227,7 +277,7 @@ onMounted(() => {
   if (formReview.value.statusId && ['C10:PREPAYMENT_INVOIC', 'C10:4'].includes(formReview.value.statusId)) {
     reviewStatus.value = true;
   }
-
+  currentProjectID.value = projectState.getProjectId()
   getCommentsList()
 })
 
@@ -247,7 +297,7 @@ onMounted(() => {
     <div class="technologist-container">
 
       <label>История сообщений:</label>
-      <div class="commentsList">
+      <div class="commentsList" id="commentsList">
         <div class="commentsList-commentsItem" v-for="comment in formReview.comments">
 
           <div class="commentsList-commentsItem-time">{{ createDateLabel(comment.CREATED)}}</div>
@@ -300,7 +350,14 @@ onMounted(() => {
               type="text"
               name="projectTechId"
               v-model="formReview.projectTechId"
+              :disabled="+formReview.projectTechId == +currentProjectID"
           >
+          <MainButton
+              @click="setProjectTechId(+formReview.projectTechId != +currentProjectID)"
+              :class-name="'btn'"
+          >
+            Текущий проект
+          </MainButton>
         </div>
 
         <textarea

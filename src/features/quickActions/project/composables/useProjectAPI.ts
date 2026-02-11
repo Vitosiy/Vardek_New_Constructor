@@ -17,7 +17,7 @@ export function useProjectAPI() {
   let loadTimeout: NodeJS.Timeout | null = null
 
   // Нормалайзер ответа от API клиента
-  const normalizeApiResponse = <T = any>(response: { data?: any; error?: any; response?: Response }): { success: boolean; data?: T; error?: string } => {
+  const normalizeApiResponse = <T = any>(response: { data?: any; deal?:any; error?: any; response?: Response }): { success: boolean; data?: T; deal?: T; error?: string } => {
     // Проверяем наличие ошибки
     if (response.error) {
       return {
@@ -175,21 +175,24 @@ export function useProjectAPI() {
         body: { id }
       })
 
-      const normalized = normalizeApiResponse<{ data?: any }>(response)
+      const normalized = normalizeApiResponse<{
+        deal?: any;
+        data?: any }>(response)
 
       if (normalized.success && normalized.data?.data) {
         const projectData = normalized.data.data
+        const deal = normalized.data.deal
 
         if (validateProjectData(projectData)) {
-          if(projectData.deal)
-            technologistStorage.setDeal(projectData.deal)
+          if(deal)
+            technologistStorage.setDeal(deal)
           else
             technologistStorage.setDeal()
 
-          if (projectData.technologist === undefined)
-            technologistStorage.setTechnologistProject(false)
-          else
+          if (deal.techProject == 1)
             technologistStorage.setTechnologistProject(true)
+          else
+            technologistStorage.setTechnologistProject(false)
 
           return projectData
         } else {
@@ -209,7 +212,7 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false, manualNewProject: boolean = false): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
@@ -235,7 +238,7 @@ export function useProjectAPI() {
         screenshotBase64 = await getProjectScreenshot()
       }
 
-      if (projectId) {
+      if (projectId && !manualNewProject) {
         console.log(projectId, 'projectId HAVE')
 
         const response = await client.POST('/api/modeller/projectq/updateprojectbyid/', {
@@ -253,7 +256,8 @@ export function useProjectAPI() {
         } else {
           throw new Error(normalized.error || 'Unknown error')
         }
-      } else {
+      }
+      else {
         console.log(projectId, 'projectId No')
 
         const tempProjectId = Date.now().toString();

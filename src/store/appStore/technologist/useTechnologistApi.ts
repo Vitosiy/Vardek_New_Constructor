@@ -4,11 +4,13 @@ import { readonly, ref } from 'vue'
 import { TechnologistService} from "@/services/technologistService.ts";
 import {TechnologistCommentsResponse, TechnologistFormResponse, TechnologistResponse} from "@/types/technologist.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
+import {useToast} from "@/features/toaster/useToast.ts";
 
 export const useTechnologistApi = () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const technologistStorage = useTechnologistStorage();
+  const toaster = useToast();
 
   const submitTechForm = async (formItem: FormData): Promise<TechnologistFormResponse | null> => {
     loading.value = true
@@ -23,6 +25,7 @@ export const useTechnologistApi = () => {
         technologistStorage.setTechFormError({})
       }
 
+      toaster.success("Заявка отправлена!")
       return <TechnologistFormResponse>{ ...response }
     }
     catch (err: any) {
@@ -57,6 +60,7 @@ export const useTechnologistApi = () => {
 
     try {
       const response = await TechnologistService.setStatus(formItem)
+      toaster.success("Статус изменен!")
       return <TechnologistResponse>{ ...response }
     }
     catch (err: any) {

@@ -38,12 +38,10 @@ const submitTechForm = () => {
   technologistStorage.clearError()
 
   Object.entries(currentForm.value).forEach(([key, value]) => {
-    if (key == 'comments') return;
 
     if(Array.isArray(value)) {
       value.forEach((item, index) => {
         formData.append(`${key}[${index}]`, item);
-
       })
     }
     else
@@ -132,11 +130,11 @@ onMounted(() => {
           <div class="technologist-form-footer-info-item">
             <label>* Дизайнер Ф.И.О.</label>
             <input
-                :class="['technologist-form-footer-info-item__input', {'technologist-form-errorForm': techFormError['name']}]"
+                :class="['technologist-form-footer-info-item__input', {'technologist-form-errorForm': techFormError['fio']}]"
                 type="text"
                 required
-                name="name"
-                v-model="currentForm.name"
+                name="fio"
+                v-model="currentForm.fio"
             >
           </div>
 
@@ -232,6 +230,10 @@ onMounted(() => {
           </li>
         </div>
 
+        <label>Комментарий:</label>
+        <textarea
+            class="technologist-form-review__textarea"
+            v-model="currentForm.comments"></textarea>
 
         <MainButton @click="submitTechForm">
           Отправить заявку
@@ -257,6 +259,34 @@ onMounted(() => {
   height: 100%;
   max-width: 1447px;
   width: 90vw;
+
+  &-review {
+    background-color: #fff;
+    z-index: 999;
+    padding: 20px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+
+    &__input {
+      margin-bottom: 10px;
+    }
+
+    &__textarea {
+      margin-bottom: 10px;
+      padding: 15px;
+      min-width: 50vw;
+      max-width: 90vw;
+      min-height: 10vh;
+      max-height: 20vh;
+      overflow-y: scroll;
+    }
+
+    .adm-fileinput-wrapper {
+      margin-bottom: 30px;
+    }
+  }
 
   &-container {
     width: 100%;
