@@ -97,7 +97,7 @@ export const useAppData = defineStore('AppData', () => {
     document.querySelector('#main-loader').style.display = 'block';
 
     if (import.meta.env.DEV) {
-      if (isLoaded.value || isLoading.value) return
+      //if (isLoaded.value || isLoading.value) return
     }
     else {
       console.warn('🧹 [BUILD] Очистка IndexedDB перед инициализацией приложения')

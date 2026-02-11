@@ -3,9 +3,9 @@
 
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import {usePopupStore} from "@/store/appStore/popUpsStore.ts";
-import {nextTick, onMounted, ref, watch} from "vue";
+import {computed, nextTick, onMounted, ref, watch} from "vue";
 import {useAppData} from "@/store/appliction/useAppData.ts";
-import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
+import {Deal, useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
 import {useToast} from "@/features/toaster/useToast.ts";
 import {useProjectAPI} from "@/features/quickActions/project/composables/useProjectAPI.ts";
@@ -141,16 +141,26 @@ const openModalSTD = function (elem, statusId) {
   }
 
   popupStore.openPopup('technologist-comments');*/
-  openModalComments(elem.id, statusId)
+  openModalComments(elem, statusId)
 }
 
-const openModalComments = function (id, statusId) {
+const openModalComments = function (elem, statusId) {
   technologistStorage.clearFormReview()
 
+  let {id, projectTechId, techProject} = elem;
   formReview.id = id;
 
-  if(statusId)
+  if(statusId) {
     formReview.statusId = statusId;
+  }
+
+  technologistStorage.setFormReview(formReview);
+  technologistStorage.setDealOfSelectedApplication(<Deal>{
+    'dealId': id,
+    'dealStatus': statusId,
+    'techProjectId': projectTechId,
+    'techProject': techProject || false,
+  })
 
   closePopup()
   popupStore.openPopup('technologist-comments');
@@ -453,21 +463,30 @@ const getNavData = () => {
           </div>
 
           <MainButton
-              v-if="APP.userGroup[56]"
-              @click="openModalSTD(elem, 'C10:1');"
+              v-if="APP.userGroup[56] && ['C10:PREPARATION', 'C10:NEW'].includes(elem.statusId)"
+              @click="openModalSTD(elem, 'C10:4');"
               :class-name="'appItem-status-btn'"
-              :style="`border-color:${APP.STATUS_TECH['C10:1'].EXTRA.COLOR}`"
+              :style="`border-color:${APP.STATUS_TECH['C10:4'].EXTRA.COLOR}`"
           >
-            Отправить проект на доработку
+            Отправить проект на доработку дизайнеру
           </MainButton>
 
           <MainButton
-              v-if="((APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC')"
-              @click="openModalSTD(elem, 'C10:1');"
+              v-if="((APP.userGroup[6] || APP.userGroup[29]) && ['C10:4', 'C10:PREPAYMENT_INVOIC'].includes(elem.statusId))"
+              @click="openModalSTD(elem, 'C10:PREPARATION');"
               :class-name="'appItem-status-btn'"
-              :style="`border-color:${APP.STATUS_TECH['C10:1'].EXTRA.COLOR}`"
+              :style="`border-color:${APP.STATUS_TECH['C10:5'].EXTRA.COLOR}`"
           >
-            Отправить проект на доработку
+            Вернуть в работу
+          </MainButton>
+
+          <MainButton
+              v-if="(APP.userGroup[56] && ['C10:4'].includes(elem.statusId))"
+              @click="setStatus(elem.id, 'C10:PREPARATION');"
+              :class-name="'appItem-status-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:5'].EXTRA.COLOR}`"
+          >
+            Вернуть в работу
           </MainButton>
 
           <MainButton
@@ -476,7 +495,7 @@ const getNavData = () => {
               :class-name="'appItem-status-btn'"
               :style="`border-color:${APP.STATUS_TECH['C10:PREPAYMENT_INVOIC'].EXTRA.COLOR}`"
           >
-            Отправить проект на проверку
+            Отправить проект дизайнеру
           </MainButton>
 
           <MainButton
@@ -515,7 +534,7 @@ const getNavData = () => {
           </MainButton>
 
           <MainButton
-              v-if="APP.userGroup[56]"
+              v-if="APP.userGroup[56] && elem.statusId == 'C10:PREPARATION'"
               @click="setStatus(elem.id, 'C10:LOSE');"
               :class-name="'appItem-status-btn'"
               :style="`border-color:${APP.STATUS_TECH['C10:LOSE'].EXTRA.COLOR}`"
@@ -540,7 +559,7 @@ const getNavData = () => {
           </MainButton>
 
           <MainButton
-              @click="openModalComments(elem.id)"
+              @click="openModalComments(elem)"
               :class-name="'appItem-btn'"
           >
             Комментарии
@@ -634,12 +653,14 @@ const getNavData = () => {
         border: 2px solid;
         border-radius: 15px;
         width: 20vw;
-        height: 50vh;
+        height: 53vh;
         padding: 10px;
         align-items: center;
         margin-bottom: 1rem;
         margin-right: 1rem;
         justify-content: space-evenly;
+        overflow-y: scroll;
+        overflow-x: hidden;
 
         &-propText {
           width: 100%;

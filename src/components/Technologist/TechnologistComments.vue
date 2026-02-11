@@ -8,7 +8,7 @@ import {useAppData} from "@/store/appliction/useAppData.ts";
 import {usePopupStore} from "@/store/appStore/popUpsStore.ts";
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import {useTechnologistApi} from "@/store/appStore/technologist/useTechnologistApi.ts";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {TechnologistCommentsItem, TechnologistFormReview} from "@/types/technologist.ts";
 import {_URL} from "@/types/constants.ts";
 import {useFilePopUpStorage} from "@/store/appStore/FilePopUpStorage.ts";
@@ -22,13 +22,18 @@ const fileStorage = useFilePopUpStorage();
 
 const loading = <boolean>ref(false)
 const reviewStatus = <boolean>ref(false)
-const formReview = <TechnologistFormReview>ref(technologistStorage.formReview)
+const formReview = <TechnologistFormReview>ref(technologistStorage.getFormReview())
+const deal = computed(() => {
+  return technologistStorage.getDealOfSelectedApplication()
+})
 const filesCash = ref({})
+const errors = ref({})
 
 const closePopup = () => {
   technologistStorage.clearFormReview();
   reviewStatus.value = false;
   filesCash.value = {};
+  technologistStorage.setDealOfSelectedApplication()
 
   popupStore.closePopup('technologist-comments');
   popupStore.openPopup('technologist');
@@ -41,13 +46,23 @@ const changeCommentsFiles = (files: File[]) => {
 const sendComments = async () => {
 
   let formData = new FormData();
-
+  errors.value = {}
 
   if(formReview.value.statusId){
     formData.append("id", +formReview.value.id);
     formData.append("statusId", formReview.value.statusId);
 
-    await technologistAPI.setStatus(formData);
+    await technologistAPI.setStatus(formData).then((result) => {
+      if(result) {
+        let data = result.DATA
+        if(data?.error) {
+          let res_errors = Object.fromEntries(data.error.map((item, index) => {
+            return [index, item];
+          }))
+          errors.value = Object.assign({}, errors.value, res_errors)
+        }
+      }
+    });
   }
 
   if (reviewStatus.value) {
@@ -56,18 +71,49 @@ const sendComments = async () => {
     if (formReview.value.projectId)
       formData.append("projectId", formReview.value.projectId);
 
-    await technologistAPI.setProjectForDeal(formData);
+    await technologistAPI.setProjectForDeal(formData).then((result) => {
+      if(result) {
+        let data = result.DATA
+        if(data?.error) {
+          errors.value = Object.assign({}, errors.value, Object.fromEntries(data.error.map((item, index) => {
+            return [index, item];
+          })))
+        }
+      }
+    });
   }
 
   formData = new FormData();
   formData.append("id", +formReview.value.id);
-  formData.append("message", formReview.value.message);
+  formData.append("message", formReview.value.message || `<Без текста>`);
   formReview.value.commentsFiles?.forEach((item, index) => {
     formData.append(`comments[${index}]`, item);
   })
 
-  technologistAPI.setComments(formData).then((res) => {
-    getCommentsList()
+  technologistAPI.setComments(formData).then((result) => {
+    if(result) {
+      let data = result.DATA
+      if(data?.error) {
+        errors.value = Object.assign({}, errors.value, Object.fromEntries(data.error.map((item, index) => {
+          return [index, item];
+        })))
+      }
+
+      if (!Object.entries(errors.value).length) {
+        if(reviewStatus.value) {
+          closePopup()
+        }
+        else
+          getCommentsList()
+
+        alert("Отправлено успешно!")
+      }
+      else {
+        getCommentsList()
+      }
+
+    }
+
   });
 }
 
@@ -178,7 +224,7 @@ const openFileFromComment = async (file) => {
 onMounted(() => {
   formReview.value = technologistStorage.getFormReview();
 
-  if (formReview.value.statusId) {
+  if (formReview.value.statusId && ['C10:PREPAYMENT_INVOIC', 'C10:4'].includes(formReview.value.statusId)) {
     reviewStatus.value = true;
   }
 
@@ -190,7 +236,7 @@ onMounted(() => {
 <template>
   <div class="technologist">
     <div class="technologist-header">
-      <div class="technologist-header__title">Проект №{{ formReview.projectId }}</div>
+      <div class="technologist-header__title">Сделка №{{ deal.dealId }}</div>
 
       <ClosePopUpButton
           class="technologist-header__close-btn"
@@ -246,7 +292,7 @@ onMounted(() => {
 
       <div class="technologist-container-review" v-if="!formReview.result.success">
 
-        <div v-if="reviewStatus && formReview.statusId == 'C10:PREPAYMENT_INVOIC'">
+        <div v-if="reviewStatus">
           <span>ID проекта</span>
           <input
               class="technologist-review__input"
@@ -266,6 +312,15 @@ onMounted(() => {
               accept=".pdf, .txt, .docx, .doc, .rtf, .jpg, .jpeg, .bmp, .png"
               @update:files="changeCommentsFiles"
           />
+        </div>
+
+        <div v-if="Object.entries(errors).length" class="technologist-errorMessages">
+          <li
+              v-for="(error, errorKey) in errors"
+              :key="errorKey"
+          >
+            <p>{{error}}</p>
+          </li>
         </div>
 
         <MainButton
@@ -303,6 +358,11 @@ onMounted(() => {
   height: 85vh;
   overflow: hidden;
 
+  &-errorMessages {
+    border: #DA444C solid 1px;
+    color: #DA444C ;
+  }
+
   &-header {
     display: flex;
     justify-content: center;
@@ -338,7 +398,6 @@ onMounted(() => {
     max-height: 50vh;
     overflow-y: scroll;
     flex-direction: column;
-    flex-wrap: wrap;
     justify-content: space-around;
     align-items: flex-start;
     align-content: flex-start;
@@ -416,6 +475,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 
     &__image {
       max-width: 100%;

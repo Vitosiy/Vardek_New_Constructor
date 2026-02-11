@@ -3,7 +3,7 @@ import {TechnologistFormError, TechnologistFormReview, TechnologistTechList} fro
 import {defineStore} from "pinia";
 
 /*const STORAGE_KEY = 'technologist-data'*/
-interface Deal {
+export interface Deal {
   dealId: number|boolean;
   dealStatus: string|boolean;
   techProjectId: number|boolean;
@@ -23,6 +23,7 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
   const techList = ref<TechnologistTechList>(<TechnologistTechList>{filter: 0})
   const formReview = ref<TechnologistFormReview>(<TechnologistFormReview>{result: {}})
   const deal = ref(Object.assign({}, defaultDeal))
+  const dealOfSelectedApplication = ref(Object.assign({}, defaultDeal))
   const technologistProject = ref<boolean>(false)
 
   const setCurrentProjectID = (id: number) => {
@@ -37,17 +38,24 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
     }
   }
 
-  const setDeal = (_deal?: Deal) => {
+  const setDeal = (_deal: Deal = defaultDeal) => {
     if(_deal) {
       deal.value = _deal
-    }
-    else {
-      deal.value = defaultDeal
     }
   }
 
   const getDeal = () => {
     return deal.value;
+  }
+
+  const setDealOfSelectedApplication = (_deal: Deal = defaultDeal) => {
+    if(_deal) {
+      dealOfSelectedApplication.value = _deal
+    }
+  }
+
+  const getDealOfSelectedApplication = () => {
+    return dealOfSelectedApplication.value;
   }
 
   const setTechnologistProject = (status: boolean) => {
@@ -108,6 +116,8 @@ export const useTechnologistStorage = defineStore('technologist-data', () => {
     getTechnologistProject,
     deal,
     setDeal,
+    setDealOfSelectedApplication,
+    getDealOfSelectedApplication,
     getDeal,
     setTechFormError,
     getTechFormError,

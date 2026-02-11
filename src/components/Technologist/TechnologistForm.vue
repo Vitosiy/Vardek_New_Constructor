@@ -53,10 +53,14 @@ const submitTechForm = () => {
   technologistAPI.submitTechForm(formData).then((result) => {
     if(result) {
       let data = result.DATA
-      if(!data?.error)
+      if(!data?.error) {
         closeForm();
-      else
+        alert("Заявка отправлена успешно!")
+      }
+      else {
+        alert("Ошибка отправки!")
         techFormError.value = technologistStorage.getTechFormError()
+      }
     }
   })
 }
