@@ -28,6 +28,7 @@
 import { computed } from "vue";
 import BasketItem from "./BasketItem.vue"
 import { useAppData } from "@/store/appliction/useAppData"
+import { useConfigStore } from "@/store/appStore/useConfigStore";
 
 interface Props {
   title?: string;
@@ -38,9 +39,8 @@ interface Props {
 defineProps<Props>()
 
 const appDataStore = useAppData();
+const { oldPrice, isFeedbackProject } = useConfigStore();
 
-const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
-// const oldPrice = 1;
 </script>
 
 <style scoped lang="scss">

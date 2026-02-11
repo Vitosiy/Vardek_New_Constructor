@@ -98,8 +98,12 @@
               >
             </div>
             <div class="product-item__wrapper">
-              <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">{{ product.NAME }}</h4>
-              <div class="product-item__price">{{ product.PRICE }}</div>
+              <h4 class="product-item__title" @click="callChildMethod(Number(product.ID))" style="cursor: pointer;">
+                {{ product.NAME }}
+                <!-- {{ appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH }} -->
+                <span>- {{appData.appData?.article[appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH]?.PROPERTIES?.ARTICLE?.VALUE }} </span>
+              </h4>
+              <!-- <div class="product-item__price">{{ product.PRICE }}</div> -->
               <button class="product-item__basket"  @click="callChildMethod(Number(product.ID))" >В корзину</button>
               <!-- <button class="product-item__basket" @click="handleProductClick(Number(product.ID))">В корзину</button> -->
             </div>
@@ -152,11 +156,13 @@ import { useCatalogStore } from '@/store/appStore/catalogStore';
 // Icons
 import SearchSVG from "@/components/ui/svg/SearchSVG.vue";
 import ProductDetails from "@/components/product-details/ProductDetails.vue";
+import { useAppData } from "@/store/appliction/useAppData";
 
 const API_URL = 'https://dev.vardek.online'
 
 const popupStore = usePopupStore();
 const catalogStore = useCatalogStore();
+const appData = useAppData();
 
 // Создаем ref для дочернего компонента
 const productDetailsRef = ref(null);
@@ -211,7 +217,9 @@ const hasMoreSubCategories = computed(() => filteredSubCategories.value.length >
 const priceProduct = computed(() => catalogStore.updateProductPrice(productPrice.value));
 
 onMounted(async () => {
-  await catalogStore.fetchInitialCatalog();
+  console.log(appData.appData.CITY.config)
+  console.log(appData.appData.CITY.style)
+  await catalogStore.fetchInitialCatalog({idSection: false, page: '1', query: false, config: appData.appData.CITY.config, style:appData.appData.CITY.style});
 });
 
 watch(
@@ -228,20 +236,20 @@ const handleCategoriesListClick = async (data) => {
   showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   catalogStore.resetCatalogData()
   catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
-  await catalogStore.fetchSubCatalogData({ idSection: data.ID });
+  await catalogStore.fetchSubCatalogData({ idSection: data.ID, config: appData.appData.CITY.config, style:appData.appData.CITY.style });
 };
 
 const handleSubCategoriesListClick = async (data) => {
   showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
-  await catalogStore.fetchSubCatalogData({ idSection: data.ID });
+  await catalogStore.fetchSubCatalogData({ idSection: data.ID, config: appData.appData.CITY.config, style:appData.appData.CITY.style });
   catalogStore.searchQuery = "";
 };
 
 const handleBreadcrumbClick = async (data) => {
   showAllSubCategories.value = false; // Сбрасываем состояние при переходе
   trimArrayByLevel(data.level)
-  await catalogStore.fetchSubCatalogData({ idSection: data.id });
+  await catalogStore.fetchSubCatalogData({ idSection: data.id, config: appData.appData.CITY.config, style:appData.appData.CITY.style });
   catalogStore.searchQuery = "";
 };
 

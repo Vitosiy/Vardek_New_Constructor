@@ -29,6 +29,7 @@ export const useScreenshot = () => {
       URL.revokeObjectURL(a.href);
 
     } catch (err) {
+      
       console.error('Ошибка при создании скрина:', err);
     }
   };

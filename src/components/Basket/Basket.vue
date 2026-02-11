@@ -97,6 +97,11 @@ import { useRoomOptions } from '../left-menu/option/roomOptions/useRoomOptons';
 import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
 
 const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
+import { useConfigStore } from "@/store/appStore/useConfigStore";
+
+const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncInvoce} = useBasketStore();
+const { oldPrice, isFeedbackProject } = useConfigStore();
+
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
 const productDelayData = ref([]);
@@ -122,13 +127,14 @@ const roomsBasketData = ref<IRoomBasketData[]>([]); // Данные корзин
 const eventBus = useEventBus();
 
 
-const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
-// const oldPrice = 1;
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 
 const closePopup = () => {
   popupStore.closePopup('basket');
+};
+const openPopupFormBasket = () => {
+  popupStore.openPopup('formbasket');
 };
 
 // Вычисляемые свойства для данных корзины
@@ -150,8 +156,14 @@ const totalOldPrice = computed(() => {
 
 
 const setInvoice = () => {
+
   console.log('basketData', basketData);
-  syncInvoce();
+  if(isFeedbackProject) {
+    closePopup();
+    openPopupFormBasket();
+  } else {
+    syncInvoce();
+  }
 };
 
 // Функция для обновления данных корзины
