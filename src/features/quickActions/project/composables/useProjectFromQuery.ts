@@ -66,36 +66,6 @@ export function useProjectFromQuery() {
     }
   };
 
-  const getAllProjectIds = async (
-    tab: ProjectTab = "my",
-    filters: { name?: string; id?: number } = {}
-  ): Promise<(string | number)[]> => {
-    const projectAPI = useProjectAPI();
-    const designerValue =
-      tab === "my" && authStore.userData?.id != null
-        ? String(authStore.userData.id)
-        : "all";
-    const name = filters.name?.trim() || undefined;
-    const id = filters.id != null && filters.id > 0 ? filters.id : undefined;
-
-    try {
-      const projects = await projectAPI.loadProjects(
-        {
-          designerValue,
-          name,
-          id,
-          elementsOnPage: 9999,
-          currentPage: 1,
-        },
-        0
-      );
-      return projects.map(p => p.id);
-    } catch (error) {
-      console.error("Ошибка получения ID проектов:", error);
-      return [];
-    }
-  };
-
   /**
    * Основная логика проверки query-параметра
    */
@@ -115,8 +85,7 @@ export function useProjectFromQuery() {
       // Очистка query и возврат на path
       //todo 
       const url = new URL(window.location.href);
-      url.searchParams.delete('projectId');
-      window.history.replaceState({}, '', url.pathname);
+      router.replace({ path, query: {} });
       return;
     }
 
@@ -128,12 +97,9 @@ export function useProjectFromQuery() {
       return;
     }
 
-    // 3. Убираем query, чтобы ссылки были чистыми
-    router.replace({ path, query: {} });
   };
 
   return {
     accordCheck,
-    getAllProjectIds,
   };
 }
