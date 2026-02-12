@@ -280,6 +280,7 @@ export function useProjectAPI() {
     isLoading,
     loadProjects,
     loadProject,
-    saveProject
+    saveProject,
+    getProjectScreenshot
   }
 }

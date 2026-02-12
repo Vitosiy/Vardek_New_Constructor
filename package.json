@@ -36,6 +36,7 @@
     "vee-validate": "^4.15.1",
     "vue": "^3.3.4",
     "vue-router": "^4.4.3",
+    "vue-the-mask": "^0.11.1",
     "yup": "^1.7.0"
   },
   "devDependencies": {

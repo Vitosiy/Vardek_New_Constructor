@@ -1,4 +1,5 @@
 import BasketPopUpView from '@/components/popUp/popup-views/BasketPopUpView.vue';
+import BasketFormPopUpView from '@/components/popUp/popup-views/BasketFormPopUpView.vue';
 import StudyPopUpView from '@/features/quickActions/learning/components/StudyPopUpView.vue';
 import ErrorPopUpView from '@/features/quickActions/report/ErrorPopUpView.vue';
 import ProjectPopUpView from '@/features/quickActions/project/ProjectPopUpView.vue';
@@ -6,7 +7,7 @@ import { Component } from 'vue';
 import CatalogPopUpView from './popup-views/CatalogPopUpView.vue';
 
 
-export type PopupKey = 'basket' | 'study' | 'error' | 'project' | 'catalog'
+export type PopupKey = 'basket' | 'study' | 'error' | 'project' | 'catalog' | 'formbasket'
 
 export type Popup = {
   title?: string,
@@ -35,5 +36,9 @@ export const POPUP_CONFIG: PopupsConfig = {
   catalog: {
     title: 'Каталог',
     component: CatalogPopUpView
+  },
+  formbasket: {
+    title: 'Корзина',
+    component: BasketFormPopUpView
   }
 } as const;

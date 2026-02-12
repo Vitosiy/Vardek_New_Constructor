@@ -43,6 +43,6 @@ export function useBasketStorage() {
     mainConstructor,
     mainCatalog,
     initializeFromStorage,
-    clearStorage
+    clearStorage,
   }
 }

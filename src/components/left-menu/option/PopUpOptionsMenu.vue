@@ -4,6 +4,7 @@
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 
 import { useAppData } from "@/store/appliction/useAppData";
+import { useConfigStore } from "@/store/appStore/useConfigStore";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import InfoPopUp from "@/components/popUp/InfoPopUp.vue";
 import { computed, ref, onBeforeMount } from "vue";
@@ -14,6 +15,7 @@ import axios from "axios";
 const menuStore = useMenuStore();
 const catalogProducts = useAppData().getAppData.CATALOG.PRODUCTS;
 const { getAppData } = useAppData();
+const { getArticleByProductId, isFeedbackProject } = useConfigStore();
 
 const exeption = ref([
   1516913,
@@ -159,7 +161,7 @@ onBeforeMount(()=>{
             class="popup-items__image"
           />
         </div>
-        <p class="popup-items__title">{{ item.NAME }}</p>
+        <p class="popup-items__title">{{ item.NAME }} <span v-if='isFeedbackProject'>{{ getArticleByProductId(item?.ID) }}</span></p>
       </div>
     </div>
     <div v-else class="options-popup-isempty">

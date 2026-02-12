@@ -14,6 +14,18 @@ interface BasketResponse {
   data: BasketItem[];
   message?: string;
 }
+interface Sendorder {
+  basket: Proxy<BasketData>;
+  cityID: string;
+  comment: string;
+  config: string;
+  fio: string;
+  phone: string;
+  project: Proxy<Project>;
+  project_img: string;
+  project_name: string;
+  style: string;
+}
 
 interface NewBasketRequest {
   items: BasketItem[];
@@ -21,6 +33,7 @@ interface NewBasketRequest {
 }
 
 const BASE_API_URL = 'https://dev.vardek.online/api/modellerjwt/basket';
+const API_URL_SENDORDER = 'https://dev.vardek.online/api/Modellerjwt/petrovich/sendorder/';
 // const BASE_API_URL = 'https://dev.vardek.online/api/modeller/basket';
 const REQUEST_TIMEOUT = 10000; // 10 секунд
 
@@ -60,6 +73,7 @@ export const BasketService = {
       throw new Error('Неизвестная ошибка при запросе к серверу');
     }
   },
+
   async getProductDelay(newBasket: NewBasketRequest): Promise<BasketResponse> {
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     
@@ -153,6 +167,38 @@ export const BasketService = {
         throw new Error(message);
       }
       throw new Error('Неизвестная ошибка');
+    }
+  },
+
+  // https://dev.vardek.online/api/Modellerjwt/petrovich/sendorder/
+  async getSendorder(sendorder: Sendorder): Promise<Sendorder> {
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+    
+    try {
+      const { data } = await axios.post<Sendorder>(
+        `${API_URL_SENDORDER}`,
+        sendorder,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            "Authorization": `Bearer ${token}`,
+
+          },
+          timeout: REQUEST_TIMEOUT,
+        }
+      );
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<BasketResponse>;
+        const message =
+          axiosError.response?.data?.message ||
+          'Ошибка при получении корзины';
+        throw new Error(message);
+      }
+      throw new Error('Неизвестная ошибка при запросе к серверу');
     }
   },
 
