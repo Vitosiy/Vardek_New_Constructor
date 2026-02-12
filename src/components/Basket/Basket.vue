@@ -99,7 +99,6 @@ import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
 const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
 import { useConfigStore } from "@/store/appStore/useConfigStore";
 
-const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncInvoce} = useBasketStore();
 const { oldPrice, isFeedbackProject } = useConfigStore();
 
 const popupStore = usePopupStore();
