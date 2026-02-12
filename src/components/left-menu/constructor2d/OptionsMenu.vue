@@ -570,7 +570,7 @@ const switchRoom = async (roomId: string | number) => {
 
         &.active {
           border-color: $white;
-          box-shadow: 0 4px 12px rgba(218, 68, 76, 0.3);
+          box-shadow: 0 4px 12px $red;
         }
 
         .item__image {
