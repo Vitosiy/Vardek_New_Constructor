@@ -1,0 +1,18 @@
+.toggle-container:focus {
+  box-shadow: none;
+}
+
+.toggle-off {
+  background: #ffffff;
+}
+
+.toggle-handle-on {
+  background-color: #5d6069 !important;
+}
+
+.toggle-handle-on {
+  background: #ffffff !important;
+}
+.toggle-handle-off {
+  background: #5d6069 !important;
+}/*# sourceMappingURL=toggle.css.map */

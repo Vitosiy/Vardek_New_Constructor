@@ -21,6 +21,10 @@ export const useProjectStore = defineStore('project', () => {
     currentProjectId.value = id
   }
 
+  const getProjectId = () => {
+    return currentProjectId.value
+  }
+
   // Сохраняем начальное состояние
   const setInitialState = (state: any) => {
     initialProjectState.value = JSON.parse(JSON.stringify(state))
@@ -52,6 +56,7 @@ export const useProjectStore = defineStore('project', () => {
     initialProjectState,
     isSaving,
     isNewProject,
+    getProjectId,
     setProjectId,
     setInitialState,
     resetState,

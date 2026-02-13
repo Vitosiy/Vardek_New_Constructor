@@ -143,7 +143,16 @@ export const useBasketStore = defineStore('basket', () => {
     syncBasket();
   }
 
-
+  const creatDataBasket = () => {
+    const currentHandlesData = countHandles(mainConstructor.value)
+    const data = currentHandlesData.length > 0 
+        ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
+        : allBasketItems.value
+    return {
+      BASKET: data,
+      TYPE_PRICE: 25,
+    }
+  }
 
   const syncBasket = async (): Promise<IBasketResponse | null> => {
     console.log('mainConstructor.value', mainConstructor.value)
@@ -151,6 +160,15 @@ export const useBasketStore = defineStore('basket', () => {
     const data = currentHandlesData.length > 0 
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value
+    const result = await syncBasketWithServer(data)
+    if (result) {
+      basketData.value = result
+    }
+    console.log('basketData.value', basketData.value)
+    return result
+  }
+  const syncBasketMulti = async (data): Promise<IBasketResponse | null> => {
+    console.log('mainConstructor.value', mainConstructor.value)
     const result = await syncBasketWithServer(data)
     if (result) {
       basketData.value = result
@@ -176,17 +194,20 @@ export const useBasketStore = defineStore('basket', () => {
     return result
   }
 
-  const syncInvoce = async (): Promise<IBasketResponse | null> => {
+  const syncInvoce = async (technologistBasket: boolean|Object = false): Promise<IBasketResponse | null> => {
     const currentHandlesData = countHandles(mainConstructor.value)
     const data = currentHandlesData.length > 0 
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value
     
     // const result = await syncBasketWithServer(data)
-    const result = await syncInvoice(data)
+    const result = await syncInvoice(data, technologistBasket)
     return result
   }
 
+  const updateBasket = (newData: IBasketResponse | null) => {
+    basketData.value = newData
+  }
 
 
   return {
@@ -213,8 +234,11 @@ export const useBasketStore = defineStore('basket', () => {
     updateQuantity,
     clearBasket,
     loadBasket,
+    updateBasket,
     syncBasket,
+    syncBasketMulti,
     syncBasketDelay,
     syncInvoce,
+    creatDataBasket
   }
 })

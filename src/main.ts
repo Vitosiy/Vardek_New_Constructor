@@ -3,11 +3,11 @@ import '@vueform/slider/themes/default.css'
 import '@vueform/toggle/themes/default.css'
 import '@/style.scss'
 import App from './App.vue'
-import router from './router'
+import createAppRouter from './router'
 import { createPinia, setActivePinia } from 'pinia'
 import { COOKIE_NAMES, getCookie } from './components/authorization/utils/cookieUtils'
 import { useAppData } from './store/appliction/useAppData'
-
+import {vMaska} from "maska/vue";
 // Функция для загрузки скриптов
 // function loadScript(src: string): Promise<void> {
 //   return new Promise((resolve, reject) => {
@@ -120,13 +120,16 @@ async function bootApp() {
   setActivePinia(pinia)  // Активируем Pinia для глобального доступа к stores
 
   app.use(pinia)
-  app.use(router)
 
+  const router = await createAppRouter()
+  app.use(router)
+  app.directive('mask', vMaska)
   await router.isReady()
 
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
 
   const initialRoute = router.currentRoute.value
+  console.log('initialRoute', initialRoute)
   const preservedQuery = initialRoute.query
   const preservedHash = initialRoute.hash ?? ''
 

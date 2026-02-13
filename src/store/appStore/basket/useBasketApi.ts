@@ -3,10 +3,13 @@
 import { readonly, ref } from 'vue'
 import { BasketService } from '@/services/basketService'
 import type { IBasket, IBasketResponse, BasketRequest } from '@/types/basket'
+import { useAppData } from '@/store/appliction/useAppData'
+
 
 export function useBasketApi() {
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const appDataStore = useAppData()
 
   const syncBasketWithServer = async (basketItems: IBasket[]): Promise<IBasketResponse | null> => {
     loading.value = true
@@ -19,7 +22,9 @@ export function useBasketApi() {
 
       const request: BasketRequest = {
         BASKET: basketItems,
-        TYPE_PRICE: 25,
+        // TYPE_PRICE: 25,
+        style:appDataStore.appData?.CITY?.style,
+        
       }
 
       // Выполняем оба запроса параллельно для оптимизации
@@ -84,7 +89,7 @@ export function useBasketApi() {
     }
   }
 
-  const syncInvoice = async (basketItems: IBasket[]): Promise<IBasketResponse | null> => {
+  const syncInvoice = async (basketItems: IBasket[], technologistBasket: boolean|Object = false): Promise<IBasketResponse | null> => {
     loading.value = true
     error.value = null
 
@@ -97,6 +102,9 @@ export function useBasketApi() {
         BASKET: basketItems,
         TYPE_PRICE: 25,
       }
+
+      if(technologistBasket)
+        request.technologistBasket = technologistBasket
 
       const response = await BasketService.invoceBasket(request)
       return response?.DATA?.type !== 'error' ? response.DATA : null

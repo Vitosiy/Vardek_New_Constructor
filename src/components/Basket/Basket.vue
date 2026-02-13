@@ -3,11 +3,33 @@
     <div class="basket-header">
       <div v-if="loading" class="basket__loader"></div>
       <div class="basket-header__title">Корзина</div>
+
       <ClosePopUpButton
         class="basket-header__close-btn" 
         @click="closePopup" 
       />
     </div>
+
+    <!-- Кнопки переключения между комнатами -->
+    <div class="room-tabs" v-if="rooms.length > 1">
+      <button 
+        class="room-tab" 
+        :class="{ 'room-tab--active': selectedRoomId === 'all' }"
+        @click="selectRoom('all')"
+      >
+        Все комнаты
+      </button>
+      <button 
+        v-for="room in rooms" 
+        :key="room.id"
+        class="room-tab"
+        :class="{ 'room-tab--active': selectedRoomId === room.id }"
+        @click="selectRoom(room.id)"
+      >
+        {{ room.label || `Комната ${room.id}` }}
+      </button>
+    </div>
+
     <div class="basket-container">
       <div class="basket-container__main-table" v-if="mainItems.length || !additionalItems.length ">
         <BasketTable
@@ -53,7 +75,13 @@
           </div>
           <button class="basket__close" @click="closePopup">Закрыть</button>
           <button class="basket__save">Печать</button>
-          <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
+          <button class="basket__order" @click="setInvoice" :disabled="errorBasket || technologistStorage.getTechnologistProject()">Оформить заказ</button>
+        </div>
+        <div class="basket__technologist__wrapper" v-if="technologistStorage.getTechnologistProject()">
+          <div class="basket__technologist__wrapper__container">
+            <p class="error__title">Это проект технолога!</p>
+            <p class="error__title"> Чтобы его оформить перейдите к нужной карточке сделки в окне "Технолог" и нажмите "Оформить заказ".</p>
+          </div>
         </div>
       </div>
     </div>
@@ -66,11 +94,20 @@ import { usePopupStore } from '@/store/appStore/popUpsStore';
 import ClosePopUpButton from '../ui/svg/ClosePopUpButton.vue';
 import BasketTable from "./BasketTable.vue"
 import { useBasketStore } from '@/store/appStore/useBasketStore';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { IBasketResponse, IProduct } from '@/types/basket';
 import { useAppData } from "@/store/appliction/useAppData"
+import { useRoomState } from "@/store/appliction/useRoomState";
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useRoomOptions } from '../left-menu/option/roomOptions/useRoomOptons';
+import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
 
-const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncInvoce} = useBasketStore();
+const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
+import { useConfigStore } from "@/store/appStore/useConfigStore";
+
+const { oldPrice, isFeedbackProject } = useConfigStore();
+import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
+
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
 const productDelayData = ref([]);
@@ -78,14 +115,33 @@ const loading = ref(true)
 const errorBasket = ref(false);
 const errorCount = ref(0);
 const appDataStore = useAppData();
+const roomState = useRoomState();
+// const rooms = roomState.getRooms;
 
-const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
-// const oldPrice = 1;
+const {
+  resetGlobalOptions,
+} = useRoomOptions();
+
+
+// Реактивные переменные
+const rooms = computed(() => roomState.getRooms || []);
+const roomsID = computed(() => roomState.getRoomId);
+const selectedRoomId = ref<string>('all'); // 'all' для всех комнат или ID конкретной комнаты
+const selectedRoomLabel = ref<string>('');
+const roomsBasketData = ref<IRoomBasketData[]>([]); // Данные корзин всех комнат
+
+const eventBus = useEventBus();
+const technologistStorage = useTechnologistStorage();
+
+
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 
 const closePopup = () => {
   popupStore.closePopup('basket');
+};
+const openPopupFormBasket = () => {
+  popupStore.openPopup('formbasket');
 };
 
 // Вычисляемые свойства для данных корзины
@@ -107,8 +163,14 @@ const totalOldPrice = computed(() => {
 
 
 const setInvoice = () => {
+
   console.log('basketData', basketData);
-  syncInvoce();
+  if(isFeedbackProject) {
+    closePopup();
+    openPopupFormBasket();
+  } else {
+    syncInvoce();
+  }
 };
 
 // Функция для обновления данных корзины
@@ -123,8 +185,55 @@ const updateBasketData = async () => {
   }
 };
 
+
+const selectRoom = async (id) => {
+  selectedRoomId.value = id;
+  if(id !== "all") {
+    loadRoom(id)
+  } else {
+    getBasket()
+  }
+}
+
+const getBasket = () => {
+  roomsBasketData.value = rooms.value.flatMap(el => {
+    const roomBasket = JSON.parse(el.basket);
+    console.log('el', roomBasket);
+    
+    return [
+      ...(roomBasket.scene || []),
+      ...(roomBasket.catalog || [])
+    ];
+  });
+  
+  console.log('Объединенная корзина:', roomsBasketData.value);
+  // allBasket(roomsBasketData.value);
+  syncBasketMulti(roomsBasketData.value)
+}
+
+const loadRoom = async (id: number) => {
+  await roomState.setLoad(false);
+  eventBus.emit("A:Save"); // Сохраняем локальное сотояние комнаты
+  await nextTick();
+  setTimeout(() => {
+    resetGlobalOptions();
+    eventBus.emit("A:Load", id);
+    eventBus.emit("A:ContantLoaded", false);
+    eventBus.emit("A:DrawingMode", false);
+    eventBus.emit("A:ToggleRulerVisibility", true);
+  }, 10);
+};
+
+
 onMounted(async () => {
   console.log('basketData', basketData);
+  console.log('rooms', rooms);
+  console.log('roomsID', roomState.getRoomId);
+  selectedRoomId.value = roomState.getRoomId || 'all';
+  // if(rooms.length > 1) {
+  //   getBasket();
+  // } else {
+  // }
   updateBasketData();
   await syncBasketDelay();
 });
@@ -217,6 +326,30 @@ watch(() => useBasketStore().basketData, (newValue) => {
       @media (max-width: 768px) {
         flex-direction: column-reverse;
         align-items: stretch;
+      }
+
+      .basket__technologist__wrapper {
+        display: flex;
+        align-items: flex-end;
+        width: 100%;
+        color: #da444c;
+        flex-direction: column;
+
+        &__container {
+          padding: 7.5px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          border: #da444c solid 1px;
+          border-radius: 15px;
+        }
+
+        @media (max-width: 768px) {
+          width: 100%;
+          margin-right: 0;
+          margin-bottom: 10px;
+          justify-content: center;
+        }
       }
 
       &-info {
@@ -337,6 +470,8 @@ watch(() => useBasketStore().basketData, (newValue) => {
     }
   }
 
+  
+
   @keyframes rotate {
     0%   {transform: rotate(0deg)}
     100%   {transform: rotate(360deg)}
@@ -358,6 +493,36 @@ watch(() => useBasketStore().basketData, (newValue) => {
     max-height: 114px;
     overflow-y: auto;
   }
+
+  .room-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+    margin-right: auto;
+    .room-tab {
+      padding: 8px 16px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: #e0e0e0;
+      }
+      
+      &--active {
+        background: $red;
+        color: white;
+        font-weight: 600;
+      }
+    }
+  }
+
+  
 
 </style>
 

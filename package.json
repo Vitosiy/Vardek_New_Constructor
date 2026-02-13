@@ -23,6 +23,7 @@
     "jquery": "^3.7.1",
     "jquery-ui": "^1.14.1",
     "lil-gui": "^0.19.2",
+    "maska": "^3.2.0",
     "openapi-fetch": "^0.14.0",
     "pinia": "^2.2.1",
     "pixi.js": "^8.10.2",
@@ -36,6 +37,7 @@
     "vee-validate": "^4.15.1",
     "vue": "^3.3.4",
     "vue-router": "^4.4.3",
+    "vue-the-mask": "^0.11.1",
     "yup": "^1.7.0"
   },
   "devDependencies": {

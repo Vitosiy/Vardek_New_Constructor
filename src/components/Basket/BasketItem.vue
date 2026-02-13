@@ -9,7 +9,7 @@
    
     <div class="basket-item__product">
       <h3 :class="item?.error ? 'basket-item__product-name--error' : ''">
-        {{ item?.product.NAME }} <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
+        {{ item?.product.NAME }} <span v-if="isFeedbackProject">{{getArticleByProductId(item?.product.ID)}}</span> <span v-if="item?.error"> (НЕДОСТУПНО!)</span>
       </h3> 
       <!-- Секция свойств товаров общяя -->
       <div class="basket-item__props" v-if="item?.product.PROPS && item?.product.TYPE !== 'umscene'">
@@ -23,6 +23,7 @@
                 <span v-if="shouldShowPropValue(propKey, propVal)" 
                       :class="getErrorClass(propVal, item?.error?.props)">
                   <!-- {{ formatPropValue(propKey, propVal , item) }} -->
+
                   <span v-html="formatPropValue(propKey, propVal, item, index)"></span>
                   
                   <span v-if="hasArticle(propKey, propVal)">
@@ -232,6 +233,7 @@ import InfoPopUp from "../popUp/InfoPopUp.vue";
 import { _URL } from "@/types/constants";
 import { propsLabel } from "./helper/basketMapper";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useConfigStore } from "@/store/appStore/useConfigStore";
 
 const API_URL = ref('https://dev.vardek.online');
 
@@ -252,10 +254,10 @@ const props = defineProps<Props>();
 const basketStore = useBasketStore();
 const appDataStore = useAppData();
 const quantity = ref(props.item.product.quantity);
+const { oldPrice, isFeedbackProject, getArticleByProductId, getArticleByFasadId } = useConfigStore();
 
 // Получаем данные из store
 const appData = computed(() => appDataStore.getAppData);
-const oldPrice = computed(()=>  appDataStore.getAppData.SETTINGS.old_price.VALUE )
 
 const openPopup = async (item) => {
   try {
@@ -377,8 +379,11 @@ const formatPropValue = (key: string, propVal: any, item: any, index: any) => {
         if (typeof value === 'object' && value !== null) {
           value = JSON.stringify(value);
         }
-        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key)) {
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key) && !isFeedbackProject) {
           listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)}</li>`; // ${getTypeName(key, value)}
+        }
+        if(key !== 'HANDLES' && getTypeName(key, value, item?.product.TYPE) && getPropLabel(key) && isFeedbackProject) {
+          listValue += `<li>${getPropLabel(key)} ${index}: ${getTypeName(key, value, item?.product.TYPE)} ${getArticleByFasadId(propVal?.article)}</li>`; // ${getTypeName(key, value)}
         }
       });
       
@@ -396,6 +401,7 @@ const getErrorClass = (propVal: any, propsError: any) => {
   if (!propsError || !Array.isArray(propsError)) return false;
 
   // if (propsError.some(error => error.id && error?.id?.includes(propVal))) {
+  // if (propsError.some(error => error.id && error.id.includes(propVal))) {
   //   return 'error-background';
   // }
   return '';

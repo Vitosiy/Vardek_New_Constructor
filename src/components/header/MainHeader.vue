@@ -499,7 +499,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <div class="header-utilitys">
-        <div class="header-basket">
+        <div class="header-basket" v-if="route.path === '/3d'">
           <div class="header-utilitys-basket">
             <p class="header-utilitys-basket-cost">
               {{ basketStore.totalPrice.toLocaleString("ru-RU") }} ₽
