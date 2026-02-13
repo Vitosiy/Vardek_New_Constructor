@@ -300,17 +300,23 @@ const getHandlesPosition = (
 
   // Вычисляем координаты центра ручки с учётом отступа и проекции (чтобы край ручки был не ближе offset)
   let posX = 0;
-  if (cfg.col === -1) posX = offset + halfExtX;
-  else if (cfg.col === 1) posX = halfWidth - offset - halfExtX;
-  else posX = width / 2 + halfExtX / 2;
+  if (cfg.col === -1)
+    posX = offset + halfExtX;
+  else if (cfg.col === 1)
+    posX = halfWidth - offset - halfExtX;
+  else
+    posX = width / 2 + halfExtX / 2;
 
   let posY = 0;
-  if (cfg.row === 1) posY = halfHeight - offset - halfExtY - fasadeMesh.position.y;
-  else if (cfg.row === -1) posY = offset + halfExtY;
-  else posY = height / 2 - halfExtY / 2;
+  if (cfg.row === 1)
+    posY = height - offset - halfExtY  ;
+  else if (cfg.row === -1)
+    posY = offset + halfExtY;
+  else
+    posY = height / 2 - halfExtY / 2 ;
 
   return {
-    position: new THREE.Vector2(posX + fasadeMesh.position.x, posY),
+    position: new THREE.Vector2(posX + fasadeMesh.position.x, posY + (fasadeMesh.position.y - height)),
     rotation: theta,
   };
 }
@@ -626,7 +632,7 @@ const renderGrid = (_moduleGrid) => {
             let handle = APP.CATALOG.PRODUCTS[row.material.HANDLES.id]
             let handle_size = new THREE.Vector2(15, 100)
             let handle_pos = getHandlesPosition(row.material.HANDLES.position, {
-              position: row.position,
+              position: new THREE.Vector2( row.position.x, module.value.height - row.position.y),
                   size: {width: row.width, height: row.height},
             },
             {
