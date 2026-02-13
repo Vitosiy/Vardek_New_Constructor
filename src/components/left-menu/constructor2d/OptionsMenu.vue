@@ -569,7 +569,7 @@ const switchRoom = async (roomId: string | number) => {
         }
 
         &.active {
-          border-color: $white;
+          border-color: $red;
           box-shadow: 0 4px 12px $red;
         }
 
