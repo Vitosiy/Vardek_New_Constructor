@@ -139,16 +139,17 @@
           />
         </div>
 
+        <!-- Пагинация под блоком карточек (по общему количеству с сервера) -->
+        
       </div>
-    </div>
-        <!-- Пагинация под блоком карточек -->
-        <div v-if="!isLoading && !loadError && projects.length > 0" class="project-list__pagination">
+      <div v-if="!isLoading && !loadError && totalElements > 0" class="project-list__pagination">
           <ProjectPagination
-            :total-items="projects.length"
+            :total-items="totalElements"
             :page-size="PAGE_SIZE"
             v-model:current-page="currentPage"
           />
         </div>
+    </div>
   </div>
 </template>
 
@@ -185,8 +186,9 @@ const schemeTransition = useSchemeTransition();
 
 const PAGE_SIZE = 12;
 
-// Простое состояние
+// Простое состояние (серверная пагинация: в projects только элементы текущей страницы)
 const projects = ref<Project[]>([]);
+const totalElements = ref(0);
 const currentPage = ref(1);
 const tab = ref<ProjectTab>("my");
 const loadError = ref<string | null>(null);
@@ -197,14 +199,8 @@ const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 const backendIdsList = computed(() => authStore.salonOwnerList ?? []);
 const selectedBackendId = ref<string>("all");
 
-// Пагинация: только карточки текущей страницы (12 на страницу)
-const paginatedProjects = computed(() => {
-  const list = projects.value;
-  const total = list.length;
-  if (total === 0) return [];
-  const start = (currentPage.value - 1) * PAGE_SIZE;
-  return list.slice(start, start + PAGE_SIZE);
-});
+// Сервер отдаёт только элементы текущей страницы — слайс не нужен
+const paginatedProjects = computed(() => projects.value);
 
 const onBackendIdSelect = async () => {
   if (selectedBackendId.value === "all") {
@@ -277,7 +273,7 @@ const loadProjects = async (delay: number = 300) => {
       if (!isNaN(idValue) && idValue > 0) id = idValue;
     }
 
-    const items = await projectAPI.loadProjects(
+    const result = await projectAPI.loadProjects(
       {
         designerValue,
         name,
@@ -287,9 +283,10 @@ const loadProjects = async (delay: number = 300) => {
       },
       delay
     );
-    projects.value = items;
+    projects.value = result.items;
+    totalElements.value = result.totalElements;
 
-    if (items.length === 0 && !name && id == null) {
+    if (result.items.length === 0 && !name && id == null) {
       loadError.value = "Не удалось загрузить проекты";
     }
   } catch (error) {
@@ -533,7 +530,7 @@ onMounted(async () => {
 .project {
   width: 1347px;
   max-width: 100%;
-  height: 80vh;
+  height: 83vh;
   position: relative;
   overflow: hidden;
 

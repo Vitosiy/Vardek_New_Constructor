@@ -1,5 +1,5 @@
 <template>
-  <div v-if="totalPages > 1" class="project-pagination">
+  <div v-if="totalPages >= 1" class="project-pagination">
     <button
       type="button"
       class="project-pagination__arrow"

@@ -15,6 +15,12 @@ export interface LoadProjectsParams {
   currentPage: number
 }
 
+/** Результат загрузки списка проектов: элементы текущей страницы и общее количество с сервера */
+export interface LoadProjectsResult {
+  items: Project[]
+  totalElements: number
+}
+
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
@@ -116,8 +122,8 @@ export function useProjectAPI() {
     })
   }
 
-  // Загрузка списка проектов с дебаунсом
-  const loadProjects = async (params: LoadProjectsParams, delay: number = 300): Promise<Project[]> => {
+  // Загрузка списка проектов с дебаунсом (серверная пагинация)
+  const loadProjects = async (params: LoadProjectsParams, delay: number = 300): Promise<LoadProjectsResult> => {
     if (loadTimeout) {
       clearTimeout(loadTimeout)
     }
@@ -149,16 +155,26 @@ export function useProjectAPI() {
             body: requestBody
           })
 
-          const normalized = normalizeApiResponse<{ data?: { items?: Project[] } }>(response)
+          const normalized = normalizeApiResponse<{
+            data?: { items?: Project[]; pager?: { totalElements?: string | number } }
+          }>(response)
 
           if (normalized.success && normalized.data?.data?.items) {
-            resolve(normalized.data.data.items)
+            const items = normalized.data.data.items
+            const pager = normalized.data.data.pager
+            const totalElements =
+              pager?.totalElements != null
+                ? typeof pager.totalElements === 'string'
+                  ? parseInt(pager.totalElements, 10) || 0
+                  : pager.totalElements
+                : items.length
+            resolve({ items, totalElements })
           } else {
-            resolve([])
+            resolve({ items: [], totalElements: 0 })
           }
         } catch (error) {
           console.error(ERROR_MESSAGES.LOAD_PROJECTS, error)
-          resolve([])
+          resolve({ items: [], totalElements: 0 })
         } finally {
           isLoading.value = false
         }

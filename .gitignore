@@ -30,3 +30,6 @@ Ideas
 *__dump
 
 .history
+
+# Windows reserved device name (causes "short read while indexing" in Git)
+nul
