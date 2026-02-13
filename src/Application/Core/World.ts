@@ -20,6 +20,7 @@ import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState"
 import { useTransformController } from "@/components/ui/transformController/useTransformController"
 import { useBasketStore } from "@/store/appStore/useBasketStore"
+import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 
 export class World {
 
@@ -37,6 +38,7 @@ export class World {
     modelState: ReturnType<typeof useModelState> = useModelState()
     transformController: ReturnType<typeof useTransformController> = useTransformController();
     basketStore: ReturnType<typeof useBasketStore> = useBasketStore()
+    technologistStore: ReturnType<typeof useTechnologistStorage> = useTechnologistStorage()
 
     trafficManager: THREETypes.TTrafficManager | null;
     room: THREETypes.TRoomManager | null = null;
@@ -112,6 +114,8 @@ export class World {
         this.modelState.setCurrentModel(null)
         this.transformController.setTransformControlsValue(false)
         this.basketStore.clearBasket();
+        this.technologistStore.clearStorage()
+        this.technologistStore.clearError()
     }
 
     saveRoom(name: string) {

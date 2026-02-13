@@ -16,6 +16,9 @@
           <span v-if="action.iconSrc === 'folder'" class="icon">
             <img :src="folderIcon" alt="" class="icon-svg" />
           </span>
+          <span v-else-if="action.iconSrc" class="icon">
+            <img :src="action.iconSrc" alt="" class="icon-svg" />
+          </span>
           <span v-else class="icon" :class="action.iconClass"></span>
         </button>
       </template>

@@ -194,14 +194,14 @@ export const useBasketStore = defineStore('basket', () => {
     return result
   }
 
-  const syncInvoce = async (): Promise<IBasketResponse | null> => {
+  const syncInvoce = async (technologistBasket: boolean|Object = false): Promise<IBasketResponse | null> => {
     const currentHandlesData = countHandles(mainConstructor.value)
     const data = currentHandlesData.length > 0 
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value
     
     // const result = await syncBasketWithServer(data)
-    const result = await syncInvoice(data)
+    const result = await syncInvoice(data, technologistBasket)
     return result
   }
 

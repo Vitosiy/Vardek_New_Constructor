@@ -75,7 +75,13 @@
           </div>
           <button class="basket__close" @click="closePopup">Закрыть</button>
           <button class="basket__save">Печать</button>
-          <button class="basket__order" @click="setInvoice" :disabled="errorBasket">Оформить заказ</button>
+          <button class="basket__order" @click="setInvoice" :disabled="errorBasket || technologistStorage.getTechnologistProject()">Оформить заказ</button>
+        </div>
+        <div class="basket__technologist__wrapper" v-if="technologistStorage.getTechnologistProject()">
+          <div class="basket__technologist__wrapper__container">
+            <p class="error__title">Это проект технолога!</p>
+            <p class="error__title"> Чтобы его оформить перейдите к нужной карточке сделки в окне "Технолог" и нажмите "Оформить заказ".</p>
+          </div>
         </div>
       </div>
     </div>
@@ -100,6 +106,7 @@ const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, sy
 import { useConfigStore } from "@/store/appStore/useConfigStore";
 
 const { oldPrice, isFeedbackProject } = useConfigStore();
+import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 
 const popupStore = usePopupStore();
 const items = ref<IBasketResponse[] | null>(null);
@@ -124,6 +131,7 @@ const selectedRoomLabel = ref<string>('');
 const roomsBasketData = ref<IRoomBasketData[]>([]); // Данные корзин всех комнат
 
 const eventBus = useEventBus();
+const technologistStorage = useTechnologistStorage();
 
 
 // Ключ для принудительной перерисовки
@@ -318,6 +326,30 @@ watch(() => useBasketStore().basketData, (newValue) => {
       @media (max-width: 768px) {
         flex-direction: column-reverse;
         align-items: stretch;
+      }
+
+      .basket__technologist__wrapper {
+        display: flex;
+        align-items: flex-end;
+        width: 100%;
+        color: #da444c;
+        flex-direction: column;
+
+        &__container {
+          padding: 7.5px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          border: #da444c solid 1px;
+          border-radius: 15px;
+        }
+
+        @media (max-width: 768px) {
+          width: 100%;
+          margin-right: 0;
+          margin-bottom: 10px;
+          justify-content: center;
+        }
       }
 
       &-info {

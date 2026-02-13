@@ -113,24 +113,30 @@
           v-for="project in projects"
           :key="project.id"
           class="project-item"
-          @click="loadProject(project.id)"
         >
-          <img
-            :src="
-              project.img
-                ? `https://dev.vardek.online${project.img}`
-                : '/src/assets/img/proj.png'
-            "
-            class="item__image"
-            :alt="project.name || 'Проект'"
-          />
-          <div class="item-info">
-            <div class="info-id">
-              <p class="id__name">{{ project.name || "Название" }}</p>
-              <p class="id__number text-grey">ID {{ project.id }}</p>
+          <div class="project-item__main" @click="loadProject(project.id)">
+            <img
+              :src="
+                project.img
+                  ? `https://dev.vardek.online${project.img}`
+                  : '/src/assets/img/proj.png'
+              "
+              class="item__image"
+              :alt="project.name || 'Проект'"
+            />
+            <div class="item-info">
+              <div class="info-id">
+                <p class="id__name">{{ project.name || 'Название' }}</p>
+                <p class="id__number text-grey">ID {{ project.id }}</p>
+              </div>
+              <p class="info__date text-grey">{{ project.date }}</p>
             </div>
-            <p class="info__date text-grey">{{ project.date }}</p>
           </div>
+
+          <TechnologistFormButton
+            :project="project"
+            @click="closePopup"
+          />
         </div>
       </div>
     </div>
@@ -156,6 +162,7 @@ import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import TechnologistFormButton from "@/components/Technologist/TechnologistFormButton.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -625,11 +632,11 @@ onMounted(async () => {
 
       .project-item {
         width: 323px;
-        height: 269px;
+        height: 100%;
+        max-height: 350px;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
         flex-direction: column;
+        align-items: stretch;
         border-radius: 16px;
         background-color: $bg;
         overflow: hidden;
@@ -639,6 +646,12 @@ onMounted(async () => {
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        &__main {
+          display: flex;
+          flex-direction: column;
+          cursor: pointer;
         }
 
         .item__image {
