@@ -44,6 +44,7 @@ interface Props {
   gap?: number;
   container?: string;
   handlePos?: string[] | [];
+  activePos?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -72,7 +73,10 @@ const changeDirectionPos = (
   emit("changeDirectionPos", value, id, active);
   if (props.handlePos.length > 0) {
     controlsData.value.forEach((el) => {
-      el.id === id ? (el.active = true) : (el.active = false);
+      if(el.id === null || el.id === undefined)
+        el.action === value ? (el.active = true) : (el.active = false);
+      else
+        el.id === id ? (el.active = true) : (el.active = false);
     });
   }
 };
@@ -88,6 +92,14 @@ const createControlsData = () => {
   setType(props.type);
   setHandlePosition(props.handlePos);
   controlsData.value = getControlsData();
+
+  if(props.activePos)
+    controlsData.value.forEach((el) => {
+      if(el.id === null || el.id === undefined)
+        el.action === props.activePos ? (el.active = true) : (el.active = false);
+      else
+        el.id === props.activePos ? (el.active = true) : (el.active = false);
+    });
 };
 
 onBeforeMount(() => {
