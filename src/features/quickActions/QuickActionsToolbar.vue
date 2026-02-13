@@ -69,8 +69,8 @@
       </template>
     </Modal>
 
-    <!-- Модальное окно выбора действия для существующего проекта (обновить / сохранить как новый) -->
-    <Modal ref="updateDialogRef">
+    <!-- Закомментировано: модальное окно выбора действия (обновить / сохранить как новый). При сохранении сразу срабатывает "Сохранить как новый проект". -->
+    <!-- <Modal ref="updateDialogRef">
       <template #modalBody="{ onModalClose }">
         <Update
           label="Сохранение проекта"
@@ -97,7 +97,7 @@
           </template>
         </Update>
       </template>
-    </Modal>
+    </Modal> -->
 
     <Modal ref="kpDialogRef">
       <template #modalBody="{ onModalClose }">
@@ -123,7 +123,7 @@ import { ref, computed, onMounted } from "vue";
 import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
 import InputDialog from "@/components/ui/inputs/InputDialog.vue";
-import Update from "@/components/ui/inputs/Update.vue";
+// import Update from "@/components/ui/inputs/Update.vue"; // закомментировано — модалка выбора не используется
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import Notification from "@/components/ui/inputs/Notification.vue";
@@ -139,9 +139,10 @@ import folderIcon from "@/assets/svg/folder.svg";
 const {
   actions,
   openSaveDialog,
-  openUpdateDialog,
+  // openUpdateDialog, // закомментировано — при сохранении сразу "Сохранить как новый"
+  openSaveAsNewDialog,
   handleSaveConfirm: handleSaveConfirmFromComposable,
-  updateExistingProject
+  // updateExistingProject // закомментировано — использовался в handleUpdateChoice (модалка Update)
 } = useQuickActionsToolbar();
 
 const route = useRoute();
@@ -161,7 +162,7 @@ const changeCamera = () => {
 
 // Рефы для модальных окон
 const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);
-const updateDialogRef = ref<InstanceType<typeof Modal> | null>(null);
+// const updateDialogRef = ref<InstanceType<typeof Modal> | null>(null); // закомментировано — модалка Update не используется
 const kpDialogRef = ref<InstanceType<typeof Modal> | null>(null);
   
 const kpData = ref<{ link: string; text: string } | null>(null);
@@ -210,40 +211,46 @@ const handleSaveConfirm = async (projectName: string) => {
 };
 
 
-// Обработка выбора действия в модалке Update
-const handleUpdateChoice = async (choice: string) => {
-  if (choice === "update") {
-    // Обновить существующий проект
-    updateDialogRef.value?.closeModal();
-    await updateExistingProject();
-    return;
-  }
-
-  if (choice === "saveAsNew") {
-    // Сохранить как новый — открываем стандартную модалку ввода имени проекта
-    saveAsNewMode.value = true;
-    updateDialogRef.value?.closeModal();
-    saveDialogRef.value?.openModal();
-  }
-};
+// Закомментировано: обработка выбора в модалке Update (обновить / сохранить как новый)
+// const handleUpdateChoice = async (choice: string) => {
+//   if (choice === "update") {
+//     updateDialogRef.value?.closeModal();
+//     await updateExistingProject();
+//     return;
+//   }
+//   if (choice === "saveAsNew") {
+//     saveAsNewMode.value = true;
+//     updateDialogRef.value?.closeModal();
+//     saveDialogRef.value?.openModal();
+//   }
+// };
 
 // Функция открытия модального окна сохранения
 const openModal = () => {
   saveDialogRef.value?.openModal();
 };
 
-// Функция открытия модального окна выбора действия для существующего проекта
-const openUpdateModal = () => {
-  updateDialogRef.value?.openModal();
+// Сценарий "Сохранить как новый проект" — сразу открываем диалог ввода имени (без выбора в Update)
+const openSaveAsNewModal = () => {
+  saveAsNewMode.value = true;
+  saveDialogRef.value?.openModal();
 };
+
+// Функция открытия модального окна выбора действия для существующего проекта (закомментировано — не используется)
+// const openUpdateModal = () => {
+//   updateDialogRef.value?.openModal();
+// };
 
 // Передаем функции открытия модальных окон в composable после монтирования
 onMounted(() => {
   if (openSaveDialog) {
     openSaveDialog.value = openModal;
   }
-  if (openUpdateDialog) {
-    openUpdateDialog.value = openUpdateModal;
+  // if (openUpdateDialog) {
+  //   openUpdateDialog.value = openUpdateModal;
+  // }
+  if (openSaveAsNewDialog) {
+    openSaveAsNewDialog.value = openSaveAsNewModal;
   }
 });
 </script>

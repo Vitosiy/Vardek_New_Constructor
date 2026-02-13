@@ -62,16 +62,23 @@ export const useQuickActionsToolbar = () => {
   const openSaveDialog = ref<(() => void) | null>(null);
   // Реф для функции открытия модального окна выбора действия при сохранении существующего проекта
   const openUpdateDialog = ref<(() => void) | null>(null);
+  // Реф для прямого открытия сценария "Сохранить как новый проект" (без выбора в модалке)
+  const openSaveAsNewDialog = ref<(() => void) | null>(null);
 
   // Функция открытия модального окна для сохранения проекта
   const onSaveProject = async () => {
-    // Если проект уже имеет ID — сначала спрашиваем, как сохранить
-    if (projectState.currentProjectId) {
-      // Пользователь будет выбирать действие в модалке Update
+    // При нажатии на кнопку сохранения всегда срабатывает сценарий "Сохранить как новый проект"
+    if (projectState.currentProjectId && openSaveAsNewDialog.value) {
       projectState.isSaving = false;
-      if (openUpdateDialog.value) openUpdateDialog.value();
+      openSaveAsNewDialog.value();
       return;
     }
+    // Закомментировано: выбор между "Обновить" и "Сохранить как новый" через модалку Update
+    // if (projectState.currentProjectId) {
+    //   projectState.isSaving = false;
+    //   if (openUpdateDialog.value) openUpdateDialog.value();
+    //   return;
+    // }
 
     // Иначе — это новый проект: скрываем лоадер и открываем модальное окно для ввода имени
     projectState.isSaving = false;
@@ -339,6 +346,7 @@ export const useQuickActionsToolbar = () => {
     actions,
     openSaveDialog,
     openUpdateDialog,
+    openSaveAsNewDialog,
     handleSaveConfirm,
     updateExistingProject
   };

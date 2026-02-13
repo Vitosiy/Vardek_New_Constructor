@@ -18,7 +18,7 @@
           />
           <MainInput
             v-model="filters.id"
-            type="text"
+            type="number"
             placeholder="ID"
             :min="0"
             :max="99999999"
@@ -30,7 +30,6 @@
             @change="onBackendIdSelect"
           >
             <option value="all">Все проекты</option>
-            <option value="my">Мои проекты</option>
             <option
               v-for="owner in backendIdsList"
               :key="owner.ID"
@@ -76,7 +75,7 @@
       </div> -->
 
       <!-- Список проектов -->
-      <div class="project-list">
+      <div class="project-list" :class="{ 'project-list--loading': isLoading }">
         <!-- Лоадер -->
         <div v-if="isLoading" class="project-loader">
           <div class="loader-spinner"></div>
@@ -532,9 +531,9 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .project {
-  width: 100%;
+  width: 1347px;
+  max-width: 100%;
   height: 80vh;
-  max-width: 1347px;
   position: relative;
   overflow: hidden;
 
@@ -603,6 +602,11 @@ onMounted(async () => {
       overflow-y: auto;
       gap: 15px;
       align-content: flex-start;
+
+      &--loading .project-item {
+        opacity: 0;
+        pointer-events: none;
+      }
 
       &__pagination {
         width: 100%;
