@@ -65,7 +65,7 @@
 
       <div class="basket-footer">
         <div class="basket-footer-info">
-          <p class="basket__sum">Общая стоимость: <span>{{ !oldPrice ? totalPrice : totalOldPrice }}</span></p>
+          <p class="basket__sum">Общая стоимость: <span>{{ totalPrice }}</span></p>
           <p class="basket__sum-no" v-if="!oldPrice">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
         </div>
         <div class="basket-footer-buttons">

@@ -201,13 +201,14 @@
     </div>
 
     <div class="basket-item__price">
-      <!-- {{ item.product.unitPriceFormat ?? 0 }}  -->
-      {{ !oldPrice ? item.product.unitPriceFormat :  item.product.unitPriceOldFormat }} 
+      {{ item.product.unitPriceFormat ?? 0 }} 
+      <!-- {{ !oldPrice ? item.product.unitPriceFormat :  item.product.unitPriceOldFormat }}  -->
     </div>
 
     <div class="basket-item__price basket-item__total">
       <!-- {{ item.product.allPriceFormat ?? 0}} -->
-      {{ !oldPrice ? item.product.allPriceFormat : item.product.allPriceOldFormat}}
+      {{ item.product.allPriceFormat ?? 0}}
+      <!-- {{ !oldPrice ? item.product.allPriceFormat : item.product.allPriceOldFormat}} -->
     </div>
 
     <div class="basket-item__price basket-item__old-total" v-if="!oldPrice">
