@@ -19,6 +19,7 @@ import MainButton from "@/components/ui/buttons/MainButton.vue";
 import Pagination from "@/components/ui/pagination/Pagination.vue";
 import {_URL} from "@/types/constants.ts";
 import {useFilePopUpStorage} from "@/store/appStore/FilePopUpStorage.ts";
+import {useBasketStore} from "@/store/appStore/useBasketStore.ts";
 
 // Загрузка проекта
 const router = useRouter();
@@ -32,6 +33,11 @@ const schemeTransition = useSchemeTransition();
 const roomState = useRoomState();
 const toaster = useToast();
 const fileStorage = useFilePopUpStorage();
+const basketStorage = useBasketStore();
+
+const deal = computed(() => {
+  return technologistStorage.getDealOfSelectedApplication()
+})
 
 const APP = useAppData().getAppData;
 const popupStore = usePopupStore();
@@ -172,22 +178,51 @@ const openModalComments = function (elem, statusId) {
   popupStore.openPopup('technologist-comments');
 }
 
-const openModalOrder = function (id) {
-  closePopup()
+const openModalOrder = async (elem, _id) => {
+
+  loading.value = true;
+
+  let {id, projectTechId, techProject} = elem;
+  technologistStorage.setDealOfSelectedApplication(<Deal>{
+    'dealId': id,
+    'dealStatus': 'C10:WON',
+    'techProjectId': projectTechId,
+    'techProject': techProject || false,
+  })
+
+  let projectID = _id
+  if (!projectID) {
+    let now = new Date();
+    let projectName = `Проект ${APP.userGroup[56] ? 'технолога' : 'дизайнера'} для сделки №${deal.value.dealId} от ${now.getDate()}.${now.getUTCMonth() + 1}.${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
+    projectName += ` со статусом <Передан в производство>`
+    const result = await projectAPI.saveProject(projectState.currentProjectId, projectName, false, true);
+    projectState.setProjectId(result.data.ID);
+    projectID = projectState.getProjectId()
+  }
 
   setTimeout(() => {
-    uploadProjectTech(id);
+    uploadProjectTech(projectID).then((result) => {
+        if(result)
+          basketStorage.syncInvoce({
+            projectID,
+            projectTechId,
+            'dealId': id,
+          })
+        else
+          toaster.error('Ошибка загрузки авто-сохраненного проекта!');
+
+      loading.value = false;
+      closePopup()
+    });
   }, 1000)
-
-  setTimeout(() => {
-    popupStore.openPopup('basket');
-  }, 5000)
 }
 
 const uploadProjectTech = async (id: string | number) => {
-  if (!id) return;
+  if (!id)
+    return;
 
   isProjectLoading.value = true;
+  let loadSuccess = false;
 
   try {
     const projectData = await projectAPI.loadProject(id.toString());
@@ -240,6 +275,8 @@ const uploadProjectTech = async (id: string | number) => {
 
           // Закрываем попап
           closePopup();
+
+          loadSuccess = true;
         }
         else {
           // Если мы на 2D или другом маршруте, конвертируем данные для 2D
@@ -279,18 +316,24 @@ const uploadProjectTech = async (id: string | number) => {
 
           // 9. Закрываем попап только после успешной инициализации
           closePopup();
+
+          loadSuccess = true;
         }
       } catch (error) {
         console.error("Ошибка применения данных проекта:", error);
         toaster.error("Ошибка загрузки проекта");
+        loadSuccess = false;
       }
     }
   } catch (error) {
     console.error("Ошибка загрузки проекта:", error);
     toaster.error("Ошибка загрузки проекта");
+    loadSuccess = false;
   } finally {
     isProjectLoading.value = false;
   }
+
+  return loadSuccess;
 };
 
 // Ожидание готовности 3D сцены
@@ -595,7 +638,7 @@ const getNavData = () => {
               v-if="((APP.userGroup[6] || APP.userGroup[29]) && ['C10:4', 'C10:PREPAYMENT_INVOIC'].includes(elem.statusId))"
               @click="openModalSTD(elem, 'C10:PREPARATION');"
               :class-name="'appItem-status-btn'"
-              :style="`border-color:${APP.STATUS_TECH['C10:5'].EXTRA.COLOR}`"
+              :style="`border-color:${APP.STATUS_TECH['C10:PREPARATION'].EXTRA.COLOR}`"
           >
             Вернуть в работу
           </MainButton>
@@ -604,7 +647,7 @@ const getNavData = () => {
               v-if="(APP.userGroup[56] && ['C10:4'].includes(elem.statusId))"
               @click="setStatus(elem.id, 'C10:PREPARATION');"
               :class-name="'appItem-status-btn'"
-              :style="`border-color:${APP.STATUS_TECH['C10:5'].EXTRA.COLOR}`"
+              :style="`border-color:${APP.STATUS_TECH['C10:PREPARATION'].EXTRA.COLOR}`"
           >
             Вернуть в работу
           </MainButton>
@@ -618,7 +661,7 @@ const getNavData = () => {
             Отправить проект дизайнеру
           </MainButton>
 
-          <MainButton
+<!--          <MainButton
               v-if="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC'"
               @click="setStatus(elem.id, 'C10:2');"
               :class-name="'appItem-status-btn'"
@@ -634,12 +677,14 @@ const getNavData = () => {
               :style="`border-color:${APP.STATUS_TECH['C10:3'].EXTRA.COLOR}`"
           >
             Принять работу
-          </MainButton>
+          </MainButton>-->
 
+          <!--Какой проект надо грузить? Технолога или дизайнера?-->
           <MainButton
-              v-if="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:3'"
-              @click="openModalOrder(elem.projectTechId);"
+              v-if="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC'"
+              @click="openModalOrder(elem);"
               :class-name="'appItem-btn'"
+              :style="`border-color:${APP.STATUS_TECH['C10:WON'].EXTRA.COLOR}`"
           >
             Оформить заказ
           </MainButton>

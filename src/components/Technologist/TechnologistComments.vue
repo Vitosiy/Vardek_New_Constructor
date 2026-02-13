@@ -37,7 +37,7 @@ const filesCash = ref({})
 const errors = ref({})
 
 const statusNames = {
-  'C10:PREPARATION': "<Отправлен в работу>",
+  'C10:PREPARATION': "<Возвращен в работу>",
   'C10:1': '<Отправлен на доработку>',
   'C10:PREPAYMENT_INVOIC': '<Передан дизайнеру>',
   'C10:2': '<Принят дизайнером>',
@@ -257,7 +257,11 @@ const setProjectTechId = async (isCurrentProjectID = true) => {
   if(isCurrentProjectID) {
     if(!currentProjectID.value || !technologistStorage.getTechnologistProject()) {
       let now = new Date();
-      let projectName = `Проект для сделки №${deal.value.dealId} от ${now.getDate()}.${now.getUTCMonth()+1}.${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
+      let projectName = `Проект ${APP.userGroup[56] ? 'технолога' : 'дизайнера'} для сделки №${deal.value.dealId} от ${now.getDate()}.${now.getUTCMonth()+1}.${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
+      if (reviewStatus.value && statusNames[formReview.value.statusId]){
+        projectName += ` со статусом "${statusNames[formReview.value.statusId]}"`
+      }
+
       const result = await projectAPI.saveProject(null, projectName, false, true);
       projectState.setProjectId(result.data.ID);
       currentProjectID.value = projectState.getProjectId()

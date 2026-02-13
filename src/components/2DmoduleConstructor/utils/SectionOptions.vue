@@ -1440,6 +1440,7 @@ onMounted(() => {
                   >
                     <article class="actions-sections-items actions-sections-items--left">
                       <div class="actions-sections-items--left-wrapper">
+
                         <div class="actions-sections-items--width">
                           <div class="actions-sections-inputs">
                             <p class="actions-sections-title">Ширина</p>
@@ -1453,6 +1454,7 @@ onMounted(() => {
                                   :max="MAX_SECTION_WIDTH"
                                   class="actions-sections-input"
                                   :value="section.width"
+                                  :disabled="module.sections.length < 2"
                                   @input="
                                     debounce(() => updateSectionWidth(
                                       $event.target.value,
@@ -1775,7 +1777,7 @@ onMounted(() => {
                     <div class="actions-sections-inputs">
                       <p class="actions-sections-title">Ширина</p>
                       <div
-                          :class="['actions-sections-input--container', module.sections.length <= 1 ? 'disable' : '']"
+                          :class="['actions-sections-input--container']"
                       >
                         <input
                             type="number"
@@ -1784,6 +1786,7 @@ onMounted(() => {
                             :max="MAX_SECTION_WIDTH"
                             class="actions-sections-input"
                             :value="section.width"
+                            :disabled="module.sections.length < 2"
                             @input="
                             debounce(() => updateSectionWidth(
                               $event.target.value,

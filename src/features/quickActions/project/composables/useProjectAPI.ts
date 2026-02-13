@@ -259,6 +259,7 @@ export function useProjectAPI() {
       }
       else {
         console.log(projectId, 'projectId No')
+        const parentProjectId = projectId
 
         const tempProjectId = Date.now().toString();
         projectData.projectId = tempProjectId
@@ -275,7 +276,8 @@ export function useProjectAPI() {
                   city: REQUEST_CONSTANTS.CITY,
                   project: projectData,
                   style: REQUEST_CONSTANTS.STYLE,
-                  projectId: Date.now().toString(),
+                  projectId: tempProjectId,
+                  parentProjectId: parentProjectId,
                   user_id: REQUEST_CONSTANTS.USER_ID,
                   ...(kpFlag && basketData && { basket: basketData }),
                   ...(kpFlag && { kp: kpFlag })
