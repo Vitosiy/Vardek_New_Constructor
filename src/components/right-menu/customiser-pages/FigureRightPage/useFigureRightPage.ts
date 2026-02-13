@@ -60,33 +60,43 @@ export const useFigureRightPage = () => {
 
     }
 
-    const createSurfaceList = () => {
-        const data = appData.getAppData
-        const { FASADE, CATALOG, POSITION_HANDLES } = data
+    const createSurfaceList = (figureData) => {
+        const _data = appData.getAppData
+        const { FASADE, CATALOG, POSITION_HANDLES } = _data
         const { PRODUCTS } = CATALOG
         const { PROPS } = modelState.getCurrentModel.userData;
         const { PRODUCT } = PROPS
         const { FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE } = PROPS.CONFIG
         const tempList: IFigureFasade[] = []
 
-        for (const el in FASADE_PROPS) {
-            const disabled = FASADE_POSITIONS[el].FASADE_TYPE[0] == null
-            // if (FASADE_TYPE[el] == null) continue
+        const calcHandles = (fasadeId, fasade) => {
+            //const disabled = FASADE_POSITIONS[el].FASADE_TYPE[0] == null
 
-            const { COLOR } = FASADE_PROPS[el]
+            const disabled = !fasade && FASADE_TYPE[fasadeId] == null
+
+            const { COLOR } = fasade || FASADE_PROPS[fasadeId]
             const fasadeData = FASADE[COLOR]
             const haveHandles = POSITION_HANDLES[PRODUCT]
 
             if (haveHandles) {
                 tempList.push({
-                    label: `Фасад ${parseInt(el) + 1}`,
-                    name: `fasade ${parseInt(el) + 1}`,
+                    label: `Фасад ${parseInt(fasadeId) + 1}`,
+                    name: `fasade ${parseInt(fasadeId) + 1}`,
                     disabled: disabled,
-                    props: FASADE_PROPS[el],
+                    props: fasade || FASADE_PROPS[fasadeId],
                     action: () => createHandlesList()
                 })
             };
+        }
 
+        if(figureData) {
+            const {data, segmentIndex} = figureData
+            calcHandles(segmentIndex, data)
+        }
+        else {
+            for (const el in FASADE_PROPS) {
+                calcHandles(el)
+            }
         }
 
         return tempList

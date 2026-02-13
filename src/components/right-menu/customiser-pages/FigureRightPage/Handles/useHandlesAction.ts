@@ -23,7 +23,7 @@ const useHandlesAction = () => {
 
         const textList = prepare.map((el) => el.CODE);
 
-        if (!ELEMENT_TYPE) {
+        if (!ELEMENT_TYPE || MODULEGRID) {
             return textList;
         }
 
