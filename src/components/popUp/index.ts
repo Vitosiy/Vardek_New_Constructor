@@ -4,9 +4,21 @@ import ErrorPopUpView from '@/features/quickActions/report/ErrorPopUpView.vue';
 import ProjectPopUpView from '@/features/quickActions/project/ProjectPopUpView.vue';
 import { Component } from 'vue';
 import CatalogPopUpView from './popup-views/CatalogPopUpView.vue';
+import TechnologistPopUpView from "@/components/popUp/popup-views/TechnologistPopUpView.vue";
+import TechnologistForm from "@/components/Technologist/TechnologistForm.vue";
+import TechnologistComments from "@/components/Technologist/TechnologistComments.vue";
+import FilePopUpView from "@/components/popUp/popup-views/FilePopUpView.vue";
 
-
-export type PopupKey = 'basket' | 'study' | 'error' | 'project' | 'catalog'
+export type PopupKey =
+    'basket' |
+    'study' |
+    'error' |
+    'project' |
+    'catalog' |
+    'technologist' |
+    'technologist-form' |
+    'technologist-comments' |
+    'file'
 
 export type Popup = {
   title?: string,
@@ -35,5 +47,20 @@ export const POPUP_CONFIG: PopupsConfig = {
   catalog: {
     title: 'Каталог',
     component: CatalogPopUpView
+  },
+  technologist: {
+    title: 'Технолог',
+    component: TechnologistPopUpView
+  },
+  "technologist-form": {
+    title: 'Заявка технолог',
+    component: TechnologistForm
+  },
+  "technologist-comments": {
+    title: 'Комментарии технолог',
+    component: TechnologistComments
+  },
+  file:{
+    component: FilePopUpView
   }
 } as const;
