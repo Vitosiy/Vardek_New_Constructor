@@ -16,6 +16,8 @@ import {
 import {Application, Container, Graphics, Text} from "pixi.js";
 import {Shape, ShapeAdjuster, Section} from "./utils/Methods";
 import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
+import {useAppData} from "@/store/appliction/useAppData.ts";
+import * as THREE from "three";
 
 const props = defineProps({
   module: {
@@ -55,6 +57,7 @@ const emit = defineEmits([
   "module-reset",
 ]);
 const canvasContainer = ref();
+const APP = useAppData().getAppData;
 
 const selectedCell = ref({sec: 0, cell: 0, row: null, extra: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
@@ -68,6 +71,7 @@ let app: Application,
     fillingsContainer: Container,
     fasadesContainer: Container,
     loopsContainer: Container,
+    handlesContainer: Container,
     shapeAdjuster: ShapeAdjuster;
 
 let cursorCheck = false;
@@ -81,6 +85,7 @@ const dementions: Graphics[] = [];
 const fillings: Graphics[] = [];
 const fasades: Graphics[] = [];
 const loops: Container[] = [];
+const handles: Container[] = [];
 
 const {
   CONST_MAX_AREA_WIDTH,
@@ -204,6 +209,7 @@ const init = async () => {
   });
   updateTotalSize();
   loopsContainer = new Container();
+  handlesContainer = new Container();
   sectionsContainer = new Container();
   lablesContainer = new Container();
   dementionContainer = new Container();
@@ -222,6 +228,7 @@ const init = async () => {
   app.stage.addChild(sectionsContainer);
   app.stage.addChild(loopsContainer);
   app.stage.addChild(fasadesContainer);
+  app.stage.addChild(handlesContainer);
   app.stage.addChild(lablesContainer);
 
   app.stage.eventMode = "static";
@@ -238,6 +245,81 @@ const init = async () => {
 
   renderGrid();
 };
+
+const positionMap = {
+  0: { col: -1, row: 1, rotation: 0 },              // лево-верх
+  1: { col: 0, row: 1, rotation: Math.PI / 2 },     // центр-верх
+  2: { col: 1, row: 1, rotation: 0 },               // право-верх
+  3: { col: -1, row: 0, rotation: 0 },              // лево-центр
+  4: { col: 0, row: 0, rotation: Math.PI / 2 },     // центр
+  5: { col: 1, row: 0, rotation: 0 },               // право-центр
+  6: { col: -1, row: -1, rotation: 0 },             // лево-низ
+  7: { col: 0, row: -1, rotation: Math.PI / 2 },    // центр-низ
+  8: { col: 1, row: -1, rotation: 0 }               // право-низ
+}
+
+const getHandlesPosition = (
+    posNumber: number,
+    fasadeMesh: {
+      position: THREE.Vector2,
+      size: {width: number, height: number},
+    },
+    handleMesh: {
+      size: THREE.Vector2,
+    }
+) => {
+  const trueSize = fasadeMesh.size;
+  if (!trueSize) {
+    console.warn('fasadeMesh.userData.trueSize отсутствует');
+    return;
+  }
+  const { width, height } = trueSize;
+
+  // Получаем размеры ручки (если их нет — вычисляем)
+  let handlSize = handleMesh.size;
+
+  const W = handlSize.x;
+  const H = handlSize.y;
+  const offset = 25; // мм
+
+  const cfg = positionMap[posNumber];
+  if (!cfg) {
+    console.warn('Неверный action для ручки:', posNumber);
+    return;
+  }
+
+  const halfWidth = width // 2;
+  const halfHeight = height // 2;
+
+  // Проекция размеров ручки на оси X/Y после поворота (полная ширина/высота AABB)
+  const theta = cfg.rotation;
+  const projW = Math.abs(W * Math.cos(theta)) + Math.abs(H * Math.sin(theta));
+  const projH = Math.abs(W * Math.sin(theta)) + Math.abs(H * Math.cos(theta));
+  const halfExtX = projW // 2;
+  const halfExtY = projH // 2;
+
+  // Вычисляем координаты центра ручки с учётом отступа и проекции (чтобы край ручки был не ближе offset)
+  let posX = 0;
+  if (cfg.col === -1)
+    posX = offset + halfExtX;
+  else if (cfg.col === 1)
+    posX = halfWidth - offset - halfExtX;
+  else
+    posX = width / 2 + halfExtX / 2;
+
+  let posY = 0;
+  if (cfg.row === 1)
+    posY = height - offset - halfExtY  ;
+  else if (cfg.row === -1)
+    posY = offset + halfExtY;
+  else
+    posY = height / 2 - halfExtY / 2 ;
+
+  return {
+    position: new THREE.Vector2(posX + fasadeMesh.position.x, posY + (fasadeMesh.position.y - height)),
+    rotation: theta,
+  };
+}
 
 const renderGrid = (_moduleGrid) => {
   clearRender();
@@ -545,6 +627,32 @@ const renderGrid = (_moduleGrid) => {
             _sector: moduleSector,
             gridType: 'fasades',
           });
+
+          if(!row.error && row.material.HANDLES?.id !== 69920 && row.material.HANDLES?.position){
+            let handle = APP.CATALOG.PRODUCTS[row.material.HANDLES.id]
+            let handle_size = new THREE.Vector2(15, 100)
+            let handle_pos = getHandlesPosition(row.material.HANDLES.position, {
+              position: new THREE.Vector2( row.position.x, module.value.height - row.position.y),
+                  size: {width: row.width, height: row.height},
+            },
+            {
+              size: handle_size,
+            })
+
+            handle_size = handle_size.rotateAround(new THREE.Vector2(), handle_pos.rotation)
+
+            createHandle({
+              x: getPixelWidth(handle_pos.position.x),
+              y: getPixelHeight(handle_pos.position.y),
+              width: getPixelWidth(handle_size.x),
+              height: getPixelHeight(handle_size.y),
+              handleData: {
+                ...handle,
+                position: handle_pos.position
+              },
+            });
+          }
+
         });
         //Добавляем отступ по горизонтали
         fasadeXOffset += pxWidth + getPixelWidth(4);
@@ -621,6 +729,10 @@ const renderGrid = (_moduleGrid) => {
 
   loops.forEach((elem) => {
     loopsContainer.addChild(elem);
+  });
+
+  handles.forEach((elem) => {
+    handlesContainer.addChild(elem);
   });
 
   fillings.forEach((elem) => {
@@ -827,6 +939,38 @@ const createLoop = ({
   sector.bound = sectorBounds;
 
   loopData.sector = sector;
+
+  return sector;
+};
+
+const createHandle = ({
+                      x,
+                      y,
+                      width,
+                      height,
+                      handleData,
+                    }) => {
+  const sector = new Container();
+
+  sector.position.set(x, y);
+
+  sector.shapes = [];
+  sector.sectorData = handleData;
+  sector.sections = sections;
+
+  const cell = new Section(handleData, width, height, sector, false);
+  cell.highlightGraphics.visible = false;
+  cell.cellGraphics.eventMode = "static";
+
+  sector.addChild(cell.cellGraphics);
+
+  handles.push(sector);
+
+  // Создаём ограничения для секторов по высоте
+  const sectorBounds = shapeAdjuster.getSectorBounds(sector);
+  sector.bound = sectorBounds;
+
+  handleData.sector = sector;
 
   return sector;
 };
@@ -2813,9 +2957,11 @@ const clearRender = () => {
   fillings.length = 0;
   fasades.length = 0;
   loops.length = 0;
+  handles.length = 0;
 
   sectionsContainer.removeChildren();
   loopsContainer.removeChildren();
+  handlesContainer.removeChildren();
   lablesContainer.removeChildren();
   fillingsContainer.removeChildren();
   dementionContainer.removeChildren();

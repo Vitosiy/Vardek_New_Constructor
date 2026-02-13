@@ -19,6 +19,8 @@ import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtil
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import {TFasadeTrueSizes} from "@/types/types.ts";
 import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
+import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
+import { useFigureRightPage, IFigureItems} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
 
 const props = defineProps({
   module: {
@@ -43,6 +45,9 @@ const {
   checkFasadeConversations,
 } = useConversationActions();
 
+const { figureItems, createSurfaceList } =
+    useFigureRightPage();
+
 const { module, visualizationRef } = toRefs(props);
 const selectedFasade = ref({ sec: 0, cell: null, row: null });
 const APP = useAppData().getAppData;
@@ -51,6 +56,10 @@ const modelState = useModelState();
 const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<Object | boolean>(false);
 const currentFasadeSize = ref<TFasadeTrueSizes | boolean>(false);
+
+const isOpenHandleSelector = ref<boolean>(false);
+const currentHandle = ref<Object | boolean>(false);
+
 const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const emit = defineEmits([
@@ -178,7 +187,7 @@ const addSlideDoor = (doorIndex) => {
   let newFasade = <FasadeObject>{
     ...newDoor,
     id: doorIndex,
-    material: <FasadeMaterial>{ ...newDoor.material },
+    material: <FasadeMaterial>{ ...newDoor.material, HANDLES: {...newDoor.material.HANDLES} },
   };
 
   fasades.push([newFasade]);
@@ -307,6 +316,7 @@ const addDoor = (secIndex) => {
       type: "fasade",
       material: <FasadeMaterial>{
         ...FASADE_PROPS,
+        HANDLES: {...FASADE_PROPS.HANDLES},
       },
     };
     let fasadeMinMax = getFasadePositionMinMax(firstFasade);
@@ -325,7 +335,7 @@ const addDoor = (secIndex) => {
   const newDoor: FasadeObject = {
     ...firstFasade,
     position: newDoorPosition,
-    material: Object.assign({}, firstFasade.material),
+    material: {...firstFasade.material, HANDLES: {...firstFasade.material.HANDLES}},
   };
 
   let fasPos = getFasadePosition(newDoor.material.POSITION);
@@ -399,7 +409,7 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  let newFasade = <FasadeObject>{
+  let newFasade = <FasadeObject> {
     ...segment,
     position: module.value.isSlidingDoors
         ? new THREE.Vector3(
@@ -411,11 +421,10 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
             segment.position.x,
             segment.position.y + 4 + segment.height + delta
         ),
-    material: Object.assign({}, segment.material),
-  }
+    material: {...segment.material,  HANDLES: {...segment.material.HANDLES}},
+  };
 
   fasades[doorIndex].splice(segmentIndex + 1, 0, newFasade);
-
   segment.height += delta;
 
   for (let i = 0; i < fasades[doorIndex].length; i++) {
@@ -841,6 +850,9 @@ const checkAddDoor = (secIndex, doorIndex) => {
 const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
   isOpenMaterialSelector.value = false;
 
+  if(isOpenHandleSelector.value)
+    closeMenu()
+
   /** @Создание_данных_для_выбранного_фасада */
   createFacadeData(segmentIndex);
 
@@ -850,8 +862,7 @@ const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
     doorIndex === currentFasadeMaterial.value.doorIndex &&
     segmentIndex === currentFasadeMaterial.value.segmentIndex
   ) {
-    currentFasadeMaterial.value = false;
-    currentFasadeSize.value = false;
+    closeMenu()
     return;
   }
 
@@ -871,6 +882,51 @@ const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
     isOpenMaterialSelector.value = true;
   }, 10);
 };
+
+const openHandleSelector = (secIndex, doorIndex, segmentIndex) => {
+  isOpenHandleSelector.value = false;
+  isOpenMaterialSelector.value = false;
+
+  if(isOpenMaterialSelector.value)
+    closeMenu()
+
+  if (
+      currentHandle.value &&
+      secIndex === currentHandle.value.secIndex &&
+      doorIndex === currentHandle.value.doorIndex &&
+      segmentIndex === currentHandle.value.segmentIndex
+  ) {
+    closeMenu()
+    return;
+  }
+
+  setTimeout(() => {
+    let data =
+        secIndex === null
+            ? module.value.fasades[doorIndex][segmentIndex]
+            : module.value.sections[secIndex].fasades[doorIndex][segmentIndex];
+    currentHandle.value = {
+      secIndex,
+      doorIndex,
+      segmentIndex,
+      data: data.material,
+    };
+    selectCell(secIndex, doorIndex, segmentIndex);
+    isOpenHandleSelector.value = true;
+  }, 10);
+};
+
+const selectHandle = (data, type) => {
+  switch (type) {
+    case "handle":
+      currentHandle.value.data.HANDLES.id = data;
+      break;
+    case "position":
+      currentHandle.value.data.HANDLES.position = data;
+      break;
+  }
+  visualizationRef.value.renderGrid();
+}
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
   currentFasadeMaterial.value.data[type] = value ? value.ID || value : null;
@@ -922,6 +978,11 @@ onMounted(() => {
 
 const closeMenu = () => {
   isOpenMaterialSelector.value = false;
+  isOpenHandleSelector.value = false;
+
+  currentHandle.value = false;
+  currentFasadeMaterial.value = false;
+  currentFasadeSize.value = false;
 };
 
 </script>
@@ -1060,6 +1121,15 @@ const closeMenu = () => {
 
                         <ConfigurationOption
                             v-if="!segment.error"
+                            :class="[
+                                {
+                                  active:
+                                    currentFasadeMaterial.doorIndex ===
+                                      doorIndex &&
+                                    currentFasadeMaterial.segmentIndex ===
+                                      segmentIndex,
+                                },
+                              ]"
                             :type="
                               segment.material.PALETTE ? 'palette' : 'surface'
                             "
@@ -1077,6 +1147,25 @@ const closeMenu = () => {
                             "
                         />
                         <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
+
+                        <ConfigurationOption
+                            v-if="!segment.error"
+                            :class="[
+                                {
+                                  active:
+                                    currentHandle.doorIndex ===
+                                      doorIndex &&
+                                    currentHandle.segmentIndex ===
+                                      segmentIndex,
+                                },
+                              ]"
+                            :type="'Handles'"
+                            :data="segment.material.HANDLES ? {...APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
+                            @click="
+                              openHandleSelector(null, doorIndex, segmentIndex)
+                            "
+                        />
+
                       </div>
                     </article>
                   </div>
@@ -1316,6 +1405,26 @@ const closeMenu = () => {
                               "
                           />
                           <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
+
+                          <ConfigurationOption
+                              v-if="!segment.error"
+                              :class="[
+                                {
+                                  active:
+                                    currentHandle.secIndex ===
+                                      secIndex &&
+                                    currentHandle.doorIndex ===
+                                      doorIndex &&
+                                    currentHandle.segmentIndex ===
+                                      segmentIndex,
+                                },
+                              ]"
+                              :type="'Handles'"
+                              :data="segment.material.HANDLES ? {...APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
+                              @click="
+                              openHandleSelector(secIndex, doorIndex, segmentIndex)
+                            "
+                          />
                         </div>
                       </article>
                     </div>
@@ -1330,15 +1439,25 @@ const closeMenu = () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="color-select" v-if="isOpenMaterialSelector" key="color-select">
+    <div class="color-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color-select">
       <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
       <AdvanceCorpusMaterialRedactor
+        v-if="isOpenMaterialSelector"
         :is-fasade="true"
         :elementData="currentFasadeMaterial.data"
         :elementIndex="currentFasadeMaterial.segmentIndex"
         :fasade-size="currentFasadeSize"
         @parent-callback="selectOption"
+      />
+
+      <Handles
+          v-else
+          :is2-dconstructor="true"
+          :data="createSurfaceList(currentHandle)"
+          :index="0"
+          @parent-callback="selectHandle"
+          :active-pos="currentHandle.data.HANDLES.position"
       />
     </div>
   </transition>
