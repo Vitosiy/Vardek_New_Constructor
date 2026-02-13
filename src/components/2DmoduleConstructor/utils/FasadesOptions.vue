@@ -409,7 +409,7 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
   segment.height = halfHeight;
 
   // Добавляем новую строку в эту колонку
-  let newFasade = <FasadeObject>{
+  let newFasade = <FasadeObject> {
     ...segment,
     position: module.value.isSlidingDoors
         ? new THREE.Vector3(
@@ -422,7 +422,7 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
             segment.position.y + 4 + segment.height + delta
         ),
     material: {...segment.material,  HANDLES: {...segment.material.HANDLES}},
-  });
+  };
 
   fasades[doorIndex].splice(segmentIndex + 1, 0, newFasade);
   segment.height += delta;
@@ -925,6 +925,7 @@ const selectHandle = (data, type) => {
       currentHandle.value.data.HANDLES.position = data;
       break;
   }
+  visualizationRef.value.renderGrid();
 }
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
@@ -1456,6 +1457,7 @@ const closeMenu = () => {
           :data="createSurfaceList(currentHandle)"
           :index="0"
           @parent-callback="selectHandle"
+          :active-pos="currentHandle.data.HANDLES.position"
       />
     </div>
   </transition>

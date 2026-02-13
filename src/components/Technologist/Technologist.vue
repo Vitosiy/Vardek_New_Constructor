@@ -680,14 +680,28 @@ const getNavData = () => {
           </MainButton>-->
 
           <!--Какой проект надо грузить? Технолога или дизайнера?-->
-          <MainButton
+          <div
               v-if="(APP.userGroup[6] || APP.userGroup[29]) && elem.statusId == 'C10:PREPAYMENT_INVOIC'"
-              @click="openModalOrder(elem);"
-              :class-name="'appItem-btn'"
-              :style="`border-color:${APP.STATUS_TECH['C10:WON'].EXTRA.COLOR}`"
+              :style="`width: 100%`"
           >
-            Оформить заказ
-          </MainButton>
+            <MainButton
+                v-if="elem.projectTechId == projectState.currentProjectId"
+                @click="openModalOrder(elem);"
+                :class-name="'appItem-btn'"
+                :style="`border-color:${APP.STATUS_TECH['C10:WON'].EXTRA.COLOR}`"
+            >
+              Оформить заказ
+            </MainButton>
+            <MainButton
+                v-else
+                :class-name="'appItem-btn disabled'"
+                disabled
+                title="Нельзя оформить проект! Проект не совпадает с проектом технолога!"
+            >
+              Оформить заказ
+            </MainButton>
+          </div>
+
 
           <MainButton
               v-if="elem.statusId == 'C10:NEW' && APP.userGroup[56]"
@@ -910,14 +924,26 @@ const getNavData = () => {
           margin-bottom: 10px;
           background: white;
           border: $strong-grey 1px solid;
+          width: 100%;
 
           &:hover {
             background-color: $red;
             color: $white;
           }
+
+          &.disabled {
+            background-color: $light-grey;
+            border: $strong-grey 1px solid;
+            cursor: not-allowed;
+
+            &:hover {
+              color: $strong-grey;
+            }
+          }
         }
 
         &-status-btn {
+          width: 100%;
           margin-bottom: 10px;
           border: $strong-grey 1px solid;
         }

@@ -44,6 +44,9 @@ const props = defineProps({
   is2Dconstructor: {
     type: Boolean,
     default: false,
+  },
+  activePos: {
+    type: Number,
   }
 });
 
@@ -181,6 +184,7 @@ const checkControllerVisible = computed(() => {
         <DirectionControl
           v-if="controllerVisible"
           :handle-pos="handlePos"
+          :active-pos="props.activePos"
           @changeDirectionPos="onChangeHandlePos"
           :container="'card'"
           :scale="1"

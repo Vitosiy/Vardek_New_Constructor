@@ -16,7 +16,7 @@ const useHandlesAction = () => {
         let result = [];
         const model = modelState.getCurrentModel;
 
-        const { FASADE_TYPE, FASADE_POSITIONS, ELEMENT_TYPE } = model?.userData.PROPS.CONFIG;
+        const { FASADE_TYPE, FASADE_POSITIONS, ELEMENT_TYPE, MODULEGRID } = model?.userData.PROPS.CONFIG;
         const prepare = FASADE_POSITIONS[fasadeNdx].FASADE_TYPE.map((el: number) => modelState._FASADE_TYPE[el]).filter(
             Boolean
         );

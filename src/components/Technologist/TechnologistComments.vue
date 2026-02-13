@@ -255,7 +255,7 @@ const openFileFromComment = async (file) => {
 
 const setProjectTechId = async (isCurrentProjectID = true) => {
   if(isCurrentProjectID) {
-    if(!currentProjectID.value || !technologistStorage.getTechnologistProject()) {
+    //if(!currentProjectID.value || !technologistStorage.getTechnologistProject()) {
       let now = new Date();
       let projectName = `Проект ${APP.userGroup[56] ? 'технолога' : 'дизайнера'} для сделки №${deal.value.dealId} от ${now.getDate()}.${now.getUTCMonth()+1}.${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
       if (reviewStatus.value && statusNames[formReview.value.statusId]){
@@ -266,7 +266,7 @@ const setProjectTechId = async (isCurrentProjectID = true) => {
       projectState.setProjectId(result.data.ID);
       currentProjectID.value = projectState.getProjectId()
       autoSaveNeedUpdate.value = true;
-    }
+    //}
 
     formReview.value.projectTechId = currentProjectID.value
   }
