@@ -29,7 +29,8 @@ export type ActionKey =
   | 'drowmod'
   | 'ruller'
   | 'screenshot3d'
-  | 'newProject';
+  | 'newProject'
+  | 'technologist';
 
 export interface QuickActionItem {
   key: ActionKey;
@@ -323,6 +324,14 @@ export const useQuickActionsToolbar = () => {
         }
         await loadBlankRoom()
       },
+    },
+    {
+      key: 'technologist',
+      tooltip: 'Технолог',
+      iconClass: 'icon-svg',
+      iconSrc: '/icons/book.svg',
+      path: 'default',
+      action: () => popupStore.openPopup('technologist'),
     },
   ];
 

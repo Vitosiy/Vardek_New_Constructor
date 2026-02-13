@@ -5,17 +5,19 @@ import { Project, ProjectFilters, SaveProjectResult, ProjectTab } from '../types
 import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
 import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
+import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
 
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
   const isLoading = ref(false)
+  const technologistStorage = useTechnologistStorage();
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
 
   // Нормалайзер ответа от API клиента
-  const normalizeApiResponse = <T = any>(response: { data?: any; error?: any; response?: Response }): { success: boolean; data?: T; error?: string } => {
+  const normalizeApiResponse = <T = any>(response: { data?: any; deal?:any; error?: any; response?: Response }): { success: boolean; data?: T; deal?: T; error?: string } => {
     // Проверяем наличие ошибки
     if (response.error) {
       return {
@@ -173,26 +175,44 @@ export function useProjectAPI() {
         body: { id }
       })
 
-      const normalized = normalizeApiResponse<{ data?: any }>(response)
+      const normalized = normalizeApiResponse<{
+        deal?: any;
+        data?: any }>(response)
 
       if (normalized.success && normalized.data?.data) {
         const projectData = normalized.data.data
+        const deal = normalized.data.deal
+
         if (validateProjectData(projectData)) {
+          if(deal)
+            technologistStorage.setDeal(deal)
+          else
+            technologistStorage.setDeal()
+
+          if (deal.techProject == 1)
+            technologistStorage.setTechnologistProject(true)
+          else
+            technologistStorage.setTechnologistProject(false)
+
           return projectData
         } else {
           console.error(ERROR_MESSAGES.INVALID_PROJECT_DATA)
+          technologistStorage.setTechnologistProject(false)
+          technologistStorage.setDeal()
           return null
         }
       }
       return null
     } catch (error) {
       console.error(ERROR_MESSAGES.LOAD_PROJECT, error)
+      technologistStorage.setTechnologistProject(false)
+      technologistStorage.setDeal()
       return null
     }
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false, manualNewProject: boolean = false): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
@@ -218,7 +238,7 @@ export function useProjectAPI() {
         screenshotBase64 = await getProjectScreenshot()
       }
 
-      if (projectId) {
+      if (projectId && !manualNewProject) {
         console.log(projectId, 'projectId HAVE')
 
         const response = await client.POST('/api/modeller/projectq/updateprojectbyid/', {
@@ -236,8 +256,10 @@ export function useProjectAPI() {
         } else {
           throw new Error(normalized.error || 'Unknown error')
         }
-      } else {
+      }
+      else {
         console.log(projectId, 'projectId No')
+        const parentProjectId = projectId
 
         const tempProjectId = Date.now().toString();
         projectData.projectId = tempProjectId
@@ -254,7 +276,8 @@ export function useProjectAPI() {
                   city: REQUEST_CONSTANTS.CITY,
                   project: projectData,
                   style: REQUEST_CONSTANTS.STYLE,
-                  projectId: Date.now().toString(),
+                  projectId: tempProjectId,
+                  parentProjectId: parentProjectId,
                   user_id: REQUEST_CONSTANTS.USER_ID,
                   ...(kpFlag && basketData && { basket: basketData }),
                   ...(kpFlag && { kp: kpFlag })

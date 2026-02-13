@@ -97,5 +97,6 @@ export interface BasketItemType {
 export interface BasketRequest {
   BASKET: IBasket[]
   TYPE_PRICE: number
+  technologistBasket?: boolean|Object
 }
 

@@ -7,7 +7,7 @@ import router from './router'
 import { createPinia, setActivePinia } from 'pinia'
 import { COOKIE_NAMES, getCookie } from './components/authorization/utils/cookieUtils'
 import { useAppData } from './store/appliction/useAppData'
-
+import {vMaska} from "maska/vue";
 // Функция для загрузки скриптов
 // function loadScript(src: string): Promise<void> {
 //   return new Promise((resolve, reject) => {
@@ -121,7 +121,7 @@ async function bootApp() {
 
   app.use(pinia)
   app.use(router)
-
+  app.directive('mask', vMaska)
   await router.isReady()
 
   const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
