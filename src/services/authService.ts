@@ -53,6 +53,30 @@ export const AuthService = {
       throw error
     }
   },
+  async getCheckUser(token: string): Promise<ApiResponse> {
+    const currentUrl = window.location.href;
+    try {
+      const { data } = await axios.get<ApiResponse>(
+        `${API_URL}/api/modellerjwt/auth/checkpromission/`,
+        {
+          headers: {
+              "Authorization": `Bearer ${token}`,
+          },
+          params: {
+            currentUrl: currentUrl
+          },
+          timeout: 10000
+        }
+      )
+      return data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Ошибка при подключении к серверу')
+      }
+      throw error
+    }
+  },
+  
   async getCheckURL(name: string): Promise<ApiResponse> {
     try {
       const { data } = await axios.post<ApiResponse>(

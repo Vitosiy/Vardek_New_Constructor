@@ -172,6 +172,9 @@ export const useAppData = defineStore('AppData', () => {
       mainLoader.style.display = 'block'
     }
 
+    const authStore = useAuthStore()
+    await authStore.fetchUserData()
+
     if (import.meta.env.DEV) {
       if (isLoaded.value || isLoading.value) return
     } else {
@@ -214,8 +217,7 @@ export const useAppData = defineStore('AppData', () => {
         console.error('Не удалось загрузить удаленные данные:', fetchError)
       }
     } finally {
-      const authStore = useAuthStore()
-      await authStore.fetchUserData()
+      // await authStore.checkUser()
       isLoading.value = false
       isLoaded.value = true
       

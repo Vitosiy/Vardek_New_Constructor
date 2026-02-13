@@ -10,13 +10,17 @@ const getBaseFromSubdomain = async () =>  {
   const parts = pathname.split('/');
   console.log('parts', parts)
   const isURL = await AuthService.getCheckURL(parts[2]);
-  console.log('parts', parts)
+  // const authStore = useAuthStore();
+  // console.log('parts', authStore)
   if (parts && parts.length > 2 && isURL.DATA) {
   // if (parts.length > 2 && parts[2] !== '2d' && parts[2] !== '3d' && parts[2] !== 'auth') {
+    console.log(parts.length);
+    // authStore.setCheckout(isURL.DATA)
     return `/dev_modeller/${parts[2]}`;
   } else {
     return '/dev_modeller';
   }
+  
 }
 
 

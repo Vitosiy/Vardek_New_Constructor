@@ -6,13 +6,15 @@ import { useRouter } from 'vue-router'
 import { LoginData, UserData } from '@/types/authTypes'
 import { useAppData } from '@/store/appliction/useAppData'
 import { setCookie, getCookie, deleteCookie, COOKIE_NAMES } from '@/components/authorization/utils/cookieUtils'
+import { useToast } from '@/features/toaster/useToast'
 
 const TOKEN_EXPIRATION_HOURS = 24
 
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   const appDataStore = useAppData()
-  
+  const isCheckURL = ref(false);
+
   const isAuthenticated = ref(!!getCookie(COOKIE_NAMES.AUTH_TOKEN))
   const isSubmitting = ref(false)
   const error = ref({
@@ -42,6 +44,14 @@ export const useAuthStore = defineStore('auth', () => {
       if (!token) {
         throw new Error('Токен не найден');
       }
+
+      const res = await checkUser(token);
+      if(res.DATA.type === 'error') {
+        await logout()
+        useToast().error('Доступ запрещен!')
+        // return;
+      }
+      
 
       const response = await AuthService.getUserData(token);
 
@@ -110,6 +120,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const checkUser = async () => {
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+    const response = await AuthService.getCheckUser(token);
+
+    return response;
+  }
+
   const login = async (credentials: LoginData) => {
     try {
       isSubmitting.value = true
@@ -148,6 +165,8 @@ export const useAuthStore = defineStore('auth', () => {
       cookieDays: 1
     })
     
+
+
     isAuthenticated.value = true
     await appDataStore.initAppData()
 
@@ -193,9 +212,28 @@ export const useAuthStore = defineStore('auth', () => {
         name: '',
         status: 'offline'
       }
-      
+      // const currentUrl = window.location.href;
+      // console.log('currentUrl', currentUrl);
+      // // http://localhost:5000/dev_modeller/petrovich/2d
+
+      // // Разбиваем URL на части
+      // const urlParts = currentUrl.split('/');
+      // // Заменяем последний сегмент на 'auth'
+      // urlParts[urlParts.length - 1] = 'auth';
+      // // Собираем URL обратно
+      // const authUrl = urlParts.join('/');
+
+      // console.log('authUrl', authUrl);
+      // // http://localhost:5000/dev_modeller/petrovich/auth
+
+      // // Перенаправляем
+      // window.location.href = authUrl;
       // Перенаправляем на страницу входа
       await router.push('/auth')
+      const mainLoader = document.querySelector('#main-loader')
+      if (mainLoader) {
+        mainLoader.style.display = 'none'
+      }
     } catch (error) {
       console.error('Ошибка при выходе:', error)
       // Форсированный выход при ошибке
@@ -223,6 +261,11 @@ export const useAuthStore = defineStore('auth', () => {
     logout()
   }
 
+
+  const setCheckout = (value: bollean) => {
+    isCheckURL.value = value;
+  }
+
   return {
     isAuthenticated,
     isSubmitting,
@@ -230,8 +273,11 @@ export const useAuthStore = defineStore('auth', () => {
     userData,
     userInitials,
     fetchUserData,
+    checkUser,
     login,
     logout,
-    checkTokenExpiration
+    checkTokenExpiration,
+    setCheckout,
+    isCheckURL,
   }
 })
