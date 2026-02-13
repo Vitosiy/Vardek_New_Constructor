@@ -231,7 +231,7 @@ export function useProjectAPI() {
   }
 
   // Сохранение проекта
-  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false, manualNewProject: boolean = false): Promise<SaveProjectResult> => {
+  const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false, _manualNewProject?: boolean): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
@@ -251,66 +251,39 @@ export function useProjectAPI() {
 
       // Генерируем скриншот проекта для нового проекта
       let screenshotBase64 = 'data:image/jpeg;base64,'
-      const projectId = incomeProjectId ?? projectData.projectId
-      // Если создаем новый проект, генерируем скриншот
-      if (true) {
-        screenshotBase64 = await getProjectScreenshot()
-      }
+      const parentProjectId = incomeProjectId ?? projectData.projectId ?? null
+      screenshotBase64 = await getProjectScreenshot()
 
-      if (projectId && !manualNewProject) {
-        console.log(projectId, 'projectId HAVE')
+      // Всегда создаём новый проект через SaveProject (updateprojectbyid не используется)
+      const tempProjectId = Date.now().toString()
+      projectData.projectId = tempProjectId
 
-        const response = await client.POST('/api/modeller/projectq/updateprojectbyid/', {
-            body: {
-            id: projectId,
+      const basketData = kpFlag ? await useBasketStore().syncBasket() : null
+      const response = await client.POST('/api/modeller/projectq/SaveProject/', {
+        body: {
+          data: {
+            file: screenshotBase64,
+            provider: REQUEST_CONSTANTS.PROVIDER,
+            name: projectData.project_name || 'Новый проект',
+            user_hash: REQUEST_CONSTANTS.USER_HASH,
+            city: REQUEST_CONSTANTS.CITY,
             project: projectData,
-            file: screenshotBase64
+            style: REQUEST_CONSTANTS.STYLE,
+            projectId: tempProjectId,
+            parentProjectId: parentProjectId,
+            user_id: REQUEST_CONSTANTS.USER_ID,
+            ...(kpFlag && basketData && { basket: basketData }),
+            ...(kpFlag && { kp: kpFlag })
           }
-        })
-
-        const normalized = normalizeApiResponse(response)
-
-        if (normalized.success) {
-          return { success: true, data: normalized.data }
-        } else {
-          throw new Error(normalized.error || 'Unknown error')
         }
-      }
-      else {
-        console.log(projectId, 'projectId No')
-        const parentProjectId = projectId
+      })
 
-        const tempProjectId = Date.now().toString();
-        projectData.projectId = tempProjectId
+      const normalized = normalizeApiResponse<{ data?: any }>(response)
 
-        console.log(kpFlag)
-        const basketData = kpFlag ? await useBasketStore().syncBasket() : null
-        const response = await client.POST('/api/modeller/projectq/SaveProject/', {
-          body: {
-                data: {
-                  file: screenshotBase64,
-                  provider: REQUEST_CONSTANTS.PROVIDER,
-                  name: projectData.project_name || 'Новый проект',
-                  user_hash: REQUEST_CONSTANTS.USER_HASH,
-                  city: REQUEST_CONSTANTS.CITY,
-                  project: projectData,
-                  style: REQUEST_CONSTANTS.STYLE,
-                  projectId: tempProjectId,
-                  parentProjectId: parentProjectId,
-                  user_id: REQUEST_CONSTANTS.USER_ID,
-                  ...(kpFlag && basketData && { basket: basketData }),
-                  ...(kpFlag && { kp: kpFlag })
-                }
-              }
-        })
-
-        const normalized = normalizeApiResponse<{ data?: any }>(response)
-
-        if (normalized.success) {
-          return { success: true, data: normalized.data?.data || normalized.data }
-        } else {
-          throw new Error(normalized.error || 'Unknown error')
-        }
+      if (normalized.success) {
+        return { success: true, data: normalized.data?.data || normalized.data }
+      } else {
+        throw new Error(normalized.error || 'Unknown error')
       }
     } catch (error) {
       console.error(ERROR_MESSAGES.SAVE_PROJECT, error)

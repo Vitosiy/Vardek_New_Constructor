@@ -471,15 +471,10 @@ const saveProject = async () => {
     const result = await projectAPI.saveProject(projectState.currentProjectId);
 
     if (result.success) {
-      if (projectState.currentProjectId) {
-        // Обновляем существующий проект
-        projectState.updateAfterSave();
-      } else {
-        // Создаем новый проект
-        projectState.setProjectId(result.data.ID);
-        projectState.updateAfterSave();
-        await loadProjects(0); // Обновляем список проектов
-      }
+      // SaveProject всегда создаёт новый проект — ставим текущим только что сохранённый
+      if (result.data?.ID) projectState.setProjectId(result.data.ID);
+      projectState.updateAfterSave();
+      await loadProjects(0);
     } else {
       console.error("❌ Ошибка сохранения:", result.error);
     }

@@ -95,6 +95,7 @@ export const useQuickActionsToolbar = () => {
     try {
       const result = await projectAPI.saveProject(projectState.currentProjectId);
       if (result.success) {
+        if (result.data?.ID) projectState.setProjectId(result.data.ID);
         projectState.updateAfterSave();
         toaster.success("Сохранено");
       } else {
@@ -125,15 +126,10 @@ export const useQuickActionsToolbar = () => {
       const result = await projectAPI.saveProject(projectState.currentProjectId, projectName, kpFlag);
 
       if (result.success) {
-        if (projectState.currentProjectId) {
-          // Обновляем существующий проект
-          console.log(result.data.kp)
-          projectState.updateAfterSave();
-        } else {
-          // Создаем новый проект
-          projectState.setProjectId(result.data.ID);
-          projectState.updateAfterSave();
-        }
+        // SaveProject всегда создаёт новый проект — обновляем текущий ID на только что сохранённый
+        if (result.data?.ID) projectState.setProjectId(result.data.ID);
+        console.log(result.data?.kp);
+        projectState.updateAfterSave();
         toaster.success("Сохранено");
         
         // Вызываем callback при успешном сохранении
