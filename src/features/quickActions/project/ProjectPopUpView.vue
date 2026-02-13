@@ -18,10 +18,10 @@
           />
           <MainInput
             v-model="filters.id"
-            type="number"
+            type="text"
             placeholder="ID"
-            :min="0"
-            :max="99999999"
+            :maxlength="30"
+            :digitsOnly="true"
             class="search-input"
           />
           <select

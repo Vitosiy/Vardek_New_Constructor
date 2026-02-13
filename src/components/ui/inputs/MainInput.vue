@@ -6,6 +6,9 @@
     :type="type"
     :min="props.min"
     :max="props.max"
+    :maxlength="maxlength"
+    :inputmode="digitsOnly ? 'numeric' : undefined"
+    :pattern="digitsOnly ? '[0-9]*' : undefined"
     v-model="inputValue"
     :placeholder="placeholder"
     :step="step"
@@ -17,6 +20,9 @@
     :type="type"
     :min="props.min"
     :max="props.max"
+    :maxlength="maxlength"
+    :inputmode="digitsOnly ? 'numeric' : undefined"
+    :pattern="digitsOnly ? '[0-9]*' : undefined"
     v-model="inputValue"
     :placeholder="placeholder"
     readonly
@@ -63,6 +69,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  maxlength: {
+    type: [String, Number],
+    default: null,
+  },
+  digitsOnly: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const input = useTemplateRef("input");
@@ -89,6 +103,18 @@ const emit = defineEmits(["update:modelValue"]);
 const inputValue = ref(props.modelValue);
 
 watch(inputValue, (newValue) => {
+  let valueToEmit = newValue;
+  if (props.digitsOnly) {
+    const filtered = String(newValue ?? "").replace(/\D/g, "");
+    const maxLen = props.maxlength != null ? Number(props.maxlength) : null;
+    valueToEmit = maxLen != null ? filtered.slice(0, maxLen) : filtered;
+    if (valueToEmit !== newValue) {
+      inputValue.value = valueToEmit;
+      emit("update:modelValue", valueToEmit);
+      if (input.value) input.value.style.color = "#6d6e73";
+      return;
+    }
+  }
   if (input.value.checkValidity() && customValidation(newValue)) {
     input.value.style.color = "#6d6e73";
     emit("update:modelValue", newValue);
