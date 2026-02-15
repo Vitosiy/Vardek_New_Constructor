@@ -118,7 +118,6 @@
           class="project-item"
         >
           <div class="project-item__main" @click="loadProject(project.id)">
-            API_URL
             <!-- <img
               :src="
                 project.img
