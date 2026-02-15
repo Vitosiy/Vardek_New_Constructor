@@ -2,8 +2,10 @@
 import { client } from '@/api/api'
 import { ApiResponse, LoginData } from '@/types/authTypes'
 import axios from 'axios'
+import { BASE_DOMAIN } from "@/utils/originalDomain";
 
-const API_URL = 'https://dev.vardek.online'
+// const API_URL = 'https://dev.vardek.online';
+const API_URL = `https://${BASE_DOMAIN}`;
 const REQUEST_TIMEOUT = 10000
 
 //можно это сделать хуком

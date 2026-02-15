@@ -35,7 +35,10 @@
               :key="owner.ID"
               :value="owner.ID"
             >
-              {{ [owner.NAME, owner.LAST_NAME].filter(Boolean).join(' ') || owner.ID }}
+              {{
+                [owner.NAME, owner.LAST_NAME].filter(Boolean).join(" ") ||
+                owner.ID
+              }}
             </option>
           </select>
         </div>
@@ -115,7 +118,8 @@
           class="project-item"
         >
           <div class="project-item__main" @click="loadProject(project.id)">
-            <img
+            API_URL
+            <!-- <img
               :src="
                 project.img
                   ? `https://dev.vardek.online${project.img}`
@@ -123,32 +127,36 @@
               "
               class="item__image"
               :alt="project.name || 'Проект'"
+            /> -->
+            <img
+              :src="getProgectImage(project)"
+              class="item__image"
+              :alt="project.name || 'Проект'"
             />
             <div class="item-info">
               <div class="info-id">
-                <p class="id__name">{{ project.name || 'Название' }}</p>
+                <p class="id__name">{{ project.name || "Название" }}</p>
                 <p class="id__number text-grey">ID {{ project.id }}</p>
               </div>
               <p class="info__date text-grey">{{ project.date }}</p>
             </div>
           </div>
 
-          <TechnologistFormButton
-            :project="project"
-            @click="closePopup"
-          />
+          <TechnologistFormButton :project="project" @click="closePopup" />
         </div>
 
         <!-- Пагинация под блоком карточек (по общему количеству с сервера) -->
-        
       </div>
-      <div v-if="!isLoading && !loadError && totalElements > 0" class="project-list__pagination">
-          <ProjectPagination
-            :total-items="totalElements"
-            :page-size="PAGE_SIZE"
-            v-model:current-page="currentPage"
-          />
-        </div>
+      <div
+        v-if="!isLoading && !loadError && totalElements > 0"
+        class="project-list__pagination"
+      >
+        <ProjectPagination
+          :total-items="totalElements"
+          :page-size="PAGE_SIZE"
+          v-model:current-page="currentPage"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -174,6 +182,7 @@ import { useRoomState } from "@/store/appliction/useRoomState";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import ProjectPagination from "./components/ProjectPagination.vue";
 import TechnologistFormButton from "@/components/Technologist/TechnologistFormButton.vue";
+import { BASE_DOMAIN } from "@/utils/originalDomain";
 
 const router = useRouter();
 const route = useRoute();
@@ -184,6 +193,7 @@ const sceneState = useSceneState();
 const eventBus = useEventBus();
 const schemeTransition = useSchemeTransition();
 
+const API_URL = ref(`https://${BASE_DOMAIN}`);
 const PAGE_SIZE = 12;
 
 // Простое состояние (серверная пагинация: в projects только элементы текущей страницы)
@@ -220,6 +230,17 @@ const roomState = useRoomState();
 // Состояние загрузки проекта
 const isProjectLoading = ref(false);
 
+const getProgectImage = computed(() => {
+  return (project) => {
+    if (project.img) {
+      return `${API_URL.value}/${project.img}`;
+    }
+    return "/src/assets/img/proj.png";
+  };
+  // ? `https://dev.vardek.online${project.img}`
+  // : '/src/assets/img/proj.png'
+});
+
 // Отслеживаем изменения фильтров — запрос с дебаунсом
 watch(
   filters,
@@ -227,7 +248,7 @@ watch(
     currentPage.value = 1;
     loadProjects(300);
   },
-  { deep: true }
+  { deep: true },
 );
 
 // Отслеживаем смену страницы — запрос сразу с новым currentPage
@@ -260,7 +281,9 @@ const loadProjects = async (delay: number = 300) => {
       sel === "all"
         ? "all"
         : sel === "my"
-          ? (authStore.userData?.id != null ? String(authStore.userData.id) : "all")
+          ? authStore.userData?.id != null
+            ? String(authStore.userData.id)
+            : "all"
           : String(sel);
 
     const nameTrim = filters.value.name?.trim();
@@ -281,7 +304,7 @@ const loadProjects = async (delay: number = 300) => {
         elementsOnPage: PAGE_SIZE,
         currentPage: currentPage.value,
       },
-      delay
+      delay,
     );
     projects.value = result.items;
     totalElements.value = result.totalElements;
@@ -338,56 +361,55 @@ const loadProject = async (id: string | number) => {
         schemeTransition.clearStore();
         // Очищаем текущую комнату перед загрузкой нового проекта
         roomState.clearCurrentRoomId();
-        
+
         // 1. Обновляем данные проекта в sceneState
         await sceneState.loadProjectFromData(projectData);
         sceneState.updateProjectParams({});
-        
+
         // 2. Устанавливаем данные в schemeTransition
         schemeTransition.setAppData(projectData.rooms);
-        roomState.routConvertData('/3d')
+        roomState.routConvertData("/3d");
 
-        
         const currentPath = route.path;
-        const is3DView = currentPath === '/3d';
+        const is3DView = currentPath === "/3d";
 
         if (is3DView) {
           // Если мы на 3D, конвертируем данные только для 3D
-          roomState.routConvertData('/3d');
-          
+          roomState.routConvertData("/3d");
+
           // Устанавливаем ID проекта в store
           projectState.setProjectId(id.toString());
-          
+
           // Ждем, чтобы данные успели обновиться
           await nextTick();
-          
+
           // Уведомляем о загрузке контента
           eventBus.emit("A:ContantLoaded", true);
-          
+
           // Загружаем первую комнату в 3D сцену
           const rooms = roomState.getRooms;
           if (rooms && rooms.length > 0) {
             const firstRoomId = rooms[0].id;
             // Небольшая задержка для гарантии обновления данных
             await nextTick();
-            
+
             // Устанавливаем состояние загрузки перед загрузкой комнаты
             await roomState.setLoad(false);
             eventBus.emit("A:Load", firstRoomId);
-            
+
             // Ждем, пока сцена отрендерится
             await waitForSceneReady();
           }
-          
+
           toaster.success("Проект загружен");
-          
+
           // Закрываем попап
           closePopup();
         } else {
           // Если мы на 2D или другом маршруте, конвертируем данные для 2D
           // 3. Конвертируем данные для 3D (чтобы rooms.value был заполнен)
-          roomState.routConvertData('/3d');
-          
+          roomState.routConvertData("/3d");
+
           // 4. Устанавливаем первую комнату как текущую активную сразу после загрузки комнат
           await nextTick(); // Ждем, чтобы комнаты успели загрузиться
           const rooms = roomState.getRooms;
@@ -395,9 +417,9 @@ const loadProject = async (id: string | number) => {
             // Всегда устанавливаем первую комнату из загруженного проекта
             roomState.setCurrentRoomId(rooms[0].id);
           }
-          
+
           // 5. Конвертируем данные для 2D (чтобы данные были в правильном формате)
-          roomState.routConvertData('/2d');
+          roomState.routConvertData("/2d");
 
           // 6. Устанавливаем ID проекта в store
           projectState.setProjectId(id.toString());
@@ -413,7 +435,7 @@ const loadProject = async (id: string | number) => {
           // 9. Ждем готовности C2D и инициализируем слои
           await nextTick(); // Ждем, чтобы компонент начал монтироваться
           const c2d = await waitForC2D();
-          
+
           if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
             // Проверяем, что данные есть перед инициализацией
             const roomsData = schemeTransition.getAllData();
@@ -426,7 +448,7 @@ const loadProject = async (id: string | number) => {
           } else {
             console.warn("C2D не готов после ожидания");
           }
-          
+
           // 10. Закрываем попап только после успешной инициализации
           closePopup();
         }
@@ -729,4 +751,3 @@ onMounted(async () => {
   }
 }
 </style>
-

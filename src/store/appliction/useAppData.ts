@@ -3,6 +3,7 @@ import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookie
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/store/appStore/authStore'
+import { BASE_DOMAIN } from "@/utils/originalDomain";
 
 export const useAppData = defineStore('AppData', () => {
   const appData = ref<{ [key: string]: any }>({})
@@ -14,7 +15,7 @@ export const useAppData = defineStore('AppData', () => {
     isLoading.value = true;
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
     console.log('Start fetch from API')
-    const url = new URL('https://dev.vardek.online/api/modellerjwt/auth/getdata/')
+    const url = new URL(`https://${BASE_DOMAIN}/api/modellerjwt/auth/getdata/`)
     let currentURL = window.location.href;
     url.searchParams.append('url', currentURL)
     const response = await fetch(url, {

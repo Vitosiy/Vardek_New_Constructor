@@ -1,6 +1,7 @@
 //@ts-nocheck
 import { COOKIE_NAMES, getCookie, setCookie } from '@/components/authorization/utils/cookieUtils';
 import axios, { AxiosError } from 'axios';
+import { BASE_DOMAIN } from "@/utils/originalDomain";
 
 // Предполагаемые типы (настройте под ваш бэкенд)
 interface BasketItem {
@@ -32,8 +33,11 @@ interface NewBasketRequest {
   // другие поля, если нужны (например, userId, sessionId и т.д.)
 }
 
-const BASE_API_URL = 'https://dev.vardek.online/api/modellerjwt/basket';
-const API_URL_SENDORDER = 'https://dev.vardek.online/api/Modellerjwt/petrovich/sendorder/';
+// const BASE_API_URL = 'https://dev.vardek.online/api/modellerjwt/basket';
+// const API_URL_SENDORDER = 'https://dev.vardek.online/api/Modellerjwt/petrovich/sendorder/';
+
+const BASE_API_URL = `https://${BASE_DOMAIN}/api/modellerjwt/basket`;
+const API_URL_SENDORDER = `https://${BASE_DOMAIN}/api/Modellerjwt/petrovich/sendorder/`;
 // const BASE_API_URL = 'https://dev.vardek.online/api/modeller/basket';
 const REQUEST_TIMEOUT = 10000; // 10 секунд
 
@@ -155,7 +159,8 @@ export const BasketService = {
         // Сохраняем токен в cookie
 
         // Делаем редирект в новое окно
-        window.open(`https://dev.vardek.online/personal/basket?basket_token=${data.DATA.token}`, '_blank');
+        // window.open(`https://dev.vardek.online/personal/basket?basket_token=${data.DATA.token}`, '_blank');
+           window.open(`https://${BASE_DOMAIN}/personal/basket?basket_token=${data.DATA.token}`, '_blank');
       }
 
       return data;

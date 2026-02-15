@@ -1,10 +1,17 @@
-export const _URL = 'https://dev.vardek.online'
+import { BASE_DOMAIN } from "@/utils/originalDomain";
+// export const _URL = 'https://dev.vardek.online'
+export const _URL = `https://${BASE_DOMAIN}`
 // export const _POST_URL ='/local/templates/constructor'
-export const _POST_URL = 'https://dev.vardek.online/api/modeller/projectq/SaveProject/'
-export const _GET_URL='https://dev.vardek.online/api/modeller/projectq/getprojectlist/'
-export const _GET_PROJECT='https://dev.vardek.online/api/modeller/projectq/getprojectbyid/'
-export const _UPDATE_PROJECT='https://dev.vardek.online/api/modeller/projectq/updateprojectbyid/'
+// export const _POST_URL = 'https://dev.vardek.online/api/modeller/projectq/SaveProject/'
+// export const _GET_URL='https://dev.vardek.online/api/modeller/projectq/getprojectlist/'
+// export const _GET_PROJECT='https://dev.vardek.online/api/modeller/projectq/getprojectbyid/'
+// export const _UPDATE_PROJECT='https://dev.vardek.online/api/modeller/projectq/updateprojectbyid/'
 // export const devHash = '08a57654db94bdcfe44a9ee10b2f0778'
+
+export const _POST_URL = `https://${BASE_DOMAIN}/api/modeller/projectq/SaveProject/`
+export const _GET_URL = `https://${BASE_DOMAIN}/api/modeller/projectq/getprojectlist/`
+export const _GET_PROJECT = `https://${BASE_DOMAIN}/api/modeller/projectq/getprojectbyid/`
+export const _UPDATE_PROJECT = `https://${BASE_DOMAIN}/api/modeller/projectq/updateprojectbyid/`
 /**
  * Универсальная функция для отправки POST-запросов через fetch
  * @param url - адрес запроса

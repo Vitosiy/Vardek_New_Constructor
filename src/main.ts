@@ -8,6 +8,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { COOKIE_NAMES, getCookie } from './components/authorization/utils/cookieUtils'
 import { useAppData } from './store/appliction/useAppData'
 import {vMaska} from "maska/vue";
+import { BASE_DOMAIN } from "@/utils/originalDomain";
 // Функция для загрузки скриптов
 // function loadScript(src: string): Promise<void> {
 //   return new Promise((resolve, reject) => {
@@ -114,6 +115,9 @@ import {vMaska} from "maska/vue";
 
 async function bootApp() {
   // await loadDependencies()
+
+  console.log(BASE_DOMAIN, 'BASE_DOMAIN')
+
 
   const app = createApp(App)
   const pinia = createPinia()

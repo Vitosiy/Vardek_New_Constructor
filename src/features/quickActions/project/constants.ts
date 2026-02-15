@@ -1,5 +1,8 @@
 // API константы
-export const API_BASE_URL = 'https://dev.vardek.online/api/modeller/projectq'
+
+import { BASE_DOMAIN } from "@/utils/originalDomain";
+// export const API_BASE_URL = 'https://dev.vardek.online/api/modeller/projectq'
+export const API_BASE_URL = `https://${BASE_DOMAIN}/api/modeller/projectq`
 
 // Endpoints
 export const API_ENDPOINTS = {

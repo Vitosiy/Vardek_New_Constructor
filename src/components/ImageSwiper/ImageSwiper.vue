@@ -40,6 +40,7 @@
   import 'swiper/css/navigation'
   import 'swiper/css/autoplay'
   import ArrowSVG from '../ui/svg/auth/ArrowSVG.vue'
+  import { BASE_DOMAIN } from "@/utils/originalDomain";
 
   const props = defineProps({
     images: {
@@ -65,7 +66,8 @@
     }
   })
 
-  const API_URL = 'https://dev.vardek.online'
+  // const API_URL = 'https://dev.vardek.online'
+    const API_URL = `https://${BASE_DOMAIN}`
 
 
   const swiperEl = ref(null)
