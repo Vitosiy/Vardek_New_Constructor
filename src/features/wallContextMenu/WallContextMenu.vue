@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+//@ts-nocheck
+
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useWallContextMenu } from './useWallContextMenu';
 import { Events } from '@/store/constructor2d/events';

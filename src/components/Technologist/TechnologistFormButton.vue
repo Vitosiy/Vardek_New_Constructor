@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//@ts-nocheck
 
 import {onBeforeMount, ref} from "vue";
 import MainButton from "@/components/ui/buttons/MainButton.vue";

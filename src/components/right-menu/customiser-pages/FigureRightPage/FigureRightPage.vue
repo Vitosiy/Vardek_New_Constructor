@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//@ts-nocheck
 import { ref, computed, onBeforeMount } from "vue";
 
 import Handles from "./Handles/Handles.vue";

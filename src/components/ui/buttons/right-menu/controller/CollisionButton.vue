@@ -25,8 +25,8 @@
 </template>
 <script lang="ts" setup>
 import { computed } from "vue";
-import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
-import { useMenuStore } from "@/store/appStore/useMenuStore";
+// import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+// import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useModelState } from "@/store/appliction/useModelState";
 const modelState = useModelState();
 
@@ -34,8 +34,8 @@ const modelState = useModelState();
 // const menuStore = useMenuStore();
 
 const toggleCollision = () => {
-  modelState.getCurrentModel.userData.disableRaycast =
-    !modelState.getCurrentModel.userData.disableRaycast;
+  modelState.getCurrentModel!.userData.disableRaycast =
+    !modelState.getCurrentModel!.userData.disableRaycast;
 
   // customiserStore.showCustomiserPopup();
   // menuStore.closeAllMenus();

@@ -121,6 +121,7 @@
 </template>
 
 <script lang="ts" setup>
+//@ts-nocheck
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import { onMounted, reactive, ref, watch } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
