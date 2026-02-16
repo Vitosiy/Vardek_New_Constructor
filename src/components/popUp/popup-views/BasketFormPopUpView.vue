@@ -107,7 +107,8 @@
           >
             Отмена
           </button>
-          <button 
+          <button
+            :disabled="isLoading" 
             type="submit" 
             class="form-order__button form-order__button--submit"
           >
@@ -131,6 +132,7 @@ import { useConfigStore } from '@/store/appStore/useConfigStore'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
 import { BasketService } from "@/services/basketService";
 // import { InputPhone } from '@/components/ui/inputs/InputPhone.vue'
+import {useToast} from "@/features/toaster/useToast.ts";
 
 const { getProjectScreenshot } = useProjectAPI();
 const { creatDataBasket } = useBasketStore();
@@ -139,7 +141,8 @@ const popupStore = usePopupStore();
 const screenshot = ref('');
 const basket = ref({});
 const sceneState = useSceneState()
-
+const toaster = useToast();
+const isLoading = ref(false);
 
 const projectData = sceneState.getCurrentProjectParams;
 const errorForm = ref(false)
@@ -164,7 +167,7 @@ const closePopup = () => {
 };
 
 const handleSubmit = async () => {
-
+  isLoading.value = true;
   if(!form.projectName.length || !form.clientName.length || !form.clientPhone.length) {
     errorForm.value = true
     errorFormInput.value = true 
@@ -181,7 +184,7 @@ const handleSubmit = async () => {
     errorFormPhone.value = false
   }
 
-  await BasketService.getSendorder({ 
+  const response = await BasketService.getSendorder({ 
     project_img: screenshot.value,
     // project_img: '',
     project_name: form.projectName,
@@ -195,6 +198,9 @@ const handleSubmit = async () => {
     cityID: ''
   })
 
+  console.log('Ответ сервера:', response.DATA.type);
+  response.DATA.type === 'success' ?  toaster.success("Заявка успешно отправлена") : toaster.error("Ошибка при отправке заявки");
+  closePopup();
 
   console.log('Отправка данных:', {
     project_img: screenshot.value,
@@ -209,7 +215,7 @@ const handleSubmit = async () => {
     basket: basket.value,
     cityID: ''
   });
-
+  isLoading.value = false;
   // Здесь будет логика отправки формы
   // await sendFormData(form);
 };
