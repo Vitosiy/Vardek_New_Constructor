@@ -143,12 +143,12 @@
 
           <TechnologistFormButton :project="project" @click="closePopup" />
         </div>
-
-        <!-- Пагинация под блоком карточек (по общему количеству с сервера) -->
       </div>
+
+      <!-- Пагинация всегда внизу попапа, вне скролла карточек -->
       <div
-        v-if="!isLoading && !loadError && totalElements > 0"
-        class="project-list__pagination"
+        v-if="!isLoading && !loadError && totalElements > PAGE_SIZE"
+        class="project__pagination"
       >
         <ProjectPagination
           :total-items="totalElements"
@@ -549,6 +549,8 @@ onMounted(async () => {
   height: 83vh;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &__title {
     text-align: center;
@@ -561,8 +563,11 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    flex: 1;
+    min-height: 0;
 
     .project-header {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -609,7 +614,8 @@ onMounted(async () => {
     }
 
     .project-list {
-      max-height: 500px;
+      flex: 1 1 0;
+      min-height: 0;
       display: flex;
       flex-wrap: wrap;
       overflow-y: auto;
@@ -619,11 +625,6 @@ onMounted(async () => {
       &--loading .project-item {
         opacity: 0;
         pointer-events: none;
-      }
-
-      &__pagination {
-        width: 100%;
-        flex-basis: 100%;
       }
 
       .project-loader {
@@ -737,6 +738,13 @@ onMounted(async () => {
           box-sizing: border-box;
         }
       }
+    }
+
+    .project__pagination {
+      flex-shrink: 0;
+      width: 100%;
+      padding-top: 10px;
+      border-top: 1px solid $stroke;
     }
   }
 }

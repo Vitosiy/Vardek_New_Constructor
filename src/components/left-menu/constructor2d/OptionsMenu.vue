@@ -128,7 +128,7 @@ let goodItemDrag = (e: DragEvent): void => {
 
 // если добавляется компонент в DOM
 onMounted(() => {
-
+  console.log('BACKBACKBACKBACK')
   document.addEventListener('click', handleGoodClick);
   document.addEventListener('dragstart', goodItemDrag);
   
@@ -217,7 +217,7 @@ const switchRoom = async (roomId: string | number) => {
               :class="gItem.id === goodItemActive ? 'active' : ''"
               draggable="true" 
               :data-id="gItem.id">
-              <img v-if="gItem.icon !== ''" :src="`/images/${gItem.icon}`">
+              <img v-if="gItem.icon !== ''" :src="`/dev_modeller/images/${gItem.icon}`">
             </div>
             <p>{{ gItem.name }}</p>
           </div>
