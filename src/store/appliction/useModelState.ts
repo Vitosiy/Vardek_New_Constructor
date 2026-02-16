@@ -361,7 +361,6 @@ export const useModelState = defineStore('ModelState', () => {
         let haveShowCase = null;
 
 
-
         if (fasadeNdx !== undefined && productId !== undefined) {
 
             let fasadePosData = null;
@@ -382,6 +381,8 @@ export const useModelState = defineStore('ModelState', () => {
             }
 
         }
+
+        const isUM = !!getCurrentModel.value?.userData?.PROPS?.CONFIG?.MODULEGRID;
 
         data.forEach(facadeId => {
             const facade = _FASADE.value[facadeId];
@@ -404,7 +405,7 @@ export const useModelState = defineStore('ModelState', () => {
 
                     id: [], size: {
                         MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
-                        MAX_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
+                        MAX_WIDTH: isUM ? "600" : restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
                         MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : -Infinity,
                         MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : -Infinity,
                     },
