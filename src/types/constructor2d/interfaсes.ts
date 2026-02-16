@@ -225,7 +225,8 @@ export const ErrorsMessage = {
 export interface ErrorItem {
   type: typeof ErrorsType;
   message: typeof ErrorsMessage;
-  list: [];
+  list?: [];
+  sections?: Object;
 }
 
 export interface GridModule {

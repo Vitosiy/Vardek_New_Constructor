@@ -1083,10 +1083,10 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
   if (!loops)
     return
 
-  const errorItem = <ErrorItem>{
+  const errorItem =  <ErrorItem>{
     type: ErrorsType['loops'],
     message: ErrorsMessage['loops'],
-    list: []
+    sections: {}
   }
 
   let loopsSectors = {}
@@ -1153,7 +1153,10 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         })
 
         if(loops[doorKey][fasadeKey].errors.length) {
-          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+          if(!errorItem.sections[secIndex])
+            errorItem.sections[secIndex] = []
+
+          errorItem.sections[secIndex].push(loops[doorKey][fasadeKey].errors)
         }
       })
     })
@@ -1177,13 +1180,21 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
     })
   }*/
 
-  if (errorItem.list.length) {
+  if (Object.entries(errorItem.sections).length) {
     if(!module.value.errors)
       module.value.errors = {}
 
-    module.value.errors[ErrorsType['loops']] = errorItem
+    if(!module.value.errors[ErrorsType['loops']])
+      module.value.errors[ErrorsType['loops']] = <ErrorItem>{
+        type: ErrorsType['loops'],
+        message: ErrorsMessage['loops'],
+        sections: {}
+      }
+
+    module.value.errors[ErrorsType['loops']].sections = Object.assign(module.value.errors[ErrorsType['loops']].sections, errorItem.sections)
   }
-  else
+
+  if(module.value.errors?.[ErrorsType['loops']] && !Object.entries(module.value.errors[ErrorsType['loops']].sections).length)
     delete module.value.errors?.[ErrorsType['loops']]
 
   return loops;
