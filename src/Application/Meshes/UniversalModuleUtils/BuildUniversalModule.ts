@@ -95,7 +95,7 @@ export class BuildUniversalModule extends BuildProduct {
                 case 7250589:   //Металлическая царга
                     PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
                     break;*/
-                case 4621257:   //Опора регулируемая
+                //case 4621257:   //Опора регулируемая - не является ножкой этого типа
                 case 4621238:   //Опора 100 мм
                 case 4621240:   //Опора 150 мм
                     optionsLegs = option.NAME.toLowerCase().includes(150) ? 150 : 100
@@ -361,11 +361,16 @@ export class BuildUniversalModule extends BuildProduct {
                                 curSection.position.z - (isSlidingDoors / 2 || 0)
                             )
 
-                            curSection.fillings.push({
+                            let newFilling = {
                                 ...filling,
                                 position: fillingPos,
                                 id: curSection.fillings.length + 1,
-                            })
+                            }
+
+                            if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                                newFilling.material = PROPS.CONFIG.MODULE_COLOR
+
+                            curSection.fillings.push(newFilling)
                         })
                     })
 
@@ -376,11 +381,16 @@ export class BuildUniversalModule extends BuildProduct {
                             curSection.position.z - (isSlidingDoors / 2 || 0)
                         )
 
-                        curSection.fillings.push({
+                        let newFilling = {
                             ...filling,
                             position: fillingPos,
                             id: curSection.fillings.length + 1,
-                        })
+                        }
+
+                        if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                            newFilling.material = PROPS.CONFIG.MODULE_COLOR
+
+                        curSection.fillings.push(newFilling)
                     })
                 })
 
@@ -391,11 +401,16 @@ export class BuildUniversalModule extends BuildProduct {
                         curSection.position.z - (isSlidingDoors / 2 || 0)
                     )
 
-                    curSection.fillings.push({
+                    let newFilling = {
                         ...filling,
                         position: fillingPos,
                         id: curSection.fillings.length + 1,
-                    })
+                    }
+
+                    if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                        newFilling.material = PROPS.CONFIG.MODULE_COLOR
+
+                    curSection.fillings.push(newFilling)
                 })
             })
 
@@ -406,11 +421,16 @@ export class BuildUniversalModule extends BuildProduct {
                     curSection.position.z - (isSlidingDoors / 2 || 0)
                 )
 
-                curSection.fillings.push({
+                let newFilling = {
                     ...filling,
                     position: fillingPos,
                     id: curSection.fillings.length + 1,
-                })
+                }
+
+                if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                    newFilling.material = PROPS.CONFIG.MODULE_COLOR
+
+                curSection.fillings.push(newFilling)
             })
 
             let allFasades = []
@@ -723,7 +743,7 @@ export class BuildUniversalModule extends BuildProduct {
     }
 
     createSubProductObject(filling: Object, data: THREETypes.TObject, props: THREETypes.TObject) {
-        let fasade = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']] : this._FASADE[filling.color || props.CONFIG.MODULE_COLOR]
+        let fasade = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']] : this._FASADE[filling.color || props.material]
         let body = this.json_builder.createMesh({ data, fasade })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));

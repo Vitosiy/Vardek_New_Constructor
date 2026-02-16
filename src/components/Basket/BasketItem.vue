@@ -315,7 +315,19 @@
           v-for="item in renderDescription(item?.product.PROPS)"
           :key="propKey"
         >
-          <div>
+          <div v-if="Array.isArray(item.value)">
+            <span class="basket-item__props-lable">{{ item.key }}:</span>
+            <div
+                class="basket-item__props-block__lables"
+                style="list-style: none"
+                v-for="(value, i) in item.value"
+                :key="i"
+            >
+              <span>{{i+1}}) {{ value.key }}:</span
+              ><span>{{value.value ? ` - поз. ${value.value} мм` : ""}}</span>
+            </div>
+          </div>
+          <div v-else>
             <span class="basket-item__props-lable">{{ item.key }}:</span
             ><span>{{ item.value }}</span>
           </div>
@@ -920,12 +932,28 @@ const renderDescription = (props) => {
         });
       }
       if (value.length && getPropDefinition(key)?.NAME && key !== "OPTION") {
-        value.forEach((el) => {
+        if(Array.isArray(value)) {
+          let items = []
+
+          value.forEach((el) => {
+            items.push({
+              key: appData.value["CATALOG"]["PRODUCTS"][el.ID]?.NAME ?? "",
+              value: el.VALUE || "",
+            });
+          });
+
           result.push({
             key: getPropDefinition(key)?.NAME,
-            value: appData.value["CATALOG"]["PRODUCTS"][el.ID]?.NAME ?? "",
+            value: items,
           });
-        });
+        }
+        else {
+          result.push({
+            key: getPropDefinition(key)?.NAME,
+            value: value,
+          });
+        }
+
       }
     }
 
@@ -1064,6 +1092,12 @@ const renderDescription = (props) => {
       color: #a3a9b5 !important;
       margin-right: 4px;
     }
+
+    &-block__lables {
+      left: 1rem;
+      position: relative;
+    }
+
     span {
       color: #111b21;
       font-weight: 600;
