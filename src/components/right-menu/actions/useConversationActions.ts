@@ -45,6 +45,9 @@ export const useConversationActions = () => {
 
     const createFasadeConversations = (fasadeId: number): TFasadeGroupSize => {
 
+        const curModel = modelState.getCurrentModel
+        const isUM = !!curModel?.userData?.PROPS?.CONFIG?.MODULEGRID;
+
         const temp = {
             MAX_HEIGHT: Infinity,
             MIN_HEIGHT: -Infinity,
@@ -63,7 +66,7 @@ export const useConversationActions = () => {
         const restrict = {
             MAX_HEIGHT: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
             MIN_HEIGHT: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.MIN_HEIGHT : -Infinity,
-            MAX_WIDTH: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
+            MAX_WIDTH: isUM ? "600" : toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
             MIN_WIDTH: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.MIN_WIDTH : -Infinity,
         }
 
