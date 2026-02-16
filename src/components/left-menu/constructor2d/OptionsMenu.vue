@@ -217,7 +217,7 @@ const switchRoom = async (roomId: string | number) => {
               :class="gItem.id === goodItemActive ? 'active' : ''"
               draggable="true" 
               :data-id="gItem.id">
-              <img v-if="gItem.icon !== ''" :src="`/images/${gItem.icon}`">
+              <img v-if="gItem.icon !== ''" :src="`/dev_modeller/images/${gItem.icon}`">
             </div>
             <p>{{ gItem.name }}</p>
           </div>
