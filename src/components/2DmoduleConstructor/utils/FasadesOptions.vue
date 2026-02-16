@@ -283,10 +283,13 @@ const deleteSlideDoor = (doorIndex) => {
 
 const addDoor = (secIndex) => {
   const section = module.value.sections[secIndex];
+  const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+
   const width = section.fasades[0]?.[0] ? Math.floor(section.fasades[0][0].width / 2 - 2) :
       module.value.sections.length === 1 ? module.value.width - 4 :
        (secIndex > 0 && secIndex < module.value.sections.length - 1) ? section.width + module.value.moduleThickness - 4 :
-        section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
+        section.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2);
 
   let firstFasade, newDoorPosition;
   if (section.fasades[0]) {
@@ -305,7 +308,7 @@ const addDoor = (secIndex) => {
     const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
     const FASADE = getFasadePosition(FASADE_PROPS.POSITION);
 
-    let startX = module.value.sections.length === 1 ? FASADE.POSITION_X : section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2;
+    let startX = secIndex > 0 ? section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 : FASADE.POSITION_X;
 
     newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
     firstFasade = <FasadeObject>{
@@ -343,15 +346,16 @@ const addDoor = (secIndex) => {
   //newDoor.position.y = fasPos.POSITION_Y
 
   let loopsidesList = getLoopsideList(secIndex, section.fasades.length);
+  let tmp_list = loopsidesList.filter(item => item.ID !== LOOPSIDE['none'])
 
   if(!module.value.isRestrictedModule) {
-    if (!loopsidesList.length) {
+    if (!tmp_list.length) {
       alert("Нельзя добавить дверь");
       return;
     }
   }
 
-  newDoor.loopsSide = loopsidesList.pop().ID;
+  newDoor.loopsSide = tmp_list.pop().ID;
 
   if(!section.loopsSides)
     section.loopsSides = {}
@@ -836,14 +840,16 @@ const checkAddDoor = (secIndex, doorIndex) => {
   }
   else {
     let loopsSidesList = getLoopsideList(secIndex, doorIndex);
+    let tmp_list = loopsSidesList.filter(item => item.ID !== LOOPSIDE['none'])
+
     const currSection = module.value.sections[secIndex];
 
     if (currSection.loopsSides?.[doorIndex])
-      loopsSidesList = loopsSidesList.filter(
+      tmp_list = tmp_list.filter(
           (item) => item.ID !== currSection.loopsSides[doorIndex]
       );
 
-    return loopsSidesList.length > 0;
+    return tmp_list.length > 0;
   }
 };
 

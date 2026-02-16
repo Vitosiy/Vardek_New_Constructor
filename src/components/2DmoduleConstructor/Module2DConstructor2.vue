@@ -673,9 +673,9 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
     const width = currentSection.fasades[0]?.[0] ? Math.floor(currentSection.fasades[0][0].width / 2 - 2) :
         module.value.sections.length === 1 ? module.value.width - 4 :
             (secIndex > 0 && secIndex < module.value.sections.length - 1) ? currentSection.width + module.value.moduleThickness - 4 :
-                currentSection.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
+                currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2);
 
-    let startX = module.value.sections.length === 1 ? FASADE.POSITION_X : currentSection.position.x - currentSection.width / 2 - module.value.moduleThickness / 2 + 2;
+    let startX = secIndex > 0 ? currentSection.position.x - currentSection.width / 2 - module.value.moduleThickness / 2 + 2 : FASADE.POSITION_X;
 
     let newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
     baseFasade = <FasadeObject>{
@@ -690,6 +690,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
     };
     let fasadeMinMax = getFasadePositionMinMax(baseFasade);
     baseFasade = Object.assign(baseFasade, fasadeMinMax);
+    baseFasade.loopsSide = LOOPSIDE['none']
   }
 
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
@@ -1083,10 +1084,10 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
   if (!loops)
     return
 
-  const errorItem = <ErrorItem>{
+  const errorItem =  <ErrorItem>{
     type: ErrorsType['loops'],
     message: ErrorsMessage['loops'],
-    list: []
+    sections: {}
   }
 
   let loopsSectors = {}
@@ -1153,7 +1154,10 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         })
 
         if(loops[doorKey][fasadeKey].errors.length) {
-          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+          if(!errorItem.sections[secIndex])
+            errorItem.sections[secIndex] = []
+
+          errorItem.sections[secIndex].push(loops[doorKey][fasadeKey].errors)
         }
       })
     })
@@ -1177,13 +1181,21 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
     })
   }*/
 
-  if (errorItem.list.length) {
+  if (Object.entries(errorItem.sections).length) {
     if(!module.value.errors)
       module.value.errors = {}
 
-    module.value.errors[ErrorsType['loops']] = errorItem
+    if(!module.value.errors[ErrorsType['loops']])
+      module.value.errors[ErrorsType['loops']] = <ErrorItem>{
+        type: ErrorsType['loops'],
+        message: ErrorsMessage['loops'],
+        sections: {}
+      }
+
+    module.value.errors[ErrorsType['loops']].sections = Object.assign(module.value.errors[ErrorsType['loops']].sections, errorItem.sections)
   }
-  else
+
+  if(module.value.errors?.[ErrorsType['loops']] && !Object.entries(module.value.errors[ErrorsType['loops']].sections).length)
     delete module.value.errors?.[ErrorsType['loops']]
 
   return loops;

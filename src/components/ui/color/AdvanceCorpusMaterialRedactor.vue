@@ -808,9 +808,13 @@ const getFasadesize = computed(() => {
 });
 
 onBeforeMount(() => {
-  materialList.value = props.materialList?.length ? props.materialList : filterFasadeConversations(props.elementIndex, props.fasadeSize);
   productData.value = modelState.getCurrentModel.userData;
   productId.value = productData.value.PROPS.PRODUCT;
+  productData.value.restrictData[props.elementIndex] = createFasadeConversations(
+      props.elementData.COLOR
+  );
+
+  materialList.value = props.materialList?.length ? props.materialList : filterFasadeConversations(props.elementIndex, props.fasadeSize);
 
   if(!props.materialList?.length) {
     fasadeSizeList.value = prepareFasadeSizeList();
