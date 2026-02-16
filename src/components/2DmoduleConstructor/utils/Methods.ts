@@ -3,6 +3,7 @@ import {UI_PARAMS} from "./UMConstructorConst.ts";
 import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "pixi.js";
 import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
 import * as THREE from "three";
+import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
 
 type TDashedLine = {
     startX: number;
@@ -1368,10 +1369,27 @@ class ShapeAdjuster extends Helpers {
         else {
             const x = bounds.x
             let maxY = bounds.y + bounds.height
+            let minY = bounds.y
 
-            for (let i = 0; i < maxY - bounds.y - height; i++) {
+            if(shape.data?.data?.MIN_FASADE_SIZE) {
+                let manufacturer_name = shape.data.data.EN_NAME?.toLowerCase() || shape.data.data.NAME?.toLowerCase()
+                let manufacturerOffset
+                Object.entries(MANUFACTURER).forEach(([key, offset]) => {
+                    if (manufacturer_name.includes(key)) {
+                        manufacturer_name = key
+                        manufacturerOffset = offset
+                    }
+                })
 
-            const y = this.convertToTen(bounds.y + (bounds.height - height) - i);
+                shape.data.fasade = {}
+                shape.data.fasade.manufacturerOffset = manufacturerOffset
+                shape.data.fasade.height = shape.data.data.MIN_FASADE_SIZE
+                maxY = maxY + this.getPixelHeight(manufacturerOffset)
+                minY = minY - this.getPixelHeight(shape.data.data.MIN_FASADE_SIZE - shape.data.data.height - manufacturerOffset)
+            }
+
+            for (let i = 0; i < maxY - minY - height; i++) {
+                const y = this.convertToTen(minY + (bounds.height - height) - i);
 
                 shape.graphic.position.x = x;
                 shape.graphic.position.y = y;

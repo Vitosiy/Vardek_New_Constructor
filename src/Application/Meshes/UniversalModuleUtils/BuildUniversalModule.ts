@@ -793,6 +793,9 @@ export class BuildUniversalModule extends BuildProduct {
             const leftPosition = section.position.x - section.size.x / 2 + Math.round((loop.width + loopPosition.CORRECTION_X) / 2)
             const rightPosition = section.position.x + section.size.x / 2 - Math.round((loop.width + loopPosition.CORRECTION_X) / 2)
 
+            if(LOOPSIDE[loopside] === 'none')
+                return false
+
             loopCoord.coords.forEach((coord) => {
                 let loopMesh = new THREE.Object3D();
 
@@ -830,7 +833,9 @@ export class BuildUniversalModule extends BuildProduct {
                 // Добавляет петли
                 section.forEach((door, doorKey) => {
                     door.forEach((fasadeLoop, fasadeLoopKey) => {
-                        allLoopsMesh.add(create(loopModel.clone(), secIndex, fasadeLoopKey, fasadeLoop))
+                        let loopMesh = create(loopModel.clone(), secIndex, fasadeLoopKey, fasadeLoop)
+                        if(loopMesh)
+                            allLoopsMesh.add(loopMesh)
                     });
                 });
             })

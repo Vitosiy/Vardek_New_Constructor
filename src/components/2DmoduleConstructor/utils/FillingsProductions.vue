@@ -18,6 +18,7 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import {useToast} from "@/features/toaster/useToast.ts";
 
 const props = defineProps({
   fillings: {
@@ -55,6 +56,7 @@ const { figureItems, createSurfaceList } =
 const {module, fillings, visualizationRef} = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
+const toAster = useToast()
 const builder = new UniversalGeometryBuilder({}).buildProduct;
 
 const selectedFilling = ref({sec: 0, cell: null, row: null, item: 0, extra: null});
@@ -196,7 +198,7 @@ const addFilling = (_product, productGroupID) => {
       return;
     }
 
-    if (!currentSection?.fasades?.[0]?.[0]) {
+    if (!currentSection?.fasades?.[0]?.[0] && !currentSection?.fasadesDrawers?.[0]) {
       alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!", "error");
       return;
     }
@@ -335,7 +337,7 @@ const addFilling = (_product, productGroupID) => {
                 currentSection.width + ((sec == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
             module.value.width - 4;
 
-    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0]
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0] || currentSection.fasadesDrawers?.[0]
 
     let manufacturerOffset = 0
     let manufacturer_name = product.EN_NAME?.toLowerCase() || product.NAME?.toLowerCase()
@@ -706,27 +708,32 @@ const changeDrawerFasade = (event, value, key, secIndex, cellIndex = null, rowIn
 
   const prevValue = currentfilling.fasade.height; //Предыдущее значение
   const newValue = parseInt(value)
-  /*
-    let tmpSector = currentfilling.sector
-    delete currentfilling.sector
 
-    const fillingData = JSON.parse(JSON.stringify(currentfilling));
-    fillingData.fasade.height = newValue;
-    fillingData.sector = tmpSector;
+  let tmpSector = currentfilling.sector
+  let tmpFasade = currentfilling.fasade
 
-    const pixiSector = currentRow.sector;
+  delete currentfilling.sector
+  delete currentfilling.fasade
 
-    // Проверяем коллизию
-    const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+  const fillingData = JSON.parse(JSON.stringify(currentfilling));
+  fillingData.sector = tmpSector;
+  fillingData.fasade = tmpFasade;
+  fillingData.fasade.height = newValue;
 
-    if (check) {
-      currentfilling.fasade.height = fillingData.fasade.height;
-    } else {
-      currentfilling.fasade.height = prevValue;
-    }
-    currentfilling.sector = tmpSector;*/
+  const pixiSector = currentRow.sector;
 
-  currentfilling.fasade.height = newValue;
+  // Проверяем коллизию
+  const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+
+  currentfilling.sector = tmpSector;
+  currentfilling.fasade = tmpFasade;
+  if (check) {
+    currentfilling.fasade.height = fillingData.fasade.height;
+  } else {
+    currentfilling.fasade.height = prevValue;
+    toAster.error("Ошибка! Размер фасада слишком велик!")
+  }
+
   module.value = gridCopy;
 
   calcDrawersFasades(secIndex)

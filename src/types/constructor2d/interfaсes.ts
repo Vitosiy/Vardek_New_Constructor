@@ -120,7 +120,8 @@ export enum LOOPSIDE {
   left = 4693746,
   left_on_partition= 7080918,
   right = 4693757,
-  right_on_partition= 7080949
+  right_on_partition = 7080949,
+  none = 13864508,
 }
 
 export interface FasadeObject {
