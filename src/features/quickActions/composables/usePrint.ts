@@ -1,5 +1,6 @@
 import { useScreenshotsStore, IScreenshot } from "@/features/store/screenshotsStore/screenshotsStore";
 import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { useRoomState } from "@/store/appliction/useRoomState";
 import { _URL } from "@/types/constants";
 import { useAppData } from "@/store/appliction/useAppData";
 
@@ -11,6 +12,28 @@ export const usePrint = () => {
       const screenshots: IScreenshot[] = screenshotsStore.getScreenshots();
 
       const basketStore = useBasketStore();
+      const roomState = useRoomState();
+
+      // Для печати используем те же данные, что и во вкладке "Все комнаты": объединённая корзина всех комнат
+      const rooms = roomState.getRooms || [];
+      const mergedBasketItems = rooms.flatMap((room: { basket?: string | unknown }) => {
+        try {
+          const raw = room.basket;
+          const roomBasket =
+            typeof raw === "string" ? JSON.parse(raw) : Array.isArray(raw) ? { scene: raw, catalog: [] } : { scene: [], catalog: [] };
+          return [
+            ...(roomBasket.scene || []),
+            ...(roomBasket.catalog || []),
+          ];
+        } catch {
+          return [];
+        }
+      });
+
+      if (mergedBasketItems.length > 0) {
+        await basketStore.syncBasketMulti(mergedBasketItems);
+      }
+
       const basketData = basketStore.basketData;
       
       // Получаем данные приложения для доступа к названиям цветов
