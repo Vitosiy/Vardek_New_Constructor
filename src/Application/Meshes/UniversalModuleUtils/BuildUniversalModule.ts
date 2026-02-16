@@ -13,8 +13,8 @@ import { useModelState } from '@/store/appliction/useModelState';
 
 import { BuildProduct } from "../BuildProduct"
 import { _URL } from "@/types/constants";
-import {CSG} from "three-csg-ts";
-import {Brush, Evaluator, SUBTRACTION} from "three-bvh-csg";
+import { CSG } from "three-csg-ts";
+import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 
 export class BuildUniversalModule extends BuildProduct {
 
@@ -31,8 +31,7 @@ export class BuildUniversalModule extends BuildProduct {
         width: number,
         height: number,
         depth: number
-    }, moduleParams?: GridModule)
-    {
+    }, moduleParams?: GridModule) {
 
         // Режим чертежа
         const drowMode = this.menuStore.getDrowModeValue
@@ -85,16 +84,16 @@ export class BuildUniversalModule extends BuildProduct {
         const curBodyExceptions = bodyExceptions?.includes(modelData.id)
 
         let optionsLegs = 0
-        for(let i = 0; i < activeOptions.length; i++) {
+        for (let i = 0; i < activeOptions.length; i++) {
             let option = this._OPTION[+activeOptions[i].id]
 
             switch (+option.ID) {
-/*                case 7250452:   //Деревянная царга
-                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
-                    break;
-                case 7250589:   //Металлическая царга
-                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
-                    break;*/
+                /*                case 7250452:   //Деревянная царга
+                                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
+                                    break;
+                                case 7250589:   //Металлическая царга
+                                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
+                                    break;*/
                 case 4621257:   //Опора регулируемая
                 case 4621238:   //Опора 100 мм
                 case 4621240:   //Опора 150 мм
@@ -240,7 +239,7 @@ export class BuildUniversalModule extends BuildProduct {
         CONFIG.MODULEGRID = {}
 
         if (product_data.BACKWALL?.length && product_data.BACKWALL?.[0]) {
-            CONFIG.BACKWALL = {SHOW: true}
+            CONFIG.BACKWALL = { SHOW: true }
             CONFIG.BACKWALL.COLOR = this.filters.filterModuleColor(product_data.BACKWALL)[0] || CONFIG["MODULE_COLOR"];
         }
 
@@ -270,15 +269,15 @@ export class BuildUniversalModule extends BuildProduct {
         PROPS.CONFIG.FASADE_PROPS = []
         PROPS.CONFIG.SECTIONS = {}
 
-        if(PROPS.CONFIG.LOOPS)
+        if (PROPS.CONFIG.LOOPS)
             PROPS.CONFIG.LOOPS = {}
 
         const full_horizont_height = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + PROPS.CONFIG.EXPRESSIONS['#HORIZONT#']
 
-        if(product_data.profilesConfig) {
+        if (product_data.profilesConfig) {
             PROPS.CONFIG['PROFILECOLOR'] = product_data.profilesConfig.COLOR
 
-            if(product_data.profilesConfig.sideProfile)
+            if (product_data.profilesConfig.sideProfile)
                 PROPS.CONFIG['SIDEPROFILE'] = product_data.profilesConfig.sideProfile
             else
                 delete PROPS.CONFIG['SIDEPROFILE']
@@ -488,11 +487,11 @@ export class BuildUniversalModule extends BuildProduct {
         let subGeometriesCSG = subGeometries.map((_subGeometry) => {
             const parentGeometry = _subGeometry.clone()
 
-            if(parentGeometry.children[0] && parentGeometry.children[0].geometry) {
+            if (parentGeometry.children[0] && parentGeometry.children[0].geometry) {
                 // Клонируем вычитаемый меш
                 let childMesh = parentGeometry.children[0].clone()
 
-                const {BODY_WIDTH, BODY_HEIGHT, BODY_DEPTH} = parentGeometry.userData.trueSizes
+                const { BODY_WIDTH, BODY_HEIGHT, BODY_DEPTH } = parentGeometry.userData.trueSizes
 
                 let childGeometry = new THREE.BoxGeometry(Math.ceil(BODY_WIDTH), Math.ceil(BODY_HEIGHT), Math.ceil(BODY_DEPTH))
                 childGeometry.computeBoundingBox()
@@ -517,7 +516,7 @@ export class BuildUniversalModule extends BuildProduct {
                 // Клонируем вычитаемый меш
                 let childMesh = parentGeometry.clone()
 
-                const {BODY_WIDTH, BODY_HEIGHT, BODY_DEPTH} = parentGeometry.userData.trueSizes
+                const { BODY_WIDTH, BODY_HEIGHT, BODY_DEPTH } = parentGeometry.userData.trueSizes
 
                 let childGeometry = new THREE.BoxGeometry(Math.ceil(BODY_WIDTH), Math.ceil(BODY_HEIGHT), Math.ceil(BODY_DEPTH))
                 childGeometry.computeBoundingBox()
@@ -630,7 +629,7 @@ export class BuildUniversalModule extends BuildProduct {
                             productFilling.scale.z = filling.size.z / productFilling.userData.trueSizes.BODY_DEPTH
                         }
                         else {
-                            if(!filling.position.z)
+                            if (!filling.position.z)
                                 filling.position.z = sizeModule.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0);
                         }
 
@@ -642,9 +641,13 @@ export class BuildUniversalModule extends BuildProduct {
                         if (!isModel)
                             PROPS.JSON_FILLINGS.push(productFilling)
 
-                        group.add(productFilling)
+                        const edge = this.edge_builder.createEdge(productFilling);
+                        const clonePos = productFilling.position.clone()
+                        edge.position.set(clonePos.x, clonePos.y, clonePos.z)
 
-                        if(filling.isProfile) {
+                        group.add(productFilling, edge)
+
+                        if (filling.isProfile) {
                             let tmp_clone = productFilling.clone()
                             tmp_clone.position.y -= baseOffset
                             subGeometries.push(tmp_clone)
@@ -657,7 +660,7 @@ export class BuildUniversalModule extends BuildProduct {
                     let productFilling
                     if (data.DAE) {
                         // console.log(data.DAE, 'DAE')
-                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID || data.id, SIZE: filling_size} }, sizeRulers: false, UMFillinig: true })
+                        this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID || data.id, SIZE: filling_size } }, sizeRulers: false, UMFillinig: true })
                     } else {
                         productFilling = this.createSubProductObject(filling, data, PROPS)
                         onLoad(productFilling, false)
@@ -673,17 +676,18 @@ export class BuildUniversalModule extends BuildProduct {
             if (!productInfo)
                 return
 
-            const filling_size = {width: filling.size.x, height: filling.size.y, depth: filling.size.z}
+            const filling_size = { width: filling.size.x, height: filling.size.y, depth: filling.size.z }
             const data = this.createModelData(this._MODELS[productInfo.models[0]], PROPS, filling_size);
 
             const onLoad = (productFilling, isModel = true) => {
-                if(filling.isProfile)
+
+                if (filling.isProfile)
                     productFilling.userData.isProfile = true
 
                 let sizeModule = PROPS.CONFIG.SIZE
                 let start_position = this.getStartPosition(sizeModule)
 
-                if(filling.rotation) {
+                if (filling.rotation) {
                     productFilling.rotation.x = filling.rotation.x;
                     productFilling.rotation.y = filling.rotation.y;
                     productFilling.rotation.z = filling.rotation.z;
@@ -704,7 +708,12 @@ export class BuildUniversalModule extends BuildProduct {
 
                 productFilling.updateMatrix()
                 productFilling.updateMatrixWorld()
-                group.add(productFilling)
+
+                const edge = this.edge_builder.createEdge(productFilling);
+                const clonePos = productFilling.position.clone()
+                edge.position.set(clonePos.x, clonePos.y, clonePos.z)
+
+                group.add(productFilling, edge)
 
                 let tmp_clone = productFilling.clone()
                 tmp_clone.position.y -= baseOffset
@@ -715,7 +724,7 @@ export class BuildUniversalModule extends BuildProduct {
             onLoad(productFilling, false)
         }
 
-        if(subGeometries.length) {
+        if (subGeometries.length) {
             this.subtractGeometry(moduleBody, subGeometries)
         }
 
