@@ -196,7 +196,7 @@ const addFilling = (_product, productGroupID) => {
       return;
     }
 
-    if (!currentSection?.fasades?.[0]?.[0]) {
+    if (!currentSection?.fasades?.[0]?.[0] && !currentSection?.fasadesDrawers?.[0]) {
       alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!", "error");
       return;
     }
@@ -335,7 +335,7 @@ const addFilling = (_product, productGroupID) => {
                 currentSection.width + ((sec == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
             module.value.width - 4;
 
-    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0]
+    let baseFasade = module.value.sections[sec]?.fasades?.[0]?.[0] || module.value.sections[0]?.fasades?.[0]?.[0] || currentSection.fasadesDrawers?.[0]
 
     let manufacturerOffset = 0
     let manufacturer_name = product.EN_NAME?.toLowerCase() || product.NAME?.toLowerCase()

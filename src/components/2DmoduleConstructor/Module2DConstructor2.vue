@@ -673,9 +673,9 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
     const width = currentSection.fasades[0]?.[0] ? Math.floor(currentSection.fasades[0][0].width / 2 - 2) :
         module.value.sections.length === 1 ? module.value.width - 4 :
             (secIndex > 0 && secIndex < module.value.sections.length - 1) ? currentSection.width + module.value.moduleThickness - 4 :
-                currentSection.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2);
+                currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2);
 
-    let startX = module.value.sections.length === 1 ? FASADE.POSITION_X : currentSection.position.x - currentSection.width / 2 - module.value.moduleThickness / 2 + 2;
+    let startX = secIndex > 0 ? currentSection.position.x - currentSection.width / 2 - module.value.moduleThickness / 2 + 2 : FASADE.POSITION_X;
 
     let newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
     baseFasade = <FasadeObject>{
@@ -690,6 +690,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
     };
     let fasadeMinMax = getFasadePositionMinMax(baseFasade);
     baseFasade = Object.assign(baseFasade, fasadeMinMax);
+    baseFasade.loopsSide = LOOPSIDE['none']
   }
 
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)

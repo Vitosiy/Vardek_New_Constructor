@@ -18,6 +18,7 @@ import {Shape, ShapeAdjuster, Section} from "./utils/Methods";
 import {UI_PARAMS} from "./utils/UMConstructorConst.ts";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import * as THREE from "three";
+import {LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
 
 const props = defineProps({
   module: {
@@ -544,6 +545,10 @@ const renderGrid = (_moduleGrid) => {
       section.loops.forEach((door, doorIndex, ) => {
         door.forEach((loop, loopIndex) => {
           let tmpLoopData = Object.assign({}, loop)
+
+          if(LOOPSIDE['none'] === tmpLoopData.side)
+            return
+
           delete tmpLoopData.coords;
           delete tmpLoopData.errors;
 
