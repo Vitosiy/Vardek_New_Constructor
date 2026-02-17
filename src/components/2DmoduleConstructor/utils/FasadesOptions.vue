@@ -292,7 +292,7 @@ const addDoor = (secIndex) => {
         section.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2);
 
   let firstFasade, newDoorPosition;
-  if (section.fasades[0]) {
+  if (section.fasades[0]?.length) {
     section.fasades[0].map((item) => {
       item.width = width;
     });
@@ -443,8 +443,15 @@ const splitFasade = (secIndex, doorIndex = 0, segmentIndex = 0) => {
 
 const deleteDoor = (secIndex, doorIndex) => {
   const current = module.value.sections[secIndex].fasades[doorIndex];
-  const prev = module.value.sections[secIndex].fasades[doorIndex - 1];
-  const next = module.value.sections[secIndex].fasades[doorIndex + 1];
+  let prev = module.value.sections[secIndex].fasades[doorIndex - 1];
+  let next = module.value.sections[secIndex].fasades[doorIndex + 1];
+
+  if(!next?.length){
+    next = false
+  }
+  if(!prev?.length){
+    prev = false
+  }
 
   const combinedWidth = next
     ? current[0].width + next[0].width + 4
