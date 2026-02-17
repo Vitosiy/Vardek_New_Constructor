@@ -390,7 +390,6 @@ const renderGrid = (_moduleGrid) => {
                   gridType: "module",
                 });
 
-                if(cellRowIndex === 0)
                   tmp_array_sectors.push(sector)
 
                 //Добавляем отступ по вертикали
@@ -438,7 +437,6 @@ const renderGrid = (_moduleGrid) => {
                 gridType: "module",
               });
 
-              if(cellRowIndex === 0)
                 tmp_array_sectors.push(sector)
             }
 
@@ -553,14 +551,15 @@ const renderGrid = (_moduleGrid) => {
           delete tmpLoopData.errors;
 
           let loopXOffset = getPixelWidth(tmpLoopData.positionX);
-          let loopYOffset = getPixelHeight(module.value.height);
           const pxWidth = getPixelWidth(tmpLoopData.width);
           const pxHeight = getPixelHeight(tmpLoopData.height);
 
           tmpLoopData.xOffset = loopXOffset;
 
           loop.coords.forEach((pos, posIndex, ) => {
-            tmpLoopData.yOffset = loopYOffset - getPixelHeight(pos + tmpLoopData.height / 2 - (!module.value.noBottom ? 0 : module.value.moduleThickness));
+            let tmp_top_loop_pos = pos + tmpLoopData.height / 2 - (!module.value.noBottom ? 0 : module.value.moduleThickness)
+            let tmp_y_pos = module.value.height - (tmp_top_loop_pos)
+            tmpLoopData.yOffset = getPixelHeight(tmp_y_pos);
             // Отрисовываем секцию
 
             let loopSector = createLoop({
@@ -571,7 +570,7 @@ const renderGrid = (_moduleGrid) => {
               loopData: {
                 ...tmpLoopData,
                 error: loop.errors?.includes(posIndex),
-                position: {x: getMmWidth(tmpLoopData.xOffset), y: getMmHeight(tmpLoopData.yOffset)}
+                position: {x: getMmWidth(tmpLoopData.xOffset), y: tmp_y_pos }
               },
             });
 

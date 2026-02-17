@@ -29,6 +29,7 @@ import {useModelState} from "@/store/appliction/useModelState.ts";
 import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
 import {TFasadeTrueSizes} from "@/types/types.ts";
 import {useEventBus} from "@/store/appliction/useEventBus.ts";
+import {useToast} from "@/features/toaster/useToast.ts";
 
 const {
   MIN_FASADE_HEIGHT,
@@ -55,6 +56,7 @@ let shapeAdjuster = null;
 const APP = useAppData().getAppData;
 const modelState = useModelState()
 const eventBus = useEventBus()
+const toaster = useToast();
 
 const productData = ref(false)
 const builder = new UniversalGeometryBuilder({}).buildProduct;
@@ -1605,6 +1607,8 @@ const saveGrid = () => {
     return false
   }
   else
+    alert('Модуль сохранен')
+    toaster.success('Модуль сохранен')
     return Object.assign({}, module.value);
 };
 

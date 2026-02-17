@@ -619,7 +619,7 @@ class Shape extends Helpers {
                     self.highlightGraphics.position.x = adjustedX;
                     let hasCollisionX = false;
 
-                    for (const otherShape of this.shapes) {
+                    for (const otherShape of this.sector.shapes) {
                         if (self !== otherShape && self.checkOverlap(otherShape, true)) {
                             hasCollisionX = true;
                             break;
@@ -637,7 +637,7 @@ class Shape extends Helpers {
                     self.highlightGraphics.position.y = adjustedY;
                     let hasCollisionY = false;
 
-                    for (const otherShape of this.shapes) {
+                    for (const otherShape of this.sector.shapes) {
                         if (self !== otherShape && self.checkOverlap(otherShape)) {
                             hasCollisionY = true;
                             break;
@@ -699,7 +699,7 @@ class Shape extends Helpers {
         if((this.data.isDrawer || this.data.fasade) && otherShape.data.type === 'loop')
             return false
 
-        if (isVerticalItem) {
+        if (isVerticalItem || otherShape.data.isVerticalItem) {
             let thisPosX = this.graphic.position.x
             let thisWidth = this.width
             let otherShapePosX = otherShape.graphic.position.x
@@ -807,7 +807,7 @@ class Shape extends Helpers {
                     pxPos.x <= this.sectorBounds.x + this.sectorBounds.width &&
                     pxPos.x >= this.sectorBounds.x
                 )
-            ) ||
+            ) &&
             (
                 (
                     pxPos.y + this.height <= this.sectorBounds.y + this.sectorBounds.height &&
