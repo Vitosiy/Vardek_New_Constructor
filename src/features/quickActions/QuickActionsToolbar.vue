@@ -16,6 +16,9 @@
           <span v-if="action.iconSrc === 'folder'" class="icon">
             <img :src="folderIcon" alt="" class="icon-svg" />
           </span>
+          <span v-else-if="action.iconSrc === 'book'" class="icon">
+            <img :src="bookIcon" alt="" class="icon-svg" />
+          </span>
           <span v-else-if="action.iconSrc" class="icon">
             <img :src="action.iconSrc" alt="" class="icon-svg" />
           </span>
@@ -135,6 +138,7 @@ import { useToast } from "@/features/toaster/useToast";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useProjectStore } from "./project/store/useProjectStore";
 import folderIcon from "@/assets/svg/folder.svg";
+import bookIcon from "@/assets/svg/book.svg";
 
 const {
   actions,
