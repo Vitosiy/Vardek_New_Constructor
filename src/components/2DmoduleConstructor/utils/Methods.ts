@@ -619,7 +619,7 @@ class Shape extends Helpers {
                     self.highlightGraphics.position.x = adjustedX;
                     let hasCollisionX = false;
 
-                    for (const otherShape of this.shapes) {
+                    for (const otherShape of this.sector.shapes) {
                         if (self !== otherShape && self.checkOverlap(otherShape, true)) {
                             hasCollisionX = true;
                             break;
@@ -637,7 +637,7 @@ class Shape extends Helpers {
                     self.highlightGraphics.position.y = adjustedY;
                     let hasCollisionY = false;
 
-                    for (const otherShape of this.shapes) {
+                    for (const otherShape of this.sector.shapes) {
                         if (self !== otherShape && self.checkOverlap(otherShape)) {
                             hasCollisionY = true;
                             break;
@@ -699,7 +699,7 @@ class Shape extends Helpers {
         if((this.data.isDrawer || this.data.fasade) && otherShape.data.type === 'loop')
             return false
 
-        if (isVerticalItem) {
+        if (isVerticalItem || otherShape.data.isVerticalItem) {
             let thisPosX = this.graphic.position.x
             let thisWidth = this.width
             let otherShapePosX = otherShape.graphic.position.x
@@ -807,7 +807,7 @@ class Shape extends Helpers {
                     pxPos.x <= this.sectorBounds.x + this.sectorBounds.width &&
                     pxPos.x >= this.sectorBounds.x
                 )
-            ) ||
+            ) &&
             (
                 (
                     pxPos.y + this.height <= this.sectorBounds.y + this.sectorBounds.height &&
@@ -891,28 +891,33 @@ class Shape extends Helpers {
         distances.left = this.graphic.position.x - this.sectorBounds.x;
         distances.right = this.sectorBounds.x + this.sectorBounds.width - (this.graphic.position.x + this.width);
         distances.top = this.graphic.position.y - this.sectorBounds.y;
-
-        let tmpSectorBounds = {
-            width: this.getMmWidth(this.sectorBounds.width),
-            height: this.getMmHeight(this.sectorBounds.height),
-            x: this.getMmWidth(this.sectorBounds.x),
-            y: this.getMmHeight(this.sectorBounds.y),
-        }
-        let tmpThis = {
-            width: this.getMmWidth(this.width),
-            height: this.getMmHeight(this.height),
-            x: this.getMmWidth(this.graphic.position.x),
-            y: this.getMmHeight(this.graphic.position.y),
-        }
-
-
         distances.bottom = this.sectorBounds.y + this.sectorBounds.height - (this.graphic.position.y + this.height);
+
+        let left, right, top, bottom
+        if(this.sector.shapes.length > 1){
+            let tmp_shapes = this.sector.shapes.slice().filter(shape => shape.data.type !== 'loop');
+            let y_sorted = tmp_shapes.slice().sort((a, b) => a.data.position.y - b.data.position.y);
+            let x_sorted = tmp_shapes.slice().sort((a, b) => a.data.position.x - b.data.position.x);
+
+            let y_index = y_sorted.findIndex(shape => shape.graphic.uid === this.graphic.uid);
+            let x_index = x_sorted.findIndex(shape => shape.graphic.uid === this.graphic.uid);
+
+            left = x_sorted[x_index - 1]
+            right = x_sorted[x_index + 1]
+            top = y_sorted[y_index - 1]
+            bottom = y_sorted[y_index + 1]
+
+            left = left ? this.graphic.position.x - left.graphic.position.x : false;
+            right = right ? right.graphic.position.x + right.width - (this.graphic.position.x + this.width) : false;
+            top = top ? this.graphic.position.y - (top.graphic.position.y + top.height) : false;
+            bottom = bottom ? bottom.graphic.position.y - (this.graphic.position.y + this.height) : false;
+        }
 
         // Отрисовка для левой границы
         if (distances.left > 0) {
             const startX = this.graphic.position.x
             const startY = this.graphic.position.y + this.height / 2
-            const endX = this.sectorBounds.x;
+            const endX = startX - (left || distances.left);
             const endY = startY;
             this.drawDashedLine({
                 startX,
@@ -925,20 +930,29 @@ class Shape extends Helpers {
             this.drawArrowhead(graphics, startX, startY, 'right');
             // Стрелка на краю сектора (внутри сектора, указывает влево, от фигуры)
             this.drawArrowhead(graphics, endX, endY, 'left', 5);
-            const leftText = new Text({text: `${Math.round(this.getMmWidth(distances.left))} mm`, style: textStyle});
+
+            let distance = startX - endX
+            const leftText = new Text({text: `${Math.round(this.getMmWidth(distance))} mm`, style: textStyle});
+
+            let widthSize = leftText.getSize()
+            if(widthSize.width > distance){
+                leftText.scale.x = (distance - 2) / widthSize.width
+            }
+            widthSize = leftText.getSize()
+
             leftText.position.set(
-                this.sectorBounds.x + distances.left / 2,
-                startY - 15
+                startX - distance / 2 - widthSize.width / 2,
+                startY - textStyle.fontSize / 2 - 15
             );
             this.dementionContainer.addChild(leftText);
             this.distanceLabels.push(leftText);
         }
 
         // Отрисовка для правой границы
-        if (distances.right > 0) {
+        if (distances.right > 0 && !right) {
             const startX = this.graphic.position.x + this.width
             const startY = this.graphic.position.y + this.height / 2
-            const endX = this.sectorBounds.x + this.sectorBounds.width;
+            const endX = startX + (right || distances.right);
             const endY = startY;
             this.drawDashedLine({
                 startX,
@@ -951,21 +965,30 @@ class Shape extends Helpers {
             this.drawArrowhead(graphics, startX, startY, 'left');
             // Стрелка на краю сектора (внутри сектора, указывает вправо, от фигуры)
             this.drawArrowhead(graphics, endX, endY, 'right', 5);
-            const rightText = new Text({text: `${Math.round(this.getMmWidth(distances.right))} mm`, style: textStyle});
+
+            let distance = endX - startX
+            const rightText = new Text({text: `${Math.round(this.getMmWidth(distance))} mm`, style: textStyle});
+
+            let widthSize = rightText.getSize()
+            if(widthSize.width > distance){
+                rightText.scale.x = (distance - 2) / widthSize.width
+            }
+            widthSize = rightText.getSize()
+
             rightText.position.set(
-                startX + distances.right / 2,
-                startY - 15
+                startX + distance / 2 - widthSize.width / 2,
+                startY - textStyle.fontSize / 2 - 15
             );
             this.dementionContainer.addChild(rightText);
             this.distanceLabels.push(rightText);
         }
 
         // Отрисовка для верхней границы
-        if (distances.top > 0) {
+        if (distances.top > 0 && !top) {
             const startX = this.graphic.position.x + this.width / 2
             const startY = this.graphic.position.y
             const endX = startX;
-            const endY = this.sectorBounds.y;
+            const endY = startY - (top || distances.top);
             this.drawDashedLine({
                 startX,
                 startY,
@@ -977,10 +1000,19 @@ class Shape extends Helpers {
             this.drawArrowhead(graphics, startX, startY, 'down');
             // Стрелка на краю сектора (внутри сектора, указывает вверх, от фигуры)
             this.drawArrowhead(graphics, endX, endY, 'up', 5);
-            const topText = new Text({text: `${Math.round(this.getMmHeight(distances.top))} mm`, style: textStyle});
+
+            let distance = startY - endY
+            const topText = new Text({text: `${Math.round(this.getMmHeight(distance))} mm`, style: textStyle});
+
+            let heightSize = topText.getSize()
+            if(heightSize.height > distance){
+                topText.scale.y = (distance - 2) / heightSize.height
+            }
+            heightSize = topText.getSize()
+
             topText.position.set(
                 startX + 5,
-                this.sectorBounds.y + distances.top / 2
+                startY - distance / 2 - heightSize.height / 2
             );
             this.dementionContainer.addChild(topText);
             this.distanceLabels.push(topText);
@@ -991,7 +1023,7 @@ class Shape extends Helpers {
             const startX = this.graphic.position.x + this.width / 2
             const startY = this.graphic.position.y + this.height
             const endX = startX;
-            const endY = this.sectorBounds.y + this.sectorBounds.height;
+            const endY = startY + (bottom || distances.bottom);
             this.drawDashedLine({
                 startX,
                 startY,
@@ -1005,13 +1037,21 @@ class Shape extends Helpers {
             this.drawArrowhead(graphics, endX, endY, 'down'); // Увеличено смещение до 5 пикселей
             this.drawArrowhead(graphics, startX, startY, 'up');
 
+            let distance = endY - startY
             const bottomText = new Text({
-                text: `${Math.round(this.getMmHeight(distances.bottom))} mm`,
+                text: `${Math.round(this.getMmHeight(distance))} mm`,
                 style: textStyle
             });
+
+            let heightSize = bottomText.getSize()
+            if(heightSize.height > distance){
+                bottomText.scale.y = (distance - 2) / heightSize.height
+            }
+            heightSize = bottomText.getSize()
+
             bottomText.position.set(
                 startX + 5,
-                startY + distances.bottom / 2
+                startY + distance / 2 - heightSize.height / 2
             );
             this.dementionContainer.addChild(bottomText);
             this.distanceLabels.push(bottomText);
