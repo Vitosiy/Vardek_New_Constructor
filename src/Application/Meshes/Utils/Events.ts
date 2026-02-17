@@ -1052,7 +1052,26 @@ export class MeshEvents extends BuildersHelper {
 
         }
 
-        this.root._customBoxHelper.updateBoxHelper()
+        //Применение позиционирования после изменений
+        
+        const adjustedPosition = this.root._roomManager!.adjustPositionWithRaycasting({
+            object: this._currentMesh,
+            targetPosition: this._currentMesh.userData.targetPosition,
+            wall: this._currentMesh.userData.currentWall
+        });
+
+        this._currentMesh.position.copy(adjustedPosition.position);
+        this._currentMesh.rotation.copy(adjustedPosition.rotation);
+
+        const center = new THREE.Vector3();
+        this._currentMesh.userData.aabb.getCenter(center);
+        this._currentMesh.userData.obb.center.copy(center);
+        /** @Корректная_коллизия */
+        const { SIZE } = this._currentMesh?.userData.PROPS.CONFIG
+
+        this._currentMesh.userData.obb.halfSize.x =  data.width * 0.5;
+
+        this.root._customBoxHelper!.updateBoxHelper();
 
     }
 
