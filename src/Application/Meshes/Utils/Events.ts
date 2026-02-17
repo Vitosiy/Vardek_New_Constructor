@@ -1053,7 +1053,7 @@ export class MeshEvents extends BuildersHelper {
         }
 
         //Применение позиционирования после изменений
-        
+
         const adjustedPosition = this.root._roomManager!.adjustPositionWithRaycasting({
             object: this._currentMesh,
             targetPosition: this._currentMesh.userData.targetPosition,
@@ -1069,7 +1069,8 @@ export class MeshEvents extends BuildersHelper {
         /** @Корректная_коллизия */
         const { SIZE } = this._currentMesh?.userData.PROPS.CONFIG
 
-        this._currentMesh.userData.obb.halfSize.x =  data.width * 0.5;
+        this._currentMesh.userData.obb.halfSize.x = data.width * 0.5;
+        this._currentMesh.userData.obb.halfSize.y = data.height * 0.5;
 
         this.root._customBoxHelper!.updateBoxHelper();
 
