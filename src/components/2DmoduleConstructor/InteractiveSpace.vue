@@ -1052,7 +1052,7 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
 
   const xOffset = cell.xOffset || x;
   const yOffset = cell.yOffset || y;
-
+  const opacity = cell.type == 'fasade' ? 1 : 0.4
 
   let text
 
@@ -1071,7 +1071,7 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
 
   const cellNumber = new Text({
     text: text,
-    style: {fontSize: 14, fill: "#131313", align: "center"},
+    style: {fontSize: 14, fill: "#131313", align: "center", alpha: opacity},
   })
 
   cellNumber.anchor.set(0.5);
@@ -1088,8 +1088,8 @@ const createSectioNum = ({x, y, width, height, cell, sectionIndex, cellIndex, ro
       26,
       5
   );
-  cellNumberBackground.fill("#ffffff");
-  cellNumberBackground.stroke({width: 1, color: "#A3A9B5"});
+  cellNumberBackground.fill({color: "#ffffff", alpha: opacity});
+  cellNumberBackground.stroke({width: 1, color: 'black', alpha: opacity});
 
   cellNumber.interactive = false;
   cellNumberBackground.interactive = false;
