@@ -331,8 +331,8 @@ export const useQuickActionsToolbar = () => {
     {
       key: 'technologist',
       tooltip: 'Технолог',
-      iconClass: 'icon-svg',
-      iconSrc: '/icons/book.svg',
+      iconClass: 'icon-book',
+      iconSrc: 'book',
       path: 'default',
       action: () => popupStore.openPopup('technologist'),
     },
