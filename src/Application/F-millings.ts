@@ -7088,12 +7088,12 @@ export const MILLINGS = {
 
                 condition: {
                     width: {
-                        min: 100,
-                        max: 1250,
+                        min: 146,
+                        max: Infinity,
                     },
                     height: {
-                        min: 536,
-                        max: 2500,
+                        min: 146,
+                        max: Infinity,
                     },
                 },
 
