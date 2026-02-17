@@ -88,12 +88,12 @@ export class BuildUniversalModule extends BuildProduct {
             let option = this._OPTION[+activeOptions[i].id]
 
             switch (+option.ID) {
-/*                case 7250452:   //Деревянная царга
-                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
-                    break;
-                case 7250589:   //Металлическая царга
-                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
-                    break;*/
+                /*                case 7250452:   //Деревянная царга
+                                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
+                                    break;
+                                case 7250589:   //Металлическая царга
+                                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
+                                    break;*/
                 //case 4621257:   //Опора регулируемая - не является ножкой этого типа
                 case 4621238:   //Опора 100 мм
                 case 4621240:   //Опора 150 мм
@@ -366,7 +366,7 @@ export class BuildUniversalModule extends BuildProduct {
                                 id: curSection.fillings.length + 1,
                             }
 
-                            if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                            if (!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
                                 newFilling.material = PROPS.CONFIG.MODULE_COLOR
 
                             curSection.fillings.push(newFilling)
@@ -386,7 +386,7 @@ export class BuildUniversalModule extends BuildProduct {
                             id: curSection.fillings.length + 1,
                         }
 
-                        if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                        if (!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
                             newFilling.material = PROPS.CONFIG.MODULE_COLOR
 
                         curSection.fillings.push(newFilling)
@@ -406,7 +406,7 @@ export class BuildUniversalModule extends BuildProduct {
                         id: curSection.fillings.length + 1,
                     }
 
-                    if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                    if (!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
                         newFilling.material = PROPS.CONFIG.MODULE_COLOR
 
                     curSection.fillings.push(newFilling)
@@ -426,7 +426,7 @@ export class BuildUniversalModule extends BuildProduct {
                     id: curSection.fillings.length + 1,
                 }
 
-                if(!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
+                if (!filling.isProfile && !["glass_shelf", 'any'].includes(filling.type))
                     newFilling.material = PROPS.CONFIG.MODULE_COLOR
 
                 curSection.fillings.push(newFilling)
@@ -628,6 +628,7 @@ export class BuildUniversalModule extends BuildProduct {
                         return
 
                     const onLoad = (productFilling, isModel = true) => {
+
                         if (filling.isProfile)
                             productFilling.userData.isProfile = true
 
@@ -658,16 +659,18 @@ export class BuildUniversalModule extends BuildProduct {
 
                         productFilling.position.copy(start_position)
 
-                        if (!isModel)
+                        if (!isModel) {
                             PROPS.JSON_FILLINGS.push(productFilling)
+                            const edge = this.edge_builder.createEdge(productFilling);
+                            const clonePos = productFilling.position.clone()
+                            edge.position.set(clonePos.x, clonePos.y, clonePos.z)
+                            group.add(productFilling, edge)
+                        }
 
-                        const edge = this.edge_builder.createEdge(productFilling);
-                        const clonePos = productFilling.position.clone()
-                        edge.position.set(clonePos.x, clonePos.y, clonePos.z)
-
-                        group.add(productFilling, edge)
+                        group.add(productFilling)
 
                         if (filling.isProfile) {
+
                             let tmp_clone = productFilling.clone()
                             tmp_clone.position.y -= baseOffset
                             subGeometries.push(tmp_clone)
@@ -679,7 +682,6 @@ export class BuildUniversalModule extends BuildProduct {
 
                     let productFilling
                     if (data.DAE) {
-                        // console.log(data.DAE, 'DAE')
                         this.models_builder.create({ onLoad, props: { CONFIG: { MODELID: data.ID || data.id, SIZE: filling_size } }, sizeRulers: false, UMFillinig: true })
                     } else {
                         productFilling = this.createSubProductObject(filling, data, PROPS)
@@ -802,7 +804,7 @@ export class BuildUniversalModule extends BuildProduct {
             const leftPosition = section.position.x - section.size.x / 2 + Math.round((loop.width + loopPosition.CORRECTION_X) / 2)
             const rightPosition = section.position.x + section.size.x / 2 - Math.round((loop.width + loopPosition.CORRECTION_X) / 2)
 
-            if(LOOPSIDE[loopside] === 'none')
+            if (LOOPSIDE[loopside] === 'none')
                 return false
 
             loopCoord.coords.forEach((coord) => {
@@ -843,7 +845,18 @@ export class BuildUniversalModule extends BuildProduct {
                 section.forEach((door, doorKey) => {
                     door.forEach((fasadeLoop, fasadeLoopKey) => {
                         let loopMesh = create(loopModel.clone(), secIndex, fasadeLoopKey, fasadeLoop)
-                        if(loopMesh)
+                        // loopMesh.traverse((child) => {
+                        //     if (child instanceof THREE.Object3D) {
+                        //         const edge = this.edge_builder.createEdge(child);
+                        //         const clonePos = child.position.clone()
+
+                        //         edge.position.set(clonePos.x, clonePos.y, clonePos.z)
+                        //         edge.rotation.copy(child.rotation)
+                        //         child.add(edge)
+                        //     }
+                        // })
+
+                        if (loopMesh)
                             allLoopsMesh.add(loopMesh)
                     });
                 });

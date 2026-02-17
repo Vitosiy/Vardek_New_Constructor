@@ -112,6 +112,7 @@ export class EdgeBuilder {
 
         meshEdge.rotation.copy(mesh.rotation)
         meshEdge.position.copy(mesh.position)
+        meshEdge.scale.copy(mesh.scale)
 
         if (name != 'default') {
             meshEdge.userData.edge = true
@@ -131,6 +132,7 @@ export class EdgeBuilder {
 
         faceMesh.rotation.copy(mesh.rotation)
         faceMesh.position.copy(mesh.position)
+        faceMesh.scale.copy(mesh.scale)
 
         faceMesh.userData.edge = true
         faceMesh.userData.name = name

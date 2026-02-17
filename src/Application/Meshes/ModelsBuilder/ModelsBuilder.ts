@@ -105,6 +105,9 @@ export class ModelsBuilder {
                     }
                 }
 
+                const edge = this.parent.edge_builder.createEdge(normolized)
+                normolized.add(edge)
+
                 if (onLoad) {
                     onLoad(normolized)
                 }

@@ -784,7 +784,8 @@ watch(
         <OpenFacadeButton
           v-if="
             Object.keys(CutData).length == 0 &&
-            modelState.getCurrentModel?.name != 'MODEL'
+            modelState.getCurrentModel?.name != 'MODEL' &&
+            !menuStore.getDrowModeValue
           "
           :class="activeHideFasadeButton"
           @click="toggleFasade"
