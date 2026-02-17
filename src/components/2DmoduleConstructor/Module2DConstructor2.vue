@@ -662,7 +662,7 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
 
 
   let fasadePosition = getFasadePosition()
-  let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
+  let baseFasade = module.value.sections[secIndex]?.fasades?.[0]?.find(item => !item.manufacturerOffset)
 
   if(!baseFasade) {
     const PROPS = productData.value.PROPS;
