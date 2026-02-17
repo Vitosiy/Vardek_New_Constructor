@@ -7077,64 +7077,40 @@ export const MILLINGS = {
     1906032: [
         {
             name: "Line",
-            type: 'svg',
-            extrudeSettings: {
-                steps: 1,
-                depth: 1,
-                bevelEnabled: true,
-                bevelThickness: 0,
-                bevelSize: 0,
-                bevelOffset: 0,
-                bevelSegments: 1,
-            },
-            figureParams: [
-                {
-                    nameCondition: "default",
-                    condition: {
-                        width: {
-                            min: 146,
-                            max: Infinity,
-                        },
-                        height: {
-                            min: 146,
-                            max: Infinity,
-                        },
+            type: 'capsule',
+            capsuleParams: {
+                radius: 4,
+                length: 'FASADE_HEIGHT',
+                capSegments: 3,
+                radialSegments: 3,
+                percent: 2,
+                padding: 2,
+
+                condition: {
+                    width: {
+                        min: 100,
+                        max: 1250,
                     },
-                    figure: {
-                        svg: `<path d="M 0 -3 L -5.2 0 L 5.2 0 Z"/>
-                            `,
-                        widthOffset: 0,
-                        heightOffset: 0,
-                        pattern: {
-                            multiply: 1,
-                            offsetX: 4
-                        },
-                        boolParams: {
-                            depth: {
-                                offset: 4,
-                                size: "FASADE_HEIGHT"
-                            },
-                            position: {
-                                top: false,
-                                bottom: true,
-                                front: -12,
-                                left: true,
-                                right: false,
-                                centerVertical: true
-                            },
-                            rotate: {
-                                x: -Math.PI * 0.5,
-                                z: -Math.PI
-                            }
-                        }
-                    },
-                    hole: {
-                        svg: ``,
-                        widthOffset: 0,
-                        heightOffset: 0,
+                    height: {
+                        min: 536,
+                        max: 2500,
                     },
                 },
-            ],
+
+                pattern: {
+                    offsetX: 5,
+                    count: 1,
+                    rotation: {
+                        y: Math.PI * 0.33
+                    },
+                },
+
+                position: {
+                    x: 'right',
+                    z: -4
+                }
+
+            }
         },
         {
             name: "corner_milling_1",
@@ -9168,12 +9144,12 @@ export const MILLINGS = {
             name: "Line",
             type: 'capsule',
             capsuleParams: {
-                radius: 5,
+                radius: 4,
                 length: 'FASADE_HEIGHT',
                 capSegments: 3,
                 radialSegments: 3,
                 percent: 2,
-                padding: 5,
+                padding: 2,
 
                 condition: {
                     width: {
@@ -9187,7 +9163,7 @@ export const MILLINGS = {
                 },
 
                 pattern: {
-                    offsetX: 10,
+                    offsetX: 5,
                     count: 1,
                     rotation: {
                         y: Math.PI * 0.33
@@ -9256,12 +9232,12 @@ export const MILLINGS = {
             name: "Drawers_Small",
             type: 'capsule',
             capsuleParams: {
-                radius: 5,
+                radius: 4,
                 length: 'FASADE_HEIGHT',
                 capSegments: 3,
                 radialSegments: 3,
                 percent: 2,
-                padding: 5,
+                padding: 2,
 
                 condition: {
                     width: {
@@ -9275,7 +9251,7 @@ export const MILLINGS = {
                 },
 
                 pattern: {
-                    offsetX: 10,
+                    offsetX: 5,
                     count: 1,
                     rotation: {
                         y: Math.PI * 0.33
@@ -9341,12 +9317,12 @@ export const MILLINGS = {
             name: "Line",
             type: 'capsule',
             capsuleParams: {
-                radius: 5,
+                radius: 4,
                 length: 'FASADE_HEIGHT',
                 capSegments: 3,
                 radialSegments: 3,
                 percent: 2,
-                padding: 5,
+                padding: 2,
 
                 condition: {
                     width: {
@@ -9360,7 +9336,7 @@ export const MILLINGS = {
                 },
 
                 pattern: {
-                    offsetX: 10,
+                    offsetX: 5,
                     count: 1,
                     rotation: {
                         y: Math.PI * 0.33
@@ -9369,7 +9345,6 @@ export const MILLINGS = {
 
                 position: {
                     x: 'right',
-
                     z: -6
                 }
 
@@ -9428,12 +9403,12 @@ export const MILLINGS = {
             name: "Drawers_Small",
             type: 'capsule',
             capsuleParams: {
-                radius: 5,
+                radius: 4,
                 length: 'FASADE_HEIGHT',
                 capSegments: 3,
                 radialSegments: 3,
                 percent: 2,
-                padding: 5,
+                padding: 2,
 
                 condition: {
                     width: {
@@ -9447,7 +9422,7 @@ export const MILLINGS = {
                 },
 
                 pattern: {
-                    offsetX: 10,
+                    offsetX: 5,
                     count: 1,
                     rotation: {
                         y: Math.PI * 0.33
