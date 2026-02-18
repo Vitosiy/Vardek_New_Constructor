@@ -117,12 +117,15 @@
                 {{ product.NAME }}
                 <!-- {{ appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH }} -->
                 <span
-                  >-
+                  >
                   {{
                     appData.appData?.article[
-                      appData.appData.CATALOG.PRODUCTS[product?.ID]
-                        ?.DATA_PETROVICH
-                    ]?.PROPERTIES?.ARTICLE?.VALUE
+                      appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH
+                    ]?.PROPERTIES?.ARTICLE?.VALUE 
+                      ? `- ${appData.appData?.article[
+                          appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH
+                        ]?.PROPERTIES?.ARTICLE?.VALUE}`
+                      : ''
                   }}
                 </span>
               </h4>
