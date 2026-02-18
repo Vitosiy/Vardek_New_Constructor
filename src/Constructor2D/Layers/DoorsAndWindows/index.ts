@@ -143,6 +143,13 @@ export default class DoorsAndWindows {
     // инициализируем события
     this.setupInteractions();
 
+    // Подписываемся на pointerup/pointermove на stage один раз при создании слоя,
+    // чтобы перетаскивание окон и дверей работало сразу после первой загрузки 2D
+    // (в init() при пустых комнатах происходит ранний return и подписка не вешалась).
+    this.app.stage
+      .on("pointerup", this.handlerStageMouseUp)
+      .on("pointermove", this.handlerStageMouseMove);
+
   }
 
   // Очистка всех объектов перед перезагрузкой
@@ -381,11 +388,7 @@ export default class DoorsAndWindows {
 
     });
 
-    if(!publicUpdate){
-      this.app.stage
-        .on("pointerup", this.handlerStageMouseUp)
-        .on("mousemove", this.handlerStageMouseMove);
-    }
+    // здесь убрали подписки обработчиков
 
     console.log('DoorsAndWindows layer initialized with', this.drawObjects.length, 'objects');
 
@@ -1098,7 +1101,7 @@ export default class DoorsAndWindows {
 
     this.app.stage
       .off("pointerup", this.handlerStageMouseUp)
-      .off("mousemove", this.handlerStageMouseMove);
+      .off("pointermove", this.handlerStageMouseMove);
 
     // Удаление контейнера
     if (this.container) {
