@@ -1215,7 +1215,10 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         sections: {}
       }
 
-    module.value.errors[ErrorsType['loops']].sections = errorItem.sections
+    module.value.errors[ErrorsType['loops']].sections = Object.assign(module.value.errors[ErrorsType['loops']].sections, errorItem.sections)
+  }
+  else if(module.value.errors?.[ErrorsType['loops']]?.sections?.[secIndex]?.length) {
+    delete module.value.errors[ErrorsType['loops']].sections[secIndex]
   }
 
   if(module.value.errors?.[ErrorsType['loops']] && !Object.entries(module.value.errors[ErrorsType['loops']].sections).length)
