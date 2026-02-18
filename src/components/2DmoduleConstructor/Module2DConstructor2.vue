@@ -1747,7 +1747,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           class="constructor2d-container--left--module-configs"
       >
 
-        <div class="actions-sections-header">
+        <div class="no-select actions-sections-header">
           <h1>Размеры модуля</h1>
         </div>
 
@@ -1756,11 +1756,11 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
         >
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Высота <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
-            <p class="item__label text-grey">
+            <p class="no-select actions-title">Высота <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="no-select item__label text-grey">
               Мин: {{ getMinMaxModuleSize('height', 'min') ?? "н/о" }}
             </p>
-            <p class="item__label text-grey">
+            <p class="no-select item__label text-grey">
               Макс: {{ getMinMaxModuleSize('height', 'max') ?? "н/о" }}
             </p>
             <div class="actions-input--container">
@@ -1777,11 +1777,11 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Ширина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
-            <p class="item__label text-grey">
+            <p class="no-select actions-title">Ширина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
+            <p class="no-select item__label text-grey">
               Мин: {{ getMinMaxModuleSize('width', 'min') ?? "н/о" }}
             </p>
-            <p class="item__label text-grey">
+            <p class="no-select item__label text-grey">
               Макс: {{ getMinMaxModuleSize('width', 'max') ?? "н/о" }}
             </p>
             <div class="actions-input--container">
@@ -1798,11 +1798,11 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Глубина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
-            <p class="item__label text-grey">
+            <p class="no-select actions-title">Глубина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="no-select item__label text-grey">
               Мин: {{ getMinMaxModuleSize('depth', 'min') ?? "н/о" }}
             </p>
-            <p class="item__label text-grey">
+            <p class="no-select item__label text-grey">
               Макс: {{ getMinMaxModuleSize('depth', 'max') ?? "н/о" }}
             </p>
             <div class="actions-input--container">
@@ -1822,15 +1822,15 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
               v-if="!module.isRestrictedModule"
               class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
           >
-            <p class="actions-title">Цоколь
+            <p class="no-select actions-title">Цоколь
               <img v-if="mode !== 'module' || noBottom" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
               <Toggle v-else v-model="onHorizont"/>
             </p>
 
-            <p v-if="!noBottom" class="item__label text-grey">
+            <p v-if="!noBottom" class="no-select item__label text-grey">
               Мин: 50
             </p>
-            <p v-if="!noBottom" class="item__label text-grey">
+            <p v-if="!noBottom" class="no-select item__label text-grey">
               Макс: 300
             </p>
 
@@ -1863,7 +1863,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
 
         </div>
 
-        <div class="actions-sections-header">
+        <div class="no-select actions-sections-header">
           <h1>Параметры модуля</h1>
         </div>
 
@@ -1879,11 +1879,11 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           />
         </div>
 
-        <div class="actions-sections-header">
+        <div class="no-select actions-sections-header">
           <h1>Опции</h1>
         </div>
 
-        <RailsRightPage style="margin-top: 5px"/>
+        <RailsRightPage class="no-select" style="margin-top: 5px"/>
 
       </div>
 
@@ -1894,7 +1894,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
         class="constructor2d-container constructor2d-container--mid"
         ref="constructor2dContainer"
     >
-      <div class="constructor2d-header">
+      <div class="no-select constructor2d-header">
         <div class="constructor2d-header--title"><h1>{{productData.PROPS.NAME}}</h1></div>
       </div>
 
@@ -1905,7 +1905,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
           <div class="actions-items--right-items">
             <button
                 :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'module'
                       }
@@ -1916,7 +1916,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             </button>
             <button
                 :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'fillings'
                       }
@@ -1927,7 +1927,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             </button>
             <button
                 :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'fasades'
                       }
@@ -1971,7 +1971,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
       <div
           v-if="mode === 'module'"
       >
-        <h1>Секции</h1>
+        <h1 class="no-select">Секции</h1>
 
         <SectionOptions
             ref="optionsRef"
@@ -1989,7 +1989,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
       <div
           v-if="mode === 'fasades'"
       >
-        <h1>Фасады</h1>
+        <h1 class="no-select">Фасады</h1>
 
         <FasadesOptions
             ref="optionsRef"
@@ -2010,7 +2010,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
       <div
           v-if="mode === 'fillings'"
       >
-        <h1>Наполнение</h1>
+        <h1 class="no-select">Наполнение</h1>
 
         <FillingsProductions
             ref="optionsRef"
@@ -2032,6 +2032,10 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
 
 <style lang="scss" scoped>
 .constructor2d {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     gap: 1rem;
@@ -2155,7 +2159,17 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
   }
 }
 
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .actions {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -2363,7 +2377,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #5d6069;
+    color: #a3a9b5;
     outline: none;
 
     &--default,

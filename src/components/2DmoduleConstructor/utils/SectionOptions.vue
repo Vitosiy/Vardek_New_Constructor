@@ -1887,7 +1887,9 @@ onMounted(() => {
 
 <style lang="scss">
 .splitter-sections {
-
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
   &-container {
     &--product {
       display: flex;
@@ -2012,7 +2014,17 @@ onMounted(() => {
   }
 }
 
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .actions-sections {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -2187,12 +2199,20 @@ onMounted(() => {
       align-items: center;
       align-self: end;
       margin-bottom: 0.5rem;
+
+      -webkit-user-select: none; /* Safari */
+      -ms-user-select: none;     /* IE 10+ и Edge */
+      user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
     }
   }
 
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10+ и Edge */
+    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
   }
 
   &-inputs {
@@ -2245,8 +2265,12 @@ onMounted(() => {
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #5d6069;
+    color: #a3a9b5;
     outline: none;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10+ и Edge */
+    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 
     &--default,
     &--footer {
@@ -2324,6 +2348,10 @@ onMounted(() => {
 }
 
 .accordion-sections {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   details {
     position: relative;
     margin: 16px 0;

@@ -1249,7 +1249,7 @@ const closeMenu = () => {
                       alt=""
                   />
                 </button>
-                <p>Дверь №{{ doorIndex + 1 }}</p>
+                <p class="actions-title actions-title--part">Дверь №{{ doorIndex + 1 }}</p>
               </div>
 
               <div class="accordion">
@@ -1452,7 +1452,7 @@ const closeMenu = () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="color-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color-select">
+    <div class="no-select color-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color-select">
       <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
       <AdvanceCorpusMaterialRedactor
@@ -1478,6 +1478,10 @@ const closeMenu = () => {
 
 <style lang="scss" scoped>
 .splitter {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-container {
     &--product {
       display: flex;
@@ -1568,6 +1572,10 @@ const closeMenu = () => {
         &__title {
           font-size: 18px;
           font-weight: 600;
+
+          -webkit-user-select: none; /* Safari */
+          -ms-user-select: none;     /* IE 10+ и Edge */
+          user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
         }
 
         &-color {
@@ -1610,7 +1618,17 @@ const closeMenu = () => {
   }
 }
 
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .actions {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -1759,12 +1777,20 @@ const closeMenu = () => {
       align-items: center;
       align-self: end;
       margin-bottom: 0.5rem;
+
+      -webkit-user-select: none; /* Safari */
+      -ms-user-select: none;     /* IE 10+ и Edge */
+      user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
     }
   }
 
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10+ и Edge */
+    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
   }
 
   &-inputs {
@@ -1817,8 +1843,12 @@ const closeMenu = () => {
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #5d6069;
+    color: #a3a9b5;
     outline: none;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10+ и Edge */
+    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 
     &--default,
     &--footer {
@@ -1896,6 +1926,10 @@ const closeMenu = () => {
 }
 
 .accordion {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   border: unset;
 
   details {
@@ -1948,6 +1982,10 @@ const closeMenu = () => {
 }
 
 .color {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-select {
     position: fixed;
     right: 20.8vw;
@@ -1982,6 +2020,10 @@ const closeMenu = () => {
       &__title {
         font-size: 15px;
         font-weight: 500;
+
+        -webkit-user-select: none; /* Safari */
+        -ms-user-select: none;     /* IE 10+ и Edge */
+        user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
       }
     }
   }

@@ -399,7 +399,17 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .actions-materials {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -627,7 +637,7 @@ onMounted(() => {
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #5d6069;
+    color: #a3a9b5;
     outline: none;
 
     &--default,
@@ -713,7 +723,10 @@ onMounted(() => {
   left: 320px;
   max-height: calc(100vh - 120px);
   z-index: -1;
-  user-select: none;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &-options {
     display: flex;
@@ -773,6 +786,10 @@ onMounted(() => {
 }
 
 .option {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-label {
     display: flex;
     align-items: center;
@@ -804,6 +821,10 @@ onMounted(() => {
     font-size: 18px;
     font-weight: 600;
     color: #a3a9b5;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10+ и Edge */
+    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 
     @media (hover: hover) {
       &:hover {
@@ -879,6 +900,10 @@ onMounted(() => {
   overflow: hidden;
 
   z-index: 0;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &-select {
     display: flex;
