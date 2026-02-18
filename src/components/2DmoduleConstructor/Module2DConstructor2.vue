@@ -1121,6 +1121,24 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
       ) {
         result.push(loop.id)
       }
+      else if(cell.fillings?.length) {
+        cell.fillings.forEach((filling) => {
+          let filling_pos = new THREE.Vector2(filling.position.x, module.value.height - filling.position.y - filling.height)
+          if(
+              (
+                (loop.minY < (filling_pos.y + filling.height) && loop.maxY > (filling_pos.y + filling.height)) ||
+                (loop.minY < filling_pos.y && loop.maxY > filling_pos.y) ||
+                (loop.minY > filling_pos.y && loop.maxY < (filling_pos.y + filling.height))
+              )
+              &&
+              ((loop.minX <= (filling_pos.x + filling.width) && loop.maxX >= (filling_pos.x + filling.width)) ||
+                  (loop.minX <= (filling_pos.x) && loop.maxX >= (filling_pos.x)))
+          ) {
+            result.push(loop.id)
+          }
+        })
+      }
+
     })
 
     return result;
@@ -1164,7 +1182,7 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
       })
     })
   }
-  /*else {
+  else {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
@@ -1176,12 +1194,15 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         })
 
         if(loops[doorKey][fasadeKey].errors.length) {
-          errorItem.list.push(loops[doorKey][fasadeKey].errors)
+          if(!errorItem.sections[secIndex])
+            errorItem.sections[secIndex] = []
+
+          errorItem.sections[secIndex].push(loops[doorKey][fasadeKey].errors)
         }
 
       })
     })
-  }*/
+  }
 
   if (Object.entries(errorItem.sections).length) {
     if(!module.value.errors)
@@ -1194,7 +1215,7 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
         sections: {}
       }
 
-    module.value.errors[ErrorsType['loops']].sections = Object.assign(module.value.errors[ErrorsType['loops']].sections, errorItem.sections)
+    module.value.errors[ErrorsType['loops']].sections = errorItem.sections
   }
 
   if(module.value.errors?.[ErrorsType['loops']] && !Object.entries(module.value.errors[ErrorsType['loops']].sections).length)
@@ -1634,6 +1655,7 @@ onMounted(() => {
   });
 
   eventBus.on("A:SelectModelOption", checkOptionsChanged)
+  reset()
 });
 
 onBeforeUnmount(() => {
@@ -1952,6 +1974,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             :max-area-width="totalWidth"
             @cell-selected="handleCellSelect"
             @calcDrawersFasades="calcDrawersFasades"
+            @checkLoopsCollision="checkLoopsCollision"
             @module-reset="reset"
         />
       </div>
@@ -2023,6 +2046,7 @@ watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () =>
             @product-updateFilling="updateFilling"
             @product-updateFasades="updateFasades"
             @product-calcDrawersFasades="calcDrawersFasades"
+            @product-checkLoopsCollision="checkLoopsCollision"
         />
       </div>
 

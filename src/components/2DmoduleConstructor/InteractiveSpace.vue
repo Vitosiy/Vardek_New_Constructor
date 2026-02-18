@@ -56,6 +56,7 @@ const emit = defineEmits([
   "position-non",
   "calcDrawersFasades",
   "module-reset",
+    'checkLoopsCollision',
 ]);
 const canvasContainer = ref();
 const APP = useAppData().getAppData;
@@ -144,6 +145,10 @@ const mode = ref('module');
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
   emit("calcDrawersFasades", secIndex, fillingData);
+}
+
+const checkLoopsCollision = (secIndex) => {
+  emit("checkLoopsCollision", secIndex);
 }
 
 const resetModule = () => {
@@ -588,6 +593,7 @@ const renderGrid = (_moduleGrid) => {
                   getPixelHeight,
                   getPixelWidth,
                   calcDrawersFasades,
+                  checkLoopsCollision,
                 });
 
                 sector.shapes.push(tempShape);
@@ -1002,6 +1008,7 @@ const createFilling = (data, sector) => {
     getPixelHeight,
     getPixelWidth,
     calcDrawersFasades,
+    checkLoopsCollision,
     dementions,
     dementionContainer,
     dragActive: mode.value === "fillings",
@@ -1321,6 +1328,7 @@ const checkPositionFillingToCreate = (data) => {
     getPixelHeight,
     getPixelWidth,
     calcDrawersFasades,
+    checkLoopsCollision,
   });
 
   /** Проверяем на возможность размещения отверстия */
