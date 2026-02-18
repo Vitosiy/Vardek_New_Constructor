@@ -47,7 +47,7 @@ const emit = defineEmits([
   "product-updateFasades",
   "product-updateFilling",
   "product-calcDrawersFasades",
-
+  "product-checkLoopsCollision",
 ]);
 
 const { figureItems, createSurfaceList } =
@@ -100,6 +100,21 @@ const debounce = (callback, wait) => {
     timer.value = false
   }, wait)
 }
+
+const checkLoopsCollision = (
+    secIndex,
+    cellIndex = null,
+    rowIndex = null,
+    segmentIndex = null
+) => {
+  emit(
+      "product-checkLoopsCollision",
+      secIndex,
+      cellIndex,
+      rowIndex,
+      segmentIndex
+  );
+};
 
 const selectCell = (sec, cell = null, row = null, extra = null, item = 0) => {
   selectedFilling.value = {sec, cell, row, item};
@@ -567,6 +582,9 @@ const changeFillingPositionY = (event, _value, key, secIndex, cellIndex = null, 
 
   if (currentfilling.fasade)
     calcDrawersFasades(secIndex)
+  else {
+    checkLoopsCollision(secIndex)
+  }
 
   visualizationRef.value.renderGrid();
 };

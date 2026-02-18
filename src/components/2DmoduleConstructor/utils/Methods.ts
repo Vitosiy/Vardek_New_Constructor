@@ -438,6 +438,7 @@ class Shape extends Helpers {
     select: () => void
     render: () => void
     calcDrawersFasades: () => void
+    checkLoopsCollision: () => void
     type: string
     sectorBounds: TBounds
     graphic: Graphics
@@ -469,7 +470,8 @@ class Shape extends Helpers {
                     getPixelHeight,
                     getPixelWidth,
                     dragActive,
-                    calcDrawersFasades
+                    calcDrawersFasades,
+                    checkLoopsCollision
                 }:
                 {
                     type: string,
@@ -483,6 +485,7 @@ class Shape extends Helpers {
                     getPixelHeight?: () => void,
                     getPixelWidth?: () => void,
                     calcDrawersFasades?: () => void,
+                    checkLoopsCollision?: () => void,
                     dementionContainer?: Container,
                     dragActive: boolean,
                 }) {
@@ -510,6 +513,8 @@ class Shape extends Helpers {
             this.getPixelHeight = getPixelHeight
         if (calcDrawersFasades)
             this.calcDrawersFasades = calcDrawersFasades
+        if (checkLoopsCollision)
+            this.checkLoopsCollision = checkLoopsCollision
 
         this.dementionContainer = dementionContainer
 
@@ -676,6 +681,8 @@ class Shape extends Helpers {
                 if (this.data.fasade || this.data.isProfile) {
                     this.calcDrawersFasades(this.data.sec, this.data)
                 }
+                else
+                    this.checkLoopsCollision(this.data.sec)
 
                 this.render();
             }
