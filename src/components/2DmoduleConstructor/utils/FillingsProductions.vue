@@ -773,7 +773,7 @@ const closeMenu = () => {
         <div class="work-mode-selector">
           <button
               :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'add'
                       }
@@ -784,7 +784,7 @@ const closeMenu = () => {
           </button>
           <button
               :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'config'
                       }
@@ -896,7 +896,7 @@ const closeMenu = () => {
 
                   <div class="actions-items--title">
                     <button
-                        class="actions-btn actions-icon"
+                        class="no-select actions-btn actions-icon"
                         @click="deleteFilling(secIndex, fillingIndex)"
                     >
                       <img
@@ -1045,7 +1045,7 @@ const closeMenu = () => {
 
                         <div class="actions-items--title">
                           <button
-                              class="actions-btn actions-icon"
+                              class="no-select actions-btn actions-icon"
                               @click="deleteFilling(secIndex, fillingIndex, cellIndex)"
                           >
                             <img
@@ -1225,7 +1225,7 @@ const closeMenu = () => {
 
                             <div class="actions-items--title">
                               <button
-                                  class="actions-btn actions-icon"
+                                  class="no-select actions-btn actions-icon"
                                   @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
                               >
                                 <img
@@ -1409,7 +1409,7 @@ const closeMenu = () => {
 
                                 <div class="actions-items--title">
                                   <button
-                                      class="actions-btn actions-icon"
+                                      class="no-select actions-btn actions-icon"
                                       @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex, extraIndex)"
                                   >
                                     <img
@@ -1525,6 +1525,10 @@ const closeMenu = () => {
 
 <style lang="scss" scoped>
 .splitter {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-container {
     &--product {
       display: flex;
@@ -1612,6 +1616,10 @@ const closeMenu = () => {
         &__title {
           font-size: 18px;
           font-weight: 600;
+
+          -webkit-user-select: none; /* Safari */
+          -ms-user-select: none;     /* IE 10+ и Edge */
+          user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
         }
 
         &-color {
@@ -1654,7 +1662,17 @@ const closeMenu = () => {
   }
 }
 
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .actions {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -1801,12 +1819,20 @@ const closeMenu = () => {
       align-items: center;
       align-self: end;
       margin-bottom: 0.5rem;
+
+      -webkit-user-select: none; /* Safari */
+      -ms-user-select: none;     /* IE 10+ и Edge */
+      user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
     }
   }
 
   &-title {
     font-size: 1rem;
     color: #a3a9b5;
+
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10+ и Edge */
+    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
   }
 
   &-inputs {
@@ -1859,7 +1885,7 @@ const closeMenu = () => {
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #5d6069;
+    color: #a3a9b5;
     outline: none;
 
     &--default,
@@ -1949,6 +1975,10 @@ const closeMenu = () => {
 }
 
 .accordion {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none ;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   border: unset;
   overflow-y: scroll;
   max-height: 85vh;
@@ -2038,6 +2068,10 @@ const closeMenu = () => {
       &__title {
         font-size: 15px;
         font-weight: 500;
+
+        -webkit-user-select: none; /* Safari */
+        -ms-user-select: none;     /* IE 10+ и Edge */
+        user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
       }
     }
   }

@@ -1036,6 +1036,10 @@ onBeforeUnmount(() => {
   overflow: hidden;
   box-sizing: border-box;
 
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &__header {
     display: flex;
     justify-content: space-between;
@@ -1068,12 +1072,22 @@ onBeforeUnmount(() => {
   }
 }
 
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .configuration {
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &__item {
     height: 50px;
@@ -1085,12 +1099,18 @@ onBeforeUnmount(() => {
     gap: 17px;
   }
 }
+
 .accordion {
   border: none;
   box-shadow: 4px 4px 4px 4px rgba(34, 60, 80, 0.11);
   transition-property: box-shadow;
   transition-duration: 0.25s;
   transition-timing-function: ease;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &__contant {
     padding-top: 0.5rem;
     border-top: 1px solid #a3a9b5;

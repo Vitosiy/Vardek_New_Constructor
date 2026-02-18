@@ -137,7 +137,7 @@ defineExpose({
         :canvasWidth="universalModuleData.canvasWidth"
       >
         <template #save>
-          <button class="actions-btn actions-btn--footer" @click="saveUMData">
+          <button class="no-select actions-btn actions-btn--footer" @click="saveUMData">
             Сохранить
           </button>
         </template>
@@ -149,7 +149,7 @@ defineExpose({
                 onModalClose();
               }
             "
-            class="actions-btn actions-btn--footer"
+            class="no-select actions-btn actions-btn--footer"
           >
             Закрыть
           </button>
@@ -157,7 +157,7 @@ defineExpose({
       </Module2DConstructor2>
     </template>
     <template #modalOpen="{ onModalOpen }">
-      <button class="cut-btn" @click="onModalOpen">
+      <button class="no-select cut-btn" @click="onModalOpen">
         <img class="cut-icon" src="/icons/cut.svg" alt="" />
       </button>
     </template>
@@ -174,6 +174,12 @@ defineExpose({
     border-radius: 8px;
     overflow: hidden;
   }
+}
+
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
 }
 
 .cut {
