@@ -368,6 +368,13 @@ export type TFasadeTrueSizes = {
   isDrawer?: boolean,
 }
 
+export type TFasadeConversation = {
+  NAME: string,
+  FASADES: any[],
+  SORT: number,
+  GROUP_SIZE: Object|null,
+}
+
 export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
