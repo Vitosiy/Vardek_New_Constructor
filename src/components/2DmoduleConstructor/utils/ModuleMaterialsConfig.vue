@@ -1,6 +1,6 @@
 <script setup lang="ts" xmlns="http://www.w3.org/1999/html">
 // @ts-nocheck
-import { computed, defineExpose, onMounted, ref, toRefs } from "vue";
+import {computed, defineExpose, onBeforeMount, onMounted, ref, toRefs} from "vue";
 
 import { useAppData } from "@/store/appliction/useAppData.ts";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
@@ -9,6 +9,9 @@ import { useModelState } from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Toggle from "@vueform/toggle";
+import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
+import {number} from "yup";
+import {TFasadeTrueSizes} from "@/types/types.ts";
 
 const props = defineProps({
   module: {
@@ -52,12 +55,20 @@ enum partsNames {
   PROFILECOLOR = "Профили",
 }
 
+
 const { module, objectData, visualizationRef } = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
+const productData = ref(null);
+const {
+  createFasadeConversations,
+  checkFasadeConversations,
+} = useConversationActions();
 
 const currentOption = ref<string | boolean>(false);
 const materialList = ref(null);
+const elementSize = <TFasadeTrueSizes|boolean>ref(false);
+
 const getMaterialsParts = computed(() => {
   return (_module: Object) => {
     let result = {};
@@ -132,6 +143,8 @@ const getCurrentValue = computed(() => {
 
       if (!result.COLOR)
         result.COLOR = objectData.value.PROPS.CONFIG.MODULE_COLOR;
+
+      elementSize.value = {FASADE_WIDTH: module.value.depth, FASADE_HEIGHT: module.value.height};
 
       break;
     default:
@@ -324,6 +337,8 @@ const changeProfilesWidth = (onSectionSize) => {
 onMounted(() => {
   modelState.createCurrentBackwallData(objectData.value.globalData);
   modelState.createCurrentSidewallData(objectData.value.globalData);
+  productData.value = modelState.getCurrentModel.userData;
+  elementSize.value = false
 });
 </script>
 
@@ -377,6 +392,7 @@ onMounted(() => {
           :element-data="getCurrentValue"
           :element-index="currentOption"
           :material-list="materialList"
+          :fasade-size="elementSize"
           @parent-callback="selectOption"
         />
         <CorpusMaterialRedactor

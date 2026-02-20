@@ -64,6 +64,7 @@ const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
 const {
   createFasadeConversations,
   checkConversations,
+    filterMaterialsConversations,
   checkFasadeConversations,
   filterFasadeConversations,
 } = useConversationActions();
@@ -814,7 +815,8 @@ onBeforeMount(() => {
       props.elementData.COLOR
   );
 
-  materialList.value = props.materialList?.length ? props.materialList : filterFasadeConversations(props.elementIndex, props.fasadeSize);
+  materialList.value = props.materialList?.length ? props.fasadeSize ? filterMaterialsConversations(props.materialList, props.fasadeSize) : props.materialList :
+      filterFasadeConversations(props.elementIndex, props.fasadeSize);
 
   if(!props.materialList?.length) {
     fasadeSizeList.value = prepareFasadeSizeList();
