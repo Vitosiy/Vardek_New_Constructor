@@ -41,13 +41,6 @@ const {
   NO_FASADE_ID,
 } = UI_PARAMS;
 
-const {
-  createFasadeConversations,
-  checkConversations,
-  checkFasadeConversations,
-  filterFasadeConversations,
-} = useConversationActions();
-
 type constructorMode = 'module' | 'fasades' | 'fillings';
 
 const emit = defineEmits(["save-table-data"]);
@@ -97,6 +90,11 @@ const onSideProfile = ref<boolean>(false);
 const noBottom = ref<boolean>(false);
 const noBackwall = ref<boolean>(false);
 const noLoops = ref<boolean>(false);
+
+const {
+  checkFasadeConversations,
+} = useConversationActions();
+
 
 const module = ref(false);
 const computeModule = () => {
@@ -546,7 +544,7 @@ const updateFasades = () => {
               segment.width += deltaWidth;
 
               if (secIndex !== 0) {
-                segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((section.width + 4) * doorIndex);
+                segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((segment.width + 4) * doorIndex);
               } else if (doorIndex > 0) {
                 segment.position.x += deltaWidth;
               }
@@ -1254,6 +1252,8 @@ const updateTotalHeight = (value) => {
     totalHeight.value = parseInt(value);
     //visualizationRef.value.updateTotalHeight(value);
     visualizationRef.value.updateTotalSize(value, "height");
+
+    checkSideColorsConversations()
     reset();
     visualizationRef.value.selectCell("module", 0, null);
 
@@ -1278,9 +1278,38 @@ const updateTotalDepth = (value) => {
     const PROPS = productData.value.PROPS;
 
     PROPS.CONFIG.SIZE.depth = parseInt(value);
+    checkSideColorsConversations()
     reset();
   }, 1000)
 };
+
+const checkSideColorsConversations = () => {
+  let CONFIG = modelState.getCurrentModel.userData.PROPS.CONFIG
+
+  if(CONFIG['RIGHTSIDECOLOR']?.COLOR) {
+    let check = checkFasadeConversations(CONFIG['RIGHTSIDECOLOR'].COLOR, {
+      FASADE_WIDTH: totalDepth.value,
+      FASADE_HEIGHT: totalHeight.value
+    })
+
+    if (!check) {
+      CONFIG['RIGHTSIDECOLOR'] = { COLOR: false }
+      toaster.error("Цвет правого бока сброшен, размер не соответствует!")
+    }
+  }
+
+  if(CONFIG['LEFTSIDECOLOR']?.COLOR) {
+    let check = checkFasadeConversations(CONFIG['LEFTSIDECOLOR'].COLOR, {
+      FASADE_WIDTH: totalDepth.value,
+      FASADE_HEIGHT: totalHeight.value
+    })
+
+    if (!check) {
+      CONFIG['LEFTSIDECOLOR'] = { COLOR: false }
+      toaster.error("Цвет левого бока сброшен, размер не соответствует!")
+    }
+  }
+}
 
 const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null, extraIndex = null) => {
   switch (type) {
@@ -1436,6 +1465,7 @@ const reset = (reset = false) => {
                   else
                     updateFilling(newRow.width, filling, 'width')
                 }
+
 
               })
             }
