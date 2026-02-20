@@ -53,10 +53,11 @@ export const useRailsRightPage = () => {
             PROPS.CONFIG.MECHANISM = values ? id : null
             curMech.active = values;
 
+            eventBus.emit("A:SelectModelOption")
         }
-        eventBus.emit("A:SelectModelOption")
 
-        if (!curOpt) return;
+        if (!curOpt)
+            return;
 
         if (values) {
             OPTIONS.forEach(opt => {
@@ -88,6 +89,10 @@ export const useRailsRightPage = () => {
         }
 
         curOpt.active = values;
+
+        if (!values && curOpt.close === '1') {
+            checkNecessaryOptions([], OPTIONS)
+        }
 
         switch (+curOpt.id) {
             case 3955910: //Опция без присадки под петли
@@ -135,6 +140,7 @@ export const useRailsRightPage = () => {
 
         eventBus.emit("A:SelectModelOption")
 
+        return curOpt.active;
     };
 
     const checkExeptionOptionForFasade = (options, global) => {
@@ -186,7 +192,11 @@ export const useRailsRightPage = () => {
 
     const filterGroups = (groups, incomingIds, global) => {
         const idStrs = incomingIds.map(id => id.toString());
-        return groups.map(group => {
+        const tmp_active_options = global?.slice().filter(item => item.active === true).map(item => {
+            return +item.id
+        }) || []
+
+        let result = groups.map(group => {
             const contant = group.CONTANT;
 
             // Проверяем, есть ли в CONTANT хотя бы один элемент с хотя бы одним incomingId в SHOW_ON_FASADE
@@ -223,6 +233,23 @@ export const useRailsRightPage = () => {
                         if (!shouldBeVisible) {
                             curOptionInConfig.active = false
                         }
+
+                        if (item.REQUIRED_OPTIONS.length > 0) {
+                            let check = false
+                            for(let option of item.REQUIRED_OPTIONS){
+                                if(tmp_active_options.includes(+option)) {
+                                    check = true
+                                    break;
+                                }
+                            }
+                            if(!check){
+                                curOptionInConfig.active = item.active = false;
+                                curOptionInConfig.visible = shouldBeVisible = false
+                                eventBus.emit("A:SelectModelOption")
+                            }
+                        }
+
+
                     } else {
                         return
                     }
@@ -234,11 +261,64 @@ export const useRailsRightPage = () => {
                 };
             });
 
-            return {
-                ...group,
-                CONTANT: modifiedContant
-            };
+
+            let visible_contant = modifiedContant.filter(item => item.visible === true)
+            if(visible_contant.length) {
+                checkNecessaryOptions(visible_contant, global)
+                return {
+                    ...group,
+                    CONTANT: visible_contant
+                };
+            }
         });
+
+        return result.filter(item => item);
+    }
+
+    //Обязательная установка хотя бы одной опции активной
+    const checkNecessaryOptions = (contant: any[], global?: any[]) => {
+        if(contant.length > 0) {
+            contant.forEach((optionCurrent) => {
+                if (optionCurrent.CLOSE_OTHER_OPTIONS === '1') {
+                    let closeOptions = []
+
+                    contant.forEach(_item2 => {
+                        if (_item2.CLOSE_OTHER_OPTIONS === '1' &&
+                            (_item2.IBLOCK_SECTION_ID?.[0] === optionCurrent.IBLOCK_SECTION_ID?.[0])) {
+                            closeOptions.push(_item2)
+                        }
+                    });
+
+                    if(!closeOptions.find(item => item.active)) {
+                        optionCurrent.active = true
+                        if (global) {
+                            const curOptionInConfig = global?.find(el => el.id === optionCurrent.ID)
+                            curOptionInConfig ? curOptionInConfig.active = optionCurrent.active : false
+                        }
+                        eventBus.emit("A:SelectModelOption")
+                    }
+                }
+            })
+        }
+        else if (global?.length) {
+            global.forEach((optionCurrent) => {
+                if (optionCurrent.close === '1') {
+                    let closeOptions = []
+
+                    global.forEach(_item2 => {
+                        if (_item2.close === '1' &&
+                            (_item2.section === optionCurrent.section)) {
+                            closeOptions.push(_item2)
+                        }
+                    });
+
+                    if(!closeOptions.find(item => item.active)) {
+                        optionCurrent.active = true
+                        eventBus.emit("A:SelectModelOption")
+                    }
+                }
+            })
+        }
     }
 
     const processVisibility = (groups: any[], incomingIds: any[], global?: any[]) => {

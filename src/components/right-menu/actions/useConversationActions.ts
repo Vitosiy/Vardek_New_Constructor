@@ -2,6 +2,7 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useToast } from "@/features/toaster/useToast";
 import { TFasadeGroupSize } from "@/store/appliction/useModelState";
+//@ts-nocheck
 
 import { TTotalProps, TFasadeItem, TFasadeTrueSizes } from "@/types/types";
 
@@ -113,7 +114,29 @@ export const useConversationActions = () => {
         return tempList;
     };
 
+    const filterMaterialsConversations = (materialList: any[], fasadeSize: TFasadeTrueSizes) => {
+        const tempList = materialList.map((el) => {
+                if(el.FASADES && Array.isArray(el.FASADES)) {
+                    let tmp_fasades = el.FASADES.map(item => {
+                        if (checkFasadeConversations(item, fasadeSize)){
+                            return item;
+                        }
+                    }).filter(Boolean);
 
-    return { onRsizeConversations, createFasadeConversations, checkFasadeConversations, filterFasadeConversations }
+                    if(tmp_fasades.length)
+                        return {...el, FASADES: tmp_fasades}
+                }
+                else if (checkFasadeConversations(el, fasadeSize)){
+                    return el;
+                }
+            })
+            .filter(Boolean);
+
+
+        return tempList;
+    };
+
+
+    return { onRsizeConversations, createFasadeConversations, checkFasadeConversations, filterFasadeConversations, filterMaterialsConversations }
 
 }
