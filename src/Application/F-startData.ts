@@ -88,8 +88,11 @@ const START_PROJECT_PARAMS = {
     camera: {
         position: [8 * 1000, 1.5 * 1000, 0],
         target: { x: 0, y: 1500, z: 0 },
+        // fov: 45,
+        // near: 10,
+        // far: 25000
         fov: 45,
-        near: 10,
+        near: 100,
         far: 25000
     },
 

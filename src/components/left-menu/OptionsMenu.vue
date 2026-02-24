@@ -155,11 +155,11 @@ onUnmounted(() => {
       <div class="options-design">
         <h1 class="options__title">Проектирование</h1>
         <div class="goods">
-          <div class="goods-item">
+          <!-- <div class="goods-item">
             <S2DAppartSVG class="goods-item__image" />
             <p class="goods-item__title">2D квартира</p>
             <div class="radial-sphere"></div>
-          </div>
+          </div> -->
 
           <div
             class="goods-item"
@@ -524,7 +524,7 @@ onUnmounted(() => {
 }
 
 .goods {
-  max-height: 20vh;
+  max-height: 30vh;
   display: flex;
   flex-direction: column;
   gap: 10px;

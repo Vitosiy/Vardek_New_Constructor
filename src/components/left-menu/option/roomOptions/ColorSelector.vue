@@ -1,5 +1,7 @@
 <script setup lang="ts">
 //@ts-nocheck
+
+import { watch, ref, computed } from "vue";
 import MaterialSelector from "@/components/right-menu/customiser-pages/ColorRightPage/MaterialSelector.vue";
 import SurfaceRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/SurfaceRedactor.vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -17,6 +19,7 @@ interface Props {
 }
 const eventBus = useEventBus();
 const props = defineProps<Props>();
+const changeCounter = ref(0);
 
 const emit = defineEmits<{
   (e: "select", value: any, type: string, extras: string | undefined): void;
@@ -27,6 +30,16 @@ const handleSelect = (value: any, type: string, extras: string | undefined) => {
   emit("select", value, type, extras);
   // eventBus.emit('A:GlobalParapsSelect')
 };
+
+const materialKey = computed(() => `mat-group-${changeCounter.value}`);
+
+watch(
+  () => props.optionsData,
+  () => {
+    changeCounter.value++;
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -35,6 +48,7 @@ const handleSelect = (value: any, type: string, extras: string | undefined) => {
 
     <SurfaceRedactor
       v-if="props.getCurrentRedactor"
+      :key="materialKey"
       :materialList="props.optionsData.data"
       :tempWork="true"
       @select_material="
@@ -45,6 +59,7 @@ const handleSelect = (value: any, type: string, extras: string | undefined) => {
 
     <MaterialSelector
       v-else
+      :key="materialKey + props.optionsData.type"
       :materials="props.optionsData.data"
       @select="
         (data) =>

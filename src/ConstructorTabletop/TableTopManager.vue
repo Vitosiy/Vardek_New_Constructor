@@ -1320,8 +1320,10 @@ onBeforeUnmount(() => {
                   >
                     Верт.распил
                   </button>
+                  
+                  <!-------------------------- @НА ДАННЫЙ МОМЕНТ НЕТ ЦЕНООБРАЗОВАНИЯ ------------------------>
 
-                  <button
+                  <!-- <button
                     class="actions-btn actions-btn--default"
                     @click="addHorizontalCut(colIndex, rowIndex)"
                   >
@@ -1334,9 +1336,9 @@ onBeforeUnmount(() => {
                     v-if="!getRoundSectionValidation(colIndex, rowIndex)"
                   >
                     Круг.распил
-                  </button>
+                  </button> -->
 
-                  <button
+                  <!-- <button
                     :class="[
                       'actions-btn actions-btn--default',
                       getHoleOptionsActive(colIndex, rowIndex),
@@ -1345,7 +1347,9 @@ onBeforeUnmount(() => {
                     @click="showHoleOptions(colIndex, rowIndex)"
                   >
                     Разрез
-                  </button>
+                  </button> -->
+
+                  <!---------------------------------------------------------------------------------------------------->
 
                   <button
                     :class="[

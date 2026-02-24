@@ -3,10 +3,12 @@
 import { ref, computed, onBeforeMount } from "vue";
 import { _URL } from "@/types/constants";
 
-const props = defineProps<{
+interface IProps {
   materials: Array<any>;
   modelValue?: any;
-}>();
+}
+
+const props = defineProps<IProps>();
 
 onBeforeMount(() => {});
 
@@ -21,20 +23,9 @@ const searchQuery = ref("");
 const isSearch = computed(() => filteredMaterialList.value.length > 0);
 
 const onSearchChange = (e: Event) => {
-  // const val = (e.target as HTMLInputElement).value.toLowerCase();
-  // searchQuery.value = val;
-  // if (!val) {
-  //   filteredMaterialList.value = [];
-  //   return;
-  // }
-  // const regex = new RegExp(`${val}`, "gm");
-  // filteredMaterialList.value = props.materials.filter((material) =>
-  //   regex.test(material.NAME.toLowerCase())
-  // );
-
   const query = e.target.value.toLowerCase();
   const filteredData = props.materials.filter(
-    (item) => item.NAME.toLowerCase().includes(query) // Проверяем, содержит ли имя запрос
+    (item) => item.NAME.toLowerCase().includes(query), // Проверяем, содержит ли имя запрос
   );
 
   filteredMaterialList.value = filteredData;
