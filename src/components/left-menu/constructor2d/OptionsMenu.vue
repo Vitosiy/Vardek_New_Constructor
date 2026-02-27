@@ -22,11 +22,15 @@ import CatalogSVG from '@/components/ui/svg/CatalogSVG.vue';
 import ClosePopUpButton from '@/components/ui/svg/ClosePopUpButton.vue';
 
 import { useRoomState } from '@/store/appliction/useRoomState';
+import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
+import { useConstructor2DHistory } from '@/store/constructor2d/useConstructor2DHistory';
 import { nextTick } from 'vue';
 
 import { storeToRefs } from 'pinia';
 
 const roomState = useRoomState();
+const schemeTransition = useSchemeTransition();
+const constructor2DHistory = useConstructor2DHistory();
 const { getRooms, getRoomId } = storeToRefs(roomState);
   
 const popupStore = usePopupStore();
@@ -36,7 +40,20 @@ const isRoomParamsOpen = ref(false);
 
 const deleteRoom = (value: number) => {
   roomState.removeRoom(value);
-  console.log('11111111111111111111111111111111111111111')
+  // Синхронизируем список комнат в schemeTransition
+  roomState.routConvertData('/2d');
+  const c2d = window.C2D;
+  if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+    c2d.layers.planner.init(true);
+    c2d.layers.doorsAndWindows.init(true);
+  }
+  // Сохраняем снимок в историю undo/redo (явно, после обновления)
+  nextTick(() => {
+    const snapshot = schemeTransition.getAllData();
+    if (snapshot && Array.isArray(snapshot)) {
+      constructor2DHistory.addAction(JSON.parse(JSON.stringify(snapshot)));
+    }
+  });
 };
 
 const toggleRoomParams = () => {

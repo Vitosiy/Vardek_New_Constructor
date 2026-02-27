@@ -278,6 +278,9 @@ function updateRoomStore(this: any): boolean {
   // Сразу синхронизируем стор комнат, чтобы 3D получил актуальные id/контент
   roomState.rooms = rooms;
 
+  // Уведомляем историю 2D о новом состоянии для undo/redo
+  eventBus.emit("C2D:HistoryPush");
+
   console.log("AFTER AFTER: ", roomState.rooms);
   return true;
 }

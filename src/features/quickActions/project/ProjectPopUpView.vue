@@ -8,33 +8,13 @@
       <!-- Фильтры -->
       <div class="project-header">
         <div class="project-search">
-          <MainInput
-            v-model="filters.name"
-            type="text"
-            placeholder="Название"
-            :min="0"
-            :max="99999999"
-            class="search-input"
-          />
-          <MainInput
-            v-model="filters.id"
-            type="text"
-            placeholder="ID"
-            :maxlength="30"
-            :digitsOnly="true"
-            class="search-input"
-          />
-          <select
-            v-model="selectedBackendId"
-            class="search-input backend-ids-select"
-            @change="onBackendIdSelect"
-          >
+          <MainInput v-model="filters.name" type="text" placeholder="Название" :min="0" :max="99999999"
+            class="search-input" />
+          <MainInput v-model="filters.id" type="text" placeholder="ID" :maxlength="30" :digitsOnly="true"
+            class="search-input" />
+          <select v-model="selectedBackendId" class="search-input backend-ids-select" @change="onBackendIdSelect">
             <option value="all">Все проекты</option>
-            <option
-              v-for="owner in backendIdsList"
-              :key="owner.ID"
-              :value="owner.ID"
-            >
+            <option v-for="owner in backendIdsList" :key="owner.ID" :value="owner.ID">
               {{
                 [owner.NAME, owner.LAST_NAME].filter(Boolean).join(" ") ||
                 owner.ID
@@ -94,10 +74,7 @@
         </div>
 
         <!-- Пустой список -->
-        <div
-          v-else-if="!isLoading && projects.length === 0"
-          class="project-empty"
-        >
+        <div v-else-if="!isLoading && projects.length === 0" class="project-empty">
           <p>Проекты не найдены</p>
         </div>
 
@@ -112,11 +89,7 @@
         </div> -->
 
         <!-- Карточки проектов (12 на страницу) -->
-        <div
-          v-for="project in paginatedProjects"
-          :key="project.id"
-          class="project-item"
-        >
+        <div v-for="project in paginatedProjects" :key="project.id" class="project-item">
           <div class="project-item__main" @click="loadProject(project.id)">
             <!-- <img
               :src="
@@ -127,15 +100,26 @@
               class="item__image"
               :alt="project.name || 'Проект'"
             /> -->
-            <img
-              :src="getProgectImage(project)"
-              class="item__image"
-              :alt="project.name || 'Проект'"
-            />
+            <img :src="getProgectImage(project)" class="item__image" :alt="project.name || 'Проект'" />
             <div class="item-info">
               <div class="info-id">
                 <p class="id__name">{{ project.name || "Название" }}</p>
-                <p class="id__number text-grey">ID {{ project.id }}</p>
+
+                <div class="id-row">
+                  <p class="id__number text-grey">
+                    ID {{ project.id }}
+                  </p>
+
+                  <!-- Копировать ID -->
+                  <button class="copy-id-button" @click.stop="copyProjectId(project.id)" title="Скопировать ID">
+                    <img src="@/assets/svg/copy.svg" alt="copy-id" />
+                  </button>
+
+                  <!-- Копировать ссылку -->
+                  <button class="copy-link-button" @click.stop="copyProjectLink(project.id)" title="Скопировать ссылку">
+                    <img src="@/assets/svg/copy.svg" alt="copy-link" />
+                  </button>
+                </div>
               </div>
               <p class="info__date text-grey">{{ project.date }}</p>
             </div>
@@ -146,15 +130,8 @@
       </div>
 
       <!-- Пагинация всегда внизу попапа, вне скролла карточек -->
-      <div
-        v-if="!isLoading && !loadError && totalElements > PAGE_SIZE"
-        class="project__pagination"
-      >
-        <ProjectPagination
-          :total-items="totalElements"
-          :page-size="PAGE_SIZE"
-          v-model:current-page="currentPage"
-        />
+      <div v-if="!isLoading && !loadError && totalElements > PAGE_SIZE" class="project__pagination">
+        <ProjectPagination :total-items="totalElements" :page-size="PAGE_SIZE" v-model:current-page="currentPage" />
       </div>
     </div>
   </div>
@@ -535,6 +512,27 @@ const initializeState = () => {
   projectState.setInitialState(currentState);
 };
 
+const copyProjectId = async (id: string | number) => {
+  try {
+    await navigator.clipboard.writeText(String(id));
+    toaster.success(`ID ${id} скопирован`);
+  } catch (e) {
+    console.error("Ошибка копирования:", e);
+    toaster.error("Не удалось скопировать ID");
+  }
+};
+
+const copyProjectLink = async (id: string | number) => {
+  try {
+    const link = `https://dev.vardek.online/dev_modeller/2d?projectId=${id}`;
+    await navigator.clipboard.writeText(link);
+    toaster.success("Ссылка на проект скопирована");
+  } catch (e) {
+    console.error("Ошибка копирования ссылки:", e);
+    toaster.error("Не удалось скопировать ссылку");
+  }
+};
+
 // Загружаем проекты при монтировании
 onMounted(async () => {
   await loadProjects(0);
@@ -737,6 +735,74 @@ onMounted(async () => {
           padding: 15px 10px;
           box-sizing: border-box;
         }
+
+        .id-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .copy-id-button {
+          width: 22px;
+          height: 22px;
+          min-width: 22px;
+          padding: 0;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border: 1px solid $stroke;
+          border-radius: 4px;
+          background: transparent;
+          cursor: pointer;
+
+          transition: all 0.15s ease;
+
+          img {
+            width: 14px;
+            height: 14px;
+          }
+
+          &:hover {
+            background: #f3f3f3;
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
+
+        .copy-link-button {
+          width: 22px;
+          height: 22px;
+          min-width: 22px;
+          padding: 0;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border: 1px solid $stroke;
+          border-radius: 4px;
+          background: transparent;
+          cursor: pointer;
+
+          transition: all 0.15s ease;
+
+          img {
+            width: 14px;
+            height: 14px;
+          }
+
+          &:hover {
+            background: #f3f3f3;
+          }
+
+          &:active {
+            transform: scale(0.95);
+          }
+        }
       }
     }
 
@@ -753,6 +819,7 @@ onMounted(async () => {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

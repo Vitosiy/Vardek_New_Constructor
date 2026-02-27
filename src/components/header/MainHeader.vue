@@ -17,6 +17,7 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useRoomOptions } from "../left-menu/option/roomOptions/useRoomOptons";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useConstructor2DHistory } from "@/store/constructor2d/useConstructor2DHistory";
 import { TApplication } from "@/types/types";
 import { getBlankRoomTemplate } from "@/Constructor2D/facade/blankRoom";
 
@@ -67,6 +68,7 @@ const modelState = useModelState();
 const roomOptions = useRoomOptions();
 const customiserStore = useCustomiserStore();
 const schemeTransition = useSchemeTransition();
+const constructor2DHistory = useConstructor2DHistory();
 
 // const _saveProject = async () => {
 //   eventBus.emit("A:Save");
@@ -170,6 +172,14 @@ const createNewRoom = (value: string) => {
       c2d.layers.doorsAndWindows.init(true);
     }
 
+    // Сохраняем снимок в историю undo/redo (явно, после обновления schemeTransition)
+    nextTick(() => {
+      const snapshot = schemeTransition.getAllData();
+      if (snapshot && Array.isArray(snapshot)) {
+        constructor2DHistory.addAction(JSON.parse(JSON.stringify(snapshot)));
+      }
+    });
+
     return;
   }
 
@@ -193,19 +203,36 @@ const checkContantLoad = (state: boolean) => {
 };
 
 const moreThenActions = computed(() => {
+  if (route.path === "/2d") return !constructor2DHistory.canRedo;
   return (
     curActionCount.value + 1 > restorLength.value || restorLength.value == 0
   );
 });
 
 const lessThenActions = computed(() => {
+  if (route.path === "/2d") return !constructor2DHistory.canUndo;
   return curActionCount.value - 1 < 0;
 });
 
 const prevAction = async () => {
-  if (historyActions.value && verdekConstructor.value) {
-    try {
-      /** Активируем preloader */
+  if (!historyActions.value) return;
+  try {
+    if (route.path === "/2d") {
+      const snapshot = constructor2DHistory.undo();
+      if (snapshot && window.C2D?.layers?.planner && window.C2D?.layers?.doorsAndWindows) {
+        constructor2DHistory.setRestoring(true);
+        schemeTransition.setAppData(snapshot);
+        roomState.convertDataTo3DConstuctor(); // синхронизируем roomState.rooms из schemeTransition
+        setCurrentRoomAfterRestore(snapshot);
+        window.C2D.layers.planner.init(true);
+        window.C2D.layers.doorsAndWindows.init(true);
+        constructor2DHistory.setRestoring(false);
+        curActionCount.value = constructor2DHistory.currentIndex;
+        props.pageComponent?.selected?.();
+      }
+      return;
+    }
+    if (verdekConstructor.value) {
       contentLoaded.value = false;
       await roomState.setLoad(false);
       await nextTick();
@@ -216,21 +243,34 @@ const prevAction = async () => {
         props.pageComponent.selected();
         customiserStore.hideCustomiserPopup();
       }, 0);
-    } catch (error) {
-      console.error("Ошибка при выполнении prevAction:", error);
     }
+  } catch (error) {
+    console.error("Ошибка при выполнении prevAction:", error);
   }
 };
 
 const nextAction = async () => {
-  if (historyActions.value && verdekConstructor.value) {
-    try {
-      /** Активируем preloader */
-
+  if (!historyActions.value) return;
+  try {
+    if (route.path === "/2d") {
+      const snapshot = constructor2DHistory.redo();
+      if (snapshot && window.C2D?.layers?.planner && window.C2D?.layers?.doorsAndWindows) {
+        constructor2DHistory.setRestoring(true);
+        schemeTransition.setAppData(snapshot);
+        roomState.convertDataTo3DConstuctor(); // синхронизируем roomState.rooms из schemeTransition
+        setCurrentRoomAfterRestore(snapshot);
+        window.C2D.layers.planner.init(true);
+        window.C2D.layers.doorsAndWindows.init(true);
+        constructor2DHistory.setRestoring(false);
+        curActionCount.value = constructor2DHistory.currentIndex;
+        props.pageComponent?.selected?.();
+      }
+      return;
+    }
+    if (verdekConstructor.value) {
       contentLoaded.value = false;
       await roomState.setLoad(false);
       await nextTick();
-
       setTimeout(() => {
         eventBus.emit("A:NextAction");
         curActionCount.value =
@@ -238,11 +278,49 @@ const nextAction = async () => {
         props.pageComponent.selected();
         customiserStore.hideCustomiserPopup();
       }, 0);
-    } catch (error) {
-      console.error("Ошибка при выполнении nextAction:", error);
     }
+  } catch (error) {
+    console.error("Ошибка при выполнении nextAction:", error);
   }
 };
+
+/** После undo/redo выбирает текущую комнату: оставляет текущую, если она есть в снимке, иначе — первую из снимка */
+const setCurrentRoomAfterRestore = (snapshot: Record<string, unknown>[]) => {
+  if (!snapshot?.length) return;
+  const normalizeId = (v: string | number | null | undefined) =>
+    v !== null && v !== undefined ? String(v) : "";
+  const snapshotIds = new Set(snapshot.map((r) => normalizeId((r as { id?: string | number }).id)));
+  const currentId = normalizeId(roomState.getRoomId);
+  if (snapshotIds.has(currentId)) return;
+  const firstRoom = snapshot[0] as { id?: string | number };
+  if (firstRoom?.id != null) {
+    roomState.setCurrentRoomId(firstRoom.id);
+  }
+};
+
+const init2DHistoryAndActions = () => {
+  const c2d = window.C2D;
+  if (!c2d?.layers?.planner || !c2d?.layers?.doorsAndWindows) return;
+  const roomsData = schemeTransition.getAllData() ?? [];
+  if (roomsData.length > 0) {
+    c2d.layers.planner.init(true);
+    c2d.layers.doorsAndWindows.init(true);
+  }
+  constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+  historyActions.value = true;
+  restorLength.value = Math.max(0, constructor2DHistory.historyLength - 1);
+  curActionCount.value = constructor2DHistory.currentIndex;
+};
+
+const onC2DReady = () => {
+  if (route.path === "/2d") {
+    init2DHistoryAndActions();
+  }
+};
+
+onMounted(() => {
+  eventBus.on("C2D:Ready", onC2DReady);
+});
 
 const addEvents3D = () => {
   try {
@@ -298,8 +376,8 @@ const addEvents3D = () => {
 
 const getHistoruBtnsState = computed(() => {
   return {
-    // disabled: !contentLoaded.value,
-    disabled: !roomState.getLoad,
+    // На 2D кнопки активны по готовности истории; на 3D — по roomState.getLoad
+    disabled: route.path === "/2d" ? false : !roomState.getLoad,
   };
 });
 
@@ -359,16 +437,18 @@ watch(
             c2d = window.C2D;
           }
         }
-        // Проверяем наличие данных перед инициализацией
-        const roomsData = schemeTransition.getAllData();
-        if (
-          c2d?.layers?.planner &&
-          c2d?.layers?.doorsAndWindows &&
-          roomsData &&
-          roomsData.length > 0
-        ) {
-          c2d.layers.planner.init(true);
-          c2d.layers.doorsAndWindows.init(true);
+        // Инициализация слоёв и объекта истории 2D
+        const roomsData = schemeTransition.getAllData() ?? [];
+        if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+          if (roomsData.length > 0) {
+            c2d.layers.planner.init(true);
+            c2d.layers.doorsAndWindows.init(true);
+          }
+          // Инициализируем объект истории 2D начальным снапшотом
+          constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+          historyActions.value = true;
+          restorLength.value = Math.max(0, constructor2DHistory.historyLength - 1);
+          curActionCount.value = constructor2DHistory.currentIndex;
         }
       }
       console.log("Все комнаты:", roomState.rooms);
@@ -379,14 +459,16 @@ watch(
       modelState.setCurrentModel(null);
       menuStore.closeAllMenus();
 
-      historyActions.value = false;
-      restorLength.value = 0;
-      curActionCount.value = 0;
+      if (newPath !== "/2d") {
+        historyActions.value = false;
+        restorLength.value = 0;
+        curActionCount.value = 0;
+      }
 
       let constructor = await waitForConstructor();
       await nextTick();
 
-      if (constructor) {
+      if (constructor && newPath === "/3d") {
         verdekConstructor.value = constructor as TApplication;
         historyActions.value = true;
         addEvents3D();
@@ -401,6 +483,7 @@ watch(
 onBeforeUnmount(() => {
   try {
     // Отключаем все события
+    eventBus.off("C2D:Ready", onC2DReady);
     eventBus.off("A:Load");
     eventBus.off("A:ChangeCameraPos");
     eventBus.off("A:ContantLoaded");
@@ -438,7 +521,7 @@ onBeforeUnmount(() => {
         <div class="header-main-ui">
           <div
             :class="['history', 'history__btns', getHistoruBtnsState]"
-            v-if="historyActions && route.path == '/3d'"
+            v-if="historyActions && (route.path == '/3d' || route.path == '/2d')"
           >
             <!-- {{ restorLength }}{{ curActionCount }} -->
             <LeftLightHeaderButton
