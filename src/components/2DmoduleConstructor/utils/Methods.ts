@@ -1421,12 +1421,16 @@ class ShapeAdjuster extends Helpers {
             if(shape.data?.data?.MIN_FASADE_SIZE) {
                 let manufacturer_name = shape.data.data.EN_NAME?.toLowerCase() || shape.data.data.NAME?.toLowerCase()
                 let manufacturerOffset
-                Object.entries(MANUFACTURER).forEach(([key, offset]) => {
-                    if (manufacturer_name.includes(key)) {
-                        manufacturer_name = key
-                        manufacturerOffset = offset
-                    }
-                })
+                if(shape.data.data.FASADE_DRAWER_OFFSET){
+                    manufacturerOffset = shape.data.data.FASADE_DRAWER_OFFSET
+                }
+                else
+                    Object.entries(MANUFACTURER).forEach(([key, offset]) => {
+                        if (manufacturer_name.includes(key)) {
+                            manufacturer_name = key
+                            manufacturerOffset = offset
+                        }
+                    })
 
                 shape.data.fasade = {}
                 shape.data.fasade.manufacturerOffset = manufacturerOffset

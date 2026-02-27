@@ -356,12 +356,16 @@ const addFilling = (_product, productGroupID) => {
 
     let manufacturerOffset = 0
     let manufacturer_name = product.EN_NAME?.toLowerCase() || product.NAME?.toLowerCase()
-    Object.entries(MANUFACTURER).forEach(([key, offset]) => {
-      if (manufacturer_name.includes(key)) {
-        manufacturer_name = key
-        manufacturerOffset = offset
-      }
-    })
+    if(product.FASADE_DRAWER_OFFSET){
+      manufacturerOffset = product.FASADE_DRAWER_OFFSET
+    }
+    else
+      Object.entries(MANUFACTURER).forEach(([key, offset]) => {
+        if (manufacturer_name.includes(key)) {
+          manufacturer_name = key
+          manufacturerOffset = offset
+        }
+      })
 
     fillingObject.type = "drawer"
     fillingObject.moduleThickness = module.value.moduleThickness

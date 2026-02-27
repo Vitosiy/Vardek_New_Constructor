@@ -2,9 +2,10 @@
 // @ts-nocheck
 import Modal from "@/components/ui/modals/Modal.vue";
 import {defineExpose, onBeforeMount, onBeforeUnmount, ref} from "vue";
-import Module2DConstructor2 from "@/components/2DmoduleConstructor/Module2DConstructor2.vue";
 import { useEventBus } from "@/store/appliction/useEventBus.ts";
 import {saveUMGrid} from "@/components/2DmoduleConstructor/utils/Methods.ts";
+import MainView from "@/components/UMconstructor/views/MainView.vue"
+import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
 
 const props = defineProps({
   product: {
@@ -14,16 +15,16 @@ const props = defineProps({
 });
 
 const eventBus = useEventBus();
+const UMstore = useUMStorage()
 
 const universalModule2DConstructor = ref();
 const universalModuleData = ref({});
 const isUMModalOpen = ref(false);
 const gridUMSaved = ref(false);
-const universalModuleCash = ref({});
-const universalModuleConfigCash = ref({});
 
 const selectUMData = (data) => {
   universalModuleData.value = data;
+  UMstore.setUMData(data.PROPS.PROPS);
 };
 
 const saveUMData = ({ data, canvasHeight }) => {
@@ -37,11 +38,11 @@ const saveUMData = ({ data, canvasHeight }) => {
 
   let tmp_result = saveUMGrid(saveData)
 
-  universalModuleCash.value = props.product.userData.PROPS.CONFIG.MODULEGRID =
-      tmp_result;
+  props.product.userData.PROPS.CONFIG.MODULEGRID = tmp_result;
+  UMstore.setUMCashGrid(tmp_result)
 
   gridUMSaved.value = true;
-  eventBus.emit("A:UM-update", universalModuleCash.value);
+  eventBus.emit("A:UM-update", UMstore.getUMCashGrid());
 };
 
 const openUMRedactor = () => {
@@ -61,50 +62,53 @@ const openUMRedactor = () => {
   } = CONFIG
 
   if(MODULEGRID)
-    universalModuleCash.value = saveUMGrid(MODULEGRID);
+    UMstore.setUMCashGrid(MODULEGRID)
 
-  universalModuleConfigCash.value = {
+  let universalModuleConfigCash = {
     HORIZONT,
     MODULE_COLOR,
     EXPRESSIONS : {...EXPRESSIONS}
   };
 
   if(BACKWALL)
-    universalModuleConfigCash.value.BACKWALL = {...CONFIG.BACKWALL};
+    universalModuleConfigCash.BACKWALL = {...CONFIG.BACKWALL};
 
   if(RIGHTSIDECOLOR)
-    universalModuleConfigCash.value.RIGHTSIDECOLOR = {...CONFIG.RIGHTSIDECOLOR};
+    universalModuleConfigCash.RIGHTSIDECOLOR = {...CONFIG.RIGHTSIDECOLOR};
 
   if(LEFTSIDECOLOR)
-    universalModuleConfigCash.value.LEFTSIDECOLOR = {...CONFIG.LEFTSIDECOLOR};
+    universalModuleConfigCash.LEFTSIDECOLOR = {...CONFIG.LEFTSIDECOLOR};
 
   if(TSARGA)
-    universalModuleConfigCash.value.TSARGA = {...CONFIG.TSARGA};
+    universalModuleConfigCash.TSARGA = {...CONFIG.TSARGA};
 
   if(TOPFASADECOLOR)
-    universalModuleConfigCash.value.TOPFASADECOLOR = {...CONFIG.TOPFASADECOLOR};
+    universalModuleConfigCash.TOPFASADECOLOR = {...CONFIG.TOPFASADECOLOR};
 
   if(OPTIONS?.length) {
-    universalModuleConfigCash.value.OPTIONS = [...CONFIG.OPTIONS.map(opt => {
+    universalModuleConfigCash.OPTIONS = [...CONFIG.OPTIONS.map(opt => {
       return {...opt}
     })];
   }
 
+  UMstore.setUMCashConfig(universalModuleConfigCash)
   isUMModalOpen.value = true;
 };
 
 const closeUMRedactor = () => {
   if (!gridUMSaved.value) {
-    props.product.userData.PROPS.CONFIG.MODULEGRID = saveUMGrid(universalModuleCash.value);
-    props.product.userData.PROPS.CONFIG = Object.assign(props.product.userData.PROPS.CONFIG, universalModuleConfigCash.value)
+    props.product.userData.PROPS.CONFIG.MODULEGRID = saveUMGrid(UMstore.getUMCashGrid());
+    props.product.userData.PROPS.CONFIG = Object.assign(props.product.userData.PROPS.CONFIG, UMstore.getUMCashConfig());
   }
 
   universalModuleData.value = false;
   isUMModalOpen.value = false;
   gridUMSaved.value = false;
 
-  universalModuleCash.value = {}
-  universalModuleConfigCash.value = {}
+  UMstore.setUMCashConfig()
+  UMstore.setUMCashGrid()
+  UMstore.setUMData()
+  UMstore.setUMGrid()
 };
 
 onBeforeUnmount(()=>{
@@ -112,8 +116,10 @@ onBeforeUnmount(()=>{
   isUMModalOpen.value = false;
   gridUMSaved.value = false;
 
-  universalModuleCash.value = {}
-  universalModuleConfigCash.value = {}
+  UMstore.setUMCashConfig()
+  UMstore.setUMCashGrid()
+  UMstore.setUMData()
+  UMstore.setUMGrid()
 })
 
 defineExpose({
@@ -129,7 +135,7 @@ defineExpose({
     @close-modal="closeUMRedactor"
   >
     <template #modalBody="{ onModalClose }" class="modal--tableTop">
-      <Module2DConstructor2
+      <MainView
         v-if="isUMModalOpen"
         ref="universalModule2DConstructor"
         :productData="universalModuleData.PROPS"
@@ -154,7 +160,7 @@ defineExpose({
             Закрыть
           </button>
         </template>
-      </Module2DConstructor2>
+      </MainView>
     </template>
     <template #modalOpen="{ onModalOpen }">
       <button class="no-select cut-btn" @click="onModalOpen">

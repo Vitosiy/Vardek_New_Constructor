@@ -1,9 +1,71 @@
 <script setup lang="ts">
+import "@/components/UMconstructor/styles/UM.scss"
+
+import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
+import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
+import {toRefs, onMounted, ref, onBeforeMount} from "vue";
+import {TTotalProps} from "@/types/types.ts";
+import SidecolorsView from "@/components/UMconstructor/views/modules/SidecolorsView.vue";
+import ModuleSizeView from "@/components/UMconstructor/views/modules/ModuleSizeView.vue";
+
+
+const props = defineProps({
+  module: {
+    type: Object,
+    required: true,
+  },
+  mode: {
+    type: String,
+    default: "module",
+  },
+  UMconstructor: {
+    type: UMconstructorClass,
+    required: true,
+  }
+});
+
+const {module, mode, UMconstructor} = toRefs(props)
+const productData = ref<TTotalProps>(<TTotalProps>{})
+
+onBeforeMount(() => {
+  productData.value = UMconstructor?.value?.UM_STORE.getUMData()
+})
 
 </script>
 
 <template>
+  <div
+      class="constructor2d-container--left--module-configs"
+  >
 
+    <ModuleSizeView
+      :product-data="productData"
+      :module="module"
+      :mode="mode"
+      :UMconstructor="UMconstructor"
+    />
+
+    <div class="no-select actions-sections-header">
+      <h1>Параметры модуля</h1>
+    </div>
+    <div
+        class="constructor2d-container--left--module-configs--module-color"
+    >
+      <SidecolorsView
+          ref="materialConfRef"
+          :visualizationRef="UMconstructor.RENDER_REF"
+          :module="module"
+          :objectData="productData"
+          @product-reset="UMconstructor.reset"
+      />
+    </div>
+
+    <div class="no-select actions-sections-header">
+      <h1>Опции</h1>
+    </div>
+    <RailsRightPage class="no-select" style="margin-top: 5px"/>
+
+  </div>
 </template>
 
 <style scoped lang="scss">
