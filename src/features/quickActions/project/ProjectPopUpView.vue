@@ -785,7 +785,7 @@ onMounted(async () => {
 
           border: 1px solid $stroke;
           border-radius: 4px;
-          background: transparent;
+          background: #e77177;
           cursor: pointer;
 
           transition: all 0.15s ease;
