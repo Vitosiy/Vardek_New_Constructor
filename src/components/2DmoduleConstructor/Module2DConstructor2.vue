@@ -1459,6 +1459,7 @@ const reset = (reset = false) => {
                 let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
                 if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
                   toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
                   return;
                 }
 
@@ -1515,6 +1516,7 @@ const reset = (reset = false) => {
                     let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
                     if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
                       toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                      alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
                       return;
                     }
 
@@ -1559,6 +1561,7 @@ const reset = (reset = false) => {
                 let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
                 if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
                   toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
                   return;
                 }
 
@@ -1588,6 +1591,7 @@ const reset = (reset = false) => {
             let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
             if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
               toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+              alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
               return;
             }
 
@@ -1619,6 +1623,7 @@ const reset = (reset = false) => {
         let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
         if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
           toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+          alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
           return;
         }
 
