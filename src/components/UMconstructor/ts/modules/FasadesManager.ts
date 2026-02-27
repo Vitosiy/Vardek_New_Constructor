@@ -15,6 +15,9 @@ export default class FasadesManager {
         this.scope = scope;
         this.EXTERNAL_FASADES = new ExternalFasadesManager(this);
     }
+    selectCell(sec: number|null = 0, cell: number | null = null, row: number | null = null) {
+        this.scope.UM_STORE.setSelected("fasades", {sec, cell, row});
+    };
 
     getFasadePosition = (_position) => {
 
@@ -263,11 +266,6 @@ export default class FasadesManager {
             return fasadePosition
     }
 
-    selectCell = (sec, cell = null, row = null) => {
-        selectedFasade.value = { sec, cell, row };
-        visualizationRef.value.selectCell("fasades", sec, cell, true, row);
-    };
-
     handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
         selectedFasade.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
 
@@ -319,10 +317,6 @@ export default class FasadesManager {
 
     calcDrawersFasades = (secIndex) => {
         emit("product-calcDrawersFasades", secIndex);
-    };
-
-    showCurrentCol = (secIndex, cellIndex = null) => {
-        selectCell(secIndex, cellIndex);
     };
 
     getFasadePositionMinMax = (fasade) => {

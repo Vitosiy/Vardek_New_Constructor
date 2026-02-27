@@ -180,7 +180,7 @@ export interface canvasConfig {
 }
 
 export interface TSelectedCell {
-    sec: number,
+    sec: number | null,
     cell?: number | null,
     row?: number | null,
     extra?: number | null,

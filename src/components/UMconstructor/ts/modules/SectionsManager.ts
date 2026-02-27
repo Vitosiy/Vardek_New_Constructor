@@ -1,3 +1,6 @@
+//@ts-nocheck
+
+
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import * as THREE from "three";
 import {
@@ -15,6 +18,10 @@ export default class SectionsManager {
     constructor(scope: UMconstructorClass) {
         this.scope = scope
     }
+
+    selectCell(sec: number|null = 0, cell: number | null = null, row: number | null = null, extra: number | null = null) {
+        this.scope.UM_STORE.setSelected("module", {sec, cell, row, extra});
+    };
 
     addSection({grid = this.scope.UM_STORE.getUMGrid(), secIndex = 0, count = 1}: {
         grid: GridModule,
@@ -91,12 +98,12 @@ export default class SectionsManager {
         {
             grid: GridModule,
             secIndex: number,
-            cellIndex: number|null,
+            cellIndex: number | null,
             count: number
-        })
-    {
-        selectCell(secIndex, cellIndex);
+        }) {
+        this.selectCell(secIndex, cellIndex);
 
+        const {MIN_SECTION_HEIGHT} = this.scope.CONST
         let section = grid.sections[secIndex];
 
         let cell;
@@ -117,7 +124,7 @@ export default class SectionsManager {
 
             if (section.hiTechProfiles) {
                 delete section.hiTechProfiles
-                updateFasades();
+                this.scope.FASADES.updateFasades();
             }
 
             section.cells.push(cell);
@@ -143,7 +150,7 @@ export default class SectionsManager {
 
         if (cell.hiTechProfiles) {
             delete cell.hiTechProfiles
-            updateFasades();
+            this.scope.FASADES.updateFasades();
         }
 
         // Добавляем новую строку в эту колонку
@@ -166,16 +173,26 @@ export default class SectionsManager {
             section.cells.splice(cellIndex || 0, 0, newCell);
         }
 
-        calcLoops(secIndex);
-
-        // Обновляем рендер
-        visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    addRowCell(secIndex, cellIndex, rowIndex = 0, _count = 1) {
-        const count = parseInt(_count)
+    addRowCell({
+                   grid = this.scope.UM_STORE.getUMGrid(),
+                   secIndex,
+                   cellIndex,
+                   rowIndex = 0,
+                   count = 1
+               }:
+               {
+                   grid: GridModule,
+                   secIndex: number,
+                   cellIndex: number,
+                   rowIndex: number,
+                   count: number
+               }) {
 
-        selectCell(secIndex, cellIndex, rowIndex);
+        this.selectCell(secIndex, cellIndex, rowIndex);
+        const {MIN_SECTION_WIDTH} = this.scope.CONST
 
         const cell = grid.sections[secIndex].cells[cellIndex]
 
@@ -197,7 +214,7 @@ export default class SectionsManager {
 
             if (cell.hiTechProfiles) {
                 delete cell.hiTechProfiles
-                updateFasades();
+                this.scope.FASADES.updateFasades();
             }
         }
 
@@ -233,13 +250,27 @@ export default class SectionsManager {
             cell.cellsRows.splice(rowIndex + 1 + i, 0, newRow);
         }
 
-        // Обновляем рендер
-        visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    addRowExtra(secIndex, cellIndex, rowIndex, extraIndex = 0, _count = 1) {
-        const count = parseInt(_count)
-        selectCell(secIndex, cellIndex, rowIndex);
+    addRowExtra({
+                    grid = this.scope.UM_STORE.getUMGrid(),
+                    secIndex,
+                    cellIndex,
+                    rowIndex,
+                    extraIndex = 0,
+                    count = 1
+                }:
+                {
+                    grid: GridModule,
+                    secIndex: number,
+                    cellIndex: number,
+                    rowIndex: number,
+                    extraIndex: number,
+                    count: number
+                }) {
+        this.selectCell(secIndex, cellIndex, rowIndex);
+        const {MIN_SECTION_HEIGHT} = this.scope.CONST
 
         let section = grid.sections[secIndex];
         let cell = section.cells[cellIndex];
@@ -264,7 +295,7 @@ export default class SectionsManager {
 
             if (row.hiTechProfiles) {
                 delete row.hiTechProfiles
-                updateFasades();
+                this.scope.FASADES.updateFasades();
             }
 
             row.extras.push(extra);
@@ -305,25 +336,28 @@ export default class SectionsManager {
             row.extras.splice(extraIndex || 0, 0, newExtra);
         }
 
-        calcLoops(secIndex);
-
-        // Обновляем рендер
-        visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    updateSectionWidth(value, secIndex) {
-        if (timerReset.value) {
-            clearTimeout(timerReset.value)
-        }
-
-        const newValue = parseInt(value);
+    updateSectionWidth({
+                           grid = this.scope.UM_STORE.getUMGrid(),
+                           secIndex,
+                           value
+                       }:
+                       {
+                           grid: GridModule,
+                           secIndex: number,
+                           value: number,
+                       }) {
+        const newValue = value;
         let adjustedValue;
+        const {MIN_SECTION_WIDTH} = this.scope.CONST
 
         // Обновляем выбранную секцию для визуального отображения
-        selectCell(secIndex, null);
+        this.selectCell(secIndex, null);
 
-        if (!isNaN(newValue) && visualizationRef.value) {
-            adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+        if (!isNaN(newValue) && this.scope.RENDER_REF) {
+            adjustedValue = this.scope.RENDER_REF.adjustSizeFromExternal({
                 dimension: "width",
                 value: newValue,
                 sec: secIndex,
@@ -638,24 +672,33 @@ export default class SectionsManager {
         }
         //grid = clone;
 
-        timerReset.value = setTimeout(() => {
-            timerReset.value = false;
-            reset()
+        this.scope.debounce('updateSectionWidth', () => {
+            this.scope.reset(grid)
         }, 100)
-        //updateFasades();
-        //calcLoops(secIndex);
-
-        //visualizationRef.value.renderGrid();
     };
 
-    updateCellHeight(value, secIndex, cellIndex) {
-        const newValue = parseInt(value);
-        let adjustedValue;
+    updateCellHeight(
+        {
+            grid = this.scope.UM_STORE.getUMGrid(),
+            secIndex,
+            cellIndex,
+            value
+        }:
+        {
+            grid: GridModule,
+            secIndex: number,
+            cellIndex: number,
+            value: number,
+        })
+    {
+        const newValue = value;
         // Обновляем выбранную секцию для визуального отображения
-        selectCell(secIndex, cellIndex);
+        this.selectCell(secIndex, cellIndex);
+        const {MIN_SECTION_HEIGHT} = this.scope.CONST;
 
-        if (!isNaN(newValue) && visualizationRef.value) {
-            adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+        let adjustedValue;
+        if (!isNaN(newValue) && this.scope.RENDER_REF) {
+            adjustedValue = this.scope.RENDER_REF.adjustSizeFromExternal({
                 dimension: "height",
                 value: newValue,
                 sec: secIndex,
@@ -792,23 +835,6 @@ export default class SectionsManager {
                 })
             }
 
-            /*cell.fillings?.filter((filling, index) => {
-              if (filling.position.y + filling.height <= cell.position.y - grid.moduleThickness) {
-                if (nextCell) {
-                  filling.cell = nextIndex
-                  nextCell.push(filling);
-                }
-                return false
-              } else if (filling.position.y >= cell.position.y + cell.height + grid.moduleThickness) {
-                if (nextCell) {
-                  filling.cell = nextIndex
-                  nextCell.push(filling);
-                }
-                return false
-              } else
-                return true
-            })*/
-
             let newBottomHeight = nextCell.height - (-delta1)
             let delta2 = nextCell.height - newBottomHeight
             nextCell.height = newBottomHeight;
@@ -926,37 +952,38 @@ export default class SectionsManager {
                     }
                 })
             }
-
-            /*nextCell.fillings?.filter((filling, index) => {
-              if (filling.position.y + filling.height <= nextCell.position.y - grid.moduleThickness) {
-                filling.cell = cellIndex
-                cell.push(filling);
-                return false
-              } else if (filling.position.y >= nextCell.position.y + nextCell.height + grid.moduleThickness) {
-                filling.cell = cellIndex
-                cell.push(filling);
-                return false
-              } else
-                return true
-            })*/
         }
         grid = clone;
-        reset()
 
-        //calcLoops(secIndex);
-
-        //visualizationRef.value.renderGrid();
+        this.scope.debounce('updateCellHeight', () => {
+            this.scope.reset(grid)
+        }, 100)
     };
 
-    updateCellRowWidth(value, secIndex, cellIndex, rowIndex) {
-        const newValue = parseInt(value);
+    updateCellRowWidth(
+        {
+            grid = this.scope.UM_STORE.getUMGrid(),
+            secIndex,
+            cellIndex,
+            rowIndex,
+            value
+        }:
+        {
+            grid: GridModule,
+            secIndex: number,
+            cellIndex: number,
+            rowIndex: number,
+            value: number,
+        })
+    {
+        const newValue = value;
         let adjustedValue;
 
         // Обновляем выбранную секцию для визуального отображения
-        selectCell(secIndex, cellIndex, rowIndex);
+        this.selectCell(secIndex, cellIndex, rowIndex);
 
-        if (!isNaN(newValue) && visualizationRef.value) {
-            adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+        if (!isNaN(newValue) && this.scope.RENDER_REF) {
+            adjustedValue = this.scope.RENDER_REF.adjustSizeFromExternal({
                 dimension: "width",
                 value: newValue,
                 sec: secIndex,
@@ -1005,20 +1032,37 @@ export default class SectionsManager {
             }
         }
         grid = clone;
-        reset()
 
-        //visualizationRef.value.renderGrid();
-
+        this.scope.debounce('updateCellRowWidth', () => {
+            this.scope.reset(grid)
+        }, 100)
     };
 
-    updateExtraHeight(value, secIndex, cellIndex, rowIndex, extraIndex) {
-        const newValue = parseInt(value);
+    updateExtraHeight(
+        {
+            grid = this.scope.UM_STORE.getUMGrid(),
+            secIndex,
+            cellIndex,
+            rowIndex,
+            extraIndex,
+            value
+        }:
+        {
+            grid: GridModule,
+            secIndex: number,
+            cellIndex: number,
+            rowIndex: number,
+            extraIndex: number,
+            value: number,
+        })
+    {
+        const newValue = value;
         let adjustedValue;
         // Обновляем выбранную секцию для визуального отображения
-        selectCell(secIndex, cellIndex, rowIndex, extraIndex);
+        this.selectCell(secIndex, cellIndex, rowIndex, extraIndex);
 
-        if (!isNaN(newValue) && visualizationRef.value) {
-            adjustedValue = visualizationRef.value.adjustSizeFromExternal({
+        if (!isNaN(newValue) && this.scope.RENDER_REF) {
+            adjustedValue = this.scope.RENDER_REF.adjustSizeFromExternal({
                 dimension: "height",
                 value: newValue,
                 sec: secIndex,
@@ -1082,13 +1126,14 @@ export default class SectionsManager {
             })
         }
         grid = clone;
-        reset()
 
-        //calcLoops(secIndex);
-        //visualizationRef.value.renderGrid();
+        this.scope.debounce('updateExtraHeight', () => {
+            this.scope.reset(grid)
+        }, 100)
     };
 
-    deleteSection(secIndex) {
+    deleteSection(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number) {
+        const {MAX_SECTION_WIDTH} = this.scope.CONST
         const current = grid.sections[secIndex];
         const next = grid.sections[secIndex + 1];
         const prev = grid.sections[secIndex - 1];
@@ -1122,20 +1167,17 @@ export default class SectionsManager {
             });
         }
 
-        calcLoops(next ? secIndex + 1 : secIndex - 1);
+        this.scope.LOOPS.calcLoops(next ? secIndex + 1 : secIndex - 1, grid);
         if (grid.sections.length > 1) {
             grid.sections.splice(secIndex, 1);
         }
 
-        selectedCell.value.cell = 0;
-        selectedCell.value.sec = 0;
+        this.selectCell(0,0)
 
-        reset()
-        //updateFasades();
-        //visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    deleteCell(cellIndex, secIndex) {
+    deleteCell(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number, cellIndex: number) {
         const clone = Object.assign({}, grid);
         const currentSection = clone.sections[secIndex];
         const currentCell = currentSection.cells[cellIndex];
@@ -1172,16 +1214,12 @@ export default class SectionsManager {
             currentSection.cells.length = 0
 
         grid = clone;
-        calcLoops(secIndex);
+        this.selectCell(secIndex,0)
 
-        // Обновляем текущий сектор
-        selectedCell.value.cell = 0;
-        selectedCell.value.sec = secIndex;
-
-        visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    deleteRowCell(cellIndex, secIndex, rowIndex) {
+    deleteRowCell(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number, cellIndex: number, rowIndex: number) {
         const clone = Object.assign({}, grid);
         const currentSection = clone.sections[secIndex];
         const currentCell = currentSection.cells[cellIndex];
@@ -1208,16 +1246,11 @@ export default class SectionsManager {
             delete currentCell.cellsRows
 
         grid = clone;
-
-        // Обновляем текущий сектор
-        selectedCell.value.cell = cellIndex;
-        selectedCell.value.sec = secIndex;
-        selectedCell.value.row = null;
-
-        visualizationRef.value.renderGrid();
+        this.selectCell(secIndex, cellIndex)
+        this.scope.reset(grid)
     }
 
-    deleteRowExtra(cellIndex, secIndex, rowIndex, extraIndex) {
+    deleteRowExtra(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number, cellIndex: number, rowIndex: number, extraIndex: number) {
         const clone = Object.assign({}, grid);
         const currentSection = clone.sections[secIndex];
         const currentCell = currentSection.cells[cellIndex];
@@ -1244,12 +1277,7 @@ export default class SectionsManager {
             delete currentRow.extras
 
         grid = clone;
-
-        // Обновляем текущий сектор
-        selectedCell.value.cell = cellIndex;
-        selectedCell.value.sec = secIndex;
-        selectedCell.value.row = rowIndex;
-
-        visualizationRef.value.renderGrid();
+        this.selectCell(secIndex, cellIndex, rowIndex)
+        this.scope.reset(grid)
     };
 }

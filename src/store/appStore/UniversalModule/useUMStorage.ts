@@ -84,15 +84,16 @@ export const useUMStorage = defineStore('um-data', () => {
   }
 
   const setSelected = (type: constructorMode, newSelected: TSelectedCell) => {
+    const {sec, cell, row, extra, item} = newSelected;
     switch (type) {
       case "fasades":
-        selectedFasade.value = newSelected || defaultSelectedFasade
+        selectedFasade.value = newSelected ? <TSelectedCell>{sec: sec || null, cell: cell || null, row: row || null} : defaultSelectedFasade
         break;
       case "module":
-        selectedCell.value = newSelected || defaultSelectedCell
+        selectedCell.value = newSelected ? <TSelectedCell>{sec: sec || null, cell: cell || null, row: row || null, extra: extra || null} : defaultSelectedCell
         break;
       case "fillings":
-        selectedFilling.value = newSelected || defaultSelectedFilling
+        selectedFilling.value =  newSelected ? <TSelectedCell>{sec: sec || null, cell: cell || null, row: row || null, extra: extra || null, item: item || null} : defaultSelectedFilling
         break;
     }
   }
