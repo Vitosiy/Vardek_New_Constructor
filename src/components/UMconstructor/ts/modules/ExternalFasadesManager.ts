@@ -18,7 +18,7 @@ export default class ExternalFasadesManager {
         this.FASADES_MANAGER = FASADES_MANAGER;
     }
 
-    calcDrawersFasades = (secIndex: number, _grid:GridModule, fillingData: FillingObject) => {
+    calcDrawersFasades = (secIndex: number, _grid:GridModule, fillingData: FillingObject = false) => {
 
         const grid = _grid || this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()
         if (fillingData) {

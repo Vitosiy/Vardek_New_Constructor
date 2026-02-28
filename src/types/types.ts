@@ -461,6 +461,7 @@ export type TConfig = {
   EXPRESSIONS: TExpressions,
   ROTATION: TRotationEuler,
   MODULEGRID?: GridModule,
+  isHiTech?: boolean,
 }
 
 export type TTotalProps = {

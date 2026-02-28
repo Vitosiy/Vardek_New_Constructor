@@ -6,10 +6,11 @@ import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass
 import SectionsView from "@/components/UMconstructor/views/modules/SectionsView.vue";
 import FasadesView from "@/components/UMconstructor/views/modules/FasadesView.vue";
 import FillingsView from "@/components/UMconstructor/views/modules/FillingsView.vue";
+import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
 
 const props = defineProps({
   module: {
-    type: Object,
+    type: ref<GridModule>,
     required: true,
   },
   mode: {

@@ -7,6 +7,8 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import {ref, toRefs, onMounted} from "vue";
 import {TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
+import {TFasadeTrueSizes} from "@/types/types.ts";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 const props = defineProps({
   module: {
@@ -26,9 +28,145 @@ const props = defineProps({
 const {module, mode, UMconstructor} = toRefs(props)
 const selectedFasade = ref<TSelectedCell>(<TSelectedCell>{})
 const step = ref<number>(1)
+const modelState = useModelState();
 
 const showCurrentCol = (secIndex: number | null = 0, cellIndex: number|null = null, rowIndex: number|null = null) => {
   UMconstructor?.value?.FASADES.selectCell(secIndex, cellIndex, rowIndex);
+};
+
+const handleCellSelect = (secIndex, cellIndex = null, rowIndex = null) => {
+  selectedFasade.value = { sec: secIndex, cell: cellIndex, row: rowIndex };
+
+  //Задержка нужна для того, чтоб рендер аккордионов обновился
+  setTimeout(() => {
+    let idTag = `fasade_${secIndex}`
+
+    if(cellIndex !== null)
+      idTag += `_${cellIndex}`;
+
+    if(rowIndex !== null)
+      idTag += `_${rowIndex}`
+
+    let domElem = document.getElementById(idTag)
+    if(domElem) {
+      domElem.scrollIntoView();
+    }
+    timer.value = false
+  }, 10)
+
+};
+
+const openFasadeSelector = (secIndex, doorIndex, segmentIndex) => {
+  isOpenMaterialSelector.value = false;
+
+  if(isOpenHandleSelector.value)
+    closeMenu()
+
+  /** @Создание_данных_для_выбранного_фасада */
+  createFacadeData(segmentIndex);
+
+  if (
+      currentFasadeMaterial.value &&
+      secIndex === currentFasadeMaterial.value.secIndex &&
+      doorIndex === currentFasadeMaterial.value.doorIndex &&
+      segmentIndex === currentFasadeMaterial.value.segmentIndex
+  ) {
+    closeMenu()
+    return;
+  }
+
+  setTimeout(() => {
+    let data =
+        secIndex === null
+            ? grid.fasades[doorIndex][segmentIndex]
+            : grid.sections[secIndex].fasades[doorIndex][segmentIndex];
+    currentFasadeMaterial.value = {
+      secIndex,
+      doorIndex,
+      segmentIndex,
+      data: data.material,
+    };
+    currentFasadeSize.value = <TFasadeTrueSizes>{FASADE_WIDTH: data.width, FASADE_HEIGHT: data.height}
+    selectCell(secIndex, doorIndex, segmentIndex);
+    isOpenMaterialSelector.value = true;
+  }, 10);
+};
+
+const openHandleSelector = (secIndex, doorIndex, segmentIndex) => {
+  isOpenHandleSelector.value = false;
+  isOpenMaterialSelector.value = false;
+
+  if(isOpenMaterialSelector.value)
+    closeMenu()
+
+  if (
+      currentHandle.value &&
+      secIndex === currentHandle.value.secIndex &&
+      doorIndex === currentHandle.value.doorIndex &&
+      segmentIndex === currentHandle.value.segmentIndex
+  ) {
+    closeMenu()
+    return;
+  }
+
+  setTimeout(() => {
+    let data =
+        secIndex === null
+            ? grid.fasades[doorIndex][segmentIndex]
+            : grid.sections[secIndex].fasades[doorIndex][segmentIndex];
+    currentHandle.value = {
+      secIndex,
+      doorIndex,
+      segmentIndex,
+      data: data.material,
+    };
+    selectCell(secIndex, doorIndex, segmentIndex);
+    isOpenHandleSelector.value = true;
+  }, 10);
+};
+
+const createFacadeData = (
+    fasadeIndex: number,
+) => {
+  const productId = UMconstructor?.value?.UM_STORE.getUMData().PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex,
+    productId,
+  });
+};
+
+const selectHandle = (data, type) => {
+  switch (type) {
+    case "handle":
+      currentHandle.value.data.HANDLES.id = data;
+      break;
+    case "position":
+      currentHandle.value.data.HANDLES.position = data;
+      break;
+  }
+  this.scope.reset(grid);
+}
+
+const selectOption = (value: Object, type: string, palette: Object = false) => {
+  currentFasadeMaterial.value.data[type] = value ? value.ID || value : null;
+  if (palette) currentFasadeMaterial.value.data["PALETTE"] = palette;
+
+  let { secIndex, doorIndex, segmentIndex } = currentFasadeMaterial.value;
+  if (secIndex === null) {
+    grid.fasades[doorIndex][segmentIndex].material = Object.assign(
+        grid.fasades[doorIndex][segmentIndex].material,
+        currentFasadeMaterial.value.data
+    );
+  } else {
+    grid.sections[secIndex].fasades[doorIndex][segmentIndex].material =
+        Object.assign(
+            grid.sections[secIndex].fasades[doorIndex][segmentIndex]
+                .material,
+            currentFasadeMaterial.value.data
+        );
+  }
 };
 
 onMounted(() => {

@@ -17,6 +17,7 @@ export interface FillingObject {
     cell?: number;
     row?: number;
     extra?: number;
+    item?: number;
     error?: boolean;
     moduleThickness?: number;
     isProfile?: ProfileData;
@@ -34,7 +35,7 @@ export interface FasadeObject {
     id: number;
     type: "fasade";
     loopsSide: number | boolean;
-    position: THREE.Vector2;
+    position: THREE.Vector2 | THREE.Vector3;
     width: number;
     height: number;
     material: FasadeMaterial;
@@ -67,7 +68,7 @@ export const MANUFACTURER = {
 }
 
 export interface DrawerFasadeObject extends FasadeObject {
-    manufacturerOffset: Number;
+    manufacturerOffset: number;
     item: number;
     sec: number | null;
     cell?: number | null;
@@ -141,6 +142,8 @@ export interface ProfilesConfig {
     COLOR: number;
     colorsList: number[];
     onSectionSize?: boolean;
+    sideProfile?: number,
+    manufacturerOffset?: number;
 }
 
 export interface ProfileData {

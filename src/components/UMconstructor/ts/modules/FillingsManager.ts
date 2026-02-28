@@ -1,10 +1,8 @@
 //@ts-nocheck
 
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {DrawerFasadeObject, FasadeMaterial, FillingObject, MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
-import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
-
+import {GridModule, TSelectedCell, DrawerFasadeObject, FasadeMaterial, FillingObject, MANUFACTURER} from "@/components/UMconstructor/types/UMtypes.ts";
 
 export default class FillingsManager {
     scope: UMconstructorClass
@@ -27,19 +25,23 @@ export default class FillingsManager {
         )
     }
 
-    updateFilling(value, currentfilling, type, render = false) {
+    updateFilling(
+        value: number,
+        currentfilling: FillingObject,
+        type: string,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+    ) {
         const {sec, cell, row, extra, item} = currentfilling
+        const {MAX_SECTION_WIDTH, MIN_SECTION_WIDTH} = this.scope.CONST
 
-        const gridCopy = Object.assign({}, module.value);
-
-        const section = gridCopy.sections[sec];
+        const section = grid.sections[sec];
         const currentCell = section.cells?.[cell];
         const currentRow = currentCell?.cellsRows?.[row];
         const currentExtra =  currentRow?.extras?.[extra];
 
         const current = currentExtra || currentRow || currentCell || section;
         const prevValue = currentfilling[type]; //Предыдущее значение
-        let newValue = parseInt(value);
+        let newValue = value;
         const delta = prevValue - newValue
 
         let tmpSector = currentfilling.sector
@@ -51,7 +53,7 @@ export default class FillingsManager {
 
         const pixiSector = current.sector;
 
-        const check = pixiSector ? shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData) : true;
+        const check = pixiSector ? this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, currentfilling.type, fillingData) : true;
 
         if (check && (newValue < MAX_SECTION_WIDTH || newValue > MIN_SECTION_WIDTH)) {
             delete currentfilling.error
@@ -74,20 +76,18 @@ export default class FillingsManager {
         }
 
         if(currentfilling.type === 'vertical_shelf') {
-            currentfilling.width = module.value.moduleThickness
-            currentfilling.size.x = module.value.moduleThickness
+            currentfilling.width = grid.moduleThickness
+            currentfilling.size.x = grid.moduleThickness
         }
 
         if(currentfilling.type === 'shelf') {
-            currentfilling.height = module.value.moduleThickness
-            currentfilling.size.y = module.value.moduleThickness
+            currentfilling.height = grid.moduleThickness
+            currentfilling.size.y = grid.moduleThickness
         }
 
         currentfilling.sector = tmpSector;
-        module.value = gridCopy;
-
-        if (render)
-            visualizationRef.value.renderGrid();
+        
+        return currentfilling;
     };
 
     checkLoopsCollision(secIndex: number, grid: GridModule){
@@ -95,12 +95,17 @@ export default class FillingsManager {
     };
 
     selectCell(sec: number, cell: number|null = null, row: number|null = null, extra: number|null = null, item: number|null = 0){
-        this.scope.UM_STORE.setSelected("fillings", {sec, cell, row, extra, item})
+        this.scope.selectCell("fillings", <TSelectedCell>{sec, cell, row, extra, item});
     };
 
-    createFillingDataToCheck(product, currentSpace, isVerticalItem = false, isDrawer = false) {
+    createFillingDataToCheck(
+        product,
+        currentSpace,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+        isVerticalItem = false,
+        isDrawer = false
+    ) {
 
-        const grid = this.scope.UM_STORE.getUMGrid()
         let width = product.width
         let height = product.height
         let isSlidingDoors = grid.fasades ? 100 : 0
@@ -125,32 +130,13 @@ export default class FillingsManager {
         return this.scope.RENDER_REF.value.checkPositionFillingToCreate(tempFilling);
     };
 
-    getFasadePosition(_position:number, grid: GridModule) {
-        
-        const PROPS = this.scope.UM_STORE.getUMData();
-        let fasadePosition = this.scope.APP.FASADE_POSITION[_position];
-
-        if (!fasadePosition || !grid)
-            return {}
-
-        fasadePosition = this.scope.BUILDER.getExec(
-            this.scope.BUILDER.expressionsReplace(fasadePosition,
-                Object.assign(PROPS.CONFIG.EXPRESSIONS,
-                    {
-                        "#X#": grid.width,
-                        "#Y#": grid.height - (grid.isRestrictedModule ? 0 : grid.horizont),
-                        "#Z#": grid.depth,
-                    }))
-        )
-
-        return fasadePosition
-    }
-
-    addFilling(_product, productGroupID){
+    addFilling(
+        _product: any,
+        productGroupID: number,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+    ){
 
         const product = Object.assign({}, _product);
-        const grid = this.scope.UM_STORE.getUMGrid();
-
         const {sec, cell, row, extra} = this.scope.UM_STORE.getSelected("module")
         const isHiTechProfile = this.scope.APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("hi_tech_profile") || false
         const isBottomHiTechProfile = isHiTechProfile && this.scope.APP.PRODUCTS_TYPES[product.productType]?.CODE.includes("bottom") || false
@@ -172,18 +158,18 @@ export default class FillingsManager {
         let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
 
         if (row === null && cell === null && sec === null && extra === null) {
-            alert("Пожалуйста, выберите секцию для добавления наполнения", "error");
+            alert("Пожалуйста, выберите секцию для добавления наполнения");
             return;
         }
 
         if (product.MIN_FASADE_SIZE) {
             if (row || extra) {
-                alert("Нельзя установить ящик с фасадом в вертикальную разделитель!", "error");
+                alert("Нельзя установить ящик с фасадом в вертикальную разделитель!");
                 return;
             }
 
             if (!currentSection?.fasades?.[0]?.[0] && !currentSection?.fasadesDrawers?.[0]) {
-                alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!", "error");
+                alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!");
                 return;
             }
         }
@@ -192,12 +178,12 @@ export default class FillingsManager {
             if (+opt.id === 4722965 && opt.active)
                 return opt;
         })) {
-            alert("Г-образный профиль доступен только для навесного модуля", "error")
+            alert("Г-образный профиль доступен только для навесного модуля")
             return;
         }
 
         if (isHiTechProfile && grid.profilesConfig?.sideProfile) {
-            alert("Нельзя добавить горизонтальный профиль вместе с боковым!", "error");
+            alert("Нельзя добавить горизонтальный профиль вместе с боковым!");
             return;
         }
 
@@ -301,16 +287,13 @@ export default class FillingsManager {
             currentModuleSegment.hiTechProfiles.push(fillingObject)
             currentFillingsArray.push(fillingObject);
 
-            calcDrawersFasades(sec)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, grid)
         } else
             currentFillingsArray.push(fillingObject);
 
         if (product.MIN_FASADE_SIZE) {
             if (!currentSection.fasadesDrawers)
                 currentSection.fasadesDrawers = []
-
-            const {PRODUCT} = PROPS
-            let productInfo = this.scope.APP.CATALOG.PRODUCTS[PRODUCT];
 
             const leftWidth = grid.leftWallThickness || grid.moduleThickness;
             const rightWidth = grid.rightWallThickness || grid.moduleThickness;
@@ -363,13 +346,18 @@ export default class FillingsManager {
             this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, grid)
         }
 
-        selectCell(sec, cell, row, extra, currentFillingsArray.length - 1);
-
-        // // Обновляем рендер
-        visualizationRef.value.renderGrid();
+        this.selectCell(sec, cell, row, extra, currentFillingsArray.length - 1);
+        this.scope.reset(grid)
     };
 
-    deleteFilling(secIndex, itemIndex, cellIndex = null, rowIndex = null, extraIndex = null){
+    deleteFilling(
+        secIndex: number,
+        itemIndex: number,
+        cellIndex: number|null = null,
+        rowIndex: number|null = null,
+        extraIndex: number|null = null,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+    ) {
         const sec = grid.sections[secIndex];
         const cell = sec.cells?.[cellIndex];
         const row = cell?.cellsRows?.[rowIndex];
@@ -429,36 +417,30 @@ export default class FillingsManager {
                         delete curRow.hiTechProfiles
                 }
 
-                calcDrawersFasades(secIndex)
-            } else
-                updateFasades()
+                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+            }
         }
-
-        visualizationRef.value.renderGrid();
+        
+        this.scope.reset(grid)
     };
 
-    updateFasades(){
-        emit("product-updateFasades");
-    }
-
-    calcDrawersFasades(sec, fillingData = false) {
-        emit("product-calcDrawersFasades", sec, fillingData);
-    }
-
-    updateFilling(value, filling, type, render = false){
-        emit("product-updateFilling", value, filling, type, render);
-    };
-
-    changeFillingPositionX(event, _value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null){
+    changeFillingPositionX(
+        event: Event,
+        _value: number,
+        key: number,
+        secIndex: number,
+        cellIndex: number|null = null,
+        rowIndex: number|null = null,
+        extraIndex: number|null = null,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+    ) {
 
         let value = Math.min(+_value, +event.target.max);
         value = Math.max(+value, +event.target.min);
 
-        selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
+        this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
-        const gridCopy = Object.assign({}, grid);
-
-        const sec = gridCopy.sections[secIndex];
+        const sec = grid.sections[secIndex];
         const currentColl = sec.cells?.[cellIndex];
         const currentRow = currentColl?.cellsRows?.[rowIndex];
         const currentExtra = currentRow?.extras?.[extraIndex];
@@ -487,7 +469,7 @@ export default class FillingsManager {
         const pixiSector = current.sector;
 
         // Проверяем коллизию
-        const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+        const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
         if (check) {
             currentfilling.position.x = fillingData.position.x;
@@ -497,23 +479,29 @@ export default class FillingsManager {
         }
 
         currentfilling.sector = tmpSector;
-        grid = gridCopy;
 
         if (currentfilling.fasade)
-            calcDrawersFasades(secIndex)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
 
-        visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    changeFillingPositionY(event, _value, key, secIndex, cellIndex = null, rowIndex = null, extraIndex = null) {
+    changeFillingPositionY(
+        event: Event,
+        _value: number,
+        key: number,
+        secIndex: number,
+        cellIndex: number|null = null,
+        rowIndex: number|null = null,
+        extraIndex: number|null = null,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+    ) {
         let value = Math.min(+_value, +event.target.max);
         value = Math.max(+value, +event.target.min);
 
-        selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
+        this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
-        const gridCopy = Object.assign({}, grid);
-
-        const sec = gridCopy.sections[secIndex];
+        const sec = grid.sections[secIndex];
         const currentColl = sec.cells?.[cellIndex];
         const currentRow = currentColl?.cellsRows?.[rowIndex];
         const currentExtra = currentRow?.extras?.[extraIndex];
@@ -543,7 +531,7 @@ export default class FillingsManager {
         const pixiSector = current.sector;
 
         // Проверяем коллизию
-        const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+        const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
         if (check) {
             currentfilling.position.y = fillingData.position.y;
@@ -553,142 +541,28 @@ export default class FillingsManager {
         }
 
         currentfilling.sector = tmpSector;
-        grid = gridCopy;
-
         if (currentfilling.fasade)
-            calcDrawersFasades(secIndex)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
         else {
-            checkLoopsCollision(secIndex)
+            this.scope.LOOPS.checkLoopsCollision(secIndex, grid)
         }
 
-        visualizationRef.value.renderGrid();
+        this.scope.reset(grid)
     };
 
-    createFacadeData(fasadeIndex){
-        const productId = modelState.getCurrentModel.userData.PROPS.PRODUCT;
-        const {FACADE} = modelState._PRODUCTS[productId];
-        modelState.createCurrentModelFasadesData({
-            data: FACADE,
-            fasadeNdx: fasadeIndex,
-            productId,
-        });
-    };
+    changeDrawerFasade(
+        event: Event,
+        value: number,
+        key: number,
+        secIndex: number,
+        cellIndex: number|null = null,
+        rowIndex: number|null = null,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+    ) {
+        
+        this.selectCell(secIndex, cellIndex, rowIndex, null, key);
 
-    openFasadeSelector(secIndex, cellIndex, rowIndex, itemIndex) {
-        isOpenMaterialSelector.value = false;
-
-        /** @Создание_данных_для_выбранного_фасада */
-        createFacadeData();
-
-        if (
-            currentFasadeMaterial.value &&
-            (
-                secIndex == currentFasadeMaterial.value.secIndex &&
-                cellIndex == currentFasadeMaterial.value.cellIndex &&
-                rowIndex == currentFasadeMaterial.value.rowIndex &&
-                itemIndex == currentFasadeMaterial.value.itemIndex
-            )
-        ) {
-            currentFasadeMaterial.value = false;
-            return;
-        }
-
-        setTimeout(() => {
-            const curSection = grid.sections[secIndex]
-            const curCell = curSection?.cells?.[cellIndex]
-            const curRow = curCell?.cellsRows?.[rowIndex]
-
-            const curModuleSegment = curRow || curCell || curSection
-
-            let data = curModuleSegment.fillings[itemIndex].fasade.material
-            currentFasadeMaterial.value = {
-                secIndex,
-                cellIndex,
-                rowIndex,
-                itemIndex,
-                data,
-                fasadeSize: {
-                    FASADE_WIDTH: curModuleSegment.fillings[itemIndex].fasade.width,
-                    FASADE_HEIGHT: curModuleSegment.fillings[itemIndex].fasade.height,
-                    isDrawer: true
-                },
-            }
-            selectCell(secIndex, cellIndex, rowIndex, null, itemIndex)
-            isOpenMaterialSelector.value = true
-        }, 10)
-    }
-
-    openHandleSelector(secIndex, cellIndex, rowIndex, itemIndex){
-        isOpenHandleSelector.value = false;
-        isOpenMaterialSelector.value = false;
-
-        if(isOpenMaterialSelector.value)
-            closeMenu()
-
-        if (
-            currentHandle.value &&
-            secIndex === currentHandle.value.secIndex &&
-            cellIndex === currentHandle.value.cellIndex &&
-            rowIndex === currentHandle.value.rowIndex &&
-            itemIndex === currentHandle.value.itemIndex
-        ) {
-            closeMenu()
-            return;
-        }
-
-        setTimeout(() => {
-            const curSection = grid.sections[secIndex]
-            const curCell = curSection?.cells?.[cellIndex]
-            const curRow = curCell?.cellsRows?.[rowIndex]
-
-            const curModuleSegment = curRow || curCell || curSection
-            let data = curModuleSegment.fillings[itemIndex].fasade.material
-
-            currentHandle.value = {
-                secIndex,
-                cellIndex,
-                rowIndex,
-                itemIndex,
-                data,
-            };
-            selectCell(secIndex, cellIndex, rowIndex, itemIndex);
-            isOpenHandleSelector.value = true;
-        }, 10);
-    };
-
-    selectHandle(data, type){
-        switch (type) {
-            case "handle":
-                currentHandle.value.data.HANDLES.id = data;
-                break;
-            case "position":
-                currentHandle.value.data.HANDLES.position = data;
-                break;
-        }
-    }
-
-    selectOption(value: Object, type: string, palette: Object = false){
-
-        currentFasadeMaterial.value.data[type] = value ? value.ID : null;
-        if (palette)
-            currentFasadeMaterial.value.data['PALETTE'] = palette
-
-        let {secIndex, cellIndex, rowIndex, itemIndex} = currentFasadeMaterial.value;
-        const curSection = grid.sections[secIndex]
-        const curCell = curSection?.cells?.[cellIndex]
-        const curRow = curCell?.cellsRows?.[rowIndex]
-
-        const curModuleSegment = curRow || curCell || curSection
-        curModuleSegment.fillings[itemIndex].fasade.material =
-            Object.assign(curModuleSegment.fillings[itemIndex].fasade.material, currentFasadeMaterial.value.data)
-    };
-
-    changeDrawerFasade(event, value, key, secIndex, cellIndex = null, rowIndex = null){
-        selectCell(secIndex, cellIndex, rowIndex, null, key);
-
-        const gridCopy = Object.assign({}, grid);
-
-        const sec = gridCopy.sections[secIndex];
+        const sec = grid.sections[secIndex];
         const currentColl = sec.cells?.[cellIndex];
         const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
 
@@ -700,7 +574,7 @@ export default class FillingsManager {
         }
 
         const prevValue = currentfilling.fasade.height; //Предыдущее значение
-        const newValue = parseInt(value)
+        const newValue = value
 
         let tmpSector = currentfilling.sector
         let tmpFasade = currentfilling.fasade
@@ -716,7 +590,7 @@ export default class FillingsManager {
         const pixiSector = currentRow.sector;
 
         // Проверяем коллизию
-        const check = props.shapeAdjuster.checkToCollision(pixiSector, false, fillingData);
+        const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
         currentfilling.sector = tmpSector;
         currentfilling.fasade = tmpFasade;
@@ -724,13 +598,10 @@ export default class FillingsManager {
             currentfilling.fasade.height = fillingData.fasade.height;
         } else {
             currentfilling.fasade.height = prevValue;
-            toAster.error("Ошибка! Размер фасада слишком велик!")
+            this.scope.AlERT.error("Ошибка! Размер фасада слишком велик!")
         }
 
-        grid = gridCopy;
-
-        calcDrawersFasades(secIndex)
-
-        visualizationRef.value.renderGrid();
+        this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+        this.scope.reset(grid)
     };
 }

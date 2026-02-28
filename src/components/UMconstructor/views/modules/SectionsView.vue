@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import "@/components/UMconstructor/styles/UM.scss"
 
 import CounterInput from "@/components/ui/inputs/CounterInput.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
@@ -7,7 +8,7 @@ import {TSelectedCell, GridModule} from "@/components/UMconstructor/types/UMtype
 
 const props = defineProps({
   module: {
-    type: GridModule,
+    type: ref<GridModule>,
     required: true,
   },
   mode: {
@@ -142,17 +143,16 @@ onMounted(() => {
                               <input
                                   type="number"
                                   :step="step"
-                                  :min="MIN_SECTION_HEIGHT"
-                                  :max="section.height - MIN_SECTION_HEIGHT"
+                                  :min="UMconstructor.CONST.MIN_SECTION_HEIGHT"
+                                  :max="section.height - UMconstructor.CONST.MIN_SECTION_HEIGHT"
                                   class="actions-sections-input"
                                   :value="cell.height"
-                                  @input="
-                            debounce(() => updateCellHeight(
-                              $event.target.value,
-                              secIndex,
-                              cellIndex
-                            ), 1000)
-                          "
+                                  @input="UMconstructor.SECTIONS.updateCellHeight({
+                                    grid: module,
+                                    secIndex,
+                                    cellIndex,
+                                    value: $event?.target?.value || UMconstructor.CONST.MIN_SECTION_HEIGHT
+                                  })"
                               />
                             </div>
                           </div>
@@ -176,9 +176,9 @@ onMounted(() => {
                               input-class="actions-sections-items--right-items-input-block-counter"
                               button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                               type="number"
-                              @update:model-value="(count) => {
-                            addCell(secIndex, cellIndex, count)
-                          }"
+                              @update:model-value="(count: number) => {
+                                UMconstructor.SECTIONS.addCell({grid: module, secIndex, cellIndex, count})
+                              }"
                           />
                         </div>
 
@@ -194,16 +194,16 @@ onMounted(() => {
                               input-class="actions-sections-items--right-items-input-block-counter"
                               button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                               type="number"
-                              @update:model-value="(count) => {
-                                addRowCell(secIndex, cellIndex, 0, count)
-                          }"
+                              @update:model-value="(count: number) => {
+                                UMconstructor.SECTIONS.addRowCell({grid: module, secIndex, cellIndex, rowIndex: 0, count})
+                              }"
                           />
                         </div>
 
                         <button
                             v-if="section.cells.length > 1"
                             class="actions-sections-btn actions-sections-btn--default"
-                            @click="deleteCell(cellIndex, secIndex)"
+                            @click="UMconstructor.SECTIONS.deleteCell(module, secIndex, cellIndex)"
                         >
                           Удалить
                         </button>
@@ -253,14 +253,13 @@ onMounted(() => {
                                         :max="cell.width - UMconstructor.CONST.MIN_SECTION_WIDTH"
                                         class="actions-sections-input"
                                         :value="row.width"
-                                        @input="
-                              debounce(() => updateCellRowWidth(
-                                $event.target.value,
-                                secIndex,
-                                cellIndex,
-                                rowIndex
-                              ), 1000)
-                            "
+                                        @input="UMconstructor.SECTIONS.updateCellRowWidth({
+                                          grid: module,
+                                          secIndex,
+                                          cellIndex,
+                                          rowIndex,
+                                          value: $event?.target?.value || UMconstructor.CONST.MIN_SECTION_WIDTH
+                                        })"
                                     />
                                   </div>
                                 </div>
@@ -286,8 +285,8 @@ onMounted(() => {
                                     input-class="actions-sections-items--right-items-input-block-counter"
                                     button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                     type="number"
-                                    @update:model-value="(count) => {
-                                          addRowCell(secIndex, cellIndex, rowIndex, count)
+                                    @update:model-value="(count: number) => {
+                                          UMconstructor.SECTIONS.addRowCell({grid: module, secIndex, cellIndex, rowIndex, count})
                                     }"
                                 />
                               </div>
@@ -304,8 +303,8 @@ onMounted(() => {
                                     input-class="actions-sections-items--right-items-input-block-counter"
                                     button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                     type="number"
-                                    @update:model-value="(count) => {
-                                          addRowExtra(secIndex, cellIndex, rowIndex, 0, count)
+                                    @update:model-value="(count: number) => {
+                                          UMconstructor.SECTIONS.addRowExtra({grid: module, secIndex, cellIndex, rowIndex, extraIndex: 0, count})
                                     }"
                                 />
                               </div>
@@ -313,7 +312,7 @@ onMounted(() => {
                               <button
                                   v-if="cell.cellsRows.length > 1"
                                   class="actions-sections-btn actions-sections-btn--default"
-                                  @click="deleteRowCell(cellIndex, secIndex, rowIndex)"
+                                  @click="UMconstructor.SECTIONS.deleteRowCell(module, secIndex, cellIndex, rowIndex)"
                               >
                                 Удалить
                               </button>
@@ -361,19 +360,18 @@ onMounted(() => {
                                           <input
                                               type="number"
                                               :step="step"
-                                              :min="MIN_SECTION_HEIGHT"
-                                              :max="row.height - MIN_SECTION_HEIGHT"
+                                              :min="UMconstructor.CONST.MIN_SECTION_HEIGHT"
+                                              :max="row.height - UMconstructor.CONST.MIN_SECTION_HEIGHT"
                                               class="actions-sections-input"
                                               :value="extra.height"
-                                              @input="
-                                                debounce(() => updateExtraHeight(
-                                                  $event.target.value,
-                                                  secIndex,
-                                                  cellIndex,
-                                                  rowIndex,
-                                                  extraIndex
-                                                ), 1000)
-                                              "
+                                              @input="UMconstructor.SECTIONS.updateExtraHeight({
+                                                grid: module,
+                                                secIndex,
+                                                cellIndex,
+                                                rowIndex,
+                                                extraIndex,
+                                                value: $event?.target?.value || UMconstructor.CONST.MIN_SECTION_HEIGHT
+                                              })"
                                           />
                                         </div>
                                       </div>
@@ -399,16 +397,16 @@ onMounted(() => {
                                           input-class="actions-sections-items--right-items-input-block-counter"
                                           button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                           type="number"
-                                          @update:model-value="(count) => {
-                                          addRowExtra(secIndex, cellIndex, rowIndex, extraIndex, count)
-                                    }"
+                                          @update:model-value="(count: number) => {
+                                            UMconstructor.SECTIONS.addRowExtra({grid: module, secIndex, cellIndex, rowIndex, extraIndex, count})
+                                          }"
                                       />
                                     </div>
 
                                     <button
                                         v-if="cell.cellsRows.length > 1"
                                         class="actions-sections-btn actions-sections-btn--default"
-                                        @click="deleteRowExtra(cellIndex, secIndex, rowIndex, extraIndex)"
+                                        @click="UMconstructor.SECTIONS.deleteRowExtra(module, secIndex, cellIndex, rowIndex, extraIndex)"
                                     >
                                       Удалить
                                     </button>
@@ -453,11 +451,12 @@ onMounted(() => {
                             :value="section.width"
                             :disabled="module.sections.length < 2"
                             @input="
-                            debounce(() => updateSectionWidth(
-                              $event.target.value,
-                              secIndex
-                            ), 1000)
-                          "
+                              UMconstructor.SECTIONS.updateSectionWidth({
+                                grid: module,
+                                secIndex,
+                                value: $event?.target?.value || UMconstructor.CONST.MIN_SECTION_WIDTH
+                              })
+                            "
                         />
                       </div>
                     </div>
@@ -474,7 +473,7 @@ onMounted(() => {
                         <input
                             type="number"
                             :step="step"
-                            :min="MIN_SECTION_HEIGHT"
+                            :min="UMconstructor.CONST.MIN_SECTION_HEIGHT"
                             class="actions-sections-input"
                             :value="section.height"
                             disabled
@@ -504,8 +503,8 @@ onMounted(() => {
                         input-class="actions-sections-items--right-items-input-block-counter"
                         button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                         type="number"
-                        @update:model-value="(count) => {
-                            addSection(secIndex, count)
+                        @update:model-value="(count: number) => {
+                            UMconstructor.SECTIONS.addSection({grid: module, secIndex, count})
                           }"
                     />
                   </div>
@@ -522,8 +521,8 @@ onMounted(() => {
                         input-class="actions-sections-items--right-items-input-block-counter"
                         button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                         type="number"
-                        @update:model-value="(count) => {
-                            addCell(secIndex, null, count)
+                        @update:model-value="(count: number) => {
+                            UMconstructor.SECTIONS.addCell({grid: module, secIndex, cellIndex: null, count})
                           }"
                     />
                   </div>

@@ -14,12 +14,13 @@ import {ref} from "vue";
 
 import {ShapeAdjuster} from "@/components/UMconstructor/utils/PixiMethods.ts";
 import {
+    constructorMode,
     FillingObject,
     GridCell,
     GridCellsRow,
     GridModule,
     GridRowExtra,
-    GridSection
+    GridSection, TSelectedCell
 } from "./../types/UMtypes.ts";
 import {TTotalProps} from "@/types/types.ts";
 
@@ -27,7 +28,6 @@ import * as THREE from "three";
 import {FasadeMaterial, FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import OptionsManager from "@/components/UMconstructor/ts/modules/OptionsManager.ts";
-
 
 export default class UMconstructorClass {
     UM_STORE: ReturnType<typeof useUMStorage> = useUMStorage();
@@ -60,6 +60,11 @@ export default class UMconstructorClass {
         this.OPTIONS = new OptionsManager(this)
         this.DEBOUNCES = {}
     }
+
+    selectCell(type: constructorMode, newSelected: TSelectedCell) {
+        this.UM_STORE.setSelected(type, newSelected);
+        this.RENDER_REF.selectCell( type, newSelected);
+    };
 
     debounce(timerKey: string, callback: Function, wait: number) {
         if (this.DEBOUNCES[timerKey]) {

@@ -12,16 +12,15 @@ export default class LoopsManager {
         this.scope = scope
     }
 
-    calcLoops (secIndex: number, grid: GridModule) {
+    calcLoops (secIndex: number, grid: GridModule = this.scope.UM_STORE.getUMGrid()) {
         const CONFIG = this.scope.UM_STORE.getUMData()?.CONFIG;
-        const curGrid = grid || this.scope.UM_STORE.getUMGrid()
 
         if (!CONFIG.LOOPS)
             return
 
-        const curSection = curGrid.sections[secIndex]
+        const curSection = grid.sections[secIndex]
 
-        if(curGrid.noLoops){
+        if(grid.noLoops){
             delete curSection.loops
             delete curSection.loopsSides
             return;
@@ -273,4 +272,128 @@ export default class LoopsManager {
 
         return loops;
     }
+
+    getLoopsideList(secIndex: number, doorIndex: number, grid: GridModule) {
+        const productInfo = this.scope.APP.CATALOG.PRODUCTS[grid.productID];
+
+        let list = [];
+        let tmp = {};
+
+        if(grid.isRestrictedModule){
+            tmp[LOOPSIDE["left"]] = this.scope.APP.LOOPSIDE[LOOPSIDE["left"]];
+            tmp[LOOPSIDE["right"]] = this.scope.APP.LOOPSIDE[LOOPSIDE["right"]];
+        }
+        else {
+            productInfo.LOOPSIDE.forEach((type) => {
+                if (this.scope.APP.LOOPSIDE[type] != undefined) {
+                    tmp[type] = this.scope.APP.LOOPSIDE[type];
+                }
+            });
+        }
+
+        const currSection = grid.sections[secIndex];
+        const sectionLeft = grid.sections[secIndex - 1] || false;
+        const sectionRight = grid.sections[secIndex + 1] || false;
+
+        const currSectionLoops = currSection.loopsSides || {};
+
+        switch (doorIndex) {
+            case 0:
+                if (grid.sections[secIndex].fasades[1]) {
+                    delete tmp[LOOPSIDE["right"]];
+                }
+
+                if (sectionLeft) {
+                    const sectionLeftLoops = sectionLeft.loopsSides || {};
+
+                    if(!grid.isRestrictedModule) {
+                        if (
+                            sectionLeftLoops[1] ||
+                            [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(
+                                sectionLeftLoops[0]
+                            )
+                        )
+                        {
+                            delete tmp[LOOPSIDE["left_on_partition"]];
+                        }
+                        else {
+                            tmp[LOOPSIDE["left_on_partition"]] =
+                                this.scope.APP.LOOPSIDE[LOOPSIDE["left_on_partition"]];
+                        }
+                    }
+
+                    delete tmp[LOOPSIDE["left"]];
+                }
+
+                if (sectionRight) {
+                    const sectionRightLoops = sectionRight.loopsSides || {};
+
+                    if(!grid.isRestrictedModule) {
+                        if (
+                            sectionRightLoops[1] ||
+                            [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(
+                                sectionRightLoops[0]
+                            )
+                        ) {
+                            delete tmp[LOOPSIDE["right_on_partition"]];
+                        } else {
+                            tmp[LOOPSIDE["right_on_partition"]] =
+                                this.scope.APP.LOOPSIDE[LOOPSIDE["right_on_partition"]];
+                        }
+                    }
+
+                    delete tmp[LOOPSIDE["right"]];
+                }
+
+                break;
+            case 1:
+                if (sectionLeft) {
+                    const sectionLeftLoops = sectionLeft.loopsSides || {};
+
+                    if(!grid.isRestrictedModule) {
+                        if (
+                            sectionLeftLoops[1] ||
+                            [LOOPSIDE["right"], LOOPSIDE["right_on_partition"]].includes(
+                                sectionLeftLoops[0]
+                            )
+                        ) {
+                            delete tmp[LOOPSIDE["left_on_partition"]];
+                        } else {
+                            tmp[LOOPSIDE["left_on_partition"]] =
+                                this.scope.APP.LOOPSIDE[LOOPSIDE["left_on_partition"]];
+                        }
+                    }
+
+                    delete tmp[LOOPSIDE["left"]];
+                }
+
+                if (sectionRight) {
+                    const sectionRightLoops = sectionRight.loopsSides || {};
+
+                    if(!grid.isRestrictedModule) {
+                        if (
+                            sectionRightLoops[1] ||
+                            [LOOPSIDE["left"], LOOPSIDE["left_on_partition"]].includes(
+                                sectionRightLoops[0]
+                            )
+                        ) {
+                            delete tmp[LOOPSIDE["right_on_partition"]];
+                        } else {
+                            tmp[LOOPSIDE["right_on_partition"]] =
+                                this.scope.APP.LOOPSIDE[LOOPSIDE["right_on_partition"]];
+                        }
+                    }
+
+                    delete tmp[LOOPSIDE["right"]];
+                }
+
+                //delete tmp[LOOPSIDE["left"]]
+                delete tmp[currSectionLoops[0]];
+
+                break;
+        }
+
+        list = Object.values(tmp);
+        return list;
+    };
 }

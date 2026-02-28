@@ -3,15 +3,16 @@ import "@/components/UMconstructor/styles/UM.scss"
 
 import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {toRefs, onMounted, ref, onBeforeMount} from "vue";
+import {toRefs, ref, onBeforeMount} from "vue";
 import {TTotalProps} from "@/types/types.ts";
 import SidecolorsView from "@/components/UMconstructor/views/modules/SidecolorsView.vue";
 import ModuleSizeView from "@/components/UMconstructor/views/modules/ModuleSizeView.vue";
+import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
 
 
 const props = defineProps({
   module: {
-    type: Object,
+    type: ref<GridModule>,
     required: true,
   },
   mode: {
@@ -56,6 +57,7 @@ onBeforeMount(() => {
           :visualizationRef="UMconstructor.RENDER_REF"
           :module="module"
           :objectData="productData"
+          :UMconstructor="UMconstructor"
           @product-reset="UMconstructor.reset"
       />
     </div>

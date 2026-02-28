@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import {GridModule} from "@/types/constructor2d/interfaсes.ts";
 

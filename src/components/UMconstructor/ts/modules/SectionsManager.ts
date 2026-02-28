@@ -8,7 +8,7 @@ import {
     GridCell,
     GridCellsRow,
     GridRowExtra,
-    GridSection
+    GridSection, TSelectedCell
 } from "@/components/UMconstructor/types/UMtypes.ts";
 
 
@@ -20,7 +20,7 @@ export default class SectionsManager {
     }
 
     selectCell(sec: number|null = 0, cell: number | null = null, row: number | null = null, extra: number | null = null) {
-        this.scope.UM_STORE.setSelected("module", {sec, cell, row, extra});
+        this.scope.selectCell("module", <TSelectedCell>{sec, cell, row, extra});
     };
 
     addSection({grid = this.scope.UM_STORE.getUMGrid(), secIndex = 0, count = 1}: {
@@ -674,7 +674,7 @@ export default class SectionsManager {
 
         this.scope.debounce('updateSectionWidth', () => {
             this.scope.reset(grid)
-        }, 100)
+        }, 1000)
     };
 
     updateCellHeight(
@@ -957,7 +957,7 @@ export default class SectionsManager {
 
         this.scope.debounce('updateCellHeight', () => {
             this.scope.reset(grid)
-        }, 100)
+        }, 1000)
     };
 
     updateCellRowWidth(
@@ -1035,7 +1035,7 @@ export default class SectionsManager {
 
         this.scope.debounce('updateCellRowWidth', () => {
             this.scope.reset(grid)
-        }, 100)
+        }, 1000)
     };
 
     updateExtraHeight(
@@ -1129,7 +1129,7 @@ export default class SectionsManager {
 
         this.scope.debounce('updateExtraHeight', () => {
             this.scope.reset(grid)
-        }, 100)
+        }, 1000)
     };
 
     deleteSection(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number) {
