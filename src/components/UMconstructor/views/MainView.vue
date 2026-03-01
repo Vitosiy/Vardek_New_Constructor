@@ -111,6 +111,10 @@ onBeforeMount(() => {
 onMounted(() => {
   UMstore.setUMGrid(module.value);
   UMconstructor.value?.setRenderRef(visualizationRef)
+
+  setTimeout(()=> {
+    UMconstructor.value?.reset(UMstore.getUMGrid())
+  }, 1000)
 });
 
 onBeforeUnmount(() => {
@@ -199,7 +203,7 @@ defineExpose({
             ref="visualizationRef"
             :mode="mode"
             :step="step"
-            :module="module"
+            :module="UMconstructor?.UM_STORE.getUMGrid()"
             :UMconstructor="UMconstructor"
             :container="constructor2dContainer"
             :max-area-height="totalHeight"

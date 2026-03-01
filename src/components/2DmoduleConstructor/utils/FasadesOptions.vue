@@ -45,7 +45,7 @@ const {
   checkFasadeConversations,
 } = useConversationActions();
 
-const { figureItems, createSurfaceList } =
+const {createSurfaceList } =
     useFigureRightPage();
 
 const { module, visualizationRef } = toRefs(props);

@@ -10,7 +10,7 @@ import LoopsManager from "@/components/UMconstructor/ts/modules/LoopsManager.ts"
 import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {useToast} from "@/features/toaster/useToast.ts";
-import {ref} from "vue";
+import {Ref, ref} from "vue";
 
 import {ShapeAdjuster} from "@/components/UMconstructor/utils/PixiMethods.ts";
 import {
@@ -28,11 +28,15 @@ import * as THREE from "three";
 import {FasadeMaterial, FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import OptionsManager from "@/components/UMconstructor/ts/modules/OptionsManager.ts";
+import {useModelState} from "@/store/appliction/useModelState.ts";
+import Render2D from "@/components/UMconstructor/views/Render2D.vue";
+import {Application} from "@/Application/Core/Application.ts";
 
 export default class UMconstructorClass {
     UM_STORE: ReturnType<typeof useUMStorage> = useUMStorage();
     APP: ReturnType<typeof useAppData> = useAppData().getAppData;
-    CONST: UI_PARAMS
+    MODEL_STATE: ReturnType<typeof useModelState> = useModelState();
+    CONST: typeof UI_PARAMS
     BUILDER: ReturnType<typeof UniversalGeometryBuilder.buildProduct>;
     AlERT: ReturnType<typeof useToast> = useToast();
     FASADES: FasadesManager
@@ -43,12 +47,12 @@ export default class UMconstructorClass {
     SIDECOLORS: SidecolorsManager
     SHAPE_ADJUSTER: ShapeAdjuster
     OPTIONS: OptionsManager
-    RENDER_REF: ref
+    RENDER_REF: Ref<typeof Render2D | undefined> = ref<typeof Render2D>()
     DEBOUNCES: {}
     
     constructor() {
         this.CONST = UI_PARAMS
-        this.BUILDER = new UniversalGeometryBuilder({}).buildProduct
+        this.BUILDER = new UniversalGeometryBuilder(<Application>{}).buildProduct
 
         this.FASADES = new FasadesManager(this)
         this.FILLINGS = new FillingsManager(this)
@@ -265,7 +269,7 @@ export default class UMconstructorClass {
         return +productData.CONFIG.SIZE_EDIT[`SIZE_EDIT_` + dimension + `_` + minmax];
     }
 
-    setRenderRef(ref: ref){
+    setRenderRef(ref: Ref){
         this.RENDER_REF = ref
     }
 
@@ -428,7 +432,6 @@ export default class UMconstructorClass {
 
         moduleGrid.leftWallThickness = leftWidth
         moduleGrid.rightWallThickness = rightWidth
-
         let NOBOTTOM = this.OPTIONS.checkOptionWithoutBottom(moduleGrid)
 
         let sectionsTotalWidth = grid.width - leftWidth - rightWidth - (moduleGrid.sections.length - 1) * moduleGrid.moduleThickness;
@@ -680,6 +683,9 @@ export default class UMconstructorClass {
         this.FASADES.updateFasades(_module)
 
         this.UM_STORE.setUMGrid(_module)
+
+        this.RENDER_REF.renderGrid(_module)
+
         return _module
     };
 }

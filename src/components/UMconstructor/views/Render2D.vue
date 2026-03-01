@@ -22,12 +22,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-
   mode: {
     type: String,
     default: "module",
   },
-
   maxAreaHeight: {
     type: Number,
     default: 720,
@@ -39,7 +37,6 @@ const props = defineProps({
   correct: {
     type: Object,
   },
-
   step: {
     type: Number,
     default: 1,

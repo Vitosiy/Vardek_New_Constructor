@@ -127,7 +127,7 @@ export default class FillingsManager {
             isDrawer,
         };
 
-        return this.scope.RENDER_REF.value.checkPositionFillingToCreate(tempFilling);
+        return this.scope.RENDER_REF.checkPositionFillingToCreate(tempFilling);
     };
 
     addFilling(
@@ -434,56 +434,57 @@ export default class FillingsManager {
         extraIndex: number|null = null,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
     ) {
+        this.scope.debounce("changeFillingPositionX", ()=>{
+            let value = Math.min(+_value, +event.target.max);
+            value = Math.max(+value, +event.target.min);
 
-        let value = Math.min(+_value, +event.target.max);
-        value = Math.max(+value, +event.target.min);
+            this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
-        this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
+            const sec = grid.sections[secIndex];
+            const currentColl = sec.cells?.[cellIndex];
+            const currentRow = currentColl?.cellsRows?.[rowIndex];
+            const currentExtra = currentRow?.extras?.[extraIndex];
 
-        const sec = grid.sections[secIndex];
-        const currentColl = sec.cells?.[cellIndex];
-        const currentRow = currentColl?.cellsRows?.[rowIndex];
-        const currentExtra = currentRow?.extras?.[extraIndex];
+            const current = currentExtra || currentRow || currentColl || sec;
 
-        const current = currentExtra || currentRow || currentColl || sec;
+            const currentfilling = current.fillings[key];
 
-        const currentfilling = current.fillings[key];
+            if (currentfilling?.isProfile?.isBottomHiTechProfile) {
+                alert("Г-образный профиль нельзя перемещать!");
+                return;
+            }
 
-        if (currentfilling?.isProfile?.isBottomHiTechProfile) {
-            alert("Г-образный профиль нельзя перемещать!");
-            return;
-        }
+            const prevValue = currentfilling.position.x; //Предыдущее значение
 
-        const prevValue = currentfilling.position.x; //Предыдущее значение
+            let delta = +value - currentfilling.distances.left
+            const newValue = prevValue + delta
 
-        let delta = +value - currentfilling.distances.left
-        const newValue = prevValue + delta
+            let tmpSector = currentfilling.sector
+            delete currentfilling.sector
 
-        let tmpSector = currentfilling.sector
-        delete currentfilling.sector
+            const fillingData = JSON.parse(JSON.stringify(currentfilling));
+            fillingData.position.x = newValue;
+            fillingData.sector = tmpSector;
 
-        const fillingData = JSON.parse(JSON.stringify(currentfilling));
-        fillingData.position.x = newValue;
-        fillingData.sector = tmpSector;
+            const pixiSector = current.sector;
 
-        const pixiSector = current.sector;
+            // Проверяем коллизию
+            const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
-        // Проверяем коллизию
-        const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
+            if (check) {
+                currentfilling.position.x = fillingData.position.x;
+            } else {
+                alert(`Нельзя изменить позицию на ${+_value}`)
+                currentfilling.position.x = prevValue;
+            }
 
-        if (check) {
-            currentfilling.position.x = fillingData.position.x;
-        } else {
-            alert(`Нельзя изменить позицию на ${+_value}`)
-            currentfilling.position.x = prevValue;
-        }
+            currentfilling.sector = tmpSector;
 
-        currentfilling.sector = tmpSector;
+            if (currentfilling.fasade)
+                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
 
-        if (currentfilling.fasade)
-            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
-
-        this.scope.reset(grid)
+            this.scope.reset(grid)
+        }, 1000)
     };
 
     changeFillingPositionY(
@@ -496,58 +497,60 @@ export default class FillingsManager {
         extraIndex: number|null = null,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
     ) {
-        let value = Math.min(+_value, +event.target.max);
-        value = Math.max(+value, +event.target.min);
+        this.scope.debounce("changeFillingPositionY", ()=>{
+            let value = Math.min(+_value, +event.target.max);
+            value = Math.max(+value, +event.target.min);
 
-        this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
+            this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
-        const sec = grid.sections[secIndex];
-        const currentColl = sec.cells?.[cellIndex];
-        const currentRow = currentColl?.cellsRows?.[rowIndex];
-        const currentExtra = currentRow?.extras?.[extraIndex];
+            const sec = grid.sections[secIndex];
+            const currentColl = sec.cells?.[cellIndex];
+            const currentRow = currentColl?.cellsRows?.[rowIndex];
+            const currentExtra = currentRow?.extras?.[extraIndex];
 
-        const current = currentExtra || currentRow || currentColl || sec;
+            const current = currentExtra || currentRow || currentColl || sec;
 
-        const currentfilling = current.fillings[key];
+            const currentfilling = current.fillings[key];
 
-        if (currentfilling?.isProfile?.isBottomHiTechProfile) {
-            alert("Г-образный профиль нельзя перемещать!");
-            return;
-        }
+            if (currentfilling?.isProfile?.isBottomHiTechProfile) {
+                alert("Г-образный профиль нельзя перемещать!");
+                return;
+            }
 
-        const prevValue = currentfilling.position.y; //Предыдущее значение
+            const prevValue = currentfilling.position.y; //Предыдущее значение
 
-        let delta = +value - currentfilling.distances.bottom
-        const newValue = prevValue - delta
+            let delta = +value - currentfilling.distances.bottom
+            const newValue = prevValue - delta
 
 
-        let tmpSector = currentfilling.sector
-        delete currentfilling.sector
+            let tmpSector = currentfilling.sector
+            delete currentfilling.sector
 
-        const fillingData = JSON.parse(JSON.stringify(currentfilling));
-        fillingData.position.y = newValue;
-        fillingData.sector = tmpSector;
+            const fillingData = JSON.parse(JSON.stringify(currentfilling));
+            fillingData.position.y = newValue;
+            fillingData.sector = tmpSector;
 
-        const pixiSector = current.sector;
+            const pixiSector = current.sector;
 
-        // Проверяем коллизию
-        const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
+            // Проверяем коллизию
+            const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
-        if (check) {
-            currentfilling.position.y = fillingData.position.y;
-        } else {
-            alert(`Нельзя изменить позицию на ${+_value}`)
-            currentfilling.position.y = prevValue;
-        }
+            if (check) {
+                currentfilling.position.y = fillingData.position.y;
+            } else {
+                alert(`Нельзя изменить позицию на ${+_value}`)
+                currentfilling.position.y = prevValue;
+            }
 
-        currentfilling.sector = tmpSector;
-        if (currentfilling.fasade)
-            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
-        else {
-            this.scope.LOOPS.checkLoopsCollision(secIndex, grid)
-        }
+            currentfilling.sector = tmpSector;
+            if (currentfilling.fasade)
+                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+            else {
+                this.scope.LOOPS.checkLoopsCollision(secIndex, grid)
+            }
 
-        this.scope.reset(grid)
+            this.scope.reset(grid)
+        }, 1000)
     };
 
     changeDrawerFasade(
@@ -559,49 +562,50 @@ export default class FillingsManager {
         rowIndex: number|null = null,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
     ) {
-        
-        this.selectCell(secIndex, cellIndex, rowIndex, null, key);
+        this.scope.debounce("changeDrawerFasade", () => {
+            this.selectCell(secIndex, cellIndex, rowIndex, null, key);
 
-        const sec = grid.sections[secIndex];
-        const currentColl = sec.cells?.[cellIndex];
-        const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
+            const sec = grid.sections[secIndex];
+            const currentColl = sec.cells?.[cellIndex];
+            const currentRow = currentColl?.cellsRows?.[rowIndex] || currentColl || sec;
 
-        const currentfilling = currentRow.fillings[key];
+            const currentfilling = currentRow.fillings[key];
 
-        if (!currentfilling?.fasade) {
-            alert("У элемента нет фасада!");
-            return
-        }
+            if (!currentfilling?.fasade) {
+                alert("У элемента нет фасада!");
+                return
+            }
 
-        const prevValue = currentfilling.fasade.height; //Предыдущее значение
-        const newValue = value
+            const prevValue = currentfilling.fasade.height; //Предыдущее значение
+            const newValue = value
 
-        let tmpSector = currentfilling.sector
-        let tmpFasade = currentfilling.fasade
+            let tmpSector = currentfilling.sector
+            let tmpFasade = currentfilling.fasade
 
-        delete currentfilling.sector
-        delete currentfilling.fasade
+            delete currentfilling.sector
+            delete currentfilling.fasade
 
-        const fillingData = JSON.parse(JSON.stringify(currentfilling));
-        fillingData.sector = tmpSector;
-        fillingData.fasade = tmpFasade;
-        fillingData.fasade.height = newValue;
+            const fillingData = JSON.parse(JSON.stringify(currentfilling));
+            fillingData.sector = tmpSector;
+            fillingData.fasade = tmpFasade;
+            fillingData.fasade.height = newValue;
 
-        const pixiSector = currentRow.sector;
+            const pixiSector = currentRow.sector;
 
-        // Проверяем коллизию
-        const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
+            // Проверяем коллизию
+            const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
-        currentfilling.sector = tmpSector;
-        currentfilling.fasade = tmpFasade;
-        if (check) {
-            currentfilling.fasade.height = fillingData.fasade.height;
-        } else {
-            currentfilling.fasade.height = prevValue;
-            this.scope.AlERT.error("Ошибка! Размер фасада слишком велик!")
-        }
+            currentfilling.sector = tmpSector;
+            currentfilling.fasade = tmpFasade;
+            if (check) {
+                currentfilling.fasade.height = fillingData.fasade.height;
+            } else {
+                currentfilling.fasade.height = prevValue;
+                this.scope.AlERT.error("Ошибка! Размер фасада слишком велик!")
+            }
 
-        this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
-        this.scope.reset(grid)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+            this.scope.reset(grid)
+        }, 1000)
     };
 }

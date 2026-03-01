@@ -85,15 +85,29 @@ export const useUMStorage = defineStore('um-data', () => {
 
   const setSelected = (type: constructorMode, newSelected: TSelectedCell) => {
     const {sec, cell, row, extra, item} = newSelected;
+
+    const validateValue = (value: any) => {
+      if (value !== undefined)
+        return value;
+      else
+        return null;
+    }
+
     switch (type) {
       case "fasades":
-        selectedFasade.value = newSelected ? <TSelectedCell>{sec: sec || null, cell: cell || null, row: row || null} : defaultSelectedFasade
+        selectedFasade.value = newSelected ?
+            <TSelectedCell>{sec: validateValue(sec), cell: validateValue(cell), row: validateValue(row)} :
+            defaultSelectedFasade
         break;
       case "module":
-        selectedCell.value = newSelected ? <TSelectedCell>{sec: sec || null, cell: cell || null, row: row || null, extra: extra || null} : defaultSelectedCell
+        selectedCell.value = newSelected ?
+            <TSelectedCell>{sec: validateValue(sec), cell: validateValue(cell), row: validateValue(row), extra: validateValue(extra)} :
+            defaultSelectedCell
         break;
       case "fillings":
-        selectedFilling.value =  newSelected ? <TSelectedCell>{sec: sec || null, cell: cell || null, row: row || null, extra: extra || null, item: item || null} : defaultSelectedFilling
+        selectedFilling.value =  newSelected ?
+            <TSelectedCell>{sec: validateValue(sec), cell: validateValue(cell), row: validateValue(row), extra: validateValue(extra), item: validateValue(item)} :
+            defaultSelectedFilling
         break;
     }
   }

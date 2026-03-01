@@ -41,7 +41,7 @@ onBeforeMount(() => {
 
     <ModuleSizeView
       :product-data="productData"
-      :module="module"
+      :module="UMconstructor.UM_STORE.getUMGrid()"
       :mode="mode"
       :UMconstructor="UMconstructor"
     />
@@ -55,7 +55,7 @@ onBeforeMount(() => {
       <SidecolorsView
           ref="materialConfRef"
           :visualizationRef="UMconstructor.RENDER_REF"
-          :module="module"
+          :module="UMconstructor.UM_STORE.getUMGrid()"
           :objectData="productData"
           :UMconstructor="UMconstructor"
           @product-reset="UMconstructor.reset"

@@ -18,6 +18,16 @@ export default class FasadesManager {
         this.EXTERNAL_FASADES = new ExternalFasadesManager(this);
     }
 
+    createFacadeData (fasadeIndex?: number, _productId?: number) {
+        const productId = _productId || this.scope.MODEL_STATE.getCurrentModel.userData.PROPS.PRODUCT;
+        const {FACADE} = this.scope.MODEL_STATE._PRODUCTS[productId];
+        this.scope.MODEL_STATE.createCurrentModelFasadesData({
+            data: FACADE,
+            fasadeNdx: fasadeIndex,
+            productId,
+        });
+    };
+
     selectCell(sec: number|null = 0, cell: number | null = null, row: number | null = null) {
         this.scope.selectCell("fasades", <TSelectedCell>{sec, cell, row});
     };
@@ -626,7 +636,7 @@ export default class FasadesManager {
     };
 
     checkRemoveFasadeSegment(
-        secIndex: number,
+        secIndex: number | null,
         doorIndex: number,
         segmentIndex: number,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
@@ -725,78 +735,80 @@ export default class FasadesManager {
         segmentIndex: number,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
     ) {
-        const newValue = value;
-        let adjustedValue;
-        // Обновляем выбранную секцию для визуального отображения
-        this.selectCell(secIndex, doorIndex, segmentIndex)
+        this.scope.debounce("updateFasadeHeight", () => {
+            const newValue = value;
+            let adjustedValue;
+            // Обновляем выбранную секцию для визуального отображения
+            this.selectCell(secIndex, doorIndex, segmentIndex)
 
-        if (!isNaN(newValue) && this.scope.RENDER_REF) {
-            adjustedValue = this.scope.RENDER_REF.adjustSizeFromExternal({
-                dimension: "height",
-                value: newValue,
-                sec: secIndex,
-                cell: doorIndex,
-                row: segmentIndex,
-                type: "fasades",
-            });
-        }
-        // Обновляем значение в module для синхронизации
-        const clone = Object.assign({}, grid);
-        if (adjustedValue) {
-            let curCell = clone.sections[secIndex].fasades[doorIndex][segmentIndex];
-            let prevCell =
-                clone.sections[secIndex].fasades[doorIndex][segmentIndex - 1];
-            let nextCell =
-                clone.sections[secIndex].fasades[doorIndex][segmentIndex + 1];
-
-            if (nextCell) {
-                let segmentsDistants = nextCell.position.y - (curCell.position.y + curCell.height);
-                if(segmentsDistants > 4)
-                    nextCell = undefined;
+            if (!isNaN(newValue) && this.scope.RENDER_REF) {
+                adjustedValue = this.scope.RENDER_REF.adjustSizeFromExternal({
+                    dimension: "height",
+                    value: newValue,
+                    sec: secIndex,
+                    cell: doorIndex,
+                    row: segmentIndex,
+                    type: "fasades",
+                });
             }
+            // Обновляем значение в module для синхронизации
+            const clone = Object.assign({}, grid);
+            if (adjustedValue) {
+                let curCell = clone.sections[secIndex].fasades[doorIndex][segmentIndex];
+                let prevCell =
+                    clone.sections[secIndex].fasades[doorIndex][segmentIndex - 1];
+                let nextCell =
+                    clone.sections[secIndex].fasades[doorIndex][segmentIndex + 1];
 
-            if (prevCell) {
-                let segmentsDistants = curCell.position.y - (prevCell.position.y + prevCell.height);
-                if(segmentsDistants > 4)
-                    prevCell = undefined;
+                if (nextCell) {
+                    let segmentsDistants = nextCell.position.y - (curCell.position.y + curCell.height);
+                    if(segmentsDistants > 4)
+                        nextCell = undefined;
+                }
+
+                if (prevCell) {
+                    let segmentsDistants = curCell.position.y - (prevCell.position.y + prevCell.height);
+                    if(segmentsDistants > 4)
+                        prevCell = undefined;
+                }
+
+                let delta = curCell.height - adjustedValue;
+
+                curCell.height = adjustedValue;
+
+                let checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
+                    curCell.material.COLOR,
+                    <TFasadeTrueSizes>{FASADE_WIDTH: curCell.width, FASADE_HEIGHT: curCell.height}
+                );
+
+                if (!checkConversation || curCell.width < curCell.minX || curCell.height < curCell.minY)
+                    curCell.error = true;
+                else delete curCell.error;
+
+                if (prevCell) {
+                    prevCell.height += delta;
+                    curCell.position.y += delta;
+                } else if (nextCell) {
+                    nextCell.height += delta;
+                    nextCell.position.y += -delta;
+                }
+
+                let tmpSegment = prevCell || nextCell || {};
+                checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
+                    tmpSegment.material.COLOR,
+                    <TFasadeTrueSizes>{FASADE_WIDTH: tmpSegment.width, FASADE_HEIGHT: tmpSegment.height}
+                );
+                if (
+                    !checkConversation ||
+                    tmpSegment.width < tmpSegment.minX ||
+                    tmpSegment.height < tmpSegment.minY
+                )
+                    tmpSegment.error = true;
+                else delete tmpSegment.error;
             }
-
-            let delta = curCell.height - adjustedValue;
-
-            curCell.height = adjustedValue;
-
-            let checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
-                curCell.material.COLOR,
-                <TFasadeTrueSizes>{FASADE_WIDTH: curCell.width, FASADE_HEIGHT: curCell.height}
-            );
-
-            if (!checkConversation || curCell.width < curCell.minX || curCell.height < curCell.minY)
-                curCell.error = true;
-            else delete curCell.error;
-
-            if (prevCell) {
-                prevCell.height += delta;
-                curCell.position.y += delta;
-            } else if (nextCell) {
-                nextCell.height += delta;
-                nextCell.position.y += -delta;
-            }
-
-            let tmpSegment = prevCell || nextCell || {};
-            checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
-                tmpSegment.material.COLOR,
-                <TFasadeTrueSizes>{FASADE_WIDTH: tmpSegment.width, FASADE_HEIGHT: tmpSegment.height}
-            );
-            if (
-                !checkConversation ||
-                tmpSegment.width < tmpSegment.minX ||
-                tmpSegment.height < tmpSegment.minY
-            )
-                tmpSegment.error = true;
-            else delete tmpSegment.error;
-        }
-        grid = clone;
-        this.scope.reset(grid);
+            grid = clone;
+            this.scope.reset(grid);
+        }, 1000)
     };
 
     changeLoopside(

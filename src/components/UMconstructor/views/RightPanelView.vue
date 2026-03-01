@@ -7,6 +7,7 @@ import SectionsView from "@/components/UMconstructor/views/modules/SectionsView.
 import FasadesView from "@/components/UMconstructor/views/modules/FasadesView.vue";
 import FillingsView from "@/components/UMconstructor/views/modules/FillingsView.vue";
 import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
+import SidecolorsView from "@/components/UMconstructor/views/modules/SidecolorsView.vue";
 
 const props = defineProps({
   module: {
@@ -61,7 +62,7 @@ const getFillings = computed(() => {
           ref="optionsRef"
           class="constructor2d-container--right--content"
           :visualizationRef="UMconstructor.RENDER_REF"
-          :module="module"
+          :module="UMconstructor.UM_STORE.getUMGrid()"
           :step="step"
           :UMconstructor="UMconstructor"
       />
@@ -76,7 +77,7 @@ const getFillings = computed(() => {
           ref="optionsRef"
           class="constructor2d-container--right--content"
           :visualizationRef="UMconstructor.RENDER_REF"
-          :module="module"
+          :module="UMconstructor.UM_STORE.getUMGrid()"
           :step="step"
           :UMconstructor="UMconstructor"
       />
@@ -91,7 +92,7 @@ const getFillings = computed(() => {
           ref="optionsRef"
           class="constructor2d-container--right--content"
           :visualizationRef="UMconstructor.RENDER_REF"
-          :module="module"
+          :module="UMconstructor.UM_STORE.getUMGrid()"
           :fillings="getFillings"
           :step="step"
           :UMconstructor="UMconstructor"

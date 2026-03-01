@@ -1,4 +1,5 @@
 <script setup lang="ts">
+//@ts-nocheck
 import "@/components/UMconstructor/styles/UM.scss"
 
 import {_URL} from "@/types/constants.ts";
@@ -6,15 +7,14 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
-import {useModelState} from "@/store/appliction/useModelState.ts";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {ref, toRefs} from "vue";
+import {onMounted, ref, toRefs, watch} from "vue";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
-import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
+import {GridModule, TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
 
 const props = defineProps({
   module: {
-    type: Object,
+    type: ref<GridModule>,
     required: true,
   },
   fillings: {
@@ -36,32 +36,40 @@ const changeConstructorMode = (_mode: workMode) => {
   }
 }
 
+type selectedMaterial = {
+  sec: number | null,
+  cell?: number | null,
+  row?: number | null,
+  extra?: number | null,
+  item?: number | null
+  data: {},
+  fasadeSize?: {},
+}
+
 const isOpenMaterialSelector = ref<boolean>(false);
-const currentFasadeMaterial = ref<Object | boolean>(false);
+const currentFasadeMaterial = ref<selectedMaterial | boolean>(false);
 const isOpenHandleSelector = ref<boolean>(false);
-const currentHandle = ref<Object | boolean>(false);
+const currentHandle = ref<selectedMaterial | boolean>(false);
+const step = ref<number>(1);
+
+const selectedFilling = ref<TSelectedCell>(<TSelectedCell>{});
 
 const {module, UMconstructor} = toRefs(props)
-const modelState = useModelState();
-const { createSurfaceList } =
+const {createSurfaceList} =
     useFigureRightPage();
 
 const createFacadeData = (fasadeIndex?: number) => {
-  const productId = modelState.getCurrentModel.userData.PROPS.PRODUCT;
-  const {FACADE} = modelState._PRODUCTS[productId];
-  modelState.createCurrentModelFasadesData({
-    data: FACADE,
-    fasadeNdx: fasadeIndex,
-    productId,
-  });
+  UMconstructor?.value?.FASADES.createFacadeData(fasadeIndex)
 };
 
 const openFasadeSelector = (
-    secIndex: number,
-    cellIndex: number,
-    rowIndex: number,
-    itemIndex: number,
+    sec: number,
+    cell: number | null,
+    row: number | null,
+    extra: number | null,
+    item: number | null,
 ) => {
+  isOpenHandleSelector.value = false;
   isOpenMaterialSelector.value = false;
 
   /** @Создание_данных_для_выбранного_фасада */
@@ -70,10 +78,11 @@ const openFasadeSelector = (
   if (
       currentFasadeMaterial.value &&
       (
-          secIndex == currentFasadeMaterial.value.secIndex &&
-          cellIndex == currentFasadeMaterial.value.cellIndex &&
-          rowIndex == currentFasadeMaterial.value.rowIndex &&
-          itemIndex == currentFasadeMaterial.value.itemIndex
+          sec === currentFasadeMaterial.value.sec &&
+          cell === currentFasadeMaterial.value.cell &&
+          row === currentFasadeMaterial.value.row &&
+          extra === currentFasadeMaterial.value.extra &&
+          item === currentFasadeMaterial.value.item
       )
   ) {
     currentFasadeMaterial.value = false;
@@ -81,69 +90,79 @@ const openFasadeSelector = (
   }
 
   setTimeout(() => {
-    const curSection = module.value.sections[secIndex]
-    const curCell = curSection?.cells?.[cellIndex]
-    const curRow = curCell?.cellsRows?.[rowIndex]
+    const curSection = module.sections[sec]
+    const curCell = curSection?.cells?.[cell]
+    const curRow = curCell?.cellsRows?.[row]
+    const curExtra = curRow?.extras?.[extra]
 
-    const curModuleSegment = curRow || curCell || curSection
+    const curModuleSegment = curExtra || curRow || curCell || curSection
 
-    let data = curModuleSegment.fillings[itemIndex].fasade.material
+    let data = curModuleSegment.fillings[item].fasade.material
     currentFasadeMaterial.value = {
-      secIndex,
-      cellIndex,
-      rowIndex,
-      itemIndex,
+      sec,
+      cell,
+      row,
+      item,
+      extra,
       data,
       fasadeSize: {
-        FASADE_WIDTH: curModuleSegment.fillings[itemIndex].fasade.width,
-        FASADE_HEIGHT: curModuleSegment.fillings[itemIndex].fasade.height,
+        FASADE_WIDTH: curModuleSegment.fillings[item].fasade.width,
+        FASADE_HEIGHT: curModuleSegment.fillings[item].fasade.height,
         isDrawer: true
       },
     }
-    UMconstructor?.value?.FILLINGS.selectCell(secIndex, cellIndex, rowIndex, null, itemIndex)
+    UMconstructor?.value?.FILLINGS.selectCell(sec, cell, row, extra, item)
     isOpenMaterialSelector.value = true
   }, 10)
 }
 
-const openHandleSelector = (secIndex, cellIndex, rowIndex, itemIndex) => {
+const openHandleSelector = (
+    sec: number,
+    cell: number | null,
+    row: number | null,
+    extra: number | null,
+    item: number | null
+) => {
   isOpenHandleSelector.value = false;
   isOpenMaterialSelector.value = false;
 
-  if(isOpenMaterialSelector.value)
+  if (isOpenMaterialSelector.value)
     closeMenu()
 
   if (
       currentHandle.value &&
-      secIndex === currentHandle.value.secIndex &&
-      cellIndex === currentHandle.value.cellIndex &&
-      rowIndex === currentHandle.value.rowIndex &&
-      itemIndex === currentHandle.value.itemIndex
+      sec === currentHandle.value.sec &&
+      cell === currentHandle.value.cell &&
+      row === currentHandle.value.row &&
+      extra === currentHandle.value.extra &&
+      item === currentHandle.value.item
   ) {
     closeMenu()
     return;
   }
 
   setTimeout(() => {
-    const curSection = grid.sections[secIndex]
-    const curCell = curSection?.cells?.[cellIndex]
-    const curRow = curCell?.cellsRows?.[rowIndex]
+    const curSection = module.sections[sec]
+    const curCell = curSection?.cells?.[cell]
+    const curRow = curCell?.cellsRows?.[row]
+    const curExtra = curRow?.extras?.[extra]
 
-    const curModuleSegment = curRow || curCell || curSection
-    let data = curModuleSegment.fillings[itemIndex].fasade.material
+    const curModuleSegment = curExtra || curRow || curCell || curSection
+    let data = curModuleSegment.fillings[item].fasade.material
 
     currentHandle.value = {
-      secIndex,
-      cellIndex,
-      rowIndex,
-      itemIndex,
+      sec,
+      cell,
+      row,
+      item,
       data,
     };
-    selectCell(secIndex, cellIndex, rowIndex, itemIndex);
+    UMconstructor?.value?.FILLINGS.selectCell(sec, cell, row, extra, item);
     isOpenHandleSelector.value = true;
   }, 10);
 };
 
-const selectHandle = (data, type) => {
+const selectHandle = (data: any, type: string) => {
   switch (type) {
     case "handle":
       currentHandle.value.data.HANDLES.id = data;
@@ -160,14 +179,14 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
   if (palette)
     currentFasadeMaterial.value.data['PALETTE'] = palette
 
-  let {secIndex, cellIndex, rowIndex, itemIndex} = currentFasadeMaterial.value;
-  const curSection = grid.sections[secIndex]
-  const curCell = curSection?.cells?.[cellIndex]
-  const curRow = curCell?.cellsRows?.[rowIndex]
+  let {sec, cell, row, item} = currentFasadeMaterial.value;
+  const curSection = module.sections[sec]
+  const curCell = curSection?.cells?.[cell]
+  const curRow = curCell?.cellsRows?.[row]
 
   const curModuleSegment = curRow || curCell || curSection
-  curModuleSegment.fillings[itemIndex].fasade.material =
-      Object.assign(curModuleSegment.fillings[itemIndex].fasade.material, currentFasadeMaterial.value.data)
+  curModuleSegment.fillings[item].fasade.material =
+      Object.assign(curModuleSegment.fillings[item].fasade.material, currentFasadeMaterial.value.data)
 };
 
 const closeMenu = () => {
@@ -177,6 +196,24 @@ const closeMenu = () => {
   currentHandle.value = false;
   currentFasadeMaterial.value = false;
 };
+
+const showCurrentCol = (
+    sec: number,
+    cell?: number | null,
+    row?: number | null,
+    extra?: number | null,
+    item?: number | null
+) => {
+  UMconstructor?.value?.selectCell("fillings", <TSelectedCell>{sec, cell, row, extra, item})
+};
+
+onMounted(() => {
+  selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
+})
+
+watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
+  selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
+})
 
 </script>
 
@@ -237,7 +274,7 @@ const closeMenu = () => {
                   style
                   v-for="(filling, key) in fillingGroup.items"
                   :key="key + filling.NAME"
-                  @click="addFilling(filling, fillingGroup.groupID)"
+                  @click="UMconstructor.FILLINGS.addFilling(filling, fillingGroup.groupID, module)"
               >
                 <div class="item-group-name">
                   <img
@@ -314,7 +351,7 @@ const closeMenu = () => {
                   <div class="actions-items--title">
                     <button
                         class="no-select actions-btn actions-icon"
-                        @click="deleteFilling(secIndex, fillingIndex)"
+                        @click="UMconstructor.FILLINGS.deleteFilling(secIndex, fillingIndex)"
                     >
                       <img
                           class="actions-icon--delete"
@@ -346,14 +383,14 @@ const closeMenu = () => {
                             min="0"
                             class="actions-input"
                             :value="filling.distances?.left"
-                            @input="debounce((event) => {
-                                changeFillingPositionX(
+                            @input="
+                                UMconstructor.FILLINGS.changeFillingPositionX(
                                     $event,
                                     $event.target.value,
                                     fillingIndex,
                                     secIndex,
-                                    )
-                                }, 1000)"
+                                )
+                            "
                         />
                         <input
                             v-else
@@ -363,14 +400,14 @@ const closeMenu = () => {
                             min="0"
                             class="actions-input"
                             :value="filling.distances?.bottom"
-                            @input="debounce((event) => {
-                                changeFillingPositionY(
+                            @input="
+                                UMconstructor.FILLINGS.changeFillingPositionY(
                                     $event,
                                     $event.target.value,
                                     fillingIndex,
                                     secIndex,
-                                    )
-                                }, 1000)"
+                                )
+                            "
                         />
                       </div>
                     </div>
@@ -394,14 +431,14 @@ const closeMenu = () => {
                             :max="filling.fasade.maxY"
                             class="actions-input"
                             :value="filling.fasade.height"
-                            @input="debounce((event) => {
-                                changeDrawerFasade(
+                            @input="
+                                UMconstructor.FILLINGS.changeDrawerFasade(
                                     $event,
                                     $event.target.value,
                                     fillingIndex,
                                     secIndex
-                                    )
-                                }, 1000)"
+                                )
+                            "
                         />
                       </div>
                     </div>
@@ -410,8 +447,8 @@ const closeMenu = () => {
                   <ConfigurationOption
                       v-if="filling.fasade"
                       :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
-                      :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
-                      @click="openFasadeSelector(secIndex, null, null, fillingIndex)"
+                      :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
+                      @click="openFasadeSelector(secIndex, null, null, null, fillingIndex)"
                   />
 
                   <ConfigurationOption
@@ -419,18 +456,18 @@ const closeMenu = () => {
                       :class="[
                                 {
                                   active:
-                                    currentHandle.secIndex ===
+                                    currentHandle.sec ===
                                       secIndex &&
-                                    currentHandle.doorIndex ===
-                                      doorIndex &&
-                                    currentHandle.segmentIndex ===
-                                      segmentIndex,
+                                    currentHandle.cell ===
+                                      null &&
+                                    currentHandle.row ===
+                                      null,
                                 },
                               ]"
                       :type="'Handles'"
-                      :data="filling.fasade.material.HANDLES ? {...APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
+                      :data="filling.fasade.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
                       @click="
-                              openHandleSelector(secIndex, null, null, fillingIndex)
+                              openHandleSelector(secIndex, null, null, null, fillingIndex)
                             "
                   />
 
@@ -463,7 +500,7 @@ const closeMenu = () => {
                         <div class="actions-items--title">
                           <button
                               class="no-select actions-btn actions-icon"
-                              @click="deleteFilling(secIndex, fillingIndex, cellIndex)"
+                              @click="UMconstructor.FILLINGS.deleteFilling(secIndex, fillingIndex, cellIndex)"
                           >
                             <img
                                 class="actions-icon--delete"
@@ -496,15 +533,15 @@ const closeMenu = () => {
                                   min="0"
                                   class="actions-input"
                                   :value="filling.distances?.left"
-                                  @input="debounce((event) => {
-                                changeFillingPositionX(
-                                    $event,
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
-                                    cellIndex
+                                  @input="
+                                    UMconstructor.FILLINGS.changeFillingPositionX(
+                                      $event,
+                                      $event.target.value,
+                                      fillingIndex,
+                                      secIndex,
+                                      cellIndex
                                     )
-                                }, 1000)"
+                                  "
                               />
                               <input
                                   v-else
@@ -514,15 +551,15 @@ const closeMenu = () => {
                                   min="0"
                                   class="actions-input"
                                   :value="filling.distances?.bottom"
-                                  @input="debounce((event) => {
-                                changeFillingPositionY(
-                                    $event,
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
-                                    cellIndex
+                                  @input="
+                                    UMconstructor.FILLINGS.changeFillingPositionY(
+                                      $event,
+                                      $event.target.value,
+                                      fillingIndex,
+                                      secIndex,
+                                      cellIndex
                                     )
-                                }, 1000)"
+                                  "
                               />
                             </div>
                           </div>
@@ -546,15 +583,15 @@ const closeMenu = () => {
                                   :max="filling.fasade.maxY"
                                   class="actions-input"
                                   :value="filling.fasade.height"
-                                  @input="debounce((event) => {
-                                    changeDrawerFasade(
-                                        $event,
-                                        $event.target.value,
-                                        fillingIndex,
-                                        secIndex,
-                                        cellIndex
-                                        )
-                                    }, 1000)"
+                                  @input="
+                                    UMconstructor.FILLINGS.changeDrawerFasade(
+                                      $event,
+                                      $event.target.value,
+                                      fillingIndex,
+                                      secIndex,
+                                      cellIndex
+                                    )
+                                  "
                               />
                             </div>
                           </div>
@@ -565,19 +602,19 @@ const closeMenu = () => {
                             :class="[
                                 {
                                   active:
-                                    currentFasadeMaterial.secIndex ===
+                                    currentFasadeMaterial.sec ===
                                       secIndex &&
-                                    currentFasadeMaterial.cellIndex ===
+                                    currentFasadeMaterial.cell ===
                                       cellIndex &&
-                                    currentFasadeMaterial.rowIndex ===
+                                    currentFasadeMaterial.row ===
                                       null &&
-                                    currentFasadeMaterial.fillingIndex ===
+                                    currentFasadeMaterial.item ===
                                       fillingIndex,
                                 },
                             ]"
                             :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
-                            :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
-                            @click="openFasadeSelector(secIndex, cellIndex, null, fillingIndex)"
+                            :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
+                            @click="openFasadeSelector(secIndex, cellIndex, null, null, fillingIndex)"
                         />
 
                         <ConfigurationOption
@@ -585,20 +622,20 @@ const closeMenu = () => {
                             :class="[
                                 {
                                   active:
-                                    currentHandle.secIndex ===
+                                    currentHandle.sec ===
                                       secIndex &&
-                                    currentHandle.cellIndex ===
+                                    currentHandle.cell ===
                                       cellIndex &&
-                                    currentHandle.rowIndex ===
+                                    currentHandle.row ===
                                       null &&
-                                    currentHandle.fillingIndex ===
+                                    currentHandle.item ===
                                       fillingIndex,
                                 },
                               ]"
                             :type="'Handles'"
-                            :data="filling.fasade.material.HANDLES ? {...APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
+                            :data="filling.fasade.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
                             @click="
-                              openHandleSelector(secIndex, cellIndex, null, fillingIndex)
+                              openHandleSelector(secIndex, cellIndex, null, null, fillingIndex)
                             "
                         />
                       </div>
@@ -643,7 +680,7 @@ const closeMenu = () => {
                             <div class="actions-items--title">
                               <button
                                   class="no-select actions-btn actions-icon"
-                                  @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
+                                  @click="UMconstructor.FILLINGS.deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex)"
                               >
                                 <img
                                     class="actions-icon--delete"
@@ -676,16 +713,16 @@ const closeMenu = () => {
                                       min="0"
                                       class="actions-input"
                                       :value="filling.distances?.left"
-                                      @input="debounce((event) => {
-                                        changeFillingPositionX(
+                                      @input="
+                                        UMconstructor.FILLINGS.changeFillingPositionX(
                                             $event,
                                             $event.target.value,
                                             fillingIndex,
                                             secIndex,
                                             cellIndex,
                                             rowIndex
-                                            )
-                                        }, 1000)"
+                                        )
+                                      "
                                   />
                                   <input
                                       v-else
@@ -695,16 +732,16 @@ const closeMenu = () => {
                                       min="0"
                                       class="actions-input"
                                       :value="filling.distances?.bottom"
-                                      @input="debounce((event) => {
-                                changeFillingPositionY(
-                                    $event,
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
-                                    cellIndex,
-                                    rowIndex
-                                    )
-                                }, 1000)"
+                                      @input="
+                                      UMconstructor.FILLINGS.changeFillingPositionY(
+                                          $event,
+                                          $event.target.value,
+                                          fillingIndex,
+                                          secIndex,
+                                          cellIndex,
+                                          rowIndex
+                                        )
+                                      "
                                   />
                                 </div>
                               </div>
@@ -728,16 +765,16 @@ const closeMenu = () => {
                                       :max="filling.fasade.maxY"
                                       class="actions-input"
                                       :value="filling.fasade.height"
-                                      @input="debounce((event) => {
-                                        changeDrawerFasade(
-                                            $event,
-                                            $event.target.value,
-                                            fillingIndex,
-                                            secIndex,
-                                            cellIndex,
-                                            rowIndex
-                                            )
-                                        }, 1000)"
+                                      @input="
+                                        UMconstructor.FILLINGS.changeDrawerFasade(
+                                          $event,
+                                          $event.target.value,
+                                          fillingIndex,
+                                          secIndex,
+                                          cellIndex,
+                                          rowIndex
+                                        )
+                                      "
                                   />
                                 </div>
                               </div>
@@ -748,19 +785,19 @@ const closeMenu = () => {
                                 :class="[
                                 {
                                   active:
-                                    currentFasadeMaterial.secIndex ===
+                                    currentFasadeMaterial.sec ===
                                       secIndex &&
-                                    currentFasadeMaterial.cellIndex ===
+                                    currentFasadeMaterial.cell ===
                                       cellIndex &&
-                                    currentFasadeMaterial.rowIndex ===
+                                    currentFasadeMaterial.row ===
                                       rowIndex &&
-                                    currentFasadeMaterial.fillingIndex ===
+                                    currentFasadeMaterial.item ===
                                       fillingIndex,
                                 },
                                 ]"
                                 :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
-                                :data="filling.fasade.material.PALETTE ? {...APP.PALETTE[filling.fasade.material.PALETTE], hex: APP.PALETTE[filling.fasade.material.PALETTE].HTML} : APP.FASADE[filling.fasade.material.COLOR]"
-                                @click="openFasadeSelector(secIndex, cellIndex, rowIndex, fillingIndex)"
+                                :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
+                                @click="openFasadeSelector(secIndex, cellIndex, rowIndex, null, fillingIndex)"
                             />
 
                             <ConfigurationOption
@@ -768,20 +805,20 @@ const closeMenu = () => {
                                 :class="[
                                 {
                                   active:
-                                    currentHandle.secIndex ===
+                                    currentHandle.sec ===
                                       secIndex &&
-                                    currentHandle.cellIndex ===
+                                    currentHandle.cell ===
                                       cellIndex &&
-                                    currentHandle.rowIndex ===
+                                    currentHandle.row ===
                                       rowIndex &&
-                                    currentHandle.fillingIndex ===
+                                    currentHandle.item ===
                                       fillingIndex,
                                 },
                               ]"
                                 :type="'Handles'"
-                                :data="filling.fasade.material.HANDLES ? {...APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
+                                :data="filling.fasade.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
                                 @click="
-                              openHandleSelector(secIndex, cellIndex, rowIndex, fillingIndex)
+                              openHandleSelector(secIndex, cellIndex, rowIndex, null, fillingIndex)
                             "
                             />
 
@@ -827,7 +864,7 @@ const closeMenu = () => {
                                 <div class="actions-items--title">
                                   <button
                                       class="no-select actions-btn actions-icon"
-                                      @click="deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex, extraIndex)"
+                                      @click="UMconstructor.FILLINGS.deleteFilling(secIndex, fillingIndex, cellIndex, rowIndex, extraIndex)"
                                   >
                                     <img
                                         class="actions-icon--delete"
@@ -860,17 +897,17 @@ const closeMenu = () => {
                                           min="0"
                                           class="actions-input"
                                           :value="filling.distances?.left"
-                                          @input="debounce((event) => {
-                                        changeFillingPositionX(
-                                            $event,
-                                            $event.target.value,
-                                            fillingIndex,
-                                            secIndex,
-                                            cellIndex,
-                                            rowIndex,
-                                            extraIndex
+                                          @input="
+                                            UMconstructor.FILLINGS.changeFillingPositionX(
+                                              $event,
+                                              $event.target.value,
+                                              fillingIndex,
+                                              secIndex,
+                                              cellIndex,
+                                              rowIndex,
+                                              extraIndex
                                             )
-                                        }, 1000)"
+                                          "
                                       />
                                       <input
                                           v-else
@@ -880,17 +917,17 @@ const closeMenu = () => {
                                           min="0"
                                           class="actions-input"
                                           :value="filling.distances?.bottom"
-                                          @input="debounce((event) => {
-                                            changeFillingPositionY(
-                                                $event,
-                                                $event.target.value,
-                                                fillingIndex,
-                                                secIndex,
-                                                cellIndex,
-                                                rowIndex,
-                                                extraIndex
-                                                )
-                                            }, 1000)"
+                                          @input="
+                                            UMconstructor.FILLINGS.changeFillingPositionY(
+                                              $event,
+                                              $event.target.value,
+                                              fillingIndex,
+                                              secIndex,
+                                              cellIndex,
+                                              rowIndex,
+                                              extraIndex
+                                            )
+                                          "
                                       />
                                     </div>
                                   </div>

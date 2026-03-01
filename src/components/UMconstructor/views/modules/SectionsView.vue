@@ -1,4 +1,6 @@
 <script setup lang="ts">
+//@ts-nocheck
+
 import "@/components/UMconstructor/styles/UM.scss"
 
 import CounterInput from "@/components/ui/inputs/CounterInput.vue";
@@ -176,8 +178,8 @@ onMounted(() => {
                               input-class="actions-sections-items--right-items-input-block-counter"
                               button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                               type="number"
-                              @update:model-value="(count: number) => {
-                                UMconstructor.SECTIONS.addCell({grid: module, secIndex, cellIndex, count})
+                              @update:model-value="(count: number|string) => {
+                                UMconstructor.SECTIONS.addCell({grid: module, secIndex, cellIndex, count: parseInt(count)})
                               }"
                           />
                         </div>
@@ -194,8 +196,8 @@ onMounted(() => {
                               input-class="actions-sections-items--right-items-input-block-counter"
                               button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                               type="number"
-                              @update:model-value="(count: number) => {
-                                UMconstructor.SECTIONS.addRowCell({grid: module, secIndex, cellIndex, rowIndex: 0, count})
+                              @update:model-value="(count: number|string) => {
+                                UMconstructor.SECTIONS.addRowCell({grid: module, secIndex, cellIndex, rowIndex: 0, count: parseInt(count)})
                               }"
                           />
                         </div>
@@ -285,8 +287,8 @@ onMounted(() => {
                                     input-class="actions-sections-items--right-items-input-block-counter"
                                     button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                     type="number"
-                                    @update:model-value="(count: number) => {
-                                          UMconstructor.SECTIONS.addRowCell({grid: module, secIndex, cellIndex, rowIndex, count})
+                                    @update:model-value="(count: number|string) => {
+                                          UMconstructor.SECTIONS.addRowCell({grid: module, secIndex, cellIndex, rowIndex, count: parseInt(count)})
                                     }"
                                 />
                               </div>
@@ -303,8 +305,8 @@ onMounted(() => {
                                     input-class="actions-sections-items--right-items-input-block-counter"
                                     button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                     type="number"
-                                    @update:model-value="(count: number) => {
-                                          UMconstructor.SECTIONS.addRowExtra({grid: module, secIndex, cellIndex, rowIndex, extraIndex: 0, count})
+                                    @update:model-value="(count: number|string) => {
+                                          UMconstructor.SECTIONS.addRowExtra({grid: module, secIndex, cellIndex, rowIndex, extraIndex: 0, count: parseInt(count)})
                                     }"
                                 />
                               </div>
@@ -397,8 +399,8 @@ onMounted(() => {
                                           input-class="actions-sections-items--right-items-input-block-counter"
                                           button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                                           type="number"
-                                          @update:model-value="(count: number) => {
-                                            UMconstructor.SECTIONS.addRowExtra({grid: module, secIndex, cellIndex, rowIndex, extraIndex, count})
+                                          @update:model-value="(count: number|string) => {
+                                            UMconstructor.SECTIONS.addRowExtra({grid: module, secIndex, cellIndex, rowIndex, extraIndex, count: parseInt(count)})
                                           }"
                                       />
                                     </div>
@@ -503,8 +505,8 @@ onMounted(() => {
                         input-class="actions-sections-items--right-items-input-block-counter"
                         button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                         type="number"
-                        @update:model-value="(count: number) => {
-                            UMconstructor.SECTIONS.addSection({grid: module, secIndex, count})
+                        @update:model-value="(count: number|string) => {
+                            UMconstructor.SECTIONS.addSection({grid: module, secIndex, count: parseInt(count)})
                           }"
                     />
                   </div>
@@ -521,8 +523,8 @@ onMounted(() => {
                         input-class="actions-sections-items--right-items-input-block-counter"
                         button-class="actions-sections-btn actions-sections-btn--default actions-sections-items--right-items-input-block-button"
                         type="number"
-                        @update:model-value="(count: number) => {
-                            UMconstructor.SECTIONS.addCell({grid: module, secIndex, cellIndex: null, count})
+                        @update:model-value="(count: number|string) => {
+                            UMconstructor.SECTIONS.addCell({grid: module, secIndex, cellIndex: null, count: parseInt(count)})
                           }"
                     />
                   </div>
