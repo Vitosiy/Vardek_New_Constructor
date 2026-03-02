@@ -116,6 +116,10 @@ export class TrafficManager {
                 // this.modelState.createCurrentModelFasadesData(product.FACADE);
                 this.modelState.createCurrentModuleData(product.MODULECOLOR)
             }
+
+            if(object.userData.elementType === 'element_room'){
+                console.log(this.modelState._WALL)
+            }
         }
         else {
 

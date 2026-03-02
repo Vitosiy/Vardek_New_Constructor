@@ -1,24 +1,26 @@
 //@ts-nocheck
-import {useAppData} from "@/store/appliction/useAppData";
-import {useModelState} from "@/store/appliction/useModelState";
-import {useEventBus} from "@/store/appliction/useEventBus";
-import {useMechanism} from "./Mechanism/useMechanism";
+import { useAppData } from "@/store/appliction/useAppData";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useEventBus } from "@/store/appliction/useEventBus";
+import { useMechanism } from "./Mechanism/useMechanism";
 
 const mechanism = useMechanism()
 
 
-export const useRailsRightPage = () => {
+export const useOptions = () => {
 
     const appData = useAppData();
     const modelState = useModelState();
     const eventBus = useEventBus();
-    const {weightCalculation, createMeckhanizmList} = mechanism
+    const { weightCalculation, createMeckhanizmList } = mechanism
+    const cutOptionsId = [4722787, 4722786];
+    const cutOptionsTempSize = 20
 
     const mechanismList = createMeckhanizmList()
 
     const createOptionList = () => {
 
-        const {PROPS} = modelState.getCurrentModel.userData;
+        const { PROPS } = modelState.getCurrentModel.userData;
         const filtered = filterOptions()
         let result = checkExeptionOptionForFasade(filtered, PROPS.CONFIG.OPTIONS)
 
@@ -34,8 +36,8 @@ export const useRailsRightPage = () => {
     }
 
     const checkActive = (id: string | number, values: boolean) => {
-        const {PROPS} = modelState.getCurrentModel.userData;
-        const {OPTIONS, MECHANISM_TEMP} = PROPS.CONFIG;
+        const { PROPS } = modelState.getCurrentModel.userData;
+        const { OPTIONS, MECHANISM_TEMP } = PROPS.CONFIG;
 
         const curOpt = OPTIONS.find(el => el.id == id);
         const curMech = MECHANISM_TEMP.find(el => el.ID == id);
@@ -75,7 +77,7 @@ export const useRailsRightPage = () => {
                                 delete PROPS.CONFIG.TSARGA
                                 break;
                             case 5738924:   //Без дна
-                                PROPS.CONFIG.BACKWALL = {COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true};
+                                PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
                                 PROPS.CONFIG.HORIZONT = 78
                                 break;
                             default:
@@ -96,7 +98,7 @@ export const useRailsRightPage = () => {
 
         switch (+curOpt.id) {
             case 3955910: //Опция без присадки под петли
-                if(curOpt.active) {
+                if (curOpt.active) {
                     checkActive(1795067, true)
                     let noLoopsOption = OPTIONS.find((opt, index) => {
                         if (+opt.id === 1795067)
@@ -115,22 +117,22 @@ export const useRailsRightPage = () => {
                 break;
             case 7250452:   //Деревянная царга
                 if (curOpt.active) {
-                    PROPS.CONFIG.TSARGA = {TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR}
+                    PROPS.CONFIG.TSARGA = { TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR }
                 } else
                     delete PROPS.CONFIG.TSARGA
                 break;
             case 7250589:   //Металлическая царга
                 if (curOpt.active) {
-                    PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}
+                    PROPS.CONFIG.TSARGA = { TYPE: 'metal', COLOR: 79065 }
                 } else
                     delete PROPS.CONFIG.TSARGA
                 break;
             case 5738924:   //Без дна
                 if (curOpt.active) {
-                    PROPS.CONFIG.BACKWALL = {COLOR: false, SHOW: false};
+                    PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
                     PROPS.CONFIG.HORIZONT = 0
                 } else {
-                    PROPS.CONFIG.BACKWALL = {COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true};
+                    PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
                     PROPS.CONFIG.HORIZONT = 78
                 }
                 break;
@@ -144,8 +146,8 @@ export const useRailsRightPage = () => {
     };
 
     const checkExeptionOptionForFasade = (options, global) => {
-        const {PROPS} = modelState.getCurrentModel.userData;
-        const {FASADE_PROPS} = PROPS.CONFIG
+        const { PROPS } = modelState.getCurrentModel.userData;
+        const { FASADE_PROPS } = PROPS.CONFIG
         const prepareColorId = FASADE_PROPS.map(el => {
             return el.COLOR
         })
@@ -158,17 +160,25 @@ export const useRailsRightPage = () => {
         const data = appData.getAppData
         const options = data.OPTION
         const optGroup = data.OPTIONS_GROUP
-        const {PROPS} = modelState.getCurrentModel.userData;
+        const { PROPS } = modelState.getCurrentModel.userData;
         const curOptions = PROPS.CONFIG.OPTIONS
 
         let filtered = []
         const curOptionsList = curOptions
             .map(el => {
-                return {...options[el.id], active: el.active, visible: el.visible}
+
+                const cutSize = getCutSizeOption(el, options[el.id])
+
+                return { ...options[el.id], active: el.active, visible: el.visible, cutSize: cutSize }
             })
             .filter(Boolean);
 
+
+
+        console.log(curOptionsList, '88888888')
+
         for (const el in optGroup) {
+
 
             filtered.push({
                 NAME: optGroup[el].NAME,
@@ -186,6 +196,8 @@ export const useRailsRightPage = () => {
             if (item.CONTANT.length > 0) return item
 
         })
+
+
 
         return filtered
     }
@@ -236,13 +248,13 @@ export const useRailsRightPage = () => {
 
                         if (item.REQUIRED_OPTIONS.length > 0) {
                             let check = false
-                            for(let option of item.REQUIRED_OPTIONS){
-                                if(tmp_active_options.includes(+option)) {
+                            for (let option of item.REQUIRED_OPTIONS) {
+                                if (tmp_active_options.includes(+option)) {
                                     check = true
                                     break;
                                 }
                             }
-                            if(!check){
+                            if (!check) {
                                 curOptionInConfig.active = item.active = false;
                                 curOptionInConfig.visible = shouldBeVisible = false
                                 eventBus.emit("A:SelectModelOption")
@@ -263,7 +275,7 @@ export const useRailsRightPage = () => {
 
 
             let visible_contant = modifiedContant.filter(item => item.visible === true)
-            if(visible_contant.length) {
+            if (visible_contant.length) {
                 checkNecessaryOptions(visible_contant, global)
                 return {
                     ...group,
@@ -277,7 +289,7 @@ export const useRailsRightPage = () => {
 
     //Обязательная установка хотя бы одной опции активной
     const checkNecessaryOptions = (contant: any[], global?: any[]) => {
-        if(contant.length > 0) {
+        if (contant.length > 0) {
             contant.forEach((optionCurrent) => {
                 if (optionCurrent.CLOSE_OTHER_OPTIONS === '1') {
                     let closeOptions = []
@@ -289,7 +301,7 @@ export const useRailsRightPage = () => {
                         }
                     });
 
-                    if(!closeOptions.find(item => item.active)) {
+                    if (!closeOptions.find(item => item.active)) {
                         optionCurrent.active = true
                         if (global) {
                             const curOptionInConfig = global?.find(el => el.id === optionCurrent.ID)
@@ -312,7 +324,7 @@ export const useRailsRightPage = () => {
                         }
                     });
 
-                    if(!closeOptions.find(item => item.active)) {
+                    if (!closeOptions.find(item => item.active)) {
                         optionCurrent.active = true
                         eventBus.emit("A:SelectModelOption")
                     }
@@ -361,8 +373,8 @@ export const useRailsRightPage = () => {
     };
 
     const resetGlobal = () => {
-        const {PROPS} = modelState.getCurrentModel.userData;
-        const {FASADE_PROPS, OPTIONS} = PROPS.CONFIG
+        const { PROPS } = modelState.getCurrentModel.userData;
+        const { FASADE_PROPS, OPTIONS } = PROPS.CONFIG
         const prepareColorId = FASADE_PROPS.map(el => {
             return el.COLOR
         })
@@ -373,5 +385,26 @@ export const useRailsRightPage = () => {
 
     }
 
-    return {createOptionList, checkActive, resetGlobal}
+    const getCutSizeOption = (option, options) => {
+        console.log(options, 'optionId')
+        const { id } = option
+        const { PROPS } = modelState.getCurrentModel.userData;
+        const { BODY_WIDTH, BODY_HEIGHT } = PROPS.BODY.userData.trueSize
+        const getResult = (param) => { return param * 0.5 - cutOptionsTempSize * 0.5 }
+
+
+        if (cutOptionsId.includes(parseInt(id))) {
+            if (parseInt(id) === 4722787) {
+                return getResult(BODY_HEIGHT)
+            }
+            if (parseInt(id) === 4722786) {
+                return getResult(BODY_WIDTH)
+            }
+        }
+
+        return null
+
+    }
+
+    return { createOptionList, checkActive, resetGlobal }
 }

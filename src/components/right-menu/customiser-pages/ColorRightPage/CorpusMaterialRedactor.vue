@@ -22,12 +22,14 @@ const eventBus = useEventBus();
 interface IProps {
   materialList: [];
   is2Dconstructor?: boolean;
+  isNisha?: boolean;
   type?: string;
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   is2Dconstructor: false,
   type: "surface",
+  isNisha: false,
 });
 
 const materialList = ref(null);
@@ -46,22 +48,26 @@ const callback = (material) => {
 };
 
 onBeforeMount(() => {
-  if (props.type === "backwall")
+  if (props.type === "backwall") {
     selectedSurfaceID.value =
       modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
-  else
-    selectedSurfaceID.value =
-      modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+    return;
+  }
+
+  selectedSurfaceID.value =
+    modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
 });
 
 onMounted(() => {
   const curModel = modelState.getCurrentModel;
   const { MODULE_COLOR } = curModel?.userData.PROPS.CONFIG;
-  const { NAME, DETAIL_PICTURE } = modelState._FASADE[MODULE_COLOR];
+  const { NAME, DETAIL_PICTURE } = props.isNisha
+    ? modelState._WALL[MODULE_COLOR]
+    : modelState._FASADE[MODULE_COLOR];
   materialList.value = modelState.getCurrentModuleData;
 
   const current = props.materialList!.find(
-    (m) => m.ID === selectedSurfaceID.value
+    (m) => m.ID === selectedSurfaceID.value,
   );
 
   currentSurfaceData.value = {
@@ -100,36 +106,6 @@ const deleteSelectedOptions = (type: string) => {
     eventBus.emit("A:ChangeModuleTexture", fallback);
   }
 };
-
-// watch(
-//   () => props.materialList,
-//   () => {
-//     materialList.value = props.materialList || modelState.getCurrentModuleData;
-
-//     if (props.type === "backwall")
-//       selectedSurfaceID.value =
-//         modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
-//     else
-//       selectedSurfaceID.value =
-//         modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
-
-//     const current = props.materialList!.find(
-//       (m) => m.ID === selectedSurfaceID.value
-//     );
-//     if (current) {
-//       currentSurfaceData.value = {
-//         name: current.NAME,
-//         imgSrc: current.DETAIL_PICTURE,
-//       };
-//     } else {
-//       currentSurfaceData.value = {
-//         name: "",
-//         imgSrc: "",
-//       };
-//     }
-//   }
-//   // { flush: "post", immediate: true }
-// );
 </script>
 
 <template>
@@ -152,9 +128,15 @@ const deleteSelectedOptions = (type: string) => {
       :materialList="props.materialList"
       :type="'module'"
       @select="changeModuleTexture"
+      v-if="!isNisha"
     />
-    <!-- <MaterialSelector :materials="props.materialList" @select="changeModuleTexture" /> -->
+    <MaterialSelector
+      :materials="props.materialList"
+      @select="changeModuleTexture"
+      v-if="isNisha"
+    />
   </div>
+
   <div class="container container--2D-constructor" v-else>
     <div class="configuration">
       <ConfigurationOption

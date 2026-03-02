@@ -15,7 +15,7 @@ const {
   setControlSnapAngle,
   getControlSnapAngle,
   getTransformControlsName,
-  setTransformControlsName
+  setTransformControlsName,
 } = useTransformController();
 
 const transformControlsValue = ref<boolean>(false);
@@ -39,13 +39,12 @@ const changeAngle = (value: number) => {
 
 const changeControllerType = (data: { name: string; type: string }) => {
   curControllerValue.value = data.name;
-  setTransformControlsName(data.name)
+  setTransformControlsName(data.name);
   eventBus.emit("A:TransformSetMode", data.type);
 };
 
 const toggleTransformMode = (value: boolean) => {
   transformControlsValue.value = value;
-
 
   if (value) {
     eventBus.emit("A:TransformMode_On");
@@ -58,12 +57,14 @@ const toggleTransformMode = (value: boolean) => {
   setTransformControlsValue(value);
 };
 
+const globalDisable = () => (transformControlsValue.value = false);
 
 onMounted(() => {
-
   transformControlsValue.value = getTransformControlsValue ?? false;
   curAngleParam.value = getControlSnapAngle;
-  curControllerValue.value = getTransformControlsName
+  curControllerValue.value = getTransformControlsName;
+
+  eventBus.on("A:GlobalTransformMode_Off", globalDisable);
 });
 
 // Следим за внешними изменениями (например, если кто-то снаружи сбросил режим)
@@ -79,7 +80,6 @@ onMounted(() => {
 
 <template>
   <div class="switch__wrapper">
-
     <transition name="controller-toggle">
       <p v-if="!transformControlsValue" class="switch__title">
         {{ curControllerValue }}
@@ -88,7 +88,11 @@ onMounted(() => {
 
     <div>
       <transition name="controller-toggle">
-        <Accordion v-if="curControllerValue.includes('Вращение') && transformControlsValue">
+        <Accordion
+          v-if="
+            curControllerValue.includes('Вращение') && transformControlsValue
+          "
+        >
           <template #title>
             <h4 class="accordion__header">Шаг: {{ curAngleParam }}&deg;</h4>
           </template>

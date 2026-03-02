@@ -78,6 +78,8 @@ export class Application {
         // (window as any).aplication = this // Для разработки
 
         /** Инициализация */
+        
+        THREE.Cache.enabled = true
         this.systemInfo = new SystemInfo()
         this.keybordListeners = new KeybordListeners(this)
         this.resources = new Resources();
@@ -137,7 +139,7 @@ export class Application {
         return this.camera!.controls
     }
 
-    get _renderClass(){
+    get _renderClass() {
         return this.renderer
     }
 

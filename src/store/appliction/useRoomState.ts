@@ -22,9 +22,8 @@ export const useRoomState = defineStore('RoomState', () => {
     if (a === undefined || a === null || b === undefined || b === null) return false;
     return normalizeId(a) === normalizeId(b);
   };
-  const normalizeRoom = (room: any) => {
-    console.log('NORM', room)
 
+  const normalizeRoom = (room: any) => {
     const clone = JSON.parse(JSON.stringify(room || {}));
     clone.id = normalizeId(clone.id);
     clone.content = typeof clone.content === 'string' ? JSON.parse(clone.content) : (clone.content || []);
@@ -53,42 +52,11 @@ export const useRoomState = defineStore('RoomState', () => {
   const updatedRoomContent = ref<THREEInterfases.IContentItem[] | null>([])
 
   const convertDataTo3DConstuctor = () => {
-    // console.log('3D', schemeTransition.getSchemeTransitionData)
     const data = toRaw(schemeTransition.getSchemeTransitionData)
-
-    // console.log(data, 'clone')
-
-    // const clone = data.map(item => {
-    //   return item
-    // })
-
-
-    // const parseData = clone.map(elem => {
-
-    //   const content = JSON.stringify(elem.content)
-    //   return {
-    //     ...elem,
-    //     content: content
-    //   }
-    // })
-    // rooms.value = parseData
     rooms.value = data.map(normalizeRoom)
   }
 
   const convertDataTo2DConstuctor = () => {
-    // const clone = rooms.value.map(item => {
-    //   return item
-    // })
-
-    // const parseData = clone.map(elem => {
-    //   const content = typeof elem.content === 'string' ? JSON.parse(elem.content) : elem.content
-    //   return {
-    //     ...elem,
-    //     content: content
-    //   }
-    // })
-    // schemeTransition.setAppData(parseData)
-
     schemeTransition.setAppData(rooms.value.map(normalizeRoom))
   }
 
@@ -115,7 +83,7 @@ export const useRoomState = defineStore('RoomState', () => {
       room.basket = basket;
 
       convertDataTo2DConstuctor()
-      // console.log(schemeTransition.getSchemeTransitionData, '== rooms ==')
+      console.log(   room.params, '== rooms ==')
 
       return
     }

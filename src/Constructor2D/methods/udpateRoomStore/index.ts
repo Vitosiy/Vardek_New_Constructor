@@ -38,7 +38,9 @@ function updateRoomStore(this: any): boolean {
     this.IDObjects?.map(
       (item: { id: string | number; name: string }) => item.id
     ) || [];
-  const idToFilter = [166755, ...idObjectsFrom2D]; // перегородки + двери/окна
+  // const idToFilter = [166755, ...idObjectsFrom2D]; // перегородки + двери/окна
+
+    const idToFilter = [...idObjectsFrom2D]; 
 
   // Создаем Set для отслеживания комнат, которые обновляются из 2D
   const updatedRoomIds = new Set<string>();
@@ -101,37 +103,37 @@ function updateRoomStore(this: any): boolean {
         normalizeId(wallData.roomId) === normalizedRoomId
       ) {
         if (wallData.name === "dividing_wall") {
-          // если перегородка
+          // // если перегородка
 
-          // const centerWall = getCenterOfPoints(wallData.points);
-          const centerWall = getCenterOfPoints([
-            wallData.points[0],
-            wallData.points[1],
-          ]);
+          // // const centerWall = getCenterOfPoints(wallData.points);
+          // const centerWall = getCenterOfPoints([
+          //   wallData.points[0],
+          //   wallData.points[1],
+          // ]);
 
-          const wData: IContentItem = {
-            id: 166755,
-            uuid: String(wallData.id),
-            position: {
-              x: centerWall.x * 10,
-              y: (300 * 10) / 2,
-              z: centerWall.y * 10,
-            },
-            rotation: {
-              isEuler: true,
-              _x: 0,
-              _y: MathUtils.degToRad(-wallData.angleDegrees),
-              _z: 0,
-              _order: "XYZ",
-            },
-            size: {
-              width: wallData.width * 10,
-              height: 300 * 10,
-              depth: wallData.height * 10,
-            },
-          };
+          // const wData: IContentItem = {
+          //   id: 166755,
+          //   uuid: String(wallData.id),
+          //   position: {
+          //     x: centerWall.x * 10,
+          //     y: (300 * 10) / 2,
+          //     z: centerWall.y * 10,
+          //   },
+          //   rotation: {
+          //     isEuler: true,
+          //     _x: 0,
+          //     _y: MathUtils.degToRad(-wallData.angleDegrees),
+          //     _z: 0,
+          //     _order: "XYZ",
+          //   },
+          //   size: {
+          //     width: wallData.width * 10,
+          //     height: 300 * 10,
+          //     depth: wallData.height * 10,
+          //   },
+          // };
 
-          room.content?.push(wData);
+          // room.content?.push(wData);
         } else {
           // если стена
 

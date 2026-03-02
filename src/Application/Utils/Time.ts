@@ -1,9 +1,11 @@
 import * as THREE from "three"
 import { EventEmitter } from "./EventEmitter";
+// import Stats from "three/examples/jsm/libs/stats.module.js";
 
 export class Time extends EventEmitter {
     clock: THREE.Clock
     prev: number
+    // stats: Stats
     private animationFrameId: number | null; // Идентификатор для requestAnimationFrame
 
     constructor() {
@@ -15,6 +17,8 @@ export class Time extends EventEmitter {
         this.animationFrameId = null; // Инициализируем как null
 
         this.tick = this.tick.bind(this)
+        // this.stats = new Stats()
+        // document.body.appendChild(this.stats.dom);
 
         this.tickStart()
     }
@@ -45,7 +49,9 @@ export class Time extends EventEmitter {
         this.trigger('tick')
 
         window.requestAnimationFrame(() => {
+            // this.stats.begin()
             this.tick()
+            // this.stats.end()
         })
     }
 }

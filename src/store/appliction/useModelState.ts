@@ -94,6 +94,7 @@ export const useModelState = defineStore('ModelState', () => {
     const _PATINA = computed(() => _APP.value.PATINA || [])
     const _HANDLES = computed(() => _APP.value.HANDLES || [])
     const _HEM = computed(() => _APP.value.HEM || [])
+    const _WALL = computed(() => _APP.value.WALL || [])
 
     // console.log(_FASADE_SIZE_RESTRICT.value, '=== 🔥 _FASADE_SIZE_RESTRICT 🔥 ===')
 
@@ -161,7 +162,6 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createCurrentModuleData = (value: number[], def: boolean = false) => {
 
-
         const validFacadeIds = value.filter(id => _FASADE.value[id]);
 
         const groupedFasades = validFacadeIds.reduce((acc, facadeId) => {
@@ -190,7 +190,6 @@ export const useModelState = defineStore('ModelState', () => {
 
         if (def) return result;
         currentModulData.value = result;
-
 
     }
 
@@ -777,6 +776,8 @@ export const useModelState = defineStore('ModelState', () => {
         _MODELS,
         _PALETTE,
         _PATINA,
+        _WALL,
+
         getModels,
 
         setCurrentModel,

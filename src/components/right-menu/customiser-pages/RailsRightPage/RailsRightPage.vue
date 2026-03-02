@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 //@ts-nocheck
 import { onBeforeMount, computed, ref } from "vue";
-import { useRailsRightPage } from "./useRailsRightPage";
+import { useOptions } from "./useOptions";
 import {_URL} from "@/types/constants.ts";
 
-const { createOptionList, checkActive } = useRailsRightPage();
+const { createOptionList, checkActive } = useOptions();
 const optionList = ref([]);
 const countLimit = ref(3)
 
@@ -70,6 +70,7 @@ onBeforeMount(() => {
   </div>
 </template>
 <style lang="scss" scoped>
+
 .rails {
   max-height: calc(100vh - 220px);
   display: flex;

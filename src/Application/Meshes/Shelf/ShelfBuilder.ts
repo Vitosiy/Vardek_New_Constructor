@@ -118,9 +118,7 @@ export class ShelfBuilder {
                 shelfMaterial
             );
             mesh.receiveShadow = true;
-            mesh.position.y =
-
-                startPos.y + (height / (current + 1)) * i;
+            mesh.position.y = startPos.y + (height / (current + 1)) * i;
             (SHELF as Mesh[]).push(mesh);
 
             const edge = this.edgeBuilder.createEdge(mesh);

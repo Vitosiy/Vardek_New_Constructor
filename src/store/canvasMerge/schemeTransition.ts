@@ -14,6 +14,8 @@ import {
 
 export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
+	const roomHeight = ref<number>(3000)
+
 	const normalizeId = (value: string | number | null | undefined) => value !== null && value !== undefined ? String(value) : '';
 	const deepClone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 	const normalizeRoom = (room: any) => {
@@ -656,6 +658,10 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		}
 	});// 
 
+	const getRoomHeight = computed(() => {
+		return roomHeight
+	})
+
 	return {
 		SchemeTransitionData,
 		getAllData,
@@ -665,6 +671,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		setAppData,
 		getWalls,
 		getRoomById,
+		getRoomHeight,
 
 		// setWall,
 		// removeWall

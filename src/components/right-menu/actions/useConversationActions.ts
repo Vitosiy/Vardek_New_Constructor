@@ -18,7 +18,6 @@ export const useConversationActions = () => {
     const eventBus = useEventBus();
     const toaster = useToast();
 
-
     const onRsizeConversations = async (size: TsizeData) => {
         const curModel = modelState.getCurrentModel
         const restrictData = curModel?.userData.restrictData
@@ -114,6 +113,7 @@ export const useConversationActions = () => {
         return tempList;
 
     };
+
     const filterMaterialsConversations = (materialList: TFasadeConversation[], fasadeSize: TFasadeTrueSizes) => {
         const tempList = materialList.map((el) => {
                 if(el.FASADES && Array.isArray(el.FASADES)) {
@@ -132,7 +132,6 @@ export const useConversationActions = () => {
 
         return tempList;
     };
-
 
     return { onRsizeConversations, createFasadeConversations, checkFasadeConversations, filterFasadeConversations, filterMaterialsConversations }
 

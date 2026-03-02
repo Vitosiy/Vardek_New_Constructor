@@ -11,12 +11,16 @@ export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
     scene: THREE.Scene
+    room: THREETypes.TRoomManager
+    root: THREETypes.TApplication
 
     constructor(root: THREETypes.TApplication) {
 
         super();
         this.resources = root._resources
         this.scene = root._scene
+        this.room = root._roomManager
+        this.root = root
     }
 
     public createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
@@ -26,7 +30,7 @@ export class BuildersHelper extends GlobalsData {
         const leftWidth = props.CONFIG.LEFTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.LEFTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
         const rightWidth = props.CONFIG.RIGHTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.RIGHTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
 
-        // console.log(props.CONFIG.EXPRESSIONS)
+        console.log(this.root._roomManager._currentRoomHeight)
 
         model_data = this.expressionsReplace(
             model_data,
@@ -43,7 +47,7 @@ export class BuildersHelper extends GlobalsData {
             },
         )
 
-        // console.log(model_data, 'model_data')
+        console.log(model_data, 'model_data')
 
         model_data = this.expressionsReplace(
             model_data,
@@ -54,16 +58,18 @@ export class BuildersHelper extends GlobalsData {
     };
 
     public getProductSize(PARAMS: any, productData: THREETypes.TObject) {
-        // console.log(productData, 'productData')
+        console.log(productData, 'productData')
 
         const product = this._PRODUCTS[PARAMS.ID];
         const materialThickness = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH ?? 18;
-        const horizont =
-            PARAMS.NOBOTTOM ? 0 :
-                PARAMS.HORIZONT ?? 78;
+        const horizont = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT ?? 78;
 
         const filling = this._FILLING[product.FILLING[0]] || {};
         const { FASADE_PROPS, SIZEEDITJOINDEPTH } = PARAMS
+
+        // Вычисляем высоту один раз
+        const roomHeight = this.root._roomManager._currentRoomHeight;
+        const resolvedHeight = productData.height === "#ROOM_HEIGHT#" ? roomHeight : productData.height;
 
         // Базовые подстановки
         const expressions: Record<string, any> = {
@@ -71,9 +77,9 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_MWIDTH#": productData.width,
             "#MODUL_WIDTH#": productData.width,
             "#X#": productData.width,
-            "#MHEIGHT#": productData.height,
-            "#MODUL_MHEIGHT#": productData.height,
-            "#MODUL_HEIGHT#": productData.height,
+            "#MHEIGHT#": resolvedHeight,
+            "#MODUL_MHEIGHT#": resolvedHeight,
+            "#MODUL_HEIGHT#": resolvedHeight,
             "#Y#": productData.height,
             "#MDEPTH#": productData.depth,
             "#MODUL_MDEPTH#": productData.depth,
@@ -84,10 +90,8 @@ export class BuildersHelper extends GlobalsData {
             "#HORIZONT#": horizont,
             "#VSECTION_MAX#": filling.VSECTION_MAX,
             "#VSECTION_MIN#": filling.VSECTION_MIN,
+            "#ROOM_HEIGHT#": roomHeight
         };
-
-        // console.log(PARAMS.FASADE_SIZE, 'PARAMS.FASADE_SIZE')
-
 
         // Обработка фасадных размеров
         Object.entries(PARAMS.FASADE_SIZE).forEach(([_, value], ndx) => {
@@ -96,10 +100,6 @@ export class BuildersHelper extends GlobalsData {
             expressions[`#${customKey}#`] = incomeData.id;
 
             if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
-
-                // console.log(size.WIDTH, ' == WIDTH ==')
-                // console.log(size, ' == size ==')
-
                 const size = this._FASADESIZE[incomeData.id];
                 const suffix = customKey.endsWith("1") ? "1" : "2";
                 expressions[`#FASADESIZEWIDTH${suffix}#`] = incomeData.params.FASADE_WIDTH ?? size.WIDTH;
@@ -118,7 +118,7 @@ export class BuildersHelper extends GlobalsData {
         const size = {
 
             width: parseFloat(productData.width),
-            height: parseFloat(productData.height),
+            height: parseFloat(resolvedHeight),
             depth: parseFloat(depthCalc),
         };
 
@@ -135,7 +135,7 @@ export class BuildersHelper extends GlobalsData {
 
         // Запасные значения
         size.width ||= parseFloat(productData.width);
-        size.height ||= parseFloat(productData.height);
+        size.height ||= parseFloat(resolvedHeight);
         size.depth ||= parseFloat(productData.depth);
 
         return size;
@@ -249,7 +249,12 @@ export class BuildersHelper extends GlobalsData {
         );
     }
 
+
+    //----------------------------------------------------------
+    /** @Настройка материала */
+    //----------------------------------------------------------
     public getTexture({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
+        console.log(texture_size, 'texture_size')
 
         this.resources.startLoading(url, 'texture', (file) => {
             if (file instanceof THREE.Texture) {
@@ -269,6 +274,7 @@ export class BuildersHelper extends GlobalsData {
             }
         });
     }
+
 
     public async getMaterial({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
         const loadedMaterial = await this.resources.startLoading(url, 'texture', (file) => {
@@ -290,9 +296,41 @@ export class BuildersHelper extends GlobalsData {
         return loadedMaterial
     }
 
-    //----------------------------------------------------------
-    /** @Настройка материала */
-    //----------------------------------------------------------
+    public createNishaMaterial(url, size, comand) {
+        console.log(comand)
+
+
+        const material = new THREE.MeshStandardMaterial({
+            metalness: 0.5,
+            roughness: 0.5,
+        });
+        const { x, y } = size;
+
+        const TILE_SIZE = 1
+        this.resources.startLoading(url, 'texture', (file) => {
+            if (file instanceof THREE.Texture) {
+
+                file.colorSpace = THREE.SRGBColorSpace
+                material.map = file;
+                material.map.wrapS = THREE.RepeatWrapping;
+                material.map.wrapT = THREE.RepeatWrapping;
+                material.map.repeat.set(
+                    (parseFloat(x) * (parseFloat(x) / parseFloat(y)) * TILE_SIZE + parseFloat(x) * TILE_SIZE),
+                    (parseFloat(y) * (parseFloat(y) / parseFloat(x)) * TILE_SIZE + parseFloat(y) * TILE_SIZE)
+                )
+
+                material.map.offset.set(0.5, 0.5);
+
+            }
+            material.needsUpdate = true;
+
+        });
+
+
+        return material
+    }
+
+
     public changeColor({
         object,
         url,
@@ -304,6 +342,8 @@ export class BuildersHelper extends GlobalsData {
         textureSize?: { x: number, y: number };
         type?: string;
     }) {
+
+
         const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color('#ffffff'),
             // opacity: 1
@@ -331,7 +371,7 @@ export class BuildersHelper extends GlobalsData {
     //----------------------------------------------------------
     /** @Настройка текстуры и параметров материала */
     //----------------------------------------------------------
-    public private applyTexture(
+    public applyTexture(
         child: THREE.Mesh,
         texture: THREE.Texture,
         textureSize?: THREE.Vector3,

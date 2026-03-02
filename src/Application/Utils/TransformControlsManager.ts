@@ -116,8 +116,6 @@ export class TransformControlsManager {
         this.currentTarget = object;
         this.callbacks.onAttach(object);
 
-
-
     }
 
     onDraggingChanged(value: boolean) {
@@ -253,6 +251,8 @@ export class TransformControlsManager {
         this.eventBus.on("A:TransformSetMode", onSetMode)
         this.eventBus.on("A:TransformMode_On", onAttach)
         this.eventBus.on("A:TransformMode_Off", onDisable)
+        this.eventBus.on("A:GlobalTransformMode_Off", onDisable)
+        
         this.eventBus.on("A:Load", onTotalDetach)
         this.eventBus.on("A:Create", onTotalDetach)
         this.eventBus.on("A:NextAction", onTotalDetach)

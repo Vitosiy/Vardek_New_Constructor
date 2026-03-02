@@ -378,7 +378,6 @@ class TableTopCreator extends BuildersHelper {
                         geometry = new THREE.BoxGeometry(hole.width, this.boolHeight, hole.height)
                         break
                 }
-
                 mesh = new THREE.Mesh(geometry);
                 this.holePositioning(mesh, width, height, xOffset, yOffset, hole)
                 startGeometry = startGeometry.subtract(CSG.fromMesh(mesh));

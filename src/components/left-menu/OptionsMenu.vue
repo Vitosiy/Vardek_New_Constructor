@@ -17,6 +17,7 @@ import { useModelState } from "@/store/appliction/useModelState";
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
+import { useTransformController } from "../ui/transformController/useTransformController";
 
 import PopUpOptionsMenu from "@/components/left-menu/option/PopUpOptionsMenu.vue";
 import RoomOptionsMenu from "@/components/left-menu/option/RoomOptionsMenu.vue";
@@ -35,6 +36,16 @@ const modelState = useModelState();
 const menuStore = useMenuStore();
 const customiserStore = useCustomiserStore();
 const popupStore = usePopupStore();
+
+const {
+  getTransformControlsValue,
+  setTransformControlsValue,
+  getTransformControlSnapAngles,
+  setControlSnapAngle,
+  getControlSnapAngle,
+  getTransformControlsName,
+  setTransformControlsName,
+} = useTransformController();
 
 const catalogSectionsType = ref(null);
 const catalogSections = ref(null);
@@ -59,13 +70,19 @@ const onDragStart = (modelId: string) => {
 
 const closeAllMenus = () => {
   menuStore.closeAllMenus();
+  disableTransformMode();
 };
 
 const showTechMenu = (id: string, products: []) => {
   clearSearch();
-
+  disableTransformMode();
   menuStore.openMenu("tech", id, products);
   customiserStore.hideCustomiserPopup();
+};
+
+const disableTransformMode = () => {
+  eventBus.emit("A:GlobalTransformMode_Off");
+  setTransformControlsValue(false);
 };
 
 // Новое меню
@@ -74,7 +91,7 @@ const showRoomParMenu = () => {
   menuStore.openMenu("roomPar");
   // eventBus.emit("A:TransformMode_Off");
   // modelState.setTransformControlsValue(false);
-  eventBus.emit("A:GlobalTransformMode_Off");
+  disableTransformMode();
   eventBus.emit("A:ClearSelected", { object: null });
 };
 
@@ -83,6 +100,7 @@ const changeCameraPos = (value: number) => {
 };
 
 const openPopup = (popupName: keyof typeof popupStore.popups) => {
+  disableTransformMode();
   popupStore.openPopup(popupName);
 };
 
@@ -114,7 +132,7 @@ const onSearchChange = (e: Event) => {
   debounceTimeout = setTimeout(() => {
     const reg = new RegExp(value.toLowerCase(), "g");
     const filteredData = Object.values(_PRODUCTS).filter((prod) =>
-      reg.test(prod.NAME.toLowerCase())
+      reg.test(prod.NAME.toLowerCase()),
     );
     filteredProductList.value = filteredData;
   }, 400);
@@ -129,7 +147,7 @@ onBeforeMount(() => {
   const app = useAppData().getAppData;
 
   const prepare = JSON.parse(JSON.stringify(app.CATALOG.SECTIONS_TYPE));
-  delete prepare.room;
+  // delete prepare.room; //Убираем ниши
 
   catalogSectionsType.value = prepare;
   catalogSections.value = app.CATALOG.SECTIONS;

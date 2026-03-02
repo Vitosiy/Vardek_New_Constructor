@@ -12,6 +12,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
+import Options from "./customiser-pages/RailsRightPage/Options.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
 import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue";
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
@@ -148,7 +149,7 @@ onUnmounted(() => {
 
         <RulerPage v-if="customiserStore.customisers == 'ruler'" />
         <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
-        <RailsRightPage v-if="customiserStore.customisers == 'moving'" />
+        <Options v-if="customiserStore.customisers == 'moving'" />
         <FigurePage v-if="customiserStore.customisers == 'figure'" />
       </div>
     </div>

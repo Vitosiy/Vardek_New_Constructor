@@ -37,9 +37,11 @@ const fasadeList = ref<any[]>([]);
 const productData = ref(null);
 const eventBus = useEventBus();
 const materialList = ref(null);
+const isNisha = ref(false);
 const tabsList = ref<any[]>([]);
 const tabIndex = ref<Number>(0);
 const tabName = ref<string>("Корпус");
+
 const isGroupsManagerActive = ref<boolean>(false);
 const transitionFasadeSelect = ref<boolean>(false);
 
@@ -47,8 +49,14 @@ const prepareData = () => {
   const productId = currentModel.value?.userData.PROPS.PRODUCT;
   const { FACADE } = modelState._PRODUCTS[productId];
 
-  materialList.value = modelState.getCurrentModuleData;
-  fasadeList.value = modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
+  materialList.value = isNisha.value
+    ? Object.values(modelState._WALL)
+    : modelState.getCurrentModuleData;
+
+  console.log(materialList.value, "materialList.value");
+
+  fasadeList.value =
+    modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
   createFacadeData();
 
@@ -58,6 +66,7 @@ const prepareData = () => {
 const createFacadeData = () => {
   const productId = currentModel.value?.userData.PROPS.PRODUCT;
   const { FACADE } = modelState._PRODUCTS[productId];
+
   modelState.createCurrentModelFasadesData({
     data: FACADE,
     fasadeNdx: fasadeIndex.value,
@@ -67,7 +76,7 @@ const createFacadeData = () => {
 
 const createTabList = (
   fasadeList: Array<object>,
-  materialList: Array<object>
+  materialList: Array<object>,
 ) => {
   let data: Array<object> = [];
 
@@ -98,15 +107,6 @@ const fasadeIndex = computed(() => {
     return tabIndex.value - 1;
   }
   return tabIndex.value;
-});
-
-onBeforeMount(() => {
-  currentModel.value = modelState.getCurrentModel;
-  prepareData();
-});
-
-onMounted(() => {
-  tabIndex.value = 0;
 });
 
 const handleTabChange = ({ index, tab }) => {
@@ -178,7 +178,7 @@ watch(
 
     prepareData();
     redactorsRef.value.selectTab(tabName.value, tabIndex.value, true);
-  }
+  },
 );
 
 // Следим за изменениями uniformMode для синхронизации состояния
@@ -190,8 +190,19 @@ watch(
       isGroupsManagerActive.value = false;
       customiserStore.hideCustomiserPopup();
     }
-  }
+  },
 );
+
+onBeforeMount(() => {
+  currentModel.value = modelState.getCurrentModel;
+  isNisha.value = modelState.getCurrentModel.elementType == "element_room";
+
+  prepareData();
+});
+
+onMounted(() => {
+  tabIndex.value = 0;
+});
 
 // Подписываемся на событие синхронизации состояния
 onMounted(() => {
@@ -218,13 +229,14 @@ onUnmounted(() => {
   />
   <CorpusMaterialRedactor
     :materialList="materialList"
+    :isNisha="isNisha"
     v-if="
       materialList.length > 0 && tabName == 'Корпус' && !isGroupsManagerActive
     "
   />
 
   <MaterialRedactor
-    v-if="tabName != 'Корпус' && !isGroupsManagerActive"
+    v-if="tabName != 'Корпус' && !isGroupsManagerActive && !isNisha"
     :key="tabIndex"
     :fasadeData="fasadeList[fasadeIndex]"
     :tabIndex="fasadeIndex"

@@ -754,8 +754,8 @@ export class BuildUniversalModule extends BuildProduct {
     }
 
     createSubProductObject(filling: Object, data: THREETypes.TObject, props: THREETypes.TObject) {
-        let fasade = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']] : this._FASADE[filling.color || filling.material]
-        let body = this.json_builder.createMesh({ data, fasade })
+        let textureUrl = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']].TEXTURE : this._FASADE[filling.color || filling.material].TEXTURE
+        let body = this.json_builder.createMesh({ data, textureUrl })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
         body.matrixWorldNeedsUpdate = true

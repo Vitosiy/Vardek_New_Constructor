@@ -40,11 +40,11 @@ import Accordion from "@/components/ui/accordion/Accordion.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import DirectionControl from "@/components/ui/direction/DirectionControl.vue";
 
-import { useRailsRightPage } from "../RailsRightPage/useRailsRightPage";
+import { useOptions } from "../RailsRightPage/useOptions";
 import { useHandlesAction } from "../FigureRightPage/Handles/useHandlesAction";
 import { useConversationActions } from "../../actions/useConversationActions";
 
-const { resetGlobal } = useRailsRightPage();
+const { resetGlobal } = useOptions();
 const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
   useHandlesAction();
 const {
@@ -123,7 +123,7 @@ const onSelectMaterial = (data) => {
 
   const checkConversation = checkFasadeConversations(
     data.id,
-    FASADE[props.tabIndex].userData.trueSize
+    FASADE[props.tabIndex].userData.trueSize,
   );
 
   if (!checkConversation) return;
@@ -136,7 +136,7 @@ const onSelectMaterial = (data) => {
   const dataOfFasadeType = _FASADE[data.id];
 
   productData.value.restrictData[props.tabIndex] = createFasadeConversations(
-    data.id
+    data.id,
   );
 
   isSurfaceSelected.value = true;
@@ -230,7 +230,7 @@ const onSelectMaterial = (data) => {
     const typeList = getIntegratedHandleControllerData(
       modelState.getCurrentFasadeTypesData,
       props.tabIndex,
-      "integrate"
+      "integrate",
     );
 
     FASADE_PROPS[props.tabIndex].TYPE = typeList[0].id;
@@ -277,7 +277,7 @@ const onSelectMilling = (data) => {
     const typeList = getIntegratedHandleControllerData(
       data,
       props.tabIndex,
-      "milling"
+      "milling",
     );
 
     if (typeList.length > 0) {
@@ -530,7 +530,7 @@ const prepareData = () => {
     fasadeTypesList.value = getIntegratedHandleControllerData(
       fasadeTypes,
       props.tabIndex,
-      "integrate"
+      "integrate",
     );
   }
 
@@ -540,7 +540,7 @@ const prepareData = () => {
     const typeList = getIntegratedHandleControllerData(
       curMilling,
       props.tabIndex,
-      "milling"
+      "milling",
     );
     fasadeHandleList.value = typeList;
     isFasadeHandleExist.value = true;
@@ -591,7 +591,7 @@ const prepareData = () => {
     id: string | number,
     target: any,
     key: string,
-    imageKey = "PREVIEW_PICTURE"
+    imageKey = "PREVIEW_PICTURE",
   ) => {
     const item = list?.find((i) => i.ID == id);
 
@@ -603,7 +603,7 @@ const prepareData = () => {
       millingData,
       MILLING,
       currentMillingData,
-      "currentMillingData"
+      "currentMillingData",
     );
   }
   if (PALETTE && paletteData[PALETTE]) {
@@ -618,7 +618,7 @@ const prepareData = () => {
       showcaseData,
       SHOWCASE,
       currentShowcaseData,
-      "currentShowcaseData"
+      "currentShowcaseData",
     );
   }
   if (GLASS) {
@@ -669,7 +669,7 @@ const changeFasadeSize = async (data: TFasadeSize) => {
   const defaultWidth = Object.values(positionList)[0].FASADE_WIDTH;
 
   const isIncomeWidth = isNaN(
-    Number(_APP.FASADE_POSITION[curPositionId].FASADE_WIDTH)
+    Number(_APP.FASADE_POSITION[curPositionId].FASADE_WIDTH),
   );
 
   curSize.id = data.ID;
@@ -728,9 +728,9 @@ const getFasadesize = computed(() => {
 
 onBeforeMount(() => {
   // materialList.value = modelState.getCurrentModelFasadesData;
-  materialList.value = filterFasadeConversations(props.tabIndex);
   productData.value = modelState.getCurrentModel.userData;
   productId.value = productData.value.PROPS.PRODUCT;
+  materialList.value = filterFasadeConversations(props.tabIndex);
 
   fasadeSizeList.value = prepareFasadeSizeList();
   fasadeSizeListExist.value = fasadeSizeList.value.length > 0;

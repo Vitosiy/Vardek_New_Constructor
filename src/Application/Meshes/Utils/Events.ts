@@ -121,6 +121,8 @@ export class MeshEvents extends BuildersHelper {
         7: 0
     }
 
+    private readonly EXTRAS_Y_SIZE = new Set<number[]>([2050360, 1059832, 971222, 3140746]);
+
     constructor(root: THREETypes.TApplication) {
 
         super(root)
@@ -265,7 +267,7 @@ export class MeshEvents extends BuildersHelper {
         const { ID } = CONFIG;
         const productData = this._PRODUCTS[ID]
 
-        console.log(ID, 'ID');
+        console.log(productData, 'ID');
         [BODY, ...(SHELF ?? []), ...(JSON_FILLINGS ?? [])].forEach((obj) => {
             if (obj instanceof THREE.Object3D) {
                 obj?.traverse((child: THREE.Object3D) => {
@@ -280,7 +282,18 @@ export class MeshEvents extends BuildersHelper {
                             return;
                         }
 
-                        this.changeColor({ object: child, url: data.TEXTURE });
+                        if (productData.element_type === "element_room") {
+                            const geometry = child.geometry
+                            const { width: x, height: y } = geometry.parameters
+                            const { comand } = geometry.userData
+
+                            const material = this.createNishaMaterial(data.TEXTURE ?? data.texture, { x, y }, comand);
+                            child.material = material;
+                            child.material.needsUpdate = true;
+                            return;
+                        }
+
+                        this.changeColor({ object: child, url: data.TEXTURE ?? data.texture });
                     }
                 })
             }
@@ -406,6 +419,8 @@ export class MeshEvents extends BuildersHelper {
 
     private tryApplyTexture(data: any, fasade: any, fasadeProp: any): boolean {
         if (data.COLOR) return false;
+
+        console.log(data, '=== TEXTURE_DATA ====')
 
         fasade.visible = true;
         fasade.traverse((child: THREE.Object3D) => {
@@ -1080,113 +1095,198 @@ export class MeshEvents extends BuildersHelper {
     /** @Изменение_размеров_модели  */
     //------------------
 
+    // async changeModelSize({ data, mesh, type }: TResizeModel) {
+
+
+    //     const extrasYsize = [2050360, 1059832, 971222, 3140746]
+    //     const currentMesh = mesh ? mesh : this._currentMesh
+
+    //     if (!currentMesh) return
+
+    //     if (currentMesh.name === 'MODEL') {
+
+    //         await this.buildProduct.models_builder.refillModelFromSource(currentMesh, {
+    //             width: data.width,
+    //             height: data.height,
+    //             depth: data.depth
+    //         }, type);
+
+    //         this.root._customBoxHelper!.updateBoxHelper();
+
+    //         return
+    //     }
+
+    //     const { PROPS } = currentMesh!.userData
+    //     const { CONFIG, PRODUCT } = PROPS
+    //     const { POSITION, UNIFORM_TEXTURE } = CONFIG
+    //     const fasadeSize = type === 'resize'
+
+    //     /** Очищаем родительский объект */
+    //     this.dispose.clearParent(currentMesh as THREE.Object3D)
+
+    //     const rebuild = async () => {
+
+    //         /** Пересоздаём по новым параметрам */
+    //         let body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data, fasadeSize);
+    //         /** Добавляем к родителю */
+    //         currentMesh?.add(body as THREE.Object3D);
+    //         currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
+    //         currentMesh?.updateMatrixWorld(true);
+
+    //         const { SIZE } = currentMesh?.userData.PROPS.CONFIG
+
+
+    //         const height = body.userData.trueSizes.HEIGHT
+    //         const incomeSize = {
+    //             DEPTH: fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5,
+    //             HEIGHT: height,
+    //             WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5
+    //         }
+    //         /** Для корректного примагничивания к стенам */
+    //         currentMesh.userData.trueSizes = incomeSize
+    //         /** Пересоздаём UNIFORM_TEXTURE*/
+    //         if (UNIFORM_TEXTURE.group !== null) {
+
+    //             const uniformGroupCash = { ...UNIFORM_TEXTURE }
+
+    //             const currentUniformGroup = this.buildUniformTexture._uniformGroups.find(group => {
+    //                 return group.id === uniformGroupCash.group
+    //             })
+
+    //             if (currentUniformGroup?.parts.flat().length < 2) {
+    //                 this.buildUniformTexture.removeFromUniformGroup(currentMesh)
+    //                 this.buildUniformTexture.loadUniformGroup([{
+    //                     objects: [currentMesh],
+    //                     id: uniformGroupCash.group,
+    //                     fasadId: uniformGroupCash.backupFasadId
+    //                 }])
+    //             }
+    //             else {
+    //                 this.buildUniformTexture.removeFromUniformGroup(currentMesh)
+    //                 this.buildUniformTexture.addToUniformGroup(currentMesh, uniformGroupCash.group)
+    //                 /** Скрываем helper переходящего рисунка */
+    //             }
+
+    //             this.root._customBoxHelper.hideGroupBox(this.buildUniformTexture._groupsBoxHelper)
+
+    //         }
+
+    //     }
+
+    //     await rebuild()
+
+    //     const adjustedPosition = this.root._roomManager!.adjustPositionWithRaycasting({
+    //         object: currentMesh,
+    //         targetPosition: currentMesh.userData.targetPosition,
+    //         wall: currentMesh.userData.currentWall
+    //     });
+
+    //     currentMesh.position.copy(adjustedPosition.position);
+    //     currentMesh.rotation.copy(adjustedPosition.rotation);
+
+    //     const center = new THREE.Vector3();
+    //     currentMesh.userData.aabb.getCenter(center);
+    //     currentMesh.userData.obb.center.copy(center);
+    //     /** @Корректная_коллизия */
+    //     const { SIZE } = currentMesh?.userData.PROPS.CONFIG
+
+    //     currentMesh.userData.obb.halfSize.x = fasadeSize ? SIZE.width * 0.5 : data.width * 0.5;
+
+    //     if (PROPS.FASADE.length === 0 || extrasYsize.includes(PRODUCT)) {
+    //         currentMesh.userData.obb.halfSize.y = data.height * 0.5;
+    //     }
+
+    //     this.root._customBoxHelper!.updateBoxHelper();
+
+    //     if (type !== 'raspil') {
+    //         this.events.emit("U:Model-resize");
+    //     }
+
+    // }
+
+
+
     async changeModelSize({ data, mesh, type }: TResizeModel) {
-
-
-        const extrasYsize = [2050360, 1059832, 971222, 3140746]
-        const currentMesh = mesh ? mesh : this._currentMesh
-
-        if (!currentMesh) return
+        const currentMesh = mesh ?? this._currentMesh;
+        if (!currentMesh) return;
 
         if (currentMesh.name === 'MODEL') {
-
-            await this.buildProduct.models_builder.refillModelFromSource(currentMesh, {
-                width: data.width,
-                height: data.height,
-                depth: data.depth
-            }, type);
-
+            await this.buildProduct.models_builder.refillModelFromSource(
+                currentMesh,
+                { width: data.width, height: data.height, depth: data.depth },
+                type
+            );
             this.root._customBoxHelper!.updateBoxHelper();
-
-            return
+            return;
         }
 
-        const { PROPS } = currentMesh!.userData
-        const { CONFIG, PRODUCT } = PROPS
-        const { POSITION, UNIFORM_TEXTURE } = CONFIG
-        const fasadeSize = type === 'resize'
+        const { PROPS } = currentMesh.userData;
+        const { CONFIG, PRODUCT } = PROPS;
+        const { POSITION, UNIFORM_TEXTURE, SIZE } = CONFIG;
+        const fasadeSize = type === 'resize';
 
-        /** Очищаем родительский объект */
-        this.dispose.clearParent(currentMesh as THREE.Object3D)
+        this.dispose.clearParent(currentMesh as THREE.Object3D);
 
-        const rebuild = async () => {
+        // Пересоздаём по новым параметрам
+        const body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data, fasadeSize);
+        currentMesh.add(body as THREE.Object3D);
+        currentMesh.position.set(POSITION.x, POSITION.y, POSITION.z);
+        currentMesh.updateMatrixWorld(true);
 
-            /** Пересоздаём по новым параметрам */
-            let body = this.buildProduct.createProductBody(currentMesh as THREE.Object3D, data, fasadeSize);
-            /** Добавляем к родителю */
-            currentMesh?.add(body as THREE.Object3D);
-            currentMesh?.position.set(POSITION.x, POSITION.y, POSITION.z)
-            currentMesh?.updateMatrixWorld(true);
+        currentMesh.userData.trueSizes = {
+            DEPTH: fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5,
+            HEIGHT: body.userData.trueSizes.HEIGHT,
+            WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5,
+        };
 
-            const { SIZE } = currentMesh?.userData.PROPS.CONFIG
+        // Пересоздаём UNIFORM_TEXTURE
+        if (UNIFORM_TEXTURE.group !== null) {
+            const uniformGroupCash = { ...UNIFORM_TEXTURE };
+            const currentUniformGroup = this.buildUniformTexture._uniformGroups.find(
+                g => g.id === uniformGroupCash.group
+            );
 
+            this.buildUniformTexture.removeFromUniformGroup(currentMesh);
 
-            const height = body.userData.trueSizes.HEIGHT
-            const incomeSize = {
-                DEPTH: fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5,
-                HEIGHT: height,
-                WIDTH: fasadeSize ? SIZE.width * 0.5 : data.width * 0.5
-            }
-            /** Для корректного примагничивания к стенам */
-            currentMesh.userData.trueSizes = incomeSize
-            /** Пересоздаём UNIFORM_TEXTURE*/
-            if (UNIFORM_TEXTURE.group !== null) {
-
-                const uniformGroupCash = { ...UNIFORM_TEXTURE }
-
-                const currentUniformGroup = this.buildUniformTexture._uniformGroups.find(group => {
-                    return group.id === uniformGroupCash.group
-                })
-
-                if (currentUniformGroup?.parts.flat().length < 2) {
-                    this.buildUniformTexture.removeFromUniformGroup(currentMesh)
-                    this.buildUniformTexture.loadUniformGroup([{
-                        objects: [currentMesh],
-                        id: uniformGroupCash.group,
-                        fasadId: uniformGroupCash.backupFasadId
-                    }])
-                }
-                else {
-                    this.buildUniformTexture.removeFromUniformGroup(currentMesh)
-                    this.buildUniformTexture.addToUniformGroup(currentMesh, uniformGroupCash.group)
-                    /** Скрываем helper переходящего рисунка */
-                }
-
-                this.root._customBoxHelper.hideGroupBox(this.buildUniformTexture._groupsBoxHelper)
-
+            if (currentUniformGroup?.parts.flat().length < 2) {
+                this.buildUniformTexture.loadUniformGroup([{
+                    objects: [currentMesh],
+                    id: uniformGroupCash.group,
+                    fasadId: uniformGroupCash.backupFasadId,
+                }]);
+            } else {
+                this.buildUniformTexture.addToUniformGroup(currentMesh, uniformGroupCash.group);
             }
 
+            this.root._customBoxHelper.hideGroupBox(this.buildUniformTexture._groupsBoxHelper);
         }
 
-        await rebuild()
-
-        const adjustedPosition = this.root._roomManager!.adjustPositionWithRaycasting({
+        const adjusted = this.root._roomManager!.adjustPositionWithRaycasting({
             object: currentMesh,
             targetPosition: currentMesh.userData.targetPosition,
-            wall: currentMesh.userData.currentWall
+            wall: currentMesh.userData.currentWall,
         });
 
-        currentMesh.position.copy(adjustedPosition.position);
-        currentMesh.rotation.copy(adjustedPosition.rotation);
+        currentMesh.position.copy(adjusted.position);
+        currentMesh.rotation.copy(adjusted.rotation);
 
         const center = new THREE.Vector3();
         currentMesh.userData.aabb.getCenter(center);
         currentMesh.userData.obb.center.copy(center);
-        /** @Корректная_коллизия */
-        const { SIZE } = currentMesh?.userData.PROPS.CONFIG
 
         currentMesh.userData.obb.halfSize.x = fasadeSize ? SIZE.width * 0.5 : data.width * 0.5;
+        currentMesh.userData.obb.halfSize.z = fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5;
+        console.log(this)
 
-        if (PROPS.FASADE.length === 0 || extrasYsize.includes(PRODUCT)) {
+        if (PROPS.FASADE.length === 0 || this.EXTRAS_Y_SIZE.has(PRODUCT)) {
             currentMesh.userData.obb.halfSize.y = data.height * 0.5;
         }
 
         this.root._customBoxHelper!.updateBoxHelper();
 
         if (type !== 'raspil') {
-            this.events.emit("U:Model-resize");
+            this.events.emit('U:Model-resize');
         }
-
     }
 
     //------------------
