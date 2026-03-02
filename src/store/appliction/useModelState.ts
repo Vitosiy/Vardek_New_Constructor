@@ -499,13 +499,20 @@ export const useModelState = defineStore('ModelState', () => {
         const fasadePosData = _FASADE_POSITION.value[positionId]
 
         const haveShowCase = fasadePosData?.glass == 1
-
+        const sideColors = ["LEFTSIDECOLOR", "RIGHTSIDECOLOR"]
 
         // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
-        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null) {
+        if ((_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null) || (sideColors.includes(fasadeNdx) && _FASADE.value[fasadeId].ATTACH_MILLINGS_SIDE?.[0])) {
 
             let millings: IMilling[] = []
-            let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
+            let fasadeMilling: number[]
+            if(sideColors.includes(fasadeNdx) && _FASADE.value[fasadeId].ATTACH_MILLINGS_SIDE?.[0]){
+                fasadeMilling = _FASADE.value[fasadeId].ATTACH_MILLINGS_SIDE
+            }
+            else {
+                fasadeMilling = _FASADE.value[fasadeId].ATTACH_MILLINGS
+            }
+
             let percept = {}
             let prodMilling: number[] = _PRODUCTS.value[productId].MILLING
 

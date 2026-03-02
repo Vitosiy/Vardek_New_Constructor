@@ -242,6 +242,20 @@ const addFilling = (_product, productGroupID) => {
     product.width = module.value.moduleThickness
   }
 
+  let depth = product.depth
+  if (product.ACTUAL_DEPT && product.ACTUAL_DEPT >= module.value.depth) {
+    alert("Недостаточная глубина модуля для этого товара!", "error");
+    return;
+  }
+
+  if (product.SIZE_EDIT_DEPTH_MAX) {
+    depth = module.value.depth;
+
+    const moduleProductInfo = APP.CATALOG.PRODUCTS[module.value.productID]
+    if (moduleProductInfo?.moduleType?.CODE === "wardrobe")
+      depth -= 100;
+  }
+
   const startFillingData = createFillingDataToCheck(product, currentModuleSegment, isVerticalItem, !!product.MIN_FASADE_SIZE);
 
   if (!startFillingData) {
@@ -252,15 +266,6 @@ const addFilling = (_product, productGroupID) => {
   if (!currentModuleSegment.fillings)
     currentModuleSegment.fillings = []
   currentFillingsArray = currentModuleSegment.fillings
-
-  let depth = product.depth
-  if (product.SIZE_EDIT_DEPTH_MAX) {
-    depth = module.value.depth;
-
-    const moduleProductInfo = APP.CATALOG.PRODUCTS[module.value.productID]
-    if (moduleProductInfo?.moduleType?.CODE === "wardrobe")
-      depth -= 100;
-  }
 
   let width = startFillingData.width;
   let height = startFillingData.height;

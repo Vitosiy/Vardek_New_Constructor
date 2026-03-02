@@ -15,12 +15,17 @@ import Constructor2D from '@/Constructor2D';
 import { loadBlankRoom } from "@/Constructor2D/facade/blankRoom";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useConstructor2DHistory } from "@/store/constructor2d/useConstructor2DHistory";
+// @ts-ignore
+import { useEventBus } from "@/store/appliction/useEventBus";
 // @ts-ignore
 import { useRoomState } from "@/store/appliction/useRoomState";
 // @ts-ignore
 import { useBasketStore } from "@/store/appStore/useBasketStore";
 
 let schemeTransition = useSchemeTransition();
+const constructor2DHistory = useConstructor2DHistory();
+const appEventBus = useEventBus();
 // root container
 let root2d: Ref<HTMLElement | undefined> = ref();
 // canvas
@@ -83,6 +88,13 @@ let dropHandler: ((event: DragEvent) => void) = (event: DragEvent): void => {
   }
 };
 
+const onHistoryPush = () => {
+  const data = schemeTransition.getAllData();
+  if (data && data.length >= 0) {
+    constructor2DHistory.addAction(JSON.parse(JSON.stringify(data)));
+  }
+};
+
 onMounted(async () => {
   if (root2d.value && canvas2d.value) {
 
@@ -100,6 +112,9 @@ onMounted(async () => {
     // @ts-ignore
     window.C2D = App2d; // Сохраняем ссылку на объект App2d в глобальную область видимости
   }
+
+  appEventBus.on("C2D:HistoryPush", onHistoryPush);
+
     // Безопасное скрытие loader
     // const loader = document.querySelector('#main-loader');
     // if (loader) {
@@ -109,10 +124,14 @@ onMounted(async () => {
     if (rooms.length === 0) {
       await loadBlankRoom();
     }
+
+    // Уведомляем, что 2D конструктор готов (для показа кнопок undo/redo в хедере)
+    appEventBus.emit("C2D:Ready");
 });
 
 onUnmounted(() => {
   try {
+    appEventBus.off("C2D:HistoryPush", onHistoryPush);
     if (App2d) {
       // Безопасно уничтожаем объект App2d
       try {

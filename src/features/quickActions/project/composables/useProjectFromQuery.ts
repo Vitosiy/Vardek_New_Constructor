@@ -1,14 +1,35 @@
 // @ts-nocheck
+import { watch } from "vue";
 import { useProjectAPI } from "./useProjectAPI";
 import { useProjectStore } from "../store/useProjectStore";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useSceneState } from "@/store/appliction/useSceneState";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useAppData } from "@/store/appliction/useAppData";
 import { useToast } from "@/features/toaster/useToast";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/store/appStore/authStore";
 import { ProjectTab } from "../types";
+
+/** Ожидание готовности appData (после getdata) перед загрузкой проекта по ссылке */
+function waitForAppDataLoaded(): Promise<void> {
+  const appDataStore = useAppData();
+  if (appDataStore.isLoaded) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const stop = watch(
+      () => appDataStore.isLoaded,
+      (loaded) => {
+        if (loaded) {
+          stop();
+          resolve();
+        }
+      }
+    );
+  });
+}
 
 export function useProjectFromQuery() {
   const router = useRouter();
@@ -67,7 +88,8 @@ export function useProjectFromQuery() {
   };
 
   /**
-   * Основная логика проверки query-параметра
+   * Основная логика проверки query-параметра.
+   * Дожидается успешной загрузки getdata (appData), затем загружает проект по projectId из ссылки.
    */
   const accordCheck = async () => {
     const rawId = route.query?.projectId;
@@ -75,28 +97,27 @@ export function useProjectFromQuery() {
     // Если параметр отсутствует — ничего не делаем
     if (!rawId) return;
 
-    const path = route.path; // нужный путь, куда возвращать
+    const path = route.path;
 
     // 1. Проверяем — является ли значение числом
     const id = Number(rawId);
 
     if (Number.isNaN(id)) {
       toaster.error("Невалидный ID");
-      // Очистка query и возврат на path
-      //todo 
-      const url = new URL(window.location.href);
       router.replace({ path, query: {} });
       return;
     }
 
-    // 2. Пытаемся загрузить проект по конкретному id
+    // 2. Дожидаемся готовности appData (getdata завершён) — важно при переходе по ссылке из неавторизованной сессии
+    await waitForAppDataLoaded();
+
+    // 3. Загружаем проект по id
     const isLoaded = await loadProject(id);
     if (!isLoaded) {
       toaster.error("Проект не найден или ссылка невалидна");
       router.replace({ path, query: {} });
       return;
     }
-
   };
 
   return {

@@ -14,6 +14,7 @@ import { useProjectAPI } from './project/composables/useProjectAPI';
 import { useProjectStore } from './project/store/useProjectStore';
 import { useRoomState } from '@/store/appliction/useRoomState';
 import { useSchemeTransition } from '@/store/canvasMerge/schemeTransition';
+import { useConstructor2DHistory } from '@/store/constructor2d/useConstructor2DHistory';
 import { loadBlankRoom } from '@/Constructor2D/facade/blankRoom';
 import { useBasketStore } from '@/store/appStore/useBasketStore';
 import { useRoomContantData } from '@/store/appliction/useRoomContantData';
@@ -50,6 +51,7 @@ export const useQuickActionsToolbar = () => {
   const sceneState = useSceneState();
   const roomState = useRoomState()
   const schemeTransition = useSchemeTransition();
+  const constructor2DHistory = useConstructor2DHistory();
 
   const projectState = useProjectStore();
   const projectAPI = useProjectAPI()
@@ -97,6 +99,10 @@ export const useQuickActionsToolbar = () => {
       if (result.success) {
         if (result.data?.ID) projectState.setProjectId(result.data.ID);
         projectState.updateAfterSave();
+        const roomsData = schemeTransition.getAllData() ?? [];
+        if (roomsData.length > 0) {
+          constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+        }
         toaster.success("Сохранено");
       } else {
         console.error("❌ Ошибка сохранения:", result.error);
@@ -130,6 +136,10 @@ export const useQuickActionsToolbar = () => {
         if (result.data?.ID) projectState.setProjectId(result.data.ID);
         console.log(result.data?.kp);
         projectState.updateAfterSave();
+        const roomsData = schemeTransition.getAllData() ?? [];
+        if (roomsData.length > 0) {
+          constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+        }
         toaster.success("Сохранено");
         
         // Вызываем callback при успешном сохранении

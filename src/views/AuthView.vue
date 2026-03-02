@@ -17,7 +17,7 @@ import AuthForm from '@/components/authorization/AuthForm.vue'
 import AuthSlider from '@/components/authorization/AuthSlider.vue'
 import { useAuthStore } from '@/store/appStore/authStore'
 import { useAppData } from '@/store/appliction/useAppData'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const authForm = ref()
 const authSlider = ref()
@@ -25,10 +25,12 @@ const isLoading = ref(true);
 const authStore = useAuthStore();
 const appDataStore = useAppData()
 const router = useRouter()
+const route = useRoute()
 
 watchEffect(async () => {
   if (authStore.isAuthenticated && !appDataStore.isLoading) {
-    await router.push('/2d')
+    // Сохраняем query (в т.ч. projectId) при переходе на /2d после авторизации по ссылке
+    await router.push({ path: '/2d', query: route.query })
   }
 });
 

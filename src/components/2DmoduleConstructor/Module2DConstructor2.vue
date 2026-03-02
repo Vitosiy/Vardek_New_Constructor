@@ -1454,7 +1454,15 @@ const reset = (reset = false) => {
 
             if (newRow.fillings?.length) {
               newRow.fillings = <FillingObject>[...newRow.fillings]
-              newRow.fillings.forEach((filling, index) => {
+              newRow.fillings = newRow.fillings.map((filling, index) => {
+
+                let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+                if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+                  toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  return;
+                }
+
                 if(filling.isVerticalItem){
                   updateFilling(newRow.height, filling, 'height')
                 }
@@ -1466,8 +1474,8 @@ const reset = (reset = false) => {
                     updateFilling(newRow.width, filling, 'width')
                 }
 
-
-              })
+                  return filling
+              }).filter(item => item)
             }
 
             newCellsRowArray.push(newRow)
@@ -1503,7 +1511,15 @@ const reset = (reset = false) => {
 
                 if (newExtra.fillings?.length) {
                   newExtra.fillings = <FillingObject>[...newExtra.fillings]
-                  newExtra.fillings.forEach((filling, index) => {
+                  newExtra.fillings = newExtra.fillings.map((filling, index) => {
+
+                    let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+                    if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+                      toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                      alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                      return;
+                    }
+
                     if(filling.isVerticalItem) {
                       updateFilling(newExtra.height, filling, 'height')
                     }
@@ -1514,7 +1530,9 @@ const reset = (reset = false) => {
                       else
                         updateFilling(newExtra.width, filling, 'width')
                     }
-                  })
+
+                    return filling;
+                  }).filter(item => item)
                 }
 
                 newRowExtrasArray.push(newExtra)
@@ -1539,7 +1557,14 @@ const reset = (reset = false) => {
 
             if (lastRow.fillings?.length) {
               lastRow.fillings = <FillingObject>[...lastRow.fillings]
-              lastRow.fillings.forEach((filling, index) => {
+              lastRow.fillings = lastRow.fillings.map((filling, index) => {
+                let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+                if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+                  toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  return;
+                }
+
                 if(filling.isVerticalItem) {
                   updateFilling(lastRow.height, filling, 'height')
                 }
@@ -1549,7 +1574,9 @@ const reset = (reset = false) => {
                   } else
                     updateFilling(lastRow.width, filling, 'width')
                 }
-              })
+
+                return filling;
+              }).filter(item => item)
             }
           }
 
@@ -1560,7 +1587,14 @@ const reset = (reset = false) => {
 
         if (newCell.fillings?.length) {
           newCell.fillings = <FillingObject>[...newCell.fillings]
-          newCell.fillings.forEach((filling, index) => {
+          newCell.fillings = newCell.fillings.map((filling, index) => {
+            let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+            if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+              toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+              alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+              return;
+            }
+
             if(filling.isVerticalItem) {
               updateFilling(newCell.height, filling, 'height')
             }
@@ -1570,7 +1604,9 @@ const reset = (reset = false) => {
               } else
                 updateFilling(newCell.width, filling, 'width')
             }
-          })
+
+            return filling;
+          }).filter(item => item)
         }
 
         newCellsArray.push(newCell)
@@ -1583,7 +1619,14 @@ const reset = (reset = false) => {
 
     if (newSection.fillings?.length) {
       newSection.fillings = <FillingObject>[...newSection.fillings]
-      newSection.fillings.forEach((filling, index) => {
+      newSection.fillings = newSection.fillings.map((filling, index) => {
+        let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+        if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+          toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+          alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+          return;
+        }
+
         if(filling.isVerticalItem) {
           updateFilling(newSection.height, filling, 'height')
         }
@@ -1593,7 +1636,9 @@ const reset = (reset = false) => {
           } else
             updateFilling(newSection.width, filling, 'width')
         }
-      })
+
+        return filling;
+      }).filter(item => item)
     }
 
     return newSection

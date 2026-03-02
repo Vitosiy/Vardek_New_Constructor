@@ -113,13 +113,16 @@ export const useOptions = () => {
                     })
                     delete noLoopsOption.disabled
                 }
-
                 break;
             case 7250452:   //Деревянная царга
                 if (curOpt.active) {
                     PROPS.CONFIG.TSARGA = { TYPE: 'wood', COLOR: PROPS.CONFIG.MODULE_COLOR }
                 } else
                     delete PROPS.CONFIG.TSARGA
+                break;
+            case 8390271:
+                if(PROPS.CONFIG.eccentricOption)
+                    curOpt.active = true;
                 break;
             case 7250589:   //Металлическая царга
                 if (curOpt.active) {
