@@ -4,7 +4,7 @@ import "@/components/UMconstructor/styles/UM.scss"
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import Toggle from "@vueform/toggle";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {onMounted, ref, toRefs} from "vue";
+import {onMounted, ref, toRefs, watch} from "vue";
 import {TTotalProps} from "@/types/types.ts";
 
 const props = defineProps({
@@ -52,6 +52,29 @@ const updateTotalSize = (dimensions: string, value: number) => {
         break;
   }
 }
+
+const horizontToggle = (value: boolean) => {
+  if (value) {
+    updateTotalSize("horizont", 78)
+  }
+  else {
+    updateTotalSize("horizont", 0)
+  }
+  UMconstructor.value.UM_STORE.onHorizont = value
+}
+
+watch(() => UMconstructor?.value?.UM_STORE.onHorizont, () => {
+  if(onHorizont.value !== UMconstructor.value.UM_STORE.onHorizont) {
+    onHorizont.value = UMconstructor.value.UM_STORE.onHorizont
+    horizontToggle(onHorizont.value)
+  }
+})
+
+watch(() => UMconstructor?.value?.UM_STORE.noBottom, () => {
+  if(noBottom.value !== UMconstructor.value.UM_STORE.noBottom) {
+    noBottom.value = UMconstructor.value.UM_STORE.noBottom
+  }
+})
 
 onMounted(() => {
   totalHeight.value = UMconstructor.value.UM_STORE.totalHeight
@@ -143,7 +166,7 @@ onMounted(() => {
     >
       <p class="no-select actions-title">Цоколь
         <img v-if="mode !== 'module' || noBottom" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
-        <Toggle v-else v-model="onHorizont"/>
+        <Toggle v-else v-model="onHorizont" @change="horizontToggle"/>
       </p>
 
       <p v-if="!noBottom" class="no-select item__label text-grey">

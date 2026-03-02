@@ -52,7 +52,6 @@ const getFillings = computed(() => {
 </script>
 
 <template>
-  <div>
     <div
         v-if="mode === 'module'"
     >
@@ -99,7 +98,6 @@ const getFillings = computed(() => {
       />
     </div>
 
-  </div>
 </template>
 
 <style scoped lang="scss">

@@ -253,7 +253,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
     <div class="splitter-container--product-data" v-if="mode === 'add'">
 
-      <div class="accordion" v-if="fillings">
+      <div class="accordion accordion-fillings_list" v-if="fillings">
         <div
             class="splitter-container--product-items"
             v-for="(fillingGroup, key) in fillings"
@@ -978,5 +978,9 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 </template>
 
 <style scoped lang="scss">
-
+.accordion {
+  &-fillings_list{
+    gap: 1rem;
+  }
+}
 </style>
