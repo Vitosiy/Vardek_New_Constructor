@@ -306,7 +306,9 @@ const init2DHistoryAndActions = () => {
     c2d.layers.planner.init(true);
     c2d.layers.doorsAndWindows.init(true);
   }
-  constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+  if (constructor2DHistory.historyLength === 0 && roomsData.length > 0) {
+    constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+  }
   historyActions.value = true;
   restorLength.value = Math.max(0, constructor2DHistory.historyLength - 1);
   curActionCount.value = constructor2DHistory.currentIndex;
@@ -444,8 +446,9 @@ watch(
             c2d.layers.planner.init(true);
             c2d.layers.doorsAndWindows.init(true);
           }
-          // Инициализируем объект истории 2D начальным снапшотом
-          constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+          if (constructor2DHistory.historyLength === 0 && roomsData.length > 0) {
+            constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+          }
           historyActions.value = true;
           restorLength.value = Math.max(0, constructor2DHistory.historyLength - 1);
           curActionCount.value = constructor2DHistory.currentIndex;

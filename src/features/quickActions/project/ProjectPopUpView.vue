@@ -152,6 +152,7 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useProjectStore } from "./store/useProjectStore";
 import { useProjectAPI } from "./composables/useProjectAPI";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useConstructor2DHistory } from "@/store/constructor2d/useConstructor2DHistory";
 import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -168,6 +169,7 @@ const authStore = useAuthStore();
 const sceneState = useSceneState();
 const eventBus = useEventBus();
 const schemeTransition = useSchemeTransition();
+const constructor2DHistory = useConstructor2DHistory();
 
 const API_URL = ref(`https://${BASE_DOMAIN}`);
 const PAGE_SIZE = 12;
@@ -472,6 +474,10 @@ const saveProject = async () => {
       // SaveProject всегда создаёт новый проект — ставим текущим только что сохранённый
       if (result.data?.ID) projectState.setProjectId(result.data.ID);
       projectState.updateAfterSave();
+      const roomsData = schemeTransition.getAllData() ?? [];
+      if (roomsData.length > 0) {
+        constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+      }
       await loadProjects(0);
     } else {
       console.error("❌ Ошибка сохранения:", result.error);
