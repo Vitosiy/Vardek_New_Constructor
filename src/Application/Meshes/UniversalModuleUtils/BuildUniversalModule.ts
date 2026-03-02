@@ -259,6 +259,11 @@ export class BuildUniversalModule extends BuildProduct {
         if (product_data.moduleType.CODE === "restricted")
             CONFIG.isRestrictedModule = true
 
+        let option = CONFIG.OPTIONS.find(item => +item.id === 8390271)
+        if (product_data.SIDEWALL?.[0] && option && !option.active) {
+            option.active = true
+        }
+
         return CONFIG
     }
 
