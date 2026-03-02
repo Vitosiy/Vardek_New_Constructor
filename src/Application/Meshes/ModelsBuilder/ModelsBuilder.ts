@@ -31,10 +31,13 @@ export class ModelsBuilder {
     public create(params: CreateParams) {
         const { url, onLoad, props, sizeRulers = true, UMFillinig = false } = params;
 
+
         const arrows = new THREE.Object3D()
         const modelData = this.parent._MODELS[props.CONFIG.MODELID]
         const path = url ?? modelData.file ?? modelData.DAE
         const PROD = this.parent._PRODUCTS[props.PRODUCT]
+
+        console.log(modelData)
 
         let normolized;
 
@@ -66,6 +69,14 @@ export class ModelsBuilder {
 
                 const editSize = checkResizes || UMFillinig ? props.CONFIG.SIZE : null
                 const normolized = this.normalizeUploadedModel(file, model, editSize) as THREE.Object3D;
+                const { corr_z, corr_y, corr_x } = modelData
+                const correction = {
+                    x: corr_x ? parseFloat(corr_x) : 0,
+                    y: corr_y ? parseFloat(corr_y) : 0,
+                    z: corr_z ? parseFloat(corr_z) : 0
+                }
+
+                console.log(correction)
 
                 if (model.model_type.length === 0) {
 
@@ -95,7 +106,7 @@ export class ModelsBuilder {
                 normolized.userData.aabb = aabb
 
                 normolized.userData.trueSizes = {
-                    DEPTH: size.z * 0.5, HEIGHT: size.y * 0.5, WIDTH: size.x * 0.5
+                    DEPTH: size.z * 0.5 + correction.z * 2, HEIGHT: size.y * 0.5 + correction.y * 2, WIDTH: size.x * 0.5 + correction.x * 2
                 }
 
                 // if (model.model_type.length == 0 && props.CONFIG.SIZE) {
