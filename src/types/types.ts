@@ -214,6 +214,7 @@ export type TFasadeItem = {
   EDGE_TEXTURE: string | null;
   SIBLINGS_COLOR: string | null;
   ATTACH_MILLINGS: (number | null)[];
+  ATTACH_MILLINGS_SIDE: (number | null)[];
   ALT_MILLINGS: (number | null)[];
   ATTACH_GLASS: number[];
   no_fasade: string;

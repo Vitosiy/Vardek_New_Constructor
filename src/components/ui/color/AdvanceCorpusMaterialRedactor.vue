@@ -165,8 +165,9 @@ const onSelectMaterial = (data) => {
 
   dataOfFasadeType = _FASADE[COLOR] || _COLOR[COLOR]
   haveShowcase = !!SHOWCASE;
+  let disablePatina = false;
 
-  if (data.ATTACH_MILLINGS?.[0]) {
+  if (data.ATTACH_MILLINGS?.[0] || data.ATTACH_MILLINGS_SIDE?.[0]) {
     modelState.createCurrentMillingData({
       fasadeId: data.ID,
       productId: productId.value,
@@ -187,18 +188,21 @@ const onSelectMaterial = (data) => {
     patinaList.value = modelState.getCurrentPatinaData;
 
     if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
-      millingList.value = millingList.value.filter(item => {
+      /*millingList.value = millingList.value.filter(item => {
         if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
           return item
-      })
+      })*/
       patinaList.value = []
+      isPatinaExist.value = false
+      disablePatina = true;
+    }
+    else{
+      /** @Патина */
+      isPatinaExist.value =
+          patinaList.value.length > 0 && !product.type_showcase[0];
     }
 
     isMillingExist.value = millingList.value.length > 0 && !haveShowcase;
-
-    /** @Патина */
-    isPatinaExist.value =
-        patinaList.value.length > 0 && !product.type_showcase[0];
   }
   else {
     isMillingExist.value = false;
@@ -251,7 +255,7 @@ const onSelectMaterial = (data) => {
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
 
     isPatinaExist.value =
-        patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0;
+        patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0 && !disablePatina;
 
   } else {
     currentMillingData.value = {};
@@ -324,12 +328,14 @@ const onSelectMilling = (data) => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const fasadeProps = props.elementData || FASADE_PROPS[props.elementIndex];
   const rootDataPatina = modelState._FASADE[fasadeProps.COLOR].PATINA;
+  const disablePatina = typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')
 
   isPatinaExist.value =
       data.patina == 0 &&
       rootDataPatina.length > 0 &&
       rootDataPatina[0] != null &&
-      rootDataPatina[0] != 0;
+      rootDataPatina[0] != 0 &&
+      !disablePatina;
 
 
   /** @Если у выбранной фрезы нет патина */
@@ -613,14 +619,18 @@ const prepareData = () => {
   }
 
   /** @Фрезеровка */
+  let disablePatina = false;
   if (fasadeData.ATTACH_MILLINGS?.[0] && !haveShowcase) {
     millingList.value = millingData;
 
     if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
-      millingList.value = millingData.filter(item => {
+      /*millingList.value = millingData.filter(item => {
         if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
           return item
-      })
+      })*/
+      patinaList.value = []
+      isPatinaExist.value = false
+      disablePatina = true;
     }
 
     isMillingExist.value = millingData.length > 0;
@@ -639,11 +649,11 @@ const prepareData = () => {
   }
 
   /** @Патина */
-  if (fasadeData.PATINA?.[0] && isMillingExist.value && MILLING) {
+  if (fasadeData.PATINA?.[0] && isMillingExist.value && MILLING && !disablePatina) {
     const curMilling = _APP.MILLING[MILLING];
 
     patinaList.value = patinaData;
-    isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0;
+    isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0 && !disablePatina;
   }
 
   /** @Стёкла */
