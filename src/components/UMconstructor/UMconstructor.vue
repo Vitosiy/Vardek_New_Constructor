@@ -109,6 +109,9 @@ const closeUMRedactor = () => {
   UMstore.setUMCashGrid()
   UMstore.setUMData()
   UMstore.setUMGrid()
+  UMstore.setSelected("module")
+  UMstore.setSelected("fasades")
+  UMstore.setSelected("fillings")
 };
 
 onBeforeUnmount(()=>{
@@ -120,6 +123,9 @@ onBeforeUnmount(()=>{
   UMstore.setUMCashGrid()
   UMstore.setUMData()
   UMstore.setUMGrid()
+  UMstore.setSelected("module")
+  UMstore.setSelected("fasades")
+  UMstore.setSelected("fillings")
 })
 
 defineExpose({

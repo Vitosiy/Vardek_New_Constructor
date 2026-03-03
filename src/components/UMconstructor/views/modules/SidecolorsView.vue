@@ -378,8 +378,8 @@ onMounted(() => {
   </div>
 
   <transition name="slide--left" mode="out-in">
-    <div class="color" v-if="currentOption" key="color-select">
-      <div class="color-select" key="color-select">
+    <div class="color--left" v-if="currentOption" key="color--left-select">
+      <div class="color--left-select" key="color--left-select">
         <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
         <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
@@ -392,7 +392,7 @@ onMounted(() => {
         </p>
 
         <AdvanceCorpusMaterialRedactor
-            class="color-select-item"
+            class="color--left-select-item"
             v-if="getCurrentRedactor"
             :key="currentOption"
             :element-data="getCurrentValue"
@@ -403,7 +403,7 @@ onMounted(() => {
         />
         <CorpusMaterialRedactor
             v-else
-            class="color-select-item"
+            class="color--left-select-item"
             :is2Dconstructor="true"
             :material-list="materialList"
             :type="currentOption === 'BACKWALL' ? 'backwall' : 'surface'"
@@ -412,7 +412,7 @@ onMounted(() => {
 
         <HiTechSideprofile
             v-if="currentOption === 'PROFILECOLOR' && getSideProfile"
-            class="color-select-item"
+            class="color--left-select-item"
             :module="module"
         />
       </div>
@@ -421,59 +421,4 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.color {
-  display: flex;
-  position: fixed;
-  left: 20.8vw;
-  top: 0;
-
-  height: 100%;
-  width: 100%;
-  max-width: 373px;
-  max-height: 95vh;
-  overflow: hidden;
-
-  z-index: 0;
-
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ и Edge */
-  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
-
-  &-select {
-    right: unset;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-
-    max-height: 96vh;
-    overflow-y: scroll;
-
-    gap: 1rem;
-    padding: 15px;
-    box-shadow: 0px 0px 10px 0px #3030301a;
-    border-radius: 15px;
-    background: rgba($white, 1);
-
-    &__container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      overflow: auto;
-    }
-
-    &-item {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      padding: 10px;
-      border-radius: 15px;
-      gap: 10px;
-
-      &__title {
-        font-size: 15px;
-        font-weight: 500;
-      }
-    }
-  }
-}
 </style>

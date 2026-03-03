@@ -50,9 +50,23 @@ const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<selectedMaterial | boolean>(false);
 const isOpenHandleSelector = ref<boolean>(false);
 const currentHandle = ref<selectedMaterial | boolean>(false);
+
 const step = ref<number>(1);
 
 const selectedFilling = ref<TSelectedCell>(<TSelectedCell>{});
+
+// Аккордеон для групп наполнений: открыта только одна группа
+const openedFillingGroupKey = ref<string | number | null>(null);
+
+const toggleFillingGroup = (key: string | number, event: Event) => {
+  const details = event.currentTarget as HTMLDetailsElement;
+  // Если только что открыли эту группу — закрываем остальные
+  if (details.open) {
+    openedFillingGroupKey.value = key;
+  } else if (openedFillingGroupKey.value === key) {
+    openedFillingGroupKey.value = null;
+  }
+};
 
 const {module, UMconstructor} = toRefs(props)
 const {createSurfaceList} =
@@ -207,8 +221,36 @@ const showCurrentCol = (
   UMconstructor?.value?.selectCell("fillings", <TSelectedCell>{sec, cell, row, extra, item})
 };
 
+const handleCellSelect = () => {
+  const {sec, cell, row, extra, item} = selectedFilling.value;
+
+  //Задержка нужна для того, чтоб рендер аккордионов обновился
+  UMconstructor?.value?.debounce("handleCellSelectSectionFillings", () => {
+    let idTag = `module_${sec}`
+
+    if(cell !== null)
+      idTag += `_${cell}`;
+
+    if(row !== null)
+      idTag += `_${row}`
+
+    if(extra !== null)
+      idTag += `_${extra}`;
+
+    if(item !== null)
+      idTag += ` ${item}`;
+
+    let domElem = document.getElementById(idTag)
+    if(domElem) {
+      domElem.scrollIntoView();
+    }
+  }, 10)
+
+};
+
 onMounted(() => {
   selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
+  handleCellSelect()
 })
 
 watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
@@ -259,7 +301,11 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
             v-for="(fillingGroup, key) in fillings"
             :key="key + fillingGroup.groupName"
         >
-          <details class="item-group">
+          <details
+              class="item-group"
+              :open="openedFillingGroupKey === key"
+              @toggle="toggleFillingGroup(key, $event)"
+          >
             <summary>
               <h3 class="item-group__title">
                 {{ fillingGroup.groupName }}
@@ -312,10 +358,10 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
             ]"
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
+              @click="showCurrentCol(secIndex)"
           >
             <p
                 class="actions-title actions-title--part"
-                @click="showCurrentCol(secIndex)"
             >
               {{ secIndex + 1 }}
             </p>
@@ -956,7 +1002,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="color-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color-select">
+    <div class="color--right-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color--right-select">
       <ClosePopUpButton class="menu__close" @close="closeMenu()"/>
 
       <AdvanceCorpusMaterialRedactor
@@ -979,6 +1025,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
 <style scoped lang="scss">
 .accordion {
+  border: unset;
   &-fillings_list{
     gap: 1rem;
   }

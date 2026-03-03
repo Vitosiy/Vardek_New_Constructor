@@ -42,14 +42,18 @@ export default class FillingsManager {
         const current = currentExtra || currentRow || currentCell || section;
         const prevValue = currentfilling[type]; //Предыдущее значение
         let newValue = value;
-        const delta = prevValue - newValue
 
         let tmpSector = currentfilling.sector
+        let tmpFasade = currentfilling.fasade
         delete currentfilling.sector
+        delete currentfilling.fasade
 
         const fillingData = JSON.parse(JSON.stringify(currentfilling));
         fillingData[type] = newValue;
         fillingData.sector = tmpSector;
+
+        if(tmpFasade)
+            fillingData.fasade = tmpFasade;
 
         const pixiSector = current.sector;
 
@@ -86,7 +90,9 @@ export default class FillingsManager {
         }
 
         currentfilling.sector = tmpSector;
-        
+        if(tmpFasade)
+            currentfilling.fasade = tmpFasade;
+
         return currentfilling;
     };
 
@@ -197,7 +203,7 @@ export default class FillingsManager {
             product.width = grid.moduleThickness
         }
 
-        const startFillingData = this.createFillingDataToCheck(product, currentModuleSegment, isVerticalItem, !!product.MIN_FASADE_SIZE);
+        const startFillingData = this.createFillingDataToCheck(product, currentModuleSegment, grid, isVerticalItem, !!product.MIN_FASADE_SIZE);
 
         if (!startFillingData) {
             alert("Позиция не найдена");
@@ -287,7 +293,7 @@ export default class FillingsManager {
             currentModuleSegment.hiTechProfiles.push(fillingObject)
             currentFillingsArray.push(fillingObject);
 
-            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, grid)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, false, grid)
         } else
             currentFillingsArray.push(fillingObject);
 
@@ -343,7 +349,7 @@ export default class FillingsManager {
 
 
             currentSection.fasadesDrawers.push(fillingObject.fasade);
-            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, grid)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, false, grid)
         }
 
         this.selectCell(sec, cell, row, extra, currentFillingsArray.length - 1);
@@ -417,7 +423,7 @@ export default class FillingsManager {
                         delete curRow.hiTechProfiles
                 }
 
-                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
             }
         }
         
@@ -481,7 +487,7 @@ export default class FillingsManager {
             currentfilling.sector = tmpSector;
 
             if (currentfilling.fasade)
-                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
 
             this.scope.reset(grid)
         }, 1000)
@@ -544,7 +550,7 @@ export default class FillingsManager {
 
             currentfilling.sector = tmpSector;
             if (currentfilling.fasade)
-                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
             else {
                 this.scope.LOOPS.checkLoopsCollision(secIndex, grid)
             }
@@ -604,7 +610,7 @@ export default class FillingsManager {
                 this.scope.AlERT.error("Ошибка! Размер фасада слишком велик!")
             }
 
-            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
             this.scope.reset(grid)
         }, 1000)
     };

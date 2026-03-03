@@ -30,6 +30,8 @@ const props = defineProps({
 
 const {module, mode, UMconstructor} = toRefs(props)
 const selectedFasade = ref<TSelectedCell>(<TSelectedCell>{})
+const selectedCell = ref<TSelectedCell>(<TSelectedCell>{})
+
 const step = ref<number>(1)
 const { createSurfaceList } =
     useFigureRightPage();
@@ -50,14 +52,14 @@ const isOpenHandleSelector = ref<boolean>(false);
 const currentHandle = ref<selectedMaterial | boolean>(false);
 
 const showCurrentCol = (secIndex: number | null = 0, cellIndex: number|null = null, rowIndex: number|null = null) => {
-  UMconstructor?.value?.FASADES.selectCell(secIndex, cellIndex, rowIndex);
+  UMconstructor?.value?.selectCell("fasades", <TSelectedCell>{sec: secIndex, cell: cellIndex, row: rowIndex});
 };
 
 const handleCellSelect = () => {
   const {sec, cell, row} = selectedFasade.value;
 
   //Задержка нужна для того, чтоб рендер аккордионов обновился
-  UMconstructor?.value?.debounce("handleCellSelect", () => {
+  UMconstructor?.value?.debounce("handleCellSelectFasades", () => {
     let idTag = `fasade_${sec}`
 
     if(cell !== null)
@@ -197,6 +199,7 @@ onMounted(() => {
 
 watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
   selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected("fasades")
+  selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected("module")
   handleCellSelect()
 })
 </script>
@@ -238,10 +241,10 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
               ]"
               v-for="(door, doorIndex) in module.fasades"
               :key="doorIndex"
+              @click="showCurrentCol(null, doorIndex)"
           >
             <p
                 class="actions-title actions-title--part"
-                @click="showCurrentCol(null, doorIndex)"
             >
               Дверь №{{ doorIndex + 1 }}
             </p>
@@ -401,19 +404,18 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
               ]"
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
+              @click="showCurrentCol(secIndex)"
           >
             <p
                 class="actions-title actions-title--part"
-                @click="showCurrentCol(secIndex)"
             >
               {{ secIndex + 1 }}
             </p>
           </div>
         </div>
 
-        <div v-for="(section, secIndex) in module.sections" :key="secIndex">
+        <div v-for="(section, secIndex) in module.sections" :key="secIndex" class="actions-items--wrapper">
           <div
-              class="actions-items--wrapper"
               v-if="selectedFasade.sec === secIndex"
           >
             <div
@@ -653,7 +655,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="no-select color-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color-select">
+    <div class="no-select color--right-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color--right-select">
       <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
       <AdvanceCorpusMaterialRedactor

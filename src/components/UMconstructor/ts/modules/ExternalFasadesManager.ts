@@ -9,18 +9,19 @@ import {
     GridModule,
     LOOPSIDE
 } from "@/components/UMconstructor/types/UMtypes.ts";
+import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 
 
 export default class ExternalFasadesManager {
     FASADES_MANAGER: FasadesManager
-
+    scope: UMconstructorClass
     constructor(FASADES_MANAGER: FasadesManager) {
         this.FASADES_MANAGER = FASADES_MANAGER;
+        this.scope = this.FASADES_MANAGER.scope;
     }
 
-    calcDrawersFasades = (secIndex: number, _grid:GridModule, fillingData: FillingObject = false) => {
+    calcDrawersFasades = (secIndex: number, fillingData: FillingObject = false, grid: GridModule = this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()) => {
 
-        const grid = _grid || this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()
         if (fillingData) {
             if(fillingData.fasade) {
                 fillingData.fasade.position.y = grid.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
@@ -80,7 +81,7 @@ export default class ExternalFasadesManager {
         let fasadesDrawers = grid.sections[secIndex].fasadesDrawers || []
 
         let baseDrawerFasade = fasadesDrawers[0]
-        let fasadesList = this.calcDrawersFasadesPositons(secIndex) || []
+        let fasadesList = this.calcDrawersFasadesPositons(secIndex, grid) || []
 
         grid.sections[secIndex].fasades[0] = []
         if (grid.sections[secIndex].fasades[1])
@@ -169,7 +170,7 @@ export default class ExternalFasadesManager {
 
         const sortedBoxesByIncrease = boxesArray.sort((a, b) => a.position.y - b.position.y)
 
-        let fasadePosition = this.FASADES_MANAGER.getFasadePosition(this.FASADES_MANAGER.scope.APP.CATALOG.PRODUCTS[productData.value.globalData].FASADE_POSITION[0])
+        let fasadePosition = this.FASADES_MANAGER.getFasadePosition(this.FASADES_MANAGER.scope.APP.CATALOG.PRODUCTS[grid.productID].FASADE_POSITION[0])
         if (!fasadePosition)
             return
 
@@ -235,7 +236,7 @@ export default class ExternalFasadesManager {
                     upperFasadeSize -= 4
                 }
             } else {
-                upperFasadeSize = Math.abs(totalHeight.value - 2 - bottomFasadePosition)
+                upperFasadeSize = Math.abs(this.FASADES_MANAGER.scope.UM_STORE.totalHeight - 2 - bottomFasadePosition)
             }
 
             if (upperFasadeSize >= this.FASADES_MANAGER.scope.CONST.MIN_FASADE_HEIGHT)

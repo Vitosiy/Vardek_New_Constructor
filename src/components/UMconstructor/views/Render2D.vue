@@ -14,7 +14,7 @@ import {Shape, ShapeAdjuster, Section} from "./../utils/PixiMethods.ts";
 import {UI_PARAMS} from "./../utils/Const.ts";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import * as THREE from "three";
-import {LOOPSIDE} from "./../types/UMtypes.ts";
+import {LOOPSIDE, TSelectedCell} from "./../types/UMtypes.ts";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 
 const props = defineProps({
@@ -58,9 +58,9 @@ const emit = defineEmits([
 const canvasContainer = ref();
 const APP = useAppData().getAppData;
 
-const selectedCell = ref({sec: 0, cell: 0, row: null, extra: null});
-const selectedFasade = ref({sec: 0, cell: 0, row: 0});
-const selectedFilling = ref({sec: 0, cell: 0, row: null, extra: null, item: 0});
+const selectedCell = ref<TSelectedCell>(<TSelectedCell>{});
+const selectedFasade = ref<TSelectedCell>(<TSelectedCell>{});
+const selectedFilling = ref<TSelectedCell>(<TSelectedCell>{});
 const {module, UMconstructor} = toRefs(props)
 
 let app: Application,
@@ -141,15 +141,15 @@ const areaWidth = ref(0);
 const mode = ref('module');
 
 const calcDrawersFasades = (secIndex, fillingData = false) => {
-  emit("calcDrawersFasades", secIndex, fillingData);
+  UMconstructor?.value?.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, fillingData, module.value);
 }
 
 const checkLoopsCollision = (secIndex) => {
-  emit("checkLoopsCollision", secIndex);
+  UMconstructor?.value?.LOOPS.checkLoopsCollision(secIndex, module.value);
 }
 
 const resetModule = () => {
-  emit("module-reset");
+  UMconstructor?.value?.reset(module.value);
 }
 
 const pixelRatioWidth = computed(() => TOTAL_WIDTH.value / areaWidth.value);
@@ -834,14 +834,14 @@ const createSector = ({
   sector.extraIndex = extraIndex;
 
   const cell = new Section(cellData, width, height, sector, gridType === mode.value);
-  const seleted = gridType === "fasades" ? selectedFasade : gridType === "filling" ? selectedFilling : selectedCell;
+  const selected = gridType === "fasades" ? selectedFasade : gridType === "filling" ? selectedFilling : selectedCell;
 
   if (
-      seleted.value.sec === sectionIndex &&
-      seleted.value.cell === cellIndex &&
-      seleted.value.row === rowIndex &&
-      seleted.value.extra === extraIndex &&
-      (seleted.value.item === undefined || seleted.value.item === itemIndex)
+      selected.value.sec === sectionIndex &&
+      selected.value.cell === cellIndex &&
+      selected.value.row === rowIndex &&
+      selected.value.extra === extraIndex &&
+      (selected.value.item === undefined || selected.value.item === itemIndex)
   ) {
     cell.highlightGraphics.visible = true;
   } else {
@@ -866,7 +866,7 @@ const createSector = ({
     if(!cellData.manufacturerOffset) {
       let tmpRowIndex = section.findIndex(item => item.id === cellData.id);
       cell.cellGraphics.on("pointerdown", () => {
-        selectCell(gridType, sectionIndex, cellIndex, false, tmpRowIndex, null, extraIndex);
+        selectCell(gridType, <TSelectedCell>{sec: sectionIndex, cell: cellIndex, row: tmpRowIndex, extra: extraIndex, item: null });
       });
 
       cell.cellGraphics.eventMode = "static";
@@ -875,7 +875,7 @@ const createSector = ({
   }
   else {
     cell.cellGraphics.on("pointerdown", () => {
-      selectCell(gridType, sectionIndex, cellIndex, false, rowIndex, null, extraIndex);
+      selectCell(gridType, <TSelectedCell>{sec: sectionIndex, cell: cellIndex, row: rowIndex, extra: extraIndex, item: null });
     });
 
     cell.cellGraphics.eventMode = "static";
@@ -1033,7 +1033,7 @@ const createFilling = (data, sector) => {
     });
 
     filling.graphic.on("pointerdown", () => {
-      selectCell("fillings", filling.data.sec, filling.data.cell, false, filling.data.row, filling.data.id, filling.data.extra);
+      selectCell("fillings", <TSelectedCell>{sec: filling.data.sec, cell: filling.data.cell, row: filling.data.row, extra: filling.data.extra, item: filling.data.id });
     });
   }
 
@@ -1305,10 +1305,7 @@ const createHorozontalCut = ({
 };
 
 const checkPositionFillingToCreate = (data) => {
-  const sec = selectedCell.value.sec;
-  const cell = selectedCell.value.cell;
-  const row = selectedCell.value.row;
-  const extra = selectedCell.value.extra;
+  const {sec,cell,row,extra} = UMconstructor?.value?.UM_STORE.getSelected("module")
 
   let position, tempShape;
 
@@ -1352,26 +1349,33 @@ const checkPositionFillingToCreate = (data) => {
 };
 
 // Выбор сектора, передача в родительский компонент
-const selectCell = (type, sectionIndex, cellIndex, parent = false, rowIndex = null, item = null, extraIndex = null) => {
+const selectCell = (type: string, newSelectedCell: TSelectedCell) => {
 
   switch (type) {
-    case "fillings":
-      selectedFilling.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, extra: extraIndex ,item: item};
-      selectedCell.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, extra: extraIndex};
-      toggleFillingColor(sectionIndex, cellIndex, rowIndex, item, extraIndex);
+    case "fillings": {
+      UMconstructor?.value?.UM_STORE.setSelected(type, newSelectedCell);
+      UMconstructor?.value?.UM_STORE.setSelected("module", newSelectedCell);
+      const {sec, cell, row, extra, item} = UMconstructor?.value?.UM_STORE.getSelected("fillings")
+      toggleFillingColor(sec, cell, row, item, extra);
       break;
-    case "fasades":
-      selectedFasade.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex};
-      toggleFasadeColor(sectionIndex, cellIndex, rowIndex);
+    }
+    case "fasades": {
+      UMconstructor?.value?.UM_STORE.setSelected(type, newSelectedCell);
+      UMconstructor?.value?.UM_STORE.setSelected("module", <TSelectedCell>{sec: newSelectedCell.sec});
+      const {sec, cell, row} = UMconstructor?.value?.UM_STORE.getSelected("fasades")
+      toggleFasadeColor(sec, cell, row);
       break;
-    default:
-      selectedCell.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, extra: extraIndex};
-      selectedFilling.value = {sec: sectionIndex, cell: cellIndex, row: rowIndex, extra: extraIndex, item: item};
-      toggleSectionColor(sectionIndex, cellIndex, rowIndex, extraIndex);
+    }
+    default: {
+      UMconstructor?.value?.UM_STORE.setSelected(type, newSelectedCell);
+      UMconstructor?.value?.UM_STORE.setSelected("fillings", newSelectedCell);
+      const {sec, cell, row, extra} = UMconstructor?.value?.UM_STORE.getSelected("module")
+      toggleSectionColor(sec, cell, row, extra);
       break;
+    }
   }
-  if (!parent)
-    emit("cell-selected", sectionIndex, cellIndex, type, rowIndex, item, extraIndex);
+  /*if (!parent)
+    emit("cell-selected", sectionIndex, cellIndex, type, rowIndex, item, extraIndex);*/
 };
 
 const toggleSectionColor = (sectionIndex, cellIndex, rowIndex = null, extraIndex = null) => {
@@ -3007,6 +3011,16 @@ watch(() => UMconstructor?.value?.UM_STORE.getUMGrid(), () => {
   setModuleGrid(UMconstructor?.value?.UM_STORE.getUMGrid())
 })
 
+watch(() => UMconstructor?.value?.UM_STORE.getSelected("module"), () => {
+  selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected("module")
+})
+watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
+  selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected("fasades")
+})
+watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
+  selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
+})
+
 onBeforeMount(() => {
   TOTAL_HEIGHT.value = props.maxAreaHeight;
   TOTAL_WIDTH.value = props.maxAreaWidth;
@@ -3017,6 +3031,9 @@ onBeforeMount(() => {
 
 onMounted(() => {
   init();
+  selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected("module")
+  selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected("fasades")
+  selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
   document.addEventListener("mousemove", handleGlobalPointerMove, false);
 });
 

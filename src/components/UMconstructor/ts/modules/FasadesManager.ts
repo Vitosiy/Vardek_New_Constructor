@@ -167,7 +167,7 @@ export default class FasadesManager {
                 }
 
                 if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
-                    this.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+                    this.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
                 }
 
                 this.scope.LOOPS.calcLoops(secIndex, grid)
@@ -497,7 +497,7 @@ export default class FasadesManager {
         section.fasades.push([newDoor]);
 
         if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
-            this.EXTERNAL_FASADES.calcDrawersFasades(secIndex, grid)
+            this.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
         }
 
         if (!grid.isSlidingDoors)

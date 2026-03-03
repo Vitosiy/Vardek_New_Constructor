@@ -4,6 +4,7 @@ import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "p
 import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
 import * as THREE from "three";
 import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
+import {TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
 
 type TDashedLine = {
     startX: number;
@@ -581,7 +582,7 @@ class Shape extends Helpers {
 
         const pointerdown = (event, graphic) => {
             graphic.cursor = "grabbing";
-            this.select('fillings', this.sector.secIndex, this.sector.cellIndex, true, this.sector.rowIndex, this.sector.extraIndex)
+            this.select("fillings", <TSelectedCell>{sec: this.sector.secIndex, cell: this.sector.cellIndex, row: this.sector.rowIndex, extra: this.sector.extraIndex});
             dragging = true;
             originalPosition = {
                 x: graphic.position.x,

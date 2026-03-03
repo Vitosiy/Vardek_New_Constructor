@@ -5,7 +5,7 @@ import "@/components/UMconstructor/styles/UM.scss"
 
 import CounterInput from "@/components/ui/inputs/CounterInput.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {onMounted, ref, toRefs} from "vue";
+import {onMounted, ref, toRefs, watch} from "vue";
 import {TSelectedCell, GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
 
 const props = defineProps({
@@ -31,6 +31,35 @@ const showCurrentCol = (secIndex: number | null = 0, cellIndex: number|null = nu
   UMconstructor?.value?.SECTIONS.selectCell(secIndex, cellIndex, rowIndex, extraIndex);
 };
 
+const handleCellSelect = () => {
+  const {sec, cell, row, extra} = selectedCell.value;
+
+  //Задержка нужна для того, чтоб рендер аккордионов обновился
+  UMconstructor?.value?.debounce("handleCellSelectSection", () => {
+    let idTag = `module_${sec}`
+
+    if(cell !== null)
+      idTag += `_${cell}`;
+
+    if(row !== null)
+      idTag += `_${row}`
+
+    if(extra !== null)
+      idTag += `_${extra}`;
+
+    let domElem = document.getElementById(idTag)
+    if(domElem) {
+      domElem.scrollIntoView();
+    }
+  }, 10)
+
+};
+
+watch(() => UMconstructor?.value?.UM_STORE.getSelected('module'), () => {
+  selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected('module')
+  handleCellSelect()
+})
+
 onMounted(() => {
   selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected('module')
 })
@@ -50,6 +79,7 @@ onMounted(() => {
               v-for="(section, secIndex) in module.sections"
               :key="secIndex"
               :id="`module_${secIndex}`"
+              @click="showCurrentCol(secIndex)"
           >
             <button
                 v-if="module.sections.length > 1"
@@ -64,7 +94,6 @@ onMounted(() => {
             </button>
             <p
                 class="actions-title actions-title--part"
-                @click="showCurrentCol(secIndex)"
             >
               {{ secIndex + 1 }}
             </p>
