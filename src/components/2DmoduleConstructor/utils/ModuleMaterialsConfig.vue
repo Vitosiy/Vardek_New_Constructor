@@ -1,6 +1,14 @@
-<script setup lang="ts" xmlns="http://www.w3.org/1999/html">
+<!-- <script setup lang="ts" xmlns="http://www.w3.org/1999/html"> -->
+ <script setup lang="ts">
 // @ts-nocheck
-import {computed, defineExpose, onBeforeMount, onMounted, ref, toRefs} from "vue";
+import {
+  computed,
+  defineExpose,
+  onBeforeMount,
+  onMounted,
+  ref,
+  toRefs,
+} from "vue";
 
 import { useAppData } from "@/store/appliction/useAppData.ts";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
@@ -9,11 +17,11 @@ import { useModelState } from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Toggle from "@vueform/toggle";
-import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
-import {number} from "yup";
-import {TFasadeTrueSizes} from "@/types/types.ts";
-import {useRailsRightPage} from "@/components/right-menu/customiser-pages/RailsRightPage/useRailsRightPage.ts";
-import {useEventBus} from "@/store/appliction/useEventBus.ts";
+import { useConversationActions } from "@/components/right-menu/actions/useConversationActions.ts";
+import { number } from "yup";
+import { TFasadeTrueSizes } from "@/types/types.ts";
+import { useOptions } from "@/components/right-menu/customiser-pages/RailsRightPage/useOptions.ts";
+import { useEventBus } from "@/store/appliction/useEventBus.ts";
 
 const props = defineProps({
   module: {
@@ -57,18 +65,16 @@ enum partsNames {
   PROFILECOLOR = "Профили",
 }
 
-
 const { module, objectData, visualizationRef } = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
 const productData = ref(null);
-const {
-} = useConversationActions();
-const { checkActive } = useRailsRightPage();
+const {} = useConversationActions();
+const { checkActive } = useOptions();
 
 const currentOption = ref<string | boolean>(false);
 const materialList = ref(null);
-const elementSize = <TFasadeTrueSizes|boolean>ref(false);
+const elementSize = <TFasadeTrueSizes | boolean>ref(false);
 
 const getMaterialsParts = computed(() => {
   return (_module: Object) => {
@@ -101,8 +107,8 @@ const getMaterialsParts = computed(() => {
       delete result["TOPFASADECOLOR"];
     }
 
-    if(module.value.noBottom) {
-      delete result['BACKWALL']
+    if (module.value.noBottom) {
+      delete result["BACKWALL"];
     }
 
     return result;
@@ -145,7 +151,10 @@ const getCurrentValue = computed(() => {
       if (!result.COLOR)
         result.COLOR = objectData.value.PROPS.CONFIG.MODULE_COLOR;
 
-      elementSize.value = {FASADE_WIDTH: module.value.depth, FASADE_HEIGHT: module.value.height};
+      elementSize.value = {
+        FASADE_WIDTH: module.value.depth,
+        FASADE_HEIGHT: module.value.height,
+      };
 
       break;
     default:
@@ -172,7 +181,7 @@ const getMaterialsList = () => {
       materialList.value = module.value.profilesConfig.colorsList.map(
         (colorID) => {
           return getMaterialInfo("COLOR", colorID);
-        }
+        },
       );
       break;
     default:
@@ -194,21 +203,24 @@ const createFacadeData = (fasadeIndex) => {
   });
 };
 
-const setEccentricOption = (props = {group: false, side : false}) => {
-  let {group, side} = props
+const setEccentricOption = (props = { group: false, side: false }) => {
+  let { group, side } = props;
 
-  if((side && group.PROPS.CONFIG[side]?.COLOR) || (group.PROPS.CONFIG['LEFTSIDECOLOR']?.COLOR || group.PROPS.CONFIG['RIGHTSIDECOLOR']?.COLOR)) {
-    group.PROPS.CONFIG.eccentricOption = true
-  }
-  else {
-    delete group.PROPS.CONFIG.eccentricOption
+  if (
+    (side && group.PROPS.CONFIG[side]?.COLOR) ||
+    group.PROPS.CONFIG["LEFTSIDECOLOR"]?.COLOR ||
+    group.PROPS.CONFIG["RIGHTSIDECOLOR"]?.COLOR
+  ) {
+    group.PROPS.CONFIG.eccentricOption = true;
+  } else {
+    delete group.PROPS.CONFIG.eccentricOption;
   }
 
- let option = group.PROPS.CONFIG.OPTIONS.find(item => +item.id === 8390271)
+  let option = group.PROPS.CONFIG.OPTIONS.find((item) => +item.id === 8390271);
   if (group.PROPS.CONFIG.eccentricOption && option && !option.active) {
-    checkActive(8390271, true)
+    checkActive(8390271, true);
   }
-}
+};
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
   console.log(value, "value", currentOption.value);
@@ -278,24 +290,28 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
       let tmp_value = value ? value.ID || value : false;
 
       if (type === "COLOR") {
-
-        if(tmp_value === objectData.value.PROPS.CONFIG.MODULE_COLOR) {
-          objectData.value.PROPS.CONFIG[currentOption.value] = {COLOR: false};
-          setEccentricOption({group: objectData.value, side: currentOption.value})
+        if (tmp_value === objectData.value.PROPS.CONFIG.MODULE_COLOR) {
+          objectData.value.PROPS.CONFIG[currentOption.value] = { COLOR: false };
+          setEccentricOption({
+            group: objectData.value,
+            side: currentOption.value,
+          });
           break;
         }
 
         if (!tmp_value || tmp_value === 7397)
           objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = false;
-        else
-          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
+        else objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
       }
 
       objectData.value.PROPS.CONFIG[currentOption.value][type] = tmp_value;
       if (palette)
         objectData.value.PROPS.CONFIG[currentOption.value]["PALETTE"] = palette;
 
-      setEccentricOption({group: objectData.value, side: currentOption.value})
+      setEccentricOption({
+        group: objectData.value,
+        side: currentOption.value,
+      });
       break;
     default:
       if (!objectData.value.PROPS.CONFIG[currentOption.value]) {
@@ -305,8 +321,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
       if (type === "COLOR") {
         if (!value || value.ID === 7397)
           objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = false;
-        else
-          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
+        else objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
       }
 
       objectData.value.PROPS.CONFIG[currentOption.value][type] = value
@@ -383,7 +398,7 @@ onMounted(() => {
   modelState.createCurrentBackwallData(objectData.value.globalData);
   modelState.createCurrentSidewallData(objectData.value.globalData);
   productData.value = modelState.getCurrentModel.userData;
-  elementSize.value = false
+  elementSize.value = false;
 });
 </script>
 
@@ -462,14 +477,14 @@ onMounted(() => {
 <style scoped lang="scss">
 .no-select {
   -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ и Edge */
-  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+  -ms-user-select: none; /* IE 10+ и Edge */
+  user-select: none; /* Стандарт: Chrome, Firefox, Opera, Edge */
 }
 
 .actions-materials {
   -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ и Edge */
-  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+  -ms-user-select: none; /* IE 10+ и Edge */
+  user-select: none; /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &-wrapper {
     display: flex;
@@ -786,8 +801,8 @@ onMounted(() => {
   z-index: -1;
 
   -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ и Edge */
-  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+  -ms-user-select: none; /* IE 10+ и Edge */
+  user-select: none; /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &-options {
     display: flex;
@@ -848,8 +863,8 @@ onMounted(() => {
 
 .option {
   -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ и Edge */
-  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+  -ms-user-select: none; /* IE 10+ и Edge */
+  user-select: none; /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &-label {
     display: flex;
@@ -884,8 +899,8 @@ onMounted(() => {
     color: #a3a9b5;
 
     -webkit-user-select: none; /* Safari */
-    -ms-user-select: none;     /* IE 10+ и Edge */
-    user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+    -ms-user-select: none; /* IE 10+ и Edge */
+    user-select: none; /* Стандарт: Chrome, Firefox, Opera, Edge */
 
     @media (hover: hover) {
       &:hover {
@@ -963,8 +978,8 @@ onMounted(() => {
   z-index: 0;
 
   -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ и Edge */
-  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+  -ms-user-select: none; /* IE 10+ и Edge */
+  user-select: none; /* Стандарт: Chrome, Firefox, Opera, Edge */
 
   &-select {
     display: flex;
