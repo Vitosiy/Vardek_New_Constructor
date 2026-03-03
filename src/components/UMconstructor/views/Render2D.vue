@@ -7,7 +7,7 @@ import {
   computed,
   reactive,
   defineExpose,
-  onBeforeMount, toRefs,
+  onBeforeMount, toRefs, watch,
 } from "vue";
 import {Application, Container, Graphics, Text} from "pixi.js";
 import {Shape, ShapeAdjuster, Section} from "./../utils/PixiMethods.ts";
@@ -61,7 +61,7 @@ const APP = useAppData().getAppData;
 const selectedCell = ref({sec: 0, cell: 0, row: null, extra: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
 const selectedFilling = ref({sec: 0, cell: 0, row: null, extra: null, item: 0});
-const {module} = toRefs(props)
+const {module, UMconstructor} = toRefs(props)
 
 let app: Application,
     sectionsContainer: Container,
@@ -328,6 +328,11 @@ const renderGrid = (_moduleGrid) => {
   clearRender();
   let xOffset = 0;
   let yOffset = 0;
+
+  if(_moduleGrid) {
+    setModuleGrid(_moduleGrid)
+  }
+
   const moduleGrid = _moduleGrid || props.module
 
   let ModulepxWidth = getPixelWidth(moduleGrid.width);
@@ -2992,6 +2997,15 @@ const addTicker = () => {
     dragMove(lastDragEvent.value);
   });
 };
+
+const setModuleGrid = (grid) => {
+  module.value = grid
+
+}
+
+watch(() => UMconstructor?.value?.UM_STORE.getUMGrid(), () => {
+  setModuleGrid(UMconstructor?.value?.UM_STORE.getUMGrid())
+})
 
 onBeforeMount(() => {
   TOTAL_HEIGHT.value = props.maxAreaHeight;

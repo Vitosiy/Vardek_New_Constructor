@@ -206,8 +206,8 @@ defineExpose({
             :module="UMconstructor?.UM_STORE.getUMGrid()"
             :UMconstructor="UMconstructor"
             :container="constructor2dContainer"
-            :max-area-height="totalHeight"
-            :max-area-width="totalWidth"
+            :max-area-height="UMconstructor?.UM_STORE.totalHeight"
+            :max-area-width="UMconstructor?.UM_STORE.totalWidth"
         />
       </div>
 

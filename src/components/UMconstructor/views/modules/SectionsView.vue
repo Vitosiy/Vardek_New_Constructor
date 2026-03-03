@@ -54,7 +54,7 @@ onMounted(() => {
             <button
                 v-if="module.sections.length > 1"
                 class="actions-btn actions-icon"
-                @click="UMconstructor.SECTIONS.deleteSection(module, secIndex)"
+                @click="UMconstructor.SECTIONS.deleteSection(module, secIndex, true)"
             >
               <img
                   class="actions-icon--delete"
@@ -506,7 +506,7 @@ onMounted(() => {
                         button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
                         type="number"
                         @update:model-value="(count: number|string) => {
-                            UMconstructor.SECTIONS.addSection({grid: module, secIndex, count: parseInt(count)})
+                            UMconstructor.SECTIONS.addSection({grid: module, secIndex, count: parseInt(count), reset: true})
                           }"
                     />
                   </div>

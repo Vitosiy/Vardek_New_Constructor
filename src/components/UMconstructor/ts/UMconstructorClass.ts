@@ -316,7 +316,7 @@ export default class UMconstructorClass {
 
             //this.RENDER_REF.updateTotalWidth(value);
             this.RENDER_REF.updateTotalSize(value, "width");
-            this.reset();
+            this.reset(grid);
             this.RENDER_REF.selectCell("module", 0, null);
 
         }, 1000)
@@ -365,18 +365,18 @@ export default class UMconstructorClass {
     }
 
     initSideProfile() {
-        if (!module.value.profilesConfig?.sideProfile) {
+        if (!grid.profilesConfig?.sideProfile) {
 
             const product = this.APP.CATALOG.PRODUCTS[6513251] //C - образный профиль
             let profileData = {}
 
-            if (!module.value.profilesConfig) {
-                module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
-                module.value.profilesConfig.colorsList = [...product.COLOR]
-                productData.value.PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+            if (!grid.profilesConfig) {
+                grid.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : grid.moduleColor}
+                grid.profilesConfig.colorsList = [...product.COLOR]
+                productData.value.PROPS.CONFIG['PROFILECOLOR'] = grid.profilesConfig.COLOR
             }
 
-            profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+            profileData.COLOR = grid.profilesConfig?.COLOR ? grid.profilesConfig?.COLOR : grid.moduleColor
 
             let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
             if (typeProfile !== "c" && typeProfile !== "l")
@@ -386,13 +386,13 @@ export default class UMconstructorClass {
             profileData.TYPE_PROFILE = typeProfile
             profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
             profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
-            profileData.size = {x: module.value.height, y: product.height, z: product.depth}
+            profileData.size = {x: grid.height, y: product.height, z: product.depth}
             profileData.product = 6513251
 
-            profileData.side = LOOPSIDE[module.value.sections[0].loopsSides[0]]?.includes("left") ? "left" : "right"
+            profileData.side = LOOPSIDE[grid.sections[0].loopsSides[0]]?.includes("left") ? "left" : "right"
             const profileSidesMap = {
                 "right": new THREE.Vector2( -profileData.manufacturerOffset - profileData.size.y / 2, 0),
-                "left": new THREE.Vector2( module.value.width + profileData.manufacturerOffset + profileData.size.y / 2, 0),
+                "left": new THREE.Vector2( grid.width + profileData.manufacturerOffset + profileData.size.y / 2, 0),
             }
             const profileRotationMap = {
                 "right": Math.PI / 2,
@@ -402,11 +402,11 @@ export default class UMconstructorClass {
             profileData.position = profileSidesMap[profileData.side];
             profileData.rotation = new THREE.Vector3(0, 0, profileRotationMap[profileData.side]);
 
-            module.value.profilesConfig.sideProfile = profileData
+            grid.profilesConfig.sideProfile = profileData
             onSideProfile.value = true
         }
         else {
-            delete module.value.profilesConfig.sideProfile
+            delete grid.profilesConfig.sideProfile
             onSideProfile.value = false
         }
     }
@@ -434,8 +434,8 @@ export default class UMconstructorClass {
         moduleGrid.rightWallThickness = rightWidth
         let NOBOTTOM = this.OPTIONS.checkOptionWithoutBottom(moduleGrid)
 
-        let sectionsTotalWidth = grid.width - leftWidth - rightWidth - (moduleGrid.sections.length - 1) * moduleGrid.moduleThickness;
-        let sectionsTotalHeight = grid.height - moduleGrid.moduleThickness * (NOBOTTOM ? 1 : 2) - moduleGrid.horizont;
+        let sectionsTotalWidth = moduleGrid.width - leftWidth - rightWidth - (moduleGrid.sections.length - 1) * moduleGrid.moduleThickness;
+        let sectionsTotalHeight = moduleGrid.height - moduleGrid.moduleThickness * (NOBOTTOM ? 1 : 2) - moduleGrid.horizont;
 
         let deltaHeight = sectionsTotalHeight - moduleGrid.sections[0].height;  //Величина, на которую нужно увеличить высоту секций
         let newSectionsArray = <GridSection>[]
@@ -494,14 +494,14 @@ export default class UMconstructorClass {
                                 newRow.fillings = <FillingObject>[...newRow.fillings]
                                 newRow.fillings.forEach((filling, index) => {
                                     if(filling.isVerticalItem){
-                                        this.FILLINGS.updateFilling(newRow.height, filling, 'height')
+                                        this.FILLINGS.updateFilling(newRow.height, filling, 'height', moduleGrid)
                                     }
                                     else {
                                         if(filling.isProfile) {
-                                            this.FILLINGS.updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width')
+                                            this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
                                         }
                                         else
-                                            this.FILLINGS.updateFilling(newRow.width, filling, 'width')
+                                            this.FILLINGS.updateFilling(newRow.width, filling, 'width', moduleGrid, moduleGrid)
                                     }
 
 
@@ -543,14 +543,14 @@ export default class UMconstructorClass {
                                         newExtra.fillings = <FillingObject>[...newExtra.fillings]
                                         newExtra.fillings.forEach((filling, index) => {
                                             if(filling.isVerticalItem) {
-                                                this.FILLINGS.updateFilling(newExtra.height, filling, 'height')
+                                                this.FILLINGS.updateFilling(newExtra.height, filling, 'height', moduleGrid)
                                             }
                                             else {
                                                 if(filling.isProfile) {
-                                                    this.FILLINGS.updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width')
+                                                    this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
                                                 }
                                                 else
-                                                    this.FILLINGS.updateFilling(newExtra.width, filling, 'width')
+                                                    this.FILLINGS.updateFilling(newExtra.width, filling, 'width', moduleGrid)
                                             }
                                         })
                                     }
@@ -579,13 +579,13 @@ export default class UMconstructorClass {
                                 lastRow.fillings = <FillingObject>[...lastRow.fillings]
                                 lastRow.fillings.forEach((filling, index) => {
                                     if(filling.isVerticalItem) {
-                                        this.FILLINGS.updateFilling(lastRow.height, filling, 'height')
+                                        this.FILLINGS.updateFilling(lastRow.height, filling, 'height', moduleGrid)
                                     }
                                     else {
                                         if (filling.isProfile) {
-                                            this.FILLINGS.updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width')
+                                            this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
                                         } else
-                                            this.FILLINGS.updateFilling(lastRow.width, filling, 'width')
+                                            this.FILLINGS.updateFilling(lastRow.width, filling, 'width', moduleGrid)
                                     }
                                 })
                             }
@@ -600,13 +600,13 @@ export default class UMconstructorClass {
                         newCell.fillings = <FillingObject>[...newCell.fillings]
                         newCell.fillings.forEach((filling, index) => {
                             if(filling.isVerticalItem) {
-                                this.FILLINGS.updateFilling(newCell.height, filling, 'height')
+                                this.FILLINGS.updateFilling(newCell.height, filling, 'height', moduleGrid)
                             }
                             else {
                                 if (filling.isProfile) {
-                                    this.FILLINGS.updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width')
+                                    this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
                                 } else
-                                    this.FILLINGS.updateFilling(newCell.width, filling, 'width')
+                                    this.FILLINGS.updateFilling(newCell.width, filling, 'width', moduleGrid)
                             }
                         })
                     }
@@ -623,13 +623,13 @@ export default class UMconstructorClass {
                 newSection.fillings = <FillingObject>[...newSection.fillings]
                 newSection.fillings.forEach((filling, index) => {
                     if(filling.isVerticalItem) {
-                        this.FILLINGS.updateFilling(newSection.height, filling, 'height')
+                        this.FILLINGS.updateFilling(newSection.height, filling, 'height', moduleGrid)
                     }
                     else {
                         if (filling.isProfile) {
-                            this.FILLINGS.updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width')
+                            this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
                         } else
-                            this.FILLINGS.updateFilling(newSection.width, filling, 'width')
+                            this.FILLINGS.updateFilling(newSection.width, filling, 'width', moduleGrid)
                     }
                 })
             }
@@ -646,6 +646,33 @@ export default class UMconstructorClass {
 
         moduleGrid.sections = newSectionsArray.slice()
 
+        let sectionsWidthSum = 0;
+        moduleGrid.sections.forEach((section, secIndex) => {
+            sectionsWidthSum += section.width;
+        })
+
+        let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
+        if(deltaWidth !== 0) {
+            let lastSection = moduleGrid.sections[moduleGrid.sections.length - 1];
+            lastSection.position.x = lastSection.position.x - lastSection.width / 2 + (lastSection.width + deltaWidth) / 2
+            lastSection.width += deltaWidth
+
+            if (lastSection.width > MAX_SECTION_WIDTH) {
+                let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
+                this.SECTIONS.addSection?.({grid: moduleGrid, secIndex: moduleGrid.sections.length - 1, count: countSections})
+            }
+            else if (lastSection.width < MIN_SECTION_WIDTH) {
+                while (moduleGrid.sections[moduleGrid.sections.length - 1].width < MIN_SECTION_WIDTH) {
+                    this.SECTIONS.deleteSection?.(moduleGrid, moduleGrid.sections.length - 1)
+                }
+            }
+            else {
+                startPositionSections.copy(lastSection.position.clone())
+                startPositionSections.x -= lastSection.width / 2
+                moduleGrid.sections[moduleGrid.sections.length - 1] = recalcSection(lastSection, startPositionSections)
+            }
+        }
+
         let _module: GridModule = {
             ...moduleGrid,
             width: this.UM_STORE.totalWidth,
@@ -653,38 +680,13 @@ export default class UMconstructorClass {
             depth: this.UM_STORE.totalDepth,
         }
 
-        let sectionsWidthSum = 0;
-        _module.sections.forEach((section, secIndex) => {
-            sectionsWidthSum += section.width;
-        })
-
-        let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
-        if(deltaWidth !== 0) {
-            let lastSection = _module.sections[_module.sections.length - 1];
-            lastSection.position.x = lastSection.position.x - lastSection.width / 2 + (lastSection.width + deltaWidth) / 2
-            lastSection.width += deltaWidth
-
-            if (lastSection.width > MAX_SECTION_WIDTH) {
-                let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
-                this.SECTIONS.addSection?.(_module.sections.length - 1, countSections)
-            }
-            else if (lastSection.width < MIN_SECTION_WIDTH) {
-                while (_module.sections[_module.sections.length - 1].width < MIN_SECTION_WIDTH) {
-                    this.SECTIONS.deleteSection?.(_module.sections.length - 1)
-                }
-            }
-            else {
-                startPositionSections.copy(lastSection.position.clone())
-                startPositionSections.x -= lastSection.width / 2
-                _module.sections[_module.sections.length - 1] = recalcSection(lastSection, startPositionSections)
-            }
-        }
-
         this.FASADES.updateFasades(_module)
 
         this.UM_STORE.setUMGrid(_module)
 
-        this.RENDER_REF.renderGrid(_module)
+        this.debounce("renderGrid", () => {
+            this.RENDER_REF.renderGrid(_module)
+        }, 100)
 
         return _module
     };

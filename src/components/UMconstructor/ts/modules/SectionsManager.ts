@@ -23,10 +23,11 @@ export default class SectionsManager {
         this.scope.selectCell("module", <TSelectedCell>{sec, cell, row, extra});
     };
 
-    addSection({grid = this.scope.UM_STORE.getUMGrid(), secIndex = 0, count = 1}: {
+    addSection({grid = this.scope.UM_STORE.getUMGrid(), secIndex = 0, count = 1, reset = false}: {
         grid: GridModule,
         secIndex: number,
-        count: number
+        count: number,
+        reset: boolean,
     }) {
 
         const section = grid.sections[secIndex];
@@ -85,7 +86,8 @@ export default class SectionsManager {
         }
 
 
-        this.scope.reset(grid)
+        if(reset)
+            this.scope.reset(grid)
     };
 
     addCell(
@@ -1132,7 +1134,7 @@ export default class SectionsManager {
         }, 1000)
     };
 
-    deleteSection(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number) {
+    deleteSection(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number, reset: boolean = false) {
         const {MAX_SECTION_WIDTH} = this.scope.CONST
         const current = grid.sections[secIndex];
         const next = grid.sections[secIndex + 1];
@@ -1174,7 +1176,8 @@ export default class SectionsManager {
 
         this.selectCell(0,0)
 
-        this.scope.reset(grid)
+        if(reset)
+            this.scope.reset(grid)
     };
 
     deleteCell(grid: GridModule = this.scope.UM_STORE.getUMGrid(), secIndex: number, cellIndex: number) {
