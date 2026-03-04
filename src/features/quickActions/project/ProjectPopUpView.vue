@@ -160,6 +160,7 @@ import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import ProjectPagination from "./components/ProjectPagination.vue";
 import TechnologistFormButton from "@/components/Technologist/TechnologistFormButton.vue";
 import { BASE_DOMAIN } from "@/utils/originalDomain";
+import { buildProjectLink } from "./composables/useProjectLink";
 
 const router = useRouter();
 const route = useRoute();
@@ -530,7 +531,7 @@ const copyProjectId = async (id: string | number) => {
 
 const copyProjectLink = async (id: string | number) => {
   try {
-    const link = `https://dev.vardek.online/dev_modeller/2d?projectId=${id}`;
+    const link = buildProjectLink(router, id);
     await navigator.clipboard.writeText(link);
     toaster.success("Ссылка на проект скопирована");
   } catch (e) {
@@ -758,9 +759,9 @@ onMounted(async () => {
           align-items: center;
           justify-content: center;
 
-          border: 1px solid $stroke;
+          border: 1px solid #000;
           border-radius: 4px;
-          background: transparent;
+          background: #000;
           cursor: pointer;
 
           transition: all 0.15s ease;
@@ -768,10 +769,16 @@ onMounted(async () => {
           img {
             width: 14px;
             height: 14px;
+            filter: brightness(0) invert(1);
           }
 
           &:hover {
-            background: #f3f3f3;
+            background: #fff;
+            border-color: $stroke;
+
+            img {
+              filter: none;
+            }
           }
 
           &:active {
