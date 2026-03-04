@@ -9,6 +9,7 @@ export interface TechnologistFormItem {
   photoRoom?: File[];
   metering?: File[];
   comments?: string;
+  pre_order_id?: string;
 }
 
 interface TechnologistFormErrorItem {
@@ -25,6 +26,7 @@ export interface TechnologistFormError {
     fio: TechnologistFormErrorItem;
     technique: TechnologistFormErrorItem;
     projectId: TechnologistFormErrorItem;
+    pre_order_id: TechnologistFormErrorItem;
   };
 }
 
