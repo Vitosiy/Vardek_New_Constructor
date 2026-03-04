@@ -112,9 +112,9 @@ onMounted(() => {
   UMstore.setUMGrid(module.value);
   UMconstructor.value?.setRenderRef(visualizationRef)
 
-  setTimeout(()=> {
+  //setTimeout(()=> {
     UMconstructor.value?.reset(UMstore.getUMGrid())
-  }, 1000)
+  //}, 1000)
 });
 
 onBeforeUnmount(() => {

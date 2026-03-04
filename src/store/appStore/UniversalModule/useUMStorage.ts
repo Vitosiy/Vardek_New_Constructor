@@ -84,7 +84,7 @@ export const useUMStorage = defineStore('um-data', () => {
   }
 
   const setSelected = (type: constructorMode, newSelected: TSelectedCell) => {
-    const {sec, cell, row, extra, item} = newSelected;
+    const {sec, cell, row, extra, item} = newSelected || {};
 
     const validateValue = (value: any) => {
       if (value !== undefined)

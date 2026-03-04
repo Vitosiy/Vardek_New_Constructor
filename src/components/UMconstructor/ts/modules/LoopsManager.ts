@@ -42,10 +42,11 @@ export default class LoopsManager {
                 curSection.loops.push(loopsPos)
         })
 
-        if (!curSection.loops.length)
+        if (!Object.keys(curSection.loops).length)
             delete curSection.loops
-        else if (!grid)
-            this.checkLoopsCollision(secIndex)
+        else if (grid) {
+            this.checkLoopsCollision(secIndex, grid)
+        }
     }
 
     calcLoopPositions(fasades, section) {
@@ -119,7 +120,7 @@ export default class LoopsManager {
         return allLoops
     }
 
-    checkLoopsCollision(secIndex: number, grid: GridModule) {
+    checkLoopsCollision(secIndex: number, grid: GridModule = this.scope.UM_STORE.getUMGrid()) {
         const CONFIG = this.scope.UM_STORE.getUMData()?.CONFIG;
 
         if (!CONFIG.LOOPS)

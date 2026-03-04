@@ -209,6 +209,8 @@ export default class FasadesManager {
                     })
             })
         }
+
+        return grid
     };
 
     calcSlideDoor(

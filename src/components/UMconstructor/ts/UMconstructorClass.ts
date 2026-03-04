@@ -411,8 +411,7 @@ export default class UMconstructorClass {
         }
     }
 
-    reset(_grid?: GridModule) {
-        const grid = _grid || this.UM_STORE.getUMGrid()
+    reset(grid: GridModule = this.UM_STORE.getUMGrid()) {
         const PROPS = this.UM_STORE.getUMData();
         const {
             MIN_SECTION_HEIGHT,
@@ -673,21 +672,21 @@ export default class UMconstructorClass {
             }
         }
 
-        let _module: GridModule = {
+        let module: GridModule = {
             ...moduleGrid,
             width: this.UM_STORE.totalWidth,
             height: this.UM_STORE.totalHeight,
             depth: this.UM_STORE.totalDepth,
         }
 
-        this.FASADES.updateFasades(_module)
+        module = this.FASADES.updateFasades(module)
 
-        this.UM_STORE.setUMGrid(_module)
+        this.UM_STORE.setUMGrid(module)
 
         this.debounce("renderGrid", () => {
-            this.RENDER_REF.renderGrid(_module)
+            this.RENDER_REF.renderGrid(module)
         }, 100)
 
-        return _module
+        return module
     };
 }
