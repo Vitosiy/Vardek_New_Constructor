@@ -3,7 +3,7 @@
 import Modal from "@/components/ui/modals/Modal.vue";
 import {defineExpose, onBeforeMount, onBeforeUnmount, ref} from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus.ts";
-import {saveUMGrid} from "@/components/2DmoduleConstructor/utils/Methods.ts";
+import {saveUMGrid} from "@/components/UMconstructor/utils/PixiMethods.ts";
 import MainView from "@/components/UMconstructor/views/MainView.vue"
 import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
@@ -63,7 +63,7 @@ const openUMRedactor = () => {
   } = CONFIG
 
   if(MODULEGRID)
-    UMstore.setUMCashGrid(MODULEGRID)
+    UMstore.setUMCashGrid(saveUMGrid(MODULEGRID))
 
   let universalModuleConfigCash = {
     HORIZONT,
