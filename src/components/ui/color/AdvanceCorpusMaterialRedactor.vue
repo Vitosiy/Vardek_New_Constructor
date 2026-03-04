@@ -64,7 +64,7 @@ const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
 const {
   createFasadeConversations,
   checkConversations,
-    filterMaterialsConversations,
+  filterMaterialsConversations,
   checkFasadeConversations,
   filterFasadeConversations,
 } = useConversationActions();
@@ -165,12 +165,13 @@ const onSelectMaterial = (data) => {
 
   dataOfFasadeType = _FASADE[COLOR] || _COLOR[COLOR]
   haveShowcase = !!SHOWCASE;
+  let disablePatina = false;
 
-  if (data.ATTACH_MILLINGS?.[0]) {
+  if (data.ATTACH_MILLINGS?.[0] || data.ATTACH_MILLINGS_SIDE?.[0]) {
     modelState.createCurrentMillingData({
       fasadeId: data.ID,
       productId: productId.value,
-    fasadeNdx: props.elementIndex,
+      fasadeNdx: props.elementIndex,
     });
 
     modelState.createCurrentPatinaData({
@@ -187,18 +188,21 @@ const onSelectMaterial = (data) => {
     patinaList.value = modelState.getCurrentPatinaData;
 
     if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
-      millingList.value = millingList.value.filter(item => {
+      /*millingList.value = millingList.value.filter(item => {
         if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
           return item
-      })
+      })*/
       patinaList.value = []
+      isPatinaExist.value = false
+      disablePatina = true;
+    }
+    else{
+      /** @Патина */
+      isPatinaExist.value =
+          patinaList.value.length > 0 && !product.type_showcase[0];
     }
 
     isMillingExist.value = millingList.value.length > 0 && !haveShowcase;
-
-    /** @Патина */
-    isPatinaExist.value =
-        patinaList.value.length > 0 && !product.type_showcase[0];
   }
   else {
     isMillingExist.value = false;
@@ -210,7 +214,7 @@ const onSelectMaterial = (data) => {
     modelState.createCurrentGlassData({
       fasadeId: data.ID,
       productId: productId.value,
-    fasadeNdx: props.elementIndex,
+      fasadeNdx: props.elementIndex,
     });
   }
   else {
@@ -223,7 +227,7 @@ const onSelectMaterial = (data) => {
   /** @Палитра */
   paletteList.value = modelState.getCurrentPaletteData;
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
-  
+
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
@@ -251,7 +255,7 @@ const onSelectMaterial = (data) => {
     currentMillingData.value = { name: NAME, imgSrc: PREVIEW_PICTURE };
 
     isPatinaExist.value =
-        patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0;
+        patinaList.value.length > 0 && isMillingExist.value && PATINAOFF == 0 && !disablePatina;
 
   } else {
     currentMillingData.value = {};
@@ -324,12 +328,14 @@ const onSelectMilling = (data) => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
   const fasadeProps = props.elementData || FASADE_PROPS[props.elementIndex];
   const rootDataPatina = modelState._FASADE[fasadeProps.COLOR].PATINA;
+  const disablePatina = typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')
 
   isPatinaExist.value =
       data.patina == 0 &&
       rootDataPatina.length > 0 &&
       rootDataPatina[0] != null &&
-      rootDataPatina[0] != 0;
+      rootDataPatina[0] != 0 &&
+      !disablePatina;
 
 
   /** @Если у выбранной фрезы нет патина */
@@ -369,7 +375,7 @@ const onSelectMilling = (data) => {
     fasadeHandleList.value = {};
     fasadeProps.MILLING_TYPE = null;
   }
-  
+
   callback(data, "MILLING");
 };
 
@@ -406,7 +412,7 @@ const onChangeIntegratedHandlePos = (action, id) => {
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
-  
+
   if (type == "surface" && props.isFasade) {
 
     let { NAME, DETAIL_PICTURE } = _FASADE[7397];
@@ -445,7 +451,7 @@ const deleteSelectedOptions = (type: String) => {
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
     isPatinaExist.value = false;
-    
+
     currentMillingData.value = { name: "", imgSrc: null };
     currentPatinaData.value = { name: "", imgSrc: null };
     callback(false, "MILLING");
@@ -613,14 +619,18 @@ const prepareData = () => {
   }
 
   /** @Фрезеровка */
+  let disablePatina = false;
   if (fasadeData.ATTACH_MILLINGS?.[0] && !haveShowcase) {
     millingList.value = millingData;
 
     if(typeof props.elementIndex === "string" && props.elementIndex.toLowerCase().includes('sidecolor')) {
-      millingList.value = millingData.filter(item => {
+      /*millingList.value = millingData.filter(item => {
         if ([2462671, 2503106, 2839850, 1596264].includes(item.ID))
           return item
-      })
+      })*/
+      patinaList.value = []
+      isPatinaExist.value = false
+      disablePatina = true;
     }
 
     isMillingExist.value = millingData.length > 0;
@@ -639,11 +649,11 @@ const prepareData = () => {
   }
 
   /** @Патина */
-  if (fasadeData.PATINA?.[0] && isMillingExist.value && MILLING) {
+  if (fasadeData.PATINA?.[0] && isMillingExist.value && MILLING && !disablePatina) {
     const curMilling = _APP.MILLING[MILLING];
 
     patinaList.value = patinaData;
-    isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0;
+    isPatinaExist.value = patinaData.length > 0 && curMilling.PATINAOFF == 0 && !disablePatina;
   }
 
   /** @Стёкла */
@@ -846,8 +856,8 @@ onBeforeUnmount(() => {
 <template>
   <div class="container">
     <div
-      class="container__header"
-      v-if="props.isFasade && props.elementIndex !== null"
+        class="container__header"
+        v-if="props.isFasade && props.elementIndex !== null"
     >
       <h3>Конфигурация фасада {{ props.elementIndex + 1 }}</h3>
     </div>
@@ -973,10 +983,10 @@ onBeforeUnmount(() => {
 
     <SurfaceRedactor
         v-if="currentEditableOption === 'surface' && materialList[0]?.FASADES"
-      :materialList="materialList"
-      :elementIndex="props.elementIndex"
-      :temp-work="true"
-      @select_material="onSelectMaterial"
+        :materialList="materialList"
+        :elementIndex="props.elementIndex"
+        :temp-work="true"
+        @select_material="onSelectMaterial"
     />
     <MaterialSelector
         v-if="currentEditableOption === 'surface' && !materialList[0]?.FASADES"

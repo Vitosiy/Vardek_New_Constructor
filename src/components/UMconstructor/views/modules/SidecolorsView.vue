@@ -11,10 +11,9 @@ import { useModelState } from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Toggle from "@vueform/toggle";
-import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
 import {TFasadeTrueSizes} from "@/types/types.ts";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-
+import {useRailsRightPage} from "@/components/right-menu/customiser-pages/RailsRightPage/useRailsRightPage.ts";
 const props = defineProps({
   module: {
     type: Object,
@@ -66,10 +65,7 @@ const { module, objectData, visualizationRef, UMconstructor } = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
 const productData = ref(null);
-const {
-  createFasadeConversations,
-  checkFasadeConversations,
-} = useConversationActions();
+const { checkActive } = useRailsRightPage();
 
 const currentOption = ref<string | boolean>(false);
 const materialList = ref(null);
@@ -199,6 +195,22 @@ const createFacadeData = (fasadeIndex) => {
   });
 };
 
+const setEccentricOption = (props = {group: false, side : false}) => {
+  let {group, side} = props
+
+  if((side && group.PROPS.CONFIG[side]?.COLOR) || (group.PROPS.CONFIG['LEFTSIDECOLOR']?.COLOR || group.PROPS.CONFIG['RIGHTSIDECOLOR']?.COLOR)) {
+    group.PROPS.CONFIG.eccentricOption = true
+  }
+  else {
+    delete group.PROPS.CONFIG.eccentricOption
+  }
+
+  let option = group.PROPS.CONFIG.OPTIONS.find(item => +item.id === 8390271)
+  if (group.PROPS.CONFIG.eccentricOption && option && !option.active) {
+    checkActive(8390271, true)
+  }
+}
+
 const selectOption = (value: Object, type: string, palette: Object = false) => {
   console.log(value, "value", currentOption.value);
 
@@ -258,6 +270,33 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         });
       }
 
+      break;
+    case "LEFTSIDECOLOR":
+    case "RIGHTSIDECOLOR":
+      if (!objectData.value.PROPS.CONFIG[currentOption.value]) {
+        objectData.value.PROPS.CONFIG[currentOption.value] = {};
+      }
+      let tmp_value = value ? value.ID || value : false;
+
+      if (type === "COLOR") {
+
+        if(tmp_value === objectData.value.PROPS.CONFIG.MODULE_COLOR) {
+          objectData.value.PROPS.CONFIG[currentOption.value] = {COLOR: false};
+          setEccentricOption({group: objectData.value, side: currentOption.value})
+          break;
+        }
+
+        if (!tmp_value || tmp_value === 7397)
+          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = false;
+        else
+          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
+      }
+
+      objectData.value.PROPS.CONFIG[currentOption.value][type] = tmp_value;
+      if (palette)
+        objectData.value.PROPS.CONFIG[currentOption.value]["PALETTE"] = palette;
+
+      setEccentricOption({group: objectData.value, side: currentOption.value})
       break;
     default:
       if (!objectData.value.CONFIG[currentOption.value]) {

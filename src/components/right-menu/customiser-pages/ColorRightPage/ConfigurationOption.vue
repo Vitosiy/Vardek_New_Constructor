@@ -10,6 +10,10 @@ const props = defineProps({
   type: String,
   data: Object,
   additionalClass: String,
+  disableDeleteChoice: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 onMounted(() => {
@@ -82,6 +86,7 @@ const deleteChoise = (event) => {
         ></div>
       </div>
       <img
+        v-if="!props.disableDeleteChoice"
         class="config__delete"
         :src="delete_url"
         alt=""

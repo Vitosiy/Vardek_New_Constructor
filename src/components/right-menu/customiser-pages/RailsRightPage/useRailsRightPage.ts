@@ -123,6 +123,10 @@ export const useRailsRightPage = () => {
                 } else
                     delete PROPS.CONFIG.TSARGA
                 break;
+            case 8390271:
+                if(PROPS.CONFIG.eccentricOption)
+                    curOpt.active = true;
+                break;
             case 7250589:   //Металлическая царга
                 if (curOpt.active) {
                     PROPS.CONFIG.TSARGA = {TYPE: 'metal', COLOR: 79065}

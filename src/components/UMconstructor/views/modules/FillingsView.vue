@@ -83,11 +83,6 @@ const openFasadeSelector = (
     extra: number | null,
     item: number | null,
 ) => {
-  isOpenHandleSelector.value = false;
-  isOpenMaterialSelector.value = false;
-
-  /** @Создание_данных_для_выбранного_фасада */
-  createFacadeData();
 
   if (
       currentFasadeMaterial.value &&
@@ -99,12 +94,16 @@ const openFasadeSelector = (
           item === currentFasadeMaterial.value.item
       )
   ) {
-    currentFasadeMaterial.value = false;
+    closeMenu()
     return;
   }
 
+  /** @Создание_данных_для_выбранного_фасада */
+  createFacadeData();
+  closeMenu()
+
   setTimeout(() => {
-    const curSection = module.sections[sec]
+    const curSection = module.value.sections[sec]
     const curCell = curSection?.cells?.[cell]
     const curRow = curCell?.cellsRows?.[row]
     const curExtra = curRow?.extras?.[extra]
@@ -137,26 +136,25 @@ const openHandleSelector = (
     extra: number | null,
     item: number | null
 ) => {
-  isOpenHandleSelector.value = false;
-  isOpenMaterialSelector.value = false;
-
-  if (isOpenMaterialSelector.value)
-    closeMenu()
 
   if (
       currentHandle.value &&
-      sec === currentHandle.value.sec &&
-      cell === currentHandle.value.cell &&
-      row === currentHandle.value.row &&
-      extra === currentHandle.value.extra &&
-      item === currentHandle.value.item
+      (
+        sec === currentHandle.value.sec &&
+        cell === currentHandle.value.cell &&
+        row === currentHandle.value.row &&
+        extra === currentHandle.value.extra &&
+        item === currentHandle.value.item
+      )
   ) {
     closeMenu()
     return;
   }
 
+  closeMenu()
+
   setTimeout(() => {
-    const curSection = module.sections[sec]
+    const curSection = module.value.sections[sec]
     const curCell = curSection?.cells?.[cell]
     const curRow = curCell?.cellsRows?.[row]
     const curExtra = curRow?.extras?.[extra]
@@ -169,6 +167,7 @@ const openHandleSelector = (
       cell,
       row,
       item,
+      extra,
       data,
     };
     UMconstructor?.value?.FILLINGS.selectCell(sec, cell, row, extra, item);
@@ -194,7 +193,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
     currentFasadeMaterial.value.data['PALETTE'] = palette
 
   let {sec, cell, row, item} = currentFasadeMaterial.value;
-  const curSection = module.sections[sec]
+  const curSection = module.value.sections[sec]
   const curCell = curSection?.cells?.[cell]
   const curRow = curCell?.cellsRows?.[row]
 
@@ -492,6 +491,20 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
                   <ConfigurationOption
                       v-if="filling.fasade"
+                      :disable-delete-choice="true"
+                      :class="[
+                                {
+                                  active:
+                                    currentFasadeMaterial.sec ===
+                                      secIndex &&
+                                    currentFasadeMaterial.cell ===
+                                      null &&
+                                    currentFasadeMaterial.row ===
+                                      null &&
+                                    currentFasadeMaterial.item ===
+                                      fillingIndex,
+                                },
+                              ]"
                       :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
                       :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
                       @click="openFasadeSelector(secIndex, null, null, null, fillingIndex)"
@@ -499,6 +512,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
                   <ConfigurationOption
                       v-if="filling.fasade"
+                      :disable-delete-choice="true"
                       :class="[
                                 {
                                   active:
@@ -507,7 +521,9 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                     currentHandle.cell ===
                                       null &&
                                     currentHandle.row ===
-                                      null,
+                                      null &&
+                                    currentHandle.item ===
+                                      fillingIndex,
                                 },
                               ]"
                       :type="'Handles'"
@@ -645,6 +661,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
                         <ConfigurationOption
                             v-if="filling.fasade"
+                            :disable-delete-choice="true"
                             :class="[
                                 {
                                   active:
@@ -665,6 +682,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
                         <ConfigurationOption
                             v-if="filling.fasade"
+                            :disable-delete-choice="true"
                             :class="[
                                 {
                                   active:
@@ -828,6 +846,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
                             <ConfigurationOption
                                 v-if="filling.fasade"
+                                :disable-delete-choice="true"
                                 :class="[
                                 {
                                   active:
@@ -848,6 +867,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 
                             <ConfigurationOption
                                 v-if="filling.fasade"
+                                :disable-delete-choice="true"
                                 :class="[
                                 {
                                   active:
@@ -1018,6 +1038,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
           :data="createSurfaceList(currentHandle)"
           :index="0"
           @parent-callback="selectHandle"
+          :active-pos="currentHandle.data.HANDLES.position"
       />
     </div>
   </transition>

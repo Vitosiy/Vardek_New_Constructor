@@ -311,9 +311,9 @@ const getHandlesPosition = (
     posX = width / 2 + halfExtX / 2;
 
   let posY = 0;
-  if (cfg.row === 1)
+  if (cfg.row === -1)
     posY = height - offset - halfExtY  ;
-  else if (cfg.row === -1)
+  else if (cfg.row === 1)
     posY = offset + halfExtY;
   else
     posY = height / 2 - halfExtY / 2 ;
@@ -694,6 +694,32 @@ const renderGrid = (_moduleGrid) => {
           _sector: moduleSector,
           gridType: 'fasades',
         });
+
+        if(!row.error && row.material.HANDLES?.id !== 69920 && row.material.HANDLES?.position){
+          let handle = APP.CATALOG.PRODUCTS[row.material.HANDLES.id]
+          let handle_size = new THREE.Vector2(15, 100)
+          let handle_pos = getHandlesPosition(row.material.HANDLES.position, {
+                position: new THREE.Vector2( row.position.x, module.value.height - row.position.y),
+                size: {width: row.width, height: row.height},
+              },
+              {
+                size: handle_size,
+              })
+
+          handle_size = handle_size.rotateAround(new THREE.Vector2(), handle_pos.rotation)
+
+          createHandle({
+            x: getPixelWidth(handle_pos.position.x),
+            y: getPixelHeight(handle_pos.position.y),
+            width: getPixelWidth(handle_size.x),
+            height: getPixelHeight(handle_size.y),
+            handleData: {
+              ...handle,
+              position: handle_pos.position
+            },
+          });
+        }
+
       });
     }
   })

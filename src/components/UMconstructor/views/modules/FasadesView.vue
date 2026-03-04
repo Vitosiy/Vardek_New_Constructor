@@ -338,6 +338,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
 
                         <ConfigurationOption
                             v-if="!segment.error"
+                            :disable-delete-choice="true"
                             :class="[
                                 {
                                   active:
@@ -367,6 +368,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
 
                         <ConfigurationOption
                             v-if="!segment.error"
+                            :disable-delete-choice="true"
                             :class="[
                                 {
                                   active:
@@ -589,6 +591,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
 
                           <ConfigurationOption
                               v-if="!segment.error"
+                              :disable-delete-choice="true"
                               :class="[
                                 {
                                   active:
@@ -624,6 +627,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
 
                           <ConfigurationOption
                               v-if="!segment.error"
+                              :disable-delete-choice="true"
                               :class="[
                                 {
                                   active:
@@ -680,5 +684,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
 </template>
 
 <style scoped lang="scss">
-
+.accordion {
+  border: unset;
+}
 </style>
