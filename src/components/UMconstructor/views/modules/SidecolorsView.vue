@@ -112,8 +112,8 @@ const getMaterialsParts = computed(() => {
 
 const emit = defineEmits(["product-reset"]);
 
-const reset = () => {
-  emit("product-reset");
+const reset = (grid) => {
+  UMconstructor?.value?.reset()
 };
 
 const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
@@ -195,18 +195,18 @@ const createFacadeData = (fasadeIndex) => {
   });
 };
 
-const setEccentricOption = (props = {group: false, side : false}) => {
-  let {group, side} = props
+const setEccentricOption = (props = {PROPS: false, side : false}) => {
+  let {PROPS, side} = props
 
-  if((side && group.PROPS.CONFIG[side]?.COLOR) || (group.PROPS.CONFIG['LEFTSIDECOLOR']?.COLOR || group.PROPS.CONFIG['RIGHTSIDECOLOR']?.COLOR)) {
-    group.PROPS.CONFIG.eccentricOption = true
+  if((side && PROPS.CONFIG[side]?.COLOR) || (PROPS.CONFIG['LEFTSIDECOLOR']?.COLOR || PROPS.CONFIG['RIGHTSIDECOLOR']?.COLOR)) {
+    PROPS.CONFIG.eccentricOption = true
   }
   else {
-    delete group.PROPS.CONFIG.eccentricOption
+    delete PROPS.CONFIG.eccentricOption
   }
 
-  let option = group.PROPS.CONFIG.OPTIONS.find(item => +item.id === 8390271)
-  if (group.PROPS.CONFIG.eccentricOption && option && !option.active) {
+  let option = PROPS.CONFIG.OPTIONS.find(item => +item.id === 8390271)
+  if (PROPS.CONFIG.eccentricOption && option && !option.active) {
     checkActive(8390271, true)
   }
 }
@@ -273,30 +273,30 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
       break;
     case "LEFTSIDECOLOR":
     case "RIGHTSIDECOLOR":
-      if (!objectData.value.PROPS.CONFIG[currentOption.value]) {
-        objectData.value.PROPS.CONFIG[currentOption.value] = {};
+      if (!objectData.value.CONFIG[currentOption.value]) {
+        objectData.value.CONFIG[currentOption.value] = {};
       }
       let tmp_value = value ? value.ID || value : false;
 
       if (type === "COLOR") {
 
-        if(tmp_value === objectData.value.PROPS.CONFIG.MODULE_COLOR) {
-          objectData.value.PROPS.CONFIG[currentOption.value] = {COLOR: false};
-          setEccentricOption({group: objectData.value, side: currentOption.value})
+        if(tmp_value === objectData.value.CONFIG.MODULE_COLOR) {
+          objectData.value.CONFIG[currentOption.value] = {COLOR: false};
+          setEccentricOption({PROPS: objectData.value, side: currentOption.value})
           break;
         }
 
         if (!tmp_value || tmp_value === 7397)
-          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = false;
+          objectData.value.CONFIG[currentOption.value]["SHOW"] = false;
         else
-          objectData.value.PROPS.CONFIG[currentOption.value]["SHOW"] = true;
+          objectData.value.CONFIG[currentOption.value]["SHOW"] = true;
       }
 
-      objectData.value.PROPS.CONFIG[currentOption.value][type] = tmp_value;
+      objectData.value.CONFIG[currentOption.value][type] = tmp_value;
       if (palette)
-        objectData.value.PROPS.CONFIG[currentOption.value]["PALETTE"] = palette;
+        objectData.value.CONFIG[currentOption.value]["PALETTE"] = palette;
 
-      setEccentricOption({group: objectData.value, side: currentOption.value})
+      setEccentricOption({PROPS: objectData.value, side: currentOption.value})
       break;
     default:
       if (!objectData.value.CONFIG[currentOption.value]) {
