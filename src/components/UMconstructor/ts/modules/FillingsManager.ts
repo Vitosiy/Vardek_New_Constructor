@@ -370,61 +370,51 @@ export default class FillingsManager {
         const extra = row?.extras?.[extraIndex];
 
         const curRow = extra || row || cell || sec;
-        let needFasadesUpdate = false
-        let profileUpdate = false
+
         let curItem = curRow.fillings[itemIndex];
-        curRow.fillings.forEach((filling, index) => {
-            if (index > itemIndex) {
-                filling.id -= 1;
-                if (filling.fasade)
-                    filling.fasade.item = filling.id;
-            }
-        })
+        let curItemFasade = curItem.fasade
+        let curItemProfile = curItem.isProfile
 
         curRow.fillings = curRow.fillings.filter((el, index) => {
-            if (index === itemIndex) {
-                if (el.fasade)
-                    needFasadesUpdate = true
-                if (el.isProfile)
-                    profileUpdate = true
-            }
-
             return index !== itemIndex;
         });
 
-        if (needFasadesUpdate || profileUpdate) {
-            if (sec.fasadesDrawers?.length || curRow.hiTechProfiles?.length) {
+        if(curItemFasade)
+            sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
+                return el.id !== curItemFasade.id;
+            });
 
-                if (sec.fasadesDrawers?.length && needFasadesUpdate) {
-                    sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
-                        return el.id !== curItem.fasade.id;
-                    });
+        if(curItemProfile)
+            curRow.hiTechProfiles = curRow.hiTechProfiles.filter((el, index) => {
+                return el.isProfile.id !== curItemProfile.id;
+            });
 
-                    sec.fasadesDrawers.forEach((el, index) => {
-                        if (el.id > curItem.fasade.id)
-                            el.id -= 1;
-                    })
-
-                    if (!sec.fasadesDrawers.length)
-                        delete sec.fasadesDrawers
+        curRow.fillings.forEach((filling, index) => {
+            if (filling.id > curItem.id) {
+                filling.id -= 1;
+                if(filling.fasade) {
+                    let oldDrawerFasadeId = sec.fasadesDrawers?.findIndex(item => item.item === filling.id + 1)
+                    filling.fasade.item = filling.id;
+                    filling.fasade.id -= 1;
+                    sec.fasadesDrawers?.splice(oldDrawerFasadeId, 1, filling.fasade)
                 }
-
-                if (curRow.hiTechProfiles?.length && profileUpdate) {
-                    curRow.hiTechProfiles = curRow.hiTechProfiles.filter((el, index) => {
-                        return el.isProfile.id !== curItem.isProfile.id;
-                    });
-
-                    curRow.hiTechProfiles.forEach((el, index) => {
-                        if (el.isProfile.id > curItem.isProfile.id)
-                            el.isProfile.id -= 1;
-                    })
-
-                    if (!curRow.hiTechProfiles.length)
-                        delete curRow.hiTechProfiles
+                if(filling.isProfile) {
+                    let oldDrawerFasadeId = sec.hiTechProfiles?.findIndex(item => item.item === filling.id + 1)
+                    filling.isProfile.item = filling.id;
+                    filling.isProfile.id -= 1;
+                    sec.hiTechProfiles?.splice(oldDrawerFasadeId, 1, filling.isProfile)
                 }
-
-                this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
             }
+        })
+
+        if (curItemFasade || curItemProfile) {
+            if (!sec.fasadesDrawers?.length)
+                delete sec.fasadesDrawers
+
+            if (!curRow.hiTechProfiles?.length)
+                delete curRow.hiTechProfiles
+
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
         }
         
         this.scope.reset(grid)

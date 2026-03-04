@@ -73,6 +73,7 @@ watch(() => UMconstructor?.value?.UM_STORE.onHorizont, () => {
 watch(() => UMconstructor?.value?.UM_STORE.noBottom, () => {
   if(noBottom.value !== UMconstructor.value.UM_STORE.noBottom) {
     noBottom.value = UMconstructor.value.UM_STORE.noBottom
+    UMconstructor.value.reset()
   }
 })
 

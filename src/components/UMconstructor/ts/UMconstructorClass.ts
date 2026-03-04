@@ -412,6 +412,9 @@ export default class UMconstructorClass {
     }
 
     reset(grid: GridModule = this.UM_STORE.getUMGrid()) {
+
+        this.UM_STORE.setLoad(true)
+
         const PROPS = this.UM_STORE.getUMData();
         const {
             MIN_SECTION_HEIGHT,
@@ -685,6 +688,7 @@ export default class UMconstructorClass {
 
         this.debounce("renderGrid", () => {
             this.RENDER_REF.renderGrid(module)
+            this.UM_STORE.setLoad(false)
         }, 100)
 
         return module

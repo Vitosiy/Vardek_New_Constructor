@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import {computed, ref} from 'vue'
 import {defineStore} from "pinia";
 import {TConfig, TTotalProps} from "@/types/types.ts";
 import {canvasConfig, constructorMode, GridModule, TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
@@ -18,6 +18,8 @@ export const useUMStorage = defineStore('um-data', () => {
   const UM_CASH_GRID = ref<GridModule>(<GridModule>{})
   const UM_CASH_CONFIG = ref<TConfig>(<TConfig>{})
   const UM_CANVAS_PROPS = ref<canvasConfig>(defaultCanvas)
+
+  const loadUM = ref<boolean>(false)
 
   const selectedCell = ref<TSelectedCell>(defaultSelectedCell);
   const selectedFasade = ref<TSelectedCell>(defaultSelectedFasade);
@@ -123,8 +125,17 @@ export const useUMStorage = defineStore('um-data', () => {
     }
   }
 
+  const setLoad = (value: boolean) => {
+    loadUM.value = value;
+  }
+
+  const getLoad = computed(() => {
+    return loadUM.value
+  })
 
   return {
+    setLoad,
+    getLoad,
     totalHeight,
     totalWidth,
     totalDepth,

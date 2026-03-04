@@ -20,7 +20,7 @@ export default class ExternalFasadesManager {
         this.scope = this.FASADES_MANAGER.scope;
     }
 
-    calcDrawersFasades = (secIndex: number, fillingData: FillingObject = false, grid: GridModule = this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()) => {
+    calcDrawersFasades(secIndex: number, fillingData: FillingObject = false, grid: GridModule = this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()) {
 
         if (fillingData) {
             if(fillingData.fasade) {
@@ -134,7 +134,7 @@ export default class ExternalFasadesManager {
         this.FASADES_MANAGER.scope.LOOPS.calcLoops(secIndex, grid)
     };
 
-    calcDrawersFasadesPositons = (secIndex: number, _grid: GridModule) => {
+    calcDrawersFasadesPositons(secIndex: number, _grid: GridModule){
         const fasadeList = []
         const {CONFIG} = this.FASADES_MANAGER.scope.UM_STORE.getUMData()
         const grid = _grid || this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()

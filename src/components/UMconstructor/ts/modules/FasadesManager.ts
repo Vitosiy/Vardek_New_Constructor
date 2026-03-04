@@ -87,6 +87,7 @@ export default class FasadesManager {
         if (!grid.isSlidingDoors)
             grid.sections.forEach((section, secIndex) => {
 
+                let deltaWidth, deltaHeight
                 if (section.fasades?.[0]) {
                     const countDoors = section.fasades.length;
 
@@ -101,12 +102,19 @@ export default class FasadesManager {
                     const sumDoorsWidth = Math.floor(section.fasades.reduce(
                         (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
                         0) / countDoors - ((countDoors - 1) * 2));
-                    const sumDoorsHeight = section.fasades[0].reduce(
+                    let sumDoorsHeight = section.fasades[0].reduce(
                         (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
                         0);
 
-                    const deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
-                    const deltaHeight = correctFasadeHeight - sumDoorsHeight;
+                    if(section?.fasadesDrawers?.length > 0){
+                        let drawersFasadesHeight = section.fasadesDrawers.reduce(
+                            (accumulator, item, index) => accumulator + item.height + 4,
+                            0);
+                        sumDoorsHeight += drawersFasadesHeight;
+                    }
+
+                    deltaWidth = correctSectionFasadeWidthDoor - sumDoorsWidth;
+                    deltaHeight = correctFasadeHeight - sumDoorsHeight;
 
                     if (deltaWidth !== 0) {
                         section.fasades.forEach((door, doorIndex) => {
@@ -166,7 +174,7 @@ export default class FasadesManager {
 
                 }
 
-                if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
+                if ((deltaWidth !== 0 || deltaHeight !== 0) && (section.fasadesDrawers?.length || section.hiTechProfiles?.length)) {
                     this.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
                 }
 
