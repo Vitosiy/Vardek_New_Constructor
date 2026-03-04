@@ -135,8 +135,6 @@ defineExpose({
 </script>
 
 <template>
-  <GenericLoader v-show="UMstore.getLoad" />
-
   <Modal
     v-if="universalModuleData && props.product"
     :container="`modal--tableTop`"
@@ -144,32 +142,38 @@ defineExpose({
     @close-modal="closeUMRedactor"
   >
     <template #modalBody="{ onModalClose }" class="modal--tableTop">
-      <MainView
-        v-if="isUMModalOpen"
-        ref="universalModule2DConstructor"
-        :productData="universalModuleData.PROPS"
-        :canvasHeight="universalModuleData.canvasHeight"
-        :canvasWidth="universalModuleData.canvasWidth"
-      >
-        <template #save>
-          <button class="no-select actions-btn actions-btn--footer" @click="saveUMData">
-            Сохранить
-          </button>
-        </template>
+      <div class="um-modal-body-wrapper">
+        <MainView
+          v-if="isUMModalOpen"
+          ref="universalModule2DConstructor"
+          :productData="universalModuleData.PROPS"
+          :canvasHeight="universalModuleData.canvasHeight"
+          :canvasWidth="universalModuleData.canvasWidth"
+        >
+          <template #save>
+            <button class="no-select actions-btn actions-btn--footer" @click="saveUMData">
+              Сохранить
+            </button>
+          </template>
 
-        <template #close>
-          <button
-            @click="
-              () => {
-                onModalClose();
-              }
-            "
-            class="no-select actions-btn actions-btn--footer"
-          >
-            Закрыть
-          </button>
-        </template>
-      </MainView>
+          <template #close>
+            <button
+              @click="
+                () => {
+                  onModalClose();
+                }
+              "
+              class="no-select actions-btn actions-btn--footer"
+            >
+              Закрыть
+            </button>
+          </template>
+        </MainView>
+
+        <div v-if="UMstore.getLoad" class="um-modal-loader-overlay">
+          <GenericLoader />
+        </div>
+      </div>
     </template>
     <template #modalOpen="{ onModalOpen }">
       <button class="no-select cut-btn" @click="onModalOpen">
@@ -180,6 +184,23 @@ defineExpose({
 </template>
 
 <style  lang="scss">
+.um-modal-body-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.um-modal-loader-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: all;
+}
+
 .modal {
   &--tableTop {
     border: none;
