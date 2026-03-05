@@ -333,6 +333,13 @@ const renderGrid = (_moduleGrid) => {
     setModuleGrid(_moduleGrid)
   }
 
+  if(mode.value === "fasades") {
+    fasadesContainer.interactiveChildren = true;
+  }
+  else {
+    fasadesContainer.interactiveChildren = false;
+  }
+
   const moduleGrid = _moduleGrid || props.module
 
   let ModulepxWidth = getPixelWidth(moduleGrid.width);
@@ -608,7 +615,7 @@ const renderGrid = (_moduleGrid) => {
       })
     }
 
-    if (mode.value === "fasades" && !module.value?.isSlidingDoors) {
+    if (!module.value?.isSlidingDoors) {
       section.fasades.forEach((column, colIndex) => {
 
         if(!column.length)
@@ -638,6 +645,7 @@ const renderGrid = (_moduleGrid) => {
             section: col,
             _sector: moduleSector,
             gridType: 'fasades',
+            opacity: mode.value === "fasades" ? 0.8 : 0.25,
           });
 
           if(!row.error && row.material.HANDLES?.id !== 69920 && row.material.HANDLES?.position){
@@ -693,6 +701,7 @@ const renderGrid = (_moduleGrid) => {
           section: col,
           _sector: moduleSector,
           gridType: 'fasades',
+          opacity: mode.value === "fasades" ? 0.8 : 0.25,
         });
 
         if(!row.error && row.material.HANDLES?.id !== 69920 && row.material.HANDLES?.position){
@@ -724,7 +733,7 @@ const renderGrid = (_moduleGrid) => {
     }
   })
 
-  if (mode.value === "fasades" && module.value?.isSlidingDoors) {
+  if (module.value?.isSlidingDoors) {
     module.value?.fasades?.forEach((column, colIndex) => {
       const pxWidth = getPixelWidth(column[0].width);
       let fasadeXOffset = getPixelWidth(column[0].position.x);
@@ -750,6 +759,7 @@ const renderGrid = (_moduleGrid) => {
           section: col,
           _sector: moduleSector,
           gridType: 'fasades',
+          opacity: mode.value === "fasades" ? 0.8 : 0.25,
         });
       });
       //Добавляем отступ по горизонтали
@@ -843,6 +853,7 @@ const createSector = ({
                         extraIndex = null,
                         itemIndex = null,
                         item = false,
+                        opacity = 1,
                       }) => {
 
   let sector = new Container();
@@ -859,7 +870,7 @@ const createSector = ({
   sector.rowIndex = rowIndex;
   sector.extraIndex = extraIndex;
 
-  const cell = new Section(cellData, width, height, sector, gridType === mode.value);
+  const cell = new Section(cellData, width, height, sector, gridType === mode.value, opacity);
   const selected = gridType === "fasades" ? selectedFasade : gridType === "filling" ? selectedFilling : selectedCell;
 
   if (
@@ -889,7 +900,7 @@ const createSector = ({
   });
 
   if (gridType === "fasades") {
-    if(!cellData.manufacturerOffset) {
+    if(!cellData.manufacturerOffset && mode.value === "fasades") {
       let tmpRowIndex = section.findIndex(item => item.id === cellData.id);
       cell.cellGraphics.on("pointerdown", () => {
         selectCell(gridType, <TSelectedCell>{sec: sectionIndex, cell: cellIndex, row: tmpRowIndex, extra: extraIndex, item: null });

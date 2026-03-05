@@ -1087,14 +1087,17 @@ class Section extends Helpers {
     height: number = 0;
     data: any;
     sector: Container;
+    opacity: number;
+    _drawDimensions: boolean;
 
-    constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true) {
+    constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true, opacity: number = 1) {
         super();
         this.data = data;
         this.width = width;
         this.height = height;
         this.sector = sector;
         this._drawDimensions = _drawDimensions;
+        this.opacity = opacity;
 
         this.createSection();
     }
@@ -1108,7 +1111,7 @@ class Section extends Helpers {
         let bottomRight = data.bottomRight ?? {type: 'none'};
         let topLeft = data.topLeft ?? {type: 'none'};
         let topRight = data.topRight ?? {type: 'none'};
-        let opacity = data.type === "fasade" ? 0.8 : 1;
+        let opacity = this.opacity;
 
         let defCellColor, deffHighlightColor;
         switch (data.type) {
