@@ -238,11 +238,13 @@ const init = async () => {
   app.stage.hitArea = app.screen;
 
   shapeAdjuster = new ShapeAdjuster({
+    scope: UMconstructor?.value,
     getMmWidth,
     getMmHeight,
     getPixelHeight,
     getPixelWidth,
   });
+  UMconstructor.value.setShapeAdjuster(shapeAdjuster)
   shapeAdjuster.setStep(props.step)
   addTicker();
 

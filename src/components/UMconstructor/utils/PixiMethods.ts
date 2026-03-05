@@ -5,6 +5,7 @@ import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/pad
 import * as THREE from "three";
 import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
 import {TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
+import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 
 type TDashedLine = {
     startX: number;
@@ -753,10 +754,10 @@ class Shape extends Helpers {
                 thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
 
                 otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y -
-                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height)
+                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height + 2)
                     : otherShapePosY
 
-                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
+                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height + 2) : otherShapeHeight
 
                 if (!(this.data.isProfile && otherShape.data.isProfile)) {
                     if (this.data.isProfile && otherShape.data.fasade) {
@@ -1341,15 +1342,18 @@ class Section extends Helpers {
 class ShapeAdjuster extends Helpers {
     maxIterations: number = 500
     maxPositionAttempts: number = 250
+    scope: UMconstructorClass
 
-    constructor({getMmWidth, getMmHeight, getPixelHeight, getPixelWidth}:
+    constructor({scope, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth}:
                 {
+                    scope: UMconstructorClass,
                     getMmHeight?: () => void,
                     getMmWidth?: () => void,
                     getPixelHeight?: () => void,
                     getPixelWidth?: () => void,
                 }) {
         super()
+        this.scope = scope
         if (getMmWidth)
             this.getMmWidth = getMmWidth
         if (getMmHeight)
@@ -1439,8 +1443,10 @@ class ShapeAdjuster extends Helpers {
                 shape.data.fasade = {}
                 shape.data.fasade.manufacturerOffset = manufacturerOffset
                 shape.data.fasade.height = shape.data.data.MIN_FASADE_SIZE
-                maxY = maxY + this.getPixelHeight(manufacturerOffset)
-                minY = minY - this.getPixelHeight(shape.data.data.MIN_FASADE_SIZE - shape.data.data.height - manufacturerOffset)
+                let moduleData = this.scope.UM_STORE.getUMGrid()
+
+                maxY = maxY + this.getPixelHeight(manufacturerOffset - (moduleData.moduleThickness - 2))
+                minY = minY - this.getPixelHeight(moduleData.moduleThickness - 2)
             }
 
             for (let i = 0; i < maxY - minY - height; i++) {

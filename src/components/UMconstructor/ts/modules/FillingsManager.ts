@@ -225,6 +225,7 @@ export default class FillingsManager {
 
         let width = startFillingData.width;
         let height = startFillingData.height;
+
         let profileData = {}
         if (isHiTechProfile) {
             if (!grid.profilesConfig) {

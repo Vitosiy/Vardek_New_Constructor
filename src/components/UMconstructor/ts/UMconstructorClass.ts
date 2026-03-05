@@ -60,7 +60,7 @@ export default class UMconstructorClass {
         this.PROFILES = new ProfilesManager(this)
         this.SECTIONS = new SectionsManager(this)
         this.SIDECOLORS = new SidecolorsManager(this)
-        this.SHAPE_ADJUSTER = new ShapeAdjuster({})
+        this.SHAPE_ADJUSTER = new ShapeAdjuster({scope: this})
         this.OPTIONS = new OptionsManager(this)
         this.DEBOUNCES = {}
     }
@@ -271,6 +271,10 @@ export default class UMconstructorClass {
 
     setRenderRef(ref: Ref){
         this.RENDER_REF = ref
+    }
+
+    setShapeAdjuster(SHAPE_ADJUSTER: ShapeAdjuster){
+        this.SHAPE_ADJUSTER = SHAPE_ADJUSTER
     }
 
     updateHorizont(value){
