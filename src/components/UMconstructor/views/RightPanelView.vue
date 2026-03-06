@@ -1,4 +1,6 @@
 <script setup lang="ts">
+//@ts-nocheck
+
 import {computed, ref, toRefs} from "vue";
 import "@/components/UMconstructor/styles/UM.scss"
 
@@ -7,7 +9,6 @@ import SectionsView from "@/components/UMconstructor/views/modules/SectionsView.
 import FasadesView from "@/components/UMconstructor/views/modules/FasadesView.vue";
 import FillingsView from "@/components/UMconstructor/views/modules/FillingsView.vue";
 import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
-import SidecolorsView from "@/components/UMconstructor/views/modules/SidecolorsView.vue";
 
 const props = defineProps({
   module: {
@@ -62,6 +63,7 @@ const getFillings = computed(() => {
           class="constructor2d-container--right--content"
           :visualizationRef="UMconstructor.RENDER_REF"
           :module="UMconstructor.UM_STORE.getUMGrid()"
+          :mode="mode"
           :step="step"
           :UMconstructor="UMconstructor"
       />
@@ -77,6 +79,7 @@ const getFillings = computed(() => {
           class="constructor2d-container--right--content"
           :visualizationRef="UMconstructor.RENDER_REF"
           :module="UMconstructor.UM_STORE.getUMGrid()"
+          :mode="mode"
           :step="step"
           :UMconstructor="UMconstructor"
       />

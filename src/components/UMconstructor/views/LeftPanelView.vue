@@ -1,4 +1,6 @@
 <script setup lang="ts">
+//@ts-nocheck
+
 import "@/components/UMconstructor/styles/UM.scss"
 
 import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";

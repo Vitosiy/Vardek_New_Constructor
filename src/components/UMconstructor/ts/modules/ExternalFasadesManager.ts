@@ -250,7 +250,7 @@ export default class ExternalFasadesManager {
                 upperFasadeSize = Math.abs(this.FASADES_MANAGER.scope.UM_STORE.totalHeight - 2 - bottomFasadePosition)
             }
 
-            if (upperFasadeSize >= this.FASADES_MANAGER.scope.CONST.MIN_FASADE_HEIGHT)
+            if (upperFasadeSize > 200)
                 fasadeList.push({
                     y: bottomFasadePosition,
                     height: upperFasadeSize,
