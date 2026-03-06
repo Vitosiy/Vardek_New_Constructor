@@ -420,14 +420,14 @@ export const useModelState = defineStore('ModelState', () => {
 
         // Формирование итогового массива
         const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => {
-            return {
-                NAME: group.NAME,
-                FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
-                SORT: group.SORT,
-                GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
+                return {
+                    NAME: group.NAME,
+                    FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
+                    SORT: group.SORT,
+                    GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
 
+                }
             }
-        }
 
 
         ).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
@@ -639,7 +639,7 @@ export const useModelState = defineStore('ModelState', () => {
         const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
 
         const defaultTypes = productPositions.reduce((acc, index) =>
-            acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
+                acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
             []);
 
 
@@ -673,7 +673,7 @@ export const useModelState = defineStore('ModelState', () => {
         let glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
 
         const currentClass = glassArray.reduce((acc, index) =>
-            acc.concat(_GLASS.value[index] || []),
+                acc.concat(_GLASS.value[index] || []),
             []);
 
         currentGlassData.value = currentClass;

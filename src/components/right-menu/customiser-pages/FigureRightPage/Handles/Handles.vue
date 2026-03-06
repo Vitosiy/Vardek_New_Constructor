@@ -170,6 +170,7 @@ const checkControllerVisible = computed(() => {
 <template>
   <div class="handles__wraper">
     <defaultTab
+      v-if="!props.is2Dconstructor"
       :tabs="props.data"
       :initialTab="figureFasad.name"
       @tab-change="handleTabChange"

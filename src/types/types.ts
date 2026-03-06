@@ -39,6 +39,7 @@ import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
+import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
 
 export type TApplication = Application
 export type TRenderer = Renderer
@@ -460,6 +461,8 @@ export type TConfig = {
   KROMKA: NumStr | null,
   EXPRESSIONS: TExpressions,
   ROTATION: TRotationEuler,
+  MODULEGRID?: GridModule,
+  isHiTech?: boolean,
 }
 
 export type TTotalProps = {

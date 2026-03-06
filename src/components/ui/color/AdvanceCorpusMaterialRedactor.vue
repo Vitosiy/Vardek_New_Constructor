@@ -64,7 +64,7 @@ const { getIntegratedHandleControllerData, setIntegratedHandleAction } =
 const {
   createFasadeConversations,
   checkConversations,
-    filterMaterialsConversations,
+  filterMaterialsConversations,
   checkFasadeConversations,
   filterFasadeConversations,
 } = useConversationActions();
@@ -171,7 +171,7 @@ const onSelectMaterial = (data) => {
     modelState.createCurrentMillingData({
       fasadeId: data.ID,
       productId: productId.value,
-    fasadeNdx: props.elementIndex,
+      fasadeNdx: props.elementIndex,
     });
 
     modelState.createCurrentPatinaData({
@@ -214,7 +214,7 @@ const onSelectMaterial = (data) => {
     modelState.createCurrentGlassData({
       fasadeId: data.ID,
       productId: productId.value,
-    fasadeNdx: props.elementIndex,
+      fasadeNdx: props.elementIndex,
     });
   }
   else {
@@ -227,7 +227,7 @@ const onSelectMaterial = (data) => {
   /** @Палитра */
   paletteList.value = modelState.getCurrentPaletteData;
   isPalleteExist.value = Object.keys(paletteList.value).length > 0;
-  
+
   /** @Витрины */
   showcaseList.value = modelState.getCurrentShowcaseData;
 
@@ -375,7 +375,7 @@ const onSelectMilling = (data) => {
     fasadeHandleList.value = {};
     fasadeProps.MILLING_TYPE = null;
   }
-  
+
   callback(data, "MILLING");
 };
 
@@ -412,7 +412,7 @@ const onChangeIntegratedHandlePos = (action, id) => {
 /** Удаление опций конфигурации */
 const deleteSelectedOptions = (type: String) => {
   const { FASADE_PROPS } = productData.value.PROPS.CONFIG;
-  
+
   if (type == "surface" && props.isFasade) {
 
     let { NAME, DETAIL_PICTURE } = _FASADE[7397];
@@ -451,7 +451,7 @@ const deleteSelectedOptions = (type: String) => {
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
     isPatinaExist.value = false;
-    
+
     currentMillingData.value = { name: "", imgSrc: null };
     currentPatinaData.value = { name: "", imgSrc: null };
     callback(false, "MILLING");
@@ -856,8 +856,8 @@ onBeforeUnmount(() => {
 <template>
   <div class="container">
     <div
-      class="container__header"
-      v-if="props.isFasade && props.elementIndex !== null"
+        class="container__header"
+        v-if="props.isFasade && props.elementIndex !== null"
     >
       <h3>Конфигурация фасада {{ props.elementIndex + 1 }}</h3>
     </div>
@@ -983,10 +983,10 @@ onBeforeUnmount(() => {
 
     <SurfaceRedactor
         v-if="currentEditableOption === 'surface' && materialList[0]?.FASADES"
-      :materialList="materialList"
-      :elementIndex="props.elementIndex"
-      :temp-work="true"
-      @select_material="onSelectMaterial"
+        :materialList="materialList"
+        :elementIndex="props.elementIndex"
+        :temp-work="true"
+        @select_material="onSelectMaterial"
     />
     <MaterialSelector
         v-if="currentEditableOption === 'surface' && !materialList[0]?.FASADES"
