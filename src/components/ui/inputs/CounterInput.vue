@@ -6,6 +6,7 @@
       :type="type"
       :min="props.min"
       :max="props.max"
+      type="number"
       v-model="inputValue"
       :placeholder="placeholder"
       :step="step"
@@ -13,6 +14,7 @@
   <input
       v-else
       ref="input"
+      type="number"
       :class="inputClass"
       :type="type"
       :min="props.min"

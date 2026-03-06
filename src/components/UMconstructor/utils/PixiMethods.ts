@@ -1,9 +1,11 @@
 // @ts-nocheck 31
-import {UI_PARAMS} from "./UMConstructorConst.ts";
+import {UI_PARAMS} from "./Const.ts";
 import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "pixi.js";
 import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
 import * as THREE from "three";
 import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
+import {TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
+import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 
 type TDashedLine = {
     startX: number;
@@ -581,7 +583,7 @@ class Shape extends Helpers {
 
         const pointerdown = (event, graphic) => {
             graphic.cursor = "grabbing";
-            this.select('fillings', this.sector.secIndex, this.sector.cellIndex, true, this.sector.rowIndex, this.sector.extraIndex)
+            this.select("fillings", <TSelectedCell>{sec: this.sector.secIndex, cell: this.sector.cellIndex, row: this.sector.rowIndex, extra: this.sector.extraIndex});
             dragging = true;
             originalPosition = {
                 x: graphic.position.x,
@@ -752,10 +754,10 @@ class Shape extends Helpers {
                 thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
 
                 otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y -
-                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height)
+                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height + 2)
                     : otherShapePosY
 
-                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
+                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height + 2) : otherShapeHeight
 
                 if (!(this.data.isProfile && otherShape.data.isProfile)) {
                     if (this.data.isProfile && otherShape.data.fasade) {
@@ -1086,14 +1088,17 @@ class Section extends Helpers {
     height: number = 0;
     data: any;
     sector: Container;
+    opacity: number;
+    _drawDimensions: boolean;
 
-    constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true) {
+    constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true, opacity: number = 1) {
         super();
         this.data = data;
         this.width = width;
         this.height = height;
         this.sector = sector;
         this._drawDimensions = _drawDimensions;
+        this.opacity = opacity;
 
         this.createSection();
     }
@@ -1107,7 +1112,7 @@ class Section extends Helpers {
         let bottomRight = data.bottomRight ?? {type: 'none'};
         let topLeft = data.topLeft ?? {type: 'none'};
         let topRight = data.topRight ?? {type: 'none'};
-        let opacity = data.type === "fasade" ? 0.8 : 1;
+        let opacity = this.opacity;
 
         let defCellColor, deffHighlightColor;
         switch (data.type) {
@@ -1337,15 +1342,18 @@ class Section extends Helpers {
 class ShapeAdjuster extends Helpers {
     maxIterations: number = 500
     maxPositionAttempts: number = 250
+    scope: UMconstructorClass
 
-    constructor({getMmWidth, getMmHeight, getPixelHeight, getPixelWidth}:
+    constructor({scope, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth}:
                 {
+                    scope: UMconstructorClass,
                     getMmHeight?: () => void,
                     getMmWidth?: () => void,
                     getPixelHeight?: () => void,
                     getPixelWidth?: () => void,
                 }) {
         super()
+        this.scope = scope
         if (getMmWidth)
             this.getMmWidth = getMmWidth
         if (getMmHeight)
@@ -1426,17 +1434,19 @@ class ShapeAdjuster extends Helpers {
                 }
                 else
                     Object.entries(MANUFACTURER).forEach(([key, offset]) => {
-                        if (manufacturer_name.includes(key)) {
-                            manufacturer_name = key
-                            manufacturerOffset = offset
-                        }
-                    })
+                    if (manufacturer_name.includes(key)) {
+                        manufacturer_name = key
+                        manufacturerOffset = offset
+                    }
+                })
 
                 shape.data.fasade = {}
                 shape.data.fasade.manufacturerOffset = manufacturerOffset
                 shape.data.fasade.height = shape.data.data.MIN_FASADE_SIZE
-                maxY = maxY + this.getPixelHeight(manufacturerOffset)
-                minY = minY - this.getPixelHeight(shape.data.data.MIN_FASADE_SIZE - shape.data.data.height - manufacturerOffset)
+                let moduleData = this.scope.UM_STORE.getUMGrid()
+
+                maxY = maxY + this.getPixelHeight(manufacturerOffset - (moduleData.moduleThickness - 2))
+                minY = minY - this.getPixelHeight(moduleData.moduleThickness - 2)
             }
 
             for (let i = 0; i < maxY - minY - height; i++) {
