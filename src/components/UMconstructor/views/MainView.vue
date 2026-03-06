@@ -21,6 +21,7 @@ const step = ref(1);
 const constructor2dContainer = ref(null);
 
 const productData = ref<TTotalProps|boolean>(false)
+const refFooter = ref(null);
 
 const visualizationRef = ref(null);
 const UMconstructor = ref<UMconstructorClass|null>(null);
@@ -70,14 +71,13 @@ const saveGrid = (_grid: GridModule) => {
   let grid = _grid || UMconstructor.value?.UM_STORE.getUMGrid();
   if(grid.errors && Object.keys(grid.errors).length > 0) {
     Object.values(grid.errors).forEach(item => {
-      alert(item.message)
+      toaster.error(item.message, refFooter.value)
     })
 
     return false
   }
-  else
-    alert('Модуль сохранен')
-  toaster.success('Модуль сохранен')
+
+  toaster.success('Модуль сохранен', refFooter.value)
 
   return Object.assign({}, grid);
 };
@@ -111,10 +111,8 @@ onBeforeMount(() => {
 onMounted(() => {
   UMstore.setUMGrid(module.value);
   UMconstructor.value?.setRenderRef(visualizationRef)
-
-  //setTimeout(()=> {
-    UMconstructor.value?.reset(UMstore.getUMGrid())
-  //}, 1000)
+  UMconstructor.value?.setAlertRef(refFooter)
+  UMconstructor.value?.reset(UMstore.getUMGrid())
 });
 
 onBeforeUnmount(() => {
@@ -211,7 +209,7 @@ defineExpose({
         />
       </div>
 
-      <section class="actions-footer">
+      <section class="actions-footer" ref="refFooter">
         <div class="actions-footer--save">
           <slot name="save"></slot>
           <slot name="close"></slot>

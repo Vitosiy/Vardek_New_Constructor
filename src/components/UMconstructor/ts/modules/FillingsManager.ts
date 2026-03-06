@@ -164,18 +164,18 @@ export default class FillingsManager {
         let currentModuleSegment = currentExtra || currentRow || currentCell || currentSection
 
         if (row === null && cell === null && sec === null && extra === null) {
-            alert("Пожалуйста, выберите секцию для добавления наполнения");
+            this.scope.callAlert("info", "Пожалуйста, выберите секцию для добавления наполнения")
             return;
         }
 
         if (product.MIN_FASADE_SIZE) {
             if (row || extra) {
-                alert("Нельзя установить ящик с фасадом в вертикальную разделитель!");
+                this.scope.callAlert("error", "Нельзя установить ящик с фасадом в вертикальную разделитель!")
                 return;
             }
 
             if (!currentSection?.fasades?.[0]?.[0] && !currentSection?.fasadesDrawers?.[0]) {
-                alert("Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!");
+                this.scope.callAlert("error", "Нельзя установить ящик с фасадом в секцию без двери! Добавьте фасад, даже если он должен быть пустым!")
                 return;
             }
         }
@@ -184,12 +184,12 @@ export default class FillingsManager {
             if (+opt.id === 4722965 && opt.active)
                 return opt;
         })) {
-            alert("Г-образный профиль доступен только для навесного модуля")
+            this.scope.callAlert("error", "Г-образный профиль доступен только для навесного модуля")
             return;
         }
 
         if (isHiTechProfile && grid.profilesConfig?.sideProfile) {
-            alert("Нельзя добавить горизонтальный профиль вместе с боковым!");
+            this.scope.callAlert("error", "Нельзя добавить горизонтальный профиль вместе с боковым!")
             return;
         }
 
@@ -206,7 +206,7 @@ export default class FillingsManager {
         const startFillingData = this.createFillingDataToCheck(product, currentModuleSegment, grid, isVerticalItem, !!product.MIN_FASADE_SIZE);
 
         if (!startFillingData) {
-            alert("Позиция не найдена");
+            this.scope.callAlert("error", "Нет места для размещения")
             return;
         }
 
@@ -447,7 +447,7 @@ export default class FillingsManager {
             const currentfilling = current.fillings[key];
 
             if (currentfilling?.isProfile?.isBottomHiTechProfile) {
-                alert("Г-образный профиль нельзя перемещать!");
+                this.scope.callAlert("info", "Г-образный профиль нельзя перемещать!")
                 return;
             }
 
@@ -471,7 +471,7 @@ export default class FillingsManager {
             if (check) {
                 currentfilling.position.x = fillingData.position.x;
             } else {
-                alert(`Нельзя изменить позицию на ${+_value}`)
+                this.scope.callAlert("error", `Нельзя изменить позицию на ${+_value}`)
                 currentfilling.position.x = prevValue;
             }
 
@@ -510,7 +510,7 @@ export default class FillingsManager {
             const currentfilling = current.fillings[key];
 
             if (currentfilling?.isProfile?.isBottomHiTechProfile) {
-                alert("Г-образный профиль нельзя перемещать!");
+                this.scope.callAlert("info", `Г-образный профиль нельзя перемещать`)
                 return;
             }
 
@@ -535,7 +535,7 @@ export default class FillingsManager {
             if (check) {
                 currentfilling.position.y = fillingData.position.y;
             } else {
-                alert(`Нельзя изменить позицию на ${+_value}`)
+                this.scope.callAlert("error", `Нельзя изменить позицию на ${+_value}`)
                 currentfilling.position.y = prevValue;
             }
 
@@ -569,7 +569,7 @@ export default class FillingsManager {
             const currentfilling = currentRow.fillings[key];
 
             if (!currentfilling?.fasade) {
-                alert("У элемента нет фасада!");
+                this.scope.callAlert("error", `У элемента нет фасада!`)
                 return
             }
 

@@ -285,7 +285,7 @@ const getHandlesPosition = (
 
   const W = handlSize.x;
   const H = handlSize.y;
-  const offset = 25; // мм
+  const offset = mode.value === "fasades" ? 45 : 25; // мм
 
   const cfg = positionMap[posNumber];
   if (!cfg) {
@@ -672,6 +672,7 @@ const renderGrid = (_moduleGrid) => {
                 ...handle,
                 position: handle_pos.position
               },
+              opacity: 0.9,
             });
           }
 
@@ -728,6 +729,7 @@ const renderGrid = (_moduleGrid) => {
               ...handle,
               position: handle_pos.position
             },
+            opacity: 0.9,
           });
         }
 
@@ -1000,6 +1002,7 @@ const createHandle = ({
                         width,
                         height,
                         handleData,
+                        opacity
                       }) => {
   const sector = new Container();
 
@@ -1009,7 +1012,7 @@ const createHandle = ({
   sector.sectorData = handleData;
   sector.sections = sections;
 
-  const cell = new Section(handleData, width, height, sector, false);
+  const cell = new Section(handleData, width, height, sector, false, opacity);
   cell.highlightGraphics.visible = false;
   cell.cellGraphics.eventMode = "static";
 

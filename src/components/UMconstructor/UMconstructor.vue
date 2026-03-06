@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // @ts-nocheck
 import Modal from "@/components/ui/modals/Modal.vue";
-import {defineExpose, onBeforeMount, onBeforeUnmount, ref} from "vue";
+import {defineExpose, onBeforeUnmount, ref} from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus.ts";
 import {saveUMGrid} from "@/components/UMconstructor/utils/PixiMethods.ts";
 import MainView from "@/components/UMconstructor/views/MainView.vue"
 import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
-import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import {useToast} from "@/features/toaster/useToast.ts";
+import UMLoader from "@/components/UMconstructor/UMLoader.vue";
 
 const props = defineProps({
   product: {
@@ -17,6 +18,7 @@ const props = defineProps({
 
 const eventBus = useEventBus();
 const UMstore = useUMStorage()
+const toaster = useToast();
 
 const universalModule2DConstructor = ref();
 const universalModuleData = ref({});
@@ -43,6 +45,7 @@ const saveUMData = ({ data, canvasHeight }) => {
   UMstore.setUMCashGrid(tmp_result)
 
   gridUMSaved.value = true;
+  toaster.success('Модуль сохранен')
   eventBus.emit("A:UM-update", UMstore.getUMCashGrid());
 };
 
@@ -171,7 +174,7 @@ defineExpose({
         </MainView>
 
         <div v-if="UMstore.getLoad" class="um-modal-loader-overlay">
-          <GenericLoader />
+          <UMLoader />
         </div>
       </div>
     </template>
@@ -185,9 +188,14 @@ defineExpose({
 
 <style  lang="scss">
 .um-modal-body-wrapper {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
   position: relative;
   width: 100%;
   height: 100%;
+
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
 }
 
 .um-modal-loader-overlay {
@@ -204,8 +212,8 @@ defineExpose({
 .modal {
   &--tableTop {
     border: none;
-    max-height: 95vh;
-    max-width: 95vw;
+    width: 95vw;
+    height: 95vh;
     display: none;
     border-radius: 8px;
     overflow: hidden;

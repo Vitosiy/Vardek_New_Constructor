@@ -35,7 +35,7 @@ export default class SectionsManager {
         const {MIN_SECTION_WIDTH} = this.scope.CONST
 
         if (halfWidth < MIN_SECTION_WIDTH) {
-            alert("Размер секций будет слишком мал! Пожалуйста, выберите меньшее количество секций!");
+            this.scope.callAlert("warning", `Размер секций будет слишком мал! Пожалуйста, выберите меньшее количество секций!`)
             return;
         }
 
@@ -138,7 +138,7 @@ export default class SectionsManager {
         const halfHeight = Math.floor((cell.height - grid.moduleThickness * count) / (count + 1));
 
         if (halfHeight < MIN_SECTION_HEIGHT) {
-            alert("Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!");
+            this.scope.callAlert("warning", `Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!`)
             return;
         }
 
@@ -223,7 +223,10 @@ export default class SectionsManager {
         const halfWidth = Math.floor((row.width - grid.moduleThickness * count) / (count + 1));
 
         if (halfWidth < MIN_SECTION_WIDTH) {
-            alert("Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!");
+            this.scope.callAlert("warning", `Расстояние между разделителями слишком мало! Пожалуйста, выберите меньшее количество!`)
+            if(cell.cellsRows?.length === 1){
+                delete cell.cellsRows
+            }
             return;
         }
 
@@ -306,7 +309,10 @@ export default class SectionsManager {
         const halfHeight = Math.floor((extra.height - grid.moduleThickness * count) / (count + 1));
 
         if (halfHeight < MIN_SECTION_HEIGHT) {
-            alert("Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!");
+            this.scope.callAlert("warning", `Расстояние между полками слишком мало! Пожалуйста, выберите меньшее количество полок!`)
+            if(row.extras?.length === 1){
+                delete row.extras
+            }
             return;
         }
 
@@ -1145,7 +1151,7 @@ export default class SectionsManager {
             : current.width + prev.width + grid.moduleThickness;
 
         if (combinedWidth > MAX_SECTION_WIDTH) {
-            alert("Суммарная ширина превышает допустимый предел! Уменьшите ширину!")
+            this.scope.callAlert("warning", `Суммарная ширина новой секции превысит допустимый предел! Уменьшите ширину секций!`)
             return;
         }
 

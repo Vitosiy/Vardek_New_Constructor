@@ -442,19 +442,25 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                 :class="'actions-container'"
                 :id="`fasade_${secIndex}_${doorIndex}`"
             >
-              <div class="actions-header">
-                <button
-                    v-if="!module.isRestrictedModule || (module.isRestrictedModule && section.fasades.length > 1)"
-                    class="actions-btn actions-icon"
-                    @click="UMconstructor.FASADES.deleteDoor(secIndex, doorIndex, module)"
-                >
-                  <img
-                      class="actions-icon--delete"
-                      src="/icons/delite.svg"
-                      alt=""
-                  />
-                </button>
-                <p class="actions-title actions-title--part">Дверь №{{ doorIndex + 1 }}</p>
+              <div class="actions-header" v-if="door && Object.entries(door).length > 0">
+                <div class="actions-header-column">
+                  <div class="actions-header-row">
+                    <button
+                        v-if="!module.isRestrictedModule || (module.isRestrictedModule && section.fasades.length > 1)"
+                        class="actions-btn actions-icon"
+                        @click="UMconstructor.FASADES.deleteDoor(secIndex, doorIndex, module)"
+                    >
+                      <img
+                          class="actions-icon--delete"
+                          src="/icons/delite.svg"
+                          alt=""
+                      />
+                    </button>
+                    <p class="actions-title actions-title--part">Дверь №{{ doorIndex + 1 }}</p>
+                  </div>
+                  <p class="actions-title actions-title--part">Высота сегментов: {{UMconstructor.FASADES.calcSumHeightDoorSegmentes(secIndex, doorIndex, module)}}</p>
+                  <p class="actions-title actions-title--part">Ширина: {{door?.[0]?.width}}</p>
+                </div>
               </div>
 
               <div class="accordion">

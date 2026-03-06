@@ -849,12 +849,11 @@ watch(
             </button> -->
           </template>
         </Modal>
-        <div v-show="universalModuleData && product">
-          <UMconstructor
-            ref="universalModule2DConstructor"
-            :product="product"
-          />
-        </div>
+        <UMconstructor
+          v-show="universalModuleData && product"
+          ref="universalModule2DConstructor"
+          :product="product"
+        />
       </div>
     </div>
   </div>

@@ -77,7 +77,18 @@ export default class ExternalFasadesManager {
             baseFasade.loopsSide = LOOPSIDE['none']
         }
 
+        if(baseFasade.minY === undefined) {
+            let fasadeMinMax = this.FASADES_MANAGER.getFasadePositionMinMax(baseFasade);
+            baseFasade = Object.assign(baseFasade, fasadeMinMax);
+        }
+
         let baseFasade2 = grid.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
+        if(baseFasade2 && baseFasade2.minY === undefined) {
+            let fasadeMinMax = this.FASADES_MANAGER.getFasadePositionMinMax(baseFasade2);
+            baseFasade2 = Object.assign(baseFasade2, fasadeMinMax);
+        }
+
+
         let fasadesDrawers = grid.sections[secIndex].fasadesDrawers || []
 
         let baseDrawerFasade = fasadesDrawers[0]
@@ -239,7 +250,7 @@ export default class ExternalFasadesManager {
                 upperFasadeSize = Math.abs(this.FASADES_MANAGER.scope.UM_STORE.totalHeight - 2 - bottomFasadePosition)
             }
 
-            if (upperFasadeSize > 0)
+            if (upperFasadeSize >= this.FASADES_MANAGER.scope.CONST.MIN_FASADE_HEIGHT)
                 fasadeList.push({
                     y: bottomFasadePosition,
                     height: upperFasadeSize,

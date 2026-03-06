@@ -12,8 +12,9 @@ import {useAppData} from "@/store/appliction/useAppData.ts";
 import {useToast} from "@/features/toaster/useToast.ts";
 import {Ref, ref} from "vue";
 
-import {ShapeAdjuster} from "@/components/UMconstructor/utils/PixiMethods.ts";
+import {saveUMGrid, ShapeAdjuster} from "@/components/UMconstructor/utils/PixiMethods.ts";
 import {
+    alertType,
     constructorMode,
     FillingObject,
     GridCell,
@@ -31,6 +32,7 @@ import OptionsManager from "@/components/UMconstructor/ts/modules/OptionsManager
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import Render2D from "@/components/UMconstructor/views/Render2D.vue";
 import {Application} from "@/Application/Core/Application.ts";
+import UMconstructor from "@/components/UMconstructor/UMconstructor.vue";
 
 export default class UMconstructorClass {
     UM_STORE: ReturnType<typeof useUMStorage> = useUMStorage();
@@ -48,8 +50,9 @@ export default class UMconstructorClass {
     SHAPE_ADJUSTER: ShapeAdjuster
     OPTIONS: OptionsManager
     RENDER_REF: Ref<typeof Render2D | undefined> = ref<typeof Render2D>()
+    ALERT_FOOTER_REF: Ref = ref()
     DEBOUNCES: {}
-    
+
     constructor() {
         this.CONST = UI_PARAMS
         this.BUILDER = new UniversalGeometryBuilder(<Application>{}).buildProduct
@@ -273,6 +276,15 @@ export default class UMconstructorClass {
         this.RENDER_REF = ref
     }
 
+    setAlertRef(ref: Ref){
+        this.ALERT_FOOTER_REF = ref
+    }
+
+    callAlert(type: alertType, message: string){
+        if(type)
+            this.AlERT[type](message, this.ALERT_FOOTER_REF)
+    }
+
     setShapeAdjuster(SHAPE_ADJUSTER: ShapeAdjuster){
         this.SHAPE_ADJUSTER = SHAPE_ADJUSTER
     }
@@ -351,7 +363,7 @@ export default class UMconstructorClass {
 
             if (!check) {
                 CONFIG['RIGHTSIDECOLOR'] = { COLOR: false }
-                this.AlERT.error("Цвет правого бока сброшен, размер не соответствует!")
+                this.callAlert("error", "Цвет правого бока сброшен, размер не соответствует!")
             }
         }
 
@@ -363,7 +375,7 @@ export default class UMconstructorClass {
 
             if (!check) {
                 CONFIG['LEFTSIDECOLOR'] = { COLOR: false }
-                this.AlERT.error("Цвет левого бока сброшен, размер не соответствует!")
+                this.callAlert("error", "Цвет левого бока сброшен, размер не соответствует!")
             }
         }
     }
@@ -426,7 +438,7 @@ export default class UMconstructorClass {
             MAX_SECTION_WIDTH,
         } = this.CONST;
 
-        let moduleGrid = Object.assign({}, grid)
+        let moduleGrid = saveUMGrid(grid)
 
         moduleGrid.moduleColor = PROPS.CONFIG.MODULE_COLOR;
         moduleGrid.moduleThickness =  this.APP.FASADE[moduleGrid.moduleColor]?.DEPTH || 18;
@@ -447,246 +459,252 @@ export default class UMconstructorClass {
         let newSectionsArray = <GridSection>[]
 
         let startPositionSections = new THREE.Vector2(leftWidth, moduleGrid.horizont + moduleGrid.moduleThickness)
+        let module = grid
+        try {
+            const recalcSection = (section, positionSections) => {
 
-        const recalcSection = (section, positionSections) => {
+                let newSection = <GridSection>{...section, position: new THREE.Vector2(section.position.x, section.position.y)}
+                newSection.position.copy(positionSections.clone())
+                newSection.position.x += newSection.width / 2
 
-            let newSection = <GridSection>{...section, position: new THREE.Vector2(section.position.x, section.position.y)}
-            newSection.position.copy(positionSections.clone())
-            newSection.position.x += newSection.width / 2
+                if (newSection.cells?.length) {
+                    let newCellsArray = <GridCell>[]
+                    let positionCells = newSection.position.clone()
 
-            if (newSection.cells?.length) {
-                let newCellsArray = <GridCell>[]
-                let positionCells = newSection.position.clone()
+                    let lastCellHeight = newSection.height
 
-                let lastCellHeight = newSection.height
+                    let tmpCells = newSection.cells.slice().reverse()
+                    for (let i = 0; i < tmpCells.length; i++) {
+                        let newCell = <GridCell>{...tmpCells[i], position: new THREE.Vector2(tmpCells[i].position.x, tmpCells[i].position.y)}
 
-                let tmpCells = newSection.cells.slice().reverse()
-                for (let i = 0; i < tmpCells.length; i++) {
-                    let newCell = <GridCell>{...tmpCells[i], position: new THREE.Vector2(tmpCells[i].position.x, tmpCells[i].position.y)}
+                        newCell.width = newSection.width;
+                        newCell.position.copy(positionCells.clone())
 
-                    newCell.width = newSection.width;
-                    newCell.position.copy(positionCells.clone())
-
-                    if(newCell.position.y - moduleGrid.moduleThickness > newSection.height){
-                        break;
-                    }
-
-                    lastCellHeight -= newCell.height
-
-                    if (i === tmpCells.length - 1 || lastCellHeight <= 0) {
-                        newCell.height += lastCellHeight
-
-                        if(newCell.height < MIN_SECTION_HEIGHT){
-                            newCellsArray[newCellsArray.length - 1].height += newCell.height + moduleGrid.moduleThickness
+                        if(newCell.position.y - moduleGrid.moduleThickness > newSection.height){
                             break;
                         }
-                    }
-                    else {
-                        lastCellHeight -= moduleGrid.moduleThickness
-                    }
 
-                    if (newCell.cellsRows?.length) {
-                        let newCellsRowArray = <GridCellsRow>[]
-                        let positionCellsRow = new THREE.Vector2(newCell.position.x - newCell.width / 2, newCell.position.y)
+                        lastCellHeight -= newCell.height
 
-                        newCell.cellsRows.forEach((row, rowIndex) => {
-                            let newRow = <GridCellsRow>{...row, position: new THREE.Vector2(row.position.x, row.position.y)}
+                        if (i === tmpCells.length - 1 || lastCellHeight <= 0) {
+                            newCell.height += lastCellHeight
 
-                            newRow.position.copy(positionCellsRow.clone())
-                            newRow.position.x += newRow.width / 2
-                            newRow.height = newCell.height;
-
-                            if (newRow.fillings?.length) {
-                                newRow.fillings = <FillingObject>[...newRow.fillings]
-                                newRow.fillings.forEach((filling, index) => {
-                                    if(filling.isVerticalItem){
-                                        this.FILLINGS.updateFilling(newRow.height, filling, 'height', moduleGrid)
-                                    }
-                                    else {
-                                        if(filling.isProfile) {
-                                            this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
-                                        }
-                                        else
-                                            this.FILLINGS.updateFilling(newRow.width, filling, 'width', moduleGrid, moduleGrid)
-                                    }
-
-
-                                })
-                            }
-
-                            newCellsRowArray.push(newRow)
-                            positionCellsRow.x += newRow.width + moduleGrid.moduleThickness
-
-                            if (row.extras?.length) {
-                                let newRowExtrasArray = <GridRowExtra>[]
-                                let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
-                                let lastExtraHeight = newRow.height
-
-                                let extras = row.extras.slice().sort((a, b) => a.position.y - b.position.y)
-                                for (let j = 0; j < extras.length; j++) {
-                                    let extra = extras[j]
-
-                                    let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
-
-                                    newExtra.position.copy(positionRowExtras.clone())
-                                    newExtra.width = newRow.width;
-
-                                    lastExtraHeight -= newExtra.height
-
-                                    if (j === extras.length - 1 || lastExtraHeight <= 0) {
-                                        newExtra.height += lastExtraHeight
-
-                                        if(newExtra.height < MIN_SECTION_HEIGHT){
-                                            newRowExtrasArray[newRowExtrasArray.length - 1].height += newExtra.height + moduleGrid.moduleThickness
-                                            break;
-                                        }
-                                    }
-                                    else {
-                                        lastExtraHeight -= moduleGrid.moduleThickness
-                                    }
-
-                                    if (newExtra.fillings?.length) {
-                                        newExtra.fillings = <FillingObject>[...newExtra.fillings]
-                                        newExtra.fillings.forEach((filling, index) => {
-                                            if(filling.isVerticalItem) {
-                                                this.FILLINGS.updateFilling(newExtra.height, filling, 'height', moduleGrid)
-                                            }
-                                            else {
-                                                if(filling.isProfile) {
-                                                    this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
-                                                }
-                                                else
-                                                    this.FILLINGS.updateFilling(newExtra.width, filling, 'width', moduleGrid)
-                                            }
-                                        })
-                                    }
-
-                                    newRowExtrasArray.push(newExtra)
-                                    positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
-                                }
-
-                                newRow.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
-                            }
-                        })
-
-                        let cellsRowWidthSum = 0;
-                        newCellsRowArray.forEach((row, rowIndex) => {
-                            cellsRowWidthSum += row.width;
-                        })
-                        cellsRowWidthSum += (newCellsRowArray.length - 1) * moduleGrid.moduleThickness;
-
-                        let deltaWidth = newCell.width - cellsRowWidthSum;   //Величина, на которую нужно изменить ширину последней ячейки
-                        if (deltaWidth !== 0){
-                            let lastRow = newCellsRowArray[newCellsRowArray.length - 1]
-                            lastRow.width += deltaWidth
-                            lastRow.position.x += -deltaWidth / 2
-
-                            if (lastRow.fillings?.length) {
-                                lastRow.fillings = <FillingObject>[...lastRow.fillings]
-                                lastRow.fillings.forEach((filling, index) => {
-                                    if(filling.isVerticalItem) {
-                                        this.FILLINGS.updateFilling(lastRow.height, filling, 'height', moduleGrid)
-                                    }
-                                    else {
-                                        if (filling.isProfile) {
-                                            this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
-                                        } else
-                                            this.FILLINGS.updateFilling(lastRow.width, filling, 'width', moduleGrid)
-                                    }
-                                })
+                            if(newCell.height < MIN_SECTION_HEIGHT){
+                                newCellsArray[newCellsArray.length - 1].height += newCell.height + moduleGrid.moduleThickness
+                                break;
                             }
                         }
+                        else {
+                            lastCellHeight -= moduleGrid.moduleThickness
+                        }
 
-                        newCell.cellsRows = newCellsRowArray.slice()
+                        if (newCell.cellsRows?.length) {
+                            let newCellsRowArray = <GridCellsRow>[]
+                            let positionCellsRow = new THREE.Vector2(newCell.position.x - newCell.width / 2, newCell.position.y)
+
+                            newCell.cellsRows.forEach((row, rowIndex) => {
+                                let newRow = <GridCellsRow>{...row, position: new THREE.Vector2(row.position.x, row.position.y)}
+
+                                newRow.position.copy(positionCellsRow.clone())
+                                newRow.position.x += newRow.width / 2
+                                newRow.height = newCell.height;
+
+                                if (newRow.fillings?.length) {
+                                    newRow.fillings = <FillingObject>[...newRow.fillings]
+                                    newRow.fillings.forEach((filling, index) => {
+                                        if(filling.isVerticalItem){
+                                            this.FILLINGS.updateFilling(newRow.height, filling, 'height', moduleGrid)
+                                        }
+                                        else {
+                                            if(filling.isProfile) {
+                                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                            }
+                                            else
+                                                this.FILLINGS.updateFilling(newRow.width, filling, 'width', moduleGrid, moduleGrid)
+                                        }
+
+
+                                    })
+                                }
+
+                                newCellsRowArray.push(newRow)
+                                positionCellsRow.x += newRow.width + moduleGrid.moduleThickness
+
+                                if (row.extras?.length) {
+                                    let newRowExtrasArray = <GridRowExtra>[]
+                                    let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
+                                    let lastExtraHeight = newRow.height
+
+                                    let extras = row.extras.slice().sort((a, b) => a.position.y - b.position.y)
+                                    for (let j = 0; j < extras.length; j++) {
+                                        let extra = extras[j]
+
+                                        let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
+
+                                        newExtra.position.copy(positionRowExtras.clone())
+                                        newExtra.width = newRow.width;
+
+                                        lastExtraHeight -= newExtra.height
+
+                                        if (j === extras.length - 1 || lastExtraHeight <= 0) {
+                                            newExtra.height += lastExtraHeight
+
+                                            if(newExtra.height < MIN_SECTION_HEIGHT){
+                                                newRowExtrasArray[newRowExtrasArray.length - 1].height += newExtra.height + moduleGrid.moduleThickness
+                                                break;
+                                            }
+                                        }
+                                        else {
+                                            lastExtraHeight -= moduleGrid.moduleThickness
+                                        }
+
+                                        if (newExtra.fillings?.length) {
+                                            newExtra.fillings = <FillingObject>[...newExtra.fillings]
+                                            newExtra.fillings.forEach((filling, index) => {
+                                                if(filling.isVerticalItem) {
+                                                    this.FILLINGS.updateFilling(newExtra.height, filling, 'height', moduleGrid)
+                                                }
+                                                else {
+                                                    if(filling.isProfile) {
+                                                        this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                                    }
+                                                    else
+                                                        this.FILLINGS.updateFilling(newExtra.width, filling, 'width', moduleGrid)
+                                                }
+                                            })
+                                        }
+
+                                        newRowExtrasArray.push(newExtra)
+                                        positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
+                                    }
+
+                                    newRow.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
+                                }
+                            })
+
+                            let cellsRowWidthSum = 0;
+                            newCellsRowArray.forEach((row, rowIndex) => {
+                                cellsRowWidthSum += row.width;
+                            })
+                            cellsRowWidthSum += (newCellsRowArray.length - 1) * moduleGrid.moduleThickness;
+
+                            let deltaWidth = newCell.width - cellsRowWidthSum;   //Величина, на которую нужно изменить ширину последней ячейки
+                            if (deltaWidth !== 0){
+                                let lastRow = newCellsRowArray[newCellsRowArray.length - 1]
+                                lastRow.width += deltaWidth
+                                lastRow.position.x += -deltaWidth / 2
+
+                                if (lastRow.fillings?.length) {
+                                    lastRow.fillings = <FillingObject>[...lastRow.fillings]
+                                    lastRow.fillings.forEach((filling, index) => {
+                                        if(filling.isVerticalItem) {
+                                            this.FILLINGS.updateFilling(lastRow.height, filling, 'height', moduleGrid)
+                                        }
+                                        else {
+                                            if (filling.isProfile) {
+                                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                            } else
+                                                this.FILLINGS.updateFilling(lastRow.width, filling, 'width', moduleGrid)
+                                        }
+                                    })
+                                }
+                            }
+
+                            newCell.cellsRows = newCellsRowArray.slice()
+                        }
+
+                        positionCells.y += newCell.height + moduleGrid.moduleThickness
+
+                        if (newCell.fillings?.length) {
+                            newCell.fillings = <FillingObject>[...newCell.fillings]
+                            newCell.fillings.forEach((filling, index) => {
+                                if(filling.isVerticalItem) {
+                                    this.FILLINGS.updateFilling(newCell.height, filling, 'height', moduleGrid)
+                                }
+                                else {
+                                    if (filling.isProfile) {
+                                        this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                    } else
+                                        this.FILLINGS.updateFilling(newCell.width, filling, 'width', moduleGrid)
+                                }
+                            })
+                        }
+
+                        newCellsArray.push(newCell)
                     }
 
-                    positionCells.y += newCell.height + moduleGrid.moduleThickness
-
-                    if (newCell.fillings?.length) {
-                        newCell.fillings = <FillingObject>[...newCell.fillings]
-                        newCell.fillings.forEach((filling, index) => {
-                            if(filling.isVerticalItem) {
-                                this.FILLINGS.updateFilling(newCell.height, filling, 'height', moduleGrid)
-                            }
-                            else {
-                                if (filling.isProfile) {
-                                    this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
-                                } else
-                                    this.FILLINGS.updateFilling(newCell.width, filling, 'width', moduleGrid)
-                            }
-                        })
-                    }
-
-                    newCellsArray.push(newCell)
+                    newSection.cells = newCellsArray.slice().sort((a, b) => b.position.y - a.position.y)
                 }
 
-                newSection.cells = newCellsArray.slice().sort((a, b) => b.position.y - a.position.y)
+                positionSections.x += newSection.width + moduleGrid.moduleThickness
+
+                if (newSection.fillings?.length) {
+                    newSection.fillings = <FillingObject>[...newSection.fillings]
+                    newSection.fillings.forEach((filling, index) => {
+                        if(filling.isVerticalItem) {
+                            this.FILLINGS.updateFilling(newSection.height, filling, 'height', moduleGrid)
+                        }
+                        else {
+                            if (filling.isProfile) {
+                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                            } else
+                                this.FILLINGS.updateFilling(newSection.width, filling, 'width', moduleGrid)
+                        }
+                    })
+                }
+
+                return newSection
             }
 
-            positionSections.x += newSection.width + moduleGrid.moduleThickness
+            moduleGrid.sections.forEach((section, secIndex) => {
+                section.height += deltaHeight;
 
-            if (newSection.fillings?.length) {
-                newSection.fillings = <FillingObject>[...newSection.fillings]
-                newSection.fillings.forEach((filling, index) => {
-                    if(filling.isVerticalItem) {
-                        this.FILLINGS.updateFilling(newSection.height, filling, 'height', moduleGrid)
+                let newSection = recalcSection(section, startPositionSections)
+                newSectionsArray.push(newSection)
+            })
+
+            moduleGrid.sections = newSectionsArray.slice()
+
+            let sectionsWidthSum = 0;
+            moduleGrid.sections.forEach((section, secIndex) => {
+                sectionsWidthSum += section.width;
+            })
+
+            let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
+            if(deltaWidth !== 0) {
+                let lastSection = moduleGrid.sections[moduleGrid.sections.length - 1];
+                lastSection.position.x = lastSection.position.x - lastSection.width / 2 + (lastSection.width + deltaWidth) / 2
+                lastSection.width += deltaWidth
+
+                if (lastSection.width > MAX_SECTION_WIDTH) {
+                    let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
+                    this.SECTIONS.addSection?.({grid: moduleGrid, secIndex: moduleGrid.sections.length - 1, count: countSections})
+                }
+                else if (lastSection.width < MIN_SECTION_WIDTH) {
+                    while (moduleGrid.sections[moduleGrid.sections.length - 1].width < MIN_SECTION_WIDTH) {
+                        this.SECTIONS.deleteSection?.(moduleGrid, moduleGrid.sections.length - 1)
                     }
-                    else {
-                        if (filling.isProfile) {
-                            this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
-                        } else
-                            this.FILLINGS.updateFilling(newSection.width, filling, 'width', moduleGrid)
-                    }
-                })
-            }
-
-            return newSection
-        }
-
-        moduleGrid.sections.forEach((section, secIndex) => {
-            section.height += deltaHeight;
-
-            let newSection = recalcSection(section, startPositionSections)
-            newSectionsArray.push(newSection)
-        })
-
-        moduleGrid.sections = newSectionsArray.slice()
-
-        let sectionsWidthSum = 0;
-        moduleGrid.sections.forEach((section, secIndex) => {
-            sectionsWidthSum += section.width;
-        })
-
-        let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
-        if(deltaWidth !== 0) {
-            let lastSection = moduleGrid.sections[moduleGrid.sections.length - 1];
-            lastSection.position.x = lastSection.position.x - lastSection.width / 2 + (lastSection.width + deltaWidth) / 2
-            lastSection.width += deltaWidth
-
-            if (lastSection.width > MAX_SECTION_WIDTH) {
-                let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
-                this.SECTIONS.addSection?.({grid: moduleGrid, secIndex: moduleGrid.sections.length - 1, count: countSections})
-            }
-            else if (lastSection.width < MIN_SECTION_WIDTH) {
-                while (moduleGrid.sections[moduleGrid.sections.length - 1].width < MIN_SECTION_WIDTH) {
-                    this.SECTIONS.deleteSection?.(moduleGrid, moduleGrid.sections.length - 1)
+                }
+                else {
+                    startPositionSections.copy(lastSection.position.clone())
+                    startPositionSections.x -= lastSection.width / 2
+                    moduleGrid.sections[moduleGrid.sections.length - 1] = recalcSection(lastSection, startPositionSections)
                 }
             }
-            else {
-                startPositionSections.copy(lastSection.position.clone())
-                startPositionSections.x -= lastSection.width / 2
-                moduleGrid.sections[moduleGrid.sections.length - 1] = recalcSection(lastSection, startPositionSections)
+
+            module = <GridModule>{
+                ...moduleGrid,
+                width: this.UM_STORE.totalWidth,
+                height: this.UM_STORE.totalHeight,
+                depth: this.UM_STORE.totalDepth,
             }
-        }
 
-        let module: GridModule = {
-            ...moduleGrid,
-            width: this.UM_STORE.totalWidth,
-            height: this.UM_STORE.totalHeight,
-            depth: this.UM_STORE.totalDepth,
+            module = this.FASADES.updateFasades(module)
         }
-
-        module = this.FASADES.updateFasades(module)
+        catch(error){
+            console.error(error)
+            this.callAlert("error", "Ошибка расчёта модуля!")
+        }
 
         this.UM_STORE.setUMGrid(module)
 

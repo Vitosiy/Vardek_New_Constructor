@@ -100,8 +100,8 @@ export default class FasadesManager {
                     const correctSectionFasadeWidthDoor = Math.floor(correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2));
 
                     const sumDoorsWidth = Math.floor(section.fasades.reduce(
-                        (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
-                        0) / countDoors - ((countDoors - 1) * 2));
+                        (accumulator, item, index) => accumulator + (item?.[0]?.width || 0) + (index > 0 ? 4 : 0),
+                        0) / countDoors - ((countDoors - 1) * 2)) || correctSectionFasadeWidthDoor;
                     let sumDoorsHeight = section.fasades[0].reduce(
                         (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
                         0);
@@ -156,7 +156,7 @@ export default class FasadesManager {
                             })
 
                             let lastSegment = door[0]
-                            if (!lastSegment.manufacturerOffset) {
+                            if (lastSegment && !lastSegment.manufacturerOffset) {
                                 lastSegment.height += deltaHeight;
 
                                 const checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
@@ -300,6 +300,30 @@ export default class FasadesManager {
             callback(fasadePosition)
         else
             return fasadePosition
+    }
+
+    calcSumHeightDoorSegmentes(
+        secIndex: number,
+        doorNumber: number,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid()
+    ) {
+        const section = grid.sections[secIndex];
+        let fasades = section.fasades ? section.fasades[doorNumber] : false;
+        let sumHeight = 0
+
+        if(!fasades)
+            return sumHeight;
+
+        sumHeight = fasades?.reduce(
+            (accumulator, item, index) => accumulator + item.height,
+            sumHeight);
+
+        if(section.fasadesDrawers?.length)
+            sumHeight = section.fasadesDrawers?.reduce(
+                (accumulator, item, index) => accumulator + item.height,
+                sumHeight);
+
+        return sumHeight;
     }
 
     addSlideDoor(
@@ -493,7 +517,7 @@ export default class FasadesManager {
 
         if(!grid.isRestrictedModule) {
             if (!tmp_list.length) {
-                alert("Нельзя добавить дверь");
+                this.scope.callAlert("error", `Нельзя добавить дверь`)
                 return;
             }
         }

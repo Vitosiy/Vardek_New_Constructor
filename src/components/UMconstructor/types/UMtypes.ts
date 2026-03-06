@@ -191,3 +191,4 @@ export interface TSelectedCell {
 }
 
 export type constructorMode = 'module' | 'fasades' | 'fillings';
+export type alertType = "error" | "warning" | "success" | "info";
