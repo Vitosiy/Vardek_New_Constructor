@@ -13,7 +13,7 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Toggle from "@vueform/toggle";
 import {TFasadeTrueSizes} from "@/types/types.ts";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {useRailsRightPage} from "@/components/right-menu/customiser-pages/RailsRightPage/useRailsRightPage.ts";
+import {useOptions} from "@/components/right-menu/customiser-pages/RailsRightPage/useOptions.ts";
 const props = defineProps({
   module: {
     type: Object,
@@ -65,7 +65,7 @@ const { module, objectData, visualizationRef, UMconstructor } = toRefs(props);
 const APP = useAppData().getAppData;
 const modelState = useModelState();
 const productData = ref(null);
-const { checkActive } = useRailsRightPage();
+const { checkActive } = useOptions();
 
 const currentOption = ref<string | boolean>(false);
 const materialList = ref(null);

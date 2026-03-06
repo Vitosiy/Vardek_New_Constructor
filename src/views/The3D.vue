@@ -39,15 +39,12 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
 import ContentControllerButton from "@/components/ui/buttons/right-menu/controller/ContentControllerButton.vue";
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
-import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CollisionButton from "@/components/ui/buttons/right-menu/controller/CollisionButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
-import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+//import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 import UMconstructor from "@/components/UMconstructor/UMconstructor.vue";
 
-import Toggle from "@vueform/toggle";
-import Accordion from "@/components/ui/accordion/Accordion.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import TransformController from "@/components/ui/transformController/TransformController.vue";
 
