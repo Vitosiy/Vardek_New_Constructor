@@ -365,6 +365,10 @@ export class BuildUniversalModule extends BuildProduct {
                                 curSection.position.z - (isSlidingDoors / 2 || 0)
                             )
 
+                            if(filling.isProfile) {
+                                fillingPos.z = product_data.depth - filling.size.z / 2
+                            }
+
                             let newFilling = {
                                 ...filling,
                                 position: fillingPos,
@@ -384,6 +388,10 @@ export class BuildUniversalModule extends BuildProduct {
                             row.position.y + filling.distances.bottom - full_horizont_height,
                             curSection.position.z - (isSlidingDoors / 2 || 0)
                         )
+
+                        if(filling.isProfile) {
+                            fillingPos.z = product_data.depth - filling.size.z / 2
+                        }
 
                         let newFilling = {
                             ...filling,
@@ -405,6 +413,10 @@ export class BuildUniversalModule extends BuildProduct {
                         curSection.position.z - (isSlidingDoors / 2 || 0)
                     )
 
+                    if(filling.isProfile) {
+                        fillingPos.z = product_data.depth - filling.size.z / 2
+                    }
+
                     let newFilling = {
                         ...filling,
                         position: fillingPos,
@@ -424,6 +436,10 @@ export class BuildUniversalModule extends BuildProduct {
                     curSection.position.y + filling.distances.bottom - full_horizont_height,
                     curSection.position.z - (isSlidingDoors / 2 || 0)
                 )
+
+                if(filling.isProfile) {
+                    fillingPos.z = product_data.depth - filling.size.z / 2
+                }
 
                 let newFilling = {
                     ...filling,

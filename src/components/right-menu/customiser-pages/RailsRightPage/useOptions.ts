@@ -84,6 +84,10 @@ export const useOptions = () => {
                                 UM_STORE.onHorizont = true
                                 UM_STORE.noBottom = false
                                 break;
+                            case 4722965:   //Навесной
+                                UM_STORE.onHorizont = true
+                                UM_STORE.onWallModule = false
+                                break;
                             default:
                                 break;
                         }
@@ -133,6 +137,16 @@ export const useOptions = () => {
                     PROPS.CONFIG.TSARGA = { TYPE: 'metal', COLOR: 79065 }
                 } else
                     delete PROPS.CONFIG.TSARGA
+                break;
+            case 4722965:   //Навесной
+                if (curOpt.active) {
+                    UM_STORE.onHorizont = false
+                    UM_STORE.onWallModule = true
+                }
+                else {
+                    UM_STORE.onHorizont = true
+                    UM_STORE.onWallModule = false
+                }
                 break;
             case 5738924:   //Без дна
                 if (curOpt.active) {

@@ -1,7 +1,6 @@
 // @ts-nocheck 31
 import {UI_PARAMS} from "./Const.ts";
-import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "pixi.js";
-import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
+import {Container, Graphics, GraphicsPath, Text, TextStyle} from "pixi.js";
 import * as THREE from "three";
 import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
 import {TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
@@ -450,6 +449,7 @@ class Shape extends Helpers {
     radius: number = 0
     paddingTop: number = 0
     paddingBottom: number = 0
+    drawersFasadesOffset: number = 0
     shapes: Shape[]
     data: THoleData
     sector: Container
@@ -535,6 +535,7 @@ class Shape extends Helpers {
         this.highlightGraphics.rect(0, 0, this.getPixelWidth(data.width), this.getPixelHeight(data.height))
         this.highlightGraphics.fill("#b86c02")
         this.highlightGraphics.stroke({width: 1, color: "#875003", alignment: 1});
+        this.drawersFasadesOffset = this.getPixelHeight(4)
 
         if (position) {
             this.graphic.position.x = this.getPixelWidth(position.x);
@@ -602,22 +603,18 @@ class Shape extends Helpers {
                 const newY = event.global.y + dragOffset.y;
                 const newX = event.global.x + dragOffset.x;
 
-                // Ограничиваем позицию границами сектора с учетом отступа
-                let adjustedY = newY;
-                let adjustedX = newX;
-
                 // Ограничения по осям
-                adjustedY = Math.max(
+                let adjustedY = Math.max(
                     this.sectorBounds.y + this.paddingTop,
                     Math.min(newY, this.sectorBounds.y + this.sectorBounds.height - self.height - this.paddingBottom)
                 );
-                adjustedX = Math.max(
+                let adjustedX = Math.max(
                     this.sectorBounds.x,
                     Math.min(newX, this.sectorBounds.x + this.sectorBounds.width - self.width)
                 );
 
                 // Сохраняем текущую позицию для восстановления в случае коллизии
-                const currentY = graphic.position.y;
+                let currentY = graphic.position.y;
                 const currentX = graphic.position.x;
 
                 if(self.data.isVerticalItem) {
@@ -647,6 +644,47 @@ class Shape extends Helpers {
                     for (const otherShape of this.sector.shapes) {
                         if (self !== otherShape && self.checkOverlap(otherShape)) {
                             hasCollisionY = true;
+
+                            if(self.data.fasade && otherShape.data.fasade) {
+                                self.graphic.position.y = currentY;
+                                self.highlightGraphics.position.y = currentY;
+                                let thisPos = self.getDrawerFasadePosition(self)
+
+                                let otherPos = self.getDrawerFasadePosition(otherShape)
+
+                                if(thisPos.min >= otherPos.max) {
+
+                                    let delta = self.getMmHeight(thisPos.min - otherPos.max)
+
+                                    if(Math.abs(delta) < 10) {
+                                        let newPos = otherPos.max + self.drawersFasadesOffset + self.getPixelHeight(self.data.fasade.height - self.data.fasade.manufacturerOffset - self.data.height)
+                                        self.graphic.position.y = newPos;
+                                        self.highlightGraphics.position.y = newPos;
+
+                                        if(!self.checkOverlap(otherShape))
+                                            currentY = newPos
+
+                                        self.graphic.position.y = adjustedY;
+                                        self.highlightGraphics.position.y = adjustedY;
+                                    }
+                                }
+                                else if(otherPos.min >= thisPos.max) {
+                                    let delta = self.getMmHeight(otherPos.min - thisPos.max)
+
+                                    if(Math.abs(delta) < 10) {
+                                        let newPos = otherPos.min - self.drawersFasadesOffset - self.getPixelHeight(self.data.fasade.manufacturerOffset + self.data.height)
+                                        self.graphic.position.y = newPos;
+                                        self.highlightGraphics.position.y = newPos;
+
+                                        if(!self.checkOverlap(otherShape))
+                                            currentY = newPos
+
+                                        self.graphic.position.y = adjustedY;
+                                        self.highlightGraphics.position.y = adjustedY;
+                                    }
+                                }
+                            }
+
                             break;
                         }
                     }
@@ -694,6 +732,22 @@ class Shape extends Helpers {
         this.graphic.on("pointerupoutside", endDrag);
         this.highlightGraphics.on("pointerup", endDrag);
         this.highlightGraphics.on("pointerupoutside", endDrag);
+    }
+
+    getDrawerFasadePosition(shape: Shape) {
+        let result = {
+            min: shape.graphic.position.y,
+            max: shape.graphic.position.y + shape.height,
+            drawer: false,
+        }
+
+        if (shape.data.fasade) {
+            result.min = shape.graphic.position.y - shape.getPixelHeight(shape.data.fasade.height - shape.data.fasade.manufacturerOffset - shape.data.height)
+            result.max = result.min + shape.getPixelHeight(shape.data.fasade.height)
+            result.drawer = true;
+        }
+
+        return result;
     }
 
     // Проверка перекрытия с другой фигурой
