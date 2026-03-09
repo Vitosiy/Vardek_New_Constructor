@@ -88,7 +88,6 @@ const onCreate = async () => {
 .project-params-dialog {
   position: relative;
   background-color: $white;
-  border: 1px solid $dark-grey;
   border-radius: 25px;
   padding: 16px;
   max-width: 318px;
