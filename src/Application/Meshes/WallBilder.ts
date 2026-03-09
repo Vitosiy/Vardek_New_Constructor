@@ -117,7 +117,7 @@ export class WallBuilder {
         mesh.userData.perpendicular = perpendicular
         mesh.userData.middleVector = vector
         mesh.userData.center = center
-        mesh.userData.elementType = 'element_room'
+        mesh.userData.elementType = 'ROOM'
         mesh.elementType = 'element_room'
         mesh.name = 'wall'
 
@@ -205,7 +205,7 @@ export class WallBuilder {
         floorMesh.userData.name = 'floor'
 
         floorMesh.userData.plane = this.convertPlaneGeometryToPlane(floorMesh)
-        // floorMesh.userData.elementType = 'element_room'
+        floorMesh.userData.elementType = 'ROOM'
         floorMesh.elementType = 'element_room'
 
         return floorMesh;

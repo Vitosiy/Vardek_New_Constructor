@@ -300,8 +300,8 @@ export class DeepDispose {
         function shouldKeep(object: THREE.Object3D): boolean {
             const cam = object instanceof THREE.Camera;
             const light = object instanceof THREE.Light;
-            // const room = object.children.find(el => el.userData.elementType === 'element_room');
-            const room = object.children.find(el => el.elementType === 'element_room');
+            const room = object.children.find(el => el.userData.elementType === 'ROOM');
+            // const room = object.children.find(el => el.elementType === 'element_room');
 
             // ИСКЛЮЧЕНИЕ: Сохраняем TransformControls gizmo/helper
             const isTransformGizmo = object.userData && object.userData.isTransformGizmo;

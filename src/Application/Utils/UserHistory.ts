@@ -13,7 +13,8 @@ class UserHistory<T> {
         "U:DrawPatina",
         "U:DeliteFasad",
         'U:ChangeFasade',
-        "U:RemoveModel"
+        "U:RemoveModel",
+        "U:Duplicated"
     ]
 
     constructor(maxSize: number = 10) {

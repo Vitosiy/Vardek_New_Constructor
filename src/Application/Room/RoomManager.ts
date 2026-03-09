@@ -21,8 +21,8 @@ import { useUniformState } from "@/store/appliction/useUniformState";
 import { SetObject } from '../Utils/SetObject';
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { Room } from './Room';
-import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
-import {saveUMGrid} from "@/components/2DmoduleConstructor/utils/Methods.ts";
+import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { saveUMGrid } from "@/components/2DmoduleConstructor/utils/Methods.ts";
 // import CreateShape from '../2DScene/CreateShape';
 
 
@@ -47,6 +47,7 @@ export class RoomManager extends Room {
     heightLine: THREE.Object3D[] = []
     totalObbBounds: OBB[] = []
     totalAABBBounds: THREE.Box3[] = []
+    duplicateSwitch: boolean = false
 
     constructor(root: THREETypes.TApplication) {
 
@@ -404,7 +405,7 @@ export class RoomManager extends Room {
             }
         }
 
-        if(saveData.CONFIG?.MODULEGRID) {
+        if (saveData.CONFIG?.MODULEGRID) {
             let MODULEGRID = Object.assign({}, saveData.CONFIG.MODULEGRID)
             try {
                 MODULEGRID = JSON.stringify(MODULEGRID)
@@ -530,7 +531,9 @@ export class RoomManager extends Room {
 
         document.addEventListener('mousemove', this.addMouseEvent, false)
 
-             this.eventBus.emit('A:Duplicated')
+        this.eventBus.emit('A:Duplicated')
+        this.duplicateSwitch = true
+
 
     }
 
@@ -540,6 +543,10 @@ export class RoomManager extends Room {
 
     public disableDuplicateProd() {
         document.removeEventListener('mousemove', this.addMouseEvent, false)
+        if (this.duplicateSwitch) {
+            this.eventBus.emit('U:Duplicated')
+            this.duplicateSwitch = false
+        }
     }
 
 

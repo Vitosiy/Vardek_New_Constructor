@@ -8,45 +8,45 @@ const appDataStore = useAppData()
 console.log('appDataStore.getAppData', appDataStore.getAppData)
 
 function createFacadeProps(objProps: any): IBasketFacade[] {
-  return objProps.CONFIG.FASADE_PROPS 
+  return objProps.CONFIG.FASADE_PROPS
     ? objProps.CONFIG.FASADE_PROPS.map((fp: any, index: number) => {
-        const facade = objProps.FASADE[index];
-        const trueSize = facade?.object?.userData?.trueSize;
-        
-        const result: any = {};
-        
-        // Добавляем свойства только если они имеют значения
-        if (fp.COLOR != null) result.COLOR = fp.COLOR;
-        if (fp.MILLING != null) result.MILLING = fp.MILLING;
-        if (fp.PALETTE != null) result.PALETTE = fp.PALETTE;
-        if (fp.SHOWCASE != null) result.SHOWCASE = fp.SHOWCASE;
-        if (fp.ALUM != null) result.ALUM = fp.ALUM;
-        if (fp.GLASS != null) result.GLASS = fp.GLASS;
-        if (fp.PATINA != null) result.PATINA = fp.PATINA;
-        if (fp.TYPE != null) result.TYPE = fp.TYPE;
-        if (fp.HANDLES != null) result.HANDLES = {ID: fp.HANDLES.id};
-        if (fp.SIZES != null) result.SIZES = fp.SIZES;
-        if (fp.TYPE != null || fp.MILLING_TYPE != null) result.FASADETYPE = fp.TYPE ?? fp.MILLING_TYPE;
-        
-        
-        // Добавляем SIZE только если есть хотя бы одно измерение
-        const size: any = {};
-        if (trueSize?.WIDTH != null) size.WIDTH = trueSize.WIDTH;
-        if (trueSize?.HEIGHT != null) size.HEIGHT = trueSize.HEIGHT;
-        if (trueSize?.DEPTH != null) size.DEPTH = trueSize.DEPTH; 
-        
-        // Если есть хотя бы одно измерение, добавляем объект SIZE
-        if (Object.keys(size).length > 0) {
-          result.SIZE = size;
-        }
-        
-        // Добавляем HEANDLES только если массив не пустой
-        if (fp.HEANDLES && Array.isArray(fp.HEANDLES) && fp.HEANDLES.length > 0) {
-          result.HEANDLES = fp.HEANDLES;
-        }
-        
-        return result;
-      })
+      const facade = objProps.FASADE[index];
+      const trueSize = facade?.object?.userData?.trueSize;
+
+      const result: any = {};
+
+      // Добавляем свойства только если они имеют значения
+      if (fp.COLOR != null) result.COLOR = fp.COLOR;
+      if (fp.MILLING != null) result.MILLING = fp.MILLING;
+      if (fp.PALETTE != null) result.PALETTE = fp.PALETTE;
+      if (fp.SHOWCASE != null) result.SHOWCASE = fp.SHOWCASE;
+      if (fp.ALUM != null) result.ALUM = fp.ALUM;
+      if (fp.GLASS != null) result.GLASS = fp.GLASS;
+      if (fp.PATINA != null) result.PATINA = fp.PATINA;
+      if (fp.TYPE != null) result.TYPE = fp.TYPE;
+      if (fp.HANDLES != null) result.HANDLES = { ID: fp.HANDLES.id };
+      if (fp.SIZES != null) result.SIZES = fp.SIZES;
+      if (fp.TYPE != null || fp.MILLING_TYPE != null) result.FASADETYPE = fp.TYPE ?? fp.MILLING_TYPE;
+
+
+      // Добавляем SIZE только если есть хотя бы одно измерение
+      const size: any = {};
+      if (trueSize?.WIDTH != null) size.WIDTH = trueSize.WIDTH;
+      if (trueSize?.HEIGHT != null) size.HEIGHT = trueSize.HEIGHT;
+      if (trueSize?.DEPTH != null) size.DEPTH = trueSize.DEPTH;
+
+      // Если есть хотя бы одно измерение, добавляем объект SIZE
+      if (Object.keys(size).length > 0) {
+        result.SIZE = size;
+      }
+
+      // Добавляем HEANDLES только если массив не пустой
+      if (fp.HEANDLES && Array.isArray(fp.HEANDLES) && fp.HEANDLES.length > 0) {
+        result.HEANDLES = fp.HEANDLES;
+      }
+
+      return result;
+    })
     : [];
 }
 
@@ -57,14 +57,14 @@ function createBodyProps(objProps: any) {
     HEIGHT: null,
     DEPTH: null,
   };
-  const isSizeEdit = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT; 
+  const isSizeEdit = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT;
   const isSizeEditStepWidth = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT_STEP_WIDTH;
   const isSizeEditStepHeight = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT_STEP_HEIGHT;
   const isSizeEditStepDepth = appDataStore.getAppData.CATALOG.PRODUCTS[`${objProps.PRODUCT}`].SIZE_EDIT_STEP_DEPTH;
 
   console.log('isSizeEdit', isSizeEdit);
   console.log('isSizeStepEdit', isSizeEditStepWidth, isSizeEditStepHeight, isSizeEditStepDepth);
-  if(isSizeEdit === "obligatory") {
+  if (isSizeEdit === "obligatory") {
     if (isSizeEditStepWidth) {
       sizeObj.WIDTH = objProps.CONFIG.SIZE.width;
     }
@@ -74,7 +74,7 @@ function createBodyProps(objProps: any) {
     if (isSizeEditStepDepth) {
       sizeObj.DEPTH = objProps.CONFIG.SIZE.depth;
     }
-  } else {    
+  } else {
     sizeObj.WIDTH = objProps.CONFIG.EXPRESSIONS['#MWIDTH#'] !== objProps.CONFIG.SIZE.width ? objProps.CONFIG.SIZE.width : null;
     sizeObj.HEIGHT = objProps.CONFIG.EXPRESSIONS['#MHEIGHT#'] !== objProps.CONFIG.SIZE.height ? objProps.CONFIG.SIZE.height : null;
     sizeObj.DEPTH = objProps.CONFIG.EXPRESSIONS['#MDEPTH#'] !== objProps.CONFIG.SIZE.depth ? objProps.CONFIG.SIZE.depth : null;
@@ -89,20 +89,20 @@ function createBodyProps(objProps: any) {
     //   DEPTH: trueSize?.BODY_DEPTH?.toFixed(0) ?? null,
     // },
   };
-    
+
 }
 
 function createOptionsProps(objProps: any) {
-  const options:any[] = [];
-  (objProps.CONFIG.OPTIONS || []).map(el =>{
-    if(el.active) options.push(+el.id);
+  const options: any[] = [];
+  (objProps.CONFIG.OPTIONS || []).map(el => {
+    if (el.active) options.push(+el.id);
   });
   return options;
 }
 
 function createRaspilData(objProps: any) {
   if (!objProps.RASPIL?.data) return {};
-  
+
   const raspilData = objProps.RASPIL.data.flat().map((el: any) => ({
     height: el.height,
     width: el.width,
@@ -122,7 +122,7 @@ function createRaspilData(objProps: any) {
 
 function createUniformTexture(objProps: any) {
   const texture = objProps.CONFIG.UNIFORM_TEXTURE;
-  
+
   return {
     GROUP: texture?.group ?? null,
     LEVEL: texture?.level ?? null,
@@ -132,88 +132,88 @@ function createUniformTexture(objProps: any) {
 }
 
 function generateDoorsSimple(moduleData) {
-    const DOORS = {};
+  const DOORS = {};
 
-    //Двери-купе
-    if(moduleData?.fasades) {
-      moduleData.fasades?.forEach((fasadeArray, index) => {
-        const doorNum = index + 1;
-        DOORS[doorNum] = {};
+  //Двери-купе
+  if (moduleData?.fasades) {
+    moduleData.fasades?.forEach((fasadeArray, index) => {
+      const doorNum = index + 1;
+      DOORS[doorNum] = {};
 
+      fasadeArray.forEach((fasade, index) => {
+        const segmentNum = index; // номер сегмента = индекс в массиве
+        const color = fasade.material.COLOR;
+
+        DOORS[doorNum][segmentNum] = color;
+      });
+    });
+  }
+  else {
+    moduleData?.sections?.forEach((section, number) => {
+      const sectionNum = number + 1;
+      DOORS[sectionNum] = {};
+
+      section.fasades?.forEach(fasadeArray => {
         fasadeArray.forEach((fasade, index) => {
+          const doorNum = fasade.door || 1;
           const segmentNum = index; // номер сегмента = индекс в массиве
           const color = fasade.material.COLOR;
 
-          DOORS[doorNum][segmentNum] = color;
+          if (!DOORS[sectionNum][doorNum]) {
+            DOORS[sectionNum][doorNum] = {};
+          }
+
+          DOORS[sectionNum][doorNum][segmentNum] = color;
         });
       });
-    }
-    else {
-      moduleData?.sections?.forEach((section, number) => {
-        const sectionNum = number + 1;
-        DOORS[sectionNum] = {};
+    });
+  }
 
-        section.fasades?.forEach(fasadeArray => {
-          fasadeArray.forEach((fasade, index) => {
-            const doorNum = fasade.door || 1;
-            const segmentNum = index; // номер сегмента = индекс в массиве
-            const color = fasade.material.COLOR;
-
-            if (!DOORS[sectionNum][doorNum]) {
-              DOORS[sectionNum][doorNum] = {};
-            }
-
-            DOORS[sectionNum][doorNum][segmentNum] = color;
-          });
-        });
-      });
-    }
-
-    return DOORS;
+  return DOORS;
 }
 
 function transformLoops(sections, horizont, moduleThickness) {
   const coordsResult = {};
   const sidesResult = {};
   sections.forEach((section, index) => {
-      const key = index + 1
-      const sectionKey = section.number.toString();
+    const key = index + 1
+    const sectionKey = section.number.toString();
 
-      if (section.loops && section.loops.length > 0) {
-          coordsResult[key] = {};
-          sidesResult[key] = {};
-          section.loops.forEach((loopArray, loopKey) => {
-              coordsResult[key][loopKey + 1] = loopArray[0].coords.map(coord => {
-                return coord - horizont - moduleThickness
-              });
-              sidesResult[key][loopKey + 1] = loopArray[0].side;
+    if (section.loops && section.loops.length > 0) {
+      coordsResult[key] = {};
+      sidesResult[key] = {};
+      section.loops.forEach((loopArray, loopKey) => {
+        coordsResult[key][loopKey + 1] = loopArray[0].coords.map(coord => {
+          return coord - horizont - moduleThickness
+        });
+        sidesResult[key][loopKey + 1] = loopArray[0].side;
 
-              // if (loopArray && loopArray.length > 0) {
-              //     const firstLoop = loopArray[0];
-                  
-              //     // Для координат
-              //     if (firstLoop && firstLoop.coords && !coordsResult[sectionKey]) {
-              //         coordsResult[sectionKey] = firstLoop.coords;
-              //     }
-                  
-              //     // Для стороны
-              //     if (firstLoop && firstLoop.side !== undefined && !sidesResult[sectionKey]) {
-              //         // sidesResult[sectionKey] = firstLoop.side;
-              //     }
-              // }
-          });
-      }
-      
-      // Альтернативно: если данные в loopsSides
-      if (section.loopsSides && Object.keys(section.loopsSides).length > 0 && !sidesResult[sectionKey]) {
-          const firstSideValue = Object.values(section.loopsSides)[0];
-          sidesResult[sectionKey] = firstSideValue;
-      }
+        // if (loopArray && loopArray.length > 0) {
+        //     const firstLoop = loopArray[0];
+
+        //     // Для координат
+        //     if (firstLoop && firstLoop.coords && !coordsResult[sectionKey]) {
+        //         coordsResult[sectionKey] = firstLoop.coords;
+        //     }
+
+        //     // Для стороны
+        //     if (firstLoop && firstLoop.side !== undefined && !sidesResult[sectionKey]) {
+        //         // sidesResult[sectionKey] = firstLoop.side;
+        //     }
+        // }
+      });
+    }
+
+    // Альтернативно: если данные в loopsSides
+    if (section.loopsSides && Object.keys(section.loopsSides).length > 0 && !sidesResult[sectionKey]) {
+      const firstSideValue = Object.values(section.loopsSides)[0];
+      sidesResult[sectionKey] = firstSideValue;
+    }
   });
-  
+
   return {
-      coords: coordsResult,
-      sides: sidesResult
+    coords: coordsResult,
+    sides: sidesResult
   };
 }
 
@@ -222,9 +222,9 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
     return [];
   }
 
-  
+
   const item = arr.map(el => {
-    if(el.type === 'section_partition') {
+    if (el.type === 'section_partition') {
       return {
         PARTITION_ID: el.product,
         SECTION_ID: el.id, // ID товара полки
@@ -237,7 +237,7 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
         DOWN_POSITION: el.ADDITIVES?.bottom?.additive_position,
         MATERIAL_ID: el.material, // Материал полки
         ADDITIVES: el.ADDITIVES || {},
-        ID:el.product,
+        ID: el.product,
         PATH: false,
         PRODUCT_TYPE: el.type,
       }
@@ -256,22 +256,22 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
         ADDITIVES: el.ADDITIVES || {},
       }
     }
-    
+
   })
 
   return item
 }
 
-function convertModuleToLegacyFormat(newModuleObject) { 
+function convertModuleToLegacyFormat(newModuleObject) {
   if (!newModuleObject?.CONFIG) {
     return {};
   }
 
-  
+
   const { CONFIG } = newModuleObject;
   const sectionCount = Object.keys(CONFIG.SECTIONS).length;
   console.log('CONFIG', CONFIG, sectionCount)
-  
+
   const legacyProps = {
     SIZEEDITWIDTH: CONFIG.SIZE?.width || 0,
     SIZEEDITHEIGHT: CONFIG.SIZE?.height || 0,
@@ -286,19 +286,19 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
   };
 
-  if(CONFIG.LEFTSIDECOLOR && CONFIG.LEFTSIDECOLOR.COLOR !== 199683 && CONFIG.LEFTSIDECOLOR.COLOR) {
+  if (CONFIG.LEFTSIDECOLOR && CONFIG.LEFTSIDECOLOR.COLOR !== 199683 && CONFIG.LEFTSIDECOLOR.COLOR) {
     legacyProps.LEFTSIDECOLOR = CONFIG.LEFTSIDECOLOR;
   }
 
-  if(CONFIG.RIGHTSIDECOLOR && CONFIG.RIGHTSIDECOLOR.COLOR !== 199683 && CONFIG.RIGHTSIDECOLOR.COLOR) {
+  if (CONFIG.RIGHTSIDECOLOR && CONFIG.RIGHTSIDECOLOR.COLOR !== 199683 && CONFIG.RIGHTSIDECOLOR.COLOR) {
     legacyProps.RIGHTSIDECOLOR = CONFIG.RIGHTSIDECOLOR;
   }
 
-  if(CONFIG.TOPFASADECOLOR && CONFIG.TOPFASADECOLOR.COLOR !== 7397) {
+  if (CONFIG.TOPFASADECOLOR && CONFIG.TOPFASADECOLOR.COLOR !== 7397) {
     legacyProps.TOPFASADECOLOR = CONFIG.TOPFASADECOLOR;
   }
 
-  if(CONFIG.FASADE_PROPS && !Object.keys(legacyProps.DOORS).length) {
+  if (CONFIG.FASADE_PROPS && !Object.keys(legacyProps.DOORS).length) {
     CONFIG.FASADE_PROPS.forEach((el, index) => {
       const count = 1 + index;
       legacyProps[`FASADE${count}`] = {
@@ -309,12 +309,12 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
 
   // Динамически добавляем заполнения секций
-  if(!Object.keys(CONFIG.MODULEGRID).length) {
+  if (!Object.keys(CONFIG.MODULEGRID).length) {
     Object.keys(CONFIG.SECTIONS).forEach(sectionKey => {
       const section = CONFIG.SECTIONS[sectionKey];
-      
-      if(section?.size)  
-        legacyProps[`SECTIONS${sectionKey}`] = section.size.x 
+
+      if (section?.size)
+        legacyProps[`SECTIONS${sectionKey}`] = section.size.x
 
       // if (section?.position) 
       //   legacyProps[`FASADEHORIZONTALPOSITION${sectionKey}`] = {
@@ -325,15 +325,15 @@ function convertModuleToLegacyFormat(newModuleObject) {
       legacyProps[`FASADEWIDTH${sectionKey}`] = 596;
       legacyProps[`LOOPS`] = {
         "1": [
-            86,
-            520
+          86,
+          520
         ]
       };
       legacyProps[`LOOPSSIDE`] = {
         "1": 4693746
       };
     });
-  } else {    
+  } else {
     const result = {}
     console.log('sections', CONFIG.MODULEGRID.sections)
     CONFIG.MODULEGRID.sections.forEach((section, number) => {
@@ -348,62 +348,62 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
       console.log('sectionKey', sectionKey);
       result[fasadesSizeKey] = {};
-      result[fasadesWidthKey] = {}; 
-      result[fasadesMillingKey] = {}; 
-      result[fasadesPaletteKey] = {}; 
-      result[fasadesPattinaKey] = {}; 
+      result[fasadesWidthKey] = {};
+      result[fasadesMillingKey] = {};
+      result[fasadesPaletteKey] = {};
+      result[fasadesPattinaKey] = {};
 
 
       section.fasades?.forEach(doorGroup => {
-          doorGroup.forEach((fasade, index) => {
-              const doorNumber = fasade.door;
-              
-              if (!result[fasadesSizeKey][doorNumber]) {
-                result[fasadesSizeKey][doorNumber] = [];
-              }
-              
-              result[fasadesSizeKey][doorNumber].push(fasade.height);
+        doorGroup.forEach((fasade, index) => {
+          const doorNumber = fasade.door;
 
-              if (!result[fasadesWidthKey][doorNumber]) {
-                result[fasadesWidthKey][doorNumber] = fasade.width;
-              }
-              if (!result[fasadesHorizontlPositionKey]) {
-                result[fasadesHorizontlPositionKey] = {};
-              }
-              if (!result[fasadesHorizontlPositionKey][doorNumber]) {
-                result[fasadesHorizontlPositionKey][doorNumber] = {};
-              }
-              result[fasadesHorizontlPositionKey][doorNumber][0] = fasade.position.x;
+          if (!result[fasadesSizeKey][doorNumber]) {
+            result[fasadesSizeKey][doorNumber] = [];
+          }
+
+          result[fasadesSizeKey][doorNumber].push(fasade.height);
+
+          if (!result[fasadesWidthKey][doorNumber]) {
+            result[fasadesWidthKey][doorNumber] = fasade.width;
+          }
+          if (!result[fasadesHorizontlPositionKey]) {
+            result[fasadesHorizontlPositionKey] = {};
+          }
+          if (!result[fasadesHorizontlPositionKey][doorNumber]) {
+            result[fasadesHorizontlPositionKey][doorNumber] = {};
+          }
+          result[fasadesHorizontlPositionKey][doorNumber][0] = fasade.position.x;
 
 
-              if(fasade.material.MILLING) {
-                if (!result[fasadesMillingKey]) {
-                  result[fasadesMillingKey] = {};
-                }
-                if (!result[fasadesMillingKey][doorNumber]) {
-                  result[fasadesMillingKey][doorNumber] = {};
-                }
-                result[fasadesMillingKey][doorNumber][index] = fasade.material.MILLING;
-              }
-              if(fasade.material.PATINA) {
-                if (!result[fasadesPattinaKey]) {
-                  result[fasadesPattinaKey] = {};
-                }
-                if (!result[fasadesPattinaKey][doorNumber]) {
-                  result[fasadesPattinaKey][doorNumber] = {};
-                }
-                result[fasadesPattinaKey][doorNumber][index] = fasade.material.PATINA;
-              }
-              if(fasade.material.PALETTE) {
-                if (!result[fasadesPaletteKey]) {
-                  result[fasadesPaletteKey] = {};
-                }
-                if (!result[fasadesPaletteKey][doorNumber]) {
-                  result[fasadesPaletteKey][doorNumber] = {};
-                }
-                result[fasadesPaletteKey][doorNumber][index] =  fasade.material.PALETTE;
-              }
-        }); 
+          if (fasade.material.MILLING) {
+            if (!result[fasadesMillingKey]) {
+              result[fasadesMillingKey] = {};
+            }
+            if (!result[fasadesMillingKey][doorNumber]) {
+              result[fasadesMillingKey][doorNumber] = {};
+            }
+            result[fasadesMillingKey][doorNumber][index] = fasade.material.MILLING;
+          }
+          if (fasade.material.PATINA) {
+            if (!result[fasadesPattinaKey]) {
+              result[fasadesPattinaKey] = {};
+            }
+            if (!result[fasadesPattinaKey][doorNumber]) {
+              result[fasadesPattinaKey][doorNumber] = {};
+            }
+            result[fasadesPattinaKey][doorNumber][index] = fasade.material.PATINA;
+          }
+          if (fasade.material.PALETTE) {
+            if (!result[fasadesPaletteKey]) {
+              result[fasadesPaletteKey] = {};
+            }
+            if (!result[fasadesPaletteKey][doorNumber]) {
+              result[fasadesPaletteKey][doorNumber] = {};
+            }
+            result[fasadesPaletteKey][doorNumber][index] = fasade.material.PALETTE;
+          }
+        });
       });
 
       legacyProps[`${sectionKey}`] = section.width;
@@ -448,14 +448,14 @@ function convertModuleToLegacyFormat(newModuleObject) {
         result[fasadesHorizontlPositionKey][index] = fasade.position.x;
 
 
-        if(fasade.material.MILLING) {
+        if (fasade.material.MILLING) {
           if (!result[fasadesMillingKey]) {
             result[fasadesMillingKey] = {};
           }
           result[fasadesMillingKey][index] = fasade.material.MILLING;
         }
 
-        if(fasade.material.PATINA) {
+        if (fasade.material.PATINA) {
           if (!result[fasadesPattinaKey]) {
             result[fasadesPattinaKey] = {};
           }
@@ -463,12 +463,12 @@ function convertModuleToLegacyFormat(newModuleObject) {
           result[fasadesPattinaKey][index] = fasade.material.PATINA;
         }
 
-        if(fasade.material.PALETTE) {
+        if (fasade.material.PALETTE) {
           if (!result[fasadesPaletteKey]) {
             result[fasadesPaletteKey] = {};
           }
 
-          result[fasadesPaletteKey][index] =  fasade.material.PALETTE;
+          result[fasadesPaletteKey][index] = fasade.material.PALETTE;
         }
 
       });
@@ -499,7 +499,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
 function removeEmptyObjects(obj) {
   const result = {};
-  
+
   for (const [key, value] of Object.entries(obj)) {
     // Если значение - объект и он не пустой, сохраняем его
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -511,10 +511,10 @@ function removeEmptyObjects(obj) {
       result[key] = value;
     }
   }
-  
+
   return result;
 }
-     
+
 export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
   console.log('createBasketItem', objProps);
 
@@ -522,9 +522,11 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
   // Добавляем свойства только если они существуют и не пустые
   const facadeProps = createFacadeProps(objProps);
+
   if (facadeProps && facadeProps.length > 0) {
     props.FASADE = facadeProps;
   }
+
 
   const bodyProps = createBodyProps(objProps);
   if (bodyProps && Object.keys(bodyProps).length > 0) {
@@ -546,13 +548,14 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
   }
 
   if (objProps.RASPIL && objProps.RASPIL.length !== 0) {
+
     props.RASPIL = {
       data: objProps.RASPIL.data.flat().map(el => {
         return {
           height: el.height,
           width: el.width,
           serviseData: el.serviseData.filter(el => el.value).map(el => {
-            if(el.width) {
+            if (el.width) {
               return {
                 ID: el.ID,
                 width: el.width,
@@ -568,68 +571,76 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
         }
       })
     }
-    
+
     // props.PROFILE = '251698';
-    props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value === true)[0]?.ID   
+    props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value === true)[0]?.ID
   }
 
-  props.USLUGI = [] 
+  props.USLUGI = []
   if (objProps.RASPIL.data && objProps.RASPIL.data.length > 1) {
     props.USLUGI.push("98683");
-    objProps.CONFIG.USLUGI.forEach(el =>{
-      if(el.value) {
+    objProps.CONFIG.USLUGI.forEach(el => {
+      if (el.value) {
         props.USLUGI.push(el.ID);
       }
     });
   }
 
-  if(objProps.RASPIL.data) {
+  if (objProps.RASPIL.data) {
+
+    console.log('====== RASPIL 2 =====', objProps.RASPIL.data)
+
     props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value)[0]?.ID;
     props.RASPIL_COUNT = objProps.RASPIL.data.length
-    
+
     function createRaspil(data) {
-      return data.flat().map(el => { console.log(el); return `${el.width}мм`}).join(' x '); 
+      return data.flat().map(el => { console.log(el); return `${el.width}мм` }).join(' x ');
     }
 
     props.USLUGIraspil = createRaspil(objProps.RASPIL.data);
   }
 
-  if(objProps.CONFIG.KROMKA) {
+  if (objProps.CONFIG.KROMKA) {
     props.KROMKA = objProps.CONFIG.KROMKA;
   }
 
-  if(objProps.RASPIL.data && objProps.RASPIL.data.length === 1) {
-    objProps.CONFIG.USLUGI.forEach(el =>{
-      if(el.value === true) {
+  if (objProps.RASPIL.data && objProps.RASPIL.data.length === 1) {
+
+    console.log('====== USLUGI =====')
+
+    objProps.CONFIG.USLUGI.forEach(el => {
+
+      console.log(el, '====== USLUGI 2 =====')
+      if (el.value === true) {
         props.USLUGI.push(el.ID);
       }
     });
-  } 
+  }
 
-  if(objProps.CONFIG.MECHANISM) {
+  if (objProps.CONFIG.MECHANISM) {
     props.MECHANISM = objProps.CONFIG.MECHANISM;
     props.MECHANISMNAME = objProps.CONFIG.MECHANISM_TEMP.find(el => el.active).NAME;
-  } 
-
-  
-  if(objProps.CONFIG.FILLING) {
-    props.FILLING =  objProps.CONFIG.FILLING;
   }
 
-  if (objProps.CONFIG?.SHELFQUANT)  {
-    props.SHELFQUANT  = objProps.CONFIG.SHELFQUANT?.current;
+
+  if (objProps.CONFIG.FILLING) {
+    props.FILLING = objProps.CONFIG.FILLING;
   }
 
-  
+  if (objProps.CONFIG?.SHELFQUANT) {
+    props.SHELFQUANT = objProps.CONFIG.SHELFQUANT?.current;
+  }
 
-  if(objProps.CONFIG.SECTIONS) {
+
+
+  if (objProps.CONFIG.SECTIONS) {
     const propsUM = convertModuleToLegacyFormat(objProps);
     const cleanedData = removeEmptyObjects(propsUM);
     console.log('cleanedData', cleanedData)
     return {
       BASKETID: key,
       PRODUCT: objProps.CONFIG.ID,
-      PROPS:cleanedData,
+      PROPS: cleanedData,
       QUANTITY: 1,
       TYPE: "umscene",
     };
@@ -646,40 +657,40 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
 
 // Определения свойств (перенесено из Angular кода)
 export const propsLabel = {
-  COLOR: {type: "COLOR", val: "int", NAME: "Цвет", SORT: 300},
-  MODULECOLOR: {type: "FASADE", val: "int", NAME: "Цвет корпуса", SORT: 300},
-  SIZE: {type: "SIZE", val: "int", NAME: "Размер", SORT: 400},
-  THICKNESS: {type: "THICKNESS", val: "int", NAME: "Толщина", SORT: 500},
-  OPTION: {type: "OPTION", val: "array", NAME: "Опции", SORT: 600},
-  SIZEEDITHEIGHT: {type: false, val: "int", NAME: "Высота", SORT: 800},
-  SIZEEDITDEPTH: {type: false, val: "int", NAME: "Глубина", SORT: 800},
-  SIZEEDITWIDTH: {type: false, val: "int", NAME: "Ширина", SORT: 800},
-  HEM: {type: "HEM", val: "int", NAME: "Кромка", SORT: 900},
-  SHELFQUANT: {type: false, val: "int", NAME: "Количество полок", SORT: 900},
+  COLOR: { type: "COLOR", val: "int", NAME: "Цвет", SORT: 300 },
+  MODULECOLOR: { type: "FASADE", val: "int", NAME: "Цвет корпуса", SORT: 300 },
+  SIZE: { type: "SIZE", val: "int", NAME: "Размер", SORT: 400 },
+  THICKNESS: { type: "THICKNESS", val: "int", NAME: "Толщина", SORT: 500 },
+  OPTION: { type: "OPTION", val: "array", NAME: "Опции", SORT: 600 },
+  SIZEEDITHEIGHT: { type: false, val: "int", NAME: "Высота", SORT: 800 },
+  SIZEEDITDEPTH: { type: false, val: "int", NAME: "Глубина", SORT: 800 },
+  SIZEEDITWIDTH: { type: false, val: "int", NAME: "Ширина", SORT: 800 },
+  HEM: { type: "HEM", val: "int", NAME: "Кромка", SORT: 900 },
+  SHELFQUANT: { type: false, val: "int", NAME: "Количество полок", SORT: 900 },
   SIZEEDITJOINDEPTH: {
     type: false,
     val: "int",
     NAME: "Глубина пристыковочного модуля",
     SORT: 1000,
   },
-  BACKWALL: {type: "FASADE", val: "color_obj_list", NAME: "Задняя стенка", SORT: 100},
-  LEFTSIDECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Левая стенка", SORT: 100},
-  RIGHTSIDECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Правая стенка", SORT: 100},
-  TOPFASADECOLOR: {type: "FASADE", val: "color_obj_list", NAME: "Накладка на крышку", SORT: 100},
- 
-  DOORS: {type: "FASADE", val: "obj_list", NAME: "Двери", SORT: 100},
-  FACADE: {type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100},
-  FASADE: {type: "FASADE", val: "int", NAME: "Фасад", SORT: 100},
-  FASADE1: {type: "FASADE", val: "int", NAME: "Цвет фасада 1", SORT: 1000},
-  FASADE2: {type: "FASADE", val: "int", NAME: "Цвет фасада 2", SORT: 1100},
-  FASADE3: {type: "FASADE", val: "int", NAME: "Цвет фасада 3", SORT: 1200},
-  FASADE4: {type: "FASADE", val: "int", NAME: "Цвет фасада 4", SORT: 1300},
-  FASADE5: {type: "FASADE", val: "int", NAME: "Цвет фасада 5", SORT: 1300},
+  BACKWALL: { type: "FASADE", val: "color_obj_list", NAME: "Задняя стенка", SORT: 100 },
+  LEFTSIDECOLOR: { type: "FASADE", val: "color_obj_list", NAME: "Левая стенка", SORT: 100 },
+  RIGHTSIDECOLOR: { type: "FASADE", val: "color_obj_list", NAME: "Правая стенка", SORT: 100 },
+  TOPFASADECOLOR: { type: "FASADE", val: "color_obj_list", NAME: "Накладка на крышку", SORT: 100 },
 
-  FASADEWIDTH: {type: false, val: "int", NAME: "Ширина фасада", SORT: 1360},
-  FASADE_WIDTH: {type: false, val: "int", NAME: "Ширина фасада", SORT: 1360},
-  FASADESIZE: {type: "FASADESIZE", val: "int", NAME: "Высота фасада", SORT: 1350},
-  SIZES: {type: "SIZES", val: "int", NAME: "Высота фасада", SORT: 1350},
+  DOORS: { type: "FASADE", val: "obj_list", NAME: "Двери", SORT: 100 },
+  FACADE: { type: "FASADE", val: "int", NAME: "Цвет фасада", SORT: 100 },
+  FASADE: { type: "FASADE", val: "int", NAME: "Фасад", SORT: 100 },
+  FASADE1: { type: "FASADE", val: "int", NAME: "Цвет фасада 1", SORT: 1000 },
+  FASADE2: { type: "FASADE", val: "int", NAME: "Цвет фасада 2", SORT: 1100 },
+  FASADE3: { type: "FASADE", val: "int", NAME: "Цвет фасада 3", SORT: 1200 },
+  FASADE4: { type: "FASADE", val: "int", NAME: "Цвет фасада 4", SORT: 1300 },
+  FASADE5: { type: "FASADE", val: "int", NAME: "Цвет фасада 5", SORT: 1300 },
+
+  FASADEWIDTH: { type: false, val: "int", NAME: "Ширина фасада", SORT: 1360 },
+  FASADE_WIDTH: { type: false, val: "int", NAME: "Ширина фасада", SORT: 1360 },
+  FASADESIZE: { type: "FASADESIZE", val: "int", NAME: "Высота фасада", SORT: 1350 },
+  SIZES: { type: "SIZES", val: "int", NAME: "Высота фасада", SORT: 1350 },
   FASADESIZE1: {
     type: "FASADESIZE",
     val: "int",
@@ -742,40 +753,40 @@ export const propsLabel = {
     SORT: 1350,
   },
 
-  GLASS: {type: "GLASS", val: "int", NAME: "Стекло", SORT: 700},
-  GLASS1: {type: "GLASS", val: "int", NAME: "Стекло 1", SORT: 1400},
-  GLASS2: {type: "GLASS", val: "int", NAME: "Стекло 2", SORT: 1500},
-  GLASS3: {type: "GLASS", val: "int", NAME: "Стекло 3", SORT: 1600},
-  GLASS4: {type: "GLASS", val: "int", NAME: "Стекло 4", SORT: 1700},
-  GLASS5: {type: "GLASS", val: "int", NAME: "Стекло 5", SORT: 1700},
+  GLASS: { type: "GLASS", val: "int", NAME: "Стекло", SORT: 700 },
+  GLASS1: { type: "GLASS", val: "int", NAME: "Стекло 1", SORT: 1400 },
+  GLASS2: { type: "GLASS", val: "int", NAME: "Стекло 2", SORT: 1500 },
+  GLASS3: { type: "GLASS", val: "int", NAME: "Стекло 3", SORT: 1600 },
+  GLASS4: { type: "GLASS", val: "int", NAME: "Стекло 4", SORT: 1700 },
+  GLASS5: { type: "GLASS", val: "int", NAME: "Стекло 5", SORT: 1700 },
 
-  PATINA: {type: "PATINA", val: "int", NAME: "Патина", SORT: 1800},
-  PATINA1: {type: "PATINA", val: "int", NAME: "Патина 1", SORT: 1800},
-  PATINA2: {type: "PATINA", val: "int", NAME: "Патина 2", SORT: 1800},
-  PATINA3: {type: "PATINA", val: "int", NAME: "Патина 3", SORT: 1800},
-  PATINA4: {type: "PATINA", val: "int", NAME: "Патина 4", SORT: 1800},
-  PATINA5: {type: "PATINA", val: "int", NAME: "Патина 5", SORT: 1800},
+  PATINA: { type: "PATINA", val: "int", NAME: "Патина", SORT: 1800 },
+  PATINA1: { type: "PATINA", val: "int", NAME: "Патина 1", SORT: 1800 },
+  PATINA2: { type: "PATINA", val: "int", NAME: "Патина 2", SORT: 1800 },
+  PATINA3: { type: "PATINA", val: "int", NAME: "Патина 3", SORT: 1800 },
+  PATINA4: { type: "PATINA", val: "int", NAME: "Патина 4", SORT: 1800 },
+  PATINA5: { type: "PATINA", val: "int", NAME: "Патина 5", SORT: 1800 },
 
-  SHOWCASE: {type: "SHOWCASE", val: "int", NAME: "Тип витрины", SORT: 1800},
-  SHOWCASE1: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 1", SORT: 1800},
-  SHOWCASE2: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 2", SORT: 1800},
-  SHOWCASE3: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 3", SORT: 1800},
-  SHOWCASE4: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 4", SORT: 1800},
-  SHOWCASE5: {type: "SHOWCASE", val: "int", NAME: "Тип витрины 5", SORT: 1800},
+  SHOWCASE: { type: "SHOWCASE", val: "int", NAME: "Тип витрины", SORT: 1800 },
+  SHOWCASE1: { type: "SHOWCASE", val: "int", NAME: "Тип витрины 1", SORT: 1800 },
+  SHOWCASE2: { type: "SHOWCASE", val: "int", NAME: "Тип витрины 2", SORT: 1800 },
+  SHOWCASE3: { type: "SHOWCASE", val: "int", NAME: "Тип витрины 3", SORT: 1800 },
+  SHOWCASE4: { type: "SHOWCASE", val: "int", NAME: "Тип витрины 4", SORT: 1800 },
+  SHOWCASE5: { type: "SHOWCASE", val: "int", NAME: "Тип витрины 5", SORT: 1800 },
 
-  PALETTE: {type: "PALETTE", val: "int", NAME: "Палитра", SORT: 1800},
-  PALETTE1: {type: "PALETTE", val: "int", NAME: "Палитра 1", SORT: 1800},
-  PALETTE2: {type: "PALETTE", val: "int", NAME: "Палитра 2", SORT: 1800},
-  PALETTE3: {type: "PALETTE", val: "int", NAME: "Палитра 3", SORT: 1800},
-  PALETTE4: {type: "PALETTE", val: "int", NAME: "Палитра 4", SORT: 1800},
-  PALETTE5: {type: "PALETTE", val: "int", NAME: "Палитра 5", SORT: 1800},
+  PALETTE: { type: "PALETTE", val: "int", NAME: "Палитра", SORT: 1800 },
+  PALETTE1: { type: "PALETTE", val: "int", NAME: "Палитра 1", SORT: 1800 },
+  PALETTE2: { type: "PALETTE", val: "int", NAME: "Палитра 2", SORT: 1800 },
+  PALETTE3: { type: "PALETTE", val: "int", NAME: "Палитра 3", SORT: 1800 },
+  PALETTE4: { type: "PALETTE", val: "int", NAME: "Палитра 4", SORT: 1800 },
+  PALETTE5: { type: "PALETTE", val: "int", NAME: "Палитра 5", SORT: 1800 },
 
   FASADEALIGN: {
     type: "FASADEALIGN",
     val: "list",
     NAME: "Сторона открывания",
     SORT: 1800,
-    VALUE: {left: "Левая", right: "Правая"},
+    VALUE: { left: "Левая", right: "Правая" },
   },
   FASADEALIGN1: {
     type: "FASADEALIGN",
@@ -813,59 +824,59 @@ export const propsLabel = {
     val: "list",
     NAME: "Передний фасад",
     SORT: 1800,
-    VALUE: {left: "Левый", right: "Правый"},
+    VALUE: { left: "Левый", right: "Правый" },
   },
 
-  MILLING: {type: "MILLING", val: "int", NAME: "Фрезеровка", SORT: 200},
-  MILLING1: {type: "MILLING", val: "int", NAME: "Фрезеровка 1", SORT: 1800},
-  MILLING2: {type: "MILLING", val: "int", NAME: "Фрезеровка 2", SORT: 1900},
-  MILLING3: {type: "MILLING", val: "int", NAME: "Фрезеровка 3", SORT: 2000},
-  MILLING4: {type: "MILLING", val: "int", NAME: "Фрезеровка 4", SORT: 2100},
-  MILLING5: {type: "MILLING", val: "int", NAME: "Фрезеровка 5", SORT: 2100},
+  MILLING: { type: "MILLING", val: "int", NAME: "Фрезеровка", SORT: 200 },
+  MILLING1: { type: "MILLING", val: "int", NAME: "Фрезеровка 1", SORT: 1800 },
+  MILLING2: { type: "MILLING", val: "int", NAME: "Фрезеровка 2", SORT: 1900 },
+  MILLING3: { type: "MILLING", val: "int", NAME: "Фрезеровка 3", SORT: 2000 },
+  MILLING4: { type: "MILLING", val: "int", NAME: "Фрезеровка 4", SORT: 2100 },
+  MILLING5: { type: "MILLING", val: "int", NAME: "Фрезеровка 5", SORT: 2100 },
 
-  USLUGI: {type: "USLUGI", val: "array", NAME: "Услуга", SORT: 2110},
-  USLUGIL: {type: "USLUGI", val: "array", NAME: "Услуга левая часть", SORT: 2120},
+  USLUGI: { type: "USLUGI", val: "array", NAME: "Услуга", SORT: 2110 },
+  USLUGIL: { type: "USLUGI", val: "array", NAME: "Услуга левая часть", SORT: 2120 },
   USLUGIR: {
     type: "USLUGI",
     val: "array",
     NAME: "Услуга правая часть",
     SORT: 2130,
   },
-  USLUGI1: {type: "USLUGI", val: "array", NAME: "Услуга 1", SORT: 2201},
-  USLUGI2: {type: "USLUGI", val: "array", NAME: "Услуга 2", SORT: 2202},
-  USLUGI3: {type: "USLUGI", val: "array", NAME: "Услуга 3", SORT: 2203},
-  USLUGI4: {type: "USLUGI", val: "array", NAME: "Услуга 4", SORT: 2204},
-  USLUGI5: {type: "USLUGI", val: "array", NAME: "Услуга 5", SORT: 2205},
+  USLUGI1: { type: "USLUGI", val: "array", NAME: "Услуга 1", SORT: 2201 },
+  USLUGI2: { type: "USLUGI", val: "array", NAME: "Услуга 2", SORT: 2202 },
+  USLUGI3: { type: "USLUGI", val: "array", NAME: "Услуга 3", SORT: 2203 },
+  USLUGI4: { type: "USLUGI", val: "array", NAME: "Услуга 4", SORT: 2204 },
+  USLUGI5: { type: "USLUGI", val: "array", NAME: "Услуга 5", SORT: 2205 },
 
-  USLUGIraspil: {type: false, val: "str", NAME: "Распил", SORT: 2300},
+  USLUGIraspil: { type: false, val: "str", NAME: "Распил", SORT: 2300 },
 
-  PROFILE: {type: "USLUGI", val: "int", NAME: "Тип завала", SORT: 2200},
-  FILLING: {type: "FILLING", val: "int", NAME: "Вариант компоновки", SORT: 2400},
+  PROFILE: { type: "USLUGI", val: "int", NAME: "Тип завала", SORT: 2200 },
+  FILLING: { type: "FILLING", val: "int", NAME: "Вариант компоновки", SORT: 2400 },
 
-  FASADETYPE: {type: "FASADETYPE", val: "int", NAME: "Тип фасада", SORT: 2500},
-  FASADETYPE1: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 1", SORT: 2510},
-  FASADETYPE2: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 2", SORT: 2520},
-  FASADETYPE3: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 3", SORT: 2530},
-  FASADETYPE4: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 4", SORT: 2540},
-  FASADETYPE5: {type: "FASADETYPE", val: "int", NAME: "Тип фасада 5", SORT: 2550},
+  FASADETYPE: { type: "FASADETYPE", val: "int", NAME: "Тип фасада", SORT: 2500 },
+  FASADETYPE1: { type: "FASADETYPE", val: "int", NAME: "Тип фасада 1", SORT: 2510 },
+  FASADETYPE2: { type: "FASADETYPE", val: "int", NAME: "Тип фасада 2", SORT: 2520 },
+  FASADETYPE3: { type: "FASADETYPE", val: "int", NAME: "Тип фасада 3", SORT: 2530 },
+  FASADETYPE4: { type: "FASADETYPE", val: "int", NAME: "Тип фасада 4", SORT: 2540 },
+  FASADETYPE5: { type: "FASADETYPE", val: "int", NAME: "Тип фасада 5", SORT: 2550 },
 
-  SECTIONS: {type: false, val: "int", NAME: "Размер секции", SORT: 2550},
-  SECTIONS1: {type: false, val: "int", NAME: "Размер секции 1", SORT: 2550},
-  SECTIONS2: {type: false, val: "int", NAME: "Размер секции 2", SORT: 2550},
-  SECTIONS3: {type: false, val: "int", NAME: "Размер секции 3", SORT: 2550},
-  SECTIONS4: {type: false, val: "int", NAME: "Размер секции 4", SORT: 2550},
-  SECTIONS5: {type: false, val: "int", NAME: "Размер секции 5", SORT: 2550},
+  SECTIONS: { type: false, val: "int", NAME: "Размер секции", SORT: 2550 },
+  SECTIONS1: { type: false, val: "int", NAME: "Размер секции 1", SORT: 2550 },
+  SECTIONS2: { type: false, val: "int", NAME: "Размер секции 2", SORT: 2550 },
+  SECTIONS3: { type: false, val: "int", NAME: "Размер секции 3", SORT: 2550 },
+  SECTIONS4: { type: false, val: "int", NAME: "Размер секции 4", SORT: 2550 },
+  SECTIONS5: { type: false, val: "int", NAME: "Размер секции 5", SORT: 2550 },
 
-  SHELFPOSITION: {type: false, val: "int", NAME: "Позиции полок", SORT: 2550},
-  SHELFPOSITION1: {type: false, val: "int", NAME: "Позиции полок 1", SORT: 2550},
-  SHELFPOSITION2: {type: false, val: "int", NAME: "Позиции полок 2", SORT: 2550},
-  SHELFPOSITION3: {type: false, val: "int", NAME: "Позиции полок 3", SORT: 2550},
-  SHELFPOSITION4: {type: false, val: "int", NAME: "Позиции полок 4", SORT: 2550},
-  SHELFPOSITION5: {type: false, val: "int", NAME: "Позиции полок 5", SORT: 2550},
-  SHELFPOSITION6: {type: false, val: "int", NAME: "Позиции полок 6", SORT: 2550},
-  SHELFPOSITION7: {type: false, val: "int", NAME: "Позиции полок 7", SORT: 2550},
-  SHELFPOSITION8: {type: false, val: "int", NAME: "Позиции полок 8", SORT: 2550},
-  SHELFPOSITION9: {type: false, val: "int", NAME: "Позиции полок 9", SORT: 2550},
+  SHELFPOSITION: { type: false, val: "int", NAME: "Позиции полок", SORT: 2550 },
+  SHELFPOSITION1: { type: false, val: "int", NAME: "Позиции полок 1", SORT: 2550 },
+  SHELFPOSITION2: { type: false, val: "int", NAME: "Позиции полок 2", SORT: 2550 },
+  SHELFPOSITION3: { type: false, val: "int", NAME: "Позиции полок 3", SORT: 2550 },
+  SHELFPOSITION4: { type: false, val: "int", NAME: "Позиции полок 4", SORT: 2550 },
+  SHELFPOSITION5: { type: false, val: "int", NAME: "Позиции полок 5", SORT: 2550 },
+  SHELFPOSITION6: { type: false, val: "int", NAME: "Позиции полок 6", SORT: 2550 },
+  SHELFPOSITION7: { type: false, val: "int", NAME: "Позиции полок 7", SORT: 2550 },
+  SHELFPOSITION8: { type: false, val: "int", NAME: "Позиции полок 8", SORT: 2550 },
+  SHELFPOSITION9: { type: false, val: "int", NAME: "Позиции полок 9", SORT: 2550 },
   SHELFPOSITION10: {
     type: false,
     val: "int",

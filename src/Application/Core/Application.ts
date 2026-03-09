@@ -79,7 +79,7 @@ export class Application {
 
         /** Инициализация */
         
-        THREE.Cache.enabled = true
+        // THREE.Cache.enabled = true
         this.systemInfo = new SystemInfo()
         this.keybordListeners = new KeybordListeners(this)
         this.resources = new Resources();
@@ -368,6 +368,8 @@ export class Application {
             // console.log(`🔥 emit вызван: "${event}"`);
 
             if (this.userHistory.checkEvent(event)) {
+                console.log(`🔥 emit вызван: "${event}"`);
+
                 const toAction: string[] = this.room?.save()!
                 this.userHistory!.addAction(toAction)
             }

@@ -191,7 +191,7 @@ export class Room extends BuildersHelper {
         const height = totalSize.y
         const depth = box!.max.z - box!.min.z;
 
-        this.wallsGroup.userData.elementType = "element_room"
+        this.wallsGroup.userData.elementType = "ROOM"
 
         this.wallsGroupSize = {
             width,
