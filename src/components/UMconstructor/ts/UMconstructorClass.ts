@@ -380,16 +380,17 @@ export default class UMconstructorClass {
         }
     }
 
-    initSideProfile() {
+    initSideProfile(grid: GridModule = this.UM_STORE.getUMGrid()) {
         if (!grid.profilesConfig?.sideProfile) {
 
             const product = this.APP.CATALOG.PRODUCTS[6513251] //C - образный профиль
+            const productData = this.UM_STORE.getUMData()
             let profileData = {}
 
             if (!grid.profilesConfig) {
                 grid.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : grid.moduleColor}
                 grid.profilesConfig.colorsList = [...product.COLOR]
-                productData.value.PROPS.CONFIG['PROFILECOLOR'] = grid.profilesConfig.COLOR
+                productData.CONFIG['PROFILECOLOR'] = grid.profilesConfig.COLOR
             }
 
             profileData.COLOR = grid.profilesConfig?.COLOR ? grid.profilesConfig?.COLOR : grid.moduleColor
@@ -419,12 +420,14 @@ export default class UMconstructorClass {
             profileData.rotation = new THREE.Vector3(0, 0, profileRotationMap[profileData.side]);
 
             grid.profilesConfig.sideProfile = profileData
-            onSideProfile.value = true
+            this.UM_STORE.onSideProfile = true
         }
         else {
             delete grid.profilesConfig.sideProfile
-            onSideProfile.value = false
+            this.UM_STORE.onSideProfile = false
         }
+
+        this.reset(grid)
     }
 
     reset(grid: GridModule = this.UM_STORE.getUMGrid()) {
@@ -517,7 +520,7 @@ export default class UMconstructorClass {
                                         }
                                         else {
                                             if(filling.isProfile) {
-                                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : moduleGrid.width, filling, 'width', moduleGrid)
                                             }
                                             else
                                                 this.FILLINGS.updateFilling(newRow.width, filling, 'width', moduleGrid, moduleGrid)
@@ -566,7 +569,7 @@ export default class UMconstructorClass {
                                                 }
                                                 else {
                                                     if(filling.isProfile) {
-                                                        this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                                        this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : moduleGrid.width, filling, 'width', moduleGrid)
                                                     }
                                                     else
                                                         this.FILLINGS.updateFilling(newExtra.width, filling, 'width', moduleGrid)
@@ -602,7 +605,7 @@ export default class UMconstructorClass {
                                         }
                                         else {
                                             if (filling.isProfile) {
-                                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : moduleGrid.width, filling, 'width', moduleGrid)
                                             } else
                                                 this.FILLINGS.updateFilling(lastRow.width, filling, 'width', moduleGrid)
                                         }
@@ -623,7 +626,7 @@ export default class UMconstructorClass {
                                 }
                                 else {
                                     if (filling.isProfile) {
-                                        this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                        this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : moduleGrid.width, filling, 'width', moduleGrid)
                                     } else
                                         this.FILLINGS.updateFilling(newCell.width, filling, 'width', moduleGrid)
                                 }
@@ -646,7 +649,7 @@ export default class UMconstructorClass {
                         }
                         else {
                             if (filling.isProfile) {
-                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : width, filling, 'width', moduleGrid)
+                                this.FILLINGS.updateFilling((moduleGrid.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : moduleGrid.width, filling, 'width', moduleGrid)
                             } else
                                 this.FILLINGS.updateFilling(newSection.width, filling, 'width', moduleGrid)
                         }

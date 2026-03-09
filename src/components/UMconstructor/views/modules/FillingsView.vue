@@ -1,4 +1,4 @@
-<script setup lang="ts">
+ <script setup lang="ts">
 //@ts-nocheck
 import "@/components/UMconstructor/styles/UM.scss"
 

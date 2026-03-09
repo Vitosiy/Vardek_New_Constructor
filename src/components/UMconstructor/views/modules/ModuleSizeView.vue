@@ -1,4 +1,6 @@
 <script setup lang="ts">
+//@ts-nocheck
+
 import "@/components/UMconstructor/styles/UM.scss"
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
@@ -33,6 +35,7 @@ const totalDepth = ref<number>(0);
 const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
 const noBottom = ref<boolean>(false);
+const onWallModule = ref<boolean>(false);
 
 const updateTotalSize = (dimensions: string, value: number) => {
   switch (dimensions) {
@@ -73,6 +76,13 @@ watch(() => UMconstructor?.value?.UM_STORE.onHorizont, () => {
 watch(() => UMconstructor?.value?.UM_STORE.noBottom, () => {
   if(noBottom.value !== UMconstructor.value.UM_STORE.noBottom) {
     noBottom.value = UMconstructor.value.UM_STORE.noBottom
+    UMconstructor.value.reset()
+  }
+})
+
+watch(() => UMconstructor?.value?.UM_STORE.onWallModule, () => {
+  if(onWallModule.value !== UMconstructor.value.UM_STORE.onWallModule) {
+    onWallModule.value = UMconstructor.value.UM_STORE.onWallModule
     UMconstructor.value.reset()
   }
 })
@@ -166,7 +176,7 @@ onMounted(() => {
         class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
     >
       <p class="no-select actions-title">Цоколь
-        <img v-if="mode !== 'module' || noBottom" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
+        <img v-if="mode !== 'module' || noBottom || onWallModule" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
         <Toggle v-else v-model="onHorizont" @change="horizontToggle"/>
       </p>
 
@@ -186,7 +196,7 @@ onMounted(() => {
             max="300"
             :type="'number'"
             placeholder="0"
-            :disabled="mode !== 'module' || productData.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0 || noBottom"
+            :disabled="mode !== 'module' || productData.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0 || noBottom || onWallModule"
         />
       </div>
     </div>
@@ -196,11 +206,11 @@ onMounted(() => {
         class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
     >
       <p class="actions-title">Боковой профиль</p>
-      <img v-if="module.sections[0].hiTechProfiles?.length" class="cut-icon" src="/icons/lock.svg" alt="" title="Нельзя добавить боковой профиль вместе с горизонтальными!" />
+      <img v-if="module.sections?.[0]?.hiTechProfiles?.length" class="cut-icon" src="/icons/lock.svg" alt="" title="Нельзя добавить боковой профиль вместе с горизонтальными!" />
       <Toggle
           v-else
           v-model="onSideProfile"
-          @change="UMconstructor.initSideProfile"
+          @change="() => UMconstructor.initSideProfile(module)"
       />
     </div>
 

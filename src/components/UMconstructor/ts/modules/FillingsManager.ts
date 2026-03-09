@@ -180,10 +180,7 @@ export default class FillingsManager {
             }
         }
 
-        if (isBottomHiTechProfile && !PROPS.CONFIG.OPTIONS.find((opt, index) => {
-            if (+opt.id === 4722965 && opt.active)
-                return opt;
-        })) {
+        if (isBottomHiTechProfile && !this.scope.UM_STORE.onWallModule) {
             this.scope.callAlert("error", "Г-образный профиль доступен только для навесного модуля")
             return;
         }
