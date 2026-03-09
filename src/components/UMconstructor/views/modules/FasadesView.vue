@@ -159,7 +159,7 @@ const selectHandle = (data: any, type: string) => {
       currentHandle.value.data.HANDLES.position = data;
       break;
   }
-  UMconstructor?.value?.reset(module.value);
+  UMconstructor?.value?.RENDER_REF.renderGrid(module.value);
 }
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
@@ -181,7 +181,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
         );
   }
 
-  UMconstructor?.value?.reset(module.value)
+  //UMconstructor?.value?.reset(module.value)
 };
 
 const closeMenu = () => {
