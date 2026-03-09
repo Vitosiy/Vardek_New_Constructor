@@ -33,22 +33,18 @@ export function initRoom(this: any): (0 | 1) {
     return 0;
   }
 
-  // Получаем текущую активную комнату
   let currentRoomId = roomState.getRoomId;
   
-  // Если текущей комнаты нет, устанавливаем первую комнату как текущую
   if (!currentRoomId && rooms.length > 0) {
     currentRoomId = rooms[0].id;
     roomState.setCurrentRoomId(currentRoomId);
   }
 
-  // Нормализуем ID для сравнения
   const normalizeId = (value: string | number | null | undefined) => {
     return value !== null && value !== undefined ? String(value) : '';
   };
   const currentRoomIdNormalized = normalizeId(currentRoomId);
 
-  // Фильтруем комнаты - обрабатываем только текущую активную комнату
   const roomsToProcess = rooms.filter(room => {
     const roomIdNormalized = normalizeId(room.id);
     return roomIdNormalized === currentRoomIdNormalized;
