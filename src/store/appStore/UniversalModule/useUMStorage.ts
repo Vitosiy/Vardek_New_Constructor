@@ -31,6 +31,7 @@ export const useUMStorage = defineStore('um-data', () => {
   const onHorizont  = ref<boolean>(true);
   const onSideProfile= ref<boolean>(false);
   const noBottom    = ref<boolean>(false);
+  const onWallModule  = ref<boolean>(false);
 
   const setUMGrid = (value: GridModule) => {
     if(value)
@@ -142,6 +143,7 @@ export const useUMStorage = defineStore('um-data', () => {
     onHorizont,
     onSideProfile,
     noBottom,
+    onWallModule,
     setUMGrid,
     setUMData,
     setUMCashConfig,
