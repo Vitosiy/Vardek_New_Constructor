@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { MathUtils } from "three"
 import { useSceneState } from "@/store/appliction/useSceneState"
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition"
 import { useRoomState } from "@/store/appliction/useRoomState"
@@ -8,6 +9,12 @@ const sceneState = useSceneState()
 const schemeTransition = useSchemeTransition()
 const projectState = useProjectStore()
 const roomState = useRoomState()
+
+const WALL_HEIGHT = 3000
+const WALL_DEPTH = 300
+const FLOOR_Y = 1500
+const OFFSET = 2000
+const HALF_PI = Math.PI / 2
 
 const jsonBlank = `{
     "projectId": "1762946168561",
@@ -163,7 +170,74 @@ const jsonBlank = `{
 }`
 const projectData = JSON.parse(jsonBlank)
 
-console.log(projectData)
+/**
+ * Строит данные проекта с одной комнатой-прямоугольником по 4 ширинам стен.
+ * Порядок: правая, левая, нижняя (передняя), верхняя (задняя).
+ * Позиции и повороты считаются так, чтобы стены смыкались в замкнутый контур.
+ */
+export const buildProjectFromWallWidths = (
+  right: number,
+  left: number,
+  bottom: number,
+  top: number
+) => {
+  const D = (right + left) / 2 // глубина (длина левой/правой стен)
+  const W = (bottom + top) / 2 // ширина (длина нижней/верхней стен)
+
+  const walls = [
+    {
+      id: `wall_vertical__${MathUtils.generateUUID()}`,
+      width: D,
+      height: WALL_HEIGHT,
+      depth: WALL_DEPTH,
+      position: { x: OFFSET + W, y: FLOOR_Y, z: OFFSET + D / 2 },
+      rotation: { isEuler: true, _x: 0, _y: -HALF_PI, _z: 0, _order: "XYZ" },
+      side: 0,
+    },
+    {
+      id: `wall_vertical__${MathUtils.generateUUID()}`,
+      width: D,
+      height: WALL_HEIGHT,
+      depth: WALL_DEPTH,
+      position: { x: OFFSET, y: FLOOR_Y, z: OFFSET + D / 2 },
+      rotation: { isEuler: true, _x: 0, _y: HALF_PI, _z: 0, _order: "XYZ" },
+      side: 0,
+    },
+    {
+      id: `wall__${MathUtils.generateUUID()}`,
+      width: W,
+      height: WALL_HEIGHT,
+      depth: WALL_DEPTH,
+      position: { x: OFFSET + W / 2, y: FLOOR_Y, z: OFFSET },
+      rotation: { isEuler: true, _x: 0, _y: 0, _z: 0, _order: "XYZ" },
+      side: 0,
+    },
+    {
+      id: `wall__${MathUtils.generateUUID()}`,
+      width: W,
+      height: WALL_HEIGHT,
+      depth: WALL_DEPTH,
+      position: { x: OFFSET + W / 2, y: FLOOR_Y, z: OFFSET + D },
+      rotation: { isEuler: true, _x: 0, _y: Math.PI, _z: 0, _order: "XYZ" },
+      side: 0,
+    },
+  ]
+
+  const room = {
+    ...JSON.parse(JSON.stringify(projectData.rooms[0])),
+    id: MathUtils.generateUUID(),
+    params: {
+      ...projectData.rooms[0].params,
+      walls,
+    },
+  }
+
+  return {
+    ...JSON.parse(JSON.stringify(projectData)),
+    projectId: String(Date.now()),
+    rooms: [room],
+  }
+}
 
 // Возвращает глубокую копию первой комнаты из blankroom
 export const getBlankRoomTemplate = () => {
@@ -176,15 +250,20 @@ const ensureLayersReady = async () => {
   }
 }
 
-export const loadBlankRoom = async () => {
+/**
+ * Загружает бланковую комнату на канвас.
+ * @param customProject — если передан, используется он (например из buildProjectFromWallWidths); иначе — дефолтный projectData.
+ */
+export const loadBlankRoom = async (customProject?: typeof projectData) => {
   await ensureLayersReady()
-  projectState.setInitialState(projectData)
+  const data = customProject ?? projectData
+  projectState.setInitialState(data)
 
   try {
-    await sceneState.loadProjectFromData(projectData)
+    await sceneState.loadProjectFromData(data)
     sceneState.updateProjectParams({})
-    schemeTransition.setAppData(projectData.rooms)
-    
+    schemeTransition.setAppData(data.rooms)
+
     roomState.routConvertData('/3d')
 
     projectState.setProjectId(undefined)
