@@ -11,6 +11,8 @@ export interface LoadProjectsParams {
   designerValue: string
   name?: string
   id?: number
+  dateFrom?: string
+  dateTo?: string
   elementsOnPage: number
   currentPage: number
 }
@@ -141,6 +143,12 @@ export function useProjectAPI() {
           }
           if (params.name != null && params.name !== '') {
             filter.name = params.name
+          }
+          if (params.dateFrom) {
+            filter.dateFrom = params.dateFrom
+          }
+          if (params.dateTo) {
+            filter.dateTo = params.dateTo
           }
 
           const requestBody = {

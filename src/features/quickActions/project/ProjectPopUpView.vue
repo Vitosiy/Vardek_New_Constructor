@@ -21,6 +21,21 @@
               }}
             </option>
           </select>
+          <div class="search-input date-filter">
+            <input
+              v-model="dateFrom"
+              type="date"
+              class="search-input date-filter__input"
+              placeholder="Дата от"
+            />
+            <span class="date-filter__separator">—</span>
+            <input
+              v-model="dateTo"
+              type="date"
+              class="search-input date-filter__input"
+              placeholder="Дата до"
+            />
+          </div>
         </div>
         <div class="project-buttons">
           <!-- <MainButton
@@ -189,6 +204,8 @@ const tab = ref<ProjectTab>("my");
 const loadError = ref<string | null>(null);
 const isLoading = ref(false);
 const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
+const dateFrom = ref("");
+const dateTo = ref("");
 
 // Список владельцев салонов (из getSalonOwner) — в селекте показываем имена, value = ID для getprojectlist
 const backendIdsList = computed(() => authStore.salonOwnerList ?? []);
@@ -231,6 +248,11 @@ watch(
   },
   { deep: true },
 );
+
+watch([dateFrom, dateTo], () => {
+  currentPage.value = 1;
+  loadProjects(300);
+});
 
 watch(currentPage, (newPage, oldPage) => {
   if (oldPage != null && newPage !== oldPage) {
@@ -297,11 +319,16 @@ const loadProjects = async (delay: number = 300) => {
       if (!isNaN(idValue) && idValue > 0) id = idValue;
     }
 
+    const dateFromVal = dateFrom.value?.trim() || undefined;
+    const dateToVal = dateTo.value?.trim() || undefined;
+
     const result = await projectAPI.loadProjects(
       {
         designerValue,
         name,
         id,
+        dateFrom: dateFromVal,
+        dateTo: dateToVal,
         elementsOnPage: PAGE_SIZE,
         currentPage: currentPage.value,
       },
@@ -605,6 +632,23 @@ onMounted(async () => {
 
         .backend-ids-select {
           cursor: pointer;
+        }
+
+        .date-filter {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-width: 0;
+        }
+
+        .date-filter__input {
+          min-width: 140px;
+          width: auto;
+        }
+
+        .date-filter__separator {
+          color: #666;
+          flex-shrink: 0;
         }
       }
 
