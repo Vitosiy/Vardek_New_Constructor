@@ -847,7 +847,7 @@ watch(
           </template>
         </Modal>
         <UMconstructor
-          v-show="universalModuleData && product"
+          v-if="universalModuleData && product"
           ref="universalModule2DConstructor"
           :product="product"
         />

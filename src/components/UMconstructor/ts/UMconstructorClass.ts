@@ -694,6 +694,10 @@ export default class UMconstructorClass {
                     moduleGrid.sections[moduleGrid.sections.length - 1] = recalcSection(lastSection, startPositionSections)
                 }
             }
+            else if(moduleGrid.sections.length < 2 && sectionsWidthSum > MAX_SECTION_WIDTH) {
+                let countSections = Math.floor(moduleGrid.sections[0].width / MAX_SECTION_WIDTH);
+                this.SECTIONS.addSection?.({grid: moduleGrid, secIndex: 0, count: countSections})
+            }
 
             module = <GridModule>{
                 ...moduleGrid,
