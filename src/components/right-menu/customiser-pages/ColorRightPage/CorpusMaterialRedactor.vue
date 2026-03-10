@@ -58,22 +58,20 @@ onBeforeMount(() => {
     modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
 });
 
-onMounted(() => {
-  const curModel = modelState.getCurrentModel;
-  const { MODULE_COLOR } = curModel?.userData.PROPS.CONFIG;
+const prepareData = () => {
   const { NAME, DETAIL_PICTURE } = props.isNisha
-    ? modelState._WALL[MODULE_COLOR]
-    : modelState._FASADE[MODULE_COLOR];
-  materialList.value = modelState.getCurrentModuleData;
-
-  const current = props.materialList!.find(
-    (m) => m.ID === selectedSurfaceID.value,
-  );
+      ? modelState._WALL[selectedSurfaceID.value]
+      : modelState._FASADE[selectedSurfaceID.value];
+  materialList.value = props.materialList?.length ? props.materialList : modelState.getCurrentModuleData;
 
   currentSurfaceData.value = {
     name: NAME,
     imgSrc: DETAIL_PICTURE,
   };
+}
+
+onMounted(() => {
+  prepareData();
 });
 
 const changeModuleTexture = (data: any) => {
@@ -106,6 +104,17 @@ const deleteSelectedOptions = (type: string) => {
     eventBus.emit("A:ChangeModuleTexture", fallback);
   }
 };
+
+watch(() => props.type, () => {
+  if (props.type === "backwall")
+    selectedSurfaceID.value =
+        modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL?.COLOR;
+  else
+    selectedSurfaceID.value =
+        modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR;
+
+  prepareData()
+})
 </script>
 
 <template>
