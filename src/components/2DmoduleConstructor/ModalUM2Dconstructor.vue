@@ -1,3 +1,7 @@
+<!-- Легаси-код -->
+<!--TODO: удалить за ненадобностью-->
+
+
 <script setup lang="ts">
 // @ts-nocheck
 import Modal from "@/components/ui/modals/Modal.vue";

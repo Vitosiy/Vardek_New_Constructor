@@ -441,7 +441,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                             v-else
                             type="number"
                             :step="1"
-                            :max="section.height - filling.height"
+                            :max="section.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
                             min="0"
                             class="actions-input"
                             :value="filling.distances?.bottom"
@@ -609,7 +609,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                   v-else
                                   type="number"
                                   :step="1"
-                                  :max="cell.height - filling.height"
+                                  :max="cell.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
                                   min="0"
                                   class="actions-input"
                                   :value="filling.distances?.bottom"
@@ -792,7 +792,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                       v-else
                                       type="number"
                                       :step="1"
-                                      :max="row.height - filling.height"
+                                      :max="row.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
                                       min="0"
                                       class="actions-input"
                                       :value="filling.distances?.bottom"
@@ -979,7 +979,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                           v-else
                                           type="number"
                                           :step="1"
-                                          :max="extra.height - filling.height"
+                                          :max="extra.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
                                           min="0"
                                           class="actions-input"
                                           :value="filling.distances?.bottom"
