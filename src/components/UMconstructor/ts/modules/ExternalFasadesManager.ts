@@ -23,15 +23,14 @@ export default class ExternalFasadesManager {
     calcDrawersFasades(secIndex: number, fillingData: FillingObject = false, grid: GridModule = this.FASADES_MANAGER.scope.UM_STORE.getUMGrid()) {
 
         if (fillingData) {
-            if(fillingData.fasade) {
+            if(fillingData.fasade && grid.sections[secIndex].fasadesDrawers) {
                 fillingData.fasade.position.y = grid.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
 
                 let drawerInfoId = grid.sections[secIndex].fasadesDrawers.findIndex(item => item.item == fillingData.id)
                 grid.sections[secIndex].fasadesDrawers[drawerInfoId] = fillingData.fasade
             }
-
-            if(fillingData.isProfile){
-                let profileInfoId = grid.sections[secIndex].hiTechProfiles.findIndex(item => item.id == fillingData.id)
+            else if (fillingData.isProfile && grid.sections[secIndex].hiTechProfiles){
+                let profileInfoId = grid.sections[secIndex].hiTechProfiles?.findIndex(item => item.id == fillingData.id)
                 grid.sections[secIndex].hiTechProfiles[profileInfoId] = fillingData
             }
         }
