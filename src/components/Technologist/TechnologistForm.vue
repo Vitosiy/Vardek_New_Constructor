@@ -168,6 +168,17 @@ onMounted(() => {
             >
           </div>
 
+          <div class="technologist-form-footer-info-item">
+            <label>* ID предзаказа</label>
+            <input
+                :class="['technologist-form-footer-info-item__input', {'technologist-form-errorForm': techFormError['pre_order_id']}]"
+                placeholder="*Если есть*"
+                v-model="currentForm['pre_order_id']"
+                name="pre_order_id"
+                type="text"
+            >
+          </div>
+
           <div class="technologist-form-footer-info-technique">
             <label>* Список техники с указанием модели:</label>
             <ul class="technologist-form-footer-info-technique__list">

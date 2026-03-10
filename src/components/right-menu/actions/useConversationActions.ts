@@ -57,8 +57,8 @@ export const useConversationActions = () => {
 
         const { _FASADE_SECTION, _FASADE_SIZE_RESTRICT, _FASADE } = modelState
         const fasadeData = (_FASADE as TFasadeItem[])[fasadeId]
-        const section = _FASADE_SECTION[fasadeData.IBLOCK_SECTION_ID];
-        const groupId = section.UF_GROUP ?? section;
+        const section = _FASADE_SECTION[fasadeData?.IBLOCK_SECTION_ID];
+        const groupId = section?.UF_GROUP ?? section;
 
         if (!groupId) return temp
 

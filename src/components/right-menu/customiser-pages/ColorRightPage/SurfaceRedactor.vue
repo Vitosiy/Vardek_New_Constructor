@@ -204,6 +204,7 @@ const checkTransitionTexture = (id: number) => {
 </template>
 
 <style scoped lang="scss">
+
 .relative__wrapper {
   display: flex;
   flex-direction: column;
@@ -215,6 +216,7 @@ const checkTransitionTexture = (id: number) => {
   border-radius: 15px;
   padding: 10px 10px 0px 10px;
 }
+
 .search {
   width: 95%;
   border-radius: 15px;
@@ -229,6 +231,16 @@ const checkTransitionTexture = (id: number) => {
   box-sizing: border-box;
   overflow-y: scroll;
   box-sizing: border-box;
+
+  &__details {
+    border-radius: 15px;
+
+    @media (hover: hover) {
+      &:hover {
+        background: $bg;
+      }
+    }
+  }
 }
 
 .item {
@@ -240,7 +252,7 @@ const checkTransitionTexture = (id: number) => {
   // height: 60px;
   border-radius: 15px;
   background-color: $bg;
-  margin-bottom: 8px;
+  margin-top: 10px;
   margin-right: 8px;
   transition-property: background-color;
   transition-duration: 0.25s;

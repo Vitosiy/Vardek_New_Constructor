@@ -531,14 +531,19 @@ export class BuildProduct extends BuildersHelper {
 
         CONFIG.MODULE_COLOR = isRoomElement ? wallTextureId : moduleColorId;
 
+
+        const moduleColorObject = isRoomElement ?
+            this._WALL[wallTextureId] :
+            this._FASADE[moduleColorId]
+
         const moduleColor = isRoomElement ?
-            this._WALL[wallTextureId].texture :
-            this._FASADE[moduleColorId]?.TEXTURE;
+            moduleColorObject.texture :
+            moduleColorObject?.TEXTURE;
 
         const isTopTable = texture?.src && !moduleColor;
 
         // Применяем кастомные перекрытия элементов через вспомогательный метод
-        this.applyBodyOverrides(data, CONFIG, moduleColor);
+        this.applyBodyOverrides(data, CONFIG, moduleColorObject);
 
         const body = this.json_builder.createMesh({
             data: { ...data, ...modelSize },
@@ -607,7 +612,7 @@ export class BuildProduct extends BuildersHelper {
         moduleColor: any
     ) {
         const { TOPFASADECOLOR, TSARGA, BACKWALL } = CONFIG;
-        const moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor?.DEPTH;
+        const moduleThickness = this._FASADE[CONFIG.FASADE_PROPS[0]?.COLOR]?.DEPTH || moduleColor?.DEPTH || 18;
         const startPos = this.getStartPosition(CONFIG.SIZE);
 
         if (TOPFASADECOLOR?.SHOW) {

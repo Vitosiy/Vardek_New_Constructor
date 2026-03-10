@@ -21,6 +21,7 @@ import { useModelState } from "@/store/appliction/useModelState"
 import { useTransformController } from "@/components/ui/transformController/useTransformController"
 import { useBasketStore } from "@/store/appStore/useBasketStore"
 import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
+import { toHandlers } from "vue"
 
 export class World {
 
@@ -72,7 +73,9 @@ export class World {
 
         if (this.roomState.getRooms.length > 0) {
             this.roomState.setLoad(false)
-            const startRoomId = String(this.roomState.getRooms[0].id)
+            const startRoomId = this.roomState.getRoomId
+                ? String(this.roomState.getRoomId)
+                : String(this.roomState.getRooms[0].id)
             this.loadRoom(startRoomId)
         }
         else {

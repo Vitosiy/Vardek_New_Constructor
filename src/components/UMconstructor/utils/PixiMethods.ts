@@ -1,9 +1,10 @@
 // @ts-nocheck 31
-import {UI_PARAMS} from "./UMConstructorConst.ts";
-import {Application, Container, Graphics, Text, TextStyle, GraphicsPath} from "pixi.js";
-import {paddingBottom} from "html2canvas/dist/types/css/property-descriptors/padding";
+import {UI_PARAMS} from "./Const.ts";
+import {Container, Graphics, GraphicsPath, Text, TextStyle} from "pixi.js";
 import * as THREE from "three";
 import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
+import {TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
+import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 
 type TDashedLine = {
     startX: number;
@@ -448,6 +449,7 @@ class Shape extends Helpers {
     radius: number = 0
     paddingTop: number = 0
     paddingBottom: number = 0
+    drawersFasadesOffset: number = 0
     shapes: Shape[]
     data: THoleData
     sector: Container
@@ -533,6 +535,7 @@ class Shape extends Helpers {
         this.highlightGraphics.rect(0, 0, this.getPixelWidth(data.width), this.getPixelHeight(data.height))
         this.highlightGraphics.fill("#b86c02")
         this.highlightGraphics.stroke({width: 1, color: "#875003", alignment: 1});
+        this.drawersFasadesOffset = this.getPixelHeight(4)
 
         if (position) {
             this.graphic.position.x = this.getPixelWidth(position.x);
@@ -581,7 +584,7 @@ class Shape extends Helpers {
 
         const pointerdown = (event, graphic) => {
             graphic.cursor = "grabbing";
-            this.select('fillings', this.sector.secIndex, this.sector.cellIndex, true, this.sector.rowIndex, this.sector.extraIndex)
+            this.select("fillings", <TSelectedCell>{sec: this.sector.secIndex, cell: this.sector.cellIndex, row: this.sector.rowIndex, extra: this.sector.extraIndex});
             dragging = true;
             originalPosition = {
                 x: graphic.position.x,
@@ -600,22 +603,18 @@ class Shape extends Helpers {
                 const newY = event.global.y + dragOffset.y;
                 const newX = event.global.x + dragOffset.x;
 
-                // Ограничиваем позицию границами сектора с учетом отступа
-                let adjustedY = newY;
-                let adjustedX = newX;
-
                 // Ограничения по осям
-                adjustedY = Math.max(
+                let adjustedY = Math.max(
                     this.sectorBounds.y + this.paddingTop,
                     Math.min(newY, this.sectorBounds.y + this.sectorBounds.height - self.height - this.paddingBottom)
                 );
-                adjustedX = Math.max(
+                let adjustedX = Math.max(
                     this.sectorBounds.x,
                     Math.min(newX, this.sectorBounds.x + this.sectorBounds.width - self.width)
                 );
 
                 // Сохраняем текущую позицию для восстановления в случае коллизии
-                const currentY = graphic.position.y;
+                let currentY = graphic.position.y;
                 const currentX = graphic.position.x;
 
                 if(self.data.isVerticalItem) {
@@ -645,6 +644,47 @@ class Shape extends Helpers {
                     for (const otherShape of this.sector.shapes) {
                         if (self !== otherShape && self.checkOverlap(otherShape)) {
                             hasCollisionY = true;
+
+                            if(self.data.fasade && otherShape.data.fasade) {
+                                self.graphic.position.y = currentY;
+                                self.highlightGraphics.position.y = currentY;
+                                let thisPos = self.getDrawerFasadePosition(self)
+
+                                let otherPos = self.getDrawerFasadePosition(otherShape)
+
+                                if(thisPos.min >= otherPos.max) {
+
+                                    let delta = self.getMmHeight(thisPos.min - otherPos.max)
+
+                                    if(Math.abs(delta) < 10) {
+                                        let newPos = otherPos.max + self.drawersFasadesOffset + self.getPixelHeight(self.data.fasade.height - self.data.fasade.manufacturerOffset - self.data.height)
+                                        self.graphic.position.y = newPos;
+                                        self.highlightGraphics.position.y = newPos;
+
+                                        if(!self.checkOverlap(otherShape))
+                                            currentY = newPos
+
+                                        self.graphic.position.y = adjustedY;
+                                        self.highlightGraphics.position.y = adjustedY;
+                                    }
+                                }
+                                else if(otherPos.min >= thisPos.max) {
+                                    let delta = self.getMmHeight(otherPos.min - thisPos.max)
+
+                                    if(Math.abs(delta) < 10) {
+                                        let newPos = otherPos.min - self.drawersFasadesOffset - self.getPixelHeight(self.data.fasade.manufacturerOffset + self.data.height)
+                                        self.graphic.position.y = newPos;
+                                        self.highlightGraphics.position.y = newPos;
+
+                                        if(!self.checkOverlap(otherShape))
+                                            currentY = newPos
+
+                                        self.graphic.position.y = adjustedY;
+                                        self.highlightGraphics.position.y = adjustedY;
+                                    }
+                                }
+                            }
+
                             break;
                         }
                     }
@@ -692,6 +732,22 @@ class Shape extends Helpers {
         this.graphic.on("pointerupoutside", endDrag);
         this.highlightGraphics.on("pointerup", endDrag);
         this.highlightGraphics.on("pointerupoutside", endDrag);
+    }
+
+    getDrawerFasadePosition(shape: Shape) {
+        let result = {
+            min: shape.graphic.position.y,
+            max: shape.graphic.position.y + shape.height,
+            drawer: false,
+        }
+
+        if (shape.data.fasade) {
+            result.min = shape.graphic.position.y - shape.getPixelHeight(shape.data.fasade.height - shape.data.fasade.manufacturerOffset - shape.data.height)
+            result.max = result.min + shape.getPixelHeight(shape.data.fasade.height)
+            result.drawer = true;
+        }
+
+        return result;
     }
 
     // Проверка перекрытия с другой фигурой
@@ -752,10 +808,10 @@ class Shape extends Helpers {
                 thisHeight = this.data.fasade ? this.getPixelHeight(this.data.fasade.height + 2) : thisHeight
 
                 otherShapePosY = otherShape.data.fasade ? otherShape.graphic.position.y -
-                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height)
+                    this.getPixelHeight(otherShape.data.fasade.height - otherShape.data.fasade.manufacturerOffset - otherShape.data.height + 2)
                     : otherShapePosY
 
-                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height) : otherShapeHeight
+                otherShapeHeight = otherShape.data.fasade ? this.getPixelHeight(otherShape.data.fasade.height + 2) : otherShapeHeight
 
                 if (!(this.data.isProfile && otherShape.data.isProfile)) {
                     if (this.data.isProfile && otherShape.data.fasade) {
@@ -1086,14 +1142,17 @@ class Section extends Helpers {
     height: number = 0;
     data: any;
     sector: Container;
+    opacity: number;
+    _drawDimensions: boolean;
 
-    constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true) {
+    constructor(data: any, width: number, height: number, sector: Container, _drawDimensions: boolean = true, opacity: number = 1) {
         super();
         this.data = data;
         this.width = width;
         this.height = height;
         this.sector = sector;
         this._drawDimensions = _drawDimensions;
+        this.opacity = opacity;
 
         this.createSection();
     }
@@ -1107,7 +1166,7 @@ class Section extends Helpers {
         let bottomRight = data.bottomRight ?? {type: 'none'};
         let topLeft = data.topLeft ?? {type: 'none'};
         let topRight = data.topRight ?? {type: 'none'};
-        let opacity = data.type === "fasade" ? 0.8 : 1;
+        let opacity = this.opacity;
 
         let defCellColor, deffHighlightColor;
         switch (data.type) {
@@ -1337,15 +1396,18 @@ class Section extends Helpers {
 class ShapeAdjuster extends Helpers {
     maxIterations: number = 500
     maxPositionAttempts: number = 250
+    scope: UMconstructorClass
 
-    constructor({getMmWidth, getMmHeight, getPixelHeight, getPixelWidth}:
+    constructor({scope, getMmWidth, getMmHeight, getPixelHeight, getPixelWidth}:
                 {
+                    scope: UMconstructorClass,
                     getMmHeight?: () => void,
                     getMmWidth?: () => void,
                     getPixelHeight?: () => void,
                     getPixelWidth?: () => void,
                 }) {
         super()
+        this.scope = scope
         if (getMmWidth)
             this.getMmWidth = getMmWidth
         if (getMmHeight)
@@ -1426,17 +1488,19 @@ class ShapeAdjuster extends Helpers {
                 }
                 else
                     Object.entries(MANUFACTURER).forEach(([key, offset]) => {
-                        if (manufacturer_name.includes(key)) {
-                            manufacturer_name = key
-                            manufacturerOffset = offset
-                        }
-                    })
+                    if (manufacturer_name.includes(key)) {
+                        manufacturer_name = key
+                        manufacturerOffset = offset
+                    }
+                })
 
                 shape.data.fasade = {}
                 shape.data.fasade.manufacturerOffset = manufacturerOffset
                 shape.data.fasade.height = shape.data.data.MIN_FASADE_SIZE
-                maxY = maxY + this.getPixelHeight(manufacturerOffset)
-                minY = minY - this.getPixelHeight(shape.data.data.MIN_FASADE_SIZE - shape.data.data.height - manufacturerOffset)
+                let moduleData = this.scope.UM_STORE.getUMGrid()
+
+                maxY = maxY + this.getPixelHeight(manufacturerOffset - (moduleData.moduleThickness - 2))
+                minY = minY - this.getPixelHeight(moduleData.moduleThickness - 2)
             }
 
             for (let i = 0; i < maxY - minY - height; i++) {

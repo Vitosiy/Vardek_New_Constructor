@@ -9,6 +9,7 @@ import TechnologistPopUpView from "@/components/popUp/popup-views/TechnologistPo
 import TechnologistForm from "@/components/Technologist/TechnologistForm.vue";
 import TechnologistComments from "@/components/Technologist/TechnologistComments.vue";
 import FilePopUpView from "@/components/popUp/popup-views/FilePopUpView.vue";
+import ProjectParamsPopUpView from "@/components/popUp/popup-views/ProjectParamsPopUpView.vue";
 
 
 export type PopupKey =
@@ -16,6 +17,7 @@ export type PopupKey =
     'study' |
     'error' |
     'project' |
+    'projectParams' |
     'catalog' |
     'technologist' |
     'technologist-form' |
@@ -46,6 +48,10 @@ export const POPUP_CONFIG: PopupsConfig = {
   project: {
     title: 'Проект',
     component: ProjectPopUpView
+  },
+  projectParams: {
+    title: 'Задайте параметры проекта',
+    component: ProjectParamsPopUpView
   },
   catalog: {
     title: 'Каталог',

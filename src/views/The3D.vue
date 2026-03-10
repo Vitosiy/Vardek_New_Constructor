@@ -39,14 +39,12 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
 import ContentControllerButton from "@/components/ui/buttons/right-menu/controller/ContentControllerButton.vue";
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
-import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CollisionButton from "@/components/ui/buttons/right-menu/controller/CollisionButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
-import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+//import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+import UMconstructor from "@/components/UMconstructor/UMconstructor.vue";
 
-import Toggle from "@vueform/toggle";
-import Accordion from "@/components/ui/accordion/Accordion.vue";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import TransformController from "@/components/ui/transformController/TransformController.vue";
 
@@ -106,7 +104,7 @@ const productFasades = ref<any[]>([]);
 /** ----------------- 19.05.25 ----------------------------- */
 
 //Универсальный модуль
-const universalModule2DConstructor = ref<typeof ModalUM2Dconstructor | null>(
+const universalModule2DConstructor = ref<typeof UMconstructor | null>(
   null
 );
 const universalModuleData = ref<TMyObject | null>(null);
@@ -848,12 +846,11 @@ watch(
             </button> -->
           </template>
         </Modal>
-        <div v-show="universalModuleData && product">
-          <ModalUM2Dconstructor
-            ref="universalModule2DConstructor"
-            :product="product"
-          />
-        </div>
+        <UMconstructor
+          v-show="universalModuleData && product"
+          ref="universalModule2DConstructor"
+          :product="product"
+        />
       </div>
     </div>
   </div>

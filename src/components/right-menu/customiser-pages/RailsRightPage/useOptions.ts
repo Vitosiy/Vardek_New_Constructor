@@ -3,6 +3,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMechanism } from "./Mechanism/useMechanism";
+import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
 
 const mechanism = useMechanism()
 
@@ -12,6 +13,7 @@ export const useOptions = () => {
     const appData = useAppData();
     const modelState = useModelState();
     const eventBus = useEventBus();
+    const UM_STORE = useUMStorage();
     const { weightCalculation, createMeckhanizmList } = mechanism
     const cutOptionsId = [4722787, 4722786];
     const cutOptionsTempSize = 20
@@ -78,7 +80,13 @@ export const useOptions = () => {
                                 break;
                             case 5738924:   //Без дна
                                 PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
-                                PROPS.CONFIG.HORIZONT = 78
+                                //PROPS.CONFIG.HORIZONT = 78
+                                UM_STORE.onHorizont = true
+                                UM_STORE.noBottom = false
+                                break;
+                            case 4722965:   //Навесной
+                                UM_STORE.onHorizont = true
+                                UM_STORE.onWallModule = false
                                 break;
                             default:
                                 break;
@@ -130,13 +138,27 @@ export const useOptions = () => {
                 } else
                     delete PROPS.CONFIG.TSARGA
                 break;
+            case 4722965:   //Навесной
+                if (curOpt.active) {
+                    UM_STORE.onHorizont = false
+                    UM_STORE.onWallModule = true
+                }
+                else {
+                    UM_STORE.onHorizont = true
+                    UM_STORE.onWallModule = false
+                }
+                break;
             case 5738924:   //Без дна
                 if (curOpt.active) {
                     PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
-                    PROPS.CONFIG.HORIZONT = 0
+                    //PROPS.CONFIG.HORIZONT = 0
+                    UM_STORE.onHorizont = false
+                    UM_STORE.noBottom = true
                 } else {
                     PROPS.CONFIG.BACKWALL = { COLOR: PROPS.CONFIG.MODULE_COLOR, SHOW: true };
-                    PROPS.CONFIG.HORIZONT = 78
+                    //PROPS.CONFIG.HORIZONT = 78
+                    UM_STORE.onHorizont = true
+                    UM_STORE.noBottom = false
                 }
                 break;
             default:
