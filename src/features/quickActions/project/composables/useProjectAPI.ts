@@ -230,6 +230,28 @@ export function useProjectAPI() {
     }
   }
 
+  const deleteProject = async (projectId: number): Promise<{ success: boolean; error?: string }> => {
+    if (!projectId) {
+      return { success: false, error: ERROR_MESSAGES.MISSING_PROJECT_ID }
+    }
+    try {
+      const response = await (client as any).POST(`/api/modeller/projectq/${projectId}`, {
+        body: {}
+      })
+      const normalized = normalizeApiResponse<{ data?: any }>(response)
+      if (normalized.success) {
+        return { success: true }
+      }
+      return { success: false, error: normalized.error || ERROR_MESSAGES.DELETE_PROJECT }
+    } catch (error) {
+      console.error(ERROR_MESSAGES.DELETE_PROJECT, error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : ERROR_MESSAGES.DELETE_PROJECT
+      }
+    }
+  }
+
   // Сохранение проекта
   const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false, _manualNewProject?: boolean): Promise<SaveProjectResult> => {
     try {
@@ -296,6 +318,7 @@ export function useProjectAPI() {
     loadProjects,
     loadProject,
     saveProject,
+    deleteProject,
     getProjectScreenshot
   }
 }

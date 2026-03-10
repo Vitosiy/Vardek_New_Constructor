@@ -65,7 +65,6 @@
           <p>Загрузка проектов...</p>
         </div>
 
-        <!-- Ошибка загрузки -->
         <div v-else-if="loadError" class="project-error">
           <p class="error-text">{{ loadError }}</p>
           <MainButton :className="'blue__button'" @click="retryLoad">
@@ -88,19 +87,16 @@
           <p class="new__title">Создать новый проект</p>
         </div> -->
 
-        <!-- Карточки проектов (12 на страницу) -->
         <div v-for="project in paginatedProjects" :key="project.id" class="project-item">
           <div class="project-item__main" @click="loadProject(project.id)">
-            <!-- <img
-              :src="
-                project.img
-                  ? `https://dev.vardek.online${project.img}`
-                  : '/src/assets/img/proj.png'
-              "
-              class="item__image"
-              :alt="project.name || 'Проект'"
-            /> -->
-            <img :src="getProgectImage(project)" class="item__image" :alt="project.name || 'Проект'" />
+            <div class="item-image-wrap">
+              <img :src="getProgectImage(project)" class="item__image" :alt="project.name || 'Проект'" />
+              <ClosePopUpButton
+                class="item-delete-btn"
+                @close="onDeleteProject(project.id)"
+                @click.stop
+              />
+            </div>
             <div class="item-info">
               <div class="info-id">
                 <p class="id__name">{{ project.name || "Название" }}</p>
@@ -110,12 +106,10 @@
                     ID {{ project.id }}
                   </p>
 
-                  <!-- Копировать ID -->
                   <button class="copy-id-button" @click.stop="copyProjectId(project.id)" title="Скопировать ID">
                     <img src="@/assets/svg/copy.svg" alt="copy-id" />
                   </button>
 
-                  <!-- Копировать ссылку -->
                   <button class="copy-link-button" @click.stop="copyProjectLink(project.id)" title="Скопировать ссылку">
                     <img src="@/assets/svg/copy.svg" alt="copy-link" />
                   </button>
@@ -129,11 +123,22 @@
         </div>
       </div>
 
-      <!-- Пагинация всегда внизу попапа, вне скролла карточек -->
       <div v-if="!isLoading && !loadError && totalElements > PAGE_SIZE" class="project__pagination">
         <ProjectPagination :total-items="totalElements" :page-size="PAGE_SIZE" v-model:current-page="currentPage" />
       </div>
     </div>
+
+    <Modal ref="deleteConfirmModalRef">
+      <template #modalBody="{ onModalClose }">
+        <div class="delete-confirm-dialog">
+          <p class="delete-confirm-dialog__text">Вы уверены?</p>
+          <div class="delete-confirm-dialog__actions">
+            <MainButton :className="'grey__button'" @click="onModalClose">Отменить</MainButton>
+            <MainButton :className="'red__button'" @click="() => confirmDeleteProject(onModalClose)">Удалить</MainButton>
+          </div>
+        </div>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -145,6 +150,7 @@ import { useRouter, useRoute } from "vue-router";
 import MainButton from "@/components/ui/buttons/MainButton.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import Modal from "@/components/ui/modals/Modal.vue";
 import { usePopupStore } from "@/store/appStore/popUpsStore";
 import { useAuthStore } from "@/store/appStore/authStore";
 import { useSceneState } from "@/store/appliction/useSceneState";
@@ -188,7 +194,6 @@ const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 const backendIdsList = computed(() => authStore.salonOwnerList ?? []);
 const selectedBackendId = ref<string>("all");
 
-// Сервер отдаёт только элементы текущей страницы — слайс не нужен
 const paginatedProjects = computed(() => projects.value);
 
 const onBackendIdSelect = async () => {
@@ -201,12 +206,10 @@ const onBackendIdSelect = async () => {
   await loadProjects(0);
 };
 
-// Инициализируем хуки
 const projectState = useProjectStore();
 const projectAPI = useProjectAPI();
 const roomState = useRoomState();
 
-// Состояние загрузки проекта
 const isProjectLoading = ref(false);
 
 const getProgectImage = computed(() => {
@@ -220,7 +223,6 @@ const getProgectImage = computed(() => {
   // : '/src/assets/img/proj.png'
 });
 
-// Отслеживаем изменения фильтров — запрос с дебаунсом
 watch(
   filters,
   () => {
@@ -230,26 +232,46 @@ watch(
   { deep: true },
 );
 
-// Отслеживаем смену страницы — запрос сразу с новым currentPage
 watch(currentPage, (newPage, oldPage) => {
   if (oldPage != null && newPage !== oldPage) {
     loadProjects(0);
   }
 });
 
-// Закрыть попап
 const closePopup = () => {
   popupStore.closePopup("project");
 };
 
-// Переключение табов
+const deleteConfirmModalRef = ref<InstanceType<typeof Modal> | null>(null);
+const projectIdToDelete = ref<number | null>(null);
+
+const onDeleteProject = (projectId: number) => {
+  projectIdToDelete.value = projectId;
+  deleteConfirmModalRef.value?.openModal();
+};
+
+const confirmDeleteProject = async (onModalClose: () => void) => {
+  const id = projectIdToDelete.value;
+  if (id == null) {
+    onModalClose();
+    return;
+  }
+  const result = await projectAPI.deleteProject(id);
+  projectIdToDelete.value = null;
+  onModalClose();
+  if (result.success) {
+    await loadProjects(0);
+  } else {
+    toaster.error(result.error ?? 'Не удалось удалить проект');
+  }
+};
+
 const switchTab = async (newTab: ProjectTab) => {
   tab.value = newTab;
   loadError.value = null;
   await loadProjects(0);
 };
 
-// Загрузка списка проектов (delay — дебаунс в мс, 0 = сразу)
 const loadProjects = async (delay: number = 300) => {
   isLoading.value = true;
   loadError.value = null;
@@ -299,12 +321,10 @@ const loadProjects = async (delay: number = 300) => {
   }
 };
 
-// Повторная попытка загрузки
 const retryLoad = async () => {
   await loadProjects(0);
 };
 
-// Функция ожидания готовности C2D
 const waitForC2D = async (timeout = 3000, interval = 50) => {
   const start = Date.now();
   return new Promise<typeof window.C2D | null>((resolve) => {
@@ -323,7 +343,6 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
   });
 };
 
-// Загрузка проекта по ID
 const loadProject = async (id: string | number) => {
   if (!id) return;
 
@@ -444,7 +463,6 @@ const loadProject = async (id: string | number) => {
   }
 };
 
-// Ожидание готовности 3D сцены
 const waitForSceneReady = async (timeout = 30000, interval = 100) => {
   const start = Date.now();
   return new Promise<void>((resolve) => {
@@ -464,7 +482,6 @@ const waitForSceneReady = async (timeout = 30000, interval = 100) => {
   });
 };
 
-// Сохранение проекта
 const saveProject = async () => {
   projectState.isSaving = true;
 
@@ -472,7 +489,6 @@ const saveProject = async () => {
     const result = await projectAPI.saveProject(projectState.currentProjectId);
 
     if (result.success) {
-      // SaveProject всегда создаёт новый проект — ставим текущим только что сохранённый
       if (result.data?.ID) projectState.setProjectId(result.data.ID);
       projectState.updateAfterSave();
       const roomsData = schemeTransition.getAllData() ?? [];
@@ -492,7 +508,6 @@ const saveProject = async () => {
   }
 };
 
-// Создание нового проекта
 const createNewProject = async () => {
   try {
     sceneState.createNewProject();
@@ -507,13 +522,11 @@ const createNewProject = async () => {
   }
 };
 
-// Обработка ошибки загрузки изображения
 const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement;
   target.src = "/src/assets/img/proj.png";
 };
 
-// Инициализация состояния при монтировании
 const initializeState = () => {
   const currentState = sceneState.getCurrentProjectParams;
   projectState.setInitialState(currentState);
@@ -540,7 +553,6 @@ const copyProjectLink = async (id: string | number) => {
   }
 };
 
-// Загружаем проекты при монтировании
 onMounted(async () => {
   await loadProjects(0);
   initializeState();
@@ -727,11 +739,24 @@ onMounted(async () => {
           cursor: pointer;
         }
 
+        .item-image-wrap {
+          position: relative;
+          width: 100%;
+        }
+
         .item__image {
           margin: 0;
           width: 100%;
           height: 200px;
           object-fit: cover;
+        }
+
+        .item-delete-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          z-index: 1;
+          cursor: pointer;
         }
 
         .item-info {
@@ -825,6 +850,25 @@ onMounted(async () => {
       padding-top: 10px;
       border-top: 1px solid $stroke;
     }
+  }
+}
+
+.delete-confirm-dialog {
+  padding: 24px;
+  min-width: 280px;
+  background: #fff;
+  border-radius: 16px;
+
+  &__text {
+    margin: 0 0 20px;
+    font-size: 16px;
+    color: #333;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
   }
 }
 
