@@ -70,8 +70,10 @@ export default class FillingsManager {
             if(type === "height") {
                 currentfilling.size.y = newValue
                 currentfilling.position.y = current.position.y;
-                currentfilling.distances.bottom = 0;
-                currentfilling.distances.top = 0;
+                if(currentfilling.distances) {
+                    currentfilling.distances.bottom = 0;
+                    currentfilling.distances.top = 0;
+                }
             }
 
         } else {

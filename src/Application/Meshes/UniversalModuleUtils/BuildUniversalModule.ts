@@ -302,7 +302,7 @@ export class BuildUniversalModule extends BuildProduct {
                 size: sectionSize,
                 position: new THREE.Vector3((prevSection ? prevSection.position.x + prevSection.size.x / 2 : 0) + (prevSection ? PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] : product_data.leftWallThickness) + sectionSize.x / 2,
                     PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] + PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"],
-                    PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + sectionSize.z / 2)
+                    (PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] + sectionSize.z) / 2)
             }
 
             const curSection = PROPS.CONFIG.SECTIONS[secIndex + 1]
@@ -775,7 +775,7 @@ export class BuildUniversalModule extends BuildProduct {
     }
 
     createSubProductObject(filling: Object, data: THREETypes.TObject, props: THREETypes.TObject) {
-        let textureUrl = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']].TEXTURE : this._FASADE[filling.color || filling.material].TEXTURE
+        let textureUrl = filling.isProfile ? this._COLOR[props.CONFIG['PROFILECOLOR']].TEXTURE : this._FASADE[filling.color || filling.material || props.CONFIG['MODULE_COLOR']].TEXTURE
         let body = this.json_builder.createMesh({ data, textureUrl })
 
         body.position.set(eval(data.corr_x), eval(data.corr_y), eval(data.corr_z));
