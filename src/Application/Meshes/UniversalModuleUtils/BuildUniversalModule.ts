@@ -359,7 +359,7 @@ export class BuildUniversalModule extends BuildProduct {
                             })
 
                         extra.fillings?.forEach((filling) => {
-                            let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0) : curSection.position.z - (isSlidingDoors / 2 || 0)
+                            let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors || 0) : curSection.position.z - (isSlidingDoors || 0)
 
                             let fillingPos = new THREE.Vector3(
                                 filling.isVerticalItem ? extra.position.x - extra.width / 2 + filling.distances.left + filling.width / 2 : extra.position.x,
@@ -381,7 +381,7 @@ export class BuildUniversalModule extends BuildProduct {
                     })
 
                     row.fillings?.forEach((filling) => {
-                        let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0) : curSection.position.z - (isSlidingDoors / 2 || 0)
+                        let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors || 0) : curSection.position.z - (isSlidingDoors || 0)
 
                         let fillingPos = new THREE.Vector3(
                             filling.isVerticalItem ? row.position.x - row.width / 2 + filling.distances.left + filling.width / 2 : row.position.x,
@@ -403,7 +403,7 @@ export class BuildUniversalModule extends BuildProduct {
                 })
 
                 cell.fillings?.forEach((filling) => {
-                    let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0) : curSection.position.z - (isSlidingDoors / 2 || 0)
+                    let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors || 0) : curSection.position.z - (isSlidingDoors || 0)
 
                     let fillingPos = new THREE.Vector3(
                         filling.isVerticalItem ? cell.position.x - cell.width / 2 + filling.distances.left + filling.width / 2 : cell.position.x,
@@ -425,7 +425,7 @@ export class BuildUniversalModule extends BuildProduct {
             })
 
             section.fillings?.forEach((filling) => {
-                let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors / 2 || 0) : curSection.position.z - (isSlidingDoors / 2 || 0)
+                let z_pos = filling.type !== "any" ? product_data.depth - filling.size.z / 2 - (isSlidingDoors || 0) : curSection.position.z - (isSlidingDoors || 0)
 
                 let fillingPos = new THREE.Vector3(
                     filling.isVerticalItem ? curSection.position.x - curSection.size.x / 2 + filling.distances.left + filling.width / 2 : curSection.position.x,
