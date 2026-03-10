@@ -347,6 +347,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
 
     const resetGlobalOptions = () => {
         const startParams = sceneState.getStartProgectParams
+        // console.log(' ❌❌❌ HERE ❌❌❌')
+
         for (const key in globalOptions.value) {
             const optionKey = key as keyof TOptionsMap
             const palitt = palittKey[optionKey]

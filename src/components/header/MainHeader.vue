@@ -219,7 +219,11 @@ const prevAction = async () => {
   try {
     if (route.path === "/2d") {
       const snapshot = constructor2DHistory.undo();
-      if (snapshot && window.C2D?.layers?.planner && window.C2D?.layers?.doorsAndWindows) {
+      if (
+        snapshot &&
+        window.C2D?.layers?.planner &&
+        window.C2D?.layers?.doorsAndWindows
+      ) {
         constructor2DHistory.setRestoring(true);
         schemeTransition.setAppData(snapshot);
         roomState.convertDataTo3DConstuctor(); // синхронизируем roomState.rooms из schemeTransition
@@ -254,7 +258,11 @@ const nextAction = async () => {
   try {
     if (route.path === "/2d") {
       const snapshot = constructor2DHistory.redo();
-      if (snapshot && window.C2D?.layers?.planner && window.C2D?.layers?.doorsAndWindows) {
+      if (
+        snapshot &&
+        window.C2D?.layers?.planner &&
+        window.C2D?.layers?.doorsAndWindows
+      ) {
         constructor2DHistory.setRestoring(true);
         schemeTransition.setAppData(snapshot);
         roomState.convertDataTo3DConstuctor(); // синхронизируем roomState.rooms из schemeTransition
@@ -289,7 +297,9 @@ const setCurrentRoomAfterRestore = (snapshot: Record<string, unknown>[]) => {
   if (!snapshot?.length) return;
   const normalizeId = (v: string | number | null | undefined) =>
     v !== null && v !== undefined ? String(v) : "";
-  const snapshotIds = new Set(snapshot.map((r) => normalizeId((r as { id?: string | number }).id)));
+  const snapshotIds = new Set(
+    snapshot.map((r) => normalizeId((r as { id?: string | number }).id)),
+  );
   const currentId = normalizeId(roomState.getRoomId);
   if (snapshotIds.has(currentId)) return;
   const firstRoom = snapshot[0] as { id?: string | number };
@@ -408,7 +418,10 @@ const waitForConstructor = async (timeout = 2000, interval = 50) => {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
+    
+
     try {
+
       if (oldPath === "/3d" && newPath === "/2d" && verdekConstructor.value) {
         eventBus.emit("A:Save");
         await nextTick(); // Ждем сохранения
@@ -416,6 +429,7 @@ watch(
 
       if (newPath === "/2d") {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
+        roomOptions.resetGlobalOptions()
 
         // Устанавливаем текущую активную комнату (первую, если нет текущей)
         const rooms = roomState.getRooms;
@@ -446,11 +460,19 @@ watch(
             c2d.layers.planner.init(true);
             c2d.layers.doorsAndWindows.init(true);
           }
-          if (constructor2DHistory.historyLength === 0 && roomsData.length > 0) {
-            constructor2DHistory.clearHistory(JSON.parse(JSON.stringify(roomsData)));
+          if (
+            constructor2DHistory.historyLength === 0 &&
+            roomsData.length > 0
+          ) {
+            constructor2DHistory.clearHistory(
+              JSON.parse(JSON.stringify(roomsData)),
+            );
           }
           historyActions.value = true;
-          restorLength.value = Math.max(0, constructor2DHistory.historyLength - 1);
+          restorLength.value = Math.max(
+            0,
+            constructor2DHistory.historyLength - 1,
+          );
           curActionCount.value = constructor2DHistory.currentIndex;
         }
       }
@@ -524,7 +546,9 @@ onBeforeUnmount(() => {
         <div class="header-main-ui">
           <div
             :class="['history', 'history__btns', getHistoruBtnsState]"
-            v-if="historyActions && (route.path == '/3d' || route.path == '/2d')"
+            v-if="
+              historyActions && (route.path == '/3d' || route.path == '/2d')
+            "
           >
             <!-- {{ restorLength }}{{ curActionCount }} -->
             <LeftLightHeaderButton

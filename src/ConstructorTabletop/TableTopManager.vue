@@ -424,9 +424,9 @@ const getHoleOptionsActive = computed(() => {
 /** =================== @Опции_Услуги =================== */
 
 const createProfileServices = () => {
-  /** ОТтладка */
+  /** Отладка */
 
-  console.log(modelState._PROFILE, "---Profile");
+  // console.log(modelState._PROFILE, "---Profile");
 
   /*---------------*/
   const parent = modelState.getCurrentRaspilParent;
@@ -446,11 +446,11 @@ const createProfileServices = () => {
   // console.log(SERVICE, "----SERVICE---", USLUGI, "--USLUGI");
 
   const curProfileServise = USLUGI.filter((el) => {
-    console.log(el.ID);
+    // console.log(el.ID);
     return SERVICE.includes(el.ID);
   });
 
-  console.log(curProfileServise, 'curProfileServise')
+  // console.log(curProfileServise, 'curProfileServise')
 
   if (activeProfile.show_props && activeProfile.show_props?.includes("hem")) {
     getCurretKromkaList();
@@ -934,6 +934,30 @@ const deliteHole = (ndx) => {
   visualizationRef.value.renderGrid();
 };
 
+const disableVisible = (event, colIndex, rowIndex) => {
+  const col = grid.value[colIndex];
+  const row = col[rowIndex];
+  row.disabled = event.target.checked;
+};
+
+const checkDisabled = computed(() => {
+  return (row) => {
+    const { disabled } = row;
+    const result = checkDisableVisible();
+    // disableActive.value = result;
+    // if (!disabled && result) disableActive.value = true;
+    return !disabled && result;
+  };
+});
+
+const checkDisableVisible = () => {
+  const disabledValues = grid.value.flat(2).map((o) => o.disabled);
+  const result =
+    disabledValues.filter(Boolean).length + 1 === disabledValues.length;
+
+  return result;
+};
+
 const handleCellSelect = (colIndex, rowIndex, type) => {
   selectedCell.value = { col: colIndex, row: rowIndex };
 
@@ -1017,7 +1041,7 @@ const reset = (reset = false) => {
 };
 
 const saveProfile = () => {
-  console.log(getCurrentKromkaId(), "tempKromka.value;");
+  // console.log(getCurrentKromkaId(), "tempKromka.value;");
 
   const parent = modelState.getCurrentRaspilParent;
   const { PROPS } = parent.userData;
@@ -1244,8 +1268,9 @@ onBeforeUnmount(() => {
                       </div>
                     </div>
                   </div>
+                  <!-------------------------- @НА ДАННЫЙ МОМЕНТ НЕТ ЦЕНООБРАЗОВАНИЯ ------------------------>
 
-                  <div class="actions-items--height">
+                  <!-- <div class="actions-items--height">   
                     <div class="actions-inputs">
                       <p class="actions-title">
                         Высота {{ colIndex + 1 }}.{{ rowIndex + 1 }}
@@ -1308,6 +1333,23 @@ onBeforeUnmount(() => {
                         />
                       </div>
                     </div>
+                  </div> -->
+
+                  <!----------------------------------------------------------------------------------------->
+
+                  <div class="actions-items--title" v-if="!checkDisabled(row)">
+                    <label
+                      class="control control-checkbox control-checkbox--bottom"
+                    >
+                      <input
+                        type="checkbox"
+                        :disabled="checkDisabled(row)"
+                        :checked="row.disabled"
+                        @change="disableVisible($event, colIndex, rowIndex)"
+                      />
+                      <span class="control_indicator"></span>
+                      <span class="actions-title">Скрыть</span>
+                    </label>
                   </div>
                 </div>
               </article>
@@ -1320,7 +1362,7 @@ onBeforeUnmount(() => {
                   >
                     Верт.распил
                   </button>
-                  
+
                   <!-------------------------- @НА ДАННЫЙ МОМЕНТ НЕТ ЦЕНООБРАЗОВАНИЯ ------------------------>
 
                   <!-- <button
@@ -1367,6 +1409,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </section>
+
       <section class="actions-footer" ref="refFooter">
         <div class="actions-footer--delite">
           <button class="actions-btn actions-btn--footer" @click="reset(true)">
@@ -1383,6 +1426,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
     </div>
+
     <div
       class="splitter-container splitter-container--right"
       v-if="
@@ -1845,6 +1889,11 @@ onBeforeUnmount(() => {
     max-width: 25vw;
     z-index: 1;
     right: 5rem;
+  }
+}
+.control-checkbox {
+  &--bottom {
+    margin-bottom: 0;
   }
 }
 </style>

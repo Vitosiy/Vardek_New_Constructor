@@ -116,7 +116,7 @@ export class RoomManager extends Room {
 
         intersects.forEach(object => {
 
-            if (!object.userData?.current) {
+            if (!object.userData?.current && object.visible ) {
                 const box = new THREE.Box3().setFromObject(object);
                 const boxTop = new THREE.Box3().setFromObject(object);
                 box.max.y = 3000;
@@ -136,9 +136,12 @@ export class RoomManager extends Room {
         this.totalObbBounds = []
         const intersects = this._roomTotalContant as THREE.Object3D[];
 
+        console.log(intersects)
+
         intersects.forEach(object => {
 
             if (!object.userData?.current && object.visible) {
+                console.log(object, 'OBJ')
 
                 const obb = object.userData.obb.clone()
                 obb.center.copy(object.position)
@@ -489,7 +492,7 @@ export class RoomManager extends Room {
             /** @Столешница */
 
             if (loadData?.RASPIL_LIST?.length > 0) {
-                this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
+                await this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
             }
 
             return 1;

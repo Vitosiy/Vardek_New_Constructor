@@ -281,6 +281,8 @@ export class MoveManager {
             const check = this.getRootObject(firstObject);
 
             // if (check.userData.elementType === "element_room") return
+            if (!check.visible) return
+
             this.selectedObject = check
 
             this.selectedObject.userData.aabb = this.trafficManager.geometryBuilder.buildProduct.computeAABB(this.selectedObject)

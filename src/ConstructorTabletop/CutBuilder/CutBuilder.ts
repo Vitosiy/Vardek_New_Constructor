@@ -172,6 +172,7 @@ class TableTopCreator extends BuildersHelper {
         let kromkaMaterial = null
 
         // const material = object.userData.PROPS.BODY.userData.MATERIAL
+
         const material = new THREE.MeshStandardMaterial()
         const tableTopMaterial = await this.getMaterial({
             material,
@@ -204,9 +205,10 @@ class TableTopCreator extends BuildersHelper {
         raspil.data.forEach((col, colNdx) => {
             col.forEach((row, ndx) => {
 
+                const { path, xOffset, yOffset, disabled } = row;
+
                 const sectorID = `f${(~~(Math.random() * 1e8)).toString(16)}`
 
-                const { path, xOffset, yOffset } = row;
                 const size = {
                     width: row.width,
                     depth: raspil.modelHeight,
@@ -234,21 +236,25 @@ class TableTopCreator extends BuildersHelper {
                 geometry.translate(-geometryCenter.x, -geometryCenter.y, -geometryCenter.z);
                 geometry.rotateX(Math.PI * 0.5);
 
-
                 let mesh = new THREE.Mesh(geometry, [material, material2]);
-                const edge = this.edgeBuilder.createEdge(mesh);
-                const defaultEdge = this.edgeBuilder.createVisibleEdge(mesh)
+                // let mesh = new THREE.Mesh(geometry, material);
 
-                mesh.add(defaultEdge)
-                mesh.add(edge)
+                if (!disabled) {
+                    const edge = this.edgeBuilder.createEdge(mesh);
+                    const defaultEdge = this.edgeBuilder.createVisibleEdge(mesh)
+                    mesh.add(defaultEdge)
+                    mesh.add(edge)
+                }
+
                 mesh.name = 'raspilPart'
+                mesh.visible = !disabled
+                mesh.userData.DISABLED = disabled
 
                 mesh.position.set(
                     originalPosition.x,
                     originalPosition.y,
                     originalPosition.z
                 );
-
 
                 if (row.holes.length > 0 || 'radius' in row.roundCut) {
 
@@ -268,7 +274,7 @@ class TableTopCreator extends BuildersHelper {
                             originalPosition.z
                         );
                     }
-           
+
                     // mesh.material = material
 
                 }
@@ -289,8 +295,6 @@ class TableTopCreator extends BuildersHelper {
 
                 this.createCollisionData(mesh, size, raspil, groupId, row.roundCut, uslugi);
                 this.addArrowSize(mesh, row)
-
-
 
                 meshes.push(mesh);
                 group.add(mesh); // Добавляем в группу
@@ -524,6 +528,7 @@ class TableTopCreator extends BuildersHelper {
 
             mesh.castShadow = true
             mesh.receiveShadow = true
+            // mesh.visible = 
 
             // const params = { material: mesh.material, url: textureData?.src, texture_size: { width: textureData?.width, height: textureData?.height }, rotation: Math.PI * 0.5 }
             // // this.getTexture(params)
@@ -620,8 +625,8 @@ class TableTopCreator extends BuildersHelper {
                 },
                 USLUGI: uslugi
             },
-            RASPIL: raspil
-
+            RASPIL: raspil,
+            // DISABLED: mesh.visible
         }
 
         if (groupId != null) {
@@ -669,8 +674,6 @@ class TableTopCreator extends BuildersHelper {
 
         arrows.position.x = (-width * 0.5 - xOffset)
         arrows.position.z = (-height * 0.5 - yOffset)
-
-        // arrows.geometry.applyMatrix4(object.matrix);
 
         arrows.name = "ARROWS"
         object.userData.PROPS.ARROWS = arrows

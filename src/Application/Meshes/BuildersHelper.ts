@@ -546,7 +546,8 @@ export class BuildersHelper extends GlobalsData {
                         height: depth,
                         roundCut: {},
                         holes: [],
-                        serviseData: uslugi
+                        serviseData: uslugi,
+                        disabled: false
 
                     }
                 ]
