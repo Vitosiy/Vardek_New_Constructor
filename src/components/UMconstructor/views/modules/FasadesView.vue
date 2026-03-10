@@ -366,7 +366,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                         />
                         <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
 
-                        <ConfigurationOption
+<!--                        <ConfigurationOption
                             v-if="!segment.error"
                             :disable-delete-choice="true"
                             :class="[
@@ -383,7 +383,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                             @click="
                               openHandleSelector(null, doorIndex, segmentIndex)
                             "
-                        />
+                        />-->
 
                       </div>
                     </article>
