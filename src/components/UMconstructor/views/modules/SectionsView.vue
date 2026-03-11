@@ -27,7 +27,7 @@ const {module, mode, UMconstructor} = toRefs(props)
 const selectedCell = ref<TSelectedCell>(<TSelectedCell>{})
 const step = ref<number>(1)
 
-const showCurrentCol = (secIndex: number | null = 0, cellIndex: number|null = null, rowIndex: number|null = null, extraIndex: number | null = null) => {
+const showCurrentCol = (secIndex: number | null = 0, cellIndex: number | null = null, rowIndex: number | null = null, extraIndex: number | null = null) => {
   UMconstructor?.value?.SECTIONS.selectCell(secIndex, cellIndex, rowIndex, extraIndex);
 };
 
@@ -38,17 +38,17 @@ const handleCellSelect = () => {
   UMconstructor?.value?.debounce("handleCellSelectSection", () => {
     let idTag = `module_${sec}`
 
-    if(cell !== null)
+    if (cell !== null)
       idTag += `_${cell}`;
 
-    if(row !== null)
+    if (row !== null)
       idTag += `_${row}`
 
-    if(extra !== null)
+    if (extra !== null)
       idTag += `_${extra}`;
 
     let domElem = document.getElementById(idTag)
-    if(domElem) {
+    if (domElem) {
       domElem.scrollIntoView();
     }
   }, 10)
@@ -110,6 +110,24 @@ onMounted(() => {
               v-if="selectedCell.sec === secIndex"
           >
             <div class="accordion" v-if="section.cells.length">
+
+              <div
+                  v-if="!module.isHiTech && (!module.isRestrictedModule || (module.isRestrictedModule && module.sections.length < 2))"
+                  class="actions-items--right-items actions-header actions-items--right-items-input-block"
+              >
+                <CounterInput
+                    button-text="Добавить секцию"
+                    model-value="1"
+                    max="10"
+                    min="1"
+                    input-class="actions-items--right-items-input-block-counter"
+                    button-class="actions-btn actions-btn--default actions-items--right-items-input-block-button"
+                    type="number"
+                    @update:model-value="(count: number|string) => {
+                        UMconstructor.SECTIONS.addSection({grid: module, secIndex, count: parseInt(count), reset: true})
+                      }"
+                />
+              </div>
 
               <div class="actions-header">
                 <p>Ячейки</p>
@@ -445,7 +463,6 @@ onMounted(() => {
                                   </div>
                                 </article>
                               </div>
-
 
 
                             </details>

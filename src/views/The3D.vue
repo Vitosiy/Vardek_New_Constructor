@@ -846,10 +846,11 @@ watch(
         </Modal>
         <div v-show="universalModuleData && product">
           <UMconstructor
-            ref="universalModule2DConstructor"
-            :product="product"
+              ref="universalModule2DConstructor"
+              :product="product"
           />
         </div>
+
       </div>
     </div>
   </div>

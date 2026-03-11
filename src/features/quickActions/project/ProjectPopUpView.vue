@@ -36,6 +36,16 @@
               placeholder="Дата до"
             />
           </div>
+          <form class="load-by-id" @submit.prevent="onLoadByIdSubmit">
+            <MainInput
+              v-model="loadByIdValue"
+              type="text"
+              placeholder="Загрузить по ID"
+              class="search-input load-by-id__input"
+              :maxlength="30"
+              :digitsOnly="true"
+            />
+          </form>
         </div>
         <div class="project-buttons">
           <!-- <MainButton
@@ -206,6 +216,7 @@ const isLoading = ref(false);
 const filters = ref<{ name: string; id: string }>({ name: "", id: "" });
 const dateFrom = ref("");
 const dateTo = ref("");
+const loadByIdValue = ref("");
 
 // Список владельцев салонов (из getSalonOwner) — в селекте показываем имена, value = ID для getprojectlist
 const backendIdsList = computed(() => authStore.salonOwnerList ?? []);
@@ -370,6 +381,17 @@ const waitForC2D = async (timeout = 3000, interval = 50) => {
   });
 };
 
+const onLoadByIdSubmit = () => {
+  const raw = loadByIdValue.value?.trim();
+  if (!raw) return;
+  const id = parseInt(raw, 10);
+  if (isNaN(id) || id <= 0) {
+    toaster.error("Введите корректный ID проекта");
+    return;
+  }
+  loadProject(id);
+};
+
 const loadProject = async (id: string | number) => {
   if (!id) return;
 
@@ -481,6 +503,8 @@ const loadProject = async (id: string | number) => {
         console.error("Ошибка применения данных проекта:", error);
         toaster.error("Ошибка загрузки проекта");
       }
+    } else {
+      toaster.error("Проект не найден");
     }
   } catch (error) {
     console.error("Ошибка загрузки проекта:", error);
@@ -650,6 +674,20 @@ onMounted(async () => {
           color: #666;
           flex-shrink: 0;
         }
+
+        .load-by-id {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-left: 100px;
+          padding-left: 16px;
+        }
+
+        .load-by-id__input {
+          min-width: 120px;
+          width: 140px;
+        }
+
       }
 
       .project-buttons {
