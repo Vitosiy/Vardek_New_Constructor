@@ -26,11 +26,24 @@ export default class ExternalFasadesManager {
             if(fillingData.fasade && grid.sections[secIndex].fasadesDrawers) {
                 fillingData.fasade.position.y = grid.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
 
-                let drawerInfoId = grid.sections[secIndex].fasadesDrawers.findIndex(item => item.item == fillingData.id)
+                let drawerInfoId = grid.sections[secIndex].fasadesDrawers.findIndex(item => (
+                    item.sec === fillingData.fasade.sec &&
+                    item.cell === fillingData.fasade.cell &&
+                    item.row === fillingData.fasade.row &&
+                    item.extra === fillingData.fasade.extra &&
+                    item.item === fillingData.fasade.item
+                ))
+
                 grid.sections[secIndex].fasadesDrawers[drawerInfoId] = fillingData.fasade
             }
             else if (fillingData.isProfile && grid.sections[secIndex].hiTechProfiles){
-                let profileInfoId = grid.sections[secIndex].hiTechProfiles?.findIndex(item => item.id == fillingData.id)
+                let profileInfoId = grid.sections[secIndex].hiTechProfiles?.findIndex(item => (
+                    item.sec === fillingData.sec &&
+                    item.cell === fillingData.cell &&
+                    item.row === fillingData.row &&
+                    item.extra === fillingData.extra &&
+                    item.id === fillingData.id
+                ))
                 grid.sections[secIndex].hiTechProfiles[profileInfoId] = fillingData
             }
         }
@@ -108,8 +121,22 @@ export default class ExternalFasadesManager {
 
             switch (item.type) {
                 case "drawer":
+                    let drawerFasade = fasadesDrawers[drawerIndex]
+                    let filling = this.scope.FILLINGS.getFillingObject({
+                        grid,
+                        sec: drawerFasade.sec,
+                        cell: drawerFasade.cell,
+                        row: drawerFasade.row,
+                        extra: drawerFasade.extra,
+                        item: drawerFasade.item - 1,
+                    });
+
                     fasadesDrawers[drawerIndex].id = index + 1
                     fasadesDrawers[drawerIndex].width = correctSectionFasadeWidth
+
+                    if(filling)
+                        filling.fasade = fasadesDrawers[drawerIndex]
+
                     drawerIndex += 1
                     break;
                 case "fasade":
@@ -117,6 +144,7 @@ export default class ExternalFasadesManager {
                     fasadeClone.id = index + 1
                     fasadeClone.height = item.height
                     fasadeClone.material = {...baseFasade.material}
+                    fasadeClone.material.HANDLES = {...fasadeClone.material.HANDLES}
 
                     fasadeClone.position = new THREE.Vector2(baseFasade.position.x, item.y)
 
@@ -131,6 +159,7 @@ export default class ExternalFasadesManager {
                         let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
                         fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
                         fasadeClone2.material = {...fasadeClone.material}
+                        fasadeClone2.material.HANDLES = {...fasadeClone2.material.HANDLES}
                         fasadeClone2.loopsSide = baseFasade2.loopsSide
 
                         grid.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))

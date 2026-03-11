@@ -12,7 +12,7 @@ import UMLoader from "@/components/UMconstructor/UMLoader.vue";
 const props = defineProps({
   product: {
     type: Object || null,
-    // required: true,
+    required: true,
   },
 });
 
