@@ -116,7 +116,7 @@ export class RoomManager extends Room {
 
         intersects.forEach(object => {
 
-            if (!object.userData?.current && object.visible ) {
+            if (!object.userData?.current && object.visible) {
                 const box = new THREE.Box3().setFromObject(object);
                 const boxTop = new THREE.Box3().setFromObject(object);
                 box.max.y = 3000;
@@ -136,15 +136,15 @@ export class RoomManager extends Room {
         this.totalObbBounds = []
         const intersects = this._roomTotalContant as THREE.Object3D[];
 
-        console.log(intersects)
-
         intersects.forEach(object => {
 
             if (!object.userData?.current && object.visible) {
-                console.log(object, 'OBJ')
-
+                console.log(object.userData, 'OBJ')
+                
+                const center = object.userData.aabb.getCenter(new THREE.Vector3())
                 const obb = object.userData.obb.clone()
-                obb.center.copy(object.position)
+                // obb.center.copy(object.position)
+                obb.center.copy(center)
                 obb.rotation.setFromMatrix4(object.matrixWorld);
 
                 /** @Визуализация_OBB */

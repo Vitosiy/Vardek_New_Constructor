@@ -211,6 +211,7 @@ export class BuildProduct extends BuildersHelper {
         const productSize = new THREE.Vector3();
         aabb.getSize(productSize);
 
+
         parent_group.userData.elementType = product_data.element_type;
         parent_group.elementType = product_data.element_type;
         parent_group.userData.trueSizes = product.userData.trueSizes ?? {
@@ -458,15 +459,19 @@ export class BuildProduct extends BuildersHelper {
             part.position.y = y;
         });
 
+        console.log(move, 'movemovemovemovemovemove')
+
         if (body) {
             body.position.set(move.x, baseY, move.z);
             body.visible = !curBodyExceptions;
+            // body.updateMatrixWorld(true);
         }
+
         if (arrows) arrows.position.copy(body?.position ?? new THREE.Vector3());
 
         // Формируем итоговую группу в зависимости от исключений
         const totalParts = curBodyExceptions
-            ? [body, shelf, fasade, arrows]
+            ? [body, shelf, arrows]
             : [plinth, legs, body, shelf, fasade, drower, arrows];
 
         totalParts.filter(Boolean).forEach(part => total.add(part as THREE.Object3D));
@@ -475,7 +480,7 @@ export class BuildProduct extends BuildersHelper {
         const tempTotal = new THREE.Object3D();
         const exept = new THREE.Object3D();
 
-        [legs?.clone(), body?.clone(), shelf?.clone()]
+        [legs?.clone(), body?.clone(), shelf?.clone(), fasade?.clone()]
             .filter(Boolean)
             .forEach(part => tempTotal.add(part));
 
@@ -484,6 +489,9 @@ export class BuildProduct extends BuildersHelper {
             .forEach(part => exept.add(part));
 
         const sourceForBounds = curBodyExceptions ? exept : tempTotal;
+
+        console.log(CONFIG.FASADE_POSITIONS, 'sourceForBounds')
+
         if (sourceForBounds) this.setBounds(total, sourceForBounds);
 
         if (drowMode) this.useEdgeBuilder.drawingMode(drowMode, total);
@@ -589,7 +597,7 @@ export class BuildProduct extends BuildersHelper {
         body.name = "BODY";
         body.userData.MATERIAL_TYPE = data.json.material.type;
 
-        const move = new THREE.Vector3(eval(data.corr_x), 0, eval(data.corr_z));
+        const move = new THREE.Vector3(eval(data.corr_x) ?? 0, 0, eval(data.corr_z) ?? 0);
         props.BODY = body;
 
         const size = new THREE.Box3().setFromObject(body).getSize(new THREE.Vector3());
@@ -821,6 +829,8 @@ export class BuildProduct extends BuildersHelper {
         const obb = new OBB().fromBox3(aabb);
         const size = new THREE.Vector3();
         aabb.getSize(size);
+
+        console.log(size, 'sizesizesize')
 
         target.userData.trueSizes = {
             DEPTH: size.z * 0.5,

@@ -372,7 +372,8 @@ export class MoveManager {
             const point = intersects[0].point; // Точка пересечения с полом или стеной
             const surface = intersects[0].object // стена
 
-            this.selectedObject.userData.aabb = this.trafficManager.geometryBuilder.buildProduct.computeAABB(this.selectedObject)
+            // this.selectedObject.userData.aabb = this.trafficManager.geometryBuilder.buildProduct.computeAABB(this.selectedObject)
+            this.selectedObject.userData.aabb = new THREE.Box3().setFromObject(this.selectedObject);
 
             const adjustedPosition = this.roomManager.adjustPositionWithRaycasting({
                 object: this.selectedObject, targetPosition: point, wall: surface
