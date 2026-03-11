@@ -44,13 +44,18 @@ export default class SectionsManager {
         // Обновляем ширину текущей колонки
         section.position.x = section.position.x - (section.width / 2 - halfWidth / 2)
         section.width = halfWidth;
-        section.fillings = []
 
-        section.cells.forEach((cell) => {
+        if (section.fillings?.length) {
+            this.scope.FILLINGS.clearFillings({grid, secIndex});
+        }
+
+        section.cells.forEach((cell, cellIndex) => {
             cell.width = halfWidth;
             cell.position.x = section.position.x
             cell.cellsRows = []
-            cell.fillings = []
+            if (cell.fillings?.length) {
+                this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex});
+            }
         });
 
         // Создаем новую колонку с такими же параметрами
@@ -102,7 +107,8 @@ export default class SectionsManager {
             secIndex: number,
             cellIndex: number | null,
             count: number
-        }) {
+        })
+    {
         this.selectCell(secIndex, cellIndex);
 
         const {MIN_SECTION_HEIGHT} = this.scope.CONST
@@ -121,12 +127,7 @@ export default class SectionsManager {
             };
 
             if (section.fillings?.length) {
-                delete section.fillings
-            }
-
-            if (section.hiTechProfiles) {
-                delete section.hiTechProfiles
-                this.scope.FASADES.updateFasades();
+                this.scope.FILLINGS.clearFillings({grid, secIndex});
             }
 
             section.cells.push(cell);
@@ -147,12 +148,8 @@ export default class SectionsManager {
         // Обновляем высоту последней строки
         cell.height = halfHeight;
 
-        if (cell.fillings)
-            cell.fillings.length = 0
-
-        if (cell.hiTechProfiles) {
-            delete cell.hiTechProfiles
-            this.scope.FASADES.updateFasades();
+        if (cell.fillings?.length) {
+            this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex});
         }
 
         // Добавляем новую строку в эту колонку
@@ -191,7 +188,8 @@ export default class SectionsManager {
                    cellIndex: number,
                    rowIndex: number,
                    count: number
-               }) {
+               })
+    {
 
         this.selectCell(secIndex, cellIndex, rowIndex);
         const {MIN_SECTION_WIDTH} = this.scope.CONST
@@ -212,11 +210,9 @@ export default class SectionsManager {
                 position: new THREE.Vector2(cell.position.x, cell.position.y),
             }
             cell.cellsRows.push(row);
-            delete cell.fillings
 
-            if (cell.hiTechProfiles) {
-                delete cell.hiTechProfiles
-                this.scope.FASADES.updateFasades();
+            if (cell.fillings?.length) {
+                this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex});
             }
         }
 
@@ -233,7 +229,7 @@ export default class SectionsManager {
         const deltaLastRow = row.width - halfWidth * (count + 1) - grid.moduleThickness * count;
 
         if (row.fillings?.length)
-            delete row.fillings
+            this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex, rowIndex});
 
         // Обновляем высоту последней строки
         row.position.x = row.position.x - (row.width / 2 - halfWidth / 2)
@@ -295,12 +291,7 @@ export default class SectionsManager {
             };
 
             if (row.fillings?.length) {
-                delete row.fillings
-            }
-
-            if (row.hiTechProfiles) {
-                delete row.hiTechProfiles
-                this.scope.FASADES.updateFasades();
+                this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex, rowIndex});
             }
 
             row.extras.push(extra);
@@ -321,8 +312,8 @@ export default class SectionsManager {
         // Обновляем высоту последней строки
         extra.height = halfHeight;
 
-        if (extra.fillings)
-            extra.fillings.length = 0
+        if (extra.fillings?.length)
+            this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex, rowIndex, extraIndex});
 
         // Добавляем новую строку в эту колонку
         for (let i = 0; i < count; i++) {
@@ -356,7 +347,8 @@ export default class SectionsManager {
                            grid: GridModule,
                            secIndex: number,
                            value: number,
-                       }) {
+                       })
+    {
         const newValue = value;
         let adjustedValue;
         const {MIN_SECTION_WIDTH} = this.scope.CONST
@@ -1193,6 +1185,7 @@ export default class SectionsManager {
 
         const next = currentSection.cells[cellIndex + 1];
         const prev = currentSection.cells[cellIndex - 1];
+        let needUpdateFasade = false;
 
         const combinedHeight = next
             ? currentCell.height + next.height
@@ -1202,17 +1195,37 @@ export default class SectionsManager {
 
         if (currentCell.fillings?.length) {
             let newFillings = next || prev
+            if (newFillings?.fillings?.length) {
+                this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex: next ? cellIndex + 1 : cellIndex - 1});
+            }
 
-            if (!newFillings.fillings)
+            /*if (!newFillings.fillings)
                 newFillings.fillings = []
 
             let startIndex = newFillings.fillings.length
             currentCell.fillings.forEach((filling) => {
+                let profileId
+                if(filling.isProfile){
+                    profileId = currentSection.hiTechProfiles?.findIndex(item => (
+                        item.sec === filling.sec &&
+                        item.cell === filling.cell &&
+                        item.row === filling.row &&
+                        item.extra === filling.extra &&
+                        item.id === filling.id
+                    ))
+                }
                 filling.id = startIndex
-                filling.cell = next ? cellIndex + 1 : cellIndex - 1
+                filling.cell = prev ? filling.cell - 1 : filling.cell
                 startIndex += 1
+
+                if(profileId) {
+                    currentSection.hiTechProfiles?.splice(profileId, 1, filling)
+                    needUpdateFasade = true
+                }
             })
-            newFillings.push(...currentCell.fillings)
+            newFillings.fillings.push(...currentCell.fillings)*/
+
+            this.scope.FILLINGS.clearFillings({grid, secIndex, cellIndex});
         }
 
         if (currentSection.cells.length > 1) {
@@ -1224,6 +1237,9 @@ export default class SectionsManager {
 
         grid = clone;
         this.selectCell(secIndex,0)
+
+        if(needUpdateFasade)
+            this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
 
         this.scope.reset(grid)
     };
