@@ -653,12 +653,12 @@ class Shape extends Helpers {
                     if (self.data.fasade || self.data.isProfile) {
                         const curentSec = self.UM_STORE.getUMGrid()?.sections?.[self.data.sec]
                         const fasadesDrawers = curentSec.fasadesDrawers ?? [];
-                        const sectionSector = fasadesDrawers[0]?.sector?.sections?.[self.data.sec]
+                        const sectionSector = fasadesDrawers[0]?.sector?.sections?.[0]
 
                         if(sectionSector?.children) {
                             let allShapes = []
                             sectionSector.children.forEach(child => {
-                                if(child.shapes)
+                                if(child.secIndex === self.data.sec && child.shapes)
                                     allShapes.push(...child.shapes)
                             })
                             shapes = allShapes
