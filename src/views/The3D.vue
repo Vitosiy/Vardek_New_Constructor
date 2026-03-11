@@ -70,7 +70,7 @@ const wallMaterials = ref<number | null>(null);
 const floorMaterials = ref<number | null>(null);
 
 const objectData = ref<THREETypes.TUseObjectData | null>(
-  null
+  null,
 ); /** Текущий объект */
 const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
 
@@ -104,9 +104,7 @@ const productFasades = ref<any[]>([]);
 /** ----------------- 19.05.25 ----------------------------- */
 
 //Универсальный модуль
-const universalModule2DConstructor = ref<typeof UMconstructor | null>(
-  null
-);
+const universalModule2DConstructor = ref<typeof UMconstructor | null>(null);
 const universalModuleData = ref<TMyObject | null>(null);
 
 //Распил
@@ -279,7 +277,7 @@ const selected = async (item: any) => {
   if (
     !RASPIL.data &&
     modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS.some(
-      (el) => el.COLOR !== 7397
+      (el) => el.COLOR !== 7397,
     )
   ) {
     hideFasadeValue.value =
@@ -367,7 +365,7 @@ const screenPrint = async () => {
       console.log(
         `Обрабатываем комнату ${i + 1}/${allRooms.length}: ${
           room.label || room.id
-        }`
+        }`,
       );
 
       try {
@@ -381,7 +379,7 @@ const screenPrint = async () => {
 
         // 1. Создаем скриншот комнаты в обычном режиме
         console.log(
-          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`
+          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`,
         );
         await new Promise<void>((resolve) => {
           renderer.domElement.toBlob((blob: Blob | null) => {
@@ -404,7 +402,7 @@ const screenPrint = async () => {
               console.log(
                 `Скриншот комнаты "${
                   room.label || room.id
-                }" в обычном режиме сохранен в стор`
+                }" в обычном режиме сохранен в стор`,
               );
             }
             resolve();
@@ -413,7 +411,7 @@ const screenPrint = async () => {
 
         // 2. Включаем режим чертежа
         console.log(
-          `Включаем режим чертежа для комнаты "${room.label || room.id}"`
+          `Включаем режим чертежа для комнаты "${room.label || room.id}"`,
         );
         await menuStore.toggleDrowModeValue();
         const drawingModeValue = menuStore.getDrowModeValue;
@@ -424,7 +422,7 @@ const screenPrint = async () => {
 
         // 3. Создаем скриншот комнаты в режиме чертежа
         console.log(
-          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`
+          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`,
         );
         await new Promise<void>((resolve) => {
           renderer.domElement.toBlob((blob: Blob | null) => {
@@ -447,7 +445,7 @@ const screenPrint = async () => {
               console.log(
                 `Скриншот комнаты "${
                   room.label || room.id
-                }" в режиме чертежа сохранен в стор`
+                }" в режиме чертежа сохранен в стор`,
               );
             }
             resolve();
@@ -467,7 +465,7 @@ const screenPrint = async () => {
       } catch (roomError) {
         console.warn(
           `Ошибка при обработке комнаты ${room.label || room.id}:`,
-          roomError
+          roomError,
         );
         // Продолжаем с следующей комнатой
         continue;
@@ -489,7 +487,7 @@ const screenPrint = async () => {
     console.log(
       `Все скриншоты комнат созданы и сохранены в стор. Всего скриншотов: ${
         screenshotsStore.getScreenshots().length
-      }`
+      }`,
     );
     eventBus.emit("A:3DScreenshotCreated");
   } catch (error) {
@@ -534,7 +532,7 @@ const removeModel = (model) => {
 const toggleFasade = () => {
   if (
     modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS.some(
-      (el) => el.COLOR !== 7397
+      (el) => el.COLOR !== 7397,
     )
   ) {
     const curVisible =
@@ -645,7 +643,7 @@ const saveTableData = async () => {
   await APP!.tableTopCreator?.create(
     toRaw(CutCash.value),
     toRaw(product.value),
-    groupID
+    groupID,
   );
 
   // // Пересчёт после сохранения распила
@@ -702,7 +700,7 @@ const deliteTable = () => {
   const { userData } = product.value;
 
   const parent = toRaw(
-    APP!._scene!.getObjectByProperty("id", userData.groupId)
+    APP!._scene!.getObjectByProperty("id", userData.groupId),
   );
 
   isModalOpen.value = false;
@@ -733,7 +731,7 @@ watch(
   () => checkContantLoad.value,
   () => {
     checkLoadContent();
-  }
+  },
 );
 
 // watch(
@@ -788,7 +786,7 @@ watch(
           :class="activeHideFasadeButton"
           @click="toggleFasade"
         />
-        <CollisionButton/>
+        <CollisionButton />
 
         <Modal
           v-if="Object.keys(CutData).length > 0"
@@ -846,11 +844,12 @@ watch(
             </button> -->
           </template>
         </Modal>
-        <UMconstructor
-          v-if="universalModuleData && product"
-          ref="universalModule2DConstructor"
-          :product="product"
-        />
+        <div v-show="universalModuleData && product">
+          <UMconstructor
+            ref="universalModule2DConstructor"
+            :product="product"
+          />
+        </div>
       </div>
     </div>
   </div>
