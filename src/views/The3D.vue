@@ -42,6 +42,7 @@ import DeleteControllerButton from "@/components/ui/buttons/right-menu/controlle
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
 import CollisionButton from "@/components/ui/buttons/right-menu/controller/CollisionButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
+import PinButton from "@/components/ui/buttons/right-menu/controller/PinButton.vue";
 //import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
 import UMconstructor from "@/components/UMconstructor/UMconstructor.vue";
 
@@ -776,7 +777,7 @@ watch(
       </div>
       <div class="controller-right">
         <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-        <!-- <UpControllerButton /> -->
+
         <OpenFacadeButton
           v-if="
             Object.keys(CutData).length == 0 &&
@@ -786,7 +787,9 @@ watch(
           :class="activeHideFasadeButton"
           @click="toggleFasade"
         />
+
         <CollisionButton />
+        <PinButton />
 
         <Modal
           v-if="Object.keys(CutData).length > 0"
@@ -839,18 +842,15 @@ watch(
           </template>
           <template #modalOpen="{ onModalOpen }">
             <CutButton @click="onModalOpen" />
-            <!-- <button class="cut-btn" @click="onModalOpen">
-              <img class="cut-icon" src="/icons/cut.svg" alt="" />
-            </button> -->
           </template>
         </Modal>
+
         <div v-show="universalModuleData && product">
           <UMconstructor
-              ref="universalModule2DConstructor"
-              :product="product"
+            ref="universalModule2DConstructor"
+            :product="product"
           />
         </div>
-
       </div>
     </div>
   </div>

@@ -365,7 +365,9 @@ export class MoveManager {
         // Пересекаем луч с полом и стенами
         const intersects = this.raycaster.intersectObjects([...this.roomManager._roomWalls, this.roomManager._roomFloor]);
 
-        if (intersects.length > 0) {
+        console.log(this.selectedObject.userData.disableMove)
+
+        if (intersects.length > 0 && !this.selectedObject.userData.disableMove) {
 
             const point = intersects[0].point; // Точка пересечения с полом или стеной
             const surface = intersects[0].object // стена

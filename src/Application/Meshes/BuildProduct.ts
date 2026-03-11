@@ -219,6 +219,8 @@ export class BuildProduct extends BuildersHelper {
             WIDTH: productSize.x * 0.5,
         };
         parent_group.userData.disableRaycast = product_data.disable_raycast == 1;
+        parent_group.userData.disableMove = false
+
         parent_group.userData.aabb = product.userData.aabb ?? aabb;
         parent_group.userData.obb = product.userData.obb ?? obb;
         parent_group.userData.restrictData = {};
@@ -278,7 +280,7 @@ export class BuildProduct extends BuildersHelper {
             (element_type === null && Number.isInteger(leg_length)) ? "element_down" : element_type;
 
         const PARAMS: THREETypes.TConfig = {
-            DISABLE_MOVE: false,
+            // DISABLE_MOVE: false,
             ELEMENT_TYPE: elType,
             ID,
             FASADE_PROPS: [],
