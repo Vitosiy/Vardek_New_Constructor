@@ -131,11 +131,11 @@ export default class ExternalFasadesManager {
                         item: drawerFasade.item - 1,
                     });
 
-                    fasadesDrawers[drawerIndex].id = index + 1
-                    fasadesDrawers[drawerIndex].width = correctSectionFasadeWidth
+                    drawerFasade.id = index + 1
+                    drawerFasade.width = correctSectionFasadeWidth
 
                     if(filling)
-                        filling.fasade = fasadesDrawers[drawerIndex]
+                        filling.fasade = drawerFasade
 
                     drawerIndex += 1
                     break;

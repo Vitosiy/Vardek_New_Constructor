@@ -85,7 +85,8 @@ export default class FasadesManager {
         const rightWidth = grid.rightWallThickness || grid.moduleThickness;
 
         if (!grid.isSlidingDoors)
-            grid.sections.forEach((section, secIndex) => {
+            for (let secIndex = 0; secIndex < grid.sections.length; secIndex++) {
+                const section = grid.sections[secIndex];
 
                 let deltaWidth, deltaHeight
                 if (section.fasades?.[0]) {
@@ -155,7 +156,7 @@ export default class FasadesManager {
                                 })
                             })
 
-                            let lastSegment = door[0]
+                            let lastSegment = door[door.length - 1]
                             if (lastSegment && !lastSegment.manufacturerOffset) {
                                 lastSegment.height += deltaHeight;
 
@@ -172,6 +173,41 @@ export default class FasadesManager {
                         })
                     }
 
+                    /*if (deltaHeight !== 0) {
+                        for (let doorIndex = 0; doorIndex < section.fasades.length; doorIndex++) {
+                            let door = section.fasades[doorIndex];
+
+                            door.forEach((segment) => {
+                                let fasadeMinMax = this.getFasadePositionMinMax(segment)
+                                Object.entries(fasadeMinMax).forEach(([key, value]) => {
+                                    segment[key] = value;
+                                })
+                            })
+
+                            let lastSegment = door[door.length - 1];
+                            if (lastSegment && !lastSegment.manufacturerOffset) {
+
+                                if(lastSegment.height + deltaHeight < 0){
+                                    this.removeFasadeSegment(secIndex, doorIndex, door.length - 1, grid)
+                                    return false
+                                }
+                                else {
+                                    lastSegment.height += deltaHeight;
+
+                                    const checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
+                                        lastSegment.material.COLOR,
+                                        <TFasadeTrueSizes>{FASADE_WIDTH: lastSegment.width, FASADE_HEIGHT: lastSegment.height}
+                                    );
+
+                                    if (!checkConversation || lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+                                        lastSegment.error = true
+                                    else
+                                        delete lastSegment.error;
+                                }
+                            }
+                        }
+                    }*/
+
                 }
 
                 if ((deltaWidth !== 0 || deltaHeight !== 0) && (section.fasadesDrawers?.length || section.hiTechProfiles?.length)) {
@@ -179,7 +215,7 @@ export default class FasadesManager {
                 }
 
                 this.scope.LOOPS.calcLoops(secIndex, grid)
-            })
+            }
         else {
             grid.fasades.forEach((door, doorIndex) => {
                 let tmp_fasadePosition = this.calcSlideDoor(door[0].material.POSITION, doorIndex + 1)

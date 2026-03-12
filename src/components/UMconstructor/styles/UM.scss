@@ -58,7 +58,7 @@
         }
 
         &::-webkit-scrollbar {
-          width: 2px;
+          display: none;
           /* Ширина скроллбара */
         }
 
@@ -170,9 +170,26 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: scroll;
     padding-right: 0.5rem;
     max-height: 100vh;
+
+    &::-webkit-scrollbar {
+      display: none;
+      /* Ширина скроллбара */
+    }
+
+    &::-webkit-scrollbar-button {
+      display: none;
+      /* Убираем стрелки */
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #888;
+      /* Цвет ползунка */
+      border-radius: 4px;
+    }
   }
 
   &-header {
@@ -240,7 +257,7 @@
       padding: 0 0 1rem 0;
 
       &::-webkit-scrollbar {
-        width: 2px;
+        display: none;
         /* Ширина скроллбара */
       }
 
@@ -551,12 +568,12 @@
         flex-direction: column;
         gap: 1.25rem;
 
-        max-height: 80vh;
+        max-height: 90vh;
         overflow-y: scroll;
         overflow-x: hidden;
 
         &::-webkit-scrollbar {
-          width: 2px;
+          display: none;
           /* Ширина скроллбара */
         }
 
