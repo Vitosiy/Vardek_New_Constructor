@@ -148,32 +148,7 @@ export default class FasadesManager {
                     }
 
                     if (deltaHeight !== 0) {
-                        section.fasades.forEach((door) => {
-                            door.forEach((segment) => {
-                                let fasadeMinMax = this.getFasadePositionMinMax(segment)
-                                Object.entries(fasadeMinMax).forEach(([key, value]) => {
-                                    segment[key] = value;
-                                })
-                            })
-
-                            let lastSegment = door[door.length - 1]
-                            if (lastSegment && !lastSegment.manufacturerOffset) {
-                                lastSegment.height += deltaHeight;
-
-                                const checkConversation = this.FASADES_CONVERSATION.checkFasadeConversations(
-                                    lastSegment.material.COLOR,
-                                    <TFasadeTrueSizes>{FASADE_WIDTH: lastSegment.width, FASADE_HEIGHT: lastSegment.height}
-                                );
-
-                                if (!checkConversation || lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
-                                    lastSegment.error = true
-                                else
-                                    delete lastSegment.error;
-                            }
-                        })
-                    }
-
-                    /*if (deltaHeight !== 0) {
+                        let needReset = false;
                         for (let doorIndex = 0; doorIndex < section.fasades.length; doorIndex++) {
                             let door = section.fasades[doorIndex];
 
@@ -187,9 +162,9 @@ export default class FasadesManager {
                             let lastSegment = door[door.length - 1];
                             if (lastSegment && !lastSegment.manufacturerOffset) {
 
-                                if(lastSegment.height + deltaHeight < 0){
-                                    this.removeFasadeSegment(secIndex, doorIndex, door.length - 1, grid)
-                                    return false
+                                if(lastSegment.height + deltaHeight <= 0){
+                                    this.removeFasadeSegment(secIndex, doorIndex, door.length - 1, grid, false)
+                                    needReset = true;
                                 }
                                 else {
                                     lastSegment.height += deltaHeight;
@@ -206,7 +181,12 @@ export default class FasadesManager {
                                 }
                             }
                         }
-                    }*/
+
+                        if (needReset) {
+                            this.scope.reset(grid)
+                            return false;
+                        }
+                    }
 
                 }
 
@@ -738,10 +718,10 @@ export default class FasadesManager {
         doorIndex: number,
         segmentIndex: number,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+        reset: boolean = true,
     ) {
-        const clone = Object.assign({}, grid);
         const fasades =
-            secIndex === null ? clone.fasades : clone.sections[secIndex].fasades;
+            secIndex === null ? grid.fasades : grid.sections[secIndex].fasades;
         const currentSection = fasades[doorIndex];
         const currentSegment = currentSection[segmentIndex];
 
@@ -791,11 +771,11 @@ export default class FasadesManager {
             currentSection.splice(segmentIndex, 1);
         }
 
-        grid = clone;
-
         // Обновляем текущий сектор
         this.selectCell(secIndex,0, 0)
-        this.scope.reset(grid)
+
+        if(reset)
+            this.scope.reset(grid)
     };
 
     updateFasadeHeight(
