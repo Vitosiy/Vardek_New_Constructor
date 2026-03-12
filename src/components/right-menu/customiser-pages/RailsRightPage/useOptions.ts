@@ -22,6 +22,8 @@ export const useOptions = () => {
 
     const createOptionList = () => {
 
+        console.log(mechanismList, 'mechanismList')
+
         const { PROPS } = modelState.getCurrentModel.userData;
         const filtered = filterOptions()
         let result = checkExeptionOptionForFasade(filtered, PROPS.CONFIG.OPTIONS)
@@ -411,7 +413,7 @@ export const useOptions = () => {
     }
 
     const getCutSizeOption = (option, options) => {
-        console.log(options, 'optionId')
+
         const { id } = option
         const { PROPS } = modelState.getCurrentModel.userData;
         const { BODY_WIDTH, BODY_HEIGHT } = PROPS.BODY.userData.trueSize

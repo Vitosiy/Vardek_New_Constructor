@@ -397,6 +397,9 @@ export class BuildProduct extends BuildersHelper {
 
         PROPS.FASADE = [];
         PROPS.FASADE_DEFAULT = [];
+        PROPS.SHELF = [];
+        PROPS.ARROWS = [];
+        PROPS.BODY = [];
 
         const productId = CONFIG.ID;
         const modelData = this._MODELS[CONFIG.MODELID];
@@ -458,8 +461,6 @@ export class BuildProduct extends BuildersHelper {
             if (!part) return;
             part.position.y = y;
         });
-
-        console.log(move, 'movemovemovemovemovemove')
 
         if (body) {
             body.position.set(move.x, baseY, move.z);

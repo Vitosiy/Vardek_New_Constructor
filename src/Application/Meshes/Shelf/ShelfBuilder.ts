@@ -111,7 +111,7 @@ export class ShelfBuilder {
         const shelfMaterial = material || this.materialMap[matType] || this.materialMap.MeshStandardMaterial;
 
         const startPos = this.parent.getStartPosition(SIZE);
-    
+
         for (let i = 1; current >= i && current <= total; i++) {
             let mesh = new Mesh(
                 new BoxGeometry(width - 32, 16, depth),
@@ -119,6 +119,9 @@ export class ShelfBuilder {
             );
             mesh.receiveShadow = true;
             mesh.position.y = startPos.y + (height / (current + 1)) * i;
+            const positionToBascet = (mesh.position.y + height * 0.5).toFixed(4);
+            mesh.userData.positionY = positionToBascet;
+
             (SHELF as Mesh[]).push(mesh);
 
             const edge = this.edgeBuilder.createEdge(mesh);

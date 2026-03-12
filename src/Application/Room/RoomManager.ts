@@ -139,7 +139,6 @@ export class RoomManager extends Room {
         intersects.forEach(object => {
 
             if (!object.userData?.current && object.visible) {
-                console.log(object.userData, 'OBJ')
                 
                 const center = object.userData.aabb.getCenter(new THREE.Vector3())
                 const obb = object.userData.obb.clone()

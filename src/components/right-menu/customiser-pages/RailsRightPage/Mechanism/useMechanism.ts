@@ -124,20 +124,36 @@ export const useMechanism = () => {
 
 
             for (const optionKey in prodOptions) {
+
                 const mechID = prodOptions[optionKey];
+
                 const mech = MECHANISM[mechID]?.[PRODUCT];
+
+                // console.log(mechID, mech,PRODUCT, '✅ === МЕХАНИЗМ === ✅')
+
+
                 if (!mech) continue;
+
 
                 const { PROPERTY_MECHANISM_LINK_VALUE, SECTION, GROUP, PROPERTY_TYPE_MECHANISM_VALUE, NAME } = mech;
 
+                console.log(mechanism[GROUP], '✅ === GROUP === ✅')
+
+                // console.log(PROPERTY_MECHANISM_LINK_VALUE, '✅ === LINK_VALUE === ✅')
+
                 for (const linkID of PROPERTY_MECHANISM_LINK_VALUE) {
                     const cond = condition_mechanism[linkID];
+
+
+
+
                     if (!cond) continue;
 
                     const minH = parseFloat(cond.PROPERTY_RANGE_MIN_HEIGHT_VALUE);
                     const maxH = parseFloat(cond.PROPERTY_RANGE_MAX_HEIGHT_VALUE);
                     const minW = parseFloat(cond.PROPERTY_RANGE_MIN_WEIGHT_VALUE);
                     const maxW = parseFloat(cond.PROPERTY_RANGE_MAX_WEIGHT_VALUE);
+
 
                     const heightInRange = SIZE.height >= minH && SIZE.height <= maxH;
                     const weightInRange = totalWeight >= minW && totalWeight <= maxW;
@@ -149,6 +165,7 @@ export const useMechanism = () => {
 
 
                     mechanism[GROUP] ??= [];
+
                     mechanism[GROUP].push({
                         ID: mechID,
                         NAME,
@@ -159,10 +176,15 @@ export const useMechanism = () => {
                         active: CONFIG.MECHANISM == parseInt(mechID),
                         visible: true
                     })
+
+
                 }
+
             }
 
-            console.log()
+
+
+
             const result = Object.entries(mechanism).map(([key, value]) => {
 
                 const prepare = Object.values(value).flat().reduce((acc, meck) => {
