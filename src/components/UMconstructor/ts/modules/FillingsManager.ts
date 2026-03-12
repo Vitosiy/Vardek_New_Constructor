@@ -616,8 +616,9 @@ export default class FillingsManager {
             }
 
             const prevValue = currentfilling.position.x; //Предыдущее значение
+            const prevValueLeft = currentfilling.distances.left; //Предыдущее значение
 
-            let delta = +value - currentfilling.distances.left
+            let delta = +value - prevValueLeft
             const newValue = prevValue + delta
 
             let tmpSector = currentfilling.sector
@@ -633,10 +634,12 @@ export default class FillingsManager {
             const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
             if (check) {
-                currentfilling.position.x = fillingData.position.x;
+                currentfilling.position.x = newValue;
+                currentfilling.distances.left = +value
             } else {
                 this.scope.callAlert("error", `Нельзя изменить позицию на ${+_value}`)
                 currentfilling.position.x = prevValue;
+                currentfilling.distances.left = prevValueLeft
             }
 
             currentfilling.sector = tmpSector;
@@ -679,6 +682,7 @@ export default class FillingsManager {
             }
 
             const prevValue = currentfilling.position.y; //Предыдущее значение
+            const prevValueBottom = currentfilling.distances.bottom; //Предыдущее значение
 
             let delta = +value - currentfilling.distances.bottom
             const newValue = prevValue - delta
@@ -697,10 +701,12 @@ export default class FillingsManager {
             const check = this.scope.SHAPE_ADJUSTER.checkToCollision(pixiSector, false, fillingData);
 
             if (check) {
-                currentfilling.position.y = fillingData.position.y;
+                currentfilling.position.y = newValue;
+                currentfilling.distances.bottom = +value
             } else {
                 this.scope.callAlert("error", `Нельзя изменить позицию на ${+_value}`)
                 currentfilling.position.y = prevValue;
+                currentfilling.distances.bottom = prevValueBottom;
             }
 
             currentfilling.sector = tmpSector;
