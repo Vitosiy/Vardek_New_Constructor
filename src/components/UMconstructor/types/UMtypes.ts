@@ -69,6 +69,7 @@ export const MANUFACTURER = {
 
 export interface DrawerFasadeObject extends FasadeObject {
     manufacturerOffset: number;
+    fasadeDrawerId: number;
     item: number;
     sec: number | null;
     cell?: number | null;
