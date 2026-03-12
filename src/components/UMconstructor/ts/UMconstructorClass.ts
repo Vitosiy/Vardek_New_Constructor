@@ -713,13 +713,17 @@ export default class UMconstructorClass {
             this.callAlert("error", "Ошибка расчёта модуля!")
         }
 
-        this.UM_STORE.setUMGrid(module)
+        if(module) {
+            this.UM_STORE.setUMGrid(module)
 
-        this.debounce("renderGrid", () => {
-            this.RENDER_REF.renderGrid(module)
-            this.UM_STORE.setLoad(false)
-        }, 100)
+            this.debounce("renderGrid", () => {
+                this.RENDER_REF.renderGrid(module)
+                this.UM_STORE.setLoad(false)
+            }, 100)
 
-        return module
+            return module
+        }
+        else
+            return false
     };
 }
