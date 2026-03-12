@@ -667,6 +667,10 @@ class Shape extends Helpers {
 
                     for (const otherShape of shapes) {
                         if ((self !== otherShape && self.data !== otherShape.data) && self.checkOverlap(otherShape)) {
+
+                            if((self.data.fasade && otherShape.data.fasade) && (self.data.fasade.fasadeDrawerId === otherShape.data.fasade.fasadeDrawerId))
+                                continue;
+
                             hasCollisionY = true;
 
                             if (self.data.fasade && otherShape.data.fasade) {

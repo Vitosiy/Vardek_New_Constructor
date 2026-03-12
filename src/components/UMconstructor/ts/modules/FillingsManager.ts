@@ -33,6 +33,49 @@ export default class FillingsManager {
         )
     }
 
+    existFilling(grid: GridModule) {
+        let check = false;
+        if (grid) {
+            grid.sections?.forEach(section => {
+
+                if (section.cells.length > 0) {
+                    section.cells.forEach(cell => {
+
+                        if(cell.cellsRows?.length > 0) {
+                            cell.cellsRows?.forEach((cellRow) => {
+
+                                if(cellRow.extras?.length > 0) {
+                                    cellRow.extras?.forEach((extra) => {
+                                        if(extra.fillings?.length > 0) {
+                                            check = true;
+                                        }
+                                    })
+                                }
+
+                                if(cellRow.fillings?.length > 0) {
+                                    check = true;
+                                }
+                            })
+                        }
+
+                        if(cell.fillings?.length > 0) {
+                            check = true;
+                        }
+                    })
+                }
+
+                if(section.fillings?.length > 0) {
+                    check = true;
+                }
+            })
+
+            return check;
+        }
+        else {
+            return check;
+        }
+    }
+
     updateFilling(
         value: number,
         currentfilling: FillingObject,
@@ -342,6 +385,7 @@ export default class FillingsManager {
             fillingObject.moduleThickness = grid.moduleThickness
             fillingObject.fasade = <DrawerFasadeObject>{
                 id: currentSection.fasadesDrawers.length + 1,
+                fasadeDrawerId: currentSection.fasadesDrawers.length + 1,
                 width: correctSectionFasadeWidth,
                 height: product.MIN_FASADE_SIZE,
                 minY: product.MIN_FASADE_SIZE,
@@ -453,16 +497,12 @@ export default class FillingsManager {
         let curItemFasade = curItem.fasade
         let curItemProfile = curItem.isProfile ? curItem : false;
 
-        curRow.fillings = curRow.fillings.filter((el, index) => {
-            return index !== itemIndex;
-        });
-
         if (curItemFasade) {
             sec.fasadesDrawers = sec.fasadesDrawers.filter((el, index) => {
-                return el.id !== curItemFasade.id;
+                return el.fasadeDrawerId !== curItemFasade.fasadeDrawerId;
             });
             sec.fasadesDrawers.forEach((fasade, index) => {
-                if (fasade.id > curItemFasade.id) {
+                if (fasade.fasadeDrawerId > curItemFasade.fasadeDrawerId) {
                     let filling = this.getFillingObject({
                         grid,
                         sec: fasade.sec,
@@ -471,7 +511,7 @@ export default class FillingsManager {
                         extra: fasade.extra,
                         item: fasade.item - 1,
                     });
-                    fasade.id -= 1;
+                    fasade.fasadeDrawerId -= 1;
                     if (filling)
                         filling.fasade = fasade
                 }
@@ -498,6 +538,11 @@ export default class FillingsManager {
                 }
             })*/
         }
+
+        curRow.fillings = curRow.fillings.filter((el, index) => {
+            return index !== itemIndex;
+        });
+
 
         curRow.fillings.forEach((filling, index) => {
             if (filling.id > curItem.id) {
