@@ -33,6 +33,49 @@ export default class FillingsManager {
         )
     }
 
+    existFilling(grid: GridModule) {
+        let check = false;
+        if (grid) {
+            grid.sections?.forEach(section => {
+
+                if (section.cells.length > 0) {
+                    section.cells.forEach(cell => {
+
+                        if(cell.cellsRows?.length > 0) {
+                            cell.cellsRows?.forEach((cellRow) => {
+
+                                if(cellRow.extras?.length > 0) {
+                                    cellRow.extras?.forEach((extra) => {
+                                        if(extra.fillings?.length > 0) {
+                                            check = true;
+                                        }
+                                    })
+                                }
+
+                                if(cellRow.fillings?.length > 0) {
+                                    check = true;
+                                }
+                            })
+                        }
+
+                        if(cell.fillings?.length > 0) {
+                            check = true;
+                        }
+                    })
+                }
+
+                if(section.fillings?.length > 0) {
+                    check = true;
+                }
+            })
+
+            return check;
+        }
+        else {
+            return check;
+        }
+    }
+
     updateFilling(
         value: number,
         currentfilling: FillingObject,
