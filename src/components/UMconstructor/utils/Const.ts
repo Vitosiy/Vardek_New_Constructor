@@ -9,6 +9,7 @@ export const UM_PARAMS = {
     MIN_FASADE_HEIGHT: 360,
     MIN_FASADE_WIDTH: 126,
     MAX_FASADE_WIDTH: 600,
+    MIN_SLIDE_DOOR_WIDTH: 600,
     MAX_SLIDE_DOOR_WIDTH: 1300,
     MIN_HOLE_SIZE_MM: 100, // Минимальный размер отверстия в мм
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
