@@ -93,11 +93,21 @@ export const useMechanism = () => {
             const curModel = modelState.getCurrentModel;
             if (!curModel) return [];
 
-            const { MECHANISM, CATALOG, condition_mechanism, OPTIONS_GROUP } = appData.getAppData;
+            const { MECHANISM, CATALOG, condition_mechanism, OPTIONS_GROUP, FILLING } = appData.getAppData;
             const { PRODUCTS } = CATALOG;
             const { PROPS } = curModel.userData;
             const { PRODUCT, CONFIG } = PROPS;
             const { SIZE } = CONFIG;
+            console.log(CONFIG.FILLING, 'CONFIG.FILLING')
+
+            if (CONFIG.FILLING) {
+                const checkFilling = FILLING[CONFIG.FILLING].VERTICAL
+                if (!checkFilling) return []
+            }
+
+
+
+
             const prodOptions = PRODUCTS[PRODUCT].OPTION;
             const weightsData = weightCalculation()
 

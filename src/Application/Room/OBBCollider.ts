@@ -12,6 +12,7 @@ import { TAdjustPosition } from "@/types/types"
 
 export class OBBCollider {
     private defaultMagnetTrashhold = 50
+    private readonly defaultSteps = 30
 
     getCorrectPosition({ object,
         targetPosition,
@@ -511,8 +512,8 @@ export class OBBCollider {
 
         //  1. Пошаговый прогон
 
-        for (let i = 1; i <= steps; i++) {
-            const t = i / steps;
+        for (let i = 1; i <= this.defaultSteps; i++) {
+            const t = i / this.defaultSteps;
             const testPos = fromPos.clone().add(moveDir.clone().multiplyScalar(t));
 
             // переносим AABB в тестовую точку

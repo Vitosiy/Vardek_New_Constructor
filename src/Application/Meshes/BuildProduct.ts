@@ -206,8 +206,11 @@ export class BuildProduct extends BuildersHelper {
 
         parent_group.add(product as THREE.Object3D);
 
-        const aabb = new THREE.Box3().setFromObject(parent_group);
-        const obb = new OBB().fromBox3(aabb);
+        // const aabb = new THREE.Box3().setFromObject(parent_group);
+        // const obb = new OBB().fromBox3(aabb);
+
+        const aabb = product?.userData.aabb;
+        const obb = product?.userData.obb;
         const productSize = new THREE.Vector3();
         aabb.getSize(productSize);
 
@@ -513,6 +516,8 @@ export class BuildProduct extends BuildersHelper {
         const product = this._PRODUCTS[ID];
         const texture = product.texture;
 
+        console.log(CONFIG.MODULE_COLOR, '❌ === MODULE_COLOR === ❌')
+
         const isRoomElement = product.element_type === "element_room"
         const wallTextureId = isRoomElement && CONFIG.MODULE_COLOR === null
             ? parseInt(this.root._roomManager._currentWallTextureId)
@@ -542,6 +547,8 @@ export class BuildProduct extends BuildersHelper {
 
         CONFIG.MODULE_COLOR = isRoomElement ? wallTextureId : moduleColorId;
 
+        console.log(MODULE_COLOR, '❌ === isRoomElement === ❌', isRoomElement)
+
 
         const moduleColorObject = isRoomElement ?
             this._WALL[wallTextureId] :
@@ -551,7 +558,11 @@ export class BuildProduct extends BuildersHelper {
             moduleColorObject.texture :
             moduleColorObject?.TEXTURE;
 
+
         const isTopTable = texture?.src && !moduleColor;
+
+        
+console.log(isTopTable,moduleColorObject, '❌ === MODULE_COLOR === ❌')
 
         // Применяем кастомные перекрытия элементов через вспомогательный метод
         this.applyBodyOverrides(data, CONFIG, moduleColorObject);

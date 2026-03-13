@@ -86,26 +86,6 @@ export class RoomManager extends Room {
     get _roomTotalBounds() {
         return this.totalAABBBounds
 
-
-        // let boundsArray: THREE.Box3[] = []
-
-        // const intersects = this._rulerContant as THREE.Object3D[];
-
-        // intersects.forEach(object => {
-
-        //     if (!object.userData?.current) {
-        //         const box = new THREE.Box3().setFromObject(object);
-        //         const boxTop = new THREE.Box3().setFromObject(object);
-        //         box.max.y = 3000;
-        //         box.min.y = 0
-
-        //         boundsArray.push(box);
-        //         boundsArray.push(boxTop);
-        //     }
-
-        // });
-
-        // return boundsArray
     }
 
     setRoomTotalBounds() {
@@ -116,7 +96,7 @@ export class RoomManager extends Room {
 
         intersects.forEach(object => {
 
-            if (!object.userData?.current && object.visible) {
+            if (!object.userData?.current && object.visible && !object.userData.disableRaycast) {
                 const box = new THREE.Box3().setFromObject(object);
                 const boxTop = new THREE.Box3().setFromObject(object);
                 box.max.y = 3000;
