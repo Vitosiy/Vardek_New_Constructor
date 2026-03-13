@@ -5,15 +5,11 @@
       :key="index"
       :content="action.tooltip"
       position="bottom"
-      v-show="action.path=='default' || route.path == action.path"
+      v-show="action.path == 'default' || route.path == action.path"
     >
       <template #trigger>
-        <button
-       
-          class="grey-radial__button"
-          @click="action.action"
-        >
-          <span v-if="action.iconSrc === 'folder'" class="icon">
+        <button class="grey-radial__button" @click="action.action">
+          <!-- <span v-if="action.iconSrc === 'folder'" class="icon">
             <img :src="folderIcon" alt="" class="icon-svg" />
           </span>
           <span v-else-if="action.iconSrc === 'book'" class="icon">
@@ -21,8 +17,8 @@
           </span>
           <span v-else-if="action.iconSrc" class="icon">
             <img :src="action.iconSrc" alt="" class="icon-svg" />
-          </span>
-          <span v-else class="icon" :class="action.iconClass"></span>
+          </span> -->
+          <span class="icon" :class="action.iconClass"></span>
         </button>
       </template>
     </Tooltip>
@@ -52,14 +48,14 @@
           <template #checkBox>
             <div class="checkbox_wrap">
               <div>
-                <input type="checkbox" v-model="kpCheckbox"/>
+                <input type="checkbox" v-model="kpCheckbox" />
                 <label class="checkbox_label">Сохранить КП</label>
               </div>
               <div>
-                <input 
-                type="checkbox"
-                v-model="centeringCheckbox" 
-                @change="changeCamera()"
+                <input
+                  type="checkbox"
+                  v-model="centeringCheckbox"
+                  @change="changeCamera()"
                 />
                 <label class="checkbox_label">Отцентровать</label>
               </div>
@@ -104,15 +100,15 @@
 
     <Modal ref="kpDialogRef">
       <template #modalBody="{ onModalClose }">
-        <Notification 
+        <Notification
           :label="'Коммерческое предложение'"
           :description="kpData?.text"
           :link="kpData?.link"
           @cancel="onModalClose"
         >
-        <template #cancelButton>
-          <MainButton @click="onModalClose">Закрыть</MainButton>
-        </template>
+          <template #cancelButton>
+            <MainButton @click="onModalClose">Закрыть</MainButton>
+          </template>
         </Notification>
       </template>
     </Modal>
@@ -121,7 +117,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { ref, computed, onMounted } from "vue";
 import Tooltip from "@/components/ui/tooltip/Tooltip.vue";
 import Modal from "@/components/ui/modals/Modal.vue";
@@ -137,8 +132,8 @@ import { useSceneState } from "@/store/appliction/useSceneState";
 import { useToast } from "@/features/toaster/useToast";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useProjectStore } from "./project/store/useProjectStore";
-import folderIcon from "@/assets/svg/folder.svg";
-import bookIcon from "@/assets/svg/book.svg";
+// import folderIcon from "@/assets/svg/folder.svg";
+// import bookIcon from "@/assets/svg/book.svg";
 
 const {
   actions,
@@ -152,23 +147,23 @@ const {
 const route = useRoute();
 const sceneState = useSceneState();
 const toaster = useToast();
-const eventBus = useEventBus()
-const projectStore = useProjectStore()
+const eventBus = useEventBus();
+const projectStore = useProjectStore();
 
-const saveAsNewMode = ref(false)
-const kpCheckbox = ref(false)
-const centeringCheckbox = ref(false)
+const saveAsNewMode = ref(false);
+const kpCheckbox = ref(false);
+const centeringCheckbox = ref(false);
 const changeCamera = () => {
   if (centeringCheckbox.value) {
     eventBus.emit("A:ChangeCameraPos", 4);
-  } 
-}
+  }
+};
 
 // Рефы для модальных окон
 const saveDialogRef = ref<InstanceType<typeof Modal> | null>(null);
 // const updateDialogRef = ref<InstanceType<typeof Modal> | null>(null); // закомментировано — модалка Update не используется
 const kpDialogRef = ref<InstanceType<typeof Modal> | null>(null);
-  
+
 const kpData = ref<{ link: string; text: string } | null>(null);
 
 const openKpModal = (kp: { link: string; text: string }) => {
@@ -199,7 +194,7 @@ const handleSaveConfirm = async (projectName: string) => {
     () => {
       saveDialogRef.value?.closeModal();
     },
-    kpCheckbox.value
+    kpCheckbox.value,
   );
 
   // Если сохранение провалилось — просто выходим
@@ -210,10 +205,9 @@ const handleSaveConfirm = async (projectName: string) => {
   //@ts-ignore
   if (kpCheckbox.value && result.kp) {
     //@ts-ignore
-    openKpModal(result.kp); 
+    openKpModal(result.kp);
   }
 };
-
 
 // Закомментировано: обработка выбора в модалке Update (обновить / сохранить как новый)
 // const handleUpdateChoice = async (choice: string) => {
@@ -259,7 +253,7 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .quick-actions {
   display: flex;
   gap: 8px;
@@ -279,5 +273,56 @@ onMounted(() => {
 .checkbox_wrap {
   display: flex;
   justify-content: space-between;
+}
+
+.grey-radial__button {
+  border: 1px solid $stroke;
+  transition-property: background-color, color, border-color;
+  transition-timing-function: ease;
+  transition-duration: 0.25s;
+  &:focus {
+    outline: none;
+  }
+  svg {
+    path {
+      fill: $strong-grey;
+    }
+
+    g {
+      path {
+        transition-property: fill;
+        transition-duration: 0.3s;
+        transition-timing-function: ease;
+        fill: $strong-grey;
+      }
+    }
+  }
+
+  &.active {
+    background-color: $red;
+
+    svg {
+      path {
+        fill: $white;
+      }
+
+      g {
+        path {
+          fill: $white;
+        }
+      }
+    }
+
+    &:active {
+      background-color: $clicked-red;
+    }
+  }
+  @media (hover: hover) {
+    &:hover {
+      background-color: black;
+      color: $white;
+      border-color: $white;
+    }
+  }
 }
 </style>

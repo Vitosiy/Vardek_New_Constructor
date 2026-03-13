@@ -1,7 +1,8 @@
 @font-face {
   font-family: "icons";
   src: url("/fonts/icons.eot?c589sw");
-  src: url("/fonts/icons.eot?c589sw#iefix") format("embedded-opentype"),
+  src:
+    url("/fonts/icons.eot?c589sw#iefix") format("embedded-opentype"),
     url("/fonts/icons.ttf?c589sw") format("truetype"),
     url("/fonts/icons.woff?c589sw") format("woff"),
     url("/fonts/icons.svg?c589sw#icons") format("svg");
@@ -122,5 +123,9 @@
 .icon-pin:before {
   content: "\e91f";
 }
-
-
+.icon-folder:before {
+  content: "\e920";
+}
+.icon-book:before {
+  content: "\e921";
+}
