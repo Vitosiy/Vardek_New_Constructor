@@ -1,18 +1,18 @@
  <script setup lang="ts">
-//@ts-nocheck
-import "@/components/UMconstructor/styles/UM.scss"
+ //@ts-nocheck
+ import "@/components/UMconstructor/styles/UM.scss"
 
-import {_URL} from "@/types/constants.ts";
-import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
-import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
-import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
-import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
-import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {onMounted, ref, toRefs, watch} from "vue";
-import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
-import {GridModule, TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
+ import {_URL} from "@/types/constants.ts";
+ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+ import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
+ import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
+ import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
+ import {computed, onMounted, ref, toRefs, watch} from "vue";
+ import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
+ import {GridModule, TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
 
-const props = defineProps({
+ const props = defineProps({
   module: {
     type: ref<GridModule>,
     required: true,
@@ -74,6 +74,21 @@ const {createSurfaceList} =
 
 const createFacadeData = (fasadeIndex?: number) => {
   UMconstructor?.value?.FASADES.createFacadeData(fasadeIndex)
+};
+
+//Поиск по элементам наполнения
+const filteredMaterialList = ref<Array>([]); // отфильтрованный массив поиска
+const isSearch = computed(() => {
+  return filteredMaterialList.value.length > 0;
+});
+const onSearchChange = (e, totalMaterialList) => {
+  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "g");
+  filteredMaterialList.value = totalMaterialList.filter((item) =>
+      reg.test(item.NAME.toLowerCase())
+  );
+
+  if (e.target.value === "")
+    filteredMaterialList.value = [];
 };
 
 const openFasadeSelector = (
@@ -309,29 +324,67 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
               <h3 class="item-group__title">
                 {{ fillingGroup.groupName }}
               </h3>
+
+              <input
+                  v-if="openedFillingGroupKey === key"
+                  class="search"
+                  type="text"
+                  placeholder="Поиск"
+                  @input="(value) => onSearchChange(value, fillingGroup.items)"
+              />
             </summary>
 
             <div class="item-group-wrapper">
-              <div
-                  :class="[
-                          'item-group-color'
-                        ]"
-                  style
-                  v-for="(filling, key) in fillingGroup.items"
-                  :key="key + filling.NAME"
-                  @click="UMconstructor.FILLINGS.addFilling(filling, fillingGroup.groupID, module)"
-              >
-                <div class="item-group-name">
-                  <img
-                      class="name__bg"
-                      :src="_URL + filling.PREVIEW_PICTURE"
-                      :alt="filling.NAME"
-                  />
-                  <p class="name__text">
-                    {{ filling.NAME }}
-                  </p>
-                </div>
-              </div>
+
+
+              <ul class="list">
+                <!-- Все возможные материалы -->
+                <ul
+                    v-if="!isSearch"
+                    :class="[
+                        'item-group-color'
+                      ]"
+                    style
+                    v-for="(filling, key1) in fillingGroup.items"
+                    :key="key1 + filling.NAME"
+                    @click="UMconstructor.FILLINGS.addFilling(filling, fillingGroup.groupID, module)"
+                >
+                  <li class="item-group-name">
+                    <img
+                        class="name__bg"
+                        :src="_URL + filling.PREVIEW_PICTURE"
+                        :alt="filling.NAME"
+                    />
+                    <p class="name__text">
+                      {{ filling.NAME }}
+                    </p>
+                  </li>
+                </ul>
+
+                <!-- отфильтрованные материалы-->
+                <ul
+                    v-else
+                    :class="[
+                        'item-group-color'
+                      ]"
+                    style
+                    v-for="(filling, key2) in filteredMaterialList"
+                    :key="key2 + filling.NAME"
+                    @click="UMconstructor.FILLINGS.addFilling(filling, fillingGroup.groupID, module)"
+                >
+                  <li class="item-group-name">
+                    <img
+                        class="name__bg"
+                        :src="_URL + filling.PREVIEW_PICTURE"
+                        :alt="filling.NAME"
+                    />
+                    <p class="name__text">
+                      {{ filling.NAME }}
+                    </p>
+                  </li>
+                </ul>
+
+              </ul>
             </div>
           </details>
         </div>
@@ -1047,8 +1100,22 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 <style scoped lang="scss">
 .accordion {
   border: unset;
-  &-fillings_list{
+
+  &-fillings_list {
     gap: 1rem;
   }
+
+  details[open] summary {
+    display: flex;
+    width: 80%;
+    gap: 1vh;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: 2vh;
+  }
+}
+.search {
+  width: 100%;
+  border-radius: 15px;
 }
 </style>
