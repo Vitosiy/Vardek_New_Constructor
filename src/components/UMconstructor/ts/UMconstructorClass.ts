@@ -92,6 +92,7 @@ export default class UMconstructorClass {
                 MIN_FASADE_WIDTH,
                 MAX_FASADE_WIDTH,
                 MAX_SLIDE_DOOR_WIDTH,
+                MIN_SLIDE_DOOR_WIDTH,
             } = this.CONST;
 
             const PROPS = productData.PROPS;
@@ -167,7 +168,7 @@ export default class UMconstructorClass {
                                 minY: MIN_FASADE_HEIGHT,
                                 maxY: fasadeColor.MAX_HEIGHT || fasadePosition.FASADE_HEIGHT,
                                 maxX: MAX_SLIDE_DOOR_WIDTH,
-                                minX: MIN_FASADE_WIDTH
+                                minX: MIN_SLIDE_DOOR_WIDTH
                             }
                         ],
                         [
@@ -183,7 +184,7 @@ export default class UMconstructorClass {
                                 minY: MIN_FASADE_HEIGHT,
                                 maxY: fasadeColor.MAX_HEIGHT || fasadePosition2.FASADE_HEIGHT,
                                 maxX: MAX_SLIDE_DOOR_WIDTH,
-                                minX: MIN_FASADE_WIDTH
+                                minX: MIN_SLIDE_DOOR_WIDTH
                             }
                         ]
                     ]
