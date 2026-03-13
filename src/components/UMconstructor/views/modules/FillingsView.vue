@@ -66,6 +66,7 @@ const toggleFillingGroup = (key: string | number, event: Event) => {
   } else if (openedFillingGroupKey.value === key) {
     openedFillingGroupKey.value = null;
   }
+  filteredMaterialList.value = [];
 };
 
 const {module, UMconstructor} = toRefs(props)
@@ -361,15 +362,17 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
               <h3 class="item-group__title">
                 {{ fillingGroup.groupName }}
               </h3>
+            </summary>
 
+            <div class="search">
               <input
                   v-if="openedFillingGroupKey === key"
-                  class="search"
+                  class="search--input"
                   type="text"
                   placeholder="Поиск"
                   @input="(value) => onSearchChange(value, fillingGroup.items)"
               />
-            </summary>
+            </div>
 
             <div class="item-group-wrapper">
 
@@ -1141,18 +1144,17 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
   &-fillings_list {
     gap: 1rem;
   }
-
-  details[open] summary {
-    display: flex;
-    width: 80%;
-    gap: 1vh;
-    flex-direction: column;
-    align-items: flex-start;
-    padding-bottom: 2vh;
-  }
 }
 .search {
   width: 100%;
-  border-radius: 15px;
+  height: 100%;
+  padding-bottom: 2vh;
+  padding-top: 2vh;
+
+  &--input{
+    padding: 10px 15px;
+    width: 100%;
+    border-radius: 15px;
+  }
 }
 </style>
