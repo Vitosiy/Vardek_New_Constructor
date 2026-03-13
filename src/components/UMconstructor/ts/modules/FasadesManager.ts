@@ -2,7 +2,8 @@
 
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import ExternalFasadesManager from "@/components/UMconstructor/ts/modules/ExternalFasadesManager.ts";
-import {FasadeMaterial, FasadeObject, GridModule, LOOPSIDE, TSelectedCell} from "./../../types/UMtypes.ts";
+import {FasadeObject, GridModule, LOOPSIDE, TSelectedCell} from "./../../types/UMtypes.ts";
+import {TFasadeProp} from "@/types/types.ts";
 import * as THREE from "three";
 import {TFasadeTrueSizes, TTotalProps} from "@/types/types.ts";
 import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
@@ -61,12 +62,13 @@ export default class FasadesManager {
     getFasadePositionMinMax(fasade: FasadeObject) {
         const fasadeColor = this.scope.APP.FASADE[fasade.material.COLOR]
         const fasadePosition = this.getFasadePosition(fasade.material.POSITION)
-        const {MIN_FASADE_HEIGHT, MAX_FASADE_WIDTH, MIN_FASADE_WIDTH} = this.scope.CONST
+        const {MIN_FASADE_HEIGHT, MAX_FASADE_WIDTH, MIN_FASADE_WIDTH, MAX_SLIDE_DOOR_WIDTH} = this.scope.CONST
+        const grid = this.scope.UM_STORE.getUMGrid()
 
         return {
             minY: MIN_FASADE_HEIGHT,
             maxY: fasadeColor.MAX_HEIGHT || fasadePosition.FASADE_HEIGHT,
-            maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+            maxX: grid.isSlidingDoors ? MAX_SLIDE_DOOR_WIDTH : fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
             minX: MIN_FASADE_WIDTH,
         }
     }
@@ -365,7 +367,7 @@ export default class FasadesManager {
         let newFasade = <FasadeObject>{
             ...newDoor,
             id: doorIndex,
-            material: <FasadeMaterial>{ ...newDoor.material, HANDLES: {...newDoor.material.HANDLES} },
+            material: <TFasadeProp>{ ...newDoor.material, HANDLES: {...newDoor.material.HANDLES} },
         };
 
         fasades.push([newFasade]);
@@ -500,7 +502,7 @@ export default class FasadesManager {
                 height: grid.height - grid.horizont - 4,
                 position: newDoorPosition,
                 type: "fasade",
-                material: <FasadeMaterial>{
+                material: <TFasadeProp>{
                     ...FASADE_PROPS,
                     HANDLES: {...FASADE_PROPS.HANDLES},
                 },

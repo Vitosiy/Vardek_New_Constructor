@@ -306,7 +306,8 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
       if (type === "COLOR") {
         if (!value || value.ID === 7397)
           objectData.value.CONFIG[currentOption.value]["SHOW"] = false;
-        else objectData.value.CONFIG[currentOption.value]["SHOW"] = true;
+        else
+          objectData.value.CONFIG[currentOption.value]["SHOW"] = true;
       }
 
       objectData.value.CONFIG[currentOption.value][type] = value

@@ -94,7 +94,7 @@ export class FasadeBuilder {
         // Индексация под униформное текстурирование
         this.indexedFasadeToUtiformTexturing(props, isUMmodule);
 
-        const resolveColorId = (fasadeColor: number) => {
+        const resolveColorId = (fasadeColor: number, MANUAL_NO_FASADE: boolean = false) => {
 
             const isDefault = fasadeColor === this.parent.project.default_fasade_color;
 
@@ -102,14 +102,14 @@ export class FasadeBuilder {
                 case "element_down":
 
                     return {
-                        color: (defFasadeBottom && isDefault) || fasadsBottom.global ? defFasadeBottom : fasadeColor,
+                        color: !MANUAL_NO_FASADE && ((defFasadeBottom && isDefault) || fasadsBottom.global) ? defFasadeBottom : fasadeColor,
                         pallite: fasadsBottom.palitte,
                         milling: fasadsBottom.milling
                     }
                 case "element_up":
 
                     return {
-                        color: (defFasadeTop && isDefault) || fasadsTop.global ? defFasadeTop : fasadeColor,
+                        color: !MANUAL_NO_FASADE && ((defFasadeTop && isDefault) || fasadsTop.global) ? defFasadeTop : fasadeColor,
                         pallite: fasadsTop.palitte,
                         milling: fasadsTop.milling
                     }
@@ -126,7 +126,7 @@ export class FasadeBuilder {
         if (Number.isInteger(fasadeNdx)) {
 
             const fasadeData: THREETypes.TFasadeProp = FASADE_PROPS[fasadeNdx];
-            const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
+            const { color, pallite, milling } = resolveColorId(fasadeData.COLOR, fasadeData.MANUAL_NO_FASADE);
 
 
             const haveShowcase = FASADE_POSITIONS[fasadeNdx].SHOWCASE === 1
@@ -352,7 +352,7 @@ export class FasadeBuilder {
             // Массовая инициализация, когда remove=false и индекс не задан
             if (!remove && !fasadeNdx) {
 
-                const { color, pallite, milling } = resolveColorId(fasadeData.COLOR);
+                const { color, pallite, milling } = resolveColorId(fasadeData.COLOR, fasadeData.MANUAL_NO_FASADE);
                 const curFasadeList = this.parent.modelState.createFlatFasadeData({ data: currentProduct.FACADE, fasadeNdx, def: true })
 
                 const includeIncomeFasade = curFasadeList.includes(color)

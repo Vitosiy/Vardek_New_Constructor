@@ -3,12 +3,13 @@
 import FasadesManager from "@/components/UMconstructor/ts/modules/FasadesManager.ts";
 import * as THREE from "three";
 import {
-    FasadeMaterial,
     FasadeObject,
     FillingObject,
     GridModule,
     LOOPSIDE
 } from "@/components/UMconstructor/types/UMtypes.ts";
+import {TFasadeProp} from "@/types/types.ts";
+
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 
 
@@ -80,7 +81,7 @@ export default class ExternalFasadesManager {
                 height: grid.height - grid.horizont - 4,
                 position: newDoorPosition,
                 type: "fasade",
-                material: <FasadeMaterial>{
+                material: <TFasadeProp>{
                     ...FASADE_PROPS,
                 },
             };
