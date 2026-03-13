@@ -26,7 +26,8 @@ import {
 import {TTotalProps} from "@/types/types.ts";
 
 import * as THREE from "three";
-import {FasadeMaterial, FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
+import {FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
+import {TFasadeProp} from "@/types/types.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import OptionsManager from "@/components/UMconstructor/ts/modules/OptionsManager.ts";
 import {useModelState} from "@/store/appliction/useModelState.ts";
@@ -159,7 +160,7 @@ export default class UMconstructorClass {
                                 width: fasadePosition.FASADE_WIDTH,
                                 height: fasadePosition.FASADE_HEIGHT,
                                 position: new THREE.Vector3(fasadePosition.POSITION_X, fasadePosition.POSITION_Y, fasadePosition.POSITION_Z),
-                                material: <FasadeMaterial>{
+                                material: <TFasadeProp>{
                                     ...FASADE_PROPS
                                 },
                                 type: "fasade",
@@ -175,7 +176,7 @@ export default class UMconstructorClass {
                                 width: fasadePosition2.FASADE_WIDTH,
                                 height: fasadePosition2.FASADE_HEIGHT,
                                 position: new THREE.Vector3(fasadePosition2.POSITION_X, fasadePosition2.POSITION_Y, fasadePosition2.POSITION_Z),
-                                material: <FasadeMaterial>{
+                                material: <TFasadeProp>{
                                     ...FASADE_PROPS_2
                                 },
                                 type: "fasade",
@@ -199,7 +200,7 @@ export default class UMconstructorClass {
                                     width: fasade_width,
                                     height: FASADE.FASADE_HEIGHT,
                                     position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
-                                    material: <FasadeMaterial>{
+                                    material: <TFasadeProp>{
                                         ...FASADE_PROPS
                                     },
                                     loopsSide: LOOPSIDE["left"],
@@ -216,7 +217,7 @@ export default class UMconstructorClass {
                                     width: fasade_width,
                                     height: FASADE.FASADE_HEIGHT,
                                     position: new THREE.Vector2(FASADE.POSITION_X + fasade_width + 4 , FASADE.POSITION_Y),
-                                    material: <FasadeMaterial>{
+                                    material: <TFasadeProp>{
                                         ...FASADE_PROPS
                                     },
                                     loopsSide: LOOPSIDE["right"],
@@ -237,7 +238,7 @@ export default class UMconstructorClass {
                                     width: FASADE.FASADE_WIDTH,
                                     height: FASADE.FASADE_HEIGHT - _module.horizont,
                                     position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
-                                    material: <FasadeMaterial>{
+                                    material: <TFasadeProp>{
                                         ...FASADE_PROPS
                                     },
                                     loopsSide: LOOPSIDE["left"],

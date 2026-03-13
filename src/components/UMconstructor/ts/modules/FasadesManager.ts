@@ -2,7 +2,8 @@
 
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import ExternalFasadesManager from "@/components/UMconstructor/ts/modules/ExternalFasadesManager.ts";
-import {FasadeMaterial, FasadeObject, GridModule, LOOPSIDE, TSelectedCell} from "./../../types/UMtypes.ts";
+import {FasadeObject, GridModule, LOOPSIDE, TSelectedCell} from "./../../types/UMtypes.ts";
+import {TFasadeProp} from "@/types/types.ts";
 import * as THREE from "three";
 import {TFasadeTrueSizes, TTotalProps} from "@/types/types.ts";
 import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
@@ -365,7 +366,7 @@ export default class FasadesManager {
         let newFasade = <FasadeObject>{
             ...newDoor,
             id: doorIndex,
-            material: <FasadeMaterial>{ ...newDoor.material, HANDLES: {...newDoor.material.HANDLES} },
+            material: <TFasadeProp>{ ...newDoor.material, HANDLES: {...newDoor.material.HANDLES} },
         };
 
         fasades.push([newFasade]);
@@ -500,7 +501,7 @@ export default class FasadesManager {
                 height: grid.height - grid.horizont - 4,
                 position: newDoorPosition,
                 type: "fasade",
-                material: <FasadeMaterial>{
+                material: <TFasadeProp>{
                     ...FASADE_PROPS,
                     HANDLES: {...FASADE_PROPS.HANDLES},
                 },

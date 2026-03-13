@@ -31,11 +31,13 @@ const selectUMData = (data) => {
 };
 
 const saveUMData = ({ data, canvasHeight }) => {
-  if (!props.product) return;
-  if (!props.product.userData) return;
+  if (!props.product)
+    return;
+
+  if (!props.product.userData)
+    return;
 
   let saveData = universalModule2DConstructor.value.saveGrid()
-
   if(!saveData)
     return;
 
@@ -43,14 +45,15 @@ const saveUMData = ({ data, canvasHeight }) => {
 
   props.product.userData.PROPS.CONFIG.MODULEGRID = tmp_result;
   UMstore.setUMCashGrid(tmp_result)
+  const {PROPS} = props.product.userData
+  saveConfigCash(PROPS)
 
   gridUMSaved.value = true;
   toaster.success('Модуль сохранен')
   eventBus.emit("A:UM-update", UMstore.getUMCashGrid());
 };
 
-const openUMRedactor = () => {
-  const {PROPS} = props.product.userData
+const saveConfigCash = (PROPS) => {
   const {CONFIG} = PROPS
   const {
     MODULEGRID,
@@ -96,6 +99,11 @@ const openUMRedactor = () => {
   }
 
   UMstore.setUMCashConfig(universalModuleConfigCash)
+}
+
+const openUMRedactor = () => {
+  const {PROPS} = props.product.userData
+  saveConfigCash(PROPS)
   isUMModalOpen.value = true;
 };
 
