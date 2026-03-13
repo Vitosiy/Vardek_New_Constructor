@@ -6,7 +6,7 @@ import "@/components/UMconstructor/styles/UM.scss"
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import Toggle from "@vueform/toggle";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {onMounted, ref, toRefs, watch, computed} from "vue";
+import {onMounted, ref, toRefs, watch, computed, onBeforeMount} from "vue";
 import {TTotalProps} from "@/types/types.ts";
 
 const props = defineProps({
@@ -94,13 +94,26 @@ watch(() => UMconstructor?.value?.UM_STORE.onWallModule, () => {
   }
 })
 
+onBeforeMount(() => {
+  if(UMconstructor?.value?.UM_STORE) {
+    totalHeight.value = UMconstructor.value.UM_STORE.totalHeight
+    totalWidth.value = UMconstructor.value.UM_STORE.totalWidth
+    totalDepth.value = UMconstructor.value.UM_STORE.totalDepth
+    onHorizont.value = UMconstructor.value.UM_STORE.onHorizont
+    onSideProfile.value = UMconstructor.value.UM_STORE.onSideProfile
+    noBottom.value = UMconstructor.value.UM_STORE.noBottom
+  }
+})
+
 onMounted(() => {
-  totalHeight.value = UMconstructor.value.UM_STORE.totalHeight
-  totalWidth.value = UMconstructor.value.UM_STORE.totalWidth
-  totalDepth.value = UMconstructor.value.UM_STORE.totalDepth
-  onHorizont.value = UMconstructor.value.UM_STORE.onHorizont
-  onSideProfile.value = UMconstructor.value.UM_STORE.onSideProfile
-  noBottom.value = UMconstructor.value.UM_STORE.noBottom
+  if(UMconstructor?.value?.UM_STORE) {
+    totalHeight.value = UMconstructor.value.UM_STORE.totalHeight
+    totalWidth.value = UMconstructor.value.UM_STORE.totalWidth
+    totalDepth.value = UMconstructor.value.UM_STORE.totalDepth
+    onHorizont.value = UMconstructor.value.UM_STORE.onHorizont
+    onSideProfile.value = UMconstructor.value.UM_STORE.onSideProfile
+    noBottom.value = UMconstructor.value.UM_STORE.noBottom
+  }
 })
 
 </script>

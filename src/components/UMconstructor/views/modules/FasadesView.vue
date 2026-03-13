@@ -10,7 +10,7 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import {ref, toRefs, onMounted, watch} from "vue";
 import {TSelectedCell, GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
-import {TFasadeTrueSizes} from "@/types/types.ts";
+import {TFasadeProp, TFasadeTrueSizes} from "@/types/types.ts";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
 
 const props = defineProps({
@@ -40,8 +40,8 @@ type selectedMaterial = {
   cell?: number | null,
   row?: number | null,
   extra?: number | null,
-  item?: number | null
-  data: {},
+  item?: number | null,
+  data: TFasadeProp,
   fasadeSize?: {},
 }
 const isOpenMaterialSelector = ref<boolean>(false);
@@ -164,7 +164,15 @@ const selectHandle = (data: any, type: string) => {
 
 const selectOption = (value: Object, type: string, palette: Object = false) => {
   currentFasadeMaterial.value.data[type] = value ? value.ID || value : null;
-  if (palette) currentFasadeMaterial.value.data["PALETTE"] = palette;
+  if (palette)
+    currentFasadeMaterial.value.data["PALETTE"] = palette;
+
+  if(type === "COLOR") {
+    if (currentFasadeMaterial.value.data[type] === UMconstructor?.value?.CONST.NO_FASADE_ID)
+      currentFasadeMaterial.value.data["MANUAL_NO_FASADE"] = true
+    else
+      delete currentFasadeMaterial.value.data["MANUAL_NO_FASADE"]
+  }
 
   let { sec, cell, row } = currentFasadeMaterial.value;
   if (sec === null) {
@@ -180,8 +188,6 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
             currentFasadeMaterial.value.data
         );
   }
-
-  //UMconstructor?.value?.reset(module.value)
 };
 
 const closeMenu = () => {
