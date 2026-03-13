@@ -1,4 +1,4 @@
-export const UI_PARAMS = {
+export const UM_PARAMS = {
     TOTAL_LENGTH: 3000, // Общая длина в миллиметрах
     TOTAL_HEIGHT: 1200, // Общая высота в миллиметрах
     CONST_MAX_AREA_WIDTH: 800, // Максимальная ширина области в пикселях
@@ -9,6 +9,7 @@ export const UI_PARAMS = {
     MIN_FASADE_HEIGHT: 360,
     MIN_FASADE_WIDTH: 126,
     MAX_FASADE_WIDTH: 600,
+    MAX_SLIDE_DOOR_WIDTH: 1300,
     MIN_HOLE_SIZE_MM: 100, // Минимальный размер отверстия в мм
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
     NO_FASADE_ID: 7397,

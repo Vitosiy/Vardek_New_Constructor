@@ -33,7 +33,7 @@ const selectedFasade = ref<TSelectedCell>(<TSelectedCell>{})
 const selectedCell = ref<TSelectedCell>(<TSelectedCell>{})
 
 const step = ref<number>(1)
-const { createSurfaceList } =
+const {createSurfaceList} =
     useFigureRightPage();
 type selectedMaterial = {
   sec: number | null,
@@ -51,7 +51,7 @@ const currentFasadeSize = ref<TFasadeTrueSizes | boolean>(false);
 const isOpenHandleSelector = ref<boolean>(false);
 const currentHandle = ref<selectedMaterial | boolean>(false);
 
-const showCurrentCol = (secIndex: number | null = 0, cellIndex: number|null = null, rowIndex: number|null = null) => {
+const showCurrentCol = (secIndex: number | null = 0, cellIndex: number | null = null, rowIndex: number | null = null) => {
   UMconstructor?.value?.selectCell("fasades", <TSelectedCell>{sec: secIndex, cell: cellIndex, row: rowIndex});
 };
 
@@ -62,23 +62,23 @@ const handleCellSelect = () => {
   UMconstructor?.value?.debounce("handleCellSelectFasades", () => {
     let idTag = `fasade_${sec}`
 
-    if(cell !== null)
+    if (cell !== null)
       idTag += `_${cell}`;
 
-    if(row !== null)
+    if (row !== null)
       idTag += `_${row}`
 
     let domElem = document.getElementById(idTag)
-    if(domElem) {
+    if (domElem) {
       domElem.scrollIntoView();
     }
   }, 10)
 };
 
-const openFasadeSelector = (sec: number, cell: number|null = null, row: number|null = null) => {
+const openFasadeSelector = (sec: number, cell: number | null = null, row: number | null = null) => {
   isOpenMaterialSelector.value = false;
 
-  if(isOpenHandleSelector.value)
+  if (isOpenHandleSelector.value)
     closeMenu()
 
   /** @Создание_данных_для_выбранного_фасада */
@@ -86,9 +86,11 @@ const openFasadeSelector = (sec: number, cell: number|null = null, row: number|n
 
   if (
       currentFasadeMaterial.value &&
-      sec === currentFasadeMaterial.value.sec &&
-      cell === currentFasadeMaterial.value.cell &&
-      row === currentFasadeMaterial.value.row
+      (
+          sec === currentFasadeMaterial.value.sec &&
+          cell === currentFasadeMaterial.value.cell &&
+          row === currentFasadeMaterial.value.row
+      )
   ) {
     closeMenu()
     return;
@@ -111,18 +113,20 @@ const openFasadeSelector = (sec: number, cell: number|null = null, row: number|n
   }, 10);
 };
 
-const openHandleSelector = (sec: number|null, cell: number|null = null, row: number|null = null) => {
+const openHandleSelector = (sec: number | null, cell: number | null = null, row: number | null = null) => {
   isOpenHandleSelector.value = false;
   isOpenMaterialSelector.value = false;
 
-  if(isOpenMaterialSelector.value)
+  if (isOpenMaterialSelector.value)
     closeMenu()
 
   if (
       currentHandle.value &&
-      sec === currentHandle.value.sec &&
-      cell === currentHandle.value.cell &&
-      row === currentHandle.value.row
+      (
+          sec === currentHandle.value.sec &&
+          cell === currentHandle.value.cell &&
+          row === currentHandle.value.row
+      )
   ) {
     closeMenu()
     return;
@@ -145,7 +149,7 @@ const openHandleSelector = (sec: number|null, cell: number|null = null, row: num
 };
 
 const createFacadeData = (
-    fasadeIndex: number|undefined,
+    fasadeIndex: number | undefined,
 ) => {
   UMconstructor?.value?.FASADES.createFacadeData(fasadeIndex)
 };
@@ -167,14 +171,14 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
   if (palette)
     currentFasadeMaterial.value.data["PALETTE"] = palette;
 
-  if(type === "COLOR") {
+  if (type === "COLOR") {
     if (currentFasadeMaterial.value.data[type] === UMconstructor?.value?.CONST.NO_FASADE_ID)
       currentFasadeMaterial.value.data["MANUAL_NO_FASADE"] = true
     else
       delete currentFasadeMaterial.value.data["MANUAL_NO_FASADE"]
   }
 
-  let { sec, cell, row } = currentFasadeMaterial.value;
+  let {sec, cell, row} = currentFasadeMaterial.value;
   if (sec === null) {
     module.value.fasades[cell][row].material = Object.assign(
         module.value.fasades[cell][row].material,
@@ -207,6 +211,31 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
   selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected("fasades")
   selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected("module")
   handleCellSelect()
+})
+
+watch(() => selectedFasade.value, () => {
+  const {sec, cell, row} = selectedFasade.value;
+  if (
+      currentFasadeMaterial.value &&
+      !(
+          sec === currentFasadeMaterial.value.sec &&
+          cell === currentFasadeMaterial.value.cell &&
+          row === currentFasadeMaterial.value.row
+      )
+  ) {
+    closeMenu()
+    return;
+  } else if (
+      currentHandle.value &&
+      !(
+          sec === currentHandle.value.sec &&
+          cell === currentHandle.value.cell &&
+          row === currentHandle.value.row
+      )
+  ) {
+    closeMenu()
+    return;
+  }
 })
 </script>
 
@@ -280,7 +309,8 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                 >
                   <summary>
                     <h3 class="item-group__title">
-                      Сегмент №{{ doorIndex + 1
+                      Сегмент №{{
+                        doorIndex + 1
                       }}{{ door.length > 1 ? `.${segment.id/*segmentIndex + 1*/}` : "" }}
                     </h3>
                   </summary>
@@ -348,6 +378,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                             :class="[
                                 {
                                   active:
+                                    isOpenMaterialSelector &&
                                     currentFasadeMaterial.cell ===
                                       doorIndex &&
                                     currentFasadeMaterial.row ===
@@ -372,24 +403,24 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                         />
                         <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
 
-<!--                        <ConfigurationOption
-                            v-if="!segment.error"
-                            :disable-delete-choice="true"
-                            :class="[
-                                {
-                                  active:
-                                    currentHandle.cell ===
-                                      doorIndex &&
-                                    currentHandle.row ===
-                                      segmentIndex,
-                                },
-                              ]"
-                            :type="'Handles'"
-                            :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
-                            @click="
-                              openHandleSelector(null, doorIndex, segmentIndex)
-                            "
-                        />-->
+                        <!--                        <ConfigurationOption
+                                                    v-if="!segment.error"
+                                                    :disable-delete-choice="true"
+                                                    :class="[
+                                                        {
+                                                          active:
+                                                            currentHandle.cell ===
+                                                              doorIndex &&
+                                                            currentHandle.row ===
+                                                              segmentIndex,
+                                                        },
+                                                      ]"
+                                                    :type="'Handles'"
+                                                    :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
+                                                    @click="
+                                                      openHandleSelector(null, doorIndex, segmentIndex)
+                                                    "
+                                                />-->
 
                       </div>
                     </article>
@@ -464,8 +495,9 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                     </button>
                     <p class="actions-title actions-title--part">Дверь №{{ doorIndex + 1 }}</p>
                   </div>
-                  <p class="actions-title actions-title--part">Высота сегментов: {{UMconstructor.FASADES.calcSumHeightDoorSegmentes(secIndex, doorIndex, module)}}</p>
-                  <p class="actions-title actions-title--part">Ширина: {{door?.[0]?.width}}</p>
+                  <p class="actions-title actions-title--part">Высота сегментов:
+                    {{ UMconstructor.FASADES.calcSumHeightDoorSegmentes(secIndex, doorIndex, module) }}</p>
+                  <p class="actions-title actions-title--part">Ширина: {{ door?.[0]?.width }}</p>
                 </div>
               </div>
 
@@ -607,6 +639,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
                               :class="[
                                 {
                                   active:
+                                    isOpenMaterialSelector &&
                                     currentFasadeMaterial.sec ===
                                       secIndex &&
                                     currentFasadeMaterial.cell ===
@@ -671,8 +704,9 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="no-select color--right-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color--right-select">
-      <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+    <div class="no-select color--right-select" v-if="isOpenMaterialSelector || isOpenHandleSelector"
+         key="color--right-select">
+      <ClosePopUpButton class="menu__close" @close="closeMenu()"/>
 
       <AdvanceCorpusMaterialRedactor
           v-if="isOpenMaterialSelector"
