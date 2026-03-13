@@ -11,6 +11,7 @@ type TsizeData = {
     height: number
     depth: number
 }
+import {UM_PARAMS} from "@/components/UMconstructor/utils/Const.ts";
 
 export const useConversationActions = () => {
 
@@ -47,6 +48,11 @@ export const useConversationActions = () => {
 
         const curModel = modelState.getCurrentModel
         const isUM = !!curModel?.userData?.PROPS?.CONFIG?.MODULEGRID;
+        let isSlideDoor = false;
+
+        if (isUM) {
+            isSlideDoor = !!curModel.userData.PROPS.CONFIG.isSlideDoor;
+        }
 
         const temp = {
             MAX_HEIGHT: Infinity,
@@ -66,7 +72,7 @@ export const useConversationActions = () => {
         const restrict = {
             MAX_HEIGHT: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
             MIN_HEIGHT: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.MIN_HEIGHT : -Infinity,
-            MAX_WIDTH: isUM ? "600" : toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
+            MAX_WIDTH: isUM ? (isSlideDoor ? UM_PARAMS.MAX_SLIDE_DOOR_WIDTH : UM_PARAMS.MAX_FASADE_WIDTH) : toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
             MIN_WIDTH: toCheck ? _FASADE_SIZE_RESTRICT[section.ID].SIZE_RESTRICT.MIN_WIDTH : -Infinity,
         }
 

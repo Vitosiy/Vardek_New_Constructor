@@ -62,12 +62,13 @@ export default class FasadesManager {
     getFasadePositionMinMax(fasade: FasadeObject) {
         const fasadeColor = this.scope.APP.FASADE[fasade.material.COLOR]
         const fasadePosition = this.getFasadePosition(fasade.material.POSITION)
-        const {MIN_FASADE_HEIGHT, MAX_FASADE_WIDTH, MIN_FASADE_WIDTH} = this.scope.CONST
+        const {MIN_FASADE_HEIGHT, MAX_FASADE_WIDTH, MIN_FASADE_WIDTH, MAX_SLIDE_DOOR_WIDTH} = this.scope.CONST
+        const grid = this.scope.UM_STORE.getUMGrid()
 
         return {
             minY: MIN_FASADE_HEIGHT,
             maxY: fasadeColor.MAX_HEIGHT || fasadePosition.FASADE_HEIGHT,
-            maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+            maxX: grid.isSlidingDoors ? MAX_SLIDE_DOOR_WIDTH : fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
             minX: MIN_FASADE_WIDTH,
         }
     }

@@ -1,7 +1,7 @@
 //@ts-nocheck
 
 import FasadesManager from "@/components/UMconstructor/ts/modules/FasadesManager.ts";
-import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
+import {UM_PARAMS} from "./../utils/Const.ts";
 import FillingsManager from "@/components/UMconstructor/ts/modules/FillingsManager.ts";
 import ProfilesManager from "@/components/UMconstructor/ts/modules/ProfilesManager.ts";
 import SidecolorsManager from "@/components/UMconstructor/ts/modules/SidecolorsManager.ts";
@@ -39,7 +39,7 @@ export default class UMconstructorClass {
     UM_STORE: ReturnType<typeof useUMStorage> = useUMStorage();
     APP: ReturnType<typeof useAppData> = useAppData().getAppData;
     MODEL_STATE: ReturnType<typeof useModelState> = useModelState();
-    CONST: typeof UI_PARAMS
+    CONST: typeof UM_PARAMS
     BUILDER: ReturnType<typeof UniversalGeometryBuilder.buildProduct>;
     AlERT: ReturnType<typeof useToast> = useToast();
     FASADES: FasadesManager
@@ -55,7 +55,7 @@ export default class UMconstructorClass {
     DEBOUNCES: {}
 
     constructor() {
-        this.CONST = UI_PARAMS
+        this.CONST = UM_PARAMS
         this.BUILDER = new UniversalGeometryBuilder(<Application>{}).buildProduct
 
         this.FASADES = new FasadesManager(this)
@@ -91,6 +91,7 @@ export default class UMconstructorClass {
                 MIN_FASADE_HEIGHT,
                 MIN_FASADE_WIDTH,
                 MAX_FASADE_WIDTH,
+                MAX_SLIDE_DOOR_WIDTH,
             } = this.CONST;
 
             const PROPS = productData.PROPS;
@@ -110,8 +111,7 @@ export default class UMconstructorClass {
                             "#Z#": depth,
                         }))
 
-
-                const isSlidingDoors = !PROPS.CONFIG.LOOPS;
+                const isSlidingDoors = PROPS.CONFIG.isSlideDoor;
                 let fasades;
 
                 let section: GridSection = {
@@ -166,7 +166,7 @@ export default class UMconstructorClass {
                                 type: "fasade",
                                 minY: MIN_FASADE_HEIGHT,
                                 maxY: fasadeColor.MAX_HEIGHT || fasadePosition.FASADE_HEIGHT,
-                                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                                maxX: MAX_SLIDE_DOOR_WIDTH,
                                 minX: MIN_FASADE_WIDTH
                             }
                         ],
@@ -182,7 +182,7 @@ export default class UMconstructorClass {
                                 type: "fasade",
                                 minY: MIN_FASADE_HEIGHT,
                                 maxY: fasadeColor.MAX_HEIGHT || fasadePosition2.FASADE_HEIGHT,
-                                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                                maxX: MAX_SLIDE_DOOR_WIDTH,
                                 minX: MIN_FASADE_WIDTH
                             }
                         ]

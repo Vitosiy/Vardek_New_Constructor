@@ -463,7 +463,14 @@ export type TConfig = {
   EXPRESSIONS: TExpressions,
   ROTATION: TRotationEuler,
   MODULEGRID?: GridModule,
+  BACKWALL?: TFasadeProp,
+  LEFTSIDECOLOR?: TFasadeProp,
+  RIGHTSIDECOLOR?: TFasadeProp,
+  TOPFASADECOLOR?: TFasadeProp,
+  LOOPS?: {},
   isHiTech?: boolean,
+  isSlideDoor?: boolean,
+  isRestrictedModule?: boolean,
 }
 
 export type TTotalProps = {
