@@ -278,6 +278,36 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
   selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
 })
 
+ watch(() => selectedFilling.value, () => {
+   const {sec, cell, row, extra, item} = selectedFilling.value;
+   if (
+       currentFasadeMaterial.value &&
+       !(
+           sec === currentFasadeMaterial.value.sec &&
+           cell === currentFasadeMaterial.value.cell &&
+           row === currentFasadeMaterial.value.row &&
+           extra === currentFasadeMaterial.value.extra &&
+           item === currentFasadeMaterial.value.item
+       )
+   ) {
+     closeMenu()
+     return;
+   }
+   else if (
+       currentHandle.value &&
+       !(
+           sec === currentHandle.value.sec &&
+           cell === currentHandle.value.cell &&
+           row === currentHandle.value.row &&
+           extra === currentHandle.value.extra &&
+           item === currentHandle.value.item
+       )
+   ) {
+     closeMenu()
+     return;
+   }
+ })
+
 </script>
 
 <template>

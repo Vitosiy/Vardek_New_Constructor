@@ -250,8 +250,12 @@ export class BuildUniversalModule extends BuildProduct {
 
         CONFIG.TOPFASADECOLOR = { COLOR: 7397, SHOW: false }
 
-        if (product_data.moduleType.CODE !== "wardrobe")
+        if (product_data.moduleType.CODE !== "wardrobe") {
             CONFIG.LOOPS = {}
+        }
+        else {
+            CONFIG.isSlideDoor = true
+        }
 
         if (this._APP.CATALOG.SECTIONS[product_data.OPTIONSECTION_ID].TYPE.toLowerCase().includes("hitech"))
             CONFIG.isHiTech = true

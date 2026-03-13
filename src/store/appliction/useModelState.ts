@@ -7,6 +7,7 @@ import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
 import { MILLINGS, additionalMillingKeys, MILLING_HANDLE_KEYS, INTEGRATE_HANDE_EXEPTIONS } from '@/Application/F-millings';
 import { number } from "yup";
+import {UM_PARAMS} from "@/components/UMconstructor/utils/Const.ts";
 
 export type TFasadeGroupSize = {
 
@@ -382,6 +383,10 @@ export const useModelState = defineStore('ModelState', () => {
         }
 
         const isUM = !!getCurrentModel.value?.userData?.PROPS?.CONFIG?.MODULEGRID;
+        let isSlideDoor = false;
+        if (isUM) {
+            isSlideDoor = !!getCurrentModel.value.userData.PROPS.CONFIG.isSlideDoor;
+        }
 
         data.forEach(facadeId => {
             const facade = _FASADE.value[facadeId];
@@ -404,7 +409,7 @@ export const useModelState = defineStore('ModelState', () => {
 
                     id: [], size: {
                         MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
-                        MAX_WIDTH: isUM ? "600" : restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
+                        MAX_WIDTH: isUM ? (isSlideDoor ? UM_PARAMS.MAX_SLIDE_DOOR_WIDTH : UM_PARAMS.MAX_FASADE_WIDTH) : restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
                         MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : -Infinity,
                         MIN_WIDTH: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : -Infinity,
                     },

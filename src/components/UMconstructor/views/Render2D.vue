@@ -11,7 +11,7 @@ import {
 } from "vue";
 import {Application, Container, Graphics, Text} from "pixi.js";
 import {Shape, ShapeAdjuster, Section} from "./../utils/PixiMethods.ts";
-import {UI_PARAMS} from "./../utils/Const.ts";
+import {UM_PARAMS} from "./../utils/Const.ts";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import * as THREE from "three";
 import {LOOPSIDE, TSelectedCell} from "./../types/UMtypes.ts";
@@ -94,7 +94,7 @@ const {
   MIN_SECTION_HEIGHT,
   MIN_FASADE_HEIGHT,
   MIN_FASADE_WIDTH
-} = UI_PARAMS;
+} = UM_PARAMS;
 
 const dragState = reactive({
   isDragging: false,

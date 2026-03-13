@@ -1,5 +1,5 @@
 // @ts-nocheck 31
-import {UI_PARAMS} from "./Const.ts";
+import {UM_PARAMS} from "./Const.ts";
 import {Container, Graphics, GraphicsPath, Text, TextStyle} from "pixi.js";
 import * as THREE from "three";
 import {MANUFACTURER} from "@/types/constructor2d/interfaсes.ts";
@@ -49,7 +49,7 @@ const {
     MAX_SECTION_WIDTH,
     CONST_MAX_AREA_HEIGHT,
     CONST_MAX_AREA_WIDTH
-} = UI_PARAMS;
+} = UM_PARAMS;
 
 type TExtremum = { maxX: number, maxY: number, minX: number, minY: number }
 
@@ -60,7 +60,7 @@ class Helpers {
     step: number = 1
 
     constructor() {
-        this.maxAreaHeight = UI_PARAMS.TOTAL_HEIGHT * CONST_MAX_AREA_HEIGHT / UI_PARAMS.TOTAL_LENGTH
+        this.maxAreaHeight = UM_PARAMS.TOTAL_HEIGHT * CONST_MAX_AREA_HEIGHT / UM_PARAMS.TOTAL_LENGTH
     }
 
     setStep(value: number) {
@@ -68,20 +68,20 @@ class Helpers {
     }
 
     getPixelWidth(mmWidth: number) {
-        return (mmWidth / UI_PARAMS.TOTAL_LENGTH) * CONST_MAX_AREA_WIDTH;
+        return (mmWidth / UM_PARAMS.TOTAL_LENGTH) * CONST_MAX_AREA_WIDTH;
     };
 
     getPixelHeight(mmHeight: number) {
         // return Math.floor((mmHeight / TOTAL_HEIGHT) * getMaxAreaHeight.value);
-        return (mmHeight / UI_PARAMS.TOTAL_HEIGHT) * this.maxAreaHeight;
+        return (mmHeight / UM_PARAMS.TOTAL_HEIGHT) * this.maxAreaHeight;
     };
 
     getMmWidth(pxWidth: number) {
-        return (pxWidth / CONST_MAX_AREA_WIDTH) * UI_PARAMS.TOTAL_LENGTH;
+        return (pxWidth / CONST_MAX_AREA_WIDTH) * UM_PARAMS.TOTAL_LENGTH;
     };
 
     getMmHeight(pxHeight: number) {
-        return (pxHeight / this.maxAreaHeight) * UI_PARAMS.TOTAL_HEIGHT;
+        return (pxHeight / this.maxAreaHeight) * UM_PARAMS.TOTAL_HEIGHT;
     };
 
     convertToTen(value) {
@@ -141,7 +141,7 @@ class Helpers {
 
         const sBounds = sector.getBounds()
         const sMax = this.convertToTen(this.getMmWidth(sBounds.maxX))
-        return sMax - minX + UI_PARAMS.SECTOR_PADDING
+        return sMax - minX + UM_PARAMS.SECTOR_PADDING
 
     }
 
@@ -152,7 +152,7 @@ class Helpers {
 
         const sBounds = sector.getBounds()
         const sMin = this.convertToTen(this.getMmWidth(sBounds.minX))
-        return maxX - sMin + UI_PARAMS.SECTOR_PADDING
+        return maxX - sMin + UM_PARAMS.SECTOR_PADDING
     }
 
     getSectionTop(sector, maxY) {
@@ -162,7 +162,7 @@ class Helpers {
 
         const sBounds = sector.getBounds()
         const sMin = this.convertToTen(this.getMmWidth(sBounds.minY))
-        return maxY - sMin + UI_PARAMS.SECTOR_PADDING
+        return maxY - sMin + UM_PARAMS.SECTOR_PADDING
     }
 
     getSectionBottom(sector, minY) {
@@ -172,7 +172,7 @@ class Helpers {
 
         const sBounds = sector.getBounds()
         const sMax = this.convertToTen(this.getMmWidth(sBounds.maxY))
-        return sMax - minY + UI_PARAMS.SECTOR_PADDING
+        return sMax - minY + UM_PARAMS.SECTOR_PADDING
     }
 
     getValidValue({
