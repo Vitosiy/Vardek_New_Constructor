@@ -475,7 +475,7 @@ export class BuildProduct extends BuildersHelper {
 
         // Формируем итоговую группу в зависимости от исключений
         const totalParts = curBodyExceptions
-            ? [body, shelf, arrows]
+            ? [body, shelf,fasade, arrows]
             : [plinth, legs, body, shelf, fasade, drower, arrows];
 
         totalParts.filter(Boolean).forEach(part => total.add(part as THREE.Object3D));
