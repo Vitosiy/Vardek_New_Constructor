@@ -15,6 +15,7 @@ export interface LoadProjectsParams {
   dateTo?: string
   elementsOnPage: number
   currentPage: number
+  readySolutions?: boolean
 }
 
 /** Результат загрузки списка проектов: элементы текущей страницы и общее количество с сервера */
@@ -135,7 +136,7 @@ export function useProjectAPI() {
         isLoading.value = true
 
         try {
-          const filter: Record<string, string | number> = {
+          const filter: Record<string, string | number | boolean> = {
             designer: params.designerValue
           }
           if (params.id != null && !isNaN(params.id) && params.id > 0) {
@@ -149,6 +150,9 @@ export function useProjectAPI() {
           }
           if (params.dateTo) {
             filter.dateTo = params.dateTo
+          }
+          if (params.readySolutions != null) {
+            filter.readySolutions = params.readySolutions
           }
 
           const requestBody = {
