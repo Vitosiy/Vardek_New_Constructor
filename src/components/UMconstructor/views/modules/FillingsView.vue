@@ -207,6 +207,13 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
   if (palette)
     currentFasadeMaterial.value.data['PALETTE'] = palette
 
+  if(type === "COLOR") {
+    if (currentFasadeMaterial.value.data[type] === UMconstructor?.value?.CONST.NO_FASADE_ID)
+      currentFasadeMaterial.value.data["MANUAL_NO_FASADE"] = true
+    else
+      delete currentFasadeMaterial.value.data["MANUAL_NO_FASADE"]
+  }
+
   let {sec, cell, row, item} = currentFasadeMaterial.value;
   const curSection = module.value.sections[sec]
   const curCell = curSection?.cells?.[cell]

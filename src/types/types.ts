@@ -399,7 +399,8 @@ export type TFasadeProp = {
     id: number,
     params: TFasadePropsSizes
   },
-  DRAWER: TDrawer
+  DRAWER: TDrawer,
+  MANUAL_NO_FASADE?: boolean
 }
 
 export type TModelData = {

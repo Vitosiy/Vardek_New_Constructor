@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {TFasadeProp} from "@/types/types.ts";
 
 export interface FillingObject {
     product: number;
@@ -38,23 +39,12 @@ export interface FasadeObject {
     position: THREE.Vector2 | THREE.Vector3;
     width: number;
     height: number;
-    material: FasadeMaterial;
+    material: TFasadeProp;
     minY: number;
     maxY: number;
     minX?: number;
     maxX?: number;
     error?: boolean;
-}
-export interface FasadeMaterial {
-    COLOR: number;
-    POSITION: number;
-    GLASS?: number;
-    MILLING?: number;
-    PALETTE?: number;
-    PATINA?: number;
-    TYPE?: number;
-    WINDOW?: number;
-    ALUM?: number;
 }
 
 export const MANUFACTURER = {

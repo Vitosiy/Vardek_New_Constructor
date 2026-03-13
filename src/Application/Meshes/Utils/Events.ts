@@ -352,6 +352,9 @@ export class MeshEvents extends BuildersHelper {
         const fasadeProp = FASADE_PROPS[fasadeNdx];
 
         fasadeProp.COLOR = data.ID
+        if (fasadeProp.MANUAL_NO_FASADE)
+            delete fasadeProp.MANUAL_NO_FASADE
+
         fasadeProp.ALUM = incomingModel;
 
         if (UNIFORM_TEXTURE.group !== null) {

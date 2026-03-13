@@ -6,10 +6,10 @@ import {
     GridModule,
     TSelectedCell,
     DrawerFasadeObject,
-    FasadeMaterial,
     FillingObject,
     MANUFACTURER
 } from "@/components/UMconstructor/types/UMtypes.ts";
+import {TFasadeProp} from "@/types/types.ts";
 
 export default class FillingsManager {
     scope: UMconstructorClass
@@ -392,7 +392,7 @@ export default class FillingsManager {
                 maxY: product.MAX_FASADE_SIZE,
                 loopsSide: false,
                 position: new THREE.Vector2(baseFasade.position.x, grid.height - (startFillingData.y + startFillingData.height + manufacturerOffset)),
-                material: <FasadeMaterial>{
+                material: <TFasadeProp>{
                     ...baseFasade.material,
                     HANDLES: {...baseFasade.material.HANDLES}
                 },
