@@ -160,6 +160,7 @@ defineExpose({
           :productData="universalModuleData.PROPS"
           :canvasHeight="universalModuleData.canvasHeight"
           :canvasWidth="universalModuleData.canvasWidth"
+          @close-modal="closeUMRedactor"
         >
           <template #save>
             <button class="no-select actions-btn actions-btn--footer" @click="saveUMData">
