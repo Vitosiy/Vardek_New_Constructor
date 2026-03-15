@@ -86,6 +86,9 @@ export const useOptions = () => {
                                 UM_STORE.onHorizont = true
                                 UM_STORE.noBottom = false
                                 break;
+                            case 1795067: //Опция без петель
+                                UM_STORE.noLoops = false
+                                break
                             case 4722965:   //Навесной
                                 UM_STORE.onHorizont = true
                                 UM_STORE.onWallModule = false
@@ -150,6 +153,13 @@ export const useOptions = () => {
                     UM_STORE.onWallModule = false
                 }
                 break;
+            case 1795067: //Опция без петель
+                if(curOpt.active) {
+                    UM_STORE.noLoops = true
+                }
+                else {
+                    UM_STORE.noLoops = false
+                }
             case 5738924:   //Без дна
                 if (curOpt.active) {
                     PROPS.CONFIG.BACKWALL = { COLOR: false, SHOW: false };
