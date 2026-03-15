@@ -46,6 +46,12 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(["close-modal"]);
+
+const closeModal = () => {
+  emit("close-modal", false);
+};
+
 const changeConstructorMode = (_mode: constructorMode) => {
   if (_mode && visualizationRef.value) {
     mode.value = _mode;
@@ -103,16 +109,22 @@ onBeforeMount(() => {
   });
 
   if(!module.value) {
-    toaster.error('Ошибка создания модуля!')
-    return;
+    toaster.error('Ошибка создания модуля!', refFooter)
+    closeModal()
   }
 })
 
 onMounted(() => {
-  UMstore.setUMGrid(module.value);
-  UMconstructor.value?.setRenderRef(visualizationRef)
-  UMconstructor.value?.setAlertRef(refFooter)
-  UMconstructor.value?.reset(UMstore.getUMGrid())
+  if (module.value) {
+    UMstore.setUMGrid(module.value);
+    UMconstructor.value?.setRenderRef(visualizationRef)
+    UMconstructor.value?.setAlertRef(refFooter)
+    UMconstructor.value?.reset(UMstore.getUMGrid())
+  }
+  else {
+    toaster.error('Ошибка создания модуля!', refFooter)
+    closeModal()
+  }
 });
 
 onBeforeUnmount(() => {

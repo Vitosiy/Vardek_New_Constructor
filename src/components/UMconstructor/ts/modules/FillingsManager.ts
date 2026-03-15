@@ -351,6 +351,7 @@ export default class FillingsManager {
             currentFillingsArray.push(fillingObject);
 
             this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, false, grid)
+            this.scope.callAlert('warning', 'Проверьте корректность рассчитанной позиции профиля!')
         } else
             currentFillingsArray.push(fillingObject);
 
@@ -407,6 +408,7 @@ export default class FillingsManager {
 
             currentSection.fasadesDrawers.push(fillingObject.fasade);
             this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(sec, false, grid)
+            this.scope.callAlert('warning', 'Проверьте корректность рассчитанной позиции ящика!')
         }
 
         this.selectCell(sec, cell, row, extra, currentFillingsArray.length - 1);
@@ -689,11 +691,21 @@ export default class FillingsManager {
 
 
             let tmpSector = currentfilling.sector
+
+            let tmpFasade
+            if(currentfilling.fasade){
+                tmpFasade = currentfilling.fasade
+                delete currentfilling.fasade
+            }
+
             delete currentfilling.sector
 
             const fillingData = JSON.parse(JSON.stringify(currentfilling));
             fillingData.position.y = newValue;
             fillingData.sector = tmpSector;
+
+            if(tmpFasade)
+                fillingData.fasade = tmpFasade;
 
             const pixiSector = current.sector;
 
@@ -710,8 +722,23 @@ export default class FillingsManager {
             }
 
             currentfilling.sector = tmpSector;
-            if (currentfilling.fasade)
+
+            if(tmpFasade)
+                currentfilling.fasade = tmpFasade;
+
+            if (currentfilling.fasade) {
+                currentfilling.fasade.position.y = grid.height - (currentfilling.position.y + currentfilling.height + currentfilling.fasade.manufacturerOffset)
+                let drawerInfoId = grid.sections[secIndex].fasadesDrawers.findIndex(item => (
+                    item.sec === fillingData.fasade.sec &&
+                    item.cell === fillingData.fasade.cell &&
+                    item.row === fillingData.fasade.row &&
+                    item.extra === fillingData.fasade.extra &&
+                    item.item === fillingData.fasade.item
+                ))
+                grid.sections[secIndex].fasadesDrawers[drawerInfoId] = currentfilling.fasade
+
                 this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
+            }
             else {
                 this.scope.LOOPS.checkLoopsCollision(secIndex, grid)
             }
@@ -744,7 +771,7 @@ export default class FillingsManager {
             }
 
             const prevValue = currentfilling.fasade.height; //Предыдущее значение
-            const newValue = value
+            const newValue = +value
 
             let tmpSector = currentfilling.sector
             let tmpFasade = currentfilling.fasade
@@ -765,10 +792,11 @@ export default class FillingsManager {
             currentfilling.sector = tmpSector;
             currentfilling.fasade = tmpFasade;
             if (check) {
-                currentfilling.fasade.height = fillingData.fasade.height;
+                currentfilling.fasade.height = newValue;
             } else {
                 currentfilling.fasade.height = prevValue;
-                this.scope.AlERT.error("Ошибка! Размер фасада слишком велик!")
+                this.scope.callAlert('error',"Ошибка! Размер фасада слишком велик!")
+                this.scope.callAlert('warning', 'Проверьте корректность позиции ящика!')
             }
 
             this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
