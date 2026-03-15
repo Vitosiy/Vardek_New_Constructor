@@ -552,8 +552,11 @@ export default class FasadesManager {
             this.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
         }
 
-        if (!grid.isSlidingDoors)
+        if (!grid.isSlidingDoors) {
             this.scope.LOOPS.calcLoops(secIndex);
+            if(!section.loops)
+                newDoor.loopsSide = LOOPSIDE['none']
+        }
 
         // Обновляем рендер
         this.scope.reset(grid)
@@ -871,6 +874,11 @@ export default class FasadesManager {
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
         ) {
         fasade.loopsSide = typeof newSide === "string" ? parseInt(newSide) : newSide;
+
+        if(!grid.sections[secIndex].loopsSides){
+            grid.sections[secIndex].loopsSides = {}
+        }
+
         grid.sections[secIndex].loopsSides[doorIndex] = fasade.loopsSide;
         grid.sections[secIndex].fasades[doorIndex].forEach(
             (item) => (item.loopsSide = fasade.loopsSide)

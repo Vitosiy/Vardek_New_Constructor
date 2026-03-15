@@ -19,14 +19,19 @@ export default class LoopsManager {
             return
 
         const curSection = grid.sections[secIndex]
+        const FASADES = curSection.fasades || []
 
         if(grid.noLoops){
             delete curSection.loops
             delete curSection.loopsSides
+            FASADES.forEach((door, doorKey) => {
+                door.forEach((fasade, key) => {
+                    fasade.loopsSide = LOOPSIDE['none']
+                })
+            })
             return;
         }
 
-        const FASADES = curSection.fasades || []
         curSection.loops = []
 
         FASADES.forEach((door, doorKey) => {
@@ -42,8 +47,14 @@ export default class LoopsManager {
                 curSection.loops.push(loopsPos)
         })
 
-        if (!Object.keys(curSection.loops).length)
+        if (!Object.keys(curSection.loops).length) {
             delete curSection.loops
+            FASADES.forEach((door, doorKey) => {
+                door.forEach((fasade, key) => {
+                    fasade.loopsSide = LOOPSIDE['none']
+                })
+            })
+        }
         else if (grid) {
             this.checkLoopsCollision(secIndex, grid)
         }
