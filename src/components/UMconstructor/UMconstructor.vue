@@ -117,13 +117,7 @@ const closeUMRedactor = () => {
   isUMModalOpen.value = false;
   gridUMSaved.value = false;
 
-  UMstore.setUMCashConfig()
-  UMstore.setUMCashGrid()
-  UMstore.setUMData()
-  UMstore.setUMGrid()
-  UMstore.setSelected("module")
-  UMstore.setSelected("fasades")
-  UMstore.setSelected("fillings")
+  UMstore.clearStorage()
 };
 
 onBeforeUnmount(()=>{
@@ -131,13 +125,7 @@ onBeforeUnmount(()=>{
   isUMModalOpen.value = false;
   gridUMSaved.value = false;
 
-  UMstore.setUMCashConfig()
-  UMstore.setUMCashGrid()
-  UMstore.setUMData()
-  UMstore.setUMGrid()
-  UMstore.setSelected("module")
-  UMstore.setSelected("fasades")
-  UMstore.setSelected("fillings")
+  UMstore.clearStorage()
 })
 
 defineExpose({
