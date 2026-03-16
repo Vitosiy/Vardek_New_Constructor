@@ -638,12 +638,20 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
     const propsUM = convertModuleToLegacyFormat(objProps);
     const cleanedData = removeEmptyObjects(propsUM);
     console.log('cleanedData', cleanedData)
+    let HANDLES = []
+    facadeProps.forEach(fasade => {
+      if(fasade.HANDLES){
+        HANDLES.push(fasade.HANDLES)
+      }
+    })
+
     return {
       BASKETID: key,
       PRODUCT: objProps.CONFIG.ID,
       PROPS: cleanedData,
       QUANTITY: 1,
       TYPE: "umscene",
+      HANDLES,
     };
   } else {
     return {

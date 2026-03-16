@@ -24,6 +24,7 @@ export interface IBasket {
   };
   QUANTITY: number;
   TYPE: "scene" | "catalog" | 'umscene';
+  HANDLES?: {ID: number}[]
 }
 
 export interface IBasketFacade {
