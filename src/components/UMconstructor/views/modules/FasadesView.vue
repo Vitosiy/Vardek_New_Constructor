@@ -747,6 +747,7 @@ watch(() => selectedFasade.value, () => {
           :index="0"
           @parent-callback="selectHandle"
           :active-pos="currentHandle.data.HANDLES.position"
+          :disable-position-changer="!!module?.isSlidingDoors"
       />
     </div>
   </transition>

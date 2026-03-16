@@ -47,7 +47,12 @@ const props = defineProps({
   },
   activePos: {
     type: Number,
+  },
+  disablePositionChanger: {
+    type: Boolean,
+    default: false,
   }
+
 });
 
 const emit = defineEmits(["parent-callback"]);
@@ -187,7 +192,7 @@ const checkControllerVisible = computed(() => {
           :data="figureFasad.data"
         />
         <DirectionControl
-          v-if="controllerVisible"
+          v-if="controllerVisible && !props.disablePositionChanger"
           :handle-pos="handlePos"
           :active-pos="props.activePos"
           @changeDirectionPos="onChangeHandlePos"

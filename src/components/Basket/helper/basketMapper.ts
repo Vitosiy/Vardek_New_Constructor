@@ -333,7 +333,8 @@ function convertModuleToLegacyFormat(newModuleObject) {
         "1": 4693746
       };
     });
-  } else {
+  }
+  else {
     const result = {}
     console.log('sections', CONFIG.MODULEGRID.sections)
     CONFIG.MODULEGRID.sections.forEach((section, number) => {
@@ -428,7 +429,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
       const fasadesPattinaKey = `PATINA${sectionNumber}`;
 
       result[fasadesSizeKey] = {};
-      result[fasadesWidthKey] = {};
+      result[fasadesWidthKey] = false;
       result[fasadesMillingKey] = {};
       result[fasadesPaletteKey] = {};
       result[fasadesPattinaKey] = {};
@@ -437,8 +438,8 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
         result[fasadesSizeKey][index] = fasade.height;
 
-        if (!result[fasadesWidthKey][index]) {
-          result[fasadesWidthKey][index] = fasade.width;
+        if (!result[fasadesWidthKey]) {
+          result[fasadesWidthKey] = fasade.width;
         }
 
         if (!result[fasadesHorizontlPositionKey]) {
