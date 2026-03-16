@@ -44,16 +44,33 @@ export const useFigureRightPage = () => {
         // const handlesMap: Record<number, THandlesItem> = {};
         const handlesMap: THandlesItem[] = []
 
-        for (const el in handlesTempList) {
-            const product = PRODUCTS[el];
-            const temp = {
-                ID: product.ID,
-                PREVIEW_PICTURE: product.PREVIEW_PICTURE,
-                models: product.models[0],
-                NAME: product.NAME
+        if(Array.isArray(handlesTempList)) {
+            handlesTempList.forEach((el, key) => {
+                const product = PRODUCTS[el];
+                if(product) {
+                    const temp = {
+                        ID: product.ID,
+                        PREVIEW_PICTURE: product.PREVIEW_PICTURE,
+                        models: product.models[0],
+                        NAME: product.NAME
+                    }
+                    // handlesMap[el] = temp
+                    handlesMap.push(temp)
+                }
+            })
+        }
+        else {
+            for (const el in handlesTempList) {
+                const product = PRODUCTS[el];
+                const temp = {
+                    ID: product.ID,
+                    PREVIEW_PICTURE: product.PREVIEW_PICTURE,
+                    models: product.models[0],
+                    NAME: product.NAME
+                }
+                // handlesMap[el] = temp
+                handlesMap.push(temp)
             }
-            // handlesMap[el] = temp
-            handlesMap.push(temp)
         }
 
         return handlesMap
