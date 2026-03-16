@@ -370,10 +370,12 @@ const onSelectMilling = (data) => {
       fasadeHandleList.value = {};
       fasadeProps.MILLING_TYPE = null;
     }
+    callback(fasadeProps.MILLING_TYPE, 'MILLING_TYPE')
   } else {
     isFasadeHandleExist.value = false;
     fasadeHandleList.value = {};
     fasadeProps.MILLING_TYPE = null;
+    callback(null, 'MILLING_TYPE')
   }
 
   callback(data, "MILLING");
@@ -429,8 +431,10 @@ const deleteSelectedOptions = (type: String) => {
     isFasadeTypesExist.value = false;
     fasadeTypesList.value = {};
 
-    FASADE_PROPS[props.elementIndex].TYPE = null;
-    FASADE_PROPS[props.elementIndex].MILLING_TYPE = null;
+    if(props.elementIndex && FASADE_PROPS[props.elementIndex]) {
+      FASADE_PROPS[props.elementIndex].TYPE = null;
+      FASADE_PROPS[props.elementIndex].MILLING_TYPE = null;
+    }
 
     /** @Очищаем данные для отслеживания полотна */
     productData.value.restrictData = {};
@@ -440,6 +444,8 @@ const deleteSelectedOptions = (type: String) => {
     callback(false, "PALETTE");
     callback(false, "PATINA");
     callback(false, "GLASS");
+    callback(null, "MILLING_TYPE");
+    callback(null, "TYPE");
 
     setCurrentEditableOption("surface");
     return;

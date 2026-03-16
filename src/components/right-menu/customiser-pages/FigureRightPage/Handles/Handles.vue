@@ -47,7 +47,12 @@ const props = defineProps({
   },
   activePos: {
     type: Number,
+  },
+  disablePositionChanger: {
+    type: Boolean,
+    default: false,
   }
+
 });
 
 const emit = defineEmits(["parent-callback"]);
@@ -80,6 +85,10 @@ onBeforeMount(() => {
 
   } else {
     index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
+  }
+
+  if (index === -1) {
+    index = 0
   }
 
   const startProp = props.data[index].props;
@@ -183,7 +192,7 @@ const checkControllerVisible = computed(() => {
           :data="figureFasad.data"
         />
         <DirectionControl
-          v-if="controllerVisible"
+          v-if="controllerVisible && !props.disablePositionChanger"
           :handle-pos="handlePos"
           :active-pos="props.activePos"
           @changeDirectionPos="onChangeHandlePos"
