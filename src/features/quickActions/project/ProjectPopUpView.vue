@@ -207,6 +207,7 @@ import { useConstructor2DHistory } from "@/store/constructor2d/useConstructor2DH
 import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import ProjectPagination from "./components/ProjectPagination.vue";
 import TechnologistFormButton from "@/components/Technologist/TechnologistFormButton.vue";
@@ -257,6 +258,7 @@ const onBackendIdSelect = async () => {
 const projectState = useProjectStore();
 const projectAPI = useProjectAPI();
 const roomState = useRoomState();
+const roomOptions = useRoomOptions();
 
 const isProjectLoading = ref(false);
 const activeTab = ref<'projects' | 'templates'>('projects');
@@ -441,6 +443,8 @@ const loadProject = async (id: string | number) => {
         // 1. Обновляем данные проекта в sceneState
         await sceneState.loadProjectFromData(projectData);
         sceneState.updateProjectParams({});
+
+        roomOptions.resetGlobalOptions();
 
         // 2. Устанавливаем данные в schemeTransition
         schemeTransition.setAppData(projectData.rooms);
