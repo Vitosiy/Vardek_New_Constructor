@@ -40,7 +40,7 @@ export interface IBasketFacade {
     HEIGHT: number | null;
     DEPTH: number | null;
   };
-  HEANDLES: any[];
+  HANDLES: any[];
 }
 
 export interface IRoomObject {

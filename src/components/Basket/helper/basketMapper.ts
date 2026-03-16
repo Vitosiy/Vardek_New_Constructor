@@ -40,9 +40,9 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
         result.SIZE = size;
       }
 
-      // Добавляем HEANDLES только если массив не пустой
-      if (fp.HEANDLES && Array.isArray(fp.HEANDLES) && fp.HEANDLES.length > 0) {
-        result.HEANDLES = fp.HEANDLES;
+      // Добавляем HANDLES только если массив не пустой
+      if (fp.HANDLES && Array.isArray(fp.HANDLES) && fp.HANDLES.length > 0) {
+        result.HANDLES = fp.HANDLES;
       }
 
       return result;
