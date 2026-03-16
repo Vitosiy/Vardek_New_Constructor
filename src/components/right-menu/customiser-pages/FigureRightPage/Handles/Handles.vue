@@ -82,6 +82,10 @@ onBeforeMount(() => {
     index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
   }
 
+  if (index === -1) {
+    index = 0
+  }
+
   const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
   const drawer = startProp.HANDLES.drawer !== null;

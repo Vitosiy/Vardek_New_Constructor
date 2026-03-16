@@ -417,25 +417,24 @@ watch(() => selectedFasade.value, () => {
                             "
                         />
                         <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
-
-                        <!--                        <ConfigurationOption
-                                                    v-if="!segment.error"
-                                                    :disable-delete-choice="true"
-                                                    :class="[
-                                                        {
-                                                          active:
-                                                            currentHandle.cell ===
-                                                              doorIndex &&
-                                                            currentHandle.row ===
-                                                              segmentIndex,
-                                                        },
-                                                      ]"
-                                                    :type="'Handles'"
-                                                    :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
-                                                    @click="
-                                                      openHandleSelector(null, doorIndex, segmentIndex)
-                                                    "
-                                                />-->
+                        <ConfigurationOption
+                            v-if="!segment.error"
+                            :disable-delete-choice="true"
+                            :class="[
+                                {
+                                  active:
+                                    currentHandle.cell ===
+                                      doorIndex &&
+                                    currentHandle.row ===
+                                      segmentIndex,
+                                },
+                              ]"
+                            :type="'Handles'"
+                            :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
+                            @click="
+                              openHandleSelector(null, doorIndex, segmentIndex)
+                            "
+                        />
 
                       </div>
                     </article>
