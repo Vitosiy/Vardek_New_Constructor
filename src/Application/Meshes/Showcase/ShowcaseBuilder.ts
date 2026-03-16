@@ -41,7 +41,7 @@ export class ShowcaseBuilder extends MillingBuilder {
             // console.log(haveHandle, action, '==== ❌ haveHandle ❌ ====')
 
             if (typeof haveHandle == 'string' && typeof action === 'number') {
-                this.createHeandless({
+                this.createHandles({
                     fasade,
                     fasadePosition,
                     action: action,
@@ -125,7 +125,7 @@ export class ShowcaseBuilder extends MillingBuilder {
         })
     }
 
-    createHeandless(data) {
+    createHandles(data) {
         const { fasade, fasadePosition, action, type } = data
 
         const sizes = fasade.userData.trueSize

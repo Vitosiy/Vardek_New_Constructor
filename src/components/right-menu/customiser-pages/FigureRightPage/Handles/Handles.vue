@@ -129,6 +129,10 @@ const onHandleSelect = (data) => {
 
   if(props.is2Dconstructor) {
     callback(data.ID, "handle")
+    eventBus.emit("A:AddHandle", {
+      data: {id: data.ID, model: data.models},
+      fasadeNdx: figureFasad?.value?.ndx || null,
+    });
   }
   else {
     eventBus.emit("A:AddHandle", {

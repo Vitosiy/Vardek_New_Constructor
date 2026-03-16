@@ -1418,8 +1418,12 @@ export class MeshEvents extends BuildersHelper {
     }
 
     async addHandle({ data, fasadeNdx }: TDataCreateHandle) {
-        if (!this._currentMesh) return;
-        await this.createHandle({ data, fasadeNdx })
+        if (!this._currentMesh)
+            return;
+
+        if(fasadeNdx)
+            await this.createHandle({ data, fasadeNdx })
+
         this.events.emit('U:AddHandle')
 
     }
