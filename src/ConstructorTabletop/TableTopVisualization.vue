@@ -72,6 +72,7 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  PART_MIN_SIZE
 } = CUTTER_PARAMS;
 
 const dragState = reactive({
@@ -87,14 +88,14 @@ const dragState = reactive({
   startLeftWidth: 0,
   startRightWidth: 0,
 
-  minXleft: 150,
-  minXRight: 150,
+  minXleft: PART_MIN_SIZE,
+  minXRight: PART_MIN_SIZE,
 
   startTopHeight: 0,
   startBottomHeight: 0,
 
-  minTop: 150,
-  minBottom: 150,
+  minTop: PART_MIN_SIZE,
+  minBottom: PART_MIN_SIZE,
 
   element: null,
 });

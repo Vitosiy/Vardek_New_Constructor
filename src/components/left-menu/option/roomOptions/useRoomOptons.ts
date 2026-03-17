@@ -2,7 +2,7 @@
 //@ts-nocheck
 
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch, reactive } from 'vue';
 import { TOptionsMap, TLightRange, TQuality, TQualityValue, TFasadeItem, TPalitte, TOptionItem, TTextureActionMap } from '@/types/types';
 import { IRoom } from '@/types/interfases';
 
@@ -25,15 +25,16 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     const sceneState = useSceneState();
     const modelState = useModelState()
     const roomState = useRoomState();
-    const startParams = sceneState.getStartProgectParams
+    const startParams = computed(() => sceneState.getStartProgectParams)
+    // const currentSceneParams = sceneState.getCurrentProjectParams
 
     const shadowValue = ref<boolean>(false)
     const refractionValue = ref<boolean>(false)
-    const startHeightClamp = ref<number | string>(startParams.height_clamp)
+    const startHeightClamp = ref<number | string>(startParams.value?.height_clamp)
 
     const lightRange = ref<TLightRange>({
-        pointLight: startParams.lights.pointLight.intensity,
-        ambientLight: startParams.lights.ambientLight.intensity
+        pointLight: startParams.value.lights.pointLight.intensity,
+        ambientLight: startParams.value.lights.ambientLight.intensity
     })
 
     const quality = ref<TQuality[]>([{
@@ -65,7 +66,7 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     }
 
     const plinthKey: Record<keyof TOptionsMap, string> = {
-        plinth: 'default_plinth_color'
+        plinth: 'default_plinth_color',
     }
 
     const defaultIds: Record<keyof TOptionsMap, string> = {
@@ -79,55 +80,66 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         plinth: 'default_plinth_body'
     }
 
-    const {
-        default_wall: defaultWall,
-        default_floor: defaultFloor,
-        default_module_color: defaultModuleTop,
-        default_module_color: defaultModuleBottom,
-        default_fasade_color: defaultFasadeTop,
-        default_fasade_color: defaultFasadeBottom,
-        default_table_model: defaulttableTop,
-        default_palit_top: defaultPalitTop,
-        default_palit_bottom: defaultPalitBottom,
-        default_milling_bottom: defaultMillingBottom,
-        default_milling_top: defaultMillingTop,
-        default_plinth_body: defaultPlinthBody,
-        default_plinth_color: defaultPlinthColor
-    } = startParams;
+    /** Для сохранения проекта */
+    const defaultSaveIds: Record<keyof TOptionsMap, string> = {
+        moduleTop: 'default_module_color_top',
+        moduleBottom: 'default_module_color_bottom',
+        fasadsTop: 'default_fasade_top',
+        fasadsBottom: 'default_fasade_bottom',
+        wall: 'default_wall',
+        floor: 'default_floor',
+        tableTop: 'default_table_model',
+        plinth: 'default_plinth_body'
+    }
+
+    // Вместо статичной деструктуризации:
+    let defaultWall = ref(startParams.value?.default_wall)
+    let defaultFloor = ref(startParams.value?.default_floor)
+    let defaultModuleTop = ref(startParams.value?.default_module_color)
+    let defaultModuleBottom = ref(startParams.value?.default_module_color)
+    let defaultFasadeTop = ref(startParams.value?.default_fasade_color)
+    let defaultFasadeBottom = ref(startParams.value?.default_fasade_color)
+    let defaulttableTop = ref(startParams.value?.default_table_model)
+    let defaultPalitTop = ref(startParams.value?.default_palit_top)
+    let defaultPalitBottom = ref(startParams.value?.default_palit_bottom)
+    let defaultMillingBottom = ref(startParams.value?.default_milling_bottom)
+    let defaultMillingTop = ref(startParams.value?.default_milling_top)
+    let defaultPlinthBody = ref(startParams.value?.default_plinth_body)
+    let defaultPlinthColor = ref(startParams.value?.default_plinth_color)
 
     const globalOptions = ref<TOptionsMap>({
         wall: {
-            id: defaultWall,
+            id: defaultWall.value,
             global: false,
             title: "Оформление стен",
             label: 'Для всех комнат',
             prefix: 'wall',
         },
         floor: {
-            id: defaultFloor,
+            id: defaultFloor.value,
             global: false,
             title: "Оформление пола",
             label: 'Для всех комнат',
             prefix: 'floor',
         },
         moduleTop: {
-            id: defaultModuleTop,
+            id: defaultModuleTop.value,
             global: false,
             title: "Цвет корпуса (верхний)",
             label: 'Для всех комнат',
             prefix: 'moduleTop',
         },
         moduleBottom: {
-            id: defaultModuleBottom,
+            id: defaultModuleBottom.value,
             global: false,
             title: "Цвет корпуса (нижний)",
             label: 'Для всех комнат',
             prefix: 'moduleBottom',
         },
         fasadsTop: {
-            id: defaultFasadeTop,
-            palitte: defaultPalitTop,
-            milling: defaultMillingTop,
+            id: defaultFasadeTop.value,
+            palitte: defaultPalitTop.value,
+            milling: defaultMillingTop.value,
             global: false,
             title: "Тип фасада (верхний)",
             label: 'Для всех комнат',
@@ -136,9 +148,9 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             millingTitle: 'Тип Фрезеровки'
         },
         fasadsBottom: {
-            id: defaultFasadeBottom,
-            palitte: defaultPalitBottom,
-            milling: defaultMillingBottom,
+            id: defaultFasadeBottom.value,
+            palitte: defaultPalitBottom.value,
+            milling: defaultMillingBottom.value,
             global: false,
             title: "Тип фасада (нижний)",
             label: 'Для всех комнат',
@@ -153,8 +165,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         //     label: 'Для всех комнат'
         // },
         plinth: {
-            id: defaultPlinthBody,
-            plinthSurfase: defaultPlinthColor,
+            id: defaultPlinthBody.value,
+            plinthSurfase: defaultPlinthColor.value,
             global: false,
             title: 'Тип цокольных планок',
             label: 'Для всех комнат',
@@ -165,6 +177,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
     });
 
     //------------------------------------------------------------------------------------------
+
+
 
     const apllyProjectWall = (value: number) => {
         const rooms: IRoom[] = roomState.rooms
@@ -414,6 +428,112 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         }
     };
 
+    const saveSceneParams = () => {
+
+        const clone = JSON.parse(JSON.stringify(sceneState.getCurrentProjectParams))
+        for (let param in globalOptions.value) {
+            const sceneParam = defaultSaveIds[param]
+
+            clone[sceneParam] = globalOptions.value[param].id
+
+            switch (param) {
+                case 'fasadsTop':
+                    clone.default_milling_top = globalOptions.value[param].milling
+                    clone.default_palit_top = globalOptions.value[param].palitte
+                    break
+                case 'fasadsBottom':
+                    clone.default_milling_bottom = globalOptions.value[param].milling
+                    clone.default_palit_bottom = globalOptions.value[param].palitte
+                    break
+                case 'plinth':
+                    clone.default_plinth_color = globalOptions.value[param].plinthSurfase
+                    break
+            }
+
+        }
+
+        return clone
+    }
+
+    watch(startParams, (newParams) => {
+
+        globalOptions.value = {
+            wall: {
+                id: newParams.default_wall,
+                global: false,
+                title: "Оформление стен",
+                label: 'Для всех комнат',
+                prefix: 'wall',
+            },
+            floor: {
+                id: newParams.default_floor,
+                global: false,
+                title: "Оформление пола",
+                label: 'Для всех комнат',
+                prefix: 'floor',
+            },
+            moduleTop: {
+                id: newParams.default_module_color_top ?? startParams.value.default_module_color,
+                global: false,
+                title: "Цвет корпуса (верхний)",
+                label: 'Для всех комнат',
+                prefix: 'moduleTop',
+            },
+            moduleBottom: {
+                id: newParams.default_module_color_bottom ?? startParams.value.default_module_color,
+                global: false,
+                title: "Цвет корпуса (нижний)",
+                label: 'Для всех комнат',
+                prefix: 'moduleBottom',
+            },
+            fasadsTop: {
+                id: newParams.default_fasade_top ?? startParams.value.default_fasade_color,
+                palitte: newParams.default_palit_top,
+                palitteData: getDefaultPalitData(newParams.default_fasade_top ?? startParams.value.default_fasade_top),
+                milling: newParams.default_milling_top,
+                millingData: getDefaultMillingData(newParams.default_fasade_top ?? startParams.value.default_fasade_color),
+                global: false,
+                title: "Тип фасада (верхний)",
+                label: 'Для всех комнат',
+                prefix: 'fasadsTop',
+                palitteTitle: 'Цвет Палитры',
+                millingTitle: 'Тип Фрезеровки'
+            },
+            fasadsBottom: {
+                id: newParams.default_fasade_bottom ?? startParams.value.default_fasade_color,
+                palitte: newParams.default_palit_bottom,
+                palitteData: getDefaultPalitData(newParams.default_fasade_bottom ?? startParams.value.default_fasade_bottom),
+                milling: newParams.default_milling_bottom,
+                millingData: getDefaultMillingData(newParams.default_fasade_bottom ?? startParams.value.default_fasade_color),
+                global: false,
+                title: "Тип фасада (нижний)",
+                label: 'Для всех комнат',
+                prefix: 'fasadsBottom',
+                palitteTitle: 'Цвет Палитры',
+                millingTitle: 'Тип Фрезеровки'
+            },
+            // tableTop: {
+            //     id: defaulttableTop,
+            //     global: false,
+            //     title: "Тип столешницы",
+            //     label: 'Для всех комнат'
+            // },
+            plinth: {
+                id: newParams.default_plinth_body,
+                plinthSurfase: newParams.default_plinth_color,
+                plinthData: getTotalPlinthColorData(newParams.default_plinth_body),
+                global: false,
+                title: 'Тип цокольных планок',
+                label: 'Для всех комнат',
+                plinthTitle: 'Тип фасада цокольных планок',
+                prefix: 'plinth',
+            }
+
+        }
+
+        console.log(newParams, 'GGGGGHHHHH')
+    })
+
     return {
         _WALL,
         _FLOOR,
@@ -452,6 +572,8 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
         getPointLightRange,
         getHeightClamp,
         getQuality,
+
+        saveSceneParams
 
     };
 });

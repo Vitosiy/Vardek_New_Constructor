@@ -75,8 +75,11 @@ export const useFigureRightPage = () => {
             const disabled = !fasade && FASADE_TYPE[fasadeId] == null
 
             const { COLOR } = fasade || FASADE_PROPS[fasadeId]
+
             const fasadeData = FASADE[COLOR]
             const haveHandles = POSITION_HANDLES[PRODUCT]
+
+            console.log(haveHandles, '=== haveHandles ===')
 
             if (haveHandles) {
                 tempList.push({

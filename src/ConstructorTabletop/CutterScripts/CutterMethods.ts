@@ -44,8 +44,9 @@ type TExtremum = { maxX: number, maxY: number, minX: number, minY: number }
 
 class Helpers {
 
-  maxAreaHeight: number
-  step: number = 1
+  maxAreaHeight: number;
+  step: number = 1;
+  minSize: number = 10;
 
   constructor() {
 
@@ -152,7 +153,7 @@ class Helpers {
 
   getRightSectionWidth(sector, minX) {
 
-    if (minX < 150) return 150
+    if (minX < CUTTER_PARAMS.PART_MIN_SIZE) return CUTTER_PARAMS.PART_MIN_SIZE
 
     const sBounds = sector.getBounds()
     const sMax = this.convertToTen(this.getMmWidth(sBounds.maxX))
@@ -162,7 +163,7 @@ class Helpers {
 
   getLeftSectionWidth(sector, maxX) {
 
-    if (maxX < 150) return 150
+    if (maxX < CUTTER_PARAMS.PART_MIN_SIZE) return CUTTER_PARAMS.PART_MIN_SIZE
 
     const sBounds = sector.getBounds()
     const sMin = this.convertToTen(this.getMmWidth(sBounds.minX))
@@ -171,7 +172,7 @@ class Helpers {
 
   getSectionTop(sector, maxY) {
 
-    if (maxY < 150) return 150
+    if (maxY < CUTTER_PARAMS.PART_MIN_SIZE) return CUTTER_PARAMS.PART_MIN_SIZE
     const sBounds = sector.getBounds()
     const sMin = this.convertToTen(this.getMmWidth(sBounds.minY))
     return maxY - sMin + CUTTER_PARAMS.SECTOR_PADDING
@@ -179,7 +180,7 @@ class Helpers {
 
   getSectionBottom(sector, minY) {
 
-    if (minY < 150) return 150
+    if (minY < CUTTER_PARAMS.PART_MIN_SIZE) return CUTTER_PARAMS.PART_MIN_SIZE
     const sBounds = sector.getBounds()
     const sMax = this.convertToTen(this.getMmWidth(sBounds.maxY))
     return sMax - minY + CUTTER_PARAMS.SECTOR_PADDING

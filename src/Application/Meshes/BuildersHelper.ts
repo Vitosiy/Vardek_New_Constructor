@@ -30,8 +30,6 @@ export class BuildersHelper extends GlobalsData {
         const leftWidth = props.CONFIG.LEFTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.LEFTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
         const rightWidth = props.CONFIG.RIGHTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.RIGHTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
 
-        console.log(this.root._roomManager._currentRoomHeight)
-
         model_data = this.expressionsReplace(
             model_data,
             {
@@ -47,8 +45,6 @@ export class BuildersHelper extends GlobalsData {
             },
         )
 
-        console.log(model_data, 'model_data')
-
         model_data = this.expressionsReplace(
             model_data,
             props.CONFIG.EXPRESSIONS
@@ -58,7 +54,6 @@ export class BuildersHelper extends GlobalsData {
     };
 
     public getProductSize(PARAMS: any, productData: THREETypes.TObject) {
-        console.log(productData, 'productData')
 
         const product = this._PRODUCTS[PARAMS.ID];
         const materialThickness = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH ?? 18;
@@ -126,8 +121,6 @@ export class BuildersHelper extends GlobalsData {
             const modelData = this._MODELS[PARAMS.MODELID]
             const model = this.expressionsReplace(modelData, expressions);
 
-            console.log(model, 'modelData')
-
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));
             if (model.depth) size.depth = parseInt(eval(model.depth));
@@ -192,7 +185,7 @@ export class BuildersHelper extends GlobalsData {
             const func = new Function("return " + expression);
             return func();
         } catch (error) {
-            console.log(expression, '---"Недопустимое выражение!"')
+            console.error(expression, '---"Недопустимое выражение!"')
             return "Недопустимое выражение!";
         }
     }
@@ -254,7 +247,6 @@ export class BuildersHelper extends GlobalsData {
     /** @Настройка материала */
     //----------------------------------------------------------
     public getTexture({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
-        console.log(texture_size, 'texture_size')
 
         this.resources.startLoading(url, 'texture', (file) => {
             if (file instanceof THREE.Texture) {
@@ -297,7 +289,7 @@ export class BuildersHelper extends GlobalsData {
     }
 
     public createNishaMaterial(url, size, comand) {
-        console.log(comand)
+        // console.log(comand)
 
 
         const material = new THREE.MeshStandardMaterial({

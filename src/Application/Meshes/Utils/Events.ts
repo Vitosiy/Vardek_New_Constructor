@@ -443,7 +443,8 @@ export class MeshEvents extends BuildersHelper {
         });
 
         Object.assign(fasadeProp, { SHOW: true, COLOR: data.ID, PALETTE: null });
-        fasade.userData.SHOW = true
+        // fasade.userData.SHOW = true
+        fasade.userData.SHOW = fasade.visible
         return true;
     }
 
@@ -1332,6 +1333,7 @@ export class MeshEvents extends BuildersHelper {
         const product = this._PRODUCTS[PROPS.PRODUCT]
         const { width, height, depth } = CONFIG.SIZE;
 
+        // CONFIG.FASADE_PROPS = []
         CONFIG.FILLING = data
         CONFIG.OPTIONS = this.buildProduct.filters.filterOption(product.OPTION)
         this.buildProduct.filters.filterFasadePosition(CONFIG, product)
@@ -1639,6 +1641,7 @@ export class MeshEvents extends BuildersHelper {
         this.events.on('A:ChangeFilling', this.onChangeFillingModel);
 
         this.events.on('A:RecountShelfs', this.onRecountShelfs);
+
         this.events.on('A:ResizeJoinDepth', this.onResizeJoinDepth);
 
 

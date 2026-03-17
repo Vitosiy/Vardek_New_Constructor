@@ -235,6 +235,7 @@ export const useMechanism = () => {
 
     }
 
+
     return { weightCalculation, createMeckhanizmList }
 
 }

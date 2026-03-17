@@ -5,7 +5,8 @@ import { Project, SaveProjectResult } from '../types'
 import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
 import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
-import {useTechnologistStorage} from "@/store/appStore/technologist/useTechnologistStorage.ts";
+import { useTechnologistStorage } from "@/store/appStore/technologist/useTechnologistStorage.ts";
+import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoomOptons'
 
 export interface LoadProjectsParams {
   designerValue: string
@@ -28,12 +29,13 @@ export function useProjectAPI() {
   const sceneState = useSceneState()
   const isLoading = ref(false)
   const technologistStorage = useTechnologistStorage();
+  const { saveSceneParams, resetGlobalOptions } = useRoomOptions()
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
 
   // Нормалайзер ответа от API клиента
-  const normalizeApiResponse = <T = any>(response: { data?: any; deal?:any; error?: any; response?: Response }): { success: boolean; data?: T; deal?: T; error?: string } => {
+  const normalizeApiResponse = <T = any>(response: { data?: any; deal?: any; error?: any; response?: Response }): { success: boolean; data?: T; deal?: T; error?: string } => {
     // Проверяем наличие ошибки
     if (response.error) {
       return {
@@ -81,7 +83,7 @@ export function useProjectAPI() {
         // Ищем все canvas элементы и находим тот, который имеет WebGL контекст
         const canvases = document.querySelectorAll('canvas')
         let webglCanvas: HTMLCanvasElement | null = null
-        
+
         for (const canvas of canvases) {
           const context = canvas.getContext('webgl') || canvas.getContext('webgl2')
           // Проверяем что это WebGL canvas и он достаточно большой (3D сцена обычно большая)
@@ -90,7 +92,7 @@ export function useProjectAPI() {
             break
           }
         }
-        
+
         if (!webglCanvas) {
           console.warn('WebGL canvas не найден для скриншота проекта')
           resolve('data:image/jpeg;base64,')
@@ -204,14 +206,15 @@ export function useProjectAPI() {
 
       const normalized = normalizeApiResponse<{
         deal?: any;
-        data?: any }>(response)
+        data?: any
+      }>(response)
 
       if (normalized.success && normalized.data?.data) {
         const projectData = normalized.data.data
         const deal = normalized.data.deal
 
         if (validateProjectData(projectData)) {
-          if(deal)
+          if (deal)
             technologistStorage.setDeal(deal)
           else
             technologistStorage.setDeal()
@@ -230,6 +233,7 @@ export function useProjectAPI() {
         }
       }
       return null
+
     } catch (error) {
       console.error(ERROR_MESSAGES.LOAD_PROJECT, error)
       technologistStorage.setTechnologistProject(false)
@@ -266,8 +270,11 @@ export function useProjectAPI() {
       // Сначала сохраняем сцену в браузер
       eventBus.emit('A:Save')
 
-      const projectData = sceneState.getCurrentProjectParams
-      // console.log(projectData, 'projectData')
+      // const projectData = sceneState.getCurrentProjectParams
+      // resetGlobalOptions()
+
+      const projectData = saveSceneParams() ?? sceneState.getCurrentProjectParams
+      console.log(projectData, 'projectData', sceneState.getCurrentProjectParams, 'getCurrentProjectParams')
 
       // Если передан projectName, обновляем его перед сохранением
       if (projectName) {

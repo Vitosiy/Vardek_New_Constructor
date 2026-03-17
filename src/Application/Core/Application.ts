@@ -368,7 +368,7 @@ export class Application {
             // console.log(`🔥 emit вызван: "${event}"`);
 
             if (this.userHistory.checkEvent(event)) {
-                console.log(`🔥 emit вызван: "${event}"`);
+                // console.log(`🔥 emit вызван: "${event}"`);
 
                 const toAction: string[] = this.room?.save()!
                 this.userHistory!.addAction(toAction)

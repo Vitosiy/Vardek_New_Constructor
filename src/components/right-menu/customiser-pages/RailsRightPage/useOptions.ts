@@ -3,7 +3,7 @@ import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useMechanism } from "./Mechanism/useMechanism";
-import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
+import { useUMStorage } from "@/store/appStore/UniversalModule/useUMStorage.ts";
 
 const mechanism = useMechanism()
 
@@ -15,6 +15,8 @@ export const useOptions = () => {
     const eventBus = useEventBus();
     const UM_STORE = useUMStorage();
     const { weightCalculation, createMeckhanizmList } = mechanism
+
+    const NESTANDART_MODULES = [971222, 1814256]
     const cutOptionsId = [4722787, 4722786];
     const cutOptionsTempSize = 20
 
@@ -41,10 +43,13 @@ export const useOptions = () => {
 
     const checkActive = (id: string | number, values: boolean) => {
         const { PROPS } = modelState.getCurrentModel.userData;
-        const { OPTIONS, MECHANISM_TEMP } = PROPS.CONFIG;
+        const { OPTIONS, MECHANISM_TEMP, ID, SHELFQUANT } = PROPS.CONFIG;
 
         const curOpt = OPTIONS.find(el => el.id == id);
         const curMech = MECHANISM_TEMP.find(el => el.ID == id);
+        const isNestandart = NESTANDART_MODULES.includes(ID)
+
+        console.log(isNestandart, ID)
 
         if (curMech) {
 
@@ -59,7 +64,14 @@ export const useOptions = () => {
             PROPS.CONFIG.MECHANISM = values ? id : null
             curMech.active = values;
 
+
+
             eventBus.emit("A:SelectModelOption")
+            if (isNestandart) {
+                eventBus.emit("A:RecountShelfs", { data: SHELFQUANT.current });
+
+            }
+
         }
 
         if (!curOpt)
@@ -131,7 +143,7 @@ export const useOptions = () => {
                     delete PROPS.CONFIG.TSARGA
                 break;
             case 8390271:
-                if(PROPS.CONFIG.eccentricOption)
+                if (PROPS.CONFIG.eccentricOption)
                     curOpt.active = true;
                 break;
             case 7250589:   //Металлическая царга

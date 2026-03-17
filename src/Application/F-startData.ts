@@ -123,6 +123,7 @@ const START_PROJECT_PARAMS = {
     default_table_color: null,
     default_fasade_color: 7397,
     default_module_color: 199675,
+    // default_module_color: 7397,
     default_fasade_top: 7397,
     default_fasade_bottom: 7397,
     default_floor: 44013,
@@ -144,7 +145,7 @@ const START_PROJECT_PARAMS = {
     // 2462671 - фрезф
 }
 
-Object.freeze(START_PROJECT_PARAMS)
+// Object.freeze(START_PROJECT_PARAMS)
 
 export { START_PROJECT_PARAMS }
 

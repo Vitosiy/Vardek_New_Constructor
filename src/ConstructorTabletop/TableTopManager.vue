@@ -62,6 +62,7 @@ const {
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
   SECTOR_PADDING,
+  PART_MIN_SIZE
 } = CUTTER_PARAMS;
 
 let shapeAdjuster = null;
@@ -199,7 +200,7 @@ const addVerticalCut = (colIndex) => {
   const column = grid.value[colIndex];
   const halfWidth = column[0].width / 2;
 
-  if (halfWidth < 150 || !((column[0].width / 2) % step.value == 0)) return;
+  if (halfWidth < PART_MIN_SIZE || !((column[0].width / 2) % step.value == 0)) return;
 
   // Обновляем ширину текущей колонки
   column.forEach((row) => {
@@ -244,7 +245,7 @@ const addHorizontalCut = (colIndex, rowIndex) => {
 
   const halfHeight = Math.floor(curRow.height / 2);
 
-  if (halfHeight < 150 || !(curRow.height % step.value == 0)) return;
+  if (halfHeight < PART_MIN_SIZE || !(curRow.height % step.value == 0)) return;
 
   // Обновляем высоту последней строки
   curRow.height = halfHeight;
@@ -642,7 +643,7 @@ const handleWidthInput = (
   visualizationRef.value.selectCell(colIndex, rowIndex);
 
   // Проверяем валидность значения
-  const minWidth = 150;
+  const minWidth = PART_MIN_SIZE;
   const maxWidth = grid.value[colIndex][0].maxWidth || TOTAL_LENGTH;
   if (!isNaN(value) && value >= minWidth && value <= maxWidth) {
     updateSectionWidth(value, colIndex, rowIndex);
@@ -659,7 +660,7 @@ const handleHeightInput = (
   visualizationRef.value.selectCell(colIndex, rowIndex);
 
   // Проверяем валидность значения
-  const minHeight = 150;
+  const minHeight = PART_MIN_SIZE;
   const maxHeight = grid.value[colIndex][rowIndex].maxHeight || TOTAL_HEIGHT;
   if (
     value !== null &&
@@ -730,7 +731,7 @@ const updateRoundCutDiameter = (value, colIndex, rowIndex) => {
 
   const prevValue = row.roundCut.radius;
   let newValue = parseInt(value);
-  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+  newValue = newValue > 600 ? 600 : newValue < PART_MIN_SIZE ? PART_MIN_SIZE : newValue;
 
   const shapeData = {
     radius: newValue,
@@ -765,7 +766,7 @@ const updateHole = (event, key, type, holeType) => {
 
   // let newValue = parseInt(event.target.value);
   let newValue = parseInt(event);
-  newValue = newValue > 600 ? 600 : newValue < 150 ? 150 : newValue;
+  newValue = newValue > 600 ? 600 : newValue < PART_MIN_SIZE ? PART_MIN_SIZE : newValue;
 
   const holeData = JSON.parse(JSON.stringify(currenthole));
   holeData[type] = newValue;
@@ -1257,7 +1258,7 @@ onBeforeUnmount(() => {
                         <TableTopInput
                           :value="column[0].width"
                           :step="step"
-                          :min="150"
+                          :min="PART_MIN_SIZE"
                           :max="column[0].maxWidth || TOTAL_LENGTH"
                           :disabled="grid.length < 0"
                           @input="handleWidthInput($event, colIndex, rowIndex)"
@@ -1284,7 +1285,7 @@ onBeforeUnmount(() => {
                         <TableTopInput
                           :value="row.height"
                           :step="step"
-                          :min="150"
+                          :min="PART_MIN_SIZE"
                           :max="row.maxHeight || TOTAL_LENGTH"
                           :disabled="grid.length < 0"
                           @input="handleHeightInput($event, colIndex, rowIndex)"
@@ -1535,7 +1536,7 @@ onBeforeUnmount(() => {
     }
 
     .actions-inputs {
-      max-width: 150px;
+      max-width: PART_MIN_SIZEpx;
     }
   }
 }

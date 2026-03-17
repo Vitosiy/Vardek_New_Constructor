@@ -293,15 +293,15 @@ export class Camera {
         // Обновляем контролы
         this.controls.update()
 
-        console.log('Камера установлена напротив самой широкой стены', {
-            wallCenter: wallCenter.toArray(),
-            cameraPosition: cameraPosition.toArray(),
-            targetPosition: targetPosition.toArray(),
-            normal: normal.toArray(),
-            wallWidth,
-            wallHeight,
-            cameraDistance
-        })
+        // console.log('Камера установлена напротив самой широкой стены', {
+        //     wallCenter: wallCenter.toArray(),
+        //     cameraPosition: cameraPosition.toArray(),
+        //     targetPosition: targetPosition.toArray(),
+        //     normal: normal.toArray(),
+        //     wallWidth,
+        //     wallHeight,
+        //     cameraDistance
+        // })
     }
 
     vueEvents() {

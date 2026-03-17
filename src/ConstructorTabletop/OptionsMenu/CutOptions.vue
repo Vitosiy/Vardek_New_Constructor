@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { ref, toRefs } from "vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
+import { CUTTER_PARAMS } from "../CutterScripts/CutterConst"; 
 
 const props = defineProps({
   holes: {
@@ -9,6 +10,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const miSize = ref<number>(CUTTER_PARAMS.PART_MIN_SIZE)
 
 const optionsShow = ref(false);
 const { holes } = toRefs(props);
@@ -159,7 +162,7 @@ const toggleHoleOptions = () => {
               <!-- <MainInput
                 :type="'number'"
                 :step="10"
-                :min="150"
+                :min="miSize"
                 :max="hole.Mwidth"
                 :inputClass="'actions-input'"
                 v-model="hole.width"
@@ -170,7 +173,7 @@ const toggleHoleOptions = () => {
               <input
                 type="number"
                 step="10"
-                min="150"
+                min="miSize"
                 :max="hole.Mwidth"
                 class="actions-input"
                 :value="hole.width"
@@ -184,7 +187,7 @@ const toggleHoleOptions = () => {
               <!-- <MainInput
                 :type="'number'"
                 :step="10"
-                :min="150"
+                :min="miSize"
                 :max="hole.Mheight"
                 :inputClass="'actions-input'"
                 v-model="hole.height"
@@ -195,7 +198,7 @@ const toggleHoleOptions = () => {
               <input
                 type="number"
                 step="10"
-                min="150"
+                min="miSize"
                 :max="hole.Mheight"
                 class="actions-input"
                 :value="hole.height"
@@ -209,7 +212,7 @@ const toggleHoleOptions = () => {
               <MainInput
                 :type="'number'"
                 :step="10"
-                :min="150"
+                :min="miSize"
                 :max="hole.Mradius"
                 :inputClass="'actions-input'"
                 v-model="hole.radius"
@@ -220,7 +223,7 @@ const toggleHoleOptions = () => {
               <!-- <input
                 type="number"
                 step="10"
-                min="150"
+                min="miSize"
                 :max="hole.Mradius"
                 class="actions-input"
                 :value="hole.radius"

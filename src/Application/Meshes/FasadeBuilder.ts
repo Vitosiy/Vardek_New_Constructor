@@ -346,6 +346,9 @@ export class FasadeBuilder {
         // Перебор фасадов. Сохраняем исходную семантику фильтра по fasadeNdx.
         for (let key = 0; key < FASADE_PROPS.length; key++) {
 
+
+            console.log('==== ❌ РЕСТАРТ ЁПТ ❌ ====')
+
             const fasadeData = FASADE_PROPS[key];
             const haveShowcase = FASADE_POSITIONS[key].SHOWCASE === 1
 

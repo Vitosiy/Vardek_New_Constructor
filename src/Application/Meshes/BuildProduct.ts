@@ -109,7 +109,6 @@ export class BuildProduct extends BuildersHelper {
             const type = this._MODELS[product_data.models[0]];
 
             if (type.DAE) {
-                console.log('== DAE ==')
                 return this.models_builder.create({
                     props: this.createStartProps(product_data, loaded_props),
                     size: loaded_size
@@ -271,7 +270,6 @@ export class BuildProduct extends BuildersHelper {
         loadedProps?: THREETypes.TObject
     ): THREETypes.TConfig {
         const isDae = this._MODELS[product_data.models[0]].DAE;
-        console.log(isDae);
 
         const {
             element_type, ID, models, width, height, depth,
@@ -475,7 +473,7 @@ export class BuildProduct extends BuildersHelper {
 
         // Формируем итоговую группу в зависимости от исключений
         const totalParts = curBodyExceptions
-            ? [body, shelf,fasade, arrows]
+            ? [body, shelf, fasade, arrows, plinth]
             : [plinth, legs, body, shelf, fasade, drower, arrows];
 
         totalParts.filter(Boolean).forEach(part => total.add(part as THREE.Object3D));
@@ -493,8 +491,6 @@ export class BuildProduct extends BuildersHelper {
             .forEach(part => exept.add(part));
 
         const sourceForBounds = curBodyExceptions ? exept : tempTotal;
-
-        console.log(CONFIG.FASADE_POSITIONS, 'sourceForBounds')
 
         if (sourceForBounds) this.setBounds(total, sourceForBounds);
 
@@ -516,7 +512,9 @@ export class BuildProduct extends BuildersHelper {
         const product = this._PRODUCTS[ID];
         const texture = product.texture;
 
-        console.log(CONFIG.MODULE_COLOR, '❌ === MODULE_COLOR === ❌')
+        const defaultColors = this.modelState.createFlatModuleData(product.MODULECOLOR);
+        const materislExist = defaultColors.includes(MODULE_COLOR);/** Проверка на существование материала по ID */
+
 
         const isRoomElement = product.element_type === "element_room"
         const wallTextureId = isRoomElement && CONFIG.MODULE_COLOR === null
@@ -524,11 +522,14 @@ export class BuildProduct extends BuildersHelper {
             : CONFIG.MODULE_COLOR
 
         const resolveColorId = (): string => {
-            const defaultColors = this.modelState.createFlatModuleData(product.MODULECOLOR);
+            // const defaultColors = this.modelState.createFlatModuleData(product.MODULECOLOR);
             const isDefault = MODULE_COLOR === this.project.default_module_color || MODULE_COLOR === defaultColors[0];
 
             const resolveForType = (defColor: string, globalFlag: boolean): string => {
+                const materislExist = defaultColors.includes(MODULE_COLOR);
+
                 const isAvailable = product.MODULECOLOR.includes(defColor);
+
                 return (defColor && isDefault && isAvailable) || (globalFlag && isAvailable)
                     ? defColor
                     : MODULE_COLOR;
@@ -541,14 +542,13 @@ export class BuildProduct extends BuildersHelper {
             }
         };
 
-        const moduleColorId = texture?.src && !this._FASADE[MODULE_COLOR]
+        const moduleColorId = !materislExist ? defaultColors[0] : texture?.src && !this._FASADE[MODULE_COLOR]
             ? MODULE_COLOR
             : resolveColorId();
 
         CONFIG.MODULE_COLOR = isRoomElement ? wallTextureId : moduleColorId;
 
-        console.log(MODULE_COLOR, '❌ === isRoomElement === ❌', isRoomElement)
-
+        console.log(moduleColorId, '❌ === isRoomElement === ❌')
 
         const moduleColorObject = isRoomElement ?
             this._WALL[wallTextureId] :
@@ -558,11 +558,9 @@ export class BuildProduct extends BuildersHelper {
             moduleColorObject.texture :
             moduleColorObject?.TEXTURE;
 
-
         const isTopTable = texture?.src && !moduleColor;
 
-        
-console.log(isTopTable,moduleColorObject, '❌ === MODULE_COLOR === ❌')
+        // console.log(isTopTable, moduleColorObject, '❌ === MODULE_COLOR === ❌')
 
         // Применяем кастомные перекрытия элементов через вспомогательный метод
         this.applyBodyOverrides(data, CONFIG, moduleColorObject);
@@ -841,8 +839,6 @@ console.log(isTopTable,moduleColorObject, '❌ === MODULE_COLOR === ❌')
         const obb = new OBB().fromBox3(aabb);
         const size = new THREE.Vector3();
         aabb.getSize(size);
-
-        console.log(size, 'sizesizesize')
 
         target.userData.trueSizes = {
             DEPTH: size.z * 0.5,

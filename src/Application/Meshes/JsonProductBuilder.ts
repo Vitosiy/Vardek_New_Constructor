@@ -198,7 +198,6 @@ export class JsonBuilder {
         isRoomElement?: boolean,
         textureUrl?: string
     ): THREE.BufferGeometry | null {
-        console.log(geometryData, ']]]]] geometryData')
 
         switch (geometryData?.geometry.type) {
             case 'BoxGeometry':
@@ -261,8 +260,6 @@ export class JsonBuilder {
         isRoomElement?: boolean,
         textureUrl?: string
     ): THREE.PlaneGeometry {
-
-        console.log(geometry_data, '====== geometry_data')
 
         const geometry = new THREE.PlaneGeometry(
             this.convert(geometry_data.geometry.opt.x),
@@ -341,8 +338,6 @@ export class JsonBuilder {
 
     createMaterial(data: THREETypes.TObject, url?: THREETypes.TObject, group?: THREE.Object3D, isRoomElement?: boolean): THREE.Material | null {
         if (!data) return null
-
-        console.log(data, url, '--in createMaterial ----')
 
         if (data instanceof THREE.Material) return data
 

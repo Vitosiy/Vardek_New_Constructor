@@ -97,28 +97,41 @@ export class ShelfBuilder {
     }
 
     buildShelves(props: TTotalProps, material: Material) {
+
         const parent = new Object3D();
         const { SHELF, CONFIG } = props
-        const { SHELFQUANT, SIZE } = CONFIG
+        const { SHELFQUANT, SIZE, MECHANISM } = CONFIG
+
+        console.log(MECHANISM, '==== MECHANISM ====')
 
         const total = SHELFQUANT.max!
         const current = SHELFQUANT.current!
         // const total = 10
         // const current = 10
         const { width, height, depth } = SIZE
+        const mechanizmTemp = height * 0.5 - 216
+
+        console.log(mechanizmTemp, 'mechanizmTemp')
 
         const matType = props.BODY.userData.MATERIAL_TYPE ?? "MeshStandardMaterial";
         const shelfMaterial = material || this.materialMap[matType] || this.materialMap.MeshStandardMaterial;
 
         const startPos = this.parent.getStartPosition(SIZE);
 
+
         for (let i = 1; current >= i && current <= total; i++) {
+            const position = startPos.y + (height / (current + 1)) * i;
+            const mechanizm = position > mechanizmTemp && MECHANISM
+            const correctDepth = mechanizm ? depth - 50 : depth
+
             let mesh = new Mesh(
-                new BoxGeometry(width - 32, 16, depth),
+                new BoxGeometry(width - 32, 16, correctDepth),
                 shelfMaterial
             );
             mesh.receiveShadow = true;
-            mesh.position.y = startPos.y + (height / (current + 1)) * i;
+            mesh.castShadow = true;
+            mesh.position.y = position;
+            mesh.position.z = mechanizm ? -25 : 0
             const positionToBascet = (mesh.position.y + height * 0.5).toFixed(4);
             mesh.userData.positionY = positionToBascet;
 
@@ -130,4 +143,6 @@ export class ShelfBuilder {
 
         return parent;
     }
+
+
 }

@@ -2,8 +2,9 @@ export const CUTTER_PARAMS = {
     TOTAL_LENGTH: 3000, // Общая длина в миллиметрах
     TOTAL_HEIGHT: 1200, // Общая высота в миллиметрах
     MAX_AREA_WIDTH: 800, // Максимальная ширина области в пикселях
-    MIN_SECTION_WIDTH: 150, // Минимальная ширина секции
-    MIN_SECTION_HEIGHT: 150, // Минимальная высота секции
+    MIN_SECTION_WIDTH: 10, // Минимальная ширина секции
+    MIN_SECTION_HEIGHT: 10, // Минимальная высота секции
+    PART_MIN_SIZE: 10,
     MIN_HOLE_SIZE_MM: 100, // Минимальный размер отверстия в мм
     MAX_HOLE_SIZE_MM: 1000, // Максимальный размер отверстия в мм,
     BACKGROUND_COLOR: "#FFFFFF",
@@ -88,7 +89,8 @@ export const CUTTER_PARAMS = {
     EXTREMUMS: {
         HOLES: 300,
         CUT: 600
-    }
+    },
+
 }
 
 export const SERVISE_ERRORS: Record<string, string> = {

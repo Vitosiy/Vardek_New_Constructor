@@ -68,6 +68,8 @@ const palitteSelect = (
   key: keyof TOptionsMap,
   palitteData: TPalitte[]
 ) => {
+  console.log(palitteTitle, key, palitteData)
+
   emit("toPalitteSelect", palitteTitle, key, palitteData);
 };
 

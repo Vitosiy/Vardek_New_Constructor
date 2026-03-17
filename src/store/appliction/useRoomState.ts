@@ -133,8 +133,6 @@ export const useRoomState = defineStore('RoomState', () => {
   const getCurrentRoomData = (roomId) => {
     let centerized = schemeTransition.getRoomDataFor3DScene(roomId);
 
-    console.log(centerized, 'centerized')
-
     const currentRoom = rooms.value.find(value => isSameId(value.id, roomId))
 
     if (centerized) {

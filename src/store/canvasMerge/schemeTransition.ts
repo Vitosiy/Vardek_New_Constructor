@@ -579,7 +579,6 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	const getRoomDataFor3DScene = (idRoom: string | number): any => {
 		const data = SchemeTransitionData.value.find((item: any) => normalizeId(item.id) === normalizeId(idRoom));
-		console.log(data, 'IN SCHEME')
 
 		if (!data) return;
 

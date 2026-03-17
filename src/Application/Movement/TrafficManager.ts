@@ -118,7 +118,7 @@ export class TrafficManager {
             }
 
             if(object.userData.elementType === 'element_room'){
-                console.log(this.modelState._WALL)
+                // console.log(this.modelState._WALL)
             }
         }
         else {

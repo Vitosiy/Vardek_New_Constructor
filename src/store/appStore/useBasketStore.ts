@@ -136,10 +136,10 @@ export const useBasketStore = defineStore('basket', () => {
   }
   
   const loadBasket = async (data: any) => { 
-    console.log('datadata', data);
+    // console.log('datadata', data);
     mainConstructor.value = data.scene;
     mainCatalog.value = data.catalog;
-    console.log('allBasketItems.value', allBasketItems.value);
+    // console.log('allBasketItems.value', allBasketItems.value);
     syncBasket();
   }
 

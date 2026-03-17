@@ -429,7 +429,7 @@ watch(
 
       if (newPath === "/2d") {
         await nextTick(); // Ждем, чтобы данные успели обновиться в schemeTransition
-        roomOptions.resetGlobalOptions()
+        // roomOptions.resetGlobalOptions()
 
         // Устанавливаем текущую активную комнату (первую, если нет текущей)
         const rooms = roomState.getRooms;

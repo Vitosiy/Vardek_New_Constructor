@@ -196,7 +196,7 @@ export class World {
         if (basketRaw) {
             try {
                 const basket = JSON.parse(basketRaw);
-                console.log('basket', basket);
+                // console.log('basket', basket);
                 if (basket) this.basketStore.loadBasket(basket)
             } catch (err) {
                 console.warn('Не удалось распарсить корзину комнаты', err);

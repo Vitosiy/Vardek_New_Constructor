@@ -254,8 +254,6 @@ export class WallBuilder {
         this.resources.startLoading(textureData[textureId].texture, 'texture', (file) => {
             if (!(file instanceof THREE.Texture)) return;
 
-            console.log(dimensions, 'dimensions')
-
             file.colorSpace = THREE.SRGBColorSpace;
             material.color = new THREE.Color('#ffffff');
             material.map = file;
