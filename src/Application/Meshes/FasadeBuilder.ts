@@ -26,7 +26,7 @@ export class FasadeBuilder {
     _FASADE_POSITION: Record<string | number, THREETypes.TFasadePositionData>
     _MILLING: Record<string | number, THREETypes.TMilling>
     _FASADE_TYPE: Record<string | number, THREETypes.TFasadeItem>
-    _FASADE_SIZE_RESTRICT:any
+    _FASADE_SIZE_RESTRICT: any
     jsonBuilder: THREETypes.TJSONBuilder
     edgeBuilder: THREETypes.TEdgeBuilder
     useEdgeBuilder: THREETypes.TUseEdgeBuilder
@@ -51,14 +51,15 @@ export class FasadeBuilder {
 
     }
 
-    getFasade({
+    public getFasade({
         props,
         fasadeNdx,
         incomingModel,
         isUMmodule = false,
         defaultConfig,
         curBodyExceptions,
-        remove = false
+        remove = false,
+        isLoad = false
     }: {
         props: THREETypes.TObject,
         fasadeNdx?: number,
@@ -66,7 +67,8 @@ export class FasadeBuilder {
         isUMmodule?: boolean,
         defaultConfig: THREETypes.TDefaultOptionsConfig,
         curBodyExceptions?: boolean,
-        remove?: boolean
+        remove?: boolean,
+        isLoad?: boolean
     }) {
         // Режим чертежа (как в исходнике, не используем, но не убираем)
         const drowMode = this.menuStore.getDrowModeValue;
@@ -102,14 +104,14 @@ export class FasadeBuilder {
                 case "element_down":
 
                     return {
-                        color: !MANUAL_NO_FASADE && ((defFasadeBottom && isDefault) || fasadsBottom.global) ? defFasadeBottom : fasadeColor,
+                        color: !MANUAL_NO_FASADE && ((defFasadeBottom && isDefault) || fasadsBottom.global) && !isLoad ? defFasadeBottom : fasadeColor,
                         pallite: fasadsBottom.palitte,
                         milling: fasadsBottom.milling
                     }
                 case "element_up":
 
                     return {
-                        color: !MANUAL_NO_FASADE && ((defFasadeTop && isDefault) || fasadsTop.global) ? defFasadeTop : fasadeColor,
+                        color: !MANUAL_NO_FASADE && ((defFasadeTop && isDefault) || fasadsTop.global) && !isLoad ? defFasadeTop : fasadeColor,
                         pallite: fasadsTop.palitte,
                         milling: fasadsTop.milling
                     }
@@ -500,7 +502,7 @@ export class FasadeBuilder {
         return parent;
     }
 
-    createFasade({
+    public createFasade({
         fasade_position,
         start_position,
         props,

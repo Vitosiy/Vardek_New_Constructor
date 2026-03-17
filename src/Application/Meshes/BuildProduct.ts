@@ -200,7 +200,7 @@ export class BuildProduct extends BuildersHelper {
         if (type.DAE) return parent_group;
 
         const product = loaded_size
-            ? this.createProductBody(parent_group, loaded_size)
+            ? this.createProductBody(parent_group, loaded_size, false, true)
             : this.createProductBody(parent_group);
 
         parent_group.add(product as THREE.Object3D);
@@ -387,7 +387,8 @@ export class BuildProduct extends BuildersHelper {
     public createProductBody(
         parentGroup: THREE.Object3D,
         size?: { width: number; height: number; depth: number } | null,
-        resize: boolean = false
+        resize: boolean = false,
+        isLoad: false
     ) {
         const drowMode = this.menuStore.getDrowModeValue;
         const total = new THREE.Object3D();
@@ -438,7 +439,7 @@ export class BuildProduct extends BuildersHelper {
         const plinth = legsHeight > 0 ? this.plinth_builder.buildPlinth(PROPS, legsHeight) : null;
 
         const fasade = fasadeProps.length
-            ? this.fasade_builder.getFasade({ props: PROPS, defaultConfig, curBodyExceptions })
+            ? this.fasade_builder.getFasade({ props: PROPS, defaultConfig, curBodyExceptions, isLoad })
             : null;
 
         const hasDrawers = fasadeProps.length > 0 && fasadeProps.some(item => item.DRAWER.drawer);
