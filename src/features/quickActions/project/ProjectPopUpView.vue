@@ -444,8 +444,6 @@ const loadProject = async (id: string | number) => {
         await sceneState.loadProjectFromData(projectData);
         sceneState.updateProjectParams({});
 
-        roomOptions.resetGlobalOptions();
-
         // 2. Устанавливаем данные в schemeTransition
         schemeTransition.setAppData(projectData.rooms);
         roomState.routConvertData("/3d");

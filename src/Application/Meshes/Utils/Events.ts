@@ -1423,10 +1423,10 @@ export class MeshEvents extends BuildersHelper {
         if (!this._currentMesh)
             return;
 
-        if(fasadeNdx)
+        if (typeof fasadeNdx === 'number') {
             await this.createHandle({ data, fasadeNdx })
-
-        this.events.emit('U:AddHandle')
+            this.events.emit('U:AddHandle')
+        }
 
     }
 
