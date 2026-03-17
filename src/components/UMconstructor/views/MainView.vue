@@ -46,6 +46,12 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(["close-modal"]);
+
+const closeModal = () => {
+  emit("close-modal", false);
+};
+
 const changeConstructorMode = (_mode: constructorMode) => {
   if (_mode && visualizationRef.value) {
     mode.value = _mode;
@@ -93,8 +99,6 @@ onBeforeMount(() => {
   UMconstructor.value.UM_STORE.totalHeight = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
   UMconstructor.value.UM_STORE.totalWidth = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   UMconstructor.value.UM_STORE.totalDepth = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
-  UMconstructor.value.UM_STORE.onHorizont = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
-  UMconstructor.value.UM_STORE.onSideProfile = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
 
   module.value = UMconstructor.value.createUMgrid(productData.value, {
     width: UMconstructor.value.UM_STORE.totalWidth,
@@ -103,22 +107,35 @@ onBeforeMount(() => {
   });
 
   if(!module.value) {
-    toaster.error('Ошибка создания модуля!')
-    return;
+    toaster.error('Ошибка создания модуля!', refFooter)
+    closeModal()
   }
 })
 
 onMounted(() => {
-  UMstore.setUMGrid(module.value);
-  UMconstructor.value?.setRenderRef(visualizationRef)
-  UMconstructor.value?.setAlertRef(refFooter)
-  UMconstructor.value?.reset(UMstore.getUMGrid())
+  if (module.value) {
+    UMstore.setUMGrid(module.value);
+
+    UMstore.noLoops = module.value.noLoops | false;
+    UMstore.noBottom = module.value.noBottom | false;
+    UMstore.noBackwall = module.value.noBackwall | false;
+    UMstore.onHorizont = module.value.horizont > 0;
+    UMstore.noLoops = module.value.noLoops | false;
+    UMstore.onSideProfile = module.value.profilesConfig?.sideProfile | false;
+    UMstore.onWallModule = module.value.onWallModule | false;
+
+    UMconstructor.value?.setRenderRef(visualizationRef)
+    UMconstructor.value?.setAlertRef(refFooter)
+    UMconstructor.value?.reset(UMstore.getUMGrid())
+  }
+  else {
+    toaster.error('Ошибка создания модуля!', refFooter)
+    closeModal()
+  }
 });
 
 onBeforeUnmount(() => {
   module.value = false;
-  UMconstructor.value.UM_STORE.onHorizont = false
-  UMconstructor.value.UM_STORE.onSideProfile = false
   UMconstructor.value = null;
 });
 

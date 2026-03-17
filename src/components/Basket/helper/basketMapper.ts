@@ -40,9 +40,9 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
         result.SIZE = size;
       }
 
-      // Добавляем HEANDLES только если массив не пустой
-      if (fp.HEANDLES && Array.isArray(fp.HEANDLES) && fp.HEANDLES.length > 0) {
-        result.HEANDLES = fp.HEANDLES;
+      // Добавляем HANDLES только если массив не пустой
+      if (fp.HANDLES && Array.isArray(fp.HANDLES) && fp.HANDLES.length > 0) {
+        result.HANDLES = fp.HANDLES;
       }
 
       return result;
@@ -333,7 +333,8 @@ function convertModuleToLegacyFormat(newModuleObject) {
         "1": 4693746
       };
     });
-  } else {
+  }
+  else {
     const result = {}
     console.log('sections', CONFIG.MODULEGRID.sections)
     CONFIG.MODULEGRID.sections.forEach((section, number) => {
@@ -428,7 +429,7 @@ function convertModuleToLegacyFormat(newModuleObject) {
       const fasadesPattinaKey = `PATINA${sectionNumber}`;
 
       result[fasadesSizeKey] = {};
-      result[fasadesWidthKey] = {};
+      result[fasadesWidthKey] = false;
       result[fasadesMillingKey] = {};
       result[fasadesPaletteKey] = {};
       result[fasadesPattinaKey] = {};
@@ -437,8 +438,8 @@ function convertModuleToLegacyFormat(newModuleObject) {
 
         result[fasadesSizeKey][index] = fasade.height;
 
-        if (!result[fasadesWidthKey][index]) {
-          result[fasadesWidthKey][index] = fasade.width;
+        if (!result[fasadesWidthKey]) {
+          result[fasadesWidthKey] = fasade.width;
         }
 
         if (!result[fasadesHorizontlPositionKey]) {
@@ -637,12 +638,20 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
     const propsUM = convertModuleToLegacyFormat(objProps);
     const cleanedData = removeEmptyObjects(propsUM);
     console.log('cleanedData', cleanedData)
+    let HANDLES = []
+    facadeProps.forEach(fasade => {
+      if(fasade.HANDLES){
+        HANDLES.push(fasade.HANDLES)
+      }
+    })
+
     return {
       BASKETID: key,
       PRODUCT: objProps.CONFIG.ID,
       PROPS: cleanedData,
       QUANTITY: 1,
       TYPE: "umscene",
+      HANDLES,
     };
   } else {
     return {

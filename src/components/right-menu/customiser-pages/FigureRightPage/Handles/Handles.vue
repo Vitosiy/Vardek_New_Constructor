@@ -48,6 +48,11 @@ const props = defineProps({
   activePos: {
     type: Number,
   },
+  disablePositionChanger: {
+    type: Boolean,
+    default: false,
+  }
+
 });
 
 const emit = defineEmits(["parent-callback"]);
@@ -88,6 +93,10 @@ onBeforeMount(() => {
     index = FASADE_POSITIONS[0].FASADE_TYPE.findIndex((item) => item !== null);
   }
 
+  if (index === -1) {
+    index = 0
+  }
+
   const startProp = props.data[index].props;
   const curHandleId = startProp.HANDLES.id;
   const drawer = startProp.HANDLES.drawer !== null;
@@ -124,9 +133,10 @@ const onHandleSelect = (data) => {
     figureFasad.value.props.HANDLES.drawer === null && data.ID !== clearId;
   // handlePos.value.length > 1;
 
-  if (props.is2Dconstructor) {
-    callback(data.ID, "handle");
-  } else {
+  if(props.is2Dconstructor) {
+    callback(data.ID, "handle")
+  }
+  else {
     eventBus.emit("A:AddHandle", {
       data: { id: data.ID, model: data.models },
       fasadeNdx: figureFasad.value.ndx,
@@ -185,7 +195,7 @@ const checkControllerVisible = computed(() => {
           :data="figureFasad.data"
         />
         <DirectionControl
-          v-if="controllerVisible"
+          v-if="controllerVisible && !props.disablePositionChanger"
           :handle-pos="handlePos"
           :active-pos="props.activePos"
           @changeDirectionPos="onChangeHandlePos"

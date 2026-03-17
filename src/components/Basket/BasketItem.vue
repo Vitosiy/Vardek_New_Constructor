@@ -312,15 +312,15 @@
       <div class="basket-item__props" v-else>
         <div
           style="list-style: none"
-          v-for="item in renderDescription(item?.product.PROPS)"
+          v-for="(propValue, propKey) in renderDescription(item?.product.PROPS)"
           :key="propKey"
         >
-          <div v-if="Array.isArray(item.value)">
-            <span class="basket-item__props-lable">{{ item.key }}:</span>
+          <div v-if="Array.isArray(propValue.value)">
+            <span class="basket-item__props-lable">{{ propValue.key }}:</span>
             <div
                 class="basket-item__props-block__lables"
                 style="list-style: none"
-                v-for="(value, i) in item.value"
+                v-for="(value, i) in propValue.value"
                 :key="i"
             >
               <span>{{i+1}}) {{ value.key }}:</span
@@ -328,8 +328,8 @@
             </div>
           </div>
           <div v-else>
-            <span class="basket-item__props-lable">{{ item.key }}:</span
-            ><span>{{ item.value }}</span>
+            <span class="basket-item__props-lable">{{ propValue.key }}:</span
+            ><span>{{ propValue.value }}</span>
           </div>
         </div>
       </div>
@@ -882,15 +882,27 @@ const renderDescription = (props) => {
     for (const [doorNumber, doorData] of Object.entries(props.DOORS)) {
       // Для каждой двери перебираем её части (обычно только часть "1")
       for (const [partNumber, partData] of Object.entries(doorData)) {
-        // Каждая часть может содержать несколько элементов (0, 1 и т.д.)
-        for (const [elementNumber, materialId] of Object.entries(partData)) {
+        // Каждая часть может содержать несколько элементов (0, 1 и т.д.), если это не двери-купе
+        // тогда здесь уже будет id материала
+        if (typeof partData === "number") {
           const description =
-            appData.value["FASADE"][materialId].NAME ||
-            `Неизвестный материал (ID: ${materialId})`;
+              appData.value["FASADE"][partData].NAME ||
+              `Неизвестный материал (ID: ${partData})`;
           result.push({
             key: `Цвет фасада ${doorNumber}`,
-            value: ` дверь ${partNumber} часть ${+elementNumber + 1} : ${description}`,
+            value: ` дверь ${doorNumber} часть ${+partNumber + 1} : ${description}`,
           });
+        }
+        else {
+          for (const [elementNumber, materialId] of Object.entries(partData)) {
+            const description =
+                appData.value["FASADE"][materialId].NAME ||
+                `Неизвестный материал (ID: ${materialId})`;
+            result.push({
+              key: `Цвет фасада ${doorNumber}`,
+              value: ` дверь ${partNumber} часть ${+elementNumber + 1} : ${description}`,
+            });
+          }
         }
       }
     }
@@ -931,7 +943,10 @@ const renderDescription = (props) => {
           });
         });
       }
-      if (value.length && getPropDefinition(key)?.NAME && key !== "OPTION") {
+      if (value.length && getPropDefinition(key)?.NAME
+          && key !== "OPTION"
+          && !["MILLING", "PATINA", "PALETTE", "GLASS", "TYPE", "SHOWCASE"].find(item => key.includes(item))
+      ) {
         if(Array.isArray(value)) {
           let items = []
 
@@ -975,7 +990,7 @@ const renderDescription = (props) => {
 
             const description =
               appData.value[getPropDefinition(key)?.type][partData].NAME ||
-              `Неизвестный материал (ID: ${materialId})`;
+              `Неизвестный материал (ID: ${partData})`;
             result.push({
               key: getPropDefinition(key)?.NAME,
               value: `дверь ${doorNumber} часть ${+partNumber + 1} : ${description}`,
@@ -1013,6 +1028,19 @@ const renderDescription = (props) => {
       if (key === "BACKWALL" && !value.COLOR) {
         result.push({ key: getPropDefinition(key)?.NAME, value: "Выключена" });
       }
+    }
+    else if (getPropDefinition(key)?.NAME && Array.isArray(value)) {  //У шкафов ЭКО фрезеровки, палитры и т.д. приходят в формате Array, а не Object
+      value.forEach((doorData, doorNumber) => {
+        if(typeof doorData === "number"){
+          const description =
+              appData.value[getPropDefinition(key)?.type][doorData].NAME ||
+              `Неизвестный материал (ID: ${doorData})`;
+          result.push({
+            key: getPropDefinition(key)?.NAME,
+            value: `${description}`,
+          });
+        }
+      })
     }
   }
 

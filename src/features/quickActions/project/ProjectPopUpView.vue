@@ -1,8 +1,27 @@
 <template>
-  <div class="project">
-    <GenericLoader v-show="isProjectLoading" />
-    <div class="project__title">Менеджер проектов</div>
-    <ClosePopUpButton class="popup__close" @close="closePopup" />
+  <div class="project-popup-wrapper">
+    <!-- Вкладки сверху попапа -->
+    <div class="project-tabs">
+      <button
+        class="project-tabs__tab"
+        :class="{ 'project-tabs__tab--active': activeTab === 'projects' }"
+        @click="activeTab = 'projects'"
+      >
+        Мои проекты
+      </button>
+      <button
+        class="project-tabs__tab"
+        :class="{ 'project-tabs__tab--active': activeTab === 'templates' }"
+        @click="activeTab = 'templates'"
+      >
+        Готовые проекты
+      </button>
+    </div>
+
+    <div class="project">
+      <GenericLoader v-show="isProjectLoading" />
+      <!-- <div class="project__title">{{ activeTab === 'projects' ? 'Мои проекты' : 'Готовые проекты' }}</div> -->
+      <ClosePopUpButton class="popup__close" @close="closePopup" />
 
     <div class="project__container">
       <!-- Фильтры -->
@@ -164,6 +183,7 @@
         </div>
       </template>
     </Modal>
+    </div>
   </div>
 </template>
 
@@ -187,6 +207,7 @@ import { useConstructor2DHistory } from "@/store/constructor2d/useConstructor2DH
 import { Project, ProjectTab } from "./types";
 import { useToast } from "@/features/toaster/useToast";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useRoomOptions } from "@/components/left-menu/option/roomOptions/useRoomOptons";
 import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
 import ProjectPagination from "./components/ProjectPagination.vue";
 import TechnologistFormButton from "@/components/Technologist/TechnologistFormButton.vue";
@@ -237,8 +258,10 @@ const onBackendIdSelect = async () => {
 const projectState = useProjectStore();
 const projectAPI = useProjectAPI();
 const roomState = useRoomState();
+const roomOptions = useRoomOptions();
 
 const isProjectLoading = ref(false);
+const activeTab = ref<'projects' | 'templates'>('projects');
 
 const getProgectImage = computed(() => {
   return (project) => {
@@ -269,6 +292,11 @@ watch(currentPage, (newPage, oldPage) => {
   if (oldPage != null && newPage !== oldPage) {
     loadProjects(0);
   }
+});
+
+watch(activeTab, () => {
+  currentPage.value = 1;
+  loadProjects(0);
 });
 
 const closePopup = () => {
@@ -333,6 +361,8 @@ const loadProjects = async (delay: number = 300) => {
     const dateFromVal = dateFrom.value?.trim() || undefined;
     const dateToVal = dateTo.value?.trim() || undefined;
 
+    const readySolutions = activeTab.value === 'templates';
+
     const result = await projectAPI.loadProjects(
       {
         designerValue,
@@ -342,6 +372,7 @@ const loadProjects = async (delay: number = 300) => {
         dateTo: dateToVal,
         elementsOnPage: PAGE_SIZE,
         currentPage: currentPage.value,
+        readySolutions,
       },
       delay,
     );
@@ -412,6 +443,8 @@ const loadProject = async (id: string | number) => {
         // 1. Обновляем данные проекта в sceneState
         await sceneState.loadProjectFromData(projectData);
         sceneState.updateProjectParams({});
+
+        roomOptions.resetGlobalOptions();
 
         // 2. Устанавливаем данные в schemeTransition
         schemeTransition.setAppData(projectData.rooms);
@@ -612,13 +645,14 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .project {
-  width: 1347px;
+  width: 1407px;
   max-width: 100%;
   height: 83vh;
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 
   &__title {
     text-align: center;
@@ -962,5 +996,49 @@ onMounted(async () => {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.project-popup-wrapper {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -25px -25px -25px;
+  width: calc(100% + 50px);
+}
+
+.project-tabs {
+  display: flex;
+  align-self: flex-start;
+  margin-left: 30px;
+
+  &__tab {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 12px 12px 0 0;
+    background-color: #e0e0e0;
+    color: #666;
+    position: relative;
+    margin-right: 4px;
+
+    &:hover:not(.project-tabs__tab--active) {
+      background-color: #d0d0d0;
+    }
+
+    &--active {
+      background-color: #fff;
+      color: #333;
+      font-weight: 600;
+      z-index: 1;
+    }
+  }
+}
+
+.project-popup-wrapper .project {
+  border-radius: 0 16px 16px 16px;
+  background-color: #fff;
+  padding: 30px;
 }
 </style>

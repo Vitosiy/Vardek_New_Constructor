@@ -361,7 +361,6 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
 
     const resetGlobalOptions = () => {
         const startParams = sceneState.getStartProgectParams
-        // console.log(' ❌❌❌ HERE ❌❌❌')
 
         for (const key in globalOptions.value) {
             const optionKey = key as keyof TOptionsMap
@@ -370,27 +369,25 @@ export const useRoomOptions = defineStore('RoomOptions', () => {
             const plinth = plinthKey[optionKey]
 
             try {
-                if (globalOptions.value[optionKey]) {
-                    if (globalOptions.value[optionKey].global === false) {
-                        globalOptions.value[optionKey].id = startParams[defaultIds[optionKey]]
-                        if (palitt) {
-                            globalOptions.value[optionKey].palitte = startParams[palitt]
-                        }
-                        if (milling) {
-                            globalOptions.value[optionKey].milling = startParams[milling]
-                        }
-                        if (plinth) {
-                            globalOptions.value[optionKey].plinthSurfase = startParams[plinth]
-                        }
-                    }
-                }
+                const option = globalOptions.value[optionKey]
+                if (!option) continue
 
+                option.id = startParams[defaultIds[optionKey]]
+                option.global = false
+
+                if (palitt) {
+                    option.palitte = startParams[palitt]
+                }
+                if (milling) {
+                    option.milling = startParams[milling]
+                }
+                if (plinth) {
+                    option.plinthSurfase = startParams[plinth]
+                }
 
             } catch (error) {
                 console.warn('Стартовые параметры не найдены', error);
             }
-
-
         }
     }
 

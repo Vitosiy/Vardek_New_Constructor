@@ -8,10 +8,11 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {ref, toRefs, onMounted, watch} from "vue";
-import {TSelectedCell, GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
+import {ref, toRefs, onMounted, watch, computed} from "vue";
+import {TSelectedCell, GridModule, LOOPSIDE} from "@/components/UMconstructor/types/UMtypes.ts";
 import {TFasadeProp, TFasadeTrueSizes} from "@/types/types.ts";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
+import {c} from "openapi-typescript";
 
 const props = defineProps({
   module: {
@@ -202,6 +203,20 @@ const closeMenu = () => {
   currentFasadeMaterial.value = false;
   currentFasadeSize.value = false;
 };
+
+const getLoopsideList = (secIndex: number, doorIndex: number, module) => {
+  let list = UMconstructor?.value?.LOOPS.getLoopsideList(
+      secIndex,
+      doorIndex,
+      module
+  )
+
+  if(module.noLoops){
+    return [list?.find(item => item.ID === LOOPSIDE["none"])]
+  }
+  else
+    return list
+}
 
 onMounted(() => {
   selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected('fasades')
@@ -402,25 +417,24 @@ watch(() => selectedFasade.value, () => {
                             "
                         />
                         <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
-
-                        <!--                        <ConfigurationOption
-                                                    v-if="!segment.error"
-                                                    :disable-delete-choice="true"
-                                                    :class="[
-                                                        {
-                                                          active:
-                                                            currentHandle.cell ===
-                                                              doorIndex &&
-                                                            currentHandle.row ===
-                                                              segmentIndex,
-                                                        },
-                                                      ]"
-                                                    :type="'Handles'"
-                                                    :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
-                                                    @click="
-                                                      openHandleSelector(null, doorIndex, segmentIndex)
-                                                    "
-                                                />-->
+                        <ConfigurationOption
+                            v-if="!segment.error"
+                            :disable-delete-choice="true"
+                            :class="[
+                                {
+                                  active:
+                                    currentHandle.cell ===
+                                      doorIndex &&
+                                    currentHandle.row ===
+                                      segmentIndex,
+                                },
+                              ]"
+                            :type="'Handles'"
+                            :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
+                            @click="
+                              openHandleSelector(null, doorIndex, segmentIndex)
+                            "
+                        />
 
                       </div>
                     </article>
@@ -574,6 +588,7 @@ watch(() => selectedFasade.value, () => {
                                     :value="segment.loopsSide"
                                     name="loopsSide"
                                     class="actions-input"
+                                    :title="UMconstructor.APP.LOOPSIDE[segment.loopsSide].NAME"
                                     @change="
                                       UMconstructor.FASADES.changeLoopside(
                                         secIndex,
@@ -583,9 +598,14 @@ watch(() => selectedFasade.value, () => {
                                         module
                                       )
                                     "
+                                    :disabled="getLoopsideList(
+                                        secIndex,
+                                        doorIndex,
+                                        module
+                                      ).length < 2"
                                 >
                                   <option
-                                      v-for="(side, key) in UMconstructor.LOOPS.getLoopsideList(
+                                      v-for="(side, key) in getLoopsideList(
                                         secIndex,
                                         doorIndex,
                                         module
@@ -593,7 +613,10 @@ watch(() => selectedFasade.value, () => {
                                       :key="key"
                                       :value="side.ID"
                                   >
-                                    <div class="item-group-name">
+                                    <div
+                                        class="item-group-name"
+                                        :title="side.NAME"
+                                    >
                                       <p class="name__text">
                                         {{ side.NAME }}
                                       </p>
@@ -724,6 +747,7 @@ watch(() => selectedFasade.value, () => {
           :index="0"
           @parent-callback="selectHandle"
           :active-pos="currentHandle.data.HANDLES.position"
+          :disable-position-changer="!!module?.isSlidingDoors"
       />
     </div>
   </transition>

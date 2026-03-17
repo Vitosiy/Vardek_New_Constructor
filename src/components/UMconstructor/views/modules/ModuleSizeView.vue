@@ -36,6 +36,8 @@ const onHorizont = ref<boolean>(true);
 const onSideProfile = ref<boolean>(false);
 const noBottom = ref<boolean>(false);
 const onWallModule = ref<boolean>(false);
+const noLoops = ref<boolean>(false);
+const noBackwall = ref<boolean>(false);
 
 const fillingExist = computed(() => {
   if(UMconstructor?.value && module.value)
@@ -83,14 +85,52 @@ watch(() => UMconstructor?.value?.UM_STORE.onHorizont, () => {
 watch(() => UMconstructor?.value?.UM_STORE.noBottom, () => {
   if(noBottom.value !== UMconstructor.value.UM_STORE.noBottom) {
     noBottom.value = UMconstructor.value.UM_STORE.noBottom
-    UMconstructor.value.reset()
+
+    if(noBottom.value)
+      module.value.noBottom = noBottom.value
+    else
+      delete module.value.noBottom
+
+    UMconstructor.value.reset(module.value)
   }
 })
 
 watch(() => UMconstructor?.value?.UM_STORE.onWallModule, () => {
   if(onWallModule.value !== UMconstructor.value.UM_STORE.onWallModule) {
     onWallModule.value = UMconstructor.value.UM_STORE.onWallModule
-    UMconstructor.value.reset()
+
+    if(onWallModule.value)
+      module.value.onWallModule = onWallModule.value
+    else
+      delete module.value.onWallModule
+
+    UMconstructor.value.reset(module.value)
+  }
+})
+
+watch(() => UMconstructor?.value?.UM_STORE.noLoops, () => {
+  if(noLoops.value !== UMconstructor.value.UM_STORE.noLoops) {
+    noLoops.value = UMconstructor.value.UM_STORE.noLoops
+
+    if(noLoops.value)
+      module.value.noLoops = noLoops.value
+    else
+      delete module.value.noLoops
+
+    UMconstructor.value.reset(module.value)
+  }
+})
+
+watch(() => UMconstructor?.value?.UM_STORE.noBackwall, () => {
+  if(noBackwall.value !== UMconstructor.value.UM_STORE.noBackwall) {
+    noBackwall.value = UMconstructor.value.UM_STORE.noBackwall
+
+    if(noBackwall.value)
+      module.value.noBackwall = noBackwall.value
+    else
+      delete module.value.noBackwall
+
+    UMconstructor.value.reset(module.value)
   }
 })
 

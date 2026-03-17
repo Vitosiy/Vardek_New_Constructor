@@ -885,7 +885,39 @@ class Shape extends Helpers {
             y: this.getPixelHeight(position.y)
         };
 
-        return (
+        let width = this.width
+        let height = this.height
+        if(this.data.fasade) {
+            let moduleThickness = this.UM_STORE.getUMGrid().moduleThickness
+            let top_offset = this.data.fasade.height - this.data.fasade.manufacturerOffset - this.data.height - (moduleThickness - 2)
+            height = this.getPixelHeight(this.data.fasade.height - (moduleThickness - 2))
+            pxPos.y -= this.getPixelHeight(top_offset)
+
+            return (
+                (
+                    (
+                        pxPos.x + width <= this.sectorBounds.x + this.sectorBounds.width &&
+                        pxPos.x + width >= this.sectorBounds.x
+                    ) &&
+                    (
+                        pxPos.x <= this.sectorBounds.x + this.sectorBounds.width &&
+                        pxPos.x >= this.sectorBounds.x
+                    )
+                ) &&
+                (
+                    (
+                        pxPos.y + height <= this.sectorBounds.y + this.sectorBounds.height &&
+                        pxPos.y + height >= this.sectorBounds.y
+                    ) &&
+                    (
+                        pxPos.y <= this.sectorBounds.y + this.sectorBounds.height &&
+                        pxPos.y >= this.sectorBounds.y
+                    )
+                )
+            );
+        }
+        else
+            return (
             (
                 (
                     pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width &&
@@ -1472,7 +1504,7 @@ class ShapeAdjuster extends Helpers {
         const bounds = this.getSectorBounds(sector)
 
         const margin = 0;
-        const {width, height} = shape;
+        let {width, height} = shape;
         const {isVerticalItem} = shape.data;
 
         const origX = shape.graphic.position.x
@@ -1526,8 +1558,10 @@ class ShapeAdjuster extends Helpers {
                 minY = minY - this.getPixelHeight(moduleData.moduleThickness - 2)
             }
 
-            for (let i = 0; i < maxY - minY - height; i++) {
-                const y = this.convertToTen(minY + (bounds.height - height) - i);
+            let totalMax = this.getMmHeight(maxY - minY - height)
+            for (let i = 0; i < totalMax; i++) {
+                let pixel_i = this.getPixelHeight(i)
+                const y = this.convertToTen(minY + (bounds.height - height) - pixel_i);
 
                 shape.graphic.position.x = x;
                 shape.graphic.position.y = y;
