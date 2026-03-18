@@ -117,11 +117,20 @@ export class JsonBuilder {
         side: THREETypes.TObject | undefined,
         materialData: THREETypes.TObject
     ): THREE.Material | null {
-        if (!side) return null
+        if (!side)
+            return null
+
+        let texture_url
+        if (side.TABLE) {
+            texture_url = this.parent._PRODUCTS[side.TABLE]?.texture?.src
+        }
+        else {
+            texture_url = this.parent._FASADE[side.COLOR].TEXTURE
+        }
 
         return side.PALETTE
             ? this.parent.palette_bulider.getPalette(side.COLOR, side.PALETTE)
-            : this.createMaterial(materialData, this.parent._FASADE[side.COLOR].TEXTURE) as THREE.Material
+            : this.createMaterial(materialData, texture_url) as THREE.Material
     }
 
     parseDate({ data, group, obj, parent_size, array, isTopTable = false, isRoomElement = false, textureUrl }: ParseDateParams): boolean | void {

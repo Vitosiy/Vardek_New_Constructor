@@ -872,8 +872,9 @@ const renderDescription = (props) => {
     const patina = appData.value["PATINA"][value.PATINA]?.NAME;
     const glass = appData.value["GLASS"][value.GLASS]?.NAME;
     const milling = appData.value["MILLING"][value.MILLING]?.NAME;
+    const table = appData.value.CATALOG.PRODUCTS[value.TABLE]?.NAME;
 
-    return `${color ?? ""} ${pallette ?? ""} ${patina ?? ""} ${milling ?? ""}`;
+    return `${table ? table : color ?? ""} ${pallette ?? ""} ${patina ?? ""} ${milling ?? ""}`;
   };
 
   console.log(appData.value);

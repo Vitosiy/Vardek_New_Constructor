@@ -401,6 +401,7 @@ export type TFasadeProp = {
   },
   DRAWER: TDrawer,
   MANUAL_NO_FASADE?: boolean
+  TABLE?: number | null,
 }
 
 export type TModelData = {
