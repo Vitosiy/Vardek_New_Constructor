@@ -30,7 +30,7 @@ export function useProjectAPI() {
   const sceneState = useSceneState()
   const isLoading = ref(false)
   const technologistStorage = useTechnologistStorage();
-  const { saveSceneParams, resetGlobalOptions } = useRoomOptions()
+  const { saveSceneParams } = useRoomOptions()
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null

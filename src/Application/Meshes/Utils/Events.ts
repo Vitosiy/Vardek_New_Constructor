@@ -1237,6 +1237,8 @@ export class MeshEvents extends BuildersHelper {
         currentMesh.position.set(POSITION.x, POSITION.y, POSITION.z);
         currentMesh.updateMatrixWorld(true);
 
+        console.log(SIZE, ' --- SIZE')
+
         currentMesh.userData.trueSizes = {
             DEPTH: fasadeSize ? SIZE.depth * 0.5 : data.depth * 0.5,
             HEIGHT: body.userData.trueSizes.HEIGHT,

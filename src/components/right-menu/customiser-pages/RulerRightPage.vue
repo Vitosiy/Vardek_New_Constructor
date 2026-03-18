@@ -104,6 +104,15 @@ const updateRootModel = (model: TFillingDataType) => {
 };
 
 const updateFillingModel = (filling: TFillingData) => {
+  // console.log(modelState._FILLING[filling.id].SHELFQUANT, "_FILLING");
+  const incomeShelfcount = modelState._FILLING[filling.id].SHELFQUANT;
+  const maxCount = typeof incomeShelfcount === "number" ? incomeShelfcount : 20;
+  // console.log(maxCount, "===== maxCount");
+  shelfCount.value = {
+    max: maxCount,
+    current: 0,
+  };
+
   eventBus.emit("A:ChangeFilling", { data: filling.id });
   fillingList.value?.forEach((el) => {
     el.active = el.id == filling.id;
@@ -152,7 +161,21 @@ const prepareData = () => {
     };
   }).sort((a, b) => a.sort - b.sort);
 
-  shelfCount.value = SHELFQUANT;
+  // console.log(modelState._FILLING, "--");
+  // console.log(modelState._FILLING[FILLING]?.SHELFQUANT, '[FILLING]?.SHELFQUANT')
+  // console.log(SHELFQUANT, "SHELFQUANTSHELFQUANT");
+
+  const maxCount = modelState._FILLING[FILLING]?.SHELFQUANT
+    ? modelState._FILLING[FILLING]?.SHELFQUANT
+    : SHELFQUANT.max;
+
+
+
+  shelfCount.value = {
+    max: maxCount,
+    current: SHELFQUANT.current,
+  };
+
   joinDepthResizeData.value.width = SIZEEDITJOINDEPTH;
   sizeEditData.value = {
     widthMin: SIZE_EDIT.SIZE_EDIT_WIDTH_MIN,
@@ -191,7 +214,7 @@ const resizeModel = (value: object) => {
     });
 
     const curFilling = fillingList.value?.some(
-      (el) => el.active && el.extensions
+      (el) => el.active && el.extensions,
     );
     if (!curFilling) {
       updateFillingModel(fillingList.value[0]);
@@ -209,7 +232,7 @@ const checkFillingConditions = (data, size) => {
       "#Y#": height,
       "#X#": width,
       "#Z#": depth,
-    }
+    },
   );
 
   return modelState.calculateFromString(extensionsPrepare);
@@ -232,7 +255,7 @@ watch(
     requestAnimationFrame(() => {
       isMounted.value = true;
     });
-  }
+  },
 );
 </script>
 
@@ -318,11 +341,14 @@ watch(
 
       <div class="customiser-section__refactor">
         <div class="customiser-section__refactor-item">
-          <p class="customiser-section__refactor-title item__label text-grey" v-if="shelfCount.max">
-            Количество полок
+          <p
+            class="customiser-section__refactor-title item__label text-grey"
+            v-if="typeof shelfCount.max == 'number'"
+          >
+            Количество полок / max: {{shelfCount.max  }}
           </p>
           <MainInput
-            v-if="shelfCount.max"
+            v-if="typeof shelfCount.max == 'number'"
             class="input__search right-menu"
             v-model="shelfCount.current"
             @update:modelValue="recountShelfs"
@@ -334,7 +360,10 @@ watch(
         </div>
 
         <div class="customiser-section__refactor-item">
-          <p class="customiser-section__refactor-title item__label text-grey " v-if="sizeEditData.joinDepthMin">
+          <p
+            class="customiser-section__refactor-title item__label text-grey"
+            v-if="sizeEditData.joinDepthMin"
+          >
             Глубина пристыковочного модуля
           </p>
           <MainInput
@@ -413,7 +442,7 @@ watch(
       flex-direction: column;
       justify-content: space-between;
     }
-    &-title{
+    &-title {
       margin-bottom: auto;
     }
   }
@@ -463,7 +492,9 @@ watch(
     font-weight: 600;
     font-size: small;
 
-    transition: background-color 0.2s, transform 0.1s;
+    transition:
+      background-color 0.2s,
+      transform 0.1s;
 
     img {
       max-width: 100px;

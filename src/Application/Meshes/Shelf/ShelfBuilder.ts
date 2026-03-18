@@ -102,7 +102,7 @@ export class ShelfBuilder {
         const { SHELF, CONFIG } = props
         const { SHELFQUANT, SIZE, MECHANISM } = CONFIG
 
-        console.log(MECHANISM, '==== MECHANISM ====')
+        // console.log(MECHANISM, '==== MECHANISM ====')
 
         const total = SHELFQUANT.max!
         const current = SHELFQUANT.current!
