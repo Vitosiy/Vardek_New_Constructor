@@ -98,6 +98,7 @@ export default class UMconstructorClass {
             const PROPS = productData.PROPS;
             const {width, height, depth} = size;
             let result
+
             if (!PROPS.CONFIG.MODULEGRID || !Object.keys(PROPS.CONFIG.MODULEGRID).length) {
 
                 let FASADE = PROPS.CONFIG.FASADE_POSITIONS[0]
@@ -192,6 +193,8 @@ export default class UMconstructorClass {
                 }
                 else {
 
+                    console.log('TYT')
+
                     if(_module.isRestrictedModule) {
                         let fasade_width = (FASADE.FASADE_WIDTH / 2) - 2
                         fasades = [
@@ -232,6 +235,7 @@ export default class UMconstructorClass {
                         ];
                     }
                     else
+                                            console.log('TYT_2')
                         fasades = [
                             [
                                 <FasadeObject>{

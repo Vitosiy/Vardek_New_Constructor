@@ -12,7 +12,6 @@ import {ref, toRefs, onMounted, watch, computed} from "vue";
 import {TSelectedCell, GridModule, LOOPSIDE} from "@/components/UMconstructor/types/UMtypes.ts";
 import {TFasadeProp, TFasadeTrueSizes} from "@/types/types.ts";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
-import {c} from "openapi-typescript";
 
 const props = defineProps({
   module: {
@@ -204,11 +203,12 @@ const closeMenu = () => {
   currentFasadeSize.value = false;
 };
 
-const getLoopsideList = (secIndex: number, doorIndex: number, module) => {
+const getLoopsideList = (secIndex: number, doorIndex: number, module, segment:number) => {
   let list = UMconstructor?.value?.LOOPS.getLoopsideList(
       secIndex,
       doorIndex,
-      module
+      module,
+      segment
   )
 
   if(module.noLoops){
@@ -608,7 +608,8 @@ watch(() => selectedFasade.value, () => {
                                       v-for="(side, key) in getLoopsideList(
                                         secIndex,
                                         doorIndex,
-                                        module
+                                        module,
+                                        segment.id
                                       )"
                                       :key="key"
                                       :value="side.ID"

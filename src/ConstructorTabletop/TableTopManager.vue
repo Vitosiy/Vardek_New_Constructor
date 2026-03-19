@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// @ts-nocheck
+
 
 import {
   onMounted,
@@ -457,6 +457,8 @@ const createProfileServices = () => {
     getCurretKromkaList();
   }
 
+  console.log(curProfileServise, ' ======= curProfileServise')
+
   return curProfileServise;
 };
 
@@ -505,6 +507,9 @@ const checkProfileDisablegroups = () => {
 };
 
 const convertProfileData = (value, item) => {
+  console.log('---- PROF')
+
+
   const parent = modelState.getCurrentRaspilParent;
 
   const { PROPS } = parent.userData;

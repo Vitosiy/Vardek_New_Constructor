@@ -57,6 +57,9 @@ export class BuildUniversalModule extends BuildProduct {
 
         const MODULEGRID = moduleParams || Object.keys(PROPS.CONFIG.MODULEGRID)?.length ? PROPS.CONFIG.MODULEGRID : false;
 
+
+        // console.log(MODULEGRID, '===== MODULEGRID =====')
+
         const size = _size ? _size : MODULEGRID ? {
             width: MODULEGRID.width,
             height: MODULEGRID.height,

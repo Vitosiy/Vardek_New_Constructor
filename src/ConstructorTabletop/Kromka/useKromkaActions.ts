@@ -168,7 +168,6 @@ const useKromkaActions = defineStore('KromkaActions', () => {
         createKromkaCardData()
     }
 
-
     const clearKromkaData = () => {
         tempKromkaList.value = []
         kromkaActive.value = false
