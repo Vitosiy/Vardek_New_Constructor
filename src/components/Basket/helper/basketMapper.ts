@@ -556,6 +556,10 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
           height: el.height,
           width: el.width,
           serviseData: el.serviseData.filter(el => el.value).map(el => {
+            console.log(el, 'IN BUSKET')
+            console.log(el.separated == '0', 'IN separated')
+
+            if (el.separated == '0') return
             if (el.width) {
               return {
                 ID: el.ID,
@@ -568,10 +572,12 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
                 NAME: el.NAME
               }
             }
-          })
+          }).filter(Boolean)
         }
       })
     }
+
+    console.log(props.RASPIL)
 
     // props.PROFILE = '251698';
     props.PROFILE = objProps.CONFIG.PROFILE.filter(el => el.value === true)[0]?.ID
@@ -640,7 +646,7 @@ export function createBasketItem(objProps: any, index: number, key: any = ''): I
     console.log('cleanedData', cleanedData)
     let HANDLES = []
     facadeProps.forEach(fasade => {
-      if(fasade.HANDLES){
+      if (fasade.HANDLES) {
         HANDLES.push(fasade.HANDLES)
       }
     })
