@@ -246,13 +246,13 @@ export function useProjectAPI() {
     }
   }
 
-  const deleteProject = async (projectId: number): Promise<{ success: boolean; error?: string }> => {
-    if (!projectId) {
+  const deleteProject = async (id: number): Promise<{ success: boolean; error?: string }> => {
+    if (!id) {
       return { success: false, error: ERROR_MESSAGES.MISSING_PROJECT_ID }
     }
     try {
-      const response = await (client as any).POST(`/api/modeller/projectq/${projectId}`, {
-        body: {}
+      const response = await (client as any).POST(`/api/modeller/projectq/deletebyid`, {
+        body: { id }
       })
       const normalized = normalizeApiResponse<{ data?: any }>(response)
       if (normalized.success) {
