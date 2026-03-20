@@ -142,7 +142,7 @@ const onSearchChange = (e) => {
   display: flex;
   flex-direction: column;
   position: relative;
-  max-height: 100vh;
+  max-height: 40vh;
   overflow: hidden;
   margin-right: 0px;
   border: 1px solid grey;

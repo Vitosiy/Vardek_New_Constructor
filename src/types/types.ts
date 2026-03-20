@@ -404,6 +404,19 @@ export type TFasadeProp = {
   TABLE?: number | null,
 }
 
+export type TToptableUMProp = {
+  SHOW: boolean | null,
+  POSITION: number | null,
+  SIZES: {
+    id: number,
+    params: TFasadePropsSizes
+  },
+  TABLE: number,
+  PROFILE: NumStr | null,
+  KROMKA?: NumStr | null,
+  USLUGI?: TUsluga[],
+}
+
 export type TModelData = {
   id: number;
   name: string;
@@ -467,7 +480,7 @@ export type TConfig = {
   BACKWALL?: TFasadeProp,
   LEFTSIDECOLOR?: TFasadeProp,
   RIGHTSIDECOLOR?: TFasadeProp,
-  TOPFASADECOLOR?: TFasadeProp,
+  TOPFASADECOLOR?: TFasadeProp | TToptableUMProp,
   LOOPS?: {},
   isHiTech?: boolean,
   isSlideDoor?: boolean,

@@ -11,7 +11,7 @@ import { useModelState } from "@/store/appliction/useModelState.ts";
 import HiTechSideprofile from "@/components/right-menu/customiser-pages/UMLeftPages/HiTechSideprofile.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import Toggle from "@vueform/toggle";
-import {TFasadeTrueSizes} from "@/types/types.ts";
+import {TFasadeProp, TFasadeTrueSizes, TToptableUMProp} from "@/types/types.ts";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import {useOptions} from "@/components/right-menu/customiser-pages/RailsRightPage/useOptions.ts";
 import ToptableSelector from "@/components/right-menu/customiser-pages/UMLeftPages/ToptableSelector.vue";
@@ -359,19 +359,20 @@ const selectOption = (value: Object | number, type: string, palette: Object = fa
 
       if (type === "COLOR") {
 
-        if(objectData.value.CONFIG[currentOption.value].TABLE)
-          delete objectData.value.CONFIG[currentOption.value].TABLE;
+        if(objectData.value.CONFIG[currentOption.value].TABLE) {
+          let {SHOW} = objectData.value.CONFIG[currentOption.value];
+          objectData.value.CONFIG[currentOption.value] = <TFasadeProp>{SHOW}
+        }
 
         if (!value || value.ID === 7397)
           objectData.value.CONFIG[currentOption.value]["SHOW"] = false;
         else
           objectData.value.CONFIG[currentOption.value]["SHOW"] = true;
       }
-
-      if (type === "TABLE") {
+      else if (type === "TABLE") {
         if(objectData.value.CONFIG[currentOption.value].COLOR){
           let {SHOW, TABLE} = objectData.value.CONFIG[currentOption.value];
-          objectData.value.CONFIG[currentOption.value] = {SHOW, TABLE}
+          objectData.value.CONFIG[currentOption.value] = <TToptableUMProp>{SHOW, TABLE}
         }
 
         if (!value || !value.ID)
@@ -459,23 +460,23 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="actions-wrapper">
-    <div :class="'actions-items--container'">
-      <div class="config-options">
+  <div class="UM actions-wrapper">
+    <div :class="'UM actions-items--container'">
+      <div class="UM config-options">
         <div
             v-for="(value, part) in getMaterialsParts(objectData)"
             :key="part"
-            class="option-small"
+            class="UM option-small"
         >
           <div
-              :class="['option-small-item', { active: currentOption === part }]"
+              :class="['UM option-small-item', { active: currentOption === part }]"
               @click="getOption(part)"
           >
             {{ partsNames[part] }}
 
             <div
                 :class="[
-                'option-small-item-chevron',
+                'UM option-small-item-chevron',
                 { active: currentOption === part },
               ]"
             >
@@ -488,12 +489,12 @@ onMounted(() => {
   </div>
 
   <transition name="slide--left" mode="out-in">
-    <div class="color--left" v-if="currentOption" key="color--left-select">
-      <div class="color--left-select" key="color--left-select">
-        <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
-        <ClosePopUpButton class="menu__close" @close="closeMenu()" />
+    <div class="UM color--left" v-if="currentOption" key="color--left-select">
+      <div class="UM color--left-select" key="color--left-select">
+        <h1 class="UM color__title">{{ partsNames[currentOption] }}</h1>
+        <ClosePopUpButton class="UM menu__close" @close="closeMenu()" />
 
-        <p class="color__title color__switch" v-if="currentOption === 'PROFILECOLOR'">
+        <p class="UM color__title color__switch" v-if="currentOption === 'PROFILECOLOR'">
           Профили в размер секции
           <Toggle
               v-model="module.profilesConfig.onSectionSize"
