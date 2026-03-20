@@ -112,7 +112,8 @@ onMounted(() => {
 
         if (selectedTable.value?.PROFILE) {
           const curProfile = tempProfile.value.find((el) => el.ID === selectedTable.value.PROFILE);
-          convertProfileData(true, curProfile);
+          if(curProfile)
+            convertProfileData(true, curProfile);
         }
 
         getCurrentTable()
@@ -130,8 +131,9 @@ const changeTable = (data: any) => {
     imgSrc: data.DETAIL_PICTURE || data.PREVIEW_PICTURE,
     id: data.ID,
   };
-
+  clearKromkaData();
   changeKromka(null)
+  changeProfile(null)
 
   if (data.profile?.length) {
     const {profile} = UMconstructor.value.BUILDER.filters.filterUslugi(data.USLUGI, data);
@@ -185,6 +187,7 @@ const checkProfileDisablegroups = () => {
 
   if (getKromkaActive.value) {
     getCurretKromkaListUM(selectedTable.value?.TABLE);
+    changeKromka(getCurrentKromkaId())
   }
   else {
     changeKromka(null)
@@ -243,16 +246,11 @@ const toggleCutServise = (colIndex, rowIndex) => {
 
 const changeKromka = (value) => {
   callback(value, "KROMKA")
-
-  if(!value)
-    clearKromkaData()
-
-  getCurrentTable()
+  setKromkaId(value)
 }
 
 const changeProfile = (value) => {
   callback(value, "PROFILE")
-  setProfileData(tempProfile.value);
 }
 
 //#endregion
