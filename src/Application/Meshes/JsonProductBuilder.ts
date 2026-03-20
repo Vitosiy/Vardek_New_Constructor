@@ -69,6 +69,11 @@ export class JsonBuilder {
         this.backMaterial = this.resolveSideMaterial(back, json.material)
         this.topMaterial = this.resolveSideMaterial(top, json.material)
 
+        if(top.KROMKA) {
+            let material2 = this.resolveKromkaMaterial(top, json.material) || this.topMaterial
+            this.topMaterial = [material2, material2, this.topMaterial, this.topMaterial, material2, material2]
+        }
+
         if (tsarga) {
             this.tsargaMaterial = tsarga.PALETTE
                 ? this.parent.palette_bulider.getPalette(tsarga.COLOR, tsarga.PALETTE)
@@ -131,6 +136,18 @@ export class JsonBuilder {
         return side.PALETTE
             ? this.parent.palette_bulider.getPalette(side.COLOR, side.PALETTE)
             : this.createMaterial(materialData, texture_url) as THREE.Material
+    }
+
+    private resolveKromkaMaterial(
+        side: THREETypes.TObject | undefined,
+        materialData: THREETypes.TObject
+    ): THREE.Material | null {
+        if (!side || !side.KROMKA)
+            return null
+
+        const texture = this.parent._APP.HEM[side.KROMKA]
+
+        return this.createMaterial(materialData, texture.DETAIL_PICTURE || texture.PREVIEW_PICTURE) as THREE.Material
     }
 
     parseDate({ data, group, obj, parent_size, array, isTopTable = false, isRoomElement = false, textureUrl }: ParseDateParams): boolean | void {

@@ -108,13 +108,14 @@ onMounted(() => {
       if (current.profile?.length) {
         const {profile} = UMconstructor.value.BUILDER.filters.filterUslugi(current.USLUGI, current);
         tempProfile.value = profile
+        setProfileData(tempProfile.value);
 
         if (selectedTable.value?.PROFILE) {
           const curProfile = tempProfile.value.find((el) => el.ID === selectedTable.value.PROFILE);
           convertProfileData(true, curProfile);
         }
 
-        setProfileData(tempProfile.value);
+        getCurrentTable()
       }
     }
   } else {
@@ -217,7 +218,6 @@ const convertProfileData = (value, item) => {
   }
 
   changeProfile(curProfile.ID)
-
   checkProfileDisablegroups();
 };
 
@@ -252,6 +252,7 @@ const changeKromka = (value) => {
 
 const changeProfile = (value) => {
   callback(value, "PROFILE")
+  setProfileData(tempProfile.value);
 }
 
 //#endregion
