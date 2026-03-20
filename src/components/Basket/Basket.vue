@@ -1,90 +1,133 @@
 <template>
   <div class="basket">
-    <div class="basket-header">
-      <div v-if="loading" class="basket__loader"></div>
-      <div class="basket-header__title">Корзина</div>
-
-      <ClosePopUpButton
-        class="basket-header__close-btn" 
-        @click="closePopup" 
-      />
-    </div>
-
-    <!-- Кнопки переключения между комнатами -->
-    <div class="room-tabs" v-if="rooms.length > 1">
-      <button 
-        class="room-tab" 
-        :class="{ 'room-tab--active': selectedRoomId === 'all' }"
-        @click="selectRoom('all')"
+    <div class="basket-tabs">
+      <button
+        class="basket-tabs__tab"
+        :class="{ 'basket-tabs__tab--active': activeTab === 'basket' }"
+        @click="activeTab = 'basket'"
       >
-        Все комнаты
+        Корзина
       </button>
-      <button 
-        v-for="room in rooms" 
-        :key="room.id"
-        class="room-tab"
-        :class="{ 'room-tab--active': selectedRoomId === room.id }"
-        @click="selectRoom(room.id)"
+      <button
+        class="basket-tabs__tab"
+        :class="{ 'basket-tabs__tab--active': activeTab === 'order' }"
+        @click="activeTab = 'order'"
       >
-        {{ room.label || `Комната ${room.id}` }}
+        Форма заказа
       </button>
     </div>
 
-    <div class="basket-container">
-      <div class="basket-container__main-table" v-if="mainItems.length || !additionalItems.length ">
-        <BasketTable
-          :key="basketUpdateKey"
-          :items="mainItems"
-          type="main"
+    <template v-if="activeTab === 'basket'">
+      <div class="basket-header">
+        <div v-if="loading" class="basket__loader"></div>
+        <div class="basket-header__title">Корзина</div>
+
+        <ClosePopUpButton
+          class="basket-header__close-btn"
+          @click="closePopup"
         />
       </div>
-      <div class="basket__additional-table">
-        <BasketTable
-          :key="basketUpdateKey + 'additional'"
-          title="Дополнительные товары"
-          :items="additionalItems"
-          type="additional"
-        />
+
+      <!-- Кнопки переключения между комнатами -->
+      <div class="room-tabs" v-if="rooms.length > 1">
+        <button
+          class="room-tab"
+          :class="{ 'room-tab--active': selectedRoomId === 'all' }"
+          @click="selectRoom('all')"
+        >
+          Все комнаты
+        </button>
+        <button
+          v-for="room in rooms"
+          :key="room.id"
+          class="room-tab"
+          :class="{ 'room-tab--active': selectedRoomId === room.id }"
+          @click="selectRoom(room.id)"
+        >
+          {{ room.label || `Комната ${room.id}` }}
+        </button>
       </div>
-    </div>
 
-    <div class="basket-footer">
-
-      <div v-if="productDelayData && productDelayData.length > 0 && productDelayData[0].type !== 'error'" class="basket-footer__notification">
-        <div v-for="productItem in productDelayData">
-          <h3 class="">{{ productItem?.data?.title }}</h3>
-          <!-- <div>{{ productItem.data.max_delay_date }}</div> -->
-          <div v-for="item in productItem?.data?.items">
-            {{ item?.text }}
-          </div>
+      <div class="basket-container">
+        <div class="basket-container__main-table" v-if="mainItems.length || !additionalItems.length ">
+          <BasketTable
+            :key="basketUpdateKey"
+            :items="mainItems"
+            type="main"
+          />
+        </div>
+        <div class="basket__additional-table">
+          <BasketTable
+            :key="basketUpdateKey + 'additional'"
+            title="Дополнительные товары"
+            :items="additionalItems"
+            type="additional"
+          />
         </div>
       </div>
-
-      
-
 
       <div class="basket-footer">
-        <div class="basket-footer-info">
-          <p class="basket__sum">Общая стоимость: <span>{{ totalPrice }}</span></p>
-          <p class="basket__sum-no" v-if="!oldPrice">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
-        </div>
-        <div class="basket-footer-buttons">
-          <div class="basket__error" v-if="errorBasket">
-            <p class="error__title"></p>
-            <p class="error__title">Ошибка - {{ errorCount }} шт. </p>
+
+        <div v-if="productDelayData && productDelayData.length > 0 && productDelayData[0].type !== 'error'" class="basket-footer__notification">
+          <div v-for="productItem in productDelayData">
+            <h3 class="">{{ productItem?.data?.title }}</h3>
+            <!-- <div>{{ productItem.data.max_delay_date }}</div> -->
+            <div v-for="item in productItem?.data?.items">
+              {{ item?.text }}
+            </div>
           </div>
-          <button class="basket__close" @click="closePopup">Закрыть</button>
-          <button class="basket__save">Печать</button>
-          <button class="basket__order" @click="setInvoice" :disabled="errorBasket || technologistStorage.getTechnologistProject()">Оформить заказ</button>
         </div>
-        <div class="basket__technologist__wrapper" v-if="technologistStorage.getTechnologistProject()">
-          <div class="basket__technologist__wrapper__container">
-            <p class="error__title">Это проект технолога!</p>
-            <p class="error__title"> Чтобы его оформить перейдите к нужной карточке сделки в окне "Технолог" и нажмите "Оформить заказ".</p>
+
+
+
+        <div class="basket-footer">
+          <div class="basket-footer-info">
+            <p class="basket__sum">Общая стоимость: <span>{{ totalPrice }}</span></p>
+            <p class="basket__sum-no" v-if="!oldPrice">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
+          </div>
+          <div class="basket-footer-buttons">
+            <div class="basket__error" v-if="errorBasket">
+              <p class="error__title"></p>
+              <p class="error__title">Ошибка - {{ errorCount }} шт. </p>
+            </div>
+            <button class="basket__close" @click="closePopup">Закрыть</button>
+            <button class="basket__save">Печать</button>
+            <button class="basket__order" @click="setInvoice" :disabled="errorBasket || technologistStorage.getTechnologistProject()">Оформить заказ</button>
+          </div>
+          <div class="basket__technologist__wrapper" v-if="technologistStorage.getTechnologistProject()">
+            <div class="basket__technologist__wrapper__container">
+              <p class="error__title">Это проект технолога!</p>
+              <p class="error__title"> Чтобы его оформить перейдите к нужной карточке сделки в окне "Технолог" и нажмите "Оформить заказ".</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
+
+    <template v-else>
+      <div class="basket-header">
+        <div class="basket-header__title">Форма заказа</div>
+        <orderForm />
+        <ClosePopUpButton
+          class="basket-header__close-btn"
+          @click="closePopup"
+        />
+      </div>
+
+      <div class="basket-container">
+      </div>
+
+      <div class="order-footer">
+        <div class="basket-footer-buttons">
+          <button class="basket__close" @click="closePopup">
+            Закрыть
+          </button>
+          <button class="basket__order" type="button">
+            Отправить
+          </button>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -101,6 +144,8 @@ import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomOptions } from '../left-menu/option/roomOptions/useRoomOptons';
 import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
+
+import orderForm from '@/features/orderForm/orderForm.vue';
 
 const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
 import { useConfigStore } from "@/store/appStore/useConfigStore";
@@ -136,6 +181,7 @@ const technologistStorage = useTechnologistStorage();
 
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
+const activeTab = ref<'basket' | 'order'>('basket');
 
 const closePopup = () => {
   popupStore.closePopup('basket');
@@ -520,6 +566,41 @@ watch(() => useBasketStore().basketData, (newValue) => {
         font-weight: 600;
       }
     }
+  }
+
+  .basket-tabs {
+    display: flex;
+    align-self: flex-start;
+    margin-left: 30px;
+
+    &__tab {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 12px 12px 0 0;
+      background-color: #e0e0e0;
+      color: #666;
+      position: relative;
+      margin-right: 4px;
+
+      &:hover:not(.basket-tabs__tab--active) {
+        background-color: #d0d0d0;
+      }
+
+      &--active {
+        background-color: #fff;
+        color: #333;
+        font-weight: 600;
+        z-index: 1;
+      }
+    }
+  }
+
+  .order-footer {
+    margin-left: auto;
   }
 
   

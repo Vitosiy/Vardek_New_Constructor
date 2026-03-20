@@ -196,7 +196,6 @@ export function useProjectAPI() {
     })
   }
 
-  // Загрузка проекта по ID
   const loadProject = async (id: string): Promise<any> => {
     if (!id) {
       console.error(ERROR_MESSAGES.MISSING_PROJECT_ID)
@@ -268,7 +267,6 @@ export function useProjectAPI() {
     }
   }
 
-  // Сохранение проекта
   const saveProject = async (incomeProjectId: string | null = null, projectName?: string, kpFlag: boolean = false, _manualNewProject?: boolean): Promise<SaveProjectResult> => {
     try {
       // Сначала сохраняем сцену в браузер
@@ -332,12 +330,58 @@ export function useProjectAPI() {
     }
   }
 
+  const getOrderFormData = async (): Promise<{ success: boolean; data?: any[]; error?: string }> => {
+    isLoading.value = true
+    try {
+      const response = await fetch('https://dev.vardek.online/api/modellerjwt/order/getprops', {
+        method: 'GET',
+      })
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '')
+        return {
+          success: false,
+          error: text || `Request failed with status ${response.status}`
+        }
+      }
+
+      const json: any = await response.json()
+
+      // Ожидаем контракт вида { CODE: 200, MESSAGE: string, DATA: [...] }
+      if (!json || typeof json !== 'object') {
+        return { success: false, error: 'Invalid JSON response' }
+      }
+
+      if (json.CODE !== 200) {
+        return {
+          success: false,
+          error: json.MESSAGE || 'Unknown API error'
+        }
+      }
+
+      if (!Array.isArray(json.DATA)) {
+        return {
+          success: false,
+          error: 'Unexpected DATA format: expected array'
+        }
+      }
+      
+      return { success: true, data: json.DATA }
+    } catch (error) {
+      console.error(ERROR_MESSAGES.LOAD_FORM_DATA, error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     isLoading,
     loadProjects,
     loadProject,
     saveProject,
     deleteProject,
-    getProjectScreenshot
+    getProjectScreenshot,
+    getOrderFormData
   }
 }
