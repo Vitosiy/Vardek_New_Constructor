@@ -39,7 +39,7 @@ import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
-import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
+import { GridModule } from "@/components/UMconstructor/types/UMtypes.ts";
 
 export type TApplication = Application
 export type TRenderer = Renderer
@@ -262,7 +262,7 @@ export type TUniformGroups = {
 export type TSize = {
   width: number;
   height: number;
-  depth: number;
+  depth?: number;
 }
 
 type TSizeEdit = {
@@ -302,7 +302,7 @@ export type TDefaultOptionsConfig = {
   defFasadeTop: number | string,
   defFasadeBottom: number | string,
   deffShowcase: number | string,
-  defPatina:number | string,
+  defPatina: number | string,
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
@@ -374,7 +374,7 @@ export type TFasadeConversation = {
   NAME: string,
   FASADES: any[],
   SORT: number,
-  GROUP_SIZE: Object|null,
+  GROUP_SIZE: Object | null,
 }
 
 export type TFasadeProp = {
@@ -400,7 +400,10 @@ export type TFasadeProp = {
     params: TFasadePropsSizes
   },
   DRAWER: TDrawer,
-  MANUAL_NO_FASADE?: boolean
+  MANUAL_NO_FASADE?: boolean,
+  UMSIZES?: TSize,
+  MECHANISM?: NumStr | null,
+
 }
 
 export type TModelData = {

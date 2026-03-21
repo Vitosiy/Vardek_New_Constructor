@@ -5,28 +5,39 @@ import { ErrorItem, ErrorsMessage, ErrorsType, LoopsmokAPI, LOOPSIDE } from "@/t
 import * as THREE from "three";
 import { GridModule } from "@/components/UMconstructor/types/UMtypes.ts";
 
+type TSizze = {
+    width: number,
+    height: number
+}
+
+type T2DLoopParams = {
+    vertical: TSizze,
+    horizontal: TSizze
+}
 
 export default class LoopsManager {
     scope: UMconstructorClass
-    MokTopLoop: LoopsmokAPI
+    private readonly loopConfig: T2DLoopParams = {
+        vertical: {
+            width: 38,
+            height: 82
+        },
+        horizontal: {
+            width: 73,
+            height: 38
+        },
+        offsetX: 14,
+        offsetY: 14,
+    }
+
     constructor(scope: UMconstructorClass) {
         this.scope = scope
 
-        this.MokTopLoop = {
-            123456: {
-                "ID": 123456,
-                "NAME": "Верх",
-                "DETAIL_PICTURE": "/upload/iblock/244/2442fd9ccf1a3c524370a8c13350fb5a.png",
-                "PREVIEW_PICTURE": "/upload/resize_cache/iblock/64e/40_40_1/64e2106b0cdd667d1a46a993bf45bd84.png",
-                "CODE": "top",
-                "SORT": 0
-            }
-        }
     }
 
     calcLoops(secIndex: number, grid: GridModule = this.scope.UM_STORE.getUMGrid()) {
-        const CONFIG = this.scope.UM_STORE.getUMData()?.CONFIG;
-        console.log(CONFIG, '===== UM_STORE')
+        const { CONFIG, SECTIONS } = this.scope.UM_STORE.getUMData();
+        console.log(secIndex, grid, '===== secIndex')
 
         if (!CONFIG.LOOPS)
             return
@@ -76,39 +87,53 @@ export default class LoopsManager {
 
     calcLoopPositions(fasades, section) {
 
+        console.log('Calc')
+
+        const { horizontal, vertical } = this.loopConfig
+
         let allLoops = []
 
         const defaultPos = 102
         const lowSizePos1 = 74
         const lowSizePos2 = 93
 
+        const allSides = fasades.map(fasade => { return fasade.loopsSide })
+
         fasades.forEach((fasade, key) => {
 
             const { width, height } = fasade
-            const topPositions = {
-                x1: 38,
-                x2: width * 0.5 - 38
-            }
 
             const fasadeHeight = height;
             const quarterPos = fasadeHeight / 4
             const oneThirdPos = fasadeHeight / 3
             const secondPos = fasadeHeight / 2
 
-            const left = LOOPSIDE[fasade.loopsSide]?.includes("left")
-            const right = LOOPSIDE[fasade.loopsSide]?.includes("right")
-            const top = !left && !right && fasadeHeight <= 450
+            const hasTop = LOOPSIDE[fasade.loopsSide]?.includes("top")
+            const notTopID = allSides.find(el => el !== LOOPSIDE['top'])
+            const notTopLoop = LOOPSIDE[notTopID]
+            const defaultLoop = LOOPSIDE['left']
 
-            console.log(top, 'top')
+            const top = width >= 350 && fasadeHeight <= 450 && LOOPSIDE[fasade.loopsSide]?.includes("top")
+
+            const left = LOOPSIDE[fasade.loopsSide]?.includes("left") || hasTop && !top && notTopLoop && notTopLoop?.includes("left")
+            const right = LOOPSIDE[fasade.loopsSide]?.includes("right") || hasTop && !top && notTopLoop && notTopLoop?.includes("right")
+
+            const isDefault = hasTop && !top && !notTopLoop
+
+            if (hasTop && !top) fasade.loopsSide = notTopID
+            if (isDefault) fasade.loopsSide = defaultLoop
 
             const fasadeLoops = {
                 side: fasade.loopsSide,
                 coords: [],
                 errors: [],
-                height: top ? 38 : 82,
-                width: top ? 82 : 38,
+                height: top ? horizontal.height : vertical.height,
+                width: top ? horizontal.width : vertical.width,
                 type: 'loop',
                 positionX: (() => {
+                    if (isDefault) {
+                        return section.position.x - section.width / 2
+                    }
                     if (left) {
                         return section.position.x - section.width / 2
                     }
@@ -117,17 +142,18 @@ export default class LoopsManager {
                     }
                     if (top) {
                         return section.position.x - section.width / 2
+
                     }
                 })(),
-                // left ? section.position.x - section.width / 2 : section.position.x + section.width / 2 - 38,
-                // positionY: top ? section.position.y + section.height + 19 : fasade.position.y
-                positionY: fasade.position.y
+                positionX2: top ? section.position.x + fasade.width / 2 - (horizontal.width) : null,
+                positionY: top ? fasade.position.y + height - horizontal.height * 0.5 - this.loopConfig.offsetY : fasade.position.y
+
             }
 
-            const { positionY, positionX } = fasadeLoops
+            const { positionY, positionX, positionX2 } = fasadeLoops
 
 
-            console.log(top, '====> top <====')
+            console.log(positionX, '====> positionX <====')
 
             //исключения по размерам
 
@@ -135,54 +161,47 @@ export default class LoopsManager {
                 if (fasadeHeight === 2036) {
                     //Отступ 658 от краев фасада
                     fasadeLoops.coords = []
-                    fasadeLoops.coords.push((positionY + defaultPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + 658).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - 658).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + 658).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - 658).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - defaultPos).toFixed(1))
                 } else if (fasadeHeight === 536) {
                     //Отступ 93 от краев фасада
                     fasadeLoops.coords = []
-                    fasadeLoops.coords.push((positionY + lowSizePos2).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - lowSizePos2).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + lowSizePos2).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - lowSizePos2).toFixed(1))
                 }//
                 else if (fasadeHeight >= 2064) {
-                    fasadeLoops.coords.push((positionY + defaultPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + quarterPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + quarterPos * 2).toFixed(1))
-                    fasadeLoops.coords.push((positionY + quarterPos * 3).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + quarterPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + quarterPos * 2).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + quarterPos * 3).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - defaultPos).toFixed(1))
                 } else if (fasadeHeight < 2064 && fasadeHeight > 1500) {
-                    fasadeLoops.coords.push((positionY + defaultPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + oneThirdPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + oneThirdPos * 2).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + oneThirdPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + oneThirdPos * 2).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - defaultPos).toFixed(1))
                 } else if (fasadeHeight <= 1500 && fasadeHeight > 1000) {
-                    fasadeLoops.coords.push((positionY + defaultPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + secondPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + secondPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - defaultPos).toFixed(1))
                 } else if (fasadeHeight <= 1000 && fasadeHeight > 400) {
-                    fasadeLoops.coords.push((positionY + defaultPos).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + defaultPos).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - defaultPos).toFixed(1))
                 } else if (400 >= fasadeHeight && fasadeHeight >= 360) {
-                    fasadeLoops.coords.push((positionY + lowSizePos1).toFixed(1))
-                    fasadeLoops.coords.push((positionY + fasadeHeight - lowSizePos1).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + lowSizePos1).toFixed(1))
+                    fasadeLoops.coords.push(+(positionY + fasadeHeight - lowSizePos1).toFixed(1))
                 }
             }
             else {
-                console.log('TOOOOP')
-
-                fasadeLoops.coords.push((positionY).toFixed(1))
-                fasadeLoops.coords.push(key + width)
-
-                // fasadeLoops.coords.push((positionY + defaultPos).toFixed(1))
-                // fasadeLoops.coords.push((positionY + fasadeHeight - defaultPos).toFixed(1))
-
-                // fasadeLoops.coords = [topPositions.x1, topPositions.x2]
-
+                fasadeLoops.coords = []
+                fasadeLoops.coords.push([+positionY.toFixed(1), +positionX.toFixed(1)])
+                fasadeLoops.coords.push([+positionY.toFixed(1), +positionX2.toFixed(1)])
             }
 
 
-            fasadeLoops.coords = fasadeLoops.coords.map((item) => parseInt(item))
+            // fasadeLoops.coords = fasadeLoops.coords.map((item) => parseInt(item))
             allLoops.push(fasadeLoops)
         })
 
@@ -346,6 +365,8 @@ export default class LoopsManager {
     }
 
     getLoopsideList(secIndex: number, doorIndex: number, grid: GridModule, segment: number) {
+        console.log('ЛУПСФЙД')
+
         const productInfo = this.scope.APP.CATALOG.PRODUCTS[grid.productID];
         const loopsData = this.scope.APP.LOOPSIDE
         const MokLoop = [...productInfo.LOOPSIDE, 14981055]
@@ -374,9 +395,11 @@ export default class LoopsManager {
         const sectionLeft = grid.sections[secIndex - 1] || false;
         const sectionRight = grid.sections[secIndex + 1] || false;
 
-        const currSectionLoops = currSection.loopsSides || {};
+        const currSectionLoops = currSection.loopsSides ?? 13864508;
 
         if (isTopPoseble) {
+
+            console.log('ЗДЕСЯЯЯ')
 
             const fasadeHeight = segment ? currSection.fasades[0][segment - 1]?.height : false
 
@@ -386,6 +409,9 @@ export default class LoopsManager {
 
         }
         else {
+
+            console.log('ТУУУУУТАААААА')
+
             delete tmp[LOOPSIDE["top"]];
             switch (doorIndex) {
                 case 0:

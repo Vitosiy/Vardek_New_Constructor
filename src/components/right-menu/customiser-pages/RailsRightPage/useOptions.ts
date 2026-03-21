@@ -24,8 +24,6 @@ export const useOptions = () => {
 
     const createOptionList = () => {
 
-        console.log(mechanismList, 'mechanismList')
-
         const { PROPS } = modelState.getCurrentModel.userData;
         const filtered = filterOptions()
         let result = checkExeptionOptionForFasade(filtered, PROPS.CONFIG.OPTIONS)
@@ -452,6 +450,10 @@ export const useOptions = () => {
         }
 
         return null
+
+    }
+
+    const checkUMmechanizmActive=()=>{
 
     }
 

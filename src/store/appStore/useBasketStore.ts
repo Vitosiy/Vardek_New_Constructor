@@ -111,6 +111,8 @@ export const useBasketStore = defineStore('basket', () => {
       )
     // console.log('appDataStore', appDataStore.getAppData.decor);
 
+    console.log(sceneItems, ' ====== sceneItems =====')
+
     mainConstructor.value = sceneItems
   }
 
@@ -166,6 +168,9 @@ export const useBasketStore = defineStore('basket', () => {
   const syncBasket = async (): Promise<IBasketResponse | null> => {
     console.log('mainConstructor.value', mainConstructor.value)
     const currentHandlesData = countHandles(mainConstructor.value)
+    console.log(allBasketItems.valu, '======== ХУЙ ======')
+
+
     const data = currentHandlesData.length > 0 
         ? [...allBasketItems.value, ...transformCountHandles(currentHandlesData)] 
         : allBasketItems.value

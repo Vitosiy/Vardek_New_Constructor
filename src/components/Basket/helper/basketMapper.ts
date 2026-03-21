@@ -5,7 +5,7 @@ import { useAppData } from "@/store/appliction/useAppData"
 
 const appDataStore = useAppData()
 
-console.log('appDataStore.getAppData', appDataStore.getAppData)
+// console.log('appDataStore.getAppData', appDataStore.getAppData)
 
 function createFacadeProps(objProps: any): IBasketFacade[] {
   return objProps.CONFIG.FASADE_PROPS
@@ -27,6 +27,7 @@ function createFacadeProps(objProps: any): IBasketFacade[] {
       if (fp.HANDLES != null) result.HANDLES = { ID: fp.HANDLES.id };
       if (fp.SIZES != null) result.SIZES = fp.SIZES;
       if (fp.TYPE != null || fp.MILLING_TYPE != null) result.FASADETYPE = fp.TYPE ?? fp.MILLING_TYPE;
+      if (fp.MECHANISM != null) result.MECHANISM = fp.MECHANISM;
 
 
       // Добавляем SIZE только если есть хотя бы одно измерение
@@ -517,7 +518,7 @@ function removeEmptyObjects(obj) {
 }
 
 export function createBasketItem(objProps: any, index: number, key: any = ''): IBasket {
-  console.log('createBasketItem', objProps);
+  console.log('========= createBasketItem ========', objProps);
 
   const props: any = {};
 

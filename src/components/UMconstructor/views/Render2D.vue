@@ -611,57 +611,84 @@ const renderGrid = (_moduleGrid) => {
     console.log(section, "section");
 
     if (section.loops?.length) {
-      console.log(section.loops, 'section.loops')
-
-
       section.loops.forEach((door, doorIndex) => {
         door.forEach((loop, loopIndex) => {
-          let tmpLoopData = Object.assign({}, loop);
+          let tmpLoopData = { ...loop };
 
           const isTopLoops = LOOPSIDE["top"] === tmpLoopData.side;
           const isNoneLoops = LOOPSIDE["none"] === tmpLoopData.side;
 
           if (isNoneLoops) return;
-
-          delete tmpLoopData.coords;
-          delete tmpLoopData.errors;
+          if (!isTopLoops) {
+            delete tmpLoopData.coords;
+            delete tmpLoopData.errors;
+          }
 
           let loopXOffset = getPixelWidth(tmpLoopData.positionX);
           const pxWidth = getPixelWidth(tmpLoopData.width);
           const pxHeight = getPixelHeight(tmpLoopData.height);
 
-          console.log(loopXOffset, 'loopXOffset')
-
           tmpLoopData.xOffset = loopXOffset;
 
+          console.log(loopXOffset, "loopXOffset");
+          console.log(tmpLoopData.positionX, "positionX");
+
           loop.coords.forEach((pos, posIndex) => {
-            let tmp_top_loop_pos =
-              pos +
-              tmpLoopData.height / 2 -
-              (!module.value.noBottom ? 0 : module.value.moduleThickness);
+            let loopSector;
+            let tmp_top_loop_pos;
 
-            let tmp_y_pos = isTopLoops
-              ? 16
-              : module.value.height - tmp_top_loop_pos;
+            if (isTopLoops) {
+              tmp_top_loop_pos =
+                pos[0] +
+                tmpLoopData.height / 2 -
+                (!module.value.noBottom ? 0 : module.value.moduleThickness);
+            } else {
+              tmp_top_loop_pos =
+                pos +
+                tmpLoopData.height / 2 -
+                (!module.value.noBottom ? 0 : module.value.moduleThickness);
+            }
 
+            let tmp_y_pos = module.value.height - tmp_top_loop_pos;
 
             tmpLoopData.yOffset = getPixelHeight(tmp_y_pos);
 
             // Отрисовываем секцию
+            if (isTopLoops) {
+              console.log(pos, "PPPPPPPP");
 
-            let loopSector = createLoop({
-              x: tmpLoopData.xOffset,
-              y: tmpLoopData.yOffset,
-              width: pxWidth,
-              height: pxHeight,
-              loopData: {
-                ...tmpLoopData,
-                error: loop.errors?.includes(posIndex),
-                position: { x: getMmWidth(tmpLoopData.xOffset), y: tmp_y_pos },
-              },
-            });
+              loopSector = createLoop({
+                x: getPixelWidth(pos[1]),
+                y:  tmpLoopData.yOffset,
+                width: pxWidth,
+                height: pxHeight,
+                loopData: {
+                  ...tmpLoopData,
+                  error: loop.errors?.includes(posIndex),
+                  position: {
+                    x: getMmWidth(pos[1]),
+                    y: tmp_y_pos,
+                  },
+                },
+              });
+            } else {
+              loopSector = createLoop({
+                x: tmpLoopData.xOffset,
+                y: tmpLoopData.yOffset,
+                width: pxWidth,
+                height: pxHeight,
+                loopData: {
+                  ...tmpLoopData,
+                  error: loop.errors?.includes(posIndex),
+                  position: {
+                    x: getMmWidth(tmpLoopData.xOffset),
+                    y: tmp_y_pos,
+                  },
+                },
+              });
+            }
 
-            console.log(loopSector, 'vvvv')
+            console.log(loopSector, "vvvv");
 
             for (let i = 0; i < tmp_array_sectors.length; i++) {
               let sector = tmp_array_sectors[i];
@@ -1128,6 +1155,8 @@ const createLoop = ({ x, y, width, height, loopData }) => {
   sector.addChild(cell.cellGraphics);
 
   loops.push(sector);
+
+  console.log(loopData, "LOOOOOOOOOOO");
 
   // Создаём ограничения для секторов по высоте
   const sectorBounds = shapeAdjuster.getSectorBounds(sector);

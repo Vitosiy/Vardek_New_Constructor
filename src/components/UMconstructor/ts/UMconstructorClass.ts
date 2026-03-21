@@ -193,8 +193,6 @@ export default class UMconstructorClass {
                 }
                 else {
 
-                    console.log('TYT')
-
                     if(_module.isRestrictedModule) {
                         let fasade_width = (FASADE.FASADE_WIDTH / 2) - 2
                         fasades = [
