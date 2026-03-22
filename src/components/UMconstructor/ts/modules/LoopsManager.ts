@@ -37,7 +37,6 @@ export default class LoopsManager {
 
     calcLoops(secIndex: number, grid: GridModule = this.scope.UM_STORE.getUMGrid()) {
         const { CONFIG, SECTIONS } = this.scope.UM_STORE.getUMData();
-        console.log(secIndex, grid, '===== secIndex')
 
         if (!CONFIG.LOOPS)
             return
@@ -87,8 +86,6 @@ export default class LoopsManager {
 
     calcLoopPositions(fasades, section) {
 
-        console.log('Calc')
-
         const { horizontal, vertical } = this.loopConfig
 
         let allLoops = []
@@ -100,6 +97,8 @@ export default class LoopsManager {
         const allSides = fasades.map(fasade => { return fasade.loopsSide })
 
         fasades.forEach((fasade, key) => {
+
+            console.log(fasade, 'fasade')
 
             const { width, height } = fasade
 
@@ -120,9 +119,19 @@ export default class LoopsManager {
 
             const isDefault = hasTop && !top && !notTopLoop
 
-            if (hasTop && !top) fasade.loopsSide = notTopID
-            if (isDefault) fasade.loopsSide = defaultLoop
+            if (left || right) {
+                fasade.material.MECHANISM = null
+            }
 
+            if (hasTop && !top) {
+                fasade.loopsSide = notTopID
+                fasade.material.MECHANISM = null
+            }
+            if (isDefault) {
+                fasade.loopsSide = defaultLoop
+                fasade.material.MECHANISM = null
+
+            }
             const fasadeLoops = {
                 side: fasade.loopsSide,
                 coords: [],
@@ -151,9 +160,6 @@ export default class LoopsManager {
             }
 
             const { positionY, positionX, positionX2 } = fasadeLoops
-
-
-            console.log(positionX, '====> positionX <====')
 
             //исключения по размерам
 
@@ -200,12 +206,12 @@ export default class LoopsManager {
                 fasadeLoops.coords.push([+positionY.toFixed(1), +positionX2.toFixed(1)])
             }
 
+            if (fasade.loopsSide)
 
-            // fasadeLoops.coords = fasadeLoops.coords.map((item) => parseInt(item))
-            allLoops.push(fasadeLoops)
+                // fasadeLoops.coords = fasadeLoops.coords.map((item) => parseInt(item))
+                allLoops.push(fasadeLoops)
         })
 
-        console.log(allLoops)
 
         return allLoops
     }
@@ -364,8 +370,12 @@ export default class LoopsManager {
         return loops;
     }
 
+
     getLoopsideList(secIndex: number, doorIndex: number, grid: GridModule, segment: number) {
-        console.log('ЛУПСФЙД')
+        console.log(grid, 'JJJ')
+
+
+
 
         const productInfo = this.scope.APP.CATALOG.PRODUCTS[grid.productID];
         const loopsData = this.scope.APP.LOOPSIDE

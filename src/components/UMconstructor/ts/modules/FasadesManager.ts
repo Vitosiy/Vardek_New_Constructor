@@ -890,7 +890,6 @@ export default class FasadesManager {
         // );
 
         if (grid.profilesConfig?.sideProfile)
-            console.log('STREEERRRTTTS')
         this.scope.PROFILES.changeProfileSide(LOOPSIDE[fasade.loopsSide]?.includes("left") ? "left" : "right", grid)
 
         this.scope.reset(grid);

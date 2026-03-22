@@ -7,6 +7,7 @@ interface IProps {
   mechanizmList?: [];
   umMechanizm?: boolean;
   element?: any;
+  segment?: any;
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -22,13 +23,13 @@ const createList = () => {
     optionList.value = data;
     return;
   }
-  console.log(props.mechanizmList, "PPPPP");
 
   optionList.value = props.mechanizmList;
 };
 
 const changeValue = (event: InputEvent, id: number) => {
   if (!props.umMechanizm) {
+
     const check = event.target!.checked;
     checkActive(id, check);
     createList();
@@ -38,9 +39,18 @@ const changeValue = (event: InputEvent, id: number) => {
 };
 
 const UMMechanizmChange = (event: InputEvent, id: number) => {
-
   activateMechanismAndDeactivateOthers(optionList.value, id)
-  props.element.material.MECHANISM = parseInt(id);
+
+  // const curMech = props.element.MECHANISM_TEMP.find((el) => el.ID == id);
+  // props.element.MECHANISM_TEMP.forEach((mech) => {
+  //   if (mech.close === curMech.close && mech.id !== curMech.ID) {
+  //     mech.active = false;
+  //   }
+  // });
+  props.segment.MECHANISM = parseInt(id)
+  // console.log(props.element, '-----element');
+
+  // props.element.material.MECHANISM = parseInt(id);
 };
 
 const activateMechanismAndDeactivateOthers = (data, targetId) => {
@@ -52,7 +62,7 @@ const activateMechanismAndDeactivateOthers = (data, targetId) => {
     for (const item of group.CONTANT) {
       if (item.ID === searchId) {
         targetFound = true;
-  
+
         item.active = true;
       } else if (item.active === true) {
         otherActiveExists = true;
@@ -60,11 +70,9 @@ const activateMechanismAndDeactivateOthers = (data, targetId) => {
     }
   }
 
-
   if (!targetFound) {
     return false;
   }
-
 
   if (otherActiveExists) {
     for (const group of data) {

@@ -93,9 +93,7 @@
                       "
                     >
                       Фрезеровка:
-                      {{
-                        getMillingSectionName(propVal.FASADE.fasade.MILLING)
-                      }}
+                      {{ getMillingSectionName(propVal.FASADE.fasade.MILLING) }}
                       -
                       {{ getMillingName(propVal.FASADE.fasade.MILLING) }}
                     </p>
@@ -279,6 +277,7 @@
               </ul>
             </div>
           </span>
+
           <span v-if="propKey === 'KROMKA'">
             <span class="basket-item__props-lable">Кромка:</span>
             <span>{{ getTypeName("HEM", propValue, item?.product.TYPE) }}</span>
@@ -315,16 +314,25 @@
           v-for="(propValue, propKey) in renderDescription(item?.product.PROPS)"
           :key="propKey"
         >
+          <!-- {{ propValue }} -->
           <div v-if="Array.isArray(propValue.value)">
             <span class="basket-item__props-lable">{{ propValue.key }}:</span>
             <div
-                class="basket-item__props-block__lables"
-                style="list-style: none"
-                v-for="(value, i) in propValue.value"
-                :key="i"
+              class="basket-item__props-block__lables"
+              style="list-style: none"
+              v-for="(value, i) in propValue.value"
+              :key="i"
             >
-              <span>{{i+1}}) {{ value.key }}:</span
-              ><span>{{value.value ? ` - поз. ${value.value} мм` : ""}}</span>
+              <div v-if="propValue.key !== 'Подъёмные механизмы'">
+                <span>{{ i + 1 }} {{ value.key }}:</span>
+                <span>{{
+                  value.value ? ` - поз. ${value.value} мм` : ""
+                }}</span>
+              </div>
+              <div v-else>
+                <span>{{ value.key }}: </span>
+                <span>{{ value.value }}</span>
+              </div>
             </div>
           </div>
           <div v-else>
@@ -398,7 +406,7 @@
 // @ts-nocheck
 import { useBasketStore } from "@/store/appStore/useBasketStore";
 import { useAppData } from "@/store/appliction/useAppData";
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import DeleteBasketButton from "../ui/buttons/basket/DeleteBasketButton.vue";
 import axios from "axios";
 import InfoPopUp from "../popUp/InfoPopUp.vue";
@@ -862,9 +870,10 @@ const getFilteredProps = (item) => {
   return filteredProps;
 };
 
-const renderDescription = (props) => {
+const renderDescription = (data) => {
   const result = [];
-  // console.log('props', props)
+  const productId = props.item.product.ID;
+  const { MECHANISM } = appData.value;
 
   const textValue = (value) => {
     const color = appData.value["FASADE"][value.COLOR]?.NAME;
@@ -876,28 +885,27 @@ const renderDescription = (props) => {
     return `${color ?? ""} ${pallette ?? ""} ${patina ?? ""} ${milling ?? ""}`;
   };
 
-  console.log(appData.value);
-  if (props.DOORS) {
+  // console.log(data, props.item, "data data data");
+  if (data.DOORS) {
     // Перебираем все двери
-    for (const [doorNumber, doorData] of Object.entries(props.DOORS)) {
+    for (const [doorNumber, doorData] of Object.entries(data.DOORS)) {
       // Для каждой двери перебираем её части (обычно только часть "1")
       for (const [partNumber, partData] of Object.entries(doorData)) {
         // Каждая часть может содержать несколько элементов (0, 1 и т.д.), если это не двери-купе
         // тогда здесь уже будет id материала
         if (typeof partData === "number") {
           const description =
-              appData.value["FASADE"][partData].NAME ||
-              `Неизвестный материал (ID: ${partData})`;
+            appData.value["FASADE"][partData].NAME ||
+            `Неизвестный материал (ID: ${partData})`;
           result.push({
             key: `Цвет фасада ${doorNumber}`,
             value: ` дверь ${doorNumber} часть ${+partNumber + 1} : ${description}`,
           });
-        }
-        else {
+        } else {
           for (const [elementNumber, materialId] of Object.entries(partData)) {
             const description =
-                appData.value["FASADE"][materialId].NAME ||
-                `Неизвестный материал (ID: ${materialId})`;
+              appData.value["FASADE"][materialId].NAME ||
+              `Неизвестный материал (ID: ${materialId})`;
             result.push({
               key: `Цвет фасада ${doorNumber}`,
               value: ` дверь ${partNumber} часть ${+elementNumber + 1} : ${description}`,
@@ -908,7 +916,7 @@ const renderDescription = (props) => {
     }
   }
 
-  for (const [key, value] of Object.entries(props)) {
+  for (const [key, value] of Object.entries(data)) {
     // console.log(getPropDefinition(key)?.NAME);
     // console.log(value);
     if (
@@ -935,6 +943,8 @@ const renderDescription = (props) => {
       result.push({ key: "Горизонт", value: value });
     }
     if (getPropDefinition(key)?.NAME && Array.isArray(value)) {
+      console.log("МЕХАНИЗМЫ", key, value, getPropDefinition(key)?.NAME);
+
       if (key === "OPTION" && value.length) {
         value.forEach((el) => {
           result.push({
@@ -943,32 +953,55 @@ const renderDescription = (props) => {
           });
         });
       }
-      if (value.length && getPropDefinition(key)?.NAME
-          && key !== "OPTION"
-          && !["MILLING", "PATINA", "PALETTE", "GLASS", "TYPE", "SHOWCASE"].find(item => key.includes(item))
+      if (
+        value.length &&
+        getPropDefinition(key)?.NAME &&
+        ![
+          "MILLING",
+          "PATINA",
+          "PALETTE",
+          "GLASS",
+          "TYPE",
+          "SHOWCASE",
+          "OPTION",
+        ].find((item) => key.includes(item))
       ) {
-        if(Array.isArray(value)) {
-          let items = []
+        if (Array.isArray(value)) {
+          console.log(key, value, "value");
 
-          value.forEach((el) => {
-            items.push({
-              key: appData.value["CATALOG"]["PRODUCTS"][el.ID]?.NAME ?? "",
-              value: el.VALUE || "",
+          let items = [];
+
+          if (key !== "UM_MECHANIZM") {
+            value.forEach((el) => {
+              items.push({
+                key: appData.value["CATALOG"]["PRODUCTS"][el.ID]?.NAME ?? "",
+                value: el.VALUE || "",
+              });
             });
-          });
+          } else {
+            value.forEach((el) => {
+              console.log(el, '-------el')
+
+              items.push({
+                key: `
+                cекция: ${el.section} / 
+                дверь: ${el.doorNum} / 
+                `,
+                value: MECHANISM[el.mechanizm][productId].NAME || "",
+              });
+            });
+          }
 
           result.push({
             key: getPropDefinition(key)?.NAME,
             value: items,
           });
-        }
-        else {
+        } else {
           result.push({
             key: getPropDefinition(key)?.NAME,
             value: value,
           });
         }
-
       }
     }
 
@@ -1028,24 +1061,28 @@ const renderDescription = (props) => {
       if (key === "BACKWALL" && !value.COLOR) {
         result.push({ key: getPropDefinition(key)?.NAME, value: "Выключена" });
       }
-    }
-    else if (getPropDefinition(key)?.NAME && Array.isArray(value)) {  //У шкафов ЭКО фрезеровки, палитры и т.д. приходят в формате Array, а не Object
+    } else if (getPropDefinition(key)?.NAME && Array.isArray(value)) {
+      //У шкафов ЭКО фрезеровки, палитры и т.д. приходят в формате Array, а не Object
       value.forEach((doorData, doorNumber) => {
-        if(typeof doorData === "number"){
+        if (typeof doorData === "number") {
           const description =
-              appData.value[getPropDefinition(key)?.type][doorData].NAME ||
-              `Неизвестный материал (ID: ${doorData})`;
+            appData.value[getPropDefinition(key)?.type][doorData].NAME ||
+            `Неизвестный материал (ID: ${doorData})`;
           result.push({
             key: getPropDefinition(key)?.NAME,
             value: `${description}`,
           });
         }
-      })
+      });
     }
   }
 
   return result;
 };
+
+onBeforeMount(() => {
+  console.log(props.item, "props.item");
+});
 </script>
 
 <style scoped lang="scss">

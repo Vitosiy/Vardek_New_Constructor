@@ -44,7 +44,7 @@ export const useMechanism = () => {
     const weightCalculation = (element): TWheightData[] | null[] | [] => {
         try {
 
-                console.log(appData.getAppData)
+            console.log(appData.getAppData)
 
             const { fasade_weight, milling_weight, CATALOG } = appData.getAppData
             const { PRODUCTS } = CATALOG
@@ -320,7 +320,7 @@ export const useMechanism = () => {
         }, [])
 
 
-        const curModel = element??modelState.getCurrentModel;
+        const curModel = element ?? modelState.getCurrentModel;
         const { PROPS } = curModel!.userData;
         const { CONFIG } = PROPS;
 

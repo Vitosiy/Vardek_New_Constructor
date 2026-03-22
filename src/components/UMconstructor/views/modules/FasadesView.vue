@@ -42,6 +42,7 @@ const mechanism: ReturnType<typeof useMechanism> = useMechanism();
 const { weightCalculation, createMeckhanizmList } = mechanism;
 const mechanismList = ref([]);
 const currentElement = ref(null);
+const currentSegment = ref(null);
 
 const step = ref<number>(1);
 const { createSurfaceList } = useFigureRightPage();
@@ -61,7 +62,10 @@ const currentFasadeSize = ref<TFasadeTrueSizes | boolean>(false);
 const isOpenHandleSelector = ref<boolean>(false);
 const currentHandle = ref<selectedMaterial | boolean>(false);
 
-const isOpenMwchanizm = ref<boolean>(false);
+const isOpenMechanizm = ref<boolean>(false);
+mechanismList.value = [];
+currentElement.value = null;
+currentSegment.value = null;
 
 const showCurrentCol = (
   secIndex: number | null = 0,
@@ -77,7 +81,6 @@ const showCurrentCol = (
 
 const handleCellSelect = () => {
   const { sec, cell, row } = selectedFasade.value;
-
   //Задержка нужна для того, чтоб рендер аккордионов обновился
   UMconstructor?.value?.debounce(
     "handleCellSelectFasades",
@@ -95,6 +98,11 @@ const handleCellSelect = () => {
     },
     10,
   );
+
+  isOpenMechanizm.value = false;
+  mechanismList.value = [];
+  currentElement.value = null;
+  currentSegment.value = null;
 };
 
 const openFasadeSelector = (
@@ -103,7 +111,10 @@ const openFasadeSelector = (
   row: number | null = null,
 ) => {
   isOpenMaterialSelector.value = false;
-  isOpenMwchanizm.value = false;
+  isOpenMechanizm.value = false;
+  mechanismList.value = [];
+  currentElement.value = null;
+  currentSegment.value = null;
 
   if (isOpenHandleSelector.value) closeMenu();
 
@@ -147,6 +158,10 @@ const openHandleSelector = (
 ) => {
   isOpenHandleSelector.value = false;
   isOpenMaterialSelector.value = false;
+  isOpenMechanizm.value = false;
+  mechanismList.value = [];
+  currentElement.value = null;
+  currentSegment.value = null;
 
   if (isOpenMaterialSelector.value) closeMenu();
 
@@ -222,11 +237,15 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
 const closeMenu = () => {
   isOpenMaterialSelector.value = false;
   isOpenHandleSelector.value = false;
-  isOpenMwchanizm.value = false;
+  isOpenMechanizm.value = false;
 
   currentHandle.value = false;
   currentFasadeMaterial.value = false;
   currentFasadeSize.value = false;
+
+  mechanismList.value = [];
+  currentElement.value = null;
+  currentSegment.value = null;
 };
 
 const getLoopsideList = (
@@ -248,6 +267,8 @@ const getLoopsideList = (
 };
 
 const changeLoopside = (secIndex, segment, event, doorIndex, module) => {
+  closeMenu()
+
   UMconstructor?.value?.FASADES.changeLoopside(
     secIndex,
     segment,
@@ -255,6 +276,7 @@ const changeLoopside = (secIndex, segment, event, doorIndex, module) => {
     doorIndex,
     module,
   );
+
 };
 
 const createMechanizmList = (segment) => {
@@ -280,15 +302,15 @@ const createMechanizmList = (segment) => {
 
   const list = createMeckhanizmList(tempData);
 
-
   mechanismList.value = list;
-  currentElement.value = segment;
+  currentElement.value = tempData.userData.PROPS.CONFIG;
+  currentSegment.value = material;
 
-  isOpenMwchanizm.value = true;
+  isOpenMechanizm.value = true;
   isOpenHandleSelector.value = false;
   isOpenMaterialSelector.value = false;
 
-  console.log(list, "Meckhanizm LIST");
+  console.log(list, tempData, "Meckhanizm LIST");
 };
 
 onMounted(() => {
@@ -377,7 +399,7 @@ watch(
               { active: doorIndex === selectedFasade.cell },
             ]"
             v-for="(door, doorIndex) in module.fasades"
-            :key="doorIndex"
+            :key="doorIndex + new Date() + 1"
             @click="showCurrentCol(null, doorIndex)"
           >
             <p class="actions-title actions-title--part">
@@ -388,7 +410,7 @@ watch(
 
         <div
           v-for="(door, doorIndex) in module.fasades"
-          :key="doorIndex"
+          :key="doorIndex + new Date()"
           :class="'actions-container'"
           :id="`fasade_${doorIndex}_${doorIndex}`"
         >
@@ -931,7 +953,7 @@ watch(
   <transition name="slide--right" mode="out-in">
     <div
       class="no-select color--right-select"
-      v-if="isOpenMaterialSelector || isOpenHandleSelector || isOpenMwchanizm"
+      v-if="isOpenMaterialSelector || isOpenHandleSelector || isOpenMechanizm"
       key="color--right-select"
     >
       <ClosePopUpButton class="menu__close" @close="closeMenu()" />
@@ -956,10 +978,11 @@ watch(
       />
 
       <Options
-        v-if="isOpenMwchanizm"
+        v-if="isOpenMechanizm"
         :mechanizm-list="mechanismList"
         :um-mechanizm="true"
         :element="currentElement"
+        :segment="currentSegment"
       />
     </div>
   </transition>
