@@ -145,7 +145,7 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomOptions } from '../left-menu/option/roomOptions/useRoomOptons';
 import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
 
-import orderForm from '@/features/orderForm/orderForm.vue';
+import orderForm from '@/features/orderForm/components/orderForm.vue';
 
 const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
 import { useConfigStore } from "@/store/appStore/useConfigStore";
