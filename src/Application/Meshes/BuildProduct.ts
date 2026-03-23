@@ -303,6 +303,7 @@ export class BuildProduct extends BuildersHelper {
             MECHANISM: null,
             MECHANISM_TEMP: [],
             SIZE: { width, height, depth },
+            SIZE_OFFSET: { width: 0, height: 0, depth: 0 },
             SIZE_EDIT: {
                 SIZE_EDIT_WIDTH_MIN: null,
                 SIZE_EDIT_WIDTH_MAX: null,
@@ -379,6 +380,7 @@ export class BuildProduct extends BuildersHelper {
 
         PARAMS.SIZE = loadedProps ? loadedProps.CONFIG.SIZE : this.getProductSize(PARAMS, product_data);
         PARAMS.SIZE_EDIT = { ...this.getSizeEdit(product_data, PARAMS) };
+        PARAMS.SIZE_OFFSET = loadedProps ? loadedProps.CONFIG.SIZE_OFFSET : { width: 0, height: 0, depth: 0 };
 
         return PARAMS;
     }
@@ -410,6 +412,7 @@ export class BuildProduct extends BuildersHelper {
         const legsHeight = this._PRODUCTS[productId]?.leg_length;
         const fasadeProps = Object.values(CONFIG.FASADE_PROPS);
         const shelfCount = CONFIG.SHELFQUANT.max;
+        console.log(size, 'resize')
 
         // Обновляем размер в конфиге
         if (size) {
@@ -493,7 +496,7 @@ export class BuildProduct extends BuildersHelper {
 
         const sourceForBounds = curBodyExceptions ? exept : tempTotal;
 
-        if (sourceForBounds) this.setBounds(total, sourceForBounds);
+        if (sourceForBounds) this.setBounds(total, sourceForBounds, size, CONFIG);
 
         if (drowMode) this.useEdgeBuilder.drawingMode(drowMode, total);
 
@@ -835,17 +838,27 @@ export class BuildProduct extends BuildersHelper {
         return arrows;
     }
 
-    private setBounds(target: THREE.Object3D, source: THREE.Object3D) {
+    private setBounds(target: THREE.Object3D, source: THREE.Object3D, resize: THREETypes.TSize, props: THREETypes.TConfig) {
+
+        const { SIZE, SIZE_OFFSET } = props
+
         const aabb = new THREE.Box3().setFromObject(source);
         const obb = new OBB().fromBox3(aabb);
         const size = new THREE.Vector3();
         aabb.getSize(size);
+
+
+        /** Для коллизии объектов с отступами боковыми фасадами и т.д. */
+        if (!resize) {
+            SIZE_OFFSET.width = size.x - SIZE.width
+        }
 
         target.userData.trueSizes = {
             DEPTH: size.z * 0.5,
             HEIGHT: size.y * 0.5,
             WIDTH: size.x * 0.5,
         };
+
         target.userData.aabb = aabb;
         target.userData.obb = obb;
     }
