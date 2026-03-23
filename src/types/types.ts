@@ -449,6 +449,7 @@ export type TConfig = {
   MECHANISM: NumStr | null,
   MECHANISM_TEMP: TMechanismData[] | [],
   SIZE: TSize,
+  SIZE_OFFSET:TSize,
   SIZE_EDIT: TSizeEdit,
   SHOWCASE: number[],
   SHELFQUANT: TShelfcount,
@@ -471,6 +472,7 @@ export type TConfig = {
   isHiTech?: boolean,
   isSlideDoor?: boolean,
   isRestrictedModule?: boolean,
+  
 }
 
 export type TTotalProps = {
