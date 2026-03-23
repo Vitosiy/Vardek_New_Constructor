@@ -69,7 +69,7 @@ export class JsonBuilder {
         this.backMaterial = this.resolveSideMaterial(back, json.material)
         this.topMaterial = this.resolveSideMaterial(top, json.material)
 
-        if(top.KROMKA) {
+        if(top?.KROMKA) {
             let material2 = this.resolveKromkaMaterial(top, json.material) || this.topMaterial
             this.topMaterial = [material2, material2, this.topMaterial, this.topMaterial, material2, material2]
         }
