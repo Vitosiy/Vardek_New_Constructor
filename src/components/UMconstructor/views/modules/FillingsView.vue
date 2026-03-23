@@ -312,16 +312,16 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
 </script>
 
 <template>
-  <div class="splitter-container--product">
+  <div class="UM splitter-container--product">
 
     <div
-        class="constructor2d-container constructor2d-header"
+        class="UM constructor2d-container constructor2d-header"
     >
-      <article class="constructor2d-header--mode-selector">
-        <div class="work-mode-selector">
+      <article class="UM constructor2d-header--mode-selector">
+        <div class="UM work-mode-selector">
           <button
               :class="[
-                      'no-select actions-btn actions-btn--default', {
+                      'UM no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'add'
                       }
@@ -332,7 +332,7 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
           </button>
           <button
               :class="[
-                      'no-select actions-btn actions-btn--default', {
+                      'UM no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'config'
                       }
@@ -345,36 +345,36 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
       </article>
     </div>
 
-    <div class="splitter-container--product-data" v-if="mode === 'add'">
+    <div class="UM splitter-container--product-data" v-if="mode === 'add'">
 
-      <div class="accordion accordion-fillings_list" v-if="fillings">
+      <div class="UM accordion accordion-fillings_list" v-if="fillings">
         <div
-            class="splitter-container--product-items"
+            class="UM splitter-container--product-items"
             v-for="(fillingGroup, key) in fillings"
             :key="key + fillingGroup.groupName"
         >
           <details
-              class="item-group"
+              class="UM item-group"
               :open="openedFillingGroupKey === key"
               @toggle="toggleFillingGroup(key, $event)"
           >
             <summary>
-              <h3 class="item-group__title">
+              <h3 class="UM item-group__title">
                 {{ fillingGroup.groupName }}
               </h3>
             </summary>
 
-            <div class="search">
+            <div class="UM search">
               <input
                   v-if="openedFillingGroupKey === key"
-                  class="search--input"
+                  class="UM search--input"
                   type="text"
                   placeholder="Поиск"
                   @input="(value) => onSearchChange(value, fillingGroup.items)"
               />
             </div>
 
-            <div class="item-group-wrapper">
+            <div class="UM item-group-wrapper">
 
 
               <ul class="list">

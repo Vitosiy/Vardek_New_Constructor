@@ -637,10 +637,17 @@ export class BuildProduct extends BuildersHelper {
         const startPos = this.getStartPosition(CONFIG.SIZE);
 
         if (TOPFASADECOLOR?.SHOW) {
-            const top = this._FASADE[TOPFASADECOLOR.COLOR];
             const topFasade_width = CONFIG.SIZE.width;
-            const topFasade_depth = CONFIG.SIZE.depth + moduleThickness;
-            const topFasade_thickness = top.DEPTH;
+            const topFasade_depth = CONFIG.SIZE.depth + moduleThickness + 2;
+            let top, topFasade_thickness
+            if(TOPFASADECOLOR.TABLE){
+                top = this._PRODUCTS[TOPFASADECOLOR.TABLE];
+                topFasade_thickness = top.height
+            }
+            else {
+                top = this._FASADE[TOPFASADECOLOR.COLOR];
+                topFasade_thickness = top.DEPTH
+            }
 
             Object.assign(TOPFASADECOLOR, {
                 width: topFasade_width,
@@ -658,8 +665,8 @@ export class BuildProduct extends BuildersHelper {
                 rotation: { x: 0, y: 0, z: 0 },
                 position: {
                     x: 0,
-                    y: startPos.y + CONFIG.SIZE.height + top.DEPTH / 2,
-                    z: startPos.z + CONFIG.SIZE.depth / 2 + moduleThickness / 2,
+                    y: startPos.y + CONFIG.SIZE.height + topFasade_thickness / 2,
+                    z: startPos.z + topFasade_depth / 2,
                 },
             });
         }
