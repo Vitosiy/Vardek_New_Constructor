@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { useEventBus } from '@/store/appliction/useEventBus'
 import { useSceneState } from '@/store/appliction/useSceneState'
-import { Project, SaveProjectResult } from '../types'
-import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../constants'
+import { Project, SaveProjectResult } from '../project/types'
+import { REQUEST_CONSTANTS, ERROR_MESSAGES } from '../project/constants'
 import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
 import { useTechnologistStorage } from "@/store/appStore/technologist/useTechnologistStorage.ts";
