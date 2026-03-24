@@ -107,7 +107,6 @@
     <template v-else>
       <div class="basket-header">
         <div class="basket-header__title">Форма заказа</div>
-        <orderForm />
         <ClosePopUpButton
           class="basket-header__close-btn"
           @click="closePopup"
@@ -115,6 +114,7 @@
       </div>
 
       <div class="basket-container">
+        <orderForm ref="orderFormRef" />
       </div>
 
       <div class="order-footer">
@@ -122,7 +122,7 @@
           <button class="basket__close" @click="closePopup">
             Закрыть
           </button>
-          <button class="basket__order" type="button">
+          <button class="basket__order" type="button" @click="handleOrderFormSubmit" :disabled="isOrderFormSubmitting">
             Отправить
           </button>
         </div>
@@ -182,6 +182,8 @@ const technologistStorage = useTechnologistStorage();
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 const activeTab = ref<'basket' | 'order'>('basket');
+const orderFormRef = ref<any>(null);
+const isOrderFormSubmitting = ref(false);
 
 const closePopup = () => {
   popupStore.closePopup('basket');
@@ -216,6 +218,20 @@ const setInvoice = () => {
     openPopupFormBasket();
   } else {
     syncInvoce();
+  }
+};
+
+const handleOrderFormSubmit = async () => {
+  if (!orderFormRef.value?.submitForm) {
+    console.warn('Order form submit method not found');
+    return;
+  }
+
+  isOrderFormSubmitting.value = true;
+  try {
+    await orderFormRef.value.submitForm();
+  } finally {
+    isOrderFormSubmitting.value = false;
   }
 };
 

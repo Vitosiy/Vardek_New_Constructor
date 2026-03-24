@@ -1,4 +1,3 @@
-import { useProjectAPI } from "@/features/quickActions/project/composables/useProjectAPI";
 import type { RawFields, NormalizedFields } from "../types/form.types";
 
 export function normalizer(raw: RawFields[]): NormalizedFields[] {
@@ -36,6 +35,13 @@ export function normalizer(raw: RawFields[]): NormalizedFields[] {
             defaultValue = toNumber(defaultValueRaw) ?? 0
         }
 
+        if (['TEXT', 'PHONE', 'TEXTAREA', 'ADDRESS_YA', 'DATE'].includes(f.TYPE)) {
+            defaultValue =
+                defaultValueRaw === false || defaultValueRaw === null || defaultValueRaw === undefined
+                    ? ''
+                    : String(defaultValueRaw)
+        }
+
         const min = toNumber(f.MIN)
         const max = toNumber(f.MAX)
 
@@ -44,6 +50,10 @@ export function normalizer(raw: RawFields[]): NormalizedFields[] {
                 .map((x) => toNumber(x))
                 .filter((x): x is number => x !== undefined)
             : []
+        
+        if (f.CODE === 'service_tech') {
+            defaultValue = ''
+        }
 
         return {
             ID: String(f.ID ?? ''),
@@ -56,7 +66,8 @@ export function normalizer(raw: RawFields[]): NormalizedFields[] {
             MULTIPLE: multiple,
             MIN: min,
             MAX: max,
-            DESCRIPTION: String(f.DESCRIPTION ?? "")
+            DESCRIPTION: String(f.DESCRIPTION ?? ""),
+            
         }
     })
 }

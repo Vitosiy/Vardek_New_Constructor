@@ -25,6 +25,13 @@ export interface LoadProjectsResult {
   totalElements: number
 }
 
+
+export interface SubmitOrderFormResult {
+  success: boolean
+  data?: any
+  error?: string
+}
+
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
@@ -375,6 +382,39 @@ export function useProjectAPI() {
     }
   }
 
+  const submitOrderForm = async (formData: FormData): Promise<SubmitOrderFormResult> => {
+    isLoading.value = true
+    try {
+      // Временная заглушка endpoint, пока backend-ручка не готова.
+      const response = await fetch('https://httpbin.org/post', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '')
+        return {
+          success: false,
+          error: text || `Request failed with status ${response.status}`
+        }
+      }
+
+      const json: any = await response.json().catch(() => ({}))
+      return {
+        success: true,
+        data: json
+      }
+    } catch (error) {
+      console.error(ERROR_MESSAGES.LOAD_FORM_DATA, error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     isLoading,
     loadProjects,
@@ -382,6 +422,7 @@ export function useProjectAPI() {
     saveProject,
     deleteProject,
     getProjectScreenshot,
-    getOrderFormData
+    getOrderFormData,
+    submitOrderForm
   }
 }
