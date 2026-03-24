@@ -251,7 +251,7 @@ export function useProjectAPI() {
       return { success: false, error: ERROR_MESSAGES.MISSING_PROJECT_ID }
     }
     try {
-      const response = await (client as any).POST(`/api/modeller/projectq/deletebyid`, {
+      const response = await (client as any).POST(`/api/modeller/projectq/deletebyid/`, {
         body: { id }
       })
       const normalized = normalizeApiResponse<{ data?: any }>(response)
