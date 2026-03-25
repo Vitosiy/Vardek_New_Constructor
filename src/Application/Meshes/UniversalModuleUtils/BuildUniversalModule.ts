@@ -209,7 +209,7 @@ export class BuildUniversalModule extends BuildProduct {
 
         const sourceForBounds = curBodyExceptions ? exept : tempTotal;
         if (sourceForBounds) {
-            this.setBounds(total, sourceForBounds, size, CONFIG);
+            this.setBounds(total, sourceForBounds);
         }
 
         if (drowMode) {
@@ -944,6 +944,8 @@ export class BuildUniversalModule extends BuildProduct {
                                 })
 
                             let relative_posY = positionY + (element.type !== 'drawer' ? element.size.y / 2 : 0) - (element.fasade?.manufacturerOffset || 0)
+                            element.basketRenderPosition = positionY
+
                             if (leftObj) {
                                 let relative_pos = leftObj.size.y - ((leftObj.position.y + leftObj.size.y) - relative_posY)
 

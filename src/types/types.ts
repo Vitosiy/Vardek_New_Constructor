@@ -472,7 +472,7 @@ export type TConfig = {
   isHiTech?: boolean,
   isSlideDoor?: boolean,
   isRestrictedModule?: boolean,
-  
+
 }
 
 export type TTotalProps = {

@@ -1,18 +1,26 @@
- <script setup lang="ts">
- //@ts-nocheck
- import "@/components/UMconstructor/styles/UM.scss"
+<script setup lang="ts">
+//@ts-nocheck
+import "@/components/UMconstructor/styles/UM.scss"
 
- import {_URL} from "@/types/constants.ts";
- import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
- import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
- import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
- import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
- import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
- import {computed, onMounted, ref, toRefs, watch} from "vue";
- import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
- import {GridModule, TSelectedCell} from "@/components/UMconstructor/types/UMtypes.ts";
+import {_URL} from "@/types/constants.ts";
+import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
+import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
+import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
+import {computed, onMounted, ref, toRefs, watch} from "vue";
+import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
+import {
+  FillingObject,
+  GridCell,
+  GridCellsRow,
+  GridModule,
+  GridRowExtra,
+  GridSection,
+  TSelectedCell
+} from "@/components/UMconstructor/types/UMtypes.ts";
 
- const props = defineProps({
+const props = defineProps({
   module: {
     type: ref<GridModule>,
     required: true,
@@ -28,6 +36,7 @@
   },
 });
 
+type axis = 'X' | 'Y';
 type workMode = 'config' | 'add';
 const mode = ref<workMode>('add');
 const changeConstructorMode = (_mode: workMode) => {
@@ -156,11 +165,11 @@ const openHandleSelector = (
   if (
       currentHandle.value &&
       (
-        sec === currentHandle.value.sec &&
-        cell === currentHandle.value.cell &&
-        row === currentHandle.value.row &&
-        extra === currentHandle.value.extra &&
-        item === currentHandle.value.item
+          sec === currentHandle.value.sec &&
+          cell === currentHandle.value.cell &&
+          row === currentHandle.value.row &&
+          extra === currentHandle.value.extra &&
+          item === currentHandle.value.item
       )
   ) {
     closeMenu()
@@ -208,7 +217,7 @@ const selectOption = (value: Object, type: string, palette: Object = false) => {
   if (palette)
     currentFasadeMaterial.value.data['PALETTE'] = palette
 
-  if(type === "COLOR") {
+  if (type === "COLOR") {
     if (currentFasadeMaterial.value.data[type] === UMconstructor?.value?.CONST.NO_FASADE_ID)
       currentFasadeMaterial.value.data["MANUAL_NO_FASADE"] = true
     else
@@ -250,25 +259,63 @@ const handleCellSelect = () => {
   UMconstructor?.value?.debounce("handleCellSelectSectionFillings", () => {
     let idTag = `module_${sec}`
 
-    if(cell !== null)
+    if (cell !== null)
       idTag += `_${cell}`;
 
-    if(row !== null)
+    if (row !== null)
       idTag += `_${row}`
 
-    if(extra !== null)
+    if (extra !== null)
       idTag += `_${extra}`;
 
-    if(item !== null)
+    if (item !== null)
       idTag += ` ${item}`;
 
     let domElem = document.getElementById(idTag)
-    if(domElem) {
+    if (domElem) {
       domElem.scrollIntoView();
     }
   }, 10)
 
 };
+
+const getAbsolutePosition = (
+    axis: axis,
+    filling: FillingObject,
+    cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+) => {
+
+  let resultPos = 0
+
+  switch (axis) {
+    case "X":
+      break;
+    case "Y":
+      resultPos = UMconstructor?.value?.FILLINGS.getAbsolutePositionY(filling, cell)
+      break;
+  }
+
+  return resultPos;
+}
+
+const getLocalPosition = (
+    axis: axis,
+    value: number,
+    filling: FillingObject,
+    cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+) => {
+  let resultPos = 0
+
+  switch (axis) {
+    case "X":
+      break;
+    case "Y":
+      resultPos = UMconstructor?.value?.FILLINGS.getLocalPositionY(value, filling, cell)
+      break;
+  }
+
+  return resultPos;
+}
 
 onMounted(() => {
   selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
@@ -279,35 +326,34 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
   selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
 })
 
- watch(() => selectedFilling.value, () => {
-   const {sec, cell, row, extra, item} = selectedFilling.value;
-   if (
-       currentFasadeMaterial.value &&
-       !(
-           sec === currentFasadeMaterial.value.sec &&
-           cell === currentFasadeMaterial.value.cell &&
-           row === currentFasadeMaterial.value.row &&
-           extra === currentFasadeMaterial.value.extra &&
-           item === currentFasadeMaterial.value.item
-       )
-   ) {
-     closeMenu()
-     return;
-   }
-   else if (
-       currentHandle.value &&
-       !(
-           sec === currentHandle.value.sec &&
-           cell === currentHandle.value.cell &&
-           row === currentHandle.value.row &&
-           extra === currentHandle.value.extra &&
-           item === currentHandle.value.item
-       )
-   ) {
-     closeMenu()
-     return;
-   }
- })
+watch(() => selectedFilling.value, () => {
+  const {sec, cell, row, extra, item} = selectedFilling.value;
+  if (
+      currentFasadeMaterial.value &&
+      !(
+          sec === currentFasadeMaterial.value.sec &&
+          cell === currentFasadeMaterial.value.cell &&
+          row === currentFasadeMaterial.value.row &&
+          extra === currentFasadeMaterial.value.extra &&
+          item === currentFasadeMaterial.value.item
+      )
+  ) {
+    closeMenu()
+    return;
+  } else if (
+      currentHandle.value &&
+      !(
+          sec === currentHandle.value.sec &&
+          cell === currentHandle.value.cell &&
+          row === currentHandle.value.row &&
+          extra === currentHandle.value.extra &&
+          item === currentHandle.value.item
+      )
+  ) {
+    closeMenu()
+    return;
+  }
+})
 
 </script>
 
@@ -534,13 +580,16 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                             v-else
                             type="number"
                             :step="1"
-                            :max="section.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
-                            min="0"
+                            :max="UMconstructor.FILLINGS.calcMinMaxPositionY('max', filling, section, module)"
+                            :min="UMconstructor.FILLINGS.calcMinMaxPositionY('min', filling, section, module)"
                             class="actions-input"
                             :value="filling.distances?.bottom"
                             @input="
                                 UMconstructor.FILLINGS.changeFillingPositionY(
-                                    $event,
+                                    {
+                                      min: $event.target.min,
+                                      max: $event.target.max,
+                                    },
                                     $event.target.value,
                                     fillingIndex,
                                     secIndex,
@@ -702,19 +751,34 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                   v-else
                                   type="number"
                                   :step="1"
-                                  :max="cell.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
-                                  min="0"
+                                  :max="UMconstructor.FILLINGS.calcMinMaxPositionY('max', filling, cell, module)"
+                                  :min="UMconstructor.FILLINGS.calcMinMaxPositionY('min', filling, cell, module)"
                                   class="actions-input"
-                                  :value="filling.distances?.bottom"
-                                  @input="
-                                    UMconstructor.FILLINGS.changeFillingPositionY(
-                                      $event,
-                                      $event.target.value,
-                                      fillingIndex,
-                                      secIndex,
-                                      cellIndex
-                                    )
-                                  "
+                                  :value="getAbsolutePosition('Y', filling, cell)"
+                                  @input="(event) => {
+                                    UMconstructor?.debounce('getLocalPosition', () => {
+                                      let convertValue = getLocalPosition('Y', parseInt(event.target.value), filling, cell)
+                                      if(convertValue >= 0){
+                                        UMconstructor.FILLINGS.changeFillingPositionY(
+                                        {
+                                          min: getLocalPosition('Y', event.target.min, filling, cell),
+                                          max: getLocalPosition('Y', event.target.max, filling, cell)
+                                        },
+                                        convertValue,
+                                        fillingIndex,
+                                        secIndex,
+                                        cellIndex,
+                                        false,
+                                        false,
+                                        module,
+                                        0
+                                      )
+                                      }
+                                      else {
+                                        UMconstructor.callAlert('error', 'Нельзя переместить сюда, т.к. позиция выходит за пределы ячейки')
+                                      }
+                                    }, 1000)
+                                  }"
                               />
                             </div>
                           </div>
@@ -885,20 +949,34 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                       v-else
                                       type="number"
                                       :step="1"
-                                      :max="row.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
-                                      min="0"
+                                      :max="UMconstructor.FILLINGS.calcMinMaxPositionY('max', filling, row, module)"
+                                      :min="UMconstructor.FILLINGS.calcMinMaxPositionY('min', filling, row, module)"
                                       class="actions-input"
-                                      :value="filling.distances?.bottom"
-                                      @input="
-                                      UMconstructor.FILLINGS.changeFillingPositionY(
-                                          $event,
-                                          $event.target.value,
-                                          fillingIndex,
-                                          secIndex,
-                                          cellIndex,
-                                          rowIndex
-                                        )
-                                      "
+                                      :value="getAbsolutePosition('Y', filling, row)"
+                                      @input="(event) => {
+                                        UMconstructor?.debounce('getLocalPosition', () => {
+                                          let convertValue = getLocalPosition('Y', parseInt(event.target.value), filling, row)
+                                          if(convertValue >= 0){
+                                            UMconstructor.FILLINGS.changeFillingPositionY(
+                                            {
+                                              min: getLocalPosition('Y', event.target.min, filling, row),
+                                              max: getLocalPosition('Y', event.target.max, filling, row)
+                                            },
+                                            convertValue,
+                                            fillingIndex,
+                                            secIndex,
+                                            cellIndex,
+                                            rowIndex,
+                                            false,
+                                            module,
+                                            0
+                                          )
+                                          }
+                                          else {
+                                            UMconstructor.callAlert('error', 'Нельзя переместить сюда, т.к. позиция выходит за пределы ячейки')
+                                          }
+                                        }, 1000)
+                                    }"
                                   />
                                 </div>
                               </div>
@@ -1072,21 +1150,34 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
                                           v-else
                                           type="number"
                                           :step="1"
-                                          :max="extra.height - filling.height + (filling.isProfile ? module.moduleThickness : 0)"
-                                          min="0"
+                                          :max="UMconstructor.FILLINGS.calcMinMaxPositionY('max', filling, extra, module)"
+                                          :min="UMconstructor.FILLINGS.calcMinMaxPositionY('min', filling, extra, module)"
                                           class="actions-input"
-                                          :value="filling.distances?.bottom"
-                                          @input="
-                                            UMconstructor.FILLINGS.changeFillingPositionY(
-                                              $event,
-                                              $event.target.value,
-                                              fillingIndex,
-                                              secIndex,
-                                              cellIndex,
-                                              rowIndex,
-                                              extraIndex
-                                            )
-                                          "
+                                          :value="getAbsolutePosition('Y', filling, extra)"
+                                          @input="(event) => {
+                                            UMconstructor?.debounce('getLocalPosition', () => {
+                                              let convertValue = getLocalPosition('Y', parseInt(event.target.value), filling, extra)
+                                              if(convertValue >= 0){
+                                                UMconstructor.FILLINGS.changeFillingPositionY(
+                                                {
+                                                  min: getLocalPosition('Y', event.target.min, filling, extra),
+                                                  max: getLocalPosition('Y', event.target.max, filling, extra)
+                                                },
+                                                convertValue,
+                                                fillingIndex,
+                                                secIndex,
+                                                cellIndex,
+                                                rowIndex,
+                                                extraIndex,
+                                                module,
+                                                0
+                                              )
+                                              }
+                                              else {
+                                                UMconstructor.callAlert('error', 'Нельзя переместить сюда, т.к. позиция выходит за пределы ячейки')
+                                              }
+                                            }, 1000)
+                                          }"
                                       />
                                     </div>
                                   </div>
@@ -1145,13 +1236,14 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
     gap: 1rem;
   }
 }
+
 .search {
   width: 100%;
   height: 100%;
   padding-bottom: 2vh;
   padding-top: 2vh;
 
-  &--input{
+  &--input {
     padding: 10px 15px;
     width: 100%;
     border-radius: 15px;
