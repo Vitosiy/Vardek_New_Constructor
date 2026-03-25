@@ -953,7 +953,7 @@ const renderDescription = (props) => {
           value.forEach((el) => {
             items.push({
               key: appData.value["CATALOG"]["PRODUCTS"][el.ID]?.NAME ?? "",
-              value: el.VALUE || "",
+              value: el.basketRenderPosition || el.VALUE || "",
             });
           });
 

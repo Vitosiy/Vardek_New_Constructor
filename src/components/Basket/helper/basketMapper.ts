@@ -240,6 +240,7 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
         ID: el.product,
         PATH: false,
         PRODUCT_TYPE: el.type,
+        basketRenderPosition: el.basketRenderPosition || false,
       }
     } else {
       return {
@@ -254,6 +255,7 @@ function creatSectionFilling(arr: any[] | null | undefined): any[] {
           depth: el.size?.z || 0
         },
         ADDITIVES: el.ADDITIVES || {},
+        basketRenderPosition: el.basketRenderPosition || false,
       }
     }
 
