@@ -1,34 +1,66 @@
 <script lang="ts" setup>
 // @ts-nocheck 31
 
-import { defineProps, defineEmits, computed, ref, onMounted } from "vue";
+import {
+  defineProps,
+  defineEmits,
+  computed,
+  ref,
+  onMounted,
+  onBeforeMount,
+  withDefaults,
+} from "vue";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useAppData } from "@/store/appliction/useAppData";
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { _URL } from "@/types/constants";
 
 import Accordion from "@/components/ui/accordion/Accordion.vue";
+type TSurface = "fasade" | "module";
 
-const props = defineProps({
-  tabIndex: {
-    type: Number,
-    required: false,
-  },
-  materialList: Array,
-  tempWork: {
-    type: Boolean,
-    default: false,
-  },
+interface IProps {
+  tabIndex?: number;
+  materialList: number[];
+  tempWork?: boolean;
+  type?: TSurface;
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  tempWork: false,
+  type: "fasade",
 });
 
-onMounted(() => {
+// const props = defineProps({
+//   tabIndex: {
+//     type: Number,
+//     required: false,
+//   },
+//   materialList: Array,
+//   tempWork: {
+//     type: Boolean,
+//     default: false,
+//   },
+// });
+
+onBeforeMount(() => {
+  if (modelState.getCurrentModel) {
+    productData.value = modelState.getCurrentModel.userData;
+  }
 });
 
-const emit = defineEmits(["select_material", "select"]);
+// const emit = defineEmits(["select_material", "select"]);
+const emit = defineEmits<{
+  (e: "update:modelValue", value: any): void;
+  (e: "select", value: any): void;
+  (e: "select_material", value: any): void;
+}>();
+
 const modelState = useModelState();
 const eventBus = useEventBus();
 
-const productData = modelState.getCurrentModel;
+// console.log(modelState.getCurrentModel);
+const productData = ref(null);
+
 const _APP = useAppData().getAppData;
 const _FASADE = _APP.FASADE;
 
@@ -48,39 +80,64 @@ const isSearch = computed(() => {
 });
 
 const changeFasadeTexture = (data: { [key: string]: any }, id, fasadeNdx) => {
-
   if (props.tempWork) {
-    // eventBus.emit(`${props.typeChanger.event}`, {
-    //   data: id,
-    //   type: props.typeChanger.type,
-    // });
-    emit("select_material", data)
-
+    emit("select_material", data);
     return;
   }
 
-  const productId = productData.PROPS.PRODUCT;
-  let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE } = data;
+  if (props.type == "module") {
+    emit("select", data);
+    console.log('jjj', data)
+    return;
+  }
 
-  modelState.createCurrentFasadeTypesData({ fasadeId: data.ID, productId });
+  console.log(data, "==== ❌ Параметры выбранного фасада ❌ ====");
+
+  const productId = productData.value.PROPS.PRODUCT;
+  let { ID, NAME, DETAIL_PICTURE, PREVIEW_PICTURE, MATERIAL, PATINA } = data;
+
   modelState.createCurrentPaletteData(ID);
-  modelState.createCurrentGlassData({ fasadeId: data.ID, productId });
-  modelState.createCurrentMillingData({ fasadeId: ID, productId });
-  modelState.createCurrentWindowsData({ fasadeId: ID, productId });
-  modelState.createCurrentPatinaData({ fasadeId: data.ID, productId });
+  modelState.createCurrentMillingData({ fasadeId: ID, productId, fasadeNdx });
+  modelState.createCurrentShowcaseData({ fasadeId: ID, productId, fasadeNdx });
+  modelState.createCurrentPatinaData({ fasadeId: ID, productId });
+  modelState.createCurrentGlassData({ fasadeId: ID, productId });
+  modelState.createCurrentFasadeTypesData({ fasadeId: ID, productId });
+
+  const transitionT = checkTransitionTexture(data.ID);
+
+  emit("select_material", {
+    id: ID,
+    name: NAME,
+    imgSrc: PREVIEW_PICTURE,
+    transitionT,
+    material: MATERIAL,
+    patinaList: PATINA,
+  });
 
   eventBus.emit("A:ChangeFasade", { data, fasadeNdx });
-  emit("select_material", { name: NAME, imgSrc: PREVIEW_PICTURE });
 };
 
 const onSearchChange = (e) => {
-  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "gm");
-  let filtered = totalMaterialList.value.filter((id) =>
+  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "g");
+  let filteredData = totalMaterialList.value.filter((id) =>
     reg.test(_FASADE[id].NAME.toLowerCase())
   );
-  filteredMaterialList.value = filtered;
 
+  filteredMaterialList.value = filteredData;
   if (e.target.value === "") filteredMaterialList.value = [];
+};
+
+const checkTransitionTexture = (id: number) => {
+  const prepare = modelState.getCurrentModelFasadesData.filter(
+    (el) => el.NAME === "Шпон Вардек 19мм"
+  );
+
+  if (prepare.length == 0) return false;
+
+  const start = prepare[0].FASADES;
+
+  if (!start) return false;
+  return start.includes(id);
 };
 </script>
 
@@ -142,15 +199,12 @@ const onSearchChange = (e) => {
           </div>
         </li>
       </ul>
-
-      <!--
-      
-      -->
     </ul>
   </div>
 </template>
 
 <style scoped lang="scss">
+
 .relative__wrapper {
   display: flex;
   flex-direction: column;
@@ -162,6 +216,7 @@ const onSearchChange = (e) => {
   border-radius: 15px;
   padding: 10px 10px 0px 10px;
 }
+
 .search {
   width: 95%;
   border-radius: 15px;
@@ -176,6 +231,16 @@ const onSearchChange = (e) => {
   box-sizing: border-box;
   overflow-y: scroll;
   box-sizing: border-box;
+
+  &__details {
+    border-radius: 15px;
+
+    @media (hover: hover) {
+      &:hover {
+        background: $bg;
+      }
+    }
+  }
 }
 
 .item {
@@ -187,7 +252,7 @@ const onSearchChange = (e) => {
   // height: 60px;
   border-radius: 15px;
   background-color: $bg;
-  margin-bottom: 8px;
+  margin-top: 10px;
   margin-right: 8px;
   transition-property: background-color;
   transition-duration: 0.25s;
@@ -212,7 +277,7 @@ const onSearchChange = (e) => {
 }
 </style>
 
-.search { position: absolute; top: 10px; height: 40px; width: 95%;
+<!-- .search { position: absolute; top: 10px; height: 40px; width: 95%;
 border-radius: 5px; padding-left: 15px; } .list { overflow: scroll; height:
 100%; margin-top: 40px; padding-right: 10px; &__details { &_contant {
 margin-top: 10px; } } } .list { position: relative; &::-webkit-scrollbar {
@@ -221,4 +286,4 @@ the thumb */ border-radius: 5px; /* Rounded corners */ } } .item { display:
 flex; flex-direction: row; align-items: center; cursor: pointer; height: 60px;
 border-radius: 15px; background-color: #e7e7e7; margin-bottom: 4px; &__img {
 height: 45px; width: 45px; border-radius: 10px; margin-left: 10px; padding: 5px;
-background-color: $white; } &__name { margin-left: 30px; } }
+background-color: $white; } &__name { margin-left: 30px; } } -->

@@ -1,4 +1,5 @@
 // import { MathUtils } from "three";
+//@ts-nocheck
 import { defineStore } from 'pinia';
 import {
 	computed,
@@ -12,6 +13,23 @@ import {
 // } from "@/Constructor2D/utils/Math/index";
 
 export const useSchemeTransition = defineStore('SchemeTransition', () => {
+
+	const roomHeight = ref<number>(3000)
+
+	const normalizeId = (value: string | number | null | undefined) => value !== null && value !== undefined ? String(value) : '';
+	const deepClone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+	const normalizeRoom = (room: any) => {
+		const clone = deepClone(room || {});
+		clone.id = normalizeId(clone.id);
+		clone.content = typeof clone.content === 'string' ? JSON.parse(clone.content) : (clone.content || []);
+		if (!clone.params) clone.params = {};
+		if (!Array.isArray(clone.params.walls)) clone.params.walls = [];
+		clone.params.walls = clone.params.walls.map((wall: any) => ({
+			...wall,
+			id: normalizeId(wall?.id)
+		}));
+		return clone;
+	};
 
 	const SchemeTransitionData = ref<{ [key: string]: any }[]>([
 
@@ -419,7 +437,8 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	 * @returns {Array} Копия массива с данными комнат
 	 */
 	const getAllData = () => {
-		return JSON.parse(JSON.stringify(SchemeTransitionData.value));
+		// return JSON.parse(JSON.stringify(SchemeTransitionData.value));
+		return SchemeTransitionData.value
 	};
 
 	const clearStore = () => {
@@ -427,8 +446,8 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	};
 
 	const setAppData = (value: any) => {
-		SchemeTransitionData.value = value
-		// console.log(SchemeTransitionData.value);
+		const normalized = (value || []).map(normalizeRoom);
+		SchemeTransitionData.value = normalized;
 	};
 
 	// добавление / обновление стены
@@ -559,11 +578,22 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	/** @CENTRALIZED */
 
 	const getRoomDataFor3DScene = (idRoom: string | number): any => {
-		const data = SchemeTransitionData.value.find((item: any) => item.id === idRoom);
+		const data = SchemeTransitionData.value.find((item: any) => normalizeId(item.id) === normalizeId(idRoom));
+
 		if (!data) return;
 
-		const roomData = JSON.parse(JSON.stringify(data));
+		const cloned = deepClone(normalizeRoom(data));
+		cloned.content = typeof cloned.content !== 'string' ? JSON.stringify(cloned.content) : cloned.content
 
+		// const prepareData = data.map(elem => {
+		// 	const content = typeof elem.content != 'string' ? JSON.stringify(elem.content) : elem.content
+		// 	return {
+		// 		...elem,
+		// 		content: content
+		// 	}
+		// })
+
+		const roomData = cloned
 		/*
 	  
 		// Если нет стен - возвращаем как есть
@@ -609,7 +639,12 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 	};
 
 	const getSchemeTransitionData = computed(() => {
-		return SchemeTransitionData.value
+		const normalized = SchemeTransitionData.value.map(normalizeRoom);
+		const prepareData = normalized.map(elem => ({
+			...deepClone(elem),
+			content: typeof elem.content !== 'string' ? JSON.stringify(elem.content) : elem.content
+		}));
+		return prepareData;
 	})
 
 	const getWalls = computed(() => {
@@ -618,9 +653,13 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 
 	const getRoomById = computed(() => {
 		return (id: string | number) => {
-			return SchemeTransitionData.value.find((item: any) => item.id === id);
+			return SchemeTransitionData.value.find((item: any) => normalizeId(item.id) === normalizeId(id));
 		}
-	});//
+	});// 
+
+	const getRoomHeight = computed(() => {
+		return roomHeight
+	})
 
 	return {
 		SchemeTransitionData,
@@ -631,6 +670,7 @@ export const useSchemeTransition = defineStore('SchemeTransition', () => {
 		setAppData,
 		getWalls,
 		getRoomById,
+		getRoomHeight,
 
 		// setWall,
 		// removeWall

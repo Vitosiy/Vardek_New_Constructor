@@ -11,16 +11,29 @@ import { useMenuStore } from '@/store/appStore/useMenuStore.ts';
 
 export class WallBuilder {
 
-    appData: ReturnType<typeof useAppData> = useAppData()
-    menuStore: ReturnType<typeof useMenuStore> = useMenuStore();
     resources: Resources
     ruler: THREETypes.TRuler
-    floorTextureData: { [key: string]: any } = this.appData.getAppData.FLOOR
-    wallTextureData: { [key: string]: any } = this.appData.getAppData.WALL
+
+    private appData: ReturnType<typeof useAppData>
+    private menuStore: ReturnType<typeof useMenuStore>
+    private floorTextureData: Record<string | number, any>
+    private wallTextureData: Record<string | number, any>
+
+    private textureDataMap: Record<string, Record<string | number, any>>
 
     constructor(root: THREETypes.TApplication) {
         this.resources = root._resources
         this.ruler = root._ruler!
+        this.appData = useAppData()
+        this.menuStore = useMenuStore()
+
+        this.floorTextureData = this.appData.getAppData.FLOOR
+        this.wallTextureData = this.appData.getAppData.WALL
+
+        this.textureDataMap = {
+            wall: this.wallTextureData,
+            floor: this.floorTextureData,
+        }
     }
 
     createMesh(
@@ -43,8 +56,6 @@ export class WallBuilder {
 
         const tempMesh = mesh.clone()
 
-        console.log(rotation._x, rotation._y, rotation._z)
-
         tempMesh.updateMatrix()
         tempMesh.geometry.applyMatrix4(mesh.matrix);
         //  Сбрасываем трансформации меша
@@ -53,11 +64,6 @@ export class WallBuilder {
         tempMesh.scale.set(1, 1, 1);
         tempMesh.matrix.identity();
 
-
-        // geometry.rotateX(rotation._x);
-        // geometry.rotateY(rotation._y);
-        // geometry.rotateZ(rotation._z);
-        // geometry.translate(position.x, position.y, position.z);
         this.addArrowSize(mesh, tempMesh)
 
         geometry.computeBoundingBox();
@@ -75,7 +81,6 @@ export class WallBuilder {
         let normal = mesh.userData.plane.normal.clone().normalize();
         let perpendicular = this.findPerpendicularVector(normal);
 
-        // console.log(normal, 'NORM', this.findPerpendicularVector(normal), 'PERP')
 
         /** Получаем координаты x, z стены */
 
@@ -112,8 +117,9 @@ export class WallBuilder {
         mesh.userData.perpendicular = perpendicular
         mesh.userData.middleVector = vector
         mesh.userData.center = center
-        mesh.userData.elementType = 'element_room'
+        mesh.userData.elementType = 'ROOM'
         mesh.elementType = 'element_room'
+        mesh.name = 'wall'
 
         return mesh;
     }
@@ -199,12 +205,18 @@ export class WallBuilder {
         floorMesh.userData.name = 'floor'
 
         floorMesh.userData.plane = this.convertPlaneGeometryToPlane(floorMesh)
-        floorMesh.userData.elementType = 'element_room'
+        floorMesh.userData.elementType = 'ROOM'
+        floorMesh.elementType = 'element_room'
 
         return floorMesh;
     }
 
-    private createMaterial(side: THREE.Side | number, type: string, textureId: number | string, dimensions?: number[]): THREE.MeshPhysicalMaterial {
+    private createMaterial(
+        side: THREE.Side | number,
+        type: string,
+        textureId: number | string,
+        dimensions?: number[]
+    ): THREE.MeshPhysicalMaterial {
 
         const material = new THREE.MeshPhysicalMaterial({
             metalness: 0.5,
@@ -212,75 +224,47 @@ export class WallBuilder {
             clearcoat: 0,
             clearcoatRoughness: 0.6,
             side: side as THREE.Side,
-            // depthTest: true,
-            // depthWrite: false
         });
 
         if (textureId) {
-            this.loadTexture(type, textureId, material, dimensions)
-        }
-        else {
-            switch (type) {
-                case 'wall':
-                    material.color = new THREE.Color('#ffffff')
-                    break;
-                case 'floor':
-                    material.color = new THREE.Color('#ab8b65')
-                    break;
-                default:
-                    console.warn(`Неизвестный тип материала: ${type}`);
-                    break;
+            this.loadTexture(type, textureId, material, dimensions);
+        } else {
+            material.color = new THREE.Color(this.defaultColors[type] ?? '#ffffff');
+            if (!this.defaultColors[type]) {
+                console.warn(`Неизвестный тип материала: ${type}`);
             }
         }
 
         return material;
     }
 
-    // Устанавливаем текстуру
-    private loadTexture(type: string, textureId: number | string, material: THREE.MeshPhysicalMaterial, dimensions?: number[]) {
+    private loadTexture(
+        type: string,
+        textureId: number | string,
+        material: THREE.MeshPhysicalMaterial,
+        dimensions?: number[]
+    ): void {
+        const textureData = this.textureDataMap[type];
 
-        // console.log(dimensions, 'dimensions')
-
-        switch (type) {
-            case 'wall':
-                this.resources.startLoading(this.wallTextureData[textureId].texture, 'texture', (file) => {
-                    if (file instanceof THREE.Texture) {
-                        file.colorSpace = THREE.SRGBColorSpace
-                        material.color = new THREE.Color('#ffffff')
-                        material.map = file;  // Устанавливаем загруженную текстуру как карту материала
-                        material.needsUpdate = true;  // Обновляем материал после изменения
-                        material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
-                        material.map.repeat.set(
-                            (dimensions![0] / 1000),
-                            (dimensions![1] / 1000)
-                        );
-                    }
-                });
-                break;
-
-            case 'floor':
-                this.resources.startLoading(this.floorTextureData[textureId].texture, 'texture', (file) => {
-                    if (file instanceof THREE.Texture) {
-                        file.colorSpace = THREE.SRGBColorSpace
-                        material.color = new THREE.Color('#ffffff')
-                        material.map = file;  // Устанавливаем загруженную текстуру как карту материала
-                        material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
-                        material.map.repeat.set(0.001, 0.001)
-                        material.needsUpdate = true;  // Обновляем материал после изменения
-                        // material.map.repeat.set(
-                        //     (dimensions[0]),
-                        //     (dimensions[1])
-                        // );
-                    }
-                });
-                break;
-
-            default:
-                console.warn(`Неизвестный тип материала: ${type}`);
-                break;
+        if (!textureData?.[textureId]) {
+            console.warn(`Неизвестный тип или id текстуры: ${type} / ${textureId}`);
+            return;
         }
-    }
 
+        this.resources.startLoading(textureData[textureId].texture, 'texture', (file) => {
+            if (!(file instanceof THREE.Texture)) return;
+
+            file.colorSpace = THREE.SRGBColorSpace;
+            material.color = new THREE.Color('#ffffff');
+            material.map = file;
+            material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+            material.map.repeat.set(
+                dimensions ? dimensions[0] / 1000 : 0.001,
+                dimensions ? dimensions[1] / 1000 : 0.001
+            );
+            material.needsUpdate = true;
+        });
+    }
     // Обновляем текстуру
     updateTexture(mesh: THREE.Mesh, type: string, textureId: string | number, dimensions: number[]): void {
         const material = mesh.material as THREE.MeshPhysicalMaterial;
@@ -332,7 +316,7 @@ export class WallBuilder {
         return perpendicular;
     }
 
-    private addArrowSize(object: THREE.Mesh, tempMesh:THREE.Mesh) {
+    private addArrowSize(object: THREE.Mesh, tempMesh: THREE.Mesh) {
         const arrows = new THREE.Object3D()
         let ruler = this.ruler.drawRullerObjects(tempMesh)
 

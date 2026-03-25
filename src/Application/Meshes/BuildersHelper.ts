@@ -6,21 +6,29 @@ import { useAppData } from "@/store/appliction/useAppData"
 
 import { GlobalsData } from './Utils/Globals'
 import { CUTTER_PARAMS } from "@/ConstructorTabletop/CutterScripts/CutterConst"
+import { label, userData } from 'three/webgpu'
 export class BuildersHelper extends GlobalsData {
 
     resources: THREETypes.TResources
     scene: THREE.Scene
+    room: THREETypes.TRoomManager
+    root: THREETypes.TApplication
 
     constructor(root: THREETypes.TApplication) {
 
         super();
         this.resources = root._resources
         this.scene = root._scene
+        this.room = root._roomManager
+        this.root = root
     }
 
-    createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
+    public createModelData(data: THREETypes.TObject, props: THREETypes.TObject, size: { width: number, height: number, depth: number }) {
         let model_data = { ...data }
         let color = this._FASADE[props.CONFIG.MODULE_COLOR]
+        const colorWidth = color?.DEPTH || 18;
+        const leftWidth = props.CONFIG.LEFTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.LEFTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
+        const rightWidth = props.CONFIG.RIGHTSIDECOLOR?.COLOR ? this._FASADE[props.CONFIG.RIGHTSIDECOLOR.COLOR]?.DEPTH : colorWidth || 18;
 
         model_data = this.expressionsReplace(
             model_data,
@@ -28,7 +36,9 @@ export class BuildersHelper extends GlobalsData {
                 "#X#": size.width,
                 "#Y#": size.height,
                 "#Z#": size.depth,
-                "#MATERIAL_THICKNESS#": color?.DEPTH,
+                "#MATERIAL_THICKNESS#": colorWidth,
+                "#LEFT_THICKNESS#": leftWidth,
+                "#RIGHT_THICKNESS#": rightWidth,
                 "#HORIZONT#": props.CONFIG.NOBOTTOM ? 0 :
                     props.CONFIG.HORIZONT || props.CONFIG.HORIZONT === 0 ? props.CONFIG.HORIZONT :
                         props.EXPRESSIONS["#HORIZONT#"] || 78,  //78 - стандартная высота цоколя на случай отсутствия данных
@@ -43,14 +53,18 @@ export class BuildersHelper extends GlobalsData {
         return model_data
     };
 
-    getProductSize(PARAMS: any, productData: THREETypes.TObject) {
+    public getProductSize(PARAMS: any, productData: THREETypes.TObject) {
+
         const product = this._PRODUCTS[PARAMS.ID];
         const materialThickness = this._FASADE[PARAMS.MODULE_COLOR]?.DEPTH ?? 18;
-        const horizont =
-            PARAMS.NOBOTTOM ? 0 :
-                PARAMS.HORIZONT ?? 78;
+        const horizont = PARAMS.NOBOTTOM ? 0 : PARAMS.HORIZONT ?? 78;
 
         const filling = this._FILLING[product.FILLING[0]] || {};
+        const { FASADE_PROPS, SIZEEDITJOINDEPTH } = PARAMS
+
+        // Вычисляем высоту один раз
+        const roomHeight = this.root._roomManager._currentRoomHeight;
+        const resolvedHeight = productData.height === "#ROOM_HEIGHT#" ? roomHeight : productData.height;
 
         // Базовые подстановки
         const expressions: Record<string, any> = {
@@ -58,29 +72,32 @@ export class BuildersHelper extends GlobalsData {
             "#MODUL_MWIDTH#": productData.width,
             "#MODUL_WIDTH#": productData.width,
             "#X#": productData.width,
-            "#MHEIGHT#": productData.height,
-            "#MODUL_MHEIGHT#": productData.height,
-            "#MODUL_HEIGHT#": productData.height,
+            "#MHEIGHT#": resolvedHeight,
+            "#MODUL_MHEIGHT#": resolvedHeight,
+            "#MODUL_HEIGHT#": resolvedHeight,
             "#Y#": productData.height,
             "#MDEPTH#": productData.depth,
             "#MODUL_MDEPTH#": productData.depth,
             "#MODUL_DEPTH#": productData.depth,
             "#Z#": productData.depth,
-            "#SIZEEDITJOINDEPTH#": productData.SIZE_EDIT_JOINDEPTH_MIN,
+            "#SIZEEDITJOINDEPTH#": SIZEEDITJOINDEPTH ?? productData.SIZE_EDIT_JOINDEPTH_MIN,
             "#MATERIAL_THICKNESS#": materialThickness,
             "#HORIZONT#": horizont,
             "#VSECTION_MAX#": filling.VSECTION_MAX,
             "#VSECTION_MIN#": filling.VSECTION_MIN,
+            "#ROOM_HEIGHT#": roomHeight
         };
 
         // Обработка фасадных размеров
-        Object.entries(PARAMS.FASADE_SIZE).forEach(([key, value]) => {
-            expressions[`#${key}#`] = value;
-            if (key === "FASADESIZE1" || key === "FASADESIZE2") {
-                const idx = value as number;
-                const size = this._FASADESIZE[idx];
-                const suffix = key.endsWith("1") ? "1" : "2";
-                expressions[`#FASADESIZEWIDTH${suffix}#`] = size.WIDTH;
+        Object.entries(PARAMS.FASADE_SIZE).forEach(([_, value], ndx) => {
+            const incomeData = FASADE_PROPS[ndx].SIZES
+            const customKey = `FASADESIZE${ndx + 1}`
+            expressions[`#${customKey}#`] = incomeData.id;
+
+            if (customKey === "FASADESIZE1" || customKey === "FASADESIZE2") {
+                const size = this._FASADESIZE[incomeData.id];
+                const suffix = customKey.endsWith("1") ? "1" : "2";
+                expressions[`#FASADESIZEWIDTH${suffix}#`] = incomeData.params.FASADE_WIDTH ?? size.WIDTH;
                 expressions[`#FASADESIZEDEPTH${suffix}#`] = size.DEPTH;
                 expressions[`#FASADESIZEDIFFWIDTH${suffix}#`] = size.DIFFWIDTH;
                 expressions[`#FASADESIZEDIFFDEPTH${suffix}#`] = size.DIFFDEPTH;
@@ -94,37 +111,41 @@ export class BuildersHelper extends GlobalsData {
             : productData.depth;
 
         const size = {
-            width: parseInt(PARAMS.SIZE.width),
-            height: parseInt(PARAMS.SIZE.height),
-            depth: parseInt(depthCalc),
+
+            width: parseFloat(productData.width),
+            height: parseFloat(resolvedHeight),
+            depth: parseFloat(depthCalc),
         };
 
         if (PARAMS.MODELID) {
             const modelData = this._MODELS[PARAMS.MODELID]
             const model = this.expressionsReplace(modelData, expressions);
+
             if (model.width) size.width = parseInt(eval(model.width));
             if (model.height) size.height = parseInt(eval(model.height));
             if (model.depth) size.depth = parseInt(eval(model.depth));
         }
 
         // Запасные значения
-        size.width ||= parseInt(productData.width);
-        size.height ||= parseInt(productData.height);
-        size.depth ||= parseInt(productData.depth);
+        size.width ||= parseFloat(productData.width);
+        size.height ||= parseFloat(resolvedHeight);
+        size.depth ||= parseFloat(productData.depth);
 
         return size;
     }
 
-    getSizeEdit(product_data: THREETypes.TObject, props: THREETypes.TObject) {
+    public getSizeEdit(product_data: THREETypes.TObject, props: THREETypes.TObject) {
 
         let sizeEdit = Object.keys(props.SIZE_EDIT)
         let productArr = this.filterObjectByKeys(product_data, sizeEdit)
         return productArr
     }
 
-    getExec(obj) {
+    public getExec(obj) {
         Object.entries(obj).forEach(([key, value]) => {
-            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color") {
+
+
+            if (key == "NAME" || key == "drawer" || key == "box_color" || key == "fasade_color" || key.includes("PROPERTY_FASADE_NUMBER_VALUE_ID")) {
                 obj[key] = value;
             } else {
                 obj[key] = eval(value);
@@ -133,7 +154,7 @@ export class BuildersHelper extends GlobalsData {
         return obj;
     };
 
-    expressionsReplace(obj: any, expressions: THREETypes.TObject) {
+    public expressionsReplace(obj: any, expressions: THREETypes.TObject) {
 
         if (!expressions || !Object.keys(expressions).length) return obj;
 
@@ -159,11 +180,21 @@ export class BuildersHelper extends GlobalsData {
         }
     };
 
-    getStartPosition(size: THREETypes.TObject) {
+    public calculateFromString(expression) {
+        try {
+            const func = new Function("return " + expression);
+            return func();
+        } catch (error) {
+            console.error(expression, '---"Недопустимое выражение!"')
+            return "Недопустимое выражение!";
+        }
+    }
+
+    public getStartPosition(size: THREETypes.TObject) {
         return new THREE.Vector3(-size.width * 0.5, -size.height * 0.5, -size.depth * 0.5);
     };
 
-    checkColor(product: THREETypes.TObject) {
+    public checkColor(product: THREETypes.TObject) {
         const { PRODUCT, CONFIG, texture } = product;
         const { BASKET } = CONFIG;
         const curProduct = this._PRODUCTS[PRODUCT];
@@ -193,7 +224,7 @@ export class BuildersHelper extends GlobalsData {
         return false;
     }
 
-    calculateHeight(object: THREE.Object3D) {
+    public calculateHeight(object: THREE.Object3D) {
 
         let box = new THREE.Box3().setFromObject(object)
         const forTableSize = new THREE.Vector3()
@@ -201,23 +232,27 @@ export class BuildersHelper extends GlobalsData {
         return tableSize.y
     }
 
-    isEmpty(obj: {}) {
+    public isEmpty(obj: {}) {
         return Object.keys(obj).length === 0
     };
 
-    filterObjectByKeys(obj: THREETypes.TObject, keys: string[]) {
+    public filterObjectByKeys(obj: THREETypes.TObject, keys: string[]) {
         return Object.fromEntries(
             Object.entries(obj).filter(([key]) => keys.includes(key))
         );
     }
 
-    getTexture({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
+
+    //----------------------------------------------------------
+    /** @Настройка материала */
+    //----------------------------------------------------------
+    public getTexture({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
 
         this.resources.startLoading(url, 'texture', (file) => {
             if (file instanceof THREE.Texture) {
                 file.colorSpace = THREE.SRGBColorSpace
                 material.map = file
-                material.needsUpdate = true;
+                // material.needsUpdate = true;
                 if (texture_size) {
                     material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
                     material.map.repeat.set(
@@ -232,10 +267,63 @@ export class BuildersHelper extends GlobalsData {
         });
     }
 
-    //----------------------------------------------------------
-    /** @Настройка материала */
-    //----------------------------------------------------------
-    changeColor({
+
+    public async getMaterial({ material, url, texture_size }: { material: any, url: string, texture_size?: THREETypes.TObject }) {
+        const loadedMaterial = await this.resources.startLoading(url, 'texture', (file) => {
+            if (file instanceof THREE.Texture) {
+                file.colorSpace = THREE.SRGBColorSpace
+                material.map = file
+                if (texture_size) {
+                    material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+                    material.map.repeat.set(
+                        1 / texture_size.width,
+                        1 / texture_size.height
+                    );
+                    material.map.offset.set(0.5, 0.5);
+                }
+                material.needsUpdate = true;
+
+            }
+        });
+        return loadedMaterial
+    }
+
+    public createNishaMaterial(url, size, comand) {
+        // console.log(comand)
+
+
+        const material = new THREE.MeshStandardMaterial({
+            metalness: 0.5,
+            roughness: 0.5,
+        });
+        const { x, y } = size;
+
+        const TILE_SIZE = 1
+        this.resources.startLoading(url, 'texture', (file) => {
+            if (file instanceof THREE.Texture) {
+
+                file.colorSpace = THREE.SRGBColorSpace
+                material.map = file;
+                material.map.wrapS = THREE.RepeatWrapping;
+                material.map.wrapT = THREE.RepeatWrapping;
+                material.map.repeat.set(
+                    (parseFloat(x) * (parseFloat(x) / parseFloat(y)) * TILE_SIZE + parseFloat(x) * TILE_SIZE),
+                    (parseFloat(y) * (parseFloat(y) / parseFloat(x)) * TILE_SIZE + parseFloat(y) * TILE_SIZE)
+                )
+
+                material.map.offset.set(0.5, 0.5);
+
+            }
+            material.needsUpdate = true;
+
+        });
+
+
+        return material
+    }
+
+
+    public changeColor({
         object,
         url,
         textureSize,
@@ -243,30 +331,30 @@ export class BuildersHelper extends GlobalsData {
     }: {
         object: THREE.Object3D;
         url: string;
-        textureSize?: THREE.Vector3;
+        textureSize?: { x: number, y: number };
         type?: string;
     }) {
+
+
+        const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color('#ffffff'),
+            // opacity: 1
+        });
         object.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             if (child.userData.type === "glass") return;
-
-            // Восстановление оригинального материала при наличии
-            if (child.userData.ORIGINAL_COLOR) {
-                child.material = child.userData.ORIGINAL_COLOR;
-            }
-            if (child.material.opacity < 1) {
-                child.material.opacity = 1
-                child.material.color = new THREE.Color('rgb(255,255,255)')
+            if (child.userData.mergedGeometry) {
+                child.material = material
+                this.getTexture({
+                    material,
+                    url: url,
+                });
+                return
             }
 
             this.resources.startLoading(url, "texture", (file) => {
                 if (!(file instanceof THREE.Texture)) return;
-
-                // Создание материала при необходимости
-                if (type && ["Palette", "Glass"].includes(type)) {
-                    child.material = new THREE.MeshStandardMaterial();
-                }
-
+                child.material = material
                 this.applyTexture(child, file, textureSize, type);
             });
         });
@@ -275,7 +363,7 @@ export class BuildersHelper extends GlobalsData {
     //----------------------------------------------------------
     /** @Настройка текстуры и параметров материала */
     //----------------------------------------------------------
-    private applyTexture(
+    public applyTexture(
         child: THREE.Mesh,
         texture: THREE.Texture,
         textureSize?: THREE.Vector3,
@@ -304,7 +392,7 @@ export class BuildersHelper extends GlobalsData {
         child.material.needsUpdate = true;
     }
 
-    createExtrudeBoxGeometry(options: THREETypes.TObject) {
+    public createExtrudeBoxGeometry(options: THREETypes.TObject) {
         let extrusionSettings = Object.assign({
             depth: 16,
             curveSegments: 1,
@@ -336,7 +424,7 @@ export class BuildersHelper extends GlobalsData {
         return geometry;
     }
 
-    addIfNotExists(array, obj) {
+    public addIfNotExists(array, obj) {
         const exists = array.some(item =>
             Object.keys(obj).every(key => item[key] === obj[key])
         );
@@ -347,13 +435,14 @@ export class BuildersHelper extends GlobalsData {
         return false
     }
 
-    getRandomInt(min: number, max: number) {
+    public getRandomInt(min: number, max: number) {
         const minCeiled = Math.ceil(min);
         const maxFloored = Math.floor(max);
         return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
     }
 
-    planarUV(geometry) {
+    public planarUV(geometry) {
+
 
         geometry.computeBoundingBox();
 
@@ -390,13 +479,42 @@ export class BuildersHelper extends GlobalsData {
         geometry.uvsNeedUpdate = true;
     }
 
-    addAdditionalKeys = (obj, additionalKeys) => (
+    public normalizeUVsTo01(geometry: THREE.BufferGeometry) {
+        const uv = geometry.attributes.uv;
+        if (!uv) return;
+
+        // Находим bounding box геометрии в локальных координатах
+        geometry.computeBoundingBox();
+        const bbox = geometry.boundingBox!;
+
+        const sizeX = bbox.max.x - bbox.min.x;
+        const sizeY = bbox.max.y - bbox.min.y;
+
+        // Если размеры нулевые или почти нулевые — ничего не делаем
+        if (sizeX < 0.001 || sizeY < 0.001) return;
+
+        // Нормализуем UV: приводим к диапазону [0..1] по реальным размерам
+        for (let i = 0; i < uv.count; i++) {
+            const u = uv.getX(i);
+            const v = uv.getY(i);
+
+            // Предполагаем, что UV изначально в миллиметрах (от 0 до width/height)
+            const normalizedU = (u - bbox.min.x) / sizeX;
+            const normalizedV = (v - bbox.min.y) / sizeY;
+
+            uv.setXY(i, normalizedU, normalizedV);
+        }
+
+        uv.needsUpdate = true;
+    }
+
+    public addAdditionalKeys = (obj, additionalKeys) => (
         Object.entries(additionalKeys).forEach(([newKey, existingKey]) =>
             obj[newKey] = obj[existingKey] ?? console.warn(`Ключ "${existingKey}" не найден в объекте.`)
         ), obj
     );
 
-    getRootObject(object: THREE.Object3D): THREE.Object3D {
+    public getRootObject(object: THREE.Object3D): THREE.Object3D {
         let root = object;
         while (root.parent && root.parent.type !== 'Scene') {
             root = root.parent;
@@ -405,21 +523,8 @@ export class BuildersHelper extends GlobalsData {
         return root;
     }
 
-    calculateFromString(expression) {
-        try {
-            const func = new Function("return " + expression);
-            return func();
-        } catch (error) {
-            return "Недопустимое выражение!";
-        }
-    }
+    public createStartTopTableCutData(uslugi, product_data) {
 
-    createStartTopTableCutData(uslugi, product_data) {
-
-        console.log(uslugi, 'uslugi')
-
-        const convert = this.createCutterParams(uslugi)
-        console.log(convert, 'convert')
 
         const { width, depth, height } = product_data
         const startCutData = {
@@ -433,7 +538,8 @@ export class BuildersHelper extends GlobalsData {
                         height: depth,
                         roundCut: {},
                         holes: [],
-                        serviseData: convert
+                        serviseData: uslugi,
+                        disabled: false
 
                     }
                 ]
@@ -443,42 +549,51 @@ export class BuildersHelper extends GlobalsData {
         return startCutData
     }
 
-    createCutterParams(uslugi) {
-        const SERVISES = CUTTER_PARAMS.CUT_SERVISES
-        return uslugi.map(obj1 => {
+    public createCutterParams(uslugi) {
+        // const SERVISES = CUTTER_PARAMS.CUT_SERVISES
+        // console.log(uslugi, ' ====== uslugi =====', SERVISES)
+
+        const result = uslugi.map(obj1 => {
             const obj2 = SERVISES.find(o => o.ID === obj1.ID);
             let merged;
             if (obj2) {
                 const extras = Object.fromEntries(
-                    Object.entries(obj2).filter(([key]) => !(key in obj1))
-                );
+                    Object.entries(obj2).filter(([key]) => {
+                        return !(key in obj1) && key != 'pos'
+                    })
+                )
+
                 merged = { ...obj1, ...extras };
-
-                // if ("width" in merged) {
-                //     const w1 = obj1.width;
-                //     const w2 = obj2.width;
-
-                //     // случай: строка + число → число
-                //     if (typeof w1 === "string" && typeof w2 === "number") {
-                //         merged.width = w2;
-                //     }
-
-                //     // случай: строка + отсутствует → удалить
-                //     if (typeof w1 === "string" && w2 === undefined) {
-                //         delete merged.width;
-                //     }
-                // }
-
-                // return merged;
+                merged.POSITION = merged.POSITION.toLowerCase()
+                if (merged.POSITION === 'center') {
+                    let sercher
+                    if (merged.radiogroups.length) {
+                        sercher = merged.radiogroups.join('_');
+                        merged.POSITION = sercher;
+                    }
+                }
             }
 
             else {
                 merged = { ...obj1 };
-                if (!("pos" in merged)) {
-                    merged.pos = "CENTER";
+
+                if (!merged.POSITION) {
+                    let sercher
+                    if (merged.radiogroups.length) {
+                        sercher = merged.radiogroups.join('_');
+                        ['left', 'right'].forEach(el => {
+                            if (sercher.includes(el)) sercher += '_bottom'
+                        })
+                        merged.POSITION = sercher;
+                    }
+                    else {
+                        merged.POSITION = 'global';
+                    }
+
+
                 }
             }
-
+            // if (!merged) return
             if ("width" in merged) {
                 const w1 = obj1.width;
                 const w2 = obj2 ? obj2.width : undefined;
@@ -492,14 +607,39 @@ export class BuildersHelper extends GlobalsData {
                 }
             }
 
+            if (merged.POSITION.includes('kromka')) {
+                merged.POSITION = merged.POSITION + '_global'
+            }
+
             return merged;
 
-        }).filter(el => el.ID !== 98683);
+        })
+
+        // .filter(el => el.ID !== 98683);
+        return result
 
         // .filter(el => parseInt(el.separated) !== 0);
     }
 
-    findElementsBySectorId(data, sectorId) {
+    public createPlinthParams(models) {
+        const basePlinth = Object.values(this._PLINTH)[0]
+        const inProdModel = this._MODELS[models[0]]
+        const jsonPlinth = inProdModel.json.plinth
+
+        if (jsonPlinth) {
+            return {
+                front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный цоколь' },
+            }
+        }
+
+        return {
+            front: { value: true, modelId: basePlinth, surfaceId: null, label: 'Центральный цоколь' },
+            left: { value: false, modelId: basePlinth, surfaceId: null, label: 'Левый цоколь' },
+            right: { value: false, modelId: basePlinth, surfaceId: null, label: 'Правый цоколь' }
+        }
+    }
+
+    public findElementsBySectorId(data, sectorId) {
         let result = null;
 
         // Рекурсивная функция для обхода массива
@@ -520,7 +660,7 @@ export class BuildersHelper extends GlobalsData {
         return result;
     }
 
-    findKeyInObject(obj, keys) {
+    public findKeyInObject(obj, keys) {
         for (const key of keys) {
             if (obj.hasOwnProperty(key)) {
                 return key;
@@ -529,7 +669,7 @@ export class BuildersHelper extends GlobalsData {
         return null;
     }
 
-    computeAABB(object: THREE.Object3D): THREE.Box3 {
+    public computeAABB(object: THREE.Object3D): THREE.Box3 {
         const box = new THREE.Box3();
         const size = new THREE.Vector3()
 
@@ -553,7 +693,8 @@ export class BuildersHelper extends GlobalsData {
         return box;
     }
 
-    mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+    public mergeArrays(arr1, arr2, { key = "ID", overwrite = false } = {}) {
+
         return arr1.map(obj1 => {
             const obj2 = arr2.find(o => o[key] === obj1[key]);
             let merged;

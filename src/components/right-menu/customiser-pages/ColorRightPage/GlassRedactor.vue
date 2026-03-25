@@ -19,17 +19,18 @@ const eventBus = useEventBus();
 const selectPatina = ref<any>(null);
 
 const changeGlass = (glass) => {
-  if (!props.tempWork)
-    eventBus.emit("A:ChangeGlassColor", {
-      data: glass.ID,
-      fasadeNdx: props.tabIndex,
-    });
 
   emit("select_glass", {
     name: glass.NAME,
     imgSrc: glass.PREVIEW_PICTURE,
     ID: glass.ID,
-  }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+  }); 
+
+  if (!props.tempWork)
+    eventBus.emit("A:ChangeGlassColor", {
+      data: glass.ID,
+      fasadeNdx: props.tabIndex,
+    });
 };
 </script>
 

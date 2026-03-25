@@ -3,10 +3,7 @@
     <!-- <div>currentMainID:{{ currentMainID }}, currentSubID:{{ currentSubID }}, Уровень:{{ currentLevel }}, Текущая страница: {{ currentPage }}, Поиск:{{ searchQuery }}, Прайс: {{ productPrice }} </div> -->
     <header class="catalog-popup__header">
       <h2 class="catalog-popup__title">Общий каталог</h2>
-      <ClosePopUpButton 
-        class="catalog-popup__close-btn" 
-        @click="closePopup" 
-      />
+      <ClosePopUpButton class="catalog-popup__close-btn" @click="closePopup" />
     </header>
     <!-- Каталог -->
     <div class="catalog-popup__search" v-if="!catalogStore.productDetails">
@@ -31,43 +28,49 @@
       </button>
     </div>
     <div class="catalog-popup__sections" v-if="!catalogStore.productDetails">
-      <div class='catalog-popup__sections_left'>
-        <div 
-          v-for="section in filteredCategories" 
+      <div class="catalog-popup__sections_left">
+        <div
+          v-for="section in filteredCategories"
           :key="section.ID"
           class="catalog-section"
-          :class="{ 'active': currentMainID === section.ID }"
+          :class="{ active: currentMainID === section.ID }"
           @click="handleCategoriesListClick(section)"
           v-memo="[section.ID, currentMainID === section.ID]"
         >
-          <h3 class="catalog-section__title" >
+          <h3 class="catalog-section__title">
             {{ section.NAME }}
           </h3>
         </div>
       </div>
 
-      <div class='catalog-popup__sections_right'>
+      <div class="catalog-popup__sections_right">
         <div v-if="breadcrumb.length > 0" class="breadcrumb-container">
           <div class="breadcrumb">
             <template v-for="(item, index) in breadcrumb" :key="item.id">
               <span class="breadcrumb__separator" v-if="index > 0">/</span>
-              <span 
-                class="breadcrumb__item" 
-                :class="{ 'active': index === breadcrumb.length - 1 }"
-                @click="index !== breadcrumb.length - 1 ? handleBreadcrumbClick(item) : null"
+              <span
+                class="breadcrumb__item"
+                :class="{ active: index === breadcrumb.length - 1 }"
+                @click="
+                  index !== breadcrumb.length - 1
+                    ? handleBreadcrumbClick(item)
+                    : null
+                "
               >
                 {{ item.name }}
               </span>
-              
             </template>
           </div>
         </div>
-        <div v-if="filteredSubCategories.length > 0" class="catalog-popup__level-two">
-          <div 
-            v-for="subsection in filteredSubCategories" 
+        <div
+          v-if="filteredSubCategories.length > 0"
+          class="catalog-popup__level-two"
+        >
+          <div
+            v-for="subsection in displayedSubCategories"
             :key="subsection.ID"
             class="catalog-section-sub"
-            :class="{ 'active': currentSubID === subsection.ID }"
+            :class="{ active: currentSubID === subsection.ID }"
             @click="handleSubCategoriesListClick(subsection)"
             v-memo="[subsection.ID, currentSubID === subsection.ID]"
           >
@@ -75,26 +78,64 @@
               {{ subsection.NAME }}
             </h3>
           </div>
+          <button
+            v-if="hasMoreSubCategories"
+            @click="toggleShowAllSubCategories"
+            class="catalog-section-sub catalog-section-sub__show-more-btn"
+          >
+            <span class="catalog-section__title">{{
+              showAllSubCategories
+                ? "Скрыть"
+                : `Показать еще (${filteredSubCategories.length - 6})`
+            }}</span>
+          </button>
         </div>
         <div v-if="products.length > 0" class="products-grid">
-          <div 
-            v-for="product in products" 
+          <div
+            v-for="product in products"
             :key="product.ID"
             class="product-item"
             v-memo="[product.ID, product.NAME, product.PRICE, product.IMG]"
           >
             <div class="product-item__img">
-              <img 
-                v-if="product?.IMG" 
-                :src="`${API_URL}${product.IMG}`" 
+              <img
+                :src="
+                  product?.IMG
+                    ? `${API_URL}${product.IMG}`
+                    : `/upload/709778d1-2ada-44ff-99a6-ac20e9ea9b03.png`
+                "
                 :alt="product?.NAME || 'Product image'"
                 loading="lazy"
-              >
+              />
             </div>
             <div class="product-item__wrapper">
-              <h4 class="product-item__title">{{ product.NAME }}</h4>
-              <div class="product-item__price">{{ product.PRICE }}</div>
-              <button class="product-item__basket"     @click="callChildMethod(Number(product.ID))" >В корзину</button>
+              <h4
+                class="product-item__title"
+                @click="callChildMethod(Number(product.ID))"
+                style="cursor: pointer"
+              >
+                {{ product.NAME }}
+                <!-- {{ appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH }} -->
+                <span
+                  >
+                  {{
+                    appData.appData?.article[
+                      appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH
+                    ]?.PROPERTIES?.ARTICLE?.VALUE 
+                      ? `- ${appData.appData?.article[
+                          appData.appData.CATALOG.PRODUCTS[product?.ID]?.DATA_PETROVICH
+                        ]?.PROPERTIES?.ARTICLE?.VALUE}`
+                      : ''
+                  }}
+                </span>
+              </h4>
+              <!-- <div class="product-item__price">{{ product.PRICE }}</div> -->
+              <button
+                class="product-item__basket"
+                @click="callChildMethod(Number(product.ID))"
+              >
+                В корзину
+              </button>
               <!-- <button class="product-item__basket" @click="handleProductClick(Number(product.ID))">В корзину</button> -->
             </div>
           </div>
@@ -102,7 +143,7 @@
         <div v-else class="product-none">
           В данном разделе товаров не найдено
         </div>
-        <div style="margin-top: auto;" > 
+        <div style="margin-top: auto">
           <Pagination
             :nav-data="pagination"
             @page-changed="handlePageChange"
@@ -110,7 +151,7 @@
           />
         </div>
       </div>
-    </div>  
+    </div>
 
     <!-- <ProductDetails 
       :productDetails="catalogStore.productDetails" 
@@ -118,12 +159,11 @@
       ref="productDetailsRef" 
     /> -->
 
-      <ProductDetails 
-        ref="productDetailsRef" 
-        :productDetails="catalogStore.productDetails" 
-        @back="handleBackPage"
-      />
-
+    <ProductDetails
+      ref="productDetailsRef"
+      :productDetails="catalogStore.productDetails"
+      @back="handleBackPage"
+    />
 
     <div v-if="isLoading" class="catalog-popup__loader"></div>
   </div>
@@ -140,21 +180,24 @@ import MainButton from "@/components/ui/buttons/MainButton.vue";
 import Pagination from "@/components/ui/pagination/Pagination.vue";
 
 // Stores
-import { usePopupStore } from '@/store/appStore/popUpsStore';
-import { useCatalogStore } from '@/store/appStore/catalogStore';
+import { usePopupStore } from "@/store/appStore/popUpsStore";
+import { useCatalogStore } from "@/store/appStore/catalogStore";
 
 // Icons
 import SearchSVG from "@/components/ui/svg/SearchSVG.vue";
 import ProductDetails from "@/components/product-details/ProductDetails.vue";
+import { useAppData } from "@/store/appliction/useAppData";
+import { BASE_DOMAIN } from "@/utils/originalDomain";
 
-const API_URL = 'https://dev.vardek.online'
+// const API_URL = ref('https://dev.vardek.online');
+const API_URL = ref(`https://${BASE_DOMAIN}`);
 
 const popupStore = usePopupStore();
 const catalogStore = useCatalogStore();
+const appData = useAppData();
 
 // Создаем ref для дочернего компонента
 const productDetailsRef = ref(null);
-
 
 const callChildMethod = (id) => {
   if (productDetailsRef.value) {
@@ -165,24 +208,24 @@ const callChildMethod = (id) => {
 };
 
 // State from store
-const { 
-    currentMainID,
-    сategoriesList,
-    currentSubID,
-    subCategoriesList,
-    products,
-    productDetails,
-    productPrice,
-    currentPage,
-    currentLevel,
-    pagination,
-    breadcrumb,
-    searchQuery,
-    isLoading,
-    error,
+const {
+  currentMainID,
+  сategoriesList,
+  currentSubID,
+  subCategoriesList,
+  products,
+  productDetails,
+  productPrice,
+  currentPage,
+  currentLevel,
+  pagination,
+  breadcrumb,
+  searchQuery,
+  isLoading,
+  error,
 } = storeToRefs(catalogStore);
 
-const { 
+const {
   fetchInitialCatalog,
   fetchSubCatalogData,
   setDreadcrumb,
@@ -192,56 +235,97 @@ const {
 } = catalogStore;
 
 const searchTimeout = ref(null);
+const showAllSubCategories = ref(false);
 
 // Использование в шаблоне
-const filteredCategories = computed(() => filterHiddenCategories(сategoriesList.value));
-const filteredSubCategories = computed(() => filterHiddenCategories(subCategoriesList.value));
-const priceProduct = computed(() => catalogStore.updateProductPrice(productPrice.value));
+const filteredCategories = computed(() =>
+  filterHiddenCategories(сategoriesList.value),
+);
+const filteredSubCategories = computed(() =>
+  filterHiddenCategories(subCategoriesList.value),
+);
+const displayedSubCategories = computed(() => {
+  const categories = filteredSubCategories.value;
+  return showAllSubCategories.value ? categories : categories.slice(0, 6);
+});
+const hasMoreSubCategories = computed(
+  () => filteredSubCategories.value.length > 6,
+);
+const priceProduct = computed(() =>
+  catalogStore.updateProductPrice(productPrice.value),
+);
 
 onMounted(async () => {
-  await catalogStore.fetchInitialCatalog();
+  console.log(appData.appData.CITY.config);
+  console.log(appData.appData.CITY.style);
+  await catalogStore.fetchInitialCatalog({
+    idSection: false,
+    page: "1",
+    query: false,
+    config: appData.appData.CITY.config,
+    style: appData.appData.CITY.style,
+  });
 });
 
 watch(
   () => productPrice.value,
   (newValue, oldValue) => {
-    console.log('Цена изменилась:', oldValue, '→', newValue);
-    catalogStore.updateProductPrice(productPrice.value)
+    console.log("Цена изменилась:", oldValue, "→", newValue);
+    catalogStore.updateProductPrice(productPrice.value);
     // Дополнительные действия при изменении
   },
 );
 
 // Methods
 const handleCategoriesListClick = async (data) => {
-  catalogStore.resetCatalogData()
-  catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
-  await catalogStore.fetchSubCatalogData({ idSection: data.ID });
+  showAllSubCategories.value = false; // Сбрасываем состояние при переходе
+  catalogStore.resetCatalogData();
+  catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME);
+  await catalogStore.fetchSubCatalogData({
+    idSection: data.ID,
+    config: appData.appData.CITY.config,
+    style: appData.appData.CITY.style,
+  });
 };
 
 const handleSubCategoriesListClick = async (data) => {
-  catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME)
-  await catalogStore.fetchSubCatalogData({ idSection: data.ID });
+  showAllSubCategories.value = false; // Сбрасываем состояние при переходе
+  catalogStore.setDreadcrumb(data.ID, data.DEPTH_LEVEL, data.NAME);
+  await catalogStore.fetchSubCatalogData({
+    idSection: data.ID,
+    config: appData.appData.CITY.config,
+    style: appData.appData.CITY.style,
+  });
   catalogStore.searchQuery = "";
 };
 
 const handleBreadcrumbClick = async (data) => {
-  trimArrayByLevel(data.level)
-  await catalogStore.fetchSubCatalogData({ idSection: data.id });
+  showAllSubCategories.value = false; // Сбрасываем состояние при переходе
+  trimArrayByLevel(data.level);
+  await catalogStore.fetchSubCatalogData({
+    idSection: data.id,
+    config: appData.appData.CITY.config,
+    style: appData.appData.CITY.style,
+  });
   catalogStore.searchQuery = "";
 };
 
 const handlePageChange = async (page) => {
-  await catalogStore.fetchSubCatalogData({ idSection: catalogStore.currentSubID, page: page, query:catalogStore.searchQuery});
+  await catalogStore.fetchSubCatalogData({
+    idSection: catalogStore.currentSubID,
+    page: page,
+    query: catalogStore.searchQuery,
+  });
 };
 
 const handleSearch = () => {
   clearTimeout(searchTimeout.value);
 
   searchTimeout.value = setTimeout(async () => {
-    await catalogStore.fetchSubCatalogData({ 
-      idSection: currentSubID.value, 
-      page: currentPage.value, 
-      query: searchQuery.value 
+    await catalogStore.fetchSubCatalogData({
+      idSection: currentSubID.value,
+      page: currentPage.value,
+      query: searchQuery.value,
     });
 
     if (!searchQuery.value.length && !catalogStore.currentSubID) {
@@ -253,27 +337,30 @@ const handleSearch = () => {
 const handleProductClick = async (id) => {
   selectedProductId.value = id;
   const formData = new FormData();
-  formData.append('ID', id.toString());
-  formData.append('custom_price_type', false);
-  
+  formData.append("ID", id.toString());
+  formData.append("custom_price_type", false);
+
   await catalogStore.fetchProductDetails(formData);
 };
 
 const filterHiddenCategories = (categories) => {
-  return categories?.filter(category => !category.hidden) || [];
+  return categories?.filter((category) => !category.hidden) || [];
 };
 
 const trimArrayByLevel = (targetLevel) => {
   const targetLevelNum = parseInt(targetLevel);
-  breadcrumb.value = breadcrumb.value.filter(item => parseInt(item.level) <= targetLevelNum);
-}
+  breadcrumb.value = breadcrumb.value.filter(
+    (item) => parseInt(item.level) <= targetLevelNum,
+  );
+};
 
 const closePopup = () => {
   catalogStore.resetCatalogData();
-  popupStore.closePopup('catalog');
+  popupStore.closePopup("catalog");
 };
 
 const resetCatalog = () => {
+  showAllSubCategories.value = false; // Сбрасываем состояние при сбросе
   catalogStore.resetCatalogData();
 };
 
@@ -281,6 +368,9 @@ const handleBackPage = () => {
   catalogStore.productDetails = null;
 };
 
+const toggleShowAllSubCategories = () => {
+  showAllSubCategories.value = !showAllSubCategories.value;
+};
 </script>
 
 <style lang="scss" scoped>
@@ -290,19 +380,19 @@ const handleBackPage = () => {
   // padding: 20px;
   border-radius: 8px;
   box-sizing: border-box;
-  height: 851px; // Ограничиваем максимальную высоту попапа
+  height: 80vh; // Ограничиваем максимальную высоту попапа
   display: flex;
   flex-direction: column;
-  
-    @media (min-width: 992px) {
-      width: 900px;
-    }
-    @media (min-width: 1440px) {
-      width: 1300px;
-    }
-    @media (min-width: 1700px) {
-      width: 1500px;
-    }
+
+  @media (min-width: 992px) {
+    width: 900px;
+  }
+  @media (min-width: 1440px) {
+    width: 1300px;
+  }
+  @media (min-width: 1700px) {
+    width: 1500px;
+  }
 
   &__header {
     position: relative;
@@ -320,7 +410,7 @@ const handleBackPage = () => {
     letter-spacing: 0%;
     text-align: center;
   }
-  
+
   &__close-btn {
     position: absolute;
     right: 0px;
@@ -355,7 +445,7 @@ const handleBackPage = () => {
       opacity: 1;
       border-radius: 15px;
       padding: 12px 25px;
-      background: #DA444C;
+      background: #da444c;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -395,7 +485,7 @@ const handleBackPage = () => {
       width: 100%;
       min-width: 320px;
       display: flex;
-      flex-direction: column;     
+      flex-direction: column;
       overflow-y: auto; // Добавляем скролл при необходимости
       gap: 10px;
       padding-right: 8px;
@@ -417,7 +507,7 @@ const handleBackPage = () => {
       flex-grow: 1; // Занимаем оставшееся пространство
       // height: 100%; // Занимаем всю высоту родителя
       min-height: 0;
-      padding-right: .5rem;
+      padding-right: 0.5rem;
 
       @media (min-width: 768px) {
         width: 80%;
@@ -428,7 +518,7 @@ const handleBackPage = () => {
   &__level-two {
     display: flex;
     flex-wrap: wrap;
-    
+
     gap: 10px; // Используем gap вместо margin для более предсказуемого поведения
     margin-bottom: 15px;
 
@@ -445,6 +535,26 @@ const handleBackPage = () => {
     }
   }
 
+  &__show-more-btn {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #c6c6c6;
+    border-radius: 8px;
+    background: transparent;
+    color: #5d6069;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+
+    &:hover {
+      border-color: #131313;
+      color: #131313;
+      background: #f6f5fa;
+    }
+  }
+
   &__loader {
     width: 48px;
     height: 48px;
@@ -452,31 +562,33 @@ const handleBackPage = () => {
     position: absolute;
     top: 1px;
     left: 0;
-    animation: rotate 1s linear infinite
+    animation: rotate 1s linear infinite;
   }
 
-  &__loader::before , &__loader::after {
+  &__loader::before,
+  &__loader::after {
     content: "";
     box-sizing: border-box;
     position: absolute;
     inset: 0px;
     border-radius: 50%;
     border: 5px solid #da444c73;
-    animation: prixClipFix 2s linear infinite ;
+    animation: prixClipFix 2s linear infinite;
   }
 
-  &__loader::after{
-    border-color: #DA444C;
-    animation: prixClipFix 2s linear infinite , rotate 0.5s linear infinite reverse;
+  &__loader::after {
+    border-color: #da444c;
+    animation:
+      prixClipFix 2s linear infinite,
+      rotate 0.5s linear infinite reverse;
     inset: 6px;
   }
-
 }
 
 .catalog-section-sub,
 .catalog-section {
   padding: 15px 20px;
-  border: 1px solid #C6C6C6;
+  border: 1px solid #c6c6c6;
   border-radius: 8px;
   transition: all 0.2s;
   cursor: pointer;
@@ -498,7 +610,7 @@ const handleBackPage = () => {
     font-size: 17px;
     line-height: 100%;
     letter-spacing: 0%;
-    color: #5D6069;
+    color: #5d6069;
   }
 }
 
@@ -512,7 +624,7 @@ const handleBackPage = () => {
   grid-template-columns: repeat(1, 1fr);
   gap: 15px;
   overflow-y: auto; // Добавляем скролл при необходимости
-  padding-right: .5rem;
+  padding-right: 0.5rem;
   @media (min-width: 1440px) {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -522,9 +634,8 @@ const handleBackPage = () => {
   padding: 12px;
   border-radius: 6px;
   transition: all 0.2s;
-  background-color: #F6F5FA;
+  background-color: #f6f5fa;
   display: flex;
-
 
   &:hover {
     // border-color: $primary;
@@ -557,7 +668,7 @@ const handleBackPage = () => {
     font-size: 18px;
     line-height: 100%;
     letter-spacing: 0%;
-    color: #111B21;
+    color: #111b21;
     margin-bottom: 4px;
   }
 
@@ -571,7 +682,7 @@ const handleBackPage = () => {
     opacity: 1;
     border-radius: 15px;
     padding: 12px 25px;
-    background: #DA444C;
+    background: #da444c;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -600,7 +711,6 @@ const handleBackPage = () => {
     background-position: center;
     background-size: contain;
   }
-  
 }
 
 .product-none {
@@ -614,7 +724,7 @@ const handleBackPage = () => {
   line-height: 100%;
   letter-spacing: 0%;
   vertical-align: middle;
-  color: #A3A9B5;
+  color: #a3a9b5;
 }
 
 .breadcrumb {
@@ -628,7 +738,7 @@ const handleBackPage = () => {
     font-size: 16px;
     line-height: 100%;
     letter-spacing: 0%;
-    color: #A3A9B5;
+    color: #a3a9b5;
     cursor: pointer;
     &.active {
       font-weight: 600;
@@ -638,17 +748,37 @@ const handleBackPage = () => {
   }
 }
 
-
 @keyframes rotate {
-  0%   {transform: rotate(0deg)}
-  100%   {transform: rotate(360deg)}
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes prixClipFix {
-    0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
-    25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
-    50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
-    75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
-    100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+  0% {
+    clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0);
+  }
+  25% {
+    clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0);
+  }
+  50% {
+    clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%);
+  }
+  75% {
+    clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
+  }
+  100% {
+    clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0);
+  }
+}
+
+.catalog-section-sub__show-more-btn {
+  background-color: #da444c;
+  span {
+    color: #fff;
+  }
 }
 </style>

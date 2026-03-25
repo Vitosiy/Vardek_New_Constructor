@@ -44,6 +44,7 @@ const props = defineProps({
 const emit = defineEmits(["cell-selected", "position-non"]);
 const canvasContainer = ref();
 const selectedCell = ref({ col: 0, row: 0 });
+const curSection = ref(null);
 
 let app: Application,
   roundSectionsContainer: Container,
@@ -71,6 +72,7 @@ const {
   BACKGROUND_COLOR,
   MIN_SECTION_WIDTH,
   MIN_SECTION_HEIGHT,
+  PART_MIN_SIZE
 } = CUTTER_PARAMS;
 
 const dragState = reactive({
@@ -86,14 +88,14 @@ const dragState = reactive({
   startLeftWidth: 0,
   startRightWidth: 0,
 
-  minXleft: 150,
-  minXRight: 150,
+  minXleft: PART_MIN_SIZE,
+  minXRight: PART_MIN_SIZE,
 
   startTopHeight: 0,
   startBottomHeight: 0,
 
-  minTop: 150,
-  minBottom: 150,
+  minTop: PART_MIN_SIZE,
+  minBottom: PART_MIN_SIZE,
 
   element: null,
 });
@@ -207,7 +209,7 @@ const renderGrid = () => {
     // Создаём ограничения для секторов по ширине
     const colBond = shapeAdjuster.createColumnBounds(sections, colIndex);
 
-    column.forEach((row) => {
+    column.forEach((row, ndx) => {
       row.shapesBond = colBond;
       row.maxX = shapeAdjuster.convertToTen(getMmWidth(colBond.maxX));
       row.minX = shapeAdjuster.convertToTen(getMmWidth(colBond.minX));
@@ -243,6 +245,12 @@ const renderGrid = () => {
   });
   deviders.forEach((elem) => {
     sectionsContainer.addChild(elem);
+  });
+
+  props.grid.forEach((column, colIndex) => {
+    column.forEach((row, rowIndex, col) => {
+      calculateMaxDimensions(column, colIndex, row, rowIndex, col);
+    });
   });
 };
 
@@ -534,9 +542,65 @@ const createHole = (data, sector) => {
   sector.shapes.push(hole);
 };
 
+// Рассчитываем экстремумы для UX
+const calculateMaxDimensions = (column, colIndex, row, rowIndex, col) => {
+  // Рассчитываем row.maxWidth
+  if (colIndex < props.grid.length - 1) {
+    // Случай: не последняя колонка, расчёт на основе следующей колонки
+    const nextCol = props.grid[colIndex + 1];
+    const totalWidth = column[0].width + nextCol[0].width;
+    const minNext = Math.max(
+      MIN_SECTION_WIDTH,
+      shapeAdjuster.getRightSectionWidth(nextCol[0].sector, nextCol[0].minX)
+    );
+    row.maxWidth = totalWidth - minNext;
+  } else if (colIndex > 0) {
+    // Случай: не первая колонка, расчёт на основе предыдущей колонки
+    const prevCol = props.grid[colIndex - 1];
+    const totalWidth = column[0].width + prevCol[0].width;
+    const minPrev = Math.max(
+      MIN_SECTION_WIDTH,
+      shapeAdjuster.getLeftSectionWidth(prevCol[0].sector, prevCol[0].maxX)
+    );
+    row.maxWidth = totalWidth - minPrev;
+  } else {
+    // Случай: единственная колонка, maxWidth равен TOTAL_LENGTH
+    row.maxWidth = TOTAL_LENGTH;
+  }
+
+  // Рассчитываем row.maxHeight
+  if (rowIndex < col.length - 1) {
+    // Случай: не последняя строка, расчёт на основе следующей строки
+    const nextRow = col[rowIndex + 1];
+    const totalHeight = row.height + nextRow.height;
+    const minNext = Math.max(
+      MIN_SECTION_HEIGHT,
+      shapeAdjuster.getSectionBottom(nextRow.sector, nextRow.minY)
+    );
+    row.maxHeight = totalHeight - minNext;
+  } else if (rowIndex > 0) {
+    // Случай: не первая строка, расчёт на основе предыдущей строки
+    const prevRow = col[rowIndex - 1];
+    const totalHeight = row.height + prevRow.height;
+    const minPrev = Math.max(
+      MIN_SECTION_HEIGHT,
+      shapeAdjuster.getSectionTop(prevRow.sector, prevRow.maxY)
+    );
+    row.maxHeight = totalHeight - minPrev;
+  } else {
+    // Случай: единственная строка, maxHeight равен TOTAL_HEIGHT
+    row.maxHeight = TOTAL_HEIGHT.value;
+  }
+};
+
 // Выбор сектора, передача в родительский компонент
 const selectCell = (colIndex, rowIndex, parent = false) => {
   selectedCell.value = { col: colIndex, row: rowIndex };
+  curSection.value = {
+    currentColl: props.grid[colIndex],
+    currentRow: props.grid[colIndex][rowIndex],
+  };
+
   toggleSectorColor(colIndex, rowIndex);
   if (!parent) emit("cell-selected", colIndex, rowIndex);
 };
@@ -768,6 +832,7 @@ const adjustSectionSize = (
         MIN_SECTION_WIDTH,
         shapeAdjuster.getRightSectionWidth(nextCol[0].sector, nextCol[0].minX)
       );
+
       calcValue = updateSizes(
         newValue,
         dimension,
@@ -866,14 +931,22 @@ const updateSizes = (
 ) => {
   if (newValue < minCurrent) newValue = minCurrent;
   const newAdjacentSize = total - newValue;
+
   if (newAdjacentSize < minAdjacent) newValue = total - minAdjacent;
 
   if (dimension === "width") {
-    current.forEach((row) => (row.width = newValue));
-    adjacent.forEach((row) => (row.width = total - newValue));
+    current.forEach((row) => {
+      row.width = newValue;
+      row.maxWidth = total - minAdjacent;
+    });
+
+    adjacent.forEach((row) => {
+      row.width = total - newValue;
+    });
   } else {
     current[dimension] = newValue;
     adjacent[dimension] = total - newValue;
+    current["maxHeight"] = total - minAdjacent;
   }
 
   return newValue;
@@ -936,7 +1009,6 @@ onBeforeMount(() => {
 
 onMounted(() => {
   init();
-  console.log(props.grid);
   document.addEventListener("mousemove", handleGlobalPointerMove, false);
 });
 
@@ -952,17 +1024,10 @@ defineExpose({
   createHole,
   createRoundCut,
   selectCell,
+  curSection,
   updateTotalHeight,
   destroy,
 });
-
-// watch(
-//   () => props.maxAreaHeight,
-//   () => {
-//     getMaxAreaHeight.value = props.maxAreaHeight;
-//     renderGrid();
-//   }
-// );
 </script>
 
 <template>

@@ -1,7 +1,8 @@
 @font-face {
   font-family: "icons";
   src: url("/fonts/icons.eot?c589sw");
-  src: url("/fonts/icons.eot?c589sw#iefix") format("embedded-opentype"),
+  src:
+    url("/fonts/icons.eot?c589sw#iefix") format("embedded-opentype"),
     url("/fonts/icons.ttf?c589sw") format("truetype"),
     url("/fonts/icons.woff?c589sw") format("woff"),
     url("/fonts/icons.svg?c589sw#icons") format("svg");
@@ -26,15 +27,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-save:before {
-  content: "\e91b";
-}
-.icon-total-menu:before {
-  content: "\e918";
-}
-.icon-add:before {
-  content: "\e919";
-}
 .icon-centered:before {
   content: "\e900";
 }
@@ -107,6 +99,33 @@
 .icon-zoom:before {
   content: "\e917";
 }
+.icon-total-menu:before {
+  content: "\e918";
+}
+.icon-add:before {
+  content: "\e919";
+}
 .icon-ruler:before {
   content: "\e91a";
+}
+.icon-save:before {
+  content: "\e91b";
+}
+.icon-cut:before {
+  content: "\e91c";
+}
+.icon-moving:before {
+  content: "\e91d";
+}
+.icon-move:before {
+  content: "\e91e";
+}
+.icon-pin:before {
+  content: "\e91f";
+}
+.icon-folder:before {
+  content: "\e920";
+}
+.icon-book:before {
+  content: "\e921";
 }

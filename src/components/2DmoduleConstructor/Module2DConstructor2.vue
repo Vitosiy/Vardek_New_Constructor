@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import {computed, defineExpose, h, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
+import {computed, defineExpose, nextTick, onBeforeMount, onBeforeUnmount, onMounted, ref, watch,} from "vue";
 
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import InteractiveSpace from "./InteractiveSpace.vue";
@@ -10,22 +10,30 @@ import FasadesOptions from "@/components/2DmoduleConstructor/utils/FasadesOption
 
 import {ShapeAdjuster} from "./utils/Methods";
 import {
+  ErrorItem, ErrorsMessage, ErrorsType,
   FasadeMaterial,
-  FasadeObject,
-  GridModule,
-  GridSection, LOOPSIDE,
+  FasadeObject, FillingObject,
+  GridCell, GridCellsRow,
+  GridModule, GridRowExtra,
+  GridSection,
+  LOOPSIDE,
 } from "@/types/constructor2d/interfaсes.ts";
 import * as THREE from "three";
 import {useAppData} from "@/store/appliction/useAppData.ts";
 import {UI_PARAMS} from "@/components/2DmoduleConstructor/utils/UMConstructorConst.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import ModuleMaterialsConfig from "@/components/2DmoduleConstructor/utils/ModuleMaterialsConfig.vue";
-import ModuleOptionsManager from "@/components/2DmoduleConstructor/utils/ModuleOptionsManager.vue";
 import Toggle from "@vueform/toggle";
 import RailsRightPage from "@/components/right-menu/customiser-pages/RailsRightPage/RailsRightPage.vue";
+import {useModelState} from "@/store/appliction/useModelState.ts";
+import {useConversationActions} from "@/components/right-menu/actions/useConversationActions.ts";
+import {TFasadeTrueSizes} from "@/types/types.ts";
+import {useEventBus} from "@/store/appliction/useEventBus.ts";
+import {useToast} from "@/features/toaster/useToast.ts";
 
 const {
   MIN_FASADE_HEIGHT,
+  MIN_SECTION_HEIGHT,
   MIN_FASADE_WIDTH,
   MAX_FASADE_WIDTH,
   MAX_SECTION_WIDTH,
@@ -39,6 +47,9 @@ const emit = defineEmits(["save-table-data"]);
 
 let shapeAdjuster = null;
 const APP = useAppData().getAppData;
+const modelState = useModelState()
+const eventBus = useEventBus()
+const toaster = useToast();
 
 const productData = ref(false)
 const builder = new UniversalGeometryBuilder({}).buildProduct;
@@ -75,9 +86,18 @@ const totalHeight = ref(0);
 const totalWidth = ref(0);
 const totalDepth = ref(0);
 const onHorizont = ref<boolean>(true);
+const onSideProfile = ref<boolean>(false);
+const noBottom = ref<boolean>(false);
+const noBackwall = ref<boolean>(false);
+const noLoops = ref<boolean>(false);
 
-const module = computed(() => {
+const {
+  checkFasadeConversations,
+} = useConversationActions();
 
+
+const module = ref(false);
+const computeModule = () => {
   if (productData.value) {
     const PROPS = productData.value.PROPS;
     if (!PROPS.CONFIG.MODULEGRID || !Object.keys(PROPS.CONFIG.MODULEGRID).length) {
@@ -114,12 +134,20 @@ const module = computed(() => {
         depth: totalDepth,
         moduleColor: PROPS.CONFIG.MODULE_COLOR,
         moduleThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
+        leftWallThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
+        rightWallThickness: PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18,
         horizont: PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0,
         sections: [section],
         type: "module",
         productID: productData.value.globalData,
         isSlidingDoors,
       }
+
+      if(PROPS.CONFIG.isHiTech)
+        _module.isHiTech = true
+
+      if(PROPS.CONFIG.isRestrictedModule)
+        _module.isRestrictedModule = true
 
       PROPS.CONFIG.MODULEGRID = _module
 
@@ -164,26 +192,69 @@ const module = computed(() => {
           ]
         ]
         _module.fasades = fasades
-      } else {
-        fasades = [
-          [
-            <FasadeObject>{
-              id: 1,
-              width: FASADE.FASADE_WIDTH,
-              height: FASADE.FASADE_HEIGHT - FASADE.POSITION_Y,
-              position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
-              material: <FasadeMaterial>{
-                ...FASADE_PROPS
-              },
-              loopsSide: LOOPSIDE["left"],
-              type: "fasade",
-              minY: MIN_FASADE_HEIGHT,
-              maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
-              maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
-              minX: MIN_FASADE_WIDTH
-            }
-          ]
-        ];
+      }
+      else {
+
+        if(_module.isRestrictedModule) {
+          let fasade_width = (FASADE.FASADE_WIDTH / 2) - 2
+          fasades = [
+            [
+              <FasadeObject>{
+                id: 1,
+                width: fasade_width,
+                height: FASADE.FASADE_HEIGHT,
+                position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+                material: <FasadeMaterial>{
+                  ...FASADE_PROPS
+                },
+                loopsSide: LOOPSIDE["left"],
+                type: "fasade",
+                minY: MIN_FASADE_HEIGHT,
+                maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                minX: MIN_FASADE_WIDTH
+              }
+            ],
+            [
+              <FasadeObject>{
+                id: 1,
+                width: fasade_width,
+                height: FASADE.FASADE_HEIGHT,
+                position: new THREE.Vector2(FASADE.POSITION_X + fasade_width + 4 , FASADE.POSITION_Y),
+                material: <FasadeMaterial>{
+                  ...FASADE_PROPS
+                },
+                loopsSide: LOOPSIDE["right"],
+                type: "fasade",
+                minY: MIN_FASADE_HEIGHT,
+                maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                minX: MIN_FASADE_WIDTH
+              }
+            ]
+          ];
+        }
+        else
+          fasades = [
+            [
+              <FasadeObject>{
+                id: 1,
+                width: FASADE.FASADE_WIDTH,
+                height: FASADE.FASADE_HEIGHT - _module.horizont,
+                position: new THREE.Vector2(FASADE.POSITION_X, FASADE.POSITION_Y),
+                material: <FasadeMaterial>{
+                  ...FASADE_PROPS
+                },
+                loopsSide: LOOPSIDE["left"],
+                type: "fasade",
+                minY: MIN_FASADE_HEIGHT,
+                maxY: fasadeColor.MAX_HEIGHT || parseInt(eval(fasadePosition.FASADE_HEIGHT)),
+                maxX: fasadeColor.MAX_WIDTH || MAX_FASADE_WIDTH,
+                minX: MIN_FASADE_WIDTH
+              }
+            ]
+          ];
+
         section.fasades = fasades
         calcLoops(0, _module)
         section.loopsSides = {0: LOOPSIDE["left"]}
@@ -191,9 +262,86 @@ const module = computed(() => {
 
     }
 
-    return PROPS.CONFIG.MODULEGRID
+    module.value = PROPS.CONFIG.MODULEGRID
   }
-});
+  else
+    module.value = false
+}
+const getModule = computed(() => {
+  return module
+})
+
+const checkOptionsChanged = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  PROPS.CONFIG.OPTIONS.forEach(option => {
+    switch (+option.id) {
+      case 5738924:
+        if(option.active) {
+          noBottom.value = true
+          module.value.noBottom = true
+          module.value.horizont = PROPS.CONFIG.HORIZONT = 0
+        }
+        else {
+          noBottom.value = false
+          delete module.value.noBottom
+        }
+        break;
+      case 1795067: //Опция без петель
+        if(option.active) {
+          noLoops.value = true
+          module.value.noLoops = true
+        }
+        else {
+          noLoops.value = false
+          delete module.value.noLoops
+        }
+        break;
+      default:
+        break;
+    }
+  })
+
+  checkNoBackwall()
+  reset()
+}
+
+
+const checkNoBackwall = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  if(!PROPS.CONFIG.BACKWALL?.COLOR){
+    noBackwall.value = true
+    module.value.noBackwall = true
+  }
+  else {
+    noBackwall.value = false
+    module.value.noBackwall = false
+  }
+
+  return noBackwall.value
+}
+
+const checkOptionWithoutBottom = () => {
+  const {PROPS} = modelState.getCurrentModel.userData;
+
+  if(PROPS.CONFIG.OPTIONS.find((opt, index) => {
+    if (+opt.id === 5738924 && opt.active)
+      return opt;
+  })) {
+    noBottom.value = true
+    module.value.noBottom = true
+    module.value.horizont = PROPS.CONFIG.HORIZONT = 0
+  }
+  else {
+    noBottom.value = false
+    delete module.value.noBottom
+  }
+
+  checkNoBackwall()
+
+  return noBottom.value
+}
 
 const getMinMaxModuleSize = (_dimension, _minmax) => {
   const dimension = _dimension.toUpperCase()
@@ -202,9 +350,9 @@ const getMinMaxModuleSize = (_dimension, _minmax) => {
   return +productData.value.PROPS.CONFIG.SIZE_EDIT[`SIZE_EDIT_` + dimension + `_` + minmax];
 }
 
-const selectedCell = ref({sec: 0, cell: 0, row: null});
+const selectedCell = ref({sec: 0, cell: 0, row: null, extra: null});
 const selectedFasade = ref({sec: 0, cell: 0, row: 0});
-const selectedFilling = ref({sec: 0, cell: 0, row: null, item: 0});
+const selectedFilling = ref({sec: 0, cell: 0, row: null, extra: null, item: 0});
 
 const correct = ref({change: false});
 const constructor2dContainer = ref(null);
@@ -241,6 +389,7 @@ const getFillings = computed(() => {
 
     objectsMatrix.push({
       groupName: fillingsGroup.NAME,
+      groupID: fillingsGroup.ID,
       items: fillingsGroup.PRODUCTS.map(item => {
         return APP.CATALOG.PRODUCTS[item]
       }).filter(item => item)
@@ -251,17 +400,19 @@ const getFillings = computed(() => {
 });
 
 const updateFilling = (value, currentfilling, type, render = false) => {
-  const {sec, cell, row} = currentfilling
+  const {sec, cell, row, extra, item} = currentfilling
 
   const gridCopy = Object.assign({}, module.value);
 
   const section = gridCopy.sections[sec];
-  const currentColl = section.cells?.[cell];
-  const currentRow = currentColl?.cellsRows?.[row] || currentColl || section;
+  const currentCell = section.cells?.[cell];
+  const currentRow = currentCell?.cellsRows?.[row];
+  const currentExtra =  currentRow?.extras?.[extra];
 
+  const current = currentExtra || currentRow || currentCell || section;
   const prevValue = currentfilling[type]; //Предыдущее значение
-
   let newValue = parseInt(value);
+  const delta = prevValue - newValue
 
   let tmpSector = currentfilling.sector
   delete currentfilling.sector
@@ -270,21 +421,39 @@ const updateFilling = (value, currentfilling, type, render = false) => {
   fillingData[type] = newValue;
   fillingData.sector = tmpSector;
 
-  const pixiSector = currentRow.sector;
+  const pixiSector = current.sector;
 
-  const check = shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData);
-  currentfilling[type] = newValue;
+  const check = pixiSector ? shapeAdjuster.checkToCollision(pixiSector, currentfilling.type, fillingData) : true;
 
-  if (check) {
+  if (check && (newValue < MAX_SECTION_WIDTH || newValue > MIN_SECTION_WIDTH)) {
     delete currentfilling.error
+    currentfilling[type] = newValue;
+
+    if(type === "width") {
+      currentfilling.size.x = newValue
+      currentfilling.position.x = current.position.x - newValue / 2;
+    }
+    if(type === "height") {
+      currentfilling.size.y = newValue
+      currentfilling.position.y = current.position.y;
+      currentfilling.distances.bottom = 0;
+      currentfilling.distances.top = 0;
+    }
+
   } else {
     currentfilling.error = true
+    currentfilling[type] = prevValue;
   }
 
-  if (newValue > MAX_SECTION_WIDTH || newValue < MIN_SECTION_WIDTH)
-    currentfilling.error = true
-  else
-    delete currentfilling.error
+  if(currentfilling.type === 'vertical_shelf') {
+    currentfilling.width = module.value.moduleThickness
+    currentfilling.size.x = module.value.moduleThickness
+  }
+
+  if(currentfilling.type === 'shelf') {
+    currentfilling.height = module.value.moduleThickness
+    currentfilling.size.y = module.value.moduleThickness
+  }
 
   currentfilling.sector = tmpSector;
   module.value = gridCopy;
@@ -296,6 +465,7 @@ const updateFilling = (value, currentfilling, type, render = false) => {
 
 //#region Фасады
 const getFasadePosition = (_position) => {
+
   const PROPS = productData.value.PROPS;
   let fasadePosition = APP.FASADE_POSITION[_position];
 
@@ -307,7 +477,7 @@ const getFasadePosition = (_position) => {
           Object.assign(PROPS.CONFIG.EXPRESSIONS,
               {
                 "#X#": totalWidth.value,
-                "#Y#": totalHeight.value - module.value.horizont,
+                "#Y#": totalHeight.value - (module.value.isRestrictedModule ? 0 : module.value.horizont),
                 "#Z#": totalDepth.value,
               }))
   )
@@ -328,25 +498,33 @@ const getFasadePositionMinMax = (fasade) => {
 }
 
 const updateFasades = () => {
-  const correctFasadeHeight = module.value.height - module.value.horizont - 4;
+  const {PROPS} = modelState.getCurrentModel.userData;
+  const {PRODUCT} = PROPS
+
+  let productInfo = APP.CATALOG.PRODUCTS[PRODUCT];
+  let fasadePosition = getFasadePosition(productInfo.FASADE_POSITION[0]);
+
+  const correctFasadeHeight = fasadePosition.FASADE_HEIGHT;
+  const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+
   if (!module.value.isSlidingDoors)
     module.value.sections.forEach((section, secIndex) => {
-      if (section.fasadesDrawers?.length) {
-        calcDrawersFasades(secIndex)
-      } else if (section.fasades?.[0]) {
+
+      if (section.fasades?.[0]) {
         const countDoors = section.fasades.length;
 
         const correctSectionFasadeWidth =
             module.value.sections.length > 1 ?
                 secIndex > 0 && secIndex < module.value.sections.length - 1 ? section.width + module.value.moduleThickness - 4 :
-                    section.width + (module.value.moduleThickness - 2) + (module.value.moduleThickness / 2 - 2) :
+                    section.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
                 module.value.width - 4;
 
-        const correctSectionFasadeWidthDoor = correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2);
+        const correctSectionFasadeWidthDoor = Math.floor(correctSectionFasadeWidth / countDoors - ((countDoors - 1) * 2));
 
-        const sumDoorsWidth = section.fasades.reduce(
+        const sumDoorsWidth = Math.floor(section.fasades.reduce(
             (accumulator, item, index) => accumulator + item[0].width + (index > 0 ? 4 : 0),
-            0) / countDoors - ((countDoors - 1) * 2);
+            0) / countDoors - ((countDoors - 1) * 2));
         const sumDoorsHeight = section.fasades[0].reduce(
             (accumulator, item, index) => accumulator + item.height + (index > 0 ? 4 : 0),
             0);
@@ -366,12 +544,17 @@ const updateFasades = () => {
               segment.width += deltaWidth;
 
               if (secIndex !== 0) {
-                segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((section.width + 4) * doorIndex);
+                segment.position.x = section.position.x - section.width / 2 - module.value.moduleThickness / 2 + 2 + ((segment.width + 4) * doorIndex);
               } else if (doorIndex > 0) {
                 segment.position.x += deltaWidth;
               }
 
-              if (segment.width < segment.minX || segment.height < segment.minY)
+              const checkConversation = checkFasadeConversations(
+                  segment.material.COLOR,
+                  <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+              );
+
+              if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
                 segment.error = true
               else
                 delete segment.error;
@@ -392,7 +575,12 @@ const updateFasades = () => {
             if (!lastSegment.manufacturerOffset) {
               lastSegment.height += deltaHeight;
 
-              if (lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
+              const checkConversation = checkFasadeConversations(
+                  lastSegment.material.COLOR,
+                  <TFasadeTrueSizes>{FASADE_WIDTH: lastSegment.width, FASADE_HEIGHT: lastSegment.height}
+              );
+
+              if (!checkConversation || lastSegment.height < lastSegment.minY || lastSegment.width < lastSegment.minX)
                 lastSegment.error = true
               else
                 delete lastSegment.error;
@@ -400,9 +588,13 @@ const updateFasades = () => {
           })
         }
 
-        calcLoops(secIndex)
       }
 
+      if (section.fasadesDrawers?.length || section.hiTechProfiles?.length) {
+        calcDrawersFasades(secIndex)
+      }
+
+      calcLoops(secIndex)
     })
   else {
     module.value.fasades.forEach((door, doorIndex) => {
@@ -429,7 +621,12 @@ const updateFasades = () => {
           segment.position.x = tmp_fasadePosition.POSITION_X
           segment.position.z = tmp_fasadePosition.POSITION_Z
 
-          if (segment.width < segment.minX || segment.height < segment.minY)
+          const checkConversation = checkFasadeConversations(
+              segment.material.COLOR,
+              <TFasadeTrueSizes>{FASADE_WIDTH: segment.width, FASADE_HEIGHT: segment.height}
+          );
+
+          if (!checkConversation || segment.width < segment.minX || segment.height < segment.minY)
             segment.error = true
           else
             delete segment.error;
@@ -441,10 +638,61 @@ const updateFasades = () => {
 const calcDrawersFasades = (secIndex, fillingData = false) => {
 
   if (fillingData) {
-    fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+    if(fillingData.fasade) {
+      fillingData.fasade.position.y = module.value.height - (fillingData.position.y + fillingData.height + fillingData.fasade.manufacturerOffset)
+
+      let drawerInfoId = module.value.sections[secIndex].fasadesDrawers.findIndex(item => item.item == fillingData.id)
+      module.value.sections[secIndex].fasadesDrawers[drawerInfoId] = fillingData.fasade
+    }
+
+    if(fillingData.isProfile){
+      let profileInfoId = module.value.sections[secIndex].hiTechProfiles.findIndex(item => item.id == fillingData.id)
+      module.value.sections[secIndex].hiTechProfiles[profileInfoId] = fillingData
+    }
   }
 
-  let baseFasade = module.value.sections[secIndex].fasades[0].find(item => !item.manufacturerOffset)
+  const leftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const rightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+  const currentSection = module.value.sections[secIndex];
+  const correctSectionFasadeWidth =
+      module.value.sections.length > 1 ?
+          secIndex > 0 && secIndex < module.value.sections.length - 1 ? currentSection.width + module.value.moduleThickness - 4 :
+              currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2) :
+          module.value.width - 4;
+
+
+  let fasadePosition = getFasadePosition()
+  let baseFasade = module.value.sections[secIndex]?.fasades?.[0]?.find(item => !item.manufacturerOffset)
+
+  if(!baseFasade) {
+    const PROPS = productData.value.PROPS;
+
+    const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
+    const FASADE = getFasadePosition(FASADE_PROPS.POSITION);
+
+    const width = currentSection.fasades[0]?.[0] ? Math.floor(currentSection.fasades[0][0].width / 2 - 2) :
+        module.value.sections.length === 1 ? module.value.width - 4 :
+            (secIndex > 0 && secIndex < module.value.sections.length - 1) ? currentSection.width + module.value.moduleThickness - 4 :
+                currentSection.width + ((secIndex == 0 ? leftWidth : rightWidth) - 2) + (module.value.moduleThickness / 2 - 2);
+
+    let startX = secIndex > 0 ? currentSection.position.x - currentSection.width / 2 - module.value.moduleThickness / 2 + 2 : FASADE.POSITION_X;
+
+    let newDoorPosition = new THREE.Vector2(startX, module.value.isRestrictedModule ? FASADE.POSITION_Y : module.value.horizont + 2);
+    baseFasade = <FasadeObject>{
+      id: 1,
+      width,
+      height: module.value.height - module.value.horizont - 4,
+      position: newDoorPosition,
+      type: "fasade",
+      material: <FasadeMaterial>{
+        ...FASADE_PROPS,
+      },
+    };
+    let fasadeMinMax = getFasadePositionMinMax(baseFasade);
+    baseFasade = Object.assign(baseFasade, fasadeMinMax);
+    baseFasade.loopsSide = LOOPSIDE['none']
+  }
+
   let baseFasade2 = module.value.sections[secIndex].fasades[1]?.find(item => !item.manufacturerOffset)
   let fasadesDrawers = module.value.sections[secIndex].fasadesDrawers || []
 
@@ -458,17 +706,24 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
   module.value.sections[secIndex].fasadesDrawers = fasadesDrawers.sort((a, b) => a.position.y - b.position.y)
 
   let drawerIndex = 0
+  fasadesList = fasadesList.filter((item) => {
+    return item.type != "profile"
+  })
+
   fasadesList.forEach((item, index) => {
 
     switch (item.type) {
       case "drawer":
         fasadesDrawers[drawerIndex].id = index + 1
+        fasadesDrawers[drawerIndex].width = correctSectionFasadeWidth
         drawerIndex += 1
         break;
       case "fasade":
         let fasadeClone = Object.assign(<FasadeObject>{}, baseFasade)
         fasadeClone.id = index + 1
         fasadeClone.height = item.height
+        fasadeClone.material = {...baseFasade.material}
+
         fasadeClone.position = new THREE.Vector2(baseFasade.position.x, item.y)
 
         if (fasadeClone.height < fasadeClone.minY || fasadeClone.width < fasadeClone.minX)
@@ -481,6 +736,8 @@ const calcDrawersFasades = (secIndex, fillingData = false) => {
         if (baseFasade2) {
           let fasadeClone2 = Object.assign(<FasadeObject>{}, fasadeClone)
           fasadeClone2.position = new THREE.Vector2(baseFasade2.position.x, item.y)
+          fasadeClone2.material = {...fasadeClone.material}
+          fasadeClone2.loopsSide = baseFasade2.loopsSide
 
           module.value.sections[secIndex].fasades[1].push(Object.assign(<FasadeObject>{}, fasadeClone2))
         }
@@ -502,7 +759,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
 
   //Ящики с фасадами
   const BOX_FASADE = module.value.sections[secIndex].fasadesDrawers || []
-  const HI_TECH_PROFILES = module.value.sections[secIndex].profiles || []
+  const HI_TECH_PROFILES = module.value.sections[secIndex].hiTechProfiles || []
 
   const boxesArray = []
   BOX_FASADE.forEach((box, box_key) => {
@@ -512,9 +769,16 @@ const calcDrawersFasadesPositons = (secIndex) => {
     boxesArray.push(box)
   })
 
-  HI_TECH_PROFILES.forEach((profile, box_key) => {
+  HI_TECH_PROFILES.forEach((_profile, box_key) => {
+    let profile = Object.assign({}, _profile)
     if (!profile.position) {
       profile.position = new THREE.Vector3()
+    }
+    else {
+      profile.position = {
+        x: profile.position.x,
+        y: module.value.height - (profile.position.y + profile.height + profile.isProfile.manufacturerOffset)
+      }
     }
     boxesArray.push(profile)
   })
@@ -542,7 +806,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
   }
 
   const firstBox = sortedBoxesByIncrease[0] //нижний ящик
-  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > 0) {
+  if ((firstBox.position.y - (firstBox.isProfile ? 0 : otstup)) > bottomFasadePosition) {
     let firstFasadeSize = Math.abs(firstBox.position.y - (firstBox.isProfile ? 0 : otstup) - bottomFasadePosition)
 
     fasadeList.push({
@@ -562,7 +826,7 @@ const calcDrawersFasadesPositons = (secIndex) => {
       box.position = new THREE.Vector3()
     }
 
-    const boxFasadeHeight = box.isProfile && box.otstup ? box.otstup : box.height
+    const boxFasadeHeight = box.isProfile && box.isProfile.offsetFasades ? box.isProfile.offsetFasades : box.height
 
     fasadeList.push({
       y: bottomFasadePosition,
@@ -696,11 +960,19 @@ const calcSlideDoor = (fasadePositionID, doorNumber, callback) => {
 //#region Петли
 const calcLoops = (secIndex, grid = false) => {
   const CONFIG = productData.value.PROPS.CONFIG
+  const curGrid = grid || module.value
 
   if (!CONFIG.LOOPS)
     return
 
-  const curSection = grid ? grid.sections[secIndex] : module.value.sections[secIndex]
+  const curSection = curGrid.sections[secIndex]
+
+  if(curGrid.noLoops){
+    delete curSection.loops
+    delete curSection.loopsSides
+    return;
+  }
+
   const FASADES = curSection.fasades || []
   curSection.loops = []
 
@@ -795,6 +1067,11 @@ const calcLoopPositions = (fasades, section) => {
 }
 
 const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasadeSegmentIndex = null) => {
+  const CONFIG = productData.value.PROPS.CONFIG
+
+  if (!CONFIG.LOOPS)
+    return
+
   const currentSection = module.value.sections[secIndex];
   const currentCol = currentSection.cells?.[cellIndex];
   const currentRow = currentCol?.cellsRows?.[rowIndex];
@@ -807,63 +1084,145 @@ const checkLoopsCollision = (secIndex, cellIndex = null, rowIndex = null, fasade
   if (!loops)
     return
 
+  const errorItem =  <ErrorItem>{
+    type: ErrorsType['loops'],
+    message: ErrorsMessage['loops'],
+    sections: {}
+  }
+
   let loopsSectors = {}
   Object.entries(loops).forEach(([doorKey, doorLoops]) => {
     loopsSectors[doorKey] = {}
-    doorLoops.forEach((fasade, fasadeKey) => {
+    doorLoops.forEach((_loops, fasadeKey) => {
       loopsSectors[doorKey][fasadeKey] = []
-      fasade.coords.forEach((coord, key) => {
+      _loops.coords.forEach((coord, key) => {
         loopsSectors[doorKey][fasadeKey].push({
           id: key,
-          minY: coord,
-          maxY: coord + fasade.height,
-          minX: fasade.positionX,
-          maxX: fasade.positionX + fasade.width,
+          minY: coord - _loops.height / 2,
+          maxY: coord + _loops.height / 2,
+          minX: _loops.positionX,
+          maxX: _loops.positionX + _loops.width,
         })
       })
     })
-    /*
-        loopsSectors[doorKey] = loopsSectors[doorKey].sort((a, b) => {
-          return a.minY - b.minY
-        })*/
   })
+
+  const checkLoop = (_loops, cell) => {
+    let result = []
+    _loops.forEach(loop => {
+      if (
+          ((loop.minY < (cell.position.y - moduleThickness) && loop.maxY > (cell.position.y - moduleThickness)) ||
+          (loop.minY < cell.position.y && loop.maxY > cell.position.y))
+          &&
+          ((loop.minX <= (cell.position.x - cell.width / 2) && loop.maxX >= (cell.position.x - cell.width / 2)) ||
+          (loop.minX <= (cell.position.x + cell.width / 2) && loop.maxX >= (cell.position.x + cell.width / 2)))
+      ) {
+        result.push(loop.id)
+      }
+      else if(cell.fillings?.length) {
+        cell.fillings.forEach((filling) => {
+          let filling_pos = new THREE.Vector2(filling.position.x, module.value.height - filling.position.y - filling.height)
+          if(
+              (
+                (loop.minY < (filling_pos.y + filling.height) && loop.maxY > (filling_pos.y + filling.height)) ||
+                (loop.minY < filling_pos.y && loop.maxY > filling_pos.y) ||
+                (loop.minY > filling_pos.y && loop.maxY < (filling_pos.y + filling.height))
+              )
+              &&
+              ((loop.minX <= (filling_pos.x + filling.width) && loop.maxX >= (filling_pos.x + filling.width)) ||
+                  (loop.minX <= (filling_pos.x) && loop.maxX >= (filling_pos.x)))
+          ) {
+            result.push(loop.id)
+          }
+        })
+      }
+
+    })
+
+    return result;
+  }
 
   if (currentSector.cells?.length) {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
+
         currentSector.cells.forEach((cell, cellKey) => {
-          _loops.forEach(loop => {
-            if (
-                (loop.minY <= (cell.position.y - moduleThickness) && loop.maxY >= (cell.position.y - moduleThickness)) ||
-                (loop.minY <= cell.position.y && loop.maxY >= cell.position.y)
-            ) {
-              if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
-                loops[doorKey][fasadeKey].errors.push(loop.id)
-            }
+
+          let check = checkLoop(_loops, cell)
+          check.forEach((id) => {
+            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+              loops[doorKey][fasadeKey].errors.push(id)
           })
+
+          cell.cellsRows?.forEach((cellRow) => {
+
+            if(cellRow.extras?.length) {
+              cellRow.extras.forEach((extraRow) => {
+                let check = checkLoop(_loops, extraRow)
+                check.forEach((id) => {
+                  if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+                    loops[doorKey][fasadeKey].errors.push(id)
+                })
+              })
+            }
+
+          })
+
         })
+
+        if(loops[doorKey][fasadeKey].errors.length) {
+          if(!errorItem.sections[secIndex])
+            errorItem.sections[secIndex] = []
+
+          errorItem.sections[secIndex].push(loops[doorKey][fasadeKey].errors)
+        }
       })
     })
-  } else {
+  }
+  else {
     Object.entries(loopsSectors).forEach(([doorKey, fasades]) => {
       Object.entries(fasades).forEach(([fasadeKey, _loops]) => {
         loops[doorKey][fasadeKey].errors = []
-        _loops.forEach(loop => {
-          if (
-              (loop.minY <= (currentSector.position.y - moduleThickness) && loop.maxY >= (currentSector.position.y - moduleThickness)) ||
-              (loop.minY <= currentSector.position.y && loop.maxY >= currentSector.position.y)
-          ) {
-            if (!loops[doorKey]?.[fasadeKey]?.errors.includes(loop.id))
-              loops[doorKey][fasadeKey].errors.push(loop.id)
-          }
+
+        let check = checkLoop(_loops, currentSector)
+        check.forEach((id) => {
+          if (!loops[doorKey]?.[fasadeKey]?.errors.includes(id))
+            loops[doorKey][fasadeKey].errors.push(id)
         })
+
+        if(loops[doorKey][fasadeKey].errors.length) {
+          if(!errorItem.sections[secIndex])
+            errorItem.sections[secIndex] = []
+
+          errorItem.sections[secIndex].push(loops[doorKey][fasadeKey].errors)
+        }
+
       })
     })
   }
 
-  return loops;
+  if (Object.entries(errorItem.sections).length) {
+    if(!module.value.errors)
+      module.value.errors = {}
 
+    if(!module.value.errors[ErrorsType['loops']])
+      module.value.errors[ErrorsType['loops']] = <ErrorItem>{
+        type: ErrorsType['loops'],
+        message: ErrorsMessage['loops'],
+        sections: {}
+      }
+
+    module.value.errors[ErrorsType['loops']].sections = Object.assign(module.value.errors[ErrorsType['loops']].sections, errorItem.sections)
+  }
+  else if(module.value.errors?.[ErrorsType['loops']]?.sections?.[secIndex]?.length) {
+    delete module.value.errors[ErrorsType['loops']].sections[secIndex]
+  }
+
+  if(module.value.errors?.[ErrorsType['loops']] && !Object.entries(module.value.errors[ErrorsType['loops']].sections).length)
+    delete module.value.errors?.[ErrorsType['loops']]
+
+  return loops;
 }
 
 //#endregion
@@ -893,6 +1252,8 @@ const updateTotalHeight = (value) => {
     totalHeight.value = parseInt(value);
     //visualizationRef.value.updateTotalHeight(value);
     visualizationRef.value.updateTotalSize(value, "height");
+
+    checkSideColorsConversations()
     reset();
     visualizationRef.value.selectCell("module", 0, null);
 
@@ -917,164 +1278,437 @@ const updateTotalDepth = (value) => {
     const PROPS = productData.value.PROPS;
 
     PROPS.CONFIG.SIZE.depth = parseInt(value);
+    checkSideColorsConversations()
     reset();
   }, 1000)
 };
 
-const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null) => {
+const checkSideColorsConversations = () => {
+  let CONFIG = modelState.getCurrentModel.userData.PROPS.CONFIG
+
+  if(CONFIG['RIGHTSIDECOLOR']?.COLOR) {
+    let check = checkFasadeConversations(CONFIG['RIGHTSIDECOLOR'].COLOR, {
+      FASADE_WIDTH: totalDepth.value,
+      FASADE_HEIGHT: totalHeight.value
+    })
+
+    if (!check) {
+      CONFIG['RIGHTSIDECOLOR'] = { COLOR: false }
+      toaster.error("Цвет правого бока сброшен, размер не соответствует!")
+    }
+  }
+
+  if(CONFIG['LEFTSIDECOLOR']?.COLOR) {
+    let check = checkFasadeConversations(CONFIG['LEFTSIDECOLOR'].COLOR, {
+      FASADE_WIDTH: totalDepth.value,
+      FASADE_HEIGHT: totalHeight.value
+    })
+
+    if (!check) {
+      CONFIG['LEFTSIDECOLOR'] = { COLOR: false }
+      toaster.error("Цвет левого бока сброшен, размер не соответствует!")
+    }
+  }
+}
+
+const handleCellSelect = (secIndex, cellIndex, type, rowIndex = null, item = null, extraIndex = null) => {
   switch (type) {
     case "fasades":
       selectedFasade.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
       break;
-    case "fillings":
-      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
-      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
-      break;
     default:
-      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex};
-      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, item: item};
+      selectedFilling.value = {sec: secIndex, cell: cellIndex, row: rowIndex, extra: extraIndex, item: item};
+      selectedCell.value = {sec: secIndex, cell: cellIndex, row: rowIndex, extra: extraIndex};
       break;
   }
 
-  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, item);
+  optionsRef.value.handleCellSelect?.(secIndex, cellIndex, rowIndex, extraIndex, item);
 };
 
+const initSideProfile = () => {
+  if (!module.value.profilesConfig?.sideProfile) {
+
+    const product = APP.CATALOG.PRODUCTS[6513251] //C - образный профиль
+    let profileData = {}
+
+    if (!module.value.profilesConfig) {
+      module.value.profilesConfig = {COLOR: product.COLOR[0] != null ? product.COLOR[0] : module.value.moduleColor}
+      module.value.profilesConfig.colorsList = [...product.COLOR]
+      productData.value.PROPS.CONFIG['PROFILECOLOR'] = module.value.profilesConfig.COLOR
+    }
+
+    profileData.COLOR = module.value.profilesConfig?.COLOR ? module.value.profilesConfig?.COLOR : module.value.moduleColor
+
+    let typeProfile = product.NAME.toLowerCase().split("-")[0].replace(/\s/g, '')
+    if (typeProfile !== "c" && typeProfile !== "l")
+      typeProfile = typeProfile.split(",").pop().replace(/\s/g, '')
+
+    profileData.isProfile = true
+    profileData.TYPE_PROFILE = typeProfile
+    profileData.offsetFasades = typeProfile == "c" ? 36 : typeProfile == "l" ? 38 : 0
+    profileData.manufacturerOffset = typeProfile == "c" ? -18.5 : typeProfile == "l" ? -19.5 : 0
+    profileData.size = {x: module.value.height, y: product.height, z: product.depth}
+    profileData.product = 6513251
+
+    profileData.side = LOOPSIDE[module.value.sections[0].loopsSides[0]]?.includes("left") ? "left" : "right"
+    const profileSidesMap = {
+      "right": new THREE.Vector2( -profileData.manufacturerOffset - profileData.size.y / 2, 0),
+      "left": new THREE.Vector2( module.value.width + profileData.manufacturerOffset + profileData.size.y / 2, 0),
+    }
+    const profileRotationMap = {
+      "right": Math.PI / 2,
+      "left": -Math.PI / 2,
+    }
+
+    profileData.position = profileSidesMap[profileData.side];
+    profileData.rotation = new THREE.Vector3(0, 0, profileRotationMap[profileData.side]);
+
+    module.value.profilesConfig.sideProfile = profileData
+    onSideProfile.value = true
+  }
+  else {
+    delete module.value.profilesConfig.sideProfile
+    onSideProfile.value = false
+  }
+
+}
 //#endregion
 
-const reset = (reset = false, moduleGrid = false) => {
-  const PROPS = productData.value.PROPS;
-
-  module.value.moduleColor = PROPS.CONFIG.MODULE_COLOR;
-  module.value.moduleThickness = PROPS.CONFIG.EXPRESSIONS["#MATERIAL_THICKNESS#"] || 18;
-  module.value.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
-
-  let sectionsTotalWidth = totalWidth.value - module.value.moduleThickness * 2 - (module.value.sections.length - 1) * module.value.moduleThickness;
-  let sectionsTotalHeight = totalHeight.value - module.value.moduleThickness * 2 - PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"];
-  let sectionsWidthSum = 0;
-
-  module.value.sections.forEach((section, secIndex) => {
-    sectionsWidthSum += section.width;
-  })
-
-  if (sectionsTotalWidth - sectionsWidthSum !== 0) {
-    let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
-    let lastSection = module.value.sections[module.value.sections.length - 1];
-
-    lastSection.position.x = lastSection.position.x - lastSection.width / 2 + (lastSection.width + deltaWidth) / 2
-
-    lastSection.width += deltaWidth
-
-    lastSection.cells.forEach((cell, cellIndex) => {
-
-      if (cell.cellsRows) {
-        let lastRow = cell.cellsRows[cell.cellsRows.length - 1]
-        lastRow.position.x = lastRow.position.x - lastRow.width / 2 + (lastRow.width + deltaWidth) / 2
-        lastRow.width += deltaWidth;
-        if (lastRow.fillings?.length)
-          lastRow.fillings.forEach((filling, index) => {
-            updateFilling(lastRow.width, filling, 'width')
-          })
-      }
-      cell.width = lastSection.width;
-      cell.position.x += lastSection.position.x
-
-      if (cell.fillings?.length)
-        cell.fillings.forEach((filling, index) => {
-          updateFilling(cell.width, filling, 'width')
-        })
-    })
-
-    if (lastSection.fillings?.length)
-      lastSection.fillings.forEach((filling, index) => {
-        updateFilling(lastSection.width, filling, 'width')
-      })
+const timerReset = ref(false);
+const reset = (reset = false) => {
+  if (timerReset.value) {
+    clearTimeout(timerReset.value)
   }
 
+  const {PROPS} = modelState.getCurrentModel.userData;
+  let moduleGrid = Object.assign({}, module.value)
 
-  if (sectionsTotalHeight - module.value.sections[0].height !== 0) {
-    let deltaHeight = sectionsTotalHeight - module.value.sections[0].height;
+  moduleGrid.moduleColor = PROPS.CONFIG.MODULE_COLOR;
+  moduleGrid.moduleThickness =  APP.FASADE[moduleGrid.moduleColor]?.DEPTH || 18;
+  moduleGrid.horizont = PROPS.CONFIG.EXPRESSIONS["#HORIZONT#"] || 0;
+  delete moduleGrid.errors
 
-    module.value.sections.forEach((section, secIndex) => {
+  const leftWidth = APP.FASADE[PROPS.CONFIG.LEFTSIDECOLOR?.COLOR]?.DEPTH || moduleGrid.moduleThickness;
+  const rightWidth = APP.FASADE[PROPS.CONFIG.RIGHTSIDECOLOR?.COLOR]?.DEPTH || moduleGrid.moduleThickness;
 
-      if (section.cells?.length) {
-        let lastCell = section.cells[section.cells.length - 1]
+  moduleGrid.leftWallThickness = leftWidth
+  moduleGrid.rightWallThickness = rightWidth
 
-        if (lastCell.cellsRows) {
-          let lastRow = lastCell.cellsRows[lastCell.cellsRows.length - 1]
-          lastRow.height += deltaHeight;
+  let NOBOTTOM = checkOptionWithoutBottom()
+
+  let sectionsTotalWidth = totalWidth.value - leftWidth - rightWidth - (moduleGrid.sections.length - 1) * moduleGrid.moduleThickness;
+  let sectionsTotalHeight = totalHeight.value - moduleGrid.moduleThickness * (NOBOTTOM ? 1 : 2) - moduleGrid.horizont;
+
+  let deltaHeight = sectionsTotalHeight - moduleGrid.sections[0].height;  //Величина, на которую нужно увеличить высоту секций
+  let newSectionsArray = <GridSection>[]
+
+  let startPositionSections = new THREE.Vector2(leftWidth, moduleGrid.horizont + moduleGrid.moduleThickness)
+
+  const recalcSection = (section, positionSections) => {
+
+    let newSection = <GridSection>{...section, position: new THREE.Vector2(section.position.x, section.position.y)}
+    newSection.position.copy(positionSections.clone())
+    newSection.position.x += newSection.width / 2
+
+    if (newSection.cells?.length) {
+      let newCellsArray = <GridCell>[]
+      let positionCells = newSection.position.clone()
+
+      let lastCellHeight = newSection.height
+
+      let tmpCells = newSection.cells.slice().reverse()
+      for (let i = 0; i < tmpCells.length; i++) {
+        let newCell = <GridCell>{...tmpCells[i], position: new THREE.Vector2(tmpCells[i].position.x, tmpCells[i].position.y)}
+
+        newCell.width = newSection.width;
+        newCell.position.copy(positionCells.clone())
+
+        if(newCell.position.y - moduleGrid.moduleThickness > newSection.height){
+          break;
         }
 
-        lastCell.height += deltaHeight;
+        lastCellHeight -= newCell.height
+
+        if (i === tmpCells.length - 1 || lastCellHeight <= 0) {
+          newCell.height += lastCellHeight
+
+          if(newCell.height < MIN_SECTION_HEIGHT){
+            newCellsArray[newCellsArray.length - 1].height += newCell.height + moduleGrid.moduleThickness
+            break;
+          }
+        }
+        else {
+          lastCellHeight -= moduleGrid.moduleThickness
+        }
+
+        if (newCell.cellsRows?.length) {
+          let newCellsRowArray = <GridCellsRow>[]
+          let positionCellsRow = new THREE.Vector2(newCell.position.x - newCell.width / 2, newCell.position.y)
+
+          newCell.cellsRows.forEach((row, rowIndex) => {
+            let newRow = <GridCellsRow>{...row, position: new THREE.Vector2(row.position.x, row.position.y)}
+
+            newRow.position.copy(positionCellsRow.clone())
+            newRow.position.x += newRow.width / 2
+            newRow.height = newCell.height;
+
+            if (newRow.fillings?.length) {
+              newRow.fillings = <FillingObject>[...newRow.fillings]
+              newRow.fillings = newRow.fillings.map((filling, index) => {
+
+                let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+                if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+                  toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  return;
+                }
+
+                if(filling.isVerticalItem){
+                  updateFilling(newRow.height, filling, 'height')
+                }
+                else {
+                  if(filling.isProfile) {
+                    updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
+                  }
+                  else
+                    updateFilling(newRow.width, filling, 'width')
+                }
+
+                  return filling
+              }).filter(item => item)
+            }
+
+            newCellsRowArray.push(newRow)
+            positionCellsRow.x += newRow.width + moduleGrid.moduleThickness
+
+            if (row.extras?.length) {
+              let newRowExtrasArray = <GridRowExtra>[]
+              let positionRowExtras = new THREE.Vector2(newRow.position.x, newRow.position.y)
+              let lastExtraHeight = newRow.height
+
+              let extras = row.extras.slice().sort((a, b) => a.position.y - b.position.y)
+              for (let j = 0; j < extras.length; j++) {
+                let extra = extras[j]
+
+                let newExtra = <GridRowExtra>{...extra, position: new THREE.Vector2(extra.position.x, extra.position.y)}
+
+                newExtra.position.copy(positionRowExtras.clone())
+                newExtra.width = newRow.width;
+
+                lastExtraHeight -= newExtra.height
+
+                if (j === extras.length - 1 || lastExtraHeight <= 0) {
+                  newExtra.height += lastExtraHeight
+
+                  if(newExtra.height < MIN_SECTION_HEIGHT){
+                    newRowExtrasArray[newRowExtrasArray.length - 1].height += newExtra.height + moduleGrid.moduleThickness
+                    break;
+                  }
+                }
+                else {
+                  lastExtraHeight -= moduleGrid.moduleThickness
+                }
+
+                if (newExtra.fillings?.length) {
+                  newExtra.fillings = <FillingObject>[...newExtra.fillings]
+                  newExtra.fillings = newExtra.fillings.map((filling, index) => {
+
+                    let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+                    if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+                      toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                      alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                      return;
+                    }
+
+                    if(filling.isVerticalItem) {
+                      updateFilling(newExtra.height, filling, 'height')
+                    }
+                    else {
+                      if(filling.isProfile) {
+                        updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
+                      }
+                      else
+                        updateFilling(newExtra.width, filling, 'width')
+                    }
+
+                    return filling;
+                  }).filter(item => item)
+                }
+
+                newRowExtrasArray.push(newExtra)
+                positionRowExtras.y += newExtra.height + moduleGrid.moduleThickness
+              }
+
+              newRow.extras = newRowExtrasArray.slice().sort((a, b) => b.position.y - a.position.y)
+            }
+          })
+
+          let cellsRowWidthSum = 0;
+          newCellsRowArray.forEach((row, rowIndex) => {
+            cellsRowWidthSum += row.width;
+          })
+          cellsRowWidthSum += (newCellsRowArray.length - 1) * moduleGrid.moduleThickness;
+
+          let deltaWidth = newCell.width - cellsRowWidthSum;   //Величина, на которую нужно изменить ширину последней ячейки
+          if (deltaWidth !== 0){
+            let lastRow = newCellsRowArray[newCellsRowArray.length - 1]
+            lastRow.width += deltaWidth
+            lastRow.position.x += -deltaWidth / 2
+
+            if (lastRow.fillings?.length) {
+              lastRow.fillings = <FillingObject>[...lastRow.fillings]
+              lastRow.fillings = lastRow.fillings.map((filling, index) => {
+                let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+                if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+                  toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+                  return;
+                }
+
+                if(filling.isVerticalItem) {
+                  updateFilling(lastRow.height, filling, 'height')
+                }
+                else {
+                  if (filling.isProfile) {
+                    updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
+                  } else
+                    updateFilling(lastRow.width, filling, 'width')
+                }
+
+                return filling;
+              }).filter(item => item)
+            }
+          }
+
+          newCell.cellsRows = newCellsRowArray.slice()
+        }
+
+        positionCells.y += newCell.height + moduleGrid.moduleThickness
+
+        if (newCell.fillings?.length) {
+          newCell.fillings = <FillingObject>[...newCell.fillings]
+          newCell.fillings = newCell.fillings.map((filling, index) => {
+            let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+            if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+              toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+              alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+              return;
+            }
+
+            if(filling.isVerticalItem) {
+              updateFilling(newCell.height, filling, 'height')
+            }
+            else {
+              if (filling.isProfile) {
+                updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
+              } else
+                updateFilling(newCell.width, filling, 'width')
+            }
+
+            return filling;
+          }).filter(item => item)
+        }
+
+        newCellsArray.push(newCell)
       }
-      section.height += deltaHeight;
-    })
+
+      newSection.cells = newCellsArray.slice().sort((a, b) => b.position.y - a.position.y)
+    }
+
+    positionSections.x += newSection.width + moduleGrid.moduleThickness
+
+    if (newSection.fillings?.length) {
+      newSection.fillings = <FillingObject>[...newSection.fillings]
+      newSection.fillings = newSection.fillings.map((filling, index) => {
+        let fillingInfo = APP.CATALOG.PRODUCTS[filling.product]
+        if (fillingInfo.ACTUAL_DEPT && fillingInfo.ACTUAL_DEPT >= moduleGrid.depth) {
+          toaster.error(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+          alert(`Товар ${fillingInfo.NAME} удалён! Глубина не соответствует!`)
+          return;
+        }
+
+        if(filling.isVerticalItem) {
+          updateFilling(newSection.height, filling, 'height')
+        }
+        else {
+          if (filling.isProfile) {
+            updateFilling((module.value.profilesConfig.onSectionSize || filling.isProfile.isBottomHiTechProfile) ? newSection.width : totalWidth.value, filling, 'width')
+          } else
+            updateFilling(newSection.width, filling, 'width')
+        }
+
+        return filling;
+      }).filter(item => item)
+    }
+
+    return newSection
   }
 
+  moduleGrid.sections.forEach((section, secIndex) => {
+    section.height += deltaHeight;
+
+    let newSection = recalcSection(section, startPositionSections)
+    newSectionsArray.push(newSection)
+  })
+
+  moduleGrid.sections = newSectionsArray.slice()
+
   let _module: GridModule = {
-    ...module.value,
+    ...moduleGrid,
     width: totalWidth,
     height: totalHeight,
     depth: totalDepth,
   }
+  module.value = _module;
 
-  PROPS.CONFIG.MODULEGRID = module.value = _module
-  updateFasades();
+  let sectionsWidthSum = 0;
+  module.value.sections.forEach((section, secIndex) => {
+    sectionsWidthSum += section.width;
+  })
 
-  visualizationRef.value.renderGrid();
-  if (reset) {
-    visualizationRef.value.selectCell("module", 0, null);
+  let deltaWidth = sectionsTotalWidth - sectionsWidthSum;
+  if(deltaWidth !== 0) {
+    let lastSection = module.value.sections[module.value.sections.length - 1];
+    lastSection.position.x = lastSection.position.x - lastSection.width / 2 + (lastSection.width + deltaWidth) / 2
+    lastSection.width += deltaWidth
+
+    if (lastSection.width > MAX_SECTION_WIDTH) {
+      let countSections = Math.floor(lastSection.width / MAX_SECTION_WIDTH);
+      optionsRef.value.addSection?.(module.value.sections.length - 1, countSections)
+    }
+    else if (lastSection.width < MIN_SECTION_WIDTH) {
+      while (module.value.sections[module.value.sections.length - 1].width < MIN_SECTION_WIDTH) {
+        optionsRef.value.deleteSection?.(module.value.sections.length - 1)
+      }
+    }
+    else {
+      startPositionSections.copy(lastSection.position.clone())
+      startPositionSections.x -= lastSection.width / 2
+      module.value.sections[module.value.sections.length - 1] = recalcSection(lastSection, startPositionSections)
+    }
   }
+
+  updateFasades()
+
+  timerReset.value = setTimeout(()=>{
+    timerReset.value = false;
+    visualizationRef.value.renderGrid(/*module.value*/);
+  }, 100)
+
 };
 
 const saveGrid = () => {
-  const garbage = ["sector", "shapesBond", "maxX", "maxY", "minX", "minY", "xOffset", "yOffset"];
-  const garbageFasades = ["sector", "shapesBond", "xOffset", "yOffset"];
-  const nesting = ["cells", "sections", "cellsRows", "fasades", "fillings", "loops"];
+  if(module.value.errors && Object.keys(module.value.errors).length > 0) {
+    Object.values(module.value.errors).forEach(item => {
+      alert(item.message)
+    })
 
-  //Рекурсивная очистка сетки от "технических" полей 2D конструктора
-  const removeGarbage = (object) => {
-    if (typeof object === "object" && !Array.isArray(object)) {
-
-      let objectType = object.type || false
-      object = Object.entries(object).map(([key, value]) => {
-
-        if (nesting.includes(key)) {
-          value = value.map(item => {
-            if (Array.isArray(item))
-              return item = item.map(_item => {
-                return removeGarbage(_item)
-              })
-            else
-              return removeGarbage(item)
-          })
-        }
-
-        return [key, value]
-      })
-
-      if (objectType === "fasade")
-        object = object.filter(([key, value]) => !garbageFasades.includes(key))
-      else
-        object = object.filter(([key, value]) => !garbage.includes(key))
-
-      object = Object.fromEntries(object)
-    }
-
-    return object;
+    return false
   }
-
-  let tmpClone = Object.assign({}, module.value)
-  tmpClone = removeGarbage(tmpClone)
-
-  return tmpClone;
-
-  /*const data = {
-    canvasHeight: totalHeight.value,
-    canvasWidth: totalWidth.value,
-    data: tmpClone,
-  };*/
-
-  //return data;
+  else
+    alert('Модуль сохранен')
+    toaster.success('Модуль сохранен')
+    return Object.assign({}, module.value);
 };
 
 defineExpose({
@@ -1082,29 +1716,32 @@ defineExpose({
 });
 
 onBeforeMount(() => {
-  console.log('onBeforeMount')
-  productData.value = props.productData //menuStore.catalogFilterProductsId[0]
-
+  productData.value = modelState.getCurrentModel.userData
   totalHeight.value = productData.value.PROPS?.CONFIG.MODULEGRID?.height || productData.value.PROPS?.CONFIG.SIZE.height || props.canvasHeight;
   totalWidth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.width || productData.value.PROPS?.CONFIG.SIZE.width || props.canvasWidth;
   totalDepth.value = productData.value.PROPS?.CONFIG.MODULEGRID?.depth || productData.value.PROPS?.CONFIG.SIZE.depth || 0;
   onHorizont.value = productData.value.PROPS?.CONFIG.EXPRESSIONS["#HORIZONT#"] > 0;
-
-  console.log(totalHeight.value, totalWidth.value)
+  onSideProfile.value = !!productData.value.PROPS?.CONFIG.MODULEGRID?.profilesConfig?.sideProfile;
+  computeModule()
+  checkOptionWithoutBottom()
 });
 
 onMounted(() => {
-  console.log('onMounted')
   shapeAdjuster = new ShapeAdjuster({});
   nextTick().then(() => {
     isMounted.value = true;
   });
+
+  eventBus.on("A:SelectModelOption", checkOptionsChanged)
+  reset()
 });
 
 onBeforeUnmount(() => {
-  console.log("close");
   shapeAdjuster = null;
-  module.value = null;
+  module.value = false;
+  onHorizont.value = false
+  onSideProfile.value = false
+  eventBus.off("A:SelectModelOption", checkOptionsChanged)
 });
 
 watch(visualizationRef, () => {
@@ -1127,6 +1764,76 @@ watch(onHorizont, () => {
   else
     updateHorizont(78)
 });
+
+
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT, () => {
+
+  let newHorizont = modelState.getCurrentModel.userData.PROPS.CONFIG.HORIZONT
+  checkOptionWithoutBottom()
+
+  if (newHorizont > 0) {
+    onHorizont.value = true
+    updateHorizont(newHorizont)
+  }
+  else {
+    onHorizont.value = false
+    updateHorizont(newHorizont)
+  }
+});
+
+//Изменение толщины левого бока и прилегающей к нему секции
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.LEFTSIDECOLOR, () => {
+
+  const oldLeftWidth = module.value.leftWallThickness || module.value.moduleThickness;
+  const newLeftWidth = APP.FASADE[modelState.getCurrentModel.userData.PROPS.CONFIG.LEFTSIDECOLOR?.COLOR]?.DEPTH || module.value.moduleThickness
+
+  const delta = oldLeftWidth - newLeftWidth
+
+  if (delta !== 0) {
+    reset()
+  }
+
+});
+
+//Изменение толщины левого бока и прилегающей к нему секции
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR, () => {
+
+  const oldRightWidth = module.value.rightWallThickness || module.value.moduleThickness;
+  const newRightWidth = APP.FASADE[modelState.getCurrentModel.userData.PROPS.CONFIG.RIGHTSIDECOLOR?.COLOR]?.DEPTH || module.value.moduleThickness
+
+  const delta = newRightWidth - oldRightWidth
+
+  if (delta !== 0) {
+    reset()
+  }
+
+});
+
+//Изменение толщины левого бока и прилегающей к нему секции
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.BACKWALL, () => {
+
+  let tmp = noBackwall.value
+  checkOptionWithoutBottom()
+
+  if(tmp !== noBackwall.value)
+    reset()
+
+});
+
+//Изменение цвета модуля
+watch(() => modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR, () => {
+
+  const oldThickness = module.value.moduleThickness;
+  const newThickness = APP.FASADE[modelState.getCurrentModel.userData.PROPS.CONFIG.MODULE_COLOR].DEPTH
+
+  const delta = newThickness - oldThickness
+
+  if (delta !== 0) {
+    reset()
+  }
+
+});
+
 </script>
 
 <template>
@@ -1140,7 +1847,7 @@ watch(onHorizont, () => {
           class="constructor2d-container--left--module-configs"
       >
 
-        <div class="actions-sections-header">
+        <div class="no-select actions-sections-header">
           <h1>Размеры модуля</h1>
         </div>
 
@@ -1149,9 +1856,16 @@ watch(onHorizont, () => {
         >
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Высота модуля</p>
+            <p class="no-select actions-title">Высота <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="no-select item__label text-grey">
+              Мин: {{ getMinMaxModuleSize('height', 'min') ?? "н/о" }}
+            </p>
+            <p class="no-select item__label text-grey">
+              Макс: {{ getMinMaxModuleSize('height', 'max') ?? "н/о" }}
+            </p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalHeight"
                   :inputClass="'actions-input'"
                   :modelValue="totalHeight"
@@ -1163,9 +1877,16 @@ watch(onHorizont, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Ширина модуля</p>
+            <p class="no-select actions-title">Ширина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /> </p>
+            <p class="no-select item__label text-grey">
+              Мин: {{ getMinMaxModuleSize('width', 'min') ?? "н/о" }}
+            </p>
+            <p class="no-select item__label text-grey">
+              Макс: {{ getMinMaxModuleSize('width', 'max') ?? "н/о" }}
+            </p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalWidth"
                   :inputClass="'actions-input'"
                   :modelValue="totalWidth"
@@ -1177,9 +1898,16 @@ watch(onHorizont, () => {
           </div>
 
           <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Глубина модуля</p>
+            <p class="no-select actions-title">Глубина <img v-if="mode !== 'module'" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование размеров доступно только в режиме 'Модуль'" /></p>
+            <p class="no-select item__label text-grey">
+              Мин: {{ getMinMaxModuleSize('depth', 'min') ?? "н/о" }}
+            </p>
+            <p class="no-select item__label text-grey">
+              Макс: {{ getMinMaxModuleSize('depth', 'max') ?? "н/о" }}
+            </p>
             <div class="actions-input--container">
               <MainInput
+                  :disabled="mode !== 'module'"
                   @update:modelValue="updateTotalDepth"
                   :inputClass="'actions-input'"
                   :modelValue="totalDepth"
@@ -1190,10 +1918,22 @@ watch(onHorizont, () => {
             </div>
           </div>
 
-          <div class="constructor2d-container--left--module-configs--module-size-item actions-inputs">
-            <p class="actions-title">Цоколь
-              <Toggle v-model="onHorizont"/>
+          <div
+              v-if="!module.isRestrictedModule"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
+            <p class="no-select actions-title">Цоколь
+              <img v-if="mode !== 'module' || noBottom" class="cut-icon" src="/icons/lock.svg" alt="" title="Редактирование заблокировано режимом работы или опцией!" />
+              <Toggle v-else v-model="onHorizont"/>
             </p>
+
+            <p v-if="!noBottom" class="no-select item__label text-grey">
+              Мин: 50
+            </p>
+            <p v-if="!noBottom" class="no-select item__label text-grey">
+              Макс: 300
+            </p>
+
             <div class="actions-input--container">
               <MainInput
                   @update:modelValue="updateHorizont"
@@ -1203,14 +1943,27 @@ watch(onHorizont, () => {
                   max="300"
                   :type="'number'"
                   placeholder="0"
-                  :disabled="productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0"
+                  :disabled="mode !== 'module' || productData.PROPS.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0 || noBottom"
               />
             </div>
           </div>
 
+          <div
+              v-if="productData.PROPS.CONFIG.isHiTech"
+              class="constructor2d-container--left--module-configs--module-size-item actions-inputs"
+          >
+            <p class="actions-title">Боковой профиль</p>
+            <img v-if="module.sections[0].hiTechProfiles?.length" class="cut-icon" src="/icons/lock.svg" alt="" title="Нельзя добавить боковой профиль вместе с горизонтальными!" />
+            <Toggle
+                v-else
+                v-model="onSideProfile"
+                @change="initSideProfile"
+            />
+          </div>
+
         </div>
 
-        <div class="actions-sections-header">
+        <div class="no-select actions-sections-header">
           <h1>Параметры модуля</h1>
         </div>
 
@@ -1220,17 +1973,17 @@ watch(onHorizont, () => {
           <ModuleMaterialsConfig
               ref="materialConfRef"
               :visualizationRef="visualizationRef"
-              :module="module"
+              :module="getModule"
               :objectData="productData"
               @product-reset="reset"
           />
         </div>
 
-        <div class="actions-sections-header">
+        <div class="no-select actions-sections-header">
           <h1>Опции</h1>
         </div>
 
-        <RailsRightPage style="margin-top: 5px"/>
+        <RailsRightPage class="no-select" style="margin-top: 5px"/>
 
       </div>
 
@@ -1241,8 +1994,8 @@ watch(onHorizont, () => {
         class="constructor2d-container constructor2d-container--mid"
         ref="constructor2dContainer"
     >
-      <div class="constructor2d-header">
-        <div class="constructor2d-header--title"><h1>Редактор модуля</h1></div>
+      <div class="no-select constructor2d-header">
+        <div class="constructor2d-header--title"><h1>{{productData.PROPS.NAME}}</h1></div>
       </div>
 
       <div
@@ -1252,7 +2005,7 @@ watch(onHorizont, () => {
           <div class="actions-items--right-items">
             <button
                 :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'module'
                       }
@@ -1263,7 +2016,7 @@ watch(onHorizont, () => {
             </button>
             <button
                 :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'fillings'
                       }
@@ -1274,7 +2027,7 @@ watch(onHorizont, () => {
             </button>
             <button
                 :class="[
-                      'actions-btn actions-btn--default', {
+                      'no-select actions-btn actions-btn--default', {
                       active:
                         mode === 'fasades'
                       }
@@ -1299,6 +2052,8 @@ watch(onHorizont, () => {
             :max-area-width="totalWidth"
             @cell-selected="handleCellSelect"
             @calcDrawersFasades="calcDrawersFasades"
+            @checkLoopsCollision="checkLoopsCollision"
+            @module-reset="reset"
         />
       </div>
 
@@ -1317,31 +2072,31 @@ watch(onHorizont, () => {
       <div
           v-if="mode === 'module'"
       >
-        <h1>Секции</h1>
+        <h1 class="no-select">Секции</h1>
 
         <SectionOptions
             ref="optionsRef"
             class="constructor2d-container--right--content"
             :visualizationRef="visualizationRef"
-            :module="module"
+            :module="getModule"
             :step="step"
             @product-updateFasades="updateFasades"
             @product-calcLoops="calcLoops"
             @product-checkLoopsCollision="checkLoopsCollision"
-            @product-updateFilling="updateFilling"
+            @product-reset="reset"
         />
       </div>
 
       <div
           v-if="mode === 'fasades'"
       >
-        <h1>Фасады</h1>
+        <h1 class="no-select">Фасады</h1>
 
         <FasadesOptions
             ref="optionsRef"
             class="constructor2d-container--right--content"
             :visualizationRef="visualizationRef"
-            :module="module"
+            :module="getModule"
             :moduleProps="productData.PROPS"
             :step="step"
             @product-updateFasades="updateFasades"
@@ -1356,19 +2111,20 @@ watch(onHorizont, () => {
       <div
           v-if="mode === 'fillings'"
       >
-        <h1>Наполнение</h1>
+        <h1 class="no-select">Наполнение</h1>
 
         <FillingsProductions
             ref="optionsRef"
             class="constructor2d-container--right--content"
             :visualizationRef="visualizationRef"
-            :module="module"
+            :module="getModule"
             :shapeAdjuster="shapeAdjuster"
             :fillings="getFillings"
             :step="step"
             @product-updateFilling="updateFilling"
             @product-updateFasades="updateFasades"
             @product-calcDrawersFasades="calcDrawersFasades"
+            @product-checkLoopsCollision="checkLoopsCollision"
         />
       </div>
 
@@ -1378,6 +2134,10 @@ watch(onHorizont, () => {
 
 <style lang="scss" scoped>
 .constructor2d {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     gap: 1rem;
@@ -1416,7 +2176,7 @@ watch(onHorizont, () => {
         &--module-size {
           display: flex;
           flex-direction: row;
-          gap: 1rem;
+          gap: 1.5rem;
           flex-wrap: wrap;
           justify-content: flex-start;
           align-items: center;
@@ -1501,7 +2261,17 @@ watch(onHorizont, () => {
   }
 }
 
+.no-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+}
+
 .actions {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ и Edge */
+  user-select: none;         /* Стандарт: Chrome, Firefox, Opera, Edge */
+
   &-wrapper {
     display: flex;
     flex-direction: column;
@@ -1709,7 +2479,7 @@ watch(onHorizont, () => {
     cursor: pointer;
     font-size: 0.75rem;
     font-weight: bold;
-    color: #5d6069;
+    color: #a3a9b5;
     outline: none;
 
     &--default,

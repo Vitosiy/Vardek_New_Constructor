@@ -3,9 +3,11 @@ import * as THREE from "three"
 import * as THREETypes from "@/types/types"
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 import { CSG } from 'three-csg-ts';
+import * as BufferGeometry from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { DeepDispose } from '@/Application/Utils/DeepDispose';
 import { BuildersHelper } from "../../Application/Meshes/BuildersHelper";
 import { useMenuStore } from '@/store/appStore/useMenuStore.ts';
+import { useModelState } from "@/store/appliction/useModelState";
 
 type TTextureData = {
 
@@ -18,6 +20,7 @@ type TTextureData = {
 
 class TableTopCreator extends BuildersHelper {
     menuStore: ReturnType<typeof useMenuStore> = useMenuStore()
+    modelState: ReturnType<typeof useModelState> = useModelState()
 
     root: THREETypes.TApplication
     roomManager: THREETypes.TRoomManager
@@ -27,6 +30,7 @@ class TableTopCreator extends BuildersHelper {
     boolHeight: number = 100
     ruler: THREETypes.TRuler
     events: THREETypes.TMeshEvents
+    edgeBuilder: THREETypes.TEdgeBuilder
 
     constructor(root: THREETypes.TApplication) {
         super(root)
@@ -35,6 +39,7 @@ class TableTopCreator extends BuildersHelper {
         this.moveManager = root._trafficManager?.moveManager!
         this.ruler = root._ruler!
         this.events = root.meshEvents!
+        this.edgeBuilder = root._geometryBuilder?.buildProduct.edge_builder
     }
 
     public async create(raspil: THREETypes.TObject, object: THREE.Object3D, groupId: number) {
@@ -55,13 +60,14 @@ class TableTopCreator extends BuildersHelper {
 
         if (object.userData.groupId) {
 
+            console.log('GROOO')
+
             const parent: THREE.Object3D = this.root._scene?.getObjectByProperty('id', object.userData.groupId)!;
 
 
-            const { USLUGI } = parent.userData.PROPS.CONFIG
+            const { USLUGI, KROMKA } = parent.userData.PROPS.CONFIG
             const { BODY_WIDTH, BODY_HEIGHT } = parent.userData.PROPS.BODY.userData.trueSize
 
-            console.log(parent, USLUGI, '---Parent USLUGI_1')
 
             await this.events.changeModelSize({
                 data: { width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, mesh: parent, type: 'raspil'
@@ -81,7 +87,7 @@ class TableTopCreator extends BuildersHelper {
             const raspilCount = parent.userData.PROPS.RASPIL_COUNT = RASPIL_LIST.length
             RASPIL_LIST.length = 0
 
-            await this.createGroup(raspil, group, meshes, parent, parent.id, USLUGI)
+            await this.createGroup(raspil, group, meshes, parent, parent.id, USLUGI, KROMKA)
             this.addToScene({ meshes, group, object: parent, raspilCount, textureData })
 
             parent.userData.PROPS.RASPIL = meshes[0].userData.PROPS.RASPIL
@@ -89,9 +95,11 @@ class TableTopCreator extends BuildersHelper {
             return
         }
 
+        console.log('NO GROOO', object)
+
 
         let { RASPIL_LIST, CONFIG } = object.userData.PROPS
-        const { USLUGI } = CONFIG
+        const { USLUGI, KROMKA } = CONFIG
 
         RASPIL_LIST.forEach((mesh: THREE.Mesh) => {
             const meshInScene = this.root._scene?.getObjectByProperty('id', mesh.id) as THREE.Object3D
@@ -108,11 +116,9 @@ class TableTopCreator extends BuildersHelper {
             data: { width: BODY_WIDTH, height: BODY_HEIGHT, depth: raspil.canvasHeight }, mesh: object, type: 'raspil'
         })
 
-        await this.createGroup(raspil, group, meshes, object, id, USLUGI)
+        await this.createGroup(raspil, group, meshes, object, id, USLUGI, KROMKA)
 
         const textureData = this._PRODUCTS[object.userData.globalData].texture
-
-        console.log(object, USLUGI, '---Parent USLUGI_1')
 
         this.addToScene({ meshes, group, object, textureData })
     }
@@ -120,6 +126,9 @@ class TableTopCreator extends BuildersHelper {
 
     private createSections(path, xOffset = 0, yOffset = 0) {
         const shape = new THREE.Shape();
+
+        console.log(path, 'PATH')
+
         // let lastPoint = new THREE.Vector2();
 
         path.forEach(({ action, data }) => {
@@ -157,23 +166,49 @@ class TableTopCreator extends BuildersHelper {
         return shape;
     }
 
-    async createGroup(raspil: any, group: THREE.Group, meshes: THREE.Object3D[], object: THREE.Object3D, groupId: number | null, uslugi) {
+    async createGroup(raspil: any, group: THREE.Group, meshes: THREE.Object3D[], object: THREE.Object3D, groupId: number | null, uslugi, kromka, color) {
+        const prodId = object.userData.PROPS.PRODUCT
+        const prodTexture = this.modelState._PRODUCTS[prodId].texture
+        let kromkaMaterial = null
 
-        // const material = new THREE.MeshPhongMaterial({
-        //     color: this.getRandomHexColor(),
-        //     side: THREE.DoubleSide,
-        //     wireframe: false
-        // });
+        // const material = object.userData.PROPS.BODY.userData.MATERIAL
 
-        const material = object.userData.PROPS.BODY.userData.MATERIAL
+        const material = new THREE.MeshStandardMaterial()
+        const tableTopMaterial = await this.getMaterial({
+            material,
+            url: prodTexture.src,
+            texture_size: {
+                width: prodTexture.width,
+                height: prodTexture.height
+            }
+        }
+        )
 
+        const material2 = new THREE.MeshStandardMaterial()
+        if (kromka) {
+            const cromkaData = this.modelState._HEM[kromka]
+            await this.getMaterial({
+                material: material2,
+                url: cromkaData.DETAIL_PICTURE,
+                texture_size: {
+                    width: 512,
+                    height: 512
+                }
+            })
+
+        }
+        else {
+            material2.map = tableTopMaterial
+            material2.needsUpdate = true;
+        }
 
         raspil.data.forEach((col, colNdx) => {
             col.forEach((row, ndx) => {
 
+                const { path, xOffset, yOffset, disabled } = row;
+
                 const sectorID = `f${(~~(Math.random() * 1e8)).toString(16)}`
 
-                const { path, xOffset, yOffset } = row;
                 const size = {
                     width: row.width,
                     depth: raspil.modelHeight,
@@ -184,6 +219,8 @@ class TableTopCreator extends BuildersHelper {
                 let geometry = new THREE.ExtrudeGeometry(shape, {
                     depth: raspil.modelHeight,
                     bevelEnabled: false,
+                    material: 0,
+                    extrudeMaterial: 1
                     // bevelThickness: 10, // Толщина фаски
                     // bevelSize: 10, // Размер фаски
                     // bevelSegments: 10
@@ -199,8 +236,19 @@ class TableTopCreator extends BuildersHelper {
                 geometry.translate(-geometryCenter.x, -geometryCenter.y, -geometryCenter.z);
                 geometry.rotateX(Math.PI * 0.5);
 
+                let mesh = new THREE.Mesh(geometry, [material, material2]);
+                // let mesh = new THREE.Mesh(geometry, material);
 
-                let mesh = new THREE.Mesh(geometry, material);
+                if (!disabled) {
+                    const edge = this.edgeBuilder.createEdge(mesh);
+                    const defaultEdge = this.edgeBuilder.createVisibleEdge(mesh)
+                    mesh.add(defaultEdge)
+                    mesh.add(edge)
+                }
+
+                mesh.name = 'raspilPart'
+                mesh.visible = !disabled
+                mesh.userData.DISABLED = disabled
 
                 mesh.position.set(
                     originalPosition.x,
@@ -208,10 +256,9 @@ class TableTopCreator extends BuildersHelper {
                     originalPosition.z
                 );
 
-
                 if (row.holes.length > 0 || 'radius' in row.roundCut) {
 
-                    let boolResult = this.createShape(row, mesh)
+                    let boolResult = this.createShape(row, mesh, material, material2)
                     mesh = boolResult
                     mesh.position.set(
                         originalPosition.x,
@@ -228,7 +275,7 @@ class TableTopCreator extends BuildersHelper {
                         );
                     }
 
-                    mesh.material = material
+                    // mesh.material = material
 
                 }
 
@@ -239,6 +286,7 @@ class TableTopCreator extends BuildersHelper {
 
                     mesh.userData.position = new THREE.Vector3(row.position.x, row.position.y, row.position.z)
                     mesh.userData.rotation = new THREE.Euler(row.rotation._x, row.rotation._y, row.rotation._z, 'XYZ')
+
                 }
                 else {
                     mesh.userData.position = null
@@ -247,6 +295,7 @@ class TableTopCreator extends BuildersHelper {
 
                 this.createCollisionData(mesh, size, raspil, groupId, row.roundCut, uslugi);
                 this.addArrowSize(mesh, row)
+
                 meshes.push(mesh);
                 group.add(mesh); // Добавляем в группу
 
@@ -265,8 +314,55 @@ class TableTopCreator extends BuildersHelper {
 
     }
 
-    private createShape(row, parent) {
+    // private _createShape(row, parent, material_1, material_2) {
+    //     const { xOffset, yOffset, width, height, holes } = row;
+    //     console.log(parent, 'SHAPE parent')
+
+    //     let startGeometry = CSG.fromMesh(parent);
+    //     let material = new THREE.MeshPhongMaterial({
+    //         color: this.getRandomHexColor(),
+    //         side: THREE.DoubleSide,
+    //         wireframe: true
+    //     });
+
+    //     holes.forEach(hole => {
+    //         if (hole) {
+    //             let geometry, mesh
+
+    //             switch (hole.type) {
+    //                 case 'circle':
+    //                     geometry = new THREE.CylinderGeometry(hole.radius * 0.5, hole.radius * 0.5, this.boolHeight, this.quality)
+    //                     break
+    //                 case 'rect':
+    //                     geometry = new THREE.BoxGeometry(hole.width, this.boolHeight, hole.height)
+    //                     break
+    //             }
+
+    //             mesh = new THREE.Mesh(geometry);
+    //             this.holePositioning(mesh, width, height, xOffset, yOffset, hole)
+    //             startGeometry = startGeometry.subtract(CSG.fromMesh(mesh));
+    //         }
+    //     })
+
+
+    //     if ('radius' in row.roundCut) {
+
+    //         let geometry, mesh;
+    //         const { x, y, radius } = row.roundCut
+
+    //         geometry = new THREE.CylinderGeometry(radius * 0.5, radius * 0.5, this.boolHeight, this.quality)
+    //         mesh = new THREE.Mesh(geometry, material);
+    //         this.holePositioning(mesh, width, height, xOffset, yOffset, { x, y })
+    //         startGeometry = startGeometry.intersect(CSG.fromMesh(mesh));
+    //     }
+    //     // return startBrush
+    //     return CSG.toMesh(startGeometry, new THREE.Matrix4())
+    // }
+
+    private createShape(row: any, parent: THREE.Mesh, material_1: THREE.Material, material_2: THREE.Material): THREE.Mesh {
         const { xOffset, yOffset, width, height, holes } = row;
+        console.log(material_1, material_2, 'material parent')
+
         let startGeometry = CSG.fromMesh(parent);
         let material = new THREE.MeshPhongMaterial({
             color: this.getRandomHexColor(),
@@ -286,8 +382,7 @@ class TableTopCreator extends BuildersHelper {
                         geometry = new THREE.BoxGeometry(hole.width, this.boolHeight, hole.height)
                         break
                 }
-
-                mesh = new THREE.Mesh(geometry, material);
+                mesh = new THREE.Mesh(geometry);
                 this.holePositioning(mesh, width, height, xOffset, yOffset, hole)
                 startGeometry = startGeometry.subtract(CSG.fromMesh(mesh));
             }
@@ -302,10 +397,66 @@ class TableTopCreator extends BuildersHelper {
             geometry = new THREE.CylinderGeometry(radius * 0.5, radius * 0.5, this.boolHeight, this.quality)
             mesh = new THREE.Mesh(geometry, material);
             this.holePositioning(mesh, width, height, xOffset, yOffset, { x, y })
+            mesh.updateMatrixWorld(true);
             startGeometry = startGeometry.intersect(CSG.fromMesh(mesh));
         }
-        // return startBrush
-        return CSG.toMesh(startGeometry, new THREE.Matrix4())
+
+        const resultMesh = CSG.toMesh(startGeometry, new THREE.Matrix4())
+
+        let preGeometry = resultMesh.geometry as THREE.BufferGeometry;
+
+        preGeometry.computeVertexNormals();
+        preGeometry = BufferGeometry.mergeVertices(preGeometry, 0.0001);
+
+        preGeometry.clearGroups();
+
+        const normals = preGeometry.attributes.normal;
+        const indices = preGeometry.index;
+
+
+        if (!indices) {
+            //  просто возвращаем с одним материалом
+            return new THREE.Mesh(preGeometry, material_1);
+        }
+
+        if (normals && indices) {
+            let horizontalStart: number | null = null;
+            let horizontalCount = 0;
+
+            for (let i = 0; i < indices.count; i += 3) {
+                const vertexIndex = indices.array[i];
+                const ny = normals.array[vertexIndex * 3 + 1];
+                const isHorizontal = Math.abs(ny) < 0.999;
+
+                if (isHorizontal) {
+                    if (horizontalStart === null) horizontalStart = i;
+                    horizontalCount += 3;
+                } else {
+                    if (horizontalStart !== null) {
+                        preGeometry.addGroup(horizontalStart, horizontalCount, 1); // material_2 — горизонтальные
+                        horizontalStart = null;
+                        horizontalCount = 0;
+                    }
+                }
+            }
+            if (horizontalStart !== null) {
+                preGeometry.addGroup(horizontalStart, horizontalCount, 1);
+            }
+        }
+
+        preGeometry.addGroup(0, indices.count, 0);
+
+
+        // Создаём новый финальный меш с двумя материалами
+        const finalMesh = new THREE.Mesh(preGeometry, [material_1, material_2]);
+
+        // Копируем трансформацию от оригинального parent (позиция, поворот, масштаб)
+        finalMesh.position.copy(parent.position);
+        finalMesh.rotation.copy(parent.rotation);
+        finalMesh.scale.copy(parent.scale);
+        finalMesh.updateMatrixWorld();
+
+        return finalMesh;
     }
 
     private holePositioning(mesh, width, height, xOffset, yOffset, hole) {
@@ -377,6 +528,7 @@ class TableTopCreator extends BuildersHelper {
 
             mesh.castShadow = true
             mesh.receiveShadow = true
+            // mesh.visible = 
 
             // const params = { material: mesh.material, url: textureData?.src, texture_size: { width: textureData?.width, height: textureData?.height }, rotation: Math.PI * 0.5 }
             // // this.getTexture(params)
@@ -473,8 +625,8 @@ class TableTopCreator extends BuildersHelper {
                 },
                 USLUGI: uslugi
             },
-            RASPIL: raspil
-
+            RASPIL: raspil,
+            // DISABLED: mesh.visible
         }
 
         if (groupId != null) {
@@ -522,8 +674,6 @@ class TableTopCreator extends BuildersHelper {
 
         arrows.position.x = (-width * 0.5 - xOffset)
         arrows.position.z = (-height * 0.5 - yOffset)
-
-        // arrows.geometry.applyMatrix4(object.matrix);
 
         arrows.name = "ARROWS"
         object.userData.PROPS.ARROWS = arrows

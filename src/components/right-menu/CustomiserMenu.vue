@@ -1,14 +1,18 @@
 <script setup lang="ts">
 // @ts-nocheck 31
-import { onMounted, onBeforeUnmount, ref, onUnmounted } from "vue";
+import { onMounted, onBeforeUnmount, ref, onUnmounted, computed } from "vue";
 import type { Mesh, Object3D, Vector3, PerspectiveCamera } from "three";
 
 import { useCustomiserStore } from "@/store/appStore/useCustomiserStore";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useUniformState } from "@/store/appliction/useUniformState";
+import { useMenuStore } from "@/store/appStore/useMenuStore";
+import { useAppData } from "@/store/appliction/useAppData";
 
 import RulerPage from "@/components/right-menu/customiser-pages/RulerRightPage.vue";
 import RailsRightPage from "./customiser-pages/RailsRightPage/RailsRightPage.vue";
+import Options from "./customiser-pages/RailsRightPage/Options.vue";
 import ColorPage from "@/components/right-menu/customiser-pages/ColorRightPage.vue";
 import ModelsItemSelector from "@/components/right-menu/customiser-pages/ColorRightPage/ModelsItemSelector.vue";
 import MovingPage from "@/components/right-menu/customiser-pages/MovingRightPage.vue";
@@ -19,17 +23,38 @@ import ColorButton from "@/components/ui/buttons/right-menu/ColorRightButton.vue
 import MovingButton from "@/components/ui/buttons/right-menu/MovingRightButton.vue";
 import FigureButton from "@/components/ui/buttons/right-menu/FigureRightButton.vue";
 import HammerButton from "@/components/ui/buttons/right-menu/HammerRightButton.vue";
+import { compute } from "three/webgpu";
+
+type TCustomiserMap = ["ruler", "color", "moving", "figure", "hammer"];
+type TButtonVisibles = {
+  ruler: boolean;
+  color: boolean;
+  moving: boolean;
+  figure: boolean;
+};
 
 const customiserStore = useCustomiserStore();
 const eventBus = useEventBus();
 const modelState = useModelState();
+const uniformState = useUniformState();
+const menuStore = useMenuStore();
+const app = useAppData();
 
 const currentModel = ref(null);
+const buttonVisibles = ref<TButtonVisibles>({
+  ruler: true,
+  color: false,
+  moving: false,
+  figure: false,
+});
 
 const closeCustomiser = () => {
+  const { uniformMode } = uniformState.getUniformModeData;
   // Отключаем режим переходящего рисунка при закрытии кастомизатора
-  eventBus.emit("A:Disable-Uniform-Mode");
-  console.log('Close customiser')
+  if (uniformMode) {
+    eventBus.emit("A:Disable-Uniform-Mode");
+  }
+  eventBus.emit("A:close-modal-custom");
   customiserStore.hideCustomiserPopup();
 };
 
@@ -40,24 +65,63 @@ const checkSelect = (el) => {
     modelState.setCurrentModel(null);
     return;
   }
-  currentModel.value = el.object.userData;
-  modelState.setCurrentModel(el.object.userData);
-  customiserStore.switchCustomiser('color')
+  // console.log(el.object, "A:Selected");
+
+  currentModel.value = el.object;
+  // modelState.setCurrentModel(el.object.userData);
+  modelState.setCurrentModel(el.object);
+  if (el.object.userData.elementType === "raspil") return;
+
+  checkData(el.object);
+
+  if (el.object.name == "MODEL") {
+    closeCustomiser();
+    return;
+  }
+  customiserStore.switchCustomiser("ruler");
+};
+
+const checkData = (object) => {
+  const products = modelState.getModels;
+  const { PRODUCT, CONFIG } = object.userData.PROPS;
+  const { FASADE_PROPS, DAE, MODULE_COLOR } = CONFIG;
+  const prodData = products[PRODUCT];
+
+  const haveHandles = app.getAppData.POSITION_HANDLES[PRODUCT];
+  const havePlinth = prodData.leg_length > 0;
+
+  const checkColor =
+    (prodData.FACADE.length > 0 && prodData.FACADE[0] !== null && !DAE) ||
+    (MODULE_COLOR != null && !DAE);
+  const checkOptions =
+    prodData.OPTION.length > 0 && prodData.OPTION[0] !== null;
+
+  buttonVisibles.value.color = checkColor;
+  buttonVisibles.value.figure = (checkColor && haveHandles) || havePlinth;
+  buttonVisibles.value.moving = checkOptions;
 };
 
 onMounted(() => {
   eventBus.on("A:Selected", checkSelect);
   eventBus.on("A:ClearSelected", checkSelect);
-  eventBus.on("A:RemoveModel", closeCustomiser)
+  eventBus.on("A:RemoveModel", closeCustomiser);
+  eventBus.on("A:Duplicate", closeCustomiser);
 });
 
 onBeforeUnmount(() => {
   eventBus.off("A:Selected", checkSelect);
   eventBus.off("A:ClearSelected", checkSelect);
 });
-onUnmounted(()=>{
-  closeCustomiser()
-})
+
+const getName = computed(() => {
+  const sceneModel = modelState.getCurrentModel;
+  const name = sceneModel?.userData.PROPS.NAME ?? "н/о";
+  return name;
+});
+
+onUnmounted(() => {
+  closeCustomiser();
+});
 </script>
 
 <template>
@@ -65,28 +129,27 @@ onUnmounted(()=>{
     <div v-if="customiserStore.isCustomiserOpen" class="customiser">
       <div class="customiser__container">
         <div class="customiser-header">
-          <p class="customiser__title">Редактирование</p>
-          <div class="customiser-links">
-            <!-- Rework -->
-            <RulerButton />
-            <ColorButton />
-            <MovingButton />
-            <FigureButton />
-            <HammerButton />
+          <p class="customiser__title">{{ getName }}</p>
+          <div class="customiser__actions">
+            <div class="customiser-links">
+              <!-- Rework -->
+              <RulerButton v-if="buttonVisibles.ruler" />
+              <ColorButton v-if="buttonVisibles.color" />
+              <MovingButton v-if="buttonVisibles.moving" />
+              <FigureButton v-if="buttonVisibles.figure" />
+              <!-- <HammerButton /> -->
+            </div>
+            <img
+              src="@/assets/svg/right-menu/close.svg"
+              class="close__button"
+              @click="closeCustomiser"
+            />
           </div>
-          <img
-            src="@/assets/svg/right-menu/close.svg"
-            class="close__button"
-            @click="closeCustomiser"
-          />
         </div>
 
         <RulerPage v-if="customiserStore.customisers == 'ruler'" />
         <ModelsItemSelector v-if="customiserStore.customisers == 'color'" />
-        <!--
-        <ColorPage v-if="customiserStore.customisers == 'color'" /> // TODO временно оставлен, для сверки со старой версией
-        -->
-        <RailsRightPage v-if="customiserStore.customisers == 'moving'" />
+        <Options v-if="customiserStore.customisers == 'moving'" />
         <FigurePage v-if="customiserStore.customisers == 'figure'" />
       </div>
     </div>
@@ -99,9 +162,9 @@ onUnmounted(()=>{
   max-height: 85vh;
   max-width: 551px;
   position: absolute;
-  top: 106px;
+  top: 10px;
   right: 10px;
-  padding: 15px;
+  padding: 1rem;
   background: $white;
   box-shadow: 0px 0px 10px 0px #3030301a;
   z-index: 10;
@@ -111,35 +174,45 @@ onUnmounted(()=>{
   // box-sizing: border-box;
   overflow: hidden;
 
+  user-select: none; /* Стандартное */
+  -webkit-user-select: none; /* Safari, Chrome */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+
+  &-header {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ecebf1;
+  }
+  &__title {
+    max-width: 50%;
+    margin-right: 50px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  &-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   &__container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 0.5rem;
     max-height: 85vh;
     padding-bottom: 25px;
+  }
 
-    .customiser-header {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      .customiser__title {
-        margin-right: 50px;
-        font-size: 18px;
-        font-weight: 600;
-      }
-
-      .customiser-links {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .close__button {
-        cursor: pointer;
-      }
-    }
+  &__actions {
+    display: flex;
+    gap: 2rem;
+  }
+  .close__button {
+    cursor: pointer;
   }
 }
 </style>

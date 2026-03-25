@@ -27,7 +27,7 @@ export class Camera {
     instance: THREE.Camera | any = null
     controls: OrbitControls | null = null
     params: THREEInterfases.ICameraData
-    ortoParams: THREEInterfases.IOrtoCameraData
+    // ortoParams: THREEInterfases.IOrtoCameraData
     ortoCamera: boolean = false
     screenSpacePanning: boolean = false
     keybordListeners: TKeybordListeners
@@ -38,19 +38,20 @@ export class Camera {
 
     private onKeyDown: (event) => void;
     private onKeyUp: (event) => void
+    private onSetPosition: (value: any) => void
 
     private cameraPositions = [
-        { pos:new THREE.Vector3(5000, 8000, -8000) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(8000, 1500, 0) , target: new THREE.Vector3(0,1500,0)},
-        { pos:new THREE.Vector3(-5000, 8000, -8000) , target: new THREE.Vector3(0,0,0)},
+        { pos: new THREE.Vector3(5000, 8000, -8000), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(8000, 1500, 0), target: new THREE.Vector3(0, 1500, 0) },
+        { pos: new THREE.Vector3(-5000, 8000, -8000), target: new THREE.Vector3(0, 0, 0) },
 
-        { pos:new THREE.Vector3(0, 5000, -10000) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(0, 12000, 0) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(0, 5000, 10000) , target: new THREE.Vector3(0,0,0)},
+        { pos: new THREE.Vector3(0, 5000, -10000), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(0, 12000, 0), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(0, 5000, 10000), target: new THREE.Vector3(0, 0, 0) },
 
-        { pos:new THREE.Vector3(5000, 8000, 8000) , target: new THREE.Vector3(0,0,0)},
-        { pos:new THREE.Vector3(-8000, 1500, 0) , target: new THREE.Vector3(0,1500,0)},
-        { pos:new THREE.Vector3(-5000, 8000, 8000) , target: new THREE.Vector3(0,0,0)},
+        { pos: new THREE.Vector3(5000, 8000, 8000), target: new THREE.Vector3(0, 0, 0) },
+        { pos: new THREE.Vector3(-8000, 1500, 0), target: new THREE.Vector3(0, 1500, 0) },
+        { pos: new THREE.Vector3(-5000, 8000, 8000), target: new THREE.Vector3(0, 0, 0) },
     ]
 
 
@@ -61,7 +62,7 @@ export class Camera {
         this.sizes = parent.sizes
         this.canvas = parent.canvas
         this.params = useSceneState().getStartCameraData
-        this.ortoParams = useSceneState().getStartOrtoCameraData
+        // this.ortoParams = useSceneState().getStartOrtoCameraData
         this.scene = parent.scene
 
         this.onKeyDown = this.keyDown.bind(this)
@@ -76,6 +77,10 @@ export class Camera {
 
     get _controls() {
         return this.controls
+    }
+
+    get _instanse() {
+        return this.instance
     }
 
     setupKeys() {
@@ -129,7 +134,13 @@ export class Camera {
     }
 
     setPosition(value): void {
-        console.log('CH')
+
+        // Если нажата центральная кнопка (action 4), устанавливаем камеру напротив самой широкой стены
+        if (value === 4) {
+            this.alignCameraToWidestWall()
+            return
+        }
+        
         this.instance.position.copy(this.cameraPositions[value].pos)
         this.controls.target.set(...this.cameraPositions[value].target)
         this.controls?.update()
@@ -145,15 +156,16 @@ export class Camera {
 
     resize(): void {
         let aspect = this.sizes.width / this.sizes.height;
+        this.instance!.aspect = aspect;
 
-        if (this.ortoCamera) {
-            this.instance!.left = (this.sizes.width / -2) * 0.01;
-            this.instance!.right = (this.sizes.width / 2) * 0.01;
-            this.instance!.top = (this.sizes.height / 2) * 0.01;
-            this.instance!.bottom = (this.sizes.height / -2) * 0.01
-        } else {
-            this.instance!.aspect = aspect;
-        }
+        // if (this.ortoCamera) {
+        //     this.instance!.left = (this.sizes.width / -2) * 0.01;
+        //     this.instance!.right = (this.sizes.width / 2) * 0.01;
+        //     this.instance!.top = (this.sizes.height / 2) * 0.01;
+        //     this.instance!.bottom = (this.sizes.height / -2) * 0.01
+        // } else {
+        //     this.instance!.aspect = aspect;
+        // }
         this.instance?.updateProjectionMatrix()
     }
 
@@ -168,6 +180,128 @@ export class Camera {
     }
 
     removeCamera() {
+    }
+
+    /**
+     * Находит самую широкую стену в комнате
+     */
+    private findWidestWall(): THREE.Object3D | null {
+        const roomManager = this.parent._roomManager
+        if (!roomManager || !roomManager._roomWalls || roomManager._roomWalls.length === 0) {
+            return null
+        }
+
+        const walls = roomManager._roomWalls
+        let widestWall: THREE.Object3D | null = null
+        let maxWidth = 0
+
+        for (const wall of walls) {
+            let width = 0
+
+            // Пытаемся получить ширину из userData.dimensions
+            if (wall.userData?.dimensions && Array.isArray(wall.userData.dimensions)) {
+                // dimensions обычно [width, height] для PlaneGeometry
+                width = wall.userData.dimensions[0] || 0
+            }
+
+            // Если не получилось, вычисляем из bounding box
+            if (width === 0 && wall instanceof THREE.Object3D) {
+                const box = new THREE.Box3().setFromObject(wall)
+                const size = new THREE.Vector3()
+                box.getSize(size)
+                
+                // Для стены ширина - это наибольший размер по X или Z (горизонтальные оси)
+                // Высота обычно по Y
+                width = Math.max(size.x, size.z)
+            }
+
+            if (width > maxWidth) {
+                maxWidth = width
+                widestWall = wall
+            }
+        }
+
+        return widestWall
+    }
+
+    /**
+     * Устанавливает камеру напротив самой широкой стены в комнате
+     * Камера будет расположена так, чтобы смотреть прямо на центр стены
+     */
+    private alignCameraToWidestWall(): void {
+        const widestWall = this.findWidestWall()
+        
+        if (!widestWall) {
+            console.warn('Не найдены стены в комнате')
+            // Fallback на стандартную позицию для action 4
+            this.instance.position.copy(this.cameraPositions[4].pos)
+            this.controls.target.set(...this.cameraPositions[4].target)
+            this.controls?.update()
+            return
+        }
+
+        // Получаем нормаль стены
+        const wallNormal = widestWall.userData?.plane?.normal
+        if (!wallNormal) {
+            console.warn('Не удалось получить нормаль стены')
+            // Fallback на стандартную позицию для action 4
+            this.instance.position.copy(this.cameraPositions[4].pos)
+            this.controls.target.set(...this.cameraPositions[4].target)
+            this.controls?.update()
+            return
+        }
+
+        const normal = new THREE.Vector3().copy(wallNormal).normalize()
+
+        // Получаем центр стены
+        const box = new THREE.Box3().setFromObject(widestWall)
+        const wallCenter = new THREE.Vector3()
+        box.getCenter(wallCenter)
+
+        // Получаем размеры стены для вычисления оптимального расстояния
+        const wallSize = new THREE.Vector3()
+        box.getSize(wallSize)
+        const wallWidth = Math.max(wallSize.x, wallSize.z)
+        const wallHeight = wallSize.y
+
+        // Расстояние от стены до камеры зависит от размера стены
+        // Используем формулу, чтобы стена хорошо помещалась в поле зрения
+        const cameraDistance = Math.max(wallWidth * 1.5, wallHeight * 2, 6000)
+        
+        // Высота камеры - на уровне центра стены
+        const cameraHeight = wallCenter.y
+
+        // Позиция камеры: от центра стены в направлении, противоположном нормали
+        // Нормаль указывает наружу от стены, поэтому инвертируем её, чтобы смотреть на стену
+        const cameraOffset = normal.clone().multiplyScalar(-cameraDistance)
+        const cameraPosition = new THREE.Vector3()
+            .copy(wallCenter)
+            .add(cameraOffset)
+        
+        // Устанавливаем высоту камеры на уровне центра стены
+        cameraPosition.y = cameraHeight
+
+        // Target камеры - центр стены
+        const targetPosition = wallCenter.clone()
+
+        // Устанавливаем позицию камеры
+        this.instance.position.copy(cameraPosition)
+        
+        // Устанавливаем target для OrbitControls
+        this.controls.target.copy(targetPosition)
+        
+        // Обновляем контролы
+        this.controls.update()
+
+        // console.log('Камера установлена напротив самой широкой стены', {
+        //     wallCenter: wallCenter.toArray(),
+        //     cameraPosition: cameraPosition.toArray(),
+        //     targetPosition: targetPosition.toArray(),
+        //     normal: normal.toArray(),
+        //     wallWidth,
+        //     wallHeight,
+        //     cameraDistance
+        // })
     }
 
     vueEvents() {

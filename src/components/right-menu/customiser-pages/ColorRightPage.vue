@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<!-- <script lang="ts" setup>
 // @ts-nocheck 31
 /**
  * ИЗНАЧАЛЬНЫЙ УСТАВРЕВШИЙ КОМПОНЕНТ. ОСТАВЛЕН ДЛЯ СВЕРКИ С НОВОЙ ВЕРСИЕЙ
@@ -471,4 +471,4 @@ const changeGlassColor = (fasadeNdx) => {
     transform: rotate(-90deg);
   }
 }
-</style>
+</style> -->

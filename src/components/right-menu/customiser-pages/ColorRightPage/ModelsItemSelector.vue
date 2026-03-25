@@ -8,6 +8,7 @@ import {
   ref,
   watch,
 } from "vue";
+import type { Object3D } from "three";
 import { useModelState } from "@/store/appliction/useModelState";
 import defaultTab from "@/components/ui/tabs/defaultTab.vue";
 import MaterialRedactor from "./MaterialRedactor.vue";
@@ -29,27 +30,56 @@ interface TabItem {
 const modelState = useModelState();
 const uniformState = useUniformState();
 const customiserStore = useCustomiserStore();
+const currentModel = ref<Object3D | null>(null);
+
 const redactorsRef = ref<HTMLElement | null>(null);
 const fasadeList = ref<any[]>([]);
 const productData = ref(null);
 const eventBus = useEventBus();
 const materialList = ref(null);
+const isNisha = ref(false);
 const tabsList = ref<any[]>([]);
 const tabIndex = ref<Number>(0);
 const tabName = ref<string>("Корпус");
+
 const isGroupsManagerActive = ref<boolean>(false);
+const transitionFasadeSelect = ref<boolean>(false);
+
 const prepareData = () => {
-  materialList.value = modelState.getCurrentModuleData;
-  fasadeList.value = modelState.getCurrentModel.PROPS.CONFIG.FASADE_PROPS;
+  const productId = currentModel.value?.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+
+  materialList.value = isNisha.value
+    ? Object.values(modelState._WALL)
+    : modelState.getCurrentModuleData;
+
+  console.log(materialList.value, "materialList.value");
+
+  fasadeList.value =
+    modelState.getCurrentModel.userData.PROPS.CONFIG.FASADE_PROPS;
   tabsList.value = createTabList(fasadeList.value, materialList.value);
-  tabName.value = tabsList.value[0].name;
+  createFacadeData();
+
+  tabName.value = tabsList.value[0]?.name;
+};
+
+const createFacadeData = () => {
+  const productId = currentModel.value?.userData.PROPS.PRODUCT;
+  const { FACADE } = modelState._PRODUCTS[productId];
+
+  modelState.createCurrentModelFasadesData({
+    data: FACADE,
+    fasadeNdx: fasadeIndex.value,
+    productId,
+  });
 };
 
 const createTabList = (
   fasadeList: Array<object>,
-  materialList: Array<object>
+  materialList: Array<object>,
 ) => {
   let data: Array<object> = [];
+
   materialList.length > 0
     ? data.push({
         name: "Корпус",
@@ -58,14 +88,16 @@ const createTabList = (
       })
     : false;
 
-  fasadeList.forEach((item, key) => {
-    data.push({
-      name: `Фасад ${key + 1}`,
-      label: `Фасад ${key + 1}`,
-      title: "Цвет фасада",
-      type: (item as any).TYPE,
-    });
-  });
+  fasadeList.length > 0
+    ? fasadeList.forEach((item, key) => {
+        data.push({
+          name: `Фасад ${key + 1}`,
+          label: `Фасад ${key + 1}`,
+          title: "Цвет фасада",
+          type: (item as any).TYPE,
+        });
+      })
+    : false;
 
   return data;
 };
@@ -77,17 +109,7 @@ const fasadeIndex = computed(() => {
   return tabIndex.value;
 });
 
-onBeforeMount(() => {
-  prepareData();
-});
-
-onMounted(() => {
-  tabIndex.value = 0;
-});
-
 const handleTabChange = ({ index, tab }) => {
-  console.log(index, tab);
-
   // Если переключаемся на другой таб, отключаем режим переходящего рисунка
   if (isGroupsManagerActive.value) {
     eventBus.emit("A:Toggle-Uniform-Mode", { showGroupsManager: false });
@@ -96,6 +118,7 @@ const handleTabChange = ({ index, tab }) => {
   isGroupsManagerActive.value = false;
   tabIndex.value = index;
   tabName.value = tab.name;
+  createFacadeData();
 };
 
 // Добавляем метод для возврата к обычным табам
@@ -120,8 +143,12 @@ const handleUniformModeToggled = (data: {
   uniformMode: boolean;
   showGroupsManager: boolean;
 }) => {
-  console.log("Uniform mode toggled:", data);
   isGroupsManagerActive.value = data.showGroupsManager && data.uniformMode;
+};
+
+const checkTransition = (value) => {
+  const { transitionT } = value;
+  transitionFasadeSelect.value = transitionT;
 };
 
 // Экспортируем метод для использования в других компонентах
@@ -139,14 +166,19 @@ watch(
       eventBus.emit("A:Toggle-Uniform-Mode", { showGroupsManager: false });
     }
 
+    if (modelState.getCurrentModel?.name == "MODEL") {
+      customiserStore.hideCustomiserPopup();
+      return;
+    }
+
     tabIndex.value = 0;
     materialList.value = modelState.getCurrentModuleData;
-    tabName.value = tabsList.value[0].name;
+    tabName.value = tabsList.value[0]?.name;
     isGroupsManagerActive.value = false;
 
     prepareData();
     redactorsRef.value.selectTab(tabName.value, tabIndex.value, true);
-  }
+  },
 );
 
 // Следим за изменениями uniformMode для синхронизации состояния
@@ -158,8 +190,19 @@ watch(
       isGroupsManagerActive.value = false;
       customiserStore.hideCustomiserPopup();
     }
-  }
+  },
 );
+
+onBeforeMount(() => {
+  currentModel.value = modelState.getCurrentModel;
+  isNisha.value = modelState.getCurrentModel.elementType == "element_room";
+
+  prepareData();
+});
+
+onMounted(() => {
+  tabIndex.value = 0;
+});
 
 // Подписываемся на событие синхронизации состояния
 onMounted(() => {
@@ -176,24 +219,28 @@ onUnmounted(() => {
     ref="redactorsRef"
     :tabs="tabsList"
     @tab-change="handleTabChange"
+    v-if="!isGroupsManagerActive"
   />
   <TransitionDrawingButton
     :class="$style.transitionDrawingButton"
     :is-active="isGroupsManagerActive"
     @click="handleTransitionDrawingClick"
+    v-if="transitionFasadeSelect"
   />
   <CorpusMaterialRedactor
     :materialList="materialList"
+    :isNisha="isNisha"
     v-if="
       materialList.length > 0 && tabName == 'Корпус' && !isGroupsManagerActive
     "
   />
 
   <MaterialRedactor
-    v-if="tabName != 'Корпус' && !isGroupsManagerActive"
+    v-if="tabName != 'Корпус' && !isGroupsManagerActive && !isNisha"
     :key="tabIndex"
     :fasadeData="fasadeList[fasadeIndex]"
     :tabIndex="fasadeIndex"
+    @select_material="checkTransition"
   />
 
   <GroupsManager v-if="isGroupsManagerActive" />

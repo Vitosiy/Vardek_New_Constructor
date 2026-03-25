@@ -21,6 +21,8 @@ import { useUniformState } from "@/store/appliction/useUniformState";
 import { SetObject } from '../Utils/SetObject';
 import { GeometryBuilder } from '../Meshes/GeometryBuilder';
 import { Room } from './Room';
+import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
+import { saveUMGrid } from "@/components/2DmoduleConstructor/utils/Methods.ts";
 // import CreateShape from '../2DScene/CreateShape';
 
 
@@ -38,11 +40,14 @@ export class RoomManager extends Room {
     scene: THREE.Scene
     setObject: SetObject | null
     geometryBuilder: GeometryBuilder | null
+    universalGeometryBuilder: UniversalGeometryBuilder | null
     uniformTextureBuilder: THREETypes.TUniformTextureBuilder
     contant: { [key: string]: any } = {};
     heightClamp: number = useSceneState().getStartHeightClamp
     heightLine: THREE.Object3D[] = []
     totalObbBounds: OBB[] = []
+    totalAABBBounds: THREE.Box3[] = []
+    duplicateSwitch: boolean = false
 
     constructor(root: THREETypes.TApplication) {
 
@@ -51,6 +56,7 @@ export class RoomManager extends Room {
         this.scene = root.scene!
         this.setObject = root.setObject!
         this.geometryBuilder = root.geometryBuilder
+        this.universalGeometryBuilder = root.universalGeometryBuilder
         this.uniformTextureBuilder = root.geometryBuilder?.buildProduct.uniform_texture_builder!
 
         // this.createShape = new CreateShape(root.canvas, root.camera.instance as THREE.Camera, root.scene, root)
@@ -78,6 +84,11 @@ export class RoomManager extends Room {
     }
 
     get _roomTotalBounds() {
+        return this.totalAABBBounds
+
+    }
+
+    setRoomTotalBounds() {
 
         let boundsArray: THREE.Box3[] = []
 
@@ -85,7 +96,7 @@ export class RoomManager extends Room {
 
         intersects.forEach(object => {
 
-            if (!object.userData?.current) {
+            if (!object.userData?.current && object.visible && !object.userData.disableRaycast) {
                 const box = new THREE.Box3().setFromObject(object);
                 const boxTop = new THREE.Box3().setFromObject(object);
                 box.max.y = 3000;
@@ -97,7 +108,7 @@ export class RoomManager extends Room {
 
         });
 
-        return boundsArray
+        this.totalAABBBounds = boundsArray
     }
 
     createTotalObbBounds() {
@@ -108,9 +119,11 @@ export class RoomManager extends Room {
         intersects.forEach(object => {
 
             if (!object.userData?.current && object.visible) {
-
+                
+                const center = object.userData.aabb.getCenter(new THREE.Vector3())
                 const obb = object.userData.obb.clone()
-                obb.center.copy(object.position)
+                // obb.center.copy(object.position)
+                obb.center.copy(center)
                 obb.rotation.setFromMatrix4(object.matrixWorld);
 
                 /** @Визуализация_OBB */
@@ -157,6 +170,7 @@ export class RoomManager extends Room {
             snapHeight?: number
         }): THREETypes.TAdjustPosition {
 
+
         const position = this.OBBCollider.getCorrectPosition({
             object,
             targetPosition,
@@ -164,7 +178,6 @@ export class RoomManager extends Room {
             targetRotation,
             snapHeight,
             heightClamp: this.heightClamp,
-
             wallStore: this._roomTotal,
             boundsStore: this._roomBounds,
             objectsBoundsStore: this._totalObbBounds,
@@ -274,33 +287,74 @@ export class RoomManager extends Room {
 
     }
 
-    save(): string[] {
+    // save(): string[] {
 
+    //     const convert = Object.values(this.contant)
+    //         .filter(item => item.userData.elementType !== 'raspil')
+    //         .map(item => {
+    //             return {
+    //                 id: item.userData.globalData,
+    //                 position: item.position.clone(),
+    //                 rotation: item.rotation.clone(),
+    //                 obb: item.userData.obb,
+    //                 data: this.convertProps(item),
+    //                 type: item.userData.elementType,
+    //                 size: item.userData.PROPS.CONFIG.SIZE
 
-        const convert = Object.values(this.contant)
-            .filter(item => item.userData.elementType !== 'raspil')
-            .map(item => {
-                return {
-                    id: item.userData.globalData,
-                    position: item.position.clone(),
-                    rotation: item.rotation.clone(),
-                    obb: item.userData.obb,
-                    data: this.convertProps(item),
-                    type: item.userData.elementType,
-                    size: item.userData.PROPS.CONFIG.SIZE
+    //             }
 
-                }
+    //         });
+    //     const result = JSON.stringify(convert)
 
-            });
-        const result = JSON.stringify(convert)
+    //     return result
+    // }
 
-        console.log('SAVE')
-        return result
+    saveSingle(item: THREE.Object3D, duplicate: boolean = false): any {
+
+        if (item.userData.elementType === 'raspil') {
+            return null; // или бросить ошибку, если не нужно сохранять
+        }
+
+        const data = {
+            id: item.userData.PROPS.PRODUCT,
+            basketId: item.userData.basketId,
+            position: item.position.clone(),
+            rotation: item.rotation.clone(),
+            obb: item.userData.obb,
+            data: this.convertProps(item, duplicate),
+            type: item.userData.elementType,
+            size: item.userData.PROPS.CONFIG.SIZE
+        }
+
+        if (duplicate) {
+            return JSON.stringify(data)
+        }
+
+        return data;
     }
 
-    convertProps(product: THREETypes.TObject) {
+    save(): string {
+        const convert = Object.values(this.contant)
+            .filter(item => item.userData.elementType !== 'raspil')
+            .map(item => this.saveSingle(item))
+            .filter(Boolean); // убираем null, если они есть
+
+        return JSON.stringify(convert);
+    }
+
+    convertProps(product: THREETypes.TObject, duplicate: boolean) {
 
         const { PROPS } = product.userData;
+        if (duplicate) {
+            PROPS.CONFIG.UNIFORM_TEXTURE = {
+                group: null,
+                level: null,
+                index: null,
+                column_index: null,
+                backupFasadId: null,
+                color: null
+            }
+        }
 
         const saveData = {
             ...PROPS,
@@ -312,8 +366,9 @@ export class RoomManager extends Room {
             FASADE: [],
             FASADE_DEFAULT: [],
             TABLETOP: {},
-            DRAWERS:{},
-            JSON_FILLINGS:[]
+            DRAWERS: {},
+            JSON_FILLINGS: [],
+            PLINTH_MESH: []
         };
 
         const raspilList = saveData.RASPIL_LIST ?? [];
@@ -329,6 +384,16 @@ export class RoomManager extends Room {
                 // Создаём клон, если нужно сохранить чистоту
                 result.position = elem.position?.clone?.() ?? null;
                 result.rotation = elem.rotation?.clone?.() ?? null;
+            }
+        }
+
+        if (saveData.CONFIG?.MODULEGRID) {
+            let MODULEGRID = Object.assign({}, saveData.CONFIG.MODULEGRID)
+            try {
+                MODULEGRID = JSON.stringify(MODULEGRID)
+            }
+            catch (e) {
+                saveData.CONFIG.MODULEGRID = saveUMGrid(saveData.CONFIG.MODULEGRID)
             }
         }
 
@@ -359,53 +424,115 @@ export class RoomManager extends Room {
         const parse = typeof data === 'string' ? JSON.parse(data) : data
 
         if (count === parse.length) {
-            this.eventBus.emit('A:ContantLoaded', true)
+            this.roomState.setLoad(true)
+            this.eventBus.emit('A:ContantLoaded')
         }
 
         const uniformGroups: UniformTypes.TUniformGroupMembership[] = toRaw(this.uniformState.getUniformGroupMembership) // Получаем доступ непосредственно к объектам, убирая proxy от VUE
         this.uniformTextureBuilder.clearUniformGroups()
         this.uniformTextureBuilder.loadUniformGroup(uniformGroups)
         this.uniformState.clearUniformGroupMembership();
-
     }
 
-    async loadData(data: string[]) {
-        // console.log(data)
-        let counts = 0;
-        const parse = typeof data === 'string' ? JSON.parse(data) : data
+    async loadSingle(data: any): Promise<number> {
 
+        const model = typeof data === 'string' ? JSON.parse(data) : data;
 
-        for (const item of parse) {
-            const model = typeof item === 'string' ? JSON.parse(item) : item;
-            const point = model.position as THREE.Vector3;
-            const rotation = model.rotation as THREE.Euler;
-            const loadData = model.data ?? '';
-            const size = model.size ?? '';
+        let count = 0;
+        const point = model.position as THREE.Vector3;
+        const rotation = model.rotation as THREE.Euler;
+        const loadData = model.data ?? '';
+        const size = model.size ?? '';
 
-            await new Promise<void>((resolve) => {
-                this.geometryBuilder!.craeteModel(
-                    this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
-                    (object: THREE.Object3D) => {
-                        this.setObject!.create({ object, rotate: rotation, point });
+        if (!this._PRODUCTS[model.id]) {
+            console.log(`❌ Товара c ID:${model.id} нет в списке PRODUCTS`)
+            return 1
+        }
+        try {
 
-                        if (loadData?.RASPIL_LIST?.length > 0) {
-                            this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
-                        }
+            /** @Загрузка_модели */
 
-                        counts++;
-                        resolve();
-                    },
-                    loadData,
-                    size
-                );
+            let builder = loadData.CONFIG?.MODULEGRID ? this.universalGeometryBuilder : this.geometryBuilder;
+
+            const object = await builder!.createModel(
+                this.modelState.getModels[model.id] as THREEInterfases.IModelsData,
+                loadData,
+                size
+            );
+
+            /** @Создаём_объект_в_сцене */
+
+            await this.setObject!.create({
+                object,
+                rotate: rotation,
+                point,
             });
+
+            /** @Столешница */
+
+            if (loadData?.RASPIL_LIST?.length > 0) {
+                await this.root.tableTopCreator?.create(loadData.RASPIL, object, object.id);
+            }
+
+            return 1;
+        } catch (error) {
+            console.error('Ошибка загрузки модели:', model.id, error);
+            return 1; // всё равно считаем обработанным
         }
 
-        return counts;
     }
 
-    addVueEvents() {
+    async loadData(data: string | string[]): Promise<number> {
 
+        let counts = 0;
+        const parse = typeof data === 'string' ? JSON.parse(data) : data;
+
+        const results = await Promise.all(
+            parse.map(item => this.loadSingle(item))
+        );
+
+        return results.reduce((sum, val) => sum + val, 0);
+    }
+
+    async duplicateProd() {
+        const curProd = this.root._trafficManager._currentObject
+        if (!curProd) return
+        try {
+            curProd.userData.current = false
+        }
+        catch (e) {
+            console.log('❌ Контекст userData.current потерян')
+        }
+        const { MOUSE_POSITION } = curProd.userData
+
+        const saved = await this.saveSingle(curProd, true)
+        await this.loadSingle(saved)
+        this.createTotalObbBounds()
+        this.root._trafficManager?.moveManager?.setSelectObj(this.root._trafficManager._currentObject)
+
+
+        document.addEventListener('mousemove', this.addMouseEvent, false)
+
+        this.eventBus.emit('A:Duplicated')
+        this.duplicateSwitch = true
+
+
+    }
+
+    private bindMouseEvent(event: MouseEvent) {
+        this.root._trafficManager?.moveManager?.handleInteractionMove(event.clientX, event.clientY)
+    }
+
+    public disableDuplicateProd() {
+        document.removeEventListener('mousemove', this.addMouseEvent, false)
+        if (this.duplicateSwitch) {
+            this.eventBus.emit('U:Duplicated')
+            this.duplicateSwitch = false
+        }
+    }
+
+
+    addVueEvents() {
 
         this.boundWallMaterial = (material) => {
 
@@ -421,12 +548,18 @@ export class RoomManager extends Room {
             this.heightClamp = value
         }
 
+        this.boundDuplicateProd = () => {
+            this.duplicateProd()
+        }
+
 
         this.eventBus.on('A:ChangeWallTexture', this.boundWallMaterial)
 
         this.eventBus.on('A:ChangeFloorTexture', this.boundFloorMaterial)
 
         this.eventBus.on('A:Height-clamp', this.boundHeightClampValue)
+
+        this.eventBus.on('A:Duplicate', this.boundDuplicateProd)
 
     }
 

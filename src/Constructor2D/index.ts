@@ -117,7 +117,7 @@ export default class Constructor2D {
     { 
       id: 3689611,
       name: "door"
-    }
+    },
   ];
 
   constructor(container: HTMLElement, canvas: HTMLCanvasElement) {
@@ -185,8 +185,24 @@ export default class Constructor2D {
   public destroy(): void {
     try {
       // Проверяем, что объект еще не уничтожен
-      if (!this.app2d && !this.layers) {
+      if (!this.app2d) {
         console.warn('Constructor2D уже уничтожен');
+        return;
+      }
+
+      // Если рендерер уже уничтожен — просто обнуляем ссылки
+      if ((this.app2d as any)?.renderer?.destroyed) {
+        this.app2d = null;
+        this.layers = {
+          grid: null,
+          halfRoom: null,
+          dimensionDisplay: null,
+          arrowRulerActiveObject: null,
+          planner: null,
+          doorsAndWindows: null,
+          startPointActiveObject: null,
+          rulers: null,
+        };
         return;
       }
 
@@ -235,64 +251,11 @@ export default class Constructor2D {
         }
       }
 
-      // Безопасно уничтожаем приложение PIXI
+      // Безопасно уничтожаем приложение PIXI (без ручного вмешательства в WebGL)
       if (this.app2d && typeof this.app2d.destroy === 'function') {
         try {
-          // Сначала очищаем сцену
-          if (this.app2d.stage) {
-            // Удаляем все дочерние объекты из сцены
-            this.app2d.stage.removeChildren();
-            
-            // Очищаем все события сцены
-            this.app2d.stage.eventMode = 'none';
-            this.app2d.stage.hitArea = null;
-          }
-          
-          // Очищаем рендерер
-          if (this.app2d.renderer) {
-            try {
-              // Очищаем все текстуры и ресурсы
-              const rAny = this.app2d.renderer as any;
-              if (rAny.texture && typeof rAny.texture.destroy === 'function') {
-                try { rAny.texture.destroy(true); } catch {}
-              }
-              
-              // Очищаем все шейдеры
-              if (rAny.shader && typeof rAny.shader.destroy === 'function') {
-                try { rAny.shader.destroy(); } catch {}
-              }
-              
-              // Очищаем все батчи
-              if (rAny.batch && typeof rAny.batch.destroy === 'function') {
-                try {
-                  rAny.batch.destroy();
-                } catch (error) {
-                  console.warn('Ошибка при очистке batch:', error);
-                }
-              }
-              
-              // Очищаем все пулы
-              if (rAny.gl) {
-                try {
-                  // Принудительно очищаем WebGL контекст
-                  const gl = rAny.gl;
-                  if (gl && gl.getExtension) {
-                    const loseContext = gl.getExtension('WEBGL_lose_context');
-                    if (loseContext) {
-                      loseContext.loseContext();
-                    }
-                  }
-                } catch (error) {
-                  console.warn('Ошибка при очистке WebGL контекста:', error);
-                }
-              }
-            } catch (error) {
-              console.warn('Ошибка при очистке рендерера:', error);
-            }
-          }
-          
-          // Затем уничтожаем приложение без дочерних объектов
-          this.app2d.destroy(false, { children: false });
+          this.app2d.stage?.removeChildren();
+          this.app2d.destroy(true, { children: true });
         } catch (error) {
           console.warn('Ошибка при уничтожении PIXI приложения:', error);
         }

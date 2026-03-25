@@ -27,22 +27,22 @@ declare global {
 //------------------
 
 export interface IProjectParams {
-    rooms?: IRoom[],
+    projectId: number | string | null,
+    type: string,
+    rooms: IRoom[],
     camera?: ICameraData,
     lights?: ILightsObjects,
     height_clamp?: number,
-    table?: { [key: string]: any },
-    table_params?: { [key: string]: any },
     table_color?: number | null,
     table_top_type_auto?: number | null,
     default_table_color?: number | null,
-    default_fasade_up?: number | null,
-    default_fasade_down?: number | null,
+    default_fasade_top?: number | null,
+    default_fasade_bottom?: number | null,
     default_fasade_color?: number | null,
     default_floor?: number | null,
     default_wall?: number | null,
-    default_module_color_down?: number | null,
-    default_module_color_up?: number | null,
+    default_module_color_bottom?: number | null,
+    default_module_color_top?: number | null,
     default_module_color?: number | null,
     default_milling_down?: number | null,
     default_milling_up?: number | null,
@@ -51,7 +51,12 @@ export interface IProjectParams {
     default_overlay_id?: number[],
     default_table_model?: number,
     default_handles?: number,
-    project_name?: number | null,
+    project_name?: number | null | string,
+    default_plinth_body?: number | null,
+    default_plinth_color?: number | null
+    default_showcase?: number | null,
+    default_milling?: number | null,
+    mirror_type?: number | null,
 
 }
 
@@ -69,6 +74,7 @@ export interface IRoom {
     description?: string;
     params: IWallSizes;
     content?: IContentItem[] | any[];
+    basket?: any[]
 }
 
 export interface IWallSizes {
@@ -381,4 +387,37 @@ export interface IProduct {
     OPTIONSECTION_ID: false | number;
     PREVIEW_PICTURE: string;
     FILLING_SECTION: false | number;
+}
+
+export interface IFillingConfig {
+    readonly ID: number;
+    readonly NAME: string;
+    readonly IMG: string;
+    readonly SMALL: string;
+    readonly NO_FASADE: boolean | null;
+
+    /** Условие в виде строки, например: "(#X#>=600&&#X#<=1200) && (#Y#>2100)" */
+    readonly CONDITIONS: string;
+
+    readonly VSECTION: number;
+    readonly VSECTION_MIN: number;
+    readonly VSECTION_MAX: number;
+    readonly SHELFQUANT: number;
+    readonly VSECTION_DEPTH: number | null;
+
+    readonly HEIGHT_PLINTH: number;
+    readonly HEIGHT_CORNICE: number;
+
+    readonly PROP_ALIGN: {
+        VALUE: string | null;
+        VALUE_ENUM: string | null;
+        PROPERTY_VALUE_ID: string | null;
+        VALUE_XML_ID: string | null;
+    } | null;
+
+    /** ID связанных 3D-моделей */
+    readonly MODELS: readonly number[];
+
+    readonly GROUP_SECTION: unknown | null;
+    readonly SORT: number;
 }

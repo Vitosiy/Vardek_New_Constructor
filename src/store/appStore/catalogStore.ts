@@ -28,18 +28,22 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   // Actions
   // Вызов 
-  const fetchInitialCatalog = async () => {
+  const fetchInitialCatalog = async (idSection, page, query, config, style) => {
     try {
       isLoading.value = true
       error.value = null
       
-      const response = await CatalogService.getCatalogList()
+      const response = await CatalogService.getCatalogList(idSection, page, query,config, style)
       
       if (!response?.sections) {
         throw new Error('Invalid server response: missing sections')
       }
-      
-      сategoriesList.value = response.sections
+
+      // const data = await processSections(response.sections);
+      // сategoriesList.value = data;
+      // console.log(response.sections);
+      // console.log(data);
+      сategoriesList.value = response.sections;
     } catch (err) {
       error.value = err
       console.error('Error loading initial catalog:', err)
@@ -49,12 +53,47 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
-  const fetchSubCatalogData = async ({ idSection, page, query = false }: CatalogListParams) => {
+  const processSections = async (sections) => {
+    // Проверяем, что sections — массив и не пустой
+    if (!Array.isArray(sections) || sections.length === 0) {
+      return [];
+    }
+
+    // Собираем все промисы и ждём их выполнения
+    const sectionsNew = await Promise.all(
+      sections.map(async (section) => {
+        console.log('Processing section ID:', section.ID);
+        try {
+          const data = await fetchSubCatalogData(section.ID);
+          return data; // Предполагается, что fetchSubCatalogData возвращает объект с items и pager
+        } catch (error) {
+          console.error(`Error fetching data for section ${section.ID}:`, error);
+          // Возвращаем заглушку или null, если запрос упал
+          return null;
+        }
+      })
+    );
+
+    // Фильтруем: исключаем объекты, где items пустой массив И pager равен false
+    // Также исключаем null/undefined, если были ошибки
+    const filteredSections = sectionsNew.filter(item => {
+      console.log();
+      if (!item) return false; // исключаем null/undefined
+      const isEmptyItems = Array.isArray(item.items) && item.items.length === 0;
+      const isPagerFalse = item.pager === false;
+      // Удаляем, если и пустые items, и pager === false
+      return !(isEmptyItems && isPagerFalse);
+    });
+
+    return filteredSections;
+  }
+
+  const fetchSubCatalogData = async ({ idSection, page, query = false, config, style }: CatalogListParams) => {
     try {
       isLoading.value = true;
       error.value = null;
 
-      const response = await CatalogService.getCatalogList({ idSection, page, query });
+      const response = await CatalogService.getCatalogList({ idSection, page, query, config, style });
       
       if (!response) {
         throw new Error('Invalid server response');

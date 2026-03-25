@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useAppData } from "@/store/appliction/useAppData";
 import { useModelState } from "@/store/appliction/useModelState";
 import { TFasadeProp } from "@/types/types";
@@ -32,7 +33,7 @@ export const useFigureRightPage = () => {
     const modelState = useModelState();
 
     const createHandlesList = () => {
-        const { PROPS } = modelState.getCurrentModel
+        const { PROPS } = modelState.getCurrentModel!.userData
         const ptoductId = PROPS.PRODUCT
 
         const data = appData.getAppData
@@ -43,48 +44,101 @@ export const useFigureRightPage = () => {
         // const handlesMap: Record<number, THandlesItem> = {};
         const handlesMap: THandlesItem[] = []
 
-        for (const el in handlesTempList) {
-            const product = PRODUCTS[el];
-            const temp = {
-                ID: product.ID,
-                PREVIEW_PICTURE: product.PREVIEW_PICTURE,
-                models: product.models[0],
-                NAME: product.NAME
+        if(Array.isArray(handlesTempList)) {
+            handlesTempList.forEach((el, key) => {
+                const product = PRODUCTS[el];
+                if(product) {
+                    const temp = {
+                        ID: product.ID,
+                        PREVIEW_PICTURE: product.PREVIEW_PICTURE,
+                        models: product.models[0],
+                        NAME: product.NAME
+                    }
+                    // handlesMap[el] = temp
+                    handlesMap.push(temp)
+                }
+            })
+        }
+        else {
+            for (const el in handlesTempList) {
+                const product = PRODUCTS[el];
+                const temp = {
+                    ID: product.ID,
+                    PREVIEW_PICTURE: product.PREVIEW_PICTURE,
+                    models: product.models[0],
+                    NAME: product.NAME
+                }
+                // handlesMap[el] = temp
+                handlesMap.push(temp)
             }
-            // handlesMap[el] = temp
-            handlesMap.push(temp)
         }
 
         return handlesMap
 
     }
 
-    const createSurfaceList = () => {
-        const { PROPS } = modelState.getCurrentModel;
-        const { FASADE_PROPS } = PROPS.CONFIG
+    const createSurfaceList = (figureData) => {
+        const _data = appData.getAppData
+        const { FASADE, CATALOG, POSITION_HANDLES } = _data
+        const { PRODUCTS } = CATALOG
+        const { PROPS } = modelState.getCurrentModel.userData;
+        const { PRODUCT } = PROPS
+        const { FASADE_PROPS, FASADE_POSITIONS, FASADE_TYPE } = PROPS.CONFIG
         const tempList: IFigureFasade[] = []
 
-        for (const el in FASADE_PROPS) {
-            tempList.push({
-                label: `Фасад ${parseInt(el) + 1}`,
-                name: `fasade ${parseInt(el) + 1}`,
-                props: FASADE_PROPS[el],
-                action: () => createHandlesList()
-            })
+        const calcHandles = (fasadeId, fasade) => {
+            //const disabled = FASADE_POSITIONS[el].FASADE_TYPE[0] == null
+
+            const disabled = !fasade && FASADE_TYPE[fasadeId] == null
+
+            const { COLOR } = fasade || FASADE_PROPS[fasadeId]
+
+            const fasadeData = FASADE[COLOR]
+            const haveHandles = POSITION_HANDLES[PRODUCT]
+
+            console.log(haveHandles, '=== haveHandles ===')
+
+            if (haveHandles) {
+                tempList.push({
+                    label: `Фасад ${parseInt(fasadeId) + 1}`,
+                    name: `fasade ${parseInt(fasadeId) + 1}`,
+                    disabled: disabled,
+                    props: fasade || FASADE_PROPS[fasadeId],
+                    action: () => createHandlesList()
+                })
+            };
+        }
+
+        if(figureData) {
+            const {data, segmentIndex} = figureData
+            calcHandles(segmentIndex, data)
+        }
+        else {
+            for (const el in FASADE_PROPS) {
+                calcHandles(el)
+            }
         }
 
         return tempList
 
     }
 
+    const createPlinthData = () => {
+        const { PROPS } = modelState.getCurrentModel.userData
+        return PROPS.CONFIG.PLINTH_ACTIONS
+    }
+
     const figureItems: IFigureItems[] = [
         {
             label: 'Ручки',
             name: 'Handles',
-            // action: () => createSurfaceList()
+        },
+        {
+            label: 'Цоколь',
+            name: 'Plinth',
         }
     ]
 
-    return { figureItems, createSurfaceList, createHandlesList }
+    return { figureItems, createSurfaceList, createHandlesList, createPlinthData }
 
 }

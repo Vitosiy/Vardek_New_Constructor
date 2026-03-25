@@ -20,7 +20,9 @@ export const CatalogService = {
   async getCatalogList({
     idSection = false,
     page = '1',
-    query = false
+    query = false,
+    config = '43830',
+    style = '689680'
   }: CatalogListParams = {}): Promise<CatalogResponse> {
     await this.ensureHeaderInitialized();
     // setTimeout(() => {
@@ -30,7 +32,8 @@ export const CatalogService = {
       let filter = ''
       if (query) filter = `&filter=${query}`
       const { data } = await axios.get(
-        `${BASE_API_URL}?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}&userid=22541`,
+        `${BASE_API_URL}?config=${config}&style=${style}&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}&userid=22541`,
+        // `${BASE_API_URL}?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}&userid=22541`,
         // `${BASE_API_URL}/data.get.php?config=43830&style=689680&cityid=17281&cityidprice=17281&section=${idSection}&type=catalog&page=${page}${filter}`,
         // https://dev.vardek.online/api/modeller/catalog/getlist/?config=43830&style=689680&cityid=17281&cityidprice=17281&section=2483&type=catalog&page=1
         {
@@ -67,7 +70,6 @@ export const CatalogService = {
       throw error
     }
   },
-
   async getProductPrice(formData: ProductRequestData): Promise<ProductPriceResponse> {
     try {
       const url = `https://vardek.ru/local/templates/constructor/API/catalog.element.getprice.php`
@@ -85,6 +87,25 @@ export const CatalogService = {
       throw error
     }
   },
+
+  // async getProductDescriprtion(formData: ProductRequestData): Promise<ProductPriceResponse> {
+  //   try {
+  //     const url = `https://vardek.ru/local/templates/constructor/API/catalog.element.getprice.php`
+  //     const response = await axios.post(url, formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data'
+  //       },
+  //       timeout: REQUEST_TIMEOUT
+  //     })
+  //     return response.data
+  //   } catch (error) {
+  //     if (axios.isAxiosError(error)) {
+  //       throw new Error(error.response?.data?.message || 'Ошибка при получении цены продукта')
+  //     }
+  //     throw error
+  //   }
+  // },
+
   async initHeader(): Promise<any> {
     try {
       const { data } = await axios.get(

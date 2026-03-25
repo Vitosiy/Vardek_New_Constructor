@@ -34,7 +34,6 @@ export class SetObject {
 
     async create({ object, point, rotate, boxHelper, wall, trafficManager }: THREEInterfases.ISetProduct) {
 
-
         this.roomManager = this.root._roomManager
 
         const { CONFIG } = object.userData.PROPS
@@ -59,7 +58,6 @@ export class SetObject {
 
         object.position.copy(point);
 
-
         const adjustedPosition = positionEmpty && rotationEmpty
             ? this.roomManager.adjustPositionWithRaycasting({ object, targetPosition: point, targetRotation: rotate, wall })
             : { position, rotation };
@@ -76,36 +74,19 @@ export class SetObject {
 
         this.scene.add(object);
         object.userData.aabb = new THREE.Box3().setFromObject(object);
+        object.userData.basketId = object.id
 
         /** Добавляем helper */
         object.userData.helper ? this.scene.add(object.userData.helper) : ''
 
         /** Добавляем объект в RoomContant для последующего использования */
         this.roomManager._roomContant = object
-        // if (object.userData.elementType !==
-        //     "element_room") {
-        //     this.roomManager._roomContant = object
-        // }
 
         object.userData.currentWall = wall
         object.userData.targetPosition = point
 
-
-
         /** Режим объединения в группы для переходящей текстуры */
         if (this.uniformState.getUniformModeData.uniformMode) return
-
-        // Передаём данные созданного объекта
-
-        // if (trafficManager) {
-
-        //     // object.userData.aabb = new THREE.Box3().setFromObject(this.object);
-        //     // trafficManager._currentObject = object
-
-        //     trafficManager.ruler.drawRulerToObjects(object)
-        // }
-
-
 
         if (!boxHelper) return
 

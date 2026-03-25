@@ -10,10 +10,13 @@ const props = defineProps({
   type: String,
   data: Object,
   additionalClass: String,
+  disableDeleteChoice: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 onMounted(() => {
-  console.log(props, "props");
 });
 
 const emit = defineEmits(["choose-option", "delete-choise"]);
@@ -21,11 +24,14 @@ const emit = defineEmits(["choose-option", "delete-choise"]);
 let title = computed(() => {
   const typeMap = {
     surface: "Тип покрытия",
+    backwall: "Тип покрытия",
     milling: "Тип фрезеровки",
     palette: "Цвет покрытия",
     patina: "Цвет патины",
     glass: "Цвет стекла",
     Handles: "Ручка",
+    showcase:"Витрина",
+    profile: "Профиль"
   };
 
   return typeMap[props.type];
@@ -57,7 +63,7 @@ let chooseOption = () => {
 };
 
 const deleteChoise = (event) => {
-  event.stopPropagation();
+  // event.stopPropagation();
   emit("delete-choise", props.type);
 };
 </script>
@@ -80,6 +86,7 @@ const deleteChoise = (event) => {
         ></div>
       </div>
       <img
+        v-if="!props.disableDeleteChoice"
         class="config__delete"
         :src="delete_url"
         alt=""
@@ -114,9 +121,13 @@ const deleteChoise = (event) => {
   overflow: hidden;
   cursor: pointer;
 
+  transition-property: box-shadow;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+
   @media (hover: hover) {
     &:hover {
-      box-shadow: 4px 4px 4px 4px #da444c;
+      box-shadow: 4px 4px 4px 4px $dark-stroke;
     }
   }
 

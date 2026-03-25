@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import * as THREETypes from "@/types/types"
 
 import { BuildersHelper } from "../BuildersHelper"

@@ -15,6 +15,7 @@ import {
   toRaw,
   defineExpose,
   nextTick,
+  watch,
 } from "vue";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
@@ -23,6 +24,9 @@ import { useObjectData } from "@/store/appliction/useObjectData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useRoomState } from "@/store/appliction/useRoomState";
+import { useBasketStore } from "@/store/appStore/useBasketStore";
+import { useBascetEvents } from "@/components/Basket/helper/basketEvents";
+import { useTransformController } from "@/components/ui/transformController/useTransformController";
 
 import { useModelState } from "@/store/appliction/useModelState";
 
@@ -35,51 +39,63 @@ import Modal from "@/components/ui/modals/Modal.vue";
 import ControllerButton from "@/components/ui/buttons/right-menu/controller/ControllerButton.vue";
 import ContentControllerButton from "@/components/ui/buttons/right-menu/controller/ContentControllerButton.vue";
 import DeleteControllerButton from "@/components/ui/buttons/right-menu/controller/DeleteControllerButton.vue";
-import UpControllerButton from "@/components/ui/buttons/right-menu/controller/UpControllerButton.vue";
 import OpenFacadeButton from "@/components/ui/buttons/right-menu/controller/OpenFacadeButton.vue";
+import CollisionButton from "@/components/ui/buttons/right-menu/controller/CollisionButton.vue";
 import CutButton from "@/components/ui/buttons/right-menu/controller/CutButton.vue";
-import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+import PinButton from "@/components/ui/buttons/right-menu/controller/PinButton.vue";
+//import ModalUM2Dconstructor from "@/components/2DmoduleConstructor/ModalUM2Dconstructor.vue";
+import UMconstructor from "@/components/UMconstructor/UMconstructor.vue";
+
+import GenericLoader from "@/components/ui/loader/GenericLoader.vue";
+import TransformController from "@/components/ui/transformController/TransformController.vue";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
 import { useScreenshotsStore } from "@/features/store/screenshotsStore/screenshotsStore";
 
-const schemeTransitionStore = useSchemeTransition();
 const menuStore = useMenuStore();
 const roomState = useRoomState();
-const screenshotsStore = useScreenshotsStore();
-
-const appData = ref<{ [key: string]: any } | null>(null);
-
 const eventBus = useEventBus();
-// uniformStat= useUniformState();
 const modelState = useModelState();
 const uniformState = useUniformState();
-// const modelState = ref<THREETypes.TUseModelState | null>(null);
+const { setTransformControlsValue } = useTransformController();
+const { testConnect, checkLoadContent, scheduleBasketSync } = useBascetEvents();
+
+const screenshotsStore = useScreenshotsStore();
+const schemeTransitionStore = useSchemeTransition();
+
+const appData = ref<Record<string, any> | null>(null);
+
 const models = ref<any>(null);
 const wallMaterials = ref<number | null>(null);
 const floorMaterials = ref<number | null>(null);
-// const customiserStore = ref<THREETypes.TUseCustomiserStore | null>(null);
+
 const objectData = ref<THREETypes.TUseObjectData | null>(
-  null
+  null,
 ); /** Текущий объект */
 const roomContantData = ref<THREETypes.TUseRoomContantData | null>(null);
+
+const basketStore = useBasketStore();
 
 const _FASADE = ref({});
 const _MILLING = ref({});
 
 const preloaderRef = ref<HTMLElement | null>(null);
-const activePreloader = ref<boolean>(false);
 
 const sceneContainer = ref<HTMLElement | null>(null);
 const VerdekConstructor = ref<Application | null>(null);
+
 const controller = ref(false);
+const transformControlsValue = ref<boolean>(false);
+const hideFasadeValue = ref<boolean>(false);
+
 const productColor = ref<{ [key: string]: any }>({});
 const currentFasadeId = ref<{ [key: string]: any }>({});
 const productData = ref<{ [key: string]: any }>({});
 const product = ref<{ [key: string]: any } | null>(null);
 const controllerPositionData = ref<THREEInterfases.IMouseData>({ x: 0, y: 0 });
 const totalContent = ref<any>();
+const actions = ref<Record<string, Function> | null>(null);
 
 /**----------------- 01.12.24-------------------- */
 
@@ -89,9 +105,7 @@ const productFasades = ref<any[]>([]);
 /** ----------------- 19.05.25 ----------------------------- */
 
 //Универсальный модуль
-const universalModule2DConstructor = ref<typeof ModalUM2Dconstructor | null>(
-  null
-);
+const universalModule2DConstructor = ref<typeof UMconstructor | null>(null);
 const universalModuleData = ref<TMyObject | null>(null);
 
 //Распил
@@ -100,6 +114,16 @@ const CutData = ref({});
 const isModalOpen = ref(false);
 const CutCash = ref({});
 const CutSave = ref(false);
+
+//Контроллер
+const controllerValue = ref([
+  { name: "Позиционирование", type: "translate" },
+  { name: "Вращение", type: "rotate" },
+]);
+const curControllerValue = ref(null);
+
+// Список событий
+// const pricetEventsMap = bascetEvents.getEventsMap;
 
 onMounted(async () => {
   try {
@@ -119,16 +143,26 @@ onMounted(async () => {
       // Подписываемся на события
       eventBus.on("A:Move", getMove);
       eventBus.on("A:Selected", selected);
-      eventBus.on("A:ContantLoaded", checkContantLoad);
+      // eventBus.on("A:ContantLoaded", checkContantLoad);
       eventBus.on("A:ClearSelected", clearSelected);
       eventBus.on("A:ScreenPrint", screenPrint);
       eventBus.on("A:Take3DScreenshot", take3DScreenshot);
-
+      eventBus.on("A:Load", setLocalActivateValue);
+      eventBus.on("A:Create", setLocalActivateValue);
+      eventBus.on("A:NextAction", setLocalActivateValue);
+      eventBus.on("A:PrevAction", setLocalActivateValue);
+      eventBus.on("A:GlobalTransformMode_Off", setLocalActivateValue);
       // Создаем приложение
       VerdekConstructor.value = new Application(sceneContainer.value);
 
       await nextTick();
       VerdekConstructor.value.refreshViewer();
+      actions.value = VerdekConstructor.value.getAction();
+      curControllerValue.value = controllerValue.value[0].name;
+      testConnect();
+
+      await nextTick(); // Дополнительный nextTick для гарантии готовности
+      eventBus.emit("A:ChangeCameraPos", 4);
     }
   } catch (error) {
     console.error("Ошибка при инициализации The3D компонента:", error);
@@ -140,7 +174,7 @@ onBeforeUnmount(() => {
     // Отключаем все события
     eventBus.off("A:Move", getMove);
     eventBus.off("A:Selected", selected);
-    eventBus.off("A:ContantLoaded", checkContantLoad);
+    // eventBus.off("A:ContantLoaded", checkContantLoad);
     eventBus.off("A:ClearSelected", clearSelected);
     eventBus.off("A:ScreenPrint", screenPrint);
     eventBus.off("A:Take3DScreenshot", take3DScreenshot);
@@ -167,6 +201,8 @@ onBeforeUnmount(() => {
 
     objectData.value = null;
     roomContantData.value = null;
+    transformControlsValue.value = false;
+    setTransformControlsValue(false);
 
     // Уничтожаем приложение
     if (VerdekConstructor.value) {
@@ -182,17 +218,34 @@ onUnmounted(() => {
   eventBus.clearEvents();
 });
 
-const checkContantLoad = (state: boolean) => {
-  // console.log("checkContantLoad", state);
-  activePreloader.value = state;
-};
-
 const getMove = (move: boolean) => {
   if (!product.value) return;
-
   controller.value = move;
   controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+  // Важно: не пересчитываем корзину при простом движении
 };
+
+const setLocalActivateValue = () => {
+  transformControlsValue.value = false;
+};
+
+const controlsActivate = (value) => {
+  console.log(value, "value");
+  transformControlsValue.value = value;
+  try {
+    if (product.value?.userData.MOUSE_POSITION) {
+      controllerPositionData.value = product.value?.userData.MOUSE_POSITION;
+    }
+  } catch (e) {
+    console.log("❌ Не удалось найти параметр MOUSE_POSITION", e);
+  }
+};
+
+// const changeControllerType = (data) => {
+//   const mode = data.type;
+//   curControllerValue.value = data.name;
+//   eventBus.emit("A:TransformSetMode", mode);
+// };
 
 const selected = async (item: any) => {
   if (!item || !item.object) {
@@ -200,6 +253,7 @@ const selected = async (item: any) => {
     CutData.value = {};
     CutCash.value = {};
     universalModuleData.value = null;
+    product.value = null;
     return;
   }
 
@@ -215,12 +269,23 @@ const selected = async (item: any) => {
   const { PROPS } = userData;
   const { CONFIG, RASPIL } = PROPS;
 
-  console.log(RASPIL, "SELECT");
-
-  objectData.value!.setObjectData(userData);
+  // objectData.value!.setObjectData(userData);
   roomContantData.value!.setRoomContantData(totalContent.value);
   product.value = object;
   controller.value = true;
+
+  /** Для скрытия отображения фасадов */
+  if (
+    !RASPIL.data &&
+    modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS.some(
+      (el) => el.COLOR !== 7397,
+    )
+  ) {
+    hideFasadeValue.value =
+      !modelState.getCurrentModel?.userData.PROPS.CONFIG?.FASADE_PROPS[0]?.SHOW;
+  } else {
+    hideFasadeValue.value = false;
+  }
 
   productData.value = { ...PROPS };
 
@@ -255,6 +320,8 @@ const selected = async (item: any) => {
   await nextTick(() => {
     controllerPositionData.value = userData.MOUSE_POSITION;
   });
+  // Пересчитываем корзину при выборе нового объекта (может измениться набор элементов)
+  // scheduleBasketSync();
 };
 
 const clearSelected = () => {
@@ -262,6 +329,10 @@ const clearSelected = () => {
   CutData.value = {};
   CutCash.value = {};
   universalModuleData.value = null;
+};
+
+const duplicateProduct = async () => {
+  eventBus.emit("A:Duplicate");
 };
 
 const screenPrint = async () => {
@@ -295,7 +366,7 @@ const screenPrint = async () => {
       console.log(
         `Обрабатываем комнату ${i + 1}/${allRooms.length}: ${
           room.label || room.id
-        }`
+        }`,
       );
 
       try {
@@ -309,7 +380,7 @@ const screenPrint = async () => {
 
         // 1. Создаем скриншот комнаты в обычном режиме
         console.log(
-          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`
+          `Создаем скриншот комнаты "${room.label || room.id}" в обычном режиме`,
         );
         await new Promise<void>((resolve) => {
           renderer.domElement.toBlob((blob: Blob | null) => {
@@ -332,7 +403,7 @@ const screenPrint = async () => {
               console.log(
                 `Скриншот комнаты "${
                   room.label || room.id
-                }" в обычном режиме сохранен в стор`
+                }" в обычном режиме сохранен в стор`,
               );
             }
             resolve();
@@ -341,7 +412,7 @@ const screenPrint = async () => {
 
         // 2. Включаем режим чертежа
         console.log(
-          `Включаем режим чертежа для комнаты "${room.label || room.id}"`
+          `Включаем режим чертежа для комнаты "${room.label || room.id}"`,
         );
         await menuStore.toggleDrowModeValue();
         const drawingModeValue = menuStore.getDrowModeValue;
@@ -352,7 +423,7 @@ const screenPrint = async () => {
 
         // 3. Создаем скриншот комнаты в режиме чертежа
         console.log(
-          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`
+          `Создаем скриншот комнаты "${room.label || room.id}" в режиме чертежа`,
         );
         await new Promise<void>((resolve) => {
           renderer.domElement.toBlob((blob: Blob | null) => {
@@ -375,7 +446,7 @@ const screenPrint = async () => {
               console.log(
                 `Скриншот комнаты "${
                   room.label || room.id
-                }" в режиме чертежа сохранен в стор`
+                }" в режиме чертежа сохранен в стор`,
               );
             }
             resolve();
@@ -395,7 +466,7 @@ const screenPrint = async () => {
       } catch (roomError) {
         console.warn(
           `Ошибка при обработке комнаты ${room.label || room.id}:`,
-          roomError
+          roomError,
         );
         // Продолжаем с следующей комнатой
         continue;
@@ -417,7 +488,7 @@ const screenPrint = async () => {
     console.log(
       `Все скриншоты комнат созданы и сохранены в стор. Всего скриншотов: ${
         screenshotsStore.getScreenshots().length
-      }`
+      }`,
     );
     eventBus.emit("A:3DScreenshotCreated");
   } catch (error) {
@@ -454,23 +525,38 @@ const removeModel = (model) => {
   if (VerdekConstructor.value) {
     eventBus.emit("A:RemoveModel", { product: model });
     controller.value = false;
+    transformControlsValue.value = false;
   }
+  scheduleBasketSync();
+};
+
+const toggleFasade = () => {
+  if (
+    modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS.some(
+      (el) => el.COLOR !== 7397,
+    )
+  ) {
+    const curVisible =
+      modelState.getCurrentModel?.userData.PROPS.CONFIG.FASADE_PROPS[0].SHOW;
+
+    hideFasadeValue.value = curVisible;
+
+    eventBus.emit("A:Toggle-Fasad", !curVisible);
+    return;
+  }
+  hideFasadeValue.value = false;
 };
 
 /** Работа с переходящий рисунок */
 
 const preCreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
-    console.log('Pre-Create-Uniform-Group')
     eventBus.emit("A:Pre-Create-Uniform-Group");
   }
 };
 
 const сreateUniformGroup = () => {
-  console.log(uniformState!.getUniformModeData.uniformMode, 'uniformMode')
   if (VerdekConstructor.value) {
-    console.log('Create-Uniform-Group')
     eventBus.emit("A:Create-Uniform-Group");
   }
 };
@@ -493,14 +579,22 @@ const removeFromUniformGroup = (id) => {
   }
 };
 
+const checkContantLoad = computed(() => {
+  return roomState.getLoad;
+});
+
 const activeController = computed(() => {
+  if (!modelState.getCurrentModel) controller.value = false;
+
   if (uniformState.getUniformModeData.uniformMode) {
     controller.value = false;
   }
 
   return {
     "model-controller--active":
-      controller.value && !uniformState.getUniformModeData.uniformMode,
+      controller.value &&
+      !uniformState.getUniformModeData.uniformMode &&
+      !transformControlsValue.value,
   };
 });
 
@@ -525,9 +619,19 @@ const controllerPosition = computed(() => {
   };
 });
 
+const getU = computed(() => {
+  return hideFasadeValue.value;
+});
+
+const activeHideFasadeButton = computed(() => {
+  return {
+    active: hideFasadeValue.value,
+  };
+});
+
 /** Работа о столешницами */
 
-const saveTableData = () => {
+const saveTableData = async () => {
   if (!product.value) return;
   const APP = VerdekConstructor.value;
   const { userData, id } = product.value;
@@ -537,7 +641,14 @@ const saveTableData = () => {
   CutCash.value = userData.PROPS.RASPIL = tableTopManager.value.saveGrid();
   CutSave.value = true;
 
-  APP!.tableTopCreator?.create(toRaw(CutCash.value), product.value, groupID);
+  await APP!.tableTopCreator?.create(
+    toRaw(CutCash.value),
+    toRaw(product.value),
+    groupID,
+  );
+
+  // // Пересчёт после сохранения распила
+  scheduleBasketSync();
 };
 
 const openTableRedactor = () => {
@@ -547,9 +658,17 @@ const openTableRedactor = () => {
 
   isModalOpen.value = true;
 
-  const parent = APP!._scene!.getObjectByProperty("id", userData.groupId);
+  console.log(product.value);
+
+  const parent = userData.groupId
+    ? APP!._scene!.getObjectByProperty("id", userData.groupId)
+    : product.value;
+
+  console.log(parent, "parent");
 
   if (parent) {
+    modelState.setCurrentRaspilParent(parent);
+
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
     APP!.tableTopCreator?.applyMovements(parent);
   }
@@ -573,6 +692,7 @@ const closeTableRedactor = () => {
   if (parent) {
     parent.userData.PROPS.RASPIL = userData.PROPS.RASPIL;
   }
+  modelState.setCurrentRaspilParent(false);
 };
 
 const deliteTable = () => {
@@ -581,7 +701,7 @@ const deliteTable = () => {
   const { userData } = product.value;
 
   const parent = toRaw(
-    APP!._scene!.getObjectByProperty("id", userData.groupId)
+    APP!._scene!.getObjectByProperty("id", userData.groupId),
   );
 
   isModalOpen.value = false;
@@ -593,6 +713,7 @@ const deliteTable = () => {
   } else {
     removeModel(null);
   }
+  modelState.setCurrentRaspilParent(false);
 };
 
 defineExpose({
@@ -600,69 +721,33 @@ defineExpose({
   closeTableRedactor,
   openTableRedactor,
   selected,
-  activePreloader,
+  scheduleBasketSync,
   getScreenshots: () => screenshotsStore.getScreenshots(),
   getScreenshotsByRoom: (roomId: string) =>
     screenshotsStore.getScreenshotsByRoom(roomId),
   clearScreenshots: () => screenshotsStore.clearScreenshots(),
 });
+
+watch(
+  () => checkContantLoad.value,
+  () => {
+    checkLoadContent();
+  },
+);
+
+// watch(
+//   () => transformControlsValue.value,
+//   () => {
+//     controlsActivate();
+//   }
+// );
 </script>
 
 <template>
+  <!-- <div ref="preloaderRef" class="preloader" v-show="!roomState.getLoad"></div> -->
+  <GenericLoader v-show="!roomState.getLoad" />
+
   <div ref="sceneContainer" class="scene-container"></div>
-  <div ref="preloaderRef" class="preloader" v-show="!activePreloader"></div>
-
-
-  <!-- Пока что закоментил потом удалим <div
-    class="uniform__container"
-    v-if="
-      uniformState!.getUniformGroups.length > 0 &&
-      uniformState!.getUniformModeData.uniformMode
-    "
-  >
-    <div
-      class="uniform__item"
-      v-for="(item, key) in uniformState!.getUniformGroups as THREETypes.TUniformGroups[]"
-      :key="key + item.id"
-    >
-      <p class="uniform__name" :style="[`background-color: ${item.color}`]">
-        Группа {{ item.id + 1 }}
-      </p>
-      <button class="uniform__btn" @click="deliteUniformGroup(item.id)">
-        УДАЛИТЬ ГРУППУ
-      </button>
-
-      <button class="uniform__btn" @click="addToUniformGroup(item.id)">
-        ДОБАВИТЬ ЭЛЕМЕНТ
-      </button>
-
-      <button class="uniform__btn" @click="removeFromUniformGroup(item.id)">
-        Убрать ЭЛЕМЕНТ
-      </button>
-    </div>
-  </div> -->
-
-  <!-- <div class="ui-panel--right">
-    <button
-      style="margin-top: 2rem"
-      v-show="uniformState!.getUniformModeData.uniformMode"
-      :class="['btn', pregropping]"
-      @click="preCreateUniformGroup"
-    >
-      Создать новую группу
-    </button>
-
-    <button
-      class="btn btn_green"
-      @click="сreateUniformGroup()"
-      v-show="
-        uniformState!.getPreGroup > 0 &&
-        uniformState!.getUniformModeData.uniformMode
-      "
-    >
-      Создать
-    </button>
-  </div> -->
 
   <div
     :class="['model-controller', activeController]"
@@ -674,7 +759,15 @@ defineExpose({
         <ControllerButton
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"
         />
+        <!-- <ControllerButton
+          v-if="
+            Object.keys(CutData).length == 0 &&
+            modelState.getCurrentModel?.name != 'MODEL' &&
+            !universalModuleData
+          "
+        /> -->
         <ContentControllerButton
+          @click="duplicateProduct"
           v-if="Object.keys(CutData).length == 0 && !universalModuleData"
         />
         <DeleteControllerButton
@@ -684,8 +777,19 @@ defineExpose({
       </div>
       <div class="controller-right">
         <img class="right-line" src="@/assets/svg/right-menu/right-line.svg" />
-        <!-- <UpControllerButton /> -->
-        <OpenFacadeButton />
+
+        <OpenFacadeButton
+          v-if="
+            Object.keys(CutData).length == 0 &&
+            modelState.getCurrentModel?.name != 'MODEL' &&
+            !menuStore.getDrowModeValue
+          "
+          :class="activeHideFasadeButton"
+          @click="toggleFasade"
+        />
+
+        <CollisionButton />
+        <PinButton />
 
         <Modal
           v-if="Object.keys(CutData).length > 0"
@@ -738,13 +842,11 @@ defineExpose({
           </template>
           <template #modalOpen="{ onModalOpen }">
             <CutButton @click="onModalOpen" />
-            <!-- <button class="cut-btn" @click="onModalOpen">
-              <img class="cut-icon" src="/icons/cut.svg" alt="" />
-            </button> -->
           </template>
         </Modal>
+
         <div v-show="universalModuleData && product">
-          <ModalUM2Dconstructor
+          <UMconstructor
             ref="universalModule2DConstructor"
             :product="product"
           />
@@ -752,6 +854,15 @@ defineExpose({
       </div>
     </div>
   </div>
+  <transition name="controller-toggle">
+    <TransformController
+      v-if="
+        modelState.getCurrentModel &&
+        !uniformState.getUniformModeData.uniformMode
+      "
+      @TransformMode="controlsActivate"
+    />
+  </transition>
 </template>
 
 <style lang="scss" scoped>
@@ -782,13 +893,15 @@ defineExpose({
   z-index: 0;
 }
 
-.preloader {
-  position: absolute;
-  width: 100dvw;
-  height: 100dvh;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-}
+// .preloader {
+//   position: absolute;
+//   width: 100dvw;
+//   height: 100dvh;
+
+//   background: rgba(145, 144, 144, 0.5);
+//   backdrop-filter: blur(5px);
+//   z-index: 999;
+// }
 
 .inputs {
   position: absolute;
@@ -830,6 +943,7 @@ defineExpose({
   left: 50%;
   top: 50%;
   padding: 1rem;
+  scale: 0;
 
   opacity: 0;
   filter: blur(10px);
@@ -842,6 +956,7 @@ defineExpose({
   &--active {
     opacity: 1;
     filter: blur(0);
+    scale: 1;
   }
 
   .controller-left {
@@ -929,7 +1044,7 @@ defineExpose({
   @media (hover: hover) {
     &:hover {
       background-color: #131313;
-      border-color: #131313;
+      border-color: $white;
     }
   }
 }
@@ -1054,6 +1169,54 @@ defineExpose({
         path {
           fill: black;
         }
+      }
+    }
+  }
+}
+
+.switch {
+  &__wrapper {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+  &__title {
+    position: absolute;
+    bottom: 2rem;
+  }
+}
+
+.accordion {
+  padding: 0.5rem 1rem;
+  color: $alter-gray;
+  // background-color: #ffffff;
+  backdrop-filter: blur(5px);
+  &__header {
+    margin-right: 0.5rem;
+  }
+  &__summary {
+    gap: 10rem;
+  }
+
+  &__contant {
+    padding-top: 0.5rem;
+    border-top: 1px solid #a3a9b5;
+  }
+
+  &__text {
+    cursor: pointer;
+    transition-property: color;
+    transition-duration: 0.25s;
+    transition-timing-function: ease;
+    @media (hover: hover) {
+      /* when hover is supported */
+      &:hover {
+        color: $strong-grey;
       }
     }
   }

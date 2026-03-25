@@ -3,10 +3,12 @@
 import { ref, computed, onBeforeMount } from "vue";
 import { _URL } from "@/types/constants";
 
-const props = defineProps<{
+interface IProps {
   materials: Array<any>;
   modelValue?: any;
-}>();
+}
+
+const props = defineProps<IProps>();
 
 onBeforeMount(() => {});
 
@@ -21,16 +23,13 @@ const searchQuery = ref("");
 const isSearch = computed(() => filteredMaterialList.value.length > 0);
 
 const onSearchChange = (e: Event) => {
-  const val = (e.target as HTMLInputElement).value.toLowerCase();
-  searchQuery.value = val;
-  if (!val) {
-    filteredMaterialList.value = [];
-    return;
-  }
-  const regex = new RegExp(`${val}`, "gm");
-  filteredMaterialList.value = props.materials.filter((material) =>
-    regex.test(material.NAME.toLowerCase())
+  const query = e.target.value.toLowerCase();
+  const filteredData = props.materials.filter(
+    (item) => item.NAME.toLowerCase().includes(query), // Проверяем, содержит ли имя запрос
   );
+
+  filteredMaterialList.value = filteredData;
+  if (e.target.value === "") filteredMaterialList.value = [];
 };
 
 const handleSelect = (material: any) => {
@@ -56,10 +55,16 @@ const handleSelect = (material: any) => {
           @click="handleSelect(material)"
         >
           <img
+            v-if="!material.HTML"
             class="item__img"
             :src="_URL + material.PREVIEW_PICTURE"
             alt=""
           />
+          <div
+            class="item__color"
+            :style="{ backgroundColor: `#${material.HTML}` }"
+            v-else
+          ></div>
           <p class="item__name">{{ material.NAME }}</p>
         </li>
       </ul>
@@ -67,8 +72,12 @@ const handleSelect = (material: any) => {
   </div>
 </template>
 
-<style  lang="scss">
+<style lang="scss">
 .redactor {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
   &__title {
     margin-bottom: 20px;
     font-size: large;
@@ -126,6 +135,12 @@ const handleSelect = (material: any) => {
 
   &__name {
     margin-left: 30px;
+  }
+  &__color {
+    height: 60px;
+    width: 60px;
+    border-radius: 12px;
+    cursor: pointer;
   }
   @media (hover: hover) {
     &:hover {

@@ -2,6 +2,7 @@
 
 import { Middleware } from "openapi-fetch";
 import { makeErrorResponse } from "./errorResponse";
+import { getCookie, COOKIE_NAMES } from "@/components/authorization/utils/cookieUtils";
 
 // Константы таймаута
 export const REQUEST_TIMEOUT = 10000; // 10 секунд
@@ -33,7 +34,7 @@ export const useMiddleware = () => {
         return isLegacyEndpoint(url) ? LEGACY_REQUEST_TIMEOUT : REQUEST_TIMEOUT;
     };
 
-    // Middleware для таймаутов
+    // Middleware для таймаутов и авторизации
     const timeoutMiddleware = () => {
         return {
             async onRequest(req: Request) {
@@ -41,12 +42,21 @@ export const useMiddleware = () => {
                 const timeout = getTimeoutForEndpoint(req.url);
                 const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-                // Клонируем request с новым signal
-                const newRequest = new Request(req, { signal: controller.signal });
+                // Получаем токен из cookies
+                const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
 
-                //TODO
-                // const token = localStorage.getItem('token')
-                // newRequest.headers.set({})
+                const headers = new Headers(req.headers);
+                
+                // Добавляем токен в заголовок Authorization, если он есть
+                if (token) {
+                    headers.set('Authorization', `Bearer ${token}`);
+                }
+
+                // Клонируем request с новым signal и заголовками
+                const newRequest = new Request(req, { 
+                    signal: controller.signal,
+                    headers: headers
+                });
                 
                 // Сохраняем timeout ID и controller в Map
                 const requestKey = createRequestKey(req);
@@ -71,6 +81,8 @@ export const useMiddleware = () => {
 
     // Middleware для legacy API
     const legacyMiddleware = () => {
+        // console.log('HHHHHH')
+
         return {
             async onRequest(req: Request) {
                 // Если это legacy endpoint, изменяем URL
@@ -79,9 +91,18 @@ export const useMiddleware = () => {
                     url.hostname = 'vardek.ru';
                     url.protocol = 'https:';
                     
+                    // Получаем токен из cookies для legacy запросов
+                    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN);
+                    const headers = new Headers(req.headers);
+                    
+                    // Добавляем токен в заголовок Authorization, если он есть
+                    if (token) {
+                        headers.set('Authorization', `Bearer ${token}`);
+                    }
+                    
                     return new Request(url.toString(), {
                         method: req.method,
-                        headers: req.headers,
+                        headers: headers,
                         body: req.body,
                         signal: req.signal
                     });

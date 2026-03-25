@@ -3,6 +3,10 @@
 import { defineProps, ref, computed, defineEmits, onMounted } from "vue";
 import { _URL } from "@/types/constants";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
+import { useHandlesAction } from "../FigureRightPage/Handles/useHandlesAction";
+import { INTEGRATE_HANDE_EXEPTIONS } from "@/Application/F-millings";
+import { FasadeTextAlignAction } from "@/types/types";
 
 const props = defineProps({
   millingList: Array,
@@ -16,6 +20,9 @@ const props = defineProps({
 const emit = defineEmits(["select_milling"]);
 
 const eventBus = useEventBus();
+const modelState = useModelState();
+const { getIntegratedHandleControllerData } = useHandlesAction();
+
 const selectMilling = ref<any>(null);
 
 let filteredMillingList = ref<Array>([]);
@@ -24,39 +31,63 @@ const isSearch = computed(() => {
 });
 
 const changeMilling = (milling) => {
-  if (!props.tempWork)
-    eventBus.emit("A:ChangeMilling", {
-      data: milling.ID,
-      fasadeNdx: props.tabIndex,
-    });
+  const { FASADE_POSITIONS, FASADE_PROPS } =
+    modelState.getCurrentModel?.userData.PROPS.CONFIG;
+  const isShowcase = FASADE_POSITIONS[props.tabIndex]?.SHOWCASE;
+  const currentMilling = FASADE_PROPS[props.tabIndex]?.MILLING;
 
   emit("select_milling", {
     name: milling.NAME,
     imgSrc: milling.PREVIEW_PICTURE,
     ID: milling.ID,
+    fasade_type: milling.fasade_type,
+    patina: milling.PATINAOFF,
   }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+
+  if (!props.tempWork) {
+    let action = null;
+    /** @Применение_типа_фасадов_с_инегрированной_ручкой */
+    const prepare = getIntegratedHandleControllerData(milling, props.tabIndex);
+
+    if (prepare.length > 0 && INTEGRATE_HANDE_EXEPTIONS.includes(milling.ID)) {
+      action = modelState.getCurrentMillingActionMap(prepare[0].id, milling.ID);
+    }
+
+    FASADE_PROPS[props.tabIndex].MILLING = milling.ID;
+
+    if (isShowcase === 1) {
+      eventBus.emit("A:ChangeShowcaseMilling");
+      return;
+    } // Если витрина пропускаем отрисовку фрезеровки
+
+    eventBus.emit("A:ChangeMilling", {
+      data: milling.ID,
+      fasadeNdx: props.tabIndex,
+      action: action,
+    });
+  }
 };
 
 const onSearchChange = (e) => {
-  let reg = new RegExp(`${e.target.value.toLowerCase()}`, "gm");
-  let filtered = props.millingList.filter((milling) =>
-    reg.test(milling.NAME.toLowerCase())
+  const query = e.target.value.toLowerCase();
+  const filteredData = props.millingList.filter(
+    (item) => item.NAME.toLowerCase().includes(query) // Проверяем, содержит ли имя запрос
   );
-  filteredMillingList.value = filtered;
+
+  filteredMillingList.value = filteredData;
   if (e.target.value === "") filteredMillingList.value = [];
 };
 </script>
 
 <template>
   <div class="relative__wrapper">
- 
-      <input
-        class="search"
-        type="text"
-        placeholder="Поиск"
-        @input="onSearchChange"
-      />
-   
+    <input
+      class="search"
+      type="text"
+      placeholder="Поиск"
+      @input="onSearchChange"
+    />
+
     <ul class="list">
       <!-- Все виды фрезировок -->
       <li
@@ -79,7 +110,6 @@ const onSearchChange = (e) => {
         <div class="item__name">{{ milling.NAME }}</div>
       </li>
     </ul>
- 
   </div>
 </template>
 

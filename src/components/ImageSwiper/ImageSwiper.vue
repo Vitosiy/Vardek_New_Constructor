@@ -40,6 +40,7 @@
   import 'swiper/css/navigation'
   import 'swiper/css/autoplay'
   import ArrowSVG from '../ui/svg/auth/ArrowSVG.vue'
+  import { BASE_DOMAIN } from "@/utils/originalDomain";
 
   const props = defineProps({
     images: {
@@ -65,7 +66,8 @@
     }
   })
 
-  const API_URL = 'https://dev.vardek.online'
+  // const API_URL = 'https://dev.vardek.online'
+    const API_URL = `https://${BASE_DOMAIN}`
 
 
   const swiperEl = ref(null)
@@ -78,20 +80,20 @@
       slidesPerView: 1, // Количество видимых слайдов
       centeredSlides: true, // Центрирование слайдов
       spaceBetween: 20, // Отступ между слайдами
-      pagination: {
-        el: '.swiper-pagination',
-        // el: '.swiper-pagination-numbers',
-        // type: 'custom',
-        // renderCustom: function (swiper, current, total) {
-        //     // const realIndex = swiper.realIndex + 1; 
-        //     const displayIndex = (current - 1) % total + 1;
-        //     console.log(displayIndex)
-        //     return `<span class="current">${displayIndex}</span>
-        //             <span class="separator">/</span>
-        //             <span class="total">${total}</span>`;
-        //       },
-        clickable: true
-      },
+      // pagination: {
+      //   el: '.swiper-pagination',
+      //   // el: '.swiper-pagination-numbers',
+      //   // type: 'custom',
+      //   // renderCustom: function (swiper, current, total) {
+      //   //     // const realIndex = swiper.realIndex + 1; 
+      //   //     const displayIndex = (current - 1) % total + 1;
+      //   //     console.log(displayIndex)
+      //   //     return `<span class="current">${displayIndex}</span>
+      //   //             <span class="separator">/</span>
+      //   //             <span class="total">${total}</span>`;
+      //   //       },
+      //   clickable: true
+      // },
       navigation: {
         nextEl: '.swiper-button-next',
         prevEl: '.swiper-button-prev'

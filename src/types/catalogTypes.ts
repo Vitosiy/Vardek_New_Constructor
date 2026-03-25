@@ -101,5 +101,7 @@ type CatalogListParams = {
   idSection?: string | number | false
   page?: string | number
   query?: string | false
+  config?: string | number
+  style?: string | number
 }
 

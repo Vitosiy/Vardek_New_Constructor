@@ -3,8 +3,10 @@
 
 import { defineProps, defineEmits, onMounted, computed, ref } from "vue";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useModelState } from "@/store/appliction/useModelState";
 
 const eventBus = useEventBus();
+const modelState = useModelState();
 const emit = defineEmits(["select_color"]);
 
 const props = defineProps({
@@ -22,15 +24,23 @@ const isSearch = computed(() => {
 });
 
 const changePaletteColor = (color) => {
+  const { FASADE_PROPS } = modelState.getCurrentModel?.userData.PROPS.CONFIG;
 
-  if(!props.tempWork) {
+  emit("select_color", {
+    name: color.NAME,
+    data: "",
+    hex: color.HTML,
+    ID: color.ID,
+  }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
+
+
+  if (!props.tempWork) {
+    FASADE_PROPS[props.tabIndex].PALETTE = color.ID;
     eventBus.emit("A:ChangePaletteColor", {
       data: color.ID,
       fasadeNdx: props.tabIndex,
     });
   }
-
-  emit("select_color", { name: color.NAME, data: "", hex: color.HTML, ID: color.ID }); // отдает данные в родительский компонент для рендеринга в ConfiguraitonOption
 };
 
 const onSearchChange = (e) => {

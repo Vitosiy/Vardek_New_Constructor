@@ -1,15 +1,29 @@
 //@ts-nocheck
 import * as THREE from "three"
+import { FasadeTextAlignAction } from "@/types/types";
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useAppData } from './useAppData';
 import { TFasadeItem } from "@/types/types";
+import { MILLINGS, additionalMillingKeys, MILLING_HANDLE_KEYS, INTEGRATE_HANDE_EXEPTIONS } from '@/Application/F-millings';
+import { number } from "yup";
+import {UM_PARAMS} from "@/components/UMconstructor/utils/Const.ts";
 
+export type TFasadeGroupSize = {
 
+    MAX_HEIGHT: number,
+    MAX_WIDTH: number,
+    MIN_HEIGHT: number,
+    MIN_WIDTH: number,
 
-interface IProductFasades {
+}
+
+export interface IProductFasades {
     NAME: string,
     FASADES: number[],
+    SORT: number,
+    GROUP_SIZE: TFasadeGroupSize
+
 }
 
 interface IFasadeGroups {
@@ -48,28 +62,47 @@ interface IMilling {
     DENSITY: null
 }
 
+export type TMillingListItem = {
+    name: string;
+    imgSrc: string;
+    ID: number;
+    fasade_type: number[];
+}
+
 export const useModelState = defineStore('ModelState', () => {
 
-    const _APP = useAppData().getAppData;
-    const _COLOR = _APP.COLOR;
-    const _FASADE = _APP.FASADE;
-    const _FASADESIZE = _APP.FASADESIZE;
-    const _FASADENUMBERSIZE = _APP.FASADENUMBERSIZE;
-    const _FASADE_SECTION = _APP.FASADE_SECTION;
-    const _FASADE_POSITION = _APP.FASADE_POSITION;
-    const _FASADE_GROUPS: IFasadeGroups = _APP.FASADE_GROUPS
-    const _PRODUCTS = _APP.CATALOG?.PRODUCTS
-    const _PALETTE = _APP.PALETTE
-    const _MILLING = _APP.MILLING
-    const _SHOWCASE = _APP.SHOWCASE
-    const _GLASS = _APP.GLASS
-    const _PATINA = _APP.PATINA
-    const _HANDLES = _APP.HANDLES
+    const appStore = useAppData()
+    const _APP = computed(() => appStore.getAppData || {})
+
+    const _COLOR = computed(() => _APP.value.COLOR || [])
+    const _FASADE = computed(() => _APP.value.FASADE || [])
+    const _FASADESIZE = computed(() => _APP.value.FASADESIZE || [])
+    const _FASADENUMBERSIZE = computed(() => _APP.value.FASADENUMBERSIZE || [])
+    const _FASADE_SECTION = computed(() => _APP.value.FASADE_SECTION || [])
+    const _FASADE_POSITION = computed(() => _APP.value.FASADE_POSITION || [])
+    const _FASADE_GROUPS = computed<IFasadeGroups>(() => _APP.value.FASADE_GROUPS || {})
+    const _FASADE_SIZE_RESTRICT = computed(() => _APP.value.FASADE_SIZE_RESTRICT || {})
+    const _FASADE_TYPE = computed(() => _APP.value.FASADETYPE || [])
+    const _FILLING = computed(() => _APP.value.FILLING || [])
+    const _PRODUCTS = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
+    const _PALETTE = computed(() => _APP.value.PALETTE || [])
+    const _PLINTH = computed(() => _APP.value.PLINTH || [])
+    const _PROFILE = computed(() => _APP.value.PROFILE || [])
+    const _MILLING = computed(() => _APP.value.MILLING || [])
+    const _MODELS = computed(() => _APP.value.MODELS || [])
+    const _SHOWCASE = computed(() => _APP.value.SHOWCASE || [])
+    const _GLASS = computed(() => _APP.value.GLASS || [])
+    const _PATINA = computed(() => _APP.value.PATINA || [])
+    const _HANDLES = computed(() => _APP.value.HANDLES || [])
+    const _HEM = computed(() => _APP.value.HEM || [])
+    const _WALL = computed(() => _APP.value.WALL || [])
+
+    // console.log(_FASADE_SIZE_RESTRICT.value, '=== 🔥 _FASADE_SIZE_RESTRICT 🔥 ===')
 
 
-    const models = ref<{ [key: string]: {} }>(_PRODUCTS)
 
     const currentModel = ref<THREE.Object3D | null>(null)
+    const currentRaspilParent = ref<THREE.Object3D | null>(null)
 
     const currentModulData = ref<any>(null)
 
@@ -85,7 +118,7 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentMillingData = ref<IMilling[]>([])
 
-    const currentWindowsData = ref<number[]>([])
+    const currentShowcaseData = ref<number[]>([])
 
     const currentFasadeTypesData = ref<number[]>([])
 
@@ -93,31 +126,94 @@ export const useModelState = defineStore('ModelState', () => {
 
     const currentPatinaData = ref<number[]>([])
 
+    const transformControls = ref<boolean>(false)
+    const transformControlsName = ref<string>("Позиционирование")
+    const transformControlSnapAngles = ref<number[]>([1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]);
+    const currentControlSnapAngle = ref<number>(1)
+
     const setCurrentModel = (object: THREE.Object3D | any) => {
+
         currentModel.value = object
+        if (!object) {
+            currentRaspilParent.value = null
+        }
     }
 
     const getCurrentModel = computed(() => {
-        return currentModel.value?.userData || currentModel.value
+        // return currentModel.value?.userData || currentModel.value
+        return currentModel.value
         //return currentModel.value?.userData
     })
-    const getModels = computed(() => {
-        return models.value
+
+    const setCurrentRaspilParent = (object: THREE.Object3D | any) => {
+        currentRaspilParent.value = object
+    }
+
+    const getCurrentRaspilParent = computed(() => {
+        return currentRaspilParent.value
     })
+
+    const getModels = computed(() => _APP.value.CATALOG?.PRODUCTS || [])
+
+    // const getModels = computed(() => {
+    //     return models.value
+    // })
 
     /** ------- Работа с Модулем -------- */
 
-    const createCurrentModuleData = (value: number[]) => {
+    const createCurrentModuleData = (value: number[], def: boolean = false) => {
 
-        const colorMap = new Set();
-        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+        const validFacadeIds = value.filter(id => _FASADE.value[id]);
 
-        colorsList.forEach(color => {
-            if (_FASADE[color] !== undefined) {
-                colorMap.add(_FASADE[color]);
-            }
+        const groupedFasades = validFacadeIds.reduce((acc, facadeId) => {
+            const facade = _FASADE.value[facadeId];
+            if (!facade) return acc;
+
+            const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+            if (!section?.UF_GROUP) return acc;
+
+            const groupId = section.UF_GROUP;
+            if (!acc[groupId]) acc[groupId] = [];
+            acc[groupId].push(facadeId);
+
+            return acc;
+        }, {} as Record<string, number[]>);
+
+
+        const result = Object.values(_FASADE_GROUPS.value)
+            .map(group => ({
+                NAME: group.NAME,
+                FASADES: groupedFasades[group.ID] || [],
+                SORT: group.SORT,
+            }))
+            .filter(group => group.FASADES.length > 0)
+            .sort((a, b) => a.SORT - b.SORT);
+
+        if (def) return result;
+        currentModulData.value = result;
+
+    }
+
+    const createFlatModuleData = (value: number[]) => {
+
+        const validIds = value.filter(id => _FASADE.value[id]);
+
+        const sortCache = new Map<number, number>();
+
+        validIds.forEach(facadeId => {
+            const facade = _FASADE.value[facadeId];
+            if (!facade) return;
+
+            const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+            const groupId = section?.UF_GROUP;
+            const group = groupId ? _FASADE_GROUPS.value[groupId] : null;
+
+            sortCache.set(facadeId, group?.SORT ?? 99999);
         });
-        currentModulData.value = Array.from(colorMap)
+
+        return validIds.sort((a, b) => {
+            return (sortCache.get(a) ?? 99999) - (sortCache.get(b) ?? 99999);
+        });
     }
 
     const getCurrentModuleData = computed(() => {
@@ -127,18 +223,36 @@ export const useModelState = defineStore('ModelState', () => {
     /** ------- Задняя стенка -------- */
 
     const createCurrentBackwallData = (productId: number) => {
-        const productInfo = _PRODUCTS[productId]
+        const productInfo = _PRODUCTS.value[productId]
 
-        if(productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
-            const colorMap = new Set();
-            const colorsList = productInfo.BACKWALL.filter((colorId: number) => _FASADE[colorId]);
+        if (productInfo.BACKWALL?.length && productInfo.BACKWALL[0]) {
+            const validFacadeIds = productInfo.BACKWALL.filter(id => _FASADE.value[id]);
 
-            colorsList.forEach(color => {
-                if (_FASADE[color] !== undefined) {
-                    colorMap.add(_FASADE[color]);
-                }
-            });
-            currentBackwallData.value = Array.from(colorMap)
+            const groupedFasades = validFacadeIds.reduce((acc, facadeId) => {
+                const facade = _FASADE.value[facadeId];
+                if (!facade) return acc;
+
+                const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+                if (!section?.UF_GROUP) return acc;
+
+                const groupId = section.UF_GROUP;
+                if (!acc[groupId]) acc[groupId] = [];
+                acc[groupId].push(facadeId);
+
+                return acc;
+            }, {} as Record<string, number[]>);
+
+
+            const result = Object.values(_FASADE_GROUPS.value)
+                .map(group => ({
+                    NAME: group.NAME,
+                    FASADES: groupedFasades[group.ID] || [],
+                    SORT: group.SORT,
+                }))
+                .filter(group => group.FASADES.length > 0)
+                .sort((a, b) => a.SORT - b.SORT);
+
+            currentBackwallData.value = result;
         }
     }
 
@@ -150,18 +264,34 @@ export const useModelState = defineStore('ModelState', () => {
 
     const createCurrentSidewallData = (productId: number) => {
 
-        const productInfo = _PRODUCTS[productId]
+        const productInfo = _PRODUCTS.value[productId]
 
-        if(productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
-            const colorMap = new Set();
-            const colorsList = productInfo.SIDEWALL.filter((colorId: number) => _FASADE[colorId]);
+        if (productInfo.SIDEWALL?.length && productInfo.SIDEWALL[0]) {
+            const groupedFasades = productInfo.SIDEWALL.reduce((acc, facadeId) => {
+                const facade = _FASADE.value[facadeId];
+                if (!facade) return acc;
 
-            colorsList.forEach(color => {
-                if (_FASADE[color] !== undefined) {
-                    colorMap.add(_FASADE[color]);
-                }
-            });
-            currentSidewallData.value = Array.from(colorMap)
+                const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+                if (!section?.UF_GROUP) return acc;
+
+                const groupId = section.UF_GROUP;
+                if (!acc[groupId]) acc[groupId] = [];
+                acc[groupId].push(facadeId);
+
+                return acc;
+            }, {} as Record<string, number[]>);
+
+
+            const result = Object.values(_FASADE_GROUPS.value)
+                .map(group => ({
+                    NAME: group.NAME,
+                    FASADES: groupedFasades[group.ID] || [],
+                    SORT: group.SORT,
+                }))
+                .filter(group => group.FASADES.length > 0)
+                .sort((a, b) => a.SORT - b.SORT);
+
+            currentSidewallData.value = result;
         }
     }
 
@@ -174,11 +304,11 @@ export const useModelState = defineStore('ModelState', () => {
     /*const createCurrentTopfasadeData = (value: number[]) => {
 
         const colorMap = new Set();
-        const colorsList = value.filter((colorId: number) => _FASADE[colorId]);
+        const colorsList = value.filter((colorId: number) => _FASADE.value[colorId]);
 
         colorsList.forEach(color => {
-            if (_FASADE[color] !== undefined) {
-                colorMap.add(_FASADE[color]);
+            if (_FASADE.value[color] !== undefined) {
+                colorMap.add(_FASADE.value[color]);
             }
         });
         currentTopfasadeData.value = Array.from(colorMap)
@@ -188,41 +318,137 @@ export const useModelState = defineStore('ModelState', () => {
         return currentTopfasadeData.value
     })*/
 
+
+
+    /** ------- Работа с Цоколем -------- */
+
+    const createTotalPlinthData = () => {
+        let percept = {}
+        const result = Object.entries(_PLINTH.value).map(([key, el]) => {
+            return percept[key] = _PRODUCTS.value[el]
+        }).filter(Boolean)
+
+        // console.log(percept)
+
+        // const filtered = Object.values(_PLINTH).map(el => {
+        //     return _PRODUCTS.value[el]
+        // })
+
+
+        return percept
+    }
+
+    const createTotalPlinthColorData = (plinthId) => {
+        if (!_PLINTH.value[plinthId]) return []
+
+        const { FACADE } = _PRODUCTS.value[plinthId]
+        const filter = FACADE.map(el => {
+            return _FASADE.value[el] ?? null
+        }).filter(Boolean)
+
+        return filter
+
+
+    }
+
     /** ------- Работа с фасадами -------- */
 
-    const createCurrentModelFasadesData = (value: number[], def: boolean = false) => {
+    const createCurrentModelFasadesData = ({ data, def, fasadeNdx, productId }: { data: number[], def?: boolean, fasadeNdx?: number, productId?: number }) => {
+        const defaultFasade = def ?? false
 
-        const groupedFasades: { [key: string]: number[] } = {};
-        let exception = !def ? 'Без фасада' : ''
+        const groupedFasades: Record<string, number> = {};
+        let exception = !defaultFasade ? 'Без фасада' : ''
+        let haveShowCase = null;
 
 
-        value.forEach(facadeId => {
-            const facade = _FASADE[facadeId];
+        if (fasadeNdx !== undefined && productId !== undefined) {
+
+            let fasadePosData = null;
+            const product = _PRODUCTS.value[productId]
+
+            console.log(product, 'product')
+
+            if (!product.FASADE_POSITION || product.FASADE_POSITION.length == 0) {
+                return []
+            }
+
+
+            const positionId = product.FASADE_POSITION[fasadeNdx]
+
+            if (positionId) {
+                fasadePosData = _FASADE_POSITION.value[positionId]
+                haveShowCase = fasadePosData.glass == 1
+            }
+
+        }
+
+        const isUM = !!getCurrentModel.value?.userData?.PROPS?.CONFIG?.MODULEGRID;
+        let isSlideDoor = false;
+        if (isUM) {
+            isSlideDoor = !!getCurrentModel.value.userData.PROPS.CONFIG.isSlideDoor;
+        }
+
+        data.forEach(facadeId => {
+            const facade = _FASADE.value[facadeId];
+            // console.log(facade)
+
             if (!facade) return;
+            const hasGlass = _FASADE.value[facadeId].GLASS_ONLY == 1
 
-            const section = _FASADE_SECTION[facade.IBLOCK_SECTION_ID];
+            const section = _FASADE_SECTION.value[facade.IBLOCK_SECTION_ID];
+
             if (!section || !section.UF_GROUP) return;
 
             const groupId: string = section.UF_GROUP;
 
             if (!groupedFasades[groupId]) {
-                groupedFasades[groupId] = [];
+
+                const restrict = _FASADE_SIZE_RESTRICT.value[section.ID]
+
+                groupedFasades[groupId] = {
+
+                    id: [], size: {
+                        MAX_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.HEIGHT : Infinity,
+                        MAX_WIDTH: isUM ? (isSlideDoor ? UM_PARAMS.MAX_SLIDE_DOOR_WIDTH : UM_PARAMS.MAX_FASADE_WIDTH) : restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.WIDTH : Infinity,
+                        MIN_HEIGHT: restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_HEIGHT : -Infinity,
+                        MIN_WIDTH: isUM ? (isSlideDoor ? UM_PARAMS.MIN_SLIDE_DOOR_WIDTH : UM_PARAMS.MIN_FASADE_WIDTH) : restrict ? _FASADE_SIZE_RESTRICT.value[section.ID].SIZE_RESTRICT.MIN_WIDTH : -Infinity,
+                    },
+                };
             }
 
-            groupedFasades[groupId].push(facadeId);
+
+            if (!haveShowCase && hasGlass) return
+
+            groupedFasades[groupId]['id'].push(facadeId);
+
         });
 
         // Формирование итогового массива
-        const result = Object.entries(_FASADE_GROUPS).map(([groupId, group]) => ({
-            NAME: group.NAME,
-            FASADES: groupedFasades[groupId] || [],
-        })).filter(group => group.FASADES.length > 0 && group.NAME !== exception);
+        const result = Object.entries(_FASADE_GROUPS.value).map(([groupId, group]) => {
+                return {
+                    NAME: group.NAME,
+                    FASADES: groupedFasades[groupId] ? groupedFasades[groupId].id : [],
+                    SORT: group.SORT,
+                    GROUP_SIZE: groupedFasades[groupId] ? groupedFasades[groupId].size : null,
 
-        if (def) {
+                }
+            }
+
+
+        ).filter(group => group.FASADES.length > 0 && group.NAME !== exception).sort((a, b) => a.SORT - b.SORT);
+
+        if (defaultFasade) {
             return result
         }
 
         currentModelFasadesData.value = result
+    }
+
+    const createFlatFasadeData = ({ data, def, fasadeNdx }) => {
+        const list = createCurrentModelFasadesData({ data, def, fasadeNdx })
+        const flated = list?.map(el => el.FASADES).flat()
+        return flated
+
     }
 
     const clearCurrentModelFasadesData = () => {
@@ -234,17 +460,19 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Палитра */
-    const createCurrentPaletteData = (value: number) => {
+    const createCurrentPaletteData = (value: number | string) => {
+
         let result = {}
-        if (_FASADE[value].PALETTE.length && _FASADE[value].PALETTE[0] != null) {
-            result = Object.keys(_PALETTE)
+        if (!_FASADE.value[value]) return result
+        if (_FASADE.value[value].PALETTE.length && _FASADE.value[value].PALETTE[0] != null) {
+            result = Object.keys(_PALETTE.value)
                 .filter(
                     (key) =>
-                        _PALETTE[key].TYPE ===
-                        _FASADE[value].PALETTE[0]
+                        _PALETTE.value[key].TYPE ===
+                        _FASADE.value[value].PALETTE[0]
                 )
                 .reduce((obj, key) => {
-                    obj[key] = _PALETTE[key];
+                    obj[key] = _PALETTE.value[key];
                     return obj;
                 }, {});
 
@@ -262,66 +490,170 @@ export const useModelState = defineStore('ModelState', () => {
     })
 
     /** Фрезеровки */
-    const createCurrentMillingData = ({ fasadeId, productId }) => {
+    const createCurrentMillingData = ({ fasadeId, productId, fasadeNdx }): TMillingListItem[] | [] => {
 
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] === null) {
+        let result = []
+        if (fasadeId == 7397) {
+            currentMillingData.value = []
+            return []
+        }
 
-            currentMillingData.value = _FASADE[fasadeId].ATTACH_MILLINGS;
+        const product = _PRODUCTS.value[productId]
+        const positionId = product.FASADE_POSITION[fasadeNdx]
+
+        const fasadePosData = _FASADE_POSITION.value[positionId]
+
+        const haveShowCase = fasadePosData?.glass == 1
+        const sideColors = ["LEFTSIDECOLOR", "RIGHTSIDECOLOR"]
+
+        // if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null && !haveShowCase) {
+        if ((_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null) || (sideColors.includes(fasadeNdx) && _FASADE.value[fasadeId].ATTACH_MILLINGS_SIDE?.[0])) {
+
             let millings: IMilling[] = []
-            let fasadeMilling: number[] = _FASADE[fasadeId].ATTACH_MILLINGS
-            let percept = {}
-            let prodMilling: number[] = _PRODUCTS[productId].MILLING
+            let fasadeMilling: number[]
+            if(sideColors.includes(fasadeNdx) && _FASADE.value[fasadeId].ATTACH_MILLINGS_SIDE?.[0]){
+                fasadeMilling = _FASADE.value[fasadeId].ATTACH_MILLINGS_SIDE
+            }
+            else {
+                fasadeMilling = _FASADE.value[fasadeId].ATTACH_MILLINGS
+            }
 
-            fasadeMilling.filter(mill => _MILLING[mill] != undefined).map((mill) => {
-                percept[mill] = _MILLING[mill]
+            let percept = {}
+            let prodMilling: number[] = _PRODUCTS.value[productId].MILLING
+
+            fasadeMilling.filter(mill => _MILLING.value[mill] != undefined).map((mill) => {
+                percept[mill] = _MILLING.value[mill]
             })
 
             prodMilling.filter(mill => percept[mill] != undefined).map((mill) => { millings.push(percept[mill]) })
 
             millings.sort((a, b) => a.SORT - b.SORT)
 
-            currentMillingData.value = millings.sort((a, b) => a.SORT - b.SORT)
+            result = millings.sort((a, b) => a.SORT - b.SORT)
 
-            return
+            currentMillingData.value = result
+
+            return result
         }
 
 
-        currentMillingData.value = []
+        currentMillingData.value = result
+        return result
+    }
+
+    const createTotalMillingList = (fasadeId): TMillingListItem[] | [] => {
+
+        if (!_FASADE.value[fasadeId]) return []
+
+        if (_FASADE.value[fasadeId].ATTACH_MILLINGS.length && _FASADE.value[fasadeId].ATTACH_MILLINGS[0] != null) {
+            let millings: IMilling[] = []
+            let fasadeMilling: number[] = _FASADE.value[fasadeId].ATTACH_MILLINGS
+            let percept = {}
+            const result = fasadeMilling.filter(mill => _MILLING.value[mill] != undefined).map((mill) => {
+                return percept[mill] = _MILLING.value[mill]
+            }).filter(Boolean)
+
+            result.sort((a, b) => a.SORT - b.SORT)
+
+            return result
+        }
+        return []
+
+    }
+
+    const getCurrentMillingMap = (data) => {
+
+        const millingKey = additionalMillingKeys[data];
+        const millingMapData = MILLINGS[millingKey] ?? MILLINGS[data] ?? MILLINGS[2462671];
+        return millingMapData;
+    }
+
+    const getCurrentMillingActionMap = (data, millingId) => {
+
+        if (!data || !INTEGRATE_HANDE_EXEPTIONS.includes(millingId)) return null
+
+        const prepare = _FASADE_TYPE.value[data].CODE
+        const actionKey = FasadeTextAlignAction[prepare]
+        const mapKey = additionalMillingKeys[millingId] ?? millingId
+        const map = MILLING_HANDLE_KEYS[mapKey]
+
+        return map[actionKey]
     }
 
     const getCurrentMillingData = computed(() => {
         return currentMillingData.value
     })
 
-    /** Витрины */
-    const createCurrentWindowsData = ({ fasadeId, productId }) => {
+    const setMillingId = (fasadeId, id) => {
 
-        // console.log(_PRODUCTS[productId].type_showcase)
-
-
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] != null && _PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] != null) {
-            currentWindowsData.value = [..._PRODUCTS[productId].type_showcase]
-        }
-
-        if (_FASADE[fasadeId].ATTACH_MILLINGS.length && _FASADE[fasadeId].ATTACH_MILLINGS[0] == null) {
-            currentWindowsData.value = []
-            currentWindowsData.value.push(_PRODUCTS[productId].type_showcase[0])
-        }
+        const { FASADE_PROPS } = currentModel.value?.userData.PROPS.CONFIG
+        const modulePart = currentModel.value?.userData.PROPS.CONFIG[fasadeId]
+        if (modulePart)
+            modulePart.MILLING = id
+        else
+            FASADE_PROPS[fasadeId].MILLING = id
     }
 
-    const getCurrentWindowsData = computed(() => {
-        return currentWindowsData.value
+    const getFasadDataType = (millingId) => {
+        const data = _MILLING[millingId]
+        const result = data.fasade_type
+            .map((item) => _FASADE_TYPE[item])
+            .filter(Boolean);
+
+        return result;
+    };
+
+    /** Витрины */
+    const createCurrentShowcaseData = ({ fasadeId, productId, fasadeNdx }) => {
+
+        const product = _PRODUCTS.value[productId]
+        const prodShowcases = product.type_showcase
+        const positionId = product.FASADE_POSITION[fasadeNdx]
+        const fasadePosData = _FASADE_POSITION.value[positionId]
+        const haveShowCase = fasadePosData?.glass == 1
+        let prepare = [];
+
+        if (!haveShowCase) {
+            currentShowcaseData.value = []
+            return
+        }
+
+        const defaultShowcase = prodShowcases[0] ?? 1013628
+
+        if (prodShowcases.length > 0 && prodShowcases[0] !== null) {
+            prepare = prodShowcases.map(el => {
+                return _SHOWCASE.value[el]
+            }).filter(Boolean)
+
+            currentShowcaseData.value = prepare
+            return
+        } else {
+            prepare = [1013628]
+        }
+
+    }
+
+    const getCurrentShowcaseData = computed(() => {
+        return currentShowcaseData.value
     })
 
-    /** Типы фасада (интегрированная ручка) */
+    /** Типы фасада */
     const createCurrentFasadeTypesData = ({ fasadeId, productId }) => {
-        const incomeTypes = _FASADE[fasadeId].fasade_type
-        const productPositions = _PRODUCTS[productId].FASADE_POSITION
+        const incomeTypes = _FASADE.value[fasadeId].fasade_type
+
+        const productPositions = _PRODUCTS.value[productId].FASADE_POSITION
+
         const defaultTypes = productPositions.reduce((acc, index) =>
-            acc.concat(_FASADE_POSITION[index]?.fasade_type || []),
+                acc.concat(_FASADE_POSITION.value[index]?.fasade_type || []),
             []);
 
-        currentFasadeTypesData.value = incomeTypes.filter(item => defaultTypes.includes(item))
+
+        const filtered = incomeTypes.filter(item => defaultTypes.includes(item))
+        const result = filtered.map(item => _FASADE_TYPE.value[item]).filter(Boolean);
+
+        currentFasadeTypesData.value = result
+
+        return result
 
     }
 
@@ -329,13 +661,24 @@ export const useModelState = defineStore('ModelState', () => {
         return currentFasadeTypesData.value
     })
 
+    const getCurrentFasadeTypesAction = (data) => {
+
+        const prepare = _FASADE_TYPE.value[data]
+        if (!prepare) return null
+
+        const actionKey = FasadeTextAlignAction[prepare.CODE]
+        return actionKey
+    }
+
     /** Стёкла */
     const createCurrentGlassData = ({ fasadeId, productId }) => {
-        const incomeGlass = _FASADE[fasadeId].ATTACH_GLASS
-        const productGlass = _PRODUCTS[productId].GLASS
-        const glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
+
+        const incomeGlass = _FASADE.value[fasadeId].ATTACH_GLASS
+        const productGlass = _PRODUCTS.value[productId].GLASS
+        let glassArray = incomeGlass.filter(item => productGlass.includes(item)).sort((a, b) => a.SORT - b.SORT)
+
         const currentClass = glassArray.reduce((acc, index) =>
-            acc.concat(_GLASS[index] || []),
+                acc.concat(_GLASS.value[index] || []),
             []);
 
         currentGlassData.value = currentClass;
@@ -346,15 +689,17 @@ export const useModelState = defineStore('ModelState', () => {
         return currentGlassData.value
     })
 
+
     /** Патина */
 
     const createCurrentPatinaData = ({ fasadeId, productId }) => {
-        if (_PRODUCTS[productId].type_showcase.length && _PRODUCTS[productId].type_showcase[0] !== null) {
+
+        if (_PRODUCTS.value[productId].type_showcase.length && _PRODUCTS.value[productId].type_showcase[0] !== null) {
             return
         }
 
-        const incomePatina = _FASADE[fasadeId].PATINA
-        const currentPataina = incomePatina.filter(key => _PATINA.hasOwnProperty(key)).map(key => _PATINA[key])
+        const incomePatina = _FASADE.value[fasadeId].PATINA
+        const currentPataina = incomePatina.filter(key => _PATINA.value.hasOwnProperty(key)).map(key => _PATINA.value[key])
 
         currentPatinaData.value = currentPataina
     }
@@ -388,26 +733,90 @@ export const useModelState = defineStore('ModelState', () => {
 
     }
 
+
+    //================== helpers ==================
+
+    const expressionsReplace = (obj: any, expressions: THREETypes.TObject) => {
+
+        if (!expressions || !Object.keys(expressions).length) return obj;
+
+        let objStr: THREETypes.TObject | string | number = obj;
+
+        // Преобразуем объект в строку, если это объект
+        if (typeof obj == "object") {
+            objStr = JSON.stringify(obj);
+        }
+
+        // Заменяем выражения
+        Object.entries(expressions).forEach(([k, v]) => {
+            if (typeof objStr != "number") {
+                objStr = objStr.split(k).join(v);
+            }
+        });
+
+        // Возвращаем объект или строку
+        if (typeof obj == "object") {
+            return JSON.parse(objStr as string);
+        } else {
+            return objStr;
+        }
+    };
+
+    const calculateFromString = (expression) => {
+        try {
+            const func = new Function("return " + expression);
+            return func();
+        } catch (error) {
+            console.log(expression, '---"Недопустимое выражение!"')
+
+            return "Недопустимое выражение!";
+        }
+    }
+
     return {
+        _APP,
+        _FASADE,
+        _PRODUCTS,
+        _PROFILE,
+        _HEM,
+        _FASADE_TYPE,
+        _FASADE_POSITION,
+        _FASADE_SIZE_RESTRICT,
+        _FASADE_SECTION,
+        _FILLING,
+        _MILLING,
+        _MODELS,
+        _PALETTE,
+        _PATINA,
+        _WALL,
+
         getModels,
 
         setCurrentModel,
         getCurrentModel,
         createCurrentModelFasadesData,
+        createFlatFasadeData,
         clearCurrentModelFasadesData,
         getCurrentModelFasadesData,
+        setCurrentRaspilParent,
+        getCurrentRaspilParent,
 
         createCurrentPaletteData,
         getCurrentPaletteData,
 
         createCurrentMillingData,
+        createTotalMillingList,
         getCurrentMillingData,
+        setMillingId,
+        getCurrentMillingMap,
+        getCurrentMillingActionMap,
 
-        createCurrentWindowsData,
-        getCurrentWindowsData,
+        createCurrentShowcaseData,
+        getCurrentShowcaseData,
 
         createCurrentFasadeTypesData,
         getCurrentFasadeTypesData,
+        getCurrentFasadeTypesAction,
 
         createCurrentGlassData,
         getCurrentGlassData,
@@ -416,6 +825,7 @@ export const useModelState = defineStore('ModelState', () => {
         getCurrentPatinaData,
 
         createCurrentModuleData,
+        createFlatModuleData,
         getCurrentModuleData,
 
         createCurrentBackwallData,
@@ -427,7 +837,15 @@ export const useModelState = defineStore('ModelState', () => {
         /*createCurrentTopfasadeData,
         getCurrentTopfasadeData,*/
 
-        getOptions
+        createTotalPlinthData,
+        createTotalPlinthColorData,
+
+        getOptions,
+
+
+        /** Helpers */
+        expressionsReplace,
+        calculateFromString
     }
 
 });

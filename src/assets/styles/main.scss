@@ -81,7 +81,7 @@ select {
 }
 
 a {
-  color: $black;
+  color: #000000;
   text-decoration: none;
 }
 
@@ -139,11 +139,11 @@ p {
   }
 
   &.router-link-active {
-    border: 1px solid $black;
+    border: 1px solid #000000;
 
     svg {
       path {
-        fill: $black;
+        fill: #000000;
       }
     }
   }
@@ -157,7 +157,7 @@ p {
   align-items: center;
   border: none;
   border-radius: 360px;
-  background: $black;
+  background: #000000;
   cursor: pointer;
 }
 
@@ -195,12 +195,12 @@ p {
     &:hover {
       svg {
         path {
-          fill: $black;
+          fill: #000000;
         }
 
         g {
           path {
-            fill: $black;
+            fill: #000000;
           }
         }
       }
@@ -222,9 +222,9 @@ p {
 
     @media (hover: hover) {
       &:hover {
-        color: $black;
+        color: #000000;
         background-color: transparent;
-        border-color: $black;
+        border-color: #000000;
       }
     }
   }
@@ -372,87 +372,4 @@ p {
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: content-box;
-}
-
-
-.main-loader {
-  position: fixed;
-  top: 0;
-  left: 0;
-  background-color: #ffffff;
-  background-image: url('@/assets/img/background.png');
-  width: 100vw;
-  height: 100vh;
-  z-index: 999;
-
-
-  &__logo {
-    width: 100%;
-    text-align: center;
-    margin: 5rem 0;
-    margin-bottom: 225px;
-  }
-
-  &__container {
-    position: relative;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-
-  &__icon {
-    display: inline-block;
-
-  }
-  svg {
-    animation: rotate 1.5s linear infinite;
-    display: block;
-  }
-
-  &__progresbar {
-    position: absolute;
-    bottom: -22px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-    height: 5px;
-    background-color: #ECEBF1;
-    border-radius: 2px;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 0;
-      background-color: #131313;
-      animation: progress 2.5s ease-in-out infinite;
-    }
-  }
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes progress {
-  0% {
-    width: 0;
-    left: 0;
-  }
-  50% {
-    width: 100%;
-    left: 0;
-  }
-  100% {
-    width: 0;
-    left: 100%;
-  }
 }

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Application } from "@/Application/Core/Application";
+import { Renderer } from "@/Application/Core/Renderer";
 import { TrafficManager } from "@/Application/Movement/TrafficManager";
 import { MoveManager } from "@/Application/Movement/MoveManager";
 import { RoomManager } from "@/Application/Room/RoomManager";
@@ -9,7 +10,7 @@ import { CustomBoxHelper } from "@/Application/Utils/BoxHelperCustom";
 import { BuildProduct } from "@/Application/Meshes/BuildProduct";
 import { MillingBuilder } from "@/Application/Meshes/MillingBuilder";
 import { PaletteBuilder } from "@/Application/Meshes/PaletteBuilder";
-import { WindowBuilder } from "@/Application/Meshes/WindowBuilder";
+import { ShowcaseBuilder } from "@/Application/Meshes/Showcase/ShowcaseBuilder";
 import { MeshEvents } from "@/Application/Meshes/Utils/Events";
 import { SetObject } from "@/Application/Utils/SetObject";
 import { AlumBuilder } from "@/Application/Meshes/AlumBuilder";
@@ -18,13 +19,15 @@ import { KeybordListeners } from "@/Application/Utils/KeybordListeners";
 import { UniformTextureEvents } from "@/Application/Meshes/UniformTextureUtils/UniformTextureEvents";
 import { UniversalGeometryBuilder } from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import { DeepDispose } from "@/Application/Utils/DeepDispose";
-import { AppLights } from "@/Application/World/Lights";
+import { AppLights } from "@/Application/Lights/Lights";
 import { GeometryBuilder } from "@/Application/Meshes/GeometryBuilder";
 import { JsonBuilder } from "@/Application/Meshes/JsonProductBuilder";
 import { EdgeBuilder } from "@/Application/Meshes/EdgeBuilder/EdgeBuilder";
 import { UseEdgeBuilder } from "@/Application/Meshes/EdgeBuilder/useEdgeBuilder";
-import { HandlesBuilder } from "@/Application/Meshes/Hendles/Handles";
-import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder";
+import { HandlesBuilder } from "@/Application/Meshes/Handles/Handles";
+import { ModelsBuilder } from "@/Application/Meshes/ModelsBuilder/ModelsBuilder";
+import { PlinthBuilder } from "@/Application/Meshes/PlinthBuilder/PlinthBuilder";
+import { ShelfBuilder } from "@/Application/Meshes/Shelf/ShelfBuilder";
 
 import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomState } from "@/store/appliction/useRoomState";
@@ -36,8 +39,10 @@ import { useRoomContantData } from "@/store/appliction/useRoomContantData";
 import { useUniformState } from "@/store/appliction/useUniformState";
 import { useModelState } from "@/store/appliction/useModelState";
 import { useMenuStore } from "@/store/appStore/useMenuStore";
+import {GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
 
 export type TApplication = Application
+export type TRenderer = Renderer
 export type TMeshEvents = MeshEvents
 export type TTrafficManager = TrafficManager
 export type TMoveManager = MoveManager
@@ -48,7 +53,7 @@ export type TScene = THREE.Scene
 export type TCustomBoxHelper = CustomBoxHelper
 export type TBuildProduct = BuildProduct
 export type TMillingBuilder = MillingBuilder
-export type TWindowBuilder = WindowBuilder
+export type TShowcaseBuilder = ShowcaseBuilder
 export type TPaletteBulider = PaletteBuilder
 export type TSetObject = SetObject
 export type TAlumBuilder = AlumBuilder
@@ -64,8 +69,11 @@ export type TEdgeBuilder = EdgeBuilder
 export type TUseEdgeBuilder = UseEdgeBuilder
 export type THandlesBuilder = HandlesBuilder
 export type TModelsBuilder = ModelsBuilder
+export type TPlinthBuilder = PlinthBuilder
+export type TShelfBuilder = ShelfBuilder
 
 export type TContentType = 'gltf' | 'geometry' | 'geometry:buffer' | 'room';
+export type TElementType = "element_down" | "element_up"
 
 export type TMaterialType =
   'MeshBasicMaterial'
@@ -104,14 +112,37 @@ export type MenuType = 'tech' | 'roomPar' | 'customiser';
 export type TQuality = {
   lable: string,
   value: TQualityValue,
-  active: boolean
+  active?: boolean
 }
 
-type TOptionItem = {
+export type TFasadeSize = {
+  ID: number;
+  NAME: string;
+  SORT: number;
+  SIZE_EDIT_WIDTH_MIN: number | null;
+  SIZE_EDIT_WIDTH_MAX: number | null;
+  WIDTH: number;
+  DEPTH: number | null;
+  DIFFWIDTH: number | null;
+  DIFFDEPTH: number | null;
+  active?: boolean;
+};
+
+export type TOptionItem = {
   id: number | string;
-  global: boolean;
+  palitte?: number | string | null,
+  milling?: number | string | null,
+  global?: boolean;
   title: string;
-  label: string;
+  label?: string;
+  prefix?: string,
+  palitteTitle?: string,
+  palitteData?: TPalitte[] | null
+  millingTitle?: string,
+  millingData?: TMilling[] | null
+  plinthTitle?: string,
+  plinthSurfase?: number | string | null,
+  plinthData?: TFasadeItem[] | null
 };
 
 export type TLightRange = {
@@ -124,9 +155,12 @@ export type TOptionsMap = {
   floor: TOptionItem;
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
+  // palitteTop?: TOptionItem;
+  // palitteBottom?: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
+  plinth: TOptionItem
 };
 
 export type TTextureActionMap = {
@@ -136,6 +170,12 @@ export type TTextureActionMap = {
   moduleBottom: 'A:ChangeModuleTotalTexture';
   fasadsTop: 'A:ChangeFasadsTopTexture';
   fasadsBottom: 'A:ChangeFasadsBottomTexture';
+  tableTop: 'A:ChangeTableTop',
+  palitteTotal: 'A:ChangePaletteTotal',
+  millingTotal: "A:ChangeMillingTotal",
+  plinth: "A:ChangePlinthBody",
+  plinthColor: "A:ChangePlinthColor"
+
 };
 
 export type TTextureItem = {
@@ -148,7 +188,7 @@ export type TTextureItem = {
   sort: number;
 };
 
-export type eTFasadeItem = {
+export type TFasadeItem = {
   ID: number;
   NAME: string;
   IBLOCK_SECTION_ID: string;
@@ -175,6 +215,7 @@ export type eTFasadeItem = {
   EDGE_TEXTURE: string | null;
   SIBLINGS_COLOR: string | null;
   ATTACH_MILLINGS: (number | null)[];
+  ATTACH_MILLINGS_SIDE: (number | null)[];
   ALT_MILLINGS: (number | null)[];
   ATTACH_GLASS: number[];
   no_fasade: string;
@@ -224,6 +265,25 @@ export type TSize = {
   depth: number;
 }
 
+type TSizeEdit = {
+
+  SIZE_EDIT_WIDTH_MIN: NumStr | null,
+  SIZE_EDIT_WIDTH_MAX: NumStr | null,
+  SIZE_EDIT_HEIGHT_MIN: NumStr | null,
+  SIZE_EDIT_HEIGHT_MAX: NumStr | null,
+  SIZE_EDIT_DEPTH_MIN: NumStr | null,
+  SIZE_EDIT_DEPTH_MAX: NumStr | null
+
+}
+
+type TRotationEuler = {
+  isEuler: boolean,
+  _x: number,
+  _y: number,
+  _z: number,
+  _order: 'XYZ' | string
+}
+
 type TModuleGrid = {
   canvasHeight: number;
   canvasWidth: number;
@@ -237,15 +297,18 @@ export type TMyObject = {
 };
 
 export type TDefaultOptionsConfig = {
-  defModuleUp: number | string,
-  defModuleDown: number | string,
-  defFasadeUp: number | string,
-  defFasadeDown: number | string,
+  defModuleTop: number | string,
+  defModuleBottom: number | string,
+  defFasadeTop: number | string,
+  defFasadeBottom: number | string,
+  deffShowcase: number | string,
+  defPatina:number | string,
   moduleTop: TOptionItem;
   moduleBottom: TOptionItem;
   fasadsTop: TOptionItem;
   fasadsBottom: TOptionItem;
   tableTop: TOptionItem
+  plinth: TOptionItem
 }
 
 //------------------
@@ -293,12 +356,35 @@ export type TModelJSON = {
   position?: TVector3;
 };
 
+type TFasadePropsSizes = {
+  FASADE_WIDTH?: number,
+  min?: number,
+  max?: number
+
+}
+
+export type TFasadeTrueSizes = {
+  FASADE_WIDTH: number,
+  FASADE_DEPTH: number,
+  FASADE_HEIGHT: number,
+  isDrawer?: boolean,
+}
+
+export type TFasadeConversation = {
+  NAME: string,
+  FASADES: any[],
+  SORT: number,
+  GROUP_SIZE: Object|null,
+}
+
 export type TFasadeProp = {
   SHOW: boolean | null,
   POSITION: number | null,
-  COLOR: number | null,
+  COLOR: number,
+  RESET_COLOR: number | null,
   TYPE: number | null,
   MILLING: number | null,
+  MILLING_TYPE: number | null,
   PALETTE: number | null,
   WINDOW: number | null,
   ALUM: number | null,
@@ -308,7 +394,13 @@ export type TFasadeProp = {
     id: number | null,
     position: number | null
     drawer: null | string
-  }
+  },
+  SIZES: {
+    id: number,
+    params: TFasadePropsSizes
+  },
+  DRAWER: TDrawer,
+  MANUAL_NO_FASADE?: boolean
 }
 
 export type TModelData = {
@@ -334,6 +426,79 @@ export type TModelData = {
   loop_model: any | null;
   wall_thickness: number | null;
 };
+type TShelfcount = {
+  max: number | null,
+  current: number | null,
+}
+
+export type TConfig = {
+  DISABLE_MOVE: boolean,
+  ELEMENT_TYPE: NumStr | null,
+  ID: NumStr | null,
+  FASADE_PROPS: TFasadeProp[],
+  FASADE_SIZE: Record<NumStr, Record<NumStr, TFasadePositionData>>[] | [],
+  FASADE_POSITIONS: Record<NumStr, TFasadePositionItem>[],
+  FASADE_TYPE: number[] | boolean | null,
+  FILLING: number[] | boolean | null,
+  FILLING_LIST: number[] | boolean | null,
+  HAVETABLETOP: boolean,
+  TABLETOP_ID: NumStr | null,
+  MODELID: number,
+  MODEL: number[],
+  MODULE_COLOR: number,
+  MECHANISM: NumStr | null,
+  MECHANISM_TEMP: TMechanismData[] | [],
+  SIZE: TSize,
+  SIZE_EDIT: TSizeEdit,
+  SHOWCASE: number[],
+  SHELFQUANT: TShelfcount,
+  POSITION: TVector3,
+  PLINTH_ACTIONS: TPlinthActions,
+  PRODUCT_SHOWCASE: NumStr | null,
+  UNIFORM_TEXTURE: TUniformTexture,
+  OPTIONS: TOption[] | [],
+  USLUGI: TUsluga[],
+  PROFILE: TUsluga[],
+  KROMKA: NumStr | null,
+  EXPRESSIONS: TExpressions,
+  ROTATION: TRotationEuler,
+  MODULEGRID?: GridModule,
+  BACKWALL?: TFasadeProp,
+  LEFTSIDECOLOR?: TFasadeProp,
+  RIGHTSIDECOLOR?: TFasadeProp,
+  TOPFASADECOLOR?: TFasadeProp,
+  LOOPS?: {},
+  isHiTech?: boolean,
+  isSlideDoor?: boolean,
+  isRestrictedModule?: boolean,
+}
+
+export type TTotalProps = {
+  ARROWS: THREE.Object3D[],
+  BODY: THREE.Object3D,
+  CONFIG: TConfig,
+  DRAWERS: THREE.Object3D[],
+  EXPRESSIONS: {},
+  FASADE: THREE.Object3D[],
+  FASADE_DEFAULT: THREE.Object3D[],
+  GLASS: {},
+  HANDLES: THREE.Object3D[],
+  HIDDENCHILDREN: {},
+  HIDDEN: false,
+  JSON_FILLINGS: THREE.Object3D[],
+  LEG: THREE.Object3D,
+  PRODUCT: number,
+  PLINTH_MESH: null,
+  RASPIL: TCanvasData,
+  RASPIL_LIST: TRaspilPart[],
+  RASPIL_COUNT: number,
+  SHELF: THREE.Object3D[] | THREE.Mesh[] | [],
+  SEPARATED: [],
+  SECTIONSOBJ: [],
+  SECTIONCONTROL: [],
+  TABLETOP: null,
+  NAME: string
+}
 
 
 /** @Product */
@@ -439,6 +604,335 @@ export type IProductFull = {
   PREVIEW_PICTURE: string;
   FILLING_SECTION: boolean;
   FASADE_POSITION: number[];
+}
+
+export type TPalitte = {
+  ID: number;
+  NAME: string;
+  TYPE: string;
+  UNAME: string;
+  HTML: string;
+  PREVIEW_PICTURE: string | null;
+  DETAIL_PICTURE: string | null;
+}
+
+export type TMilling = {
+  ID: number;
+  NAME: string;
+  IBLOCK_SECTION_ID: string;
+  '~IBLOCK_SECTION_ID': string;
+  DETAIL_PICTURE: string;
+  PREVIEW_PICTURE: string;
+  SORT: number;
+  '~SORT': string;
+  FACADEALIGNSELECT: 0 | 1;
+  PATINAOFF: 0 | 1;
+  MODEL: string | null;
+  INCITY: (string | null)[];
+  CITY: (string | null)[];
+  delay_date: string | null;
+  date_shipment: string | null;
+  date_build: string | null;
+  type_showcase: number[];
+  fasade_type: number[];
+  DENSITY: number | string | null;
+}
+
+export type TFasadePositionData = {
+  ID: number;
+  NAME: string;
+  PROPERTY_FASADE_NUMBER_VALUE: string;
+  PROPERTY_FASADE_NUMBER_VALUE_ID: string;
+  FASADE_NUMBER: number;
+  FASADE_HEIGHT: string;
+  FASADE_WIDTH: string;
+  FASADE_DEPTH: string;
+  POSITION_X: string;
+  POSITION_Y: string;
+  POSITION_Z: string;
+  ROTATE_Y: string;
+  ROTATE_X: string | null;
+  ROTATE_Z: string | null;
+  POSITION_2_X: string; // например: "#X#-396 - 2"
+  POSITION_2_Y: string;
+  POSITION_2_Z: string;
+  ROTATE_2_Y: string | null;
+  ROTATE_2_X: string | null;
+  ROTATE_2_Z: string | null;
+  glass: number;
+  is_glass_fasade: number;
+  PRODUCT: number;
+  FASADE_SIZE: number;
+  models: null[];
+  FASADE_MODEL: null;
+  inherit_fasade_number: number[];
+  conditions: null;
+  filling: null[];
+  fasade_type: number[];
+  handle_position: null;
+  animation: null;
+  SITEOFF: number;
+  drawer: null;
+  box_color: null;
+  fasade_color: null;
+  built_in: number;
+  ignore_main_catalog: number;
+};
+
+export type TFasadePositionItem = {
+  FASADE_WIDTH: number | null,
+  FASADE_HEIGHT: number | null,
+  FASADE_DEPTH: number | null,
+  POSITION_X: number | null,
+  POSITION_Y: number | null,
+  POSITION_Z: number | null,
+  POSITION_2_X: number | null,
+  POSITION_2_Y: number | null,
+  POSITION_2_Z: number | null,
+  ROTATE_X: number | null,
+  ROTATE_Y: number | null,
+  ROTATE_Z: number | null,
+  ROTATE_2_X: number | null,
+  ROTATE_2_Y: number | null,
+  ROTATE_2_Z: number | null,
+  FASADE_NUMBER: number | null,
+  FASADE_MODEL: number | null,
+  SHOWCASE: number | null
+  FASADE_TYPE: number[] | null[] | null
+}
+
+export type TPlinthActions = {
+  front: TPlinthAction,
+  left: TPlinthAction,
+  right: TPlinthAction
+}
+
+
+type TPlinthAction = {
+  value: boolean,
+  modelId: number | null,
+  surfaceId: number | null,
+}
+
+type TMechanismData = {
+  ID: number,
+  NAME: string,
+  CLOSE_OTHER_OPTIONS: NumStr,
+  TYPE: string,
+  active: boolean,
+  visible: boolean
+}
+
+type TUniformTexture = {
+  group: NumStr | null,
+  level: NumStr | null,
+  index: NumStr | null,
+  column_index: NumStr | null,
+  backupFasadId: NumStr | null,
+  color: NumStr | null
+}
+
+type TOption = {
+  id: NumStr | null,
+  active: boolean,
+  group: NumStr | null,
+  close: NumStr | null,
+  visible: boolean
+}
+
+type TUsluga = {
+  ID: NumStr;
+  NAME: NumStr;
+  CODE: NumStr;
+  default: NumStr;
+  model: NumStr;
+  sub_uslugi: boolean;
+  INCITY: NumStr | null;
+  SEPARATE_MAX: NumStr;
+  RASPIL_VIS_HIDE: NumStr;
+  PROPIL: NumStr;
+  isseparate: NumStr;
+  show_props: NumStr[] | boolean;
+  hide_props: boolean;
+  radiogroups: NumStr[] | boolean;
+  separated: NumStr;
+  TERMS_MULTIPLICITY: NumStr;
+  TERMS_MULTIPLICITY_PRODUCT: NumStr;
+  disablegroups: boolean;
+  group: NumStr;
+  depth: NumStr;
+  delay_date: NumStr;
+  date_build: NumStr;
+  height: NumStr;
+  conditions: NumStr;
+  width_setting: NumStr;
+  WIDTHMOM: NumStr;
+  DOP_PRODUCT: NumStr;
+  QUANTITY_PRODUCT: NumStr;
+  POSITION: NumStr;
+  PATH_MAX_WIDTH: NumStr;
+  PATH_MIN_WIDTH: NumStr;
+  TEST: NumStr;
+  width?: string;
+  visible: boolean;
+  value: boolean;
+};
+
+export type TExpressions = {
+  "#MWIDTH#": NumStr
+  "#MODUL_MWIDTH#": NumStr
+  "#MODUL_WIDTH#": NumStr
+  "#X#": NumStr
+  "#MHEIGHT#": NumStr
+  "#MODUL_MHEIGHT#": NumStr
+  "#MODUL_HEIGHT#": NumStr
+  "#Y#": NumStr
+  "#MDEPTH#": NumStr
+  "#MODUL_MDEPTH#": NumStr
+  "#MODUL_DEPTH#": NumStr
+  "#Z#": NumStr
+  "#SIZEEDITJOINDEPTH#": NumStr | null;
+  "#MATERIAL_THICKNESS#": NumStr
+  "#HORIZONT#": NumStr,
+  "#DRAWHEIGHT#"?: NumStr,
+  "#DRAWWIDTH#"?: NumStr,
+  "#DRAWDEPTH#"?: NumStr,
+}
+
+type TRaspilPart = {
+  id: NumStr,
+  sectorId: NumStr,
+  position: TVector3,
+  rotation: TRotationEuler
+}
+
+type TDrawer = {
+  drawer: string | null,
+  buildIn: NumStr | null
+
+}
+
+/** @Столешница */
+
+export type TTabelTopServiceItem = {
+  ID: number;
+  NAME: string;
+  CODE: string;
+  default: string;
+  model: string;
+  sub_uslugi: boolean;
+  INCITY: string | null;
+  SEPARATE_MAX: string;
+  RASPIL_VIS_HIDE: string;
+  PROPIL: string;
+  isseparate: string;
+  show_props: string[] | boolean;
+  hide_props: string[] | boolean;
+  radiogroups: string[] | boolean;
+  separated: string;
+  TERMS_MULTIPLICITY: string;
+  TERMS_MULTIPLICITY_PRODUCT: string;
+  disablegroups: boolean;
+  group: string;
+  depth: string;
+  delay_date: string;
+  date_build: string;
+  height: string;
+  conditions: string;
+  width_setting: string;
+  WIDTHMOM: string;
+  DOP_PRODUCT: string;
+  QUANTITY_PRODUCT: string;
+  POSITION: string;
+  PATH_MAX_WIDTH: string;
+  PATH_MIN_WIDTH: string;
+  TEST: string;
+  visible: boolean;
+  value: boolean;
+}
+
+export type TKromkaMaterialItem = {
+  ID: number;
+  NAME: string;
+  CODE: string;
+  PREVIEW_PICTURE: string;
+  DETAIL_PICTURE: string;
+  INCITY: number[] | null;
+  CITY: string | null;
+  delay_date: string | null;
+  date_build: string | null;
+  date_shipment: string | null;
+}
+
+
+type PathCommand = {
+  action:
+  | "moveTo"
+  | "lineTo"
+  | "closePath";
+  data: number[];
+};
+
+type TServiceItem = {
+  ID: NumStr;
+  NAME: NumStr;
+  POSITION: NumStr;
+  CODE: NumStr;
+  value: boolean;
+  separated: NumStr;
+  visible: boolean;
+  error: boolean;
+
+  corner?: NumStr;
+  radius?: NumStr;
+  width?: NumStr;
+};
+
+type TPanel = {
+  width: NumStr;
+  height: NumStr;
+  roundCut: Record<string, unknown>; // пустой объект
+  holes: unknown[]; // пустой массив
+  aventData: TServiceItem[];
+  xOffset: NumStr;
+  yOffset: NumStr;
+  path: PathCommand[];
+  maxWidth: NumStr;
+  maxHeight: NumStr;
+  sectorId: string;
+  position: TSize;
+  rotation: TRotationEuler;
+};
+
+type TCanvasData = {
+  modelHeight: number;
+  canvasHeight: number;
+  data: TPanel[][];
+};
+
+// ==================================================================
+
+export enum FasadeTextAlignAction {
+  right_top = 0,
+  top = 1,
+  left_top = 2,
+
+  right = 3,
+  right_open = 3,
+  right_side = 3,
+  right_p = 3,
+
+  center = 4,
+
+  left = 5,
+  left_open = 5,
+  left_side = 5,
+  left_p = 5,
+
+  right_down = 6,
+  bottom = 7,
+  left_down = 8,
+
 }
 
 

@@ -8,15 +8,19 @@ export class PatinaBuilder {
         567326: "#d1d0cf", // SILVER
         475452: "#aa5a0f", // BRONSE
     }
-    
+
     constructor() {
 
     }
 
     public createPatinaColor({ geometry, patinaId, startMaterial }: { geometry: THREE.BufferGeometry, patinaId: number | string, startMaterial: THREE.MeshStandardMaterial }) {
 
+        if (!startMaterial || !geometry || !startMaterial) return;
+
         geometry.computeVertexNormals();
         geometry.computeBoundingBox();
+
+        // console.log(startMaterial, '=== startMaterial')
 
         const defaultColor = startMaterial.color;
         const defaultRoughness = startMaterial.roughness;

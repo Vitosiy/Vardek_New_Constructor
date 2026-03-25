@@ -1,39 +1,46 @@
 <script setup lang="ts">
 // @ts-nocheck
-import { computed, ref, toRefs } from "vue";
+import { computed, ref, toRefs, withDefaults, onBeforeMount, watch } from "vue";
 import { SERVISE_ERRORS } from "@/ConstructorTabletop/CutterScripts/CutterConst";
+import { useKromkaActions } from "../Kromka/useKromkaActions";
+import KromkaCard from "../Kromka/KromkaCard.vue";
 import MainInput from "@/components/ui/inputs/MainInput.vue";
 import Tooltip from "./Tooltip.vue";
 
-const props = defineProps({
-  serviseData: {
-    type: Array,
-    required: true,
-  },
-  currentSection: {
-    type: Object,
-    required: true,
-  },
-  step: {
-    type: Number,
-    default: 1,
-  },
+interface Props {
+  profileData: any[];
+  serviseData: any[];
+  currentSection: Record<string, any>;
+  step?: number;
+}
+
+const kromkaActions = useKromkaActions();
+const { getCurretKromkaList, getKromkaActive, checkKromkaActive } =
+  kromkaActions;
+
+const props = withDefaults(defineProps<Props>(), {
+  step: 1,
 });
+
 const emit = defineEmits([
+  "cut-profileData",
   "cut-toggleCutServise",
   "cut-servisData",
   "cut-updateServise",
 ]);
 
 const cutServisShow = ref(false);
+const profileDataParse = ref<any[] | null>(null);
+const serviseDataParse = ref<any[] | null>(null);
 
-const cutChacked = (
-  event: Event,
-  item: Record<string,string>,
-) => {
-  console.log(item, "item");
-  // const typeLow = item.NAME.toLowerCase();
+const cutChacked = (event: Event, item: Record<string, string>) => {
   emit("cut-servisData", event.target.checked, item);
+};
+
+const profileChacked = (event: Event, profile: Record<string, string>) => {
+  // console.log(profile, ' ==== profile ====')
+
+  emit("cut-profileData", event.target.checked, profile);
 };
 
 const toggleCutServise = () => {
@@ -57,24 +64,56 @@ const updateEuroWidth = (event: Event, type: string) => {
 
   emit("cut-updateServise", event, typeLow);
 };
+
+const getContainerHeight = computed(() => {
+  return {
+    full: props.profileData.length == 0,
+  };
+});
+
+const checkDefaultProfile = computed(() => {
+  return (value, id) => {
+    // if (id === 251698) return true;
+    return value;
+  };
+});
+
+const profileData = computed(() => {
+  if (props.profileData() > 0) return profileDataParse.value;
+});
+
+onBeforeMount(() => {
+  getCurretKromkaList();
+  // profileDataParse.value = props.profileData();
+});
+
+watch(
+  () => props,
+  () => {
+    // console.log("serviseData");
+  }
+);
 </script>
 
 <template>
   <div class="splitter-container--cut">
-    <div class="splitter-container--cut-header">
+    <div :class="['splitter-container--cut-header', getContainerHeight]">
       <h3 class="splitter-title">Услуги</h3>
       <button class="actions-btn actions-icon" @click="toggleCutServise">
         <img class="actions-icon--close" src="/icons/close.svg" alt="" />
       </button>
     </div>
 
-    <div class="splitter-container--cut-servise">
+    <div :class="['splitter-container--cut-servise', getContainerHeight]">
       <div
         v-for="(item, key) in props.serviseData"
-        :key="key"
+        :key="key + item.NAME"
         :class="['cut-servise--item', { error: item.error }]"
       >
-        <div :class="['cut-servise--wrapper', { error: item.error }]">
+        <div
+          :class="['cut-servise--wrapper', { error: item.error }]"
+          v-if="item.visible"
+        >
           <label class="control control-checkbox">
             <input
               type="checkbox"
@@ -101,12 +140,12 @@ const updateEuroWidth = (event: Event, type: string) => {
           </Tooltip>
         </div>
 
-        <div class="actions-inputs" v-if="item.width && item.value">
+        <div class="actions-inputs" v-if="item.EURO_WIDTH && item.value">
           <p class="actions-title">Ширина</p>
           <div class="actions-input--container">
             <MainInput
               :inputClass="'actions-input'"
-              v-model="item.width"
+              v-model="item.EURO_WIDTH"
               :min="200"
               :max="getMaxWidth"
               :type="'number'"
@@ -114,19 +153,49 @@ const updateEuroWidth = (event: Event, type: string) => {
                 (newValue) => updateEuroWidth(newValue, item.NAME)
               "
             />
-            <!-- <input
-              type="number"
-              :step="step"
-              min="300"
-              :max="getMaxWidth"
-              class="actions-input"
-              :value="item.width"
-              @input.number="updateEuroWidth($event, item.NAME)"
-            /> -->
           </div>
         </div>
       </div>
     </div>
+
+    <div
+      class="splitter-container--cut-header"
+      v-if="props.profileData.length > 0"
+    >
+      <div class="splitter-container--cut-header">
+        <h3 class="splitter-title">Профиль</h3>
+      </div>
+    </div>
+
+    <div
+      class="splitter-container--cut-servise"
+      v-if="props.profileData.length > 0"
+    >
+      <div
+        class="'cut-servise--item'"
+        v-for="(profile, key, ndx) in props.profileData"
+        :key="profile.NAME + ndx"
+      >
+        <div :class="['cut-servise--wrapper']">
+          <label class="control control-checkbox">
+            <input
+              type="checkbox"
+              :checked="profile.value"
+              :disabled="profile.ID === 251698 && profile.value"
+              @change="profileChacked($event, profile)"
+            />
+            <span class="control_indicator"></span>
+            <span class="text-lg text-gray-800 font-medium">{{
+              profile.NAME
+            }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <slot name="kromkaSelect" v-if="getKromkaActive"> </slot>
+
+    <!-- <KromkaCard v-if="checkKromkaActive()"/> -->
   </div>
 </template>
 
@@ -137,9 +206,14 @@ const updateEuroWidth = (event: Event, type: string) => {
       &-servise {
         display: flex;
         flex-direction: column;
-        padding: 0 10px;
+        padding: 0 10px 10px 10px;
         gap: 5px;
         overflow-y: scroll;
+
+        // height: 100%;
+        // max-height: 60%;
+
+        border-bottom: 1px solid #ecebf1;
 
         &::-webkit-scrollbar {
           width: 5px;
@@ -156,6 +230,10 @@ const updateEuroWidth = (event: Event, type: string) => {
           /* Цвет ползунка */
           border-radius: 4px;
         }
+
+        &.full {
+          max-height: 100%;
+        }
       }
     }
   }
@@ -165,7 +243,7 @@ const updateEuroWidth = (event: Event, type: string) => {
   &--item {
     display: flex;
     flex-direction: column;
-    padding: 0 5px 5px 5px;
+    // padding: 0 5px 5px 5px;
     border-radius: 5px;
     &.error {
       background-color: #d56b6b32;

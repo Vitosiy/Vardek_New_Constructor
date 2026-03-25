@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 import { MathUtils } from "three";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
+import { useRoomState } from "@/store/appliction/useRoomState";
 
 import {
   Vector2,
@@ -39,6 +40,7 @@ import {
   roundToPrecision,
   getIntersectVectorLine,
   getAngleBetweenVectors,
+  isPointOnSegment
 } from "./../../utils/Math";
 
 import { handlerDownEventGraphic } from "./methods/events/handlerDown";
@@ -48,6 +50,7 @@ import { handlerStageMouseUp } from "./methods/events/handlerStageMouseUp";
 import { handlerStageMouseMove } from "./methods/events/handlerStageMouseMove";
 
 const roomsStore = useSchemeTransition();
+const roomState = useRoomState();
 
 export default class DoorsAndWindows {
 
@@ -140,15 +143,65 @@ export default class DoorsAndWindows {
     // инициализируем события
     this.setupInteractions();
 
+    // Подписываемся на pointerup/pointermove на stage один раз при создании слоя,
+    // чтобы перетаскивание окон и дверей работало сразу после первой загрузки 2D
+    // (в init() при пустых комнатах происходит ранний return и подписка не вешалась).
+    this.app.stage
+      .on("pointerup", this.handlerStageMouseUp)
+      .on("pointermove", this.handlerStageMouseMove);
+
+  }
+
+  // Очистка всех объектов перед перезагрузкой
+  public clear(): void {
+    // Удаляем все объекты
+    const objectsToRemove = [...this.drawObjects];
+    objectsToRemove.forEach((obj) => {
+      this.removeObject(obj.id, false);
+    });
+
+    // Очищаем массив
+    this.drawObjects = [];
+    this.state.activeObject = null;
+    this.state.activePointObject = null;
   }
 
   // инициализация слоя
   // вызывается в конструкторе при запуске приложения
   public init(publicUpdate: boolean = false): void {
+    // Очищаем существующие данные перед загрузкой новых
+    this.clear();
 
     const rooms = roomsStore.getAllData(); // получаем комнаты из стора
 
-    rooms.forEach((room: any) => {
+    // Получаем текущую активную комнату
+    let currentRoomId = roomState.getRoomId;
+    
+    // Если текущей комнаты нет, устанавливаем первую комнату как текущую
+    if (!currentRoomId && rooms.length > 0) {
+      currentRoomId = rooms[0].id;
+      roomState.setCurrentRoomId(currentRoomId);
+    }
+
+    // Нормализуем ID для сравнения
+    const normalizeId = (value: string | number | null | undefined) => {
+      return value !== null && value !== undefined ? String(value) : '';
+    };
+    const currentRoomIdNormalized = normalizeId(currentRoomId);
+
+    // Фильтруем комнаты - обрабатываем только текущую активную комнату
+    const roomsToProcess = rooms.filter((room: any) => {
+      const roomIdNormalized = normalizeId(room.id);
+      return roomIdNormalized === currentRoomIdNormalized;
+    });
+
+    if (roomsToProcess.length === 0) {
+      console.warn('Текущая активная комната не найдена в данных для DoorsAndWindows');
+      return;
+    }
+
+    // Обрабатываем только текущую активную комнату
+    roomsToProcess.forEach((room: any) => {
 
       // получаем объекты комнат, в том числе двери и окна, исключая перегородки (166755)
       const dataObjsects = room.content.filter((item: any) => item.id !== 166755);
@@ -164,11 +217,22 @@ export default class DoorsAndWindows {
         }
 
         // находим стену к которой пренадлежит объект
-        const getBelongsToWall: { id: number | string; point: Vector2 } | null =
-          this.parent.layers.planner.getConnectionPointInPolygon({
-            x: object.position.x / 10,
-            y: object.position.z / 10
-          });
+        const objectPosition: Vector2 = {
+          x: object.position.x / 10,
+          y: object.position.z / 10
+        };
+        
+        let getBelongsToWall: { id: number | string; point: Vector2 } | null =
+          this.parent.layers.planner.getConnectionPointInPolygon(objectPosition);
+        
+        // Если не нашли стену через getConnectionPointInPolygon, ищем ближайшую по расстоянию
+        if (!getBelongsToWall) {
+          getBelongsToWall = this.findNearestWall(objectPosition, 50);
+          if (getBelongsToWall) {
+            console.log(`Wall not found by polygon check, using nearest wall (id: ${getBelongsToWall.id})`);
+          }
+        }
+        
         const dataWall: Pick<ObjectWall, 'id' | 'name' | 'width' | 'height' | 'points' | 'heightDirection' | 'angleDegrees' | 'updateTime'> | null =
           getBelongsToWall
             ? JSON.parse(JSON.stringify((() => {
@@ -243,10 +307,68 @@ export default class DoorsAndWindows {
 
         points.push(point2, point3);
 
-        dataObject.belongsToWall.distanceFromWallStart = getBelongsToWall 
-          ? getDistanceBetweenVectors(dataWall?.points[0], points[0]) : 0;
+        // Если объект принадлежит стене, проецируем его на стену
+        // (аналогично логике в updateObject), чтобы убрать смещение из 3D
+        if (getBelongsToWall && dataWall) {
+          // Обновляем свойства объекта на основе стены (как в updateObject)
+          dataObject.height = dataWall.height;
+          dataObject.heightDirection = dataWall.heightDirection;
+          dataObject.angleDegrees = dataWall.angleDegrees;
 
-        dataObject.points = points;
+          // Вычисляем расстояние от начала стены до проекции точки[0] на стену
+          const projectedPoint0 = getIntersectVectorLine(
+            [dataWall.points[0], dataWall.points[1]],
+            points[0]
+          );
+
+          if (projectedPoint0) {
+            // Вычисляем distanceFromWallStart от спроецированной точки
+            dataObject.belongsToWall.distanceFromWallStart = getDistanceBetweenVectors(
+              dataWall.points[0],
+              projectedPoint0
+            );
+
+            // Используем ту же логику, что и в updateObject для корректного позиционирования
+            const point_0: Vector2 = offsetVectorBySegment(
+              [dataWall.points[0], dataWall.points[1]],
+              dataWall.points[0],
+              dataObject.belongsToWall.distanceFromWallStart
+            );
+            
+            let point_1: Vector2 = {
+              x: point_0.x + dataObject.width,
+              y: point_0.y
+            };
+            
+            let point_2: Vector2 = JSON.parse(JSON.stringify(point_1));
+            point_2.y -= dataObject.height;
+            
+            let point_3: Vector2 = JSON.parse(JSON.stringify(point_0));
+            point_3.y -= dataObject.height;
+
+            // Поворачиваем точки вокруг point_0 на угол стены
+            const objectPoints: Vector2[] = rotatePointsAroundCenter([
+              point_0,
+              point_1,
+              point_2,
+              point_3
+            ], point_0, dataObject.angleDegrees);
+
+            // Используем корректно позиционированные точки
+            dataObject.points = objectPoints;
+          } else {
+            // Если проекция не удалась, используем исходные точки
+            dataObject.belongsToWall.distanceFromWallStart = getDistanceBetweenVectors(
+              dataWall.points[0],
+              points[0]
+            );
+            dataObject.points = points;
+          }
+        } else {
+          // Если объект не принадлежит стене, используем исходные точки
+          dataObject.belongsToWall.distanceFromWallStart = 0;
+          dataObject.points = points;
+        }
 
         this.drawObjects.push(dataObject);
 
@@ -266,11 +388,7 @@ export default class DoorsAndWindows {
 
     });
 
-    if(!publicUpdate){
-      this.app.stage
-        .on("pointerup", this.handlerStageMouseUp)
-        .on("mousemove", this.handlerStageMouseMove);
-    }
+    // здесь убрали подписки обработчиков
 
     console.log('DoorsAndWindows layer initialized with', this.drawObjects.length, 'objects');
 
@@ -278,7 +396,6 @@ export default class DoorsAndWindows {
 
   // добавляем объект в слой
   public addObject(data: IArgumentDataAddObject): void {
-
     /*
     * data.position = {x: 0, y: 0} - position cursor pointer
     * data.type = door | window - тип объекта
@@ -364,18 +481,29 @@ export default class DoorsAndWindows {
     { // ищем комноту под курсором, чтобы установить roomId
 
       const rooms = this.parent.layers.planner.allRooms; // спиосок всех комнат
+      let roomIdFound = false;
 
+      // Сначала пытаемся определить комнату по точке объекта
       for (let i = 0, len = rooms.length; i < len; i++) {
 
         const pointInRoom: boolean = this.parent.layers.planner.isPointInRoom(rooms[i].id, objectPoints[0]);
 
-        objectData.roomId = pointInRoom ? rooms[i].id : null;
-
         if (pointInRoom) {
+          objectData.roomId = rooms[i].id;
+          roomIdFound = true;
           console.log('>>> Объект находится внутри комнаты:', rooms[i].id);
           break;
         }
 
+      }
+
+      // Если не нашли комнату по точке и объект принадлежит стене, берем roomId из стены
+      if (!roomIdFound && getBelongsToWall?.id) {
+        const wall = this.parent.layers.planner.objectWalls.find((el: ObjectWall) => el.id === getBelongsToWall.id);
+        if (wall && wall.roomId) {
+          objectData.roomId = wall.roomId;
+          console.log('>>> roomId взят из стены:', wall.roomId);
+        }
       }
 
     }
@@ -420,6 +548,41 @@ export default class DoorsAndWindows {
       this.draw(this.state.activeObject); // Рисуем новый активный объект
     }
 
+  }
+
+  private findNearestWall(position: Vector2, maxDistance: number = 50): { id: number | string; point: Vector2 } | null {
+    let nearestWall: { id: number | string; point: Vector2; distance: number } | null = null;
+
+    const walls = this.parent.layers.planner.objectWalls;
+
+    for (const wall of walls) {
+      if (!wall.points || wall.points.length < 2) continue;
+
+      // Получаем проекцию точки на линию стены
+      const projection = getIntersectVectorLine(
+        [wall.points[0], wall.points[1]],
+        position
+      );
+
+      if (!projection) continue;
+
+      // Проверяем, что проекция находится на сегменте стены
+      if (!isPointOnSegment(wall.points[0], wall.points[1], projection)) continue;
+
+      // Вычисляем расстояние от точки до проекции
+      const distance = getDistanceBetweenVectors(position, projection);
+
+      // Если расстояние в пределах допустимого и меньше текущего минимума
+      if (distance <= maxDistance && (!nearestWall || distance < nearestWall.distance)) {
+        nearestWall = {
+          id: wall.id,
+          point: projection,
+          distance: distance
+        };
+      }
+    }
+
+    return nearestWall ? { id: nearestWall.id, point: nearestWall.point } : null;
   }
 
   // создаем контейнеры для визуализации cтены
@@ -938,7 +1101,7 @@ export default class DoorsAndWindows {
 
     this.app.stage
       .off("pointerup", this.handlerStageMouseUp)
-      .off("mousemove", this.handlerStageMouseMove);
+      .off("pointermove", this.handlerStageMouseMove);
 
     // Удаление контейнера
     if (this.container) {

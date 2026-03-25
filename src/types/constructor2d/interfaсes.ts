@@ -97,6 +97,7 @@ export interface HoverPointObject {
 
 export interface FillingObject {
   product: number;
+  isVerticalItem: boolean;
   id: number;
   name: string;
   image: string;
@@ -110,14 +111,17 @@ export interface FillingObject {
   sec: number;
   cell?: number;
   row?: number;
+  extra?: number;
   error?: boolean;
+  moduleThickness?: number;
 }
 
 export enum LOOPSIDE {
   left = 4693746,
   left_on_partition= 7080918,
   right = 4693757,
-  right_on_partition= 7080949
+  right_on_partition = 7080949,
+  none = 13864508,
 }
 
 export interface FasadeObject {
@@ -146,21 +150,31 @@ export interface FasadeMaterial {
   ALUM?: number;
 }
 
-export enum MANUFACTURER {
-  innotech = 31,
-  иннотех = 31,
-  avantech = 29.25,
-  авантех = 29.25,
-  flowbox = 25,
-  флоубокс = 25,
+export const MANUFACTURER = {
+  "innotech": 31,
+  "иннотех": 31,
+  "avantech": 29.25,
+  "авантех": 29.25,
+  "flowbox": 25,
+  "флоубокс": 25,
+  "квадро": 29,
 }
 
 export interface DrawerFasadeObject extends FasadeObject {
-  manufacturerOffset: MANUFACTURER;
+  manufacturerOffset: Number;
   item: number;
   sec: number | null;
   cell?: number | null;
   row?: number | null;
+}
+
+export interface GridRowExtra {
+  number: number;
+  width: number;
+  height: number;
+  position: THREE.Vector2;
+  type: "rowExtra";
+  fillings?: FillingObject[];
 }
 
 export interface GridCellsRow {
@@ -169,6 +183,7 @@ export interface GridCellsRow {
   height: number;
   position: THREE.Vector2;
   type: "rowCell";
+  extras?: GridRowExtra[];
   fillings?: FillingObject[];
 }
 
@@ -196,6 +211,25 @@ export interface GridSection {
   profiles?: FillingObject[];
 }
 
+export const ErrorsType = {
+  "loops": 'LOOPS',
+  'fasades': 'FASADES',
+  'fillings': 'FILLINGS',
+}
+
+export const ErrorsMessage = {
+  "loops": 'Ошибка! Петли фасадов пересекаются с наполнением!',
+  'fasades': 'Ошибка размера фасадов!',
+  'fillings': 'Ошибка установки наполнения!',
+}
+
+export interface ErrorItem {
+  type: typeof ErrorsType;
+  message: typeof ErrorsMessage;
+  list?: [];
+  sections?: Object;
+}
+
 export interface GridModule {
   width: number;
   height: number;
@@ -208,4 +242,10 @@ export interface GridModule {
   horizont?: number;
   fasades?: FasadeObject[];
   isSlidingDoors?: boolean;
+  leftWallThickness?: number;
+  rightWallThickness?: number;
+  noBottom?: boolean;
+  noBackwall?: boolean
+  noLoops?: boolean;
+  errors?: Object;
 }

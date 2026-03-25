@@ -1,4 +1,5 @@
 //@ts-nocheck
+
 import * as THREE from "three";
 import * as THREETypes from "@/types/types";
 import roughnessUrl from '@/assets/metall/metal_roughness.jpg';
@@ -25,11 +26,6 @@ export class AlumBuilder {
             this.setupTexture(file);
             this.roughnessMap = file;
         });
-
-        this.resources.startLoading(metallicUrl, 'localTexture', (file) => {
-            this.setupTexture(file);
-            this.metalnessMap = file;
-        });
     }
 
     private setupTexture(texture: THREE.Texture) {
@@ -39,6 +35,11 @@ export class AlumBuilder {
     }
 
     createAlum({ fasade, data }: { fasade: THREE.Object3D; data: { COLOR: string } }) {
+        if (!fasade) {
+            console.log('AlumBuilder: параметр fasade - не определён')
+            return
+        }
+
         fasade.visible = true;
 
         fasade.traverse((child: THREE.Object3D) => {

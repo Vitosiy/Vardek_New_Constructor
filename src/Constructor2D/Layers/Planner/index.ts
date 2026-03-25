@@ -4,6 +4,8 @@ import { MathUtils } from "three";
 
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 
+import { useRoomValidationStore } from '@/store/constructor2d/store/useRoomValidationStore'
+
 import { Vector2 } from '@/types/constructor2d/interfaсes';
 
 import { Events } from '@/store/constructor2d/events';
@@ -124,6 +126,8 @@ export default class Planner {
 
   private initRoom: () => (0 | 1);
 
+  private roomValidationStore = useRoomValidationStore()
+
   constructor(pixiApp: PIXI.Application, parent: any) {
     if (!pixiApp) throw new Error("PIXI.Application instance is required");
 
@@ -158,8 +162,125 @@ export default class Planner {
     this.init();
   }
 
+  // Очистка всех стен и комнат перед перезагрузкой
+  public clear(): void {
+    // Очищаем разметку размеров стен
+    this.parent?.layers?.dimensionDisplay?.hide();
+    // Очищаем активные точки стен (синие точки с углом)
+    this.parent?.layers?.startPointActiveObject?.activate(false);
+    this.parent?.layers?.arrowRulerActiveObject?.clearGraphic();
+    
+    // Очищаем графику всех стен
+    this.objectWalls.forEach((drawObject) => {
+      const containers = drawObject.containers;
+
+      if (containers) {
+        for (const key in containers) {
+          if (
+            key === "root" ||
+            key === "containerTextRulerWall" ||
+            key === "textRulerWall"
+          ) continue;
+
+          const graphic = containers[key];
+
+          if (graphic && typeof graphic.destroy === "function") {
+            try {
+              if (key === "eventGraphic" && graphic instanceof PIXI.Graphics) {
+                graphic
+                  .off("mouseover", this.handlerOverEventGraphic)
+                  .off("mouseout", this.handlerOutEventGraphic)
+                  .off("pointerdown", this.handlerDownEventGraphic);
+              }
+
+              if (!graphic.destroyed) {
+                graphic.destroy({
+                  texture: false,
+                  baseTexture: false,
+                });
+              }
+
+              if (containers.root && containers.root.children.includes(graphic)) {
+                containers.root.removeChild(graphic);
+              }
+
+              containers[key as keyof ObjectWallContainers] = null!;
+            } catch (error) {
+              console.warn(`Failed to destroy graphic: ${key}`, error);
+            }
+          }
+        }
+
+        // Удаляем textRulerWall
+        try {
+          if (containers.textRulerWall && typeof containers.textRulerWall.destroy === "function") {
+            containers.textRulerWall.destroy(true);
+          }
+          if (
+            containers.containerTextRulerWall &&
+            containers.containerTextRulerWall.children.includes(containers.textRulerWall)
+          ) {
+            containers.containerTextRulerWall.removeChild(containers.textRulerWall);
+          }
+          containers.textRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy textRulerWall`, error);
+        }
+
+        // Удаляем containerTextRulerWall
+        try {
+          if (containers.containerTextRulerWall && typeof containers.containerTextRulerWall.destroy === "function") {
+            containers.containerTextRulerWall.destroy(true);
+          }
+          if (
+            containers.root &&
+            containers.root.children.includes(containers.containerTextRulerWall)
+          ) {
+            containers.root.removeChild(containers.containerTextRulerWall);
+          }
+          containers.containerTextRulerWall = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy containerTextRulerWall`, error);
+        }
+
+        // Удаляем root контейнер
+        try {
+          if (containers.root && typeof containers.root.destroy === "function") {
+            containers.root.destroy({
+              children: true,
+              texture: false,
+              baseTexture: false,
+            });
+          }
+          if (
+            this.container &&
+            this.container.children.includes(containers.root)
+          ) {
+            this.container.removeChild(containers.root);
+          }
+          containers.root = null!;
+        } catch (error) {
+          console.warn(`Failed to destroy root`, error);
+        }
+      }
+    });
+
+    // Очищаем массивы и карты
+    this.objectWalls = [];
+    this.roomsMap.clear();
+    this.state.activeWall = null;
+    this.state.activePointWall = null;
+
+    // Очищаем слой пола комнаты (серая область)
+    if (this.parent?.layers?.halfRoom) {
+      this.parent.layers.halfRoom.removeHalfRoom();
+    }
+  }
+
   // инициализация объектов для визуализации при запуске приложения
   public init(publicUpdate: boolean = false): void {
+    // Очищаем существующие данные перед загрузкой новых
+    this.clear();
 
     const result = this.initRoom();
 
@@ -192,6 +313,7 @@ export default class Planner {
 
   }
 
+  private checkAndCreateRoomFromConnectedWalls()
   // добавление новой комнаты
   public addRoom(
     id: string | number | null = null, 
@@ -614,6 +736,11 @@ export default class Planner {
 
   public isPointInRoom(roomId: number | string, targetPoint: Vector2): boolean {
 
+    const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+      if (a === undefined || a === null || b === undefined || b === null) return false;
+      return String(a) === String(b);
+    };
+
     // Проверка входных параметров
     if (!roomId || !targetPoint) {
       throw new Error(`Invalid parameters: roomId(${roomId}) and targetPoint(${JSON.stringify(targetPoint)}) are required`);
@@ -628,25 +755,336 @@ export default class Planner {
 
   public getRoomContour(roomId: number | string): Vector2[] {
 
-    // 2. Настройки точности
-    const precision = 2; // Кол-во знаков после запятой
-    const uniquePoints = new Map<string, Vector2>();
+    const isSameId = (a: string | number | null | undefined, b: string | number | null | undefined) => {
+      if (a === undefined || a === null || b === undefined || b === null) return false;
+      return String(a) === String(b);
+    };
 
-    // 3. Сбор уникальных точек (индексы 0 и 1)
-    for (const wall of this.objectWalls) {
-      if (wall.roomId === roomId && wall.name !== 'dividing_wall' && wall.points?.length >= 2) {
-        // Точка 0
-        const key0 = `${wall.points[0].x.toFixed(precision)},${wall.points[0].y.toFixed(precision)}`;
-        uniquePoints.set(key0, wall.points[0]);
+    // Настройки точности
+    const precision = 2;
+    const pointKey = (p: Vector2): string => `${p.x.toFixed(precision)},${p.y.toFixed(precision)}`;
 
-        // Точка 1
-        const key1 = `${wall.points[1].x.toFixed(precision)},${wall.points[1].y.toFixed(precision)}`;
-        uniquePoints.set(key1, wall.points[1]);
+    // Сбор стен комнаты
+    const roomWalls = this.objectWalls.filter(
+      (wall) => isSameId(wall.roomId, roomId) && wall.name !== 'dividing_wall' && wall.points?.length >= 4
+    );
+
+    if (roomWalls.length === 0) {
+      return [];
+    }
+    
+    // Если стен меньше двух, возвращаем точки как есть
+    if (roomWalls.length < 2) {
+      const wall = roomWalls[0];
+      if (!wall.points || wall.points.length < 2) return [];
+      return [wall.points[0], wall.points[1]];
+    }
+
+    const wallMap = new Map<string | number, ObjectWall>();
+    roomWalls.forEach(wall => wallMap.set(wall.id, wall));
+
+    // Функция для получения внутренней границы стены (контур комнаты проходит по внутренней стороне стен)
+    // Используем точки 2 и 3, которые находятся на внутренней стороне стены относительно heightDirection
+    const getInnerEdge = (wall: ObjectWall): [Vector2, Vector2] => {
+      // Стена имеет 4 точки:
+      // points[0], points[1] - основные точки стены (начало и конец)
+      // points[2], points[3] - точки на противоположной стороне от основной линии
+      // Внутренняя сторона стены - это сторона, обращенная внутрь комнаты
+      // Для heightDirection = 1: внутренняя сторона - points[3] -> points[2]
+      // Для heightDirection = -1: внутренняя сторона - points[0] -> points[1]
+      // Но на практике, для правильного построения контура нужно использовать points[3] -> points[2]
+      // так как они всегда находятся на внутренней стороне относительно основной линии
+      if (wall.heightDirection === 1) {
+        return [wall.points[3], wall.points[2]];
+      } else {
+        // Для heightDirection = -1 внутренняя сторона - это основная линия
+        return [wall.points[0], wall.points[1]];
+      }
+    };
+
+    // Функция для получения продолжения линии (для поиска пересечений при вогнутых углах)
+    const extendLine = (edge: [Vector2, Vector2], extendBy: number = 10000): [Vector2, Vector2] => {
+      const [p1, p2] = edge;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len === 0) return edge;
+      
+      const unitX = dx / len;
+      const unitY = dy / len;
+      
+      return [
+        { x: p1.x - unitX * extendBy, y: p1.y - unitY * extendBy },
+        { x: p2.x + unitX * extendBy, y: p2.y + unitY * extendBy }
+      ];
+    };
+
+    // Собираем все углы комнаты: для каждой пары соединенных стен находим точку пересечения их внутренних границ
+    const wallCorners = new Map<string | number, Vector2[]>(); // wallId -> [corner1, corner2]
+    
+    for (const wall of roomWalls) {
+      const [wallStart, wallEnd] = getInnerEdge(wall);
+      const wallEdge = [wallStart, wallEnd] as [Vector2, Vector2];
+      const extendedWallEdge = extendLine(wallEdge);
+      const corners: Vector2[] = [];
+      
+      // Проверяем соединение через wallPoint0 (точка 0 стены соединена с другой стеной)
+      if (wall.mergeWalls.wallPoint0) {
+        const connectedWall = wallMap.get(wall.mergeWalls.wallPoint0);
+        if (connectedWall) {
+          const [connStart, connEnd] = getInnerEdge(connectedWall);
+          const connEdge = [connStart, connEnd] as [Vector2, Vector2];
+          const extendedConnEdge = extendLine(connEdge);
+          
+          const intersection = getIntersectionPoint(extendedWallEdge, extendedConnEdge);
+          if (intersection) {
+            corners.push(intersection);
+          }
+        }
+      }
+      
+      // Проверяем соединение через wallPoint1 (точка 1 стены соединена с другой стеной)
+      if (wall.mergeWalls.wallPoint1) {
+        const connectedWall = wallMap.get(wall.mergeWalls.wallPoint1);
+        if (connectedWall) {
+          const [connStart, connEnd] = getInnerEdge(connectedWall);
+          const connEdge = [connStart, connEnd] as [Vector2, Vector2];
+          const extendedConnEdge = extendLine(connEdge);
+          
+          const intersection = getIntersectionPoint(extendedWallEdge, extendedConnEdge);
+          if (intersection) {
+            const key = pointKey(intersection);
+            // Проверяем, не добавили ли мы уже этот угол
+            const exists = corners.some(c => pointKey(c) === key);
+            if (!exists) {
+              corners.push(intersection);
+            }
+          }
+        }
+      }
+      
+      // Если не нашли углы через соединения, используем конечные точки стены
+      if (corners.length === 0) {
+        corners.push(wallStart, wallEnd);
+      }
+      
+      wallCorners.set(wall.id, corners);
+    }
+
+    // Строим контур, обходя стены и используя найденные углы
+    const visitedWalls = new Set<string | number>();
+    const contour: Vector2[] = [];
+    
+    // Начинаем с первой стены
+    let currentWall = roomWalls[0];
+    let [innerStart, innerEnd] = getInnerEdge(currentWall);
+    let currentPoint: Vector2 = innerStart;
+    const startPoint: Vector2 = innerStart;
+
+    while (currentWall && !visitedWalls.has(currentWall.id)) {
+      visitedWalls.add(currentWall.id);
+      
+      // Добавляем текущую точку в контур
+      const currentKey = pointKey(currentPoint);
+      const lastKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+      if (currentKey !== lastKey) {
+        contour.push({ ...currentPoint });
+      }
+
+      // Проверяем, не вернулись ли мы к начальной точке
+      if (contour.length > 2 && currentKey === pointKey(startPoint)) {
+        break;
+      }
+
+      // Определяем следующую стену
+      const currentPointKey = pointKey(currentPoint);
+      const innerStartKey = pointKey(innerStart);
+      const innerEndKey = pointKey(innerEnd);
+      
+      const connectedWallId = currentPointKey === innerStartKey 
+        ? currentWall.mergeWalls.wallPoint1 
+        : currentWall.mergeWalls.wallPoint0;
+
+      let nextWall: ObjectWall | undefined;
+
+      if (connectedWallId) {
+        nextWall = wallMap.get(connectedWallId);
+        if (nextWall) {
+          // Ищем угол между этими стенами (пересечение продолжений внутренних границ)
+          const [nextStart, nextEnd] = getInnerEdge(nextWall);
+          const currentEdge = [innerStart, innerEnd] as [Vector2, Vector2];
+          const nextEdge = [nextStart, nextEnd] as [Vector2, Vector2];
+          const extendedCurrent = extendLine(currentEdge);
+          const extendedNext = extendLine(nextEdge);
+          
+          // Ищем пересечение продолжений - это может быть угол комнаты
+          const intersection = getIntersectionPoint(extendedCurrent, extendedNext);
+          if (intersection) {
+            // Проверяем, находится ли точка пересечения в разумных пределах от стен
+            // Вычисляем минимальное расстояние от точки пересечения до текущей и следующей стены
+            const distToCurrentStart = getDistanceBetweenVectors(intersection, innerStart);
+            const distToCurrentEnd = getDistanceBetweenVectors(intersection, innerEnd);
+            const distToNextStart = getDistanceBetweenVectors(intersection, nextStart);
+            const distToNextEnd = getDistanceBetweenVectors(intersection, nextEnd);
+            
+            // Находим минимальное расстояние до любой точки стен
+            const minDistToCurrent = Math.min(distToCurrentStart, distToCurrentEnd);
+            const minDistToNext = Math.min(distToNextStart, distToNextEnd);
+            const minDist = Math.min(minDistToCurrent, minDistToNext);
+            
+            // Используем точку пересечения только если она находится близко к стенам
+            // (в пределах 2-3 длин стен, чтобы учесть вогнутые углы, но не слишком далекие точки)
+            const maxWallLength = Math.max(
+              getDistanceBetweenVectors(innerStart, innerEnd),
+              getDistanceBetweenVectors(nextStart, nextEnd)
+            );
+            const maxAllowedDist = maxWallLength * 3; // Максимальное допустимое расстояние
+            
+            if (minDist <= maxAllowedDist) {
+              // Точка пересечения находится в разумных пределах - используем её как угол
+              const cornerKey = pointKey(intersection);
+              const lastKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+              
+              if (cornerKey !== lastKey) {
+                contour.push({ ...intersection });
+              }
+              currentPoint = intersection;
+              
+              // Определяем следующую точку на следующей стене
+              if (distToNextStart > distToNextEnd) {
+                currentPoint = nextStart;
+              } else {
+                currentPoint = nextEnd;
+              }
+            } else {
+              // Точка пересечения слишком далеко - используем реальную точку соединения
+              const currentEndPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+              const distToNextStart2 = getDistanceBetweenVectors(currentEndPoint, nextStart);
+              const distToNextEnd2 = getDistanceBetweenVectors(currentEndPoint, nextEnd);
+              
+              if (distToNextStart2 < distToNextEnd2) {
+                currentPoint = nextEnd;
+              } else {
+                currentPoint = nextStart;
+              }
+            }
+          } else {
+            // Если нет пересечения, используем конечную точку текущей стены
+            const currentEndPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+            const distToNextStart = getDistanceBetweenVectors(currentEndPoint, nextStart);
+            const distToNextEnd = getDistanceBetweenVectors(currentEndPoint, nextEnd);
+            
+            if (distToNextStart < distToNextEnd) {
+              currentPoint = nextEnd;
+            } else {
+              currentPoint = nextStart;
+            }
+          }
+        }
+      }
+
+      // Если не нашли через mergeWalls, ищем по совпадению координат
+      if (!nextWall) {
+        const currentEndPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+        
+        for (const wall of roomWalls) {
+          if (wall.id === currentWall.id || visitedWalls.has(wall.id)) continue;
+          
+          const [wallStart, wallEnd] = getInnerEdge(wall);
+          const wallStartKey = pointKey(wallStart);
+          const wallEndKey = pointKey(wallEnd);
+          
+          if (pointKey(currentEndPoint) === wallStartKey || pointKey(currentEndPoint) === wallEndKey) {
+            nextWall = wall;
+            
+            // Ищем угол между стенами
+            const currentEdge = [innerStart, innerEnd] as [Vector2, Vector2];
+            const nextEdge = [wallStart, wallEnd] as [Vector2, Vector2];
+            const extendedCurrent = extendLine(currentEdge);
+            const extendedNext = extendLine(nextEdge);
+            
+            const intersection = getIntersectionPoint(extendedCurrent, extendedNext);
+            if (intersection) {
+              // Проверяем, находится ли точка пересечения в разумных пределах от стен
+              const distToCurrentStart = getDistanceBetweenVectors(intersection, innerStart);
+              const distToCurrentEnd = getDistanceBetweenVectors(intersection, innerEnd);
+              const distToNextStart = getDistanceBetweenVectors(intersection, wallStart);
+              const distToNextEnd = getDistanceBetweenVectors(intersection, wallEnd);
+              
+              const minDistToCurrent = Math.min(distToCurrentStart, distToCurrentEnd);
+              const minDistToNext = Math.min(distToNextStart, distToNextEnd);
+              const minDist = Math.min(minDistToCurrent, minDistToNext);
+              
+              const maxWallLength = Math.max(
+                getDistanceBetweenVectors(innerStart, innerEnd),
+                getDistanceBetweenVectors(wallStart, wallEnd)
+              );
+              const maxAllowedDist = maxWallLength * 3;
+              
+              if (minDist <= maxAllowedDist) {
+                const cornerKey = pointKey(intersection);
+                const lastKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+                
+                if (cornerKey !== lastKey) {
+                  contour.push({ ...intersection });
+                }
+                currentPoint = intersection;
+              }
+            }
+            
+            // Определяем следующую точку
+            if (pointKey(currentEndPoint) === wallStartKey) {
+              currentPoint = wallEnd;
+            } else {
+              currentPoint = wallStart;
+            }
+            break;
+          }
+        }
+      }
+
+      if (nextWall) {
+        currentWall = nextWall;
+        [innerStart, innerEnd] = getInnerEdge(currentWall);
+      } else {
+        // Если не нашли следующую стену, добавляем конечную точку
+        const endPoint = currentPointKey === innerStartKey ? innerEnd : innerStart;
+        const endKey = pointKey(endPoint);
+        const lastPointKey = contour.length > 0 ? pointKey(contour[contour.length - 1]) : '';
+        
+        if (endKey !== lastPointKey) {
+          contour.push({ ...endPoint });
+        }
+        break;
       }
     }
 
-    // 4. Проверка минимального количества точек
-    return Array.from(uniquePoints.values());
+    // Убираем дубликат начальной точки
+    if (contour.length > 2 && pointKey(contour[0]) === pointKey(contour[contour.length - 1])) {
+      contour.pop();
+    }
+
+    // Если контур получился слишком коротким, возвращаем все уникальные точки
+    if (contour.length < 3) {
+      const allPoints: Vector2[] = [];
+      const uniquePoints = new Map<string, Vector2>();
+      roomWalls.forEach(wall => {
+        const [wallStart, wallEnd] = getInnerEdge(wall);
+        const key0 = pointKey(wallStart);
+        const key1 = pointKey(wallEnd);
+        if (!uniquePoints.has(key0)) {
+          uniquePoints.set(key0, wallStart);
+          allPoints.push(wallStart);
+        }
+        if (!uniquePoints.has(key1)) {
+          uniquePoints.set(key1, wallEnd);
+          allPoints.push(wallEnd);
+        }
+      });
+      return allPoints;
+    }
+
+    return contour;
 
   }
 
@@ -1272,6 +1710,8 @@ export default class Planner {
 
     const rooms = this.allRooms;
 
+    let hasRoomWithMoreThan3Points = false
+
     rooms.forEach((room, index) => {
 
       const polygonPoints: Vector2[] = this.getRoomContour(room.id);
@@ -1282,8 +1722,14 @@ export default class Planner {
       if(polygonPoints.length > 2){
         roomsHalf.push(roomData);
       }
+
+      if(polygonPoints.length > 3){
+        hasRoomWithMoreThan3Points = true
+      }
       
     });
+
+    this.roomValidationStore.setHasValidRoom(hasRoomWithMoreThan3Points)
 
     if (roomsHalf.length != 0) {
 
@@ -1291,6 +1737,7 @@ export default class Planner {
 
     } else {
       this.parent.layers.halfRoom.removeHalfRoom();
+      this.roomValidationStore.setHasValidRoom(false)
     }
 
   }
@@ -1490,19 +1937,23 @@ export default class Planner {
           *        - Выполняем удаление исходной комнаты и обновление roomId для всех стен цепочки
           */
           if (dataWall.roomId !== connectWall.roomId) {
-
+            // Сохраняем ID комнаты для удаления ДО изменения roomId
+            const roomToRemove = dataWall.roomId;
+            
+            // Обновляем roomId для всех стен
             this.objectWalls.forEach(wall => {
-              if (wall.roomId === dataWall.roomId) {
-                wall.roomId = connectWall.roomId;
-              }
+                if (wall.roomId === dataWall.roomId) {
+                    wall.roomId = connectWall.roomId;
+                }
             });
-
-            this.removeRoom(dataWall.roomId);
+            
+            // Удаляем комнату только если она ещё существует
+            if (this.roomsMap.has(roomToRemove)) {
+                this.removeRoom(roomToRemove);
+            }
+            
             dataWall.roomId = connectWall.roomId;
-
-            // !!! обновляем пол комнаты
-
-          }
+        } 
 
         } else {
 
@@ -1687,6 +2138,170 @@ export default class Planner {
 
     this.redrawAllObjects();
 
+  }
+
+  /**
+   * Разделяет стену на две новые.
+   * Логика:
+   * - берём исходную стену (W), её точки points[0] и points[1] и roomId
+   * - находим соседние стены по mergeWalls.wallPoint0 и wallPoint1 (если есть)
+   * - создаём новую точку splitPoint в середине сегмента [p0, p1]
+   * - создаём две новые стены W1 и W2, каждая в той же комнате, что и исходная
+   *   W1: [p0, splitPoint], W2: [splitPoint, p1]
+   * - перевычисляем их points (четырёхугольник) через calculatePositionPointsWall
+   * - настраиваем mergeWalls:
+   *   - если был сосед слева (old.mergeWalls.wallPoint1), привязываем его к W1
+   *   - если был сосед справа (old.mergeWalls.wallPoint0), привязываем его к W2
+   *   - W1 и W2 соединяем друг с другом в средней точке
+   * - удаляем старую стену и её контейнеры, добавляем контейнеры и отрисовываем новые
+   * - обновляем roomStore
+   */
+  public splitWallIntoTwo(id: string | number): void {
+
+    const indexWall = this.objectWalls.findIndex(el => el.id === id);
+    if (indexWall === -1) return;
+
+    const oldWall = this.objectWalls[indexWall];
+    if (!oldWall || !oldWall.points || oldWall.points.length < 2) return;
+
+    const p0 = oldWall.points[0];
+    const p1 = oldWall.points[1];
+
+    // середина старой стены
+    const splitPoint: Vector2 = {
+      x: (p0.x + p1.x) / 2,
+      y: (p0.y + p1.y) / 2,
+    };
+
+    // создаём две новые прямые (по 2 точки), затем расширим до 4 через calculatePositionPointsWall
+    const firstLineP0: Vector2 = { ...p0 };
+    const firstLineP1: Vector2 = { ...splitPoint };
+    const secondLineP0: Vector2 = { ...splitPoint };
+    const secondLineP1: Vector2 = { ...p1 };
+
+    const firstPoints = this.calculatePositionPointsWall(
+      firstLineP0,
+      firstLineP1,
+      oldWall.height,
+      oldWall.heightDirection
+    );
+
+    const secondPoints = this.calculatePositionPointsWall(
+      secondLineP0,
+      secondLineP1,
+      oldWall.height,
+      oldWall.heightDirection
+    );
+
+    const firstId: string = String(oldWall.name || 'wall') + '__split1__' + MathUtils.generateUUID();
+    const secondId: string = String(oldWall.name || 'wall') + '__split2__' + MathUtils.generateUUID();
+
+    // исходные связи
+    const leftNeighborId = oldWall.mergeWalls.wallPoint1;
+    const rightNeighborId = oldWall.mergeWalls.wallPoint0;
+
+    // mergeWalls для новых стен
+    const firstMergeWalls: MergeWalls = {
+      wallPoint0: null,
+      wallPoint1: null,
+    };
+
+    const secondMergeWalls: MergeWalls = {
+      wallPoint0: null,
+      wallPoint1: null,
+    };
+
+    // Привязываем левого соседа к первой новой стене
+    if (leftNeighborId != null) {
+      const leftNeighbor = this.objectWalls.find(w => w.id === leftNeighborId);
+      if (leftNeighbor) {
+        // старая стена была отмерджена как wallPoint1 -> значит у соседа она в wallPoint0
+        firstMergeWalls.wallPoint1 = leftNeighbor.id;
+        // у соседа заменяем ссылку на старую стену id на первую новую
+        if (leftNeighbor.mergeWalls.wallPoint0 === id) {
+          leftNeighbor.mergeWalls.wallPoint0 = firstId;
+        }
+        if (leftNeighbor.mergeWalls.wallPoint1 === id) {
+          leftNeighbor.mergeWalls.wallPoint1 = firstId;
+        }
+      }
+    }
+
+    // Привязываем правого соседа ко второй новой стене
+    if (rightNeighborId != null) {
+      const rightNeighbor = this.objectWalls.find(w => w.id === rightNeighborId);
+      if (rightNeighbor) {
+        secondMergeWalls.wallPoint0 = rightNeighbor.id;
+        if (rightNeighbor.mergeWalls.wallPoint0 === id) {
+          rightNeighbor.mergeWalls.wallPoint0 = secondId;
+        }
+        if (rightNeighbor.mergeWalls.wallPoint1 === id) {
+          rightNeighbor.mergeWalls.wallPoint1 = secondId;
+        }
+      }
+    }
+
+    // Соединяем две новые стены между собой:
+    // для простоты: W1.wallPoint0 <-> W2.id и W2.wallPoint1 <-> W1.id
+    firstMergeWalls.wallPoint0 = secondId;
+    secondMergeWalls.wallPoint1 = firstId;
+
+    // создаём объекты новых стен
+    const firstWall: ObjectWall = {
+      id: firstId,
+      name: oldWall.name,
+      width: getDistanceBetweenVectors(firstPoints[0], firstPoints[1]),
+      height: oldWall.height,
+      heightDirection: oldWall.heightDirection,
+      angleDegrees: getAngleBetweenVectors(
+        firstPoints[0],
+        { x: firstPoints[0].x + 300, y: firstPoints[0].y },
+        firstPoints[1]
+      ),
+      updateTime: Date.now(),
+      mergeWalls: firstMergeWalls,
+      points: firstPoints,
+      roomId: oldWall.roomId,
+      containers: undefined,
+    };
+
+    const secondWall: ObjectWall = {
+      id: secondId,
+      name: oldWall.name,
+      width: getDistanceBetweenVectors(secondPoints[0], secondPoints[1]),
+      height: oldWall.height,
+      heightDirection: oldWall.heightDirection,
+      angleDegrees: getAngleBetweenVectors(
+        secondPoints[0],
+        { x: secondPoints[0].x + 300, y: secondPoints[0].y },
+        secondPoints[1]
+      ),
+      updateTime: Date.now(),
+      mergeWalls: secondMergeWalls,
+      points: secondPoints,
+      roomId: oldWall.roomId,
+      containers: undefined,
+    };
+
+    // Удаляем старую стену с холста и из массива
+    this.state.activeWall = oldWall.id;
+    this.deleteSelectedObject();
+
+    // Добавляем новые стены рядом с позицией старой
+    // (после deleteSelectedObject() this.objectWalls уже без старой)
+    const insertIndex = Math.min(indexWall, this.objectWalls.length);
+    this.objectWalls.splice(insertIndex, 0, firstWall, secondWall);
+
+    // создаём контейнеры и рисуем новые стены (локально, до пересборки)
+    this.createDrawContainers(firstWall.id);
+    this.createDrawContainers(secondWall.id);
+    this.drawWall(firstWall.id);
+    this.drawWall(secondWall.id);
+
+    // Обновляем данные комнаты и полностью пересобираем planner
+    // (init -> clear + initRoom), тем самым заново пересчитывая mergeWalls, как при старте
+    this.parent.updateRoomStore();
+    this.init(true);
   }
 
   public updateScenePosition(): void {

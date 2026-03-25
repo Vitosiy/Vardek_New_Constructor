@@ -80,8 +80,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
 
     crteateUniformGroup({ objects, id, maxHeight, maxWidth, fasadeId, groupColor }) {
 
-        console.log(objects, id, maxHeight, maxWidth, fasadeId, groupColor, 'DATA_UNIFORM')
-
         let organizedLevels, indexedParts, groupId, fasad
 
         if (objects) {
@@ -199,12 +197,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
             return acc
         }, []).includes(true)
 
-        FASADE_PROPS.forEach(el => {
-            console.log(this.parent._FASADE[el.COLOR], 'FFF')
-        })
-
-
-
 
         const fasaded = FASADE_PROPS.filter((element) => element.COLOR !== null && element.COLOR !== 7397).length > 0
 
@@ -231,7 +223,6 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         this.backupFasadId = this.backupFasadId ?? FASADE_PROPS.filter(element => parseInt(element.COLOR) !== 7397)[0].COLOR  // Создаём общий индекс материала фасада
         const rootFasadeData = this.parent._FASADE[this.backupFasadId as number]
 
-
         if (rootFasadeData.MAX_WIDTH === null) {
             alert(`Выбранный фасад не может иметь переходящий рисунок`)
             this.backupFasadId = null
@@ -239,6 +230,8 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         }
 
         this.backupMaterial = this.backupMaterial ?? await this.getBackupTexture(rootFasadeData) as THREE.MeshPhongMaterial | THREE.MeshStandardMaterial | null; // Создаём общий материала фасада
+        const bigTexturePath = rootFasadeData.BIG_PICTURE ?? ''
+        this.createTexture.setTexture(bigTexturePath)
 
         this.maxGroupHeight = rootFasadeData.MAX_HEIGHT ?? this.maxGroupHeight
         this.maxGroupWidth = rootFasadeData.MAX_WIDTH ?? this.maxGroupWidth
@@ -380,7 +373,7 @@ export class UniformTextureBuilder extends UniformTextureUtils {
         const product = this.parent._PRODUCTS[element.userData.globalData].FACADE
 
         this.uniformEvents.modelState.clearCurrentModelFasadesData(); // Очищаем предыдущие данные
-        this.uniformEvents.modelState.createCurrentModelFasadesData(product) // Создаём новые данные
+        this.uniformEvents.modelState.createCurrentModelFasadesData({ data: product }) // Создаём новые данные
 
         const fasades = this.uniformEvents.modelState.getCurrentModelFasadesData  // Получаем новые данные
         const fasadesClone = JSON.parse(JSON.stringify(fasades)) as {

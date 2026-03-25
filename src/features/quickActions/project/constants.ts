@@ -1,5 +1,8 @@
 // API константы
-export const API_BASE_URL = 'https://dev.vardek.online/api/modeller/projectq'
+
+import { BASE_DOMAIN } from "@/utils/originalDomain";
+// export const API_BASE_URL = 'https://dev.vardek.online/api/modeller/projectq'
+export const API_BASE_URL = `https://${BASE_DOMAIN}/api/modeller/projectq`
 
 // Endpoints
 export const API_ENDPOINTS = {
@@ -33,7 +36,9 @@ export const ERROR_MESSAGES = {
   LOAD_PROJECT: 'Не удалось загрузить проект',
   SAVE_PROJECT: 'Ошибка сохранения проекта',
   INVALID_PROJECT_DATA: 'Данные проекта невалидны',
-  MISSING_PROJECT_ID: 'ID проекта не указан'
+  MISSING_PROJECT_ID: 'ID проекта не указан',
+  DELETE_PROJECT: 'Не удалось удалить проект',
+  LOAD_FORM_DATA: 'Не удалось получить форму'
 } as const
 
 // Сообщения для пользователя
