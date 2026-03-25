@@ -7,7 +7,7 @@ import {
     TSelectedCell,
     DrawerFasadeObject,
     FillingObject,
-    MANUFACTURER
+    MANUFACTURER, GridSection, GridCell, GridCellsRow, GridRowExtra
 } from "@/components/UMconstructor/types/UMtypes.ts";
 import {TFasadeProp} from "@/types/types.ts";
 
@@ -41,37 +41,36 @@ export default class FillingsManager {
                 if (section.cells.length > 0) {
                     section.cells.forEach(cell => {
 
-                        if(cell.cellsRows?.length > 0) {
+                        if (cell.cellsRows?.length > 0) {
                             cell.cellsRows?.forEach((cellRow) => {
 
-                                if(cellRow.extras?.length > 0) {
+                                if (cellRow.extras?.length > 0) {
                                     cellRow.extras?.forEach((extra) => {
-                                        if(extra.fillings?.length > 0) {
+                                        if (extra.fillings?.length > 0) {
                                             check = true;
                                         }
                                     })
                                 }
 
-                                if(cellRow.fillings?.length > 0) {
+                                if (cellRow.fillings?.length > 0) {
                                     check = true;
                                 }
                             })
                         }
 
-                        if(cell.fillings?.length > 0) {
+                        if (cell.fillings?.length > 0) {
                             check = true;
                         }
                     })
                 }
 
-                if(section.fillings?.length > 0) {
+                if (section.fillings?.length > 0) {
                     check = true;
                 }
             })
 
             return check;
-        }
-        else {
+        } else {
             return check;
         }
     }
@@ -239,11 +238,11 @@ export default class FillingsManager {
         }
 
         if (isHiTechProfile) {
-            if(grid.profilesConfig?.sideProfile) {
+            if (grid.profilesConfig?.sideProfile) {
                 this.scope.callAlert("error", "Нельзя добавить горизонтальный профиль вместе с боковым!")
                 return;
             }
-            if(row || extra) {
+            if (row || extra) {
                 this.scope.callAlert("error", "Нельзя установить профиль в вертикальный разделитель!")
                 return;
             }
@@ -448,21 +447,21 @@ export default class FillingsManager {
     }
 
     getFillingObject({
-                   grid = this.scope.UM_STORE.getUMGrid(),
-                   sec = 0,
-                   cell,
-                   row,
-                   extra,
-                    item = 0,
-               }:
-               {
-                   grid: GridModule,
-                   sec: number,
-                   item: number,
-                   cell?: number | undefined,
-                   row?: number | undefined,
-                   extra?: number | undefined,
-               }
+                         grid = this.scope.UM_STORE.getUMGrid(),
+                         sec = 0,
+                         cell,
+                         row,
+                         extra,
+                         item = 0,
+                     }:
+                     {
+                         grid: GridModule,
+                         sec: number,
+                         item: number,
+                         cell?: number | undefined,
+                         row?: number | undefined,
+                         extra?: number | undefined,
+                     }
     ) {
         const curSection = grid.sections[sec];
         const curCell = curSection.cells?.[cell];
@@ -524,21 +523,21 @@ export default class FillingsManager {
             sec.hiTechProfiles = sec.hiTechProfiles.filter((el, index) => {
                 return el.isProfile.id !== curItemProfile.isProfile.id;
             });
-/*            sec.hiTechProfiles.forEach((profile, index) => {
-                if (profile.isProfile.id > curItemProfile.isProfile.id) {
-                    let filling = this.getFillingObject({
-                        grid,
-                        sec: profile.sec,
-                        cell: profile.cell,
-                        row: profile.row,
-                        extra: profile.extra,
-                        item: profile.id - 1,
-                    });
-                    profile.isProfile.id -= 1;
-                    if(filling)
-                        filling.isProfile.id = profile.isProfile.id;
-                }
-            })*/
+            /*            sec.hiTechProfiles.forEach((profile, index) => {
+                            if (profile.isProfile.id > curItemProfile.isProfile.id) {
+                                let filling = this.getFillingObject({
+                                    grid,
+                                    sec: profile.sec,
+                                    cell: profile.cell,
+                                    row: profile.row,
+                                    extra: profile.extra,
+                                    item: profile.id - 1,
+                                });
+                                profile.isProfile.id -= 1;
+                                if(filling)
+                                    filling.isProfile.id = profile.isProfile.id;
+                            }
+                        })*/
         }
 
         curRow.fillings = curRow.fillings.filter((el, index) => {
@@ -588,7 +587,10 @@ export default class FillingsManager {
     };
 
     changeFillingPositionX(
-        event: Event,
+        conversation: {
+            min: number,
+            max: number
+        },
         _value: number,
         key: number,
         secIndex: number,
@@ -598,8 +600,8 @@ export default class FillingsManager {
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
     ) {
         this.scope.debounce("changeFillingPositionX", () => {
-            let value = Math.min(+_value, +event.target.max);
-            value = Math.max(+value, +event.target.min);
+            let value = Math.min(+_value, conversation.max);
+            value = Math.max(+value, conversation.min);
 
             this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
@@ -653,8 +655,60 @@ export default class FillingsManager {
         }, 1000)
     };
 
+    calcMinMaxPositionY = (
+        type: "min" | "max",
+        filling: FillingObject,
+        cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+        grid: GridModule = this.scope.UM_STORE.getUMGrid()
+    ) => {
+
+        let result = 0
+        switch (type) {
+            case "max":
+                result = cell.height - filling.height + (filling.isProfile ? grid.moduleThickness : 0)
+                if (filling.fasade) {
+                    result += (grid.moduleThickness - 2) - filling.fasade.height + filling.fasade.manufacturerOffset + filling.height
+                }
+                break;
+            case "min":
+                result = 0 - (filling.isProfile ? grid.moduleThickness : 0)
+                if (filling.fasade) {
+                    result = result - (grid.moduleThickness - 2) + filling.fasade.manufacturerOffset
+                }
+                break;
+        }
+
+        return cell.position.y + result
+    }
+
+    getAbsolutePositionY(
+        filling: FillingObject,
+        cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+    ) {
+        let resultPos = filling.position.y;
+
+        if (filling.distances) {
+            const grid = this.scope.UM_STORE.getUMGrid()
+            resultPos = cell.position.y + filling.distances.bottom - (grid.horizont + (grid.noBottom ? 0 : grid.moduleThickness))
+        }
+
+        return resultPos >= 0 ? resultPos : 0;
+    }
+
+    getLocalPositionY(
+        value: number,
+        filling: FillingObject,
+        cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+    ) {
+        let result = value - cell.position.y
+        return result >= 0 ? result : 0;
+    }
+
     changeFillingPositionY(
-        event: Event,
+        conversation: {
+            min: number,
+            max: number
+        },
         _value: number,
         key: number,
         secIndex: number,
@@ -662,10 +716,11 @@ export default class FillingsManager {
         rowIndex: number | null = null,
         extraIndex: number | null = null,
         grid: GridModule = this.scope.UM_STORE.getUMGrid(),
+        time: number = 1000,
     ) {
         this.scope.debounce("changeFillingPositionY", () => {
-            let value = Math.min(+_value, +event.target.max);
-            value = Math.max(+value, +event.target.min);
+            let value = Math.min(+_value, conversation.max);
+            value = Math.max(+value, conversation.min);
 
             this.selectCell(secIndex, cellIndex, rowIndex, extraIndex, key);
 
@@ -693,7 +748,7 @@ export default class FillingsManager {
             let tmpSector = currentfilling.sector
 
             let tmpFasade
-            if(currentfilling.fasade){
+            if (currentfilling.fasade) {
                 tmpFasade = currentfilling.fasade
                 delete currentfilling.fasade
             }
@@ -704,7 +759,11 @@ export default class FillingsManager {
             fillingData.position.y = newValue;
             fillingData.sector = tmpSector;
 
-            if(tmpFasade)
+            currentfilling.sector = tmpSector;
+            if (tmpFasade)
+                currentfilling.fasade = tmpFasade;
+
+            if (tmpFasade)
                 fillingData.fasade = tmpFasade;
 
             const pixiSector = current.sector;
@@ -716,15 +775,23 @@ export default class FillingsManager {
                 currentfilling.position.y = newValue;
                 currentfilling.distances.bottom = +value
             } else {
+                let tmpPos = {
+                    x: fillingData.position.x,
+                    y: newValue,
+                }
+                fillingData.position.y = prevValue;
+                fillingData.distances.bottom = prevValueBottom;
+                let closestPos = this.scope.SHAPE_ADJUSTER.getClosestPosition(pixiSector, fillingData, tmpPos)
+
                 this.scope.callAlert("error", `Нельзя изменить позицию на ${+_value}`)
-                currentfilling.position.y = prevValue;
-                currentfilling.distances.bottom = prevValueBottom;
+                if (closestPos) {
+                    currentfilling.position.y = closestPos.y;
+                    currentfilling.distances.bottom = current.height - (currentfilling.position.y + currentfilling.height) + grid.moduleThickness
+                } else {
+                    currentfilling.position.y = prevValue;
+                    currentfilling.distances.bottom = prevValueBottom;
+                }
             }
-
-            currentfilling.sector = tmpSector;
-
-            if(tmpFasade)
-                currentfilling.fasade = tmpFasade;
 
             if (currentfilling.fasade) {
                 currentfilling.fasade.position.y = grid.height - (currentfilling.position.y + currentfilling.height + currentfilling.fasade.manufacturerOffset)
@@ -738,13 +805,12 @@ export default class FillingsManager {
                 grid.sections[secIndex].fasadesDrawers[drawerInfoId] = currentfilling.fasade
 
                 this.scope.FASADES.EXTERNAL_FASADES.calcDrawersFasades(secIndex, false, grid)
-            }
-            else {
+            } else {
                 this.scope.LOOPS.checkLoopsCollision(secIndex, grid)
             }
 
             this.scope.reset(grid)
-        }, 1000)
+        }, time)
     };
 
     changeDrawerFasade(
@@ -795,7 +861,7 @@ export default class FillingsManager {
                 currentfilling.fasade.height = newValue;
             } else {
                 currentfilling.fasade.height = prevValue;
-                this.scope.callAlert('error',"Ошибка! Размер фасада слишком велик!")
+                this.scope.callAlert('error', "Ошибка! Размер фасада слишком велик!")
                 this.scope.callAlert('warning', 'Проверьте корректность позиции ящика!')
             }
 

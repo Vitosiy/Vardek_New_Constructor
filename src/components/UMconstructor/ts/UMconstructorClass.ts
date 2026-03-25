@@ -311,7 +311,7 @@ export default class UMconstructorClass {
         }, 1000)
     };
 
-    updateTotalHeight(value) {
+    updateTotalHeight(value, event: Event) {
         this.debounce('totalHeight', () => {
             const grid = this.UM_STORE.getUMGrid()
 
