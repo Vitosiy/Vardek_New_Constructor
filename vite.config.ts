@@ -3,10 +3,12 @@ import { defineConfig } from 'vite'
 import path from "path";
 import vue from '@vitejs/plugin-vue'
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: './',
+  base: '/dev_modeller/',
   root: "./",
   server: {
     port: 5000,
@@ -33,24 +35,45 @@ export default defineConfig({
       }
     }
   },
-  build: {
-    emptyOutDir: true,
-    sourcemap: false,
-    declaration: false,
-    declarationMap: false,
-    minify: true,
-    rollupOptions: {
-      output: {
-        entryFileNames: "[name].js",
-        chunkFileNames: "[name].js",
-        assetFileNames: ({ name, extname }) => {
+  // build: {
+  //   emptyOutDir: true,
+  //   sourcemap: false,
+  //   declaration: false,
+  //   declarationMap: false,
+  //   minify: true,
+  //   rollupOptions: {
+  //     output: {
+  //       entryFileNames: "[name].js",
+  //       chunkFileNames: "[name].js",
+  //       assetFileNames: ({ name, extname }) => {
 
+  //         if (/\.css$/.test(name ?? '')) {
+  //           return 'assets/style[extname]';
+  //         }
+  //         return 'assets/[name][extname]';
+  //       },
+  //     },
+  //   },
+  // },
+  build: {
+  emptyOutDir: true,
+  sourcemap: false,
+  declaration: false,
+  declarationMap: false,
+  minify: true,
+  // Измените assetsDir
+  assetsDir: 'assets',
+  rollupOptions: {
+    output: {
+      entryFileNames: "assets/js/[name]-[hash].js",
+      chunkFileNames: "assets/js/[name]-[hash].js",
+      assetFileNames: ({ name, extname }) => {
           if (/\.css$/.test(name ?? '')) {
-            return 'assets/style[extname]';
+            return 'assets/style-[hash][extname]';
           }
           return 'assets/[name][extname]';
-        },
       },
     },
   },
+}
 })
