@@ -16,12 +16,16 @@ const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const submitSuccess = ref(false)
 
-const renderedFields = computed(() =>
+const fieldsForSubmit = computed(() =>
   fields.value.filter((field) => Boolean(fieldComponentMap[field.TYPE]))
 )
-const splitFieldsIndex = computed(() => Math.ceil(renderedFields.value.length / 2))
-const leftColumnFields = computed(() => renderedFields.value.slice(0, splitFieldsIndex.value))
-const rightColumnFields = computed(() => renderedFields.value.slice(splitFieldsIndex.value))
+
+// DELIVERY_COORDS должен уходить в запрос, но не должен отображаться пользователю.
+const visibleFields = computed(() => fieldsForSubmit.value.filter((field) => field.CODE !== 'DELIVERY_COORDS'))
+
+const splitFieldsIndex = computed(() => Math.ceil(visibleFields.value.length / 2))
+const leftColumnFields = computed(() => visibleFields.value.slice(0, splitFieldsIndex.value))
+const rightColumnFields = computed(() => visibleFields.value.slice(splitFieldsIndex.value))
 
 const isRepeatableField = (field: NormalizedFields) =>
   Boolean(field.MULTIPLE) && field.TYPE !== 'CHECKBOX' && field.TYPE !== 'FILE'
@@ -148,14 +152,85 @@ const getFieldForRender = (field: NormalizedFields, valueIndex: number): Normali
   }
 }
 
+const setDeliveryCoords = (coords: string | null) => {
+  formValues.value['DELIVERY_COORDS'] = coords ?? ''
+}
+
 const submitForm = async () => {
   submitError.value = null
   submitSuccess.value = false
   isSubmitting.value = true
 
   try {
+    // Проверка обязательных полей перед отправкой.
+    // Так как отправка идёт через JS, нативная HTML-валидация не срабатывает.
+    const requiredFields = fieldsForSubmit.value.filter((f) => f.REQUIED === true)
+    const isValueFilled = (field: NormalizedFields, value: any): boolean => {
+      if (value === null || value === undefined) return false
+
+      if (field.TYPE === 'CHECKBOX') {
+        return value === true
+      }
+
+      if (field.TYPE === 'FILE') {
+        if (Array.isArray(value)) return value.length > 0
+        return value instanceof File
+      }
+
+      if (Array.isArray(value)) {
+        // Для repeatable полей: считаем заполненными, если в каждом элементе есть значение.
+        if (value.length === 0) return false
+        return value.every((item) => {
+          if (item === null || item === undefined) return false
+          if (typeof item === 'string') return item.trim() !== ''
+          if (item instanceof File) return true
+          return Boolean(item)
+        })
+      }
+
+      if (typeof value === 'string') return value.trim() !== ''
+      if (typeof value === 'number') return Number.isFinite(value) && !Number.isNaN(value)
+      return Boolean(value)
+    }
+
+    for (const f of requiredFields) {
+      const value = formValues.value[f.CODE]
+      if (!isValueFilled(f, value)) {
+        submitError.value = `Поле "${f.NAME}" обязательно для заполнения`
+        return { success: false, error: submitError.value }
+      }
+    }
+
+    // Адрес должен быть выбран из SuggestView, иначе координаты не будут получены.
+    // Чтобы не "наказывать" пользователя за асинхронность geocode (выбор из меню -> промис),
+    // ждём короткое время, пока DELIVERY_COORDS не заполнится.
+    const address = String(formValues.value['ADDRESS'] ?? '').trim()
+    const getDeliveryCoords = () => String(formValues.value['DELIVERY_COORDS'] ?? '').trim()
+
+    if (address !== '' && getDeliveryCoords() === '') {
+      const timeoutMs = 2000
+      const intervalMs = 100
+      const startedAt = Date.now()
+
+      console.log('[orderForm] wait deliveryCoords after address select', {
+        address,
+        deliveryCoordsInitially: getDeliveryCoords()
+      })
+
+      while (Date.now() - startedAt < timeoutMs && getDeliveryCoords() === '') {
+        await new Promise((resolve) => setTimeout(resolve, intervalMs))
+      }
+
+      if (getDeliveryCoords() === '') {
+        submitError.value = 'Пожалуйста, выберите адрес из автокомплита Яндекса'
+        return { success: false, error: submitError.value }
+      }
+      console.log('[orderForm] deliveryCoords received after wait:', getDeliveryCoords())
+    }
+
+
     const payload = new FormData()
-    renderedFields.value.forEach((field, index) => {
+    fieldsForSubmit.value.forEach((field, index) => {
       appendFieldToFormData(
         payload,
         index,
@@ -204,6 +279,7 @@ defineExpose({
                   :is="fieldComponentMap[field.TYPE]"evelop2
                   :field="getFieldForRender(field, Number(valueIndex))"
                   v-model="formValues[field.CODE][valueIndex]"
+                  @update-delivery-coords="setDeliveryCoords"
                 />
                 <button
                   v-if="valueIndex === 0"
@@ -230,6 +306,7 @@ defineExpose({
               :is="fieldComponentMap[field.TYPE]"
               :field="field"
               v-model="formValues[field.CODE]"
+              @update-delivery-coords="setDeliveryCoords"
             />
           </template>
         </div>
@@ -246,6 +323,7 @@ defineExpose({
                   :is="fieldComponentMap[field.TYPE]"
                   :field="getFieldForRender(field, Number(valueIndex))"
                   v-model="formValues[field.CODE][valueIndex]"
+                  @update-delivery-coords="setDeliveryCoords"
                 />
                 <button
                   v-if="valueIndex === 0"
@@ -272,6 +350,7 @@ defineExpose({
               :is="fieldComponentMap[field.TYPE]"
               :field="field"
               v-model="formValues[field.CODE]"
+              @update-delivery-coords="setDeliveryCoords"
             />
           </template>
         </div>
