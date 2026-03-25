@@ -209,7 +209,7 @@ export class BuildUniversalModule extends BuildProduct {
 
         const sourceForBounds = curBodyExceptions ? exept : tempTotal;
         if (sourceForBounds) {
-            this.setBounds(total, sourceForBounds);
+            this.setBounds(total, sourceForBounds, size, CONFIG);
         }
 
         if (drowMode) {
