@@ -12,7 +12,6 @@ import {ref, toRefs, onMounted, watch, computed} from "vue";
 import {TSelectedCell, GridModule, LOOPSIDE} from "@/components/UMconstructor/types/UMtypes.ts";
 import {TFasadeProp, TFasadeTrueSizes} from "@/types/types.ts";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
-import {c} from "openapi-typescript";
 
 const props = defineProps({
   module: {
@@ -255,18 +254,18 @@ watch(() => selectedFasade.value, () => {
 </script>
 
 <template>
-  <div class="splitter-container--product">
-    <div class="splitter-container--product-data" v-if="module">
+  <div class="UM splitter-container--product">
+    <div class="UM splitter-container--product-data" v-if="module">
       <section
           v-if="module.fasades"
-          class="actions-wrapper"
+          class="UM actions-wrapper"
       >
-        <div :class="'actions-items--container'">
-          <article class="actions-items actions-items--right">
-            <div class="actions-items--right-items">
+        <div :class="'UM actions-items--container'">
+          <article class="UM actions-items actions-items--right">
+            <div class="UM actions-items--right-items">
               <button
                   v-if="module.fasades.length < 4"
-                  :class="['actions-btn actions-btn--default']"
+                  :class="['UM actions-btn actions-btn--default']"
                   @click="UMconstructor.FASADES.addSlideDoor(module.fasades.length + 1, module)"
               >
                 Добавить дверь
@@ -274,7 +273,7 @@ watch(() => selectedFasade.value, () => {
 
               <button
                   v-if="module.fasades.length > 2"
-                  :class="['actions-btn actions-btn--default']"
+                  :class="['UM actions-btn actions-btn--default']"
                   @click="UMconstructor.FASADES.deleteSlideDoor(module.fasades.length, module)"
               >
                 Удалить дверь
@@ -283,10 +282,10 @@ watch(() => selectedFasade.value, () => {
           </article>
         </div>
 
-        <div class="actions-header">
+        <div class="UM actions-header">
           <div
               :class="[
-                'actions-header--container',
+                'UM actions-header--container',
                 { active: doorIndex === selectedFasade.cell },
               ]"
               v-for="(door, doorIndex) in module.fasades"
@@ -294,7 +293,7 @@ watch(() => selectedFasade.value, () => {
               @click="showCurrentCol(null, doorIndex)"
           >
             <p
-                class="actions-title actions-title--part"
+                class="UM actions-title actions-title--part"
             >
               Дверь №{{ doorIndex + 1 }}
             </p>
@@ -304,18 +303,18 @@ watch(() => selectedFasade.value, () => {
         <div
             v-for="(door, doorIndex) in module.fasades"
             :key="doorIndex"
-            :class="'actions-container'"
+            :class="'UM actions-container'"
             :id="`fasade_${doorIndex}_${doorIndex}`"
         >
           <div
-              class="actions-items--wrapper"
+              class="UM actions-items--wrapper"
               v-if="selectedFasade.cell === doorIndex"
           >
-            <div class="accordion">
+            <div class="UM accordion">
               <div
                   v-for="(segment, segmentIndex) in door"
                   :key="segmentIndex"
-                  :class="'actions-items--container'"
+                  :class="'UM actions-items--container'"
                   :id="`fasade_${doorIndex}_${segmentIndex}`"
               >
                 <details

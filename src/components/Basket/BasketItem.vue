@@ -873,6 +873,15 @@ const renderDescription = (props) => {
     const glass = appData.value["GLASS"][value.GLASS]?.NAME;
     const milling = appData.value["MILLING"][value.MILLING]?.NAME;
 
+    const table = appData.value.CATALOG.PRODUCTS[value.TABLE]?.NAME;
+    if(table){
+      const KROMKA = appData.value.HEM[value.KROMKA]?.NAME;
+      const PROFILE = appData.value.PROFILE.find(item => item.PROFILE === value.PROFILE)?.NAME;
+
+      return `${table ?? ""} ${PROFILE ?? ""} ${KROMKA ?? ""}`;
+    }
+
+
     return `${color ?? ""} ${pallette ?? ""} ${patina ?? ""} ${milling ?? ""}`;
   };
 

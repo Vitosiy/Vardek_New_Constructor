@@ -8,13 +8,13 @@
       >
         Корзина
       </button>
-      <!-- <button
+      <button
         class="basket-tabs__tab"
         :class="{ 'basket-tabs__tab--active': activeTab === 'order' }"
         @click="activeTab = 'order'"
       >
         Форма заказа
-      </button> -->
+      </button>
     </div>
 
     <template v-if="activeTab === 'basket'">
@@ -107,7 +107,6 @@
     <template v-else>
       <div class="basket-header">
         <div class="basket-header__title">Форма заказа</div>
-        <orderForm />
         <ClosePopUpButton
           class="basket-header__close-btn"
           @click="closePopup"
@@ -115,6 +114,7 @@
       </div>
 
       <div class="basket-container">
+        <orderForm ref="orderFormRef" />
       </div>
 
       <div class="order-footer">
@@ -122,7 +122,7 @@
           <button class="basket__close" @click="closePopup">
             Закрыть
           </button>
-          <button class="basket__order" type="button">
+          <button class="basket__order" type="button" @click="handleOrderFormSubmit" :disabled="isOrderFormSubmitting">
             Отправить
           </button>
         </div>
@@ -145,7 +145,7 @@ import { useEventBus } from "@/store/appliction/useEventBus";
 import { useRoomOptions } from '../left-menu/option/roomOptions/useRoomOptons';
 import { useBasketStorage } from '@/store/appStore/basket/useBasketStorage';
 
-import orderForm from '@/features/orderForm/orderForm.vue';
+import orderForm from '@/features/orderForm/components/orderForm.vue';
 
 const { basketData, basketDelay, allBasketDelay, syncBasket, syncBasketDelay, syncBasketMulti, syncInvoce} = useBasketStore();
 import { useConfigStore } from "@/store/appStore/useConfigStore";
@@ -182,6 +182,8 @@ const technologistStorage = useTechnologistStorage();
 // Ключ для принудительной перерисовки
 const basketUpdateKey = ref(0);
 const activeTab = ref<'basket' | 'order'>('basket');
+const orderFormRef = ref<any>(null);
+const isOrderFormSubmitting = ref(false);
 
 const closePopup = () => {
   popupStore.closePopup('basket');
@@ -216,6 +218,20 @@ const setInvoice = () => {
     openPopupFormBasket();
   } else {
     syncInvoce();
+  }
+};
+
+const handleOrderFormSubmit = async () => {
+  if (!orderFormRef.value?.submitForm) {
+    console.warn('Order form submit method not found');
+    return;
+  }
+
+  isOrderFormSubmitting.value = true;
+  try {
+    await orderFormRef.value.submitForm();
+  } finally {
+    isOrderFormSubmitting.value = false;
   }
 };
 
