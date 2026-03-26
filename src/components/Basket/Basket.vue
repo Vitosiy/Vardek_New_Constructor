@@ -20,7 +20,6 @@
     <template v-if="activeTab === 'basket'">
       <div class="basket-header">
         <div v-if="loading" class="basket__loader"></div>
-        <div class="basket-header__title">Корзина</div>
 
         <ClosePopUpButton
           class="basket-header__close-btn"
@@ -106,7 +105,6 @@
 
     <template v-else>
       <div class="basket-header">
-        <div class="basket-header__title">Форма заказа</div>
         <ClosePopUpButton
           class="basket-header__close-btn"
           @click="closePopup"

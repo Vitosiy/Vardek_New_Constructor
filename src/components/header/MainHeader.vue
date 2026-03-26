@@ -19,7 +19,8 @@ import { useRoomOptions } from "../left-menu/option/roomOptions/useRoomOptons";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useConstructor2DHistory } from "@/store/constructor2d/useConstructor2DHistory";
 import { TApplication } from "@/types/types";
-import { getBlankRoomTemplate } from "@/Constructor2D/facade/blankRoom";
+import { buildProjectFromWallWidths } from "@/Constructor2D/facade/blankRoom";
+import { usePopupStore } from "@/store/appStore/popUpsStore";
 
 import {
   postRequest,
@@ -69,6 +70,7 @@ const roomOptions = useRoomOptions();
 const customiserStore = useCustomiserStore();
 const schemeTransition = useSchemeTransition();
 const constructor2DHistory = useConstructor2DHistory();
+const popupStore = usePopupStore();
 
 // const _saveProject = async () => {
 //   eventBus.emit("A:Save");
@@ -143,41 +145,56 @@ const constructor2DHistory = useConstructor2DHistory();
 const createNewRoom = (value: string) => {
   // 2D: создаем новую комнату на основе шаблона blankroom
   if (route.path === "/2d") {
-    const roomId = Date.now().toString();
-    const template = getBlankRoomTemplate();
-    const label =
-      value || template.label || `Комната ${roomState.getRooms.length + 1}`;
+    popupStore.openProjectParamsPopup(async (widths) => {
+      const projectData = buildProjectFromWallWidths(
+        widths.right,
+        widths.left,
+        widths.bottom,
+        widths.top
+      );
 
-    roomState.addRoom({
-      id: roomId,
-      label,
-      description: template.description || "",
-      params: template.params,
-      content: template.content,
-      basket: JSON.stringify({
-        scene: [],
-        catalog: [],
-      }),
-    });
+      const template = projectData?.rooms?.[0];
+      if (!template) return;
 
-    roomState.setCurrentRoomId(roomId);
+      const roomId = template.id ?? Date.now().toString();
+      const label =
+        value ||
+        template.label ||
+        `Комната ${roomState.getRooms.length + 1}`;
 
-    // Обновляем данные для 2D‑конструктора
-    roomState.routConvertData("/2d");
+      roomState.addRoom({
+        id: roomId,
+        label,
+        description: template.description || "",
+        params: template.params,
+        content: template.content,
+        basket: JSON.stringify({
+          scene: [],
+          catalog: [],
+        }),
+      });
 
-    // Переинициализируем C2D, если он уже загружен
-    const c2d = window.C2D;
-    if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
-      c2d.layers.planner.init(true);
-      c2d.layers.doorsAndWindows.init(true);
-    }
+      roomState.setCurrentRoomId(roomId);
 
-    // Сохраняем снимок в историю undo/redo (явно, после обновления schemeTransition)
-    nextTick(() => {
-      const snapshot = schemeTransition.getAllData();
-      if (snapshot && Array.isArray(snapshot)) {
-        constructor2DHistory.addAction(JSON.parse(JSON.stringify(snapshot)));
+      // Обновляем данные для 2D‑конструктора
+      roomState.routConvertData("/2d");
+
+      // Переинициализируем C2D, если он уже загружен
+      const c2d = window.C2D;
+      if (c2d?.layers?.planner && c2d?.layers?.doorsAndWindows) {
+        c2d.layers.planner.init(true);
+        c2d.layers.doorsAndWindows.init(true);
       }
+
+      // Сохраняем снимок в историю undo/redo (явно, после обновления schemeTransition)
+      nextTick(() => {
+        const snapshot = schemeTransition.getAllData();
+        if (snapshot && Array.isArray(snapshot)) {
+          constructor2DHistory.addAction(
+            JSON.parse(JSON.stringify(snapshot))
+          );
+        }
+      });
     });
 
     return;

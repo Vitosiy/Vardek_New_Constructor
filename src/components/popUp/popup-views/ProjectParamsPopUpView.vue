@@ -73,13 +73,23 @@ const onCancel = () => {
 };
 
 const onCreate = async () => {
-  popupStore.closePopup('projectParams');
   const widths = {
     right: parseWidth(right.value, DEFAULT_WALL_WIDTH),
     left: parseWidth(left.value, DEFAULT_WALL_WIDTH),
     bottom: parseWidth(bottom.value, DEFAULT_WALL_WIDTH),
     top: parseWidth(top.value, DEFAULT_WALL_WIDTH),
   };
+
+  // Если popup открывали как шаг создания комнаты — используем переданный обработчик.
+  // Иначе работаем в режиме "новый проект".
+  const handler = popupStore.getProjectParamsCreateHandler();
+  popupStore.closePopup('projectParams');
+
+  if (handler) {
+    await handler(widths);
+    return;
+  }
+
   await runNewProject(widths);
 };
 </script>

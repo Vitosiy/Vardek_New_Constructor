@@ -97,7 +97,7 @@ const appendFieldToFormData = (
   }
 
   if (typeof value === 'boolean') {
-    payload.append(`fields[${index}][value]`, value ? 'Y' : 'N')
+    payload.append(`fields[${index}][value]`, value ? 'true' : 'false')
     return
   }
 
@@ -111,6 +111,45 @@ const sanitizeArrayValue = (value: unknown[]) =>
     if (typeof item === 'string') return item.trim() !== ''
     return true
   })
+
+const parseAllowedExtensionsFromDescription = (description: string): string[] => {
+  const text = String(description ?? '').toLowerCase()
+  const exts = new Set<string>()
+
+  // Основной сценарий с бэка: "*.jpg, *.jpeg, *.png"
+  const starExtRe = /\*\.\s*([a-z0-9]+)/gi
+  let match: RegExpExecArray | null
+  while ((match = starExtRe.exec(text))) {
+    exts.add(`.${match[1].toLowerCase()}`)
+  }
+  if (exts.size > 0) return Array.from(exts)
+
+  // Запасной сценарий: ".jpg .png jpg png"
+  const tokens = text
+    .split(/[,;]+|\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+
+  for (const token of tokens) {
+    const cleaned = token
+      .replace(/^\*+\./, '')
+      .replace(/^\*\./, '')
+      .replace(/^\./, '')
+      .replace(/^\*/, '')
+    if (!cleaned) continue
+    if (!/^[a-z0-9]+$/i.test(cleaned)) continue
+    exts.add(`.${cleaned.toLowerCase()}`)
+  }
+
+  return Array.from(exts)
+}
+
+const isFileExtensionAllowed = (file: File, allowedExtensions: string[]) => {
+  const parts = file.name.split('.')
+  if (parts.length < 2) return false
+  const ext = (parts[parts.length - 1] || '').toLowerCase()
+  return allowedExtensions.includes(`.${ext}`)
+}
 
 const getSubmitValue = (field: NormalizedFields, value: unknown) => {
   if (!isRepeatableField(field)) return value
@@ -234,6 +273,24 @@ const submitForm = async () => {
       console.log('[orderForm] deliveryCoords received after wait:', getDeliveryCoords())
     }
 
+    // Проверяем расширения для TYPE === 'FILE' по списку из field.DESCRIPTION
+    const fileFields = fieldsForSubmit.value.filter((f) => f.TYPE === 'FILE')
+    for (const f of fileFields) {
+      const allowedExtensions = parseAllowedExtensionsFromDescription(f.DESCRIPTION)
+      if (!allowedExtensions.length) continue
+
+      const value = formValues.value[f.CODE]
+      const files = Array.isArray(value) ? value : value instanceof File ? [value] : []
+      const realFiles = files.filter((x): x is File => x instanceof File)
+
+      const invalidFiles = realFiles.filter((file) => !isFileExtensionAllowed(file, allowedExtensions))
+      if (invalidFiles.length) {
+        submitError.value = `Поле "${f.NAME}": разрешены только форматы: ${allowedExtensions
+          .map((e) => e.replace('.', ''))
+          .join(', ')}`
+        return { success: false, error: submitError.value }
+      }
+    }
 
     const payload = new FormData()
     fieldsForSubmit.value.forEach((field, index) => {
@@ -282,7 +339,7 @@ defineExpose({
                 class="order-form__multiple-row"
               >
                 <component
-                  :is="fieldComponentMap[field.TYPE]"evelop2
+                  :is="fieldComponentMap[field.TYPE]"
                   :field="getFieldForRender(field, Number(valueIndex))"
                   v-model="formValues[field.CODE][valueIndex]"
                   @update-delivery-coords="setDeliveryCoords"
