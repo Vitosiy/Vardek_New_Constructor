@@ -177,6 +177,15 @@ const submitForm = async () => {
         return value instanceof File
       }
 
+      if (field.TYPE === 'PHONE') {
+        if (typeof value !== 'string') return false
+        // Если маска оставила незаполненные позиции
+        if (value.includes('_')) return false
+        // Проверка по количеству цифр
+        const digits = value.replace(/\D/g, '')
+        return digits.length === 11
+      }
+
       if (Array.isArray(value)) {
         // Для repeatable полей: считаем заполненными, если в каждом элементе есть значение.
         if (value.length === 0) return false
@@ -201,9 +210,6 @@ const submitForm = async () => {
       }
     }
 
-    // Адрес должен быть выбран из SuggestView, иначе координаты не будут получены.
-    // Чтобы не "наказывать" пользователя за асинхронность geocode (выбор из меню -> промис),
-    // ждём короткое время, пока DELIVERY_COORDS не заполнится.
     const address = String(formValues.value['ADDRESS'] ?? '').trim()
     const getDeliveryCoords = () => String(formValues.value['DELIVERY_COORDS'] ?? '').trim()
 

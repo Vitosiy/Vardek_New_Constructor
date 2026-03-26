@@ -8,6 +8,8 @@ import { useBasketStore } from '@/store/appStore/useBasketStore'
 import { useTechnologistStorage } from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoomOptons'
 
+import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookieUtils'
+
 export interface LoadProjectsParams {
   designerValue: string
   name?: string
@@ -339,9 +341,13 @@ export function useProjectAPI() {
 
   const getOrderFormData = async (): Promise<{ success: boolean; data?: any[]; error?: string }> => {
     isLoading.value = true
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
     try {
       const response = await fetch('https://dev.vardek.online/api/modellerjwt/order/getprops', {
         method: 'GET',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
       })
 
       if (!response.ok) {
@@ -384,10 +390,13 @@ export function useProjectAPI() {
 
   const submitOrderForm = async (formData: FormData): Promise<SubmitOrderFormResult> => {
     isLoading.value = true
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
     try {
-      // Временная заглушка endpoint, пока backend-ручка не готова.
       const response = await fetch('https://httpbin.org/post', {
         method: 'POST',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
         body: formData
       })
 
