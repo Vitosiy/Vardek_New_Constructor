@@ -47,7 +47,7 @@ const onInput = (event: Event) => {
 <style scoped>
 .order-text-field {
   display: grid;
-  gap: 8px;
+  gap: 1px;
 }
 
 .order-text-field__label {

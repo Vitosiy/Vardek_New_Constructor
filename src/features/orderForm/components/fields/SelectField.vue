@@ -61,7 +61,7 @@ const onChange = (event: Event) => {
 <style scoped>
 .order-select-field {
   display: grid;
-  gap: 8px;
+  gap: 1px;
 }
 
 .order-select-field__label {

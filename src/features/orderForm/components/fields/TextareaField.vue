@@ -213,7 +213,7 @@ onMounted(async () => {
 <style scoped>
 .order-textarea-field {
   display: grid;
-  gap: 8px;
+  gap: 1px;
 }
 
 .order-textarea-field__label {

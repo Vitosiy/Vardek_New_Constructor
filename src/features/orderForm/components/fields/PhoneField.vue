@@ -51,7 +51,7 @@ const phoneValue = computed({
 <style scoped>
 .order-phone-field {
   display: grid;
-  gap: 8px;
+  gap: 1px;
 }
 
 .order-phone-field__label {

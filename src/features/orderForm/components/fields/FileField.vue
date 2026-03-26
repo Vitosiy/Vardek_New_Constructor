@@ -249,7 +249,7 @@ const onDrop = (event: DragEvent) => {
 <style scoped>
 .order-file-field {
   display: grid;
-  gap: 6px;
+  gap: 1px;
   position: relative;
 }
 

@@ -447,12 +447,12 @@ defineExpose({
 
 .order-form__column {
   display: grid;
-  gap: 14px;
+  gap: 4px;
 }
 
 .order-form__multiple-field {
   display: grid;
-  gap: 10px;
+  gap: 4px;
 }
 
 .order-form__multiple-row {

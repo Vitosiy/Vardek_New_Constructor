@@ -45,7 +45,7 @@ const onInput = (event: Event) => {
 <style scoped>
 .order-date-field {
   display: grid;
-  gap: 8px;
+  gap: 1px;
 }
 
 .order-date-field__label {

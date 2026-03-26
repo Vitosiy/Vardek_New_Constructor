@@ -47,7 +47,7 @@ const onInput = (event: Event) => {
 <style scoped>
 .order-address-field {
   display: grid;
-  gap: 8px;
+  gap: 1px;
 }
 
 .order-address-field__label {
