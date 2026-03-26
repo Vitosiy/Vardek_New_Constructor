@@ -104,6 +104,7 @@ export const useOptions = () => {
                             case 4722965:   //Навесной
                                 UM_STORE.onHorizont = true
                                 UM_STORE.onWallModule = false
+                                modelState.createCurrentBackwallData(ID);
                                 break;
                             default:
                                 break;
@@ -164,6 +165,14 @@ export const useOptions = () => {
                     UM_STORE.onHorizont = true
                     UM_STORE.onWallModule = false
                 }
+                modelState.createCurrentBackwallData(ID);
+                let currentBackwallData = modelState.getCurrentBackwallData;
+
+                if(UM_STORE.onWallModule && currentBackwallData.length > 0) {
+                    if (!currentBackwallData[0]?.FASADES.includes(PROPS.CONFIG.BACKWALL.COLOR))
+                        PROPS.CONFIG.BACKWALL = { COLOR: currentBackwallData[0]?.FASADES?.[0], SHOW: true };
+                }
+
                 break;
             case 1795067: //Опция без петель
                 if(curOpt.active) {

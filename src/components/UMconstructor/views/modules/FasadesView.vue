@@ -8,7 +8,7 @@ import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMa
 import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
 import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {ref, toRefs, onMounted, watch, computed} from "vue";
+import {ref, toRefs, onBeforeUnmount, onMounted, watch, computed} from "vue";
 import {TSelectedCell, GridModule, LOOPSIDE} from "@/components/UMconstructor/types/UMtypes.ts";
 import {TFasadeProp, TFasadeTrueSizes} from "@/types/types.ts";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
@@ -51,6 +51,23 @@ const currentFasadeSize = ref<TFasadeTrueSizes | boolean>(false);
 
 const isOpenHandleSelector = ref<boolean>(false);
 const currentHandle = ref<selectedMaterial | boolean>(false);
+const panelRef = ref<HTMLElement | null>(null);
+
+const handleOutsideClick = (event: MouseEvent) => {
+  // Закрываем только когда меню реально открыто
+  if (!isOpenMaterialSelector.value && !isOpenHandleSelector.value) return;
+
+  const panel = panelRef.value;
+  if (!panel) return;
+
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+
+  // Клик внутри окна - ничего не делаем
+  if (panel.contains(target)) return;
+
+  closeMenu();
+};
 
 const showCurrentCol = (secIndex: number | null = 0, cellIndex: number | null = null, rowIndex: number | null = null) => {
   UMconstructor?.value?.selectCell("fasades", <TSelectedCell>{sec: secIndex, cell: cellIndex, row: rowIndex});
@@ -220,7 +237,14 @@ const getLoopsideList = (secIndex: number, doorIndex: number, module) => {
 
 onMounted(() => {
   selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected('fasades')
+
+  // Закрытие при клике вне зоны панели
+  document.addEventListener("click", handleOutsideClick);
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
 
 watch(() => UMconstructor?.value?.UM_STORE.getSelected("fasades"), () => {
   selectedFasade.value = UMconstructor?.value?.UM_STORE.getSelected("fasades")
@@ -412,9 +436,7 @@ watch(() => selectedFasade.value, () => {
                                   }
                                 : UMconstructor.APP.FASADE[segment.material.COLOR]
                             "
-                            @click="
-                              openFasadeSelector(null, doorIndex, segmentIndex)
-                            "
+                            @click.stop="openFasadeSelector(null, doorIndex, segmentIndex)"
                         />
                         <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
                         <ConfigurationOption
@@ -431,9 +453,7 @@ watch(() => selectedFasade.value, () => {
                               ]"
                             :type="'Handles'"
                             :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
-                            @click="
-                              openHandleSelector(null, doorIndex, segmentIndex)
-                            "
+                            @click.stop="openHandleSelector(null, doorIndex, segmentIndex)"
                         />
 
                       </div>
@@ -683,13 +703,7 @@ watch(() => selectedFasade.value, () => {
                                     }
                                   : UMconstructor.APP.FASADE[segment.material.COLOR]
                               "
-                              @click="
-                                openFasadeSelector(
-                                  secIndex,
-                                  doorIndex,
-                                  segmentIndex
-                                )
-                              "
+                              @click.stop="openFasadeSelector(secIndex, doorIndex, segmentIndex)"
                           />
                           <h class="splitter-container--product-error-message" v-else>Фасад некорректного размера!</h>
 
@@ -709,9 +723,7 @@ watch(() => selectedFasade.value, () => {
                               ]"
                               :type="'Handles'"
                               :data="segment.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[segment.material.HANDLES.id]} : false"
-                              @click="
-                              openHandleSelector(secIndex, doorIndex, segmentIndex)
-                            "
+                              @click.stop="openHandleSelector(secIndex, doorIndex, segmentIndex)"
                           />
                         </div>
                       </article>
@@ -727,8 +739,12 @@ watch(() => selectedFasade.value, () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="no-select color--right-select" v-if="isOpenMaterialSelector || isOpenHandleSelector"
-         key="color--right-select">
+    <div
+        class="no-select color--right-select"
+        v-if="isOpenMaterialSelector || isOpenHandleSelector"
+        key="color--right-select"
+        ref="panelRef"
+    >
       <ClosePopUpButton class="menu__close" @close="closeMenu()"/>
 
       <AdvanceCorpusMaterialRedactor

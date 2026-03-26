@@ -8,6 +8,7 @@ import Toggle from "@vueform/toggle";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
 import {onMounted, ref, toRefs, watch, computed, onBeforeMount} from "vue";
 import {TTotalProps} from "@/types/types.ts";
+import {useModelState} from "@/store/appliction/useModelState.ts";
 
 const props = defineProps({
   module: {
@@ -38,6 +39,7 @@ const noBottom = ref<boolean>(false);
 const onWallModule = ref<boolean>(false);
 const noLoops = ref<boolean>(false);
 const noBackwall = ref<boolean>(false);
+const modelState = useModelState();
 
 const fillingExist = computed(() => {
   if(UMconstructor?.value && module.value)
@@ -94,6 +96,10 @@ watch(() => UMconstructor?.value?.UM_STORE.noBottom, () => {
     else
       delete module.value.noBottom
 
+    if(UMconstructor.value.UM_STORE.noBottom){
+      UMconstructor.value.callAlert("warning", "Задняя удалена!")
+    }
+
     UMconstructor.value.reset(module.value)
   }
 })
@@ -106,6 +112,12 @@ watch(() => UMconstructor?.value?.UM_STORE.onWallModule, () => {
       module.value.onWallModule = onWallModule.value
     else
       delete module.value.onWallModule
+
+    let currentBackwallData = modelState.getCurrentBackwallData;
+    if(UMconstructor.value.UM_STORE.onWallModule && currentBackwallData.length > 0){
+      UMconstructor.value.callAlert("warning", "Задняя стенка изменена!")
+      UMconstructor.value.callAlert("warning", "Навесной модуль может иметь только заднюю стенку ХДФ!")
+    }
 
     UMconstructor.value.reset(module.value)
   }
