@@ -46,15 +46,18 @@ const fillingExist = computed(() => {
     return false
 })
 
-const updateTotalSize = (dimensions: string, value: number) => {
+const updateTotalSize = (dimensions: string, value: number, event: Event) => {
   switch (dimensions) {
     case "totalHeight":
-      UMconstructor?.value?.updateTotalHeight(value);
+      totalHeight.value = value;
+      UMconstructor?.value?.updateTotalHeight(value, event);
       break;
     case "totalWidth":
+      totalWidth.value = value;
       UMconstructor?.value?.updateTotalWidth(value);
       break;
     case "totalDepth":
+      totalDepth.value = value;
       UMconstructor?.value?.updateTotalDepth(value);
       break;
     case "horizont":
@@ -182,12 +185,13 @@ onMounted(() => {
       <div class="UM actions-input--container">
         <MainInput
             :disabled="mode !== 'module' || fillingExist"
-            @update:modelValue="(value: number) => updateTotalSize('totalHeight', value)"
-            :inputClass="'UM actions-input'"
+            @update:modelValue="(value: number) => updateTotalSize('totalHeight', value, $event)"
+            :inputClass="'actions-input'"
             :modelValue="totalHeight"
             :min="UMconstructor.getMinMaxModuleSize(productData, 'height', 'min')"
             :max="UMconstructor.getMinMaxModuleSize(productData, 'height', 'max')"
             :type="'number'"
+            :isUM="true"
         />
       </div>
     </div>
@@ -212,6 +216,7 @@ onMounted(() => {
             :min="UMconstructor.getMinMaxModuleSize(productData, 'width', 'min')"
             :max="UMconstructor.getMinMaxModuleSize(productData, 'width', 'max')"
             :type="'number'"
+            :isUM="true"
         />
       </div>
     </div>
@@ -236,6 +241,7 @@ onMounted(() => {
             :min="UMconstructor.getMinMaxModuleSize(productData, 'depth', 'min')"
             :max="UMconstructor.getMinMaxModuleSize(productData, 'depth', 'max')"
             :type="'number'"
+            :isUM="true"
         />
       </div>
     </div>
@@ -266,6 +272,7 @@ onMounted(() => {
             :type="'number'"
             placeholder="0"
             :disabled="mode !== 'module' || productData.CONFIG.EXPRESSIONS['#HORIZONT#'] === 0 || noBottom || onWallModule"
+            :isUM="true"
         />
       </div>
     </div>
