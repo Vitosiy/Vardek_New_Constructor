@@ -7,6 +7,7 @@ import { client } from '@/api/api'
 import { useBasketStore } from '@/store/appStore/useBasketStore'
 import { useTechnologistStorage } from "@/store/appStore/technologist/useTechnologistStorage.ts";
 import { useRoomOptions } from '@/components/left-menu/option/roomOptions/useRoomOptons'
+import { useAppData } from '@/store/appliction/useAppData'
 
 import { COOKIE_NAMES, getCookie } from '@/components/authorization/utils/cookieUtils'
 
@@ -34,12 +35,19 @@ export interface SubmitOrderFormResult {
   error?: string
 }
 
+export interface GetOrderPaySystemsResult {
+  success: boolean
+  data?: any[]
+  error?: string
+}
+
 export function useProjectAPI() {
   const eventBus = useEventBus()
   const sceneState = useSceneState()
   const isLoading = ref(false)
   const technologistStorage = useTechnologistStorage();
   const { saveSceneParams } = useRoomOptions()
+  const appDataStore = useAppData()
 
   // Дебаунс для запросов
   let loadTimeout: NodeJS.Timeout | null = null
@@ -343,11 +351,21 @@ export function useProjectAPI() {
     isLoading.value = true
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
     try {
+      const basketStore = useBasketStore()
+      const basketPayload = basketStore.creatDataBasket()
+      const requestBody = {
+        BASKET: basketPayload.BASKET,
+        style: appDataStore.appData?.CITY?.style
+      }
+
       const response = await fetch('https://dev.vardek.online/api/modellerjwt/order/getprops', {
-        method: 'GET',
+        method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        body: JSON.stringify(requestBody)
       })
 
       if (!response.ok) {
@@ -424,6 +442,58 @@ export function useProjectAPI() {
     }
   }
 
+  const getOrderPaySystems = async (): Promise<GetOrderPaySystemsResult> => {
+    isLoading.value = true
+    const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
+
+    try {
+      const response = await fetch('https://dev.vardek.online/api/modellerjwt/order/GetPaySystem', {
+        method: 'GET',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '')
+        return {
+          success: false,
+          error: text || `Request failed with status ${response.status}`
+        }
+      }
+
+      const json: any = await response.json()
+      if (!json || typeof json !== 'object') {
+        return { success: false, error: 'Invalid JSON response' }
+      }
+
+      if (json.CODE !== 200) {
+        return {
+          success: false,
+          error: json.MESSAGE || 'Unknown API error'
+        }
+      }
+
+      if (!Array.isArray(json.DATA)) {
+        return {
+          success: false,
+          error: 'Unexpected DATA format: expected array'
+        }
+      }
+
+      return { success: true, data: json.DATA }
+    } catch (error) {
+      console.error(ERROR_MESSAGES.LOAD_FORM_DATA, error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     isLoading,
     loadProjects,
@@ -432,6 +502,7 @@ export function useProjectAPI() {
     deleteProject,
     getProjectScreenshot,
     getOrderFormData,
-    submitOrderForm
+    submitOrderForm,
+    getOrderPaySystems
   }
 }

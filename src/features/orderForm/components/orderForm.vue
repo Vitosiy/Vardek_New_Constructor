@@ -5,11 +5,20 @@ import { normalizer } from '../utils/normalizeFields'
 import type { NormalizedFields } from '../types/form.types'
 import { fieldComponentMap } from '../config/fieldComponentMap'
 
-const { getOrderFormData, submitOrderForm } = useProjectAPI()
+const { getOrderFormData, submitOrderForm, getOrderPaySystems } = useProjectAPI()
 const MAX_MULTIPLE_ITEMS = 5
+
+interface OrderPaySystem {
+  ID: string
+  NAME: string
+  SORT?: string
+  LOGOTIP?: string
+}
 
 const fields = ref<NormalizedFields[]>([])
 const formValues = ref<Record<string, any>>({})
+const paySystems = ref<OrderPaySystem[]>([])
+const selectedPaySystemId = ref<string>('')
 const isLoaded = ref(false)
 const loadError = ref<string | null>(null)
 const isSubmitting = ref(false)
@@ -41,6 +50,26 @@ const normalizeInitialFieldValue = (field: NormalizedFields) => {
 }
 
 onMounted(async () => {
+  const paySystemsResponse = await getOrderPaySystems()
+  if (!paySystemsResponse.success) {
+    console.error('Ошибка загрузки систем оплаты', paySystemsResponse.error)
+  } else {
+    const data = Array.isArray(paySystemsResponse.data) ? paySystemsResponse.data : []
+    paySystems.value = data
+      .map((item) => ({
+        ID: String(item.ID ?? ''),
+        NAME: String(item.NAME ?? ''),
+        SORT: item.SORT != null ? String(item.SORT) : undefined,
+        LOGOTIP: item.LOGOTIP != null ? String(item.LOGOTIP) : undefined
+      }))
+      .filter((item) => item.ID !== '' && item.NAME !== '')
+      .sort((a, b) => Number(a.SORT ?? 0) - Number(b.SORT ?? 0))
+
+    if (paySystems.value.length > 0) {
+      selectedPaySystemId.value = paySystems.value[0].ID
+    }
+  }
+
   const response = await getOrderFormData()
 
   if (!response.success || !response.data) {
@@ -64,10 +93,12 @@ const appendFieldToFormData = (
   index: number,
   fieldId: string,
   fieldCode: string,
+  fieldName: string,
   value: unknown
 ) => {
   payload.append(`fields[${index}][id]`, fieldId)
   payload.append(`fields[${index}][code]`, fieldCode)
+  payload.append(`fields[${index}][name]`, fieldName)
 
   if (value === null || value === undefined) return
 
@@ -195,6 +226,16 @@ const setDeliveryCoords = (coords: string | null) => {
   formValues.value['DELIVERY_COORDS'] = coords ?? ''
 }
 
+const selectedPaySystem = computed(() =>
+  paySystems.value.find((item) => item.ID === selectedPaySystemId.value) || null
+)
+
+const getPaySystemLogoUrl = (logoPath?: string) => {
+  if (!logoPath) return ''
+  if (/^https?:\/\//i.test(logoPath)) return logoPath
+  return `https://dev.vardek.online${logoPath.startsWith('/') ? '' : '/'}${logoPath}`
+}
+
 const submitForm = async () => {
   submitError.value = null
   submitSuccess.value = false
@@ -273,6 +314,11 @@ const submitForm = async () => {
       console.log('[orderForm] deliveryCoords received after wait:', getDeliveryCoords())
     }
 
+    if (paySystems.value.length > 0 && !selectedPaySystem.value) {
+      submitError.value = 'Пожалуйста, выберите систему оплаты'
+      return { success: false, error: submitError.value }
+    }
+
     // Проверяем расширения для TYPE === 'FILE' по списку из field.DESCRIPTION
     const fileFields = fieldsForSubmit.value.filter((f) => f.TYPE === 'FILE')
     for (const f of fileFields) {
@@ -299,9 +345,21 @@ const submitForm = async () => {
         index,
         field.ID,
         field.CODE,
+        field.NAME,
         getSubmitValue(field, formValues.value[field.CODE])
       )
     })
+
+    if (selectedPaySystem.value) {
+      appendFieldToFormData(
+        payload,
+        fieldsForSubmit.value.length,
+        selectedPaySystem.value.ID,
+        'PAYSYSTEM',
+        'Система оплаты',
+        selectedPaySystem.value.NAME
+      )
+    }
 
     const response = await submitOrderForm(payload)
     if (!response.success) {
@@ -419,6 +477,30 @@ defineExpose({
         </div>
       </div>
 
+      <div v-if="paySystems.length" class="order-form__pay-system">
+        <p class="order-form__pay-system-title">Система оплаты</p>
+        <label
+          v-for="paySystem in paySystems"
+          :key="paySystem.ID"
+          class="order-form__pay-system-option"
+        >
+          <input
+            v-model="selectedPaySystemId"
+            class="order-form__pay-system-radio"
+            type="radio"
+            name="order-pay-system"
+            :value="paySystem.ID"
+          />
+          <img
+            v-if="paySystem.LOGOTIP"
+            class="order-form__pay-system-logo"
+            :src="getPaySystemLogoUrl(paySystem.LOGOTIP)"
+            :alt="paySystem.NAME"
+          />
+          <span>{{ paySystem.NAME }}</span>
+        </label>
+      </div>
+
       <p v-if="submitError" class="order-form__error">{{ submitError }}</p>
       <p v-if="submitSuccess" class="order-form__success">Форма успешно отправлена</p>
     </div>
@@ -485,6 +567,38 @@ defineExpose({
 .order-form__loading {
   color: #5d6069;
   font-size: 14px;
+}
+
+.order-form__pay-system {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.order-form__pay-system-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #272727;
+}
+
+.order-form__pay-system-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #272727;
+  font-size: 14px;
+}
+
+.order-form__pay-system-radio {
+  accent-color: #da444c;
+}
+
+.order-form__pay-system-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .order-form__error {
