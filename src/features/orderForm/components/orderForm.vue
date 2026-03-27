@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useProjectAPI } from '@/features/quickActions/project/composables/useProjectAPI'
 import { normalizer } from '../utils/normalizeFields'
 import type { NormalizedFields } from '../types/form.types'
@@ -7,6 +7,19 @@ import { fieldComponentMap } from '../config/fieldComponentMap'
 
 const { getOrderFormData, submitOrderForm, getOrderPaySystems } = useProjectAPI()
 const MAX_MULTIPLE_ITEMS = 5
+
+const emit = defineEmits<{
+  (
+    e: 'service-calc-change',
+    value: Array<{
+      code: string
+      checked: boolean
+      calcType: string
+      min: number
+      percent: number
+    }>
+  ): void
+}>()
 
 interface OrderPaySystem {
   ID: string
@@ -230,6 +243,50 @@ const selectedPaySystem = computed(() =>
   paySystems.value.find((item) => item.ID === selectedPaySystemId.value) || null
 )
 
+const toNumberSafe = (value: unknown): number => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const toBooleanSafe = (value: unknown): boolean => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (['true', '1', 'y', 'yes', 'on'].includes(normalized)) return true
+    if (['false', '0', 'n', 'no', 'off', ''].includes(normalized)) return false
+  }
+  if (typeof value === 'number') return value !== 0
+  return Boolean(value)
+}
+
+const serviceCalcPayload = computed(() =>
+  fields.value
+    .filter((field) => {
+      const meta = field.META as Record<string, unknown> | undefined
+      return field.TYPE === 'CHECKBOX' && meta?.SERVICE === true
+    })
+    .map((field) => {
+      const meta = field.META as Record<string, unknown> | undefined
+      const calc = (meta?.CALC as Record<string, unknown> | undefined) ?? {}
+
+      return {
+        code: field.CODE,
+        checked: toBooleanSafe(formValues.value[field.CODE]),
+        calcType: String(calc.TYPE ?? ''),
+        min: toNumberSafe(calc.MIN),
+        percent: toNumberSafe(calc.PERCENT)
+      }
+    })
+)
+
+watch(
+  serviceCalcPayload,
+  (value) => {
+    emit('service-calc-change', value)
+  },
+  { immediate: true }
+)
+
 const getPaySystemLogoUrl = (logoPath?: string) => {
   if (!logoPath) return ''
   if (/^https?:\/\//i.test(logoPath)) return logoPath
@@ -430,6 +487,30 @@ defineExpose({
               @update-delivery-coords="setDeliveryCoords"
             />
           </template>
+
+          <div v-if="paySystems.length" class="order-form__pay-system">
+            <p class="order-form__pay-system-title">Система оплаты</p>
+            <label
+              v-for="paySystem in paySystems"
+              :key="paySystem.ID"
+              class="order-form__pay-system-option"
+            >
+              <input
+                v-model="selectedPaySystemId"
+                class="order-form__pay-system-radio"
+                type="radio"
+                name="order-pay-system"
+                :value="paySystem.ID"
+              />
+              <img
+                v-if="paySystem.LOGOTIP"
+                class="order-form__pay-system-logo"
+                :src="getPaySystemLogoUrl(paySystem.LOGOTIP)"
+                :alt="paySystem.NAME"
+              />
+              <span>{{ paySystem.NAME }}</span>
+            </label>
+          </div>
         </div>
 
         <div class="order-form__column">
@@ -477,30 +558,6 @@ defineExpose({
         </div>
       </div>
 
-      <div v-if="paySystems.length" class="order-form__pay-system">
-        <p class="order-form__pay-system-title">Система оплаты</p>
-        <label
-          v-for="paySystem in paySystems"
-          :key="paySystem.ID"
-          class="order-form__pay-system-option"
-        >
-          <input
-            v-model="selectedPaySystemId"
-            class="order-form__pay-system-radio"
-            type="radio"
-            name="order-pay-system"
-            :value="paySystem.ID"
-          />
-          <img
-            v-if="paySystem.LOGOTIP"
-            class="order-form__pay-system-logo"
-            :src="getPaySystemLogoUrl(paySystem.LOGOTIP)"
-            :alt="paySystem.NAME"
-          />
-          <span>{{ paySystem.NAME }}</span>
-        </label>
-      </div>
-
       <p v-if="submitError" class="order-form__error">{{ submitError }}</p>
       <p v-if="submitSuccess" class="order-form__success">Форма успешно отправлена</p>
     </div>
@@ -525,16 +582,18 @@ defineExpose({
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
+  align-items: start;
 }
 
 .order-form__column {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  align-content: start;
 }
 
 .order-form__multiple-field {
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .order-form__multiple-row {

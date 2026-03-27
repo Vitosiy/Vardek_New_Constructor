@@ -249,7 +249,8 @@ const onDrop = (event: DragEvent) => {
 <style scoped>
 .order-file-field {
   display: grid;
-  gap: 1px;
+  gap: 3px;
+  margin: 0;
   position: relative;
 }
 
@@ -266,11 +267,13 @@ const onDrop = (event: DragEvent) => {
 
 .order-file-field__label {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 4px;
   font-size: 14px;
   font-weight: 500;
   color: #272727;
+  line-height: 1;
+  margin: 0;
 }
 
 .order-file-field__label sup {
@@ -291,6 +294,7 @@ const onDrop = (event: DragEvent) => {
   color: #131313;
   font-size: 14px;
   cursor: pointer;
+  margin: 0;
 }
 
 .order-file-field__control {

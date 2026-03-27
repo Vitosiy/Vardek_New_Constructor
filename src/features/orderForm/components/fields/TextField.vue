@@ -47,16 +47,19 @@ const onInput = (event: Event) => {
 <style scoped>
 .order-text-field {
   display: grid;
-  gap: 1px;
+  gap: 3px;
+  margin: 0;
 }
 
 .order-text-field__label {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 4px;
   font-size: 14px;
+  line-height: 1;
   font-weight: 500;
   color: #272727;
+  margin: 0;
 }
 
 .order-text-field__label sup {
@@ -74,6 +77,7 @@ const onInput = (event: Event) => {
   color: #131313;
   font-size: 14px;
   outline: none;
+  margin: 0;
 }
 
 .order-text-field__control:focus {

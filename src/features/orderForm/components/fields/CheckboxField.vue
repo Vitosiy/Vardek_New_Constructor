@@ -22,7 +22,10 @@ const onChange = (event: Event) => {
 </script>
 
 <template>
-  <label class="order-checkbox-field">
+  <label
+    class="order-checkbox-field"
+    :class="{ 'order-checkbox-field--installment': field.CODE === 'INSTALLMENT' }"
+  >
     <input
       class="order-checkbox-field__control"
       type="checkbox"
@@ -43,6 +46,14 @@ const onChange = (event: Event) => {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  margin: 3px 0;
+}
+
+.order-checkbox-field--installment {
+  width: 100%;
+  padding: 0px 0;
+  border-top: 1px solid #d5d8e0;
+  border-bottom: 1px solid #d5d8e0;
 }
 
 .order-checkbox-field__control {
@@ -55,6 +66,7 @@ const onChange = (event: Event) => {
 .order-checkbox-field__text {
   font-size: 14px;
   color: #272727;
+  line-height: 1;
 }
 
 .order-checkbox-field__text sup {

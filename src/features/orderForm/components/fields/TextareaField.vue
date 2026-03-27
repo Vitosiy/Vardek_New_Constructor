@@ -213,16 +213,19 @@ onMounted(async () => {
 <style scoped>
 .order-textarea-field {
   display: grid;
-  gap: 1px;
+  gap: 3px;
+  margin: 0;
 }
 
 .order-textarea-field__label {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 4px;
   font-size: 14px;
   font-weight: 500;
   color: #272727;
+  line-height: 1;
+  margin: 0;
 }
 
 .order-textarea-field__label sup {
@@ -241,6 +244,7 @@ onMounted(async () => {
   font-size: 14px;
   resize: vertical;
   outline: none;
+  margin: 0;
 }
 
 .order-textarea-field__control:focus {

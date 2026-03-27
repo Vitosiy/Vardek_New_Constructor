@@ -112,10 +112,19 @@
       </div>
 
       <div class="basket-container">
-        <orderForm ref="orderFormRef" />
+        <orderForm
+          ref="orderFormRef"
+          @service-calc-change="onOrderFormServiceCalcChange"
+        />
       </div>
 
       <div class="order-footer">
+        <div class="basket-footer-info">
+          <p class="order-footer__title">Стоимость с учётом выбранных услуг: <span>{{ finalOrderPrice }}</span></p>
+          <p class="basket__sum">Общая стоимость: <span>{{ totalPrice }}</span></p>
+          <p class="basket__sum-no" v-if="!oldPrice">Общая стоимость без скидки: <span>{{ totalOldPrice }}</span></p>
+        </div>
+
         <div class="basket-footer-buttons">
           <button class="basket__close" @click="closePopup">
             Закрыть
@@ -182,6 +191,13 @@ const basketUpdateKey = ref(0);
 const activeTab = ref<'basket' | 'order'>('basket');
 const orderFormRef = ref<any>(null);
 const isOrderFormSubmitting = ref(false);
+const orderFormServiceCalc = ref<Array<{
+  code: string
+  checked: boolean
+  calcType: string
+  min: number
+  percent: number
+}>>([]);
 
 const closePopup = () => {
   popupStore.closePopup('basket');
@@ -206,6 +222,51 @@ const totalPrice = computed(() => {
 const totalOldPrice = computed(() => {
   return items.value?.basket?.sumFormatOld ?? 0;
 });
+
+const baseOrderPriceValue = computed<number>(() => {
+  const sum = items.value?.basket?.sum;
+  if (typeof sum === 'number' && Number.isFinite(sum)) return sum;
+
+  const raw = String(totalPrice.value ?? '');
+  const normalized = raw.replace(/[^\d.,-]/g, '').replace(/\s+/g, '').replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+});
+
+const serviceSurchargeTotal = computed<number>(() => {
+  return orderFormServiceCalc.value.reduce((acc, service) => {
+    if (!service.checked) return acc;
+    if (String(service.calcType).toLowerCase() !== 'perc') return acc;
+
+    const percentAmount = (baseOrderPriceValue.value * service.percent) / 100;
+    const surcharge = percentAmount < service.min ? service.min : percentAmount;
+    return acc + surcharge;
+  }, 0);
+});
+
+const finalOrderPriceValue = computed<number>(() => baseOrderPriceValue.value + serviceSurchargeTotal.value);
+
+const formatPriceRub = (value: number): string => {
+  const rounded = Math.round(value * 100) / 100;
+  const isInt = Number.isInteger(rounded);
+  const formatted = rounded.toLocaleString('ru-RU', {
+    minimumFractionDigits: isInt ? 0 : 2,
+    maximumFractionDigits: 2
+  });
+  return `${formatted} руб`;
+};
+
+const finalOrderPrice = computed(() => formatPriceRub(finalOrderPriceValue.value));
+
+const onOrderFormServiceCalcChange = (value: Array<{
+  code: string
+  checked: boolean
+  calcType: string
+  min: number
+  percent: number
+}>) => {
+  orderFormServiceCalc.value = Array.isArray(value) ? value : [];
+};
 
 
 const setInvoice = () => {
@@ -614,7 +675,24 @@ watch(() => useBasketStore().basketData, (newValue) => {
   }
 
   .order-footer {
-    margin-left: auto;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+  }
+
+  .order-footer__title {
+    margin: 0 0 6px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #272727;
   }
 
   

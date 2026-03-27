@@ -61,17 +61,19 @@ const onChange = (event: Event) => {
 <style scoped>
 .order-select-field {
   display: grid;
-  gap: 1px;
+  gap: 3px;
+  margin: 0;
 }
 
 .order-select-field__label {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 4px;
   font-size: 14px;
-  line-height: 1.2;
+  line-height: 1;
   font-weight: 500;
   color: #272727;
+  margin: 0;
 }
 
 .order-select-field__label sup {
@@ -91,6 +93,7 @@ const onChange = (event: Event) => {
   line-height: 1;
   outline: none;
   cursor: pointer;
+  margin: 0;
 }
 
 .order-select-field__control:focus {
