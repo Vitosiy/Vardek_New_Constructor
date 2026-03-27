@@ -21,6 +21,7 @@ export interface RawFields {
     MIN?: number | string
     MAX?: number | string
     DESCRIPTION?: string
+    META?: Record<string, unknown>
 }
 
 export interface NormalizedFields {
@@ -35,4 +36,5 @@ export interface NormalizedFields {
     MIN?: number
     MAX?: number
     DESCRIPTION: string
+    META?: Record<string, unknown>
 }

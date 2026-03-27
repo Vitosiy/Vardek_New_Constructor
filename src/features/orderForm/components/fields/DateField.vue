@@ -18,6 +18,33 @@ const currentValue = computed(() => {
   return String(props.modelValue)
 })
 
+const toDateInputValue = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+
+  // Бэкенд отдаёт даты как "dd.mm.yyyy"
+  const ddmmyyyy = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(trimmed)
+  if (ddmmyyyy) {
+    const [, dd, mm, yyyy] = ddmmyyyy
+    return `${yyyy}-${mm}-${dd}`
+  }
+
+  // Если уже пришёл ISO-формат, оставляем как есть
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed)
+  if (iso) return trimmed
+
+  return undefined
+}
+
+const dateMin = computed(() =>
+  toDateInputValue((props.field.META as Record<string, unknown> | undefined)?.FROM)
+)
+
+const dateMax = computed(() =>
+  toDateInputValue((props.field.META as Record<string, unknown> | undefined)?.TO)
+)
+
 const onInput = (event: Event) => {
   emit('update:modelValue', (event.target as HTMLInputElement).value)
 }
@@ -37,6 +64,8 @@ const onInput = (event: Event) => {
       type="date"
       :required="Boolean(field.REQUIED)"
       :value="currentValue"
+      :min="dateMin"
+      :max="dateMax"
       @input="onInput"
     />
   </div>

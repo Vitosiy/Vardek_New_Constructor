@@ -67,7 +67,8 @@ export function normalizer(raw: RawFields[]): NormalizedFields[] {
             MIN: min,
             MAX: max,
             DESCRIPTION: String(f.DESCRIPTION ?? ""),
-            
+            META: f.META && typeof f.META === 'object' ? f.META : undefined
+
         }
     })
 }
