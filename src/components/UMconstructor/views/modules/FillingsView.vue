@@ -8,7 +8,7 @@ import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
 import ConfigurationOption from "@/components/right-menu/customiser-pages/ColorRightPage/ConfigurationOption.vue";
 import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {computed, onMounted, ref, toRefs, watch} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, toRefs, watch} from "vue";
 import {useFigureRightPage} from "@/components/right-menu/customiser-pages/FigureRightPage/useFigureRightPage.ts";
 import {
   FillingObject,
@@ -59,6 +59,7 @@ const isOpenMaterialSelector = ref<boolean>(false);
 const currentFasadeMaterial = ref<selectedMaterial | boolean>(false);
 const isOpenHandleSelector = ref<boolean>(false);
 const currentHandle = ref<selectedMaterial | boolean>(false);
+const panelRef = ref<HTMLElement | null>(null);
 
 const step = ref<number>(1);
 
@@ -242,6 +243,22 @@ const closeMenu = () => {
   currentFasadeMaterial.value = false;
 };
 
+const handleOutsideClick = (event: MouseEvent) => {
+  // Закрываем только когда попап реально открыт
+  if (!isOpenMaterialSelector.value && !isOpenHandleSelector.value) return;
+
+  const panel = panelRef.value;
+  if (!panel) return;
+
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+
+  // Клик внутри окна - ничего не делаем
+  if (panel.contains(target)) return;
+
+  closeMenu();
+};
+
 const showCurrentCol = (
     sec: number,
     cell?: number | null,
@@ -320,7 +337,14 @@ const getLocalPosition = (
 onMounted(() => {
   selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
   handleCellSelect()
+
+  // Закрытие при клике вне зоны панели
+  document.addEventListener("click", handleOutsideClick);
 })
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
 
 watch(() => UMconstructor?.value?.UM_STORE.getSelected("fillings"), () => {
   selectedFilling.value = UMconstructor?.value?.UM_STORE.getSelected("fillings")
@@ -584,17 +608,30 @@ watch(() => selectedFilling.value, () => {
                             :min="UMconstructor.FILLINGS.calcMinMaxPositionY('min', filling, section, module)"
                             class="actions-input"
                             :value="filling.distances?.bottom"
-                            @input="
-                                UMconstructor.FILLINGS.changeFillingPositionY(
-                                    {
-                                      min: $event.target.min,
-                                      max: $event.target.max,
-                                    },
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
+                            @input="(event) => {
+                              UMconstructor?.debounce('getLocalPosition', () => {
+                                let convertValue = getLocalPosition('Y', parseInt(event.target.value), filling, section)
+                                if(convertValue >= 0){
+                                  UMconstructor.FILLINGS.changeFillingPositionY(
+                                  {
+                                    min: getLocalPosition('Y', event.target.min, filling, section),
+                                    max: getLocalPosition('Y', event.target.max, filling, section)
+                                  },
+                                  convertValue,
+                                  fillingIndex,
+                                  secIndex,
+                                  false,
+                                  false,
+                                  false,
+                                  module,
+                                  0
                                 )
-                            "
+                                }
+                                else {
+                                  UMconstructor.callAlert('error', 'Нельзя переместить сюда, т.к. позиция выходит за пределы ячейки')
+                                }
+                              }, 1000)
+                            }"
                         />
                       </div>
                     </div>
@@ -649,7 +686,7 @@ watch(() => selectedFilling.value, () => {
                               ]"
                       :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
                       :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
-                      @click="openFasadeSelector(secIndex, null, null, null, fillingIndex)"
+                      @click.stop="openFasadeSelector(secIndex, null, null, null, fillingIndex)"
                   />
 
                   <ConfigurationOption
@@ -670,9 +707,7 @@ watch(() => selectedFilling.value, () => {
                               ]"
                       :type="'Handles'"
                       :data="filling.fasade.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
-                      @click="
-                              openHandleSelector(secIndex, null, null, null, fillingIndex)
-                            "
+                      @click.stop="openHandleSelector(secIndex, null, null, null, fillingIndex)"
                   />
 
                 </div>
@@ -834,7 +869,7 @@ watch(() => selectedFilling.value, () => {
                             ]"
                             :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
                             :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
-                            @click="openFasadeSelector(secIndex, cellIndex, null, null, fillingIndex)"
+                            @click.stop="openFasadeSelector(secIndex, cellIndex, null, null, fillingIndex)"
                         />
 
                         <ConfigurationOption
@@ -855,9 +890,7 @@ watch(() => selectedFilling.value, () => {
                               ]"
                             :type="'Handles'"
                             :data="filling.fasade.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
-                            @click="
-                              openHandleSelector(secIndex, cellIndex, null, null, fillingIndex)
-                            "
+                            @click.stop="openHandleSelector(secIndex, cellIndex, null, null, fillingIndex)"
                         />
                       </div>
                     </article>
@@ -1033,7 +1066,7 @@ watch(() => selectedFilling.value, () => {
                                 ]"
                                 :type="filling.fasade.material.PALETTE ? 'palette' : 'surface'"
                                 :data="filling.fasade.material.PALETTE ? {...UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE], hex: UMconstructor.APP.PALETTE[filling.fasade.material.PALETTE].HTML} : UMconstructor.APP.FASADE[filling.fasade.material.COLOR]"
-                                @click="openFasadeSelector(secIndex, cellIndex, rowIndex, null, fillingIndex)"
+                            @click.stop="openFasadeSelector(secIndex, cellIndex, rowIndex, null, fillingIndex)"
                             />
 
                             <ConfigurationOption
@@ -1054,9 +1087,7 @@ watch(() => selectedFilling.value, () => {
                               ]"
                                 :type="'Handles'"
                                 :data="filling.fasade.material.HANDLES ? {...UMconstructor.APP.CATALOG.PRODUCTS[filling.fasade.material.HANDLES.id]} : false"
-                                @click="
-                              openHandleSelector(secIndex, cellIndex, rowIndex, null, fillingIndex)
-                            "
+                            @click.stop="openHandleSelector(secIndex, cellIndex, rowIndex, null, fillingIndex)"
                             />
 
                           </div>
@@ -1206,7 +1237,12 @@ watch(() => selectedFilling.value, () => {
   </div>
 
   <transition name="slide--right" mode="out-in">
-    <div class="color--right-select" v-if="isOpenMaterialSelector || isOpenHandleSelector" key="color--right-select">
+    <div
+        class="color--right-select"
+        v-if="isOpenMaterialSelector || isOpenHandleSelector"
+        key="color--right-select"
+        ref="panelRef"
+    >
       <ClosePopUpButton class="menu__close" @close="closeMenu()"/>
 
       <AdvanceCorpusMaterialRedactor

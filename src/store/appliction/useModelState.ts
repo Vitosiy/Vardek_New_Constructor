@@ -8,6 +8,7 @@ import { TFasadeItem } from "@/types/types";
 import { MILLINGS, additionalMillingKeys, MILLING_HANDLE_KEYS, INTEGRATE_HANDE_EXEPTIONS } from '@/Application/F-millings';
 import { number } from "yup";
 import {UM_PARAMS} from "@/components/UMconstructor/utils/Const.ts";
+import {useUMStorage} from "@/store/appStore/UniversalModule/useUMStorage.ts";
 
 export type TFasadeGroupSize = {
 
@@ -69,6 +70,7 @@ export type TMillingListItem = {
     fasade_type: number[];
 }
 
+const UM_store = useUMStorage()
 export const useModelState = defineStore('ModelState', () => {
 
     const appStore = useAppData()
@@ -243,7 +245,7 @@ export const useModelState = defineStore('ModelState', () => {
             }, {} as Record<string, number[]>);
 
 
-            const result = Object.values(_FASADE_GROUPS.value)
+            let result = Object.values(_FASADE_GROUPS.value)
                 .map(group => ({
                     NAME: group.NAME,
                     FASADES: groupedFasades[group.ID] || [],
@@ -251,6 +253,11 @@ export const useModelState = defineStore('ModelState', () => {
                 }))
                 .filter(group => group.FASADES.length > 0)
                 .sort((a, b) => a.SORT - b.SORT);
+
+            let onWallModule = UM_store.onWallModule
+            if (onWallModule) {
+                result = result.filter(item => item.NAME.toLowerCase().includes('хдф'));
+            }
 
             currentBackwallData.value = result;
         }
