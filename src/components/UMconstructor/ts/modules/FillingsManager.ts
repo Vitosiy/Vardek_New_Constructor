@@ -7,7 +7,7 @@ import {
     TSelectedCell,
     DrawerFasadeObject,
     FillingObject,
-    MANUFACTURER, GridSection, GridCell, GridCellsRow, GridRowExtra
+    MANUFACTURER, GridSection, GridCell, GridCellsRow, GridRowExtra, FasadeObject, LOOPSIDE
 } from "@/components/UMconstructor/types/UMtypes.ts";
 import {TFasadeProp} from "@/types/types.ts";
 
@@ -367,7 +367,30 @@ export default class FillingsManager {
                         currentSection.width + ((sec == 0 ? leftWidth : rightWidth) - 2) + (grid.moduleThickness / 2 - 2) :
                     grid.width - 4;
 
-            let baseFasade = grid.sections[sec]?.fasades?.[0]?.[0] || grid.sections[0]?.fasades?.[0]?.[0] || currentSection.fasadesDrawers?.[0]
+            let baseFasade = grid.sections[sec]?.fasades?.[0]?.[0] || currentSection.fasadesDrawers?.[0]
+            if(!baseFasade) {
+                const PROPS = this.scope.UM_STORE.getUMData();
+
+                const FASADE_PROPS = PROPS.CONFIG.FASADE_PROPS[0];
+                const FASADE = this.scope.FASADES.getFasadePosition(FASADE_PROPS.POSITION);
+
+                let startX = sec > 0 ? currentSection.position.x - currentSection.width / 2 - grid.moduleThickness / 2 + 2 : FASADE.POSITION_X;
+
+                let newDoorPosition = new THREE.Vector2(startX, grid.isRestrictedModule ? FASADE.POSITION_Y : grid.horizont + 2);
+                baseFasade = <FasadeObject>{
+                    id: 1,
+                    width: correctSectionFasadeWidth,
+                    height: grid.height - grid.horizont - 4,
+                    position: newDoorPosition,
+                    type: "fasade",
+                    material: <TFasadeProp>{
+                        ...FASADE_PROPS,
+                    },
+                };
+                let fasadeMinMax = this.scope.FASADES.getFasadePositionMinMax(baseFasade);
+                baseFasade = Object.assign(baseFasade, fasadeMinMax);
+                baseFasade.loopsSide = LOOPSIDE['none']
+            }
 
             let manufacturerOffset = 0
             let manufacturer_name = product.EN_NAME?.toLowerCase() || product.NAME?.toLowerCase()
@@ -699,8 +722,15 @@ export default class FillingsManager {
         value: number,
         filling: FillingObject,
         cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+        isMinMax: boolean = false,
     ) {
+        const grid = this.scope.UM_STORE.getUMGrid()
         let result = value - cell.position.y
+
+        if(!isMinMax) {
+            result += (grid.horizont + (grid.noBottom ? 0 : grid.moduleThickness))
+        }
+
         return result >= 0 ? result : 0;
     }
 
