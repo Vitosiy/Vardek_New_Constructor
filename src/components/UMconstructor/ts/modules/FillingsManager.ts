@@ -699,8 +699,15 @@ export default class FillingsManager {
         value: number,
         filling: FillingObject,
         cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+        isMinMax: boolean = false,
     ) {
+        const grid = this.scope.UM_STORE.getUMGrid()
         let result = value - cell.position.y
+
+        if(!isMinMax) {
+            result += (grid.horizont + (grid.noBottom ? 0 : grid.moduleThickness))
+        }
+
         return result >= 0 ? result : 0;
     }
 

@@ -320,6 +320,7 @@ const getLocalPosition = (
     value: number,
     filling: FillingObject,
     cell: GridSection | GridCell | GridCellsRow | GridRowExtra,
+    isMinMax: boolean = false,
 ) => {
   let resultPos = 0
 
@@ -327,7 +328,7 @@ const getLocalPosition = (
     case "X":
       break;
     case "Y":
-      resultPos = UMconstructor?.value?.FILLINGS.getLocalPositionY(value, filling, cell)
+      resultPos = UMconstructor?.value?.FILLINGS.getLocalPositionY(value, filling, cell, isMinMax)
       break;
   }
 
@@ -614,8 +615,8 @@ watch(() => selectedFilling.value, () => {
                                 if(convertValue >= 0){
                                   UMconstructor.FILLINGS.changeFillingPositionY(
                                   {
-                                    min: getLocalPosition('Y', event.target.min, filling, section),
-                                    max: getLocalPosition('Y', event.target.max, filling, section)
+                                    min: getLocalPosition('Y', event.target.min, filling, section, true),
+                                    max: getLocalPosition('Y', event.target.max, filling, section, true)
                                   },
                                   convertValue,
                                   fillingIndex,
@@ -796,8 +797,8 @@ watch(() => selectedFilling.value, () => {
                                       if(convertValue >= 0){
                                         UMconstructor.FILLINGS.changeFillingPositionY(
                                         {
-                                          min: getLocalPosition('Y', event.target.min, filling, cell),
-                                          max: getLocalPosition('Y', event.target.max, filling, cell)
+                                          min: getLocalPosition('Y', event.target.min, filling, cell, true),
+                                          max: getLocalPosition('Y', event.target.max, filling, cell, true)
                                         },
                                         convertValue,
                                         fillingIndex,
@@ -992,8 +993,8 @@ watch(() => selectedFilling.value, () => {
                                           if(convertValue >= 0){
                                             UMconstructor.FILLINGS.changeFillingPositionY(
                                             {
-                                              min: getLocalPosition('Y', event.target.min, filling, row),
-                                              max: getLocalPosition('Y', event.target.max, filling, row)
+                                              min: getLocalPosition('Y', event.target.min, filling, row, true),
+                                              max: getLocalPosition('Y', event.target.max, filling, row, true)
                                             },
                                             convertValue,
                                             fillingIndex,
@@ -1191,8 +1192,8 @@ watch(() => selectedFilling.value, () => {
                                               if(convertValue >= 0){
                                                 UMconstructor.FILLINGS.changeFillingPositionY(
                                                 {
-                                                  min: getLocalPosition('Y', event.target.min, filling, extra),
-                                                  max: getLocalPosition('Y', event.target.max, filling, extra)
+                                                  min: getLocalPosition('Y', event.target.min, filling, extra, true),
+                                                  max: getLocalPosition('Y', event.target.max, filling, extra, true)
                                                 },
                                                 convertValue,
                                                 fillingIndex,
