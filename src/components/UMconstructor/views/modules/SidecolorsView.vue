@@ -2,7 +2,7 @@
 // @ts-nocheck
 import "@/components/UMconstructor/styles/UM.scss"
 
-import {computed, onMounted, ref, toRefs} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, toRefs} from "vue";
 
 import { useAppData } from "@/store/appliction/useAppData.ts";
 import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
@@ -69,6 +69,7 @@ const productData = ref(null);
 const { checkActive } = useOptions();
 
 const currentOption = ref<string | boolean>(false);
+const panelRef = ref<HTMLElement | null>(null);
 const materialList = ref(null);
 const elementSize = <TFasadeTrueSizes|boolean>ref(false);
 const toptableMode = ref<boolean>(false);
@@ -163,6 +164,22 @@ const getMaterialInfo = (type: CATALOG_TYPE, materialID: number) => {
 const closeMenu = () => {
   currentOption.value = false;
   materialList.value = null;
+};
+
+const handleOutsideClick = (event: MouseEvent) => {
+  // Закрываем только когда меню реально открыто
+  if (!currentOption.value) return;
+
+  const panel = panelRef.value;
+  if (!panel) return;
+
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+
+  // Клик внутри окна - ничего не делаем
+  if (panel.contains(target)) return;
+
+  closeMenu();
 };
 
 const getOption = (part: string) => {
@@ -456,6 +473,13 @@ onMounted(() => {
   modelState.createCurrentSidewallData(objectData.value.PRODUCT);
   productData.value = UMconstructor?.value?.UM_STORE.getUMData();
   elementSize.value = false
+
+  // Закрытие при клике вне зоны панели
+  document.addEventListener("click", handleOutsideClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
 });
 </script>
 
@@ -469,8 +493,8 @@ onMounted(() => {
             class="UM option-small"
         >
           <div
-              :class="['UM option-small-item', { active: currentOption === part }]"
-              @click="getOption(part)"
+              :class="['option-small-item', { active: currentOption === part }]"
+              @click.stop="getOption(part)"
           >
             {{ partsNames[part] }}
 
@@ -489,10 +513,10 @@ onMounted(() => {
   </div>
 
   <transition name="slide--left" mode="out-in">
-    <div class="UM color--left" v-if="currentOption" key="color--left-select">
-      <div class="UM color--left-select" key="color--left-select">
-        <h1 class="UM color__title">{{ partsNames[currentOption] }}</h1>
-        <ClosePopUpButton class="UM menu__close" @close="closeMenu()" />
+    <div class="color--left" v-if="currentOption" key="color--left-select">
+      <div class="color--left-select" key="color--left-select">
+        <h1 class="color__title">{{ partsNames[currentOption] }}</h1>
+        <ClosePopUpButton class="menu__close" @close="closeMenu()" />
 
         <p class="UM color__title color__switch" v-if="currentOption === 'PROFILECOLOR'">
           Профили в размер секции
