@@ -410,7 +410,7 @@ export function useProjectAPI() {
     isLoading.value = true
     const token = getCookie(COOKIE_NAMES.AUTH_TOKEN)
     try {
-      const response = await fetch('https://httpbin.org/post', {
+      const response = await fetch('https://dev.vardek.online/api/modellerjwt/order/send', {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${token}`,
