@@ -15,16 +15,15 @@
       >
         Форма заказа
       </button>
+      <ClosePopUpButton
+        class="basket-tabs__close-btn"
+        @click="closePopup"
+      />
     </div>
 
     <template v-if="activeTab === 'basket'">
       <div class="basket-header">
         <div v-if="loading" class="basket__loader"></div>
-
-        <ClosePopUpButton
-          class="basket-header__close-btn"
-          @click="closePopup"
-        />
       </div>
 
       <!-- Кнопки переключения между комнатами -->
@@ -104,13 +103,6 @@
     </template>
 
     <template v-else>
-      <div class="basket-header">
-        <ClosePopUpButton
-          class="basket-header__close-btn"
-          @click="closePopup"
-        />
-      </div>
-
       <div class="basket-container">
         <orderForm
           ref="orderFormRef"
@@ -411,13 +403,6 @@ watch(() => useBasketStore().basketData, (newValue) => {
         letter-spacing: 0%;
         text-align: center;
       }
-      &__close-btn {
-        fill: #A3A9B5;
-        position: absolute;
-        right: 0;
-        top: 10px;
-        cursor: pointer;
-      }
     }
     &__additional-table {
       margin-top: 2rem;
@@ -645,8 +630,9 @@ watch(() => useBasketStore().basketData, (newValue) => {
 
   .basket-tabs {
     display: flex;
-    align-self: flex-start;
-    margin-left: 30px;
+    align-self: stretch;
+    width: 100%;
+    align-items: center;
 
     &__tab {
       padding: 12px 24px;
@@ -671,6 +657,13 @@ watch(() => useBasketStore().basketData, (newValue) => {
         font-weight: 600;
         z-index: 1;
       }
+    }
+
+    &__close-btn {
+      margin-left: auto;
+      fill: #A3A9B5;
+      cursor: pointer;
+      flex-shrink: 0;
     }
   }
 
