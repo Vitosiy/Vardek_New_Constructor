@@ -10,6 +10,7 @@ import TechnologistForm from "@/components/Technologist/TechnologistForm.vue";
 import TechnologistComments from "@/components/Technologist/TechnologistComments.vue";
 import FilePopUpView from "@/components/popUp/popup-views/FilePopUpView.vue";
 import ProjectParamsPopUpView from "@/components/popUp/popup-views/ProjectParamsPopUpView.vue";
+import WallHeightPopUpView from "@/components/popUp/popup-views/WallHeightPopUpView.vue";
 
 
 export type PopupKey =
@@ -18,6 +19,7 @@ export type PopupKey =
     'error' |
     'project' |
     'projectParams' |
+    'wallHeight' |
     'catalog' |
     'technologist' |
     'technologist-form' |
@@ -52,6 +54,10 @@ export const POPUP_CONFIG: PopupsConfig = {
   projectParams: {
     title: 'Задайте параметры проекта',
     component: ProjectParamsPopUpView
+  },
+  wallHeight: {
+    title: 'Высота стен',
+    component: WallHeightPopUpView
   },
   catalog: {
     title: 'Каталог',

@@ -4,6 +4,7 @@ import { MathUtils } from "three";
 import { useSchemeTransition } from "@/store/canvasMerge/schemeTransition";
 import { useRoomState } from "@/store/appliction/useRoomState";
 import { useEventBus } from "@/store/appliction/useEventBus";
+import { useWallHeightStore } from "@/store/constructor2d/store/useWallHeightStore";
 
 import { IRoom, IWallData, IContentItem } from "@/types/interfases";
 
@@ -18,6 +19,10 @@ function updateRoomStore(this: any): boolean {
     value !== undefined && value !== null ? String(value) : "";
   const eventBus = useEventBus();
   const roomState = useRoomState();
+  const wallHeightStore = useWallHeightStore();
+  const wallHeightScene = wallHeightStore.wallHeightMm * 10;
+  const wallHeightHalfY = wallHeightScene / 2;
+
   console.log("BEFORE: ", roomState.rooms);
   const roomStore = useSchemeTransition();
   
@@ -145,11 +150,11 @@ function updateRoomStore(this: any): boolean {
           const wData: IWallData = {
             id: normalizeId(wallData.id),
             width: wallData.width * 10,
-            height: 300 * 10,
+            height: wallHeightScene,
             depth: wallData.height * 10,
             position: {
               x: centerWall.x * 10,
-              y: (300 * 10) / 2,
+              y: wallHeightHalfY,
               z: centerWall.y * 10,
             },
             rotation: {
@@ -233,12 +238,7 @@ function updateRoomStore(this: any): boolean {
           id: IDObjects, // Заметка: убрать "?? 0"
           position: {
             x: centerWall.x * 10 - normalOffsetX,
-            y:
-              objData.name === "door"
-                ? 0
-                : objData.name === "window"
-                ? 1500
-                : (300 * 10) / 2,
+            y: objData.name === "door" ? 0 : wallHeightHalfY,
             z: centerWall.y * 10 - normalOffsetY,
           },
           rotation: {

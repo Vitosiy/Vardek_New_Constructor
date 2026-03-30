@@ -83,7 +83,9 @@ onUnmounted(() => {
 .wall-context-menu {
   position: fixed;
   z-index: 10000;
-  width: 188px; // 5 см (при 96dpi: 1cm ≈ 37.8px, 5cm ≈ 189px)
+  min-width: 220px;
+  width: max-content;
+  max-width: 320px;
   background-color: #ffffff;
   border: 1px solid #cccccc;
   border-radius: 4px;

@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { usePopupStore } from '@/store/appStore/popUpsStore';
 
 export interface WallContextMenuItem {
   key: string;
@@ -7,6 +8,8 @@ export interface WallContextMenuItem {
 }
 
 export const useWallContextMenu = () => {
+  const popupStore = usePopupStore();
+
   const actions: WallContextMenuItem[] = [
     {
       key: 'splitWall',
@@ -14,6 +17,11 @@ export const useWallContextMenu = () => {
       action: () => {
         // Действие будет передано извне через openMenu
       }
+    },
+    {
+      key: 'changeWallHeight',
+      label: 'Изменить высоту стен',
+      action: () => {}
     }
   ];
 
@@ -47,6 +55,13 @@ export const useWallContextMenu = () => {
   const handleAction = (actionKey: string) => {
     if (actionKey === 'splitWall' && wallId.value !== null && splitWallCallback) {
       splitWallCallback(wallId.value);
+      closeMenu();
+      return;
+    }
+    if (actionKey === 'changeWallHeight') {
+      popupStore.openPopup('wallHeight');
+      closeMenu();
+      return;
     }
     closeMenu();
   };
