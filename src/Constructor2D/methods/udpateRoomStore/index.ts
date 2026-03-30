@@ -251,9 +251,15 @@ function updateRoomStore(this: any): boolean {
         };
 
         if (objData.name === "door" || objData.name === "window") {
+          const openingHeightPlan =
+            typeof objData.openingHeight === "number" && objData.openingHeight > 0
+              ? objData.openingHeight
+              : objData.name === "door"
+              ? 210
+              : 150;
           obj.size = {
             width: objData.width * 10,
-            height: 0,
+            height: openingHeightPlan * 10,
             depth: objData.height * 10,
           };
         }

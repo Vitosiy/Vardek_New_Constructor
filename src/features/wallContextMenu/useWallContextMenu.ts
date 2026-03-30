@@ -1,65 +1,100 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
+import { useOpeningSizeEditorStore } from '@/store/constructor2d/store/useOpeningSizeEditorStore';
 
 export interface WallContextMenuItem {
   key: string;
   label: string;
-  action: () => void | Promise<void>;
 }
+
+export type WallContextMenuWallContext = {
+  kind: 'wall';
+  wallId: string | number;
+  onSplitWall: (id: string | number) => void;
+};
+
+export type WallContextMenuOpeningContext = {
+  kind: 'door' | 'window';
+  openingId: string | number;
+};
+
+export type WallMenuContext = WallContextMenuWallContext | WallContextMenuOpeningContext;
+
+export type WallContextMenuPayload = {
+  x: number;
+  y: number;
+  context: WallMenuContext;
+};
 
 export const useWallContextMenu = () => {
   const popupStore = usePopupStore();
-
-  const actions: WallContextMenuItem[] = [
-    {
-      key: 'splitWall',
-      label: 'Добавить стену',
-      action: () => {
-        // Действие будет передано извне через openMenu
-      }
-    },
-    {
-      key: 'changeWallHeight',
-      label: 'Изменить высоту стен',
-      action: () => {}
-    }
-  ];
+  const openingSizeStore = useOpeningSizeEditorStore();
 
   const isVisible = ref(false);
   const position = ref({ x: 0, y: 0 });
-  const wallId = ref<string | number | null>(null);
+  const menuContext = ref<WallMenuContext | null>(null);
   let splitWallCallback: ((id: string | number) => void) | null = null;
 
-  const openMenu = (
-    x: number,
-    y: number,
-    id: string | number,
-    onSplitWall: (id: string | number) => void
-  ) => {
-    // Позиционируем меню справа от курсора (добавляем небольшой отступ)
-    position.value = { 
-      x: x + 10, // Отступ 10px справа от курсора
-      y: y 
+  const actions = computed((): WallContextMenuItem[] => {
+    const ctx = menuContext.value;
+    if (!ctx) return [];
+    if (ctx.kind === 'wall') {
+      return [
+        { key: 'splitWall', label: 'Добавить стену' },
+        { key: 'changeWallHeight', label: 'Изменить высоту стен' },
+      ];
+    }
+    if (ctx.kind === 'window') {
+      return [{ key: 'changeWindowSize', label: 'Изменить размеры окна' }];
+    }
+    return [{ key: 'changeDoorSize', label: 'Изменить размеры двери' }];
+  });
+
+  const openMenu = (x: number, y: number, context: WallMenuContext) => {
+    position.value = {
+      x: x + 10,
+      y: y,
     };
-    wallId.value = id;
-    splitWallCallback = onSplitWall;
+    menuContext.value = context;
+    if (context.kind === 'wall') {
+      splitWallCallback = context.onSplitWall;
+    } else {
+      splitWallCallback = null;
+    }
     isVisible.value = true;
   };
 
   const closeMenu = () => {
     isVisible.value = false;
-    wallId.value = null;
+    menuContext.value = null;
     splitWallCallback = null;
   };
 
   const handleAction = (actionKey: string) => {
-    if (actionKey === 'splitWall' && wallId.value !== null && splitWallCallback) {
-      splitWallCallback(wallId.value);
+    const ctx = menuContext.value;
+
+    if (actionKey === 'splitWall' && ctx?.kind === 'wall' && splitWallCallback) {
+      splitWallCallback(ctx.wallId);
       closeMenu();
       return;
     }
     if (actionKey === 'changeWallHeight') {
       popupStore.openPopup('wallHeight');
+      closeMenu();
+      return;
+    }
+    if (
+      actionKey === 'changeWindowSize' &&
+      ctx?.kind === 'window'
+    ) {
+      openingSizeStore.setObjectId(ctx.openingId);
+      popupStore.openPopup('doorWindowSize');
+      closeMenu();
+      return;
+    }
+    if (actionKey === 'changeDoorSize' && ctx?.kind === 'door') {
+      openingSizeStore.setObjectId(ctx.openingId);
+      popupStore.openPopup('doorWindowSize');
       closeMenu();
       return;
     }
@@ -72,7 +107,6 @@ export const useWallContextMenu = () => {
     position,
     openMenu,
     closeMenu,
-    handleAction
+    handleAction,
   };
 };
-

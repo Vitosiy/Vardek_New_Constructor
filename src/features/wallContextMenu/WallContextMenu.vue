@@ -20,7 +20,7 @@
 //@ts-nocheck
 
 import { computed, onMounted, onUnmounted } from 'vue';
-import { useWallContextMenu } from './useWallContextMenu';
+import { useWallContextMenu, type WallContextMenuPayload } from './useWallContextMenu';
 import { Events } from '@/store/constructor2d/events';
 import { useEventBus } from '@/store/constructor2d/useEventBus';
 
@@ -34,13 +34,6 @@ const {
   handleAction
 } = useWallContextMenu();
 
-interface ShowMenuData {
-  x: number;
-  y: number;
-  wallId: string | number;
-  onSplitWall: (id: string | number) => void;
-}
-
 const menuStyle = computed(() => {
   return {
     left: `${position.value.x}px`,
@@ -48,8 +41,8 @@ const menuStyle = computed(() => {
   };
 });
 
-const showMenu = (data: ShowMenuData) => {
-  openMenu(data.x, data.y, data.wallId, data.onSplitWall);
+const showMenu = (data: WallContextMenuPayload) => {
+  openMenu(data.x, data.y, data.context);
 };
 
 const hideMenu = () => {

@@ -109,9 +109,26 @@ export class BuildProduct extends BuildersHelper {
             const type = this._MODELS[product_data.models[0]];
 
             if (type.DAE) {
+                const props = this.createStartProps(product_data, loaded_props);
+                let useContentSizeForDae = false;
+                // Размер из схемы (2D → content.size); иначе ModelsBuilder для DAE не применяет loaded_size
+                if (
+                    loaded_size
+                    && typeof loaded_size === 'object'
+                    && (Number(loaded_size.width) > 0
+                        || Number(loaded_size.height) > 0
+                        || Number(loaded_size.depth) > 0)
+                ) {
+                    props.CONFIG.SIZE = {
+                        width: Number(loaded_size.width),
+                        height: Number(loaded_size.height),
+                        depth: Number(loaded_size.depth),
+                    };
+                    useContentSizeForDae = true;
+                }
                 return this.models_builder.create({
-                    props: this.createStartProps(product_data, loaded_props),
-                    size: loaded_size
+                    props,
+                    forceContentSizeScale: useContentSizeForDae,
                 })
                     .then(model => this.finalizeModel(model, resolve, type))
                     .catch(err => console.error('Ошибка загрузки DAE:', err));

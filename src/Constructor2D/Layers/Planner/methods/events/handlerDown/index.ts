@@ -30,14 +30,17 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
         this.parent.eventBus.emit(Events.C2D_SHOW_WALL_CONTEXT_MENU, {
           x: domX,
           y: domY,
-          wallId: id,
-          onSplitWall: (wallId: string | number) => {
-            if (typeof this.splitWallIntoTwo === 'function') {
-              this.splitWallIntoTwo(wallId);
-            } else {
-              console.warn('Wallsplitter is not defined on Planner');
-            }
-          }
+          context: {
+            kind: "wall" as const,
+            wallId: id,
+            onSplitWall: (wallId: string | number) => {
+              if (typeof this.splitWallIntoTwo === "function") {
+                this.splitWallIntoTwo(wallId);
+              } else {
+                console.warn("Wallsplitter is not defined on Planner");
+              }
+            },
+          },
         });
       }, 0);
     }
