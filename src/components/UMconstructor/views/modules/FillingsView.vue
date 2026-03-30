@@ -608,17 +608,30 @@ watch(() => selectedFilling.value, () => {
                             :min="UMconstructor.FILLINGS.calcMinMaxPositionY('min', filling, section, module)"
                             class="actions-input"
                             :value="filling.distances?.bottom"
-                            @input="
-                                UMconstructor.FILLINGS.changeFillingPositionY(
-                                    {
-                                      min: $event.target.min,
-                                      max: $event.target.max,
-                                    },
-                                    $event.target.value,
-                                    fillingIndex,
-                                    secIndex,
+                            @input="(event) => {
+                              UMconstructor?.debounce('getLocalPosition', () => {
+                                let convertValue = getLocalPosition('Y', parseInt(event.target.value), filling, section)
+                                if(convertValue >= 0){
+                                  UMconstructor.FILLINGS.changeFillingPositionY(
+                                  {
+                                    min: getLocalPosition('Y', event.target.min, filling, section),
+                                    max: getLocalPosition('Y', event.target.max, filling, section)
+                                  },
+                                  convertValue,
+                                  fillingIndex,
+                                  secIndex,
+                                  false,
+                                  false,
+                                  false,
+                                  module,
+                                  0
                                 )
-                            "
+                                }
+                                else {
+                                  UMconstructor.callAlert('error', 'Нельзя переместить сюда, т.к. позиция выходит за пределы ячейки')
+                                }
+                              }, 1000)
+                            }"
                         />
                       </div>
                     </div>
