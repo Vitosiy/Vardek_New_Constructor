@@ -124,16 +124,23 @@ const dragState = reactive({
   element: null,
 });
 
+const MAX_AREA_WIDTH = ref<number>(CONST_MAX_AREA_WIDTH);
+const MAX_AREA_HEIGHT = ref<number>(CONST_MAX_AREA_HEIGHT);
 
-const MAX_AREA_WIDTH = computed(() => {
+const calcMaxAreaWidth = () => {
   let midArea = document.getElementById("midAreaUM2Dconstructor")
-  return midArea?.clientWidth * 0.7 || CONST_MAX_AREA_WIDTH;
-});
+  MAX_AREA_WIDTH.value = midArea?.clientWidth * 0.7 || CONST_MAX_AREA_WIDTH;
+}
 
-const MAX_AREA_HEIGHT = computed(() => {
+const calcMaxAreaHeight = () => {
   let midArea = document.getElementById("midAreaUM2Dconstructor")
-  return midArea?.clientHeight * 0.75 || CONST_MAX_AREA_HEIGHT;
-});
+  MAX_AREA_HEIGHT.value = midArea?.clientHeight * 0.75 || CONST_MAX_AREA_HEIGHT;
+}
+
+const calcMaxAreaSizeConst = () => {
+  calcMaxAreaHeight()
+  calcMaxAreaWidth()
+}
 
 const TOTAL_HEIGHT = ref(0);
 const TOTAL_WIDTH = ref(0);
@@ -157,6 +164,7 @@ const pixelRatioWidth = computed(() => TOTAL_WIDTH.value / areaWidth.value);
 const pixelRatioHeight = computed(() => TOTAL_HEIGHT.value / areaHeight.value);
 
 const calcMaxAreaSize = () => {
+  calcMaxAreaSizeConst()
   let scale = Math.min(MAX_AREA_WIDTH.value / TOTAL_WIDTH.value, MAX_AREA_HEIGHT.value / TOTAL_HEIGHT.value)
 
   areaWidth.value = TOTAL_WIDTH.value * scale;
