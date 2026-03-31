@@ -257,6 +257,18 @@ function updateRoomStore(this: any): boolean {
               : objData.name === "door"
               ? 210
               : 150;
+          const distanceFromFloorPlan =
+            objData.name === "window" &&
+            typeof objData.distanceFromFloor === "number" &&
+            objData.distanceFromFloor >= 0
+              ? objData.distanceFromFloor
+              : 0;
+          const windowCenterY =
+            (distanceFromFloorPlan + openingHeightPlan / 2) * 10;
+
+          if (objData.name === "window") {
+            obj.position.y = windowCenterY;
+          }
           obj.size = {
             width: objData.width * 10,
             height: openingHeightPlan * 10,

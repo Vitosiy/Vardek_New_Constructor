@@ -71,6 +71,8 @@ export interface IDrawObjects {
   height: number;
   /** Высота проёма «в человеческом смысле», мм/10 как у width (в 3D → size.height) */
   openingHeight: number;
+  /** Расстояние от пола до низа проёма, мм/10 (для окон в 3D → position.y). */
+  distanceFromFloor: number;
   points: Vector2[];
   heightDirection: -1 | 1;
   angleDegrees: number;

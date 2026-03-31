@@ -248,6 +248,10 @@ export default class DoorsAndWindows {
         const defaultOpeningPlan = NameObjects === "door" ? 210 : 150;
         const openingFrom3d =
           object.size?.height > 0 ? object.size.height / 10 : defaultOpeningPlan;
+        const distanceFromFloorFrom3d =
+          NameObjects === "window" && object.position?.y != null
+            ? Math.max(0, object.position.y / 10 - openingFrom3d / 2)
+            : 0;
 
         const dataObject: IDrawObjects = {
           id: id,
@@ -255,6 +259,7 @@ export default class DoorsAndWindows {
           width: object.size.width / 10,
           height: object.size.depth / 10,
           openingHeight: openingFrom3d,
+          distanceFromFloor: distanceFromFloorFrom3d,
           heightDirection: -1, // по умолчанию
           angleDegrees: MathUtils.radToDeg(object.rotation._y),
           updateTime: Date.now(),
@@ -472,6 +477,7 @@ export default class DoorsAndWindows {
       width: objWidth,
       height: objHeight,
       openingHeight: data.type === "door" ? 210 : 150,
+      distanceFromFloor: data.type === "window" ? 90 : 0,
       heightDirection: objHeightDirection,
       angleDegrees: objAngleDegrees,
       updateTime: Date.now(),
@@ -1098,6 +1104,7 @@ export default class DoorsAndWindows {
     objectId: string | number,
     widthMm: number,
     openingHeightMm: number,
+    distanceFromFloorMm?: number,
   ): boolean {
     const obj = this.drawObjects.find((el) => el.id === objectId);
     if (!obj || (obj.name !== "door" && obj.name !== "window")) return false;
@@ -1105,10 +1112,12 @@ export default class DoorsAndWindows {
     const minMm = 200;
     const wMm = Math.max(minMm, widthMm);
     const hMm = Math.max(minMm, openingHeightMm);
+    const floorDistanceMm = Math.max(0, distanceFromFloorMm ?? 0);
     const wPlan = wMm / 10;
     const hPlan = hMm / 10;
 
     obj.openingHeight = hPlan;
+    obj.distanceFromFloor = floorDistanceMm / 10;
     obj.updateTime = Date.now();
 
     const wallId = obj.belongsToWall?.id;
