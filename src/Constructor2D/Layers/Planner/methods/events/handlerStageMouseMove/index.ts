@@ -34,6 +34,15 @@ export function handlerStageMouseMove(this: any, e: PIXI.FederatedPointerEvent):
       }
 
       if(status){
+        const nextPoint0: Vector2 = {
+          x: this.state.oldPosition[0].x + distance.x,
+          y: this.state.oldPosition[0].y + distance.y,
+        };
+        const nextPoint1: Vector2 = {
+          x: this.state.oldPosition[1].x + distance.x,
+          y: this.state.oldPosition[1].y + distance.y,
+        };
+        if (!this.canMoveActiveWallWithAcuteLimit(nextPoint0, nextPoint1)) return;
       
         dataWall.points.forEach((p: Vector2, index: number) => {
           p.x = this.state.oldPosition[index].x + distance.x;

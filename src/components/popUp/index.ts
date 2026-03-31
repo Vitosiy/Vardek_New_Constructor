@@ -11,6 +11,7 @@ import TechnologistComments from "@/components/Technologist/TechnologistComments
 import FilePopUpView from "@/components/popUp/popup-views/FilePopUpView.vue";
 import ProjectParamsPopUpView from "@/components/popUp/popup-views/ProjectParamsPopUpView.vue";
 import WallHeightPopUpView from "@/components/popUp/popup-views/WallHeightPopUpView.vue";
+import WallLengthPopUpView from "@/components/popUp/popup-views/WallLengthPopUpView.vue";
 import DoorWindowOpeningSizePopUpView from "@/components/popUp/popup-views/DoorWindowOpeningSizePopUpView.vue";
 
 
@@ -21,6 +22,7 @@ export type PopupKey =
     'project' |
     'projectParams' |
     'wallHeight' |
+    'wallLength' |
     'doorWindowSize' |
     'catalog' |
     'technologist' |
@@ -60,6 +62,10 @@ export const POPUP_CONFIG: PopupsConfig = {
   wallHeight: {
     title: 'Высота стен',
     component: WallHeightPopUpView
+  },
+  wallLength: {
+    title: 'Длина стены',
+    component: WallLengthPopUpView
   },
   doorWindowSize: {
     title: 'Размеры проёма',

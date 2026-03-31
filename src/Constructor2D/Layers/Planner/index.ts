@@ -1857,6 +1857,7 @@ export default class Planner {
         dataWall.height,
         dataWall.heightDirection
       );
+      if (!this.canApplyWallPointMoveWithAcuteLimit(dataWall, newPoints)) return;
 
       // обновить угол наклона стены
       dataWall.angleDegrees = getAngleBetweenVectors(
@@ -1969,6 +1970,7 @@ export default class Planner {
         dataWall.height,
         dataWall.heightDirection
       );
+      if (!this.canApplyWallPointMoveWithAcuteLimit(dataWall, newPoints)) return;
 
       // обновить угол наклона стены
       dataWall.angleDegrees = getAngleBetweenVectors(
@@ -2129,12 +2131,218 @@ export default class Planner {
 
   }
 
+  private normalizeAngle360(angle: number): number {
+    const normalized = angle % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  }
+
+  private circularDiff(a: number, b: number): number {
+    const d = Math.abs(this.normalizeAngle360(a) - this.normalizeAngle360(b));
+    return Math.min(d, 360 - d);
+  }
+
+  private getDisplayedCornerAngleDeg(p0: Vector2, p1: Vector2, p2: Vector2): number {
+    const vAngle = -getAngleBetweenVectors(p1, p0, p2);
+    return vAngle < 0 ? 360 + vAngle : vAngle;
+  }
+
+  private getCornerAngleByMerge(
+    wall: ObjectWall,
+    points: [Vector2, Vector2, Vector2, Vector2] | Vector2[],
+    side: 0 | 1,
+  ): number | null {
+    if (side === 1) {
+      const mergeId = wall.mergeWalls.wallPoint1;
+      if (!mergeId) return null;
+      const mergeWall = this.objectWalls.find((el) => el.id === mergeId);
+      if (!mergeWall) return null;
+      return this.getDisplayedCornerAngleDeg(mergeWall.points[0], points[0], points[1]);
+    }
+    const mergeId = wall.mergeWalls.wallPoint0;
+    if (!mergeId) return null;
+    const mergeWall = this.objectWalls.find((el) => el.id === mergeId);
+    if (!mergeWall) return null;
+    return this.getDisplayedCornerAngleDeg(mergeWall.points[1], points[1], points[0]);
+  }
+
+  private canApplyWallPointMoveWithAcuteLimit(
+    wall: ObjectWall,
+    newPoints: [Vector2, Vector2, Vector2, Vector2],
+  ): boolean {
+    const minBlockDeg = 51;
+    const oldPoints = wall.points;
+    const sides: (0 | 1)[] = [0, 1];
+    for (const side of sides) {
+      const oldAngle = this.getCornerAngleByMerge(wall, oldPoints, side);
+      const newAngle = this.getCornerAngleByMerge(wall, newPoints, side);
+      if (oldAngle === null || newAngle === null) continue;
+      if (newAngle < minBlockDeg && newAngle < oldAngle) {
+        return false;
+      }
+    }
+    if (!this.canApplyRoomAnglesLimitBySimulation(wall, newPoints, minBlockDeg)) {
+      return false;
+    }
+    return true;
+  }
+
+  private normalizeCornerAngleDeg(angle: number): number {
+    const normalized = this.normalizeAngle360(angle);
+    return normalized > 180 ? 360 - normalized : normalized;
+  }
+
+  private getRoomMinAngleDeg(roomId: string | number): number | null {
+    const contour = this.getRoomContour(roomId);
+    if (!contour || contour.length < 3) return null;
+    let minAngle = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < contour.length; i++) {
+      const prev = contour[(i - 1 + contour.length) % contour.length];
+      const curr = contour[i];
+      const next = contour[(i + 1) % contour.length];
+      const raw = getAngleBetweenVectors(curr, prev, next);
+      const angle = this.normalizeCornerAngleDeg(raw);
+      if (Number.isFinite(angle) && angle > 0) {
+        minAngle = Math.min(minAngle, angle);
+      }
+    }
+    return Number.isFinite(minAngle) ? minAngle : null;
+  }
+
+  private canApplyRoomAnglesLimitBySimulation(
+    wall: ObjectWall,
+    newPoints: [Vector2, Vector2, Vector2, Vector2],
+    minBlockDeg: number,
+  ): boolean {
+    if (wall.roomId == null) return true;
+    const oldRoomMin = this.getRoomMinAngleDeg(wall.roomId);
+    if (oldRoomMin === null) return true;
+
+    const affectedIds = this.getMergeWallsIDForUpdate(wall.id);
+    if (!affectedIds.includes(wall.id)) affectedIds.push(wall.id);
+    const backups = affectedIds
+      .map((id) => this.objectWalls.find((el) => el.id === id))
+      .filter(Boolean)
+      .map((w) => ({
+        id: w!.id,
+        points: JSON.parse(JSON.stringify(w!.points)),
+        width: w!.width,
+        angleDegrees: w!.angleDegrees,
+      }));
+
+    wall.points = JSON.parse(JSON.stringify(newPoints));
+    wall.width = getDistanceBetweenVectors(newPoints[0], newPoints[1]);
+    wall.angleDegrees = getAngleBetweenVectors(
+      newPoints[0],
+      { x: newPoints[0].x + 300, y: newPoints[0].y },
+      newPoints[1],
+    );
+    if (wall.mergeWalls.wallPoint0) this.updateMergeWallProperties(0, newPoints[1], wall.mergeWalls.wallPoint0);
+    if (wall.mergeWalls.wallPoint1) this.updateMergeWallProperties(1, newPoints[0], wall.mergeWalls.wallPoint1);
+
+    const newRoomMin = this.getRoomMinAngleDeg(wall.roomId);
+
+    backups.forEach((b) => {
+      const target = this.objectWalls.find((el) => el.id === b.id);
+      if (!target) return;
+      target.points = b.points;
+      target.width = b.width;
+      target.angleDegrees = b.angleDegrees;
+    });
+
+    if (newRoomMin === null) return true;
+    return !(newRoomMin < minBlockDeg && newRoomMin < oldRoomMin);
+  }
+
+  public canMoveActiveWallWithAcuteLimit(newPoint0: Vector2, newPoint1: Vector2): boolean {
+    if (this.state.activeWall === null) return true;
+    const wall = this.objectWalls.find((el) => el.id === this.state.activeWall);
+    if (!wall) return true;
+    const newPoints = this.calculatePositionPointsWall(
+      newPoint0,
+      newPoint1,
+      wall.height,
+      wall.heightDirection,
+    );
+    return this.canApplyWallPointMoveWithAcuteLimit(wall, newPoints);
+  }
+
+  public applyWallLengthMm(wallId: string | number, lengthMm: number): boolean {
+    const wall = this.objectWalls.find((el) => el.id === wallId);
+    if (!wall) return false;
+    const targetMm = Math.max(200, lengthMm);
+    const targetPlan = targetMm / 10;
+    const p0 = wall.points[0];
+    const p1 = wall.points[1];
+    const dx = p1.x - p0.x;
+    const dy = p1.y - p0.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-6) return false;
+    const ux = dx / len;
+    const uy = dy / len;
+    const nextPoint1: Vector2 = {
+      x: p0.x + ux * targetPlan,
+      y: p0.y + uy * targetPlan,
+    };
+    const prevActiveWall = this.state.activeWall;
+    const prevActivePoint = this.state.activePointWall;
+    this.state.activeWall = wallId;
+    this.state.activePointWall = 1;
+    const before = getDistanceBetweenVectors(p0, wall.points[1]);
+    this.updateWallPoint(nextPoint1, 1);
+    const afterWall = this.objectWalls.find((el) => el.id === wallId);
+    const after = afterWall ? getDistanceBetweenVectors(afterWall.points[0], afterWall.points[1]) : before;
+    this.state.activeWall = prevActiveWall;
+    this.state.activePointWall = prevActivePoint;
+    return Math.abs(after - before) > 1e-6;
+  }
+
+  public setActiveWallAngleByPoint0(targetAngleDeg: number): boolean {
+    if (this.state.activeWall === null) return false;
+
+    const wall = this.objectWalls.find((el) => el.id === this.state.activeWall);
+    if (!wall || !wall.mergeWalls.wallPoint1) return false;
+
+    const mergeWall = this.objectWalls.find((el) => el.id === wall.mergeWalls.wallPoint1);
+    if (!mergeWall) return false;
+
+    const desired = Math.max(50, Math.min(359, targetAngleDeg));
+    const p0 = mergeWall.points[0];
+    const p1 = wall.points[0];
+    const currentP2 = wall.points[1];
+    const length = Math.max(0.001, getDistanceBetweenVectors(p1, currentP2));
+    const base = Math.atan2(p0.y - p1.y, p0.x - p1.x);
+    const rad = MathUtils.degToRad(desired);
+
+    const candidateA: Vector2 = {
+      x: p1.x + Math.cos(base + rad) * length,
+      y: p1.y + Math.sin(base + rad) * length,
+    };
+    const candidateB: Vector2 = {
+      x: p1.x + Math.cos(base - rad) * length,
+      y: p1.y + Math.sin(base - rad) * length,
+    };
+
+    const angleA = this.getDisplayedCornerAngleDeg(p0, p1, candidateA);
+    const angleB = this.getDisplayedCornerAngleDeg(p0, p1, candidateB);
+    const nextPoint = this.circularDiff(angleA, desired) <= this.circularDiff(angleB, desired)
+      ? candidateA
+      : candidateB;
+
+    this.state.activePointWall = 1;
+    this.updateWallPoint(nextPoint, 1);
+    this.parent.layers.startPointActiveObject.updatePositionIndicatorPoint(nextPoint);
+    this.parent.layers.startPointActiveObject.drawAngleBetweenWalls();
+    this.parent.updateRoomStore();
+    return true;
+  }
+
   public deactiveWalls(): void {
 
     this.state.activeWall = null;
     this.state.activePointWall = null;
 
     this.parent.eventBus.emit(Events.C2D_HIDE_FORM_MODIFY_WALL);
+    this.parent.eventBus.emit(Events.C2D_HIDE_ANGLE_INPUT_MODAL);
 
     this.redrawAllObjects();
 
@@ -2430,6 +2638,7 @@ export default class Planner {
           id: this.state.activeWall
         });
         this.state.activeWall = null
+        this.parent.eventBus.emit(Events.C2D_HIDE_ANGLE_INPUT_MODAL);
 
         this.redrawAllObjects();
         this.parent.layers.arrowRulerActiveObject?.clearGraphic();

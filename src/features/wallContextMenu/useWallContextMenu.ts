@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue';
 import { usePopupStore } from '@/store/appStore/popUpsStore';
 import { useOpeningSizeEditorStore } from '@/store/constructor2d/store/useOpeningSizeEditorStore';
+import { useWallLengthEditorStore } from '@/store/constructor2d/store/useWallLengthEditorStore';
 
 export interface WallContextMenuItem {
   key: string;
@@ -29,6 +30,7 @@ export type WallContextMenuPayload = {
 export const useWallContextMenu = () => {
   const popupStore = usePopupStore();
   const openingSizeStore = useOpeningSizeEditorStore();
+  const wallLengthStore = useWallLengthEditorStore();
 
   const isVisible = ref(false);
   const position = ref({ x: 0, y: 0 });
@@ -42,6 +44,7 @@ export const useWallContextMenu = () => {
       return [
         { key: 'splitWall', label: 'Добавить стену' },
         { key: 'changeWallHeight', label: 'Изменить высоту стен' },
+        { key: 'changeWallLength', label: 'Изменить длину стены' },
       ];
     }
     if (ctx.kind === 'window') {
@@ -80,6 +83,12 @@ export const useWallContextMenu = () => {
     }
     if (actionKey === 'changeWallHeight') {
       popupStore.openPopup('wallHeight');
+      closeMenu();
+      return;
+    }
+    if (actionKey === 'changeWallLength' && ctx?.kind === 'wall') {
+      wallLengthStore.setWallId(ctx.wallId);
+      popupStore.openPopup('wallLength');
       closeMenu();
       return;
     }

@@ -5,6 +5,7 @@ import { onMounted, onUnmounted, Ref, ref } from "vue";
 import ModifyWall from "@/components/popUp/constructor2d/ModifyWall.vue";
 import FormLabelRoom from "@/components/popUp/constructor2d/FormLabelRoom.vue";
 import WallContextMenu from "@/features/wallContextMenu/WallContextMenu.vue";
+import AngleInputModal from "@/features/angleInputModal/AngleInputModal.vue";
 
 import {
   Vector2,
@@ -179,5 +180,6 @@ onUnmounted(() => {
     <ModifyWall />
     <FormLabelRoom />
     <WallContextMenu />
+    <AngleInputModal />
   </div>
 </template>

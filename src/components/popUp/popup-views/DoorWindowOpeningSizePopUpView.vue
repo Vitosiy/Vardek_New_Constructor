@@ -10,7 +10,7 @@
           v-model="widthInput"
           type="text"
           class="project-params-dialog__input"
-          placeholder="1000"
+          :placeholder="widthPlaceholder"
         />
       </div>
       <div class="project-params-dialog__field">
@@ -19,7 +19,7 @@
           v-model="heightInput"
           type="text"
           class="project-params-dialog__input"
-          placeholder="1000"
+          :placeholder="heightPlaceholder"
         />
       </div>
       <div v-if="isWindow" class="project-params-dialog__field">
@@ -28,7 +28,7 @@
           v-model="distanceFromFloorInput"
           type="text"
           class="project-params-dialog__input"
-          placeholder="900"
+          :placeholder="distanceFromFloorPlaceholder"
         />
       </div>
     </div>
@@ -75,6 +75,38 @@ const openingType = computed(() => {
 const isWindow = computed(() => openingType.value === 'window');
 
 const maxWallMm = computed(() => wallHeightStore.wallHeightMm * 10);
+const currentOpeningValuesMm = computed(() => {
+  const c2d = (window as unknown as {
+    C2D?: {
+      layers?: {
+        doorsAndWindows?: {
+          getDrawObjectById?: (id: string | number) =>
+            | { width: number; openingHeight?: number; distanceFromFloor?: number; name?: string }
+            | undefined;
+        };
+      };
+    };
+  }).C2D;
+  const id = openingStore.objectId;
+  if (id == null) return null;
+  const obj = c2d?.layers?.doorsAndWindows?.getDrawObjectById?.(id);
+  if (!obj) return null;
+  const defaultOpen = obj.name === 'door' ? 210 : 150;
+  const openPlan = typeof obj.openingHeight === 'number' && obj.openingHeight > 0
+    ? obj.openingHeight
+    : defaultOpen;
+  const floorDistPlan = obj.name === 'window' && typeof obj.distanceFromFloor === 'number' && obj.distanceFromFloor >= 0
+    ? obj.distanceFromFloor
+    : 0;
+  return {
+    width: String(obj.width * 10),
+    height: String(openPlan * 10),
+    distanceFromFloor: String(floorDistPlan * 10),
+  };
+});
+const widthPlaceholder = computed(() => currentOpeningValuesMm.value?.width ?? '');
+const heightPlaceholder = computed(() => currentOpeningValuesMm.value?.height ?? '');
+const distanceFromFloorPlaceholder = computed(() => currentOpeningValuesMm.value?.distanceFromFloor ?? '');
 
 const syncInputsFromObject = () => {
   const c2d = (window as unknown as {
