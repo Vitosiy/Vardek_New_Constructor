@@ -1723,7 +1723,7 @@ export default class Planner {
         roomsHalf.push(roomData);
       }
 
-      if(polygonPoints.length > 3){
+      if(polygonPoints.length > 2){
         hasRoomWithMoreThan3Points = true
       }
       
@@ -2169,7 +2169,7 @@ export default class Planner {
     wall: ObjectWall,
     newPoints: [Vector2, Vector2, Vector2, Vector2],
   ): boolean {
-    const minBlockDeg = 51;
+    const minBlockDeg = 1;
     const oldPoints = wall.points;
     const sides: (0 | 1)[] = [0, 1];
     for (const side of sides) {
@@ -2493,7 +2493,7 @@ export default class Planner {
 
     // Удаляем старую стену с холста и из массива
     this.state.activeWall = oldWall.id;
-    this.deleteSelectedObject();
+    this.deleteSelectedObject(false);
 
     // Добавляем новые стены рядом с позицией старой
     // (после deleteSelectedObject() this.objectWalls уже без старой)
@@ -2535,7 +2535,85 @@ export default class Planner {
 
   }
 
-  public deleteSelectedObject(): void {
+  public removeWallById(id: string | number): void {
+    if (!id) return;
+    const exists = this.objectWalls.find((el: ObjectWall) => el.id === id);
+    if (!exists) return;
+    this.state.activeWall = id;
+    this.deleteSelectedObject();
+  }
+
+  private reconnectNeighborsAfterWallDelete(
+    leftNeighborId: string | number | null,
+    rightNeighborId: string | number | null,
+    deletedPoint0: Vector2,
+    deletedPoint1: Vector2,
+    roomId: string | number | null = null,
+  ): void {
+    const left = leftNeighborId != null
+      ? this.objectWalls.find((el: ObjectWall) => el.id === leftNeighborId)
+      : null;
+    const right = rightNeighborId != null
+      ? this.objectWalls.find((el: ObjectWall) => el.id === rightNeighborId)
+      : null;
+
+    if (!left && !right) return;
+    if (left && right) {
+      // Сцепляем соседей в устойчивую точку без пересечения бесконечных прямых,
+      // чтобы избежать "улёта" геометрии при почти параллельных стенах.
+      const connectPoint: Vector2 = {
+        x: (deletedPoint0.x + deletedPoint1.x) / 2,
+        y: (deletedPoint0.y + deletedPoint1.y) / 2,
+      };
+
+      left.points[1] = connectPoint;
+      left.points = this.calculatePositionPointsWall(
+        left.points[0],
+        left.points[1],
+        left.height,
+        left.heightDirection,
+      );
+      left.width = getDistanceBetweenVectors(left.points[0], left.points[1]);
+      left.angleDegrees = getAngleBetweenVectors(
+        left.points[0],
+        { x: left.points[0].x + 300, y: left.points[0].y },
+        left.points[1],
+      );
+
+      right.points[0] = connectPoint;
+      right.points = this.calculatePositionPointsWall(
+        right.points[0],
+        right.points[1],
+        right.height,
+        right.heightDirection,
+      );
+      right.width = getDistanceBetweenVectors(right.points[0], right.points[1]);
+      right.angleDegrees = getAngleBetweenVectors(
+        right.points[0],
+        { x: right.points[0].x + 300, y: right.points[0].y },
+        right.points[1],
+      );
+
+      left.mergeWalls.wallPoint0 = right.id;
+      right.mergeWalls.wallPoint1 = left.id;
+      if (roomId !== null) {
+        left.roomId = roomId;
+        right.roomId = roomId;
+      }
+      return;
+    }
+
+    if (left) {
+      left.mergeWalls.wallPoint0 = null;
+      if (roomId !== null) left.roomId = roomId;
+    }
+    if (right) {
+      right.mergeWalls.wallPoint1 = null;
+      if (roomId !== null) right.roomId = roomId;
+    }
+  }
+
+  public deleteSelectedObject(reconnectNeighbors: boolean = true): void {
 
     if (this.state.activeWall) {
 
@@ -2578,55 +2656,58 @@ export default class Planner {
 
         }
 
-        if (this.objectWalls[indexWall].mergeWalls.wallPoint0 !== null) {
+        const wallForDelete = this.objectWalls[indexWall];
+        const leftNeighborId = wallForDelete.mergeWalls.wallPoint1 ?? null;
+        const rightNeighborId = wallForDelete.mergeWalls.wallPoint0 ?? null;
+        const deletedPoint0 = JSON.parse(JSON.stringify(wallForDelete.points[0])) as Vector2;
+        const deletedPoint1 = JSON.parse(JSON.stringify(wallForDelete.points[1])) as Vector2;
 
-          const wall = this.objectWalls.find((el: ObjectWall) => el.id === this.objectWalls[indexWall].mergeWalls.wallPoint0);
-          if (wall) {
-            wall.mergeWalls.wallPoint1 = null
-          }
-
-        }
-
-        if (this.objectWalls[indexWall].mergeWalls.wallPoint1 !== null) {
-
-          const wall = this.objectWalls.find((el: ObjectWall) => el.id === this.objectWalls[indexWall].mergeWalls.wallPoint1);
-          if (wall) {
-            wall.mergeWalls.wallPoint0 = null
-          }
-
-        }
-
-        const count = this.objectWalls.reduce((acc, wall) => {
-          return acc + (
-            (
-              wall.id !== this.objectWalls[indexWall].id && 
-              wall.roomId === this.objectWalls[indexWall].roomId &&
-              wall.name !== "dividing_wall"
-            ) ? 1 : 0
-          );
-        }, 0);
-        if (count == 0 && this.objectWalls[indexWall].roomId){
-
-          // отвязываем все внутренние стены от удаленной комнаты
-          this.objectWalls.forEach((wall: ObjectWall) => {
-            if(wall.name === "dividing_wall" && wall.roomId === this.objectWalls[indexWall].roomId){
-              wall.roomId = null;
-            }
-          });
-
-          // отвязываем все внутренние объекты от удаленной комнаты
-          this.parent.layers.doorsAndWindows.drawObjects.forEach((obj: IDrawObjects) => {
-            if(obj.roomId === this.objectWalls[indexWall].roomId){
-              obj.roomId = null;
-            }
-          });
-          
-          this.removeRoom(this.objectWalls[indexWall].roomId);
-          
-        }
-        console.log('remove | all rooms:', this.allRooms);
+        const deletedRoomId = this.objectWalls[indexWall].roomId ?? null;
 
         this.objectWalls.splice(indexWall, 1);
+        if (reconnectNeighbors) {
+          this.reconnectNeighborsAfterWallDelete(
+            leftNeighborId,
+            rightNeighborId,
+            deletedPoint0,
+            deletedPoint1,
+            deletedRoomId,
+          );
+        } else {
+          if (leftNeighborId !== null) {
+            const left = this.objectWalls.find((el: ObjectWall) => el.id === leftNeighborId);
+            if (left) left.mergeWalls.wallPoint0 = null;
+          }
+          if (rightNeighborId !== null) {
+            const right = this.objectWalls.find((el: ObjectWall) => el.id === rightNeighborId);
+            if (right) right.mergeWalls.wallPoint1 = null;
+          }
+        }
+
+        if (deletedRoomId !== null) {
+          const countAfter = this.objectWalls.reduce((acc, wall) => {
+            return acc + (
+              wall.roomId === deletedRoomId && wall.name !== "dividing_wall" ? 1 : 0
+            );
+          }, 0);
+          if (countAfter === 0) {
+            // отвязываем все внутренние стены от удаленной комнаты
+            this.objectWalls.forEach((wall: ObjectWall) => {
+              if (wall.name === "dividing_wall" && wall.roomId === deletedRoomId) {
+                wall.roomId = null;
+              }
+            });
+
+            // отвязываем все внутренние объекты от удаленной комнаты
+            this.parent.layers.doorsAndWindows.drawObjects.forEach((obj: IDrawObjects) => {
+              if (obj.roomId === deletedRoomId) {
+                obj.roomId = null;
+              }
+            });
+            this.removeRoom(deletedRoomId);
+          }
+        }
+        console.log('remove | all rooms:', this.allRooms);
         // this.roomStore.removeWall({
         //   idRoom: this.roomStore.getSchemeTransitionData[0].id,
         //   idWall: this.state.activeWall

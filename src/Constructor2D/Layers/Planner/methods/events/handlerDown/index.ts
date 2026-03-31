@@ -40,6 +40,13 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
                 console.warn("Wallsplitter is not defined on Planner");
               }
             },
+            onDeleteWall: (wallId: string | number) => {
+              if (typeof this.removeWallById === "function") {
+                this.removeWallById(wallId);
+              } else {
+                console.warn("removeWallById is not defined on Planner");
+              }
+            },
           },
         });
       }, 0);

@@ -12,6 +12,7 @@ export type WallContextMenuWallContext = {
   kind: 'wall';
   wallId: string | number;
   onSplitWall: (id: string | number) => void;
+  onDeleteWall: (id: string | number) => void;
 };
 
 export type WallContextMenuOpeningContext = {
@@ -36,6 +37,7 @@ export const useWallContextMenu = () => {
   const position = ref({ x: 0, y: 0 });
   const menuContext = ref<WallMenuContext | null>(null);
   let splitWallCallback: ((id: string | number) => void) | null = null;
+  let deleteWallCallback: ((id: string | number) => void) | null = null;
 
   const actions = computed((): WallContextMenuItem[] => {
     const ctx = menuContext.value;
@@ -45,6 +47,7 @@ export const useWallContextMenu = () => {
         { key: 'splitWall', label: 'Добавить стену' },
         { key: 'changeWallHeight', label: 'Изменить высоту стен' },
         { key: 'changeWallLength', label: 'Изменить длину стены' },
+        { key: 'deleteWall', label: 'Удалить стену' },
       ];
     }
     if (ctx.kind === 'window') {
@@ -61,8 +64,10 @@ export const useWallContextMenu = () => {
     menuContext.value = context;
     if (context.kind === 'wall') {
       splitWallCallback = context.onSplitWall;
+      deleteWallCallback = context.onDeleteWall;
     } else {
       splitWallCallback = null;
+      deleteWallCallback = null;
     }
     isVisible.value = true;
   };
@@ -71,6 +76,7 @@ export const useWallContextMenu = () => {
     isVisible.value = false;
     menuContext.value = null;
     splitWallCallback = null;
+    deleteWallCallback = null;
   };
 
   const handleAction = (actionKey: string) => {
@@ -78,6 +84,11 @@ export const useWallContextMenu = () => {
 
     if (actionKey === 'splitWall' && ctx?.kind === 'wall' && splitWallCallback) {
       splitWallCallback(ctx.wallId);
+      closeMenu();
+      return;
+    }
+    if (actionKey === 'deleteWall' && ctx?.kind === 'wall' && deleteWallCallback) {
+      deleteWallCallback(ctx.wallId);
       closeMenu();
       return;
     }
