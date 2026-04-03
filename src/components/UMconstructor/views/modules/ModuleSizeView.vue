@@ -149,6 +149,13 @@ watch(() => UMconstructor?.value?.UM_STORE.noBackwall, () => {
   }
 })
 
+watch(() => UMconstructor?.value?.UM_STORE.onSideProfile, () => {
+  if(onSideProfile.value !== UMconstructor.value.UM_STORE.onSideProfile) {
+    onSideProfile.value = UMconstructor.value.UM_STORE.onSideProfile
+    UMconstructor.value.reset(module.value)
+  }
+})
+
 onBeforeMount(() => {
   if(UMconstructor?.value?.UM_STORE) {
     totalHeight.value = UMconstructor.value.UM_STORE.totalHeight
