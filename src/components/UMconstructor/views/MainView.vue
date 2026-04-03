@@ -121,7 +121,7 @@ onMounted(() => {
     UMstore.noBackwall = module.value.noBackwall | false;
     UMstore.onHorizont = module.value.horizont > 0;
     UMstore.noLoops = module.value.noLoops | false;
-    UMstore.onSideProfile = module.value.profilesConfig?.sideProfile | false;
+    UMstore.onSideProfile = !!module.value.profilesConfig?.sideProfile;
     UMstore.onWallModule = module.value.onWallModule | false;
 
     UMconstructor.value?.setRenderRef(visualizationRef)
