@@ -66,6 +66,10 @@ export interface State {
   mouseLeft: boolean;
   positionDown: Vector2;
   oldPosition: Vector2[];
+  dragRoomId: string | number | null;
+  dragAngleStepDeg: number;
+  dragLastCommittedAngles: number[] | null;
+  hasAngleStepCommit: boolean;
 };
 
 export interface ArgumentDataAddWall {
@@ -88,3 +92,8 @@ export interface IC2DRoom {
   label: string;
   description: string;
 };
+
+export interface GhostWallPreview {
+  id: string | number;
+  points: Vector2[];
+}

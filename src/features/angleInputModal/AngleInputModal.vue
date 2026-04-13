@@ -12,6 +12,13 @@
       class="angle-input-modal__input"
       @keydown.enter.prevent="apply"
     />
+    <div class="angle-input-modal__title">Шаг изменения комнаты, ° (1-45)</div>
+    <input
+      v-model="dragStepInput"
+      type="text"
+      class="angle-input-modal__input"
+      @keydown.enter.prevent="apply"
+    />
     <div class="angle-input-modal__actions">
       <button class="angle-input-modal__btn angle-input-modal__btn--apply" @click="apply">
         Применить
@@ -32,15 +39,19 @@ type AngleInputPayload = {
   x: number;
   y: number;
   angle: number;
+  dragAngleStep?: number;
   onApply: (angle: number) => void;
+  onApplyDragAngleStep?: (step: number) => void;
 };
 
 const eventBus = useEventBus();
 
 const isVisible = ref(false);
 const angleInput = ref('');
+const dragStepInput = ref('');
 const position = ref({ x: 0, y: 0 });
 let applyCallback: ((angle: number) => void) | null = null;
+let applyDragStepCallback: ((step: number) => void) | null = null;
 
 const modalStyle = computed(() => ({
   left: `${position.value.x}px`,
@@ -54,22 +65,34 @@ const normalizeAngle = (value: string): number | null => {
   return parsed;
 };
 
+const normalizeDragStep = (value: string): number | null => {
+  const parsed = Number(String(value).trim().replace(',', '.'));
+  if (!Number.isFinite(parsed)) return null;
+  if (parsed < 1 || parsed > 45) return null;
+  return parsed;
+};
+
 const show = (payload: AngleInputPayload) => {
   position.value = { x: payload.x + 10, y: payload.y };
   angleInput.value = String(payload.angle.toFixed(2).replace('.', ','));
+  dragStepInput.value = String((payload.dragAngleStep ?? 5).toFixed(2).replace('.', ','));
   applyCallback = payload.onApply;
+  applyDragStepCallback = payload.onApplyDragAngleStep ?? null;
   isVisible.value = true;
 };
 
 const hide = () => {
   isVisible.value = false;
   applyCallback = null;
+  applyDragStepCallback = null;
 };
 
 const apply = () => {
   const angle = normalizeAngle(angleInput.value);
-  if (angle === null || !applyCallback) return;
+  const dragStep = normalizeDragStep(dragStepInput.value);
+  if (angle === null || dragStep === null || !applyCallback) return;
   applyCallback(angle);
+  applyDragStepCallback?.(dragStep);
   hide();
 };
 

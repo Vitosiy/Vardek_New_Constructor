@@ -56,6 +56,7 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
   }
 
   if (e.button == 0){
+    this.clearGhostPreview();
 
     // снимает активность с окна или двери
     this.parent.layers.doorsAndWindows.setActiveObject(null);
@@ -72,6 +73,10 @@ export function handlerDownEventGraphic(this: any, e: PIXI.FederatedPointerEvent
     if (addedwall && addedwall.points) {
       this.state.oldPosition = JSON.parse(JSON.stringify(addedwall.points));
     }
+    this.state.dragRoomId = addedwall?.roomId ?? null;
+    this.state.dragLastCommittedAngles =
+      this.state.dragRoomId != null ? this.getRoomCornerAnglesDeg(this.state.dragRoomId) : null;
+    this.state.hasAngleStepCommit = false;
     
     this.state.positionDown.x = e.global.x;
     this.state.positionDown.y = e.global.y;

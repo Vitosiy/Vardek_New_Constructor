@@ -19,6 +19,7 @@ import {
   MergeWalls,
   HoverPointObject,
   IC2DRoom,
+  GhostWallPreview,
 } from "./interfaces";
 
 import { IDrawObjects } from "./../DoorsAndWindows/interfaces";
@@ -71,6 +72,7 @@ export default class Planner {
   public container: PIXI.Container;
 
   private activeObjectGraphic: PIXI.Graphics;
+  private ghostPreviewGraphic: PIXI.Graphics;
 
   private objectWalls: ObjectWall[] = [];
 
@@ -111,7 +113,11 @@ export default class Planner {
       x: 0,
       y: 0
     },
-    oldPosition: []
+    oldPosition: [],
+    dragRoomId: null,
+    dragAngleStepDeg: 5,
+    dragLastCommittedAngles: null,
+    hasAngleStepCommit: false
 
   }
 
@@ -139,6 +145,8 @@ export default class Planner {
 
     this.activeObjectGraphic = new PIXI.Graphics();
     this.app.stage.addChild(this.activeObjectGraphic);
+    this.ghostPreviewGraphic = new PIXI.Graphics();
+    this.container.addChild(this.ghostPreviewGraphic);
 
     // event methods
     this.handlerOverEventGraphic = handlerOverEventGraphic;
@@ -164,6 +172,7 @@ export default class Planner {
 
   // Очистка всех стен и комнат перед перезагрузкой
   public clear(): void {
+    this.clearGhostPreview();
     // Очищаем разметку размеров стен
     this.parent?.layers?.dimensionDisplay?.hide();
     // Очищаем активные точки стен (синие точки с углом)
@@ -2169,7 +2178,7 @@ export default class Planner {
     wall: ObjectWall,
     newPoints: [Vector2, Vector2, Vector2, Vector2],
   ): boolean {
-    const minBlockDeg = 1;
+    const minBlockDeg = 20;
     const oldPoints = wall.points;
     const sides: (0 | 1)[] = [0, 1];
     for (const side of sides) {
@@ -2189,6 +2198,167 @@ export default class Planner {
   private normalizeCornerAngleDeg(angle: number): number {
     const normalized = this.normalizeAngle360(angle);
     return normalized > 180 ? 360 - normalized : normalized;
+  }
+
+  public clearGhostPreview(): void {
+    if (this.ghostPreviewGraphic) {
+      this.ghostPreviewGraphic.clear();
+    }
+  }
+
+  public drawGhostPreview(previewWalls: GhostWallPreview[]): void {
+    if (!this.ghostPreviewGraphic) return;
+    this.ghostPreviewGraphic.clear();
+    this.ghostPreviewGraphic.alpha = 0.9;
+    previewWalls.forEach((wall) => {
+      const pts = wall.points;
+      if (!pts || pts.length < 4) return;
+      this.ghostPreviewGraphic.lineStyle(2, 0x4f7cff, 0.95);
+      this.ghostPreviewGraphic.beginFill(0x4f7cff, 0.16);
+      this.ghostPreviewGraphic.moveTo(pts[0].x, pts[0].y);
+      this.ghostPreviewGraphic.lineTo(pts[1].x, pts[1].y);
+      this.ghostPreviewGraphic.lineTo(pts[2].x, pts[2].y);
+      this.ghostPreviewGraphic.lineTo(pts[3].x, pts[3].y);
+      this.ghostPreviewGraphic.closePath();
+      this.ghostPreviewGraphic.endFill();
+    });
+  }
+
+  public getWallMoveSimulationResult(
+    wallId: string | number,
+    nextPoint0: Vector2,
+    nextPoint1: Vector2,
+  ): { nextAngles: number[] | null; previewWalls: GhostWallPreview[] } | null {
+    const wall = this.objectWalls.find((el) => el.id === wallId);
+    if (!wall || wall.roomId == null) return null;
+    const newPoints = this.calculatePositionPointsWall(
+      nextPoint0,
+      nextPoint1,
+      wall.height,
+      wall.heightDirection,
+    );
+    if (!this.canApplyWallPointMoveWithAcuteLimit(wall, newPoints)) return null;
+
+    const affectedIds = this.getMergeWallsIDForUpdate(wall.id);
+    if (!affectedIds.includes(wall.id)) affectedIds.push(wall.id);
+    const backups = affectedIds
+      .map((id) => this.objectWalls.find((el) => el.id === id))
+      .filter(Boolean)
+      .map((w) => ({
+        id: w!.id,
+        points: JSON.parse(JSON.stringify(w!.points)),
+        width: w!.width,
+        angleDegrees: w!.angleDegrees,
+      }));
+
+    wall.points = JSON.parse(JSON.stringify(newPoints));
+    wall.width = getDistanceBetweenVectors(newPoints[0], newPoints[1]);
+    wall.angleDegrees = getAngleBetweenVectors(
+      newPoints[0],
+      { x: newPoints[0].x + 300, y: newPoints[0].y },
+      newPoints[1],
+    );
+    if (wall.mergeWalls.wallPoint0) this.updateMergeWallProperties(0, newPoints[1], wall.mergeWalls.wallPoint0);
+    if (wall.mergeWalls.wallPoint1) this.updateMergeWallProperties(1, newPoints[0], wall.mergeWalls.wallPoint1);
+
+    const nextAngles = this.getRoomCornerAnglesDeg(wall.roomId);
+    const previewWalls: GhostWallPreview[] = affectedIds
+      .map((id) => this.objectWalls.find((el) => el.id === id))
+      .filter(Boolean)
+      .map((w) => ({ id: w!.id, points: JSON.parse(JSON.stringify(w!.points)) }));
+
+    backups.forEach((b) => {
+      const target = this.objectWalls.find((el) => el.id === b.id);
+      if (!target) return;
+      target.points = b.points;
+      target.width = b.width;
+      target.angleDegrees = b.angleDegrees;
+    });
+
+    return { nextAngles, previewWalls };
+  }
+
+  public getRoomCornerAnglesDeg(roomId: string | number): number[] {
+    const contour = this.getRoomContour(roomId);
+    if (!contour || contour.length < 3) return [];
+    const result: number[] = [];
+    for (let i = 0; i < contour.length; i++) {
+      const prev = contour[(i - 1 + contour.length) % contour.length];
+      const curr = contour[i];
+      const next = contour[(i + 1) % contour.length];
+      const raw = getAngleBetweenVectors(curr, prev, next);
+      const angle = this.normalizeCornerAngleDeg(raw);
+      if (Number.isFinite(angle) && angle > 0) {
+        result.push(angle);
+      }
+    }
+    return result;
+  }
+
+  public hasAnyRoomAngleStepReached(
+    previousAngles: number[] | null,
+    nextAngles: number[] | null,
+    stepDeg: number,
+  ): boolean {
+    if (!previousAngles || !nextAngles) return false;
+    if (previousAngles.length === 0 || nextAngles.length === 0) return false;
+    const len = Math.min(previousAngles.length, nextAngles.length);
+    for (let i = 0; i < len; i++) {
+      if (Math.abs(nextAngles[i] - previousAngles[i]) >= stepDeg) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public getRoomAnglesForSimulatedWallMove(
+    wallId: string | number,
+    nextPoint0: Vector2,
+    nextPoint1: Vector2,
+  ): number[] | null {
+    const wall = this.objectWalls.find((el) => el.id === wallId);
+    if (!wall || wall.roomId == null) return null;
+    const newPoints = this.calculatePositionPointsWall(
+      nextPoint0,
+      nextPoint1,
+      wall.height,
+      wall.heightDirection,
+    );
+    if (!this.canApplyWallPointMoveWithAcuteLimit(wall, newPoints)) return null;
+
+    const affectedIds = this.getMergeWallsIDForUpdate(wall.id);
+    if (!affectedIds.includes(wall.id)) affectedIds.push(wall.id);
+    const backups = affectedIds
+      .map((id) => this.objectWalls.find((el) => el.id === id))
+      .filter(Boolean)
+      .map((w) => ({
+        id: w!.id,
+        points: JSON.parse(JSON.stringify(w!.points)),
+        width: w!.width,
+        angleDegrees: w!.angleDegrees,
+      }));
+
+    wall.points = JSON.parse(JSON.stringify(newPoints));
+    wall.width = getDistanceBetweenVectors(newPoints[0], newPoints[1]);
+    wall.angleDegrees = getAngleBetweenVectors(
+      newPoints[0],
+      { x: newPoints[0].x + 300, y: newPoints[0].y },
+      newPoints[1],
+    );
+    if (wall.mergeWalls.wallPoint0) this.updateMergeWallProperties(0, newPoints[1], wall.mergeWalls.wallPoint0);
+    if (wall.mergeWalls.wallPoint1) this.updateMergeWallProperties(1, newPoints[0], wall.mergeWalls.wallPoint1);
+
+    const nextAngles = this.getRoomCornerAnglesDeg(wall.roomId);
+
+    backups.forEach((b) => {
+      const target = this.objectWalls.find((el) => el.id === b.id);
+      if (!target) return;
+      target.points = b.points;
+      target.width = b.width;
+      target.angleDegrees = b.angleDegrees;
+    });
+
+    return nextAngles;
   }
 
   private getRoomMinAngleDeg(roomId: string | number): number | null {
@@ -2294,6 +2464,14 @@ export default class Planner {
     this.state.activeWall = prevActiveWall;
     this.state.activePointWall = prevActivePoint;
     return Math.abs(after - before) > 1e-6;
+  }
+
+  public setDragAngleStepDeg(stepDeg: number): number {
+    const parsed = Number(stepDeg);
+    if (!Number.isFinite(parsed)) return this.state.dragAngleStepDeg;
+    const normalized = Math.max(1, Math.min(45, parsed));
+    this.state.dragAngleStepDeg = normalized;
+    return this.state.dragAngleStepDeg;
   }
 
   public setActiveWallAngleByPoint0(targetAngleDeg: number): boolean {

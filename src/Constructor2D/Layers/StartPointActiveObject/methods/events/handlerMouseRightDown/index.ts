@@ -36,9 +36,13 @@ export function handlerMouseRightDown(this: any, e: PIXI.FederatedPointerEvent):
     x: domX,
     y: domY,
     angle: currentAngle,
+    dragAngleStep: this.parent.layers.planner.state.dragAngleStepDeg,
     onApply: (value: number) => {
       this.parent.layers.planner.setActiveWallAngleByPoint0(value);
       this.drawAngleBetweenWalls();
+    },
+    onApplyDragAngleStep: (value: number) => {
+      this.parent.layers.planner.setDragAngleStepDeg(value);
     },
   });
 
