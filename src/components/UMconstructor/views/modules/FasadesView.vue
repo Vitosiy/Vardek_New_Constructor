@@ -491,7 +491,9 @@ watch(() => selectedFasade.value, () => {
               v-if="selectedFasade.sec === secIndex"
           >
             <div
-                v-if="(!module.isHiTech || !module.profilesConfig?.sideProfile) && section.fasades.length < 2 && UMconstructor.FASADES.checkAddDoor(secIndex, section.fasades.length - 1, module)"
+                v-if="section.fasades.length < 1 ||
+                ((!module.isHiTech || !module.profilesConfig?.sideProfile) && section.fasades.length < 2
+                && UMconstructor.FASADES.checkAddDoor(secIndex, section.fasades.length - 1, module))"
                 :class="'actions-items--container'"
             >
               <article class="actions-items actions-items--right">
