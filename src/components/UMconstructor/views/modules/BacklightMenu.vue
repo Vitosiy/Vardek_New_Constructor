@@ -83,8 +83,11 @@ const createBacklightsData = () => {
     if (nearestCells.value[side]) {
       let cells = nearestCells.value[side];
       cells.forEach((cell) => {
-          if(cell.backlight && cell.backlight.sides[OPPOSITE_SIDES[side]]) {
-            deepness[side] = false
+          if(cell.backlight && cell.backlight.sides[0]) {
+            let tmp_side = cell.backlight.sides.find(item => item.side === [OPPOSITE_SIDES[side]])
+            if (tmp_side) {
+              deepness[tmp_side.deepness] = false
+            }
           }
       })
 
