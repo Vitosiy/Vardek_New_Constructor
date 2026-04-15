@@ -513,7 +513,12 @@ onBeforeUnmount(() => {
   </div>
 
   <transition name="slide--left" mode="out-in">
-    <div class="UM color--left" v-if="currentOption" key="color--left-select">
+    <div
+        class="UM color--left"
+        v-if="currentOption"
+        key="color--left-select"
+        ref="panelRef"
+    >
       <div class="UM color--left-select" key="color--left-select">
         <h1 class="UM color__title">{{ partsNames[currentOption] }}</h1>
         <ClosePopUpButton class="UM menu__close" @close="closeMenu()" />
