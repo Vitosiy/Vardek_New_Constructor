@@ -5,8 +5,15 @@ import "@/components/UMconstructor/styles/UM.scss"
 
 import CounterInput from "@/components/ui/inputs/CounterInput.vue";
 import UMconstructorClass from "@/components/UMconstructor/ts/UMconstructorClass.ts";
-import {onMounted, ref, toRefs, watch} from "vue";
-import {TSelectedCell, GridModule} from "@/components/UMconstructor/types/UMtypes.ts";
+import {onBeforeUnmount, onMounted, ref, toRefs, watch} from "vue";
+import {TSelectedCell, GridModule, BacklightItem} from "@/components/UMconstructor/types/UMtypes.ts";
+import ClosePopUpButton from "@/components/ui/svg/ClosePopUpButton.vue";
+import Toggle from "@vueform/toggle";
+import AdvanceCorpusMaterialRedactor from "@/components/ui/color/AdvanceCorpusMaterialRedactor.vue";
+import HiTechSideprofile from "@/components/right-menu/customiser-pages/HiTechProfilePage/HiTechSideprofile.vue";
+import CorpusMaterialRedactor from "@/components/right-menu/customiser-pages/ColorRightPage/CorpusMaterialRedactor.vue";
+import Handles from "@/components/right-menu/customiser-pages/FigureRightPage/Handles/Handles.vue";
+import BacklightMenu from "@/components/UMconstructor/views/modules/BacklightMenu.vue";
 
 const props = defineProps({
   module: {
@@ -26,6 +33,9 @@ const props = defineProps({
 const {module, mode, UMconstructor} = toRefs(props)
 const selectedCell = ref<TSelectedCell>(<TSelectedCell>{})
 const step = ref<number>(1)
+
+const isOpenBacklightMenu = ref<boolean>(false);
+const currentBacklight = ref<BacklightItem | boolean>(false)
 
 const showCurrentCol = (secIndex: number | null = 0, cellIndex: number | null = null, rowIndex: number | null = null, extraIndex: number | null = null) => {
   UMconstructor?.value?.SECTIONS.selectCell(secIndex, cellIndex, rowIndex, extraIndex);
@@ -55,6 +65,43 @@ const handleCellSelect = () => {
 
 };
 
+const openBacklightMenu = (status: boolean, selectedCell: TSelectedCell) => {
+  isOpenBacklightMenu.value = status;
+
+  if (isOpenBacklightMenu.value && selectedCell) {
+    let currentCell = UMconstructor?.value?.getCurrenGridData(module.value, selectedCell)
+
+    if(currentCell) {
+      if(currentCell.backlight)
+        currentBacklight.value = currentCell.backlight
+    }
+  }
+  else
+    currentBacklight.value = false
+}
+
+const panelRef = ref<HTMLElement | null>(null);
+const handleOutsideClick = (event: MouseEvent) => {
+  // Закрываем только когда попап реально открыт
+  if (!isOpenBacklightMenu.value) return;
+
+  const panel = panelRef.value;
+  if (!panel)
+    return;
+
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+
+  // Клик внутри окна - ничего не делаем
+  if (panel.contains(target)) return;
+
+  closeMenu();
+};
+
+const closeMenu = () => {
+  isOpenBacklightMenu.value = false;
+};
+
 watch(() => UMconstructor?.value?.UM_STORE.getSelected('module'), () => {
   selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected('module')
   handleCellSelect()
@@ -62,7 +109,11 @@ watch(() => UMconstructor?.value?.UM_STORE.getSelected('module'), () => {
 
 onMounted(() => {
   selectedCell.value = UMconstructor?.value?.UM_STORE.getSelected('module')
+  document.addEventListener("click", handleOutsideClick);
 })
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
 </script>
 
 <template>
@@ -260,6 +311,17 @@ onMounted(() => {
                       </div>
                     </article>
                   </div>
+
+                  <button
+                      class="actions-btn actions-btn--default backlight-btn"
+                      @click.stop="() => {
+                        let selected = <TSelectedCell>{sec: secIndex, cell: cellIndex}
+                        UMconstructor.selectCell('module', selected)
+                        openBacklightMenu(!isOpenBacklightMenu, selected)
+                      }"
+                  >
+                    Подсветка
+                  </button>
 
                   <div class="accordion" v-if="cell.cellsRows?.length">
                     <div class="actions-header">
@@ -583,8 +645,29 @@ onMounted(() => {
       </section>
     </div>
   </div>
+
+  <transition name="slide--right" mode="out-in">
+    <div
+        class="no-select color--right-select"
+        v-if="isOpenBacklightMenu"
+        key="color--right-select"
+        ref="panelRef"
+    >
+      <ClosePopUpButton class="menu__close" @close="closeMenu"/>
+      <h1 class="color__title">Подсветка</h1>
+
+      <BacklightMenu
+          :module="module"
+          :current-backlight="currentBacklight"
+          :UMconstructor="UMconstructor"
+      />
+    </div>
+  </transition>
+
 </template>
 
 <style scoped lang="scss">
-
+.backlight-btn{
+  margin: 1rem;
+}
 </style>

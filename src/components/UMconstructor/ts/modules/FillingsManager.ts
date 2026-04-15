@@ -33,6 +33,13 @@ export default class FillingsManager {
         )
     }
 
+    getCurrenFillingData = (grid: GridModule = this.scope.UM_STORE.getUMGrid()) => {
+        let currentCellData = this.scope.getCurrenGridData(grid);
+        let {item} = this.scope.UM_STORE.getSelected('fillings')
+
+        return currentCellData.fillings[item];
+    }
+
     existFilling(grid: GridModule) {
         let check = false;
         if (grid) {

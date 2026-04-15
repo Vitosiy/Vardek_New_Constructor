@@ -82,10 +82,12 @@ const useHandlesAction = () => {
         const map = MILLING_HANDLE_KEYS[key]
 
         if (type === "milling") {
-            if (!key || !map) return;
+            if (!key || !map)
+                return;
             eventBus.emit('A:ChangeMilling', { data: currentMilling, fasadeNdx, action: map[action] })
         }
-        if (type === "integrate") eventBus.emit('A:ChangeShowcase', { data: currentAlum, fasadeNdx, action: action })
+        if (type === "integrate")
+            eventBus.emit('A:ChangeShowcase', { data: currentAlum, fasadeNdx, action: action })
 
     }
 

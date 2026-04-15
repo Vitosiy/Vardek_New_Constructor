@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import {TFasadeProp} from "@/types/types.ts";
+import {Container} from "pixi.js";
 
 export interface FillingObject {
     product: number;
@@ -57,6 +58,13 @@ export const MANUFACTURER = {
     "квадро": 29,
 }
 
+export const BACKLIGHT_SIDE = {
+    "слева": 11111,
+    "справа": 11111,
+    "верх": 11111,
+    "низ": 11111,
+}
+
 export interface DrawerFasadeObject extends FasadeObject {
     manufacturerOffset: number;
     fasadeDrawerId: number;
@@ -66,13 +74,28 @@ export interface DrawerFasadeObject extends FasadeObject {
     row?: number | null;
 }
 
+export interface BacklightSide {
+    side: 'left' | 'right' | 'top' | 'bottom';
+    position: THREE.Vector3;
+    deepness: 'front' | 'mid' | 'back';
+}
+export interface BacklightItem {
+    sides: BacklightSide[];
+    profileColor: number;
+    profileType: number;
+    diffuser: number;
+    lightColor: number;
+}
+
 export interface GridRowExtra {
     number: number;
     width: number;
     height: number;
     position: THREE.Vector2;
     type: "rowExtra";
+    sector?: Container;
     fillings?: FillingObject[];
+    backlight?: BacklightItem;
 }
 
 export interface GridCellsRow {
@@ -81,8 +104,10 @@ export interface GridCellsRow {
     height: number;
     position: THREE.Vector2;
     type: "rowCell";
+    sector?: Container;
     extras?: GridRowExtra[];
     fillings?: FillingObject[];
+    backlight?: BacklightItem;
 }
 
 export interface GridCell {
@@ -91,8 +116,10 @@ export interface GridCell {
     height: number;
     position: THREE.Vector2;
     type: "cell";
+    sector?: Container;
     cellsRows?: GridCellsRow[];
     fillings?: FillingObject[];
+    backlight?: BacklightItem;
 }
 
 export interface GridSection {
@@ -102,12 +129,14 @@ export interface GridSection {
     position: THREE.Vector2;
     type: "section";
     cells: GridCell[];
+    sector?: Container;
     fasades?: FasadeObject[];
     fasadesDrawers?: FasadeObject[];
     loops?: [];
     loopsSides?: {};
     hiTechProfiles?: FillingObject[];
     fillings?: FillingObject[];
+    backlight?: BacklightItem;
 }
 
 export const ErrorsType = {
@@ -155,6 +184,7 @@ export interface GridModule {
     moduleColor: number;
     sections: GridSection[];
     type: "module";
+    sector?: Container;
     horizont?: number;
     fasades?: FasadeObject[];
     isSlidingDoors?: boolean;

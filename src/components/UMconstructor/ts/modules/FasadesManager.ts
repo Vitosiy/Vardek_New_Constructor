@@ -19,6 +19,11 @@ export default class FasadesManager {
         this.EXTERNAL_FASADES = new ExternalFasadesManager(this);
     }
 
+    getCurrenFasadeData = (grid: GridModule = this.scope.UM_STORE.getUMGrid()) => {
+        let {sec, cell, row} = this.scope.UM_STORE.getSelected('fasades')
+        return grid.sections[sec].fasades[cell][row];
+    }
+
     createFacadeData (fasadeIndex?: number, _productId?: number) {
         const productId = _productId || this.scope.MODEL_STATE.getCurrentModel.userData.PROPS.PRODUCT;
         const {FACADE} = this.scope.MODEL_STATE._PRODUCTS[productId];

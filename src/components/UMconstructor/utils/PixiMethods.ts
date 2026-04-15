@@ -97,13 +97,16 @@ class Helpers {
         //let tmpChildren = [...sector.children];
         //sector.children = sector.children.filter(item => !item.dimensions);
         const bounds = sector.getBounds()
+        const width = bounds.maxX - bounds.minX
+        const height = bounds.maxY - bounds.minY
         //sector.children = tmpChildren;
         return {
             x: sector.x,
             y: sector.y,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-
+            width,
+            height,
+            max_x: sector.x + width,
+            max_y: sector.y + height,
         }
     }
 
@@ -492,8 +495,7 @@ class Shape extends Helpers {
                     checkLoopsCollision?: () => void,
                     dementionContainer?: Container,
                     dragActive: boolean,
-                })
-    {
+                }) {
         super()
 
         this.sector = sector
@@ -655,10 +657,10 @@ class Shape extends Helpers {
                         const fasadesDrawers = curentSec.fasadesDrawers ?? [];
                         const sectionSector = fasadesDrawers[0]?.sector?.sections?.[0]
 
-                        if(sectionSector?.children) {
+                        if (sectionSector?.children) {
                             let allShapes = []
                             sectionSector.children.forEach(child => {
-                                if(child.secIndex === self.data.sec && child.shapes)
+                                if (child.secIndex === self.data.sec && child.shapes)
                                     allShapes.push(...child.shapes)
                             })
                             shapes = allShapes
@@ -668,7 +670,7 @@ class Shape extends Helpers {
                     for (const otherShape of shapes) {
                         if ((self !== otherShape && self.data !== otherShape.data) && self.checkOverlap(otherShape)) {
 
-                            if((self.data.fasade && otherShape.data.fasade) && (self.data.fasade.fasadeDrawerId === otherShape.data.fasade.fasadeDrawerId))
+                            if ((self.data.fasade && otherShape.data.fasade) && (self.data.fasade.fasadeDrawerId === otherShape.data.fasade.fasadeDrawerId))
                                 continue;
 
                             hasCollisionY = true;
@@ -690,7 +692,7 @@ class Shape extends Helpers {
                                         self.highlightGraphics.position.y = newPos;
 
                                         //if (!self.checkOverlap(otherShape))
-                                            currentY = newPos
+                                        currentY = newPos
 
                                         self.graphic.position.y = adjustedY;
                                         self.highlightGraphics.position.y = adjustedY;
@@ -704,7 +706,7 @@ class Shape extends Helpers {
                                         self.highlightGraphics.position.y = newPos;
 
                                         //if (!self.checkOverlap(otherShape))
-                                            currentY = newPos
+                                        currentY = newPos
 
                                         self.graphic.position.y = adjustedY;
                                         self.highlightGraphics.position.y = adjustedY;
@@ -887,7 +889,7 @@ class Shape extends Helpers {
 
         let width = this.width
         let height = this.height
-        if(this.data.fasade) {
+        if (this.data.fasade) {
             let moduleThickness = this.UM_STORE.getUMGrid().moduleThickness
             let top_offset = this.data.fasade.height - this.data.fasade.manufacturerOffset - this.data.height - (moduleThickness - 2)
             height = this.getPixelHeight(this.data.fasade.height - (moduleThickness - 2) * 2)
@@ -915,30 +917,29 @@ class Shape extends Helpers {
                     )
                 )
             );
-        }
-        else
+        } else
             return (
-            (
                 (
-                    pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width &&
-                    pxPos.x + this.width >= this.sectorBounds.x
-                ) ||
+                    (
+                        pxPos.x + this.width <= this.sectorBounds.x + this.sectorBounds.width &&
+                        pxPos.x + this.width >= this.sectorBounds.x
+                    ) ||
+                    (
+                        pxPos.x <= this.sectorBounds.x + this.sectorBounds.width &&
+                        pxPos.x >= this.sectorBounds.x
+                    )
+                ) &&
                 (
-                    pxPos.x <= this.sectorBounds.x + this.sectorBounds.width &&
-                    pxPos.x >= this.sectorBounds.x
+                    (
+                        pxPos.y + this.height <= this.sectorBounds.y + this.sectorBounds.height &&
+                        pxPos.y + this.height >= this.sectorBounds.y
+                    ) ||
+                    (
+                        pxPos.y <= this.sectorBounds.y + this.sectorBounds.height &&
+                        pxPos.y >= this.sectorBounds.y
+                    )
                 )
-            ) &&
-            (
-                (
-                    pxPos.y + this.height <= this.sectorBounds.y + this.sectorBounds.height &&
-                    pxPos.y + this.height >= this.sectorBounds.y
-                ) ||
-                (
-                    pxPos.y <= this.sectorBounds.y + this.sectorBounds.height &&
-                    pxPos.y >= this.sectorBounds.y
-                )
-            )
-        );
+            );
     }
 
     // Вспомогательный метод для отрисовки стрелки (заполненный треугольник)
@@ -1584,7 +1585,7 @@ class ShapeAdjuster extends Helpers {
         return null;
     }
 
-    getClosestPosition(sector, data, inputPosition){
+    getClosestPosition(sector, data, inputPosition) {
 
         if (!sector) {
             return false;
@@ -1602,20 +1603,23 @@ class ShapeAdjuster extends Helpers {
             return false;
         }
 
-  /*      let tempShape = new Shape({
-            type: data.type,
-            sector,
-            position: {x: 0, y: 0},
-            data,
-            getMmWidth: this.getMmWidth,
-            getMmHeight: this.getMmHeight,
-            getPixelWidth: this.getPixelWidth,
-            getPixelHeight: this.getPixelHeight,
-        });*/
+        /*      let tempShape = new Shape({
+                  type: data.type,
+                  sector,
+                  position: {x: 0, y: 0},
+                  data,
+                  getMmWidth: this.getMmWidth,
+                  getMmHeight: this.getMmHeight,
+                  getPixelWidth: this.getPixelWidth,
+                  getPixelHeight: this.getPixelHeight,
+              });*/
 
         /** Проверяем на возможность размещения отверстия */
 
-        let position = this.findClosestPosition(sector, tempShape, {x: this.getPixelWidth(inputPosition.x), y: this.getPixelHeight(inputPosition.y)});
+        let position = this.findClosestPosition(sector, tempShape, {
+            x: this.getPixelWidth(inputPosition.x),
+            y: this.getPixelHeight(inputPosition.y)
+        });
 
         if (!position) {
             return false;
@@ -1659,8 +1663,7 @@ class ShapeAdjuster extends Helpers {
                     return {x, y};
                 }
             }
-        }
-        else {
+        } else {
             const x = bounds.x
 
             let findTopMaxY = inputPosition.y
@@ -1700,7 +1703,7 @@ class ShapeAdjuster extends Helpers {
                     shape.graphic.position.x = origX;
                     shape.graphic.position.y = origY;
                     findPositionTop = {x, y}
-                   break;
+                    break;
                 }
             }
 
@@ -1765,6 +1768,94 @@ class ShapeAdjuster extends Helpers {
         );
 
         return insideSector && !overLap;
+    }
+
+    findNearestCells(sector: Container, shapeData: Container) {
+
+        let nearestCells = {};
+        let shapes = sector.sections[0]?.children?.slice() || [];
+
+        let shapeBounds = this.getSectorBounds(sector)
+        const currentSec = shapeData.sector.secIndex
+
+        const moduleThickness = this.scope.UM_STORE.getUMGrid().moduleThickness
+
+        shapes.filter(item => item.sectorData?.backlight && [currentSec, currentSec + 1, currentSec - 1].includes(item.secIndex)).forEach(item => {
+            if (item.uid !== sector.uid) {
+
+                const itemBounds = this.getSectorBounds(item);
+                const checkXpos = (
+                    (
+                        shapeBounds.max_x <= itemBounds.max_x &&
+                        shapeBounds.max_x >= itemBounds.x
+                    ) ||
+                    (
+                        shapeBounds.x <= itemBounds.max_x &&
+                        shapeBounds.x >= itemBounds.x
+                    )
+                )
+                const checkYpos = (
+                    (
+                        shapeBounds.max_y <= itemBounds.max_y &&
+                        shapeBounds.max_y >= itemBounds.y
+                    ) ||
+                    (
+                        shapeBounds.y <= itemBounds.max_y &&
+                        shapeBounds.y >= itemBounds.y
+                    )
+                )
+
+                if (checkXpos || checkYpos) {
+
+                    const distances = {
+                        left: false,
+                        right: false,
+                        top: false,
+                        bottom: false,
+                    };
+
+                    distances.left = Math.round(this.getMmWidth(shapeBounds.x - itemBounds.max_x));
+                    distances.right = Math.round(this.getMmWidth(itemBounds.x - shapeBounds.max_x));
+                    distances.top = Math.round(this.getMmWidth(shapeBounds.y - itemBounds.max_y));
+                    distances.bottom = Math.round(this.getMmWidth(itemBounds.y - shapeBounds.max_y));
+
+                    if (distances.left > 0 && distances.left <= moduleThickness) {
+
+                        if(!nearestCells['left'])
+                            nearestCells['left'] = [];
+
+                        nearestCells['left'].push(item);
+                    }
+
+                    if (distances.right > 0 && distances.right <= moduleThickness) {
+
+                        if(!nearestCells['right'])
+                            nearestCells['right'] = [];
+
+                        nearestCells['right'].push(item);
+                    }
+
+                    if (distances.top > 0 && distances.top <= moduleThickness) {
+
+                        if(!nearestCells['top'])
+                            nearestCells['top'] = [];
+
+                        nearestCells['top'].push(item);
+                    }
+
+                    if (distances.bottom > 0 && distances.bottom <= moduleThickness) {
+
+                        if(!nearestCells['bottom'])
+                            nearestCells['bottom'] = [];
+
+                        nearestCells['bottom'].push(item);
+                    }
+                }
+
+            }
+        })
+
+        return nearestCells;
     }
 
 }

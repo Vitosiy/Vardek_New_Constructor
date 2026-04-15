@@ -21,19 +21,19 @@ import {
     GridCellsRow,
     GridModule,
     GridRowExtra,
-    GridSection, TSelectedCell
+    GridSection,
+    TSelectedCell
 } from "./../types/UMtypes.ts";
-import {TTotalProps} from "@/types/types.ts";
+import {TFasadeProp, TTotalProps} from "@/types/types.ts";
 
 import * as THREE from "three";
 import {FasadeObject, LOOPSIDE} from "@/types/constructor2d/interfaсes.ts";
-import {TFasadeProp} from "@/types/types.ts";
 import {UniversalGeometryBuilder} from "@/Application/Meshes/UniversalModuleUtils/UniversalGeometryBuilder.ts";
 import OptionsManager from "@/components/UMconstructor/ts/modules/OptionsManager.ts";
 import {useModelState} from "@/store/appliction/useModelState.ts";
 import Render2D from "@/components/UMconstructor/views/Render2D.vue";
 import {Application} from "@/Application/Core/Application.ts";
-import UMconstructor from "@/components/UMconstructor/UMconstructor.vue";
+import BacklightsManager from "@/components/UMconstructor/ts/modules/BacklightsManager.ts";
 
 export default class UMconstructorClass {
     UM_STORE: ReturnType<typeof useUMStorage> = useUMStorage();
@@ -42,6 +42,7 @@ export default class UMconstructorClass {
     CONST: typeof UM_PARAMS
     BUILDER: ReturnType<typeof UniversalGeometryBuilder.buildProduct>;
     AlERT: ReturnType<typeof useToast> = useToast();
+    BACKLIGHTS: BacklightsManager
     FASADES: FasadesManager
     FILLINGS: FillingsManager
     LOOPS: LoopsManager
@@ -53,11 +54,13 @@ export default class UMconstructorClass {
     RENDER_REF: Ref<typeof Render2D | undefined> = ref<typeof Render2D>()
     ALERT_FOOTER_REF: Ref = ref()
     DEBOUNCES: {}
+    THREE: typeof THREE
 
     constructor() {
         this.CONST = UM_PARAMS
         this.BUILDER = new UniversalGeometryBuilder(<Application>{}).buildProduct
 
+        this.BACKLIGHTS = new BacklightsManager(this)
         this.FASADES = new FasadesManager(this)
         this.FILLINGS = new FillingsManager(this)
         this.LOOPS = new LoopsManager(this)
@@ -67,12 +70,24 @@ export default class UMconstructorClass {
         this.SHAPE_ADJUSTER = new ShapeAdjuster({scope: this})
         this.OPTIONS = new OptionsManager(this)
         this.DEBOUNCES = {}
+        this.THREE = THREE
     }
 
     selectCell(type: constructorMode, newSelected: TSelectedCell) {
         this.UM_STORE.setSelected(type, newSelected);
         this.RENDER_REF.selectCell( type, newSelected);
     };
+
+    getCurrenGridData = (grid: GridModule = this.UM_STORE.getUMGrid(), selected: TSelectedCell = this.UM_STORE.getSelected('module')) => {
+        const {sec, cell, row, extra} = selected
+
+        const section = grid.sections[sec];
+        const currentCell = section.cells?.[cell];
+        const currentRow = currentCell?.cellsRows?.[row];
+        const currentExtra = currentRow?.extras?.[extra];
+
+        return currentExtra || currentRow || currentCell || section
+    }
 
     debounce(timerKey: string, callback: Function, wait: number) {
         if (this.DEBOUNCES[timerKey]) {
